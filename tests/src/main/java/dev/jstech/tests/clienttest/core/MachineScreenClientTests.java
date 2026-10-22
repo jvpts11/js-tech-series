@@ -12,6 +12,7 @@ import dev.jstech.core.energy.EnergyProtection;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.machine.MachineHistory;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.material.MatterState;
@@ -38,8 +39,8 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 /**
  * The machine screen on a player's game, to set beside the approved design: the test kit machine, owned by the player
  * and open to their team, working cobblestone into stone with a speed upgrade in a bay, hydrogen in its gas tank, a
- * fuse in its holder and a charged battery in its bay; each of its five tabs in turn; and its switch thrown off and on
- * again from the screen.
+ * fuse in its holder and a charged battery in its bay; its LCD turned to its last ten minutes once the first reading
+ * comes, and back; each of its five tabs in turn; and its switch thrown off and on again from the screen.
  */
 public final class MachineScreenClientTests {
 
@@ -49,6 +50,11 @@ public final class MachineScreenClientTests {
     private static final long STORED = 6_000L;
     private static final long HYDROGEN = 6_000L;
     private static final int CHARGE = 7_200;
+    /* The LCD's middle on the face, a click on which turns its page; and the longest a reading takes to come. */
+    private static final int LCD_MIDDLE_X = MachineScreenLayout.LCD_X + MachineScreenLayout.LCD_WIDTH / 2;
+    private static final int LCD_MIDDLE_Y = MachineScreenLayout.LCD_Y + MachineScreenLayout.LCD_HEIGHT / 2;
+    private static final int TICKS_A_SECOND = 20;
+    private static final int READING = (MachineHistory.READING_SECONDS + 3) * TICKS_A_SECOND;
 
     private MachineScreenClientTests() {
     }
@@ -63,6 +69,11 @@ public final class MachineScreenClientTests {
                 .thenWaitUntil(() -> ctx.mc().screen instanceof MachineScreen && machine(ctx).running(), WAIT,
                         "the machine's screen to open on the machine at work")
                 .thenScreenshot(10, "machine-main")
+                .then(0, () -> face(ctx, LCD_MIDDLE_X, LCD_MIDDLE_Y))
+                .thenWaitUntil(() -> !menu(ctx).history().made().isEmpty(), READING,
+                        "the first reading of the machine's last ten minutes to reach the screen")
+                .thenScreenshot(5, "machine-statistics")
+                .then(0, () -> face(ctx, LCD_MIDDLE_X, LCD_MIDDLE_Y))
                 .then(0, () -> tab(ctx, MachineMenu.SIDES))
                 .thenScreenshot(5, "machine-sides")
                 .then(0, () -> tab(ctx, MachineMenu.REDSTONE))
@@ -111,7 +122,11 @@ public final class MachineScreenClientTests {
     }
 
     private static MachineBlockEntity machine(final ClientTestContext ctx) {
-        return ((MachineScreen) Objects.requireNonNull(ctx.mc().screen, "no screen")).getMenu().machine();
+        return menu(ctx).machine();
+    }
+
+    private static MachineMenu menu(final ClientTestContext ctx) {
+        return ((MachineScreen) Objects.requireNonNull(ctx.mc().screen, "no screen")).getMenu();
     }
 
     /* The machine as the server holds it, read on the server's own thread, where the level hands it out. */

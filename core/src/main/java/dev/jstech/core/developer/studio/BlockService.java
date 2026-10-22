@@ -37,6 +37,8 @@ final class BlockService implements IStudioService {
     static final String NAME = "block";
     /** The most items a face names. */
     private static final int ITEMS_NAMED = 3;
+    /** How long one reading keeps a block entity's faces counted: three of the inspector's seconds. */
+    private static final int WATCHED_TICKS = 60;
 
     @Override
     public void answer(final ServerPlayer player, final CompoundTag args, final Consumer<CompoundTag> reply) {
@@ -59,6 +61,10 @@ final class BlockService implements IStudioService {
         }
         out.put(StudioKeys.FACES, faces);
         if (entity instanceof SyncedBlockEntity synced) {
+            // Watched from now on, a few of the inspector's seconds ahead; its neighbours ask again to be counted.
+            if (synced.fields().flow().watch(level.getGameTime(), level.getGameTime() + WATCHED_TICKS)) {
+                level.invalidateCapabilities(pos);
+            }
             final FieldFlow.Totals totals = synced.fields().flow().totals();
             final CompoundTag flow = new CompoundTag();
             flow.putLong(StudioKeys.ENERGY_IN, totals.energyIn());

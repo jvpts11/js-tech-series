@@ -86,6 +86,9 @@ dependencies {
     // API jar; nothing loads a ComputerCraft class unless the mod is present (soft dependency, guarded at
     // runtime). The 1.21.1 line publishes its NeoForge build under the "forge" artifact name.
     compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cc_tweaked_version}"
+
+    // The JSON library the game brings, at its version, for the unit tests that read the docs' examples as JSON.
+    testImplementation 'com.google.code.gson:gson:2.10.1'
 }
 
 // Expands the declared properties into the mod metadata template. A missing property is an error.

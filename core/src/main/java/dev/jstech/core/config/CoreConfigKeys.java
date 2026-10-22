@@ -101,6 +101,8 @@ public final class CoreConfigKeys {
     private static final int MIN_AUDIT_ENTRIES = 100;
     private static final int MAX_AUDIT_ENTRIES = 1_000_000;
     private static final int MAX_ROBOTS_PER_PLAYER = 1024;
+    private static final int MAX_STRUCTURES_PER_PLAYER = 1024;
+    private static final int MAX_EDITS_PER_PLAYER = 256;
     private static final int MIN_STALL_MILLIS = 50;
     private static final int MAX_STALL_MILLIS = 60_000;
     private static final int SHORTEST_LONGEST_NAME = 4;
@@ -256,6 +258,22 @@ public final class CoreConfigKeys {
             .range(0, MAX_ROBOTS_PER_PLAYER)
             .comment("How many robots one player may have at once; 0 lets nobody have any.")
             .named("Robots per player").unit("robots");
+
+    /** How many moving structures one player may have made and not yet set down. */
+    public static final ConfigKey<Integer> PROTECTION_STRUCTURES_PER_PLAYER = ConfigKey.whole(
+            PROTECTION + ".structures_per_player", ProtectionBalance.DEFAULT_STRUCTURES_PER_PLAYER)
+            .range(0, MAX_STRUCTURES_PER_PLAYER)
+            .comment("How many moving structures one player may have made and not yet set down; the pieces a broken "
+                    + "one parts into are not counted. 0 lets nobody make one.")
+            .named("Moving structures per player").unit("structures");
+
+    /** How many large edits one player may have under way at once. */
+    public static final ConfigKey<Integer> PROTECTION_EDITS_PER_PLAYER = ConfigKey.whole(
+            PROTECTION + ".edits_per_player", ProtectionBalance.DEFAULT_EDITS_PER_PLAYER)
+            .range(0, MAX_EDITS_PER_PLAYER)
+            .comment("How many large edits of the world (a crater, a levelled hill) one player may have under way "
+                    + "at once; 0 lets nobody start one.")
+            .named("Large edits per player").unit("edits");
 
     /** How long a section of the series' work may run before the watchdog writes it down, in milliseconds. */
     public static final ConfigKey<Integer> DIAGNOSTICS_STALL_MILLIS = ConfigKey.whole(
@@ -726,6 +744,8 @@ public final class CoreConfigKeys {
             .key(PROTECTION_AUDIT, ProtectionBalance::setAudit)
             .key(PROTECTION_AUDIT_ENTRIES, ProtectionBalance::setAuditEntries)
             .key(PROTECTION_ROBOTS_PER_PLAYER, ProtectionBalance::setRobotsPerPlayer)
+            .key(PROTECTION_STRUCTURES_PER_PLAYER, ProtectionBalance::setStructuresPerPlayer)
+            .key(PROTECTION_EDITS_PER_PLAYER, ProtectionBalance::setEditsPerPlayer)
             .key(DIAGNOSTICS_STALL_MILLIS, DiagnosticBalance::setStallMillis)
             .key(DIAGNOSTICS_COUNT_NETWORK, DiagnosticBalance::setCountNetwork)
             .key(DIAGNOSTICS_WARN_OPERATORS, DiagnosticBalance::setWarnOperators)

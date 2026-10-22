@@ -145,6 +145,11 @@ It is built around the things of the game, never around kinds of files:
   baked a model from them, that no model names a texture that is not there, that no animation moves a bone no model
   of its mod has, that its screen file loads, that its item is in a creative tab, and that a block that drops by a
   loot table has one (in a world of your own, whose data the studio can read). Open opens the file that mends it.
+  A screen file is checked against the menu its screen was registered for (`DataScreens.register`): the studio makes
+  the menu on your game, from the thing's block entity as it opens on the server or with nothing more sent, counts its
+  slots, and says when the file shows a slot the menu has not, leaves out one of the menu's, shows one twice, or has
+  no inventory while the menu holds the player's. A menu that needs more to be made, a place in a world or what the
+  server sends, is not checked.
 
 **Reload all** reloads the resources, and the data when the world is yours, and reads every thing again. **Run its
 tests** asks the server to run, near you, the GameTests whose name names the thing, and the chat says how many
@@ -177,7 +182,7 @@ the world ask the server for it, so they answer only a player who may use the wo
 
 | Tab | What it shows and does |
 |---|---|
-| **Block** | Every field the block entity saves, read again each second while Watching is on; what each face offers (energy, slots and what they hold, tanks); and, for a block entity of the Core, what crossed its faces each second, energy, items and fluid, in and out. Only what really moved is counted, never a move that was only tried. |
+| **Block** | Every field the block entity saves, read again each second while Watching is on; what each face offers (energy, slots and what they hold, tanks); and, for a block entity of the Core, what crossed its faces each second, energy, items and fluid, in and out. Only what really moved is counted, never a move that was only tried, and only while the tab watches the block: a block nobody watches hands its neighbours its own handlers, so counting costs nothing in a game where nobody looks. |
 | **Cost** | Measure times every machine for some seconds and lists them dearest first, with where each one is and who owns it. Heat map lights each one in the world, the dearest red and the cheapest yellow. |
 | **Payloads** | What the server sent you, or everyone, tick by tick over the last hundred ticks: a bar a tick and, for the tick chosen, each kind of packet with its mod, how many, how many bytes and the biggest one. |
 | **Recipes** | The recipes that make the thing chosen, each with the pack it came from and what a pack took away, replaced or changed; the recipe as the recipe viewers draw it; the other recipes that take the same inputs; and a recipe of your own, written, tried and saved to your mod. |

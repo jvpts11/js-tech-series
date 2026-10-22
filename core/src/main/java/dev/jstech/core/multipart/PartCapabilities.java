@@ -9,6 +9,8 @@ package dev.jstech.core.multipart;
 
 import dev.jstech.core.capability.CapabilityKind;
 import dev.jstech.core.capability.CapabilityKinds;
+import dev.jstech.core.signal.ISignalOutput;
+import dev.jstech.core.signal.Signals;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -22,8 +24,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A block that holds parts answering, on each face, with what the part there offers: the game's items, fluids and
- * energy, and every capability declared with the Core. The block registers it once, and its parts are asked from then
- * on, so a part never registers anything:
+ * energy, the signal of a sensor ({@link Signals#OUTPUT}), and every capability declared with the Core. A part that is
+ * itself an {@link ISignalOutput} is its own signal output on its face, as a block entity offered with
+ * {@link Signals#offer} is on every face, so whatever reads sensors reads one mounted beside cables and covers as well.
+ * The block registers it once, and its parts are asked from then on, so a part never registers anything:
  *
  * <pre>{@code
  * PartCapabilities.register(event, MY_PART_HOST.get(), MyPartHost::parts);
@@ -39,7 +43,8 @@ public final class PartCapabilities {
                                                         final BlockEntityType<B> type,
                                                         final Function<B, SpaceParts> parts) {
         final List<BlockCapability<?, @Nullable Direction>> capabilities = new ArrayList<>(List.of(
-                Capabilities.ItemHandler.BLOCK, Capabilities.FluidHandler.BLOCK, Capabilities.EnergyStorage.BLOCK));
+                Capabilities.ItemHandler.BLOCK, Capabilities.FluidHandler.BLOCK, Capabilities.EnergyStorage.BLOCK,
+                Signals.OUTPUT));
         for (final CapabilityKind<?> kind : CapabilityKinds.all()) {
             capabilities.add(kind.block());
         }
@@ -56,7 +61,12 @@ public final class PartCapabilities {
                 return null;
             }
             final IFacePart part = parts.apply(host).get(face);
-            return part == null ? null : part.capability(capability);
+            if (part == null) {
+                return null;
+            }
+            final T offered = part.capability(capability);
+            return offered == null && capability == Signals.OUTPUT && part instanceof ISignalOutput
+                    ? capability.typeClass().cast(part) : offered;
         });
     }
 }

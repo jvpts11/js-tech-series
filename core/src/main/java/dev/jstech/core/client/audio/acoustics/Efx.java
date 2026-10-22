@@ -33,6 +33,9 @@ final class Efx {
     /* An echo's density and how diffuse it is: full, a room's. */
     private static final float DENSITY = 1.0F;
     private static final float DIFFUSION = 1.0F;
+    /* The pitches the game itself plays a sound at, half to twice its own. */
+    private static final float LOWEST_PITCH = 0.5F;
+    private static final float HIGHEST_PITCH = 2.0F;
 
     private static long context;
     private static int slot;
@@ -98,6 +101,19 @@ final class Efx {
         lowpass(sendGain, sendHighs);
         AL11.alSource3i(source, EXTEfx.AL_AUXILIARY_SEND_FILTER, slot, 0, filter);
         AL10.alSourcef(source, EXTEfx.AL_AIR_ABSORPTION_FACTOR, Math.clamp(airAbsorption, 0F, 10F));
+        AL10.alGetError();
+    }
+
+    /**
+     * Plays the source {@code source} at {@code factor} times the pitch the game gave it, held within what the game
+     * itself plays at, half to twice. A source the game has since let go is left alone.
+     */
+    static synchronized void pitch(final int source, final float factor) {
+        if (factor == 1F || !AL10.alIsSource(source)) {
+            return;
+        }
+        final float given = AL10.alGetSourcef(source, AL10.AL_PITCH);
+        AL10.alSourcef(source, AL10.AL_PITCH, Math.clamp(given * factor, LOWEST_PITCH, HIGHEST_PITCH));
         AL10.alGetError();
     }
 

@@ -10,6 +10,8 @@ package dev.jstech.example.part;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.signal.ISignalOutput;
+import dev.jstech.core.signal.Reading;
 import dev.jstech.core.text.Text;
 import dev.jstech.example.ExampleContent;
 import dev.jstech.example.ExampleTexts;
@@ -29,8 +31,11 @@ import org.jetbrains.annotations.Nullable;
  * The level sensor: a plate mounted on a face of a cable, which reads how full the block its face points at is, of
  * energy or else of fluid, and gives that out as a redstone signal from 0 for empty to 15 for full, as a comparator
  * reads a chest. The cable's other wires and pipes run on through the block beside it.
+ *
+ * <p>It is a sensor of the Core's ({@link ISignalOutput}), so anything that reads sensors reads it on the cable's face
+ * ({@code Signals.strengthAt}), with no capability registered for it: the cable answers for its parts.
  */
-public final class LevelSensorPart implements IFacePart {
+public final class LevelSensorPart implements IFacePart, ISignalOutput {
 
     private @Nullable IPartHost host;
     private Direction face = Direction.NORTH;
@@ -72,6 +77,12 @@ public final class LevelSensorPart implements IFacePart {
     @Override
     public int comparator() {
         return strength;
+    }
+
+    /* The one thing it reads is how full the block is, in the signal's own steps, so it speaks what it gives. */
+    @Override
+    public List<Reading> readings() {
+        return List.of(new Reading(ExampleTexts.SENSOR_FULLNESS, strength, 0, FULL, null));
     }
 
     @Override

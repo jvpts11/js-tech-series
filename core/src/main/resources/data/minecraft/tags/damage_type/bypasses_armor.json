@@ -8,6 +8,8 @@
     "jscore:corrosive_item",
     "jscore:radiation_sickness",
     "jscore:dissonance",
-    "jscore:heavy_metal_poisoning"
+    "jscore:heavy_metal_poisoning",
+    "jscore:cold_burn",
+    "jscore:pressure"
   ]
 }

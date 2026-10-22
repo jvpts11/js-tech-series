@@ -112,7 +112,8 @@ public final class WorldGen {
         return !oresOf(namespace).isEmpty() || !structuresOf(namespace).isEmpty()
                 || !Structures.poolsOf(namespace).isEmpty()
                 || !dimensionsOf(namespace).isEmpty() || !WorldBiomes.biomesOf(namespace).isEmpty()
-                || !Terrains.terrainsOf(namespace).isEmpty() || Landforms.declares(namespace);
+                || !Terrains.terrainsOf(namespace).isEmpty() || !Terrains.noisesOf(namespace).isEmpty()
+                || !Terrains.densitiesOf(namespace).isEmpty() || Landforms.declares(namespace);
     }
 
     /**

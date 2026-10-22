@@ -50,6 +50,29 @@ class LandformShapesTest {
     }
 
     @Test
+    void rille_isASmoothTroughDeepestInItsMiddle() {
+        assertEquals(6, LandformShapes.rille(0, 10, 6), CLOSE);
+        final double near = LandformShapes.rille(2, 10, 6);
+        final double far = LandformShapes.rille(4, 10, 6);
+        assertTrue(near < 6 && far < near && far > 0, "it rises evenly to its rims: " + near + ", " + far);
+        assertEquals(LandformShapes.rille(-3, 10, 6), LandformShapes.rille(3, 10, 6), CLOSE);
+        assertEquals(0, LandformShapes.rille(5, 10, 6), CLOSE);
+    }
+
+    @Test
+    void glacier_isThickNearItsHeadAndThinsToItsSnout() {
+        final double head = LandformShapes.glacier(-20, 0, 40, 12, 10);
+        final double middle = LandformShapes.glacier(0, 0, 40, 12, 10);
+        final double snout = LandformShapes.glacier(36, 0, 40, 12, 10);
+        assertTrue(head > middle && middle > snout && snout > 0, "it thins down its length: " + head + ", "
+                + middle + ", " + snout);
+        assertTrue(LandformShapes.glacier(-39, 0, 40, 12, 10) < head, "and rises out of the land at its head");
+        assertTrue(LandformShapes.glacier(0, 4, 40, 12, 10) < middle, "and thins to its edges");
+        assertEquals(0, LandformShapes.glacier(0, 6, 40, 12, 10), CLOSE);
+        assertEquals(0, LandformShapes.glacier(40, 0, 40, 12, 10), CLOSE);
+    }
+
+    @Test
     void dune_risesGentlyAndFallsSteeply() {
         assertEquals(0, LandformShapes.dune(0, 20, 4), CLOSE);
         assertEquals(4, LandformShapes.dune(14, 20, 4), CLOSE);

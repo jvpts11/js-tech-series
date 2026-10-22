@@ -10,6 +10,8 @@ package dev.jstech.computers.scripting;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -27,7 +30,7 @@ import org.junit.jupiter.api.Test;
 /**
  * The page for modpack makers, {@code computers/docs/MODPACKS.md}, says only what is so: the tags it names are the
  * ones the data run writes, and all of them; the calls of {@code JsComputers} it shows are methods the binding has;
- * and every example it prints is the test mod's own data or script, which the GameTests load and check, with the
+ * and every example it prints is in the test mod's own data or script, which the GameTests load and check, with the
  * namespace changed from {@code jstests} to {@code mypack}.
  */
 class ModpacksDocTest {
@@ -81,18 +84,20 @@ class ModpacksDocTest {
     }
 
     @Test
-    void jsonExamples_areTheTestModsData() {
-        final Set<String> data = new TreeSet<>();
+    void jsonExamples_areInTheTestModsData() {
+        final List<JsonElement> data = new ArrayList<>();
         try (Stream<Path> walk = Files.walk(TEST_DATA)) {
-            walk.filter(path -> path.toString().endsWith(".json")).forEach(path -> data.add(squeezed(read(path))));
+            walk.filter(path -> path.toString().endsWith(".json"))
+                    .forEach(path -> data.add(JsonParser.parseString(read(path))));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
         final List<String> examples = blocks("json");
         assertTrue(examples.size() >= 5, "the page prints the datapack examples; found " + examples.size());
         for (final String example : examples) {
-            assertTrue(data.contains(squeezed(asTested(example))),
-                    () -> "a datapack example is not the test mod's data:\n" + example);
+            final JsonElement shown = JsonParser.parseString(asTested(example));
+            assertTrue(data.stream().anyMatch(file -> holds(file, shown)),
+                    () -> "a datapack example is not in the test mod's data:\n" + example);
         }
     }
 
@@ -121,6 +126,41 @@ class ModpacksDocTest {
     /* The page writes a modpack's namespace where the test mod has its own. */
     private static String asTested(final String example) {
         return example.replace("mypack", "jstests");
+    }
+
+    /*
+     * Whether a file of data holds all the example shows: each key with what it holds, and each item of a list. A
+     * file may hold more, as the test mod's list of loot modifiers names the Core's tests' modifiers beside the page's.
+     */
+    private static boolean holds(final JsonElement file, final JsonElement example) {
+        if (example.isJsonObject()) {
+            if (!file.isJsonObject()) {
+                return false;
+            }
+            for (final Map.Entry<String, JsonElement> entry : example.getAsJsonObject().entrySet()) {
+                final JsonElement there = file.getAsJsonObject().get(entry.getKey());
+                if (there == null || !holds(there, entry.getValue())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (example.isJsonArray()) {
+            if (!file.isJsonArray()) {
+                return false;
+            }
+            for (final JsonElement item : example.getAsJsonArray()) {
+                boolean found = false;
+                for (final JsonElement candidate : file.getAsJsonArray()) {
+                    found |= holds(candidate, item);
+                }
+                if (!found) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return example.equals(file);
     }
 
     /* Whitespace says nothing in JSON and only lays a script out, so the comparison leaves it out. */

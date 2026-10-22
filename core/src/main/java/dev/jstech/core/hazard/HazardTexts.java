@@ -61,6 +61,14 @@ public final class HazardTexts {
             "%1$s was eaten away by something corrosive");
     public static final TextKey DIED_CORROSIVE_FIGHTING = TextKey.of("death.attack.jscore.corrosive_item.player",
             "%1$s was eaten away by something corrosive while fighting %2$s");
+    public static final TextKey DIED_COLD_BURN = TextKey.of("death.attack.jscore.cold_burn",
+            "%1$s was burned by something far too cold");
+    public static final TextKey DIED_COLD_BURN_FIGHTING = TextKey.of("death.attack.jscore.cold_burn.player",
+            "%1$s was burned by something far too cold while fighting %2$s");
+    public static final TextKey DIED_PRESSURE = TextKey.of("death.attack.jscore.pressure",
+            "%1$s was crushed by the pressure");
+    public static final TextKey DIED_PRESSURE_FIGHTING = TextKey.of("death.attack.jscore.pressure.player",
+            "%1$s was crushed by the pressure while fighting %2$s");
 
     /** A carried thing's hazard on its tooltip: its name, then what protects from it. */
     public static final TextKey TOOLTIP_HAZARD = TextKey.of("jscore.item_hazard.tooltip", "%s: %s");

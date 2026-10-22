@@ -21,7 +21,7 @@ import dev.jstech.core.registry.CoreItems;
  */
 public final class CoreFonts {
 
-    /** The licence the three come under, as their makers name it. */
+    /** The licence the four come under, as their makers name it. */
     private static final String LICENCE = "Public domain";
     /** Who made them and where they come from, after the size's own name. */
     private static final String MAKERS = ", from Markus Kuhn's ucs-fonts as the X.Org Foundation ships it in "
@@ -39,7 +39,7 @@ public final class CoreFonts {
     /** Misc Fixed 9x15, the same design a size up: a cell nine pixels wide and fifteen tall, twelve above the line. */
     public static final CellFont FIXED_9X15 = misc("9x15", 9, 15, 12);
 
-    /** Misc Fixed 10x20, the largest of the three: a cell ten pixels wide and twenty tall, sixteen above the line. */
+    /** Misc Fixed 10x20, the largest of the four: a cell ten pixels wide and twenty tall, sixteen above the line. */
     public static final CellFont FIXED_10X20 = misc("10x20", 10, 20, 16);
 
     private CoreFonts() {

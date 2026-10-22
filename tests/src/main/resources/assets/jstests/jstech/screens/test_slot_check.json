@@ -1,0 +1,19 @@
+{
+  "width": 176,
+  "root": {
+    "type": "column",
+    "gap": 4,
+    "children": [
+      {"type": "title", "id": "title"},
+      {
+        "type": "row",
+        "gap": 4,
+        "children": [
+          {"type": "slot", "slot": 0, "id": "first"},
+          {"type": "slot", "slot": 0, "id": "first_again"},
+          {"type": "slot", "slot": 2, "id": "past_the_menu"}
+        ]
+      }
+    ]
+  }
+}

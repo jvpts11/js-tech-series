@@ -448,6 +448,11 @@ the order they began, as structures are set: without waking their neighbours, un
 An edit says how far it has got (`progress()`), can be stopped where it is (`stop()`), and a planner that throws sets
 nothing. `WorldEdits.apply(level, plan)` sets a plan made already.
 
+An edit a player starts goes through `WorldEdits.planFor(level, player, box, planner)` (or `applyFor`): it counts
+against how many large edits one player may have under way at once (`protection.edits_per_player`, 4 by default,
+[Protection](PROTECTION.md#limits-per-player)) until it ends, and at the limit nothing is planned and the answer is
+empty, `PlayerLimits.reached(PlayerLimits.LARGE_EDITS, WorldEdits.underWayFor(player))` saying so to the player.
+
 ### World events
 
 A **world event** is something the world goes through by its schedule or by chance: a meteor shower, a solar storm,
@@ -552,6 +557,32 @@ public static final Terrains.TerrainSpec SALT_PLAINS = Terrains.terrain(rl("salt
 The data generation writes its noise settings and the noises they sample, under `data/<namespace>/worldgen/`. A
 surface's top lies where the ground meets the air; under a liquid the floor is the block under it.
 
+A terrain that wants more than hills is made of parts declared one by one, each written as a file of its own that a
+datapack can change and other parts refer to by its name: noises, density functions made from the noises and from one
+another, and the surface as rules read in order.
+
+```java
+public static final NoiseSpec RIDGE = Terrains.noise(rl("ridge"), -6, 1.0, 0.5);   // about 64 blocks, two octaves
+public static final DensitySpec RIDGED_GROUND = Terrains.density(rl("ridged_ground"), (noises, densities) ->
+        DensityFunctions.add(DensityFunctions.yClampedGradient(0, 128, 1.5, -1.5),   // solid below the middle
+                DensityFunctions.noise(noises.getOrThrow(RIDGE.key()), 1.0, 0.0).abs()));  // raised in sharp folds
+public static final Terrains.TerrainSpec RIDGES = Terrains.terrain(rl("ridges")).heights(0, 128).ground(64)
+        .density(RIDGED_GROUND)              // its ground, solid where the density is above zero
+        .surfaceRules(Terrains.surfaceRules()
+                .bedrock("mymod:ridges_bedrock", 3)
+                .above(80, () -> Blocks.SNOW_BLOCK)          // the floor open to the air at y 80 and above
+                .steep(() -> Blocks.STONE)                   // cliffs too steep for a top
+                .underLiquid(() -> Blocks.GRAVEL)            // the beds of its seas
+                .in(MY_DESERT, Terrains.surfaceRules().layers(() -> Blocks.SAND, () -> Blocks.SANDSTONE, 4))
+                .layers(() -> Blocks.GRASS_BLOCK, () -> Blocks.DIRT, 3))
+        .declare();
+```
+
+The first rule that holds for a block lays it. `where(noise, from, to, rules)` lays rules where a noise reads within
+a range, patches of a surface, and `rule(...)` takes any surface rule of the game's own. A density function may sample
+another declared one, `OTHER.reference(densities)`. The test mod's ridged land is a worked example
+(`tests/src/main/java/dev/jstech/tests/TestWorldGen.java`).
+
 ### Biomes and their climates
 
 *Added 2026-10-16.*
@@ -617,16 +648,20 @@ public static final Landforms.LandformSpec CRATERS = Landforms.landform(rl("crat
 | `mesa` | A flat top over cliffs, its body in bands (`bands(...)`). | top | body | | |
 | `dunes` | Ridges, gentle on the windward side and steep on the lee. | top | body | | |
 | `canyon` | A long winding cut with steep walls. | floor | | in its bottom | |
+| `rille` | A narrow channel winding tightly, a smooth trough, as a lava channel whose roof fell in. | floor | | | |
 | `river` | A shallow winding channel of any liquid. | bed | | liquid | what it freezes to |
 | `lake` | A bowl of any liquid. | bed | bank | liquid | what it freezes to |
 | `lava_tube` | A tunnel under the ground, open to the sky here and there. | | | its floor | |
 | `ice_sheet` | A sheet of ice over the land. | snow on top | | ice | |
+| `glacier` | A tongue of ice down the land, thick near its head and thin at its snout, cracked by crevasses down its lower half. | snow on top | | ice | moraines along its edges and before its snout |
 | `geyser` | A mound round a vent down to water over magma, which bubbles. | mound's top | mound | water | magma |
+| `cryovolcano` | A broad dome of ice with a liquid of the cold in its summit. | slopes | body | summit's liquid | what it threw out, round its foot |
 | `sinkhole` | A shaft down into the ground. | floor | | in its bottom | |
 | `salt_flat` | The land made level, cracked in a net. | | | salt | cracks |
 
 `height` is a share of the radius: a crater's depth, a mesa's height, a lava tube's bore, a river's depth, a
-geyser's vent. A river's or a canyon's radius is half its length. A lake's or a river's liquid freezes where it is
+geyser's vent, a glacier's thickness at its head. A river's, a canyon's, a rille's or a glacier's radius is half its
+length; a glacier is as wide as a third of its length. A lake's or a river's liquid freezes where it is
 colder than `liquidRange(freezes, boils)` says, in kelvin, and boils away where it is hotter; water's 273.15 and
 373.15 are the default, and a lake of lava, of brine or of liquid methane says its own.
 
@@ -950,16 +985,24 @@ region, however many boxes the world holds. A box wider than 4,096 regions is ke
 *Added 2026-10-05.*
 
 A machine that must work while nobody is near (a quarry, a station far away) asks the Core to keep chunks loaded
-for its owner:
+for its owner, and says why:
 
 ```java
-LoadOutcome outcome = ChunkLoaders.load(level, machinePos, ownerUuid, new ChunkPos(machinePos), true);
+public static final TextKey QUARRY_DIGS = TextKey.of("mymod.chunks.quarry",
+        "A quarry keeps the chunks it digs loaded");
+
+LoadOutcome outcome = ChunkLoaders.load(level, machinePos, ownerUuid, QUARRY_DIGS, new ChunkPos(machinePos),
+        true);
 // when the machine is broken:
 ChunkLoaders.releaseAll(level, machinePos);
 ```
 
 - `true` keeps the chunk **ticking**: machines and entities in it work as if a player were near. `false` only keeps
   it loaded.
+- The reason is a sentence of the mod's own, in a `@TextHolder` class like any other. No chunk is held open without
+  an owner and a reason to show for it: an operator who finds the world kept loaded reads both, on the map and in the
+  command below. It is saved with its English, so it still reads after the mod that gave it is taken out, and a
+  source asking again with another reason keeps the new one. `ChunkLoaders.reasons(level)` gives each source's.
 - Each owner may keep a number of chunks across every dimension: 25 unless the server says otherwise
   (`world.chunks_per_owner` in `jstech-balance.toml`, 0 to 4,096). Past it, `load` answers `LIMIT_REACHED`.
 - Every owner together may keep only the server's budget: 400 unless the server says otherwise
@@ -969,9 +1012,9 @@ ChunkLoaders.releaseAll(level, machinePos);
   has its chunks let go.
 - The chunks a source keeps are an area on the maps of its owner's team (the layer "Chunks kept loaded",
   `LoadedChunkMarkers.LAYER`), kept up to date as it loads and lets go of them.
-- `/jstech chunks <player>` shows what a player keeps loaded, and releases it; `/jstech chunks` counts every owner's
-  against the budget, and `/jstech chunks map` shows an operator every place keeping chunks, and whose it is, on their
-  own map ([Commands](COMMANDS.md)).
+- `/jstech chunks <player>` shows what a player keeps loaded, place by place with each one's reason, and releases
+  it; `/jstech chunks` counts every owner's against the budget, and `/jstech chunks map` shows an operator every place
+  keeping chunks, whose it is and why, on their own map ([Commands](COMMANDS.md)).
 
 ### The Space Persistor
 

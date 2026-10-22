@@ -33,8 +33,15 @@ public static final DamageKind SPORES = DamageKinds.declare(new DamageKind(
 
 A damage type is of a kind when it is in the kind's damage type tag, `<namespace>:damage_kind/<path>`: the game's
 fire and the Core's hot things are in `jscore:damage_kind/heat`, explosions in `jscore:damage_kind/blast`, freezing in
-`jscore:damage_kind/cryogenic`, lightning and the Core's electric shocks in `jscore:damage_kind/electrical`. A data
-pack adds any mod's damage to a kind the same way.
+`jscore:damage_kind/cryogenic`, lightning and the Core's electric shocks in `jscore:damage_kind/electrical`, radiation
+sickness in `jscore:damage_kind/radiation`. A data pack adds any mod's damage to a kind the same way.
+
+Every kind of damage the Core declares has a damage of the Core's own in it, with its death messages, so a mod that
+hurts by a kind needs no damage type of its own to do it: `DamageKinds.source(level, DamageKinds.COLD_BURN)` is the
+burn of something far too cold ("was burned by something far too cold"), `DamageKinds.PRESSURE_DAMAGE` what a
+difference of pressure does to a body ("was crushed by the pressure"); the others are `jscore:electric`,
+`jscore:corrosive_item`, `jscore:heat`, `jscore:shrapnel` and `jscore:radiation_sickness`. A worn thing's share of a
+kind is taken off them as off any damage of the kind.
 
 What a worn thing stops is data, the data map `jscore:resistances` on items, and what a kind of creature stops by
 itself the same map on entity types:
@@ -211,9 +218,16 @@ Where the laws of physics round a body depart from the normal ones ([World](WORL
 (`Dissonance`), a percent a second for each unit the laws are from ours: how far the pull is from straight down at its
 usual strength, twice how far time runs from its usual pace, how much light bends, shimmers, darkens or glows, one for
 space that wraps or leads elsewhere, one for liquids that rise. A planet's own gravity is not a law of its own and
-counts for nothing. I at 10 warps the sight; II at 25 lets the body's gravity drift; III at 45 makes time stutter, the
-body caught back where it was a second ago, and hungry; IV at 70 throws it in small jumps through space and harms it;
-V at 100 tears it apart. In normal laws it falls back half a percent a second and two hundredths of what there is.
+counts for nothing. I at 10 warps the sight and shifts its colours, swinging slowly towards red and towards blue as
+the view shimmers; II at 25 lets the body's gravity drift, and every sound of the world plays a little higher or lower
+than it should, wavering; III at 45 makes time stutter, the body caught back where it was a second ago, and hungry; IV
+at 70 throws it in small jumps through space and harms it; V at 100 tears it apart. In normal laws it falls back half
+a percent a second and two hundredths of what there is. The colours and the pitch go further the further it has built
+up (`DissonanceSenses`), on the player's game.
+
+Anything else may change how the player sees or hears the same way, on the player's game:
+`LightLawsClient.see(sight)` puts what an `ISight` gives together with the light of the place, and
+`SoundShaper.shiftPitch(factor)` multiplies the pitch of every sound of the world as it starts.
 
 A bubble of normal laws round a body keeps it from building up, and doubles how fast it falls back: an armour module,
 a block that makes a zone, each spending its own energy:

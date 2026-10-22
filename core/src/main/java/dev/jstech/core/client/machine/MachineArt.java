@@ -36,12 +36,16 @@ public final class MachineArt {
             0xFF << 24 | 0xE8C547, 0xFF << 24 | 0x3C2C00, 0xFF << 24 | 0x343740, 0xFF << 24 | 0x7CFF7C,
             0xFF << 24 | 0x182418, 0xFF << 24 | 0x3668D2, 0xFF << 24 | 0xDC1E14, 0xFF << 24 | 0xFFECA0,
             0xFF << 24 | 0xECECE6, 0xFF << 24 | 0x468CEB, 0xFF << 24 | 0xF0AA32, 0xFF << 24 | 0x5ACD6E,
-            0xFF << 24 | 0x787C82, 0xFF << 24 | 0xFFC446));
+            0xFF << 24 | 0x787C82, 0xFF << 24 | 0xFFC446, 0xFF << 24 | 0xF0C860));
     private static final float SMALL = MachineScreenLayout.SMALL;
     /* A sight glass's width; an arrow's length, and its shaft's. */
     private static final int GLASS = 8;
     private static final int ARROW = 14;
     private static final int ARROW_SHAFT = 9;
+    /* An LCD chart's room above its columns, for its words; how high its columns and its dots reach at their most. */
+    private static final int LCD_CHART_ROOM = 12;
+    private static final double BAR_REACH = 0.8;
+    private static final double TRACE_REACH = 0.45;
 
     private MachineArt() {
     }
@@ -246,6 +250,44 @@ public final class MachineArt {
                 text(g, font, fit(font, lines.get(i), w - 6), x + 4, y + 3 + i * 10, colour);
             }
         }
+        glassShine(g, x, y, x + w, y + h);
+    }
+
+    /**
+     * An LCD showing a chart over time, oldest on the left, a column a reading: {@code left} and {@code right} in its
+     * top corners, {@code bars} as green columns reaching four fifths of its height at their most, their tops lit, and
+     * {@code trace} as amber dots every other reading, reaching under half of it, so the two never hide each other.
+     */
+    public static void lcdChart(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                                final int h, final String left, final String right, final List<Integer> bars,
+                                final List<Long> trace) {
+        final Colours c = PALETTE.get();
+        bezel(g, x - 3, y - 3, x + w + 3, y + h + 3, false);
+        final int ground = c.lcdGround();
+        fill(g, x, y, x + w, y + h, ground);
+        for (int gy = y; gy < y + h; gy += 2) {
+            hline(g, x, x + w, gy, mix(ground, c.black(), 0.18));
+        }
+        text(g, font, left, x + 3, y + 2, c.lcdGlow());
+        text(g, font, right, x + w - 2 - width(font, right), y + 2, mix(c.lcdGlow(), ground, 0.45));
+        final int x0 = x + 3;
+        final int base = y + h - 2;
+        final int tall = h - LCD_CHART_ROOM;
+        final double barPeak = Math.max(1, bars.stream().mapToInt(Integer::intValue).max().orElse(0)) / BAR_REACH;
+        final double tracePeak = Math.max(1L, trace.stream().mapToLong(Long::longValue).max().orElse(0L))
+                / TRACE_REACH;
+        final int columns = Math.min(bars.size(), w - 6);
+        for (int i = 0; i < columns; i++) {
+            final int high = (int) Math.round(bars.get(i) / barPeak * tall);
+            if (high > 0) {
+                fill(g, x0 + i, base - high + 1, x0 + i + 1, base, mix(c.lcdGlow(), ground, 0.78));
+                dot(g, x0 + i, base - high, c.lcdGlow());
+            }
+        }
+        for (int i = 0; i < Math.min(trace.size(), w - 6); i += 2) {
+            dot(g, x0 + i, base - Math.max(1, (int) Math.round(trace.get(i) / tracePeak * tall)), c.lcdTrace());
+        }
+        hline(g, x0, x0 + w - 6, base, mix(c.lcdGlow(), ground, 0.6));
         glassShine(g, x, y, x + w, y + h);
     }
 
@@ -661,11 +703,13 @@ public final class MachineArt {
      * @param faceBoth   a face that does both
      * @param faceOff    a face that does neither
      * @param pushLit    a lit pushbutton of a resource
+     * @param lcdTrace   an LCD chart's second line, amber beside its green
      */
     public record Colours(int black, int white, int dark, int ground, int slot, int slotDark, int title, int steel,
                           int aluminium, int meterFace, int lampRun, int lampWait, int lampFault, int classPlate,
                           int classInk,
                           int plateInk, int lcdGlow, int lcdGround, int water, int redstone, int lit,
-                          int wheelDigit, int faceIn, int faceOut, int faceBoth, int faceOff, int pushLit) {
+                          int wheelDigit, int faceIn, int faceOut, int faceBoth, int faceOff, int pushLit,
+                          int lcdTrace) {
     }
 }

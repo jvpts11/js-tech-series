@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -55,18 +56,15 @@ public final class StudioServicesGameTests {
     public static void block_saysItsFieldsFacesAndWhatCrossedThem(final GameTestHelper helper) {
         helper.setBlock(AT, TestKitMachine.BLOCK.get());
         final BlockPos pos = helper.absolutePos(AT);
-        // Whichever face the machine's sides take its input at: cobblestone, which it makes stone of.
-        final ItemStack cobblestone = new ItemStack(Items.COBBLESTONE, PUT);
-        IItemHandler input = null;
-        for (final Direction side : Direction.values()) {
-            final IItemHandler offered = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, pos, side);
-            if (input == null && offered != null && offered.insertItem(0, cobblestone, true).getCount() < PUT) {
-                input = offered;
-            }
-        }
-        helper.assertTrue(input != null, "the kit machine takes cobblestone at a face");
-        final int taken = PUT - input.insertItem(0, cobblestone.copy(), false).getCount();
-        input.insertItem(0, cobblestone.copy(), true);
+        final ItemStack cobblestone = new ItemStack(Items.COBBLESTONE, 1);
+        // Before the inspector first watches it, nothing that crosses its faces is counted, for nothing is counting.
+        input(helper, pos).insertItem(0, cobblestone.copy(), false);
+        asked(helper, StudioServices.BLOCK, at(pos), first -> helper.assertTrue(
+                first.getCompound(StudioKeys.FLOW).getLong(StudioKeys.ITEMS_IN) == 0L,
+                "unwatched, what was put in is not counted: " + first.get(StudioKeys.FLOW)));
+        final IItemHandler input = input(helper, pos);
+        final int taken = PUT - input.insertItem(0, cobblestone.copyWithCount(PUT), false).getCount();
+        input.insertItem(0, cobblestone.copyWithCount(PUT), true);
         asked(helper, StudioServices.BLOCK, at(pos), answer -> {
             helper.assertTrue(answer.getString(StudioKeys.BLOCK).equals(TestKitMachine.BLOCK.getId().toString()),
                     "it names the block: " + answer);
@@ -75,7 +73,8 @@ public final class StudioServicesGameTests {
             helper.assertTrue(answer.getList(StudioKeys.FACES, Tag.TAG_COMPOUND).size() == Direction.values().length,
                     "it reads each face");
             helper.assertTrue(answer.getCompound(StudioKeys.FLOW).getLong(StudioKeys.ITEMS_IN) == taken,
-                    "what was put in counts, and what was only tried does not: " + answer.get(StudioKeys.FLOW));
+                    "watched, what was put in counts, and what was only tried does not: "
+                            + answer.get(StudioKeys.FLOW));
         });
         helper.succeed();
     }
@@ -219,6 +218,18 @@ public final class StudioServicesGameTests {
     private static void leave(final ServerPlayer player) {
         player.server.getPlayerList().getOps().remove(player.getGameProfile());
         GameTestPlayers.leave(player);
+    }
+
+    /* Whichever face the kit machine's sides take its input at: cobblestone, which it makes stone of. */
+    private static IItemHandler input(final GameTestHelper helper, final BlockPos pos) {
+        final ItemStack cobblestone = new ItemStack(Items.COBBLESTONE, PUT);
+        for (final Direction side : Direction.values()) {
+            final IItemHandler offered = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, pos, side);
+            if (offered != null && offered.insertItem(0, cobblestone, true).getCount() < PUT) {
+                return offered;
+            }
+        }
+        throw new GameTestAssertException("the kit machine takes cobblestone at no face");
     }
 
     private static CompoundTag at(final BlockPos pos) {

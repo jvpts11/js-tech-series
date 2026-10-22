@@ -60,7 +60,10 @@ public final class FieldCapabilities {
         }
         final T whole = synced.fields().capability(capability);
         final T offered = synced instanceof IFaceGate gate ? gate.throughFace(capability, side, whole) : whole;
-        return offered == null ? null : capability.typeClass().cast(CountedCapabilities.counted(offered,
-                synced.fields().flow()));
+        final FieldFlow flow = synced.fields().flow();
+        // Counted only while the studio's inspector watches it: anywhere else the handler goes out as it is.
+        final boolean watched = offered != null && synced.getLevel() != null
+                && flow.watched(synced.getLevel().getGameTime());
+        return watched ? capability.typeClass().cast(CountedCapabilities.counted(offered, flow)) : offered;
     }
 }

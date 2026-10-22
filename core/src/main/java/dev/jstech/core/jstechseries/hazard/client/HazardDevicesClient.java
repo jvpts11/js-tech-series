@@ -90,6 +90,7 @@ public final class HazardDevicesClient {
             }
         });
         SmogClient.listen();
+        DissonanceClient.listen();
     }
 
     /**

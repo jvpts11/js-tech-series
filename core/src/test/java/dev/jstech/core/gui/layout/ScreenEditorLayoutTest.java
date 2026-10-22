@@ -16,14 +16,31 @@ class ScreenEditorLayoutTest {
 
     @Test
     void panel_isCleanAtItsWidest() {
-        final GuiLayout layout = ScreenEditorLayout.panel(ScreenEditorLayout.PANEL_WIDTH);
+        final GuiLayout layout = ScreenEditorLayout.panel(ScreenEditorLayout.PANEL_WIDTH,
+                ScreenEditorLayout.MOST_FIELDS);
         assertTrue(layout.isClean(), "overlaps " + layout.overlaps() + ", out of bounds " + layout.outOfBounds());
     }
 
     @Test
     void panel_isCleanAtItsNarrowest() {
-        final GuiLayout layout = ScreenEditorLayout.panel(ScreenEditorLayout.MIN_WIDTH);
+        final GuiLayout layout = ScreenEditorLayout.panel(ScreenEditorLayout.MIN_WIDTH, ScreenEditorLayout.MOST_FIELDS);
         assertTrue(layout.isClean(), "overlaps " + layout.overlaps() + ", out of bounds " + layout.outOfBounds());
+    }
+
+    @Test
+    void panel_isCleanWithTheFewestFields() {
+        final GuiLayout layout = ScreenEditorLayout.panel(ScreenEditorLayout.MIN_WIDTH, 1);
+        assertTrue(layout.isClean(), "overlaps " + layout.overlaps() + ", out of bounds " + layout.outOfBounds());
+    }
+
+    @Test
+    void panelTop_standsBesideItsComponentAndOnTheScreen() {
+        assertEquals(90, ScreenEditorLayout.panelTop(90, 3, 480), "at the component's height");
+        assertEquals(ScreenEditorLayout.PANEL_Y, ScreenEditorLayout.panelTop(5, 3, 480), "never over the bar");
+        final int height = 270;
+        final int top = ScreenEditorLayout.panelTop(260, ScreenEditorLayout.MOST_FIELDS, height);
+        assertTrue(top + ScreenEditorLayout.panelHeight(ScreenEditorLayout.MOST_FIELDS)
+                <= height - ScreenEditorLayout.HINTS_UP, "and never past the line of what to do: " + top);
     }
 
     @Test

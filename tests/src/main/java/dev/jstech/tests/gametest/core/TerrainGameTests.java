@@ -27,6 +27,8 @@ import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.testkit.LandSurvey;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -46,7 +48,9 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -173,6 +177,61 @@ public final class TerrainGameTests {
             helper.assertTrue(Math.abs(HeatClimate.ambient(land, above)
                             - HeatMath.kelvin(BiomeClimates.celsius(land, above))) < CLOSE,
                     "and heat meets the steppe's own climate there");
+        } finally {
+            RuntimeDimensions.remove(server, copy);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void ridgedLand_isMadeOfItsDeclaredPartsAndRules(final GameTestHelper helper) {
+        final RegistryAccess registries = helper.getLevel().registryAccess();
+        helper.assertTrue(registries.registryOrThrow(Registries.NOISE).containsKey(TestWorldGen.RIDGE_NOISE.id()),
+                "a declared noise is registered");
+        helper.assertTrue(registries.registryOrThrow(Registries.DENSITY_FUNCTION)
+                .containsKey(TestWorldGen.RIDGED_GROUND.id()), "and a declared density function");
+        final NoiseGeneratorSettings settings = registries.registryOrThrow(Registries.NOISE_SETTINGS)
+                .get(TestWorldGen.RIDGED.id());
+        helper.assertTrue(settings != null && settings.noiseRouter().initialDensityWithoutJaggedness()
+                instanceof DensityFunctions.HolderHolder ground
+                && ground.function().is(TestWorldGen.RIDGED_GROUND.key()),
+                "the ridged land's ground is its density function, by its name");
+        final MinecraftServer server = helper.getLevel().getServer();
+        final ResourceKey<Level> copy = ResourceKey.create(Registries.DIMENSION,
+                ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "ridges_" + UUID.randomUUID().toString()
+                        .substring(0, 8)));
+        final ServerLevel land = RuntimeDimensions.getOrCreate(server, copy, TestWorldGen.RIDGED_LAND.id());
+        try {
+            int heights = 0;
+            int snowy = 0;
+            int grassy = 0;
+            final Set<String> otherwise = new TreeSet<>();
+            for (int cx = -2; cx <= 2; cx++) {
+                for (int cz = -2; cz <= 2; cz++) {
+                    land.getChunk(cx, cz);
+                    for (int x = cx * 16; x < cx * 16 + 16; x += 2) {
+                        for (int z = cz * 16; z < cz * 16 + 16; z += 2) {
+                            // The ground's own top: the plains' grass and flowers on it are not its surface.
+                            final int top = land.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                            final BlockState surface = land.getBlockState(new BlockPos(x, top, z));
+                            if (top >= TestWorldGen.RIDGED_SNOW) {
+                                heights++;
+                                if (surface.is(Blocks.SNOW_BLOCK)) {
+                                    snowy++;
+                                } else {
+                                    otherwise.add(surface.getBlock().getName().getString() + " at " + top);
+                                }
+                            } else if (surface.is(Blocks.GRASS_BLOCK)) {
+                                grassy++;
+                            }
+                        }
+                    }
+                }
+            }
+            helper.assertTrue(heights > 0, "its ridges rise above " + TestWorldGen.RIDGED_SNOW);
+            helper.assertTrue(snowy == heights, "and every one of their tops up there is snow: " + snowy + " of "
+                    + heights + ", the rest " + otherwise);
+            helper.assertTrue(grassy > 0, "while the lower land is grass");
         } finally {
             RuntimeDimensions.remove(server, copy);
         }

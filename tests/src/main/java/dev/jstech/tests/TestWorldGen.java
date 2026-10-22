@@ -19,6 +19,8 @@ import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.structure.Growth;
 import dev.jstech.core.worldgen.structure.StructureFit;
 import dev.jstech.core.worldgen.structure.Structures;
+import dev.jstech.core.worldgen.terrain.DensitySpec;
+import dev.jstech.core.worldgen.terrain.NoiseSpec;
 import dev.jstech.core.worldgen.terrain.Terrains;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -27,6 +29,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.structure.Structure;
 
@@ -89,6 +92,23 @@ public final class TestWorldGen {
      */
     public static final WorldGen.DimensionSpec TEST_LAND = WorldGen.dimension(id("test_land")).terrain(TERRAIN)
             .biome(STEPPE.key(), 0.5F, 0F).biome(FROST.key(), -0.5F, 0F).runtimeOnly().declare();
+    /** The height from which the ridged land's ground is snow. */
+    public static final int RIDGED_SNOW = 80;
+    /** The noise the ridged land's ridges are folded from, a feature about 64 blocks across. */
+    public static final NoiseSpec RIDGE_NOISE = Terrains.noise(id("test_ridge_noise"), -6, 1.0, 0.5);
+    /** The ridged land's ground: the land's height, raised into sharp ridges by the folds of the ridge noise. */
+    public static final DensitySpec RIDGED_GROUND = Terrains.density(id("test_ridged_ground"), (noises, densities) ->
+            DensityFunctions.add(DensityFunctions.yClampedGradient(0, 128, 1.5, -1.5),
+                    DensityFunctions.noise(noises.getOrThrow(RIDGE_NOISE.key()), 1.0, 0.0).abs()));
+    /** Ridged land of its own ground, snow on its heights, bare stone on its slopes, grass on the rest. */
+    public static final Terrains.TerrainSpec RIDGED = Terrains.terrain(id("test_ridged_land")).heights(0, 128)
+            .ground(64).sea(40).density(RIDGED_GROUND).surfaceRules(Terrains.surfaceRules()
+                    .bedrock("jstests:test_ridged_land_bedrock", 3).above(RIDGED_SNOW, () -> Blocks.SNOW_BLOCK)
+                    .steep(() -> Blocks.STONE).underLiquid(() -> Blocks.GRAVEL)
+                    .layers(() -> Blocks.GRASS_BLOCK, () -> Blocks.DIRT, 3)).declare();
+    /** The ridged land, under plains; only its copies exist, made by the test that looks at it. */
+    public static final WorldGen.DimensionSpec RIDGED_LAND = WorldGen.dimension(id("test_ridged_land"))
+            .terrain(RIDGED).biome(Biomes.PLAINS).runtimeOnly().declare();
     /**
      * The game's own overworld ground under plains, nothing of the series in it: what the test land's generation is
      * measured against.

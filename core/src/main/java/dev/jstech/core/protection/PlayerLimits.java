@@ -31,7 +31,8 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * How many of a kind of thing one player may have at once (robots, moving structures, large edits in progress), so
  * nobody can bring a server down on purpose. Each kit declares its limit with what sets it, takes from it as a player
- * gets one and gives back as it goes; the counts are kept with the world, per player. Whoever holds
+ * gets one and gives back as it goes; the counts are kept with the world, per player. A kit whose things end with the
+ * server counts them itself and asks {@link #allows} instead, so no count outlives what it counted. Whoever holds
  * {@link CorePermissions#PASS_LIMITS} goes past every limit.
  *
  * <pre>{@code
@@ -47,6 +48,8 @@ public final class PlayerLimits {
     /* How many the player has, how many they may have, and of what. */
     public static final TextKey REACHED = TextKey.of("jscore.limit.reached", "You have %s of %s %s allowed");
     public static final TextKey ROBOTS_NAME = TextKey.of("jscore.limit.robots", "robots");
+    public static final TextKey STRUCTURES_NAME = TextKey.of("jscore.limit.moving_structures", "moving structures");
+    public static final TextKey EDITS_NAME = TextKey.of("jscore.limit.large_edits", "large edits under way");
 
     /** What each player has of each kind, by the kind's id. */
     private static final PlayerState<Map<String, Integer>> COUNTS = CoreState.builder(
@@ -58,6 +61,12 @@ public final class PlayerLimits {
     /** The robots one player may have. */
     public static final Limit ROBOTS = declare(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "robots"),
             ROBOTS_NAME, ProtectionBalance::robotsPerPlayer);
+    /** The moving structures one player may have made and not yet set down. */
+    public static final Limit MOVING_STRUCTURES = declare(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "moving_structures"), STRUCTURES_NAME, ProtectionBalance::structuresPerPlayer);
+    /** The large edits of the world one player may have under way at once. */
+    public static final Limit LARGE_EDITS = declare(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "large_edits"), EDITS_NAME, ProtectionBalance::editsPerPlayer);
 
     private PlayerLimits() {
     }
@@ -118,7 +127,20 @@ public final class PlayerLimits {
 
     /** What a player at {@code limit} is told: how many they have, how many they may have, and of what. */
     public static Text reached(final MinecraftServer server, final UUID player, final Limit limit) {
-        return REACHED.with(count(server, player, limit), limit.most().getAsInt(), limit.name());
+        return reached(limit, count(server, player, limit));
+    }
+
+    /**
+     * Whether {@code player}, who has {@code has} of {@code limit}'s kind, may have one more: for a kit whose things
+     * end with the server, as large edits do, which counts them itself rather than keep a count with the world.
+     */
+    public static boolean allows(final UUID player, final Limit limit, final int has) {
+        return has < limit.most().getAsInt() || CorePermissions.has(player, CorePermissions.PASS_LIMITS);
+    }
+
+    /** What a player at {@code limit} who has {@code has} of its kind is told, for a kit that counts its own. */
+    public static Text reached(final Limit limit, final int has) {
+        return REACHED.with(has, limit.most().getAsInt(), limit.name());
     }
 
     /** Gives back one of {@code limit} {@code player} had, as the thing goes. */

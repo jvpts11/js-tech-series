@@ -11,6 +11,7 @@ import dev.jstech.core.task.Task;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ public final class WorldEdit {
     private @Nullable EditPlan plan;
     private int set;
     private State state = State.PLANNING;
+    /* The player it is counted for, against their limit of edits under way; none for one a mod makes. */
+    private @Nullable UUID player;
 
     WorldEdit(final ServerLevel level) {
         this.level = level;
@@ -40,6 +43,11 @@ public final class WorldEdit {
     /** Where it has got to. */
     public State state() {
         return this.state;
+    }
+
+    /** The player it is counted for, against their limit of edits under way; null for one made for nobody. */
+    public @Nullable UUID player() {
+        return this.player;
     }
 
     /** How many blocks it sets in all; 0 while it is still being planned. */
@@ -88,6 +96,10 @@ public final class WorldEdit {
 
     void planning(final Task<EditPlan> task) {
         this.planning = task;
+    }
+
+    void forPlayer(final UUID who) {
+        this.player = who;
     }
 
     void planned(final EditPlan made) {

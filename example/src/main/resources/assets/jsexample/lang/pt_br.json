@@ -22,5 +22,6 @@
   "jsexample.logbook.start_over": "Zerar a minha contagem",
   "jsexample.logbook.title": "Diário de Bordo",
   "jsexample.recipe_kind.crushing": "Trituração",
+  "jsexample.sensor.fullness": "Quão cheio o bloco está",
   "jsexample.sensor.reads": "Lê %s de 15"
 }

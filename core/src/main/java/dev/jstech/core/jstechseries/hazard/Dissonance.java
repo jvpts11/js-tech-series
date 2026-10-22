@@ -37,10 +37,11 @@ import net.minecraft.world.phys.Vec3;
  * A hazard of the physics kit: where the laws of physics round a body depart from the normal ones (time running at
  * another pace, a pull that is not down, light that bends, space that wraps, liquids that rise), the difference builds
  * up in the body, faster the further the laws are from ours, and falls back in normal laws. The bands: I warps the
- * sight, II lets the body's own gravity drift, III makes time stutter, the body caught back where it was and hungry,
- * IV throws it in small jumps through space and harms it slowly, V tears it apart. A bubble of normal laws round the
- * body ({@link IDissonanceShield}, an armour module or a block that makes a zone) keeps it from building up. A planet's
- * own gravity is not a law of its own, and builds up nothing.
+ * sight and shifts its colours, II lets the body's own gravity drift and changes the pitch of what it hears (both on
+ * the player's game, by {@link DissonanceSenses}), III makes time stutter, the body caught back where it was and
+ * hungry, IV throws it in small jumps through space and harms it slowly, V tears it apart. A bubble of normal laws
+ * round the body ({@link IDissonanceShield}, an armour module or a block that makes a zone) keeps it from building up.
+ * A planet's own gravity is not a law of its own, and builds up nothing.
  */
 @TextHolder
 public final class Dissonance {
@@ -83,8 +84,8 @@ public final class Dissonance {
 
     /** How far the laws round a body are from ours, built up in percent of what kills. */
     public static final HazardKind KIND = Hazards.declare(HazardKind.builder(HazardDevices.DISSONANCE, NAME, PERCENT)
-            .band(10, SIGHT, HazardEffects.effect(MobEffects.CONFUSION, 0))
-            .band(25, GRAVITY, HazardEffects.effect(MobEffects.CONFUSION, 0), drift())
+            .band(DissonanceSenses.SIGHT_WARPS, SIGHT, HazardEffects.effect(MobEffects.CONFUSION, 0))
+            .band(DissonanceSenses.GRAVITY_DRIFTS, GRAVITY, HazardEffects.effect(MobEffects.CONFUSION, 0), drift())
             .band(45, TIME, HazardEffects.effect(MobEffects.CONFUSION, 0), HazardEffects.effect(MobEffects.HUNGER, 1),
                     stutter())
             .band(70, SPACE, HazardEffects.effect(MobEffects.CONFUSION, 0), HazardEffects.effect(MobEffects.HUNGER, 1),

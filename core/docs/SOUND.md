@@ -141,7 +141,9 @@ Every sound of the world, the game's own and other mods' included, reaches the p
   all. In a [sealed room](ROOMS.md) the room's exact size is used.
 - **Walls muffle by what they are made of.** Each block between the player and a sound lets some of it through, and
   takes its high notes first: wool little, stone some, metal much. The air takes the high notes away with distance,
-  so a far sound comes muffled.
+  so a far sound comes muffled. What the walls between two places let through is kept by the two blocks for two
+  seconds, so a machine heard again from the same spot is weighed at once, and the sounds that go on playing are
+  weighed again on a thread of their own: the game never waits on the walls.
 - **The medium counts.** Through a vacuum nothing carries a sound: only what the player touches is heard, softly,
   through the body. Under water everything is dull. In thin air sounds are as much weaker as the air is thinner (on
   Mars, about a thirteenth as loud). The server tells each player the air round their head once a second.

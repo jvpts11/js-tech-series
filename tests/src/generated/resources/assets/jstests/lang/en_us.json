@@ -161,6 +161,7 @@
   "item.jstests.test_repair_kit": "Test Repair Kit",
   "item.jstests.test_sight_module": "Test Night Vision Module",
   "item.jstests.test_silk_module": "Test Silk Touch Module",
+  "item.jstests.test_slot_check": "Test Slot Check",
   "item.jstests.test_speed_module": "Test Speed Module",
   "item.jstests.test_speed_upgrade": "Test Speed Upgrade",
   "item.jstests.test_thermal_goggles": "Test thermal goggles",

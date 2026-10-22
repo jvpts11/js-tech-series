@@ -8,6 +8,7 @@
 package dev.jstech.core.moving;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.StructureUuid;
@@ -16,16 +17,21 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +41,8 @@ import org.jetbrains.annotations.Nullable;
  * them notices; it refuses, saying why, blocks that must stay put (the tag {@code jscore:stays_put_for_structures}),
  * blocks that are another structure's already, blocks in land that is not loaded, and more blocks than the server
  * allows. A plot whose chunks have not loaded yet is waited for: the structure is made at once, and its blocks stand
- * where they are until the plot is loaded, a few ticks later ({@link MovingStructure#arriving()}).
+ * where they are until the plot is loaded, a few ticks later ({@link MovingStructure#arriving()}). A structure may
+ * also be born as one from a template ({@link #born}), its blocks laid straight into its plot.
  */
 public final class StructureAssembly {
 
@@ -49,6 +56,16 @@ public final class StructureAssembly {
     /** Makes a structure of every block in the box from {@code from} to {@code to}, both corners included. */
     public static StructureResult box(final ServerLevel level, final BlockPos from, final BlockPos to,
                                       @Nullable final Vec3 pivot) {
+        return box(level, from, to, pivot, null);
+    }
+
+    /**
+     * Makes a structure of every block in the box from {@code from} to {@code to} for {@code maker}, counted against
+     * their limit of moving structures ({@link PlayerLimits#MOVING_STRUCTURES}) and refused at it; with no maker, for
+     * nobody, as a command or a machine makes one.
+     */
+    public static StructureResult box(final ServerLevel level, final BlockPos from, final BlockPos to,
+                                      @Nullable final Vec3 pivot, @Nullable final UUID maker) {
         final Set<BlockPos> chosen = new LinkedHashSet<>();
         for (final BlockPos at : BlockPos.betweenClosed(from, to)) {
             if (level.isOutsideBuildHeight(at)) {
@@ -68,7 +85,7 @@ public final class StructureAssembly {
                 }
             }
         }
-        return blocks(level, chosen, pivot);
+        return blocks(level, chosen, pivot, maker);
     }
 
     /**
@@ -77,6 +94,12 @@ public final class StructureAssembly {
      * the ground, and when they reach land that is not loaded, whose blocks cannot be known.
      */
     public static StructureResult joined(final ServerLevel level, final BlockPos seed, @Nullable final Vec3 pivot) {
+        return joined(level, seed, pivot, null);
+    }
+
+    /** Makes a structure of {@code seed} and every block joined to it for {@code maker}, counted as by the box. */
+    public static StructureResult joined(final ServerLevel level, final BlockPos seed, @Nullable final Vec3 pivot,
+                                         @Nullable final UUID maker) {
         final Set<BlockPos> found = new LinkedHashSet<>();
         final Deque<BlockPos> next = new ArrayDeque<>();
         final StructureResult kept = keptByAnother(level, seed);
@@ -112,7 +135,7 @@ public final class StructureAssembly {
                 next.add(near);
             }
         }
-        return blocks(level, found, pivot);
+        return blocks(level, found, pivot, maker);
     }
 
     /**
@@ -121,6 +144,12 @@ public final class StructureAssembly {
      */
     public static StructureResult blocks(final ServerLevel level, final Collection<BlockPos> chosen,
                                          @Nullable final Vec3 pivot) {
+        return blocks(level, chosen, pivot, null);
+    }
+
+    /** Makes a structure of the blocks at {@code chosen} for {@code maker}, counted as by the box. */
+    public static StructureResult blocks(final ServerLevel level, final Collection<BlockPos> chosen,
+                                         @Nullable final Vec3 pivot, @Nullable final UUID maker) {
         final Set<BlockPos> blocks = new HashSet<>();
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
@@ -168,11 +197,18 @@ public final class StructureAssembly {
         if (!Loaded.area(level, minX - 1, minZ - 1, maxX + 1, maxZ + 1)) {
             return StructureResult.refused(StructureTexts.NOT_LOADED.text());
         }
+        if (maker != null && !PlayerLimits.take(level.getServer(), maker, PlayerLimits.MOVING_STRUCTURES)) {
+            return StructureResult.refused(PlayerLimits.reached(level.getServer(), maker,
+                    PlayerLimits.MOVING_STRUCTURES));
+        }
         final StructureUuid id = StructureUuid.random();
         final int plot;
         try {
             plot = StructureYard.take(level, id);
         } catch (final IllegalStateException full) {
+            if (maker != null) {
+                PlayerLimits.giveBack(level.getServer(), maker, PlayerLimits.MOVING_STRUCTURES);
+            }
             return StructureResult.refused(StructureTexts.YARD_FULL.text());
         }
         final int dx = YardLayout.centreX(plot) - (minX + maxX) / 2;
@@ -189,7 +225,66 @@ public final class StructureAssembly {
         final MovingStructure structure = MovingStructures.make(level, id, plot, bounds, blocks.size(),
                 centre.x + dx, centre.y, centre.z + dz, StructurePose.at(centre.x, centre.y, centre.z),
                 new StructureArrival(places, dx, dz));
+        if (maker != null) {
+            structure.madeBy(maker);
+        }
         return StructureResult.done(structure, blocks.size());
+    }
+
+    /**
+     * Makes a structure born as one, of the blocks of {@code template}, standing with the middle of its bottom at the
+     * world's place {@code at}: its blocks are laid straight into its plot of the yard and never stand in the world,
+     * as a rocket is built in its hangar. For {@code maker}, counted as by the box; with no maker, for nobody. Refused,
+     * saying why, for a template of nothing, of more blocks than the server allows, holding a block that stays put, or
+     * that would stand out of the world's height.
+     */
+    public static StructureResult born(final ServerLevel level, final StructureTemplate template, final Vec3 at,
+                                       @Nullable final UUID maker) {
+        final Vec3i size = template.getSize();
+        final int count = size.getX() <= 0 || size.getY() <= 0 || size.getZ() <= 0 ? 0
+                : StructureBirth.blocksOf(template);
+        if (count == 0) {
+            return StructureResult.refused(StructureTexts.NOTHING.text());
+        }
+        if (count > StructureBalance.mostBlocks()) {
+            return tooMany(count);
+        }
+        final Optional<StructureBirth.Placed> stays = StructureBirth.staysPut(template);
+        if (stays.isPresent()) {
+            return StructureResult.refused(StructureTexts.IMMOVABLE.with(stays.get().block().toString(),
+                    stays.get().at().toShortString()));
+        }
+        final int minY = Mth.floor(at.y);
+        if (level.isOutsideBuildHeight(minY) || level.isOutsideBuildHeight(minY + size.getY() - 1)) {
+            return StructureResult.refused(StructureTexts.BORN_OUT_OF_WORLD.text());
+        }
+        if (maker != null && !PlayerLimits.take(level.getServer(), maker, PlayerLimits.MOVING_STRUCTURES)) {
+            return StructureResult.refused(PlayerLimits.reached(level.getServer(), maker,
+                    PlayerLimits.MOVING_STRUCTURES));
+        }
+        final StructureUuid id = StructureUuid.random();
+        final int plot;
+        try {
+            plot = StructureYard.take(level, id);
+        } catch (final IllegalStateException full) {
+            if (maker != null) {
+                PlayerLimits.giveBack(level.getServer(), maker, PlayerLimits.MOVING_STRUCTURES);
+            }
+            return StructureResult.refused(StructureTexts.YARD_FULL.text());
+        }
+        final BlockPos corner = new BlockPos(YardLayout.centreX(plot) - size.getX() / 2, minY,
+                YardLayout.centreZ(plot) - size.getZ() / 2);
+        final Box bounds = new Box(corner.getX(), minY, corner.getZ(), corner.getX() + size.getX() - 1,
+                minY + size.getY() - 1, corner.getZ() + size.getZ() - 1);
+        StructureYard.hold(level, bounds);
+        final MovingStructure structure = MovingStructures.make(level, id, plot, bounds, count,
+                corner.getX() + size.getX() / 2.0, minY, corner.getZ() + size.getZ() / 2.0,
+                StructurePose.at(at.x, at.y, at.z), null);
+        structure.born(new StructureBirth(template, corner));
+        if (maker != null) {
+            structure.madeBy(maker);
+        }
+        return StructureResult.done(structure, count);
     }
 
     private static StructureResult tooMany(final int count) {

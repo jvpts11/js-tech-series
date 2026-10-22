@@ -131,8 +131,9 @@ A device on a face (`IFacePart`, see [Cables](CABLES.md#parts-on-the-cable)) doe
 
 A device whose light or need of a tick changes calls its host's `partChanged()`; one whose redstone or comparator
 reading changes calls `partSignalChanged(face)`, and the block's neighbours hear of it. Strengths are kept within 0
-and 15. A menu opened on a device stays open while `MenuValidity.part(level, pos, face, part)` holds: the very device
-still on that face, and the player within reach.
+and 15. A device that is a sensor, an `ISignalOutput`, is read on its face by anything that reads sensors
+([Redstone and signals](SIGNALS.md)). A menu opened on a device stays open while
+`MenuValidity.part(level, pos, face, part)` holds: the very device still on that face, and the player within reach.
 
 The light and the need of a tick are kept in the block's state (`light`, `ticking`, in `PartStates`), set again each
 time a device changes, because the game reads both from a block's state, and the light engine may reach a block before

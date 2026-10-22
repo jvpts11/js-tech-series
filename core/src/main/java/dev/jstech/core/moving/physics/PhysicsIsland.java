@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.moving.physics;
 
+import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.IStructureMotion;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
@@ -15,6 +16,7 @@ import dev.jstech.core.moving.StructureMounts;
 import dev.jstech.core.moving.joint.JointEnd;
 import dev.jstech.core.moving.joint.StructureJoint;
 import dev.jstech.core.moving.joint.StructureJoints;
+import dev.jstech.core.region.Box;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -23,6 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,6 +39,16 @@ final class PhysicsIsland {
 
     private final Map<MovingStructure, StructurePhysics> members = new LinkedHashMap<>();
     private final List<StructureJoint> joints = new ArrayList<>();
+    private final Map<StructurePhysics, PhysicsMotion> motions = new IdentityHashMap<>();
+    private final List<StructurePhysics> live = new ArrayList<>();
+    private final StructurePhysics leader;
+    private final PhysicsMotion leaderMotion;
+    private List<StructureJoint> held = List.of();
+    private long now;
+    /* Whether a chunk it reaches is not loaded, so it waits where it is this tick and nothing is finished. */
+    private boolean waiting;
+    /* How long its last solving took, in nanoseconds. */
+    private long cost;
 
     /* The most structures worked as one; more joined are worked on their own. */
     private static final int MOST_MEMBERS = 64;
@@ -43,16 +57,106 @@ final class PhysicsIsland {
     private static final double LEAST_STEP = 1.0e-6;
     /* How many rounds the joints are drawn back together in a step. */
     private static final int ROUNDS = 4;
+    /*
+     * How far round its structures an island reads the world in a tick beyond how far they go in it, in blocks: past
+     * the farthest a magnet aboard pulls from, with room to spare.
+     */
+    static final double READ_REACH = 24;
 
-    private PhysicsIsland() {
+    private PhysicsIsland(final StructurePhysics leader, final PhysicsMotion leaderMotion) {
+        this.leader = leader;
+        this.leaderMotion = leaderMotion;
     }
 
     /** Works the island of {@code leader} for a tick, {@code motion} the leader's rule; gives the leader's step. */
     static IStructureMotion.Step step(final ServerLevel level, final StructurePhysics leader,
                                       final PhysicsMotion motion) {
-        final PhysicsIsland island = new PhysicsIsland();
+        final PhysicsIsland island = prepare(level, leader, motion);
+        if (island != null) {
+            island.solve(level);
+            island.finish(level);
+        }
+        return leaderStep(leader, motion);
+    }
+
+    /**
+     * Readies the island of {@code leader} for a tick, on the server's thread: its members gathered and begun, its
+     * winches reeled. None when there is nothing to work, each member's step kept already: asleep, or of no mass.
+     */
+    static @Nullable PhysicsIsland prepare(final ServerLevel level, final StructurePhysics leader,
+                                           final PhysicsMotion motion) {
+        final PhysicsIsland island = new PhysicsIsland(leader, motion);
         island.gather(level, leader);
-        return island.work(level, leader, motion);
+        return island.ready(level) ? island : null;
+    }
+
+    /** The leader whose turn worked it. */
+    StructurePhysics leader() {
+        return leader;
+    }
+
+    /** How long its last solving took, in nanoseconds. */
+    long cost() {
+        return cost;
+    }
+
+    /**
+     * The box of the world it may read this tick: its structures as they stand, grown by how far they may go in a
+     * tick and by how far round them it reads.
+     */
+    AABB reach() {
+        AABB box = null;
+        for (final StructurePhysics member : members.values()) {
+            final AABB own = member.reachThisTick().inflate(READ_REACH);
+            box = box == null ? own : box.minmax(own);
+        }
+        return box == null ? new AABB(0, 0, 0, 0, 0, 0) : box;
+    }
+
+    /**
+     * Takes into {@code lens} every chunk it may read this tick: the world's within its reach, and the yard's of its
+     * own structures and of every structure within its reach, whose blocks it meets.
+     */
+    void lend(final ServerLevel level, final PhysicsLens lens) {
+        final AABB box = reach();
+        lens.take(Mth.floor(box.minX) >> 4, Mth.floor(box.minZ) >> 4, Mth.floor(box.maxX) >> 4,
+                Mth.floor(box.maxZ) >> 4);
+        for (final StructurePhysics member : members.values()) {
+            member.lendYard(lens);
+        }
+        for (final IStructureBody near : MovingStructures.near(level, box)) {
+            final Box yard = near.bounds();
+            lens.take((yard.minX() - 1) >> 4, (yard.minZ() - 1) >> 4, (yard.maxX() + 1) >> 4,
+                    (yard.maxZ() + 1) >> 4);
+        }
+    }
+
+    /**
+     * The islands of {@code islands} in groups that lie apart: each group's reach meets no other's, so groups are
+     * worked at once and the islands of one group in turn.
+     */
+    static List<List<PhysicsIsland>> apart(final List<PhysicsIsland> islands) {
+        final List<List<PhysicsIsland>> groups = new ArrayList<>();
+        final List<AABB> reaches = new ArrayList<>();
+        for (final PhysicsIsland island : islands) {
+            final List<PhysicsIsland> joined = new ArrayList<>(List.of(island));
+            AABB together = island.reach();
+            // A group grown by one it met may meet another it did not before: looked over again till none joins.
+            boolean grew = true;
+            while (grew) {
+                grew = false;
+                for (int i = groups.size() - 1; i >= 0; i--) {
+                    if (reaches.get(i).intersects(together)) {
+                        joined.addAll(groups.remove(i));
+                        together = together.minmax(reaches.remove(i));
+                        grew = true;
+                    }
+                }
+            }
+            groups.add(joined);
+            reaches.add(together);
+        }
+        return groups;
     }
 
     /** The physics of this island whose body {@code structure} is part of, or null. */
@@ -140,12 +244,15 @@ final class PhysicsIsland {
         }
     }
 
-    /* One tick of the island: each readied, stepped together, and finished; the leader's step given. */
-    private IStructureMotion.Step work(final ServerLevel level, final StructurePhysics leader,
-                                       final PhysicsMotion leaderMotion) {
-        final long now = level.getGameTime();
-        final Map<StructurePhysics, PhysicsMotion> motions = new IdentityHashMap<>();
-        final List<StructurePhysics> live = new ArrayList<>();
+    /*
+     * The start of the island's tick, on the server's thread: each member readied, those of no mass given their step
+     * at once, and its winches reeled; false when there is nothing to work, every member asleep or of no mass.
+     */
+    private boolean ready(final ServerLevel level) {
+        now = level.getGameTime();
+        for (final StructurePhysics member : members.values()) {
+            member.taken(now);
+        }
         for (final StructurePhysics member : members.values()) {
             final PhysicsMotion motion = member == leader ? leaderMotion
                     : member.structure().motion() instanceof PhysicsMotion own ? own : PhysicsMotion.AT_REST;
@@ -165,10 +272,55 @@ final class PhysicsIsland {
                 member.holdStill();
                 member.worked(now, new IStructureMotion.Step(member.structure().frame().pose(), motions.get(member)));
             }
-            return leaderStep(leader, leaderMotion);
+            return false;
         }
+        held = joints.isEmpty() ? joints : leader.joints().winch(level, joints);
+        return true;
+    }
+
+    /*
+     * The island stepped through the tick, its members together, reading the world and changing nothing of it: on
+     * the server's thread, or beside it through a lens. A chunk one of them reaches not loaded, they wait where they
+     * stood, as they went.
+     */
+    void solve(final ServerLevel level) {
+        final long start = System.nanoTime();
+        try {
+            steps(level);
+        } finally {
+            cost = System.nanoTime() - start;
+        }
+    }
+
+    /*
+     * The end of the island's tick, on the server's thread: what broke broken, and each member finished, its step
+     * kept for its turn.
+     */
+    void finish(final ServerLevel level) {
+        if (waiting) {
+            return;
+        }
+        leader.joints().breakWhatBroke(level);
+        for (final StructurePhysics member : live) {
+            member.worked(now, member.finish(level, motions.get(member)));
+        }
+    }
+
+    /*
+     * Waits the island where it stood this tick, going as it went: a chunk it reaches is not loaded, or its work
+     * beside the server's thread failed.
+     */
+    void hold() {
+        waiting = true;
+        for (final StructurePhysics each : live) {
+            each.restore();
+            each.worked(now, new IStructureMotion.Step(each.structure().frame().pose(), motions.get(each)));
+        }
+    }
+
+    /* The steps of the tick. */
+    private void steps(final ServerLevel level) {
         final JointWork work = leader.joints();
-        final List<StructureJoint> held = joints.isEmpty() ? joints : work.winch(level, joints);
         double left = 1 / StructurePhysics.TICKS;
         int taken = 0;
         while (left > LEAST_STEP && taken < MOST_STEPS) {
@@ -200,15 +352,11 @@ final class PhysicsIsland {
             for (final StructurePhysics member : live) {
                 if (!member.findContacts(level, step, this)) {
                     // A chunk one of them reaches is not loaded: they wait where they are, as they went.
-                    for (final StructurePhysics each : live) {
-                        each.restore();
-                        each.worked(now, new IStructureMotion.Step(each.structure().frame().pose(),
-                                motions.get(each)));
-                    }
-                    return leaderStep(leader, leaderMotion);
+                    hold();
+                    return;
                 }
             }
-            solve(level, live, settles, work, held, step);
+            holdTogether(level, settles, work, step);
             for (final StructurePhysics member : live) {
                 member.drift(step);
             }
@@ -218,19 +366,14 @@ final class PhysicsIsland {
             left -= step;
             taken++;
         }
-        work.breakWhatBroke(level);
-        for (final StructurePhysics member : live) {
-            member.worked(now, member.finish(level, motions.get(member)));
-        }
-        return leaderStep(leader, leaderMotion);
     }
 
     /*
      * Holds the island's contacts and joints over a step: each structure's contacts and the joints readied, then
      * worked a round each by turns, as often as the most a structure's contacts ask, so they agree.
      */
-    private void solve(final ServerLevel level, final List<StructurePhysics> live, final double[] settles,
-                       final JointWork work, final List<StructureJoint> held, final double step) {
+    private void holdTogether(final ServerLevel level, final double[] settles, final JointWork work,
+                              final double step) {
         if (!held.isEmpty()) {
             work.build(level, this, held, step);
         }

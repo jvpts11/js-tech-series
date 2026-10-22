@@ -24,22 +24,28 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 /**
  * The Core's own commands: {@code /jstech progress <players> <axis> [<step>]}, where players stand along a progression
  * axis and, with a step, putting them there; {@code /jstech chunks <players> [release]}, how many chunks their
- * machines keep loaded and letting go of them; and {@code /jstech dimension create <id> <template>} and
+ * machines keep loaded, where and why, and letting go of them; and {@code /jstech dimension create <id> <template>} and
  * {@code remove <id>}, a dimension made while the game runs and taken away again.
  */
 @TextHolder
@@ -54,6 +60,9 @@ public final class CoreCommands {
             "That axis has no step %s");
     public static final TextKey CHUNKS_HELD = TextKey.of("jscore.command.chunks.held",
             "%s keeps %s chunks loaded");
+    /* How many chunks one place keeps, where it is, and why: "9 at 12, 64, -30 in minecraft:overworld: ...". */
+    public static final TextKey CHUNKS_SOURCE = TextKey.of("jscore.command.chunks.source",
+            "%s at %s in %s: %s");
     public static final TextKey CHUNKS_RELEASED = TextKey.of("jscore.command.chunks.released",
             "Let go of the %s chunks %s kept loaded");
     public static final TextKey CHUNKS_SERVER = TextKey.of("jscore.command.chunks.server",
@@ -169,9 +178,26 @@ public final class CoreCommands {
             final int held = ChunkLoaders.loadedBy(context.getSource().getServer(), player.getUUID());
             context.getSource().sendSuccess(() -> GameText.component(CHUNKS_HELD.with(player.getScoreboardName(),
                     held)), false);
+            showSources(context.getSource(), player.getUUID());
             total += held;
         }
         return total;
+    }
+
+    /* One line for each place that keeps chunks loaded for that owner: where it is, how many, and why. */
+    private static void showSources(final CommandSourceStack source, final UUID owner) {
+        for (final ServerLevel level : source.getServer().getAllLevels()) {
+            final Map<BlockPos, UUID> owners = ChunkLoaders.sources(level);
+            final Map<BlockPos, TextKey> reasons = ChunkLoaders.reasons(level);
+            for (final Map.Entry<BlockPos, Set<ChunkPos>> kept : ChunkLoaders.kept(level).entrySet()) {
+                if (owner.equals(owners.get(kept.getKey()))) {
+                    final BlockPos at = kept.getKey();
+                    final TextKey reason = reasons.getOrDefault(at, ChunkLoaders.UNSAID);
+                    source.sendSuccess(() -> GameText.component(CHUNKS_SOURCE.with(kept.getValue().size(),
+                            at.toShortString(), level.dimension().location().toString(), reason)), false);
+                }
+            }
+        }
     }
 
     private static int showServerChunks(final CommandContext<CommandSourceStack> context) {

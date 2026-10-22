@@ -13,6 +13,7 @@ import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionAxes;
 import dev.jstech.core.region.ChunkLoaders;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
@@ -37,6 +38,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class SeriesCommandGameTests {
 
     private static final String ARENA = "empty";
+    private static final TextKey REASON = TextKey.of("jstests.command.chunks.reason", "A test keeps it loaded");
 
     private SeriesCommandGameTests() {
     }
@@ -79,7 +81,7 @@ public final class SeriesCommandGameTests {
         final ServerPlayer player = GameTestPlayers.join(helper, "loader");
         final BlockPos source = helper.absolutePos(new BlockPos(1, 2, 1));
         try {
-            ChunkLoaders.load(helper.getLevel(), source, player.getUUID(), new ChunkPos(source), false);
+            ChunkLoaders.load(helper.getLevel(), source, player.getUUID(), REASON, new ChunkPos(source), false);
             helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS, "jstech chunks @s") == 1,
                     "the command counts the one chunk the player keeps loaded");
             helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS, "jstech chunks @s release") == 1,
@@ -99,13 +101,17 @@ public final class SeriesCommandGameTests {
         final BlockPos source = helper.absolutePos(new BlockPos(2, 2, 2));
         final ChunkPos chunk = new ChunkPos(source);
         try {
-            ChunkLoaders.load(helper.getLevel(), source, player.getUUID(), chunk, false);
+            ChunkLoaders.load(helper.getLevel(), source, player.getUUID(), REASON, chunk, false);
             helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS, "jstech chunks") >= 1,
                     "the server's count holds the chunk kept");
             helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS, "jstech chunks map") >= 1,
                     "the map shows at least the one place keeping chunks");
             helper.assertTrue(markersOver(helper, player, chunk) == 2, "the operator sees it twice: as its owner, and"
                     + " among every place");
+            helper.assertTrue(MapMarkers.of(helper.getLevel().getServer(), player.getUUID()).stream()
+                    .filter(marker -> marker.area().contains(chunk))
+                    .allMatch(marker -> marker.label().getString().contains(REASON.english())),
+                    "and both say why the chunk is kept");
             helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS, "jstech chunks map hide") >= 1,
                     "hiding takes every place off");
             helper.assertTrue(markersOver(helper, player, chunk) == 1, "and leaves the owner's own marker");

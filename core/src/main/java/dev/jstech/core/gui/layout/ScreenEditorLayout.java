@@ -7,12 +7,16 @@
  */
 package dev.jstech.core.gui.layout;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Where the editor of screens puts its parts: the name of the file at the top left and its buttons at the top right,
- * the panel of the chosen component on the left (its kind, its line, its name, what it is bound to, one more of its
- * fields, its style, its box, Duplicate and Delete), the list of kinds to add on the right, and what the mouse and
- * the keys do along the foot. Pure, so a unit test checks that nothing overlaps.
+ * the card of the chosen component on the left at its height (its kind, its line, its name, what it is bound to, the
+ * fields its kind has, its style, its box, Duplicate and Delete), the list of kinds to add on the right, and what the
+ * mouse and the keys do along the foot. Pure, so a unit test checks that nothing overlaps. The editor's own, and no
+ * promise.
  */
+@ApiStatus.Internal
 public final class ScreenEditorLayout {
 
     /**
@@ -40,11 +44,11 @@ public final class ScreenEditorLayout {
     public static final int FIELD_STEP = 22;
     public static final int LABEL_TO_FIELD = 7;
     public static final int FIELD_HEIGHT = 13;
-    public static final int FIELDS = 3;
-    public static final int STYLE_Y = FIELDS_Y + FIELDS * FIELD_STEP + 3;
-    public static final int POSITION_Y = STYLE_Y + BUTTON_HEIGHT + 4;
-    public static final int ACTIONS_Y = POSITION_Y + 10;
-    public static final int PANEL_HEIGHT = ACTIONS_Y + BUTTON_HEIGHT + PAD;
+    /**
+     * The most fields a card shows, so it fits on a screen 270 tall at the GUI scale of a full-HD window: its name,
+     * what it is bound to, and four of its kind's own, the rest left to the file.
+     */
+    public static final int MOST_FIELDS = 6;
     /** The list of kinds to add: how wide, how tall a row is, and how many it shows. */
     public static final int ADD_WIDTH = 150;
     public static final int ADD_ROW = 11;
@@ -56,7 +60,7 @@ public final class ScreenEditorLayout {
     private ScreenEditorLayout() {
     }
 
-    /** The width of the bar's button {@code index} whose label is {@code labelWidth} wide: its least, or the label's. */
+    /** The width of the bar's button {@code index} whose label is {@code labelWidth} wide: its least or the label's. */
     public static int barWidth(final int index, final int labelWidth) {
         return Math.max(BAR_WIDTHS[index], labelWidth + 2 * LABEL_ROOM);
     }
@@ -87,6 +91,35 @@ public final class ScreenEditorLayout {
         return FIELDS_Y + index * FIELD_STEP + LABEL_TO_FIELD;
     }
 
+    /** The top of the style's button of a card of {@code fields} fields, from the card's. */
+    public static int styleY(final int fields) {
+        return FIELDS_Y + fields * FIELD_STEP + 3;
+    }
+
+    /** The top of the line of the box of a card of {@code fields} fields. */
+    public static int positionY(final int fields) {
+        return styleY(fields) + BUTTON_HEIGHT + 4;
+    }
+
+    /** The top of Duplicate and Delete on a card of {@code fields} fields. */
+    public static int actionsY(final int fields) {
+        return positionY(fields) + 10;
+    }
+
+    /** How tall a card of {@code fields} fields is. */
+    public static int panelHeight(final int fields) {
+        return actionsY(fields) + BUTTON_HEIGHT + PAD;
+    }
+
+    /**
+     * The top of a card of {@code fields} fields beside a component whose top is {@code componentTop}, on a screen
+     * {@code height} tall: at the component's height, below the bar and above the line of what to do.
+     */
+    public static int panelTop(final int componentTop, final int fields, final int height) {
+        final int lowest = height - HINTS_UP - 2 - panelHeight(fields);
+        return Math.max(PANEL_Y, Math.min(componentTop, lowest));
+    }
+
     /**
      * The panel's width beside a screen whose window starts at {@code screenLeft}: narrower when the room beside it
      * is short, so the screen being edited is never under it, down to its least.
@@ -103,22 +136,22 @@ public final class ScreenEditorLayout {
         return Math.max(MIN_WIDTH, Math.min(ADD_WIDTH, width - screenRight - GAP - PAD));
     }
 
-    /** The panel of the chosen component {@code width} wide, as the overlap check reads it. */
-    public static GuiLayout panel(final int width) {
-        final GuiLayout layout = new GuiLayout(width, PANEL_HEIGHT);
+    /** The card of the chosen component, {@code width} wide with {@code fields} fields, as the overlap check reads. */
+    public static GuiLayout panel(final int width, final int fields) {
+        final GuiLayout layout = new GuiLayout(width, panelHeight(fields));
         layout.text("kind", PAD, TITLE_Y, 16, 1f);
         // The file and line are cut to the room inside the panel, as the editor draws them.
         layout.textBox("file", PAD, FILE_Y, Math.min(Math.round(34 * GuiLayout.GLYPH_WIDTH * 0.75f),
                 width - 2 * PAD), Math.round(GuiLayout.LINE_HEIGHT * 0.75f));
-        for (int i = 0; i < FIELDS; i++) {
+        for (int i = 0; i < fields; i++) {
             layout.text("label " + i, PAD, FIELDS_Y + i * FIELD_STEP, 10, 0.75f);
             layout.box("field " + i, PAD, fieldY(i), width - 2 * PAD, FIELD_HEIGHT);
         }
-        layout.box("style", PAD, STYLE_Y, width - 2 * PAD, BUTTON_HEIGHT);
-        layout.text("position", PAD, POSITION_Y, 24, 0.75f);
+        layout.box("style", PAD, styleY(fields), width - 2 * PAD, BUTTON_HEIGHT);
+        layout.text("position", PAD, positionY(fields), 24, 0.75f);
         final int half = (width - 2 * PAD - BUTTON_GAP) / 2;
-        layout.box("duplicate", PAD, ACTIONS_Y, half, BUTTON_HEIGHT);
-        layout.box("delete", PAD + half + BUTTON_GAP, ACTIONS_Y, half, BUTTON_HEIGHT);
+        layout.box("duplicate", PAD, actionsY(fields), half, BUTTON_HEIGHT);
+        layout.box("delete", PAD + half + BUTTON_GAP, actionsY(fields), half, BUTTON_HEIGHT);
         return layout;
     }
 

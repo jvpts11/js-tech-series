@@ -18,7 +18,7 @@ final class InspectorPalette {
 
     static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "gui/inspector", new Colours(
             0xFF4F8DFF, 0xFF4FC85A, 0xFF8B8B8B, 0xFFE0483A, 0xFFF0C830, 0xFFFFFFFF, 0xFF000000, 0xFF404040,
-            0xFF6E6E6E, 0xFFFFFFFF));
+            0xFF6E6E6E, 0xFFFFFFFF, 0xFFFF4FD8));
 
     private InspectorPalette() {
     }
@@ -41,8 +41,9 @@ final class InspectorPalette {
      * @param text        the panel's words
      * @param dim         what follows a row's kind, and the key's name
      * @param handle      the squares round the component chosen in the editor
+     * @param guide       the lines along which the chosen component lines up with the others
      */
     record Colours(int layout, int component, int selected, int error, int warning, int errorText,
-                   int warningText, int text, int dim, int handle) {
+                   int warningText, int text, int dim, int handle, int guide) {
     }
 }

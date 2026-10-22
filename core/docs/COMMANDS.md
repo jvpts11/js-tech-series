@@ -41,9 +41,9 @@ level always may run it, and a server's permission mod may grant it to a player 
 | `/jstech milestone <players> <id>` | level 2 | Has players' teams reach a milestone ([Progression](PROGRESSION.md#milestones)). |
 | `/jstech model preview <model>` | level 2 | Opens the preview of a model on the game of who runs it, a declared one or any model file by its path ([Models](MODELS.md#while-you-build)). |
 | `/jstech model reload` | level 2 | Reads the models again on the game of who runs it, and nothing else of the resources ([Models](MODELS.md#while-you-build)). |
-| `/jstech chunks <players> [release]` | level 2 | Shows how many chunks players keep loaded, or lets them all go ([World](WORLD.md#keeping-chunks-loaded)). |
+| `/jstech chunks <players> [release]` | level 2 | Shows how many chunks players keep loaded, and each place keeping them with its reason; or lets them all go ([World](WORLD.md#keeping-chunks-loaded)). |
 | `/jstech chunks` | level 2 | Shows how many chunks every owner together keeps loaded, against the server's budget ([World](WORLD.md#keeping-chunks-loaded)). *Added 2026-10-17.* |
-| `/jstech chunks map [hide]` | level 2 | Shows every place keeping chunks loaded, in every dimension, and whose it is, on the map of who runs it; or takes them off ([World](WORLD.md#keeping-chunks-loaded)). *Added 2026-10-17.* |
+| `/jstech chunks map [hide]` | level 2 | Shows every place keeping chunks loaded, in every dimension, whose it is and why, on the map of who runs it; or takes them off ([World](WORLD.md#keeping-chunks-loaded)). *Added 2026-10-17.* |
 | `/jstech dimension create <id> <template>` | level 3 | Makes a dimension from a declared one, while the game runs ([World](WORLD.md#dimensions-made-while-the-game-runs)). |
 | `/jstech dimension remove <id>` | level 3 | Takes away a dimension made that way; refuses any other. |
 | `/jstech media` | level 3 | Shows how many recordings the server keeps and how much room they take. |

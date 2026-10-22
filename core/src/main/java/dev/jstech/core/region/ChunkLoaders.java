@@ -8,6 +8,8 @@
 package dev.jstech.core.region;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import java.util.LinkedHashMap;
@@ -37,13 +39,17 @@ import net.neoforged.neoforge.common.world.chunk.TicketHelper;
  * of the player or the team that owns it; each owner may keep only so many loaded across the whole world, and every
  * owner together only as many as the server's budget. A source is the block that asked; breaking it should release
  * what it holds, and a source that no longer holds anything when the world loads again has its chunks let go of. The
- * chunks each source keeps are a marker on its owner's team's maps ({@link LoadedChunkMarkers}).
+ * chunks each source keeps are a marker on its owner's team's maps ({@link LoadedChunkMarkers}). Every source says
+ * why it keeps them, so no chunk is held open without its owner and its reason to show for it.
  */
+@TextHolder
 public final class ChunkLoaders {
 
     /** What the loaded chunks are kept under in the game's own forced-chunk file. */
     public static final TicketController CONTROLLER = new TicketController(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "owned"), ChunkLoaders::validate);
+    /** The reason of a source saved before sources said theirs. */
+    public static final TextKey UNSAID = TextKey.of("jscore.chunks.reason.unsaid", "For a reason it did not say");
     private static final String FILE = "jstech_chunk_loaders";
 
     private ChunkLoaders() {
@@ -71,16 +77,23 @@ public final class ChunkLoaders {
 
     /**
      * Keeps {@code chunk} of {@code level} loaded for {@code owner}, on behalf of the block at {@code source}; with
-     * {@code ticking} its block entities and entities go on working as if a player were near.
+     * {@code ticking} its block entities and entities go on working as if a player were near. {@code reason} says why,
+     * in a sentence of the mod that asks ("A quarry keeps the chunks it digs loaded"): an operator who finds the world
+     * held open reads it beside the owner's name, and a source asking again with another reason keeps the new one.
      */
     public static LoadOutcome load(final ServerLevel level, final BlockPos source, final UUID owner,
-                                   final ChunkPos chunk, final boolean ticking) {
+                                   final TextKey reason, final ChunkPos chunk, final boolean ticking) {
         final Ledger ledger = ledger(level);
         Source held = ledger.sources.get(source);
         // A source handed to another owner, or switched between ticking and not, starts again under its new terms.
         if (held != null && (!held.owner.equals(owner) || held.ticking != ticking)) {
             releaseAll(level, source);
             held = null;
+        }
+        if (held != null && !held.reason.equals(reason)) {
+            held = new Source(owner, reason, ticking, held.chunks);
+            ledger.sources.put(source.immutable(), held);
+            ledger.setDirty();
         }
         if (held != null && held.chunks.contains(chunk.toLong())) {
             return LoadOutcome.ALREADY;
@@ -91,12 +104,12 @@ public final class ChunkLoaders {
         if (loadedOnServer(level.getServer()) >= ChunkLoadingBalance.serverBudget()) {
             return LoadOutcome.SERVER_FULL;
         }
-        final Source kept = held != null ? held : new Source(owner, ticking, new LongLinkedOpenHashSet());
+        final Source kept = held != null ? held : new Source(owner, reason, ticking, new LongLinkedOpenHashSet());
         kept.chunks.add(chunk.toLong());
         ledger.sources.put(source.immutable(), kept);
         ledger.setDirty();
         CONTROLLER.forceChunk(level, source, chunk.x, chunk.z, true, ticking);
-        LoadedChunkMarkers.changed(level, source, owner, kept.chunks);
+        LoadedChunkMarkers.changed(level, source, owner, kept.reason, kept.chunks);
         return LoadOutcome.LOADED;
     }
 
@@ -112,7 +125,7 @@ public final class ChunkLoaders {
             ledger.sources.remove(source);
         }
         ledger.setDirty();
-        LoadedChunkMarkers.changed(level, source, held.owner, held.chunks);
+        LoadedChunkMarkers.changed(level, source, held.owner, held.reason, held.chunks);
     }
 
     /** Lets go of every chunk the source kept loaded, as a broken machine does. */
@@ -126,7 +139,7 @@ public final class ChunkLoaders {
             CONTROLLER.forceChunk(level, source, ChunkPos.getX(chunk), ChunkPos.getZ(chunk), false, held.ticking);
         }
         ledger.setDirty();
-        LoadedChunkMarkers.changed(level, source, held.owner, LongSet.of());
+        LoadedChunkMarkers.changed(level, source, held.owner, held.reason, LongSet.of());
     }
 
     /**
@@ -213,6 +226,13 @@ public final class ChunkLoaders {
         return out;
     }
 
+    /** Every source of {@code level} keeping chunks loaded, with why it keeps them. */
+    public static Map<BlockPos, TextKey> reasons(final ServerLevel level) {
+        final Map<BlockPos, TextKey> out = new LinkedHashMap<>();
+        ledger(level).sources.forEach((pos, source) -> out.put(pos, source.reason));
+        return out;
+    }
+
     /* When the world loads, a ticket whose source the ledger no longer knows is let go of. */
     private static void validate(final ServerLevel level, final TicketHelper tickets) {
         final Ledger ledger = ledger(level);
@@ -223,12 +243,24 @@ public final class ChunkLoaders {
         }
     }
 
+    /*
+     * The reason saved with a source. Its English goes with the key, so a reason still reads when the mod that gave it
+     * is gone; one that is missing or does not read as a key is a reason not said, not a world that will not load.
+     */
+    private static TextKey reasonIn(final CompoundTag source) {
+        try {
+            return TextKey.of(source.getString("reason"), source.getString("reason_english"));
+        } catch (final IllegalArgumentException unreadable) {
+            return UNSAID;
+        }
+    }
+
     private static Ledger ledger(final ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(Ledger::new, Ledger::load), FILE);
     }
 
-    /** One source's chunks and whose they are. */
-    private record Source(UUID owner, boolean ticking, LongSet chunks) {
+    /** One source's chunks, whose they are and why it keeps them. */
+    private record Source(UUID owner, TextKey reason, boolean ticking, LongSet chunks) {
     }
 
     /** What every source of one dimension keeps loaded, as its saved data. */
@@ -242,7 +274,7 @@ public final class ChunkLoaders {
                 final CompoundTag source = (CompoundTag) one;
                 final LongSet chunks = new LongLinkedOpenHashSet(source.getLongArray("chunks"));
                 NbtUtils.readBlockPos(source, "pos").ifPresent(pos -> ledger.sources.put(pos,
-                        new Source(source.getUUID("owner"), source.getBoolean("ticking"), chunks)));
+                        new Source(source.getUUID("owner"), reasonIn(source), source.getBoolean("ticking"), chunks)));
             }
             return ledger;
         }
@@ -254,6 +286,8 @@ public final class ChunkLoaders {
                 final CompoundTag one = new CompoundTag();
                 one.put("pos", NbtUtils.writeBlockPos(pos));
                 one.putUUID("owner", source.owner());
+                one.putString("reason", source.reason().key());
+                one.putString("reason_english", source.reason().english());
                 one.putBoolean("ticking", source.ticking());
                 one.put("chunks", new LongArrayTag(source.chunks().toLongArray()));
                 list.add(one);

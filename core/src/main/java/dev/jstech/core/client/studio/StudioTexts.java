@@ -117,6 +117,27 @@ public final class StudioTexts {
             "\"%s\" moves %s, a bone no model of %s has");
     public static final TextKey SCREEN_BROKEN = TextKey.of("gui.jscore.studio.check.screen_broken",
             "Its screen file does not load");
+    public static final TextKey SLOTS_BEYOND = TextKey.of("gui.jscore.studio.check.slots_beyond",
+            "Its screen shows slots its menu does not have");
+    /* The slots, and how many the menu has. */
+    public static final TextKey SLOTS_BEYOND_DETAIL = TextKey.of("gui.jscore.studio.check.slots_beyond.detail",
+            "The screen shows slots %s; the menu has %s");
+    public static final TextKey SLOTS_NOWHERE = TextKey.of("gui.jscore.studio.check.slots_nowhere",
+            "Its screen leaves out slots of its menu");
+    /* The slots. */
+    public static final TextKey SLOTS_NOWHERE_DETAIL = TextKey.of("gui.jscore.studio.check.slots_nowhere.detail",
+            "The menu's slots %s are shown nowhere");
+    public static final TextKey SLOTS_TWICE = TextKey.of("gui.jscore.studio.check.slots_twice",
+            "Its screen shows slots twice");
+    /* The slots. */
+    public static final TextKey SLOTS_TWICE_DETAIL = TextKey.of("gui.jscore.studio.check.slots_twice.detail",
+            "The slots %s are shown more than once");
+    public static final TextKey SLOTS_NO_INVENTORY = TextKey.of("gui.jscore.studio.check.slots_no_inventory",
+            "Its screen leaves out the player's inventory");
+    /* How many of the menu's slots are the player's. */
+    public static final TextKey SLOTS_NO_INVENTORY_DETAIL = TextKey.of(
+            "gui.jscore.studio.check.slots_no_inventory.detail",
+            "The menu holds the player's %s slots, and the screen has no inventory to show them");
     public static final TextKey IN_NO_TAB = TextKey.of("gui.jscore.studio.check.no_tab", "In no creative tab");
     /* The item. */
     public static final TextKey IN_NO_TAB_DETAIL = TextKey.of("gui.jscore.studio.check.no_tab.detail",

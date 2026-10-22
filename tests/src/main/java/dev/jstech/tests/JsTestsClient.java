@@ -10,6 +10,7 @@ package dev.jstech.tests;
 import dev.jstech.core.client.config.CoreConfigScreen;
 import dev.jstech.core.client.dimension.TravelScreens;
 import dev.jstech.core.client.gui.data.DataScreens;
+import dev.jstech.core.client.gui.data.IScreenLogic;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.tests.clienttest.ClientTestSuite;
@@ -53,6 +54,9 @@ public final class JsTestsClient {
                 TestScreens.MENU.get(), TestScreens.FILE, menu -> screen -> screen.onAction("press",
                         TestScreens.PRESSED::incrementAndGet).preview("pressed ten times",
                         () -> TestScreens.PRESSED.set(10))));
+        // A screen that shows its menu's slots wrongly on purpose, for the studio to find.
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event -> DataScreens.register(event,
+                TestScreens.SLOT_CHECK_MENU.get(), TestScreens.SLOT_CHECK_FILE, menu -> IScreenLogic.none()));
         // The dial's renderer and the picture program's window, as another mod registers them.
         TestClientParts.register();
         // The fan part's turning blade, as another mod hands the Core a moving part.

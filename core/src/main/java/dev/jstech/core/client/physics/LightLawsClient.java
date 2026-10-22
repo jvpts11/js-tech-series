@@ -24,6 +24,9 @@ import dev.jstech.core.physics.PhysicsArea;
 import dev.jstech.core.physics.Pull;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -53,6 +56,9 @@ public final class LightLawsClient {
     private static final double LENS_REACH = 96.0;
     private static final float TIME_SCALE = 1.0F / 20.0F;
     private static final float CHANNEL = 255F;
+    private static final int WHITE = 0xFFFFFF;
+    /* What else changes how the player sees, drawn with the place's light. */
+    private static final List<ISight> SIGHTS = new CopyOnWriteArrayList<>();
     private static @Nullable ShaderInstance shader;
     private static int scratch = -1;
     private static int scratchWidth;
@@ -82,6 +88,15 @@ public final class LightLawsClient {
             }
         });
         NeoForge.EVENT_BUS.addListener(RenderGuiEvent.Pre.class, event -> draw(event.getGuiGraphics()));
+    }
+
+    /**
+     * Adds something besides the laws of the place that changes how the player sees, once, from a mod's client: what
+     * it gives is put together with the place's light, the colours tinted by both, shifted by the sum of their
+     * shifts, and shimmering, darkened or lit by the sum of each, held within the laws' own bounds.
+     */
+    public static void see(final ISight sight) {
+        SIGHTS.add(Objects.requireNonNull(sight, "sight"));
     }
 
     /** The lens of the mass the player looks at now: x, y on the screen, its radius, its strength; none for none. */
@@ -115,7 +130,8 @@ public final class LightLawsClient {
         if (level == null || law == null) {
             return;
         }
-        final Laws.Light light = Physics.lawsAt(level, eye).light().orElse(null);
+        final Laws.Light light = withSights(Physics.lawsAt(level, eye).light().orElse(null),
+                level.getGameTime() * TIME_SCALE);
         final float[] lens = lens();
         if (light == null && lens == null) {
             return;
@@ -158,6 +174,33 @@ public final class LightLawsClient {
         BufferUploader.drawWithShader(quad.buildOrThrow());
         RenderSystem.enableBlend();
         RenderSystem.enableDepthTest();
+    }
+
+    /* The place's light with what else changes the player's sight now put together with it; none for neither. */
+    private static @Nullable Laws.Light withSights(@Nullable final Laws.Light place, final double seconds) {
+        Laws.Light seen = place;
+        for (final ISight sight : SIGHTS) {
+            final Laws.Light more = sight.now(seconds);
+            if (more != null) {
+                seen = seen == null ? more : new Laws.Light(tinted(seen.tint(), more.tint()),
+                        Math.clamp(seen.shift() + more.shift(), -1, 1), Math.max(seen.lens(), more.lens()),
+                        Math.min(1, seen.mirage() + more.mirage()), Math.min(1, seen.dark() + more.dark()),
+                        Math.min(1, seen.glow() + more.glow()));
+            }
+        }
+        return seen;
+    }
+
+    /* Two tints together, channel by channel, as two coloured glasses one behind the other. */
+    private static int tinted(final int a, final int b) {
+        if (a == WHITE) {
+            return b;
+        }
+        int out = 0;
+        for (int shift = 0; shift <= 16; shift += 8) {
+            out |= ((a >> shift & 0xFF) * (b >> shift & 0xFF) / 0xFF) << shift;
+        }
+        return out;
     }
 
     /* Where {@code at} was on the screen in the last frame, from 0 to 1 across and up; none behind the eye. */

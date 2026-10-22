@@ -9,9 +9,11 @@ package dev.jstech.core.mixin;
 
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
+import dev.jstech.core.moving.physics.PhysicsLens;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,9 +24,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * wet farmland and fill a cauldron, and a structure's block is out in the yard, under the void's dry sky. It rains on
  * a block of a structure when the block sees the sky past the structure's own blocks and it rains where the block is
  * in the world. Every other block is asked as before.
+ *
+ * <p>And hands a thread working the physics of moving structures beside the server's thread the block entities of
+ * the chunks gathered for it ({@link PhysicsLens}), which the game gives no thread but its own.
  */
 @Mixin(Level.class)
 public abstract class LevelMixin {
+
+    @Inject(method = "getBlockEntity", at = @At("HEAD"), cancellable = true)
+    private void jscore$blockEntityThroughTheLens(final BlockPos pos, final CallbackInfoReturnable<BlockEntity> info) {
+        final PhysicsLens lens = PhysicsLens.on(this);
+        if (lens != null) {
+            info.setReturnValue(lens.blockEntity(pos));
+        }
+    }
 
     @Inject(method = "isRainingAt", at = @At("HEAD"), cancellable = true)
     private void jscore$rainWhereTheStructureIs(final BlockPos pos, final CallbackInfoReturnable<Boolean> info) {

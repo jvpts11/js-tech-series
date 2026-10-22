@@ -7,6 +7,9 @@
  */
 package dev.jstech.core.client.gui.data;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -24,11 +27,14 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
  *                 .onAction("start", () -> START.send(true))));
  * }</pre>
  *
- * <p>and a screen with no menu is opened where it is wanted, {@code DataScreens.open(rl("probe"), logic)}. The file is
- * {@code assets/<namespace>/jstech/screens/<path>.json}; the namespace is the mod whose style choice the screen
+ * <p>and a screen with no menu is opened where it is wanted, {@code DataScreens.open(rl("probe"), title, logic)}. The
+ * file is {@code assets/<namespace>/jstech/screens/<path>.json}; the namespace is the mod whose style choice the screen
  * follows.
  */
 public final class DataScreens {
+
+    /* The menu each file's screen was registered for, which the studio checks the file's slots against. */
+    private static final Map<ResourceLocation, MenuType<?>> MENUS = new ConcurrentHashMap<>();
 
     private DataScreens() {
     }
@@ -39,8 +45,14 @@ public final class DataScreens {
     public static <M extends AbstractContainerMenu> void register(final RegisterMenuScreensEvent event,
                                                                   final MenuType<M> type, final ResourceLocation file,
                                                                   final Function<M, IScreenLogic<M>> logic) {
+        MENUS.put(file, type);
         event.<M, DataContainerScreen<M>>register(type, (menu, inventory, title) -> new DataContainerScreen<>(menu,
                 inventory, title, file, logic.apply(menu)));
+    }
+
+    /** The menu the screen declared in {@code file} was registered for, if one was. */
+    public static Optional<MenuType<?>> menuOf(final ResourceLocation file) {
+        return Optional.ofNullable(MENUS.get(file));
     }
 
     /** Opens the screen declared in {@code file}, with no menu, over the screen open now. */

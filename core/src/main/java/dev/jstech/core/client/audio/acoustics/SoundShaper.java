@@ -19,12 +19,17 @@ import dev.jstech.core.client.audio.AlertSigns;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.client.audio.SoundDirector;
 import dev.jstech.core.stepaside.StepAside;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.DoubleSupplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -53,13 +58,19 @@ import org.jetbrains.annotations.Nullable;
  * resource pack's, by what the block is made of; a sound declared with a distant one plays that from far away; a
  * sound that matters is shown on screen to a player who asked for signs.
  *
- * <p>A sound is weighed on the game's thread as it is asked for, and its shape is put on its source on the sound
- * thread as it starts; long sounds and moving ones are weighed again as they play.
+ * <p>A sound is weighed on the game's thread as it is asked for, the walls between kept by the two places a couple of
+ * seconds so a sound heard again from the same spot costs nothing, and its shape is put on its source on the sound
+ * thread as it starts; long sounds and moving ones are weighed again as they play, on the acoustics' own thread
+ * ({@link AcousticWork}), so the game never waits on them.
  */
 public final class SoundShaper {
 
     /* What each sound about to play was weighed as, kept until its source starts. */
     private static final Map<SoundInstance, Shape> SHAPES = Collections.synchronizedMap(new WeakHashMap<>());
+    /* The pitch each sound about to play was given beside its own, kept until its source starts. */
+    private static final Map<SoundInstance, Float> PITCHES = Collections.synchronizedMap(new WeakHashMap<>());
+    /* What else changes the pitch of what the player hears, each giving a factor. */
+    private static final List<DoubleSupplier> PITCH_SHIFTS = new CopyOnWriteArrayList<>();
     /* The sounds held back by the speed of sound, which are not held back again when they come round. */
     private static final Set<SoundInstance> DELAYED = Collections.newSetFromMap(
             Collections.synchronizedMap(new WeakHashMap<>()));
@@ -88,6 +99,16 @@ public final class SoundShaper {
                 event -> started(event.getSound(), event.getChannel()));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> tick());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> forget());
+    }
+
+    /**
+     * Adds something that changes the pitch of every sound of the world the player hears, once, from a mod's client:
+     * {@code factor} is asked as each sound is about to play, and what it gives, with every other such factor, is what
+     * the sound's own pitch is multiplied by; 1 changes nothing. A hazard of the body gives one, sounds wavering higher
+     * and lower. Sounds of the screen and music are left as they are.
+     */
+    public static void shiftPitch(final DoubleSupplier factor) {
+        PITCH_SHIFTS.add(Objects.requireNonNull(factor, "factor"));
     }
 
     /**
@@ -130,7 +151,11 @@ public final class SoundShaper {
         if (SoundTraits.of(sound.getLocation()).matters()) {
             AlertSigns.raise(heard);
         }
-        SHAPES.put(heard, weigh(level, listener, at, medium, SoundDirector.muffles(heard)));
+        SHAPES.put(heard, weigh(level, listener, at, medium, SoundDirector.muffles(heard), false));
+        final float pitch = pitchShift();
+        if (pitch != 1F) {
+            PITCHES.put(heard, pitch);
+        }
         return heard;
     }
 
@@ -149,6 +174,10 @@ public final class SoundShaper {
         final Shape shape = SHAPES.remove(sound);
         final Shape put = shape == null ? Shape.within() : shape;
         Efx.shape(channel.source, put.gain(), put.highs(), put.sendGain(), put.sendHighs(), put.air());
+        final Float pitch = PITCHES.remove(sound);
+        if (pitch != null) {
+            Efx.pitch(channel.source, pitch);
+        }
         PLAYING.put(sound, new Playing(channel.source, new Vec3(sound.getX(), sound.getY(), sound.getZ())));
     }
 
@@ -173,6 +202,7 @@ public final class SoundShaper {
         final boolean reweigh = ticks % REWEIGH_EVERY == 0 || RingingEars.ringing();
         final SoundManager sounds = minecraft.getSoundManager();
         PLAYING.entrySet().removeIf(entry -> !sounds.isActive(entry.getKey()));
+        final List<Reweighed> again = new ArrayList<>();
         for (final Map.Entry<SoundInstance, Playing> entry : PLAYING.entrySet()) {
             final SoundInstance sound = entry.getKey();
             final Playing playing = entry.getValue();
@@ -185,11 +215,19 @@ public final class SoundShaper {
                 entry.setValue(new Playing(playing.source(), at));
             }
             if (reweigh && (sound.isLooping() || sound instanceof TickableSoundInstance || RingingEars.ringing())) {
-                final Shape shape = placed ? weigh(level, listener, at, medium, SoundDirector.muffles(sound))
-                        : Shape.within();
-                Efx.shape(playing.source(), shape.gain(), shape.highs(), shape.sendGain(), shape.sendHighs(),
-                        shape.air());
+                again.add(new Reweighed(playing.source(), placed ? at : null, SoundDirector.muffles(sound)));
             }
+        }
+        if (!again.isEmpty()) {
+            // The walls between are read again away from the game's thread, and each source shaped as they come.
+            AcousticWork.inBackground(() -> {
+                for (final Reweighed one : again) {
+                    final Shape shape = one.at() == null ? Shape.within()
+                            : weigh(level, listener, one.at(), medium, one.muffles(), true);
+                    Efx.shape(one.source(), shape.gain(), shape.highs(), shape.sendGain(), shape.sendHighs(),
+                            shape.air());
+                }
+            });
         }
         if (ticks % ECHO_EVERY == 0) {
             setEcho(target(medium, prefs));
@@ -222,12 +260,16 @@ public final class SoundShaper {
         return now + (target - now) * EASE;
     }
 
-    /* How a sound at {@code at} reaches the listener through the walls between, the medium and ringing ears. */
+    /*
+     * How a sound at {@code at} reaches the listener through the walls between, the medium and ringing ears; the walls
+     * read again from the world when {@code fresh}, else as kept for the two places while they are fresh.
+     */
     private static Shape weigh(final Level level, final Vec3 listener, final Vec3 at, final SoundMedium medium,
-                               final boolean mufflesItself) {
+                               final boolean mufflesItself, final boolean fresh) {
         final double blocks = listener.distanceTo(at);
-        final float walls = AudioPrefsStore.prefs().occlusion() && !StepAside.SOUND_PHYSICS.steps()
-                ? Walls.through(level, listener, at) : 1F;
+        final boolean occludes = AudioPrefsStore.prefs().occlusion() && !StepAside.SOUND_PHYSICS.steps();
+        final float walls = !occludes ? 1F : fresh ? AcousticWork.wallsNow(level, listener, at, ticks)
+                : AcousticWork.walls(level, listener, at, ticks);
         final float ears = RingingEars.heard();
         final float earHighs = RingingEars.highs();
         final float carried = (float) medium.gain(blocks);
@@ -286,8 +328,19 @@ public final class SoundShaper {
         return minecraft.gameRenderer.getMainCamera().getPosition();
     }
 
+    /* Every factor of the pitch put together, as a sound is about to play. */
+    private static float pitchShift() {
+        double factor = 1;
+        for (final DoubleSupplier shift : PITCH_SHIFTS) {
+            factor *= shift.getAsDouble();
+        }
+        return (float) factor;
+    }
+
     private static void forget() {
         SHAPES.clear();
+        PITCHES.clear();
+        AcousticWork.forget();
         DELAYED.clear();
         PLAYING.clear();
         AcousticProbe.forget();
@@ -323,5 +376,15 @@ public final class SoundShaper {
      * @param at     where it was at the last tick
      */
     record Playing(int source, Vec3 at) {
+    }
+
+    /**
+     * A sound playing, to be weighed again away from the game's thread.
+     *
+     * @param source  the sound card's source it plays from
+     * @param at      where it is, or null for one of the listener's own head or screen
+     * @param muffles whether it muffles itself, as a sound from inside a helmet does
+     */
+    private record Reweighed(int source, @Nullable Vec3 at, boolean muffles) {
     }
 }

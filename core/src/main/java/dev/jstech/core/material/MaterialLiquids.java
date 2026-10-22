@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.material;
 
+import dev.jstech.core.content.ClaimedFlow;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -194,8 +195,8 @@ public final class MaterialLiquids {
             settle();
             for (final MaterialLiquid liquid : registered) {
                 final BaseFlowingFluid.Properties properties = properties(liquid);
-                helper.register(liquid.id(), new BaseFlowingFluid.Source(properties));
-                helper.register(flowingId(liquid), new BaseFlowingFluid.Flowing(properties));
+                helper.register(liquid.id(), new ClaimedFlow.Source(properties));
+                helper.register(flowingId(liquid), new ClaimedFlow.Flowing(properties));
             }
         });
         event.register(Registries.BLOCK, helper -> {

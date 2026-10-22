@@ -13,6 +13,7 @@ import dev.jstech.core.client.studio.StudioScreen;
 import dev.jstech.core.client.studio.StudioSheet;
 import dev.jstech.core.client.studio.StudioTool;
 import dev.jstech.core.client.studio.ThingKind;
+import dev.jstech.tests.TestItems;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -38,6 +39,10 @@ public final class StudioClientTests {
     /* Where the player stands, and the machine in front of it. */
     private static final BlockPos STAND = new BlockPos(0, 2, 0);
     private static final BlockPos AT = new BlockPos(0, 2, -3);
+    /* What the checks of a screen's slots against its menu say, in English. */
+    private static final String SLOTS_BEYOND = "Its screen shows slots its menu does not have";
+    private static final String SLOTS_NOWHERE = "Its screen leaves out slots of its menu";
+    private static final String SLOTS_TWICE = "Its screen shows slots twice";
 
     private StudioClientTests() {
     }
@@ -76,6 +81,26 @@ public final class StudioClientTests {
     }
 
     @ClientTest(timeoutTicks = 300)
+    public static void studio_checksAScreensSlotsAgainstItsMenu(final ClientTestContext ctx) {
+        ctx.afterTest(() -> ctx.mc().setScreen(null));
+        ctx.then(0, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.THINGS)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> {
+                    final StudioScreen studio = ctx.screen(StudioScreen.class);
+                    ctx.assertTrue(studio.choose(TestItems.SLOT_CHECK.getId()),
+                            "the thing whose screen shows its slots wrongly is among the things");
+                    final List<String> wrong = titles(studio.sheet().orElseThrow());
+                    ctx.assertTrue(wrong.containsAll(List.of(SLOTS_BEYOND, SLOTS_NOWHERE, SLOTS_TWICE)),
+                            "a slot the menu has not, one of the menu's left out and one twice are found: " + wrong);
+                    ctx.assertTrue(studio.choose(ResourceLocation.fromNamespaceAndPath("jsexample", "logbook")),
+                            "the example's logbook is among the things");
+                    final List<String> fine = titles(studio.sheet().orElseThrow());
+                    ctx.assertTrue(fine.stream().noneMatch(List.of(SLOTS_BEYOND, SLOTS_NOWHERE, SLOTS_TWICE)::contains),
+                            "and a screen that shows its menu as it is has nothing found: " + fine);
+                });
+    }
+
+    @ClientTest(timeoutTicks = 300)
     public static void studio_readsTheBlockLookedAtOnItsPage(final ClientTestContext ctx) {
         ctx.afterTest(() -> ctx.mc().setScreen(null));
         ctx.thenTeleport(0, STAND, Direction.NORTH)
@@ -107,5 +132,10 @@ public final class StudioClientTests {
 
     private static StudioSheet.Part part(final StudioSheet sheet, final String name) {
         return sheet.parts().stream().filter(part -> part.name().equals(name)).findFirst().orElseThrow();
+    }
+
+    /* The titles of the checks across its parts a sheet says. */
+    private static List<String> titles(final StudioSheet sheet) {
+        return sheet.checks().stream().map(StudioSheet.Check::title).toList();
     }
 }

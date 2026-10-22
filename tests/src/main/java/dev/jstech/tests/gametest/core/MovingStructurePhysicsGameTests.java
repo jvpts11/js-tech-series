@@ -25,17 +25,22 @@ import dev.jstech.core.moving.TowardMotion;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.moving.physics.ForceSum;
 import dev.jstech.core.moving.physics.PhysicsMotion;
+import dev.jstech.core.moving.physics.PhysicsWorkers;
 import dev.jstech.core.moving.physics.StructurePhysics;
 import dev.jstech.core.region.Box;
+import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.SealedRooms;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestClaims;
 import dev.jstech.tests.TestPhysics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
@@ -48,6 +53,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirectionalBlock;
@@ -79,6 +85,10 @@ public final class MovingStructurePhysicsGameTests {
     private static final double RESTS = 0.03;
     /* The floor's top, in the arena's places. */
     private static final int FLOOR = 2;
+    /* How many chunks away, both ways, the test of structures far apart keeps its second place: past every arena. */
+    private static final int FAR_CHUNKS = 40;
+    private static final TextKey KEPT_FAR = TextKey.of("jstests.moving.kept_far",
+            "A test keeps a place far from its arena loaded");
     /* How long the weather a test clears stays clear, in ticks. */
     private static final int CLEAR = 12_000;
     /* The hydrogen balloon: the side of its shell, and the room inside it, a cube two blocks smaller. */
@@ -367,6 +377,78 @@ public final class MovingStructurePhysicsGameTests {
                             "it went through the glass to the floor: " + iron.worldBox());
                     helper.assertTrue(find(helper.getLevel(), iron, state -> state.is(Blocks.IRON_BLOCK)) != null,
                             "the iron itself held");
+                    MovingStructures.takeAway(iron);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void physics_structuresFarApartAreWorkedBesideTheServersThread(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        // A second place far from every arena, in the middle of its chunk, kept loaded and ticking for the test.
+        final BlockPos arena = helper.absolutePos(new BlockPos(4, FLOOR, 4));
+        final ChunkPos farChunk = new ChunkPos((arena.getX() >> 4) + FAR_CHUNKS, (arena.getZ() >> 4) + FAR_CHUNKS);
+        final BlockPos far = new BlockPos(farChunk.getMiddleBlockX(), arena.getY(), farChunk.getMiddleBlockZ());
+        final UUID keeper = UUID.randomUUID();
+        ChunkLoaders.load(level, far, keeper, KEPT_FAR, farChunk, true);
+        final long before = PhysicsWorkers.workedBeside();
+        final MovingStructure near = made(helper, List.of(new BlockPos(4, 5, 4)), Blocks.IRON_BLOCK);
+        final MovingStructure[] away = new MovingStructure[1];
+        helper.runAfterDelay(390, () -> {
+            if (away[0] != null) {
+                MovingStructures.takeAway(away[0]);
+            }
+            ChunkLoaders.releaseAll(level, far);
+        });
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.isPositionEntityTicking(far),
+                        "the far place is loaded and ticking"))
+                .thenExecute(() -> {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            level.setBlockAndUpdate(far.offset(dx, -1, dz), Blocks.STONE.defaultBlockState());
+                        }
+                    }
+                    level.setBlockAndUpdate(far.above(3), Blocks.IRON_BLOCK.defaultBlockState());
+                    warm(level);
+                    final StructureResult made = MovingStructures.assemble(level, far.above(3), far.above(3));
+                    helper.assertTrue(made.ok(), "the far structure is made: " + made.refusal());
+                    away[0] = made.structure();
+                    near.move(PhysicsMotion.AT_REST);
+                    away[0].move(PhysicsMotion.AT_REST);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(asleep(near) && asleep(away[0]), "both come to rest"))
+                .thenExecute(() -> {
+                    helper.assertTrue(PhysicsWorkers.workedBeside() > before,
+                            "lying apart, they were worked beside the server's thread");
+                    helper.assertTrue(Math.abs(near.worldBox().minY - y(helper, FLOOR)) < RESTS,
+                            "the near one rests on its floor: " + near.worldBox());
+                    helper.assertTrue(Math.abs(away[0].worldBox().minY - far.getY()) < RESTS,
+                            "and the far one on its own: " + away[0].worldBox());
+                    MovingStructures.takeAway(near);
+                    MovingStructures.takeAway(away[0]);
+                    away[0] = null;
+                    ChunkLoaders.releaseAll(level, far);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void physics_aCrashBreaksNothingOfClaimedLand(final GameTestHelper helper) {
+        helper.setBlock(new BlockPos(4, 2, 4), Blocks.GLASS);
+        // The glass alone is claimed: the iron, made by nobody, comes at it from outside the claim.
+        final AABB claim = new AABB(helper.absolutePos(new BlockPos(4, 2, 4)));
+        TestClaims.claim(claim);
+        final MovingStructure iron = made(helper, List.of(new BlockPos(4, 5, 4)), Blocks.IRON_BLOCK);
+        iron.move(PhysicsMotion.AT_REST);
+        helper.runAfterDelay(190, () -> TestClaims.unclaim(claim));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(asleep(iron), "it comes to rest"))
+                .thenExecute(() -> {
+                    TestClaims.unclaim(claim);
+                    helper.assertBlockPresent(Blocks.GLASS, new BlockPos(4, 2, 4));
+                    helper.assertTrue(Math.abs(iron.worldBox().minY - y(helper, FLOOR + 1)) < RESTS,
+                            "it rests on the claimed glass, which held: " + iron.worldBox());
                     MovingStructures.takeAway(iron);
                 })
                 .thenSucceed();

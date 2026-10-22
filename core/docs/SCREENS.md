@@ -208,7 +208,8 @@ void layout_isClean() {
 
 A screen of a block (a machine's window) paints through a **theme** of its era. `EraThemes.of(era)` gives it:
 colours (panel, slots, lines, accent, text) from a palette a resource pack can change, and a style (scanlines on a
-Vintage screen, glass bands on an Advanced one). Bind it while the screen paints, and draw through `JsTechTheme`:
+Vintage screen, glass bands on a Transition one, a thin accent line under an Advanced one's headers). Bind it while
+the screen paints, and draw through `JsTechTheme`:
 
 ```java
 JsTechTheme.bind(EraThemes.of(HardwareEra.LEGACY));
@@ -389,7 +390,10 @@ DataScreens.register(event, MENU.get(), rl("press"), menu -> screen -> screen
 
 **The editor.** Ctrl+E from the inspector opens the editor on the same screen. Click a component to choose it, drag
 it to move it (in a stack by its margin, in a row or a column onto a sibling to take its place), drag its bottom
-right corner to resize it, and change its name, what it is bound to and one more of its fields in the panel. Add...
+right corner to resize it. Lines show where the chosen component's edges or middle line up with another's, and a
+component moved in a stack is pulled onto them when it comes within three pixels. Its card, beside the screen at
+its height, holds only what it has: its name, what it is bound to, and the fields its kind declares (a button's text,
+action, menu button and whether it is the primary one), up to six; a list or a table is left to the file. Add...
 lists every kind of component; Enter or a click adds the first one where the pointer last was over the screen, in
 the deepest component there that holds others. Every change is written to the file in your mod's source at once,
 two spaces a level, so the file in git is the one you see; Undo and Redo walk back and forth through the changes.

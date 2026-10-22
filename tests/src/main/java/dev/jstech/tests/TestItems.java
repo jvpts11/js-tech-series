@@ -69,6 +69,14 @@ public final class TestItems {
             .named("Foreign Tin Ingot").look(IItemLook.HANDMADE).tab(ITEMS)
             .register();
 
+    /**
+     * A thing whose screen file shows its menu's slots wrongly on purpose ({@code test_slot_check.json}): one slot
+     * twice, one the menu has not, and one of the menu's left out, for the studio's checks across its parts to find.
+     */
+    public static final ItemEntry<Item> SLOT_CHECK = TestSounds.CONTENT.item("test_slot_check", Item::new)
+            .named("Test Slot Check").look(IItemLook.parent("minecraft:item/book")).tab(ITEMS)
+            .register();
+
     private TestItems() {
     }
 

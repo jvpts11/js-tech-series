@@ -136,7 +136,8 @@ final class StructureBalloons {
             if (part.physics().burner().isPresent()) {
                 final BlockPos above = part.pos().above();
                 if (asked.add(above.asLong())) {
-                    SealedRooms.track(level, above);
+                    // Rooms are kept on the server's thread; worked beside it, it asks once the work is over.
+                    PhysicsLens.onServerThread(() -> SealedRooms.track(level, above));
                 }
             }
         }

@@ -126,6 +126,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private UpgradeEffect applied = UpgradeEffect.NONE;
     private final Deque<long[]> made = new ArrayDeque<>();
     private long drawnThisTick;
+    /* Its last ten minutes, for its screen's page of statistics, and what that page shows as of the last second. */
+    private final MachineStatistics statistics = new MachineStatistics();
+    private MachineHistory history = MachineHistory.NONE;
     private @Nullable List<MachineParameter> parameters;
     private boolean asleep;
     private long wakeAt;
@@ -475,6 +478,14 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     /** How many things it made the last minute, as its screen shows it while it is open. */
     public int perMinute() {
         return perMinute.get();
+    }
+
+    /**
+     * What it did over its last ten minutes, as of the last second, on the server: its screen reads it through
+     * {@link MachineMenu#history()}. It starts again when the machine is loaded.
+     */
+    public MachineHistory history() {
+        return history;
     }
 
     /**
@@ -924,8 +935,12 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         if (sides.automatic() && Math.floorMod(now + worldPosition.asLong(), MachineTransfers.EVERY) == 0) {
             MachineTransfers.run(server, this);
         }
+        // Last tick's work and draw: counted before this tick changes them, whether or not it rests.
+        statistics.tick(running.get(), drawn.get());
         if (now % TICKS_A_SECOND == 0) {
             countMinute(now);
+            statistics.second(perMinute.get());
+            history = MachineHistory.of(statistics, now);
         }
         if (asleep && now < wakeAt) {
             drawn.set(0L);
@@ -991,6 +1006,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
             server.sendParticles(ParticleTypes.POOF, worldPosition.getX() + 0.5, worldPosition.getY() + 1.0,
                     worldPosition.getZ() + 0.5, 4, 0.2, 0.05, 0.2, 0.01);
         } else if (!nowRunning && running.get()) {
+            if (result != MachineStatus.SWITCHED_OFF && result != MachineStatus.OFF_BY_REDSTONE) {
+                statistics.stopped(result.serializedName(), server.getGameTime());
+            }
             play(server, sounds().stop());
             server.sendParticles(ParticleTypes.SMOKE, worldPosition.getX() + 0.5, worldPosition.getY() + 1.0,
                     worldPosition.getZ() + 0.5, 3, 0.2, 0.05, 0.2, 0.01);

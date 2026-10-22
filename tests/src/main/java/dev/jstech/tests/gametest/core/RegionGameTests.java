@@ -12,6 +12,7 @@ import dev.jstech.core.region.Box;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.region.ChunkLoadingBalance;
 import dev.jstech.core.region.RegionIndex;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.tests.JsTests;
 import java.util.Set;
 import java.util.UUID;
@@ -25,8 +26,8 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The Core's world by where things are: a region index kept in a dimension, and chunks kept loaded for an owner, up
- * to the owner's limit and the server's budget and no further, and let go of again.
+ * The Core's world by where things are: a region index kept in a dimension, and chunks kept loaded for an owner and a
+ * reason, up to the owner's limit and the server's budget and no further, and let go of again.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -37,6 +38,8 @@ public final class RegionGameTests {
             ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "region_notes"), Codec.STRING);
     /** Far from where the tests run, so the chunks it loads are not loaded for another reason. */
     private static final int FAR = 60_000;
+    private static final TextKey REASON = TextKey.of("jstests.chunks.reason", "A test keeps it loaded");
+    private static final TextKey OTHER_REASON = TextKey.of("jstests.chunks.other_reason", "A test keeps it for more");
 
     private RegionGameTests() {
     }
@@ -66,12 +69,12 @@ public final class RegionGameTests {
             final ChunkPos first = new ChunkPos(source);
             final ChunkPos second = new ChunkPos(first.x + 1, first.z);
             final ChunkPos third = new ChunkPos(first.x + 2, first.z);
-            helper.assertTrue(ChunkLoaders.load(level, source, owner, first, true)
+            helper.assertTrue(ChunkLoaders.load(level, source, owner, REASON, first, true)
                     == ChunkLoaders.LoadOutcome.LOADED, "the first chunk is loaded");
-            helper.assertTrue(ChunkLoaders.load(level, source, owner, first, true)
+            helper.assertTrue(ChunkLoaders.load(level, source, owner, REASON, first, true)
                     == ChunkLoaders.LoadOutcome.ALREADY, "asking again changes nothing");
-            ChunkLoaders.load(level, source, owner, second, true);
-            helper.assertTrue(ChunkLoaders.load(level, source, owner, third, true)
+            ChunkLoaders.load(level, source, owner, REASON, second, true);
+            helper.assertTrue(ChunkLoaders.load(level, source, owner, REASON, third, true)
                     == ChunkLoaders.LoadOutcome.LIMIT_REACHED, "a third goes past the owner's limit of two");
             helper.assertTrue(ChunkLoaders.loadedBy(level.getServer(), owner) == 2, "the owner keeps two");
             final Runnable restore = () -> {
@@ -94,6 +97,27 @@ public final class RegionGameTests {
         }
     }
 
+    @GameTest(template = ARENA)
+    public static void chunkLoaders_sayWhyEachSourceKeepsItsChunks(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos source = new BlockPos(FAR + 32, 64, FAR + 32);
+        final ChunkPos chunk = new ChunkPos(source);
+        final UUID owner = UUID.randomUUID();
+        try {
+            ChunkLoaders.load(level, source, owner, REASON, chunk, false);
+            helper.assertTrue(REASON.equals(ChunkLoaders.reasons(level).get(source)),
+                    "the source keeps its chunk for the reason it gave");
+            helper.assertTrue(ChunkLoaders.load(level, source, owner, OTHER_REASON, chunk, false)
+                    == ChunkLoaders.LoadOutcome.ALREADY, "asking again for another reason loads nothing new");
+            helper.assertTrue(OTHER_REASON.equals(ChunkLoaders.reasons(level).get(source)),
+                    "but the source now says the new reason");
+        } finally {
+            ChunkLoaders.releaseAll(level, source);
+        }
+        helper.assertTrue(!ChunkLoaders.reasons(level).containsKey(source), "a source let go of says nothing");
+        helper.succeed();
+    }
+
     /* A batch of its own: the server's budget is every owner's, and lowering it would starve the tests beside it. */
     @GameTest(template = ARENA, batch = "jscore_chunk_budget")
     public static void chunkLoaders_stopAtTheServersBudget(final GameTestHelper helper) {
@@ -103,11 +127,11 @@ public final class RegionGameTests {
         final int budget = ChunkLoadingBalance.serverBudget();
         try {
             ChunkLoadingBalance.setServerBudget(ChunkLoaders.loadedOnServer(level.getServer()));
-            helper.assertTrue(ChunkLoaders.load(level, source, UUID.randomUUID(), chunk, true)
+            helper.assertTrue(ChunkLoaders.load(level, source, UUID.randomUUID(), REASON, chunk, true)
                     == ChunkLoaders.LoadOutcome.SERVER_FULL, "an owner with room is refused by a full server");
             helper.assertTrue(ChunkLoaders.loadedFrom(level, source).isEmpty(), "and nothing is kept");
             ChunkLoadingBalance.setServerBudget(ChunkLoaders.loadedOnServer(level.getServer()) + 1);
-            helper.assertTrue(ChunkLoaders.load(level, source, UUID.randomUUID(), chunk, true)
+            helper.assertTrue(ChunkLoaders.load(level, source, UUID.randomUUID(), REASON, chunk, true)
                     == ChunkLoaders.LoadOutcome.LOADED, "one more in the budget lets it in");
             helper.assertTrue(ChunkLoaders.kept(level).getOrDefault(source, Set.of()).contains(chunk),
                     "the server knows which source keeps it");

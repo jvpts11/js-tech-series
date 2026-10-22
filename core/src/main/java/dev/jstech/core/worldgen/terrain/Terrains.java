@@ -25,8 +25,6 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.NoiseSettings;
 import net.minecraft.world.level.levelgen.SurfaceRules;
-import net.minecraft.world.level.levelgen.VerticalAnchor;
-import net.minecraft.world.level.levelgen.placement.CaveSurface;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +40,26 @@ import org.jetbrains.annotations.Nullable;
  *         .surface(() -> Blocks.SAND, () -> Blocks.SANDSTONE, 4)
  *         .surface(SALT_STEPPE, () -> Blocks.CALCITE, () -> Blocks.DRIPSTONE_BLOCK, 3).declare();
  * }</pre>
+ *
+ * <p>A terrain that wants more than hills declares its parts one by one, each written as a file of its own: its
+ * noises ({@link #noise}), the density functions its ground is made of ({@link #density}, made from the noises and
+ * from one another), and its surface as rules read in order ({@link #surfaceRules}).
+ *
+ * <pre>{@code
+ * NoiseSpec RIDGE = Terrains.noise(id("ridge"), -7, 1.0, 0.5);
+ * DensitySpec RIDGED = Terrains.density(id("ridged_ground"), (noises, densities) -> DensityFunctions.add(
+ *         DensityFunctions.yClampedGradient(0, 256, 2.0, -2.0),
+ *         DensityFunctions.noise(noises.getOrThrow(RIDGE.key()), 1.0, 0.0).abs()));
+ * Terrains.terrain(id("ridges")).heights(0, 256).ground(96).density(RIDGED)
+ *         .surfaceRules(Terrains.surfaceRules().above(160, () -> Blocks.SNOW_BLOCK).steep(() -> Blocks.STONE)
+ *                 .layers(() -> Blocks.GRASS_BLOCK, () -> Blocks.DIRT, 3)).declare();
+ * }</pre>
  */
 public final class Terrains {
 
     private static final List<TerrainSpec> TERRAINS = Collections.synchronizedList(new ArrayList<>());
+    private static final List<NoiseSpec> NOISES = Collections.synchronizedList(new ArrayList<>());
+    private static final List<DensitySpec> DENSITIES = Collections.synchronizedList(new ArrayList<>());
     /* The noise that picks biomes changes over a few thousand blocks, as the overworld's does. */
     private static final int CLIMATE_OCTAVE = -10;
     /* A hill's noise, its octaves halving: the broad shape, then the hills on it, then the knolls. */
@@ -60,10 +74,50 @@ public final class Terrains {
         return new TerrainBuilder(id);
     }
 
+    /**
+     * Declares a noise named {@code id}: its broadest octave {@code firstOctave}, a feature about two to the minus that
+     * blocks across, and how much each octave counts from there, each finer than the last.
+     */
+    public static NoiseSpec noise(final ResourceLocation id, final int firstOctave, final double... amplitudes) {
+        final List<Double> each = new ArrayList<>(amplitudes.length);
+        for (final double amplitude : amplitudes) {
+            each.add(amplitude);
+        }
+        final NoiseSpec spec = new NoiseSpec(id, firstOctave, each);
+        NOISES.add(spec);
+        return spec;
+    }
+
+    /** Declares a density function named {@code id}, made by {@code recipe} from the noises and the others. */
+    public static DensitySpec density(final ResourceLocation id, final IDensityRecipe recipe) {
+        final DensitySpec spec = new DensitySpec(id, recipe);
+        DENSITIES.add(spec);
+        return spec;
+    }
+
+    /** Starts a terrain's surface as rules read in order; none, until some are given. */
+    public static SurfaceRuleBuilder surfaceRules() {
+        return new SurfaceRuleBuilder();
+    }
+
     /** The terrains the mod of that namespace declared. */
     public static List<TerrainSpec> terrainsOf(final String namespace) {
         synchronized (TERRAINS) {
             return TERRAINS.stream().filter(terrain -> terrain.id().getNamespace().equals(namespace)).toList();
+        }
+    }
+
+    /** The noises the mod of that namespace declared, beside those of its terrains. */
+    public static List<NoiseSpec> noisesOf(final String namespace) {
+        synchronized (NOISES) {
+            return NOISES.stream().filter(noise -> noise.id().getNamespace().equals(namespace)).toList();
+        }
+    }
+
+    /** The density functions the mod of that namespace declared. */
+    public static List<DensitySpec> densitiesOf(final String namespace) {
+        synchronized (DENSITIES) {
+            return DENSITIES.stream().filter(density -> density.id().getNamespace().equals(namespace)).toList();
         }
     }
 
@@ -94,10 +148,13 @@ public final class Terrains {
      * @param liquid    the liquid of its seas
      * @param bedrock   how many blocks of bedrock floor it, fading upwards
      * @param surfaces  its surfaces, a biome's own first and the one for every other biome last
+     * @param density   the density function its ground is, or null for its hills
+     * @param rules     its surface as rules, or null for its surfaces
      */
     public record TerrainSpec(ResourceLocation id, int minY, int height, int ground, double hills, int hillWidth,
                               double roughness, int sea, Supplier<? extends Block> stone,
-                              Supplier<? extends Block> liquid, int bedrock, List<Surface> surfaces) {
+                              Supplier<? extends Block> liquid, int bedrock, List<Surface> surfaces,
+                              @Nullable DensitySpec density, @Nullable SurfaceRuleBuilder rules) {
 
         public TerrainSpec {
             surfaces = List.copyOf(surfaces);
@@ -113,32 +170,31 @@ public final class Terrains {
             return ResourceKey.create(Registries.NOISE, this.id.withSuffix("_" + which));
         }
 
-        /** Its noises, by their names, as the game registers them. */
+        /**
+         * Its noises, by their names, as the game registers them: the two its biomes are placed by, and, for ground of
+         * hills, the hills' and the roughness's; ground of its own density function samples noises of its own.
+         */
         public List<Noise> noises() {
-            final int hillOctave = -(int) Math.round(Math.log(this.hillWidth) / Math.log(2));
-            return List.of(new Noise("hills", new NormalNoise.NoiseParameters(hillOctave, HILL_OCTAVES[0],
-                            HILL_OCTAVES[1], HILL_OCTAVES[2], HILL_OCTAVES[3])),
-                    new Noise("rough", new NormalNoise.NoiseParameters(ROUGH_OCTAVE, 1.0, 0.5)),
-                    new Noise("warmth", new NormalNoise.NoiseParameters(CLIMATE_OCTAVE, 1.0, 1.0, 0.5)),
-                    new Noise("wetness", new NormalNoise.NoiseParameters(CLIMATE_OCTAVE, 1.0, 1.0, 0.5)));
+            final List<Noise> out = new ArrayList<>();
+            if (this.density == null) {
+                final int hillOctave = -(int) Math.round(Math.log(this.hillWidth) / Math.log(2));
+                out.add(new Noise("hills", new NormalNoise.NoiseParameters(hillOctave, HILL_OCTAVES[0],
+                        HILL_OCTAVES[1], HILL_OCTAVES[2], HILL_OCTAVES[3])));
+                out.add(new Noise("rough", new NormalNoise.NoiseParameters(ROUGH_OCTAVE, 1.0, 0.5)));
+            }
+            out.add(new Noise("warmth", new NormalNoise.NoiseParameters(CLIMATE_OCTAVE, 1.0, 1.0, 0.5)));
+            out.add(new Noise("wetness", new NormalNoise.NoiseParameters(CLIMATE_OCTAVE, 1.0, 1.0, 0.5)));
+            return List.copyOf(out);
         }
 
         /**
          * Its noise settings, as the game registers them: the ground solid wherever the land's height, raised and
-         * lowered by the hills' noise, is above a block, broken by the roughness, the liquid below its sea, and the
-         * surfaces laid on it.
+         * lowered by the hills' noise, is above a block, broken by the roughness, or wherever its own density function
+         * says; the liquid below its sea, and its surfaces laid on it, or its rules.
          */
-        public NoiseGeneratorSettings settings(final HolderGetter<NormalNoise.NoiseParameters> noises) {
-            final int top = this.minY + this.height;
-            final DensityFunction slope = DensityFunctions.yClampedGradient(this.minY, top,
-                    (this.ground - this.minY) / this.hills, (this.ground - top) / this.hills);
-            final DensityFunction hilly = DensityFunctions.flatCache(DensityFunctions.noise(
-                    noises.getOrThrow(noise("hills")), 1.0, 0.0));
-            DensityFunction density = DensityFunctions.add(slope, hilly);
-            if (this.roughness > 0) {
-                density = DensityFunctions.add(density, DensityFunctions.mul(DensityFunctions.constant(this.roughness),
-                        DensityFunctions.noise(noises.getOrThrow(noise("rough")), 1.0, 1.0)));
-            }
+        public NoiseGeneratorSettings settings(final HolderGetter<NormalNoise.NoiseParameters> noises,
+                                               final HolderGetter<DensityFunction> densities) {
+            final DensityFunction density = this.density != null ? this.density.reference(densities) : hills(noises);
             final DensityFunction warmth = DensityFunctions.flatCache(DensityFunctions.noise(
                     noises.getOrThrow(noise("warmth")), 1.0, 0.0));
             final DensityFunction wetness = DensityFunctions.flatCache(DensityFunctions.noise(
@@ -151,30 +207,39 @@ public final class Terrains {
                     surfaceRule(), List.of(), this.sea, false, false, false, false);
         }
 
-        private SurfaceRules.RuleSource surfaceRule() {
-            final List<SurfaceRules.RuleSource> rules = new ArrayList<>();
-            if (this.bedrock > 0) {
-                rules.add(SurfaceRules.ifTrue(SurfaceRules.verticalGradient(this.id + "_bedrock",
-                        VerticalAnchor.bottom(), VerticalAnchor.aboveBottom(this.bedrock)),
-                        SurfaceRules.state(Blocks.BEDROCK.defaultBlockState())));
+        /* The land's height, raised and lowered by the hills' noise, broken by the roughness. */
+        private DensityFunction hills(final HolderGetter<NormalNoise.NoiseParameters> noises) {
+            final int top = this.minY + this.height;
+            final DensityFunction slope = DensityFunctions.yClampedGradient(this.minY, top,
+                    (this.ground - this.minY) / this.hills, (this.ground - top) / this.hills);
+            final DensityFunction hilly = DensityFunctions.flatCache(DensityFunctions.noise(
+                    noises.getOrThrow(noise("hills")), 1.0, 0.0));
+            DensityFunction density = DensityFunctions.add(slope, hilly);
+            if (this.roughness > 0) {
+                density = DensityFunctions.add(density, DensityFunctions.mul(DensityFunctions.constant(this.roughness),
+                        DensityFunctions.noise(noises.getOrThrow(noise("rough")), 1.0, 1.0)));
             }
-            for (final Surface surface : this.surfaces) {
-                final SurfaceRules.RuleSource laid = laid(surface);
-                rules.add(surface.biome() == null ? laid
-                        : SurfaceRules.ifTrue(SurfaceRules.isBiome(surface.biome()), laid));
-            }
-            return SurfaceRules.sequence(rules.toArray(SurfaceRules.RuleSource[]::new));
+            return density;
         }
 
-        /* The top on a floor open to the air, the block under it on a floor under a liquid and below either. */
-        private static SurfaceRules.RuleSource laid(final Surface surface) {
-            final SurfaceRules.RuleSource top = SurfaceRules.state(surface.top().get().defaultBlockState());
-            final SurfaceRules.RuleSource under = SurfaceRules.state(surface.under().get().defaultBlockState());
-            return SurfaceRules.sequence(
-                    SurfaceRules.ifTrue(SurfaceRules.ON_FLOOR, SurfaceRules.sequence(
-                            SurfaceRules.ifTrue(SurfaceRules.waterBlockCheck(-1, 0), top), under)),
-                    SurfaceRules.ifTrue(SurfaceRules.stoneDepthCheck(surface.depth(), false, CaveSurface.FLOOR),
-                            under));
+        /* Its rules when it was given them; else bedrock, then each surface, a biome's own before the rest's. */
+        private SurfaceRules.RuleSource surfaceRule() {
+            if (this.rules != null) {
+                return this.rules.build();
+            }
+            final SurfaceRuleBuilder laid = new SurfaceRuleBuilder();
+            if (this.bedrock > 0) {
+                laid.bedrock(this.id + "_bedrock", this.bedrock);
+            }
+            for (final Surface surface : this.surfaces) {
+                if (surface.biome() == null) {
+                    laid.layers(surface.top(), surface.under(), surface.depth());
+                } else {
+                    laid.in(surface.biome(), new SurfaceRuleBuilder().layers(surface.top(), surface.under(),
+                            surface.depth()));
+                }
+            }
+            return laid.build();
         }
     }
 
@@ -203,6 +268,8 @@ public final class Terrains {
         private Supplier<? extends Block> liquid = () -> Blocks.WATER;
         private int bedrock = 5;
         private Surface fallback = new Surface(null, () -> Blocks.GRASS_BLOCK, () -> Blocks.DIRT, 3);
+        private @Nullable DensitySpec density;
+        private @Nullable SurfaceRuleBuilder rules;
 
         private TerrainBuilder(final ResourceLocation id) {
             this.id = Objects.requireNonNull(id, "id");
@@ -269,6 +336,18 @@ public final class Terrains {
             return this;
         }
 
+        /** Its ground is {@code ground}, a declared density function, solid where it is above zero, not its hills. */
+        public TerrainBuilder density(final DensitySpec ground) {
+            this.density = Objects.requireNonNull(ground, "ground");
+            return this;
+        }
+
+        /** Its surface is these rules, read in order, not its surfaces; its bedrock goes in them if wanted. */
+        public TerrainBuilder surfaceRules(final SurfaceRuleBuilder given) {
+            this.rules = Objects.requireNonNull(given, "given");
+            return this;
+        }
+
         /**
          * Declares the terrain.
          *
@@ -284,7 +363,7 @@ public final class Terrains {
             final List<Surface> all = new ArrayList<>(surfaces);
             all.add(fallback);
             final TerrainSpec spec = new TerrainSpec(id, minY, height, ground, hills, hillWidth, roughness, sea,
-                    stone, liquid, bedrock, all);
+                    stone, liquid, bedrock, all, density, rules);
             TERRAINS.add(spec);
             return spec;
         }

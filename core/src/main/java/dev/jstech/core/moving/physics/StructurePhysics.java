@@ -31,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3d;
@@ -90,6 +91,8 @@ public final class StructurePhysics {
     /* The tick it was last worked in, with the structures it is joined to, and what came of it. */
     private long workedAt = Long.MIN_VALUE;
     private long askedAt = Long.MIN_VALUE;
+    /* What its last tick's work cost, in nanoseconds. */
+    private long lastCost;
     private IStructureMotion.Step worked;
     /* Pushes given from outside since its last tick, each a push in newton seconds and the world's place it is at. */
     private final List<Vector3d[]> pushes = new ArrayList<>();
@@ -309,9 +312,72 @@ public final class StructurePhysics {
         try {
             return PhysicsIsland.step(level, this, motion);
         } finally {
-            budget.spend(System.nanoTime() - start);
+            lastCost = System.nanoTime() - start;
+            budget.spend(lastCost);
             Diagnostics.record(TIMED, start);
         }
+    }
+
+    /*
+     * Readies its island for this tick, to be worked beside the server's thread, from the start of the dimension's
+     * tick: none when it took its turn already, waits on the dimension's budget (the islands readied before it this
+     * tick expected to cost {@code expected} nanoseconds, as they did the last), or has nothing to work.
+     */
+    @Nullable PhysicsIsland readyBeside(final ServerLevel level, final PhysicsMotion motion, final long expected) {
+        final long now = level.getGameTime();
+        if (tookTurn(now)) {
+            return null;
+        }
+        askedAt = now;
+        if (PhysicsBudget.of(level).spentWith(expected) && !waited) {
+            waited = true;
+            worked(now, new IStructureMotion.Step(structure.frame().pose(), motion));
+            return null;
+        }
+        waited = false;
+        return PhysicsIsland.prepare(level, this, motion);
+    }
+
+    /* What its last tick's work cost, in nanoseconds: what its next is expected to. */
+    long lastCost() {
+        return lastCost;
+    }
+
+    /* Keeps what its tick's work beside the server's thread cost, in nanoseconds, against the dimension's budget. */
+    void spentBeside(final ServerLevel level, final long nanos) {
+        lastCost = nanos;
+        PhysicsBudget.of(level).spend(nanos);
+        Diagnostics.record(TIMED, System.nanoTime() - nanos);
+    }
+
+    /* It is worked in an island this tick, readied already: no other island takes it in. */
+    void taken(final long now) {
+        askedAt = now;
+    }
+
+    /*
+     * The box of the world its structure, and what it holds, may fill this tick: where they stand, grown by how far
+     * its going and its turning may carry them in a tick.
+     */
+    AABB reachThisTick() {
+        final double going = (body.velocity().length() + body.spin().length() * reach()) / TICKS + 1;
+        AABB box = structure.worldBox();
+        for (final Piece piece : held.values()) {
+            box = box.minmax(piece.structure.worldBox());
+        }
+        return box.inflate(going);
+    }
+
+    /* Takes into {@code lens} the yard's chunks its blocks and those of what it holds stand in, and those beside. */
+    void lendYard(final PhysicsLens lens) {
+        lendYard(lens, structure.bounds());
+        for (final Piece piece : held.values()) {
+            lendYard(lens, piece.structure.bounds());
+        }
+    }
+
+    private static void lendYard(final PhysicsLens lens, final Box yard) {
+        lens.take((yard.minX() - 1) >> 4, (yard.minZ() - 1) >> 4, (yard.maxX() + 1) >> 4, (yard.maxZ() + 1) >> 4);
     }
 
     /* Lends its last contacts with the world to {@code into}, for its body against {@code ground} there. */

@@ -184,8 +184,8 @@ public final class FluidBuilder {
             bucket = bucketBuilder.register();
             properties.block(block).bucket(bucket);
         }
-        this.content.fluidRegister().register(this.id, () -> new BaseFlowingFluid.Source(properties));
-        this.content.fluidRegister().register("flowing_" + this.id, () -> new BaseFlowingFluid.Flowing(properties));
+        this.content.fluidRegister().register(this.id, () -> new ClaimedFlow.Source(properties));
+        this.content.fluidRegister().register("flowing_" + this.id, () -> new ClaimedFlow.Flowing(properties));
         final FluidEntry entry = new FluidEntry(key, name, type, source, flowingFluid, block, bucket,
                 new FluidEntry.Look(this.still, this.flowing, this.tint), isGas, this.corrosive);
         this.content.declare(entry);

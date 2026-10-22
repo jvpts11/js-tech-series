@@ -34,6 +34,7 @@ import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.energy.Energy;
 import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.machine.MachineHistory;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.machine.MachineScreenTexts;
@@ -43,11 +44,13 @@ import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -66,12 +69,18 @@ import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
  * its slots, each lane's inputs, an arrow lit as far as its work has gone, and its outputs; its switch; and a sight
  * glass of its first tank, or of its stored energy.
  *
+ * <p>A click on the LCD turns it to its page of statistics and back: how much of the last minute the machine worked,
+ * and a chart of its last ten minutes, what it made a minute as green columns and what it drew as amber dots, told in
+ * full, with the last thing that jammed it, in the LCD's tooltip.
+ *
  * <p>An input slot locked to an item shows the item faded while it is empty; Ctrl and a click locks it to what it
  * holds, or unlocks it.
  */
 public final class StandardFace implements IMachineFace {
 
     private long peak;
+    /* Whether the LCD shows its page of statistics, the last ten minutes, rather than its readings. */
+    private boolean statistics;
 
     private static final List<String> MARKS = List.of("0", "1", "2", "3", "4");
     private static final int TILE = 8;
@@ -82,6 +91,10 @@ public final class StandardFace implements IMachineFace {
     private static final int PERCENT = 100;
     private static final int LABEL_ROOM = 22;
     private static final int METER_LABEL_ROOM = 36;
+    private static final int SECONDS_A_MINUTE = 60;
+    private static final int MINUTES = MachineHistory.READINGS * MachineHistory.READING_SECONDS / SECONDS_A_MINUTE;
+    private static final int TICKS_A_SECOND = 20;
+    private static final int RGB = 0xFFFFFF;
 
     @Override
     public void draw(final MachineView v) {
@@ -96,8 +109,15 @@ public final class StandardFace implements IMachineFace {
         MachineArt.engrave(g, v.font(), MachineArt.fit(v.font(), GameText.resolve(MachineScreenTexts.METER_RANGE.with(
                 energy.rate(mark))), METER_LABEL_ROOM), v.x(METER_X + METER_WIDTH / 2), v.y(METER_Y + METER_HEIGHT + 8),
                 true);
-        MachineArt.lcd(g, v.font(), v.x(LCD_X), v.y(LCD_Y), LCD_WIDTH, LCD_HEIGHT, lcdLines(machine),
-                machine.status() == MachineStatus.WORKING, true);
+        if (this.statistics) {
+            final MachineHistory history = v.menu().history();
+            MachineArt.lcdChart(g, v.font(), v.x(LCD_X), v.y(LCD_Y), LCD_WIDTH, LCD_HEIGHT,
+                    GameText.resolve(MachineScreenTexts.LCD_EFFICIENCY.with(history.efficiency())),
+                    GameText.resolve(MachineScreenTexts.LCD_SPAN.with(MINUTES)), history.made(), history.power());
+        } else {
+            MachineArt.lcd(g, v.font(), v.x(LCD_X), v.y(LCD_Y), LCD_WIDTH, LCD_HEIGHT, lcdLines(machine),
+                    machine.status() == MachineStatus.WORKING, true);
+        }
         processWindow(v);
         MachineArt.rocker(g, v.x(SWITCH_X), v.y(SWITCH_Y), machine.control().on());
         MachineArt.engrave(g, v.font(), GameText.resolve(MachineScreenTexts.ON), v.x(SWITCH_X + SWITCH_WIDTH + 4),
@@ -135,6 +155,10 @@ public final class StandardFace implements IMachineFace {
             v.press().accept(MachineMenu.SWITCH);
             return true;
         }
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && onLcd(x, y)) {
+            this.statistics = !this.statistics;
+            return true;
+        }
         return false;
     }
 
@@ -146,8 +170,11 @@ public final class StandardFace implements IMachineFace {
             return List.of(GameText.component(MachineScreenTexts.TIP_METER.with(energy.rate(machine.drawn()),
                     energy.rate(MachineScreenLayout.meterMark(this.peak)))));
         }
-        if (MachineScreenLayout.on(x, y, LCD_X - 3, LCD_Y - 3, LCD_WIDTH + 6, LCD_HEIGHT + 6)) {
-            return List.of(GameText.component(MachineBlockEntity.STATUS_LINE.with(machine.status().text())));
+        if (onLcd(x, y)) {
+            return this.statistics ? statisticsTooltip(v.menu().history(), machine) : List.of(
+                    GameText.component(MachineBlockEntity.STATUS_LINE.with(machine.status().text())),
+                    GameText.component(MachineScreenTexts.TIP_LCD_STATISTICS.with(MINUTES))
+                            .withStyle(ChatFormatting.DARK_GRAY));
         }
         if (MachineScreenLayout.on(x, y, SWITCH_X, SWITCH_Y, SWITCH_WIDTH, SWITCH_HEIGHT)) {
             return List.of(GameText.component(MachineScreenTexts.TIP_SWITCH.with(
@@ -157,6 +184,48 @@ public final class StandardFace implements IMachineFace {
             return glassTooltip(machine);
         }
         return List.of();
+    }
+
+    /*
+     * The page of statistics told in full: what it makes a minute and the most it made, what it draws now and on the
+     * whole, how much of the last minute it worked, and what last jammed it, amber.
+     */
+    private static List<Component> statisticsTooltip(final MachineHistory history, final MachineBlockEntity machine) {
+        final Energy energy = machine.power().energy();
+        final UnitFormatter format = UnitFormatter.forCurrentLocale();
+        final List<Component> lines = new ArrayList<>();
+        lines.add(GameText.component(MachineScreenTexts.TIP_STATISTICS.with(MINUTES)));
+        if (history.made().isEmpty()) {
+            lines.add(GameText.component(MachineScreenTexts.TIP_NO_READING.with(MachineHistory.READING_SECONDS))
+                    .withStyle(ChatFormatting.GRAY));
+        } else {
+            lines.add(GameText.component(MachineScreenTexts.TIP_MADE.with(format.compact(machine.perMinute()),
+                    format.compact(Math.max(machine.perMinute(), history.mostMade()))))
+                    .withStyle(ChatFormatting.GRAY));
+            lines.add(GameText.component(MachineScreenTexts.TIP_POWER.with(energy.rate(history.lastPower()),
+                    energy.rate(history.averagePower()))).withStyle(ChatFormatting.GRAY));
+        }
+        lines.add(GameText.component(MachineScreenTexts.TIP_EFFICIENCY.with(history.efficiency(),
+                history.workedTicks() / TICKS_A_SECOND)).withStyle(ChatFormatting.GRAY));
+        history.stop().ifPresent(stop -> lines.add(GameText.component(jam(history.stoppedSecondsAgo(), stop))
+                .withColor(MachineArt.PALETTE.get().lampWait() & RGB)));
+        lines.add(GameText.component(MachineScreenTexts.TIP_LCD_READINGS).withStyle(ChatFormatting.DARK_GRAY));
+        return lines;
+    }
+
+    /* What last jammed it, {@code seconds} ago, in seconds under a minute and in minutes after. */
+    private static Text jam(final int seconds, final MachineStatus stop) {
+        if (seconds < SECONDS_A_MINUTE) {
+            return MachineScreenTexts.TIP_JAM_SECONDS.with(seconds, stop.text());
+        }
+        final int minutes = seconds / SECONDS_A_MINUTE;
+        return minutes == 1 ? MachineScreenTexts.TIP_JAM_MINUTE.with(stop.text())
+                : MachineScreenTexts.TIP_JAM_MINUTES.with(minutes, stop.text());
+    }
+
+    /* Whether ({@code x}, {@code y}) is on the LCD or its bezel. */
+    private static boolean onLcd(final double x, final double y) {
+        return MachineScreenLayout.on(x, y, LCD_X - 3, LCD_Y - 3, LCD_WIDTH + 6, LCD_HEIGHT + 6);
     }
 
     /* The LCD's two lines: what it made the last minute, then how far its work is and what it draws, or its state. */

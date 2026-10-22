@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.example;
 
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.signal.Signals;
 import dev.jstech.example.ExampleContent;
 import dev.jstech.example.ExampleSettings;
 import dev.jstech.example.ExampleState;
@@ -168,8 +169,14 @@ public final class ExampleGameTests {
         final LevelSensorPart sensor = new LevelSensorPart();
         helper.assertTrue(cable.addPart(Direction.EAST, sensor), "the sensor mounts on the cable's face");
 
-        helper.succeedWhen(() -> helper.assertTrue(sensor.signal() == LevelSensorPart.FULL / 2,
-                "half full reads " + LevelSensorPart.FULL / 2 + ": " + sensor.signal()));
+        final BlockPos at = helper.absolutePos(RUN.get(0));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(sensor.signal() == LevelSensorPart.FULL / 2,
+                    "half full reads " + LevelSensorPart.FULL / 2 + ": " + sensor.signal());
+            final int read = Signals.strengthAt(helper.getLevel(), at, Direction.EAST);
+            helper.assertTrue(read == LevelSensorPart.FULL / 2,
+                    "and a reader of sensors reads it on the cable's face: " + read);
+        });
     }
 
     @GameTest(template = ARENA)

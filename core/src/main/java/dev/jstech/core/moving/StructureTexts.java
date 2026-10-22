@@ -32,6 +32,8 @@ public final class StructureTexts {
             "The structure cannot be set down: the %s at %s is in the way");
     public static final TextKey OUT_OF_WORLD = TextKey.of("jscore.moving.refused.out_of_world",
             "The structure cannot be set down out of the world's height");
+    public static final TextKey BORN_OUT_OF_WORLD = TextKey.of("jscore.moving.refused.born_out_of_world",
+            "The structure would stand out of the world's height");
     public static final TextKey NOT_LOADED = TextKey.of("jscore.moving.refused.not_loaded",
             "Those blocks are not all loaded");
     public static final TextKey LAND_NOT_LOADED = TextKey.of("jscore.moving.refused.land_not_loaded",

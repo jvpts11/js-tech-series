@@ -24,9 +24,12 @@ import dev.jstech.core.moving.TurnAboutMotion;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
+import dev.jstech.core.protection.PlayerLimits;
+import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.tests.JsTests;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ import java.util.stream.StreamSupport;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -81,6 +85,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -105,6 +110,8 @@ public final class MovingStructureGameTests {
     private static final String ARENA = "empty";
     /* How close, in blocks, two places count as one. */
     private static final double CLOSE = 1.0e-3;
+    private static final TextKey LOADER_ABOARD = TextKey.of("jstests.moving.loader_aboard",
+            "A loader aboard keeps the world under it loaded");
 
     private MovingStructureGameTests() {
     }
@@ -137,6 +144,99 @@ public final class MovingStructureGameTests {
         helper.assertTrue(Math.abs(box.getXsize() - 2) < CLOSE && Math.abs(box.getYsize() - 1) < CLOSE,
                 "the structure fills the box its blocks filled: " + box);
         MovingStructures.takeAway(structure);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = "jscore_moving_assembly")
+    public static void assemblyFor_countsAgainstThePlayersLimitUntilItGoes(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final UUID player = UUID.randomUUID();
+        final int most = ProtectionBalance.structuresPerPlayer();
+        ProtectionBalance.setStructuresPerPlayer(1);
+        helper.setBlock(new BlockPos(2, 3, 2), Blocks.STONE);
+        helper.setBlock(new BlockPos(5, 3, 5), Blocks.STONE);
+        warm(level);
+        try {
+            final StructureResult first = MovingStructures.assembleFor(level, helper.absolutePos(new BlockPos(2, 3, 2)),
+                    helper.absolutePos(new BlockPos(2, 3, 2)), player);
+            helper.assertTrue(first.ok() && first.structure().maker().orElse(null) == player,
+                    "the first is made, and is theirs: " + refusal(first));
+            helper.assertTrue(PlayerLimits.count(level.getServer(), player, PlayerLimits.MOVING_STRUCTURES) == 1,
+                    "and counted against their limit");
+            final StructureResult second = MovingStructures.assembleFor(level,
+                    helper.absolutePos(new BlockPos(5, 3, 5)), helper.absolutePos(new BlockPos(5, 3, 5)), player);
+            helper.assertTrue(!second.ok() && second.refusal() instanceof Text.Translated said
+                    && said.key() == PlayerLimits.REACHED, "a second goes past their limit of one: "
+                    + refusal(second));
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(5, 3, 5));
+            MovingStructures.takeAway(first.structure());
+            helper.assertTrue(PlayerLimits.count(level.getServer(), player, PlayerLimits.MOVING_STRUCTURES) == 0,
+                    "taken away, it is given back to their count");
+            final StructureResult again = MovingStructures.assembleFor(level,
+                    helper.absolutePos(new BlockPos(5, 3, 5)), helper.absolutePos(new BlockPos(5, 3, 5)), player);
+            helper.assertTrue(again.ok(), "so another is made: " + refusal(again));
+            MovingStructures.takeAway(again.structure());
+            helper.setBlock(new BlockPos(1, 3, 1), Blocks.STONE);
+            final StructureResult nobodys = MovingStructures.assemble(level,
+                    helper.absolutePos(new BlockPos(1, 3, 1)), helper.absolutePos(new BlockPos(1, 3, 1)));
+            helper.assertTrue(nobodys.ok() && nobodys.structure().maker().isEmpty(),
+                    "one made for nobody is nobody's, and counts for nobody");
+            MovingStructures.takeAway(nobodys.structure());
+        } finally {
+            ProtectionBalance.setStructuresPerPlayer(most);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = "jscore_moving_assembly", timeoutTicks = 200)
+    public static void born_standsOfItsTemplateWithItsBlocksNeverInTheWorld(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        // A template of two blocks, read from the arena and the arena cleared: what a hangar holds of a rocket.
+        helper.setBlock(new BlockPos(2, 3, 2), Blocks.GLASS);
+        helper.setBlock(new BlockPos(3, 3, 2), Blocks.STONE);
+        final StructureTemplate template = new StructureTemplate();
+        template.fillFromWorld(level, helper.absolutePos(new BlockPos(2, 3, 2)), new Vec3i(2, 1, 1), false,
+                Blocks.STRUCTURE_VOID);
+        helper.setBlock(new BlockPos(2, 3, 2), Blocks.AIR);
+        helper.setBlock(new BlockPos(3, 3, 2), Blocks.AIR);
+        warm(level);
+        final Vec3 at = helper.absoluteVec(new Vec3(5, 4, 5));
+        final StructureResult made = MovingStructures.born(level, template, at);
+        helper.assertTrue(made.ok() && made.blocks() == 2, "a template of two blocks is born a structure: "
+                + refusal(made));
+        final MovingStructure structure = made.structure();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(structure.ready() && !structure.arriving(),
+                        "its plot has loaded and its blocks are laid in it"))
+                .thenExecute(() -> {
+                    helper.assertTrue(find(level, structure, state -> state.is(Blocks.GLASS)) != null
+                            && find(level, structure, state -> state.is(Blocks.STONE)) != null,
+                            "both its blocks are in its plot of the yard");
+                    helper.assertTrue(structure.blocks() == 2, "and it is made of the two: " + structure.blocks());
+                    helper.assertBlockPresent(Blocks.AIR, new BlockPos(5, 4, 5));
+                    final AABB box = structure.worldBox();
+                    helper.assertTrue(Math.abs(box.minY - at.y) < CLOSE
+                            && Math.abs((box.minX + box.maxX) / 2 - at.x) < CLOSE,
+                            "it stands with the middle of its bottom where it was born: " + box);
+                    MovingStructures.takeAway(structure);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = "jscore_moving_assembly")
+    public static void born_refusesATemplateOfNothingOrOfWhatStaysPut(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final StructureResult empty = MovingStructures.born(level, new StructureTemplate(),
+                helper.absoluteVec(new Vec3(4, 4, 4)));
+        helper.assertTrue(!empty.ok() && empty.refusal() instanceof Text.Translated said
+                && said.key() == StructureTexts.NOTHING, "a template of nothing is born nothing: " + refusal(empty));
+        helper.setBlock(new BlockPos(2, 3, 2), Blocks.BEDROCK);
+        final StructureTemplate bedrock = new StructureTemplate();
+        bedrock.fillFromWorld(level, helper.absolutePos(new BlockPos(2, 3, 2)), new Vec3i(1, 1, 1), false,
+                Blocks.STRUCTURE_VOID);
+        final StructureResult kept = MovingStructures.born(level, bedrock, helper.absoluteVec(new Vec3(4, 4, 4)));
+        helper.assertTrue(!kept.ok() && kept.refusal() instanceof Text.Translated said
+                && said.key() == StructureTexts.IMMOVABLE, "and bedrock stays put: " + refusal(kept));
         helper.succeed();
     }
 
@@ -726,7 +826,7 @@ public final class MovingStructureGameTests {
         final ServerLevel level = helper.getLevel();
         final MovingStructure floor = floor(helper);
         final BlockPos aboard = find(level, floor, state -> !state.isAir());
-        ChunkLoaders.load(level, aboard, UUID.randomUUID(), new ChunkPos(aboard), true);
+        ChunkLoaders.load(level, aboard, UUID.randomUUID(), LOADER_ABOARD, new ChunkPos(aboard), true);
         helper.startSequence()
                 .thenExecuteAfter(25, () -> helper.assertTrue(floor.keepsItsPlace(),
                         "with a loader aboard the structure keeps the world under it loaded"))

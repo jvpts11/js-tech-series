@@ -26,6 +26,11 @@ if (!Protection.may(Actor.forOwner(owner), ProtectedAction.BREAK, level, target)
 - The world's own work stays inside the claim it comes from: a fluid may flow, and a fire spread, within one claim or
   out of one into unclaimed land, never into a claim from outside. FTB Chunks lets an explosion in only where the
   claiming team allows explosions.
+- The Core's own work asks it everywhere: every fluid of the Core, a mod's declared ones and the materials' liquids,
+  asks `FLOW` before it flows into a place, as the world coming from where it flows from; a projectile of the Core
+  asks `SHOOT` as its shooter (the world, for one shot by nobody or by no player) before it hits anything, and is
+  spent harmless where it may not; a moving structure's blows break a block only where its maker may `BREAK`, or the
+  world coming from where the structure stands, for one made by nobody; explosions ask `EXPLODE` and fires `BURN`.
 - The question does not post the game's own events; work that a player could do also posts them as the player would
   (a robot breaking a block posts the block break event under its owner's stand-in), so a protection mod that only
   listens to the events still sees it.
@@ -100,7 +105,15 @@ PlayerLimits.giveBack(server, owner, CRANES);
 ```
 
 The Core's own: **robots** (`protection.robots_per_player`, 16 by default). `RobotEntity.giveTo(owner)` takes one and
-says no at the limit; a robot killed or discarded gives it back, one only unloaded with its chunk does not.
+says no at the limit; a robot killed or discarded gives it back, one only unloaded with its chunk does not. **Moving
+structures** (`protection.structures_per_player`, 32 by default): one made for a player
+(`MovingStructures.assembleFor`) takes one, and gives it back as it is set down or taken away
+([Moving structures](MOVING_STRUCTURES.md#making-one)). **Large edits under way** (`protection.edits_per_player`, 4 by
+default): `WorldEdits.planFor` asks for one and the edit gives it back as it ends ([World](WORLD.md#large-edits)).
+
+A kit whose things end with the server, as large edits do, keeps no count with the world, which would outlive them
+after a crash: it counts its own and asks `PlayerLimits.allows(player, limit, has)`, and tells a player at the limit
+`PlayerLimits.reached(limit, has)`.
 
 ## The audit log
 

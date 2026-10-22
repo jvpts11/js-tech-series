@@ -182,6 +182,28 @@ public final class MachineScreenTexts {
             "A battery charges while the line keeps it full, and runs the machine when the line goes down");
     public static final TextKey TIP_ACCESS = TextKey.of("jscore.machine.screen.tip.access",
             "Who may use it besides its owner: %s. Only its owner turns this key");
+    public static final TextKey LCD_EFFICIENCY = TextKey.of("jscore.machine.screen.lcd.efficiency", "EFF %s%%");
+    public static final TextKey LCD_SPAN = TextKey.of("jscore.machine.screen.lcd.span", "%sM");
+    public static final TextKey TIP_LCD_STATISTICS = TextKey.of("jscore.machine.screen.tip.lcd_statistics",
+            "Click: the last %s minutes");
+    public static final TextKey TIP_LCD_READINGS = TextKey.of("jscore.machine.screen.tip.lcd_readings",
+            "Click: back to the readings");
+    public static final TextKey TIP_STATISTICS = TextKey.of("jscore.machine.screen.tip.statistics",
+            "The last %s minutes");
+    public static final TextKey TIP_NO_READING = TextKey.of("jscore.machine.screen.tip.no_reading",
+            "No reading yet: one comes every %s s");
+    public static final TextKey TIP_MADE = TextKey.of("jscore.machine.screen.tip.made",
+            "Made: %s a minute, at most %s");
+    public static final TextKey TIP_POWER = TextKey.of("jscore.machine.screen.tip.power",
+            "Power: %s, %s on the whole");
+    public static final TextKey TIP_EFFICIENCY = TextKey.of("jscore.machine.screen.tip.efficiency",
+            "Efficiency: %s%%, working %s s of the last minute");
+    public static final TextKey TIP_JAM_SECONDS = TextKey.of("jscore.machine.screen.tip.jam_seconds",
+            "A jam %s s ago: %s");
+    public static final TextKey TIP_JAM_MINUTE = TextKey.of("jscore.machine.screen.tip.jam_minute",
+            "A jam a minute ago: %s");
+    public static final TextKey TIP_JAM_MINUTES = TextKey.of("jscore.machine.screen.tip.jam_minutes",
+            "A jam %s minutes ago: %s");
 
     private MachineScreenTexts() {
     }

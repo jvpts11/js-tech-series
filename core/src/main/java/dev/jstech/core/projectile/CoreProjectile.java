@@ -11,6 +11,9 @@ import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.Wind;
 import dev.jstech.core.dimension.Winds;
+import dev.jstech.core.protection.Actor;
+import dev.jstech.core.protection.ProtectedAction;
+import dev.jstech.core.protection.Protection;
 import dev.jstech.core.room.SealedRooms;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -19,6 +22,8 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -31,7 +36,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * A projectile any mod builds on: it flies as its {@link #spec() spec} says, falling by the pull of the dimension it
  * flies in, harms and pushes what it hits, sets it burning, passes through as many things as it pierces, and ends
- * against a block, in the last thing it hits, or in a blast. Whoever fired it is credited with the harm.
+ * against a block, in the last thing it hits, or in a blast. Whoever fired it is credited with the harm, and where a
+ * protection keeps its shooter from shooting ({@link ProtectedAction#SHOOT}), it is spent there, harming nothing.
  *
  * <p>One with a mass flies by real ballistics: the air where it flies holds it back by its density, thin high up and
  * none in a vacuum, the water far more, and the wind carries it. One that gets through blocks passes a block as hard
@@ -122,6 +128,10 @@ public abstract class CoreProjectile extends ThrowableProjectile {
         }
         final ProjectileSpec spec = spec();
         final Entity target = hit.getEntity();
+        if (!mayHit(target.blockPosition())) {
+            discard();
+            return;
+        }
         target.hurt(damageSources().thrown(this, getOwner()), spec.damage());
         if (spec.fireSeconds() > 0.0F) {
             target.igniteForSeconds(spec.fireSeconds());
@@ -145,7 +155,12 @@ public abstract class CoreProjectile extends ThrowableProjectile {
             return;
         }
         super.onHitBlock(hit);
-        if (!level().isClientSide() && !getThrough(hit.getBlockPos())) {
+        if (level().isClientSide()) {
+            return;
+        }
+        if (!mayHit(hit.getBlockPos())) {
+            discard();
+        } else if (!getThrough(hit.getBlockPos())) {
             end();
         }
     }
@@ -181,6 +196,20 @@ public abstract class CoreProjectile extends ThrowableProjectile {
         blocksThrough.add(pos.asLong());
         setDeltaMovement(getDeltaMovement().scale(Ballistics.throughScale(before, after)));
         return after > 0.0F || hardness == 0.0F;
+    }
+
+    /*
+     * Whether it may hit what is at {@code pos}: no protection stops its shooter shooting there. One that may not is
+     * spent against the claim's edge, harming nothing, getting through nothing and blowing nothing up.
+     */
+    private boolean mayHit(final BlockPos pos) {
+        if (!(level() instanceof ServerLevel server)) {
+            return true;
+        }
+        final Entity shooter = getOwner();
+        final Actor actor = shooter instanceof ServerPlayer player ? Actor.of(player)
+                : Actor.world(shooter == null ? null : shooter.blockPosition());
+        return Protection.may(actor, ProtectedAction.SHOOT, server, pos);
     }
 
     /* How dense the air is where it flies: a sealed room's own, or the dimension's at its height. */

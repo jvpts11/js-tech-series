@@ -12,6 +12,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.JsonOps;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
@@ -52,11 +53,12 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * The editor of a screen declared in a file, on the screen itself, in a development run: opened from the inspector
- * with Ctrl+E. A click chooses a component; dragged it moves (in a stack by its margin, in a row or a column to the
- * place of the one it is dropped on), its corners resize it; the panel on the left names it, binds it and sets one
- * more of its fields, cycles the screen's style, copies it and takes it out; Add puts a kind of component where the
- * pointer is. Every change is taken by the screen at once and written to the mod's source file, and Undo and Redo go
- * back and forth through them.
+ * with Ctrl+E. A click chooses a component; dragged it moves (in a stack by its margin, pulled onto the guides of the
+ * others within reach, in a row or a column to the place of the one it is dropped on), its corners resize it, and
+ * guides show where it lines up with the others; its card, beside the screen at its height, holds only what it has
+ * (its name, what it is bound to and the fields its kind declares), cycles the screen's style, copies it and takes it
+ * out; Add puts a kind of component where the pointer is. Every change is taken by the screen at once and written to
+ * the mod's source file, and Undo and Redo go back and forth through them.
  */
 public final class ScreenEditor {
 
@@ -151,11 +153,16 @@ public final class ScreenEditor {
         }
     }
 
-    /** Adds a component of the kind {@code kind} where the pointer last was over the screen, as Add does; for a test. */
+    /** Adds a component of kind {@code kind} where the pointer last was over the screen, as Add does, for a test. */
     public static void add(final String kind) {
         if (open != null) {
             open.addAtPointer(kind);
         }
+    }
+
+    /** The keys of the fields on the chosen component's card, in order; for a test. */
+    public static List<String> cardFields() {
+        return open == null ? List.of() : List.copyOf(open.keys);
     }
 
     /** The box on the game's screen of the component written at {@code path} of the file's tree; for a test. */
@@ -253,14 +260,15 @@ public final class ScreenEditor {
         private final Deque<String> redone = new ArrayDeque<>();
         private final Panel bar = new Panel();
         private final List<Button> barButtons = new ArrayList<>();
-        private final Panel fields = new Panel();
         private final Panel adder = new Panel();
-        private final TextField[] boxes = new TextField[ScreenEditorLayout.FIELDS];
-        private final String[] keys = new String[ScreenEditorLayout.FIELDS];
+        /* The chosen component's fields on its card, and the keys they write, made again as the kind chosen changes. */
+        private final List<TextField> boxes = new ArrayList<>();
+        private final List<String> keys = new ArrayList<>();
         private final TextField search = new TextField(32);
         private final Button styleButton;
         private final Button duplicate;
         private final Button delete;
+        private Panel fields = new Panel();
         private JsonObject json;
         private @Nullable List<Integer> selected;
         private @Nullable InspectorModel model;
@@ -291,14 +299,9 @@ public final class ScreenEditor {
             })));
             barButtons.add(bar.add(new Button(() -> label(DeveloperTexts.SAVE), this::write)));
             barButtons.add(bar.add(new Button(() -> CommonComponents.GUI_DONE.getString(), () -> open = null)));
-            for (int i = 0; i < boxes.length; i++) {
-                final int index = i;
-                boxes[i] = fields.add(new TextField(256));
-                boxes[i].setOnCommit(value -> setField(keys[index], value));
-            }
-            styleButton = fields.add(new Button(this::styleLabel, this::nextStyle));
-            duplicate = fields.add(new Button(() -> label(DeveloperTexts.DUPLICATE), this::duplicate));
-            delete = fields.add(new Button(() -> label(DeveloperTexts.DELETE), this::delete));
+            styleButton = new Button(this::styleLabel, this::nextStyle);
+            duplicate = new Button(() -> label(DeveloperTexts.DUPLICATE), this::duplicate);
+            delete = new Button(() -> label(DeveloperTexts.DELETE), this::delete);
             adder.add(search);
         }
 
@@ -391,13 +394,16 @@ public final class ScreenEditor {
                 return;
             }
             if (inStack(next, selected)) {
+                // Moved freely, it is pulled onto the guides of the others within reach; Alt holds it where it is.
+                final int[] pull = Screen.hasAltDown() ? new int[2] : AlignmentGuides.pull(new int[] {
+                    startBox[0] + dx, startBox[1] + dy, startBox[2], startBox[3]}, model().boxesBut(selected), REACH);
                 ScreenJson.at(next, selected).ifPresent(component -> {
                     final int[] margin = margin(component);
                     final JsonArray moved = new JsonArray();
-                    moved.add(Math.max(0, margin[0] + dy));
+                    moved.add(Math.max(0, margin[0] + dy + pull[1]));
                     moved.add(margin[1]);
                     moved.add(margin[2]);
-                    moved.add(Math.max(0, margin[3] + dx));
+                    moved.add(Math.max(0, margin[3] + dx + pull[0]));
                     component.add("margin", moved);
                 });
                 apply(next, false);
@@ -441,7 +447,10 @@ public final class ScreenEditor {
             }
             g.pose().pushPose();
             g.pose().translate(0, 0, IN_FRONT);
-            chosenBox().ifPresent(box -> chosen(g, box, colours));
+            chosenBox().ifPresent(box -> {
+                guides(g, box, colours);
+                chosen(g, box, colours);
+            });
             // Each button as wide as its label needs in the language chosen, never narrower than its least.
             final int[] widths = new int[barButtons.size()];
             for (int i = 0; i < widths.length; i++) {
@@ -473,37 +482,47 @@ public final class ScreenEditor {
             g.pose().popPose();
         }
 
-        /* The panel of the chosen component: its kind and line, three fields, the style, its box, and two buttons. */
+        /*
+         * The card of the chosen component, beside the screen at the component's height: its kind and line, the
+         * fields its kind has, the style, its box, and two buttons.
+         */
         private void panel(final GuiGraphics g, final Font font, final StyleSkin skin, final UiContext ctx,
                            final InspectorPalette.Colours colours) {
             final int left = ScreenEditorLayout.PANEL_X;
-            final int top = ScreenEditorLayout.PANEL_Y;
+            final int top = panelTop();
             final int pad = ScreenEditorLayout.PAD;
             final int width = panelWidth();
             final int inner = width - 2 * pad;
-            skin.window(g, left, top, width, ScreenEditorLayout.PANEL_HEIGHT);
+            final int count = boxes.size();
+            skin.window(g, left, top, width, ScreenEditorLayout.panelHeight(count));
             final Optional<BuiltNode> node = model().nodeAt(selected);
             Draw.text(g, font, Texts.clip(font, node.map(model()::name).orElse(""), inner), left + pad,
                     top + ScreenEditorLayout.TITLE_Y, colours.text());
             Draw.textScaled(g, font, Texts.clip(font, node.flatMap(model()::where).orElse(""),
                     Math.round(inner / SMALL)), left + pad, top + ScreenEditorLayout.FILE_Y, colours.dim(), SMALL);
-            for (int i = 0; i < boxes.length; i++) {
-                Draw.textScaled(g, font, fieldLabel(i), left + pad, top + ScreenEditorLayout.FIELDS_Y
-                        + i * ScreenEditorLayout.FIELD_STEP, colours.text(), SMALL);
-                boxes[i].setBounds(left + pad, top + ScreenEditorLayout.fieldY(i), inner,
+            for (int i = 0; i < count; i++) {
+                Draw.textScaled(g, font, Texts.clip(font, fieldLabel(i), Math.round(inner / SMALL)), left + pad,
+                        top + ScreenEditorLayout.FIELDS_Y + i * ScreenEditorLayout.FIELD_STEP, colours.text(), SMALL);
+                boxes.get(i).setBounds(left + pad, top + ScreenEditorLayout.fieldY(i), inner,
                         ScreenEditorLayout.FIELD_HEIGHT);
             }
-            styleButton.setBounds(left + pad, top + ScreenEditorLayout.STYLE_Y, inner,
+            styleButton.setBounds(left + pad, top + ScreenEditorLayout.styleY(count), inner,
                     ScreenEditorLayout.BUTTON_HEIGHT);
             chosenBox().ifPresent(box -> Draw.textScaled(g, font, GameText.resolve(DeveloperTexts.POSITION.with(
                     box[0] - view.left(), box[1] - view.top(), box[2], box[3])), left + pad,
-                    top + ScreenEditorLayout.POSITION_Y, colours.text(), SMALL));
+                    top + ScreenEditorLayout.positionY(count), colours.text(), SMALL));
             final int half = (inner - ScreenEditorLayout.BUTTON_GAP) / 2;
-            duplicate.setBounds(left + pad, top + ScreenEditorLayout.ACTIONS_Y, half,
+            duplicate.setBounds(left + pad, top + ScreenEditorLayout.actionsY(count), half,
                     ScreenEditorLayout.BUTTON_HEIGHT);
-            delete.setBounds(left + pad + half + ScreenEditorLayout.BUTTON_GAP, top + ScreenEditorLayout.ACTIONS_Y,
-                    half, ScreenEditorLayout.BUTTON_HEIGHT);
+            delete.setBounds(left + pad + half + ScreenEditorLayout.BUTTON_GAP, top
+                    + ScreenEditorLayout.actionsY(count), half, ScreenEditorLayout.BUTTON_HEIGHT);
             fields.render(g, ctx);
+        }
+
+        /* Where the card's top stands: at the chosen component's height, on the screen. */
+        private int panelTop() {
+            return ScreenEditorLayout.panelTop(chosenBox().map(box -> box[1]).orElse(ScreenEditorLayout.PANEL_Y),
+                    boxes.size(), screen.height);
         }
 
         /* The kinds to add, those the search names, and how to add one. */
@@ -526,6 +545,20 @@ public final class ScreenEditor {
             }
             Draw.textScaled(g, font, label(DeveloperTexts.ADD_HINT), left + pad, top + ScreenEditorLayout.ADD_HEIGHT
                     - pad - 7, colours.dim(), SMALL);
+        }
+
+        /* The lines along which the chosen component lines up with the others, each over both. */
+        private void guides(final GuiGraphics g, final int[] box, final InspectorPalette.Colours colours) {
+            if (selected == null) {
+                return;
+            }
+            for (final AlignmentGuides.Guide guide : AlignmentGuides.of(box, model().boxesBut(selected))) {
+                if (guide.down()) {
+                    g.fill(guide.at(), guide.from(), guide.at() + 1, guide.to(), colours.guide());
+                } else {
+                    g.fill(guide.from(), guide.at(), guide.to(), guide.at() + 1, colours.guide());
+                }
+            }
         }
 
         /* The chosen component's box drawn round in dots, and its eight squares. */
@@ -563,34 +596,57 @@ public final class ScreenEditor {
             return Math.abs(x - x1) <= REACH && Math.abs(y - y1) <= REACH;
         }
 
-        /* The names of the chosen component's three fields: its id, what it is bound to, and one more of its own. */
+        /*
+         * The chosen component's card: its id, what it is bound to, and the fields its kind declares, as many as the
+         * card holds, each with what the file says of it; made again when the fields it has change.
+         */
         void fillFields() {
-            keys[0] = "id";
-            keys[1] = "bind";
-            keys[2] = "text";
             final Optional<JsonObject> component = selected == null ? Optional.empty()
                     : ScreenJson.at(json, selected);
-            component.ifPresent(found -> {
-                for (final String key : found.keySet()) {
-                    if (!NOT_A_FIELD.contains(key) && found.get(key).isJsonPrimitive()) {
-                        keys[2] = key;
-                        break;
-                    }
+            final List<String> wanted = fieldKeys(component);
+            if (!wanted.equals(keys)) {
+                keys.clear();
+                keys.addAll(wanted);
+                boxes.clear();
+                fields = new Panel();
+                for (final String key : keys) {
+                    final TextField box = fields.add(new TextField(256));
+                    box.setOnCommit(value -> setField(key, value));
+                    boxes.add(box);
                 }
-            });
-            for (int i = 0; i < boxes.length; i++) {
-                final String key = keys[i];
-                boxes[i].set(component.map(found -> found.get(key)).filter(JsonElement::isJsonPrimitive)
+                fields.add(styleButton);
+                fields.add(duplicate);
+                fields.add(delete);
+            }
+            for (int i = 0; i < keys.size(); i++) {
+                final String key = keys.get(i);
+                boxes.get(i).set(component.map(found -> found.get(key)).filter(JsonElement::isJsonPrimitive)
                         .map(JsonElement::getAsString).orElse(""));
             }
+        }
+
+        /*
+         * The keys of a component's card: its id and what it is bound to, then each field its kind declares, read from
+         * the kind's own codec, that the file leaves out or writes as a plain value; a list or a table is the file's.
+         */
+        private List<String> fieldKeys(final Optional<JsonObject> component) {
+            final List<String> out = new ArrayList<>(List.of("id", "bind"));
+            component.map(found -> found.get("type")).filter(JsonElement::isJsonPrimitive)
+                    .flatMap(type -> ElementTypes.get(kindId(type.getAsString())))
+                    .ifPresent(kind -> kind.props().keys(JsonOps.INSTANCE).map(JsonElement::getAsString)
+                            .filter(key -> !NOT_A_FIELD.contains(key) && !out.contains(key))
+                            .filter(key -> component.map(found -> found.get(key)).map(JsonElement::isJsonPrimitive)
+                                    .orElse(true))
+                            .forEach(out::add));
+            return List.copyOf(out.subList(0, Math.min(out.size(), ScreenEditorLayout.MOST_FIELDS)));
         }
 
         private String fieldLabel(final int index) {
             return switch (index) {
                 case 0 -> label(DeveloperTexts.NAME);
                 case 1 -> label(DeveloperTexts.BOUND_TO);
-                default -> keys[2] == null ? "" : keys[2].substring(0, 1).toUpperCase(Locale.ROOT)
-                        + keys[2].substring(1).replace('_', ' ');
+                default -> keys.get(index).substring(0, 1).toUpperCase(Locale.ROOT)
+                        + keys.get(index).substring(1).replace('_', ' ');
             };
         }
 
@@ -781,9 +837,9 @@ public final class ScreenEditor {
         }
 
         private boolean onPanel(final double x, final double y) {
+            final int top = panelTop();
             return selected != null && x >= ScreenEditorLayout.PANEL_X && x < ScreenEditorLayout.PANEL_X
-                    + panelWidth() && y >= ScreenEditorLayout.PANEL_Y && y < ScreenEditorLayout.PANEL_Y
-                    + ScreenEditorLayout.PANEL_HEIGHT;
+                    + panelWidth() && y >= top && y < top + ScreenEditorLayout.panelHeight(boxes.size());
         }
 
         private boolean onAdder(final double x, final double y) {

@@ -22,6 +22,7 @@ public final class ExampleTexts {
     public static final TextKey FLUID_PIPE_JOB = TextKey.of("jsexample.cable.fluid",
             "Fluid line: carries oil and water between tanks");
     public static final TextKey SENSOR_READS = TextKey.of("jsexample.sensor.reads", "Reads %s of 15");
+    public static final TextKey SENSOR_FULLNESS = TextKey.of("jsexample.sensor.fullness", "How full the block is");
     public static final TextKey LOGBOOK_TITLE = TextKey.of("jsexample.logbook.title", "Logbook");
     public static final TextKey LOGBOOK_MADE = TextKey.of("jsexample.logbook.made",
             "Energy made on this server: %s FE");

@@ -109,7 +109,8 @@ public final class SpacePersistorClientTests {
         final BlockPos source = at.east(16 * OTHERS_DX).below();
         final UUID stranger = UUID.randomUUID();
         for (int dz = -1; dz <= 1; dz++) {
-            ChunkLoaders.load(level, source, stranger, new ChunkPos(own.x + OTHERS_DX, own.z + dz), false);
+            ChunkLoaders.load(level, source, stranger, SpacePersistor.REASON, new ChunkPos(own.x + OTHERS_DX,
+                    own.z + dz), false);
         }
         return source;
     }

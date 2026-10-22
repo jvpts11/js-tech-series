@@ -63,7 +63,8 @@ public final class MovingStructureRenderer extends EntityRenderer<MovingStructur
                                 final double y, final double z) {
         final ClientStructure structure = ClientMovingStructures.of(entity);
         return structure != null && structure.ready() && !StructureHandOffs.hidden(structure)
-                && frustum.isVisible(structure.drawnBox());
+                && frustum.isVisible(structure.drawnBox())
+                && StructureLayers.withinReach(structure.drawnBox(), new Vec3(x, y, z));
     }
 
     @Override

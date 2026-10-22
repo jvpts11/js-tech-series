@@ -7,11 +7,15 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import dev.jstech.core.protection.PlayerLimits;
+import dev.jstech.core.protection.ProtectionBalance;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.world.edit.EditPlan;
 import dev.jstech.core.world.edit.RegionSnapshot;
 import dev.jstech.core.world.edit.WorldEdit;
 import dev.jstech.core.world.edit.WorldEdits;
 import dev.jstech.tests.JsTests;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -114,6 +118,38 @@ public final class WorldEditGameTests {
                             "and the stopped edit set nothing more");
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void editsForAPlayer_stopAtTheirLimitAndComeBackAsOneEnds(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final UUID player = UUID.randomUUID();
+        final int most = ProtectionBalance.editsPerPlayer();
+        ProtectionBalance.setEditsPerPlayer(1);
+        try {
+            final EditPlan.Builder one = EditPlan.builder();
+            one.set(farCorner(), Blocks.GLASS.defaultBlockState());
+            final EditPlan plan = one.build();
+            final Optional<WorldEdit> first = WorldEdits.applyFor(level, player, plan);
+            helper.assertTrue(first.isPresent() && first.get().player() == player
+                    && WorldEdits.underWayFor(player) == 1, "the first is under way, counted for them");
+            helper.assertTrue(WorldEdits.applyFor(level, player, plan).isEmpty()
+                    && WorldEdits.underWayFor(player) == 1, "a second goes past their limit of one");
+            helper.assertTrue(PlayerLimits.reached(PlayerLimits.LARGE_EDITS, 1) instanceof Text.Translated said
+                    && said.key() == PlayerLimits.REACHED, "and they are told so");
+            first.get().stop();
+            helper.assertTrue(WorldEdits.underWayFor(player) == 0, "stopped, it no longer counts");
+            final Optional<WorldEdit> again = WorldEdits.applyFor(level, player, plan);
+            helper.assertTrue(again.isPresent(), "so another may start");
+            again.get().stop();
+            final WorldEdit nobodys = WorldEdits.apply(level, plan);
+            helper.assertTrue(nobodys.player() == null && WorldEdits.underWayFor(player) == 0,
+                    "an edit made for nobody counts for nobody");
+            nobodys.stop();
+        } finally {
+            ProtectionBalance.setEditsPerPlayer(most);
+        }
+        helper.succeed();
     }
 
     /* A corner far out in the sky, at a place of its own each run, its chunks never touched before. */

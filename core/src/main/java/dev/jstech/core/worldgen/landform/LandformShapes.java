@@ -10,7 +10,8 @@ package dev.jstech.core.worldgen.landform;
 /**
  * The shapes of landforms, as heights over or under the ground at a distance from their middle: a crater's bowl, raised
  * rim and central peak; a volcano's cone, broad and gentle for a shield, steep for a stratovolcano, with its summit
- * crater; a mesa's flat top and cliffs; the ridges of dunes; the cross-section of a canyon. In blocks; pure.
+ * crater; a mesa's flat top and cliffs; the ridges of dunes; the cross-sections of a canyon and of a rille; a glacier's
+ * thickness down its length. In blocks; pure.
  */
 public final class LandformShapes {
 
@@ -24,6 +25,8 @@ public final class LandformShapes {
     private static final double STRATO_POWER = 1.15;
     /* How the lee side of a dune falls steeper than its windward side rises. */
     private static final double LEE = 0.7;
+    /* Over what share of its length a glacier's head rises out of the land. */
+    private static final double GLACIER_HEAD = 0.2;
 
     private LandformShapes() {
     }
@@ -102,6 +105,36 @@ public final class LandformShapes {
         }
         final double floor = half * 0.4;
         return out <= floor ? depth : depth * Math.sqrt(1 - (out - floor) / (half - floor));
+    }
+
+    /**
+     * How deep a rille {@code width} wide and {@code depth} deep is at {@code across} blocks from its middle line: a
+     * smooth trough, deepest in its middle and rising evenly to its rims, as a lava channel whose roof fell in lies;
+     * nothing past them.
+     */
+    public static double rille(final double across, final double width, final double depth) {
+        final double half = width / 2;
+        final double out = Math.abs(across);
+        return out >= half ? 0 : depth * Math.cos(out / half * Math.PI / 2);
+    }
+
+    /**
+     * How thick a glacier {@code length} long either way of its middle and {@code width} wide is at {@code along}
+     * blocks down it and {@code across} from its middle line, {@code thickness} at its thickest: thick near its head,
+     * at {@code along} of minus its length, where it rises out of the land, thinning down to nothing at its snout, and
+     * from its middle line to its edges.
+     */
+    public static double glacier(final double along, final double across, final double length, final double width,
+                                 final double thickness) {
+        final double half = width / 2;
+        final double out = Math.abs(across);
+        if (Math.abs(along) >= length || out >= half) {
+            return 0;
+        }
+        final double down = (along + length) / (2 * length);
+        final double head = Math.min(1, (along + length) / (length * GLACIER_HEAD));
+        final double side = out / half;
+        return thickness * head * Math.sqrt(1 - down) * (1 - side * side);
     }
 
     /** How much of a landform's change holds at {@code at} of {@code radius}: all of it inside, fading to none. */

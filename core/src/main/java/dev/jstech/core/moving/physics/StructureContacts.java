@@ -16,6 +16,9 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureBalance;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.YardLayout;
+import dev.jstech.core.protection.Actor;
+import dev.jstech.core.protection.ProtectedAction;
+import dev.jstech.core.protection.Protection;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.util.Loaded;
 import it.unimi.dsi.fastutil.booleans.BooleanArrayList;
@@ -213,9 +216,11 @@ final class StructureContacts {
      * this one, as many as a tick allows; what breaks drops as broken.
      */
     void breakWhatBroke(final ServerLevel level) {
+        final MovingStructure mine = struck;
         tellHardest(level);
-        if (StructureBalance.impacts()) {
-            breakEach(level, cellBlows, breakEach(level, metBlows, 0));
+        if (StructureBalance.impacts() && mine != null) {
+            final Actor actor = actorOf(mine);
+            breakEach(level, actor, cellBlows, breakEach(level, actor, metBlows, 0));
         }
         metBlows.clear();
         cellBlows.clear();
@@ -582,8 +587,21 @@ final class StructureContacts {
         hardestClosing = 0;
     }
 
-    /* Breaks each block of {@code blows} whose blow was more than it holds; how many are broken this tick, all told. */
-    private static int breakEach(final ServerLevel level, final Long2DoubleMap blows, final int before) {
+    /*
+     * Who breaks what a structure's blows break: the player who made it, weighed as them wherever they are; for one
+     * made by nobody, the world, coming from where the structure stands. A claim keeps out a crash as it does a hand.
+     */
+    private static Actor actorOf(final MovingStructure structure) {
+        return structure.maker().map(Actor::forOwner)
+                .orElseGet(() -> Actor.world(BlockPos.containing(structure.worldBox().getCenter())));
+    }
+
+    /*
+     * Breaks each block of {@code blows} whose blow was more than it holds and that {@code actor} may break; how many
+     * are broken this tick, all told.
+     */
+    private static int breakEach(final ServerLevel level, final Actor actor, final Long2DoubleMap blows,
+                                 final int before) {
         int broken = before;
         final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (final Long2DoubleMap.Entry blow : blows.long2DoubleEntrySet()) {
@@ -599,7 +617,8 @@ final class StructureContacts {
                 continue;
             }
             if (ContactMath.breaks(blow.getDoubleValue(), BlockPhysics.strengthOf(state),
-                    Math.max(BlockPhysics.volumeOf(level, pos, state), LEAST_VOLUME))) {
+                    Math.max(BlockPhysics.volumeOf(level, pos, state), LEAST_VOLUME))
+                    && Protection.may(actor, ProtectedAction.BREAK, level, pos)) {
                 level.destroyBlock(pos.immutable(), true);
                 broken++;
             }

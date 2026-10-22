@@ -38,7 +38,12 @@ final class PhysicsBudget {
 
     /** Whether this tick's budget is spent. */
     boolean spent() {
-        return spent >= StructureBalance.physicsMillis() * NANOS_PER_MILLI;
+        return spentWith(0);
+    }
+
+    /** Whether this tick's budget is spent once {@code more} nanoseconds expected of it are spent too. */
+    boolean spentWith(final long more) {
+        return spent + Math.max(0, more) >= StructureBalance.physicsMillis() * NANOS_PER_MILLI;
     }
 
     /** Counts {@code nanos} more spent this tick. */

@@ -19,8 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
@@ -59,6 +61,8 @@ public final class MovingStructure implements IStructureBody {
     /* Its physics, while it moves by them. */
     private @Nullable StructurePhysics physics;
     private @Nullable StructureArrival arrival;
+    /* The template a structure born as one is still to be laid from, once its plot has loaded. */
+    private @Nullable StructureBirth birth;
     private @Nullable StructureDeparture departure;
     /* The structure holding it, and where it stands on it, or null. */
     private @Nullable StructureMount mount;
@@ -72,6 +76,11 @@ public final class MovingStructure implements IStructureBody {
     /* What it is told to do now, by its helm or its autopilot, and the autopilot flying it, if any. */
     private final StructureControls controls = new StructureControls();
     private @Nullable StructureAutopilot autopilot;
+    /*
+     * The player who made it, counted against their limit of moving structures until it is set down or taken away;
+     * none for one made by a command, a machine or a break.
+     */
+    private @Nullable UUID maker;
     /* What the autopilot has built up holding its height against its weight. */
     private final double[] autopilotHold = new double[1];
     private boolean parting;
@@ -82,6 +91,7 @@ public final class MovingStructure implements IStructureBody {
 
     private static final String ID = "structure";
     private static final String ARRIVAL = "arrival";
+    private static final String BIRTH = "birth";
     private static final String DEPARTURE = "departure";
     private static final String PLOT = "plot";
     private static final String BOUNDS = "bounds";
@@ -91,6 +101,7 @@ public final class MovingStructure implements IStructureBody {
     private static final String MOTION = "motion";
     private static final String MOUNT = "mount";
     private static final String AUTOPILOT = "autopilot";
+    private static final String MAKER = "maker";
     private static final String SPLIT_SEEDS = "split_seeds";
     private static final String SPLIT_PLOTS = "split_plots";
     private static final Codec<double[]> PLACE = Codec.DOUBLE.listOf(3, 3).xmap(
@@ -134,6 +145,9 @@ public final class MovingStructure implements IStructureBody {
         if (tag.contains(ARRIVAL)) {
             read.arrival = StructureArrival.CODEC.parse(NbtOps.INSTANCE, tag.get(ARRIVAL)).result().orElse(null);
         }
+        if (tag.contains(BIRTH, Tag.TAG_COMPOUND)) {
+            read.birth = StructureBirth.read(tag.getCompound(BIRTH), BuiltInRegistries.BLOCK.asLookup());
+        }
         if (tag.contains(DEPARTURE)) {
             read.departure = StructureDeparture.CODEC.parse(NbtOps.INSTANCE, tag.get(DEPARTURE)).result()
                     .orElse(null);
@@ -144,6 +158,9 @@ public final class MovingStructure implements IStructureBody {
         if (tag.contains(AUTOPILOT)) {
             read.autopilot = StructureAutopilot.CODEC.parse(NbtOps.INSTANCE, tag.get(AUTOPILOT)).result()
                     .orElse(null);
+        }
+        if (tag.hasUUID(MAKER)) {
+            read.maker = tag.getUUID(MAKER);
         }
         for (final long seed : tag.getLongArray(SPLIT_SEEDS)) {
             read.splitSeeds.add(seed);
@@ -173,6 +190,9 @@ public final class MovingStructure implements IStructureBody {
             StructureArrival.CODEC.encodeStart(NbtOps.INSTANCE, arrival).result()
                     .ifPresent(written -> tag.put(ARRIVAL, written));
         }
+        if (birth != null) {
+            tag.put(BIRTH, birth.save());
+        }
         if (departure != null) {
             StructureDeparture.CODEC.encodeStart(NbtOps.INSTANCE, departure).result()
                     .ifPresent(written -> tag.put(DEPARTURE, written));
@@ -184,6 +204,9 @@ public final class MovingStructure implements IStructureBody {
         if (autopilot != null) {
             StructureAutopilot.CODEC.encodeStart(NbtOps.INSTANCE, autopilot).result()
                     .ifPresent(written -> tag.put(AUTOPILOT, written));
+        }
+        if (maker != null) {
+            tag.putUUID(MAKER, maker);
         }
         // A piece waiting to part is looked for again as it loads, and the plot taken for it given back.
         final Set<Long> seeds = new HashSet<>(splitSeeds);
@@ -203,6 +226,14 @@ public final class MovingStructure implements IStructureBody {
     @Override
     public StructureUuid id() {
         return id;
+    }
+
+    /**
+     * The player who made it, counted against their limit of moving structures until it is set down or taken away;
+     * empty for one made by a command, a machine or a break.
+     */
+    public Optional<UUID> maker() {
+        return Optional.ofNullable(maker);
     }
 
     @Override
@@ -275,11 +306,12 @@ public final class MovingStructure implements IStructureBody {
     }
 
     /**
-     * Whether it is just made and its blocks still stand where they stood, until the chunks of its plot of the yard
-     * have loaded: a few ticks, after which they are its own, in the yard, and it is {@link #ready()}.
+     * Whether it is just made and its blocks still stand where they stood, or, born as one, are still to be laid,
+     * until the chunks of its plot of the yard have loaded: a few ticks, after which they are its own, in the yard,
+     * and it is {@link #ready()}.
      */
     public boolean arriving() {
-        return arrival != null;
+        return arrival != null || birth != null;
     }
 
     /** Whether it is on its way to another dimension, going once the chunks it goes to have loaded. */
@@ -364,6 +396,12 @@ public final class MovingStructure implements IStructureBody {
                 return;
             }
             arrive(level);
+        }
+        if (birth != null) {
+            if (!StructureYard.loaded(level, bounds)) {
+                return;
+            }
+            beBorn(level);
         }
         if (!ready) {
             ready = StructureYard.loaded(level, bounds);
@@ -562,6 +600,29 @@ public final class MovingStructure implements IStructureBody {
         this.departureHeld = false;
     }
 
+    /* Makes it one born as one: its blocks laid from {@code coming} once its plot has loaded. */
+    void born(final StructureBirth coming) {
+        this.birth = coming;
+    }
+
+    /* Counts it as made by {@code player}, who took one of their limit for it. */
+    void madeBy(final UUID player) {
+        this.maker = player;
+    }
+
+    /* Hands its maker to {@code there}, what it goes on as in another dimension: still theirs, and counted once. */
+    void handMakerTo(final MovingStructure there) {
+        there.maker = this.maker;
+        this.maker = null;
+    }
+
+    /* Forgets its maker, who is given back the one of their limit it took, as it goes for good. */
+    @Nullable UUID takeMaker() {
+        final UUID was = this.maker;
+        this.maker = null;
+        return was;
+    }
+
     /** Lets go of its plot's chunks, and takes it out of its level's files, as its entity leaves the level. */
     void letGo(final ServerLevel level) {
         if (held) {
@@ -688,6 +749,19 @@ public final class MovingStructure implements IStructureBody {
         // Counted after: each block laid in its plot was also heard of as a block set on the structure.
         blocks = moves.size();
         emptied = moves.isEmpty();
+    }
+
+    /* Lays the blocks of a structure born as one into its plot, now that the plot has loaded. */
+    private void beBorn(final ServerLevel level) {
+        final StructureBirth coming = birth;
+        birth = null;
+        if (coming == null) {
+            return;
+        }
+        // Each block laid is heard of as a block set on the structure; what it is made of is counted from none.
+        blocks = 0;
+        coming.lay(level);
+        emptied = blocks == 0;
     }
 
     /* One tick by its own rule, held by none. */

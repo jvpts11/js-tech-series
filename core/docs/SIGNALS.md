@@ -40,6 +40,11 @@ public final class LightSensorBlockEntity extends SensorBlockEntity {
 Signals.offer(event, LIGHT_SENSOR_ENTITY.get());
 ```
 
+A sensor need not be a block of its own. A device mounted on a face in a multipart space or on a cable
+([Multipart](MULTIPART.md)) that implements `ISignalOutput` is the signal output of its face, with nothing to
+register: the block it sits in answers `Signals.OUTPUT` on that face for it. J's Example's level sensor is one
+(`example/src/main/java/dev/jstech/example/part/LevelSensorPart.java`).
+
 `choose(index)` sets the reading its signal speaks. What a block gives is kept in a `SignalLevel`
 (`SignalLevel.in(fields(), "signal")`), saved with it: its neighbours are told only when it changes, so a sensor read
 every ten ticks in a steady world costs its neighbours nothing.

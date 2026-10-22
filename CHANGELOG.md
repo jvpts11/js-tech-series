@@ -40,6 +40,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `package-info`. `IField`, what every field of a block entity is, is public and sealed, and its `flags()` internal.
 - (Core) The photo travels: J's Core's jar carries its API photo, `META-INF/jstech/api/core.txt`, so a mod checks what
   it uses against the very Core it is built on.
+- (Core) What the kits still owed: J's Core's API is at version 11, all experimental. `ChunkLoaders.load` takes why
+  the chunks are kept, a `TextKey`, between the owner and the chunk, and `ChunkLoaders.reasons` reads them back; the
+  form without a reason is gone. `MovingStructures.assembleFor`, `assembleJoinedFor` and `bornFor` make a structure
+  for a player, counted against their limit, `born` makes one from a `StructureTemplate`, the `StructureAssembly`
+  forms take the maker, and `MovingStructure.maker()` says whose it is. `MachineHistory`, from `MachineMenu.history()`
+  on the player's side and `MachineBlockEntity.history()` on the server's, is what a machine did over its last ten
+  minutes. `DataScreens.menuOf` gives the menu a screen file is drawn over, and `CoreConfigKeys` has the two new
+  limits per player. `ScreenEditorLayout` is the editor's own and leaves the API.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -109,7 +117,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   something to a place (break, place, use, explode, burn, flow, move into, shoot), and every protection installed
   answers: the game's spawn protection, FTB Chunks and Open Parties and Claims when they are there, and any a mod
   registers. A machine, a robot or a moving structure is weighed as its owner, online or not, never as a generic fake
-  player; the world's own work stays inside the claim it comes from. Robots ask before they break a block.
+  player; the world's own work stays inside the claim it comes from. Robots ask before they break a block. The Core's
+  own liquids ask before they spread into a claim, its projectiles before they strike there, and a moving structure
+  crashing into a claim breaks only what its maker may break.
 - (Core) Permissions for everything: every command of the series, opening, using, setting up and breaking what others
   own, changing a server's settings from afar, building multiblocks and going past the limits have a permission
   node, which LuckPerms and FTB Ranks grant or deny; without them the operator levels apply. `/jstech dump permissions`
@@ -117,7 +127,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Trust by name: the owner of a thing trusts players by name to use it, to set it up as well, or to break it as
   well. An owned block or entity is kept from whoever its owner does not let break or use it.
 - (Core) Limits per player: how many of a kind of thing one player may have at once, kept with the world, starting
-  with robots (16 each by default).
+  with robots (16 each by default), moving structures made and not yet set down (32) and large edits of the world
+  under way at once (4), each a setting of the server's.
 - (Core) The audit log: when the server keeps it, who used, changed or broke what another player owns is written down,
   and `/jstech audit` reads it, of everything, of one player or of one place.
 - (Core) Damage between players follows the server's PvP rule, the claim the victim stands in, and the teams:
@@ -339,7 +350,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   switches, thumbwheels and filter of what it pushes and pulls; Redstone has the knobs of how it answers redstone and
   what a comparator reads, the lamps of the signal in and the meter out; Upgrades has its bays and the bars of what
   they do; Protection has its port and line, its fuse, its battery and the key of who may use it. Ctrl and a click
-  locks an input slot to what it holds.
+  locks an input slot to what it holds. A click on the LCD turns it to the machine's last ten minutes: how much of
+  the last minute it worked, and a chart of what it made a minute and what it drew, told in full in its tooltip with
+  the last thing that jammed it.
 - (Core) JEI's "+" and EMI's fill button move a recipe into the open machine: its ingredients from the player's
   inventory into the inputs, once or a stack's worth, and the recipe picked among those its inputs make.
 - (Core) Upgrade effects: besides speed and energy, an upgrade can make a machine work several recipes at once, make
@@ -448,6 +461,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   reading, give light, hear the redstone reaching it, open a menu that closes when the part is taken off, and take a
   room of its own shape. A cable or a space of parts is ticked only while one of its parts needs it, so a world of
   plain cables costs nothing each tick, and redstone wire joins a cable only on a face whose part deals in redstone.
+  A part that is a sensor is read on its face by anything that reads sensors, as a sensor block is.
 - (Core) The game's torches, levers, buttons and pressure plates share a block space: used on the face of the block
   beside a cable or a space of parts, the item hangs its block in the space, beside the wires and the other pieces,
   where it lights, powers, is pulled, pressed and falls with its wall as the game's own does.
@@ -580,14 +594,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Terrain declared in code: how high the land lies, how far and how wide its hills, how rough, its rock, the
   liquid of its seas up to their level, a floor of bedrock and its surface biome by biome, written as the noise
   settings a data pack can change; a dimension takes it with its biomes spread by the terrain's warmth and wetness.
+  Beneath that, a mod declares the pieces themselves: noises, density functions of its own, and surface rules read
+  in order (bedrock, a cap on the peaks, bare cliffs, a sea floor, each biome's layers), a terrain built of them.
 - (Core) Biomes declared in code, with their climate in real values: degrees Celsius over the year, how far the
   seasons swing it, millimetres of rain a year, kept in a data map a data pack can fill for any biome; every other
   biome's read from the game's own values. A place's warmth follows the calendar's seasons and cools with height,
   and heat meets it where a biome has a climate of its own.
 - (Core) Landforms as data, laid a chunk at a time from the world's seed so any size draws whole: craters with
   their ejecta, rays and central peaks, shield volcanoes and stratovolcanoes with lava in their summits, mesas in
-  bands, dunes, canyons, lava tubes open to the sky here and there, ice sheets, geysers that bubble, sinkholes and
-  cracked salt flats.
+  bands, dunes, canyons, rilles, lava tubes open to the sky here and there, ice sheets, glaciers with their
+  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats.
 - (Core) Lakes, rivers and seas of any liquid, which freeze over where the place is colder than their liquid
   freezes and boil away where it is hotter.
 - (Core) Rock in layers by depth, each region of the land with its own sequence, the layers rising and falling
@@ -647,7 +663,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   all, when it has no port); short of power, switched off or broken, it lets every chunk go.
 - (Core) A server's budget of loaded chunks: every owner together keeps at most 400 by default, besides each owner's
   own number; `/jstech chunks` counts them, and `/jstech chunks map` shows an operator every place keeping chunks,
-  and whose it is, on their own map. The chunks a machine keeps are an area on its owner's team's maps.
+  and whose it is, on their own map. The chunks a machine keeps are an area on its owner's team's maps. Each place
+  says why it keeps its chunks, and `/jstech chunks` lists a player's places under their count: how many chunks
+  each keeps, where it is, and why.
 - (Core) Each dimension's own day and year: a dimension's rules can give it a day of any length, a world locked to its
   star with its sun held still, and a year of its own days, its seasons a quarter of it and its world going round its
   orbit; the overworld's day is never touched. Its wind can blow harder or softer than the overworld's.
@@ -691,7 +709,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   made of, wool little and metal much, and the air takes its high notes away with distance. Through a vacuum only
   what the player touches is heard; under water everything is dull; thin air carries sounds weaker. A far sound
   arrives as late as the speed of sound brings it, and what moves changes pitch as it passes. A sound can say it
-  matters, to be shown on screen with where it comes from, and what it becomes heard from far away.
+  matters, to be shown on screen with where it comes from, and what it becomes heard from far away. The walls between
+  a sound and the player are weighed away from the game's thread and remembered for a moment by where they stand, so
+  a place full of sounds costs the frame nothing.
 - (Core) Resource packs give blocks their sounds by material (steps, blows, breaking, placing, falls, and how much
   they drink and let through), a blow on a living thing its sound by the kind of thing struck, the ambience of places
   by biome, weather, time, depth, roof and what is near, and music in layers that come in and go out with the moment
@@ -711,7 +731,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the damage as it lands, shown in the tooltip. A hazard builds up in a body from its sources, cut by what is worn
   against it, harms in bands, goes away away from its sources, faster with a medicine or a shower a mod gives it,
   kills with a death message of its own, and creatures
-  suffer the kinds that harm them. The dimensions' bad air, heat and cold are kinds of it.
+  suffer the kinds that harm them. The dimensions' bad air, heat and cold are kinds of it. Cold burns and crushing
+  pressure are damage of their own, each with its death message, and radiation sickness is radiation damage.
 - (Core) Hazards of carried things, as data: a hot ingot burns the hand, sodium goes off in the rain, a pyrophoric
   powder catches fire, an unstable charge goes off in a fall, a toxic or corrosive thing harms its carrier and a
   blinding one blinds, each named in the tooltip with what protects from it.
@@ -744,7 +765,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Dissonance: where the laws of physics depart from ours (time at another pace, a pull that is not down, light
   that bends, space that wraps) it builds up in a body, from warped sight through drifting gravity, stuttering time
   and jumps through space to coming apart, and falls back in normal laws; a bubble of normal laws a mod gives keeps it
-  off. It has a setting of its own.
+  off. It has a setting of its own. In its first band the colours of the world shift, and in its second what the
+  player hears goes off pitch.
 - (Core) Pollution: kinds any mod declares, an amount over each chunk given off by blocks, which spreads, fades, is
   taken up where plants grow, harms the bodies on the chunk as a hazard of its own, does what it does to the land, and
   withers it under enough; the hazard map device measures them.
@@ -792,7 +814,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   follow on their own, with `whenMoved` for the rest. The Core's own kits work aboard: a formed multiblock crosses
   formed and stands formed set down turned, cables, mechanical networks, spotlights, peripheral links, radio relays,
   the Atmosphere Detector and radiation leave nothing where they stood, and an overhead wire goes with the two
-  insulators it hangs from. It has commands and a setting of its own.
+  insulators it hangs from. It has commands and a setting of its own. A structure can also be born whole from a
+  template, as a rocket is put together in its hangar, its blocks laid straight into its plot without ever standing
+  in the world; and one beyond the player's render distance is not drawn.
 - (Core) Moving structures by their physics: a structure let go moves as a body of real mass, its mass, centre and
   inertia following every block set on it or broken off it. It falls under the pull of the place, a dimension's pull
   thinning with height where its rules say so; the air, as dense as the height makes it, and the wind drag its faces;
@@ -809,7 +833,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and the forces it gives, is the data map `jscore:block_physics`; blocks of iron are `#jscore:magnetic`; the command
   `/jstech structure physics` lets a structure go; each structure's tick of physics is timed in the diagnostics, and
   a dimension's physics takes no more of a tick than the setting `moving_structures.physics_millis` lets it, past
-  which a structure waits a tick.
+  which a structure waits a tick. Structures far apart from one another work out their physics side by side, away
+  from the server's thread, and only what they do to the world is done on it.
 - (Core) Rooms aboard moving structures: a sealed room aboard has round it the air of where its structure is, taken
   again each second, so a cabin climbs into thin air and a sealed balloon swells until its walls burst; a hole in a
   room aboard pulls whoever is in it towards the hole as its air rushes out.
@@ -971,7 +996,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Ctrl+C copies; it draws the screen at another GUI scale, in the other language and in each state its code offers
   (`ScreenWiring.preview`). Ctrl+E opens the editor on the screen, which moves, resizes, adds, copies and takes out
   components and writes each change to the mod's source at once, with Undo and Redo; `/jstech screen new` makes the
-  file of a new screen for the block looked at, from a machine's screen, a tab, a HUD element or a copy.
+  file of a new screen for the block looked at, from a machine's screen, a tab, a HUD element or a copy. While a
+  component is dragged, lines show where its edges and middle meet the others' and the window's, and it snaps to
+  them; its card holds the fields its kind has and no others.
 - (Core) Manuals: scenes that explain step by step: what each step puts in and takes away is data (`step`, `take`),
   its sentence stands over the picture, and a timeline under it has the step before, play and pause, the next step
   and a mark for each step. Every scene has an In world button that shows the step, or the whole scene, as ghosts in
@@ -1100,10 +1127,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its parts (a name missing in a language, a file or a model missing, a texture that is not there, an animation
   moving a bone no model has, a screen file that does not load, an item in no creative tab, a loot table missing),
   each opening the file that mends it; Reload all, and Run its tests, which runs near the player the GameTests that
-  name it. A mod adds a part of its own with `StudioReaders`.
+  name it. A mod adds a part of its own with `StudioReaders`. The checks of a screen file open the menu it is drawn
+  over and say which of the menu's slots the file shows nowhere, and which slots the file shows that the menu does
+  not have.
 - (Core) The studio's tools: a strip of tabs under the studio's bar opens twelve tools beside the things of the game.
   Block reads a block entity's fields live, what each face offers, and what crossed each face each second, counted
-  for every block entity of the Core; Cost times every machine, dearest first, with a heat map in the world; Payloads
+  for a block entity of the Core while the tab watches it, at no cost to any other; Cost times every machine, dearest first, with a heat map in the world; Payloads
   shows the packets sent tick by tick, by kind and mod; Recipes says where each recipe came from and what a pack
   changed, draws it as the recipe viewers do, lists the recipes with the same inputs, and writes, tries and saves a
   recipe; Tags says which pack put each entry in a tag; Loot rolls a table up to ten thousand times with a tool,

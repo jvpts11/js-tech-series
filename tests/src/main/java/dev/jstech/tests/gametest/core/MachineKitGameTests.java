@@ -17,6 +17,7 @@ import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.machine.ComparatorReads;
 import dev.jstech.core.machine.IMachineParameters;
 import dev.jstech.core.machine.MachineHealth;
+import dev.jstech.core.machine.MachineHistory;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.RedstoneMode;
 import dev.jstech.core.material.MatterState;
@@ -64,6 +65,7 @@ public final class MachineKitGameTests {
 
     private static final String ARENA = "empty";
     private static final BlockPos MACHINE = new BlockPos(4, 2, 4);
+    private static final int TICKS_A_SECOND = 20;
 
     private MachineKitGameTests() {
     }
@@ -104,6 +106,39 @@ public final class MachineKitGameTests {
                 .thenExecuteAfter(2, () -> helper.assertTrue(machine.status() == MachineStatus.OUTPUT_FULL,
                         "with no room for its work, its output is full: " + machine.status()))
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void history_tellsWhatItDidAndWhatJammedIt(final GameTestHelper helper) {
+        // Eight stones of work, a second each: it works, runs out and waits, and its first reading comes after.
+        final KitMachineBlockEntity machine = loaded(helper);
+        helper.runAfterDelay(MachineHistory.READING_SECONDS * TICKS_A_SECOND + 2 * TICKS_A_SECOND, () -> {
+            final MachineHistory history = machine.history();
+            helper.assertTrue(history.made().size() == 1 && history.mostMade() == 8,
+                    "its first reading has what it made a minute: " + history.made());
+            helper.assertTrue(history.averagePower() > 0L, "and what it drew: " + history.power());
+            helper.assertTrue(history.efficiency() > 0 && history.efficiency() < 100,
+                    "it worked part of the time: " + history.efficiency());
+            helper.assertTrue(history.workedTicks() >= 8 * TestKitMachine.TICKS,
+                    "as long as its eight stones took: " + history.workedTicks());
+            helper.assertTrue(history.stop().orElse(null) == MachineStatus.WAITING,
+                    "running out jammed it: " + history.stoppedBy());
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 120)
+    public static void history_leavesOutWhatItsPlayerStopped(final GameTestHelper helper) {
+        final KitMachineBlockEntity machine = loaded(helper);
+        helper.runAfterDelay(TestKitMachine.TICKS / 2, () -> {
+            helper.assertTrue(machine.running(), "it works before it is switched off");
+            machine.control().setOn(false);
+            helper.runAfterDelay(2 * TICKS_A_SECOND, () -> {
+                helper.assertTrue(machine.history().stop().isEmpty(),
+                        "switched off by hand is no jam: " + machine.history().stoppedBy());
+                helper.succeed();
+            });
+        });
     }
 
     @GameTest(template = ARENA, timeoutTicks = 100)

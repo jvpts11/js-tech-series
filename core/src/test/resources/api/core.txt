@@ -1912,6 +1912,7 @@ stable 4
 10 dev.jstech.core.client.gui.data.DataScreens  type final class
 10 dev.jstech.core.client.gui.data.DataScreens  static <M extends AbstractContainerMenu> void register(RegisterMenuScreensEvent, MenuType<M>, ResourceLocation, Function<M, IScreenLogic<M>>)
 10 dev.jstech.core.client.gui.data.DataScreens  static DataScreenView preview(ResourceLocation, Component)
+11 dev.jstech.core.client.gui.data.DataScreens  static Optional<MenuType<?>> menuOf(ResourceLocation)
 10 dev.jstech.core.client.gui.data.DataScreens  static void open(ResourceLocation, Component, IScreenLogic<Void>)
 10 dev.jstech.core.client.gui.data.ElementBuilders  type final class
 10 dev.jstech.core.client.gui.data.ElementBuilders  static <P> void register(ElementType<P>, IElementBuilder<P>)
@@ -2736,7 +2737,9 @@ stable 4
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROGRAM_MACHINE_MICROS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROGRAM_SERVER_MICROS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROTECTION_AUDIT_ENTRIES
+11 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROTECTION_EDITS_PER_PLAYER
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROTECTION_ROBOTS_PER_PLAYER
+11 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROTECTION_STRUCTURES_PER_PLAYER
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> ROOMS_LARGEST
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> SSD_LATENCY_TICKS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> TOOLS_MOST_BROKEN
@@ -4671,42 +4674,6 @@ stable 4
 10 dev.jstech.core.gui.layout.NotificationPlaceLayout  static final int HEADER
 10 dev.jstech.core.gui.layout.NotificationPlaceLayout  static final int PAD
 10 dev.jstech.core.gui.layout.NotificationPlaceLayout  static final int TITLE_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  type final class
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static GuiLayout bar(int, int[])
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static GuiLayout panel(int)
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int ACTIONS_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int ADD_HEIGHT
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int ADD_ROW
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int ADD_ROWS
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int ADD_WIDTH
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int BAR_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int BUTTON_GAP
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int BUTTON_HEIGHT
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int FIELDS
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int FIELDS_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int FIELD_HEIGHT
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int FIELD_STEP
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int FILE_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int GAP
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int HINTS_UP
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int LABEL_ROOM
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int LABEL_TO_FIELD
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int MIN_WIDTH
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int PAD
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int PANEL_HEIGHT
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int PANEL_WIDTH
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int PANEL_X
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int PANEL_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int POSITION_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int STYLE_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int TITLE_Y
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static final int[] BAR_WIDTHS
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static int addWidth(int, int)
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static int barLeft(int, int[])
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static int barWidth(int, int)
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static int barX(int, int[], int)
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static int fieldY(int)
-10 dev.jstech.core.gui.layout.ScreenEditorLayout  static int panelWidth(int)
 10 dev.jstech.core.gui.layout.SoundMixerLayout  type final class
 10 dev.jstech.core.gui.layout.SoundMixerLayout  static GuiLayout channels(int, int, int, int)
 10 dev.jstech.core.gui.layout.SoundMixerLayout  static GuiLayout options(int, int, int)
@@ -6645,6 +6612,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  MachineControl control()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineHealth health()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineHeat heat()
+11 dev.jstech.core.machine.MachineBlockEntity  MachineHistory history()
 10 dev.jstech.core.machine.MachineBlockEntity  MachinePower power()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineShaft shaft()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineSides sides()
@@ -6788,6 +6756,15 @@ stable 4
 10 dev.jstech.core.machine.MachineHeat  double watts()
 10 dev.jstech.core.machine.MachineHeat  static MachineHeat of(Thermal, double, double, double)
 10 dev.jstech.core.machine.MachineHeat  static final double STARTS_BELOW
+11 dev.jstech.core.machine.MachineHistory  type record(List<Integer> made, List<Long> power, int efficiency, int workedTicks, String stoppedBy, int stoppedSecondsAgo)
+11 dev.jstech.core.machine.MachineHistory  Optional<MachineStatus> stop()
+11 dev.jstech.core.machine.MachineHistory  int mostMade()
+11 dev.jstech.core.machine.MachineHistory  long averagePower()
+11 dev.jstech.core.machine.MachineHistory  long lastPower()
+11 dev.jstech.core.machine.MachineHistory  static final MachineHistory NONE
+11 dev.jstech.core.machine.MachineHistory  static final StreamCodec<ByteBuf, MachineHistory> STREAM_CODEC
+11 dev.jstech.core.machine.MachineHistory  static final int READINGS
+11 dev.jstech.core.machine.MachineHistory  static final int READING_SECONDS
 10 dev.jstech.core.machine.MachineInstallerItem  type class extends Item
 10 dev.jstech.core.machine.MachineInstallerItem  InteractionResult onItemUseFirst(ItemStack, UseOnContext)
 10 dev.jstech.core.machine.MachineInstallerItem  new(Properties, Supplier<MachineFamily>, int)
@@ -6798,6 +6775,7 @@ stable 4
 10 dev.jstech.core.machine.MachineMenu  type final class extends CoreMenu
 10 dev.jstech.core.machine.MachineMenu  List<Slot> faceSlots()
 10 dev.jstech.core.machine.MachineMenu  MachineBlockEntity machine()
+11 dev.jstech.core.machine.MachineMenu  MachineHistory history()
 10 dev.jstech.core.machine.MachineMenu  int tab()
 10 dev.jstech.core.machine.MachineMenu  new(int, Inventory, MachineBlockEntity)
 10 dev.jstech.core.machine.MachineMenu  new(int, Inventory, RegistryFriendlyByteBuf)
@@ -7049,6 +7027,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey HIGH
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey IGNORE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_DAMAGED
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_EFFICIENCY
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_FUSE_BLOWN
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_LOCKED
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_NOT_FORMED
@@ -7056,6 +7035,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_OFF_BY_REDSTONE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_OUTPUT_FULL
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_OVERHEATED
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_SPAN
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_SWITCHED_OFF
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_TOO_SLOW
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_UNDERVOLTAGE
@@ -7117,6 +7097,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_BATTERY
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_BAY
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_CMP_OUT
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_EFFICIENCY
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_EMPTY_TANK
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_FACE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_FACE_USE
@@ -7124,17 +7105,26 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_FILTER_ONLY
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_FILTER_USE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_FUSE
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_JAM_MINUTE
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_JAM_MINUTES
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_JAM_SECONDS
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_KNOB_USE
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_LCD_READINGS
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_LCD_STATISTICS
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_MADE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_MATTER
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_METER
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_NAME
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_NO_READING
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_PORT
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_POWER
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_PULL
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_PUSH
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_READS
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_RESOURCE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_RUNS
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_SIGNAL
+11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_STATISTICS
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_STORED
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_SWITCH
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_TANK
@@ -8755,6 +8745,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructure  IStructureMotion motion()
 10 dev.jstech.core.moving.MovingStructure  Level level()
 10 dev.jstech.core.moving.MovingStructure  MovingStructureEntity entity()
+11 dev.jstech.core.moving.MovingStructure  Optional<UUID> maker()
 10 dev.jstech.core.moving.MovingStructure  StructureAboard aboard()
 10 dev.jstech.core.moving.MovingStructure  StructureAutopilot autopilot()
 10 dev.jstech.core.moving.MovingStructure  StructureControls controls()
@@ -8838,7 +8829,11 @@ stable 4
 10 dev.jstech.core.moving.MovingStructures  static List<IStructureBody> near(Level, AABB)
 10 dev.jstech.core.moving.MovingStructures  static MovingStructure byId(ServerLevel, StructureUuid)
 10 dev.jstech.core.moving.MovingStructures  static StructureResult assemble(ServerLevel, BlockPos, BlockPos)
+11 dev.jstech.core.moving.MovingStructures  static StructureResult assembleFor(ServerLevel, BlockPos, BlockPos, UUID)
 10 dev.jstech.core.moving.MovingStructures  static StructureResult assembleJoined(ServerLevel, BlockPos)
+11 dev.jstech.core.moving.MovingStructures  static StructureResult assembleJoinedFor(ServerLevel, BlockPos, UUID)
+11 dev.jstech.core.moving.MovingStructures  static StructureResult born(ServerLevel, StructureTemplate, Vec3)
+11 dev.jstech.core.moving.MovingStructures  static StructureResult bornFor(ServerLevel, StructureTemplate, Vec3, UUID)
 10 dev.jstech.core.moving.MovingStructures  static StructureResult dock(MovingStructure, MovingStructure, Optional<BlockPos>)
 10 dev.jstech.core.moving.MovingStructures  static StructureResult join(MovingStructure, MovingStructure)
 10 dev.jstech.core.moving.MovingStructures  static StructureResult mount(MovingStructure, MovingStructure, Optional<BlockPos>)
@@ -8913,8 +8908,12 @@ stable 4
 10 dev.jstech.core.moving.StructureAboard  Map<BlockPos, BlockAboard> blocks()
 10 dev.jstech.core.moving.StructureAssembly  type final class
 10 dev.jstech.core.moving.StructureAssembly  static StructureResult blocks(ServerLevel, Collection<BlockPos>, Vec3)
+11 dev.jstech.core.moving.StructureAssembly  static StructureResult blocks(ServerLevel, Collection<BlockPos>, Vec3, UUID)
+11 dev.jstech.core.moving.StructureAssembly  static StructureResult born(ServerLevel, StructureTemplate, Vec3, UUID)
 10 dev.jstech.core.moving.StructureAssembly  static StructureResult box(ServerLevel, BlockPos, BlockPos, Vec3)
+11 dev.jstech.core.moving.StructureAssembly  static StructureResult box(ServerLevel, BlockPos, BlockPos, Vec3, UUID)
 10 dev.jstech.core.moving.StructureAssembly  static StructureResult joined(ServerLevel, BlockPos, Vec3)
+11 dev.jstech.core.moving.StructureAssembly  static StructureResult joined(ServerLevel, BlockPos, Vec3, UUID)
 10 dev.jstech.core.moving.StructureAssembly  static final TagKey<Block> STAYS_PUT
 10 dev.jstech.core.moving.StructureAutopilot  type record(Goal goal, double speed)
 10 dev.jstech.core.moving.StructureAutopilot  static StructureAutopilot dock(StructureUuid, BlockPos, double)
@@ -9178,6 +9177,7 @@ stable 4
 10 dev.jstech.core.moving.StructureTexts  static final TextKey ASSEMBLED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey AT_REST
 10 dev.jstech.core.moving.StructureTexts  static final TextKey BLOCKED
+11 dev.jstech.core.moving.StructureTexts  static final TextKey BORN_OUT_OF_WORLD
 10 dev.jstech.core.moving.StructureTexts  static final TextKey DISASSEMBLED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey FOREIGN
 10 dev.jstech.core.moving.StructureTexts  static final TextKey IMMOVABLE
@@ -11232,11 +11232,13 @@ stable 4
 10 dev.jstech.core.region.Box  static Box at(int, int, int)
 10 dev.jstech.core.region.Box  static Box between(int, int, int, int, int, int)
 10 dev.jstech.core.region.ChunkLoaders  type final class
-10 dev.jstech.core.region.ChunkLoaders  static LoadOutcome load(ServerLevel, BlockPos, UUID, ChunkPos, boolean)
+11 dev.jstech.core.region.ChunkLoaders  static LoadOutcome load(ServerLevel, BlockPos, UUID, TextKey, ChunkPos, boolean)
 10 dev.jstech.core.region.ChunkLoaders  static Map<BlockPos, Set<ChunkPos>> kept(ServerLevel)
+11 dev.jstech.core.region.ChunkLoaders  static Map<BlockPos, TextKey> reasons(ServerLevel)
 10 dev.jstech.core.region.ChunkLoaders  static Map<BlockPos, UUID> sources(ServerLevel)
 10 dev.jstech.core.region.ChunkLoaders  static Map<UUID, Integer> loadedPerOwner(MinecraftServer)
 10 dev.jstech.core.region.ChunkLoaders  static Set<ChunkPos> loadedFrom(ServerLevel, BlockPos)
+11 dev.jstech.core.region.ChunkLoaders  static final TextKey UNSAID
 10 dev.jstech.core.region.ChunkLoaders  static final TicketController CONTROLLER
 10 dev.jstech.core.region.ChunkLoaders  static int loadedBy(MinecraftServer, UUID)
 10 dev.jstech.core.region.ChunkLoaders  static int loadedOnServer(MinecraftServer)

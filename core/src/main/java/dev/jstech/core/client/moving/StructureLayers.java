@@ -47,6 +47,16 @@ final class StructureLayers {
         return SHADER_PACKS;
     }
 
+    /**
+     * Whether a structure whose drawing fills {@code box} is near enough to {@code camera} to be drawn: within the
+     * player's render distance and a margin past it, as the world's own sections are. One rule for its blocks, drawn
+     * here or by a shader pack, and for its block entities, so a far fleet costs nothing however it is drawn.
+     */
+    static boolean withinReach(final AABB box, final Vec3 camera) {
+        final double reach = Minecraft.getInstance().options.getEffectiveRenderDistance() * 16.0 + MARGIN;
+        return box.distanceToSqr(camera) <= reach * reach;
+    }
+
     static void listen() {
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, StructureLayers::onStage);
     }
@@ -76,13 +86,12 @@ final class StructureLayers {
             return;
         }
         final Frustum frustum = event.getFrustum();
-        final double reach = game.options.getEffectiveRenderDistance() * 16.0 + MARGIN;
         final List<ClientStructure> drawn = new ArrayList<>(ClientMovingStructures.all());
         drawn.addAll(StructureHandOffs.landed());
         for (final ClientStructure structure : drawn) {
             final AABB box = structure.drawnBox();
             if (!structure.ready() || StructureHandOffs.hidden(structure) || !frustum.isVisible(box)
-                    || box.distanceToSqr(camera) > reach * reach) {
+                    || !withinReach(box, camera)) {
                 continue;
             }
             structure.meshes().draw(type, event.getModelViewMatrix(), event.getProjectionMatrix(), camera,
@@ -102,7 +111,8 @@ final class StructureLayers {
         final MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
         final PoseStack pose = event.getPoseStack();
         for (final ClientStructure structure : landed) {
-            if (!event.getFrustum().isVisible(structure.drawnBox())) {
+            final AABB box = structure.drawnBox();
+            if (!event.getFrustum().isVisible(box) || !withinReach(box, camera)) {
                 continue;
             }
             final StructurePose at = structure.drawnAt(partialTick);

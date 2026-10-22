@@ -154,6 +154,7 @@ public final class StructureTravel {
             StructureMounts.file(there);
         }
         there.move(motion);
+        structure.handMakerTo(there);
         // What it holds stands where it stood on it, here and there, its blocks now in another plot.
         StructureMounts.shift(from, structure.id(), dx, dy, dz);
         StructureMounts.shift(to, structure.id(), dx, dy, dz);

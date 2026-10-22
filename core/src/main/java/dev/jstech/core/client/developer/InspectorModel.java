@@ -136,6 +136,21 @@ final class InspectorModel {
         return Optional.ofNullable(found[0]);
     }
 
+    /**
+     * The boxes on the game's screen of every component written in the file but the one at {@code path} and what it
+     * holds: what the editor lines that one up with.
+     */
+    List<int[]> boxesBut(final List<Integer> path) {
+        final List<int[]> out = new ArrayList<>();
+        view.tree().ifPresent(root -> root.forEach(node -> pathOf(node).ifPresent(at -> {
+            final boolean inside = at.size() >= path.size() && at.subList(0, path.size()).equals(path);
+            if (!inside) {
+                boxOf(node).ifPresent(out::add);
+            }
+        })));
+        return out;
+    }
+
     /** Where in the file's tree {@code node} was written, or none for a part a component made of itself. */
     Optional<List<Integer>> pathOf(final BuiltNode node) {
         return view.specOf(node).map(paths::get);

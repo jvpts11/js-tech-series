@@ -126,6 +126,61 @@ public final class LandformGameTests {
     }
 
     @GameTest(template = ARENA, skyAccess = true)
+    public static void rille_windsATroughThroughTheGround(final GameTestHelper helper) {
+        floor(helper);
+        paint(helper, config(LandformKind.RILLE, 0.5, Blocks.GRAVEL, Blocks.STONE, Blocks.AIR, Blocks.ICE), 4);
+        helper.assertTrue(top(helper, MIDDLE, MIDDLE) < TOP, "the rille's middle is cut below the ground");
+        helper.assertBlockState(new BlockPos(MIDDLE, top(helper, MIDDLE, MIDDLE), MIDDLE),
+                state -> state.is(Blocks.GRAVEL), () -> "its floor is its surface");
+        int cut = 0;
+        for (int z = 0; z <= SIDE; z++) {
+            for (int x = 0; x <= SIDE; x++) {
+                if (top(helper, x, z) < TOP) {
+                    cut++;
+                }
+            }
+        }
+        helper.assertTrue(cut < (SIDE + 1) * (SIDE + 1) / 2, "a narrow trough, not the whole land: " + cut);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, skyAccess = true)
+    public static void glacier_liesThickAtItsHeadThinAtItsSnoutBetweenMoraines(final GameTestHelper helper) {
+        floor(helper);
+        paint(helper, config(LandformKind.GLACIER, 1.0, Blocks.SNOW_BLOCK, Blocks.STONE, Blocks.PACKED_ICE,
+                Blocks.GRAVEL), 4);
+        helper.assertBlockState(new BlockPos(MIDDLE, TOP + 1, MIDDLE), state -> state.is(Blocks.PACKED_ICE),
+                () -> "the glacier lies on the ground in ice");
+        final int head = highest(helper, MIDDLE - 3, MIDDLE);
+        final int snout = highest(helper, MIDDLE + 3, MIDDLE);
+        helper.assertBlockState(new BlockPos(MIDDLE - 3, head, MIDDLE), state -> state.is(Blocks.SNOW_BLOCK),
+                () -> "under snow");
+        helper.assertTrue(head > snout && snout > TOP, "thick near its head, thinning down to its snout: " + head
+                + " and " + snout);
+        helper.assertBlockState(new BlockPos(MIDDLE, TOP + 1, MIDDLE + 3), state -> state.is(Blocks.GRAVEL),
+                () -> "a moraine lies along its edge");
+        helper.assertBlockState(new BlockPos(SIDE, TOP + 1, MIDDLE), state -> state.is(Blocks.GRAVEL),
+                () -> "and before its snout");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, skyAccess = true)
+    public static void cryovolcano_raisesADomeOfIceWithWaterInItsSummit(final GameTestHelper helper) {
+        floor(helper);
+        paint(helper, config(LandformKind.CRYOVOLCANO, 0.5, Blocks.SNOW_BLOCK, Blocks.PACKED_ICE, Blocks.WATER,
+                Blocks.ICE), 4);
+        final int summit = topOfAnything(helper, MIDDLE, MIDDLE);
+        helper.assertTrue(summit > TOP, "the dome rises over the ground");
+        helper.assertBlockState(new BlockPos(MIDDLE, summit, MIDDLE), state -> state.is(Blocks.WATER),
+                () -> "and its summit holds water");
+        helper.assertBlockState(new BlockPos(MIDDLE + 2, top(helper, MIDDLE + 2, MIDDLE), MIDDLE),
+                state -> state.is(Blocks.SNOW_BLOCK), () -> "its slopes are its surface");
+        helper.assertBlockState(new BlockPos(SIDE, TOP + 1, MIDDLE), state -> state.is(Blocks.ICE),
+                () -> "and what it threw out lies at its foot");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, skyAccess = true)
     public static void river_runsItsLiquidInItsChannel(final GameTestHelper helper) {
         floor(helper);
         paint(helper, config(LandformKind.RIVER, 0.5, Blocks.GRAVEL, Blocks.STONE, Blocks.WATER, Blocks.ICE), 4);
@@ -308,6 +363,17 @@ public final class LandformGameTests {
     /* The highest solid block of a column of the arena, relative; -1 when the column is empty. */
     private static int top(final GameTestHelper helper, final int x, final int z) {
         for (int y = TOP + 2; y >= 0; y--) {
+            final BlockState state = helper.getBlockState(new BlockPos(x, y, z));
+            if (!state.isAir() && state.getFluidState().isEmpty()) {
+                return y;
+            }
+        }
+        return -1;
+    }
+
+    /* The highest solid block of a column of the arena, relative, looked for high enough for a glacier's ice. */
+    private static int highest(final GameTestHelper helper, final int x, final int z) {
+        for (int y = TOP + SIDE; y >= 0; y--) {
             final BlockState state = helper.getBlockState(new BlockPos(x, y, z));
             if (!state.isAir() && state.getFluidState().isEmpty()) {
                 return y;

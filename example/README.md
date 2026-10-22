@@ -20,7 +20,7 @@ run the same check: it is the test kit's `ApiUse` ([The API](../docs/API.md#hold
 | A tank, filled by buckets and pipes | `machine/TankBlock.java`, `machine/TankBlockEntity.java` | block entity fields ([Content](../core/docs/CONTENT.md)) |
 | Oil, with its block and its bucket | `ExampleContent.OIL` | fluids ([Content](../core/docs/CONTENT.md)) |
 | An energy cable and a fluid pipe in the Core's cable block | `ExampleContent.ENERGY_CABLE`, `ExampleContent.FLUID_PIPE` | cables ([Cables](../core/docs/CABLES.md)) |
-| A level sensor mounted on a cable | `part/LevelSensorPart.java` | parts on cables ([Cables](../core/docs/CABLES.md)) |
+| A level sensor mounted on a cable | `part/LevelSensorPart.java` | parts on cables ([Cables](../core/docs/CABLES.md)), sensors ([Redstone and signals](../core/docs/SIGNALS.md)) |
 | A settings file | `ExampleSettings.java` | settings ([Settings](../core/docs/SETTINGS.md)) |
 | A number kept for the whole server and one for each player | `ExampleState.java` | state ([State and saves](../core/docs/STATE_AND_SAVES.md)) |
 | A simple screen declared in a file | `screen/LogbookMenu.java`, `client/JsExampleClient.java`, `src/main/resources/assets/jsexample/jstech/screens/logbook.json` | screens ([Screens](../core/docs/SCREENS.md)) |

@@ -11,6 +11,8 @@ import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.core.worldgen.biome.WorldBiomes;
 import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.terrain.DensitySpec;
+import dev.jstech.core.worldgen.terrain.NoiseSpec;
 import dev.jstech.core.worldgen.terrain.Terrains;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,12 +78,21 @@ public final class WorldGenProvider extends DatapackBuiltinEntriesProvider {
         final List<WorldGen.DimensionSpec> dimensions = WorldGen.dimensionsOf(modid);
         final List<WorldBiomes.BiomeSpec> declaredBiomes = WorldBiomes.biomesOf(modid);
         final List<Terrains.TerrainSpec> terrains = Terrains.terrainsOf(modid);
+        final List<NoiseSpec> noises = Terrains.noisesOf(modid);
+        final List<DensitySpec> densities = Terrains.densitiesOf(modid);
         final List<Shaped> shapes = shapes(modid);
         return new RegistrySetBuilder()
-                .add(Registries.NOISE, context -> terrains.forEach(terrain -> terrain.noises().forEach(noise ->
-                        context.register(terrain.noise(noise.name()), noise.parameters()))))
+                .add(Registries.NOISE, context -> {
+                    terrains.forEach(terrain -> terrain.noises().forEach(noise ->
+                            context.register(terrain.noise(noise.name()), noise.parameters())));
+                    noises.forEach(noise -> context.register(noise.key(), noise.parameters()));
+                })
+                .add(Registries.DENSITY_FUNCTION, context -> densities.forEach(density -> context.register(
+                        density.key(), density.recipe().make(context.lookup(Registries.NOISE),
+                                context.lookup(Registries.DENSITY_FUNCTION)))))
                 .add(Registries.NOISE_SETTINGS, context -> terrains.forEach(terrain -> context.register(
-                        terrain.key(), terrain.settings(context.lookup(Registries.NOISE)))))
+                        terrain.key(), terrain.settings(context.lookup(Registries.NOISE),
+                                context.lookup(Registries.DENSITY_FUNCTION)))))
                 .add(Registries.BIOME, context -> {
                     final HolderGetter<PlacedFeature> placed = context.lookup(Registries.PLACED_FEATURE);
                     final HolderGetter<ConfiguredWorldCarver<?>> carvers = context.lookup(Registries.CONFIGURED_CARVER);

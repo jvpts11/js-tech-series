@@ -14,7 +14,9 @@ import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.moving.joint.StructureJoints;
 import dev.jstech.core.moving.physics.PhysicsMotion;
+import dev.jstech.core.moving.physics.PhysicsWorkers;
 import dev.jstech.core.moving.physics.StructurePhysics;
+import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
@@ -37,6 +39,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
@@ -115,6 +118,34 @@ public final class MovingStructures {
     /** Makes a structure of {@code seed} and every block joined to it face to face. */
     public static StructureResult assembleJoined(final ServerLevel level, final BlockPos seed) {
         return StructureAssembly.joined(level, seed, null);
+    }
+
+    /**
+     * Makes a structure of every block in the box from {@code from} to {@code to} for {@code player}: counted against
+     * their limit of moving structures until it is set down or taken away, and refused, saying so, at the limit.
+     */
+    public static StructureResult assembleFor(final ServerLevel level, final BlockPos from, final BlockPos to,
+                                              final UUID player) {
+        return StructureAssembly.box(level, from, to, null, player);
+    }
+
+    /** Makes a structure of {@code seed} and every block joined to it for {@code player}, counted as by the box. */
+    public static StructureResult assembleJoinedFor(final ServerLevel level, final BlockPos seed, final UUID player) {
+        return StructureAssembly.joined(level, seed, null, player);
+    }
+
+    /**
+     * Makes a structure born as one of the blocks of {@code template}, standing with the middle of its bottom at
+     * {@code at}, its blocks never in the world: a rocket built in its hangar, a ship of a datapack's.
+     */
+    public static StructureResult born(final ServerLevel level, final StructureTemplate template, final Vec3 at) {
+        return StructureAssembly.born(level, template, at, null);
+    }
+
+    /** Makes a structure born as one for {@code player}, counted against their limit as one assembled for them. */
+    public static StructureResult bornFor(final ServerLevel level, final StructureTemplate template, final Vec3 at,
+                                          final UUID player) {
+        return StructureAssembly.born(level, template, at, player);
     }
 
     /** Sets {@code structure} down on the world's grid where it is, and takes it away. */
@@ -370,6 +401,11 @@ public final class MovingStructures {
             StructureYard.giveBack(level, structure.plot());
         }
         StructureJoints.forget(level, structure.id());
+        // Its maker has one more of their limit back, unless it went on as another structure, which kept them.
+        final UUID maker = structure.takeMaker();
+        if (maker != null) {
+            PlayerLimits.giveBack(level.getServer(), maker, PlayerLimits.MOVING_STRUCTURES);
+        }
         entity.discard();
     }
 
@@ -383,10 +419,14 @@ public final class MovingStructures {
             return;
         }
         final List<MovingStructure> moving = new ArrayList<>();
+        final List<MovingStructure> physical = new ArrayList<>();
         for (final IStructureBody body : all.all()) {
             if (body instanceof MovingStructure structure && !structure.resting()
                     && level.isPositionEntityTicking(structure.entity().blockPosition())) {
                 moving.add(structure);
+                if (structure.ready() && structure.mount() == null && structure.motion() instanceof PhysicsMotion) {
+                    physical.add(structure);
+                }
             }
         }
         SECTION.run(() -> {
@@ -394,9 +434,12 @@ public final class MovingStructures {
                 for (final MovingStructure structure : moving) {
                     prepare(level, structure);
                 }
-                return;
+            } else {
+                workers().submit(() -> moving.parallelStream().forEach(structure -> prepare(level, structure)))
+                        .join();
             }
-            workers().submit(() -> moving.parallelStream().forEach(structure -> prepare(level, structure))).join();
+            // Those moving by their physics far apart are worked beside the server's thread too, each in its group.
+            PhysicsWorkers.work(level, physical, workers());
         });
     }
 

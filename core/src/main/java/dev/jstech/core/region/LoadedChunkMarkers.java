@@ -37,8 +37,8 @@ import net.minecraft.world.level.ChunkPos;
 public final class LoadedChunkMarkers {
 
     public static final TextKey LAYER_NAME = TextKey.of("jscore.map.layer.loaded_chunks", "Chunks kept loaded");
-    public static final TextKey KEPT = TextKey.of("jscore.map.loaded_chunks.kept", "Kept loaded");
-    public static final TextKey KEPT_BY = TextKey.of("jscore.map.loaded_chunks.kept_by", "Kept loaded by %s");
+    public static final TextKey KEPT = TextKey.of("jscore.map.loaded_chunks.kept", "Kept loaded: %s");
+    public static final TextKey KEPT_BY = TextKey.of("jscore.map.loaded_chunks.kept_by", "Kept loaded by %s: %s");
     /** The layer the chunks kept loaded are drawn in, as areas. */
     public static final MarkerLayer LAYER = MapMarkers.layer(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "loaded_chunks"), LAYER_NAME, 0x55FFFF, true);
@@ -63,11 +63,14 @@ public final class LoadedChunkMarkers {
         int shown = 0;
         for (final ServerLevel level : server.getAllLevels()) {
             final Map<BlockPos, UUID> owners = ChunkLoaders.sources(level);
+            final Map<BlockPos, TextKey> reasons = ChunkLoaders.reasons(level);
             for (final Map.Entry<BlockPos, Set<ChunkPos>> source : ChunkLoaders.kept(level).entrySet()) {
                 final UUID owner = owners.get(source.getKey());
                 final String name = owner == null ? "" : CoreTeams.nameOf(server, owner).orElse(owner.toString());
+                final TextKey reason = reasons.getOrDefault(source.getKey(), ChunkLoaders.UNSAID);
                 MapMarkers.show(operator, Marker.area(id(EVERY, level, source.getKey()), LAYER.id(),
-                        level.dimension(), List.copyOf(source.getValue()), GameText.component(KEPT_BY.with(name))));
+                        level.dimension(), List.copyOf(source.getValue()),
+                        GameText.component(KEPT_BY.with(name, reason))));
                 shown++;
             }
         }
@@ -96,7 +99,8 @@ public final class LoadedChunkMarkers {
     }
 
     /* The source at {@code source} keeps {@code chunks} now: its marker on its owner's team's maps follows. */
-    static void changed(final ServerLevel level, final BlockPos source, final UUID owner, final LongSet chunks) {
+    static void changed(final ServerLevel level, final BlockPos source, final UUID owner, final TextKey reason,
+                        final LongSet chunks) {
         final String id = id(OWN, level, source);
         if (chunks.isEmpty()) {
             MapMarkers.hide(level.getServer(), owner, id);
@@ -105,7 +109,7 @@ public final class LoadedChunkMarkers {
         final List<ChunkPos> area = new ArrayList<>();
         chunks.forEach(chunk -> area.add(new ChunkPos(chunk)));
         MapMarkers.share(level.getServer(), owner, Marker.area(id, LAYER.id(), level.dimension(), area,
-                GameText.component(KEPT.text())));
+                GameText.component(KEPT.with(reason))));
     }
 
     private static String id(final String prefix, final ServerLevel level, final BlockPos source) {

@@ -10,11 +10,14 @@ package dev.jstech.core.world.edit;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.log.CoreLogs;
+import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.task.Tasks;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -48,6 +51,8 @@ public final class WorldEdits {
 
     private static final Logger LOGGER = CoreLogs.WORLD.logger();
     private static final List<WorldEdit> SETTING = new ArrayList<>();
+    /* The edits under way for players, planning or setting, each until it ends. */
+    private static final List<WorldEdit> FOR_PLAYERS = new ArrayList<>();
     /* How long a tick's share may run, in nanoseconds, and how many blocks are set between looks at the clock. */
     private static final long SLICE_NANOS = 1_500_000L;
     private static final int BETWEEN_LOOKS = 64;
@@ -65,6 +70,7 @@ public final class WorldEdits {
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> {
             List.copyOf(SETTING).forEach(WorldEdit::stop);
             SETTING.clear();
+            FOR_PLAYERS.clear();
         });
     }
 
@@ -93,6 +99,41 @@ public final class WorldEdits {
         final WorldEdit edit = new WorldEdit(level);
         begin(edit, Objects.requireNonNull(plan, "plan"));
         return edit;
+    }
+
+    /**
+     * Plans an edit as {@link #plan} does, for {@code player}: it counts against their limit of large edits under way
+     * ({@link PlayerLimits#LARGE_EDITS}) until it ends, done, stopped or failed. Empty, and nothing planned, when they
+     * are at the limit, which {@code PlayerLimits.reached(LARGE_EDITS, underWayFor(player))} tells them.
+     */
+    public static Optional<WorldEdit> planFor(final ServerLevel level, final UUID player, final BoundingBox box,
+                                              final Function<RegionSnapshot, EditPlan> planner) {
+        if (!PlayerLimits.allows(player, PlayerLimits.LARGE_EDITS, underWayFor(player))) {
+            return Optional.empty();
+        }
+        return Optional.of(counted(plan(level, box, planner), player));
+    }
+
+    /** Sets the blocks of {@code plan} as {@link #apply} does, for {@code player}, counted as {@link #planFor} is. */
+    public static Optional<WorldEdit> applyFor(final ServerLevel level, final UUID player, final EditPlan plan) {
+        if (!PlayerLimits.allows(player, PlayerLimits.LARGE_EDITS, underWayFor(player))) {
+            return Optional.empty();
+        }
+        return Optional.of(counted(apply(level, plan), player));
+    }
+
+    /**
+     * How many edits {@code player} has under way, planning or setting: what their limit counts. An edit does not
+     * outlive the server, so neither does the count, which is of the edits themselves.
+     */
+    public static int underWayFor(final UUID player) {
+        int count = 0;
+        for (final WorldEdit edit : FOR_PLAYERS) {
+            if (player.equals(edit.player())) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /** The edits under way, in the order they began. */
@@ -128,6 +169,16 @@ public final class WorldEdits {
             }
         }
         return setNow;
+    }
+
+    /* Counts {@code edit} as {@code player}'s until it ends. */
+    private static WorldEdit counted(final WorldEdit edit, final UUID player) {
+        edit.forPlayer(player);
+        if (!edit.over()) {
+            FOR_PLAYERS.add(edit);
+            edit.whenOver(FOR_PLAYERS::remove);
+        }
+        return edit;
     }
 
     private static void begin(final WorldEdit edit, final EditPlan plan) {

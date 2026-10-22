@@ -41,6 +41,14 @@ public final class LandformPainter {
     private static final int LARGE_CRATER = 24;
     private static final double FADING = 0.3;
     private static final double BANK = 1.5;
+    /* How much more tightly a rille winds than a canyon, and how far it swings, as a share of its width. */
+    private static final double RILLE_WINDING = 3.0;
+    private static final double RILLE_SWING = 1.5;
+    /* How wide a glacier's moraines are, and how far apart its crevasses lie down its length. */
+    private static final int MORAINE = 2;
+    private static final int CREVASSE_SPACING = 5;
+    /* How far past a cryovolcano's foot what it threw out lies, as a share of its radius. */
+    private static final double PLUME = 0.5;
     private static final int UPDATE = 2;
     private static final int MAGMA_TICK = 20;
     private static final long MIX_X = 341_873_128_712L;
@@ -95,6 +103,9 @@ public final class LandformPainter {
                     raise(x, z, ground, ground + (int) Math.round(rise), this.config.surface());
                 }
                 case CANYON -> canyon(x, z, ground, r, tall);
+                case RILLE -> rille(x, z, ground, r, tall);
+                case GLACIER -> glacier(x, z, ground, r, tall);
+                case CRYOVOLCANO -> cryovolcano(x, z, ground, d, r, tall);
                 case RIVER -> river(x, z, ground, r, tall);
                 case LAVA_TUBE -> tube(x, z, ground, r, tall);
                 case ICE_SHEET -> {
@@ -184,6 +195,72 @@ public final class LandformPainter {
                 if (!this.config.special().isAir() && cut > 2) {
                     put(x, ground - cut + 1, z, this.config.special());
                 }
+            }
+        }
+
+        /* A rille is narrower than a canyon and winds three times as tightly, a smooth trough rather than a gorge. */
+        private void rille(final int x, final int z, final int ground, final double r, final double tall) {
+            final double along = this.one.along(x, z);
+            if (Math.abs(along) > r) {
+                return;
+            }
+            final double width = Math.max(4, r / 6);
+            final double across = this.one.across(x, z)
+                    + Math.sin(along / (MEANDER / RILLE_WINDING) * 2 * Math.PI) * width * RILLE_SWING;
+            final double depth = tall * LandformShapes.fade(Math.abs(along), r, r * FADING);
+            final int cut = (int) Math.round(LandformShapes.rille(across, width, depth));
+            if (cut > 0) {
+                lower(x, z, ground, ground - cut, this.config.surface());
+            }
+        }
+
+        /*
+         * A glacier lies down its line from its head, as wide as a third of its length: its ice the special under the
+         * surface, cut open by crevasses across its lower half, and moraines of the scatter heaped on the ground along
+         * its edges and before its snout, where the ice has given out.
+         */
+        private void glacier(final int x, final int z, final int ground, final double r, final double tall) {
+            final double along = this.one.along(x, z);
+            final double across = this.one.across(x, z);
+            if (Math.abs(along) > r) {
+                return;
+            }
+            final double width = Math.max(6, r * 2 / 3);
+            final int thick = (int) Math.round(LandformShapes.glacier(along, across, r, width, tall));
+            if (thick <= 0) {
+                final boolean beside = Math.abs(across) >= width / 2 && Math.abs(across) < width / 2 + MORAINE;
+                final boolean before = along >= r - MORAINE && Math.abs(across) < width / 2;
+                if (beside || before) {
+                    put(x, ground + 1, z, this.config.scatter());
+                }
+                return;
+            }
+            fill(x, z, ground + 1, ground + thick, this.config.special());
+            put(x, ground + thick + 1, z, this.config.surface());
+            final int crack = (int) Math.floor(along);
+            if (along > 0 && thick > 1 && Math.floorMod(crack, CREVASSE_SPACING) == 0
+                    && Math.abs(across) < width / 4) {
+                fill(x, z, ground + thick - thick / 2 + 1, ground + thick + 1, Blocks.AIR.defaultBlockState());
+            }
+        }
+
+        /*
+         * A cryovolcano stands as a broad dome, built of the fill under its surface, its summit holding the special,
+         * and what it threw out lies past its foot, all of it near the foot and less outwards.
+         */
+        private void cryovolcano(final int x, final int z, final int ground, final double d, final double r,
+                                 final double tall) {
+            if (d < r) {
+                final int top = ground + (int) Math.round(LandformShapes.volcano(d, r, tall, true));
+                raise(x, z, ground, top, this.config.surface());
+                if (LandformShapes.inSummit(d, r)) {
+                    fill(x, z, top - SUMMIT_POOL + 1, top, this.config.special());
+                }
+                return;
+            }
+            final double thin = 1 - (d - r) / (r * PLUME);
+            if (thin > 0 && chance(x, z) < thin) {
+                put(x, ground + 1, z, this.config.scatter());
             }
         }
 

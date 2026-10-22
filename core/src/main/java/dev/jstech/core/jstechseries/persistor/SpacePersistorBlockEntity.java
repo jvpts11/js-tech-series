@@ -246,8 +246,8 @@ public final class SpacePersistorBlockEntity extends MachineBlockEntity {
             if (held.contains(chunk)) {
                 continue;
             }
-            final ChunkLoaders.LoadOutcome outcome = ChunkLoaders.load(level, this.worldPosition, owner, chunk,
-                    true);
+            final ChunkLoaders.LoadOutcome outcome = ChunkLoaders.load(level, this.worldPosition, owner,
+                    SpacePersistor.REASON, chunk, true);
             if (outcome == ChunkLoaders.LoadOutcome.LIMIT_REACHED || outcome == ChunkLoaders.LoadOutcome.SERVER_FULL) {
                 refused = true;
                 break;

@@ -22,5 +22,6 @@
   "jsexample.logbook.start_over": "Start my count over",
   "jsexample.logbook.title": "Logbook",
   "jsexample.recipe_kind.crushing": "Crushing",
+  "jsexample.sensor.fullness": "How full the block is",
   "jsexample.sensor.reads": "Reads %s of 15"
 }

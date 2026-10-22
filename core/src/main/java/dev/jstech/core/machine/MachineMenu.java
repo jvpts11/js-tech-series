@@ -17,6 +17,7 @@ import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.menu.SlotGroup;
+import dev.jstech.core.menu.SyncedValue;
 import dev.jstech.core.team.Access;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public final class MachineMenu extends CoreMenu {
 
     private final MachineBlockEntity machine;
     private final List<Slot> faceSlots = new ArrayList<>();
+    private final SyncedValue<MachineHistory> history;
     private int tab;
 
     /** The tabs, in their order along the top. */
@@ -117,6 +119,8 @@ public final class MachineMenu extends CoreMenu {
         shiftClick(upgrades, player.main(), player.hotbar());
         shiftClick(protections, player.main(), player.hotbar());
         data(machine.fields().menuData());
+        // Carried only while the screen is open, and only when its second's reading changed it.
+        this.history = synced("history", MachineHistory.STREAM_CODEC, MachineHistory.NONE, machine::history);
         declareButtons();
     }
 
@@ -143,6 +147,11 @@ public final class MachineMenu extends CoreMenu {
     /** The slots its Main tab shows. */
     public List<Slot> faceSlots() {
         return List.copyOf(faceSlots);
+    }
+
+    /** What the machine did over its last ten minutes, for its face's page of statistics. */
+    public MachineHistory history() {
+        return history.get();
     }
 
     /** The button that sets what {@code face} does with {@code resource} to {@code mode}. */

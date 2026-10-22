@@ -105,6 +105,10 @@ public final class ScreenToolsClientTests {
                     ctx.assertTrue(inFace.size() == 1 && "button".equals(inFace.get(0).getAsJsonObject()
                             .get("type").getAsString()), "Add put a button in the face, where the pointer is, in "
                             + "place of the line saying it is empty: " + inFace);
+                    final List<String> card = ScreenEditor.cardFields();
+                    ctx.assertTrue(card.size() > 2 && card.subList(0, 2).equals(List.of("id", "bind"))
+                            && card.contains("text") && card.contains("action"), "its card holds its name, what it "
+                            + "is bound to and the fields a button has: " + card);
                 })
                 .then(SETTLE, () -> {
                     ScreenEditor.set("id", "made_by_the_editor");

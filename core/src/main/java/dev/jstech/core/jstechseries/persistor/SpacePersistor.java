@@ -70,6 +70,9 @@ public final class SpacePersistor {
     public static final TextKey CIRCLE = TextKey.of("jscore.persistor.shape.circle", "Circle");
     public static final TextKey LINE = TextKey.of("jscore.persistor.shape.line", "Line, across the way it faces");
     public static final TextKey FREE = TextKey.of("jscore.persistor.shape.free", "Free: only the chunks clicked");
+    /** Why it keeps its chunks, for the operator who finds them kept. */
+    public static final TextKey REASON = TextKey.of("jscore.persistor.reason",
+            "A Space Persistor keeps the area round it loaded");
 
     /** The Persistor. */
     public static final BlockEntry<DeviceBlock> BLOCK = CoreItems.CONTENT.block("space_persistor",

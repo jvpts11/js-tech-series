@@ -31,7 +31,27 @@ StructureResult joined = MovingStructures.assembleJoined(level, seed);          
 if (made.ok()) {
     MovingStructure structure = made.structure();
 }
+StructureResult theirs = MovingStructures.assembleFor(level, corner, otherCorner, player.getUUID());
 ```
+
+A structure can also be **born as one**, from a template, as a rocket is built in its hangar: its blocks are laid
+straight into its plot of the yard and never stand in the world.
+
+```java
+// A datapack's template, or one a structure block saved.
+StructureTemplate rocket = level.getStructureManager().getOrCreate(rl("rocket"));
+StructureResult born = MovingStructures.born(level, rocket, Vec3.atBottomCenterOf(padPos.above()));
+```
+
+It stands with the middle of its bottom at the place given. It waits, as an assembled one does, for its plot to load
+(`arriving()`), and is refused, saying why, for a template of nothing, of more blocks than the server allows, holding
+a block that stays put, or that would stand out of the world's height. The template's creatures are left out.
+
+A structure a player makes is made for them, `assembleFor`, `assembleJoinedFor` and `bornFor`: it counts against how
+many moving structures one player may have made and not yet set down (`protection.structures_per_player`, 32 by
+default, [Protection](PROTECTION.md#limits-per-player)), and at the limit it is refused, saying so.
+`structure.maker()` is whose it is; it stays theirs as it goes to another dimension, and is given back to their count
+as it is set down or taken away. The pieces a broken structure parts into are counted for nobody.
 
 The blocks are moved whole into a plot of the yard, block entities with everything they keep, quietly: no
 neighbour is told on the way, so a torch on a wall moved with the wall stays on it. The structure then stands
@@ -183,6 +203,14 @@ loaded is read: a structure reaching one waits there. Each structure's tick of p
 `jscore:structure_physics`; twenty small structures falling and landing at once take a few milliseconds a tick. The
 physics of a dimension's structures takes no more of a tick than `moving_structures.physics_millis` lets it: past
 that, a structure waits a tick, and goes the next whatever the budget.
+
+Structures moving by their physics far apart are worked at once, beside the server's thread. At the start of the
+dimension's tick each readies its tick on the server's thread; those whose reach this tick (where they stand, how far
+they may go, and two dozen blocks round) meets no other's are worked each on a thread of its own, reading only the
+loaded chunks round them, gathered for them first; then, on the server's thread again, what they broke is broken and
+what they show is sent, and each takes its step in its turn as before. Structures near one another, and joined ones,
+are worked together in turn. Alone, or with another mod's moving structures about, a structure is worked on the
+server's thread in its turn, as it always was.
 
 Each force can be turned off for every structure by its setting, gravity, drag, lift, thrust, buoyancy with the
 balloons, levitation, magnetism and the wind, so a server can make a world of floating islands or of still air; and
@@ -544,7 +572,9 @@ either way the game builds the sections of the world again a few frames after th
 first build begun after the change is drawn is the frame the drawing changes hands. Under a shader pack
 (Iris, Oculus) the meshes are handed to the pack's drawing as an entity's are, so the structure looks the same with
 or without it. A player sees a structure as far as its blocks reach, not only as far as its middle, and its block
-entities whatever part of the world its middle is in.
+entities whatever part of the world its middle is in. A structure is drawn only while its nearest block is within the
+player's render distance and four chunks past it, as the world's own sections are; one further off costs no drawing at
+all, its blocks, its block entities and under a shader pack alike, so a fleet far away weighs nothing on the frame.
 
 ## Keeping and travelling
 

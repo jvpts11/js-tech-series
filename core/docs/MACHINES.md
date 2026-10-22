@@ -294,7 +294,12 @@ Device.of(() -> MY_MACHINE.get()).ticks(MachineBlockEntity::serverTick).opensMen
   an LCD of what it made the last minute and how far through its work it is, or what keeps it waiting, the process
   window with its slots and each lane's arrow lit as far as its work has gone, its ON/OFF rocker, and a sight glass
   of its first tank (or of its stored energy, for a machine with none). Ctrl and a click on an input slot locks it to
-  what it holds, or unlocks it; a locked empty slot shows its item faded.
+  what it holds, or unlocks it; a locked empty slot shows its item faded. A click on the LCD turns it to its page of
+  statistics and back: how much of the last minute the machine worked, and a chart of its last ten minutes, what it
+  made a minute as green columns and what it drew as amber dots, a reading every twelve seconds. Its tooltip tells it
+  in full: what it makes a minute and the most it made, what it draws now and on the whole, how many seconds of the
+  last minute it worked, and the last thing that jammed it and how long ago (a stop by its switch or by redstone is
+  its player's, not a jam).
 - **Sides** shows the machine as two cubes, from the front and from the back, each face tinted and named by what it
   does with the resource picked on the buttons at the left (blue in, amber out, green both, grey neither). A click
   picks a face, a right-click turns it; the knob on the right turns the face picked. Below, the switches of what it
@@ -314,6 +319,18 @@ Device.of(() -> MY_MACHINE.get()).ticks(MachineBlockEntity::serverTick).opensMen
 
 Every control is a button of the menu, which the server answers (`MachineMenu.SWITCH`, `sideButton(...)`,
 `automationButton(...)`, and so on), so a test or a mod presses them the way the screen does.
+
+*Added 2026-10-22:* the statistics are counted on the server as the machine ticks, never saved (they start again when
+the machine is loaded), and carried only to a player with the screen open. A face of your own shows them from the
+menu, drawn as the standard face does:
+
+```java
+MachineHistory history = menu.history();      // machine.history() on the server
+MachineArt.lcdChart(g, font, x, y, 56, 22,
+        GameText.resolve(MachineScreenTexts.LCD_EFFICIENCY.with(history.efficiency())),
+        GameText.resolve(MachineScreenTexts.LCD_SPAN.with(10)), history.made(), history.power());
+history.stop().ifPresent(jam -> ...);         // what last jammed it, history.stoppedSecondsAgo() ago
+```
 
 A machine of your own with a face of its own registers it on the player's side and puts its slots where its face
 draws them, overriding `mainSlots()`; the face draws with `MachineArt`, so its parts match every other machine's:

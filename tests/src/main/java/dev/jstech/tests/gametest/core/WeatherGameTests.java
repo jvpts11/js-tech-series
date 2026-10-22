@@ -61,13 +61,16 @@ public final class WeatherGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(!Weathers.at(level, centre).isEmpty(),
                         "the weather is under way at the arena"))
                 .thenExecute(() -> {
+                    // Each cow's health before the weather is what it is weighed against: tests running beside
+                    // this one may have touched either since it was spawned.
                     final float before = out.getHealth();
+                    final float shelteredBefore = sheltered.getHealth();
                     Weathers.weather(level, out);
                     Weathers.weather(level, sheltered);
                     helper.assertTrue(out.hasEffect(MobEffects.POISON) && out.getHealth() < before,
                             "the cow out in it is harmed and poisoned");
                     helper.assertTrue(!sheltered.hasEffect(MobEffects.POISON)
-                            && sheltered.getHealth() == sheltered.getMaxHealth(), "the cow under a roof is spared");
+                            && sheltered.getHealth() == shelteredBefore, "the cow under a roof is spared");
                     helper.assertTrue(Weathers.windAt(level, centre) == 3, "the wind blows three times as hard in it");
                     helper.assertTrue(Weathers.windAt(level, centre.east(BEYOND)) == 1, "and as it was beyond");
                 })

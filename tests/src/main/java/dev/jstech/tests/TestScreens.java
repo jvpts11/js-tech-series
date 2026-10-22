@@ -77,6 +77,11 @@ public final class TestScreens {
     /** The menu's type. */
     public static final DeferredHolder<MenuType<?>, MenuType<TestDataMenu>> MENU = MENUS.register("data_screen",
             () -> new MenuType<>(TestDataMenu::new, FeatureFlags.DEFAULT_FLAGS));
+    /** The screen file of the thing whose screen shows its menu's slots wrongly, named as the thing. */
+    public static final ResourceLocation SLOT_CHECK_FILE = TestItems.SLOT_CHECK.getId();
+    /** Its menu: two slots of its own, and no inventory of the player's. */
+    public static final DeferredHolder<MenuType<?>, MenuType<SlotCheckMenu>> SLOT_CHECK_MENU = MENUS.register(
+            "slot_check", () -> new MenuType<>(SlotCheckMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     private TestScreens() {
     }
@@ -125,6 +130,19 @@ public final class TestScreens {
         /** The bar's fill, as this copy of the menu has it. */
         public int progress() {
             return progress.get();
+        }
+    }
+
+    /** The menu of the thing whose screen shows its slots wrongly: two slots of its own, and nothing else. */
+    public static final class SlotCheckMenu extends CoreMenu {
+
+        private final ItemStackHandler items = new ItemStackHandler(2);
+
+        private static final GuiLayout.SlotPosition ANYWHERE = new GuiLayout.SlotPosition(0, 0);
+
+        public SlotCheckMenu(final int id, final Inventory inventory) {
+            super(SLOT_CHECK_MENU.get(), id, inventory, player -> true);
+            slots(slot(items, 0, ANYWHERE), slot(items, 1, ANYWHERE));
         }
     }
 }

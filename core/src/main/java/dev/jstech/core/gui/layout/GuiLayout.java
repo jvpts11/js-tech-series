@@ -16,9 +16,9 @@ import java.util.Map;
  * A pure, Minecraft-free model of a screen's layout, so the layout can be unit-tested. A screen builds
  * its element rectangles here and the validators catch the layout bugs that previously only surfaced
  * in-game: solid elements overlapping, anything spilling past the panel, and text running wider than the
- * space it sits in. It lives in {@code common} (not {@code client}) because both the Menu (which places
- * the real slots) and the Screen (which draws their frames) consume the same layout, so the slot
- * positions are validated too.
+ * space it sits in. It lives outside {@code client} because both the Menu (which places the real
+ * slots) and the Screen (which draws their frames) consume the same layout, so the slot positions are
+ * validated too.
  *
  * <p>Elements come in two kinds, because not every overlap is a bug:
  * <ul>

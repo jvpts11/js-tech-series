@@ -14,8 +14,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.level.Level;
 
 /**
  * The kinds of harm any mod declares, the Core's first: radiation, electrical, cryogenic, acid, heat, a blast and
@@ -41,7 +45,22 @@ public final class DamageKinds {
     /** What is too bright to look at; what a dark visor stops. */
     public static final DamageKind BLINDING = declare("blinding", HazardTexts.BLINDING);
 
+    /**
+     * The Core's damage of the cryogenic kind, beside the game's freezing: the burn of what is far too cold, a
+     * cryogenic liquid or the metal it chills, for a mod to deal ({@link #source}).
+     */
+    public static final ResourceKey<DamageType> COLD_BURN = ResourceKey.create(Registries.DAMAGE_TYPE,
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "cold_burn"));
+    /** The Core's damage of the pressure kind: what a difference of pressure does to a body, for a mod to deal. */
+    public static final ResourceKey<DamageType> PRESSURE_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE,
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "pressure"));
+
     private DamageKinds() {
+    }
+
+    /** Damage of {@code type} in {@code level}, from nothing in particular. */
+    public static DamageSource source(final Level level, final ResourceKey<DamageType> type) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(type));
     }
 
     /** Declares {@code kind}, from a mod's constructor; its name is said beside it, in a class of texts. */

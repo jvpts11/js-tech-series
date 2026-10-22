@@ -21,6 +21,7 @@
     "PlayerListMixin",
     "PlayerMixin",
     "RecipeManagerMixin",
+    "ServerChunkCacheMixin",
     "ServerGamePacketListenerImplMixin",
     "ServerLevelMixin",
     "TrackedEntityMixin",

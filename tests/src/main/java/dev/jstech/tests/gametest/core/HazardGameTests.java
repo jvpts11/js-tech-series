@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.core;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.dimension.DimensionHazardEvent;
 import dev.jstech.core.dimension.DimensionHazards;
+import dev.jstech.core.hazard.DamageKind;
 import dev.jstech.core.hazard.DamageKinds;
 import dev.jstech.core.hazard.HazardMap;
 import dev.jstech.core.hazard.HazardMaps;
@@ -30,12 +31,16 @@ import dev.jstech.tests.TestHazards;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
@@ -75,6 +80,35 @@ public final class HazardGameTests {
     private static final BlockPos PIG = new BlockPos(2, 2, 2);
 
     private HazardGameTests() {
+    }
+
+    @GameTest(template = ARENA)
+    public static void damageKinds_eachHasTheCoresOwnDamageWithItsDeathMessage(final GameTestHelper helper) {
+        final ServerPlayer player = GameTestPlayers.join(helper, "harmed");
+        try {
+            for (final DamageKind kind : List.of(DamageKinds.RADIATION, DamageKinds.ELECTRICAL, DamageKinds.CRYOGENIC,
+                    DamageKinds.ACID, DamageKinds.HEAT, DamageKinds.BLAST, DamageKinds.PRESSURE)) {
+                final List<Holder<DamageType>> types = helper.getLevel().registryAccess()
+                        .registryOrThrow(Registries.DAMAGE_TYPE).getTag(kind.types())
+                        .map(set -> set.stream().toList()).orElse(List.of());
+                final Holder<DamageType> own = types.stream()
+                        .filter(type -> type.unwrapKey().orElseThrow().location().getNamespace().equals("jscore"))
+                        .findFirst().orElse(null);
+                helper.assertTrue(own != null, kind.id() + " holds a damage of the Core's own; got " + types);
+                final DamageSource source = new DamageSource(own);
+                helper.assertTrue(DamageKinds.of(source).orElse(null) == kind, "and it is of " + kind.id());
+                final Component died = source.getLocalizedDeathMessage(player);
+                final String key = died.getContents() instanceof TranslatableContents said ? said.getKey() : "";
+                helper.assertTrue(Language.getInstance().has(key), "it says how " + kind.id() + " kills: " + key);
+            }
+            helper.assertTrue(DamageKinds.of(DamageKinds.source(helper.getLevel(), DamageKinds.COLD_BURN))
+                    .orElse(null) == DamageKinds.CRYOGENIC, "a cold burn is cryogenic");
+            helper.assertTrue(DamageKinds.of(DamageKinds.source(helper.getLevel(), DamageKinds.PRESSURE_DAMAGE))
+                    .orElse(null) == DamageKinds.PRESSURE, "and the pressure's damage of the pressure kind");
+        } finally {
+            GameTestPlayers.leave(player);
+        }
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)
