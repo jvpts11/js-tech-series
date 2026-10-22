@@ -3165,12 +3165,15 @@ stable 4
 10 dev.jstech.core.content.ModelBuilder  type final class
 10 dev.jstech.core.content.ModelBuilder  DeclaredModel register()
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder animations(String...)
+12 dev.jstech.core.content.ModelBuilder  ModelBuilder far(int, int)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder file(String)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder glow(String...)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder glowLight(int, int)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder noCracks()
+12 dev.jstech.core.content.ModelBuilder  ModelBuilder scale(double)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder texture(String)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder translucent()
+12 dev.jstech.core.content.ModelBuilder  ModelBuilder triangles(int)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder variant(Consumer<VariantBuilder>)
 10 dev.jstech.core.content.ModelBuilder.VariantBuilder  type static final class
 10 dev.jstech.core.content.ModelBuilder.VariantBuilder  VariantBuilder hide(String...)
@@ -4578,16 +4581,22 @@ stable 4
 10 dev.jstech.core.gui.layout.McpPairLayout  static final int SIDE
 10 dev.jstech.core.gui.layout.McpPairLayout.Regions  type record(int width, int height, int titleY, int whoY, int readY, int actY, int noteY, int timeoutY, int textX, int textWidth, List<StudioLayout.Rect> buttons)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  type final class
-10 dev.jstech.core.gui.layout.ModelPreviewLayout  static GuiLayout layout(int, int, int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static GuiLayout layout(int, int, Column)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static boolean hintShown(int, Column)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int BAR
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int BAR_HEIGHT
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int BOTTOM
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int BUTTON_PITCH
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int COLUMN
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int CONTROL
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int COUNT_WIDTH
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int DETAIL_ROW
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int FEWEST_ROWS
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int LABEL
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int MARGIN
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int MOST_BUTTONS
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int NAME_WIDTH
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int NONE_ROW
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int RELOADED_WIDTH
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int SMALLEST_HEIGHT
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int SMALLEST_WIDTH
@@ -4597,25 +4606,31 @@ stable 4
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int TREE_INDENT
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static final int TREE_ROW
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int animationsLabelY()
-10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int bonesLabelY(int, int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int barY(int, Column)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int bonesLabelY(int, Column)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int bottomY(int)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int buttonY(int)
-10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int buttonsShown(int, int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int buttonsShown(int, Column)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int buttonsTop()
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int columnX(int)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int controlY(int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int detailY(int, Column, int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int detailsShown(int, Column)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int detailsTop(int, Column)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int speedX(int)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int switchX(int, int)
-10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int switchY(int, int)
-10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int switchesTop(int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int switchY(int, Column, int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int switchesTop(int, Column)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int timelineWidth(int)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int timelineX()
-10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int treeRows(int, int)
-10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int treeTop(int, int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int titleRoom(int)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int treeRows(int, Column)
+12 dev.jstech.core.gui.layout.ModelPreviewLayout  static int treeTop(int, Column)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int viewHeight(int)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int viewWidth(int)
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int viewX()
 10 dev.jstech.core.gui.layout.ModelPreviewLayout  static int viewY()
+12 dev.jstech.core.gui.layout.ModelPreviewLayout.Column  type record(int animations, int switches, int details, boolean hint)
 10 dev.jstech.core.gui.layout.NewScreenLayout  type final class
 10 dev.jstech.core.gui.layout.NewScreenLayout  static GuiLayout layout()
 10 dev.jstech.core.gui.layout.NewScreenLayout  static final int BLOCK_LABEL_Y
@@ -8359,6 +8374,15 @@ stable 4
 10 dev.jstech.core.model.BedrockReader  static List<ModelData> geometry(String, JsonObject)
 10 dev.jstech.core.model.BlockbenchReader  type final class
 10 dev.jstech.core.model.BlockbenchReader  static ModelData read(String, JsonObject)
+12 dev.jstech.core.model.CadLook  type final class
+12 dev.jstech.core.model.CadLook  static Matrix4f upright()
+12 dev.jstech.core.model.CadLook  static ModelData standing(ModelData)
+12 dev.jstech.core.model.CadLook  static ModelTexture colour(int)
+12 dev.jstech.core.model.CadLook  static Vector3f upright(Vector3f)
+12 dev.jstech.core.model.CadLook  static boolean isColour(ModelTexture)
+12 dev.jstech.core.model.CadLook  static final float PIXELS_A_METRE
+12 dev.jstech.core.model.CadLook  static final int SIZE
+12 dev.jstech.core.model.CadLook  static final int STEEL
 10 dev.jstech.core.model.CubeFace  type enum implements IStableName
 10 dev.jstech.core.model.CubeFace  DOWN
 10 dev.jstech.core.model.CubeFace  EAST
@@ -8456,6 +8480,9 @@ stable 4
 10 dev.jstech.core.model.MeshDeformer  BakedGeometry.Deformed deformed()
 10 dev.jstech.core.model.MeshDeformer  float[] deform(ModelPose, Matrix4f[])
 10 dev.jstech.core.model.MeshDeformer  new(BakedGeometry.Deformed, ModelPose)
+12 dev.jstech.core.model.MeshReducer  type final class
+12 dev.jstech.core.model.MeshReducer  static ModelMesh reduce(ModelMesh, int)
+12 dev.jstech.core.model.MeshReducer  static int triangles(ModelMesh)
 10 dev.jstech.core.model.ModelAnimation  type record(String name, double length, Loop loop, Map<String, Tracks> bones, Map<String, AnimationChannel> weights, List<Event> events)
 10 dev.jstech.core.model.ModelAnimation  boolean over(double)
 10 dev.jstech.core.model.ModelAnimation  double timeAt(double)
@@ -8493,12 +8520,17 @@ stable 4
 10 dev.jstech.core.model.ModelData  Map<String, ModelLocator> locators()
 10 dev.jstech.core.model.ModelData  Optional<ModelAnimation> animation(String)
 10 dev.jstech.core.model.ModelData  Optional<ModelBone> bone(String)
-10 dev.jstech.core.model.ModelDefinition  type record(String model, List<String> textures, List<String> animations, boolean translucent, Set<String> glow, boolean cracks, List<Variant> variants, int glowLight, int glowColour)
+12 dev.jstech.core.model.ModelDefinition  type record(String model, List<String> textures, List<String> animations, boolean translucent, Set<String> glow, boolean cracks, List<Variant> variants, int glowLight, int glowColour, Detail detail)
 10 dev.jstech.core.model.ModelDefinition  JsonObject toJson()
 10 dev.jstech.core.model.ModelDefinition  Variant variantFor(Map<String, String>)
 10 dev.jstech.core.model.ModelDefinition  static ModelDefinition fromJson(String, JsonObject)
 10 dev.jstech.core.model.ModelDefinition  static ModelDefinition of(String, List<String>)
 10 dev.jstech.core.model.ModelDefinition  static final int WHITE
+12 dev.jstech.core.model.ModelDefinition.Detail  type record(double scale, int triangles, int farFrom, int farTriangles)
+12 dev.jstech.core.model.ModelDefinition.Detail  boolean hasFar()
+12 dev.jstech.core.model.ModelDefinition.Detail  int most()
+12 dev.jstech.core.model.ModelDefinition.Detail  static final Detail AS_MADE
+12 dev.jstech.core.model.ModelDefinition.Detail  static final int MOST_UNSAID
 10 dev.jstech.core.model.ModelDefinition.Variant  type record(Map<String, String> when, String model, String texture, Set<String> hidden, Set<String> shown)
 10 dev.jstech.core.model.ModelDefinition.Variant  boolean matches(Map<String, String>)
 10 dev.jstech.core.model.ModelDefinition.Variant  static final Variant NONE
@@ -8541,9 +8573,16 @@ stable 4
 10 dev.jstech.core.model.ModelReaders  static List<ModelAnimation> animations(String, byte[])
 10 dev.jstech.core.model.ModelReaders  static List<ModelData> read(String, byte[], Function<String, byte[]>)
 10 dev.jstech.core.model.ModelReaders  static String stem(String)
+12 dev.jstech.core.model.ModelReaders  static boolean fromParts(String)
 10 dev.jstech.core.model.ModelReaders  static boolean readsModel(String)
 10 dev.jstech.core.model.ModelReaders  static final List<String> MODEL_ENDINGS
 10 dev.jstech.core.model.ModelReaders  static final String ANIMATION_ENDING
+12 dev.jstech.core.model.ModelShaping  type final class
+12 dev.jstech.core.model.ModelShaping  static ModelData shape(ModelData, ModelDefinition.Detail, boolean)
+12 dev.jstech.core.model.ModelShaping  static Optional<String> overBudget(ModelData, ModelDefinition.Detail)
+12 dev.jstech.core.model.ModelShaping  static int meshTriangles(ModelData)
+12 dev.jstech.core.model.ModelShaping  static int triangles(ModelBone)
+12 dev.jstech.core.model.ModelShaping  static int triangles(ModelData)
 10 dev.jstech.core.model.ModelSkin  type record(List<String> joints, float[] inverseBinds)
 10 dev.jstech.core.model.ModelTexture  type record(String name, String file, byte[] bytes, int width, int height)
 10 dev.jstech.core.model.ModelTexture  boolean embedded()
@@ -8553,6 +8592,17 @@ stable 4
 10 dev.jstech.core.model.Rotations  type final class
 10 dev.jstech.core.model.Rotations  static Quaternionf ofEuler(Vector3fc)
 10 dev.jstech.core.model.Rotations  static Quaternionf ofEuler(float, float, float, Quaternionf)
+12 dev.jstech.core.model.StepReader  type final class
+12 dev.jstech.core.model.StepReader  static Counted readCounted(String, byte[])
+12 dev.jstech.core.model.StepReader  static ModelData read(String, byte[])
+12 dev.jstech.core.model.StepReader.Counted  type record(ModelData model, int laid, int dropped)
+12 dev.jstech.core.model.StlReader  type final class
+12 dev.jstech.core.model.StlReader  static ModelData read(String, byte[])
+12 dev.jstech.core.model.ThreeMfReader  type final class
+12 dev.jstech.core.model.ThreeMfReader  static ModelData read(String, byte[])
+12 dev.jstech.core.model.UsdReader  type final class
+12 dev.jstech.core.model.UsdReader  static ModelData read(String, byte[], Function<String, byte[]>)
+12 dev.jstech.core.model.UsdReader  static boolean readsUsd(byte[])
 10 dev.jstech.core.moving.BlockAboard  type record(Optional<Seat> seat, Optional<Clamp> clamp, Optional<Decoupler> decoupler, Optional<Tool> tool)
 10 dev.jstech.core.moving.BlockAboard  boolean any()
 10 dev.jstech.core.moving.BlockAboard  static BlockAboard of(BlockState)

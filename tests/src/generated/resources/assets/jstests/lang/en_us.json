@@ -61,6 +61,7 @@
   "block.jstests.test_kit_machine": "Test kit machine",
   "block.jstests.test_kit_machine_mk2": "Test kit machine Mk2",
   "block.jstests.test_kit_press": "Test kit press",
+  "block.jstests.test_kit_showcase": "Test kit showcase",
   "block.jstests.test_kit_turbine": "Test kit turbine",
   "block.jstests.test_large_gear": "Test large gear",
   "block.jstests.test_large_pulley": "Test large pulley",

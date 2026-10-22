@@ -1,0 +1,7 @@
+{
+  "far": {
+    "from": 24,
+    "triangles": 40
+  },
+  "model": "jstests:jsmodels/test_kit_fan.usda"
+}

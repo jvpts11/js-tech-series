@@ -1,0 +1,11 @@
+{
+  "animations": [
+    "jstests:jsmodels/test_kit_pump.animation.json"
+  ],
+  "far": {
+    "from": 32,
+    "triangles": 300
+  },
+  "model": "jstests:jsmodels/test_kit_pump.3mf",
+  "triangles": 800
+}

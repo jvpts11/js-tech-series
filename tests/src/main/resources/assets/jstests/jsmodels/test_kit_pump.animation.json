@@ -1,0 +1,23 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.test_kit_pump.spin": {
+      "loop": true,
+      "animation_length": 1.0,
+      "bones": {
+        "rotor": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "1.0": [360, 0, 0]
+          }
+        },
+        "impeller": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "1.0": [360, 0, 0]
+          }
+        }
+      }
+    }
+  }
+}

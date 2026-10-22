@@ -17,15 +17,19 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.jstech.core.api.client.GpuSurface;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.gui.layout.ModelPreviewLayout;
 import dev.jstech.core.model.AnimationController;
 import dev.jstech.core.model.BakedGeometry;
+import dev.jstech.core.model.CadLook;
 import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelAnimation;
 import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelFormatException;
 import dev.jstech.core.model.ModelLocator;
+import dev.jstech.core.model.ModelReaders;
+import dev.jstech.core.model.ModelShaping;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -53,16 +57,19 @@ import org.joml.Vector3f;
 
 /**
  * The preview of a model, for whoever makes one: the model turned, zoomed and moved with the mouse over a floor of
- * quarter blocks; its animations, each played or paused by its button; its tree of bones, the one chosen drawn in
- * yellow with the bones it hangs from; its locators by name; its glowing parts shown in the dark; its faces as wire;
- * the time of the animation, dragged along its timeline; the speed it plays at. A model's files changed and read again
- * show at once, the animation going on.
+ * quarter blocks; its animations, each played or paused by its button; its tree of bones (the parts of a CAD or scene
+ * file), each with its triangles, the one chosen drawn in yellow with the bones it hangs from; its triangles against
+ * what it may have, how it is drawn far away, its size and its colours; its locators by name; its glowing parts shown
+ * in the dark; its faces as wire; its model far away; the time of the animation, dragged along its timeline; the speed
+ * it plays at. A model's files changed and read again show at once, the animation going on.
  */
 public final class ModelPreviewScreen extends Screen {
 
     private final ResourceLocation id;
     private final List<Row> rows = new ArrayList<>();
     private final List<Button> animationButtons = new ArrayList<>();
+    private final List<Switch> switches = new ArrayList<>();
+    private final List<Component> details = new ArrayList<>();
     @Nullable
     private KitModel model;
     @Nullable
@@ -77,7 +84,12 @@ public final class ModelPreviewScreen extends Screen {
     private Timeline timeline;
     @Nullable
     private Button speedButton;
+    @Nullable
+    private Component hint;
+    private ModelPreviewLayout.Column holds = new ModelPreviewLayout.Column(0, 3, 0, false);
     private long seenReload = -1;
+    private int triangles;
+    private int most;
     private float yaw = 45;
     private float pitch = 30;
     private float zoom = 1;
@@ -87,6 +99,7 @@ public final class ModelPreviewScreen extends Screen {
     private boolean showLocators = true;
     private boolean showGlow;
     private boolean showWire;
+    private boolean showFar;
     private boolean paused;
     private int speedIndex = 2;
     private int selected = -1;
@@ -100,6 +113,10 @@ public final class ModelPreviewScreen extends Screen {
     private static final float GRID_STEP = 0.25F;
     private static final float PIXEL = 1.0F / 16.0F;
     private static final int DARK = LightTexture.pack(0, 0);
+    private static final double MILLIMETRES = 1000.0;
+    private static final String ELIDED = "...";
+    /* The line on the detail of the model far away, fainter than the others, as it is drawn less often. */
+    private static final int FAR_LINE = 1;
 
     public ModelPreviewScreen(final ResourceLocation id) {
         super(GameText.component(KitTexts.TITLE.with(id.toString())));
@@ -111,7 +128,7 @@ public final class ModelPreviewScreen extends Screen {
         resolve();
         this.animationButtons.clear();
         final List<ModelAnimation> animations = this.model == null ? List.of() : this.model.animations();
-        final int shown = ModelPreviewLayout.buttonsShown(this.height, animations.size());
+        final int shown = ModelPreviewLayout.buttonsShown(this.height, this.holds);
         this.buttonScroll = Math.max(0, Math.min(this.buttonScroll, animations.size() - shown));
         for (int i = 0; i < shown; i++) {
             final int index = i;
@@ -120,13 +137,12 @@ public final class ModelPreviewScreen extends Screen {
                             ModelPreviewLayout.COLUMN, ModelPreviewLayout.CONTROL).build();
             this.animationButtons.add(addRenderableWidget(button));
         }
-        final TextKey[] switches = {KitTexts.BONES, KitTexts.LOCATORS, KitTexts.GLOW, KitTexts.WIRE};
-        final boolean[] on = {this.showBones, this.showLocators, this.showGlow, this.showWire};
-        for (int i = 0; i < switches.length; i++) {
-            final int index = i;
-            addRenderableWidget(Checkbox.builder(GameText.component(switches[i]), this.font)
-                    .pos(ModelPreviewLayout.switchX(this.width, i), ModelPreviewLayout.switchY(this.height, i))
-                    .selected(on[i]).onValueChange((box, value) -> toggle(index, value)).build());
+        for (int i = 0; i < this.switches.size(); i++) {
+            final Switch each = this.switches.get(i);
+            addRenderableWidget(Checkbox.builder(GameText.component(each.text), this.font)
+                    .pos(ModelPreviewLayout.switchX(this.width, i), ModelPreviewLayout.switchY(this.height,
+                            this.holds, i))
+                    .selected(on(each)).onValueChange((box, value) -> toggle(each, value)).build());
         }
         this.timeline = addRenderableWidget(new Timeline(ModelPreviewLayout.timelineX(),
                 ModelPreviewLayout.controlY(this.height), ModelPreviewLayout.timelineWidth(this.width)));
@@ -149,11 +165,7 @@ public final class ModelPreviewScreen extends Screen {
         super.render(g, mouseX, mouseY, partialTick);
         final ModelPreviewPalette.Colours colours = ModelPreviewPalette.get();
         g.fill(0, 0, this.width, ModelPreviewLayout.TITLE_HEIGHT, colours.titleBar());
-        Draw.text(g, this.font, this.title, ModelPreviewLayout.MARGIN, (ModelPreviewLayout.TITLE_HEIGHT - 8) / 2,
-                colours.title(), colours.titleBar());
-        small(g, GameText.component(KitTexts.RELOADED.with((Util.getMillis() - KitModels.reloadedAt()) / 1000)),
-                this.width - ModelPreviewLayout.MARGIN - ModelPreviewLayout.RELOADED_WIDTH,
-                (ModelPreviewLayout.TITLE_HEIGHT - 6) / 2, colours.faint());
+        title(g, colours);
         view(g, colours);
         column(g, colours);
         g.fill(0, ModelPreviewLayout.bottomY(this.height), this.width, this.height, colours.bar());
@@ -207,15 +219,14 @@ public final class ModelPreviewScreen extends Screen {
             return true;
         }
         final int column = ModelPreviewLayout.columnX(this.width);
-        final int count = this.model == null ? 0 : this.model.animations().size();
-        if (mouseX >= column && mouseY < ModelPreviewLayout.bonesLabelY(this.height, count)) {
+        if (mouseX >= column && mouseY < ModelPreviewLayout.bonesLabelY(this.height, this.holds)) {
             this.buttonScroll = Math.max(0, this.buttonScroll - (int) Math.signum(scrollY));
             rebuildWidgets();
             return true;
         }
-        if (mouseX >= column && mouseY < ModelPreviewLayout.switchesTop(this.height)) {
+        if (mouseX >= column && mouseY < ModelPreviewLayout.detailsTop(this.height, this.holds)) {
             this.treeScroll = Math.max(0, Math.min(Math.max(0, this.rows.size() - ModelPreviewLayout.treeRows(
-                    this.height, count)), this.treeScroll - (int) Math.signum(scrollY)));
+                    this.height, this.holds)), this.treeScroll - (int) Math.signum(scrollY)));
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
@@ -223,9 +234,8 @@ public final class ModelPreviewScreen extends Screen {
 
     @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        final int count = this.model == null ? 0 : this.model.animations().size();
-        final int top = ModelPreviewLayout.treeTop(this.height, count);
-        final int shownRows = ModelPreviewLayout.treeRows(this.height, count);
+        final int top = ModelPreviewLayout.treeTop(this.height, this.holds);
+        final int shownRows = ModelPreviewLayout.treeRows(this.height, this.holds);
         if (mouseX >= ModelPreviewLayout.columnX(this.width) && mouseY >= top
                 && mouseY < top + shownRows * ModelPreviewLayout.TREE_ROW) {
             final int row = (int) ((mouseY - top) / ModelPreviewLayout.TREE_ROW) + this.treeScroll;
@@ -271,6 +281,48 @@ public final class ModelPreviewScreen extends Screen {
         if (this.model != null) {
             tree(null, 0);
         }
+        detail();
+    }
+
+    /* The switches the model has use for, and the lines on its detail: its triangles, far away, size, colours. */
+    private void detail() {
+        this.switches.clear();
+        this.details.clear();
+        this.hint = null;
+        final boolean locators = this.model != null && this.model.data().bones().stream()
+                .anyMatch(bone -> !bone.locators().isEmpty());
+        final boolean far = this.model != null && this.model.far() != null;
+        for (final Switch each : Switch.values()) {
+            if (each == Switch.LOCATORS && !locators || each == Switch.FAR && !far) {
+                continue;
+            }
+            this.switches.add(each);
+        }
+        this.showFar &= far;
+        if (this.model == null) {
+            this.holds = new ModelPreviewLayout.Column(0, this.switches.size(), 0, false);
+            return;
+        }
+        final UnitFormatter format = UnitFormatter.forCurrentLocale();
+        final ModelDefinition.Detail detail = this.model.definition().detail();
+        this.triangles = ModelShaping.triangles(this.model.data());
+        this.most = detail.most();
+        if (ModelReaders.fromParts(this.model.file().getPath())) {
+            this.hint = GameText.component(KitTexts.PARTS_HINT);
+        }
+        this.details.add(GameText.component(KitTexts.TRIANGLES.with(format.decimal(this.triangles),
+                format.decimal(this.most))));
+        this.details.add(far ? GameText.component(KitTexts.FAR.with(format.decimal(ModelShaping.triangles(
+                this.model.far().data())), format.decimal(detail.farFrom())))
+                : GameText.component(KitTexts.NO_FAR));
+        final double wide = this.model.bounds().getXsize();
+        this.details.add(GameText.component(KitTexts.SCALE.with(format.decimal(Math.round(wide * MILLIMETRES)),
+                format.decimal(wide))));
+        final long colours = this.model.data().textures().stream().filter(CadLook::isColour).count();
+        this.details.add(colours > 0 ? GameText.component(KitTexts.COLOURS.with(format.decimal(colours)))
+                : GameText.component(KitTexts.TEXTURES.with(format.decimal(this.model.textures().size()))));
+        this.holds = new ModelPreviewLayout.Column(this.model.animations().size(), this.switches.size(),
+                this.details.size() + (this.hint == null ? 0 : 1), this.hint != null);
     }
 
     /* The tree of bones, each under the one it hangs from. */
@@ -321,18 +373,21 @@ public final class ModelPreviewScreen extends Screen {
         small(g, GameText.component(KitTexts.HINT), x + 4, y + h - 9, colours.faint());
     }
 
-    /* How the model is seen: its middle at the view's, a block as big as the view leaves room for, zoomed. */
+    /*
+     * How the model is seen: its middle at the view's, as big as the view leaves room for, zoomed; a model smaller
+     * than a block, as a part from a CAD program can be, no smaller than a quarter of a block would be.
+     */
     private SceneRenderer.View seen(final int pixelsWide, final int pixelsTall, final double guiScale) {
         final KitModel shown = this.instance.model();
-        final double reach = Math.max(1, Math.max(shown.bounds().getXsize(), Math.max(shown.bounds().getYsize(),
-                shown.bounds().getZsize())));
+        final double reach = Math.max(GRID_STEP, Math.max(shown.bounds().getXsize(), Math.max(shown.bounds()
+                .getYsize(), shown.bounds().getZsize())));
         final float scale = (float) (Math.min(pixelsWide, pixelsTall) * 0.55 / reach * this.zoom);
         return new SceneRenderer.View((float) shown.bounds().getCenter().x, (float) shown.bounds().getCenter().y,
                 (float) shown.bounds().getCenter().z, this.yaw, this.pitch, scale, (float) (this.panX * guiScale),
                 (float) (this.panY * guiScale));
     }
 
-    /* The floor, the model, and its wire, in the scene's surface. */
+    /* The floor, the model (or its model far away), and its wire, in the scene's surface. */
     private void paint(final PoseStack pose, final MultiBufferSource.BufferSource buffers) {
         final ModelPreviewPalette.Colours colours = ModelPreviewPalette.get();
         final VertexConsumer lines = buffers.getBuffer(RenderType.lines());
@@ -340,18 +395,25 @@ public final class ModelPreviewScreen extends Screen {
             line(lines, pose, at, 0, -GRID_REACH, at, 0, GRID_REACH, colours.grid());
             line(lines, pose, -GRID_REACH, 0, at, GRID_REACH, 0, at, colours.grid());
         }
-        KitRenderer.draw(this.instance, ModelDefinition.Variant.NONE, this, pose, buffers,
+        KitRenderer.draw(this.instance, shown(), ModelDefinition.Variant.NONE, this, pose, buffers,
                 this.showGlow ? DARK : LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, null, null, false);
         if (this.showWire) {
             wire(pose, buffers.getBuffer(RenderType.lines()), colours.wire());
         }
     }
 
+    /* The model drawn: the one of fewer triangles it is drawn as far away, if that is asked for, or its own. */
+    private KitModel shown() {
+        final KitModel own = this.instance.model();
+        return this.showFar && own.far() != null ? own.far() : own;
+    }
+
     private void wire(final PoseStack pose, final VertexConsumer lines, final int colour) {
         final Matrix4f[] world = this.instance.world();
         final Vector3f a = new Vector3f();
         final Vector3f b = new Vector3f();
-        final List<List<BakedGeometry.Part>> bones = this.instance.model().geometry().bones();
+        final float size = PIXEL * shown().scale();
+        final List<List<BakedGeometry.Part>> bones = shown().geometry().bones();
         for (int i = 0; i < bones.size(); i++) {
             if (this.instance.pose().hidden(i)) {
                 continue;
@@ -362,8 +424,8 @@ public final class ModelPreviewScreen extends Screen {
                     for (int k = 0; k < 4; k++) {
                         final int from = face + k * BakedGeometry.STRIDE;
                         final int to = face + (k + 1) % 4 * BakedGeometry.STRIDE;
-                        world[i].transformPosition(a.set(v[from], v[from + 1], v[from + 2])).mul(PIXEL);
-                        world[i].transformPosition(b.set(v[to], v[to + 1], v[to + 2])).mul(PIXEL);
+                        world[i].transformPosition(a.set(v[from], v[from + 1], v[from + 2])).mul(size);
+                        world[i].transformPosition(b.set(v[to], v[to + 1], v[to + 2])).mul(size);
                         line(lines, pose, a.x, a.y, a.z, b.x, b.y, b.z, colour);
                     }
                 }
@@ -377,9 +439,10 @@ public final class ModelPreviewScreen extends Screen {
                          final double guiScale) {
         final Matrix4f[] world = this.instance.world();
         final List<ModelBone> bones = this.instance.model().data().bones();
+        final float size = PIXEL * this.instance.model().scale();
         final Vector3f[] pivots = new Vector3f[bones.size()];
         for (int i = 0; i < bones.size(); i++) {
-            final Vector3f pivot = world[i].transformPosition(new Vector3f(bones.get(i).pivot())).mul(PIXEL);
+            final Vector3f pivot = world[i].transformPosition(new Vector3f(bones.get(i).pivot())).mul(size);
             pivots[i] = toScreen(seen, pixelsWide, pixelsTall, guiScale, pivot);
         }
         if (this.showBones) {
@@ -409,7 +472,7 @@ public final class ModelPreviewScreen extends Screen {
         if (this.showLocators) {
             for (int i = 0; i < bones.size(); i++) {
                 for (final ModelLocator locator : bones.get(i).locators()) {
-                    final Vector3f place = world[i].transformPosition(new Vector3f(locator.offset())).mul(PIXEL);
+                    final Vector3f place = world[i].transformPosition(new Vector3f(locator.offset())).mul(size);
                     final Vector3f shown = toScreen(seen, pixelsWide, pixelsTall, guiScale, place);
                     final int sx = (int) shown.x;
                     final int sy = (int) shown.y;
@@ -439,26 +502,90 @@ public final class ModelPreviewScreen extends Screen {
                 (float) (ModelPreviewLayout.viewY() + out.y / guiScale), out.z);
     }
 
+    /* The title, in the middle when that leaves room for the file and when it was read at its right. */
+    private void title(final GuiGraphics g, final ModelPreviewPalette.Colours colours) {
+        final int right = read(g, colours);
+        final int room = Math.max(ModelPreviewLayout.titleRoom(this.width), this.width - 3 * ModelPreviewLayout.MARGIN
+                - right);
+        final int wide = this.font.width(this.title);
+        final int middle = (this.width - wide) / 2;
+        final int x = middle + wide <= ModelPreviewLayout.MARGIN + room ? middle : ModelPreviewLayout.MARGIN;
+        Draw.text(g, this.font, this.font.plainSubstrByWidth(this.title.getString(), room), x,
+                (ModelPreviewLayout.TITLE_HEIGHT - 8) / 2, colours.title(), colours.titleBar());
+    }
+
+    /* The file and when it was read, at the title's right; how wide it is drawn. */
+    private int read(final GuiGraphics g, final ModelPreviewPalette.Colours colours) {
+        final String path = this.model == null ? this.id.getPath() : this.model.file().getPath();
+        final long seconds = Math.max(0, System.currentTimeMillis() - KitModels.reloadedAt()) / 1000;
+        final int most = (int) (ModelPreviewLayout.RELOADED_WIDTH / SMALL);
+        // A long file name gives way from its start, so its ending and when it was read stay in sight.
+        String file = path.substring(path.lastIndexOf('/') + 1);
+        String read = GameText.component(KitTexts.RELOADED.with(file, seconds)).getString();
+        while (this.font.width(read) > most && file.length() > ELIDED.length() + 1) {
+            file = ELIDED + file.substring(ELIDED.length() + 1);
+            read = GameText.component(KitTexts.RELOADED.with(file, seconds)).getString();
+        }
+        final String fits = this.font.plainSubstrByWidth(read, most);
+        final int wide = (int) Math.ceil(this.font.width(fits) * SMALL);
+        small(g, Component.literal(fits), this.width - ModelPreviewLayout.MARGIN - wide,
+                (ModelPreviewLayout.TITLE_HEIGHT - 6) / 2, colours.faint());
+        return wide;
+    }
+
     private void column(final GuiGraphics g, final ModelPreviewPalette.Colours colours) {
         final int x = ModelPreviewLayout.columnX(this.width);
-        final int count = this.model == null ? 0 : this.model.animations().size();
         Draw.text(g, this.font, GameText.component(KitTexts.ANIMATIONS), x, ModelPreviewLayout.animationsLabelY(),
                 colours.text());
-        if (count == 0) {
+        if (this.holds.animations() == 0) {
             small(g, GameText.component(KitTexts.NO_ANIMATIONS), x + 4, ModelPreviewLayout.buttonsTop(),
                     colours.faint());
         }
-        Draw.text(g, this.font, GameText.component(KitTexts.BONES), x, ModelPreviewLayout.bonesLabelY(this.height,
-                count), colours.text());
-        final int top = ModelPreviewLayout.treeTop(this.height, count);
-        final int shown = ModelPreviewLayout.treeRows(this.height, count);
+        final boolean parts = this.model != null && ModelReaders.fromParts(this.model.file().getPath());
+        Draw.text(g, this.font, GameText.component(parts ? KitTexts.PARTS : KitTexts.BONES), x,
+                ModelPreviewLayout.bonesLabelY(this.height, this.holds), colours.text());
+        final int top = ModelPreviewLayout.treeTop(this.height, this.holds);
+        final int shown = ModelPreviewLayout.treeRows(this.height, this.holds);
+        final List<ModelBone> drawn = this.instance == null ? List.of() : shown().data().bones();
+        final UnitFormatter format = UnitFormatter.forCurrentLocale();
         for (int row = 0; row < shown && row + this.treeScroll < this.rows.size(); row++) {
             final Row each = this.rows.get(row + this.treeScroll);
+            final int y = top + row * ModelPreviewLayout.TREE_ROW;
+            final int indent = 4 + each.depth * ModelPreviewLayout.TREE_INDENT;
             final String name = this.model.data().bones().get(each.bone).name();
-            small(g, Component.literal(name), x + 4 + each.depth * ModelPreviewLayout.TREE_INDENT,
-                    top + row * ModelPreviewLayout.TREE_ROW, each.bone == this.selected ? colours.chosen()
-                            : colours.tree());
+            final int room = (int) ((ModelPreviewLayout.COLUMN - indent - ModelPreviewLayout.COUNT_WIDTH) / SMALL);
+            small(g, Component.literal(this.font.plainSubstrByWidth(name, room)), x + indent, y,
+                    each.bone == this.selected ? colours.chosen() : colours.tree());
+            final int count = each.bone < drawn.size() ? ModelShaping.triangles(drawn.get(each.bone)) : 0;
+            if (count > 0) {
+                final String written = format.decimal(count);
+                small(g, Component.literal(written), x + ModelPreviewLayout.COLUMN - 2 - (int) Math.ceil(this.font
+                        .width(written) * SMALL), y, colours.faint());
+            }
         }
+        lines(g, colours, x);
+    }
+
+    /* The lines on the model's detail, the hint first when there is room for it, and the bar of its triangles. */
+    private void lines(final GuiGraphics g, final ModelPreviewPalette.Colours colours, final int x) {
+        final int shown = ModelPreviewLayout.detailsShown(this.height, this.holds);
+        if (shown == 0) {
+            return;
+        }
+        int line = 0;
+        if (this.hint != null && ModelPreviewLayout.hintShown(this.height, this.holds)) {
+            small(g, this.hint, x, ModelPreviewLayout.detailY(this.height, this.holds, line++), colours.faint());
+        }
+        for (int i = 0; line < shown && i < this.details.size(); i++, line++) {
+            small(g, this.details.get(i), x, ModelPreviewLayout.detailY(this.height, this.holds, line),
+                    i == FAR_LINE ? colours.faint() : colours.tree());
+        }
+        final int y = ModelPreviewLayout.barY(this.height, this.holds);
+        final int wide = ModelPreviewLayout.COLUMN - 2;
+        g.fill(x, y, x + wide, y + ModelPreviewLayout.BAR_HEIGHT, colours.track());
+        final double share = this.most <= 0 ? 0 : Math.min(1.0, (double) this.triangles / this.most);
+        g.fill(x + 1, y + 1, x + 1 + (int) Math.round((wide - 2) * share), y + ModelPreviewLayout.BAR_HEIGHT - 1,
+                this.triangles > this.most ? colours.over() : colours.within());
     }
 
     private void pressAnimation(final int index) {
@@ -488,13 +615,24 @@ public final class ModelPreviewScreen extends Screen {
         this.chosen = animation;
     }
 
-    private void toggle(final int index, final boolean value) {
-        switch (index) {
-            case 0 -> this.showBones = value;
-            case 1 -> this.showLocators = value;
-            case 2 -> this.showGlow = value;
-            default -> this.showWire = value;
+    private void toggle(final Switch each, final boolean value) {
+        switch (each) {
+            case BONES -> this.showBones = value;
+            case LOCATORS -> this.showLocators = value;
+            case WIRE -> this.showWire = value;
+            case FAR -> this.showFar = value;
+            case GLOW -> this.showGlow = value;
         }
+    }
+
+    private boolean on(final Switch each) {
+        return switch (each) {
+            case BONES -> this.showBones;
+            case LOCATORS -> this.showLocators;
+            case WIRE -> this.showWire;
+            case FAR -> this.showFar;
+            case GLOW -> this.showGlow;
+        };
     }
 
     private void nextSpeed() {
@@ -575,6 +713,21 @@ public final class ModelPreviewScreen extends Screen {
 
     /* A row of the tree of bones: which bone, and how deep it hangs. */
     private record Row(int bone, int depth) {
+    }
+
+    /*
+     * The switches, in the order they stand two to a row; locators and the model far away only for a model that has
+     * them.
+     */
+    private enum Switch {
+        BONES(KitTexts.BONES), LOCATORS(KitTexts.LOCATORS), WIRE(KitTexts.WIRE), FAR(KitTexts.FAR_DETAIL),
+        GLOW(KitTexts.GLOW);
+
+        private final TextKey text;
+
+        Switch(final TextKey text) {
+            this.text = text;
+        }
     }
 
     /* The timeline: how far the animation is, dragged to put it there. */

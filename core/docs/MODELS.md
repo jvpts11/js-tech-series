@@ -4,8 +4,9 @@
 
 Animated models for blocks, items, entities and armour, read from the files artists already make: a Blockbench
 project, a Bedrock or GeckoLib geometry, glTF from Blender, FBX from Maya, 3ds Max, Cinema 4D or Blender, and OBJ from
-anything. Every reader is the Core's own, written from each format's description; none needs the program that made the
-file. A model has bones in a tree, cubes and meshes on them, locators, skins and morph targets; it plays animations
+anything; and the files of CAD programs and scenes, STL, 3MF, STEP and USD, each part a bone. Every reader is the
+Core's own, written from each format's description; none needs the program that made the file. A model has bones in a
+tree, cubes and meshes on them, locators, skins and morph targets; it plays animations
 with every easing Blockbench has, several at once, blending from one to the next; and the server can tell everyone who
 sees it what to play.
 
@@ -21,11 +22,17 @@ The design behind this page is [Models](design/models.md).
 | glTF 2.0 | `.gltf`, `.glb` | nodes as bones, meshes with normals, pictures, skins and morph targets (sparse ones too), the textures of their materials, animations stepped, straight or by cubic spline |
 | FBX 7.x, binary or text | `.fbx` | models with their pivots and pre- and post-rotations, meshes split by material, skins, blend shapes, every animation stack |
 | Wavefront OBJ | `.obj` | each object or group a bone, faces of any number of corners, the textures its material library names |
+| STL, text or binary | `.stl` | each solid of a text file a part, the colour of each triangle where a binary file gives one (as VisCAM, SolidView or Materialise write it) |
+| 3MF | `.3mf` | the objects of an assembly as parts, placed by its components and its build; colours from base materials or colour groups; textures by the file's own picture places; the parts the production extension keeps in files of their own |
+| STEP (ISO 10303-21: AP203, AP214, AP242) | `.step`, `.stp` | solids' faces laid on their own surfaces (planes, cylinders, cones, spheres, tori, B-splines, surfaces of revolution and of extrusion), faceted solids and the triangles AP242 carries, the products of an assembly as parts, the colours of solids and faces |
+| USD, text, binary or packed | `.usda`, `.usdc`, `.usdz`, `.usd` | the prims that place things as bones, meshes with their normals, picture places and colours, the colour or texture of a UsdPreviewSurface, prims referenced from the same file or from files beside it or in its package, skeletons with the meshes they bend, transforms and skeletal animations over time |
 
 Every format is turned into the same space, the game's: Y up, a model facing north (toward -Z) as it is drawn, sixteen
 pixels to a block. Bedrock's files count X the other way, and are turned round as they are read. glTF and OBJ count in
 metres, a block each; FBX says its own unit and which way is up, and its model hangs from one bone, `fbx_axes`, that
-turns its axes into the game's.
+turns its axes into the game's. STL says nothing of its unit and is taken in millimetres, as CAD programs write it; 3MF
+and STEP say theirs; USD says its own (`metersPerUnit`, centimetres when it does not) and which way is up. A CAD file,
+Z up, is turned to stand Y up, on its origin.
 
 ## Declaring a model
 
@@ -51,14 +58,58 @@ public static final DeclaredModel PRESS = CONTENT.model("press")
 | `translucent()` | it is drawn see-through, every face sorted back to front |
 | `noCracks()` | a block drawn with it shows no cracks while it is broken |
 | `variant(...)` | chosen by the block's state: another file (`model`), another texture, bones hidden (`hide`) or shown (`show`) |
+| `scale(times)` | it is drawn that many times bigger than its file says, a metre a block |
+| `triangles(most)` | it is drawn with that many triangles at most, its meshes brought down to them as it is read |
+| `far(blocks, most)` | from that many blocks away, it is drawn with that many triangles at most |
 
 The data run writes its definition to `assets/<mod>/jsmodels/<path>.model.json`, after reading the model: a file that
-is not there, a model that does not read, or a bone named that the model has none of stops the run with what to fix.
+is not there, a model that does not read, a bone named that the model has none of, or a model of more triangles than
+it may have (below) stops the run with what to fix.
 Add the provider when your mod does not gather its data through `ContentData`:
 
 ```java
 generator.addProvider(event.includeClient(), new ModelDefinitionProvider(output, CONTENT, existingFiles));
 ```
+
+## From CAD programs and scenes
+
+*Added 2026-10-22.* A part drawn in a CAD program (Fusion, SolidWorks, FreeCAD, Onshape, a slicer) or a scene from
+Blender, Maya or Houdini is declared as any model is, and comes into the game as one of its own:
+
+```java
+public static final DeclaredModel PUMP = CONTENT.model("pump")
+        .file("jsmodels/pump.3mf")                       // or .stl, .step, .usdz...
+        .animations("jsmodels/pump.animation.json")      // its parts are its bones
+        .triangles(2_000)                                // at most, near
+        .far(32, 600)                                    // and from 32 blocks away
+        .register();
+```
+
+- **Its parts are its bones.** Each part of an assembly (a 3MF object, a STEP product, a USD prim, a text STL's solid)
+  is a bone, its pivot at the part's own origin, placed as the file places it and hanging from the part that holds it;
+  an animation file turns the impeller by naming it. The preview lists them as *Parts, from the file*.
+- **Its colours are textures in the game's look.** A CAD file carries colours, not pictures: each colour becomes a
+  texture of sixteen pixels a side, the colour with the lighter and darker pixels of the game's blocks, laid on the
+  faces from the sides as a block's are, a pixel a sixteenth of a block at the size it is drawn. A part with no colour
+  is a bright steel. A file with pictures of its own (3MF, USD) keeps them.
+- **Its size is its real one.** A metre is a block, so a pump 600 mm long is 0.6 blocks long; `scale(times)` draws it
+  bigger or smaller.
+- **Its triangles are what it says.** `triangles(most)` brings its meshes down to that many as they are read, the
+  edges that shape it least folded first, so a cylinder of many sides keeps its outline; `far(blocks, most)` gives it a
+  second shape of fewer, drawn from that far away, with the same bones, so it moves the same. Cubes are drawn as they
+  are. A model that says nothing may have at most 20 000 triangles (`ModelDefinition.Detail.MOST_UNSAID`): the data run
+  stops a file past that, as the export of every screw of a machine would be, and one whose cubes alone are more than
+  it says.
+- **STEP is laid out, not modelled.** Each face is laid with triangles on its own surface, no farther from it than a
+  hundred and fiftieth of the part's size (and never coarser than a sixty-fourth of a block); a curved edge is sampled
+  more where it bends, once, so the faces either side of it meet. Nothing is cut, joined or mended: the program that
+  exported the file worked out every edge, and the reader lays out what it says. A face on a surface it does not know,
+  or whose loops do not close, is left out, and the rest of its solid is drawn; `StepReader.readCounted(file, bytes)`
+  says how many faces were laid out and how many left out.
+- **USD is composed as far as a model needs.** References to prims in the same file, in files beside it or in its
+  package are taken in where they are referenced; sublayers, variants other than the default, payloads and the other
+  arcs of composition are let go. What moves over time, transforms and skeletal animations, is one animation,
+  `animation`, which loops.
 
 ## Drawing a block
 
@@ -241,10 +292,12 @@ together in the last frame, and in how many calls.
 | `/jstech model reload` | reads the models again, and nothing else of the resources |
 
 The preview shows the model on a floor of quarter blocks: drag to turn it, the wheel to zoom, shift and drag to move it.
-Each animation has its button, which plays it or pauses it; the tree lists the bones, and the one clicked is drawn in
-yellow with those it hangs from; the switches show the bones, the locators, the glowing parts alone in the dark, and
-the faces as wire; the timeline is dragged to a time; the speed button steps through a quarter, a half, one, two and
-four times.
+Each animation has its button, which plays it or pauses it; the tree lists the bones, each with its triangles, and the
+one clicked is drawn in yellow with those it hangs from; under it, the model's triangles against the most it may have,
+with a bar, how it is drawn far away, how big it is, and its colours or textures; the switches show the bones, the
+locators (of a model that has some), the faces as wire, the model drawn far away (of one that has it), and the glowing
+parts alone in the dark; the timeline is dragged to a time; the speed button steps through a quarter, a half, one, two
+and four times. A short screen keeps one animation's button and lets the lines under the tree go from the last.
 
 In a development run, a changed model, animation or definition file in a mod's `jsmodels` folder, or a model of a
 format only the Core reads anywhere, has the models read again by themselves, at once and alone; an open preview
@@ -255,7 +308,9 @@ since GeckoLib reads those too ([While you build](DEVELOPING.md)).
 
 `ModelReaders.read(file, bytes, beside)` reads any of the formats into a `ModelData`, and needs nothing of the game;
 `ModelReaders.animations(file, bytes)` reads an animation file. `ModelPose` places a model's bones, `ModelAnimator`
-moves them, and `GeometryBaker` lays out its faces, all pure: a test runs them without the game.
+moves them, `GeometryBaker` lays out its faces, `ModelShaping.shape(data, detail, far)` brings it to the triangles its
+detail says and `ModelShaping.overBudget(data, detail)` says what keeps it from them, all pure: a test runs them
+without the game.
 
 ## What can go wrong
 
@@ -267,6 +322,12 @@ moves them, and `GeometryBaker` lays out its faces, all pure: a test runs them w
 - **The model is drawn black or magenta.** Its texture is not found: name it with `texture(...)`, or put it where the
   file names it, beside the model.
 - **An FBX file is refused.** Files before version 7 (2010) name their objects otherwise; export as FBX 7.4 or later.
+- **The data run stops at a model of too many triangles.** Say how many it is drawn with, `triangles(...)`, and how
+  many far away, `far(...)`; or export it coarser. Its cubes are never brought down: make it of fewer.
+- **A CAD model is the size of a grain or of a house.** An STL is taken in millimetres; a file exported in another unit
+  without saying so needs `scale(...)` (an STL in metres, `scale(1000)`).
+- **A face of a STEP model is missing.** It is on a surface the reader does not know, or its edges do not close;
+  `StepReader.readCounted(file, bytes)` says how many were left out. Export it again, or as AP242 with its triangles.
 - **An animation the server plays is not seen by a player who came later.** Orders from the server are moments; play
   what lasts from the driver, from the block entity's state.
 - **A piece of armour is drawn as the game's own.** The item has no `KitArmorModel` registered for it: register the

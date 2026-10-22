@@ -6,10 +6,13 @@
   "frame": "#FFFFFFFF",
   "grid": "#40FFFFFF",
   "locator": "#FFFF40FF",
+  "over": "#FFEF6A5A",
   "text": "#FFFFFFFF",
   "title": "#FFFFFFFF",
   "titleBar": "#FF4A6CA8",
+  "track": "#FF373737",
   "tree": "#FFD8DCE4",
   "view": "#E0222C3C",
-  "wire": "#FFFFFFFF"
+  "wire": "#FFFFFFFF",
+  "within": "#FF5FE07A"
 }

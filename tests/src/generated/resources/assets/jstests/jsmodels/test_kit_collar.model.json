@@ -1,0 +1,4 @@
+{
+  "model": "jstests:jsmodels/test_kit_collar.step",
+  "scale": 4.0
+}

@@ -7,10 +7,11 @@ Maya, 3ds Max and Cinema 4D.
 ## What exists today
 
 Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: the readers of
-Blockbench, Bedrock, glTF, FBX and OBJ, what a model holds, the animation with its controllers, expressions, events and
-bones moved by code, what entities need ready-made (their own queries, and the game's creatures drawn with a model by
-data), textures that move and glow, layers, the player's arms in first person, the drawing with every copy of a model
-drawn together, the preview and live reload, and connected textures. How a mod uses it, with code:
+Blockbench, Bedrock, glTF, FBX and OBJ, and of STL, 3MF, STEP and USD with their way into the game, what a model holds,
+the animation with its controllers, expressions, events and bones moved by code, what entities need ready-made (their
+own queries, and the game's creatures drawn with a model by data), textures that move and glow, layers, the player's
+arms in first person, the drawing with every copy of a model drawn together, the preview with each part's triangles
+and live reload, and connected textures. How a mod uses it, with code:
 [Models](../MODELS.md) and [Connected textures](../CONNECTED_TEXTURES.md).
 
 ## The design
@@ -33,9 +34,12 @@ The kit reads instead the **formats those programs export**, each with a reader 
 | **STEP** | every CAD program | solids, their faces made into triangles as they are read |
 | **USD** | all four, more and more | whole scenes |
 
-A model from a CAD program comes in through STL, 3MF or STEP: its millimetres become blocks by a scale the model declares, its
-colours become textures in the game's style, its faces get UVs by projection, and it is brought down to the triangles
-the game can afford, with fewer far away.
+A model from a CAD program comes in through STL, 3MF or STEP, and a scene through USD: each part becomes a bone, placed
+as the file places it; its units become blocks, a metre a block, and a scale the model declares draws it bigger or
+smaller; its colours become textures in the game's style, laid on its faces from the sides as a block's are; and it is
+brought down to the triangles it declares, with fewer far away. A model that declares none may have at most 20 000,
+and the data run stops one that has more. STEP's solids are laid out on their own surfaces as they are read, with no
+modelling kernel: what the exporting program worked out is laid out as it says.
 
 ### What a model holds
 
@@ -91,7 +95,6 @@ In the spirit of CTM and Continuity:
 
 ## Still to build
 
-- **STL, 3MF, STEP and USD**, as the formats above say, with their way into the game.
 - **Glowing block textures in OptiFine's form** (a texture's `_e` beside it), as Continuity reads them, for resource
   packs made for it.
 - **J's Computers' models move onto the kit** (the Mainframes, racks, drives and encoders), and GeckoLib leaves the

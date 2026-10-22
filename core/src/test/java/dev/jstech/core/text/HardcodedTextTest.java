@@ -118,6 +118,8 @@ class HardcodedTextTest {
     private static final String MCP_TOOLS = "what the MCP server's tools do and what their arguments are, which an "
             + "agent reads in English as the protocol is written, and the arguments' names";
     private static final String CORE = "core/src/main/java/dev/jstech/core/";
+    private static final String PARSER_WANTS = "what a model file's parser wanted where the file does not read, the "
+            + "message of the exception its helper makes, for whoever reads the log";
 
     /**
      * The files whose fixed text is data, not words to translate, and how many pieces each holds. The count is exact,
@@ -233,6 +235,11 @@ class HardcodedTextTest {
                     "the words every binary FBX file starts with, by which it is told from one in text"),
             data("core/src/main/java/dev/jstech/core/model/FbxReader.java", 4,
                     "the names FBX gives a model's own properties, which every exporter writes as they are"),
+            data("core/src/main/java/dev/jstech/core/model/StepFile.java", 7, PARSER_WANTS),
+            data("core/src/main/java/dev/jstech/core/model/UsdaParser.java", 7, PARSER_WANTS),
+            data("core/src/main/java/dev/jstech/core/model/ModelShaping.java", 4,
+                    "what keeps a model from the triangles it says, which the data run stops with for the mod's "
+                            + "maker"),
             data("core/src/main/java/dev/jstech/core/guide/GuideSite.java", 32,
                     "a manual's website: its pages' markup, its search's script and its style sheet, which a browser "
                             + "reads; every word on its pages comes from the manual's keys"),

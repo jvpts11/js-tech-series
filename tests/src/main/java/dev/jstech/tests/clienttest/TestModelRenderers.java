@@ -65,6 +65,12 @@ public final class TestModelRenderers {
                     }
                 })
                 .build());
+        // The showcase plays the first animation its model has, the pump's spin or the fan's turn.
+        event.registerBlockEntityRenderer(TestModels.SHOWCASE_ENTITY.get(), context -> KitBlockEntityRenderer
+                .<TestModels.ShowcaseEntity>of(showcase -> showcase.shown().id())
+                .driver((showcase, animator, seconds) -> animator.animationNames().stream().findFirst()
+                        .ifPresent(name -> animator.play("main", name, seconds)))
+                .build());
         TurningParts.draw(TestMechanical.SHAFT, TestModels.SHAFT.id());
         TurningParts.draw(TestMechanical.SMALL_GEAR, TestModels.GEAR.id());
         TurningParts.draw(TestMechanical.LARGE_GEAR, TestModels.GEAR.id());

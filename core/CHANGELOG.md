@@ -47,7 +47,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   limits per player. `ScreenEditorLayout` is the editor's own and leaves the API.
 - The Core complete: J's Core's API is at version 12, all experimental. `ExpressionContext.value` hands a
   model's expressions a value for the frame, and `nextFrame` begins another, a query of code being worked out once a
-  frame. `DrawingSettings` holds whether the player has alike things drawn together.
+  frame. `DrawingSettings` holds whether the player has alike things drawn together. `ModelBuilder` says a model's
+  `scale`, `triangles` and `far` detail, and `ModelDefinition` carries it as its `Detail`, with `MOST_UNSAID`, the
+  triangles a model may have without saying; `ModelReaders` reads STL, 3MF, STEP and USD, and `StlReader`,
+  `ThreeMfReader`, `StepReader` and `UsdReader` each read one alone; `ModelShaping` brings a model to its detail and
+  says what keeps it from it, `MeshReducer` brings a mesh down to fewer triangles, and `CadLook` makes a CAD file's
+  colours textures in the game's look. `ModelPreviewLayout` lays the preview out for what its column holds, a
+  `ModelPreviewLayout.Column`, in place of the count of animations alone.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -528,12 +534,21 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   handing over only its light and where its bones are, so a rack of a hundred alike drives costs about what one does;
   the effects' particles are drawn the same way. Under a shader pack, and for a player who turns *Draw alike things
   together* off, everything is drawn one by one as before, and the two ways look the same.
+- Models from CAD programs and scenes: STL (text and binary), 3MF, STEP (AP203, AP214 and AP242) and USD (text,
+  binary and packed, with the files it references) read by the Core's own readers, each part of a file a bone, so an
+  animation turns the impeller of a pump by naming it. A CAD file's colours become textures in the game's look, laid
+  on its faces from the sides as a block's are; its size is its real one, a metre a block, or as many times bigger as
+  the model says; STEP's solids are laid out as they are read, every face on its own surface (planes, cylinders,
+  cones, spheres, tori, B-splines). A model says the most triangles it is drawn with, near and from a distance on, its
+  meshes brought down to them as they are read with the same bones, so it moves the same far away; one that says
+  nothing may have 20 000, and the data run stops a file with more.
 - The preview of a model: `/jstech model preview <model>` opens it, a declared model or any model file by its
   path, turned, zoomed and moved with the mouse over a floor of quarter blocks, its animations played or paused from
-  their buttons, its bones in a tree, the chosen one shown in yellow, its locators by name, its glowing parts shown in
-  the dark, its faces as wire, a timeline to drag and a speed to step. In a development run a changed model file
-  reads the models alone again, at once, and an open preview shows the change; `/jstech model reload` does the same by
-  hand.
+  their buttons, its bones in a tree with each one's triangles, the chosen one shown in yellow, its triangles against
+  the most it may have, how it is drawn far away, its size and its colours, its model far away, its locators by name,
+  its glowing parts shown in the dark, its faces as wire, a timeline to drag and a speed to step. In a development run
+  a changed model file reads the models alone again, at once, and an open preview shows the change; `/jstech model
+  reload` does the same by hand.
 - Formed multiblocks: a structure can turn into one detailed model once it forms, a turbine's casing with its
   rotor turning in place of its iron, turned, mirrored or laid down as it was built. Its plain blocks merge into parts
   that draw nothing and stand in for what they were, breaking as slowly and dropping the block they were; the

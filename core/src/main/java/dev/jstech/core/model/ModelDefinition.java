@@ -24,8 +24,9 @@ import java.util.TreeSet;
  * How a model is drawn, as its definition file says beside it ({@code assets/<mod>/jsmodels/<name>.model.json}),
  * written by the data run from what a mod declares: the model file, the textures it is painted with, the animation
  * files it plays from besides its own, whether it is see-through, which bones glow besides those named {@code _glow},
- * whether a block drawn with it shows the cracks of being broken, and its variants, each chosen by the block's state:
- * another model or texture, and bones hidden or shown. Every file is named as {@code <mod>:<path>} from the mod's
+ * whether a block drawn with it shows the cracks of being broken, its variants, each chosen by the block's state:
+ * another model or texture, and bones hidden or shown, and the detail it is drawn in: its size beside its file's, how
+ * many triangles at most, and how many far away. Every file is named as {@code <mod>:<path>} from the mod's
  * {@code assets} folder. Pure.
  *
  * @param model       the model file
@@ -37,10 +38,11 @@ import java.util.TreeSet;
  * @param variants    its variants, the first whose state matches chosen
  * @param glowLight   the light its glowing parts cast on the world around, from 0 (none) to 15
  * @param glowColour  the colour they glow in, {@code 0xRRGGBB}, for their halo and their light
+ * @param detail      the detail it is drawn in
  */
 public record ModelDefinition(String model, List<String> textures, List<String> animations, boolean translucent,
                               Set<String> glow, boolean cracks, List<Variant> variants, int glowLight,
-                              int glowColour) {
+                              int glowColour, Detail detail) {
 
     /** White, the colour a glow is unless its definition says another. */
     public static final int WHITE = 0xFFFFFF;
@@ -55,11 +57,13 @@ public record ModelDefinition(String model, List<String> textures, List<String> 
         variants = List.copyOf(variants);
         glowLight = Math.clamp(glowLight, 0, BRIGHTEST);
         glowColour = glowColour & WHITE;
+        Objects.requireNonNull(detail, "detail");
     }
 
     /** The definition of a model drawn as its file is, with nothing else. */
     public static ModelDefinition of(final String model, final List<String> textures) {
-        return new ModelDefinition(model, textures, List.of(), false, Set.of(), true, List.of(), 0, WHITE);
+        return new ModelDefinition(model, textures, List.of(), false, Set.of(), true, List.of(), 0, WHITE,
+                Detail.AS_MADE);
     }
 
     /**
@@ -107,6 +111,7 @@ public record ModelDefinition(String model, List<String> textures, List<String> 
         if (this.glowColour != WHITE) {
             out.addProperty("glow_colour", String.format(Locale.ROOT, "#%06X", this.glowColour));
         }
+        this.detail.into(out);
         return out;
     }
 
@@ -128,7 +133,8 @@ public record ModelDefinition(String model, List<String> textures, List<String> 
         return new ModelDefinition(json.get("model").getAsString(), strings(json, "textures"),
                 strings(json, "animations"), ModelJson.flag(json, "translucent", false),
                 new TreeSet<>(strings(json, "glow")), ModelJson.flag(json, "cracks", true), variants,
-                json.has("glow_light") ? json.get("glow_light").getAsInt() : 0, colour(name, json));
+                json.has("glow_light") ? json.get("glow_light").getAsInt() : 0, colour(name, json),
+                Detail.fromJson(name, json));
     }
 
     /* The colour its glow is in, written #RRGGBB; white when it says none. */
@@ -223,6 +229,73 @@ public record ModelDefinition(String model, List<String> textures, List<String> 
             }
             return new Variant(when, ModelJson.string(json, "model", ""), ModelJson.string(json, "texture", ""),
                     new TreeSet<>(strings(json, "hide")), new TreeSet<>(strings(json, "show")));
+        }
+    }
+
+    /**
+     * The detail a model is drawn in: how many times bigger than its file says, its file's units taken as they are
+     * (a metre a block, so a pump of 600 mm is 0.6 blocks); the most triangles it is drawn with, its meshes brought
+     * down to them as they are read; and from how far away it is drawn with fewer.
+     *
+     * @param scale        how many times bigger than its file says
+     * @param triangles    the most triangles it is drawn with near; 0 for as many as its file has
+     * @param farFrom      from how many blocks away it is drawn with {@code farTriangles}; 0 for never
+     * @param farTriangles the most triangles it is drawn with from there
+     */
+    public record Detail(double scale, int triangles, int farFrom, int farTriangles) {
+
+        /** As its file has it, at every distance. */
+        public static final Detail AS_MADE = new Detail(1.0, 0, 0, 0);
+        /**
+         * The most triangles a model may have without saying how many it is drawn with: a file past them, as a CAD
+         * program's drawing of every screw, stops the generation of data until its declaration brings it down.
+         */
+        public static final int MOST_UNSAID = 20_000;
+
+        public Detail {
+            if (!(scale > 0) || triangles < 0 || farFrom < 0 || farTriangles < 0 || farFrom > 0 && farTriangles == 0) {
+                throw new IllegalArgumentException("a model's detail is a scale above 0, triangles of 0 or more, "
+                        + "and triangles far away when it says from how far: " + scale + ", " + triangles + ", "
+                        + farFrom + ", " + farTriangles);
+            }
+        }
+
+        /** Whether it is drawn with fewer triangles far away. */
+        public boolean hasFar() {
+            return this.farFrom > 0;
+        }
+
+        /** The most triangles it may be drawn with near: what it says, or {@link #MOST_UNSAID}. */
+        public int most() {
+            return this.triangles > 0 ? this.triangles : MOST_UNSAID;
+        }
+
+        void into(final JsonObject out) {
+            if (this.scale != 1.0) {
+                out.addProperty("scale", this.scale);
+            }
+            if (this.triangles > 0) {
+                out.addProperty("triangles", this.triangles);
+            }
+            if (this.farFrom > 0) {
+                final JsonObject far = new JsonObject();
+                far.addProperty("from", this.farFrom);
+                far.addProperty("triangles", this.farTriangles);
+                out.add("far", far);
+            }
+        }
+
+        static Detail fromJson(final String name, final JsonObject json) {
+            final JsonObject far = json.has("far") ? json.getAsJsonObject("far") : new JsonObject();
+            try {
+                return new Detail(json.has("scale") ? json.get("scale").getAsDouble() : 1.0,
+                        json.has("triangles") ? json.get("triangles").getAsInt() : 0,
+                        far.has("from") ? far.get("from").getAsInt() : 0,
+                        far.has("triangles") ? far.get("triangles").getAsInt() : 0);
+            } catch (final IllegalArgumentException wrong) {
+                throw new ModelFormatException("the model definition " + name + " has a detail that cannot be: "
+                        + wrong.getMessage());
+            }
         }
     }
 }

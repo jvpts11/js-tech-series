@@ -10,9 +10,13 @@ package dev.jstech.tests.gametest.core;
 import com.google.gson.JsonParser;
 import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.content.DeclaredModel;
+import dev.jstech.core.model.CadLook;
+import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelDefinition;
+import dev.jstech.core.model.ModelMesh;
 import dev.jstech.core.model.ModelReaders;
+import dev.jstech.core.model.ModelShaping;
 import dev.jstech.core.model.network.ModelAnimationPayload;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.model.network.ModelTarget;
@@ -39,9 +43,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Core's models as the server sees them: every model a mod declares has its definition written beside its file,
- * the same the declaration says, and its file reads, whatever its format; what the server plays on a model crosses
- * the wire as it left, and a name too long for the wire is refused where it is made, not where it is sent; an item
- * the server animates is given its number once; and the models' commands are there.
+ * the same the declaration says, and its file reads, whatever its format; the files of CAD programs and scenes read as
+ * their parts, in their colours, at their size, within the triangles they may have; what the server plays on a model
+ * crosses the wire as it left, and a name too long for the wire is refused where it is made, not where it is sent; an
+ * item the server animates is given its number once; and the models' commands are there.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -56,8 +61,10 @@ public final class ModelGameTests {
     @GameTest(template = ARENA)
     public static void declaredModels_haveTheirDefinitionsBesideThem(final GameTestHelper helper) {
         final List<DeclaredModel> declared = TestSounds.CONTENT.declaredModels();
-        // The press, the crate, the walker, the helmet, the arms, the turbine, the shaft, the gear and the two pulleys.
-        helper.assertTrue(declared.size() == 10, "the test mod declares its ten models; it has " + declared.size());
+        // The press, the crate, the walker, the helmet, the arms, the turbine, the shaft, the gear, the two pulleys,
+        // and the pump, the bracket, the collar and the fan of CAD and scene files.
+        helper.assertTrue(declared.size() == 14, "the test mod declares its fourteen models; it has "
+                + declared.size());
         for (final DeclaredModel model : declared) {
             final ResourceLocation file = DeclaredModel.definitionFile(model.id());
             final ModelDefinition written = ModelDefinition.fromJson(model.id().toString(), JsonParser.parseString(
@@ -82,6 +89,38 @@ public final class ModelGameTests {
         helper.assertTrue(press.locators().containsKey("plate"), "and the locator its ingot is held at");
         helper.assertTrue(press.animations().size() == 2 && press.animations().getFirst().events().size() == 3,
                 "and its two animations, the strike with its sound, its smoke and its word to code");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void cadModels_readAsTheirPartsInTheirColours(final GameTestHelper helper) {
+        final ModelData pump = read(TestModels.PUMP);
+        helper.assertTrue(pump.bone("impeller").orElseThrow().parent().equals("housing")
+                && pump.bone("rotor").orElseThrow().parent().equals("motor")
+                && pump.bone("flange").orElseThrow().parent().equals("pump"),
+                "the pump's parts hang from the parts they are components of: " + pump.bones());
+        helper.assertTrue(pump.textures().stream().filter(CadLook::isColour).count() == 6,
+                "each of its six colours is a texture in the game's look");
+        helper.assertTrue(ModelShaping.triangles(pump) == 1_000, "it has the 1 000 triangles of its file");
+        final ModelDefinition.Detail detail = TestModels.PUMP.definition().detail();
+        final int near = ModelShaping.triangles(ModelShaping.shape(pump, detail, false));
+        final int far = ModelShaping.triangles(ModelShaping.shape(pump, detail, true));
+        helper.assertTrue(near <= 800 && near > far && far <= 300, "and is drawn with at most 800 near and 300 far:"
+                + " " + near + " and " + far);
+        final ModelData bracket = read(TestModels.BRACKET);
+        helper.assertTrue(ModelShaping.triangles(bracket) == 20 && Math.abs(wide(bracket) - 4.8F) < 0.01F,
+                "the bracket is its file's twenty triangles, 300 millimetres wide: " + wide(bracket) + " pixels");
+        final ModelData collar = read(TestModels.COLLAR);
+        helper.assertTrue(collar.textures().size() == 1 && CadLook.isColour(collar.textures().getFirst())
+                && Math.abs(wide(collar) - 1.92F) < 0.05F, "the collar is of its one brass, 120 millimetres wide, "
+                + "drawn four times as big: " + wide(collar) + " pixels");
+        final ModelData fan = read(TestModels.FAN);
+        helper.assertTrue(fan.animations().size() == 1 && fan.animations().getFirst().bones().containsKey("blades"),
+                "the fan's blades turn by the scene's samples");
+        for (final DeclaredModel model : TestModels.SHOWN) {
+            helper.assertTrue(ModelShaping.overBudget(read(model), model.definition().detail()).isEmpty(),
+                    model.id() + " is within the triangles it may be drawn with");
+        }
         helper.succeed();
     }
 
@@ -139,6 +178,26 @@ public final class ModelGameTests {
     public static void modelCommands_areDeclared(final GameTestHelper helper) {
         helper.assertTrue(SeriesCommands.names().contains("model"), "/jstech model is declared");
         helper.succeed();
+    }
+
+    private static ModelData read(final DeclaredModel model) {
+        final ResourceLocation file = ResourceLocation.parse(model.definition().model());
+        return ModelReaders.read(file.getPath(), bytes(file), beside -> null).getFirst();
+    }
+
+    /* How wide a model's meshes are across X, in pixels. */
+    private static float wide(final ModelData data) {
+        float low = Float.MAX_VALUE;
+        float high = -Float.MAX_VALUE;
+        for (final ModelBone bone : data.bones()) {
+            for (final ModelMesh mesh : bone.meshes()) {
+                for (int at = 0; at < mesh.positions().length; at += 3) {
+                    low = Math.min(low, mesh.positions()[at]);
+                    high = Math.max(high, mesh.positions()[at]);
+                }
+            }
+        }
+        return high - low;
     }
 
     private static byte[] bytes(final ResourceLocation file) {

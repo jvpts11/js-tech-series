@@ -48,6 +48,8 @@ public final class KitRenderer {
 
     private static final float PIXEL = 1.0F / 16.0F;
     private static final int WHITE = 0xFFFFFFFF;
+    /* Where a model drawn in the world stands from the camera, worked out on the render thread. */
+    private static final Vector3f SEEN = new Vector3f();
 
     private KitRenderer() {
     }
@@ -64,32 +66,47 @@ public final class KitRenderer {
                                 final PoseStack poses, final MultiBufferSource buffers, final int light,
                                 final int overlay, @Nullable final IHeldThings<T> held, @Nullable final Level level,
                                 final boolean world) {
-        final KitModel model = instance.model();
+        // In the world, a model far enough away is drawn as its model of fewer triangles, with the same bones.
+        final KitModel model = world ? instance.model().at(poses.last().pose().getTranslation(SEEN).length())
+                : instance.model();
+        draw(instance, model, variant, thing, poses, buffers, light, overlay, held, level, world);
+    }
+
+    /*
+     * Draws {@code instance} as {@code model}: its own model, or the one of fewer triangles it is drawn as far away,
+     * which has the same bones, so the instance's pose fits it.
+     */
+    static <T> void draw(final KitInstance instance, final KitModel model, final ModelDefinition.Variant variant,
+                         final T thing, final PoseStack poses, final MultiBufferSource buffers, final int light,
+                         final int overlay, @Nullable final IHeldThings<T> held, @Nullable final Level level,
+                         final boolean world) {
         final boolean[] hidden = hidden(instance, variant);
         final ResourceLocation painted = variant.texture().isEmpty() ? null : ResourceLocation.parse(
                 variant.texture());
         final ModelDefinition definition = model.definition();
         final Level glowsIn = world && level != null && definition.glowLight() > 0 ? level : null;
         final long tick = KitClock.tick();
+        final float size = PIXEL * model.scale();
         poses.pushPose();
-        poses.scale(PIXEL, PIXEL, PIXEL);
-        if (!world || !KitInstancing.take(instance, hidden, painted, poses, buffers, light, overlay, glowsIn)) {
-            lay(instance, hidden, painted, poses, buffers, null, light, overlay, tick, glowsIn);
+        poses.scale(size, size, size);
+        if (!world || !KitInstancing.take(instance, model, hidden, painted, poses, buffers, light, overlay,
+                glowsIn)) {
+            lay(instance, model, hidden, painted, poses, buffers, null, light, overlay, tick, glowsIn);
             if (glowsAnywhere(model, painted)) {
-                lay(instance, hidden, painted, poses, buffers, KitRenderer::glowingType, LightTexture.FULL_BRIGHT,
-                        overlay, tick, null);
+                lay(instance, model, hidden, painted, poses, buffers, KitRenderer::glowingType,
+                        LightTexture.FULL_BRIGHT, overlay, tick, null);
             }
             final List<IKitLayer> layers = KitLayers.of(model.id());
             if (!layers.isEmpty()) {
-                final IKitFaces faces = (type, lit, over) -> lay(instance, hidden, painted, poses, buffers, type,
-                        lit, over, tick, null);
+                final IKitFaces faces = (type, lit, over) -> lay(instance, model, hidden, painted, poses, buffers,
+                        type, lit, over, tick, null);
                 for (final IKitLayer layer : layers) {
                     layer.draw(instance, faces, buffers, light, overlay);
                 }
             }
         }
         if (held != null) {
-            heldThings(instance, hidden, thing, held, poses, buffers, light, overlay, level);
+            heldThings(instance, hidden, thing, held, poses, buffers, light, overlay, level, size);
         }
         poses.popPose();
     }
@@ -111,8 +128,9 @@ public final class KitRenderer {
         final Matrix4f undo = instance.branchScratch().set(world[bone]).invert();
         final ModelBone root = model.data().bones().get(bone);
         final long tick = KitClock.tick();
+        final float size = PIXEL * model.scale();
         poses.pushPose();
-        poses.scale(PIXEL, PIXEL, PIXEL);
+        poses.scale(size, size, size);
         poses.translate(-root.pivot().x(), -root.pivot().y(), -root.pivot().z());
         final List<List<BakedGeometry.Part>> bones = model.geometry().bones();
         for (int i = 0; i < bones.size(); i++) {
@@ -151,12 +169,11 @@ public final class KitRenderer {
      * each into its own way ({@code type} none) or into the way {@code type} gives its texture, skipping a face it
      * gives none for; telling the world of the glowing parts in {@code glowsIn}, when there is one.
      */
-    private static void lay(final KitInstance instance, final boolean[] hidden,
+    private static void lay(final KitInstance instance, final KitModel model, final boolean[] hidden,
                             @Nullable final ResourceLocation painted, final PoseStack poses,
                             final MultiBufferSource buffers,
                             @Nullable final Function<ResourceLocation, @Nullable RenderType> type, final int light,
                             final int overlay, final long tick, @Nullable final Level glowsIn) {
-        final KitModel model = instance.model();
         final Matrix4f[] matrices = instance.world();
         final List<List<BakedGeometry.Part>> bones = model.geometry().bones();
         for (int i = 0; i < bones.size(); i++) {
@@ -305,7 +322,7 @@ public final class KitRenderer {
     private static <T> void heldThings(final KitInstance instance, final boolean[] hidden, final T thing,
                                        final IHeldThings<T> held, final PoseStack poses,
                                        final MultiBufferSource buffers, final int light, final int overlay,
-                                       @Nullable final Level level) {
+                                       @Nullable final Level level, final float size) {
         final List<ModelBone> bones = instance.model().data().bones();
         for (int i = 0; i < bones.size(); i++) {
             if (bones.get(i).locators().isEmpty() || hidden[i]) {
@@ -320,8 +337,8 @@ public final class KitRenderer {
                 poses.mulPose(instance.world()[i]);
                 poses.translate(locator.offset().x(), locator.offset().y(), locator.offset().z());
                 poses.mulPose(Rotations.ofEuler(locator.rotation()));
-                // Back to blocks, which an item is drawn in.
-                poses.scale(1 / PIXEL, 1 / PIXEL, 1 / PIXEL);
+                // Back to blocks, which an item is drawn in, at its own size whatever the model's.
+                poses.scale(1 / size, 1 / size, 1 / size);
                 Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED, light,
                         overlay, poses, buffers, level, i);
                 poses.popPose();

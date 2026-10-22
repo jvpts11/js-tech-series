@@ -49,6 +49,10 @@ public final class ModelBuilder {
     private boolean cracks = true;
     private int glowLight;
     private int glowColour = ModelDefinition.WHITE;
+    private double scale = 1.0;
+    private int triangles;
+    private int farFrom;
+    private int farTriangles;
 
     ModelBuilder(final ModContent content, final String path) {
         this.content = content;
@@ -101,6 +105,28 @@ public final class ModelBuilder {
         return this;
     }
 
+    /**
+     * It is drawn {@code times} bigger than its file says, its file's units taken as they are, a metre a block: a
+     * part drawn by a CAD program at its real size becomes as big in the game.
+     */
+    public ModelBuilder scale(final double times) {
+        this.scale = times;
+        return this;
+    }
+
+    /** It is drawn with {@code most} triangles at most, its meshes brought down to them as they are read. */
+    public ModelBuilder triangles(final int most) {
+        this.triangles = most;
+        return this;
+    }
+
+    /** From {@code blocks} away it is drawn with {@code most} triangles at most. */
+    public ModelBuilder far(final int blocks, final int most) {
+        this.farFrom = blocks;
+        this.farTriangles = most;
+        return this;
+    }
+
     /** A variant chosen by the state of the block it is drawn for, as {@code variant} says. */
     public ModelBuilder variant(final Consumer<VariantBuilder> variant) {
         final VariantBuilder builder = new VariantBuilder();
@@ -125,10 +151,17 @@ public final class ModelBuilder {
                     + ", of no format the Core reads", "use a file ending in one of " + ModelReaders.MODEL_ENDINGS);
         }
         final String modid = this.content.modid();
+        final ModelDefinition.Detail detail;
+        try {
+            detail = new ModelDefinition.Detail(this.scale, this.triangles, this.farFrom, this.farTriangles);
+        } catch (final IllegalArgumentException wrong) {
+            throw DeclarationError.of(modid, "the model " + id, "has a detail that cannot be: " + wrong.getMessage(),
+                    "give scale(...) a size above 0, and far(...) a distance and the triangles there");
+        }
         final DeclaredModel model = new DeclaredModel(id, new ModelDefinition(full(modid, this.file),
                 this.textures.stream().map(each -> full(modid, each)).toList(),
                 this.animations.stream().map(each -> full(modid, each)).toList(), this.translucent, this.glow,
-                this.cracks, this.variants, this.glowLight, this.glowColour));
+                this.cracks, this.variants, this.glowLight, this.glowColour, detail));
         this.content.declare(model);
         return model;
     }

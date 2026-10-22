@@ -26,9 +26,12 @@ public final class ModelReaders {
 
     /** The endings of the model files read, the longest first, as a name is matched against them in turn. */
     public static final List<String> MODEL_ENDINGS = List.of(".geo.json", ".bbmodel", ".gltf", ".glb", ".fbx",
-            ".obj");
+            ".obj", ".stl", ".3mf", ".step", ".stp", ".usda", ".usdc", ".usdz", ".usd");
     /** The ending of the animation files read. */
     public static final String ANIMATION_ENDING = ".animation.json";
+    /* The endings of the files that hold parts as a CAD program or a scene draws them, each part made a bone. */
+    private static final List<String> PART_ENDINGS = List.of(".stl", ".3mf", ".step", ".stp", ".usda", ".usdc",
+            ".usdz", ".usd");
 
     private ModelReaders() {
     }
@@ -42,6 +45,15 @@ public final class ModelReaders {
             }
         }
         return false;
+    }
+
+    /**
+     * Whether {@code file} is of a format that holds the parts a CAD program or a scene drew, rather than bones made
+     * for the game: STL, 3MF, STEP and USD. Each of its parts is read as a bone.
+     */
+    public static boolean fromParts(final String file) {
+        final String lower = file.toLowerCase(Locale.ROOT);
+        return PART_ENDINGS.stream().anyMatch(lower::endsWith);
     }
 
     /** What a model file is called without its ending, as {@code fan} for {@code fan.geo.json}. */
@@ -86,6 +98,19 @@ public final class ModelReaders {
             }
             if (lower.endsWith(".obj")) {
                 return List.of(ObjReader.read(name, bytes, beside));
+            }
+            if (lower.endsWith(".stl")) {
+                return List.of(StlReader.read(name, bytes));
+            }
+            if (lower.endsWith(".3mf")) {
+                return List.of(ThreeMfReader.read(name, bytes));
+            }
+            if (lower.endsWith(".step") || lower.endsWith(".stp")) {
+                return List.of(StepReader.read(name, bytes));
+            }
+            if (lower.endsWith(".usda") || lower.endsWith(".usdc") || lower.endsWith(".usdz")
+                    || lower.endsWith(".usd")) {
+                return List.of(UsdReader.read(name, bytes, beside));
             }
         } catch (final JsonParseException | IllegalStateException | IllegalArgumentException
                        | IndexOutOfBoundsException | UnsupportedOperationException | ClassCastException broken) {

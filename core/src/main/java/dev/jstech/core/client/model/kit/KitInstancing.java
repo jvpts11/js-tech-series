@@ -85,14 +85,15 @@ public final class KitInstancing {
      * Takes {@code instance} to be drawn with the others of its model, the pose stack standing where its model's
      * origin is in pixels; whether it was taken, or is to be drawn one by one.
      *
+     * @param model   the model it is drawn as, its own or, far away, its model of fewer triangles
      * @param hidden  the bones hidden this frame
      * @param painted the variant's paint for its first picture, or none
      * @param glowsIn the world its glowing parts light, or none
      */
-    static boolean take(final KitInstance instance, final boolean[] hidden, @Nullable final ResourceLocation painted,
-                        final PoseStack poses, final MultiBufferSource buffers, final int light, final int overlay,
+    static boolean take(final KitInstance instance, final KitModel model, final boolean[] hidden,
+                        @Nullable final ResourceLocation painted, final PoseStack poses,
+                        final MultiBufferSource buffers, final int light, final int overlay,
                         @Nullable final Level glowsIn) {
-        final KitModel model = instance.model();
         if (!collecting || buffers != Minecraft.getInstance().renderBuffers().bufferSource()
                 || model.definition().translucent() || !instance.deformers().isEmpty()
                 || !KitLayers.of(model.id()).isEmpty()) {

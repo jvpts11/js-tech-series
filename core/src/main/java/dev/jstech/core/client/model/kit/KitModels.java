@@ -20,6 +20,7 @@ import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelFormatException;
 import dev.jstech.core.model.ModelReaders;
+import dev.jstech.core.model.ModelShaping;
 import dev.jstech.core.model.ModelTexture;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +45,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import org.slf4j.Logger;
@@ -130,7 +132,8 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
         final List<String> animationFiles = manager.getResource(animations).isPresent()
                 ? List.of(animations.toString()) : List.of();
         final ModelDefinition definition = new ModelDefinition(file.toString(), List.of(texture.toString()),
-                animationFiles, false, Set.of(), true, List.of(), 0, ModelDefinition.WHITE);
+                animationFiles, false, Set.of(), true, List.of(), 0, ModelDefinition.WHITE,
+                ModelDefinition.Detail.AS_MADE);
         try {
             final Map<ResourceLocation, NativeImage> images = new LinkedHashMap<>();
             final KitModel read = read(manager, file, definition, images);
@@ -204,10 +207,15 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
         return read(manager, file, file, definition, images);
     }
 
-    /* A model, its file read, its shape worked out, its textures found, its variants' files read too. */
+    /*
+     * A model, its file read and brought to its definition's detail, its shape worked out, its textures found, its
+     * variants' files read too, and the model of fewer triangles it is drawn as far away.
+     */
     private static KitModel read(final ResourceManager manager, final ResourceLocation id, final ResourceLocation file,
                                  final ModelDefinition definition, final Map<ResourceLocation, NativeImage> images) {
-        final ModelData data = readFile(manager, file);
+        final ModelData read = readFile(manager, file);
+        final ModelDefinition.Detail detail = definition.detail();
+        final ModelData data = ModelShaping.shape(read, detail, false);
         final BakedGeometry geometry = GeometryBaker.bake(data, definition.glow());
         final List<ModelAnimation> animations = new ArrayList<>(data.animations());
         for (final String animationFile : definition.animations()) {
@@ -215,18 +223,26 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
             animations.addAll(ModelReaders.animations(animationFile, bytes(manager, location)));
         }
         final List<ResourceLocation> textures = textures(manager, id, file, definition, data, images);
+        final float scale = (float) detail.scale();
         final Map<String, KitModel> variants = new HashMap<>();
         for (final ModelDefinition.Variant variant : definition.variants()) {
             if (!variant.model().isEmpty() && !variants.containsKey(variant.model())) {
                 final ResourceLocation variantFile = ResourceLocation.parse(variant.model());
-                final ModelData variantData = readFile(manager, variantFile);
+                final ModelData variantData = ModelShaping.shape(readFile(manager, variantFile), detail, false);
                 final BakedGeometry variantGeometry = GeometryBaker.bake(variantData, definition.glow());
                 variants.put(variant.model(), new KitModel(id, definition, variantData, variantGeometry, animations,
-                        textures, Map.of(), variantFile, KitModel.restBounds(variantData, variantGeometry)));
+                        textures, Map.of(), variantFile, KitModel.restBounds(variantData, variantGeometry, scale),
+                        null));
             }
         }
-        return new KitModel(id, definition, data, geometry, animations, textures, variants, file,
-                KitModel.restBounds(data, geometry));
+        final AABB bounds = KitModel.restBounds(data, geometry, scale);
+        KitModel far = null;
+        if (detail.hasFar()) {
+            final ModelData farData = ModelShaping.shape(read, detail, true);
+            far = new KitModel(id, definition, farData, GeometryBaker.bake(farData, definition.glow()), animations,
+                    textures, Map.of(), file, bounds, null);
+        }
+        return new KitModel(id, definition, data, geometry, animations, textures, variants, file, bounds, far);
     }
 
     /* The model a file holds: the first of a geometry file that holds several. */

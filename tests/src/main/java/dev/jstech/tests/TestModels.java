@@ -24,6 +24,7 @@ import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -46,6 +47,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
@@ -54,8 +56,10 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * crate from an OBJ file, as an item; a walker from an FBX file in its text form, its head turning, as an entity; a
  * helmet from a Bedrock geometry, as armour; the Dock Station of J's Computers as GeckoLib lays its files out,
  * drawn by the Core's models to set beside GeckoLib's; a turbine, a multiblock whose iron merges into its model once
- * it forms, its rotor turning while it works; and a shaft, a gear and two pulleys, the parts of mechanical power drawn
- * turning. Their block states and item models are written by hand, as the test mod's are.
+ * it forms, its rotor turning while it works; a shaft, a gear and two pulleys, the parts of mechanical power drawn
+ * turning; and, on a showcase, a pump from a 3MF assembly, a bracket from STL, a collar from STEP and a fan from a USD
+ * scene, the parts of each file its bones. Their block states and item models are written by hand, as the test mod's
+ * are.
  */
 public final class TestModels {
 
@@ -138,6 +142,37 @@ public final class TestModels {
             .file("jsmodels/test_kit_large_pulley.bbmodel")
             .texture("minecraft:textures/block/oak_planks.png")
             .register();
+    /*
+     * The models of CAD and scene files, each part of the file a bone, drawn on the showcase. The pump, an assembly of
+     * 1 000 triangles, is brought down to 800, and to 300 from 32 blocks away; its rotor and impeller turn by an
+     * animation of their own.
+     */
+    public static final DeclaredModel PUMP = TestSounds.CONTENT.model("test_kit_pump")
+            .file("jsmodels/test_kit_pump.3mf")
+            .animations("jsmodels/test_kit_pump.animation.json")
+            .triangles(800)
+            .far(32, 300)
+            .register();
+    /** A bracket from a text STL file, the triangles alone a 3D printer takes. */
+    public static final DeclaredModel BRACKET = TestSounds.CONTENT.model("test_kit_bracket")
+            .file("jsmodels/test_kit_bracket.stl")
+            .register();
+    /** A collar from a STEP file, its faces of brass laid from their surfaces, drawn four times its size. */
+    public static final DeclaredModel COLLAR = TestSounds.CONTENT.model("test_kit_collar")
+            .file("jsmodels/test_kit_collar.step")
+            .scale(4)
+            .register();
+    /** A fan from a USD scene in text, its blades turning by the scene's own samples, plainer from 24 blocks away. */
+    public static final DeclaredModel FAN = TestSounds.CONTENT.model("test_kit_fan")
+            .file("jsmodels/test_kit_fan.usda")
+            .far(24, 40)
+            .register();
+    /** The models the showcase draws, by the number its block's state holds. */
+    public static final List<DeclaredModel> SHOWN = List.of(PUMP, BRACKET, COLLAR, FAN);
+    public static final BlockEntry<ShowcaseBlock> SHOWCASE_BLOCK = TestSounds.CONTENT.block("test_kit_showcase",
+            ShowcaseBlock::new).named("Test kit showcase").look(IBlockLook.cubeAll("test_kit_showcase")).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShowcaseEntity>> SHOWCASE_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_kit_showcase", ShowcaseEntity::new, SHOWCASE_BLOCK);
 
     private static final int TURBINE_ENERGY = 1_000;
 
@@ -225,6 +260,52 @@ public final class TestModels {
 
         public DockEntity(final BlockPos pos, final BlockState state) {
             super(DOCK_ENTITY.get(), pos, state);
+        }
+    }
+
+    /** The showcase: a block drawn with one of the models of CAD and scene files, which its state says. */
+    public static final class ShowcaseBlock extends BaseEntityBlock {
+
+        /** Which of {@link #SHOWN} it is drawn with. */
+        public static final IntegerProperty MODEL = IntegerProperty.create("model", 0, 3);
+        private static final MapCodec<ShowcaseBlock> CODEC = simpleCodec(ShowcaseBlock::new);
+
+        public ShowcaseBlock(final Properties properties) {
+            super(properties.noOcclusion());
+            registerDefaultState(defaultBlockState().setValue(MODEL, 0));
+        }
+
+        @Override
+        public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
+            return new ShowcaseEntity(pos, state);
+        }
+
+        @Override
+        protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
+            builder.add(MODEL);
+        }
+
+        @Override
+        protected RenderShape getRenderShape(final BlockState state) {
+            return RenderShape.ENTITYBLOCK_ANIMATED;
+        }
+
+        @Override
+        protected MapCodec<? extends BaseEntityBlock> codec() {
+            return CODEC;
+        }
+    }
+
+    /** The showcase's block entity, which holds nothing; its block's state says what it is drawn with. */
+    public static final class ShowcaseEntity extends BlockEntity {
+
+        public ShowcaseEntity(final BlockPos pos, final BlockState state) {
+            super(SHOWCASE_ENTITY.get(), pos, state);
+        }
+
+        /** The model it is drawn with. */
+        public DeclaredModel shown() {
+            return SHOWN.get(getBlockState().getValue(ShowcaseBlock.MODEL));
         }
     }
 

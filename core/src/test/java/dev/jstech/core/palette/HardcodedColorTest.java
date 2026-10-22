@@ -56,6 +56,11 @@ class HardcodedColorTest {
                     "the multiplier of a hash that picks a build line"),
             "core/src/main/java/dev/jstech/core/model/GltfReader.java", new Data(3,
                     "the marks a binary glTF file and its two chunks start with, as the format writes them"),
+            "core/src/main/java/dev/jstech/core/model/CadLook.java", new Data(2,
+                    "the steel a CAD part with no colour is given, as CAD programs show one, and the alpha of an "
+                            + "opaque colour read from a file"),
+            "core/src/main/java/dev/jstech/core/model/StepReader.java", new Data(8,
+                    "the eight colours ISO 10303 names, as a STEP file may name a colour instead of writing it"),
             "core/src/main/java/dev/jstech/core/client/model/kit/KitRenderer.java", new Data(1,
                     "the white a model's texture is multiplied by, which leaves the texture's own colours"),
             "core/src/main/java/dev/jstech/core/client/developer/Pictures.java", new Data(1,

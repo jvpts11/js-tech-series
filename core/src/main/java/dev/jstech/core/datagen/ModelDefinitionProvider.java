@@ -13,6 +13,7 @@ import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelFormatException;
 import dev.jstech.core.model.ModelReaders;
+import dev.jstech.core.model.ModelShaping;
 import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,8 +33,9 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 /**
  * Writes the definition of every model a mod declares to {@code assets/<mod>/jsmodels/<path>.model.json}, once it has
  * read the model: every file the declaration names has to be there, the model has to read, and every bone it names
- * (to glow, to hide, to show) has to be one of the model's. A declaration that has drifted from its files stops the
- * generation instead of drawing nothing in the game.
+ * (to glow, to hide, to show) has to be one of the model's; and a file of more triangles than a model may have
+ * without saying how many it is drawn with has to say it. A declaration that has drifted from its files stops the
+ * generation instead of drawing nothing, or too much, in the game.
  */
 public final class ModelDefinitionProvider implements DataProvider {
 
@@ -83,8 +85,15 @@ public final class ModelDefinitionProvider implements DataProvider {
             }
         }
         final Set<String> bones = new HashSet<>();
-        for (final ModelData data : read(model, definition.model())) {
+        final List<ModelData> drawn = read(model, definition.model());
+        for (final ModelData data : drawn) {
             data.bones().forEach(bone -> bones.add(bone.name()));
+        }
+        budget(model, definition.model(), drawn.getFirst());
+        for (final ModelDefinition.Variant variant : definition.variants()) {
+            if (!variant.model().isEmpty()) {
+                budget(model, variant.model(), read(model, variant.model()).getFirst());
+            }
         }
         final Set<String> wanted = new HashSet<>(definition.glow());
         definition.variants().forEach(variant -> {
@@ -97,6 +106,15 @@ public final class ModelDefinitionProvider implements DataProvider {
                     + wanted + ", which its file " + definition.model() + " has none of", "name bones it has: "
                     + bones);
         }
+    }
+
+    /* A model's file within the triangles it may be drawn with, or the generation stops saying how it is not. */
+    private static void budget(final DeclaredModel model, final String file, final ModelData data) {
+        ModelShaping.overBudget(data, model.definition().detail()).ifPresent(problem -> {
+            throw DeclarationError.of(model.id().getNamespace(), "the model " + model.id(), "in " + file + " "
+                    + problem, "say on its declaration how many triangles it is drawn with, triangles(...) and "
+                    + "far(...), or make it of fewer");
+        });
     }
 
     private List<ModelData> read(final DeclaredModel model, final String file) {

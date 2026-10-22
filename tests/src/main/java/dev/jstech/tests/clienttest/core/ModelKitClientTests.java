@@ -11,11 +11,13 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.client.developer.LiveReloadClient;
 import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitInstance;
+import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.ModelPreviewScreen;
 import dev.jstech.core.developer.LiveReload;
 import dev.jstech.core.developer.ModFolders;
 import dev.jstech.core.model.ModelAnimation;
+import dev.jstech.core.model.ModelShaping;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestModels;
@@ -26,9 +28,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -39,6 +43,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 
@@ -47,7 +52,9 @@ import net.minecraft.world.phys.Vec3;
  * lit while powered, an ingot on its plate, the words its strike hands to code heard; J's Computers' Dock Station
  * drawn by the Core's models beside GeckoLib's own, to set the two side by side; a crate from an OBJ file in the hand,
  * a walker from an FBX file turning its head, a helmet from a Bedrock geometry on an armour stand; the preview of a
- * model, its animation played from its button; and a model file changed, read again by itself.
+ * model, its animation played from its button; the models of 3MF, STL, STEP and USD files on showcases, the pump's
+ * parts spinning, and its preview with its parts, its triangles and its model far away; and a model file changed,
+ * read again by itself.
  */
 public final class ModelKitClientTests {
 
@@ -55,6 +62,8 @@ public final class ModelKitClientTests {
     private static final BlockPos PRESS = new BlockPos(-2, 2, 1);
     private static final BlockPos KIT_DOCK = new BlockPos(0, 2, 1);
     private static final BlockPos GECKO_DOCK = new BlockPos(1, 2, 1);
+    /* The first of the four showcases, the others to its west. */
+    private static final BlockPos SHOWCASE = new BlockPos(1, 2, 1);
     private static final int WAIT = 200;
 
     private ModelKitClientTests() {
@@ -135,6 +144,41 @@ public final class ModelKitClientTests {
                 .thenAwaitNoScreen(WAIT);
     }
 
+    @ClientTest(timeoutTicks = 900)
+    public static void cadModels_drawNearFarAndInThePreview(final ClientTestContext ctx) {
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    for (int i = 0; i < TestModels.SHOWN.size(); i++) {
+                        level.setBlockAndUpdate(ctx.abs(SHOWCASE.west(i)), TestModels.SHOWCASE_BLOCK.get()
+                                .defaultBlockState().setValue(TestModels.ShowcaseBlock.MODEL, i));
+                    }
+                })
+                .thenWaitUntil(() -> showcases(ctx).stream().allMatch(Optional::isPresent), WAIT,
+                        "the four models of CAD and scene files to be drawn")
+                .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(SHOWCASE.west(1))).add(-0.5, -0.2, 0)))
+                .thenAssert(0, () -> showcases(ctx).getFirst().map(pump -> pump.animator().controller("main")
+                        .playing() != null).orElse(false), "the pump plays its spin")
+                .thenScreenshot(12, "kit-cad-models-near")
+                .thenAssert(0, () -> {
+                    final KitModel pump = KitModels.get(TestModels.PUMP.id()).orElseThrow();
+                    return pump.far() != null && pump.at(8) == pump && pump.at(40) == pump.far()
+                            && ModelShaping.triangles(pump.far().data()) <= 300
+                            && ModelShaping.triangles(pump.data()) <= 800;
+                }, "the pump is drawn with 800 triangles at most near, and with its model of 300 past 32 blocks")
+                .thenServer(0, level -> ctx.server().getCommands().performPrefixedCommand(
+                        ctx.serverPlayer().createCommandSourceStack(), "jstech model preview "
+                                + TestModels.PUMP.id()))
+                .thenAwaitScreen(ModelPreviewScreen.class, WAIT)
+                .then(0, () -> flip(ctx, "Wire"))
+                .thenScreenshot(6, "kit-cad-preview-pump")
+                .then(0, () -> flip(ctx, "Far detail"))
+                .thenScreenshot(4, "kit-cad-preview-pump-far")
+                .then(0, () -> ctx.mc().setScreen(null))
+                .thenAwaitNoScreen(WAIT)
+                .thenServer(0, level -> clear(ctx, level));
+    }
+
     /* The probe is named for this run, so the other clients of a battery pay it no mind. */
     @ClientTest(timeoutTicks = 1200)
     public static void changedModelFiles_areReadAgainByThemselves(final ClientTestContext ctx) {
@@ -165,6 +209,24 @@ public final class ModelKitClientTests {
             return Optional.empty();
         }
         return KitAnimations.drawn(ctx.mc().level.getBlockEntity(ctx.abs(PRESS)));
+    }
+
+    /* Flips the preview's switch called {@code name}. */
+    private static void flip(final ClientTestContext ctx, final String name) {
+        ctx.screen(ModelPreviewScreen.class).children().stream().filter(Checkbox.class::isInstance)
+                .map(Checkbox.class::cast).filter(box -> box.getMessage().getString().equals(name)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("the preview has no switch " + name)).onPress();
+    }
+
+    /* What draws each of the showcases, in the order of the models they show. */
+    private static List<Optional<KitInstance>> showcases(final ClientTestContext ctx) {
+        final List<Optional<KitInstance>> out = new ArrayList<>();
+        for (int i = 0; i < TestModels.SHOWN.size(); i++) {
+            final BlockEntity showcase = ctx.mc().level == null ? null : ctx.mc().level.getBlockEntity(ctx.abs(
+                    SHOWCASE.west(i)));
+            out.add(showcase == null ? Optional.empty() : KitAnimations.drawn(showcase));
+        }
+        return out;
     }
 
     private static boolean playing(final ClientTestContext ctx, final String animation) {

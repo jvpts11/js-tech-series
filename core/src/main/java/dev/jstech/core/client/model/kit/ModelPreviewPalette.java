@@ -18,7 +18,7 @@ final class ModelPreviewPalette {
 
     static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "model_preview", new Colours(
             0xFF4A6CA8, 0xFFFFFFFF, 0xFFB4BED0, 0xE0222C3C, 0xD0181C24, 0xFFFFFFFF, 0xFFD8DCE4, 0xFFFFE040,
-            0xFFFF40FF, 0x40FFFFFF, 0xFFFFFFFF, 0xC0E0E0E0, 0xFFFFFFFF));
+            0xFFFF40FF, 0x40FFFFFF, 0xFFFFFFFF, 0xC0E0E0E0, 0xFFFFFFFF, 0xFF373737, 0xFF5FE07A, 0xFFEF6A5A));
 
     private ModelPreviewPalette() {
     }
@@ -44,8 +44,11 @@ final class ModelPreviewPalette {
      * @param wire     the faces' edges, drawn as wire
      * @param boneLine the line from a bone to the one it hangs from
      * @param frame    the frame round the button of the animation that plays
+     * @param track    the track of the bar of the model's triangles
+     * @param within   the bar of a model within the triangles it may have
+     * @param over     the bar of a model past them, its cubes alone more than it may have
      */
     record Colours(int titleBar, int title, int faint, int view, int bar, int text, int tree, int chosen, int locator,
-                   int grid, int wire, int boneLine, int frame) {
+                   int grid, int wire, int boneLine, int frame, int track, int within, int over) {
     }
 }
