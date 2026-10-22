@@ -110,7 +110,11 @@ there at once. Create writes the file, under the block's mod, and opens it in th
 
 ## Cost and settings
 
-Every particle of a layer is drawn in one batch, the see-through ones back to front. The player's
+Every particle of a layer is drawn in one batch, the see-through ones back to front. *Added 2026-10-22:* the
+graphics card draws them: one square is sent to it once, and each particle hands over only where it is, its size,
+its picture, its colour, its turn and its light, so thousands cost the game little. Under a shader pack, or with the
+player's *Draw alike things together* turned off ([Models](MODELS.md)), they are laid out one by one as before. The
+player's
 `jstech-effects.toml` says how many particles may live at once (6000 unless they say), how hard the screen shakes,
 how bright a flash is, and whether heat haze and shockwaves bend the view; the game's own particle setting (all,
 decreased, minimal) thins out what is emitted, and near the budget the farthest effects emit fewer. An effect too far

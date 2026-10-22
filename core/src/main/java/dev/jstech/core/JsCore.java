@@ -202,6 +202,7 @@ import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.MaterialValues;
 import dev.jstech.core.material.MineralFamilies;
 import dev.jstech.core.menu.MenuSync;
+import dev.jstech.core.model.DrawingSettings;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.model.network.ModelCommands;
 import dev.jstech.core.moving.BlockAboard;
@@ -514,6 +515,8 @@ public final class JsCore {
         ConfigFiles.register(LightingSettings.FILE, modEventBus, modContainer);
         // How effects look on a player's game: particles at once, the screen's shake and flash, heat haze.
         ConfigFiles.register(EffectSettings.FILE, modEventBus, modContainer);
+        // Whether alike models, turning parts and particles are drawn many at once on a player's game.
+        ConfigFiles.register(DrawingSettings.FILE, modEventBus, modContainer);
         ConfigFiles.register(CameraSettings.FILE, modEventBus, modContainer);
         // What the series adds to every item's tooltip on a player's game: the mod's name, the bar of wear.
         ConfigFiles.register(TooltipSettings.FILE, modEventBus, modContainer);

@@ -47,7 +47,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   limits per player. `ScreenEditorLayout` is the editor's own and leaves the API.
 - The Core complete: J's Core's API is at version 12, all experimental. `ExpressionContext.value` hands a
   model's expressions a value for the frame, and `nextFrame` begins another, a query of code being worked out once a
-  frame.
+  frame. `DrawingSettings` holds whether the player has alike things drawn together.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -511,7 +511,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   blending from one to the next; Molang in keyframes reads what the code gives it; sounds, particles and words to code
   happen on their times; code moves bones over the animations; items are held at locators; and the server can play an
   animation for everyone who sees the model. A model is worked out once and shared, animated only in sight and near,
-  and drawn with the game's own shaders, so shader packs draw it. Families of files laid out for GeckoLib are drawn by
+  and under a shader pack drawn with the game's own shaders, so the pack draws it. Families of files laid out for
+  GeckoLib are drawn by
   the Core's models as they are, alike to the pixel.
 - What entities need from a model, ready-made: an entity's model, and armour on whoever wears it, reads the
   entity's own queries under Bedrock's names (how fast it goes, how its limbs swing, whether it is on the ground, in
@@ -522,6 +523,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   textures are, shows the frame of the tick, every model in step; a glowing texture beside it, the same name with
   `_e`, is drawn over it at full light. Mods lay layers of their own over any model (a glow, an outline, a shield), and
   an item's model can have the player's own arms drawn at two bones in first person, holding it.
+- Alike things drawn together: every copy of a model of the Core's in the world (block entities, entities,
+  turning parts) is drawn in one call for each of its pictures, the graphics card holding its faces and each copy
+  handing over only its light and where its bones are, so a rack of a hundred alike drives costs about what one does;
+  the effects' particles are drawn the same way. Under a shader pack, and for a player who turns *Draw alike things
+  together* off, everything is drawn one by one as before, and the two ways look the same.
 - The preview of a model: `/jstech model preview <model>` opens it, a declared model or any model file by its
   path, turned, zoomed and moved with the mouse over a floor of quarter blocks, its animations played or paused from
   their buttons, its bones in a tree, the chosen one shown in yellow, its locators by name, its glowing parts shown in

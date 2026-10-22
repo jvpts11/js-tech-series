@@ -190,6 +190,9 @@ TurningParts.register(event, MyParts.PART.get());
 - **The angle follows the speed** frame by frame, so a part speeding up or slowing down does so smoothly, whatever
   the server's ticks. Every other gear stands half a tooth on, so two meshed gears' teeth meet.
 - **Every part drawn with one model shares its shape**: the model is baked once and every part only turns it.
+  *Added 2026-10-22:* the parts of one model are drawn together, in one call for each of its pictures, each part
+  handing over only its turn and its light ([Models](MODELS.md)), so a plant of thousands of shafts and gears costs
+  the frame little.
 - **A belt or a chain runs** between the pulleys it joins, as fast as the pulleys' rims: its two straight runs touch
   both pulleys as an open belt does (`BeltPath`), drawn with the game's black wool for a belt and its chain for a
   chain, as thick as a belt is. A pulley's model is made as round as its spec's radius, so the belt meets its rim.

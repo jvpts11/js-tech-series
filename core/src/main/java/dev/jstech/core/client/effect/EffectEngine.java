@@ -8,6 +8,7 @@
 package dev.jstech.core.client.effect;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.jstech.core.client.instancing.Instancing;
 import dev.jstech.core.client.light.LightRenderTypes;
 import dev.jstech.core.effect.ArcPath;
 import dev.jstech.core.effect.EffectCurves;
@@ -42,15 +43,18 @@ import org.joml.Vector3f;
  * their bursts, from their shapes, turned the way the effect faces), and every particle moves by the physics of where
  * it is (the dimension's pull, the air's density, the wind, the water it is in), dies in what it may not live in,
  * stops at blocks if it collides, leaves its ribbon and emits what it carries. Each frame they are drawn camera-facing
- * from the particle sheet, see-through ones back to front, every one of a layer in one batch, with the beams, arcs
- * and ribbons. The game's particle setting and the player's budget thin what is emitted; an effect too far to be seen
- * emits nothing.
+ * from the particle sheet, see-through ones back to front, every one of a layer in one batch (many at once on the
+ * graphics card, while {@link Instancing#on} says so), with the beams, arcs and ribbons. The game's particle setting
+ * and the player's budget thin what is emitted; an effect too far to be seen emits nothing.
  */
 public final class EffectEngine {
 
     /** A tick, in seconds. */
     static final double TICK = 0.05;
     private static final ParticleStore STORE = new ParticleStore();
+    /* The particles laid over what is behind them and those added to it, when drawn many at once. */
+    private static final InstancedParticles LAID = new InstancedParticles();
+    private static final InstancedParticles ADDED = new InstancedParticles();
     private static final List<RunningEffect> RUNNING = new ArrayList<>();
     private static final SplittableRandom RANDOM = new SplittableRandom();
     /* How many particles the game's setting lets through, and how much fewer the farthest emit near the budget. */
@@ -79,6 +83,7 @@ public final class EffectEngine {
 
     private static double cost;
     private static long tickNanos;
+    private static int instancedLast;
 
     private EffectEngine() {
     }
@@ -86,6 +91,11 @@ public final class EffectEngine {
     /** How many particles live now. */
     public static int particles() {
         return STORE.count;
+    }
+
+    /** How many particles were drawn many at once on the graphics card in the last frame. */
+    public static int instancedLastFrame() {
+        return instancedLast;
     }
 
     /** What the effects cost the player's game a frame, in milliseconds, smoothed. */
@@ -387,15 +397,21 @@ public final class EffectEngine {
         return effect.colour == 0 ? own : own & ~RGB | effect.colour & RGB;
     }
 
+    /*
+     * The particles, see-through ones back to front: many at once on the graphics card while it may be, each layer in
+     * one go, or one by one into the batches of the layers.
+     */
     private static void drawParticles(final ClientLevel level, final Camera camera, final Vec3 eye,
                                       final float partialTick, final MultiBufferSource.BufferSource buffers) {
         final Vector3f left = camera.getLeftVector();
         final Vector3f up = camera.getUpVector();
+        final boolean together = Instancing.on();
         final long[] order = new long[STORE.count];
         int laid = 0;
         for (int i = 0; i < STORE.count; i++) {
             if (STORE.owner[i].emitter.look().blend() == Emitter.Blend.ADDITIVE) {
-                drawParticle(level, i, eye, partialTick, left, up, buffers.getBuffer(EffectRenderTypes.GLOWING));
+                drawParticle(level, i, eye, partialTick, left, up, together ? null
+                        : buffers.getBuffer(EffectRenderTypes.GLOWING), ADDED);
             } else {
                 final double dx = lerp(STORE.lastX[i], STORE.x[i], partialTick) - eye.x;
                 final double dy = lerp(STORE.lastY[i], STORE.y[i], partialTick) - eye.y;
@@ -406,14 +422,19 @@ public final class EffectEngine {
         }
         // Back to front, so each see-through one lies over those behind it.
         Arrays.sort(order, 0, laid);
-        final VertexConsumer consumer = laid > 0 ? buffers.getBuffer(EffectRenderTypes.PARTICLES) : null;
+        final VertexConsumer consumer = laid > 0 && !together ? buffers.getBuffer(EffectRenderTypes.PARTICLES)
+                : null;
         for (int k = laid - 1; k >= 0; k--) {
-            drawParticle(level, (int) order[k], eye, partialTick, left, up, consumer);
+            drawParticle(level, (int) order[k], eye, partialTick, left, up, consumer, LAID);
         }
+        instancedLast = together ? LAID.draw(EffectRenderTypes.PARTICLES, camera)
+                + ADDED.draw(EffectRenderTypes.GLOWING, camera) : 0;
     }
 
+    /* A particle, into {@code consumer}, or written to {@code together} to be drawn many at once for none. */
     private static void drawParticle(final ClientLevel level, final int i, final Vec3 eye, final float partialTick,
-                                     final Vector3f left, final Vector3f up, final VertexConsumer consumer) {
+                                     final Vector3f left, final Vector3f up, @Nullable final VertexConsumer consumer,
+                                     final InstancedParticles together) {
         final EmitterRun run = STORE.owner[i];
         final Emitter.Look look = run.emitter.look();
         final double share = STORE.age[i] / STORE.life[i];
@@ -432,6 +453,11 @@ public final class EffectEngine {
         final double z = lerp(STORE.lastZ[i], STORE.z[i], partialTick);
         final int light = lightAt(level, x, y, z, look.light());
         final float turn = STORE.angle[i] + STORE.spin[i] * partialTick * (float) TICK;
+        if (consumer == null) {
+            together.add((float) (x - eye.x), (float) (y - eye.y), (float) (z - eye.z), (float) size,
+                    sprite.getU0(), sprite.getV0(), sprite.getU1(), sprite.getV1(), argb, turn, light);
+            return;
+        }
         final float cos = (float) (Math.cos(turn) * size);
         final float sin = (float) (Math.sin(turn) * size);
         // The two half-diagonals of the square, turned by the particle's angle on the camera's plane.

@@ -6,8 +6,8 @@ series.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists. How a mod
-uses it, with code: [Mechanical power](../MECHANICAL_POWER.md).
+Everything this page designs is built, as of October 2026. How a mod uses it, with code:
+[Mechanical power](../MECHANICAL_POWER.md). Nothing of this page is left to build.
 
 ## The design
 
@@ -46,8 +46,3 @@ uses it, with code: [Mechanical power](../MECHANICAL_POWER.md).
 - **Mechanical power on moving structures**: an airship's propellers driven by shafts, as in Create Aeronautics
   ([Moving structures](moving-structures.md)).
 - **Networks are worked out again only when they change**, with no tick per shaft.
-
-## Still to build
-
-- **Turning parts drawn by instancing**, as *Seeing and measuring* above says, so a plant of thousands of shafts and
-  gears costs the frame little: today they are drawn in batches.

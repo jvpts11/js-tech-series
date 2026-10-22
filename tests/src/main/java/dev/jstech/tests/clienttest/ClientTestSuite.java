@@ -176,6 +176,7 @@ import dev.jstech.tests.clienttest.core.FoundRockClientTests;
 import dev.jstech.tests.clienttest.core.VariantClientTests;
 import dev.jstech.tests.clienttest.core.RecipeChooserClientTests;
 import dev.jstech.tests.clienttest.core.ReiRecipeViewClientTests;
+import dev.jstech.tests.clienttest.core.InstancingClientTests;
 import dev.jstech.tests.clienttest.core.MachineLooksClientTests;
 import dev.jstech.tests.clienttest.core.MachineScreenClientTests;
 import dev.jstech.tests.clienttest.core.MediaClientTests;
@@ -334,6 +335,7 @@ public final class ClientTestSuite {
             ReachClientTests.class,
             ModelKitClientTests.class,
             ModelKitEntitiesClientTests.class,
+            InstancingClientTests.class,
             MachineLooksClientTests.class,
             ConnectedPacksClientTests.class,
             LightingClientTests.class,

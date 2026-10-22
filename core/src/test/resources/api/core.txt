@@ -8371,6 +8371,10 @@ stable 4
 10 dev.jstech.core.model.CubeFace  int stepY()
 10 dev.jstech.core.model.CubeFace  int stepZ()
 10 dev.jstech.core.model.CubeFace  static CubeFace byName(String)
+12 dev.jstech.core.model.DrawingSettings  type final class
+12 dev.jstech.core.model.DrawingSettings  static boolean instancing()
+12 dev.jstech.core.model.DrawingSettings  static final ConfigFile FILE
+12 dev.jstech.core.model.DrawingSettings  static final ConfigKey<Boolean> INSTANCING
 10 dev.jstech.core.model.Easing  type enum implements IStableName
 10 dev.jstech.core.model.Easing  BEZIER
 10 dev.jstech.core.model.Easing  CATMULLROM

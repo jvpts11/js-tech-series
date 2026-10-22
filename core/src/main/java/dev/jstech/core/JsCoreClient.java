@@ -60,6 +60,7 @@ import dev.jstech.core.client.heat.ThermalViewClient;
 import dev.jstech.core.client.hologram.HologramView;
 import dev.jstech.core.client.hud.HudElements;
 import dev.jstech.core.client.inspect.InspectClient;
+import dev.jstech.core.client.instancing.Instancing;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.input.MenuSwapCursor;
 import dev.jstech.core.client.item.ItemStateClient;
@@ -80,6 +81,7 @@ import dev.jstech.core.client.model.PartMotions;
 import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitClock;
 import dev.jstech.core.client.model.kit.KitEntityModels;
+import dev.jstech.core.client.model.kit.KitInstancing;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.multiblock.FormedPartsClient;
 import dev.jstech.core.client.motion.CoreMotionClient;
@@ -172,6 +174,9 @@ public final class JsCoreClient {
         KitEntityModels.listen(modEventBus);
         KitAnimations.listen();
         KitClock.listen();
+        // Alike models and particles drawn many at once on the graphics card, with their shaders.
+        Instancing.listen(modEventBus);
+        KitInstancing.listen();
         FormedPartsClient.listen(modEventBus);
         CoreMotionClient.listen(modEventBus);
         CorePaletteClient.listen(modEventBus);

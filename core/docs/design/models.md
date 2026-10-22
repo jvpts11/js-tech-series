@@ -8,7 +8,9 @@ Maya, 3ds Max and Cinema 4D.
 
 Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: the readers of
 Blockbench, Bedrock, glTF, FBX and OBJ, what a model holds, the animation with its controllers, expressions, events and
-bones moved by code, the drawing, the preview and live reload, and connected textures. How a mod uses it, with code:
+bones moved by code, what entities need ready-made (their own queries, and the game's creatures drawn with a model by
+data), textures that move and glow, layers, the player's arms in first person, the drawing with every copy of a model
+drawn together, the preview and live reload, and connected textures. How a mod uses it, with code:
 [Models](../MODELS.md) and [Connected textures](../CONNECTED_TEXTURES.md).
 
 ## The design
@@ -28,9 +30,10 @@ The kit reads instead the **formats those programs export**, each with a reader 
 | **FBX** | all four | the same, read by a reader of the Core's own |
 | **OBJ** | all four | still meshes |
 | **STL** and **3MF** | every CAD program | meshes; 3MF also colours and the parts of an assembly, which become bones |
-| **USD**, later | all four, more and more | whole scenes |
+| **STEP** | every CAD program | solids, their faces made into triangles as they are read |
+| **USD** | all four, more and more | whole scenes |
 
-A model from a CAD program comes in through STL or 3MF: its millimetres become blocks by a scale the model declares, its
+A model from a CAD program comes in through STL, 3MF or STEP: its millimetres become blocks by a scale the model declares, its
 colours become textures in the game's style, its faces get UVs by projection, and it is brought down to the triangles
 the game can afford, with fewer far away.
 
@@ -88,17 +91,8 @@ In the spirit of CTM and Continuity:
 
 ## Still to build
 
-- **What entities need ready-made**: expressions that read an entity's own state (its limbs' swing and speed, on the
-  ground or in water, hurt, its head's turn), and the expressions compiled once and read once a frame.
-- **Textures that move and glow**: animated textures by their frames, and glowing textures as files beside the texture.
-- **Layers a mod adds**: a hook that lays a glow, an overlay or an outline over any model of the kit.
-- **The game's own entities** drawn with a model of the kit, chosen by data, and hooks for the arm and the held item in
-  first person.
-- **Instancing**, as the cost above says: identical models drawn in one call, with a pose and a light each, and the way
-  of today kept where a shader pack refuses it.
-- **STL and 3MF**, as the formats above say, with their way into the game.
+- **STL, 3MF, STEP and USD**, as the formats above say, with their way into the game.
 - **Glowing block textures in OptiFine's form** (a texture's `_e` beside it), as Continuity reads them, for resource
   packs made for it.
-- **USD**, still later.
 - **J's Computers' models move onto the kit** (the Mainframes, racks, drives and encoders), and GeckoLib leaves the
   series, when J's Computers moves onto the Core.

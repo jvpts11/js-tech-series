@@ -69,6 +69,5 @@ one place, for any mod.
   laboratory or greenhouse is lit in the glass's hue.
 - **Coloured light under deferred shader packs**: tried with Iris's deferred packs, and whatever that asks for.
 - **Light updates in batches away from the main thread**, as the cost above says, checked and finished.
-- **Particles drawn by instancing** on the graphics card, as the cost above says, and particles stretched along their
-  speed, for sparks and tracers.
+- **Particles stretched along their speed**, for sparks and tracers.
 - **Shimmer** has no build for this version of the game, so stepping aside for it waits for one.

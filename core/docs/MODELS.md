@@ -191,8 +191,9 @@ from it. With `glowLight(level, colour)` its glowing parts also light the world 
 the world, as a lamp's bulb does, moving with them: a lamp on a machine's turning arm lights what it passes. A
 see-through model has its faces sorted back to front by the game, as it sorts what it draws see-through. A
 block drawn with a model shows the cracks of being broken over it, as the game draws them over any block entity,
-unless it says `noCracks()`. The model is drawn with the game's own entity shaders, so shader packs (Iris, Oculus) draw
-it as they draw a mob.
+unless it says `noCracks()`. Under a shader pack (Iris, Oculus) the model is drawn with the game's own entity shaders,
+so the pack draws it as it draws a mob; without one, the copies of a model in the world are drawn together by a shader
+of the Core's that draws them just as those do (*What it costs*, below).
 
 *Added 2026-10-22:* **textures that move and glow.** A texture of frames laid one under another, with a `.mcmeta`
 beside it as the game's block textures have (`"animation": {"frametime": 4}`, and a list of `frames` if it likes),
@@ -221,6 +222,16 @@ go to the game in one batch. Only what is in sight is drawn, and only what is ne
 thing at rest (nothing playing, no code moving it) is not worked out again until it moves; a thing drawn more than once
 in a frame is worked out once. A mesh that bends with a skin or moves toward a morph target is the only part worked out
 each frame.
+
+*Added 2026-10-22:* **copies drawn together.** Every copy of a model drawn in the world in a frame (block entities,
+entities, turning parts) is drawn in one call for each of its pictures: its faces wait on the graphics card from the
+first time it is drawn, and each copy hands over only its light, its overlay and where each of its bones is. A rack of a
+hundred alike drives costs about what one does. A copy drawn anywhere else (in a hand, a screen, the inventory) is
+drawn one by one, and so is one being broken (its cracks), one with an outline, a see-through model, one with a mesh
+that bends or morphs, and one with layers laid over it. A shader pack draws everything one by one, and so does the
+player's setting `drawing.instancing` in `jstech-drawing.toml`, *Draw alike things together*, turned off for a graphics
+card that draws them wrong. `KitInstancing.drawnLastFrame()` and `callsLastFrame()` say how many copies were drawn
+together in the last frame, and in how many calls.
 
 ## While you build
 

@@ -41,6 +41,8 @@ import org.joml.Vector3f;
  *
  * <p>A texture that is animated shows the frame of the tick ({@link KitTextures}); one with a glowing texture beside
  * it has that drawn over it at full light; and the layers laid over the model ({@link KitLayers}) draw after it.
+ * Drawn in the world, it is drawn with every other thing of its model at once, where it can be
+ * ({@link KitInstancing}).
  */
 public final class KitRenderer {
 
@@ -71,17 +73,19 @@ public final class KitRenderer {
         final long tick = KitClock.tick();
         poses.pushPose();
         poses.scale(PIXEL, PIXEL, PIXEL);
-        lay(instance, hidden, painted, poses, buffers, null, light, overlay, tick, glowsIn);
-        if (glowsAnywhere(model, painted)) {
-            lay(instance, hidden, painted, poses, buffers, KitRenderer::glowingType, LightTexture.FULL_BRIGHT,
-                    overlay, tick, null);
-        }
-        final List<IKitLayer> layers = KitLayers.of(model.id());
-        if (!layers.isEmpty()) {
-            final IKitFaces faces = (type, lit, over) -> lay(instance, hidden, painted, poses, buffers, type, lit,
-                    over, tick, null);
-            for (final IKitLayer layer : layers) {
-                layer.draw(instance, faces, buffers, light, overlay);
+        if (!world || !KitInstancing.take(instance, hidden, painted, poses, buffers, light, overlay, glowsIn)) {
+            lay(instance, hidden, painted, poses, buffers, null, light, overlay, tick, glowsIn);
+            if (glowsAnywhere(model, painted)) {
+                lay(instance, hidden, painted, poses, buffers, KitRenderer::glowingType, LightTexture.FULL_BRIGHT,
+                        overlay, tick, null);
+            }
+            final List<IKitLayer> layers = KitLayers.of(model.id());
+            if (!layers.isEmpty()) {
+                final IKitFaces faces = (type, lit, over) -> lay(instance, hidden, painted, poses, buffers, type,
+                        lit, over, tick, null);
+                for (final IKitLayer layer : layers) {
+                    layer.draw(instance, faces, buffers, light, overlay);
+                }
             }
         }
         if (held != null) {
@@ -203,9 +207,9 @@ public final class KitRenderer {
         }
     }
 
-    /* The texture of picture {@code texture}: the variant's paint for the first, or the model's own. */
-    private static ResourceLocation location(final KitModel model, final int texture,
-                                             @Nullable final ResourceLocation painted) {
+    /** The texture of picture {@code texture}: the variant's paint for the first, or the model's own. */
+    static ResourceLocation location(final KitModel model, final int texture,
+                                     @Nullable final ResourceLocation painted) {
         return painted != null && texture == 0 ? painted : model.texture(texture);
     }
 
