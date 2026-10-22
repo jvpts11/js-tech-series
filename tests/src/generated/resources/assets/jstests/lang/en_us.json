@@ -147,6 +147,7 @@
   "item.jstests.test_gadget": "Test Gadget",
   "item.jstests.test_hot_oil_bucket": "Test Hot Oil Bucket",
   "item.jstests.test_hot_pick": "Test Hot Pick",
+  "item.jstests.test_kit_arms": "Test kit arms",
   "item.jstests.test_kit_crate": "Test kit crate",
   "item.jstests.test_kit_helmet": "Test kit helmet",
   "item.jstests.test_kit_installer": "Test Kit Installer",

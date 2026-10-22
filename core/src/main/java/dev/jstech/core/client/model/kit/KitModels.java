@@ -195,6 +195,7 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
         problems = List.copyOf(loaded.problems);
         reloadedAt = System.currentTimeMillis();
         KitAnimations.forgetModels();
+        KitTextures.forget();
     }
 
     private static KitModel read(final ResourceManager manager, final ResourceLocation file,

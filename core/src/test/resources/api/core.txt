@@ -8414,11 +8414,13 @@ stable 4
 10 dev.jstech.core.model.ExpressionContext  ExpressionContext lifeTime(double)
 10 dev.jstech.core.model.ExpressionContext  ExpressionContext query(String, ToDoubleFunction<ExpressionContext>)
 10 dev.jstech.core.model.ExpressionContext  ExpressionContext query(String, double)
+12 dev.jstech.core.model.ExpressionContext  ExpressionContext value(String, double)
 10 dev.jstech.core.model.ExpressionContext  boolean hasVariable(String)
 10 dev.jstech.core.model.ExpressionContext  double animTime()
 10 dev.jstech.core.model.ExpressionContext  double lifeTime()
 10 dev.jstech.core.model.ExpressionContext  double readQuery(String)
 10 dev.jstech.core.model.ExpressionContext  double variable(String)
+12 dev.jstech.core.model.ExpressionContext  void nextFrame()
 10 dev.jstech.core.model.ExpressionContext  void setVariable(String, double)
 10 dev.jstech.core.model.ExpressionParser  type final class
 10 dev.jstech.core.model.ExpressionParser  static ModelExpression parse(String)

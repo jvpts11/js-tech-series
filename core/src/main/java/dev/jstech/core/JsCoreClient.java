@@ -79,6 +79,7 @@ import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.client.model.PartMotions;
 import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitClock;
+import dev.jstech.core.client.model.kit.KitEntityModels;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.multiblock.FormedPartsClient;
 import dev.jstech.core.client.motion.CoreMotionClient;
@@ -168,6 +169,7 @@ public final class JsCoreClient {
         CoreFontClient.listen(modEventBus);
         CoreModels.listen(modEventBus);
         KitModels.listen(modEventBus);
+        KitEntityModels.listen(modEventBus);
         KitAnimations.listen();
         KitClock.listen();
         FormedPartsClient.listen(modEventBus);

@@ -128,6 +128,11 @@ public final class KitArmorModel {
                 return;
             }
             final KitInstance instance = KitAnimations.of(this.stack, ItemDisplayContext.NONE, found.get());
+            if (this.wearer != null) {
+                // A piece's keyframes read its wearer as an entity's model reads its own.
+                EntityQueries.hand(instance.animator().context(), this.wearer,
+                        Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
+            }
             instance.animate(frame, KitClock.now(), false, IAnimationListener.NONE);
             final MultiBufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
             final VertexConsumer glint = this.stack.hasFoil() ? buffers.getBuffer(RenderType.armorEntityGlint())

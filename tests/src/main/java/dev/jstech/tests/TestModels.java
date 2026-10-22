@@ -76,6 +76,11 @@ public final class TestModels {
             .file("jsmodels/test_kit_helmet.geo.json")
             .texture("minecraft:textures/block/gold_block.png")
             .register();
+    /** A tool held by the player's own arm in first person, painted with a texture of four frames that glows. */
+    public static final DeclaredModel ARMS = TestSounds.CONTENT.model("test_kit_arms")
+            .file("jsmodels/test_kit_arms.geo.json")
+            .texture("jstests:textures/kit/test_kit_flasher.png")
+            .register();
     /** J's Computers' Dock Station as its GeckoLib family lays out its files. */
     public static final GeoLook<Object> DOCK = GeoLook.of("jsc", "dock", "dock_station", thing -> "dock_station");
 
@@ -89,6 +94,8 @@ public final class TestModels {
             TestSounds.CONTENT.blockEntity("test_kit_dock", DockEntity::new, DOCK_BLOCK);
     public static final ItemEntry<Item> CRATE_ITEM = TestSounds.CONTENT.item("test_kit_crate", Item::new)
             .named("Test kit crate").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    public static final ItemEntry<Item> ARMS_ITEM = TestSounds.CONTENT.item("test_kit_arms", Item::new)
+            .named("Test kit arms").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
     public static final ItemEntry<ArmorItem> HELMET_ITEM = TestSounds.CONTENT.item("test_kit_helmet",
             properties -> new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.HELMET, properties))
             .named("Test kit helmet").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();

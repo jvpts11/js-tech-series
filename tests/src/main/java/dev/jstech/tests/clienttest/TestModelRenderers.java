@@ -76,6 +76,7 @@ public final class TestModelRenderers {
     @SubscribeEvent
     public static void onRegisterExtensions(final RegisterClientExtensionsEvent event) {
         event.registerItem(KitItemRenderer.of(TestModels.CRATE.id()).extensions(), TestModels.CRATE_ITEM.get());
+        event.registerItem(KitItemRenderer.of(TestModels.ARMS.id()).extensions(), TestModels.ARMS_ITEM.get());
         event.registerItem(KitArmorModel.of(TestModels.HELMET.id()).extensions(), TestModels.HELMET_ITEM.get());
     }
 

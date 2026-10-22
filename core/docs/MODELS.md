@@ -128,7 +128,43 @@ and `query.`/`q.`. `query.anim_time` and `query.life_time` are given; the code g
 
 ```java
 animator.context().query("load", context -> machine.load());   // read as query.load
+animator.context().value("pressure", tank.pressure());          // a value handed over this frame
 ```
+
+A query of code is worked out once a frame, however many keyframes read it; the expressions themselves are read into
+a tree once, as the model loads.
+
+*Added 2026-10-22:* an entity's model, and armour on whoever wears it, reads the entity's queries ready-made, under
+the names Bedrock gives them (`EntityQueries.NAMES` lists them):
+
+| Query | What it reads |
+| --- | --- |
+| `ground_speed`, `vertical_speed` | blocks a second, across and up |
+| `limb_swing` (`modified_distance_moved`), `limb_swing_amount` (`modified_move_speed`) | how far its limbs have swung, and how hard they swing now, 0 to 1 |
+| `is_on_ground`, `is_in_water`, `is_in_water_or_rain`, `is_in_lava`, `is_on_fire`, `is_sneaking`, `is_sprinting`, `is_swimming`, `is_riding`, `is_alive`, `is_baby` | 1 or 0 |
+| `head_x_rotation`, `head_y_rotation`, `body_y_rotation`, `yaw_speed` | degrees, and degrees a second |
+| `hurt_time`, `health`, `max_health` | ticks left of its last hurt, and its health |
+| `distance_from_camera`, `time_of_day`, `moon_phase` | blocks to the viewer, the day from 0 to 1, the moon from 0 to 7 |
+
+So a walk is written in the file, with no code:
+
+```json
+"rotation": ["math.sin(query.limb_swing * 38) * 40 * query.limb_swing_amount", 0, 0]
+```
+
+**The game's own creatures** are drawn with a model of the Core's when a resource pack says so, in
+`assets/<namespace>/jstech/entity_models/<name>.json`; their animation reads their queries as above:
+
+```json
+{
+  "entity": "minecraft:pig",
+  "model": "mypack:pig",
+  "plays": "animation.pig.move"
+}
+```
+
+Only creatures, the entities the game draws as living things, can be drawn so; a file naming a model no pack holds
+leaves the creature as the game draws it.
 
 **Events** happen as their times go by: a sound plays where the model is, a particle shows at its locator, and a
 timeline word goes to the driver's `instruction(thing, animation, word)`.
@@ -157,6 +193,26 @@ see-through model has its faces sorted back to front by the game, as it sorts wh
 block drawn with a model shows the cracks of being broken over it, as the game draws them over any block entity,
 unless it says `noCracks()`. The model is drawn with the game's own entity shaders, so shader packs (Iris, Oculus) draw
 it as they draw a mob.
+
+*Added 2026-10-22:* **textures that move and glow.** A texture of frames laid one under another, with a `.mcmeta`
+beside it as the game's block textures have (`"animation": {"frametime": 4}`, and a list of `frames` if it likes),
+shows the frame of the tick, every model painted with it in step; frames are not blended into each other. A texture
+with a glowing texture beside it, the same name with `_e` before `.png` (`pump.png` and `pump_e.png`), has that drawn
+over it at full light, its clear pixels showing nothing: lamps, screens and hot coils that glow in the dark.
+`KitTextures.of(texture)` says what a texture was read as.
+
+**Layers** a mod lays over a model are drawn after it, each time it is drawn, in the model's space; they redraw the
+model's faces into a way of their own, or draw anything else there:
+
+```java
+KitLayers.add(rl("reactor"), (instance, faces, buffers, light, overlay) ->
+        faces.into(texture -> RenderType.energySwirl(SHIELD, 0, 0), LightTexture.FULL_BRIGHT, overlay));
+KitLayers.everywhere(myOutline);   // over every model of the Core's
+```
+
+**The player's arms in first person**: an item's model with a bone named `player_right_arm` or `player_left_arm` has
+that arm of the player drawn at the bone's pivot while it is held in first person, in the player's own skin and
+sleeve, wide or slim, so a tool is held by hands that move with its animation.
 
 ## What it costs
 

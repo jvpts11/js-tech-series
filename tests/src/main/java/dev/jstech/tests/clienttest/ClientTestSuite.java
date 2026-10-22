@@ -180,6 +180,7 @@ import dev.jstech.tests.clienttest.core.MachineLooksClientTests;
 import dev.jstech.tests.clienttest.core.MachineScreenClientTests;
 import dev.jstech.tests.clienttest.core.MediaClientTests;
 import dev.jstech.tests.clienttest.core.ModelKitClientTests;
+import dev.jstech.tests.clienttest.core.ModelKitEntitiesClientTests;
 import dev.jstech.tests.clienttest.core.MultiblockToolsClientTests;
 import dev.jstech.tests.clienttest.core.MultipartClientTests;
 import dev.jstech.tests.clienttest.core.ProgressionClientTests;
@@ -332,6 +333,7 @@ public final class ClientTestSuite {
             ProgressionClientTests.class,
             ReachClientTests.class,
             ModelKitClientTests.class,
+            ModelKitEntitiesClientTests.class,
             MachineLooksClientTests.class,
             ConnectedPacksClientTests.class,
             LightingClientTests.class,

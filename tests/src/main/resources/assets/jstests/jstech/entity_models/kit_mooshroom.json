@@ -1,0 +1,5 @@
+{
+  "entity": "minecraft:mooshroom",
+  "model": "jstests:test_kit_walker",
+  "plays": "Walk"
+}

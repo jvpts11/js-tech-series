@@ -25,7 +25,8 @@ import org.joml.Matrix4f;
 
 /**
  * Draws an entity with a model of the Core's: standing where the entity stands, turned the way it looks, moved by its
- * driver and by what the server plays on it, holding what it holds at its locators.
+ * driver and by what the server plays on it, holding what it holds at its locators. Its keyframes read the entity's
+ * own queries ready-made ({@link EntityQueries}).
  *
  * <pre>{@code
  * event.registerEntityRenderer(MY_ROBOT.get(), context -> KitEntityRenderer.of(context,
@@ -72,6 +73,7 @@ public final class KitEntityRenderer<T extends Entity> extends EntityRenderer<T>
         if (found.isPresent()) {
             final KitInstance instance = KitAnimations.of(entity, found.get());
             final double seconds = KitClock.seconds(partialTick);
+            EntityQueries.hand(instance.animator().context(), entity, partialTick);
             this.driver.drive(entity, instance.animator(), seconds);
             instance.animate(KitClock.frame(), seconds, this.driver.movesBones(), KitEvents.of(entity, this.driver,
                     instance, entity.level(), () -> new Matrix4f().translation((float) entity.getX(),

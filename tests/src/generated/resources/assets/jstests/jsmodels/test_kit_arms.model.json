@@ -1,0 +1,6 @@
+{
+  "model": "jstests:jsmodels/test_kit_arms.geo.json",
+  "textures": [
+    "jstests:textures/kit/test_kit_flasher.png"
+  ]
+}

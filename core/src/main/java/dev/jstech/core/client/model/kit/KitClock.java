@@ -45,6 +45,11 @@ public final class KitClock {
         return seconds(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
     }
 
+    /** The tick now, whole: what an animated texture's frames are counted by, so every model shows them in step. */
+    public static long tick() {
+        return (long) Math.floor(now() * TICKS_PER_SECOND);
+    }
+
     /** The frame being drawn, a number that is the same through one frame and different in the next. */
     public static long frame() {
         return frames;

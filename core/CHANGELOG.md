@@ -45,6 +45,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   on the player's side and `MachineBlockEntity.history()` on the server's, is what a machine did over its last ten
   minutes. `DataScreens.menuOf` gives the menu a screen file is drawn over, and `CoreConfigKeys` has the two new
   limits per player. `ScreenEditorLayout` is the editor's own and leaves the API.
+- The Core complete: J's Core's API is at version 12, all experimental. `ExpressionContext.value` hands a
+  model's expressions a value for the frame, and `nextFrame` begins another, a query of code being worked out once a
+  frame.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -510,6 +513,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   animation for everyone who sees the model. A model is worked out once and shared, animated only in sight and near,
   and drawn with the game's own shaders, so shader packs draw it. Families of files laid out for GeckoLib are drawn by
   the Core's models as they are, alike to the pixel.
+- What entities need from a model, ready-made: an entity's model, and armour on whoever wears it, reads the
+  entity's own queries under Bedrock's names (how fast it goes, how its limbs swing, whether it is on the ground, in
+  water or on fire, how it turns its head, how hurt it is, the time of day), so a walk is written in the model's file
+  with no code; and a query of code is worked out once a frame. A resource pack can draw any of the game's creatures
+  with a model of the Core's, its animation reading those queries.
+- Textures that move and glow on the Core's models: a texture of frames with its `.mcmeta`, as the game's block
+  textures are, shows the frame of the tick, every model in step; a glowing texture beside it, the same name with
+  `_e`, is drawn over it at full light. Mods lay layers of their own over any model (a glow, an outline, a shield), and
+  an item's model can have the player's own arms drawn at two bones in first person, holding it.
 - The preview of a model: `/jstech model preview <model>` opens it, a declared model or any model file by its
   path, turned, zoomed and moved with the mouse over a floor of quarter blocks, its animations played or paused from
   their buttons, its bones in a tree, the chosen one shown in yellow, its locators by name, its glowing parts shown in

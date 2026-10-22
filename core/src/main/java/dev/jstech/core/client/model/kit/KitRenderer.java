@@ -19,6 +19,7 @@ import dev.jstech.core.model.ModelLocator;
 import dev.jstech.core.model.ModelPose;
 import dev.jstech.core.model.Rotations;
 import java.util.List;
+import java.util.function.Function;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -37,6 +38,9 @@ import org.joml.Vector3f;
  * painted with their textures, see-through or not as the model's definition says, glowing parts at full light;
  * meshes that bend or morph worked out for the frame; and what the model holds at its locators, drawn there. The
  * model's pixels are a sixteenth of a block, its origin where the pose stack stands.
+ *
+ * <p>A texture that is animated shows the frame of the tick ({@link KitTextures}); one with a glowing texture beside
+ * it has that drawn over it at full light; and the layers laid over the model ({@link KitLayers}) draw after it.
  */
 public final class KitRenderer {
 
@@ -59,49 +63,26 @@ public final class KitRenderer {
                                 final int overlay, @Nullable final IHeldThings<T> held, @Nullable final Level level,
                                 final boolean world) {
         final KitModel model = instance.model();
-        final Matrix4f[] matrices = instance.world();
         final boolean[] hidden = hidden(instance, variant);
         final ResourceLocation painted = variant.texture().isEmpty() ? null : ResourceLocation.parse(
                 variant.texture());
         final ModelDefinition definition = model.definition();
-        final boolean glows = world && level != null && definition.glowLight() > 0;
+        final Level glowsIn = world && level != null && definition.glowLight() > 0 ? level : null;
+        final long tick = KitClock.tick();
         poses.pushPose();
         poses.scale(PIXEL, PIXEL, PIXEL);
-        final List<List<BakedGeometry.Part>> bones = model.geometry().bones();
-        for (int i = 0; i < bones.size(); i++) {
-            final List<BakedGeometry.Part> parts = bones.get(i);
-            if (parts.isEmpty() || hidden[i]) {
-                continue;
-            }
-            poses.pushPose();
-            poses.mulPose(matrices[i]);
-            for (final BakedGeometry.Part part : parts) {
-                emit(buffers.getBuffer(type(model, part.texture(), painted)), poses.last(), part.vertices(),
-                        part.vertices().length, part.glow() ? LightTexture.FULL_BRIGHT : light, overlay);
-                if (glows && part.glow()) {
-                    KitGlows.report(level, middle(poses.last(), part.vertices()), definition.glowLight(),
-                            definition.glowColour());
-                }
-            }
-            poses.popPose();
+        lay(instance, hidden, painted, poses, buffers, null, light, overlay, tick, glowsIn);
+        if (glowsAnywhere(model, painted)) {
+            lay(instance, hidden, painted, poses, buffers, KitRenderer::glowingType, LightTexture.FULL_BRIGHT,
+                    overlay, tick, null);
         }
-        for (final MeshDeformer deformer : instance.deformers()) {
-            final BakedGeometry.Deformed deformed = deformer.deformed();
-            if (hidden[deformed.bone()]) {
-                continue;
+        final List<IKitLayer> layers = KitLayers.of(model.id());
+        if (!layers.isEmpty()) {
+            final IKitFaces faces = (type, lit, over) -> lay(instance, hidden, painted, poses, buffers, type, lit,
+                    over, tick, null);
+            for (final IKitLayer layer : layers) {
+                layer.draw(instance, faces, buffers, light, overlay);
             }
-            final float[] corners = deformer.deform(instance.pose(), matrices);
-            final GeometryBaker.Corners laid = instance.corners();
-            laid.clear();
-            GeometryBaker.mesh(deformed.mesh(), corners, laid);
-            poses.pushPose();
-            if (deformed.skin() == null) {
-                // A mesh that only morphs stays in its bone's space; one a skin bends is in the model's.
-                poses.mulPose(matrices[deformed.bone()]);
-            }
-            emit(buffers.getBuffer(type(model, deformed.mesh().texture(), painted)), poses.last(), laid.data(),
-                    laid.size(), deformed.glow() ? LightTexture.FULL_BRIGHT : light, overlay);
-            poses.popPose();
         }
         if (held != null) {
             heldThings(instance, hidden, thing, held, poses, buffers, light, overlay, level);
@@ -125,6 +106,7 @@ public final class KitRenderer {
         final ModelPose pose = instance.pose();
         final Matrix4f undo = instance.branchScratch().set(world[bone]).invert();
         final ModelBone root = model.data().bones().get(bone);
+        final long tick = KitClock.tick();
         poses.pushPose();
         poses.scale(PIXEL, PIXEL, PIXEL);
         poses.translate(-root.pivot().x(), -root.pivot().y(), -root.pivot().z());
@@ -141,10 +123,13 @@ public final class KitRenderer {
             }
             for (final BakedGeometry.Part part : bones.get(i)) {
                 final int lit = part.glow() ? LightTexture.FULL_BRIGHT : light;
-                emit(buffers.getBuffer(type(model, part.texture(), null)), poses.last(), part.vertices(),
-                        part.vertices().length, lit, overlay);
+                final ResourceLocation location = model.texture(part.texture());
+                final TextureFrames frames = KitTextures.of(location).frames();
+                emit(buffers.getBuffer(own(model, location)), poses.last(), part.vertices(), part.vertices().length,
+                        lit, overlay, frames, tick);
                 if (through != null) {
-                    emit(through, poses.last(), part.vertices(), part.vertices().length, lit, overlay);
+                    emit(through, poses.last(), part.vertices(), part.vertices().length, lit, overlay, frames,
+                            tick);
                 }
             }
             poses.popPose();
@@ -154,10 +139,100 @@ public final class KitRenderer {
 
     /** The way the faces painted with picture {@code texture} are drawn. */
     static RenderType type(final KitModel model, final int texture, @Nullable final ResourceLocation painted) {
-        final ResourceLocation location = painted != null && texture == 0 ? painted : model.texture(texture);
+        return own(model, location(model, texture, painted));
+    }
+
+    /*
+     * Lays every face shown this frame: the bones' faces where the bones are, then the meshes that bend or morph,
+     * each into its own way ({@code type} none) or into the way {@code type} gives its texture, skipping a face it
+     * gives none for; telling the world of the glowing parts in {@code glowsIn}, when there is one.
+     */
+    private static void lay(final KitInstance instance, final boolean[] hidden,
+                            @Nullable final ResourceLocation painted, final PoseStack poses,
+                            final MultiBufferSource buffers,
+                            @Nullable final Function<ResourceLocation, @Nullable RenderType> type, final int light,
+                            final int overlay, final long tick, @Nullable final Level glowsIn) {
+        final KitModel model = instance.model();
+        final Matrix4f[] matrices = instance.world();
+        final List<List<BakedGeometry.Part>> bones = model.geometry().bones();
+        for (int i = 0; i < bones.size(); i++) {
+            final List<BakedGeometry.Part> parts = bones.get(i);
+            if (parts.isEmpty() || hidden[i]) {
+                continue;
+            }
+            poses.pushPose();
+            poses.mulPose(matrices[i]);
+            for (final BakedGeometry.Part part : parts) {
+                final ResourceLocation location = location(model, part.texture(), painted);
+                final RenderType into = type == null ? own(model, location) : type.apply(location);
+                if (into != null) {
+                    emit(buffers.getBuffer(into), poses.last(), part.vertices(), part.vertices().length,
+                            part.glow() ? LightTexture.FULL_BRIGHT : light, overlay,
+                            KitTextures.of(location).frames(), tick);
+                }
+                if (glowsIn != null && part.glow()) {
+                    KitGlows.report(glowsIn, middle(poses.last(), part.vertices()), model.definition().glowLight(),
+                            model.definition().glowColour());
+                }
+            }
+            poses.popPose();
+        }
+        for (final MeshDeformer deformer : instance.deformers()) {
+            final BakedGeometry.Deformed deformed = deformer.deformed();
+            if (hidden[deformed.bone()]) {
+                continue;
+            }
+            final ResourceLocation location = location(model, deformed.mesh().texture(), painted);
+            final RenderType into = type == null ? own(model, location) : type.apply(location);
+            if (into == null) {
+                continue;
+            }
+            final float[] corners = deformer.deform(instance.pose(), matrices);
+            final GeometryBaker.Corners laid = instance.corners();
+            laid.clear();
+            GeometryBaker.mesh(deformed.mesh(), corners, laid);
+            poses.pushPose();
+            if (deformed.skin() == null) {
+                // A mesh that only morphs stays in its bone's space; one a skin bends is in the model's.
+                poses.mulPose(matrices[deformed.bone()]);
+            }
+            emit(buffers.getBuffer(into), poses.last(), laid.data(), laid.size(),
+                    deformed.glow() ? LightTexture.FULL_BRIGHT : light, overlay, KitTextures.of(location).frames(),
+                    tick);
+            poses.popPose();
+        }
+    }
+
+    /* The texture of picture {@code texture}: the variant's paint for the first, or the model's own. */
+    private static ResourceLocation location(final KitModel model, final int texture,
+                                             @Nullable final ResourceLocation painted) {
+        return painted != null && texture == 0 ? painted : model.texture(texture);
+    }
+
+    /* The way a model draws faces painted with {@code location}, see-through or not as its definition says. */
+    private static RenderType own(final KitModel model, final ResourceLocation location) {
         final ModelDefinition definition = model.definition();
         return definition.translucent() ? KitRenderTypes.translucent(location, definition.cracks())
                 : KitRenderTypes.cutout(location, definition.cracks());
+    }
+
+    /* The way a texture's glowing texture is drawn over it, at full light; none for one that has none. */
+    private static @Nullable RenderType glowingType(final ResourceLocation location) {
+        final ResourceLocation glowing = KitTextures.of(location).glowing();
+        return glowing == null ? null : RenderType.entityTranslucentEmissive(glowing);
+    }
+
+    /* Whether any texture the model is painted with has a glowing texture beside it. */
+    private static boolean glowsAnywhere(final KitModel model, @Nullable final ResourceLocation painted) {
+        if (painted != null && KitTextures.of(painted).glowing() != null) {
+            return true;
+        }
+        for (final ResourceLocation texture : model.textures()) {
+            if (KitTextures.of(texture).glowing() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /*
@@ -206,12 +281,16 @@ public final class KitRenderer {
         return Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().add(seen.x(), seen.y(), seen.z());
     }
 
+    /* Emits the faces, their V moved onto the tick's frame of an animated texture. */
     private static void emit(final VertexConsumer consumer, final PoseStack.Pose pose, final float[] vertices,
-                             final int count, final int light, final int overlay) {
+                             final int count, final int light, final int overlay, final TextureFrames frames,
+                             final long tick) {
+        final float scale = frames.vScale();
+        final float offset = frames.vOffset(tick);
         for (int at = 0; at < count; at += BakedGeometry.STRIDE) {
             consumer.addVertex(pose, vertices[at], vertices[at + 1], vertices[at + 2])
                     .setColor(WHITE)
-                    .setUv(vertices[at + 3], vertices[at + 4])
+                    .setUv(vertices[at + 3], vertices[at + 4] * scale + offset)
                     .setOverlay(overlay)
                     .setLight(light)
                     .setNormal(pose, vertices[at + 5], vertices[at + 6], vertices[at + 7]);

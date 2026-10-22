@@ -114,6 +114,7 @@ public final class ModelAnimator {
         if (Double.isNaN(this.bornAt)) {
             this.bornAt = now;
         }
+        this.context.nextFrame();
         this.context.lifeTime(now - this.bornAt);
         this.pose.reset();
         for (final AnimationController controller : this.controllers.values()) {
