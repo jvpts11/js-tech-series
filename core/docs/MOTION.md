@@ -10,8 +10,8 @@ A motion is a change drawn over a short time instead of all at once. The Core de
 
 - a **style**, the way it moves: `scale` (grows or shrinks about a point), `slide` (comes in from an edge),
   `zoom` (goes down to the place that stands for it, a window to its button, or comes back from there),
-  `outline` (only the outline of the thing travels there, the way the oldest window managers drew it) and `fade`
-  (a flat colour over the thing thins away);
+  `outline` (only the outline of the thing travels there, the way the oldest window managers drew it), `appear`
+  (the thing itself grows from clear to solid, or fades away) and `fade` (a flat colour over the thing thins away);
 - a **duration** and a **delay**, in milliseconds;
 - a **curve**, which says how far along the motion is at each moment of its time;
 - the **numbers** its style reads: how small a window starts, how far a menu slides, where the point it grows from
@@ -22,6 +22,12 @@ curve, `cubic-bezier(0, 0, 0, 1)`, a straight line, `linear`, or a number of equ
 oldest systems that moved a shape in a few steps. The usual curves have names: `ease`, `ease-in`, `ease-out`,
 `ease-in-out`, `ease-in-quad`, `ease-out-quad`, `ease-in-cubic`, `ease-out-cubic`, `ease-in-sine`, `ease-out-expo`,
 `fluent-entrance`, `fluent-point` and `fluent-exit`.
+
+A spring moves as the toolkits of phones move things: let go towards its end, it goes past it and comes back, a
+little less each time, and settles there by the end of its time. `spring(0.5)` names one by its damping: below 1 it
+swings past its end, the lower the further; at 1 or more it comes to its end without passing it. `spring` is
+`spring(0.5)` and `spring-soft`, which barely swings past, is `spring(0.75)`. A curve that goes past its end moves
+the thing past where it stops: a window grows a little larger than itself and comes back.
 
 In code a motion is a `MotionSpec`, and one under way is a `Motion`: the spec and the moment it started. A `Motion`
 holds no timer and is never ticked. Whoever draws it asks how far along it is at the time of the frame, which keeps
@@ -81,7 +87,8 @@ The numbers each style reads:
 
 | Style | Numbers |
 |---|---|
-| `scale` | `from` and `to`, the size it starts and ends at against its own (1 where not given); `from_y` and `to_y`, the same downwards when it grows unevenly; `pivot_x` and `pivot_y`, where it grows from, 0 to 1 across and down it (the middle by default) |
+| `scale` | `from` and `to`, the size it starts and ends at against its own (1 where not given); `from_y` and `to_y`, the same downwards when it grows unevenly; `pivot_x` and `pivot_y`, where it grows from, 0 to 1 across and down it (the middle by default); `opacity_from` and `opacity_to`, how solid it is drawn on the way, 0 clear to 1 solid (1 where not given) |
+| `appear` | `out` set to 1 fades it away instead of growing it solid |
 | `slide` | `distance`, how far away it starts, in its own heights; `out` set to 1 slides it away instead |
 | `zoom` | `out` set to 1 goes to the place that stands for it; otherwise it comes back from there |
 | `outline` | as `zoom`, and `trail`, how many outlines follow the leading one |
@@ -92,9 +99,20 @@ The numbers each style reads:
 A screen reads a `Motion` each frame and moves its pose by it: `scale(now)` and `scaleY(now)` for the size,
 `offset(now)` for how far a slide still has to come, `toward(now)` for how far a zoom has got to its place, and
 `progress(now)` for anything else. Scaling and sliding transform what is drawn without asking it to be drawn
-anywhere else, so a window grows with every letter and picture of it in place; that is why they came first. Fading
-a whole window needs it drawn off the screen first, and the Core does not do it yet; a flat colour can fade, which
-is what `fade` does.
+anywhere else, so a window grows with every letter and picture of it in place.
+
+A window faded is drawn as one picture, the way a window on a real desktop fades:
+
+```java
+FadeLayer.draw(graphics, (float) motion.opacity(MotionClock.now()), () -> paintWindow(graphics));
+```
+
+`opacity(now)` says how solid the thing is drawn at the moment, from an `appear` motion or a motion's
+`opacity_from` and `opacity_to`, and `FadeLayer` draws what it is handed off the screen first, into a layer the size
+of the game's window, then lays that over what is behind at the strength asked for. Drawn at half strength straight
+onto the screen, a window would show its own background through its text and its frame through its body. A picture
+drawn for something in the world, a monitor's face, is drawn solid, as every motion there is shown where it ends. A
+flat colour over a thing fades with no layer, which is what `fade` does.
 
 J's Computers' desktops are the worked example: `DesktopMotion` reads the system's profile less what the machine's
 owner switched off, `DesktopPainter` draws each window in its motion, and a closed window leaves the desktop at once

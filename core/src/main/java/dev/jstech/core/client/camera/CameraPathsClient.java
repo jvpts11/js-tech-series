@@ -16,12 +16,16 @@ import dev.jstech.core.camera.CameraPath;
 import dev.jstech.core.camera.CameraPathCodecs;
 import dev.jstech.core.camera.CameraPaths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The camera paths on a player's game: those declared in code, with the files of the resource packs under
@@ -40,6 +44,21 @@ public final class CameraPathsClient extends SimpleJsonResourceReloadListener {
     public static Optional<CameraPath> get(final ResourceLocation id) {
         final CameraPath file = files.get(id);
         return file != null ? Optional.of(file) : Optional.ofNullable(CameraPaths.declared().get(id));
+    }
+
+    /** The id of every path, of a file or declared, in order. */
+    public static List<ResourceLocation> known() {
+        final Set<ResourceLocation> ids = new TreeSet<>(files.keySet());
+        ids.addAll(CameraPaths.declared().keySet());
+        return List.copyOf(ids);
+    }
+
+    /** Has {@code id} be {@code path}, as a file just written says it, until the resource packs are read again. */
+    @ApiStatus.Internal
+    public static void hold(final ResourceLocation id, final CameraPath path) {
+        final Map<ResourceLocation, CameraPath> next = new HashMap<>(files);
+        next.put(id, path);
+        files = Map.copyOf(next);
     }
 
     @Override

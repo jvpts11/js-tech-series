@@ -4327,6 +4327,29 @@ stable 4
 10 dev.jstech.core.gui.flex.Track.Kind  AUTO
 10 dev.jstech.core.gui.flex.Track.Kind  FIXED
 10 dev.jstech.core.gui.flex.Track.Kind  FRACTION
+12 dev.jstech.core.gui.layout.CameraPathsLayout  type final class
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static Fit fit(StudioLayout.Rect, List<double[]>)
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static GuiLayout layout(int, int, List<Integer>, int, List<Integer>)
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static Laid of(StudioLayout.Rect, int, List<Integer>)
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static StudioLayout.Rect cell(Laid, int, int)
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static StudioLayout.Rect keyframeRow(Laid, int)
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static StudioLayout.Rect pathRow(Laid, int)
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final double KEYFRAMES_SHARE
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final double LEAST_SPAN
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final double LIST_SHARE
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int BUTTON_HEIGHT
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int GAP
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int HEAD
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int HINT_LINES
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int INSET
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int LABEL_ROOM
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int MAP_MARGIN
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int PATH_ROW
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int ROW
+12 dev.jstech.core.gui.layout.CameraPathsLayout  static final int SMALL_LINE
+12 dev.jstech.core.gui.layout.CameraPathsLayout.Fit  type record(double scale, double centreX, double centreZ, StudioLayout.Rect area)
+12 dev.jstech.core.gui.layout.CameraPathsLayout.Fit  double[] at(double, double)
+12 dev.jstech.core.gui.layout.CameraPathsLayout.Laid  type record(StudioLayout.Rect list, StudioLayout.Rect keyframes, StudioLayout.Rect map, List<Integer> cells, int headerY, int firstRowY, int rows, List<StudioLayout.Rect> buttons, int hintY, int fileY, StudioLayout.Rect mapArea, int pathRows)
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  type final class
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static Footer footer(int, int, List<Integer>, List<Integer>, int)
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static GuiLayout layout(int, int, boolean, int, int, int, List<Integer>, List<Integer>, int)
@@ -6160,6 +6183,7 @@ stable 4
 10 dev.jstech.core.input.CoreKeys  static final KeyAction CUT_AGENTS
 10 dev.jstech.core.input.CoreKeys  static final KeyAction EDIT_HUD
 10 dev.jstech.core.input.CoreKeys  static final KeyAction FREE_LOOK
+12 dev.jstech.core.input.CoreKeys  static final KeyAction KEEP_KEYFRAME
 10 dev.jstech.core.input.CoreKeys  static final KeyAction NOTIFICATIONS
 10 dev.jstech.core.input.CoreKeys  static final KeyAction OPEN_IN_MANUAL
 10 dev.jstech.core.input.CoreKeys  static final KeyAction OPEN_STUDIO

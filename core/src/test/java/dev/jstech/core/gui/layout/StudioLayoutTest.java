@@ -24,7 +24,7 @@ class StudioLayoutTest {
      * The tools' labels, each as wide as the longer of the series' two languages writes it at three quarters of the
      * game's font, in the order of the tabs.
      */
-    private static final List<Integer> TABS = List.of(27, 23, 23, 32, 36, 18, 18, 41, 59, 45, 27, 18, 18, 32);
+    private static final List<Integer> TABS = List.of(27, 23, 23, 32, 36, 18, 18, 41, 59, 45, 32, 27, 18, 18, 32);
 
     @Test
     void layout_isCleanOnEveryScreen() {

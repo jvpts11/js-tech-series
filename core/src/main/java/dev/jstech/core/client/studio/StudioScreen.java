@@ -89,7 +89,8 @@ public final class StudioScreen extends Screen {
         this.runButton = panel.add(new Button(() -> GameText.resolve(StudioTexts.RUN_TESTS), this::runTests));
         this.recordButton = panel.add(new Button(() -> GameText.resolve(StudioTexts.RECORD), TestRecorder::start));
         this.doneButton = panel.add(new Button(() -> GameText.resolve(StudioTexts.DONE), this::onClose));
-        this.status = GameText.resolve(TestRecorder.recording() ? StudioTexts.RECORDING : StudioTexts.MODE_ON);
+        this.status = TestRecorder.recording() ? GameText.resolve(StudioTexts.RECORDING)
+                : CameraPathRecorder.recording() ? CameraPathRecorder.line() : GameText.resolve(StudioTexts.MODE_ON);
         this.pages.put(StudioTool.THINGS, this.things);
         this.pages.put(StudioTool.BLOCK, new BlockPage(this));
         this.pages.put(StudioTool.COST, new CostPage(this));
@@ -100,6 +101,7 @@ public final class StudioScreen extends Screen {
         this.pages.put(StudioTool.TRANSLATIONS, new TranslationsPage(this));
         this.pages.put(StudioTool.SETTINGS, new SettingsPage(this));
         this.pages.put(StudioTool.STRUCTURES, new StructuresPage(this));
+        this.pages.put(StudioTool.CAMERAS, new CamerasPage(this));
         this.pages.put(StudioTool.TESTS, new TestsPage(this));
         this.pages.put(StudioTool.SAVE, new SavePage(this));
         this.pages.put(StudioTool.LOGS, new LogsPage(this));
@@ -136,6 +138,38 @@ public final class StudioScreen extends Screen {
     /** Chooses the thing of {@code id}, as a click on its row does; whether there is one. For a test as for a click. */
     public boolean choose(final ResourceLocation id) {
         return this.things.choose(id);
+    }
+
+    /**
+     * Chooses the row of the page open now that says {@code what}, as a click on it does; whether it has one. For a
+     * test as for a click.
+     */
+    public boolean choose(final String what) {
+        return this.page().choose(what);
+    }
+
+    /** Types {@code text} into the field of the page open now that has the keyboard, as the player types. */
+    public void type(final String text) {
+        for (final char c : text.toCharArray()) {
+            this.page().panel().charTyped(c);
+        }
+    }
+
+    /**
+     * Presses the button, of the page open now or of the studio's own, that says {@code label}, when it may be
+     * pressed; whether there was one. For a test as for a click.
+     */
+    public boolean press(final String label) {
+        for (final Panel each : List.of(this.page().panel(), panel)) {
+            for (final UiComponent child : each.children()) {
+                if (child instanceof Button button && button.visible() && button.enabled()
+                        && button.label().equals(label)) {
+                    button.press();
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** What the thing chosen is made of and what is wrong across its parts; empty for none chosen. */
@@ -243,6 +277,11 @@ public final class StudioScreen extends Screen {
             }
             final Panel pagePanel = this.page().panel();
             if (pagePanel.focusedChild() != null && pagePanel.keyPressed(key, scanCode, modifiers)) {
+                return true;
+            }
+            final boolean typing = panel.focusedChild() != null && panel.focusedChild().takesTyping()
+                    || pagePanel.focusedChild() != null && pagePanel.focusedChild().takesTyping();
+            if (!typing && this.page().keyPressed(key)) {
                 return true;
             }
         }

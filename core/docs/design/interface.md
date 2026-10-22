@@ -97,6 +97,16 @@ In the spirit of SecurityCraft's cameras, the zoom mods and cinematic modes:
   world; security cameras, and what a probe sees.
 - **Seeing from somewhere else**: a periscope, a probe's camera, a robot's or a drone's.
 - **Within the game's means**: views drawn into a texture have their own resolution and rate, and a limit per player.
+- **Shake and smoothing as one service**: every mod's shakes (a blast, a launch, a machine's rumble) add up in one
+  place, each wandering smoothly and dying away, felt less the farther it comes from; and each mod's lean of the view
+  (a cockpit banking, a recoil) eased there and back. The player's shake setting and less movement apply to all.
+- **Riders lean with what they ride**: an aircraft's pilot, as other players see them, tilts with its bank.
+- **A hook for a mod's third-person camera**: how far back it stands, over which shoulder and round which place,
+  brought nearer by walls as the game's own is, and eased from one view to another.
+- **An editor of camera paths** in the studio: flown and recorded into the path's file ([Developers](developers.md)).
+
+The motion kit fades a whole window as one picture, drawn off the screen first, and has a spring among its curves,
+which goes past its end and settles there.
 
 ### Notifications
 
@@ -178,5 +188,3 @@ one place, for any mod.
   and credit required as for the bitmap ones.
 - **Jade in the player's style**: what Jade shows drawn in the style the player picked.
 - **Every mod's settings**: the settings screen shows the settings of mods that do not use the Core beside the Core's.
-- **More of the camera**: smoothing and shake as one service every mod shares; a hook a mod's third-person camera
-  plugs into; the whole window fading, drawn off-screen; and a spring among the curves, which overshoots and settles.

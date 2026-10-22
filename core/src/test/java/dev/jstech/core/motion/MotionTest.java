@@ -47,6 +47,18 @@ class MotionTest {
     }
 
     @Test
+    void scale_growsPastItsSizeAndBackOnASpring() {
+        final Motion motion = new Motion(MotionSpec.of(MotionStyles.SCALE, 200, IEasing.named("spring"), "")
+                .with("from", 0.8), 0.0);
+        double most = 0;
+        for (int ms = 0; ms <= 200; ms++) {
+            most = Math.max(most, motion.scale(ms));
+        }
+        assertTrue(most > 1.0, "a window on a spring grows a little larger than itself: " + most);
+        assertEquals(1.0, motion.scale(200.0), 1e-2, "and comes back to its size");
+    }
+
+    @Test
     void scaleY_followsTheAcrossSizeUnlessItGrowsUnevenly() {
         final Motion even = new Motion(spec(MotionStyles.SCALE).with("from", 0.5), 0.0);
         assertEquals(0.5, even.scaleY(0.0), CLOSE);

@@ -53,6 +53,7 @@ public final class StudioClient {
         });
         StudioHeatMap.listen();
         TestRecorder.listen();
+        CameraPathRecorder.listen();
     }
 
     /** Opens the studio over whatever is open, on the page it was last left on. */

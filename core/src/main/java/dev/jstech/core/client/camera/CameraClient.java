@@ -8,7 +8,9 @@
 package dev.jstech.core.client.camera;
 
 import dev.jstech.core.camera.CameraClientHooks;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent;
 import net.neoforged.neoforge.client.event.CalculatePlayerTurnEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -25,7 +27,8 @@ import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The camera on a player's game: zoom through a lens, the view following what is ridden, looking about freely, views
- * from elsewhere the server starts, and the views of cameras in the world drawn for the screens that show them.
+ * from elsewhere the server starts, the views of cameras in the world drawn for the screens that show them, the view
+ * shaken and leant, and the cameras mods put in the third person.
  */
 public final class CameraClient {
 
@@ -46,6 +49,15 @@ public final class CameraClient {
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, ChaseCamera::onAngles);
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, FreeLook::onAngles);
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, CameraViewsClient::onAngles);
+        // Last, so shakes and leans move the view wherever the rest put it.
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ViewportEvent.ComputeCameraAngles.class,
+                CameraMotion::onAngles);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> CameraMotion.clear());
+        // Late, so a distance another mod set stands as the game's own when no camera of the Core's takes the view.
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, CalculateDetachedCameraDistanceEvent.class,
+                ThirdPersonCameras::onDistance);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class,
+                event -> ThirdPersonCameras.clear());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ChaseCamera::onTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, FreeLook::onTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, CameraViewsClient::onTick);

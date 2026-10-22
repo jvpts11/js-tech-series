@@ -20,6 +20,7 @@ import dev.jstech.tests.clienttest.TestPassageScreen;
 import dev.jstech.tests.clienttest.TestTouchPanelClient;
 import dev.jstech.tests.clienttest.computers.TestClientParts;
 import dev.jstech.tests.clienttest.core.TestFanMotion;
+import dev.jstech.tests.clienttest.core.TestThirdPerson;
 import dev.jstech.tests.clienttest.core.TestTooltips;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
@@ -71,6 +72,8 @@ public final class JsTestsClient {
         TestTooltips.declare();
         // The pump's panel, a screen in the world built of the Core's components.
         TestTouchPanelClient.register(modEventBus);
+        // A camera in the third person, as another mod puts one.
+        TestThirdPerson.register();
         // Every client test of the series, a suite for each mod, handed to the Core's test kit, which runs them.
         ClientTestSuite.register();
     }

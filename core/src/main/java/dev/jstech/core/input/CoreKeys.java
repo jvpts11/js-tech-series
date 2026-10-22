@@ -80,6 +80,14 @@ public final class CoreKeys {
     public static final KeyAction FREE_LOOK = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "free_look"), CameraTexts.FREE_LOOK_KEY));
 
+    /**
+     * While the studio records a camera path, keeps where the player stands and looks as its next keyframe. K, as the
+     * diagram of forces has it, which does not open while a path records, until the player changes it.
+     */
+    public static final KeyAction KEEP_KEYFRAME = KeyActions.declare(KeyAction.builder(
+                    ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "keep_keyframe"), CameraTexts.KEEP_KEYFRAME_KEY)
+            .key(GLFW.GLFW_KEY_K));
+
     /** What the key that opens the HUD editor is called. */
     public static final TextKey EDIT_HUD_KEY = TextKey.of("key.jscore.edit_hud", "Edit the HUD");
     /**

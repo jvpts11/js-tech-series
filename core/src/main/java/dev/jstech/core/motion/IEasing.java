@@ -15,11 +15,12 @@ import java.util.Map;
  * is, from 0 to 1.
  *
  * <p>Written as the systems that are imitated write their own: a cubic Bezier curve as in CSS and in the toolkits
- * of every modern desktop ({@code cubic-bezier(0, 0, 0, 1)}), straight, or in steps, the way the oldest systems moved a
- * shape in a few jumps. The usual curves have names ({@link #named}), so a motion file can say
- * {@code ease-out-expo} rather than four numbers.
+ * of every modern desktop ({@code cubic-bezier(0, 0, 0, 1)}), straight, in steps, the way the oldest systems moved a
+ * shape in a few jumps, or a spring that goes past its end and comes back ({@code spring(0.5)}), as phones move
+ * things. The usual curves have names ({@link #named}), so a motion file can say {@code ease-out-expo} rather than four
+ * numbers.
  */
-public sealed interface IEasing permits IEasing.Linear, IEasing.CubicBezier, IEasing.Steps {
+public sealed interface IEasing permits IEasing.Linear, IEasing.CubicBezier, IEasing.Steps, IEasing.Spring {
 
     /** Straight from start to end. */
     IEasing LINEAR = new Linear();
@@ -39,7 +40,9 @@ public sealed interface IEasing permits IEasing.Linear, IEasing.CubicBezier, IEa
             Map.entry("ease-out-expo", new CubicBezier(0.19, 1.0, 0.22, 1.0)),
             Map.entry("fluent-entrance", new CubicBezier(0.0, 0.0, 0.0, 1.0)),
             Map.entry("fluent-point", new CubicBezier(0.55, 0.55, 0.0, 1.0)),
-            Map.entry("fluent-exit", new CubicBezier(1.0, 0.0, 1.0, 1.0)));
+            Map.entry("fluent-exit", new CubicBezier(1.0, 0.0, 1.0, 1.0)),
+            Map.entry("spring", new Spring(0.5)),
+            Map.entry("spring-soft", new Spring(0.75)));
 
     /** How far along the motion is when {@code time} of it has passed, both from 0 to 1. */
     double apply(double time);
@@ -60,8 +63,8 @@ public sealed interface IEasing permits IEasing.Linear, IEasing.CubicBezier, IEa
     String written();
 
     /**
-     * The curve a motion file names: one of the {@link #NAMED} ones, {@code cubic-bezier(x1, y1, x2, y2)} or
-     * {@code steps(n)}.
+     * The curve a motion file names: one of the {@link #NAMED} ones, {@code cubic-bezier(x1, y1, x2, y2)},
+     * {@code steps(n)} or {@code spring(damping)}.
      *
      * @throws IllegalArgumentException when the text names no curve
      */
@@ -87,6 +90,13 @@ public sealed interface IEasing permits IEasing.Linear, IEasing.CubicBezier, IEa
                 return new Steps(Integer.parseInt(key.substring("steps(".length(), key.length() - 1).trim()));
             } catch (final NumberFormatException notANumber) {
                 throw new IllegalArgumentException("steps needs a whole number: " + text, notANumber);
+            }
+        }
+        if (key.startsWith("spring(") && key.endsWith(")")) {
+            try {
+                return new Spring(Double.parseDouble(key.substring("spring(".length(), key.length() - 1).trim()));
+            } catch (final NumberFormatException notANumber) {
+                throw new IllegalArgumentException("a spring needs its damping, a number: " + text, notANumber);
             }
         }
         throw new IllegalArgumentException("no curve is called " + text);
@@ -200,6 +210,46 @@ public sealed interface IEasing permits IEasing.Linear, IEasing.CubicBezier, IEa
         @Override
         public String written() {
             return "steps(" + count + ")";
+        }
+    }
+
+    /**
+     * A spring let go towards its end, as the toolkits of phones move things: it goes past the end and comes back,
+     * fewer times and less far the more it is damped, and is still at the end when its time is up. {@code damping} is
+     * how much of what stops it from swinging it has: 1 or more comes to the end without going past it, 0.5 goes a
+     * sixth past it once, less swings more.
+     */
+    record Spring(double damping) implements IEasing {
+
+        /* The swing has died away to a thousandth by the end of the motion's time. */
+        private static final double SETTLED = Math.log(1000.0);
+
+        public Spring {
+            if (!(damping > 0) || !Double.isFinite(damping)) {
+                throw new IllegalArgumentException("a spring's damping is a number above 0, not " + damping);
+            }
+        }
+
+        @Override
+        public double apply(final double time) {
+            final double t = clamp(time);
+            if (t >= 1.0) {
+                return 1.0;
+            }
+            final double decay = SETTLED * t;
+            if (damping >= 1.0) {
+                // Damped so it comes to rest without swinging past: its fastest way there.
+                return 1.0 - Math.exp(-decay) * (1.0 + decay);
+            }
+            // Swinging at the rate its damping leaves, the swing dying away as fast as it settles.
+            final double swing = SETTLED / damping * Math.sqrt(1.0 - damping * damping) * t;
+            return 1.0 - Math.exp(-decay) * (Math.cos(swing) + damping / Math.sqrt(1.0 - damping * damping)
+                    * Math.sin(swing));
+        }
+
+        @Override
+        public String written() {
+            return "spring(" + damping + ")";
         }
     }
 

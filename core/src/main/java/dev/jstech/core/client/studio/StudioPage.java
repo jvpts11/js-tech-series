@@ -84,6 +84,16 @@ abstract class StudioPage {
     void mouseReleased() {
     }
 
+    /** A key pressed while no field of the studio takes typing; whether the page did something with it. */
+    boolean keyPressed(final int key) {
+        return false;
+    }
+
+    /** Chooses the row that says {@code what}, as a click on it does; whether it has one. For a test as for a click. */
+    boolean choose(final String what) {
+        return false;
+    }
+
     /** Its buttons and fields. */
     Panel panel() {
         return this.panel;

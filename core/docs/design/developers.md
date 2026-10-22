@@ -77,6 +77,9 @@ of the game, never around kinds of files or a tree of scenes: a machine is opene
   - **The settings of every mod on the Core**: range, default and value, and a modpack's preset exported.
   - **Catching a structure**: build a multiblock in the world, select it and save it as a structure file, with the
     Structure Projector's preview ([Multiblocks](multiblocks.md)).
+  - **An editor of camera paths**: fly where the camera goes and keep each place with a key, change each keyframe in
+    a table, see the path from above, play it as a scene before it is saved and save it to the path's file
+    ([The interface](interface.md)).
   - **Recording a test**: click through a screen and keep the path as a client test; and the tests' reference pictures
     with the difference marked.
   - **A round trip through the save**: save and reload a block and see which field changed.
@@ -146,8 +149,8 @@ The series' own tests are the most complete kit of their kind; the Core opens th
 
 ## Still to build
 
-- **More of the studio**: an editor of camera paths, flown and recorded into the path's file; a recorder that writes a
-  multiblock's pattern, its projector preview and its recipe-viewer page from a structure built in the world; a preview
-  of who may do what at a place; and, on the Recipes tab, a preview of what unification would change.
+- **More of the studio**: a recorder that writes a multiblock's pattern, its projector preview and its recipe-viewer
+  page from a structure built in the world; a preview of who may do what at a place; and, on the Recipes tab, a
+  preview of what unification would change.
 - **More for agents**: a published page of the MCP server's tools and their schemas, made from the tools themselves, and
   a tool that describes the scene in view.

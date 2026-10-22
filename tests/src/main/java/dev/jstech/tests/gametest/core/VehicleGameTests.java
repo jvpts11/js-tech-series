@@ -25,6 +25,7 @@ import dev.jstech.core.vehicle.VehicleAccess;
 import dev.jstech.core.vehicle.VehicleBuild;
 import dev.jstech.core.vehicle.VehicleEntity;
 import dev.jstech.core.vehicle.VehicleHolds;
+import dev.jstech.core.vehicle.VehicleLean;
 import dev.jstech.core.vehicle.VehiclePartStack;
 import dev.jstech.core.vehicle.VehicleRoles;
 import dev.jstech.core.vehicle.VehicleStack;
@@ -70,6 +71,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.network.registration.NetworkRegistry;
+import org.joml.Vector3d;
 
 /**
  * The Core's vehicles, through the test mod's own: a van made of its parts, which goes ahead on its fuel and burns it,
@@ -181,6 +183,30 @@ public final class VehicleGameTests {
         helper.runAfterDelay(10, () -> {
             helper.assertTrue(van.leanPitch() < -5, "its nose leans down: " + van.leanPitch());
             helper.assertTrue(Math.abs(van.leanRoll()) < 1, "and not to a side: " + van.leanRoll());
+            van.discard();
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void seats_leanWithTheBody(final GameTestHelper helper) {
+        for (int x = 3; x <= 5; x++) {
+            helper.setBlock(new BlockPos(x, 1, 5), Blocks.AIR);
+        }
+        final VehicleEntity van = van(helper, new Vec3(4.5, 2, 4.5));
+        final Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new Vec3(4.5, 2, 4.5));
+        helper.assertTrue(pig.startRiding(van, true), "a pig takes the passenger's seat");
+        helper.runAfterDelay(10, () -> {
+            final Vec3 at = van.def().seats().get(van.seatOf(pig)).at();
+            final Vector3d leaning = VehicleLean.seat(at.x, at.y, at.z, van.getYRot(), van.leanPitch(),
+                    van.leanRoll());
+            final Vector3d level = VehicleLean.seat(at.x, at.y, at.z, van.getYRot(), 0.0F, 0.0F);
+            final Vec3 seat = van.position().add(leaning.x, leaning.y, leaning.z);
+            helper.assertTrue(van.leanPitch() < -5 && pig.position().distanceTo(seat) < 1.0e-3,
+                    "the pig sits where its seat is with the body leaning nose down: " + pig.position() + " against "
+                            + seat);
+            helper.assertTrue(new Vector3d(leaning).sub(level).length() > 0.05, "not where it would be standing level");
+            pig.discard();
             van.discard();
             helper.succeed();
         });

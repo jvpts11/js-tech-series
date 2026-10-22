@@ -18,6 +18,8 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.camera.CameraShake;
+import dev.jstech.core.client.camera.CameraMotion;
 import dev.jstech.core.client.heat.HeatGlowClient;
 import dev.jstech.core.effect.EffectSettings;
 import dev.jstech.core.heat.Blackbody;
@@ -41,7 +43,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -68,9 +69,8 @@ public final class ScreenEffects {
     private static final double SHIMMER_SIZE = 1.5;
     private static final double LEAST_SIZE = 0.04;
     private static final double MOST_SIZE = 0.35;
-    /* How far a shockwave's ring goes across the screen over its time, and how much a shake turns the view. */
+    /* How far a shockwave's ring goes across the screen over its time. */
     private static final double SHOCK_SPREAD = 0.9;
-    private static final double SHAKE_DEGREES = 2.5;
     private static final int VIGNETTE_TICKS = 10;
     private static final float VIGNETTE_INSET = 0.3F;
     private static final int CHANNEL = 255;
@@ -79,7 +79,6 @@ public final class ScreenEffects {
     private static final double TICKS_A_SECOND = 20.0;
     private static final float TIME_SCALE = 1.0F / 20.0F;
     private static final List<Burst> FLASHES = new ArrayList<>();
-    private static final List<Burst> SHAKES = new ArrayList<>();
     private static final List<Shock> SHOCKS = new ArrayList<>();
     private static final Map<ResourceLocation, Vignette> VIGNETTES = new HashMap<>();
 
@@ -112,7 +111,6 @@ public final class ScreenEffects {
             }
         });
         NeoForge.EVENT_BUS.addListener(RenderGuiEvent.Pre.class, event -> draw(event.getGuiGraphics()));
-        NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, ScreenEffects::shake);
     }
 
     /**
@@ -127,7 +125,7 @@ public final class ScreenEffects {
             FLASHES.add(new Burst(flash, now, ticks));
         }
         if (shake > 0) {
-            SHAKES.add(new Burst(shake, now, ticks));
+            CameraMotion.shake(CameraShake.of(shake, ticks / TICKS_A_SECOND));
         }
         if (shock > 0) {
             SHOCKS.add(new Shock(at, shock, now, ticks));
@@ -151,26 +149,13 @@ public final class ScreenEffects {
     /** Takes every screen effect away, as the world closes. */
     static void clear() {
         FLASHES.clear();
-        SHAKES.clear();
         SHOCKS.clear();
         VIGNETTES.clear();
     }
 
     /** Whether any screen effect is on now, for a test to look at. */
     public static boolean active() {
-        return !FLASHES.isEmpty() || !SHAKES.isEmpty() || !SHOCKS.isEmpty() || !VIGNETTES.isEmpty();
-    }
-
-    private static void shake(final ViewportEvent.ComputeCameraAngles event) {
-        final double strength = strongest(SHAKES) * EffectSettings.shake();
-        if (strength <= 0) {
-            return;
-        }
-        final double t = now() + event.getPartialTick();
-        final double degrees = SHAKE_DEGREES * strength;
-        event.setYaw((float) (event.getYaw() + degrees * Math.sin(t * 2.1)));
-        event.setPitch((float) (event.getPitch() + degrees * Math.sin(t * 2.9 + 1.0)));
-        event.setRoll((float) (event.getRoll() + degrees * 0.5 * Math.sin(t * 3.7 + 2.0)));
+        return !FLASHES.isEmpty() || CameraMotion.active() || !SHOCKS.isEmpty() || !VIGNETTES.isEmpty();
     }
 
     private static void draw(final GuiGraphics graphics) {

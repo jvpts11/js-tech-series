@@ -34,9 +34,9 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 
 /**
- * The vehicles on a player's game: drawn with their models, their items drawn as their kinds say, their lights lighting
- * the world, the headlights the way ahead as far as they reach, their engines heard as they run, and a manual
- * gearbox's changes felt at once by whoever drives it.
+ * The vehicles on a player's game: drawn with their models, whoever rides one leaning with it, their items drawn as
+ * their kinds say, their lights lighting the world, the headlights the way ahead as far as they reach, their engines
+ * heard as they run, and a manual gearbox's changes felt at once by whoever drives it.
  */
 public final class VehiclesClient {
 
@@ -55,6 +55,7 @@ public final class VehiclesClient {
         modBus.addListener(RegisterClientExtensionsEvent.class, event -> event.registerItem(
                 new VehicleItemRenderer().extensions(), Vehicles.ITEM.get(), Vehicles.PART_ITEM.get()));
         DynamicLightsClient.provide(VehiclesClient::lights);
+        VehicleRiders.listen();
         NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, event -> {
             if (event.getLevel().isClientSide() && event.getEntity() instanceof VehicleEntity vehicle) {
                 SoundDirector.track(vehicle);

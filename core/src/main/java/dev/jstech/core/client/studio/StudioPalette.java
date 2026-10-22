@@ -19,7 +19,8 @@ final class StudioPalette {
     static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "gui/studio", new Colours(
             0xFFFFFFFF, 0xFFE0E0E0, 0xFFA0A0A0, 0xFF000000, 0xFFFFFFFF, 0x30FFFFFF, 0xFF55FF55, 0xFFFFFF55,
             0xFFFF5555, 0xFF000000, 0xFF000000, 0xFF608CDC, 0xFFAAC8F0, 0xFF000000, 0xFFFF5555, 0xFF55FFFF,
-            0xFF55FFFF, 0x5A000000, 0x5AFFFFFF, 0xFF8B8B8B, 0x28FF5555, 0xFFFF5555, 0xC0000000));
+            0xFF55FFFF, 0x5A000000, 0x5AFFFFFF, 0xFF8B8B8B, 0x28FF5555, 0xFFFF5555, 0xC0000000, 0xFFFFFF55,
+            0xC0141A1E, 0xFF74747E));
 
     private StudioPalette() {
     }
@@ -55,9 +56,14 @@ final class StudioPalette {
      * @param changed     behind a field that came back changed from the save
      * @param recording   the words of the recorder of a test while it records
      * @param overlay     behind the recorder's buttons, over the game
+     * @param pathPoint   a camera path's keyframes seen from above, and the way between them; the one chosen is
+     *                    drawn in the outline's colour
+     * @param mapGround   behind a camera path seen from above
+     * @param origin      the place a camera path is played from, seen from above
      */
     record Colours(int text, int label, int dim, int selected, int outline, int pointed, int fine, int warning,
                    int error, int warningText, int errorText, int skyTop, int skyLow, int frame, int energy, int items,
-                   int bar, int track, int viewer, int arrow, int changed, int recording, int overlay) {
+                   int bar, int track, int viewer, int arrow, int changed, int recording, int overlay, int pathPoint,
+                   int mapGround, int origin) {
     }
 }

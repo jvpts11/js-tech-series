@@ -8,6 +8,7 @@
 package dev.jstech.core.client.moving;
 
 import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.client.studio.CameraPathRecorder;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.moving.ForceDiagramTexts;
 import dev.jstech.core.moving.IStructureBody;
@@ -112,7 +113,8 @@ public final class StructureForcesClient {
     /* The key: the diagram of the structure before the player, or a word that there is none. */
     private static void open() {
         final Minecraft game = Minecraft.getInstance();
-        if (game.player == null || game.screen != null) {
+        // While the studio records a camera path, the key keeps keyframes, as its line says, unless rebound.
+        if (game.player == null || game.screen != null || CameraPathRecorder.recording()) {
             return;
         }
         final ClientStructure structure = before(game.player);

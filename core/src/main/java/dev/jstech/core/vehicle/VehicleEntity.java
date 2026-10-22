@@ -41,6 +41,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
 
 /**
  * A vehicle in the world, of whichever {@link VehicleDef kind} it was made: seated players and robots ride in it, the
@@ -658,10 +659,9 @@ public class VehicleEntity extends Entity implements IEnergyHolder, IAudible {
         }
         final int seat = Math.clamp(seatOf(passenger), 0, kind.seats().size() - 1);
         final Vec3 at = kind.seats().get(seat).at();
-        final Vec3 ahead = Vec3.directionFromRotation(0, getYRot());
-        final Vec3 left = new Vec3(ahead.z, 0, -ahead.x);
-        move.accept(passenger, getX() + left.x * at.x + ahead.x * at.z, getY() + at.y,
-                getZ() + left.z * at.x + ahead.z * at.z);
+        // The seat leans with the body, as the model is drawn, so a banking aircraft carries its pilot to the side.
+        final Vector3d place = VehicleLean.seat(at.x, at.y, at.z, getYRot(), leanPitch(), leanRoll());
+        move.accept(passenger, getX() + place.x, getY() + place.y, getZ() + place.z);
     }
 
     @Override

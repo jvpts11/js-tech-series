@@ -15,6 +15,7 @@ import dev.jstech.core.text.TextKey;
 public final class CameraTexts {
 
     public static final TextKey FREE_LOOK_KEY = TextKey.of("key.jscore.free_look", "Free Look");
+    public static final TextKey KEEP_KEYFRAME_KEY = TextKey.of("key.jscore.keep_keyframe", "Keep a camera keyframe");
 
     private CameraTexts() {
     }

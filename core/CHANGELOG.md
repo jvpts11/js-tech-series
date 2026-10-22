@@ -53,7 +53,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `ThreeMfReader`, `StepReader` and `UsdReader` each read one alone; `ModelShaping` brings a model to its detail and
   says what keeps it from it, `MeshReducer` brings a mesh down to fewer triangles, and `CadLook` makes a CAD file's
   colours textures in the game's look. `ModelPreviewLayout` lays the preview out for what its column holds, a
-  `ModelPreviewLayout.Column`, in place of the count of animations alone.
+  `ModelPreviewLayout.Column`, in place of the count of animations alone. `CameraPathsLayout` lays out the studio's
+  page of camera paths, and `CoreKeys.KEEP_KEYFRAME` is the key that keeps a camera path's keyframe while it records.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -995,6 +996,21 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the server starts and the player skips by sneaking, their ending told on the Core's events; and cameras in the
   world whose view a screen shows (`CameraFeeds`), drawn before the frame at a rate, a width and a number at once the
   player sets.
+- Shakes and leans of the view, one service for every mod (`CameraMotion`): shakes from any number of mods add
+  up, each wandering smoothly and dying away, felt less the farther from where it comes, the player's shake setting
+  scaling them and less movement stilling them; a lean holds the view turned as its owner asks, a cockpit banking or
+  a recoil, and eases it back as fast as it can without swinging past. A blast's shake goes through it.
+- Riders lean with what they ride: each sits where its seat is on a leaning vehicle, on the server and on every
+  player's game, and an aircraft's pilot tilts with its bank as other players see them.
+- A mod's camera in the third person (`ThirdPersonCameras`): how far back it stands, over which shoulder and
+  round which place, the middle of a long vehicle; brought nearer by walls as the game's own is, eased from one view
+  to another, the highest priority first and the game's own when none gives a view.
+- The studio's Cameras page: every camera path, and a new one named in place; fly where the camera goes and
+  keep each place with the Keep a camera keyframe key (K), or add one where you stand; change each keyframe's time,
+  field of view, roll and easing in its table; see the path from above, numbered along the way the camera takes;
+  play it as a scene on your game alone before it is saved, and save it to your mod's file.
+- Motion: springs among the curves (`spring`, `spring-soft`, `spring(damping)`), which go past their end and
+  settle there, as phones move things.
 - Items: an item holds a gas, in a tank of a volume at a pressure the Core's gas capability reaches; a key works
   an item wherever its player carries it, in a hand, worn or in the inventory, and turns one on and off
   (`ItemActions`); an item lasts as many uses as declared, or as many as its mod makes of a property of its material;

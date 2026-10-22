@@ -7,16 +7,33 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
+import dev.jstech.core.camera.CameraPath;
+import dev.jstech.core.camera.CameraPathCodecs;
+import dev.jstech.core.camera.CameraView;
+import dev.jstech.core.client.camera.CameraPathsClient;
+import dev.jstech.core.client.camera.CameraViewsClient;
 import dev.jstech.core.client.studio.BenchState;
+import dev.jstech.core.client.studio.CameraPathRecorder;
+import dev.jstech.core.client.studio.CameraPathTexts;
 import dev.jstech.core.client.studio.StudioClient;
 import dev.jstech.core.client.studio.StudioScreen;
 import dev.jstech.core.client.studio.StudioSheet;
 import dev.jstech.core.client.studio.StudioTool;
 import dev.jstech.core.client.studio.ThingKind;
+import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.developer.DevSources;
+import dev.jstech.core.input.CoreKeys;
+import dev.jstech.core.text.GameText;
 import dev.jstech.tests.TestItems;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
@@ -26,7 +43,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The studio: every mod's things by kind, a machine chosen on the bench in its states, what it is made of, each part
- * with its file and its state, and the checks across its parts.
+ * with its file and its state, and the checks across its parts; and a camera path kept where the player stands,
+ * played as a scene before it is saved, and written to its mod's file.
  */
 public final class StudioClientTests {
 
@@ -43,6 +61,11 @@ public final class StudioClientTests {
     private static final String SLOTS_BEYOND = "Its screen shows slots its menu does not have";
     private static final String SLOTS_NOWHERE = "Its screen leaves out slots of its menu";
     private static final String SLOTS_TWICE = "Its screen shows slots twice";
+    /* The camera path the studio writes, and where the player flies for its second keyframe. */
+    private static final ResourceLocation STUDIO_PATH = ResourceLocation.fromNamespaceAndPath("jstests",
+            "studio_path");
+    private static final BlockPos FLOWN_TO = new BlockPos(0, 5, 8);
+    private static final BlockPos FLOWN_ON = new BlockPos(6, 4, 10);
 
     private StudioClientTests() {
     }
@@ -127,6 +150,87 @@ public final class StudioClientTests {
                     .then(SETTLE, () -> ctx.assertTrue(ctx.screen(StudioScreen.class).tool() == tool,
                             "the tab of " + tool + " opens its page"))
                     .thenScreenshot(SETTLE, "studio-tool-" + tool.name().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    @ClientTest(timeoutTicks = 800)
+    public static void cameras_keepsAPathFlownPlaysItAndWritesItsFile(final ClientTestContext ctx) {
+        final Path[] written = new Path[1];
+        ctx.afterTest(() -> {
+            ctx.mc().setScreen(null);
+            if (written[0] != null) {
+                try {
+                    Files.deleteIfExists(written[0]);
+                } catch (final IOException kept) {
+                    // Left where the test wrote it, for whoever runs the tests to see.
+                }
+            }
+        });
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .then(SETTLE, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.CAMERAS)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> {
+                    ctx.assertTrue(studio(ctx).choose(GameText.resolve(CameraPathTexts.A_NEW_PATH)),
+                            "the page has a row for a new path");
+                    studio(ctx).type(STUDIO_PATH.toString());
+                    ctx.assertTrue(studio(ctx).press(GameText.resolve(CameraPathTexts.ADD_HERE)),
+                            "a keyframe added where the player stands");
+                })
+                .thenTeleport(0, FLOWN_TO, Direction.NORTH)
+                .then(SETTLE, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(CameraPathTexts.ADD_HERE)),
+                        "a second keyframe added where the player flew"))
+                .then(0, () -> ctx.assertTrue(studio(ctx).lines().size() == 2
+                        && studio(ctx).lines().get(1).startsWith("2 s"), "two keyframes, the second two seconds on"))
+                .thenScreenshot(SETTLE, "studio-cameras")
+                .then(0, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(CameraPathTexts.FLY_AND_RECORD)),
+                        "recording begun"))
+                .thenWaitUntil(() -> ctx.mc().screen == null && CameraPathRecorder.recording(), WAIT,
+                        "the studio shut while the path records")
+                .thenTeleport(0, FLOWN_ON, Direction.WEST)
+                .then(SETTLE, () -> KeyActionsClient.press(CoreKeys.KEEP_KEYFRAME))
+                .thenAssert(SETTLE, () -> CameraPathRecorder.keyframes().size() == 3,
+                        "the key keeps where the player flew as the third keyframe")
+                .thenScreenshot(0, "camera-path-recording")
+                .then(0, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.CAMERAS)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(
+                        CameraPathTexts.STOP_RECORDING)) && !CameraPathRecorder.recording(), "recording stopped"))
+                .then(0, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(CameraPathTexts.PLAY)),
+                        "the path played"))
+                .thenWaitUntil(() -> ctx.mc().screen == null && CameraViewsClient.showing()
+                        .filter(CameraView.Scene.class::isInstance).isPresent(), WAIT, "the path playing as a scene")
+                .thenWaitUntil(() -> CameraViewsClient.showing().isEmpty() && ctx.mc().getCameraEntity()
+                        == ctx.player(), WAIT * 3, "the scene over, the view back with the player")
+                .then(SETTLE, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.CAMERAS)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> {
+                    ctx.assertTrue(studio(ctx).lines().size() == 3, "the keyframes kept while the studio was shut");
+                    written[0] = DevSources.resourcesOf(STUDIO_PATH.getNamespace()).orElseThrow()
+                            .resolve("assets/jstests/jstech/camera_paths/studio_path.json");
+                    ctx.assertTrue(studio(ctx).press(GameText.resolve(CameraPathTexts.SAVE_TO_FILE)),
+                            "the path saved");
+                })
+                .then(SETTLE, () -> {
+                    final CameraPath read = CameraPathCodecs.PATH.parse(JsonOps.INSTANCE, JsonParser.parseString(
+                            readFile(written[0]))).getOrThrow();
+                    ctx.assertTrue(read.keyframes().equals(CameraPathRecorder.keyframes()),
+                            "the file says the keyframes kept");
+                    ctx.assertTrue(read.keyframes().get(1).z() > read.keyframes().get(0).z(),
+                            "the second keyframe south of the first, where the player flew");
+                    ctx.assertTrue(CameraPathsClient.get(STUDIO_PATH).isPresent(),
+                            "the game plays the path as its file says from now");
+                });
+    }
+
+    private static StudioScreen studio(final ClientTestContext ctx) {
+        return ctx.screen(StudioScreen.class);
+    }
+
+    private static String readFile(final Path file) {
+        try {
+            return Files.readString(file, StandardCharsets.UTF_8);
+        } catch (final IOException unread) {
+            throw new IllegalStateException("the path's file was not written: " + file, unread);
         }
     }
 

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.camera;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.camera.CameraClientHooks;
 import dev.jstech.core.camera.CameraPath;
 import dev.jstech.core.camera.CameraView;
@@ -16,6 +17,7 @@ import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Marker;
@@ -40,6 +42,10 @@ import org.jetbrains.annotations.Nullable;
 public final class CameraViewsClient implements CameraClientHooks.IHooks {
 
     private static final CameraViewsClient INSTANCE = new CameraViewsClient();
+    /* The id a scene rehearsed on this game alone is shown under. */
+    private static final ResourceLocation REHEARSAL = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "studio_rehearsal");
+    private static @Nullable CameraPath rehearsed;
     private static @Nullable CameraView showing;
     private static @Nullable CameraPath path;
     private static @Nullable Entity stand;
@@ -54,6 +60,18 @@ public final class CameraViewsClient implements CameraClientHooks.IHooks {
     /** The view the player sees now, or none. */
     public static Optional<CameraView> showing() {
         return Optional.ofNullable(showing);
+    }
+
+    /**
+     * Plays {@code scene} on this game alone, from {@code origin} facing {@code yaw}, as the studio tries a path before
+     * it is saved: sneaking skips it as any scene, and the server, which did not start it, is told nothing of it.
+     */
+    public static void rehearse(final CameraPath scene, final Vec3 origin, final float yaw) {
+        if (showing != null) {
+            restore();
+        }
+        rehearsed = scene;
+        start(new CameraView.Scene(REHEARSAL, origin, yaw));
     }
 
     @Override
@@ -180,7 +198,8 @@ public final class CameraViewsClient implements CameraClientHooks.IHooks {
         roll = 0;
         switch (view) {
             case CameraView.Scene scene -> {
-                final Optional<CameraPath> found = CameraPathsClient.get(scene.path());
+                final Optional<CameraPath> found = scene.path().equals(REHEARSAL) ? Optional.ofNullable(rehearsed)
+                        : CameraPathsClient.get(scene.path());
                 if (found.isEmpty()) {
                     end(CameraViewEvent.Ending.LOST);
                     return;
@@ -210,8 +229,11 @@ public final class CameraViewsClient implements CameraClientHooks.IHooks {
 
     /* Ends the view on this game and tells the server how. */
     private static void end(final CameraViewEvent.Ending ending) {
+        final boolean started = rehearsed == null;
         restore();
-        PacketDistributor.sendToServer(CameraViewEndedPayload.of(ending));
+        if (started) {
+            PacketDistributor.sendToServer(CameraViewEndedPayload.of(ending));
+        }
     }
 
     /* Back to the player's own eyes. */
@@ -223,6 +245,7 @@ public final class CameraViewsClient implements CameraClientHooks.IHooks {
         showing = null;
         path = null;
         stand = null;
+        rehearsed = null;
     }
 
     /* A stand-in for the camera, kept out of the world: nothing sees or touches it. */
