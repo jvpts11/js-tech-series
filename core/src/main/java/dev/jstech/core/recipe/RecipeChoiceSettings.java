@@ -37,7 +37,7 @@ public final class RecipeChoiceSettings {
                     ConfigFormats.TOML)
             .comment("Choosing between recipes that overlap, at the crafting table and the furnace.")
             .sectionComment(SECTION, "Whether the player chooses, and whether that is left to Polymorph.")
-            .sectionNamed(SECTION, "Choosing between recipes")
+            .sectionNamed(SECTION, "Recipe choice")
             .key(ENABLED)
             .key(STEP_ASIDE)
             .build();

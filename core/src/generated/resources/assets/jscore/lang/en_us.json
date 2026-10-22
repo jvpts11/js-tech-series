@@ -1262,7 +1262,7 @@
   "jscore.configuration.protection.team_damage": "Teammates can hurt each other",
   "jscore.configuration.protection.team_damage.tooltip": "Whether players on one team can hurt each other. While the teams are the game's scoreboard teams, a team's own friendly fire decides when this is off.",
   "jscore.configuration.protection.tooltip": "Who may hurt whom, what is written down of what players do to others' things, and how many of each thing one player may have.",
-  "jscore.configuration.recipe_choice": "Choosing between recipes",
+  "jscore.configuration.recipe_choice": "Recipe choice",
   "jscore.configuration.recipe_choice.enabled": "Choose between recipes that overlap",
   "jscore.configuration.recipe_choice.enabled.tooltip": "Whether a player chooses which recipe is used when more than one fits what is in a crafting grid or a furnace, and the choice is kept: the player's for the grid, the furnace's for what it smelts.",
   "jscore.configuration.recipe_choice.step_aside": "Leave choosing between recipes to Polymorph",
