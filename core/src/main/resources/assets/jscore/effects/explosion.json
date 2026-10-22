@@ -22,7 +22,8 @@
       "emission": {"shape": {"type": "sphere", "radius": 0.5}, "bursts": [{"at": 0, "count": 30}],
                    "life": [0.8, 1.6], "speed": [5, 10]},
       "look": {"sprite": "minecraft:spark", "frames": 8, "size": [0.16, 0.06],
-               "colour": ["#FFE0A0FF", "#FF502000"], "blend": "additive", "light": 15, "trail": 0.2, "width": 0.04},
+               "colour": ["#FFE0A0FF", "#FF502000"], "blend": "additive", "light": 15, "trail": 0.2, "width": 0.04,
+               "stretch": 0.03},
       "motion": {"gravity": 1, "drag": 0.3, "collide": true}
     },
     {

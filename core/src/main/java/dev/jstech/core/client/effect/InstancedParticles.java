@@ -27,8 +27,8 @@ import org.lwjgl.system.MemoryUtil;
 /**
  * One layer of the effects' particles drawn many at once: one square on the graphics card, drawn once for each
  * particle written this frame, in the order written, so the see-through ones still lie back to front. Each particle
- * is four texels: where it is from the camera and half its size, its picture's corners on the sheet, its colour, and
- * its angle with its light. On the render thread.
+ * is five texels: where it is from the camera and half its size, its picture's corners on the sheet, its colour, its
+ * angle with its light, and how far it is drawn out along the way it goes. On the render thread.
  */
 final class InstancedParticles {
 
@@ -36,7 +36,7 @@ final class InstancedParticles {
     private int count;
 
     private static final InstanceTexels TEXELS = new InstanceTexels();
-    private static final int TEXELS_EACH = 4;
+    private static final int TEXELS_EACH = 5;
     private static final float CHANNEL = 255.0F;
     private static final int LOW = 0xFFFF;
     private static final int HIGH = 16;
@@ -46,14 +46,19 @@ final class InstancedParticles {
 
     private static int square = -1;
 
-    /** Writes a particle at {@code x, y, z} from the camera, {@code argb} its colour, {@code light} packed. */
+    /**
+     * Writes a particle at {@code x, y, z} from the camera, {@code argb} its colour, {@code light} packed, drawn out
+     * by {@code sx, sy, sz} either way along the way it goes (none for a square).
+     */
     void add(final float x, final float y, final float z, final float half, final float u0, final float v0,
-             final float u1, final float v1, final int argb, final float angle, final int light) {
+             final float u1, final float v1, final int argb, final float angle, final int light, final float sx,
+             final float sy, final float sz) {
         this.data.put(x, y, z, half);
         this.data.put(u0, v0, u1, v1);
         this.data.put((argb >> 16 & 0xFF) / CHANNEL, (argb >> 8 & 0xFF) / CHANNEL, (argb & 0xFF) / CHANNEL,
                 (argb >>> 24) / CHANNEL);
         this.data.put(angle, light & LOW, light >>> HIGH, 0);
+        this.data.put(sx, sy, sz, 0);
         this.count++;
     }
 

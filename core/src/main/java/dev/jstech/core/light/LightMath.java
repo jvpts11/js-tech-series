@@ -26,6 +26,8 @@ public final class LightMath {
     public static final double MOST_TINT = 0.85;
     /** How much open sky at its brightest takes from a place's tint. */
     public static final double SKY_FADE = 0.6;
+    /** How much of a place's colour comes from daylight through blocks that tint it, at its brightest. */
+    public static final double SKY_TINT = 0.55;
 
     private static final int CHANNEL = 0xFF;
     private static final double FULL = 255.0;
@@ -78,6 +80,20 @@ public final class LightMath {
         final double share = (double) strongest / BRIGHTEST * MOST_TINT
                 * (1.0 - SKY_FADE * Math.clamp(skyLight, 0, BRIGHTEST) / BRIGHTEST);
         return blend(WHITE, mixed, share);
+    }
+
+    /**
+     * The colour of a place lit by {@code tint} and by daylight of {@code skyLight} come down through blocks that gave
+     * it {@code filter}: the daylight's hue laid over the place by the share of the light it brings, as a glass roof of
+     * a colour tints the floor beneath it by day.
+     */
+    public static int skyThrough(final int tint, final int filter, final int skyLight) {
+        if (filter == WHITE || skyLight <= 0) {
+            return tint;
+        }
+        final int hue = normalised(filter >> RED_SHIFT & CHANNEL, filter >> GREEN_SHIFT & CHANNEL, filter & CHANNEL);
+        final double share = (double) Math.clamp(skyLight, 0, BRIGHTEST) / BRIGHTEST * SKY_TINT;
+        return blend(tint, multiply(tint, hue), share);
     }
 
     /** Between two colours, {@code share} of the way from the first. */

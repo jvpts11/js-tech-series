@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest.core;
 
 import dev.jstech.core.client.connect.ConnectedPacks;
+import dev.jstech.core.client.connect.PackEmissive;
 import dev.jstech.core.multipart.MicroShape;
 import dev.jstech.core.multipart.Microblock;
 import dev.jstech.core.multipart.SpaceSlots;
@@ -17,6 +18,8 @@ import dev.jstech.tests.TestConnected;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
@@ -27,6 +30,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 /**
@@ -34,8 +38,8 @@ import net.neoforged.neoforge.client.model.data.ModelData;
  * write them: OptiFine's and Continuity's full method picking the tile of how each face of a wall joins, their compact
  * method drawing a quarter at a time, both by block and by texture; CTM's metadata joining a quarter at a time from its
  * companion; CTM's override in a model drawing a pattern over its faces of one tint index; microblocks of a material
- * joining their like in the spaces beside them; and the Core keeping the packs' textures to itself while neither
- * Continuity nor CTM is installed.
+ * joining their like in the spaces beside them; a pack's glowing texture, OptiFine's {@code _e}, shining over its
+ * block in the dark; and the Core keeping the packs' textures to itself while neither Continuity nor CTM is installed.
  */
 public final class ConnectedPacksClientTests {
 
@@ -44,6 +48,10 @@ public final class ConnectedPacksClientTests {
     private static final int WALL_Z = 2;
     private static final int WAIT = 200;
     private static final long SEED = 42L;
+    private static final long NIGHT = 18_000L;
+    private static final long DAY = 6_000L;
+    /* Where a corner keeps its light in the block format. */
+    private static final int LIGHT = 6;
 
     private ConnectedPacksClientTests() {
     }
@@ -154,6 +162,34 @@ public final class ConnectedPacksClientTests {
                 .thenServer(0, level -> clear(ctx, level));
     }
 
+    @ClientTest(timeoutTicks = 600)
+    public static void glowingTextures_shineOverTheirBlockInTheDark(final ClientTestContext ctx) {
+        final BlockPos panel = new BlockPos(0, 3, WALL_Z);
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                    wall(ctx, level, Blocks.DEEPSLATE_TILES);
+                    level.setBlockAndUpdate(ctx.abs(panel), TestConnected.GLOW_PANEL.get().defaultBlockState());
+                })
+                .thenWaitUntil(() -> placed(ctx, panel, TestConnected.GLOW_PANEL.get()), WAIT,
+                        "the panel to reach the player")
+                .thenAssert(0, PackEmissive::any, "the test mod's pack says glowing textures end in _e")
+                .thenAssert(0, () -> layers(ctx, panel).contains(RenderType.cutout())
+                        && layers(ctx, panel).contains(RenderType.solid()),
+                        "the panel is drawn solid, and its glowing texture over it in the cut-out layer")
+                .thenAssert(0, () -> glowingFace(ctx, panel), "its north face is drawn again with "
+                        + TestConnected.GLOW_PANEL_GLOWING + " at full light, unshaded")
+                .thenAssert(0, () -> quads(ctx, new BlockPos(1, 3, WALL_Z), Direction.NORTH).size() == 1,
+                        "a block whose texture has no glowing one is drawn as it was")
+                .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(panel))))
+                .thenScreenshot(20, "glowing-panel-in-the-dark")
+                .thenServer(0, level -> {
+                    level.setDayTime(DAY);
+                    clear(ctx, level);
+                });
+    }
+
     @ClientTest(timeoutTicks = 200)
     public static void stepAside_keepsThePacksWhileNeitherModIsInstalled(final ClientTestContext ctx) {
         ctx.thenAssert(0, () -> StepAside.CONNECTED_TEXTURES.installed().isEmpty(),
@@ -187,6 +223,28 @@ public final class ConnectedPacksClientTests {
         final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
         final ModelData data = model.getModelData(ctx.mc().level, pos, state, ctx.mc().level.getModelData(pos));
         return model.getQuads(state, side, RandomSource.create(SEED), data, null);
+    }
+
+    /* The layers the block at {@code at} is drawn in. */
+    private static ChunkRenderTypeSet layers(final ClientTestContext ctx, final BlockPos at) {
+        final BlockPos pos = ctx.abs(at);
+        final BlockState state = ctx.mc().level.getBlockState(pos);
+        final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
+        return model.getRenderTypes(state, RandomSource.create(SEED), model.getModelData(ctx.mc().level, pos, state,
+                ModelData.EMPTY));
+    }
+
+    /* Whether the north face of the block at {@code at} is drawn in the cut-out layer in its glowing texture, lit. */
+    private static boolean glowingFace(final ClientTestContext ctx, final BlockPos at) {
+        final BlockPos pos = ctx.abs(at);
+        final BlockState state = ctx.mc().level.getBlockState(pos);
+        final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
+        final ModelData data = model.getModelData(ctx.mc().level, pos, state, ModelData.EMPTY);
+        final List<BakedQuad> cutout = model.getQuads(state, Direction.NORTH, RandomSource.create(SEED), data,
+                RenderType.cutout());
+        return cutout.size() == 1 && cutout.getFirst().getSprite().contents().name().toString()
+                .equals(TestConnected.GLOW_PANEL_GLOWING) && cutout.getFirst().getVertices()[LIGHT]
+                == LightTexture.FULL_BRIGHT && !cutout.getFirst().isShade();
     }
 
     private static float uSpan(final BakedQuad quad) {

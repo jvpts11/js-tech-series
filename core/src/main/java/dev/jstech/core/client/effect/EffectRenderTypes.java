@@ -16,8 +16,11 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 /**
  * The layers effects are drawn in: particles from the game's particle sheet laid over what is behind them, or added
  * to it as light; ribbons, beams and arcs of colour laid over or added; and marks on the blocks, drawn just off their
- * faces. None writes depth, so what is see-through overlaps cleanly; walls in front hide them all. Every particle of
- * a layer goes to the graphics card in one batch.
+ * faces. None marks how far it is, so what is see-through overlaps cleanly; they are drawn after the clouds and the
+ * rain, so the clouds lie behind them. Under the Fabulous graphics the game lays its layers together by how far each
+ * thing is, so there the particles mark it, drawn back to front so none hides one nearer, with the clear edges of their
+ * pictures marking nothing. Walls in front hide them all. Every particle of a layer goes to the graphics card in one
+ * batch.
  */
 public final class EffectRenderTypes extends RenderType {
 
@@ -43,6 +46,28 @@ public final class EffectRenderTypes extends RenderType {
                     .setTransparencyState(LIGHTNING_TRANSPARENCY)
                     .setLightmapState(LIGHTMAP)
                     .setWriteMaskState(COLOR_WRITE)
+                    .setCullState(NO_CULL)
+                    .setDepthTestState(LEQUAL_DEPTH_TEST)
+                    .createCompositeState(false));
+    /** {@link #PARTICLES} under the Fabulous graphics, marking how far they are for the game to lay the layers. */
+    public static final RenderType PARTICLES_LAYERED = create("jscore_effect_particles_layered",
+            DefaultVertexFormat.PARTICLE, VertexFormat.Mode.QUADS, BUFFER, false, false, CompositeState.builder()
+                    .setShaderState(PARTICLE_SHADER)
+                    .setTextureState(new TextureStateShard(TextureAtlas.LOCATION_PARTICLES, false, false))
+                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                    .setLightmapState(LIGHTMAP)
+                    .setWriteMaskState(COLOR_DEPTH_WRITE)
+                    .setCullState(NO_CULL)
+                    .setDepthTestState(LEQUAL_DEPTH_TEST)
+                    .createCompositeState(false));
+    /** {@link #GLOWING} under the Fabulous graphics, marking how far they are for the game to lay the layers. */
+    public static final RenderType GLOWING_LAYERED = create("jscore_effect_glowing_layered",
+            DefaultVertexFormat.PARTICLE, VertexFormat.Mode.QUADS, BUFFER, false, false, CompositeState.builder()
+                    .setShaderState(PARTICLE_SHADER)
+                    .setTextureState(new TextureStateShard(TextureAtlas.LOCATION_PARTICLES, false, false))
+                    .setTransparencyState(LIGHTNING_TRANSPARENCY)
+                    .setLightmapState(LIGHTMAP)
+                    .setWriteMaskState(COLOR_DEPTH_WRITE)
                     .setCullState(NO_CULL)
                     .setDepthTestState(LEQUAL_DEPTH_TEST)
                     .createCompositeState(false));

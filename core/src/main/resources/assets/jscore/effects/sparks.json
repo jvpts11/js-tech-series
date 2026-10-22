@@ -6,7 +6,8 @@
       "emission": {"shape": {"type": "cone", "angle": 120}, "rate": 30, "bursts": [{"at": 0, "count": 20}],
                    "life": [0.6, 1.2], "speed": [2, 5], "children": ["wisps"]},
       "look": {"sprite": "minecraft:spark", "frames": 8, "size": [0.12, 0.04],
-               "colour": ["#FFE9A0FF", "#FF7A2000"], "blend": "additive", "light": 15, "trail": 0.15, "width": 0.03},
+               "colour": ["#FFE9A0FF", "#FF7A2000"], "blend": "additive", "light": 15, "trail": 0.15, "width": 0.03,
+               "stretch": 0.04},
       "motion": {"gravity": 1, "drag": 0.3, "collide": true}
     },
     {

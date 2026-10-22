@@ -43,6 +43,7 @@
   "block.jstests.test_furnace_controller": "Test furnace controller",
   "block.jstests.test_furnace_part": "Test furnace part",
   "block.jstests.test_gearbox": "Test gearbox",
+  "block.jstests.test_glow_panel": "Test glowing panel",
   "block.jstests.test_harvester": "Test harvester",
   "block.jstests.test_heat_copper": "Test heat copper",
   "block.jstests.test_heat_iron": "Test heat iron",

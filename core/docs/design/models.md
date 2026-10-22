@@ -92,10 +92,10 @@ In the spirit of CTM and Continuity:
 - **Joins by rule**: the same block, the same tag or a list, diagonals too.
 - **They work in multipart spaces and on microblocks** ([Multipart](multipart.md)).
 - **They step aside for Continuity and CTM** when those are installed ([Modpacks](modpacks.md)).
+- **Glowing block textures in OptiFine's form** (a texture's `_e` beside it, the ending the pack says), as Continuity
+  reads them, for resource packs made for it: drawn over their faces at full light.
 
 ## Still to build
 
-- **Glowing block textures in OptiFine's form** (a texture's `_e` beside it), as Continuity reads them, for resource
-  packs made for it.
 - **J's Computers' models move onto the kit** (the Mainframes, racks, drives and encoders), and GeckoLib leaves the
   series, when J's Computers moves onto the Core.

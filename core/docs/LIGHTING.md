@@ -92,10 +92,26 @@ that gives light gives its own level in its colour; anything on fire gives a fir
 game's own: soul fire's blue, redstone's red, the sea lantern's cyan, amethyst's violet, the froglights, a bucket of
 lava, a blaze rod, the glowing mobs.
 
-Light of several colours mixes, each by the light it brings, and a colour shows only where its light does: a source
-the game's light shows did not reach a place (a wall between them) gives it no colour. Open sky takes from a place's
-tint, as daylight drowns a lamp. The world's mesh carries the colour in the corners of its faces, blended across them,
-so a floor fades smoothly from red to white away from an alarm.
+Light of several colours mixes, each by the light it brings, and a colour shows only where its light goes: each
+source's light is spread through the blocks as the game spreads its own, a level less each block, round walls and
+never through them, so a lamp behind a wall colours nothing on the other side. Open sky takes from a place's tint, as
+daylight drowns a lamp. The world's mesh carries the colour in the corners of its faces, blended across them, so a
+floor fades smoothly from red to white away from an alarm.
+
+*Added 2026-10-22:* **light through coloured glass.** Light that passes a block that tints it takes the block's
+colour on the far side: white light through a wall of red glass lights the floor beyond red, and white on the near
+side; through two panes it takes both. Daylight does the same under a roof of stained glass, by day, down to the first
+wall or sixteen blocks, as the sun through a greenhouse's panes. The colour a block gives the light that passes it is
+a data map too, `data/<namespace>/data_maps/block/light_tints.json`; a block the map says nothing of gives its beacon
+beam's colour if it colours one, as the game's stained glass and its panes do, and leaves light as it is otherwise.
+
+```json
+{ "values": { "mymod:amber_window": "#FFB040" } }
+```
+
+The light of every source near is spread away from the main thread, a batch of sections a tick, and the main thread
+only hands the batch over and takes it back; `ColouredLights.lastTickMillis()` says what it spent (a field of a hundred
+coloured lamps costs it about a fifth of a millisecond a tick), and `spread()` how many sources' light is spread.
 
 ## Dynamic light
 
@@ -115,7 +131,15 @@ DynamicLightsClient.provide(level -> Cars.near(level).stream()
 
 Bright lamps, blocks that give coloured or bright light, and glowing parts that cast light have a soft halo in their
 colour, and spotlights a shaft of light through the air, bright at the lamp and fading along its reach, as dust and
-haze show it. Both are light added to what lies behind them and hidden behind walls; only the nearest are drawn.
+haze show it. Both are light added to what lies behind them and hidden behind walls; only the nearest are drawn. They
+are drawn after the clouds, so a cloud lies behind them.
+
+## Under a shader pack
+
+A shader pack lights the world its own way. The Core's colour rides in the corners of the faces, which a pack such as
+Complementary multiplies into what it draws, so a lamp's colour still shows on the floor it lights, softened by the
+pack's own light; a pack with coloured light of its own colours the light of the blocks its own lists name. The halos
+step aside, since a pack glows bright things with a bloom of its own; the shafts of spotlights stay.
 
 ## Readings
 
@@ -145,5 +169,7 @@ on as well. Light that counts in the game (lamps, spotlights) is never stepped a
   one before what a ray meets, so a spotlight into the open sky, or onto glass with nothing behind it, lights nothing.
 - **No colour shows.** The block's colour is not in the map (white tints nothing), the place is under open sky, the
   player turned coloured light off, or Shimmer is installed and the Core stepped aside.
+- **Glass does not tint the light.** The block is in no `light_tints` map and colours no beacon beam, or no light
+  passes it: tinted glass, like a wall, lets none through.
 - **A model's glowing part casts no light.** Its declaration gives no `glowLight`, or it is drawn in a hand or a
   screen, where it lights nothing.

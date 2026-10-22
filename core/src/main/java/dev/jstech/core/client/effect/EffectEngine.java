@@ -30,6 +30,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -76,6 +77,8 @@ public final class EffectEngine {
     private static final int RGB = 0xFFFFFF;
     private static final int ALPHA_SHIFT = 24;
     private static final double LEAST_SPEED = 1e-4;
+    /* How little a particle may be drawn out and still be drawn as a square. */
+    private static final float NO_STRETCH = 1e-4F;
     private static final int ARC_TICKS = 2;
     private static final int BRIGHTEST = 15;
     /* An effect that went further than this in a tick, in blocks, jumped: what it emits is not laid along the way. */
@@ -398,8 +401,9 @@ public final class EffectEngine {
     }
 
     /*
-     * The particles, see-through ones back to front: many at once on the graphics card while it may be, each layer in
-     * one go, or one by one into the batches of the layers.
+     * The particles, back to front in each layer: many at once on the graphics card while it may be, each layer in
+     * one go, or one by one into the batches of the layers. Under the Fabulous graphics they mark how far they are,
+     * for the game to lay its layers together; drawn back to front, none hides one nearer.
      */
     private static void drawParticles(final ClientLevel level, final Camera camera, final Vec3 eye,
                                       final float partialTick, final MultiBufferSource.BufferSource buffers) {
@@ -407,28 +411,34 @@ public final class EffectEngine {
         final Vector3f up = camera.getUpVector();
         final boolean together = Instancing.on();
         final long[] order = new long[STORE.count];
+        final long[] added = new long[STORE.count];
         int laid = 0;
+        int glowing = 0;
         for (int i = 0; i < STORE.count; i++) {
+            final double dx = lerp(STORE.lastX[i], STORE.x[i], partialTick) - eye.x;
+            final double dy = lerp(STORE.lastY[i], STORE.y[i], partialTick) - eye.y;
+            final double dz = lerp(STORE.lastZ[i], STORE.z[i], partialTick) - eye.z;
+            final long key = (long) Float.floatToIntBits((float) (dx * dx + dy * dy + dz * dz)) << Integer.SIZE | i;
             if (STORE.owner[i].emitter.look().blend() == Emitter.Blend.ADDITIVE) {
-                drawParticle(level, i, eye, partialTick, left, up, together ? null
-                        : buffers.getBuffer(EffectRenderTypes.GLOWING), ADDED);
+                added[glowing++] = key;
             } else {
-                final double dx = lerp(STORE.lastX[i], STORE.x[i], partialTick) - eye.x;
-                final double dy = lerp(STORE.lastY[i], STORE.y[i], partialTick) - eye.y;
-                final double dz = lerp(STORE.lastZ[i], STORE.z[i], partialTick) - eye.z;
-                final float away = (float) (dx * dx + dy * dy + dz * dz);
-                order[laid++] = (long) Float.floatToIntBits(away) << Integer.SIZE | i;
+                order[laid++] = key;
             }
         }
-        // Back to front, so each see-through one lies over those behind it.
         Arrays.sort(order, 0, laid);
-        final VertexConsumer consumer = laid > 0 && !together ? buffers.getBuffer(EffectRenderTypes.PARTICLES)
-                : null;
+        Arrays.sort(added, 0, glowing);
+        final boolean layered = Minecraft.useShaderTransparency();
+        final RenderType over = layered ? EffectRenderTypes.PARTICLES_LAYERED : EffectRenderTypes.PARTICLES;
+        final RenderType lit = layered ? EffectRenderTypes.GLOWING_LAYERED : EffectRenderTypes.GLOWING;
+        final VertexConsumer consumer = laid > 0 && !together ? buffers.getBuffer(over) : null;
         for (int k = laid - 1; k >= 0; k--) {
             drawParticle(level, (int) order[k], eye, partialTick, left, up, consumer, LAID);
         }
-        instancedLast = together ? LAID.draw(EffectRenderTypes.PARTICLES, camera)
-                + ADDED.draw(EffectRenderTypes.GLOWING, camera) : 0;
+        final VertexConsumer light = glowing > 0 && !together ? buffers.getBuffer(lit) : null;
+        for (int k = glowing - 1; k >= 0; k--) {
+            drawParticle(level, (int) added[k], eye, partialTick, left, up, light, ADDED);
+        }
+        instancedLast = together ? LAID.draw(over, camera) + ADDED.draw(lit, camera) : 0;
     }
 
     /* A particle, into {@code consumer}, or written to {@code together} to be drawn many at once for none. */
@@ -453,23 +463,26 @@ public final class EffectEngine {
         final double z = lerp(STORE.lastZ[i], STORE.z[i], partialTick);
         final int light = lightAt(level, x, y, z, look.light());
         final float turn = STORE.angle[i] + STORE.spin[i] * partialTick * (float) TICK;
-        if (consumer == null) {
-            together.add((float) (x - eye.x), (float) (y - eye.y), (float) (z - eye.z), (float) size,
-                    sprite.getU0(), sprite.getV0(), sprite.getU1(), sprite.getV1(), argb, turn, light);
-            return;
-        }
-        final float cos = (float) (Math.cos(turn) * size);
-        final float sin = (float) (Math.sin(turn) * size);
-        // The two half-diagonals of the square, turned by the particle's angle on the camera's plane.
-        final float ax = left.x() * cos + up.x() * sin;
-        final float ay = left.y() * cos + up.y() * sin;
-        final float az = left.z() * cos + up.z() * sin;
-        final float bx = up.x() * cos - left.x() * sin;
-        final float by = up.y() * cos - left.y() * sin;
-        final float bz = up.z() * cos - left.z() * sin;
+        // Half of how far it goes in the time its look draws it along, as far either way of where it is.
+        final float drawnOut = (float) (look.stretch() / 2 * run.effect.scale);
+        final float sx = STORE.vx[i] * drawnOut;
+        final float sy = STORE.vy[i] * drawnOut;
+        final float sz = STORE.vz[i] * drawnOut;
         final float cx = (float) (x - eye.x);
         final float cy = (float) (y - eye.y);
         final float cz = (float) (z - eye.z);
+        if (consumer == null) {
+            together.add(cx, cy, cz, (float) size, sprite.getU0(), sprite.getV0(), sprite.getU1(), sprite.getV1(),
+                    argb, turn, light, sx, sy, sz);
+            return;
+        }
+        final float[] halves = halves(cx, cy, cz, (float) size, turn, sx, sy, sz, left, up);
+        final float ax = halves[0];
+        final float ay = halves[1];
+        final float az = halves[2];
+        final float bx = halves[3];
+        final float by = halves[4];
+        final float bz = halves[5];
         final int r = argb >> 16 & CHANNEL;
         final int g = argb >> 8 & CHANNEL;
         final int b = argb & CHANNEL;
@@ -482,6 +495,32 @@ public final class EffectEngine {
                 .setColor(r, g, b, a).setLight(light);
         consumer.addVertex(cx + ax - bx, cy + ay - by, cz + az - bz).setUv(sprite.getU0(), sprite.getV1())
                 .setColor(r, g, b, a).setLight(light);
+    }
+
+    /*
+     * The two half-sides of a particle's square, as the instanced shader lays them: drawn out along the way it goes
+     * by {@code sx, sy, sz} and turned about that line to face the camera, or turned by its angle on the camera's
+     * plane when it is not drawn out, or goes straight at the camera.
+     */
+    private static float[] halves(final float cx, final float cy, final float cz, final float size, final float turn,
+                                  final float sx, final float sy, final float sz, final Vector3f left,
+                                  final Vector3f up) {
+        final Vector3f stretch = new Vector3f(sx, sy, sz);
+        final float drawn = stretch.length();
+        if (drawn > NO_STRETCH) {
+            final Vector3f along = stretch.div(drawn);
+            final Vector3f side = new Vector3f(along).cross(new Vector3f(cx, cy, cz).normalize());
+            if (side.length() > NO_STRETCH) {
+                side.normalize(size);
+                along.mul(size + drawn);
+                return new float[] {side.x, side.y, side.z, along.x, along.y, along.z};
+            }
+        }
+        final float cos = (float) (Math.cos(turn) * size);
+        final float sin = (float) (Math.sin(turn) * size);
+        return new float[] {left.x() * cos + up.x() * sin, left.y() * cos + up.y() * sin,
+            left.z() * cos + up.z() * sin, up.x() * cos - left.x() * sin, up.y() * cos - left.y() * sin,
+            up.z() * cos - left.z() * sin};
     }
 
     /* The particles' ribbons, from the oldest place each remembers to where it is now, fading to its tail. */

@@ -13,6 +13,7 @@ import dev.jstech.core.light.CoreLights;
 import dev.jstech.core.light.LampBlockEntity;
 import dev.jstech.core.light.LightBlock;
 import dev.jstech.core.light.LightColours;
+import dev.jstech.core.light.LightFlood;
 import dev.jstech.core.light.LightKind;
 import dev.jstech.core.light.LightKinds;
 import dev.jstech.core.light.LightMath;
@@ -28,6 +29,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Blaze;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.LightLayer;
@@ -41,7 +43,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * The lighting kit in a world: a lamp shines as its control says, by redstone, by power or always, pulsing as its
  * kind says, and goes dark broken until mended; a floodlight's cone and a narrow beam light places far past the
  * game's fifteen blocks with light that counts for what spawns there, and that light goes when the lamp does; light
- * left standing in the air goes by itself; the colours of light are data, and a sensor reads light's level and hue.
+ * left standing in the air goes by itself; the colours of light are data, stained glass tints the light that passes
+ * it, and a sensor reads light's level and hue.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -177,6 +180,45 @@ public final class LightingGameTests {
         final LightColours.Glow glow = LightColours.of(blaze);
         blaze.discard();
         helper.assertTrue(glow != null && glow.level() == 10, "a blaze glows: " + glow);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void stainedGlass_tintsTheLightThatPassesItsColour(final GameTestHelper helper) {
+        final int red = DyeColor.RED.getTextureDiffuseColor() & LightMath.WHITE;
+        helper.assertTrue(LightColours.tint(Blocks.RED_STAINED_GLASS.defaultBlockState()) == red,
+                "red stained glass tints light its colour");
+        helper.assertTrue(LightColours.tint(Blocks.BLUE_STAINED_GLASS_PANE.defaultBlockState())
+                == (DyeColor.BLUE.getTextureDiffuseColor() & LightMath.WHITE), "and so does a pane, blue");
+        helper.assertTrue(!LightColours.tints(Blocks.GLASS.defaultBlockState()), "clear glass tints nothing");
+        // A wall of red glass between a white source and the far side, in the arena's own blocks.
+        for (int y = 1; y <= 5; y++) {
+            for (int z = 0; z <= 6; z++) {
+                helper.setBlock(new BlockPos(3, y, z), Blocks.RED_STAINED_GLASS);
+            }
+        }
+        final BlockPos source = helper.absolutePos(new BlockPos(1, 2, 3));
+        final ServerLevel level = helper.getLevel();
+        final LightFlood flood = LightFlood.spread(source.getX(), source.getY(), source.getZ(), 15,
+                LightMath.WHITE, new LightFlood.IPassage() {
+                    @Override
+                    public int dims(final int x, final int y, final int z) {
+                        final BlockPos at = new BlockPos(x, y, z);
+                        return level.getBlockState(at).getLightBlock(level, at);
+                    }
+
+                    @Override
+                    public int tint(final int x, final int y, final int z) {
+                        return LightColours.tint(level.getBlockState(new BlockPos(x, y, z)));
+                    }
+                });
+        final BlockPos near = helper.absolutePos(new BlockPos(2, 2, 3));
+        final BlockPos far = helper.absolutePos(new BlockPos(5, 2, 3));
+        helper.assertTrue(flood.colour(near.getX(), near.getY(), near.getZ()) == LightMath.WHITE,
+                "white on the source's side of the glass");
+        helper.assertTrue(flood.colour(far.getX(), far.getY(), far.getZ()) == red && flood.level(far.getX(),
+                far.getY(), far.getZ()) == 11, "red, four places on, past the glass: " + Integer.toHexString(
+                flood.colour(far.getX(), far.getY(), far.getZ())));
         helper.succeed();
     }
 

@@ -20,6 +20,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
@@ -30,9 +31,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The colour of light, as data maps a mod or a data pack fills, sent to every player: the colour each block that gives
  * light gives it in ({@code data/<namespace>/data_maps/block/light_colours.json}), the light an item gives while it is
- * held or lies on the ground ({@code item/held_lights.json}), and the light a kind of mob gives
- * ({@code entity_type/entity_lights.json}). A block the map says nothing of gives white light, which tints nothing,
- * as the game's own warm light; a held block that gives light gives its own level in its colour.
+ * held or lies on the ground ({@code item/held_lights.json}), the light a kind of mob gives
+ * ({@code entity_type/entity_lights.json}), and the colour a block gives the light passing through it
+ * ({@code block/light_tints.json}). A block the map says nothing of gives white light, which tints nothing, as the
+ * game's own warm light; a held block that gives light gives its own level in its colour; stained glass tints light
+ * its own colour unless the map says otherwise.
  *
  * <pre>{@code
  * { "values": { "minecraft:redstone_torch": "#FF3018", "mymod:alarm_lamp": "#FF2010" } }
@@ -52,6 +55,13 @@ public final class LightColours {
     /** The light a kind of mob gives. */
     public static final DataMapType<EntityType<?>, Glow> ENTITIES = DataMapType.builder(id("entity_lights"),
             Registries.ENTITY_TYPE, Glow.CODEC).synced(Glow.CODEC, false).build();
+    /**
+     * The colour each block gives the light that passes through it ({@code block/light_tints.json}), as stained glass
+     * does; a block the map says nothing of gives its beacon beam's colour if it colours one, as the game's stained
+     * glass and its panes do, and leaves light as it is otherwise.
+     */
+    public static final DataMapType<Block, Integer> TINTS = DataMapType.builder(id("light_tints"),
+            Registries.BLOCK, COLOUR).synced(COLOUR, false).build();
     /** The light of whatever burns: a fire's level and colour. */
     public static final Glow BURNING = new Glow(LightMath.BRIGHTEST, 0xFFA040);
 
@@ -67,6 +77,7 @@ public final class LightColours {
             event.register(BLOCKS);
             event.register(HELD);
             event.register(ENTITIES);
+            event.register(TINTS);
         });
     }
 
@@ -74,6 +85,21 @@ public final class LightColours {
     public static int of(final BlockState state) {
         final Integer colour = state.getBlockHolder().getData(BLOCKS);
         return colour == null ? LightMath.WHITE : colour;
+    }
+
+    /** The colour {@code state} gives light passing through it: the map's, its beacon beam's, or white for none. */
+    public static int tint(final BlockState state) {
+        final Integer colour = state.getBlockHolder().getData(TINTS);
+        if (colour != null) {
+            return colour;
+        }
+        return state.getBlock() instanceof BeaconBeamBlock glass ? glass.getColor().getTextureDiffuseColor()
+                & LightMath.WHITE : LightMath.WHITE;
+    }
+
+    /** Whether {@code state} gives light passing through it a colour. */
+    public static boolean tints(final BlockState state) {
+        return tint(state) != LightMath.WHITE;
     }
 
     /** The light {@code stack} gives held or on the ground: the map's, else its block's own light; none for none. */

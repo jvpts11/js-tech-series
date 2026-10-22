@@ -23,6 +23,11 @@ public final class TestConnected {
     /** The block of the full method's rule, by block. */
     public static final BlockEntry<Block> FULL = TestSounds.CONTENT.block("test_ctm_full", Block::new)
             .named("Test connected full").look(IBlockLook.cubeAll("test_ctm_full")).register();
+    /** A panel whose texture has a glowing one beside it, {@code _e}, as a pack in OptiFine's form writes it. */
+    public static final BlockEntry<Block> GLOW_PANEL = TestSounds.CONTENT.block("test_glow_panel", Block::new)
+            .named("Test glowing panel").look(IBlockLook.cubeAll("test_glow_panel")).register();
+    /** The texture drawn glowing over the panel's. */
+    public static final String GLOW_PANEL_GLOWING = "jstests:block/test_glow_panel_e";
     /** The block of the compact method's rule, by its texture. */
     public static final BlockEntry<Block> COMPACT = TestSounds.CONTENT.block("test_ctm_compact", Block::new)
             .named("Test connected compact").look(IBlockLook.cubeAll("test_ctm_compact")).register();

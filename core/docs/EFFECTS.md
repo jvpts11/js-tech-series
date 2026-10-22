@@ -41,6 +41,7 @@ it.
 | `look.size`, `colour` | keys over its life, spread evenly: blocks across, and `#RRGGBB` or `#RRGGBBAA` |
 | `look.spin`, `blend`, `light` | degrees a second either way; `translucent` or `additive`; a light of its own, 15 for full light |
 | `look.trail`, `width` | the ribbon it leaves, in seconds of its path, and its width; a beam's or an arc's width |
+| `look.stretch` | how much of its path it is drawn along, in seconds: as long as its size and as far as it goes in that time, along the way it goes and turned about that line to face the camera, as a spark or a tracer streaks; 0 for a square |
 | `motion.gravity`, `drag`, `buoyancy` | how much of the pull acts (1 falls as a stone); how quickly the air brings it to the wind's speed at sea level, a second; how hard it is lifted at sea level |
 | `motion.moved_by` | `{"gravity": true, "air": true, "wind": true}`: what acts on it |
 | `motion.collide`, `expands`, `medium` | whether it stops at blocks; whether it widens as the air thins, as a plume of gas does, up to six times in a vacuum; `any`, `air` (dies in water) or `water` (bubbles) |
@@ -113,8 +114,10 @@ there at once. Create writes the file, under the block's mod, and opens it in th
 Every particle of a layer is drawn in one batch, the see-through ones back to front. *Added 2026-10-22:* the
 graphics card draws them: one square is sent to it once, and each particle hands over only where it is, its size,
 its picture, its colour, its turn and its light, so thousands cost the game little. Under a shader pack, or with the
-player's *Draw alike things together* turned off ([Models](MODELS.md)), they are laid out one by one as before. The
-player's
+player's *Draw alike things together* turned off ([Models](MODELS.md)), they are laid out one by one as before.
+Effects are drawn after the clouds and the rain, so a cloud lies behind a plume of steam rather than across it; under
+the Fabulous graphics, with the game's particles, in the layer the game lays together with the clouds' by how far
+each thing is. The player's
 `jstech-effects.toml` says how many particles may live at once (6000 unless they say), how hard the screen shakes,
 how bright a flash is, and whether heat haze and shockwaves bend the view; the game's own particle setting (all,
 decreased, minimal) thins out what is emitted, and near the budget the farthest effects emit fewer. An effect too far

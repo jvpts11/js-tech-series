@@ -7,6 +7,9 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import com.mojang.logging.LogUtils;
+import dev.jstech.core.client.light.ColouredLights;
+import dev.jstech.core.client.instancing.Instancing;
 import dev.jstech.core.client.light.DynamicLightsClient;
 import dev.jstech.core.light.LampBlockEntity;
 import dev.jstech.core.light.LightBlock;
@@ -14,6 +17,7 @@ import dev.jstech.tests.TestLights;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
@@ -29,13 +33,18 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.model.data.ModelData;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * How light looks to a player: a green lamp tints the floor it lights green, in the corners of the floor's faces as
- * the world's mesh is built; a torch held lights the way on the player's own game, and the way goes dark once it is
- * put away; a floodlight's shaft through the night air, lighting a wall twenty blocks off; and the halos of bright
- * lamps in the dark.
+ * the world's mesh is built; white light through a wall of red glass lights the floor past it red, and the sun through
+ * a roof of green glass the floor under it green; a field of sea lanterns' light spread away from the main thread,
+ * which only hands it over; the colours under a deferred shader pack, run with Iris; a torch held lights the way on
+ * the player's own game, and the way goes dark once it is put away; a floodlight's shaft through the night air,
+ * lighting a wall twenty blocks off; and the halos of bright lamps in the dark.
  */
 public final class LightingClientTests {
 
@@ -54,6 +63,20 @@ public final class LightingClientTests {
     private static final int GREEN_SHIFT = 8;
     private static final int BLUE_SHIFT = 16;
     private static final long SEED = 42L;
+    /* A corner's colour left as the face's own: white, wholly opaque. */
+    private static final int WHITE_CORNER = 0xFFFFFFFF;
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final int FIELD_SIDE = 10;
+    private static final int FIELD_STEP = 4;
+    private static final int FIELD_X = 8;
+    private static final int SAMPLES = 100;
+    /* What the main thread may spend on coloured light a tick, on average, with the field's light to look after. */
+    private static final double MOST_MAIN_MILLIS = 0.5;
+    private static final String IRIS = "iris";
+    private static final String IRIS_CLASS = "net.irisshaders.iris.Iris";
+    /* A deferred pack, which the run's shaderpacks folder holds for a run with Iris. */
+    private static final String PACK = "ComplementaryReimagined_r5.9.3.zip";
+    private static final int PACK_WAIT = 600;
 
     private LightingClientTests() {
     }
@@ -79,6 +102,138 @@ public final class LightingClientTests {
                 .thenWaitUntil(() -> night(ctx), WAIT, "night on the player's game")
                 .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(FLOOR))))
                 .thenScreenshot(20, "coloured-lamps-tint-a-white-floor")
+                .thenServer(0, level -> {
+                    level.setDayTime(DAY);
+                    clear(ctx, level);
+                    floor(ctx, level, Blocks.GRASS_BLOCK.defaultBlockState());
+                });
+    }
+
+    @ClientTest(timeoutTicks = 900)
+    public static void colouredLight_takesTheColourOfStainedGlassItPasses(final ClientTestContext ctx) {
+        final BlockPos glowstone = new BlockPos(-7, 2, 3);
+        final BlockPos past = new BlockPos(-3, 1, 3);
+        final BlockPos before = new BlockPos(-8, 1, 3);
+        ctx.afterTest(() -> ctx.serverPlayer().serverLevel().getServer().execute(() -> floor(ctx,
+                ctx.serverPlayer().serverLevel(), Blocks.GRASS_BLOCK.defaultBlockState())));
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                    floor(ctx, level, Blocks.WHITE_CONCRETE.defaultBlockState());
+                    // White light on one side of a wall of red glass.
+                    level.setBlockAndUpdate(ctx.abs(glowstone), Blocks.GLOWSTONE.defaultBlockState());
+                    for (int y = 2; y <= 5; y++) {
+                        for (int z = 0; z <= 7; z++) {
+                            level.setBlockAndUpdate(ctx.abs(new BlockPos(-5, y, z)), Blocks.RED_STAINED_GLASS
+                                    .defaultBlockState());
+                        }
+                    }
+                })
+                .thenWaitUntil(() -> night(ctx), WAIT, "night on the player's game")
+                .thenWaitUntil(() -> redder(top(ctx, past)), WAIT,
+                        "the floor past the glass to be lit red by the white light through it")
+                .thenAssert(0, () -> top(ctx, before) == WHITE_CORNER, "and white on the glowstone's side: "
+                        + Integer.toHexString(top(ctx, before)))
+                .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(new BlockPos(-5, 2, 3)))))
+                .thenScreenshot(20, "white-light-through-red-glass")
+                .thenServer(0, level -> {
+                    level.setDayTime(DAY);
+                    clear(ctx, level);
+                    floor(ctx, level, Blocks.GRASS_BLOCK.defaultBlockState());
+                });
+    }
+
+    @ClientTest(timeoutTicks = 900)
+    public static void daylight_takesTheColourOfAGlassRoof(final ClientTestContext ctx) {
+        final BlockPos under = new BlockPos(-2, 1, 3);
+        final BlockPos outside = new BlockPos(3, 1, 3);
+        ctx.afterTest(() -> ctx.serverPlayer().serverLevel().getServer().execute(() -> floor(ctx,
+                ctx.serverPlayer().serverLevel(), Blocks.GRASS_BLOCK.defaultBlockState())));
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(DAY);
+                    floor(ctx, level, Blocks.WHITE_CONCRETE.defaultBlockState());
+                    for (int x = -5; x <= 0; x++) {
+                        for (int z = 1; z <= 5; z++) {
+                            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, 5, z)), Blocks.LIME_STAINED_GLASS
+                                    .defaultBlockState());
+                        }
+                    }
+                })
+                .thenWaitUntil(() -> greener(top(ctx, under)), WAIT,
+                        "the floor under the roof to be lit green by the sun through it")
+                .thenAssert(0, () -> top(ctx, outside) == WHITE_CORNER, "and white in the open: "
+                        + Integer.toHexString(top(ctx, outside)))
+                .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(under))))
+                .thenScreenshot(20, "sun-through-a-green-glass-roof")
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    floor(ctx, level, Blocks.GRASS_BLOCK.defaultBlockState());
+                });
+    }
+
+    @ClientTest(timeoutTicks = 1200)
+    public static void colouredLight_isWorkedOutAwayFromTheMainThread(final ClientTestContext ctx) {
+        final double[] taken = new double[2];
+        final int[] ticks = new int[1];
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    level.setDayTime(NIGHT);
+                    field(ctx, level, Blocks.SEA_LANTERN.defaultBlockState());
+                })
+                .thenWaitUntil(() -> ColouredLights.spread() >= FIELD_SIDE * FIELD_SIDE, WAIT,
+                        "every sea lantern's light to be spread through the blocks")
+                .thenWaitUntil(() -> {
+                    taken[0] += ColouredLights.lastTickMillis();
+                    taken[1] = Math.max(taken[1], ColouredLights.lastTickMillis());
+                    return ++ticks[0] >= SAMPLES;
+                }, SAMPLES + 20, "the main thread's share to be timed over " + SAMPLES + " ticks")
+                .then(0, () -> LOGGER.info("[JSC-BENCH] coloured light {} sources: main thread {} ms a tick on "
+                        + "average, {} ms at most", ColouredLights.spread(), String.format(Locale.ROOT, "%.3f",
+                        taken[0] / ticks[0]), String.format(Locale.ROOT, "%.3f", taken[1])))
+                .thenAssert(0, () -> taken[0] / ticks[0] < MOST_MAIN_MILLIS, "the main thread only hands the "
+                        + "batches over and takes them back: " + taken[0] / ticks[0] + " ms a tick")
+                .thenServer(0, level -> {
+                    field(ctx, level, Blocks.AIR.defaultBlockState());
+                    level.setDayTime(DAY);
+                });
+    }
+
+    /*
+     * Run with -PwithIris and a deferred pack in the run's shaderpacks folder; without Iris, the test says only that no
+     * pack draws.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void colouredLight_showsUnderADeferredShaderPack(final ClientTestContext ctx) {
+        if (!ModList.get().isLoaded(IRIS)) {
+            ctx.thenAssert(0, () -> !Instancing.shaderPack(), "without Iris no shader pack draws the world");
+            return;
+        }
+        ctx.afterTest(() -> shaders(null));
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                    floor(ctx, level, Blocks.WHITE_CONCRETE.defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(LAMP), TestLights.FRAGILE_LAMP.get().defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(LAMP.west(5)), TestLights.ALARM_LAMP.get().defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(LAMP.west(5).above()), Blocks.REDSTONE_BLOCK
+                            .defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(LAMP.east(5)), Blocks.SOUL_LANTERN.defaultBlockState());
+                })
+                .thenWaitUntil(() -> lit(ctx, LAMP), WAIT, "the lamp to be on on the player's game")
+                .thenWaitUntil(() -> night(ctx), WAIT, "night on the player's game")
+                .thenWaitUntil(() -> greener(ctx), WAIT, "the floor to be tinted green without a pack")
+                .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(FLOOR))))
+                .thenScreenshot(10, "coloured-light-without-a-pack")
+                .then(0, () -> shaders(PACK))
+                .thenWaitUntil(Instancing::shaderPack, PACK_WAIT, "the pack " + PACK + " to draw the world")
+                .thenAssert(40, () -> greener(ctx), "the floor's faces still carry the green the pack draws them in")
+                .thenScreenshot(20, "coloured-light-under-a-deferred-pack")
+                .then(0, () -> shaders(null))
+                .thenWaitUntil(() -> !Instancing.shaderPack(), PACK_WAIT, "the pack to be put away")
                 .thenServer(0, level -> {
                     level.setDayTime(DAY);
                     clear(ctx, level);
@@ -205,6 +360,58 @@ public final class LightingClientTests {
         final int green = colour >> GREEN_SHIFT & CHANNEL;
         final int blue = colour >> BLUE_SHIFT & CHANNEL;
         return green == CHANNEL && red < CHANNEL && blue < CHANNEL;
+    }
+
+    /* Has Iris draw the world with the shader pack {@code pack}, or with none; through its own settings. */
+    private static void shaders(@Nullable final String pack) {
+        try {
+            final Class<?> iris = Class.forName(IRIS_CLASS);
+            final Object settings = iris.getMethod("getIrisConfig").invoke(null);
+            if (pack != null) {
+                settings.getClass().getMethod("setShaderPackName", String.class).invoke(settings, pack);
+            }
+            settings.getClass().getMethod("setShadersEnabled", boolean.class).invoke(settings, pack != null);
+            settings.getClass().getMethod("save").invoke(settings);
+            iris.getMethod("reload").invoke(null);
+        } catch (final ReflectiveOperationException failed) {
+            throw new IllegalStateException("Iris could not be told to draw with " + pack, failed);
+        }
+    }
+
+    /* A field of {@code state}, ten by ten, four blocks apart, east of where the other tests stand. */
+    private static void field(final ClientTestContext ctx, final ServerLevel level, final BlockState state) {
+        for (int i = 0; i < FIELD_SIDE; i++) {
+            for (int j = 0; j < FIELD_SIDE; j++) {
+                level.setBlockAndUpdate(ctx.abs(new BlockPos(FIELD_X + i * FIELD_STEP, 2, j * FIELD_STEP)), state);
+            }
+        }
+    }
+
+    /* The colour of the first corner of the top of the block at {@code at}, as the world's mesh would draw it. */
+    private static int top(final ClientTestContext ctx, final BlockPos at) {
+        final ClientLevel level = ctx.mc().level;
+        if (level == null) {
+            return 0;
+        }
+        final BlockPos pos = ctx.abs(at);
+        final BlockState state = level.getBlockState(pos);
+        final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
+        final ModelData data = model.getModelData(level, pos, state, ModelData.EMPTY);
+        final List<BakedQuad> faces = model.getQuads(state, Direction.UP, RandomSource.create(SEED), data, null);
+        return faces.isEmpty() ? 0 : faces.getFirst().getVertices()[3];
+    }
+
+    /* Whether a corner's colour, red, green, blue and alpha from the lowest byte up, is red over green and blue. */
+    private static boolean redder(final int corner) {
+        final int red = corner & CHANNEL;
+        return red == CHANNEL && (corner >> GREEN_SHIFT & CHANNEL) < CHANNEL && (corner >> BLUE_SHIFT & CHANNEL)
+                < CHANNEL;
+    }
+
+    /* Whether a corner's colour is green over red and blue. */
+    private static boolean greener(final int corner) {
+        return (corner >> GREEN_SHIFT & CHANNEL) == CHANNEL && (corner & CHANNEL) < CHANNEL
+                && (corner >> BLUE_SHIFT & CHANNEL) < CHANNEL;
     }
 
     /* The light laid where the player's eyes are, on their own game. */

@@ -576,7 +576,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its light, layer, proxies, conditions with predicates and faces of their own, its overrides in block models, and
   logics written as data, OptiFine's full sheet among them. Blocks may be named by tag. Faces join by how their
   texture lies on them, partial faces take the same part of their tile, and microblocks join their like in the spaces
-  around. While Continuity or CTM is installed the Core steps aside and says so, unless the player's setting keeps it.
+  around. Glowing textures in OptiFine's form too: where a pack says their ending (`suffix.emissive=_e`), a block's
+  texture with a glowing one beside it, and a tile's, is drawn with it over it at full light, shining in the dark.
+  While Continuity or CTM is installed the Core steps aside and says so, unless the player's setting keeps it.
 - Lamps: kinds of light as data, declared by a mod and written over by a data pack (colour, intensity, reach, a
   point, a spotlight's cone or a narrow beam, a flicker by name or by its own letters, what turns it on, the watts it
   draws, whether it breaks), and lamps of a kind that shine always, by redstone or while they get their watts, flicker
@@ -587,23 +589,29 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   given back when the lamp goes off, and light left where no lamp holds it goes by itself.
 - Coloured light: the colour of the light of blocks, of what is held and of mobs is data, the game's own filled
   in (soul fire, redstone, the sea lantern, amethyst, the froglights, lava, blazes and more); light of several colours
-  mixes and tints the world it lights, fading smoothly across faces, only where its light reaches, less under open
-  sky. It rides in the world's mesh, so it looks the same with Sodium, Embeddium and Iris as without them.
+  mixes and tints the world it lights, fading smoothly across faces, only where its light goes, round walls and never
+  through them, less under open sky. Light that passes stained glass takes the glass's colour, white light through a
+  red pane lighting the far side red, and daylight under a roof of stained glass takes the roof's; the colour a block
+  gives the light passing it is data too. The light is worked out away from the main thread, a batch of sections a
+  tick. It rides in the world's mesh, so it looks the same with Sodium, Embeddium and Iris as without them, and a
+  shader pack such as Complementary multiplies it into what it draws.
 - Dynamic light: a torch held lights the way, a mob on fire its surroundings, an item that gives light the
   ground it lies on, a model's glowing part that casts light the world as it moves, and a mod's own moving lights;
   drawn on the player's game only, nothing of the world changed.
 - Glow without a shader: soft halos about bright lamps, blocks of coloured or bright light and glowing parts,
-  in their colour, and the shaft of a spotlight through the air, fading along its reach.
+  in their colour, and the shaft of a spotlight through the air, fading along its reach, with the clouds behind them.
+  Under a shader pack the halos step aside for the pack's own bloom.
 - Light sensors read a place's light, from 0 to 15, and the hue of the light there.
 - The player's lighting settings: coloured light and dynamic light on or off, the glow's strength, how far it
   all reaches. Dynamic light steps aside for LambDynamicLights and Sodium Dynamic Lights, coloured light and glow for
   Shimmer, unless the player's setting keeps the Core's on as well.
 - Particles and effects as data: an effect is a file of emitters with shapes (a point, a sphere, a box, a disc,
   a cone, a line, the faces of a model), a rate and bursts, particles whose size, colour, picture and spin change
-  over their life, with a light of their own, a ribbon behind them, collisions with blocks, and emitters they carry.
-  They move by the physics of where they are: the dimension's pull, drag and lift by the air's density, the wind, the
-  water they are in; steam rises and drifts, nothing rises in a vacuum, a plume widens as the air thins, bubbles
-  live only in water.
+  over their life, with a light of their own, a ribbon behind them or drawn out along their speed as sparks and
+  tracers streak, collisions with blocks, and emitters they carry. They move by the physics of where they are: the
+  dimension's pull, drag and lift by the air's density, the wind, the water they are in; steam rises and drifts,
+  nothing rises in a vacuum, a plume widens as the air thins, bubbles live only in water. They are drawn after the
+  clouds, so a cloud lies behind a plume of steam rather than across it.
 - The wind: a few metres a second in a world with air, turning over the days, stronger in rain and storms and
   higher up, the same on the server and every player's game; a mod's weather says its own.
 - Beams, electric arcs that zigzag and branch, ribbons and tracers; marks that fade on the world, scorch and

@@ -8,6 +8,7 @@
 package dev.jstech.core.client.light;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.jstech.core.client.instancing.Instancing;
 import dev.jstech.core.stepaside.StepAside;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -53,15 +54,21 @@ public final class LightingClient {
         }
         final Minecraft minecraft = Minecraft.getInstance();
         final ClientLevel level = minecraft.level;
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || level == null
-                || StepAside.COLOURED_LIGHT.steps()) {
+        // After the clouds and the rain, so the clouds lie behind the glow; under the Fabulous graphics, in the layer
+        // of the particles, which the game lays together with the clouds' by how far each is.
+        final RenderLevelStageEvent.Stage stage = Minecraft.useShaderTransparency()
+                ? RenderLevelStageEvent.Stage.AFTER_PARTICLES : RenderLevelStageEvent.Stage.AFTER_WEATHER;
+        if (event.getStage() != stage || level == null || StepAside.COLOURED_LIGHT.steps()) {
             return;
         }
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
         final PoseStack poses = event.getPoseStack();
         BeamVisuals.draw(level, event.getCamera(), poses, buffers,
                 event.getPartialTick().getGameTimeDeltaPartialTick(false));
-        Halos.draw(level, event.getCamera(), poses, buffers);
+        // A shader pack glows bright things with a bloom of its own; a halo of the Core's over it would glow twice.
+        if (!Instancing.shaderPack()) {
+            Halos.draw(level, event.getCamera(), poses, buffers);
+        }
         buffers.endBatch(LightRenderTypes.GLOW);
     }
 }

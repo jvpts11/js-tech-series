@@ -21,6 +21,8 @@ one place, for any mod.
   headlights and fired flares; a moving structure's lamps light the world it passes.
 - **Spotlights and directional light**: a cone or a beam that reaches far, past the game's fifteen levels, as Immersive
   Engineering's floodlight does.
+- **Light through coloured glass**: light that passes a stained or tinted block takes its colour, so a glass-walled
+  laboratory is lit in the glass's hue beyond it; and daylight under a roof of stained glass, so a greenhouse is.
 - **Bloom**: what glows gets a halo, with no shader mod needed.
 - **Light as data**: a light declares its colour, intensity, reach and **flicker** (a fluorescent tube starting, a lamp
   failing); it turns on and off by redstone or power, and a lamp can break.
@@ -31,7 +33,8 @@ one place, for any mod.
 - **The sun's colour tints a world's day**: the reddish day under a red dwarf, the darkening of an eclipse
   ([The world](world.md)).
 - **Cost**: light updates in batches and away from the main thread, many dynamic lights cheaply, within a distance.
-- **Works with Sodium, Embeddium, Iris and Oculus**, and without them.
+- **Works with Sodium, Embeddium, Iris and Oculus**, and without them. Under a deferred shader pack the colour rides in
+  the faces, which the pack multiplies into what it draws, and the halos step aside for the pack's own bloom.
 - **Each player's settings**: dynamic light on or off, and how strong the bloom is.
 
 ### Particles and effects
@@ -47,7 +50,7 @@ one place, for any mod.
 - **A new effect from nothing**: at the block looked at, from one of its faces or a locator of its model, from a
   starting point (smoke, steam, sparks, a beam, a trail, nothing) that plays there at once as it starts. Create writes
   the file and opens it in the editor.
-- **Trails**: contrails, tracers.
+- **Trails**: contrails, tracers; and particles stretched along their speed, for sparks and tracers.
 - **Beams and arcs**: lasers (J's Space's Laser Satellite), electric arcs between points (the arc flash of overvoltage,
   Tesla coils), lightning.
 - **Smoke, steam and gas with volume**: plumes that rise and drift with the wind (cooling towers, the chimneys of
@@ -65,9 +68,4 @@ one place, for any mod.
 
 ## Still to build
 
-- **Light through coloured glass**: light that passes a stained or tinted block takes its colour, so a glass-walled
-  laboratory or greenhouse is lit in the glass's hue.
-- **Coloured light under deferred shader packs**: tried with Iris's deferred packs, and whatever that asks for.
-- **Light updates in batches away from the main thread**, as the cost above says, checked and finished.
-- **Particles stretched along their speed**, for sparks and tracers.
 - **Shimmer** has no build for this version of the game, so stepping aside for it waits for one.

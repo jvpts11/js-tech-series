@@ -81,6 +81,11 @@ def withFtbQuests = providers.gradleProperty('withFtbQuests').isPresent()
  * says; every other run proves the Core without them.
  */
 def withAeronautics = providers.gradleProperty('withAeronautics').isPresent()
+/*
+ * -PwithIris runs the development mods with Iris and the Sodium it needs, so the client tests of what the Core draws
+ * under a shader pack run with the pack the run's shaderpacks folder holds; without them those tests say no pack draws.
+ */
+def withIris = providers.gradleProperty('withIris').isPresent()
 def withSable = withAeronautics || providers.gradleProperty('withSable').isPresent()
 def withCreate = withSable || providers.gradleProperty('withCreate').isPresent()
 if (withoutComputerCraft) {
@@ -300,6 +305,10 @@ dependencies {
     }
     if (withAeronautics) {
         localRuntime("maven.modrinth:create-aeronautics:${aeronautics_version}") { transitive = false }
+    }
+    if (withIris) {
+        localRuntime("maven.modrinth:sodium:${sodium_version}") { transitive = false }
+        localRuntime("maven.modrinth:iris:${iris_version}") { transitive = false }
     }
 }
 

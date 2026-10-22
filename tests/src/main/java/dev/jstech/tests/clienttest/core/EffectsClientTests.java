@@ -8,6 +8,8 @@
 package dev.jstech.tests.clienttest.core;
 
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.logging.LogUtils;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.effect.ClientEffects;
@@ -18,6 +20,7 @@ import dev.jstech.core.client.effect.EffectTools;
 import dev.jstech.core.client.effect.NewEffectScreen;
 import dev.jstech.core.client.effect.ScreenEffects;
 import dev.jstech.core.effect.EffectDefinition;
+import dev.jstech.tests.JsTests;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.io.IOException;
@@ -31,10 +34,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
 
 /**
  * Effects as a player sees them: steam rising from a block and drifting with the world's wind; sparks, an arc flash
- * and a laser at night; bubbles that live only in water; scorch on the ground; the screen's flash, shake, vignette and
+ * and a laser at night; a tracer drawn out along its path, and the same one not, a dot; bubbles that live only in
+ * water; scorch on the ground; the screen's flash, shake, vignette and
  * the ring of a shockwave; the effects editor open on the real block, an emitter turned off and the file saved; and a
  * new effect made from a starting point and opened in the editor.
  */
@@ -47,6 +52,14 @@ public final class EffectsClientTests {
     private static final long DAY = 6_000L;
     private static final int WAIT = 300;
     private static final Object TOWER_HOLDER = new Object();
+    private static final Logger LOGGER = LogUtils.getLogger();
+    /* A pixel's channels past this are a tracer's white; the night is darker. */
+    private static final int BRIGHT = 150;
+    /* How long over tall a streak is at least, and a dot at most. */
+    private static final double STREAK = 4.0;
+    private static final double SQUARE_ENOUGH = 3.0;
+    /* How far above the middle of the screen the crosshair reaches, in the screen's own units. */
+    private static final int CROSSHAIR = 8;
 
     private EffectsClientTests() {
     }
@@ -90,6 +103,35 @@ public final class EffectsClientTests {
                 })
                 .thenScreenshot(4, "sparks-arc-laser-at-night")
                 .thenAssert(0, () -> EffectEngine.particles() > 20, "sparks fly")
+                .thenServer(0, level -> {
+                    level.setDayTime(DAY);
+                    clear(ctx, level);
+                });
+    }
+
+    @ClientTest(timeoutTicks = 900)
+    public static void tracers_streakAlongTheWayTheyGo(final ClientTestContext ctx) {
+        final Vec3 from = Vec3.atCenterOf(ctx.abs(new BlockPos(-6, 5, 10)));
+        final Vec3 east = new Vec3(1, 0, 0);
+        final double[] shapes = new double[2];
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                })
+                .thenWaitUntil(() -> night(ctx), WAIT, "night on the player's game")
+                // Looking a little below the tracer's way, so it crosses the sky above the crosshair.
+                .then(2, () -> ctx.lookAt(from.add(5, -1.5, 0)))
+                .then(10, () -> ClientEffects.play(tests("test_tracer"), from, east))
+                .thenAssert(2, () -> EffectEngine.particles() > 0, "the tracer flies")
+                .then(1, () -> shapes[0] = longOverTall(ctx))
+                .thenScreenshot(0, "tracer-streaks")
+                .then(20, () -> ClientEffects.play(tests("test_tracer_square"), from, east))
+                .then(3, () -> shapes[1] = longOverTall(ctx))
+                .then(0, () -> LOGGER.info("[CT] a tracer drawn out is {} times as long as tall, one not {}",
+                        shapes[0], shapes[1]))
+                .thenAssert(0, () -> shapes[0] > STREAK && shapes[1] < SQUARE_ENOUGH, "a tracer drawn out along "
+                        + "its path is long and thin, and the same one not drawn out a dot; the log says how long")
                 .thenServer(0, level -> {
                     level.setDayTime(DAY);
                     clear(ctx, level);
@@ -202,6 +244,37 @@ public final class EffectsClientTests {
                         "under the block's mod")
                 .then(0, () -> ctx.mc().setScreen(null))
                 .thenServer(0, level -> clear(ctx, level));
+    }
+
+    /*
+     * How many times wider than tall the bright pixels of the band of night sky above the crosshair lie: a tracer's,
+     * the crosshair, the hotbar and the hand left out. None bright, none wide.
+     */
+    private static double longOverTall(final ClientTestContext ctx) {
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        try (NativeImage frame = ctx.capture(width / 4, height / 8, width / 2, height / 2 - height / 8 - CROSSHAIR)) {
+            int left = Integer.MAX_VALUE;
+            int right = Integer.MIN_VALUE;
+            int top = Integer.MAX_VALUE;
+            int bottom = Integer.MIN_VALUE;
+            for (int y = 0; y < frame.getHeight(); y++) {
+                for (int x = 0; x < frame.getWidth(); x++) {
+                    final int pixel = frame.getPixelRGBA(x, y);
+                    if ((pixel & 0xFF) > BRIGHT && (pixel >> 8 & 0xFF) > BRIGHT && (pixel >> 16 & 0xFF) > BRIGHT) {
+                        left = Math.min(left, x);
+                        right = Math.max(right, x);
+                        top = Math.min(top, y);
+                        bottom = Math.max(bottom, y);
+                    }
+                }
+            }
+            return right < left ? 0 : (double) (right - left + 1) / (bottom - top + 1);
+        }
+    }
+
+    private static ResourceLocation tests(final String path) {
+        return ResourceLocation.fromNamespaceAndPath(JsTests.MODID, path);
     }
 
     private static ResourceLocation rl(final String path) {

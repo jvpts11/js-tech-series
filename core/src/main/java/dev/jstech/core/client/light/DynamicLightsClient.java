@@ -112,16 +112,17 @@ public final class DynamicLightsClient {
                 laid.remove();
             }
         }
-        final List<ColouredLights.Source> coloured = new ArrayList<>();
+        // White light too: stained glass near may tint it.
+        final List<ColouredLights.Source> laidNow = new ArrayList<>();
         for (final Map.Entry<BlockPos, Lit> entry : wanted.entrySet()) {
             final BlockPos pos = entry.getKey();
             final Lit lit = entry.getValue();
-            if (lay(level, pos, lit.level()) && lit.colour() != LightMath.WHITE) {
-                coloured.add(new ColouredLights.Source(pos.getX(), pos.getY(), pos.getZ(), lit.level(),
-                        lit.colour(), false));
+            if (lay(level, pos, lit.level())) {
+                laidNow.add(new ColouredLights.Source(pos.getX(), pos.getY(), pos.getZ(), lit.level(), lit.colour(),
+                        false));
             }
         }
-        ColouredLights.dynamic(coloured);
+        ColouredLights.dynamic(laidNow);
     }
 
     /* Lays light of {@code light} at {@code pos}, unless something stands there; whether it is laid. */

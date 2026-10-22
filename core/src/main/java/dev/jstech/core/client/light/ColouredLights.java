@@ -7,28 +7,39 @@
  */
 package dev.jstech.core.client.light;
 
+import com.mojang.logging.LogUtils;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.light.Beams;
 import dev.jstech.core.light.BeamLights;
 import dev.jstech.core.light.LampBlockEntity;
 import dev.jstech.core.light.LightBlock;
 import dev.jstech.core.light.LightColours;
+import dev.jstech.core.light.LightFlood;
 import dev.jstech.core.light.LightKind;
 import dev.jstech.core.light.LightMath;
 import dev.jstech.core.light.LightingSettings;
+import dev.jstech.core.light.SkyTints;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -36,18 +47,37 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * The sources of coloured light around the player, by the section of the world each is in: the blocks that give light
  * of a colour ({@link LightColours}), the lamps of the lighting kit and the places their spotlights light, and the
- * dynamic light the player's game lays. Looked at a batch of sections a tick, round and round, within the reach of
- * light; where a section's sources change, the sections they reach are built again, so the world's colours follow.
- * A whole bright source, coloured or not, is kept too, for its glow.
+ * dynamic light the player's game lays. A batch of sections is looked at each tick, round and round, within the reach
+ * of light, away from the main thread: there each source's light is spread through the blocks as the game spreads its
+ * own ({@link LightFlood}), round walls and through stained glass, which tints it; a white source's too where a block
+ * that tints stands near; and daylight come down through tinting blocks takes their colour ({@link SkyTints}). The main
+ * thread only takes the batch back, and where a section's light changed, the sections it reaches are built again, so
+ * the world's colours follow. A whole bright source, coloured or not, is kept too, for its glow.
  */
 public final class ColouredLights {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     /* A section's sources, swapped in whole; the sections waiting their turn to be looked at. */
     private static final Map<Long, List<Source>> BY_SECTION = new ConcurrentHashMap<>();
+    /* The light of each source as it spreads; none yet for one the worker has not reached. */
+    private static final Map<Source, LightFlood> FLOODS = new ConcurrentHashMap<>();
+    /* Daylight's colour below tinting blocks, by place; the places each section's gave; the sections holding any. */
+    private static final Map<Long, Integer> SKY = new ConcurrentHashMap<>();
+    private static final Map<Long, long[]> SKY_BY_SECTION = new ConcurrentHashMap<>();
+    private static final Set<Long> SKY_SECTIONS = ConcurrentHashMap.newKeySet();
+    /* The one thread the sections are looked at on, below the game's own, so it never holds a frame up. */
+    private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(work -> {
+        final Thread thread = new Thread(work, "jscore-coloured-light");
+        thread.setDaemon(true);
+        thread.setPriority(Thread.MIN_PRIORITY);
+        return thread;
+    });
     private static final int SECTIONS_A_TICK = 48;
     private static final int SECTION = 16;
     /* What a source must give to glow without a colour: a lamp's or a lantern's, not a torch's. */
@@ -55,16 +85,42 @@ public final class ColouredLights {
     private static final ThreadLocal<Near> LAST = new ThreadLocal<>();
     /* Changed whenever the sources do, so a building thread's last answer is known stale. */
     private static final AtomicInteger VERSION = new AtomicInteger();
-
     /* The sky's light is told in quarters, so the world is built again only four times as day turns to night. */
     private static final float SKY_STEPS = 4.0F;
+    private static final double NANOS_A_MILLI = 1_000_000.0;
 
     private static List<Long> queue = new ArrayList<>();
     private static int next;
     private static volatile List<Source> dynamic = List.of();
     private static volatile float sky = 1.0F;
+    @Nullable
+    private static Future<Batch> pending;
+    private static volatile double lastTickMillis;
+    private static boolean warned;
 
     private ColouredLights() {
+    }
+
+    /** How long the main thread spent on coloured light in its last tick, in milliseconds; the worker spares it. */
+    public static double lastTickMillis() {
+        return lastTickMillis;
+    }
+
+    /** How many sources' light is spread now, coloured or tinted on its way. */
+    public static int spread() {
+        return FLOODS.size();
+    }
+
+    /**
+     * Looks at {@code sections} again now rather than at their turn: the blocks there changed hands with a moving
+     * structure's, and their glow and coloured light go with them in the frame they do.
+     */
+    public static void lookAgain(final List<Long> sections) {
+        final ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        apply(look(level, sections, lamps(level), List.of()));
     }
 
     static void listen() {
@@ -74,18 +130,28 @@ public final class ColouredLights {
 
     /**
      * The coloured sources whose light may reach a place in the section {@code section}: those in it and in the
-     * sections beside it. Asked for each block as the world's mesh is built, so each building thread keeps the last
-     * section's answer until the sources change.
+     * sections beside it, and the white ones whose light a block near tints. Asked for each block as the world's mesh
+     * is built, so each building thread keeps the last section's answer until the sources change.
      */
     static List<Source> near(final long section) {
-        final Near last = LAST.get();
-        final int now = VERSION.get();
-        if (last != null && last.section() == section && last.version() == now) {
-            return last.sources();
-        }
-        final List<Source> sources = gather(section);
-        LAST.set(new Near(section, now, sources));
-        return sources;
+        return nearest(section).sources();
+    }
+
+    /** Whether daylight is tinted at a place in the section {@code section} or the sections beside it. */
+    static boolean shaded(final long section) {
+        return nearest(section).shaded();
+    }
+
+    /** The light of {@code source} as it spreads, if it has been worked out. */
+    @Nullable
+    static LightFlood flood(final Source source) {
+        return FLOODS.get(source);
+    }
+
+    /** Daylight's colour at {@code pos}, below tinting blocks; white where it has none. */
+    static int skyTint(final BlockPos pos) {
+        final Integer colour = SKY.get(pos.asLong());
+        return colour == null ? LightMath.WHITE : colour;
     }
 
     /** The blocks kept that glow, coloured or bright, for their halos. */
@@ -101,17 +167,31 @@ public final class ColouredLights {
         return out;
     }
 
-    /** Sets the dynamic light the player's game lays, as sources, and has the sections they reach built again. */
+    /**
+     * Sets the dynamic light the player's game lays, as sources, and has the sections they reach built again: at once
+     * for a coloured one; for a white one once its light is spread, where a block near tints it.
+     */
     static void dynamic(final List<Source> sources) {
         if (dynamic.equals(sources)) {
             return;
         }
         final Set<Long> touched = new HashSet<>();
+        final Set<Source> now = new HashSet<>(sources);
         for (final Source source : dynamic) {
-            touched.add(SectionPos.asLong(source.pos()));
+            if (now.contains(source)) {
+                continue;
+            }
+            final LightFlood gone = FLOODS.remove(source);
+            if (source.colour() != LightMath.WHITE) {
+                touched.add(SectionPos.asLong(source.pos()));
+            } else if (gone != null && gone.tinted()) {
+                touched.addAll(reached(source, gone));
+            }
         }
         for (final Source source : sources) {
-            touched.add(SectionPos.asLong(source.pos()));
+            if (source.colour() != LightMath.WHITE) {
+                touched.add(SectionPos.asLong(source.pos()));
+            }
         }
         dynamic = List.copyOf(sources);
         VERSION.incrementAndGet();
@@ -126,6 +206,23 @@ public final class ColouredLights {
         return sky;
     }
 
+    /** Whether light of {@code level} and {@code colour} is kept for its glow: of a colour, or bright enough. */
+    static boolean glows(final int level, final int colour) {
+        return colour != LightMath.WHITE || level >= GLOWS_FROM;
+    }
+
+    /* The building thread's answer for {@code section}: its last, unless the sources changed since. */
+    private static Near nearest(final long section) {
+        final Near last = LAST.get();
+        final int now = VERSION.get();
+        if (last != null && last.section() == section && last.version() == now) {
+            return last;
+        }
+        final Near near = new Near(section, now, gather(section), shadedAround(section));
+        LAST.set(near);
+        return near;
+    }
+
     private static List<Source> gather(final long section) {
         final int x = SectionPos.x(section);
         final int y = SectionPos.y(section);
@@ -136,11 +233,11 @@ public final class ColouredLights {
                 for (int dz = -1; dz <= 1; dz++) {
                     final List<Source> sources = BY_SECTION.get(SectionPos.asLong(x + dx, y + dy, z + dz));
                     if (sources != null && !sources.isEmpty()) {
-                        if (out == null) {
-                            out = new ArrayList<>();
-                        }
                         for (final Source source : sources) {
-                            if (source.colour() != LightMath.WHITE) {
+                            if (tints(source)) {
+                                if (out == null) {
+                                    out = new ArrayList<>();
+                                }
                                 out.add(source);
                             }
                         }
@@ -151,8 +248,7 @@ public final class ColouredLights {
         for (final Source source : dynamic) {
             if (Math.abs(SectionPos.blockToSectionCoord(source.x()) - x) <= 1
                     && Math.abs(SectionPos.blockToSectionCoord(source.y()) - y) <= 1
-                    && Math.abs(SectionPos.blockToSectionCoord(source.z()) - z) <= 1
-                    && source.colour() != LightMath.WHITE) {
+                    && Math.abs(SectionPos.blockToSectionCoord(source.z()) - z) <= 1 && tints(source)) {
                 if (out == null) {
                     out = new ArrayList<>();
                 }
@@ -162,7 +258,36 @@ public final class ColouredLights {
         return out == null ? List.of() : List.copyOf(out);
     }
 
+    /* Whether a source gives any place a colour: one of a colour, or a white one whose light a block tinted. */
+    private static boolean tints(final Source source) {
+        if (source.colour() != LightMath.WHITE) {
+            return true;
+        }
+        final LightFlood flood = FLOODS.get(source);
+        return flood != null && flood.tinted();
+    }
+
+    private static boolean shadedAround(final long section) {
+        if (SKY_SECTIONS.isEmpty()) {
+            return false;
+        }
+        final int x = SectionPos.x(section);
+        final int y = SectionPos.y(section);
+        final int z = SectionPos.z(section);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (SKY_SECTIONS.contains(SectionPos.asLong(x + dx, y + dy, z + dz))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private static void tick() {
+        final long started = System.nanoTime();
         final Minecraft minecraft = Minecraft.getInstance();
         final ClientLevel level = minecraft.level;
         final LocalPlayer player = minecraft.player;
@@ -175,49 +300,243 @@ public final class ColouredLights {
             sky = daylight;
             VERSION.incrementAndGet();
             BY_SECTION.forEach((section, sources) -> {
-                if (sources.stream().anyMatch(source -> source.colour() != LightMath.WHITE)) {
+                if (sources.stream().anyMatch(ColouredLights::tints)) {
                     rebuildAround(section);
                 }
             });
+            SKY_SECTIONS.forEach(ColouredLights::rebuild);
+        }
+        if (pending != null) {
+            if (!pending.isDone()) {
+                lastTickMillis = (System.nanoTime() - started) / NANOS_A_MILLI;
+                return;
+            }
+            take(level, pending);
+            pending = null;
         }
         if (next >= queue.size()) {
             queue = around(player.blockPosition());
             // A moving structure's blocks are out in the yard: its sections are looked at while it is near.
             queue.addAll(ClientMovingStructures.yardSectionsNear(player.position(), LightingSettings.reach()));
             next = 0;
-            if (BY_SECTION.keySet().retainAll(new HashSet<>(queue))) {
-                VERSION.incrementAndGet();
+            forgetBut(new HashSet<>(queue));
+        }
+        final List<Long> batch = new ArrayList<>(queue.subList(next, Math.min(queue.size(), next + SECTIONS_A_TICK)));
+        next += batch.size();
+        final Map<Long, List<Source>> lamps = lamps(level);
+        final List<Source> moving = new ArrayList<>();
+        for (final Source source : dynamic) {
+            if (!FLOODS.containsKey(source)) {
+                moving.add(source);
             }
         }
-        final Map<Long, List<Source>> lamps = lamps(level);
-        for (int i = 0; i < SECTIONS_A_TICK && next < queue.size(); i++, next++) {
-            look(level, queue.get(next), lamps);
+        pending = WORKER.submit(() -> look(level, batch, lamps, moving));
+        lastTickMillis = (System.nanoTime() - started) / NANOS_A_MILLI;
+    }
+
+    /* Takes a batch back from the worker, if it was for this world. */
+    private static void take(final ClientLevel level, final Future<Batch> done) {
+        try {
+            final Batch batch = done.get();
+            if (batch.level() == level) {
+                apply(batch);
+            }
+        } catch (final ExecutionException failed) {
+            if (!warned) {
+                warned = true;
+                LOGGER.warn("Coloured light could not be worked out for a batch of sections", failed.getCause());
+            }
+        } catch (final InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
         }
     }
 
-    /**
-     * Looks at {@code sections} again now rather than at their turn: the blocks there changed hands with a moving
-     * structure's, and their glow and coloured light go with them in the frame they do.
+    /*
+     * Looks at the sources of {@code sections} as they are now, and spreads their light: on the worker, or on the
+     * main thread for a few sections that must follow at once. Reads the world's blocks and light, changes nothing.
      */
-    public static void lookAgain(final List<Long> sections) {
-        final ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) {
+    private static Batch look(final ClientLevel level, final List<Long> sections, final Map<Long, List<Source>> lamps,
+                              final List<Source> moving) {
+        final LevelPassage passage = new LevelPassage(level);
+        final List<Looked> looked = new ArrayList<>(sections.size());
+        for (final long section : sections) {
+            final List<Source> sources = new ArrayList<>(blocks(level, section));
+            sources.addAll(lamps.getOrDefault(section, List.of()));
+            final Map<Source, LightFlood> floods = new HashMap<>();
+            for (final Source source : sources) {
+                spread(level, passage, source, floods);
+            }
+            looked.add(new Looked(section, List.copyOf(sources), floods, shades(level, passage, section)));
+        }
+        final Map<Source, LightFlood> movingFloods = new HashMap<>();
+        for (final Source source : moving) {
+            spread(level, passage, source, movingFloods);
+        }
+        return new Batch(level, looked, movingFloods);
+    }
+
+    /* Spreads {@code source}'s light, if it is of a colour or a block near may tint it; kept where it gives colour. */
+    private static void spread(final ClientLevel level, final LevelPassage passage, final Source source,
+                               final Map<Source, LightFlood> into) {
+        final boolean coloured = source.colour() != LightMath.WHITE;
+        if (!coloured && !tintingNear(level, source)) {
             return;
         }
-        final Map<Long, List<Source>> lamps = lamps(level);
-        for (final long section : sections) {
-            look(level, section, lamps);
+        final LightFlood flood = LightFlood.spread(source.x(), source.y(), source.z(), source.level(),
+                source.colour(), passage);
+        if (coloured || flood.tinted()) {
+            into.put(source, flood);
         }
     }
 
-    /* Takes the sources of the section {@code section} as they are now; what their light reaches is built again. */
-    private static void look(final ClientLevel level, final long section, final Map<Long, List<Source>> lamps) {
-        final List<Source> now = new ArrayList<>(blocks(level, section));
-        now.addAll(lamps.getOrDefault(section, List.of()));
-        final List<Source> before = BY_SECTION.put(section, List.copyOf(now));
-        if (before != null && !before.equals(now) || before == null && !now.isEmpty()) {
+    /* Whether a block that tints light may stand within a white source's reach: in its section or one beside it. */
+    private static boolean tintingNear(final ClientLevel level, final Source source) {
+        final int x = SectionPos.blockToSectionCoord(source.x());
+        final int y = SectionPos.blockToSectionCoord(source.y());
+        final int z = SectionPos.blockToSectionCoord(source.z());
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                final LevelChunk chunk = level.getChunkSource().getChunk(x + dx, z + dz, ChunkStatus.FULL, false);
+                if (chunk == null) {
+                    continue;
+                }
+                for (int dy = -1; dy <= 1; dy++) {
+                    final int index = chunk.getSectionIndexFromSectionY(y + dy);
+                    if (index >= 0 && index < chunk.getSectionsCount()
+                            && chunk.getSection(index).maybeHas(LightColours::tints)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /* The places below the section's tinting blocks open to the sky, and daylight's colour there. */
+    private static Map<Long, Integer> shades(final ClientLevel level, final LevelPassage passage,
+                                             final long section) {
+        final LevelChunkSection blocks = section(level, section);
+        if (blocks == null || blocks.hasOnlyAir() || !blocks.maybeHas(LightColours::tints)) {
+            return Map.of();
+        }
+        final Map<Long, Integer> out = new HashMap<>();
+        final int bx = SectionPos.sectionToBlockCoord(SectionPos.x(section));
+        final int by = SectionPos.sectionToBlockCoord(SectionPos.y(section));
+        final int bz = SectionPos.sectionToBlockCoord(SectionPos.z(section));
+        final BlockPos.MutableBlockPos above = new BlockPos.MutableBlockPos();
+        for (int y = 0; y < SECTION; y++) {
+            for (int z = 0; z < SECTION; z++) {
+                for (int x = 0; x < SECTION; x++) {
+                    if (!LightColours.tints(blocks.getBlockState(x, y, z))
+                            || level.getBrightness(LightLayer.SKY, above.set(bx + x, by + y + 1, bz + z))
+                            < LightMath.BRIGHTEST) {
+                        continue;
+                    }
+                    SkyTints.below(bx + x, by + y, bz + z, passage, (px, py, pz, colour) ->
+                            out.put(BlockPos.asLong(px, py, pz), colour));
+                }
+            }
+        }
+        return out;
+    }
+
+    /* Takes what was looked at: the sources, their light, daylight's colours; what changed is built again. */
+    private static void apply(final Batch batch) {
+        final Set<Long> around = new HashSet<>();
+        final Set<Long> exactly = new HashSet<>();
+        for (final Looked looked : batch.sections()) {
+            final List<Source> before = BY_SECTION.put(looked.section(), looked.sources());
+            if (before != null && !before.equals(looked.sources()) || before == null && !looked.sources().isEmpty()) {
+                around.add(looked.section());
+            }
+            if (before != null) {
+                for (final Source gone : before) {
+                    if (!looked.floods().containsKey(gone)) {
+                        final LightFlood flood = FLOODS.remove(gone);
+                        if (flood != null) {
+                            exactly.addAll(reached(gone, flood));
+                        }
+                    }
+                }
+            }
+            looked.floods().forEach((source, flood) -> {
+                if (!flood.equals(FLOODS.put(source, flood))) {
+                    exactly.addAll(reached(source, flood));
+                }
+            });
+            exactly.addAll(shade(looked.section(), looked.shades()));
+        }
+        batch.moving().forEach((source, flood) -> {
+            if (dynamic.contains(source) && !flood.equals(FLOODS.put(source, flood)) && flood.tinted()) {
+                exactly.addAll(reached(source, flood));
+            }
+        });
+        if (!around.isEmpty() || !exactly.isEmpty()) {
             VERSION.incrementAndGet();
-            rebuildAround(section);
+            around.forEach(ColouredLights::rebuildAround);
+            exactly.forEach(ColouredLights::rebuild);
+        }
+    }
+
+    /* Swaps in daylight's colours below a section's tinting blocks; the sections whose places changed. */
+    private static Set<Long> shade(final long section, final Map<Long, Integer> shades) {
+        final long[] before = SKY_BY_SECTION.getOrDefault(section, new long[0]);
+        final long[] now = shades.keySet().stream().mapToLong(Long::longValue).sorted().toArray();
+        boolean same = Arrays.equals(before, now);
+        for (int i = 0; same && i < now.length; i++) {
+            same = Objects.equals(SKY.get(now[i]), shades.get(now[i]));
+        }
+        if (same) {
+            return Set.of();
+        }
+        final Set<Long> touched = new HashSet<>();
+        for (final long cell : before) {
+            SKY.remove(cell);
+            touched.add(SectionPos.asLong(BlockPos.of(cell)));
+        }
+        SKY.putAll(shades);
+        for (final long cell : now) {
+            touched.add(SectionPos.asLong(BlockPos.of(cell)));
+        }
+        if (now.length == 0) {
+            SKY_BY_SECTION.remove(section);
+        } else {
+            SKY_BY_SECTION.put(section, now);
+        }
+        SKY_SECTIONS.clear();
+        for (final long cell : SKY.keySet()) {
+            SKY_SECTIONS.add(SectionPos.asLong(BlockPos.of(cell)));
+        }
+        final Set<Long> out = new HashSet<>();
+        for (final long sectionTouched : touched) {
+            out.addAll(beside(sectionTouched));
+        }
+        return out;
+    }
+
+    /* Lets go of the sections out of reach, their sources' light and daylight's colours under them. */
+    private static void forgetBut(final Set<Long> kept) {
+        boolean changed = false;
+        final List<Long> gone = new ArrayList<>();
+        for (final Map.Entry<Long, List<Source>> entry : BY_SECTION.entrySet()) {
+            if (!kept.contains(entry.getKey())) {
+                gone.add(entry.getKey());
+            }
+        }
+        for (final long section : gone) {
+            for (final Source source : BY_SECTION.remove(section)) {
+                FLOODS.remove(source);
+            }
+            changed = true;
+        }
+        for (final long section : new ArrayList<>(SKY_BY_SECTION.keySet())) {
+            if (!kept.contains(section)) {
+                shade(section, Map.of());
+                changed = true;
+            }
+        }
+        if (changed) {
+            VERSION.incrementAndGet();
         }
     }
 
@@ -242,23 +561,26 @@ public final class ColouredLights {
         return out;
     }
 
+    @Nullable
+    private static LevelChunkSection section(final ClientLevel level, final long section) {
+        final LevelChunk chunk = level.getChunkSource().getChunk(SectionPos.x(section), SectionPos.z(section),
+                ChunkStatus.FULL, false);
+        if (chunk == null) {
+            return null;
+        }
+        final int index = chunk.getSectionIndexFromSectionY(SectionPos.y(section));
+        return index < 0 || index >= chunk.getSectionsCount() ? null : chunk.getSection(index);
+    }
+
     /* A section's blocks that give light, coloured or bright enough to glow. */
     private static List<Source> blocks(final ClientLevel level, final long section) {
+        final LevelChunkSection blocks = section(level, section);
+        if (blocks == null || blocks.hasOnlyAir() || !blocks.maybeHas(ColouredLights::worthKeeping)) {
+            return List.of();
+        }
         final int sx = SectionPos.x(section);
         final int sy = SectionPos.y(section);
         final int sz = SectionPos.z(section);
-        final LevelChunk chunk = level.getChunkSource().getChunk(sx, sz, ChunkStatus.FULL, false);
-        if (chunk == null) {
-            return List.of();
-        }
-        final int index = chunk.getSectionIndexFromSectionY(sy);
-        if (index < 0 || index >= chunk.getSectionsCount()) {
-            return List.of();
-        }
-        final LevelChunkSection blocks = chunk.getSection(index);
-        if (blocks.hasOnlyAir() || !blocks.maybeHas(ColouredLights::worthKeeping)) {
-            return List.of();
-        }
         final List<Source> out = new ArrayList<>();
         for (int y = 0; y < SECTION; y++) {
             for (int z = 0; z < SECTION; z++) {
@@ -279,11 +601,6 @@ public final class ColouredLights {
     private static boolean worthKeeping(final BlockState state) {
         final int level = state.getLightEmission();
         return level > 0 && !(state.getBlock() instanceof LightBlock) && glows(level, LightColours.of(state));
-    }
-
-    /** Whether light of {@code level} and {@code colour} is kept for its glow: of a colour, or bright enough. */
-    static boolean glows(final int level, final int colour) {
-        return colour != LightMath.WHITE || level >= GLOWS_FROM;
     }
 
     /* The lamps the player's game has, and the places their spotlights light, by section. */
@@ -310,20 +627,61 @@ public final class ColouredLights {
         return out;
     }
 
+    /* The sections whose blocks look into a place a source's light reaches. */
+    private static Set<Long> reached(final Source source, final LightFlood flood) {
+        final int reach = flood.reach() + 1;
+        final Set<Long> out = new HashSet<>();
+        for (int x = SectionPos.blockToSectionCoord(source.x() - reach);
+             x <= SectionPos.blockToSectionCoord(source.x() + reach); x++) {
+            for (int y = SectionPos.blockToSectionCoord(source.y() - reach);
+                 y <= SectionPos.blockToSectionCoord(source.y() + reach); y++) {
+                for (int z = SectionPos.blockToSectionCoord(source.z() - reach);
+                     z <= SectionPos.blockToSectionCoord(source.z() + reach); z++) {
+                    out.add(SectionPos.asLong(x, y, z));
+                }
+            }
+        }
+        return out;
+    }
+
+    /* A section and the 26 beside it. */
+    private static Set<Long> beside(final long section) {
+        final Set<Long> out = new HashSet<>();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    out.add(SectionPos.asLong(SectionPos.x(section) + dx, SectionPos.y(section) + dy,
+                            SectionPos.z(section) + dz));
+                }
+            }
+        }
+        return out;
+    }
+
     /* Has the sections the light of a source in {@code section} may reach built again. */
     private static void rebuildAround(final long section) {
         Minecraft.getInstance().levelRenderer.setSectionDirtyWithNeighbors(SectionPos.x(section),
                 SectionPos.y(section), SectionPos.z(section));
     }
 
+    private static void rebuild(final long section) {
+        Minecraft.getInstance().levelRenderer.setSectionDirty(SectionPos.x(section), SectionPos.y(section),
+                SectionPos.z(section));
+    }
+
     private static void clear() {
-        if (!BY_SECTION.isEmpty() || !dynamic.isEmpty()) {
+        if (!BY_SECTION.isEmpty() || !dynamic.isEmpty() || !FLOODS.isEmpty() || !SKY.isEmpty()) {
             VERSION.incrementAndGet();
         }
         BY_SECTION.clear();
+        FLOODS.clear();
+        SKY.clear();
+        SKY_BY_SECTION.clear();
+        SKY_SECTIONS.clear();
         queue = new ArrayList<>();
         next = 0;
         dynamic = List.of();
+        pending = null;
         LampBeams.clear();
     }
 
@@ -346,11 +704,61 @@ public final class ColouredLights {
         }
     }
 
-    /* A building thread's last answer: the section asked, the sources' version then, and what they were. */
-    private record Near(long section, int version, List<Source> sources) {
+    /* A building thread's last answer: the section asked, the sources' version then, what they were, and the sky. */
+    private record Near(long section, int version, List<Source> sources, boolean shaded) {
 
         Near {
             sources = List.copyOf(sources);
+        }
+    }
+
+    /* What the worker looked at: the world it was for, each section's, and the spread light of what moves. */
+    private record Batch(ClientLevel level, List<Looked> sections, Map<Source, LightFlood> moving) {
+    }
+
+    /* A section looked at: its sources, their light spread, and daylight's colour below its tinting blocks. */
+    private record Looked(long section, List<Source> sources, Map<Source, LightFlood> floods,
+                          Map<Long, Integer> shades) {
+    }
+
+    /* The world's blocks as light goes through them, read away from the main thread, one chunk kept at a time. */
+    private static final class LevelPassage implements LightFlood.IPassage {
+
+        private final ClientLevel level;
+        private final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        @Nullable
+        private LevelChunk chunk;
+        private int chunkX = Integer.MIN_VALUE;
+        private int chunkZ = Integer.MIN_VALUE;
+
+        LevelPassage(final ClientLevel level) {
+            this.level = level;
+        }
+
+        @Override
+        public int dims(final int x, final int y, final int z) {
+            final BlockState state = state(x, y, z);
+            return state.isAir() ? 0 : state.getLightBlock(this.level, this.at.set(x, y, z));
+        }
+
+        @Override
+        public int tint(final int x, final int y, final int z) {
+            return LightColours.tint(state(x, y, z));
+        }
+
+        private BlockState state(final int x, final int y, final int z) {
+            if (this.level.isOutsideBuildHeight(y)) {
+                return Blocks.AIR.defaultBlockState();
+            }
+            final int cx = SectionPos.blockToSectionCoord(x);
+            final int cz = SectionPos.blockToSectionCoord(z);
+            if (cx != this.chunkX || cz != this.chunkZ) {
+                this.chunk = this.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
+                this.chunkX = cx;
+                this.chunkZ = cz;
+            }
+            return this.chunk == null ? Blocks.AIR.defaultBlockState() : this.chunk.getBlockState(this.at.set(x, y,
+                    z));
         }
     }
 

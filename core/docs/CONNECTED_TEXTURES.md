@@ -79,10 +79,20 @@ a block is drawn as its own model.
 - **The Core's own connected blocks**, declared in code (`CoreModels.connected(block, rule, tiles)`,
   [Screens](SCREENS.md)), are drawn as they always were.
 
+*Added 2026-10-22:* **glowing textures**, OptiFine's emissive form, as Continuity reads it. A pack that says the
+ending of a glowing texture's name in `assets/minecraft/optifine/emissive.properties`
+(`suffix.emissive=_e`) has every block texture with one of that name beside it drawn with it over it at full light,
+unshaded: `textures/block/furnace_front_on_e.png` beside `furnace_front_on.png` makes the glowing pixels of the
+furnace shine in the dark. A connected texture's tile glows the same way, its glowing tile beside it. A face of the
+solid or cut-out layers has its glowing texture drawn in the cut-out layer, so the clear pixels show the face
+beneath; a see-through face, in its own. A pack that says no ending has no glowing textures, as in OptiFine. Blocks
+in the world glow so; items are drawn as they are.
+
 ## Stepping aside
 
-While Continuity or CTM is installed it draws the packs' connected textures, and the Core leaves them to it: it reads
-no rule and puts no tile into the atlas, and the log says once what it stepped aside for. The player's setting
+While Continuity or CTM is installed it draws the packs' connected textures and glowing textures, and the Core leaves
+them to it: it reads no rule, puts no tile into the atlas and glows no texture, and the log says once what it stepped
+aside for. The player's setting
 `step_aside.connected_textures` in `jstech-step-aside.toml` keeps the Core's own on as well. The Core's connected
 blocks declared in code are drawn either way, and a mod that writes its connected textures as data in either format
 has them drawn by whichever mod draws them.

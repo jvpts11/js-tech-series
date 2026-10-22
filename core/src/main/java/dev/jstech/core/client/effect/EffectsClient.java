@@ -41,10 +41,16 @@ public final class EffectsClient {
         });
     }
 
+    /*
+     * Draws the effects after the clouds and the rain, so the clouds lie behind them; under the Fabulous graphics,
+     * with the game's particles, in their layer, which the game lays together with the clouds' by how far each is.
+     */
     private static void onRender(final RenderLevelStageEvent event) {
         final Minecraft minecraft = Minecraft.getInstance();
         final ClientLevel level = minecraft.level;
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || level == null) {
+        final RenderLevelStageEvent.Stage stage = Minecraft.useShaderTransparency()
+                ? RenderLevelStageEvent.Stage.AFTER_PARTICLES : RenderLevelStageEvent.Stage.AFTER_WEATHER;
+        if (event.getStage() != stage || level == null) {
             return;
         }
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();

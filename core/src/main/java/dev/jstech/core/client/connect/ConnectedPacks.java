@@ -62,6 +62,7 @@ public final class ConnectedPacks {
     public static void listen(final IEventBus modBus) {
         modBus.addListener(RegisterSpriteSourceTypesEvent.class, PackTileSource::register);
         modBus.addListener(ModelEvent.ModifyBakingResult.class, ConnectedPacks::onModifyBakingResult);
+        PackEmissive.listen(modBus);
     }
 
     /** Whether the packs in use say any connected texture the Core draws. */

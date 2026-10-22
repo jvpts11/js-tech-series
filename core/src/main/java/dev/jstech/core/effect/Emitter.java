@@ -231,14 +231,17 @@ public record Emitter(String name, Kind kind, boolean enabled, Emission emission
      * @param spin   how fast it turns, either way, in degrees a second
      * @param blend  how it is drawn
      * @param light  the light of its own, 0 to 15; 15 at full light whatever is around
-     * @param trail  how long a ribbon it leaves behind it, in seconds; 0 for none
-     * @param width  a beam's, an arc's or a ribbon's width, in blocks
+     * @param trail   how long a ribbon it leaves behind it, in seconds; 0 for none
+     * @param width   a beam's, an arc's or a ribbon's width, in blocks
+     * @param stretch how much of its path it is drawn along, in seconds, as a spark or a tracer streaks: as long as
+     *                its size and as far as it goes in that time, along the way it goes, turned about that line to
+     *                face the camera; 0 for a square
      */
     public record Look(String sprite, int frames, List<Double> size, List<Integer> colour, double spin, Blend blend,
-                       int light, double trail, double width) {
+                       int light, double trail, double width, double stretch) {
 
         public static final Look PLAIN = new Look("", 1, List.of(DEFAULT_SIZE), List.of(WHITE), 0, Blend.TRANSLUCENT,
-                0, 0, DEFAULT_WIDTH);
+                0, 0, DEFAULT_WIDTH, 0);
         public static final Codec<Look> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("sprite", "").forGetter(Look::sprite),
                 Codec.intRange(1, MOST_FRAMES).optionalFieldOf("frames", 1).forGetter(Look::frames),
@@ -248,7 +251,8 @@ public record Emitter(String name, Kind kind, boolean enabled, Emission emission
                 StableCodecs.byName(Blend.class).optionalFieldOf("blend", Blend.TRANSLUCENT).forGetter(Look::blend),
                 Codec.intRange(0, BRIGHTEST).optionalFieldOf("light", 0).forGetter(Look::light),
                 Codec.doubleRange(0, MOST_SECONDS).optionalFieldOf("trail", 0.0).forGetter(Look::trail),
-                Codec.doubleRange(0, MOST_SIZE).optionalFieldOf("width", DEFAULT_WIDTH).forGetter(Look::width))
+                Codec.doubleRange(0, MOST_SIZE).optionalFieldOf("width", DEFAULT_WIDTH).forGetter(Look::width),
+                Codec.doubleRange(0, MOST_SECONDS).optionalFieldOf("stretch", 0.0).forGetter(Look::stretch))
                 .apply(instance, Look::new));
 
         public Look {
@@ -261,13 +265,13 @@ public record Emitter(String name, Kind kind, boolean enabled, Emission emission
         /** It, its size keys times {@code factor}. */
         public Look withSizeTimes(final double factor) {
             return new Look(this.sprite, this.frames, this.size.stream().map(each -> each * factor).toList(),
-                    this.colour, this.spin, this.blend, this.light, this.trail, this.width);
+                    this.colour, this.spin, this.blend, this.light, this.trail, this.width, this.stretch);
         }
 
         /** It, {@code blocks} wide as a beam, an arc or a ribbon. */
         public Look withWidth(final double blocks) {
             return new Look(this.sprite, this.frames, this.size, this.colour, this.spin, this.blend, this.light,
-                    this.trail, blocks);
+                    this.trail, blocks, this.stretch);
         }
 
         /** It, every colour key's alpha {@code alpha} (0 to 255) times as strong as its first's. */
@@ -279,7 +283,7 @@ public record Emitter(String name, Kind kind, boolean enabled, Emission emission
                 return now << ALPHA_SHIFT | each & RGB;
             }).toList();
             return new Look(this.sprite, this.frames, this.size, changed, this.spin, this.blend, this.light,
-                    this.trail, this.width);
+                    this.trail, this.width, this.stretch);
         }
     }
 

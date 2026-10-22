@@ -8,6 +8,7 @@
 package dev.jstech.core.client.light;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.light.LightFlood;
 import dev.jstech.core.light.LightMath;
 import dev.jstech.core.light.LightingSettings;
 import dev.jstech.core.light.TintGrid;
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -56,6 +58,7 @@ final class ColouredLightModel extends BakedModelWrapper<BakedModel> {
     private static final int Y = 1;
     private static final int Z = 2;
     private static final int COLOUR = 3;
+    private static final int LIGHT = 6;
     private static final int CHANNEL = 0xFF;
     private static final int GREEN_SHIFT = 8;
     private static final int BLUE_SHIFT = 16;
@@ -101,8 +104,9 @@ final class ColouredLightModel extends BakedModelWrapper<BakedModel> {
         if (!LightingSettings.coloured()) {
             return own;
         }
-        final List<ColouredLights.Source> sources = ColouredLights.near(SectionPos.asLong(pos));
-        if (sources.isEmpty() || !within(sources, pos)) {
+        final long section = SectionPos.asLong(pos);
+        final List<ColouredLights.Source> sources = ColouredLights.near(section);
+        if ((sources.isEmpty() || !within(sources, pos)) && !ColouredLights.shaded(section)) {
             return own;
         }
         final TintGrid grid = grid(level, pos, sources);
@@ -137,7 +141,11 @@ final class ColouredLightModel extends BakedModelWrapper<BakedModel> {
         return false;
     }
 
-    /* The colour the sources give each place around the block, where the game's light shows they reach. */
+    /*
+     * The colour the sources give each place around the block, by the way their light goes there, round walls and
+     * through tinting blocks; and daylight's colour below tinting blocks. A source whose light the worker has not yet
+     * spread goes straight, where the game's light shows it reaches.
+     */
     private static TintGrid grid(final BlockAndTintGetter level, final BlockPos pos,
                                  final List<ColouredLights.Source> sources) {
         final int[] colours = new int[TintGrid.SIZE];
@@ -145,6 +153,11 @@ final class ColouredLightModel extends BakedModelWrapper<BakedModel> {
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         final List<LightMath.Arrival> arrivals = new ArrayList<>();
         final float daylight = ColouredLights.sky();
+        final boolean shaded = ColouredLights.shaded(SectionPos.asLong(pos));
+        final LightFlood[] floods = new LightFlood[sources.size()];
+        for (int i = 0; i < floods.length; i++) {
+            floods[i] = ColouredLights.flood(sources.get(i));
+        }
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -1; dz <= 1; dz++) {
@@ -154,15 +167,23 @@ final class ColouredLightModel extends BakedModelWrapper<BakedModel> {
                     final int sky = level.getBrightness(LightLayer.SKY, at);
                     lit[index] = block > 0 || sky > 0;
                     arrivals.clear();
-                    for (final ColouredLights.Source source : sources) {
-                        final int arriving = LightMath.arriving(source.level(), Math.abs(source.x() - at.getX())
+                    for (int i = 0; i < floods.length; i++) {
+                        final ColouredLights.Source source = sources.get(i);
+                        final LightFlood flood = floods[i];
+                        final int arriving = flood != null ? flood.level(at.getX(), at.getY(), at.getZ())
+                                : LightMath.arriving(source.level(), Math.abs(source.x() - at.getX())
                                 + Math.abs(source.y() - at.getY()) + Math.abs(source.z() - at.getZ()));
                         if (arriving > 0) {
-                            arrivals.add(new LightMath.Arrival(arriving, source.colour()));
+                            arrivals.add(new LightMath.Arrival(arriving, flood != null ? flood.colour(at.getX(),
+                                    at.getY(), at.getZ()) : source.colour()));
                         }
                     }
-                    colours[index] = arrivals.isEmpty() ? LightMath.WHITE : LightMath.tint(arrivals, block,
-                            Math.round(sky * daylight));
+                    final int daylit = Math.round(sky * daylight);
+                    int colour = arrivals.isEmpty() ? LightMath.WHITE : LightMath.tint(arrivals, block, daylit);
+                    if (shaded && sky > 0) {
+                        colour = LightMath.skyThrough(colour, ColouredLights.skyTint(at), daylit);
+                    }
+                    colours[index] = colour;
                 }
             }
         }
@@ -172,7 +193,8 @@ final class ColouredLightModel extends BakedModelWrapper<BakedModel> {
     /* The face with each corner's colour multiplied by the light's colour where the corner looks. */
     private static BakedQuad tinted(final BakedQuad quad, final TintGrid grid) {
         final int[] data = quad.getVertices();
-        if (data.length < CORNERS * STRIDE) {
+        if (data.length < CORNERS * STRIDE || data[LIGHT] == LightTexture.FULL_BRIGHT) {
+            // A face that glows of itself, as a pack's glowing texture, gives light rather than takes it.
             return quad;
         }
         final Direction facing = quad.getDirection();
