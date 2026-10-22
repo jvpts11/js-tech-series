@@ -5,10 +5,11 @@ live in J's Core alone, so the other mods of the series ask the Core instead of 
 
 ## What exists today
 
-Nothing reaches into the game: the Core works through NeoForge's events and APIs only. Animated models (J's Computers'
-Mainframes, racks, drives and encoders) are drawn with GeckoLib, a required dependency of J's Computers.
+Everything this page designs is built, as of October 2026: the Core's few reaches into the game, each with its reason
+and its test, and its own animated models. How each reach is kept: [Reaches into the game](../REACHES.md). What is left
+of the models is on their own page ([Models](models.md)).
 
-## To build
+## The design
 
 ### Reaching into the game
 

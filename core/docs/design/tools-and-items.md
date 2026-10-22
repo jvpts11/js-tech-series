@@ -5,10 +5,10 @@ energy, fuel or air, and items that answer a key without being held.
 
 ## What exists today
 
-- **Items that hold things**, energy among them, keep their contents as data components ([Content](../CONTENT.md)).
-- **What is worn** is found wherever it is worn ([Entities](../ENTITIES.md)).
+Everything this page designs is built, as of October 2026. How a mod uses it, with code:
+[Tools and items](../TOOLS.md). Nothing of this page is left to build.
 
-## To build
+## The design
 
 The kit gathers what Mekanism's Meka-Tool and Atomic Disassembler, Tinkers' Construct, Mining Gadgets, Building
 Gadgets, FTB Ultimine and the Construction Wand do, in one place, for any mod.

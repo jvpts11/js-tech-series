@@ -8,10 +8,12 @@ Galacticraft and Ad Astra and the atmospheres of Advanced Rocketry.
 
 ## What exists today
 
-Nothing of the kit. The Core's dimension rules already say whether a dimension's air can be breathed, its temperature
-and its pressure, and the Core posts a hazard event before they harm a player ([The world](world.md)).
+Everything this page designs is built, as of October 2026: rooms found and their real gases kept, leaks, doors and
+bursting blocks, breathing, fire and oxygen, rooms under water, mobs and plants, the view of a room, the Atmosphere
+Detector and vents. How a mod uses it, with code: [Sealed rooms](../ROOMS.md). What is left is under *Still to build*
+at the end.
 
-## To build
+## The design
 
 ### Rooms
 
@@ -103,3 +105,8 @@ breathing, plants needing air, and bursting blocks, each can be turned off; the 
 J's Space's bases on other worlds and the rooms of its starships first, with J's Space's blocks (pressurized doors and
 windows, airlocks, vents, scrubbers, the Sabatier reactor); J's Oceanics' underwater bases next. Neither needs all of
 it, and any mod may use the rest.
+
+## Still to build
+
+- **Torches and candles going out where there is no air to burn** are J's Space's, with its blocks.
+- **The hiss of a leak** comes with the series' pass over its sounds.

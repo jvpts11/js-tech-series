@@ -6,24 +6,12 @@ adds and what they do; this page is the system they share.
 
 ## What exists today
 
-**One cable block for every cable**, `jscore:cable` ([Cables](../CABLES.md)):
+Everything this page designs is built, as of October 2026: the one cable block with its nine lanes, grids as a
+registry, the series' lines, lines that group, how each end works, the basic lines and the overhead lines, and
+telemetry as J's Space's own line. How a mod uses it, with code: [Cables](../CABLES.md) and
+[Energy and resources](../ENERGY_AND_RESOURCES.md). What is not built yet is under *Still to build* at the end.
 
-- A block holds up to **nine wires**, each in a **lane** of a 3 by 3 grid seen end on, so a data cable, a peripheral
-  cable and an energy cable run through the same block side by side without ever joining. A cable that must be alone
-  holds the block by itself.
-- A **line** is a job a cable does, with a **generation** that counts eras: a port takes cables of its own generation
-  and every earlier one, never a newer one. One line owns one lane.
-- A mod declares a **cable type**: its line, the **grid** that carries it (power, fluid, heat, gas, motion, data or
-  peripheral), its lane, what it carries a tick and how far, what it loses, the temperatures and marks of the fluids it
-  takes, whether it can turn inside a block, how many neighbours it joins, and its look.
-- **Joining**: two wires join when they are of the same line and generation and their colours agree. A dye colours a
-  wire; two colours never join, and an undyed wire joins every colour. Where a wire changes lane or two would cross, the
-  block becomes a **junction box**. Breaking takes out only the wire or the part looked at.
-- **Parts** sit on the block's faces (a bus, a cover, a sensor), each a registered type that saves, ticks and answers a
-  player on its own; a part closes its face to wires.
-- **Only the data grid carries a network's identity** ([Networks and Operations](networks-and-operations.md)).
-
-## To build
+## The design
 
 ### Every cable is a line of the block
 
@@ -124,5 +112,10 @@ bonus to machines.
 
 ### Telemetry leaves the peripheral types
 
-The point-to-point telemetry type the Core has today (256 blocks) gives way to J's Space's **telemetry line**, a line of
-its own that groups antennas, ground-station devices and research computers, and carries data only.
+The point-to-point telemetry type the Core had (256 blocks) gave way to J's Space's **telemetry line**, a line of its
+own that groups antennas, ground-station devices and research computers, and carries data only.
+
+## Still to build
+
+- **Shared in turn**: a grid that gives to its ends one after another, beside the priority it already has, for lines
+  whose ends want the same share over time rather than the same share at once.

@@ -4,15 +4,11 @@ Performance, diagnostics, the Core's settings, and how its state is kept.
 
 ## What exists today
 
-- **The Core's server settings** are in `jstech-balance.toml`, in each world's `serverconfig` folder: the disks'
-  latency, how long an Operation waits and how it ages, the Subframe's share, how long a saved Operation may wait, the
-  time programs may spend per machine and per server, the rates and shares of recordings, the days of a season, and the
-  chunks each owner may keep loaded ([Settings](../SETTINGS.md#the-cores-own-settings)).
-- **Values kept with the world** are each in a file of their own, with a version; block entities, saved attachments and
-  the Core's own files carry versions too ([State and saves](../STATE_AND_SAVES.md)).
-- **Timings** of named sections show on the F3 screen.
+Everything this page designs is built, as of October 2026: the performance rules, the diagnostics, the settings and the
+state. How a mod uses them, with code: [Diagnostics](../DIAGNOSTICS.md), [Settings](../SETTINGS.md) and
+[State and saves](../STATE_AND_SAVES.md). What is not built yet is under *Still to build* at the end.
 
-## To build
+## The design
 
 ### Performance
 
@@ -95,3 +91,10 @@ Empty defaults are set when the system is built. Every number on these pages is 
 - **Moving structures**: their region of blocks and where each structure is, kept through restarts.
 
 Everything saved has a version and a way to read older saves; a save from a newer version is never written over.
+
+## Still to build
+
+- **A page to read the diagnostic file**: a web page written beside the file, so an administrator reads the settings,
+  the mods, the timings and the state without opening the file itself.
+- **J's Computers' numbers leave the Core's balance file** (the disks' latency, the Subframe's share, the time programs
+  may spend, the media) for J's Computers' own settings, when J's Computers moves onto the Core.

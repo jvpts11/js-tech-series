@@ -5,54 +5,16 @@ world, keys, and sound. Every mod of the series draws through it, so they look a
 
 ## What exists today
 
-### Screens
+Everything this page designs is built, as of October 2026: screens declared in files with the layout engine, styles
+and the tools that build them, the components, tooltips, fonts, motion, the HUD and its editor, notifications, the
+camera, accessibility and the sound kit. How a mod uses it, with code: [Screens](../SCREENS.md),
+[UI components](../UI_COMPONENTS.md), [Tooltips](../TOOLTIPS.md), [Fonts](../FONTS.md), [Motion](../MOTION.md),
+[Overlays](../OVERLAYS.md), [Notifications](../NOTIFICATIONS.md), [The camera](../CAMERA.md) and
+[Sound](../SOUND.md). What is not built yet is under *Still to build* at the end.
 
-([Screens](../SCREENS.md), [UI components](../UI_COMPONENTS.md).)
+## The design
 
-- **Layouts that can be tested**: a screen's positions live in a layout with no game code, which the screen and its
-  menu both read (so a slot and its frame never part), and a test checks that nothing overlaps or runs out of bounds.
-- **Themes and skins**: a block's screen paints through the **theme of its era** (colours from a palette a resource
-  pack can change, and a style: scanlines on a Vintage screen, glass on an Advanced one); inside a computer the look is
-  the system's **skin**, so the same button is a Frames 95 button on one machine and a flat one on another.
-- **About twenty components**: panels, scroll panels, dialogs, labels, buttons, checkboxes, text fields and areas, a
-  command line, tabs, lists, column headers, grids of cells, context menus, breadcrumbs, scroll bars, progress bars,
-  steppers; and the tested logic behind the fields and editors.
-- **Text and models**: drawing text, block and item models on a screen.
-- **Screens in the world**: a monitor shows a picture painted with the same calls as a screen, drawn ten times a second
-  up to 16 blocks away and twice a second up to 32; the server sends what it shows only to the players near it, and
-  only when it changed.
-- **Keys** a mod declares, sent to the server as actions.
-
-### Fonts and motion
-
-- **Fonts from their free sources**, declared once and turned into what the game reads, with a **grid painter** for
-  terminal-like views; the Core carries **Misc Fixed**, the X Window System's font, in the public domain, in three
-  sizes ([Fonts](../FONTS.md)).
-- **Motion**: curves, profiles a resource pack can change, and one clock every motion reads ([Motion](../MOTION.md)).
-
-### Over the game
-
-- **HUD elements** stacked by corner, so two mods never draw over each other; **holograms** in the world; what **Jade**
-  shows for every block that describes itself ([Overlays](../OVERLAYS.md)).
-
-### Sound
-
-([Sound](../SOUND.md).)
-
-- A sound is **declared once** (where it is heard from, whether it loops, its channel, its files, how far it carries,
-  its subtitle), and its registration and language entry follow from that line.
-- **Channels** with a volume each, a **Sound Mixer** screen, a mute for any sound of the game, ducking under alerts,
-  visual signs for alerts.
-- **Running sounds** that follow what makes them, rooms of many machines heard as one, occlusion by walls, and a budget
-  of voices.
-- **Cues**: code says what happened, and a data file a resource pack can replace picks the sound by its context.
-- **Sounds made as they play**: a synthesiser, decoders, sound devices with their own limits, a voice allocator.
-- **Recordings** that are not the mods' own: stored on the server, fetched by the players who hear them, with shares
-  and a command to clear them.
-
-## To build
-
-The toolkit gathers what owo-ui, LDLib and YACL do, in one place, for any mod.
+The toolkit gathers in one place, for any mod, what the best screen and settings libraries do.
 
 ### How a screen is made
 
@@ -206,3 +168,15 @@ one place, for any mod.
 - **Drawing less**: still parts are kept in textures, and only what changed is drawn again.
 - **Visual tests**: screens are drawn off-screen in the client tests and compared with reference pictures, so a change
   nobody meant is caught.
+
+## Still to build
+
+- **A schema of screen files**: a JSON schema written from the screens' codecs by the data generation, so an editor
+  completes a screen file as it is typed.
+- **Components animated in one call**, by the motion kit's curves.
+- **Fonts from TrueType and OpenType files**, turned into the game's font by the data generation, with their licence
+  and credit required as for the bitmap ones.
+- **Jade in the player's style**: what Jade shows drawn in the style the player picked.
+- **Every mod's settings**: the settings screen shows the settings of mods that do not use the Core beside the Core's.
+- **More of the camera**: smoothing and shake as one service every mod shares; a hook a mod's third-person camera
+  plugs into; the whole window fading, drawn off-screen; and a spring among the curves, which overshoots and settles.

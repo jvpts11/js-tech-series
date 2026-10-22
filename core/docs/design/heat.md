@@ -5,10 +5,10 @@ back, and felt by those who stand too close. It is in the spirit of Mekanism's h
 
 ## What exists today
 
-The cable block knows a heat grid, and machines have a heat port and can overheat by design ([Machines](machines.md));
-there is no physics of heat behind them yet.
+Everything this page designs is built, as of October 2026. How a mod uses it, with code: [Heat](../HEAT.md). Nothing
+of this page is left to build; the body's own temperature is the hazards' ([Hazards](hazards.md)).
 
-## To build
+## The design
 
 ### Real temperature
 

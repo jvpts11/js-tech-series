@@ -7,11 +7,12 @@ as any other mod's would be.
 
 ## What exists today
 
-The dimension rules hurt a player in air they can't breathe, or in heat or cold past the limits, once a second, after
-the Core posts a **hazard event** that any mod's suit cancels to protect its wearer ([The world](world.md)). There is no
-radiation, dissonance or pollution yet.
+Everything this page designs is built, as of October 2026: the hazard kit, hazards of carried things, the lungs,
+treatment, radiation and its kinds, ionizing radiation and contamination, dissonance and pollution, with the hazard
+devices and their maps. How a mod uses it, with code: [Hazards](../HAZARDS.md). What is not built yet is under
+*Still to build* at the end.
 
-## To build
+## The design
 
 ### The hazard kit
 
@@ -164,3 +165,15 @@ Cleaning equipment is each mod's (J's Industrial's scrubbers and filters).
 
 The hazard, radiation and pollution kits are the platform's; **ionizing radiation, dissonance and the series' kinds of
 pollution** are the series' own, in its package, built only from the kits ([The API](api.md)).
+
+## Still to build
+
+- **The body's temperature, in kelvin**: what the place gives a body (the air, the sun, water, wind, hot and cold
+  blocks near) reaches it through what it wears, each worn thing's insulation a number in W/(m²·K) given as data, and
+  the body adds what it makes by working; past the bands of the hazard kit come hypothermia and heatstroke, shown on the
+  HUD.
+- **Acclimation**: a body that stays in a climate moves its bands toward it over time, and loses that away from it.
+- **Shielded containers**: a container that holds radioactive things and shields their radiation by the density of its
+  own material, so carrying them in one is safe.
+- **A helper for cleaning**: a block or a device that takes so much of one kind of pollution a second from its chunk,
+  for each mod's scrubbers and filters to use.

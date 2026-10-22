@@ -6,44 +6,12 @@ does, without depending on J's Computers; J's Computers is what runs the network
 
 ## What exists today
 
-### The data network
+Everything this page designs is built on the Core's side, as of October 2026: the data network's model, peripheral
+links, the framework of Operations, machines of any mod on the network, state as tables, and telemetry as J's Space's
+own line. How a mod uses it, with code: [Networks](../NETWORKS.md) and [Operations](../OPERATIONS.md). What is left is
+J's Computers' side, under *Still to build* at the end.
 
-([Networks](../NETWORKS.md).)
-
-- A network is every block joined by data cable around **one Mainframe**, with an identity of its own; each member has
-  an identity too. Both are types of their own, never bare ids, so one can't be handed where the other is wanted.
-- **What the network may do with each block** is its category: **A** carries the network but is not a member (a cable);
-  **B** is a member the network reads but never gives work to; **C** carries out Operations (the computers).
-- The members are a **closed family** (computer nodes such as the Mainframe and Subframes, service nodes such as storage
-  servers), whose leaves the mods fill in. **Topology elements** (routers, switches) shape the network and never receive
-  work.
-- **How runs join**: a cable touching runs of one network joins it; touching runs of two networks is a **conflict**, and
-  they are joined under one of the two. Cutting a run leaves the part away from the Mainframe with no network.
-- **How fast data goes**: each data cable has a line and an era, which give it a throughput and a range; between any two
-  places, the network knows the **slowest cable on the fastest way**, which is as fast as data can go.
-
-### Peripheral links
-
-A **peripheral link** joins one machine (the owner, a computer) to its devices (a monitor, a speaker, a drive) by
-peripheral cable. It is not part of the data network and carries no network identity. An owner has a number of ports of
-each kind and links no more; a hub takes one port and offers several. When a link can't be made, it says why.
-
-### Operations
-
-([Operations](../OPERATIONS.md).)
-
-- An **Operation** is a request with a **kind**, the arguments that kind takes, and a **status**. A mod adds kinds while
-  the game loads; afterwards the list closes, because a world saved yesterday has to mean the same today.
-- **Eight states**: pending, processing and waiting are active; completed, completed partially, failed, refused because
-  something is locked, and discarded are final. Each has a fixed number, because states are saved and sent. A failure
-  carries its reason as translatable text.
-- **Priority** (five levels, medium by default) and **queues**: the Mainframe works several at once; the highest
-  priority goes first, equal ones in the order they came, and an Operation that waits climbs a level after a while, so
-  nothing waits forever.
-- **Every Operation's life is posted** on the Core's event bus (created, started, then completed, failed or discarded),
-  so any mod can watch.
-
-## To build
+## The design
 
 ### Machines of any mod on the network
 
@@ -66,6 +34,11 @@ storage, and no mod depends on another to be read.
 
 ### Telemetry leaves the peripheral links
 
-Today the Core has three kinds of peripheral cable: computing, telemetry and industrial control. Telemetry becomes J's
-Space's own line, a group of the devices it joins ([Cables and lines](cables-and-lines.md)); computing and industrial
-control stay point-to-point links.
+The Core had three kinds of peripheral cable: computing, telemetry and industrial control. Telemetry became J's Space's
+own line, a group of the devices it joins ([Cables and lines](cables-and-lines.md)); computing and industrial control
+stay point-to-point links.
+
+## Still to build
+
+J's Computers' side, when it moves onto the Core: its SELECT reading the tables of state, its storage keeping every
+state of matter, the network reading the world's events, and what an era or a tier reached sets off.

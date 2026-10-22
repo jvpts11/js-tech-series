@@ -5,20 +5,11 @@ behaving, instead of the usual "items and fluids", where "fluid" ends up meaning
 
 ## What exists today
 
-Everything moves through NeoForge's standard capabilities, so it works with the machines and pipes of any mod
-([Energy and resources](../ENERGY_AND_RESOURCES.md)):
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: each state
+its own, with its storage, its line and its bridges, and the containment of exotic matter with the Antimatter Trap. How
+a mod uses it, with code: [Energy and resources](../ENERGY_AND_RESOURCES.md).
 
-- **Items**, in inventories, with faces a machine's owner sets (in, out, both, closed) named from the block's own front,
-  and filters by item, id or tag with amounts.
-- **Fluids**, as NeoForge fluids, in tanks and in pipes of the cable block. A pipe stands a range of temperatures and
-  takes some **marks**: `jscore:gases` (a gas needs a pipe that holds pressure) and `jscore:corrosive`; they are data
-  tags, so a data pack can mark any mod's fluids. A run carries only what every pipe of it takes. Amounts are in mB: a
-  block is one cubic metre, a thousand mB.
-- **Chemicals** that are neither items nor fluids (Mekanism's gases, for example) move through **bridges**, as an id and
-  an amount, with no mod named in the Core; without a bridge there are none, and nothing breaks.
-- Moving between two stores is all or nothing.
-
-## To build
+## The design
 
 ### Each state its own
 
@@ -50,3 +41,10 @@ and radiation belts, with no other mod installed.
 - **Without energy it stops taking more and releases nothing**: there are no accidents with exotic matter.
 - The **Antimatter Trap** is containment in its form for antimatter, a Penning trap.
 - Each mod gives the blocks its recipes, as with the rest of the shared content.
+
+## Still to build
+
+- **Pressure that bursts**: a tank or a pipe held past what it stands bursts, with the force of what it held; a relief
+  valve lets a little out before that.
+- **The bridge of chemicals checked against Mekanism's four kinds** of its current version.
+- **J's Computers' storage keeping every state**, when J's Computers moves onto the Core.

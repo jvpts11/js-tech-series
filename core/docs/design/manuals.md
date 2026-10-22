@@ -6,30 +6,13 @@ the contents and the index, searches them, and shows them in every manual that h
 
 ## What exists today
 
-([Manuals](../MANUALS.md).)
+Everything this page designs is built, as of October 2026, except writing a manual in Markdown, which *Still to build*
+at the end lists: the manuals with their chapters, sections and entries, the series' three manuals, the numbering, the
+styles as data, scenes in 3D and in motion, finding one's way (back and forward, bookmarks, search, the recipe
+viewers), the marks of what is new, live reload, the export to the web and the immersion. How a mod uses it, with code:
+[Manuals](../MANUALS.md).
 
-- **Manuals, chapters, sections and entries.** A chapter is everything one mod writes; an entry is one thing a player
-  can look up, made of blocks: paragraphs, headings, figures, numbered tables (with amounts read from the code and
-  written in the reader's way), recipes, steps, warnings, problems and their fixes, words explained, links, and blocks a
-  mod draws itself.
-- **The series' manuals**: the **Technical Reference** (every chapter of every mod installed, in a navy binder), J's
-  Computers' **Guide to Operations** (a beige binder of the early computer manuals) and J's Industrial's **Plant
-  Drawings** (a folder of blueprints, each machine drawn from three sides). A mod's entries show in its own manual and
-  in the Technical Reference.
-- **Numbered as technical manuals are**: chapter 3, section 3.2, entry 3.2.6, Figure 3-9, page 3-14; a set of drawings
-  numbers its entries as drawings (JI-102).
-- **Two ways of writing**: five parts in order (what it is, what it is for, how to get it, how to use it, what can go
-  wrong), or running text that tells the idea before the part and ends with what to do if something goes wrong.
-- **Links inside a sentence**, numbered by the manual being read; an **index** that lists every word explained, which
-  makes it the glossary; a **plate** under the title with the items the entry is about; **pictures**, as images or as
-  drawings made as the page is shown (J's Computers' real firmware screens); a block **seen from three sides** with
-  numbered callouts; **plans** of blocks to place.
-- **Styles are data**: colours, pages, columns, fonts, decorations (a binder's rings, a drawing's grid, frame and title
-  block), covers, numbering; a resource pack can replace them.
-- **The manual key** over an item opens its entry, in the item's own manual when it has one; a manual is handed to each
-  player once, the first time they join; a manual reopens where it was left.
-
-## To build
+## The design
 
 The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder do, in one place, for any mod.
 
@@ -62,6 +45,14 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
 - **Live reload**: pages change in the game as they are edited, with no restart.
 - **Export to the web**: the same manual comes out as a static website, with search, so a mod's manual is also its
   online documentation, made from the same data.
+- **Written in Markdown**: a manual is a folder of Markdown files, and the code only loads it. Each entry is a file in
+  `assets/<mod>/jstech/manuals/<manual>/<language>/`, falling back to `en_us` where a language has none, so a
+  translator copies the folder as they would a language file. A short header at the top of each file names the entry,
+  its chapter, its number, its order and its icon; the manual and its chapters are files too. The text is CommonMark
+  with tables; links between entries go by their names; and the manual's own blocks (a recipe, a scene, a multiblock, a
+  figure, a callout of a note, a warning or a plan, a table whose amounts are read from the code by name, a listing, a
+  terminal session) are written in the file in a syntax of their own. The index, the glossary, the search and the
+  export to the web read the same files.
 
 ### Immersion
 
@@ -74,3 +65,11 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
   the one who wrote it, from a pencil button on the toolbar.
 - **A tip at the right time**: the first time a player picks up an item, a quiet notice offers its page; a setting turns
   it off.
+
+## Still to build
+
+- **Manuals written in Markdown**, as *For those who write* above says: the files, their header, the manual's own
+  blocks, the manual and its chapters as files, read live; the code only registers a manual.
+- **The Core's own manuals moved to Markdown**, as the proof of it, and the way of declaring entries in code goes.
+- **J's Computers' manuals** (the Guide to Operations and its books) move to Markdown too, as J's Computers' last step
+  in this cycle.

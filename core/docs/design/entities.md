@@ -6,18 +6,12 @@ is the light, fast way, for cars, bikes and drones.
 
 ## What exists today
 
-([Entities](../ENTITIES.md).)
+Everything this page designs is built, as of October 2026: vehicles as data with their parts, fuels, seats, keys,
+lights, paints, trailers and cargo, robots with paths in three dimensions and tasks with logic, creatures as data,
+real ballistics, and the kit of modules in worn things. How a mod uses it, with code: [Entities](../ENTITIES.md). What
+is not built yet is under *Still to build* at the end.
 
-- **Entities are declared like blocks**: a name, a size, how far and how often players are sent them, fire immunity,
-  attributes, energy offered to chargers and cables.
-- **Vehicles** players sit in and drive with the walking keys (a flying one climbs and sinks), falling by the gravity of
-  their dimension, running on a battery.
-- **Robots** that work through a list of tasks as their owner would: they **never fight**, and never break a block their
-  owner could not. The Core's tasks move, break blocks, collect items, wait and drive; a mod adds kinds of its own.
-- **Projectiles**, crediting whoever fired them with what they hit.
-- **What is worn**: the armour slots and the slots of Curios or Accessories when installed, and any mod's own.
-
-## To build
+## The design
 
 The kits gather what Immersive Vehicles, Small Ships and the robots of many mods do, in one place, for any mod.
 
@@ -66,3 +60,10 @@ their hardness.
 
 **A kit of modules in worn items**: an item with module places, each module with its effect and the energy it spends,
 in a screen of its own. J's Industrial's exo-suits and J's Space's suits use the same kit.
+
+## Still to build
+
+- **A rolling aircraft seen rolling**: the player's model turned with the vehicle's roll for every player who sees it,
+  not only in the pilot's own view.
+- **Two screens come with the mods that use them**: a vehicle's panel and instruments with J's Transport, and the
+  screen of a worn thing's modules with the mod of the suits.

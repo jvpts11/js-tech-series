@@ -5,19 +5,12 @@ says what the shape is, checks the world against it, turns it into one machine, 
 
 ## What exists today
 
-([Multiblocks](../MULTIBLOCKS.md).)
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: shapes by
+pattern and by rule, the inside that counts, ports as blocks anywhere on the shell, forming, the Structure Projector
+and the Multiblock Builder, the recipe viewers' pages, multiblocks entirely as data, and multiblocks moving. How a mod
+uses it, with code: [Multiblocks](../MULTIBLOCKS.md).
 
-- **A pattern** is the shape drawn in letters, one layer at a time from the bottom; one letter is the **controller**,
-  the block that holds the machine's state and runs it, and the others say which blocks or tags fit there.
-- **Patterns are data**: the data generation writes each to a file, and a data pack can change the shape, the blocks
-  or the ports with no code. A pattern can also be read from a structure built in the game.
-- **Four rotations**: a shape is found facing any of the four horizontal ways, so a player can build it turned.
-- A failed check says **which place is wrong**, what was wanted and what was found, which is what a player needs to be
-  told.
-- **Ports at fixed places** of the pattern (items, fluids, energy, in or out) pass pipes and cables through to the
-  controller.
-
-## To build
+## The design
 
 The kit gathers what the multiblocks of GregTech, Mekanism, NuclearCraft, Extreme Reactors, Tinkers' Construct and
 Modular Machinery do, in one place, for any mod.
@@ -90,3 +83,10 @@ with no code, as Modular Machinery does, so a modpack makes machines of its own.
 
 Multiblocks can be **sections of a moving structure**, such as a rocket's parts, with known models and collision
 ([Moving structures](moving-structures.md)).
+
+## Still to build
+
+- **A recorder of patterns**, a tool of the studio: a multiblock built in the world becomes its pattern's file, its
+  projector preview and its page in the recipe viewers, in one step.
+- **The Multiblock Builder taking from a network's storage** is J's Computers' side of it, when J's Computers moves onto
+  the Core.

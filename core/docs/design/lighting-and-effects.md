@@ -5,12 +5,12 @@ at work. Both are kits any mod uses, written natively.
 
 ## What exists today
 
-The game's own light (block light and sky light, from 0 to 15) and its own particles. Holograms and screens in the world
-are drawn by the Core ([The interface](interface.md)).
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists. How a mod
+uses it, with code: [Lighting](../LIGHTING.md) and [Particles and effects](../EFFECTS.md).
 
-## To build
+## The design
 
-The kits gather what Shimmer, the dynamic-light mods, Immersive Engineering's floodlight, Photon and MadParticle do, in
+The kits gather what Shimmer, the dynamic-light mods, Immersive Engineering's floodlight and the particle mods do, in
 one place, for any mod.
 
 ### Lighting
@@ -62,3 +62,13 @@ one place, for any mod.
 - **Cost**: thousands of particles drawn by instancing on the graphics card, a budget per player, and the game's own
   particle setting (all, decreased, minimal) respected.
 - **Works with Iris and Oculus**, and without them.
+
+## Still to build
+
+- **Light through coloured glass**: light that passes a stained or tinted block takes its colour, so a glass-walled
+  laboratory or greenhouse is lit in the glass's hue.
+- **Coloured light under deferred shader packs**: tried with Iris's deferred packs, and whatever that asks for.
+- **Light updates in batches away from the main thread**, as the cost above says, checked and finished.
+- **Particles drawn by instancing** on the graphics card, as the cost above says, and particles stretched along their
+  speed, for sparks and tracers.
+- **Shimmer** has no build for this version of the game, so stepping aside for it waits for one.

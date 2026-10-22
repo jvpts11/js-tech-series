@@ -6,11 +6,12 @@ Blocks and Chisels and Bits.
 
 ## What exists today
 
-Inside the cable block only: thin **parts** on the block's faces (a bus, a cover, a sensor), each a kind registered by
-any mod, saving, ticking and answering a player on its own, beside the bundle of wires running through the block's
-middle; a part on a face closes that face to wires ([Cables](../CABLES.md#parts-on-the-cable)).
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: block spaces
+with many occupants, microblocks of any block, the saw, facades, parts that move and act on their own faces, the game's
+small blocks in a space, and sensors among the parts. How a mod uses it, with code:
+[Block spaces and microblocks](../MULTIPART.md).
 
-## To build
+## The design
 
 ### A block space with many occupants
 
@@ -53,3 +54,7 @@ middle; a part on a face closes that face to wires ([Cables](../CABLES.md#parts-
 - **The wrench** turns or takes off a part.
 - **Multipart spaces travel in moving structures** like any block ([Moving structures](moving-structures.md)).
 - **A testing kit** for GameTests of multipart spaces.
+
+## Still to build
+
+- **Facades over any block**, not only where a cable runs, so a microblock's look covers any face of a space.

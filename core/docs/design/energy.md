@@ -6,20 +6,12 @@ series are J's Industrial's; the system they run on is the Core's, so every mod 
 
 ## What exists today
 
-The Core moves **FE**, the energy unit every NeoForge mod shares ([Energy and resources](../ENERGY_AND_RESOURCES.md)):
+Everything this page designs is built, as of October 2026: the energy kit and J's Energy with its voltage classes,
+loss, the wrong class, protection, speaking FE through the converters, and the basic cable and battery; the settings of
+consequence live in the server's `jstech-energy.toml`. How a mod uses it, with code:
+[Energy and resources](../ENERGY_AND_RESOURCES.md). Nothing of this page is left to build.
 
-- A block is a **generator**, a **consumer** or a **buffer** by what its energy store gives and takes. Items and
-  entities (a vehicle's battery, a robot) can hold energy too.
-- **Energy moves in the same tick, and cables hold none.** Every tick, after the machines have worked, what the
-  generators on a run give is shared among what its consumers want, in proportion, never more than each can take.
-- **No energy is made or lost by rounding**: the shares are whole numbers that add up exactly to what was given, the
-  remainder going one unit at a time to those whose share was rounded down the most.
-- A cable carries at most its throughput a tick, the narrowest cable of a run limits all of it, and a cable may lose a
-  share of what it carries, rounded up, so a lossy cable never carries energy for free.
-- **Seven energy tiers** exist as a type, with their ceilings, and a mod can register a **unit** of its own with its
-  ratio to FE (conversions round down, so converting never makes energy).
-
-## To build
+## The design
 
 ### Two layers: the energy kit and J's Energy
 

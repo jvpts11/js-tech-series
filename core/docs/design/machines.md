@@ -6,20 +6,12 @@ its mod's.
 
 ## What exists today
 
-A **processing machine** for any mod ([Machines](../MACHINES.md)):
+Everything this page designs is built, as of October 2026: the framework with its resources, sides, never jammed,
+recipes, control, setting up fast, upgrades, and the screen with the machine's last ten minutes. How a mod uses it,
+with code: [Machines](../MACHINES.md). Nothing of this page is left to build; J's Industrial's compressed air reaches a
+machine through the framework's ports for other resources.
 
-- input and output slots, fluid tanks, an energy store and upgrade slots, laid out by the machine;
-- **recipe kinds**: each kind of machine works a kind of recipe, kept as data files that players and data packs add to,
-  change or remove with no code; one line declares the kind, its recipe type and its name;
-- each tick: with nothing to work, or no room for **everything** a recipe makes, its progress goes back to zero, so a
-  machine never ends a recipe it can't finish; with no energy it waits and keeps its progress; otherwise it spends the
-  tick's energy and moves on;
-- **upgrades**: an item says what one of it does to speed and to energy, and the effects of every upgrade installed
-  multiply;
-- **JEI and EMI** pages for every recipe kind with no code, which only load when the viewer is installed;
-- faces an owner sets per machine (in, out, both, closed), and what tools such as Jade show ("Working: 45%").
-
-## To build
+## The design
 
 The framework gathers what the machines of Mekanism, Thermal and EnderIO do, in one place, for any mod.
 

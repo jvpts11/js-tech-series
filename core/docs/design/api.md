@@ -6,27 +6,13 @@ page ([The API of the J's Tech Series](../../../docs/API.md)).
 
 ## What exists today
 
-- **The promise is narrow**: the packages `dev.jstech.core.api` and `dev.jstech.core.api.client`, and the few types a
-  mod can't add anything without (the registries of programming languages and of kinds of Operation, and what goes into
-  them). Everything else in the Core works, is documented, and is used by the series every day, but is not promised: a
-  release may change its shape, and the changelog says so.
-- **One version number** for the Core's API (4 today), raised by one whenever something is added to it or changes shape,
-  so a mod can refuse to load below the number that brought what it needs. What a release adds is marked
-  **experimental** for that release and loses the mark when the next cycle begins; the CHANGELOG has an "API" section.
-- **Not settled yet**, and the API says so: until J's Computers and J's Industrial are finished, anything in it may
-  change shape between releases, always with a note in the changelog.
-- **The promise is written down line by line**: every type and member a mod can reach, with the version that brought it,
-  and the tests fail when the code and that list disagree.
-- **Taking something away**: it is marked deprecated first, with what to use instead, stays one whole cycle, and goes in
-  the next one.
-- **Numbers that travel** (the kinds of Operation, an Operation's status, sizes and tiers of hardware), written into
-  saves and sent as numbers, never change once given out, and a test fails if one moves.
-- **How a mod adds things**: it listens for the Core's register event while the game loads and adds what it has. After
-  loading every registry closes and refuses changes, so what a world knows how to do never changes under it. Two entries
-  with one id are refused; nothing quietly replaces anything, because which of two won would depend on the order the
-  mods loaded in.
+Everything this page designs is built, as of October 2026: the API is at version 11; the Core's kits are promised,
+experimental, each listed in `JsCoreApi.PROMISED_PACKAGES` and documented from zero; the photo of the promise, line by
+line, travels in the Core's jar for a mod to check against; and J's Example builds on the promise alone. How a mod
+uses it: [The API of the J's Tech Series](../../../docs/API.md) and [Getting started](../GETTING_STARTED.md). What is
+not built yet is under *Still to build* at the end.
 
-## To build
+## The design
 
 ### Two layers, kept apart
 
@@ -74,3 +60,9 @@ J's Computers or J's Industrial: a generator, a battery, a crusher, a tank and a
 pipe, a sensor on a cable, settings, a recipe from a data pack, state kept per server and per player, and a simple
 screen. It is a tutorial, a test of the whole API, proof that the Core is general, and an alarm for anything internal
 that leaks into the promise, all at once.
+
+## Still to build
+
+- **Published for everyone**: the Core, its Gradle plugin and its test kit in a public Maven repository, so a mod
+  outside the series builds on them without building the series first.
+- **The promise growing** with every kit added next, each documented from zero with an example that compiles.

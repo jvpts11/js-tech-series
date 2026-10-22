@@ -7,24 +7,13 @@ made with are the Core's.
 
 ## What exists today
 
-([The world](../WORLD.md).)
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: terrain and
+biomes declared in code down to their noises, density functions and surface rules, landforms, rock in layers, seas of
+any liquid, veins and prospecting, reservoirs, structures and settlements, finding things, map markers, the sky, the
+day and the weather of each dimension, the physics kit, worlds that change, fields over chunks, chunks kept loaded with
+a reason each, and the Space Persistor. How a mod uses it, with code: [The world](../WORLD.md).
 
-- **Ores and structures** declared in code, with the files the game reads written by the data generation, so a data
-  pack can replace any of them.
-- **Dimensions of a mod's own**, flat or with terrain from noise, with their sky, ceiling and light; **runtime-only**
-  ones, which a world does not load as it starts, so it is never marked as using experimental settings.
-- **Rules of a dimension**, a data file each: gravity (as a share of the Overworld's), whether the air can be breathed,
-  temperature, weather and pressure. The Core applies them: things fall by the gravity, and a player in air they can't
-  breathe, or in heat or cold past the limits, is hurt once a second, after the Core posts a **hazard event** that a
-  suit of any mod cancels to protect its wearer.
-- **Dimensions made while the game runs**: copies of a declared template, saved with the world, as many as are needed,
-  which an operator can also make and remove (`/jstech dimension`).
-- **Data over areas**: values kept over boxes of the world, saved with each dimension and found by place in
-  near-constant time however many the world holds.
-- **Keeping chunks loaded**: a machine asks for its chunks for its owner, ticking or only loaded, within a number per
-  owner across every dimension (25 by default); what a gone block held is let go when the world loads.
-
-## To build
+## The design
 
 The kits below gather in one place, for any mod, the kind of things TerraBlender, Tectonic and Terralith, Lithostitched
 and the planets of Ad Astra and Galacticraft do, and more.
@@ -200,3 +189,16 @@ that generate on many threads or draw distant terrain, such as C2ME and Distant 
 
 A world whose extra dimensions are the series' own, declared ahead (as J's Space's Moon), should open without the
 game's warning about experimental settings; this needs reaching into the game ([Low level](low-level.md)).
+
+## Still to build
+
+- **Changing other mods' world as data**: density functions, biomes, features and structures of the game and of other
+  mods changed by a data pack, and more kinds of density function to build terrain with.
+- **Other mods' structures tuned by an operator**: a settings file that turns off, spaces out or moves to other biomes
+  the structures of any mod, and a dump of them all.
+- **A field manual of the veins**, written in Markdown in the manuals' framework ([Manuals](manuals.md)).
+- **Large edits kept and undone**: a large edit saved as a structure file, read back from one, and undone.
+- **Chunks kept with their owner away**, by a rule of the server's.
+- **The same world on every thread, proved**: a test that generates the same land with any number of threads.
+- **Biomes added to the Overworld by region**, with their surface rules merged, belong to J's Overworld, a mod of its
+  own on the Core.

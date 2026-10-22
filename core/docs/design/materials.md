@@ -8,13 +8,12 @@ own design; this page is the system they all live in.
 
 ## What exists today
 
-A closed catalogue of five metals (iron, copper, gold, tin and bronze) in seven forms (ingot, nugget, dust, plate, bolt,
-rod and gear). The Core registers the forms the game lacks as they are needed (today iron dust, iron plate and copper
-plate, under `jscore`), and every form is in the common tag other mods use, `c:<forms>/<material>`, so a recipe that
-asks for `c:dusts/iron` takes iron dust from any mod ([Content](../CONTENT.md#materials)). Forms the game already has,
-such as the iron ingot, stay vanilla's.
+Everything this page designs is built, as of October 2026: materials, forms, properties, mineral families and host
+rocks as registries, the 118 elements, isotopes, what lies beyond the known table, the exotic forms, minerals, liquids
+made from materials, the shared catalogue and the J's Tech creative tab. How a mod uses it, with code:
+[Content](../CONTENT.md#materials). Nothing of this page is left to build.
 
-## To build
+## The design
 
 ### Materials are registries
 

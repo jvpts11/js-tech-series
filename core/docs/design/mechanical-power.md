@@ -6,9 +6,10 @@ series.
 
 ## What exists today
 
-The cable block knows a motion grid, with no kit behind it yet ([Cables and lines](cables-and-lines.md)).
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists. How a mod
+uses it, with code: [Mechanical power](../MECHANICAL_POWER.md).
 
-## To build
+## The design
 
 ### Real units
 
@@ -45,3 +46,8 @@ The cable block knows a motion grid, with no kit behind it yet ([Cables and line
 - **Mechanical power on moving structures**: an airship's propellers driven by shafts, as in Create Aeronautics
   ([Moving structures](moving-structures.md)).
 - **Networks are worked out again only when they change**, with no tick per shaft.
+
+## Still to build
+
+- **Turning parts drawn by instancing**, as *Seeing and measuring* above says, so a plant of thousands of shafts and
+  gears costs the frame little: today they are drawn in batches.

@@ -6,10 +6,13 @@ of Create Aeronautics, Valkyrien Skies and Create's contraptions, as an open-sou
 
 ## What exists today
 
-Nothing of the kit. The Core has entities with a driver's input and a vehicle's specification
-([Entities](../ENTITIES.md)), which are single entities, not structures of blocks.
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: real blocks
+that really move, by rule and by physics, living and working aboard, rooms, joints, held structures, parting and
+joining, structures born whole from a template, the layer beside Create and Create Aeronautics, and the physics of
+structures far apart worked out beside the server's thread. How a mod uses it, with code:
+[Moving structures](../MOVING_STRUCTURES.md).
 
-## To build
+## The design
 
 ### Real blocks that really move
 
@@ -155,3 +158,14 @@ conflict or crash the game where they meet:
 - **Behind a guard,** isolated, pinned to the versions its tests cover, with GameTests for each place they meet; a
   version outside that range turns the layer off with a warning in the log, and the kit then refuses every meeting
   with that mod's structures.
+
+## Still to build
+
+- **A steadier solver**: contacts kept from tick to tick and started from the last answer, more passes where bodies are
+  stacked, rest that stays still, and fast bodies caught before they pass through; proved by a stack of structures
+  that settles and sleeps, a great hull resting on the ground without trembling, a fast body that never goes through a
+  wall, and a vehicle that rolls.
+- **Block entities that remember places of their own**: a general way to move the positions they keep with the
+  structure's pose, and a hook for other mods' block entities.
+- **Running structures by command**: freezing one, taking one away, and saving one as a structure file, beside the
+  commands there are.

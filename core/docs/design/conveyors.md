@@ -6,10 +6,10 @@ Engineering's conveyors.
 
 ## What exists today
 
-Nothing of the kit: items move between blocks through inventories, pipes and the cable block's lines
-([Energy and resources](../ENERGY_AND_RESOURCES.md)).
+Everything this page designs is built, as of October 2026. How a mod uses it, with code:
+[Conveyors](../CONVEYORS.md). What is not built yet is under *Still to build* at the end.
 
-## To build
+## The design
 
 - **Items in compressed queues, never entities**, so thousands of moving items weigh nothing.
 - **Items seen moving**, at a speed by the kind of belt.
@@ -20,3 +20,8 @@ Nothing of the kit: items move between blocks through inventories, pipes and the
 - **Driven by energy or by mechanical power**, through either kit ([Energy](energy.md),
   [Mechanical power](mechanical-power.md)).
 - **They work on moving structures** ([Moving structures](moving-structures.md)).
+
+## Still to build
+
+- **Measured at scale**: how many items a plant's belts carry before they cost the server anything, measured, and
+  whatever the measure asks for.

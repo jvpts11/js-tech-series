@@ -7,15 +7,13 @@ Java only.
 
 ## What exists today
 
-- **Declaring everything once**, with the files the game reads written by the data generation
-  ([Getting started](../GETTING_STARTED.md)).
-- **Optional mods only behind guards**: the Core's own integrations (JEI, EMI, Jade, FTB Teams, Curios, Accessories,
-  Mekanism's chemicals) load only when the mod is installed, and a test fails if one is reached from outside its guard.
-- **JEI and EMI pages** for every kind of processing recipe, with no code.
-- **Timings** of named sections on the F3 screen, and panels of a mod's own lines there.
-- **A testing kit** for unit tests and GameTests ([Testing](../TESTING.md)).
+Everything this page designs is built, as of October 2026: the toolkit, errors that teach, the checks of the data
+generation, the log by system, live reload, the inspectors, developer mode and the studio with its tools, the MCP server
+and the tools an agent plays with, the Gradle plugin and the test kit. How a mod uses it, with code:
+[While you build](../DEVELOPING.md), [The toolkit](../TOOLKIT.md), [Testing](../TESTING.md) and
+[The Gradle plugin](../GRADLE_PLUGIN.md). What is not built yet is under *Still to build* at the end.
 
-## To build
+## The design
 
 - **Capabilities made easy**: a capability of a mod's own (for blocks, items or entities, per face) declared in one
   line; **lookups kept in a cache** that is told when they go stale, so nothing searches for a capability every tick;
@@ -145,3 +143,11 @@ The series' own tests are the most complete kit of their kind; the Core opens th
 - **Tests of cost**: "this machine costs less than so many microseconds a tick", with a limit that fails the build.
 - **A stall monitor and a report of time** for long batteries.
 - **Arenas made in code**: empty templates of several sizes, with no structures drawn by hand.
+
+## Still to build
+
+- **More of the studio**: an editor of camera paths, flown and recorded into the path's file; a recorder that writes a
+  multiblock's pattern, its projector preview and its recipe-viewer page from a structure built in the world; a preview
+  of who may do what at a place; and, on the Recipes tab, a preview of what unification would change.
+- **More for agents**: a published page of the MCP server's tools and their schemas, made from the tools themselves, and
+  a tool that describes the scene in view.

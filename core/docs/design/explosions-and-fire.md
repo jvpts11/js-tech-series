@@ -6,9 +6,10 @@ explosions, with real physics.
 
 ## What exists today
 
-The game's own explosions and fire.
+Everything this page designs is built, as of October 2026. How a mod uses it, with code:
+[Explosions and fire](../EXPLOSIONS_AND_FIRE.md). Nothing of this page is left to build.
 
-## To build
+## The design
 
 ### Explosions
 

@@ -5,22 +5,12 @@ reached without depending on it.
 
 ## What exists today
 
-Progress is counted along **axes**: named ladders of steps, each kept per player and saved with the world
-([Progression](../PROGRESSION.md)).
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: the axes and
+the eras as a registry, axes that move by playing, progression kept per team, milestones, knowledge and the knowledge
+gate, the knowledge seal of structures, advancements, and naming what is discovered. How a mod uses it, with code:
+[Progression](../PROGRESSION.md).
 
-- **The two axes of the series**: the **hardware eras** (`jscore:hardware_era`: Vintage, Legacy, Transition, Standard,
-  Advanced, Exa, Singularity), the generation of the computers a player builds, and the **industrial tiers**
-  (`jscore:industrial_tier`: T0 to T9), how far a player's industry has come. They are two ladders on purpose: a player
-  can run an Advanced computer on a T2 industry, and the other way round; nothing derives one from the other.
-- Any mod registers **axes of its own**. A player only moves forward on an axis, and the Core says once when they arrive
-  at a step; an operator can put a player on any step (`/jstech progress`).
-- **Gates in data**: a data file can ask for a step of an axis before something is allowed.
-- **Advancements**: two triggers (something happened, a step was reached), and tabs of advancements written from code,
-  with advancements that only exist when another mod is installed.
-
-Today no mod moves the two axes by playing: only an operator does.
-
-## To build
+## The design
 
 ### Eras as a registry
 
@@ -64,3 +54,8 @@ Written once for every mod: a **recipe may ask for a piece of knowledge**.
 The **fictional elements** (from 119 on) can be named by the player who first discovers one on a server: the element
 and its items take that name, kept with the world, sent to every player, and the same in every language. With the
 setting off, the names the series gives them are used ([Materials](materials.md)).
+
+## Still to build
+
+- **The hardware eras' axis read from the registry of eras**: the mechanism is built, and the axis J's Computers'
+  hardware reads moves onto it when J's Computers does.

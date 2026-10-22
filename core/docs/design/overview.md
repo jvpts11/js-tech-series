@@ -7,22 +7,12 @@ working from one release to the next.
 
 ## What exists today
 
-The Core is the most built part of the series. Its programmers' documentation explains every part from zero, with code
-([J's Core documentation](../README.md)); these pages say what each part is for, the rules behind it, and what is still
-to come. Built today:
+Nearly all of the Core is built, as of October 2026: the platform, the series' shared model and the shared content,
+in the three layers below. Its programmers' documentation explains every part from zero, with code
+([J's Core documentation](../README.md)); these pages say what each part is for, the rules behind it, and, at the end
+of each, what is still to come.
 
-- **the platform**: declaring blocks, items, block entities, menus and entities once; values kept with the world, with
-  versions; settings files and their screen; commands; teams and owners; energy, fluids, chemicals and items moving
-  between blocks; the cable block; machines and their recipes; multiblocks; the data network and Operations; world
-  generation, dimensions and chunk loading; screens, fonts, motion, overlays and sound; manuals; testing
-  ([The platform](platform.md) and the pages after it);
-- **the series' shared model**: the hardware eras and the industrial tiers, the material catalogue, the network's
-  roles and the Operations framework ([Progression](progression.md), [Materials](materials.md),
-  [Networks and Operations](networks-and-operations.md));
-- **the first shared content**: the materials every mod trades, the cable block every mod lays its cables in, and the
-  framework of the series' manuals.
-
-## To build
+## The design
 
 ### Three layers
 
@@ -93,3 +83,9 @@ Core's sake: its content is there because other mods need it, and a world with t
 | [Low level](low-level.md) | Reaching into the game, and native animated models. |
 | [Implementation](implementation.md) | Settings, numbers and files. |
 | [The series](series.md) | Who depends on whom, and what each mod takes from the Core. |
+
+## Still to build
+
+What each page lists at its end, and one move of the whole: the series' model that the Core holds today (the eras and
+tiers, the network's model, the Operations and their kinds, the peripheral links, the `/jstech` root, the series' theme)
+goes into the series' own package when J's Computers and J's Industrial move onto the Core.

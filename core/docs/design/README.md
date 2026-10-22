@@ -4,11 +4,11 @@ This folder contains the design spec of J's Core. The entire library is made bas
 purpose of not only making every system that will exist sane and easy to build by anyone, but also of leaving no doubt
 about the things yet to be made.
 
-Each page covers one subject. Inside a page, what the Core already does comes first, and what is designed but not built
-yet is in a section called **To build**. Much of the Core is already built and explained, with code, in its programmers'
-documentation ([J's Core documentation](../README.md)); these pages say what each part is for and the rules behind it,
-and link to that documentation instead of repeating it. Every number in these pages is a first estimate, to be tuned in
-play.
+Each page covers one subject. Inside a page, **What exists today** says how much of it is built and where its
+programmers' documentation explains it, with code ([J's Core documentation](../README.md)); **The design** says what
+each part is for and the rules behind it; and **Still to build**, at its end, lists what is designed and not built yet,
+and what was left to another mod of the series. As of October 2026 nearly all of the Core is built. Every number in
+these pages is a first estimate, to be tuned in play.
 
 ## The pages
 
@@ -49,7 +49,9 @@ play.
 
 ## The order of building
 
-The Core grows with the mods that need it, so each part is built when its first real user starts, by its dependencies:
+The Core grows with the mods that need it, so each part is built when its first real user starts, by its dependencies.
+The ten steps below were built in this order, and are done; what each page still lists comes next, before J's
+Computers and J's Industrial are moved onto the Core:
 
 1. **Order in the house**: the series' package and the wider promise, with the test of everything reachable; J's
    Computers' settings and programming languages move to J's Computers; telemetry leaves the peripheral types; the J's
