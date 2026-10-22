@@ -401,11 +401,6 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         return out;
     }
 
-    /* A cable's faces take facades, which hide its wires and leave its links open. */
-    @Override
-    public boolean takesFacades() {
-        return true;
-    }
 
     // Shape, aim and drops
 

@@ -11,8 +11,10 @@ import net.minecraft.core.BlockPos;
 
 /**
  * A block entity that keeps the places of other blocks, told when it moves with a structure: any mod's block works
- * aboard as it is, and the few that remember where something else is put that right here. A mod whose block entity it
- * cannot change listens for {@link StructureBlocksMovedEvent} instead.
+ * aboard as it is, and the few that remember where something else is put that right here. One that does not has the
+ * places it saved, written as the game writes places, follow the blocks they name ({@link StructurePlaces}); a mod
+ * whose block entity keeps them some other way and that it cannot change declares a fixer there, or listens for
+ * {@link StructureBlocksMovedEvent}.
  *
  * <pre>{@code
  * public void moved(BlockPos was, BlockMove move) {

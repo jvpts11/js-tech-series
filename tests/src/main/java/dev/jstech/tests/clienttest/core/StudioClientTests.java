@@ -22,12 +22,14 @@ import dev.jstech.core.client.studio.StudioScreen;
 import dev.jstech.core.client.studio.StudioSheet;
 import dev.jstech.core.client.studio.StudioTool;
 import dev.jstech.core.client.studio.ThingKind;
+import dev.jstech.core.client.studio.ToolTexts;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.developer.DevSources;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.text.GameText;
 import dev.jstech.tests.TestItems;
 import dev.jstech.tests.TestKitMachine;
+import dev.jstech.tests.TestStructures;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.io.IOException;
@@ -39,12 +41,13 @@ import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * The studio: every mod's things by kind, a machine chosen on the bench in its states, what it is made of, each part
- * with its file and its state, and the checks across its parts; and a camera path kept where the player stands,
- * played as a scene before it is saved, and written to its mod's file.
+ * with its file and its state, and the checks across its parts; a camera path kept where the player stands, played as
+ * a scene before it is saved, and written to its mod's file; and a structure caught made a multiblock.
  */
 public final class StudioClientTests {
 
@@ -66,6 +69,14 @@ public final class StudioClientTests {
             "studio_path");
     private static final BlockPos FLOWN_TO = new BlockPos(0, 5, 8);
     private static final BlockPos FLOWN_ON = new BlockPos(6, 4, 10);
+    /*
+     * The furnace made a multiblock: its corners, its front amid the face the player sees, and where its far corner
+     * is seen from.
+     */
+    private static final BlockPos FURNACE_FROM = new BlockPos(-1, 2, -3);
+    private static final BlockPos FURNACE_TO = new BlockPos(1, 3, -5);
+    private static final BlockPos FURNACE_FRONT = new BlockPos(0, 2, -3);
+    private static final BlockPos ABOVE = new BlockPos(1, 7, -5);
 
     private StudioClientTests() {
     }
@@ -220,6 +231,58 @@ public final class StudioClientTests {
                     ctx.assertTrue(CameraPathsClient.get(STUDIO_PATH).isPresent(),
                             "the game plays the path as its file says from now");
                 });
+    }
+
+    @ClientTest(timeoutTicks = 600)
+    public static void structures_makesACaughtStructureAMultiblock(final ClientTestContext ctx) {
+        ctx.afterTest(() -> {
+            if (ctx.mc().screen instanceof StudioScreen open) {
+                open.press(GameText.resolve(ToolTexts.CATCH_ANOTHER));
+            }
+            ctx.mc().setScreen(null);
+        });
+        ctx.thenTeleport(0, STAND, Direction.NORTH)
+                .thenServer(SETTLE, level -> {
+                    for (final BlockPos at : BlockPos.betweenClosed(ctx.abs(FURNACE_FROM), ctx.abs(FURNACE_TO))) {
+                        level.setBlockAndUpdate(at, Blocks.BRICKS.defaultBlockState());
+                    }
+                    level.setBlockAndUpdate(ctx.abs(FURNACE_FRONT), Blocks.BLAST_FURNACE.defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(FURNACE_FRONT.north()), Blocks.AIR.defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(FURNACE_FRONT.north().west()),
+                            TestStructures.ITEM_INPUT.get().defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(FURNACE_FRONT.north().east()),
+                            TestStructures.ITEM_OUTPUT.get().defaultBlockState());
+                })
+                .then(SETTLE, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(FURNACE_FROM))))
+                .then(SETTLE, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.STRUCTURES)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(ToolTexts.CORNER_1)),
+                        "the first corner taken"))
+                .then(0, () -> ctx.mc().setScreen(null))
+                // The far corner is hidden behind the furnace from the front: it is taken from above.
+                .thenTeleport(SETTLE, ABOVE, Direction.NORTH)
+                .then(SETTLE, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(FURNACE_TO))))
+                .then(SETTLE, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.STRUCTURES)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(ToolTexts.CORNER_2)),
+                        "the second corner taken"))
+                .then(0, () -> ctx.mc().setScreen(null))
+                .thenTeleport(SETTLE, STAND, Direction.NORTH)
+                .then(SETTLE, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(FURNACE_FRONT))))
+                .then(SETTLE, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.STRUCTURES)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(ToolTexts.MAKE_MULTIBLOCK)),
+                        "the furnace looked at is made its controller"))
+                .thenWaitUntil(() -> studio(ctx).lines().stream().anyMatch(line -> line.contains(
+                        "minecraft:bricks")), WAIT, "the server records the pattern")
+                .then(0, () -> {
+                    final List<String> letters = studio(ctx).lines();
+                    ctx.assertTrue(letters.contains("B minecraft:bricks 14"), "fourteen bricks under B: " + letters);
+                    ctx.assertTrue(letters.stream().anyMatch(line -> line.startsWith("I "))
+                            && letters.stream().anyMatch(line -> line.startsWith("O ")),
+                            "the ports under I and O: " + letters);
+                })
+                .thenScreenshot(SHOT, "studio-multiblock");
     }
 
     private static StudioScreen studio(final ClientTestContext ctx) {

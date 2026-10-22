@@ -7,8 +7,8 @@ says what the shape is, checks the world against it, turns it into one machine, 
 
 Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: shapes by
 pattern and by rule, the inside that counts, ports as blocks anywhere on the shell, forming, the Structure Projector
-and the Multiblock Builder, the recipe viewers' pages, multiblocks entirely as data, and multiblocks moving. How a mod
-uses it, with code: [Multiblocks](../MULTIBLOCKS.md).
+and the Multiblock Builder, the recipe viewers' pages, multiblocks entirely as data, the studio's recorder of patterns,
+and multiblocks moving. How a mod uses it, with code: [Multiblocks](../MULTIBLOCKS.md).
 
 ## The design
 
@@ -79,6 +79,9 @@ Modular Machinery do, in one place, for any mod.
 **Multiblocks entirely as data**: the shape, the ports, the kind of recipe and the numbers declared in a data pack,
 with no code, as Modular Machinery does, so a modpack makes machines of its own.
 
+**A recorder of patterns**, a tool of the studio: a multiblock built in the world becomes its pattern's file, its
+projector preview and its page in the recipe viewers, in one step.
+
 ### Moving
 
 Multiblocks can be **sections of a moving structure**, such as a rocket's parts, with known models and collision
@@ -86,7 +89,5 @@ Multiblocks can be **sections of a moving structure**, such as a rocket's parts,
 
 ## Still to build
 
-- **A recorder of patterns**, a tool of the studio: a multiblock built in the world becomes its pattern's file, its
-  projector preview and its page in the recipe viewers, in one step.
 - **The Multiblock Builder taking from a network's storage** is J's Computers' side of it, when J's Computers moves onto
   the Core.

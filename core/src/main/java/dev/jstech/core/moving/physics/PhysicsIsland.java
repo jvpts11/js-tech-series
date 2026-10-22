@@ -49,6 +49,8 @@ final class PhysicsIsland {
     private boolean waiting;
     /* How long its last solving took, in nanoseconds. */
     private long cost;
+    /* Whether any of its structures were taken in for touching another, not only for a joint. */
+    private boolean stacked;
 
     /* The most structures worked as one; more joined are worked on their own. */
     private static final int MOST_MEMBERS = 64;
@@ -57,6 +59,11 @@ final class PhysicsIsland {
     private static final double LEAST_STEP = 1.0e-6;
     /* How many rounds the joints are drawn back together in a step. */
     private static final int ROUNDS = 4;
+    /* How many more times contacts are worked in a step for each structure of the island past the first, and most. */
+    private static final int PASSES_PER_MEMBER = 4;
+    private static final int MOST_PASSES = 40;
+    /* The fewest steps a tick of structures resting on one another is cut into. */
+    private static final int STACKED_STEPS = 4;
     /*
      * How far round its structures an island reads the world in a tick beyond how far they go in it, in blocks: past
      * the farthest a magnet aboard pulls from, with room to spare.
@@ -159,6 +166,15 @@ final class PhysicsIsland {
         return groups;
     }
 
+    /** The farthest any of its structures being worked may go over a step of {@code seconds}, as each looks ahead. */
+    double widest(final double seconds) {
+        double most = 0;
+        for (final StructurePhysics member : live) {
+            most = Math.max(most, member.margin(seconds));
+        }
+        return most;
+    }
+
     /** The physics of this island whose body {@code structure} is part of, or null. */
     @Nullable StructurePhysics member(final MovingStructure structure) {
         final StructurePhysics direct = members.get(structure);
@@ -229,6 +245,37 @@ final class PhysicsIsland {
                         }
                     }
                 }
+            }
+            touching(level, at, next);
+        }
+    }
+
+    /*
+     * The structures moving by their physics, awake, that {@code at}, one of the island, may meet this tick: worked
+     * with it, so a stack of them holds as one, each held up by what is under it. One asleep is not taken in: met
+     * gently it holds as the ground does, and met hard it wakes and takes its own turn.
+     */
+    private void touching(final ServerLevel level, final MovingStructure at, final Deque<MovingStructure> next) {
+        final StructurePhysics own = members.get(at);
+        if (own == null || !own.active()) {
+            return;
+        }
+        for (final IStructureBody near : MovingStructures.near(level, own.reachThisTick())) {
+            if (members.size() >= MOST_MEMBERS) {
+                return;
+            }
+            if (!(near instanceof MovingStructure them) || !them.ready()) {
+                continue;
+            }
+            final MovingStructure root = StructureMounts.rootOf(them);
+            if (members.containsKey(root) || !root.ready() || !(root.motion() instanceof PhysicsMotion)) {
+                continue;
+            }
+            final StructurePhysics physics = root.physicsMade();
+            if (physics.active() && !physics.asleep() && !physics.tookTurn(level.getGameTime())) {
+                members.put(root, physics);
+                next.add(root);
+                stacked = true;
             }
         }
     }
@@ -301,8 +348,13 @@ final class PhysicsIsland {
             return;
         }
         leader.joints().breakWhatBroke(level);
+        // Its structures fall asleep together, once each of them has been still long enough, or none does.
+        boolean quiet = true;
         for (final StructurePhysics member : live) {
-            member.worked(now, member.finish(level, motions.get(member)));
+            quiet &= member.finish(level);
+        }
+        for (final StructurePhysics member : live) {
+            member.worked(now, member.rest(level, quiet, motions.get(member)));
         }
     }
 
@@ -325,7 +377,9 @@ final class PhysicsIsland {
         int taken = 0;
         while (left > LEAST_STEP && taken < MOST_STEPS) {
             final int stepsLeft = MOST_STEPS - taken;
-            double step = left;
+            // Structures resting on one another are worked in shorter steps, each sinking into the next less before
+            // it is held up, so a stack settles still rather than shaking.
+            double step = stacked ? Math.min(left, 1 / StructurePhysics.TICKS / STACKED_STEPS) : left;
             for (final StructurePhysics member : live) {
                 member.nextStep();
                 step = Math.min(step, member.byGoing(left, stepsLeft));
@@ -380,6 +434,10 @@ final class PhysicsIsland {
         int times = 0;
         for (int i = 0; i < live.size(); i++) {
             times = Math.max(times, live.get(i).beginContacts(step, settles[i]));
+        }
+        // A push travels one structure a pass: a stack of them needs a pass more for each, to hold its top up.
+        if (stacked) {
+            times = Math.max(times, Math.min(MOST_PASSES, times + PASSES_PER_MEMBER * (live.size() - 1)));
         }
         if (!work.any() && live.size() == 1) {
             live.get(0).iterateContacts(times);

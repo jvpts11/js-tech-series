@@ -62,6 +62,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   promise. `FontBuilder.outline` declares a font from a TrueType or OpenType file, `CellFont.pixels` is the size it is
   drawn at and `OutlineFontReader` draws one. `ConfigScreenLayout.RAIL_HEADING` and `HEADING_SCALE` lay out the
   headings of the settings screen's list, and `ConfigScreenTexts` has the words for other mods' settings.
+  `StructurePlaces` puts right the places a block entity saved as its blocks move, with a fixer or a leave-alone
+  declared by its type's id (`IPlaceFixer`). `MovingStructures.export` saves a structure's blocks as a structure file,
+  and `StructureTexts` has the words of the commands that freeze, free, remove and export one. `ContactSolver.add`
+  takes the group of points two shapes meet at, `Contact.group` gives it, `forget` and `forgetBut` let go of the pushes
+  kept from the step before. `MultiblockRecorder` reads a multiblock's pattern off one built (`Recording`, `Letter`).
+  `IPartHost.takesFacades` is true unless a host says otherwise, and `CableBlockEntity` no longer declares its own.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1261,8 +1267,26 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   NeoForge's way, under "Other mods" in each tab, with the controls their values call for, their names and
   descriptions as each mod gives them, and when they take hold; on a server, another mod's world settings are shown
   and not changed.
+- Places kept through every move: a block entity of any mod that keeps the places of other blocks in what it
+  saved, a beehive's flower too, has them follow the blocks they name as its structure is made, turned and set down;
+  a mod whose block entities keep their places some other way declares a fixer for their type.
+- Running structures by command: `/jstech structure freeze` holds one where it stands, in the air too,
+  `unfreeze` lets it go again, `remove` takes it away, its blocks with it, and `export <name>` saves its blocks as a
+  structure file the game places again.
+- The studio's recorder of patterns: on its page of structures, a structure caught is made a multiblock in one
+  step, its controller the block looked at; the page lists the letter of each kind of block with how many, its ports
+  and its layers, it may be mirrored or lie down, and beside it is the page the recipe viewers will show; writing it
+  makes the pattern's file, in the mod's source or in a data pack of the world's own, and the projector shows it where
+  it was built.
 
 ### Changed
+- A steadier solver for moving structures: structures that may meet in a tick are worked as one, with more
+  passes and shorter steps where they are stacked, and fall asleep together, so a stack of crates settles and sleeps
+  instead of sinking and swaying; a contact starts from its whole push of the step before, so a great hull on the
+  ground holds still; a fast body stops at the wall it meets and bounces as it touches, never before; a bounce comes
+  only as bodies meet, never while they rest; the ways a contact grips along stay the same as it leans by a hair; and
+  a structure asleep looks about without kicking what rests on it.
+- Facades stand over any face of a space, not only where a cable runs.
 - The Core's chapter of the Technical Reference and the series' are written in Markdown, in English and
   Portuguese, in place of the Java that declared them.
 - Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

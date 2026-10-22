@@ -13,15 +13,15 @@ import java.util.List;
 /**
  * The shapes a microblock is cut in, each of a thickness in eighths of a block: a piece against a face (a cover is
  * an eighth, a panel a quarter, a slab a half, and the thicknesses between), the same with a hole in its middle for a
- * cable, a facade (a cover on a cable's face that hides the cable and keeps its link), a thin post along an edge or
- * through the middle, and a corner. Pure: the room each takes is worked out in pixels.
+ * cable, a facade (a cover over any face, which on a cable's hides the cable and keeps its link), a thin post along an
+ * edge or through the middle, and a corner. Pure: the room each takes is worked out in pixels.
  */
 public enum MicroShape implements IStableName {
     /** Against a face, solid. */
     FACE("face"),
     /** Against a face, an eight-pixel hole in its middle for a cable to pass. */
     HOLLOW("hollow"),
-    /** A cover on a cable's face, hiding the cable without cutting its link. */
+    /** A cover over any face of a space; on a cable's, hiding the cable without cutting its link. */
     FACADE("facade"),
     /** Along an edge, or through the middle along an axis. */
     POST("post"),

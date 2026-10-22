@@ -6,11 +6,11 @@ of Create Aeronautics, Valkyrien Skies and Create's contraptions, as an open-sou
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: real blocks
-that really move, by rule and by physics, living and working aboard, rooms, joints, held structures, parting and
-joining, structures born whole from a template, the layer beside Create and Create Aeronautics, and the physics of
-structures far apart worked out beside the server's thread. How a mod uses it, with code:
-[Moving structures](../MOVING_STRUCTURES.md).
+Everything this page designs is built, as of October 2026: real blocks that really move, by rule and by physics, with a
+steady solver, living and working aboard, rooms, joints, held structures, parting and joining, structures born whole
+from a template, block entities that keep their places through every move, commands to run them, the layer beside
+Create and Create Aeronautics, and the physics of structures far apart worked out beside the server's thread. How a
+mod uses it, with code: [Moving structures](../MOVING_STRUCTURES.md).
 
 ## The design
 
@@ -113,6 +113,11 @@ harvest, ploughs, placers. A combine harvester drives and harvests at once.
 
 - **Many structures, of thousands of blocks each.** Physics runs away from the main thread where it can, and a structure
   at rest **sleeps** and costs nothing.
+- **A steady solver**: contacts kept from tick to tick and started from the last answer; structures that may meet worked
+  as one, with more passes and shorter steps where they are stacked, and falling asleep together; rest that stays
+  still; and fast bodies caught before they pass through, bouncing as they touch, never before. Proved by a stack of
+  structures that settles and sleeps, a great hull resting on the ground without trembling, a fast body that never goes
+  through a wall, and a vehicle that rolls.
 - **Far from players**: with the Space Persistor it keeps working ([The world](world.md#keeping-chunks-loaded));
   without it, it freezes and is saved.
 
@@ -140,6 +145,11 @@ harvest, ploughs, placers. A combine harvester drives and harvests at once.
 - **The API**: making, moving, pushing and asking structures; turning positions between the world and a structure;
   events for collisions, splits and docking; the **physical properties of every block as data** (mass, thrust, lift,
   buoyancy, levitation).
+- **Block entities that remember places of their own** keep them through every move: any mod's, the places they saved
+  written as the game writes places following the blocks they name, turned with the structure's pose; and a hook by
+  the block entity's type for those that keep them some other way, declared by their mod or by another that knows it.
+- **Running structures by command**: freezing one, taking one away, and saving one as a structure file, beside the
+  commands to make, move and set one down.
 
 ### Living alongside other moving-structure mods
 
@@ -158,14 +168,3 @@ conflict or crash the game where they meet:
 - **Behind a guard,** isolated, pinned to the versions its tests cover, with GameTests for each place they meet; a
   version outside that range turns the layer off with a warning in the log, and the kit then refuses every meeting
   with that mod's structures.
-
-## Still to build
-
-- **A steadier solver**: contacts kept from tick to tick and started from the last answer, more passes where bodies are
-  stacked, rest that stays still, and fast bodies caught before they pass through; proved by a stack of structures
-  that settles and sleeps, a great hull resting on the ground without trembling, a fast body that never goes through a
-  wall, and a vehicle that rolls.
-- **Block entities that remember places of their own**: a general way to move the positions they keep with the
-  structure's pose, and a hook for other mods' block entities.
-- **Running structures by command**: freezing one, taking one away, and saving one as a structure file, beside the
-  commands there are.

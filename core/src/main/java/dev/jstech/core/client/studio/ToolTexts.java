@@ -260,6 +260,43 @@ public final class ToolTexts {
     public static final TextKey A_NEW_ONE = TextKey.of("gui.jscore.studio.structures.new", "a new one");
     public static final TextKey NOT_WRITTEN = TextKey.of("gui.jscore.studio.structures.not_written",
             "The structure was not written; the log says why");
+    public static final TextKey MAKE_MULTIBLOCK = TextKey.of("gui.jscore.studio.structures.make_multiblock",
+            "Make it a multiblock");
+    public static final TextKey CATCH_ANOTHER = TextKey.of("gui.jscore.studio.structures.catch_another",
+            "Catch another");
+    public static final TextKey LOOK_AT_CONTROLLER = TextKey.of("gui.jscore.studio.structures.look_controller",
+            "Look at the block that runs it, its controller, inside the corners, and press again");
+    public static final TextKey CAUGHT = TextKey.of("gui.jscore.studio.structures.caught", "Caught");
+    /* Its three sides, and how many blocks. */
+    public static final TextKey CAUGHT_VALUE = TextKey.of("gui.jscore.studio.structures.caught_value",
+            "%s x %s x %s, %s blocks");
+    public static final TextKey CONTROLLER = TextKey.of("gui.jscore.studio.structures.controller", "Controller");
+    /* The block, and its place's three numbers. */
+    public static final TextKey CONTROLLER_VALUE = TextKey.of("gui.jscore.studio.structures.controller_value",
+            "the %s at %s, %s, %s");
+    public static final TextKey LETTERS_FOUND = TextKey.of("gui.jscore.studio.structures.letters",
+            "The letters it found");
+    /* Its number, from the bottom. */
+    public static final TextKey LAYER = TextKey.of("gui.jscore.studio.structures.layer", "layer %s");
+    public static final TextKey THE_CONTROLLER = TextKey.of("gui.jscore.studio.structures.the_controller",
+            "the controller");
+    /* What goes through it. */
+    public static final TextKey A_PORT = TextKey.of("gui.jscore.studio.structures.a_port", "a port: %s");
+    public static final TextKey AIR_ANY = TextKey.of("gui.jscore.studio.structures.air_any", "air, left as any");
+    public static final TextKey FOUR_ROTATIONS = TextKey.of("gui.jscore.studio.structures.rotations",
+            "4 rotations");
+    public static final TextKey MIRRORED_TOO = TextKey.of("gui.jscore.studio.structures.mirrored", "Mirrored too");
+    public static final TextKey LYING_DOWN = TextKey.of("gui.jscore.studio.structures.lying", "Lying down");
+    public static final TextKey WRITE_PATTERN = TextKey.of("gui.jscore.studio.structures.write_pattern",
+            "Write the pattern");
+    public static final TextKey ITS_VIEWER_PAGE = TextKey.of("gui.jscore.studio.structures.viewer_page",
+            "its page in JEI and EMI");
+    public static final TextKey ITS_PREVIEW = TextKey.of("gui.jscore.studio.structures.preview",
+            "its projector preview");
+    public static final TextKey AFTER_RELOAD = TextKey.of("gui.jscore.studio.structures.after_reload",
+            "in force once the world's data is reloaded");
+    public static final TextKey AS_VIEWER = TextKey.of("gui.jscore.studio.structures.as_viewer",
+            "As JEI will show it");
 
     public static final TextKey RECORDING_A_TEST = TextKey.of("gui.jscore.studio.tests.recording",
             "Recording a test");

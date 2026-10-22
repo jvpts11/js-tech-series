@@ -73,6 +73,16 @@ public final class StructureTexts {
     public static final TextKey UNDER_WAY = TextKey.of("jscore.command.structure.under_way", "moving");
     public static final TextKey NONE_LOADED = TextKey.of("jscore.command.structure.none",
             "No moving structure is loaded in this dimension");
+    public static final TextKey FROZEN = TextKey.of("jscore.command.structure.frozen",
+            "The structure is frozen where it stands, in the air too, until it is let go");
+    public static final TextKey UNFROZEN = TextKey.of("jscore.command.structure.unfrozen",
+            "The structure is let go to its physics again");
+    public static final TextKey REMOVED = TextKey.of("jscore.command.structure.removed",
+            "Took the structure of %s blocks away, its blocks gone with it");
+    public static final TextKey EXPORTED = TextKey.of("jscore.command.structure.exported",
+            "Saved the structure's %s blocks as the structure file %s");
+    public static final TextKey NOT_EXPORTED = TextKey.of("jscore.command.structure.not_exported",
+            "The structure file %s could not be written");
 
     private StructureTexts() {
     }

@@ -744,7 +744,6 @@ stable 4
 10 dev.jstech.core.cable.CableBlockEntity  boolean setEnd(CableType, Direction, CableEnd)
 10 dev.jstech.core.cable.CableBlockEntity  boolean take(CableType)
 10 dev.jstech.core.cable.CableBlockEntity  boolean takes(Wire)
-10 dev.jstech.core.cable.CableBlockEntity  boolean takesFacades()
 10 dev.jstech.core.cable.CableBlockEntity  int aimedPart(Vec3, Vec3)
 10 dev.jstech.core.cable.CableBlockEntity  int links(Lane)
 10 dev.jstech.core.cable.CableBlockEntity  int pieces()
@@ -9064,6 +9063,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructures  static Vec3 inWorld(Level, Vec3)
 10 dev.jstech.core.moving.MovingStructures  static Vec3 toWorld(IStructureBody, Vec3)
 10 dev.jstech.core.moving.MovingStructures  static Vec3 toYard(IStructureBody, Vec3)
+12 dev.jstech.core.moving.MovingStructures  static boolean export(MovingStructure, ResourceLocation)
 10 dev.jstech.core.moving.MovingStructures  static boolean frozen(MovingStructure)
 10 dev.jstech.core.moving.MovingStructures  static boolean helm(ServerPlayer, int)
 10 dev.jstech.core.moving.MovingStructures  static boolean sit(ServerPlayer, BlockPos)
@@ -9324,6 +9324,12 @@ stable 4
 10 dev.jstech.core.moving.StructureMounts  static MovingStructure rootOf(MovingStructure)
 10 dev.jstech.core.moving.StructureMounts  static StructureResult mount(MovingStructure, MovingStructure, Optional<BlockPos>)
 10 dev.jstech.core.moving.StructureMounts  static StructureResult unmount(MovingStructure, boolean)
+12 dev.jstech.core.moving.StructurePlaces  type final class
+12 dev.jstech.core.moving.StructurePlaces  static CompoundTag moved(ResourceLocation, CompoundTag, BlockMove)
+12 dev.jstech.core.moving.StructurePlaces  static void fixer(ResourceLocation, IPlaceFixer)
+12 dev.jstech.core.moving.StructurePlaces  static void leaveAlone(ResourceLocation)
+12 dev.jstech.core.moving.StructurePlaces.IPlaceFixer  type interface
+12 dev.jstech.core.moving.StructurePlaces.IPlaceFixer  abstract CompoundTag fix(CompoundTag, BlockMove)
 10 dev.jstech.core.moving.StructurePose  type record(double x, double y, double z, double qx, double qy, double qz, double qw)
 10 dev.jstech.core.moving.StructurePose  StructurePose movedTo(double, double, double)
 10 dev.jstech.core.moving.StructurePose  StructurePose then(StructurePose)
@@ -9399,7 +9405,9 @@ stable 4
 10 dev.jstech.core.moving.StructureTexts  static final TextKey BLOCKED
 11 dev.jstech.core.moving.StructureTexts  static final TextKey BORN_OUT_OF_WORLD
 10 dev.jstech.core.moving.StructureTexts  static final TextKey DISASSEMBLED
+12 dev.jstech.core.moving.StructureTexts  static final TextKey EXPORTED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey FOREIGN
+12 dev.jstech.core.moving.StructureTexts  static final TextKey FROZEN
 10 dev.jstech.core.moving.StructureTexts  static final TextKey IMMOVABLE
 10 dev.jstech.core.moving.StructureTexts  static final TextKey IN_YARD
 10 dev.jstech.core.moving.StructureTexts  static final TextKey LAND_NOT_LOADED
@@ -9410,6 +9418,7 @@ stable 4
 10 dev.jstech.core.moving.StructureTexts  static final TextKey NOTHING
 10 dev.jstech.core.moving.StructureTexts  static final TextKey NOT_ALIGNED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey NOT_A_STRUCTURE
+12 dev.jstech.core.moving.StructureTexts  static final TextKey NOT_EXPORTED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey NOT_LOADED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey NOT_MOUNTED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey NOT_READY
@@ -9418,6 +9427,7 @@ stable 4
 10 dev.jstech.core.moving.StructureTexts  static final TextKey OUT_OF_WORLD
 10 dev.jstech.core.moving.StructureTexts  static final TextKey PHYSICAL
 10 dev.jstech.core.moving.StructureTexts  static final TextKey REFUSED_BY
+12 dev.jstech.core.moving.StructureTexts  static final TextKey REMOVED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey STOPPED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey TILTED
 10 dev.jstech.core.moving.StructureTexts  static final TextKey TOO_MANY
@@ -9425,6 +9435,7 @@ stable 4
 10 dev.jstech.core.moving.StructureTexts  static final TextKey TOO_WIDE
 10 dev.jstech.core.moving.StructureTexts  static final TextKey TRAVELLING
 10 dev.jstech.core.moving.StructureTexts  static final TextKey UNDER_WAY
+12 dev.jstech.core.moving.StructureTexts  static final TextKey UNFROZEN
 10 dev.jstech.core.moving.StructureTexts  static final TextKey YARD_FULL
 10 dev.jstech.core.moving.StructureTravel  type final class
 10 dev.jstech.core.moving.StructureTravel  static StructureResult travel(MovingStructure, ServerLevel, Vec3)
@@ -9605,12 +9616,15 @@ stable 4
 10 dev.jstech.core.moving.physics.ContactMath  static double spring(double, double, double, double)
 10 dev.jstech.core.moving.physics.ContactSolver  type final class
 10 dev.jstech.core.moving.physics.ContactSolver  Contact add(RigidBody, RigidBody, Vector3d, Vector3d, double, double, long)
+12 dev.jstech.core.moving.physics.ContactSolver  Contact add(RigidBody, RigidBody, Vector3d, Vector3d, double, double, long, long)
 10 dev.jstech.core.moving.physics.ContactSolver  List<Contact> contacts()
 10 dev.jstech.core.moving.physics.ContactSolver  int begin(double, int, double)
 10 dev.jstech.core.moving.physics.ContactSolver  static final int ITERATIONS
 10 dev.jstech.core.moving.physics.ContactSolver  static long key(long, Vector3d)
 10 dev.jstech.core.moving.physics.ContactSolver  void clear()
 10 dev.jstech.core.moving.physics.ContactSolver  void end()
+12 dev.jstech.core.moving.physics.ContactSolver  void forget()
+12 dev.jstech.core.moving.physics.ContactSolver  void forgetBut(RigidBody)
 10 dev.jstech.core.moving.physics.ContactSolver  void iterate(int)
 10 dev.jstech.core.moving.physics.ContactSolver  void reset()
 10 dev.jstech.core.moving.physics.ContactSolver  void round(int)
@@ -9626,6 +9640,7 @@ stable 4
 10 dev.jstech.core.moving.physics.ContactSolver.Contact  double closing()
 10 dev.jstech.core.moving.physics.ContactSolver.Contact  double grip()
 10 dev.jstech.core.moving.physics.ContactSolver.Contact  double normalImpulse()
+12 dev.jstech.core.moving.physics.ContactSolver.Contact  long group()
 10 dev.jstech.core.moving.physics.ContactSolver.Contact  long key()
 10 dev.jstech.core.moving.physics.ForceSum  type final class
 10 dev.jstech.core.moving.physics.ForceSum  Vector3d centre()
@@ -10013,6 +10028,10 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockPorts  static void release(Level, Iterable<Long>)
 10 dev.jstech.core.multiblock.MultiblockPorts  static void stamp(Level, BlockPos, ShapeMatch.Formed)
 10 dev.jstech.core.multiblock.MultiblockPorts  static void stamp(Level, IMatchResult.Success)
+12 dev.jstech.core.multiblock.MultiblockRecorder  type final class
+12 dev.jstech.core.multiblock.MultiblockRecorder  static Recording record(BlockGetter, BlockPos, BlockPos, BlockPos, String, boolean, boolean)
+12 dev.jstech.core.multiblock.MultiblockRecorder.Letter  type record(char letter, String block, Optional<PortKind> port, int count)
+12 dev.jstech.core.multiblock.MultiblockRecorder.Recording  type record(MultiblockPattern pattern, List<Letter> letters, int blocks, int sizeX, int sizeY, int sizeZ)
 10 dev.jstech.core.multiblock.MultiblockViewLayout  type final class
 10 dev.jstech.core.multiblock.MultiblockViewLayout  static GuiLayout layout()
 10 dev.jstech.core.multiblock.MultiblockViewLayout  static Point choice(int)

@@ -57,6 +57,9 @@ of the game, never around kinds of files or a tree of scenes: a machine is opene
   three, a name missing in a language, or an animation moving a bone the model does not have; each opens the file at
   its line.
 - **The thing on a bench**, in a world, working, idle or jammed, to be walked around.
+- **A structure built in the world made a multiblock**: caught between two corners, its pattern recorded with a letter
+  for each kind of block, its ports and its layers, and written to its file, with its projector preview and its page
+  in the recipe viewers, in one step ([Multiblocks](multiblocks.md)).
 - **No project of its own**: the studio reads and writes the files written by hand; screens and effects are JSON in the
   game's data format ([The interface](interface.md)).
 - **Java from end to end**, inside the Core's jar, with the Core's interface kit: nothing native, no browser, no other
@@ -149,8 +152,7 @@ The series' own tests are the most complete kit of their kind; the Core opens th
 
 ## Still to build
 
-- **More of the studio**: a recorder that writes a multiblock's pattern, its projector preview and its recipe-viewer
-  page from a structure built in the world; a preview of who may do what at a place; and, on the Recipes tab, a
-  preview of what unification would change.
+- **More of the studio**: a preview of who may do what at a place; and, on the Recipes tab, a preview of what
+  unification would change.
 - **More for agents**: a published page of the MCP server's tools and their schemas, made from the tools themselves, and
   a tool that describes the scene in view.

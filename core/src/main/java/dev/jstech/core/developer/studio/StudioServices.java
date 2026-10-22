@@ -28,9 +28,9 @@ import org.slf4j.Logger;
 
 /**
  * The server's side of the studio's tools: each service by its name, the Core's (the fields of a block, what machines
- * cost, the packets sent, where tags and recipes come from, rolls of a loot table, a structure caught, a block saved
- * and read back) and a mod's own. A question is answered only for a player who may use the developer's tools that read
- * or change the world; anyone else is told so.
+ * cost, the packets sent, where tags and recipes come from, rolls of a loot table, a structure caught, a multiblock's
+ * pattern recorded, a block saved and read back) and a mod's own. A question is answered only for a player who may
+ * use the developer's tools that read or change the world; anyone else is told so.
  */
 @TextHolder
 public final class StudioServices {
@@ -44,6 +44,7 @@ public final class StudioServices {
     public static final String SOURCES = SourcesService.NAME;
     public static final String LOOT = LootService.NAME;
     public static final String STRUCTURE = StructureService.NAME;
+    public static final String MULTIBLOCK = MultiblockService.NAME;
     public static final String SAVE = SaveService.NAME;
 
     private static final TextKey NO_SERVICE = TextKey.of("commands.jscore.developer.no_service",
@@ -79,6 +80,7 @@ public final class StudioServices {
         declare(SourcesService.NAME, new SourcesService());
         declare(LootService.NAME, new LootService());
         declare(StructureService.NAME, new StructureService());
+        declare(MultiblockService.NAME, new MultiblockService());
         declare(SaveService.NAME, new SaveService());
     }
 

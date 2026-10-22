@@ -12,6 +12,9 @@ import dev.jstech.core.developer.studio.StudioServices;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.testkit.gametest.GameTestPlayers;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -36,8 +39,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The server's side of the studio's tools, asked as an operator asks: a block's fields, faces and what crossed them; a
- * block saved and read back; a loot table rolled; a structure caught; where a tag's entries came from; the packets
- * sent; and every machine timed. Anyone else is refused.
+ * block saved and read back; a loot table rolled; a structure caught; a multiblock's pattern recorded and written;
+ * where a tag's entries came from; the packets sent; and every machine timed. Anyone else is refused.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -132,6 +135,37 @@ public final class StudioServicesGameTests {
             helper.assertTrue(answer.getInt(StudioKeys.BLOCKS) == 3, "air is left out: " + answer);
             helper.assertTrue(answer.getInt(StudioKeys.ENTITIES) == 1, "the chest's block entity is kept");
             helper.assertTrue(!answer.contains(StudioKeys.PATH), "nothing is written unless asked");
+        });
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void multiblock_recordsThePatternAndWritesItsFile(final GameTestHelper helper) {
+        for (final BlockPos at : BlockPos.betweenClosed(new BlockPos(1, 2, 1), new BlockPos(3, 2, 2))) {
+            helper.setBlock(at, Blocks.BRICKS);
+        }
+        helper.setBlock(new BlockPos(2, 2, 1), Blocks.BLAST_FURNACE);
+        final CompoundTag args = new CompoundTag();
+        args.putLong(StudioKeys.FROM, helper.absolutePos(new BlockPos(1, 2, 1)).asLong());
+        args.putLong(StudioKeys.TO, helper.absolutePos(new BlockPos(3, 2, 2)).asLong());
+        args.putLong(StudioKeys.CONTROLLER, helper.absolutePos(new BlockPos(2, 2, 1)).asLong());
+        // A namespace no mod of this run has a source of, so the file goes to the world's own pack, not into a mod.
+        args.putString(StudioKeys.NAME, "jstests_recorded:furnace_" + Math.abs(helper.absolutePos(AT).asLong()));
+        args.putBoolean(StudioKeys.SAVE, true);
+        asked(helper, StudioServices.MULTIBLOCK, args, answer -> {
+            final ListTag letters = answer.getList(StudioKeys.LETTERS, Tag.TAG_COMPOUND);
+            helper.assertTrue(letters.size() == 1 && letters.getCompound(0).getString(StudioKeys.LETTER).equals("B")
+                    && letters.getCompound(0).getInt(StudioKeys.COUNT) == 5, "its bricks are B, five: " + letters);
+            helper.assertTrue(answer.getString(StudioKeys.PATTERN).contains("B#B"), "the pattern is sent: "
+                    + answer.getString(StudioKeys.PATTERN));
+            final Path file = Path.of(answer.getString(StudioKeys.PATH));
+            helper.assertTrue(Files.exists(file) && answer.getBoolean(StudioKeys.RELOAD),
+                    "its file is written to the world's pack, in force once its data is reloaded: " + file);
+            try {
+                Files.deleteIfExists(file);
+            } catch (final IOException kept) {
+                throw new GameTestAssertException("the file written could not be taken away again: " + kept);
+            }
         });
         helper.succeed();
     }

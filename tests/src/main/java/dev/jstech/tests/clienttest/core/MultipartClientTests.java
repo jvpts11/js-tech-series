@@ -61,6 +61,7 @@ public final class MultipartClientTests {
     @ClientTest(timeoutTicks = 600)
     public static void microblocks_drawAsTheBlocksTheyAreCutFrom(final ClientTestContext ctx) {
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenGive(0)
                 .thenServer(0, level -> {
                     clear(ctx, level);
                     final ScenarioBuilder build = ScenarioBuilder.at(level, ctx.abs(BlockPos.ZERO));
@@ -90,6 +91,7 @@ public final class MultipartClientTests {
     @ClientTest(timeoutTicks = 600)
     public static void smallBlocks_hangBesideACableAgainstAWall(final ClientTestContext ctx) {
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenGive(0)
                 .thenServer(0, level -> {
                     clear(ctx, level);
                     final ScenarioBuilder build = ScenarioBuilder.at(level, ctx.abs(BlockPos.ZERO));
@@ -114,6 +116,7 @@ public final class MultipartClientTests {
     @ClientTest(timeoutTicks = 600)
     public static void parts_turnTheirBladesAndWearTheirPlates(final ClientTestContext ctx) {
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenGive(0)
                 .thenServer(0, level -> {
                     clear(ctx, level);
                     final ScenarioBuilder build = ScenarioBuilder.at(level, ctx.abs(BlockPos.ZERO));

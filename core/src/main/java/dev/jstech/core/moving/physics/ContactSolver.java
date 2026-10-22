@@ -18,8 +18,8 @@ import org.joml.Vector3d;
  * as much as it takes for them to stop closing there, never pulling, and holds them against sliding as much as its
  * grip lets; all the contacts in turn, again and again, until they agree. A contact a little into the other body pushes
  * it out a little a step; one still apart lets the bodies close up to touching, and no further, so a fast body stops
- * where it meets, never through; a blow bounces a little. Each contact starts from the push it gave the step before,
- * so a body resting on many points rests still.
+ * where it meets, never through; a blow bounces a little as the bodies touch, as fast as they came. Each contact
+ * starts from the whole push it gave the step before, so a body resting on many points rests still.
  */
 public final class ContactSolver {
 
@@ -31,6 +31,8 @@ public final class ContactSolver {
     private final Vector3d relative = new Vector3d();
     private final Vector3d scratch = new Vector3d();
     private final Vector3d push = new Vector3d();
+    /* The group the next contact added alone is put in, each its own: below every group a caller names. */
+    private long lone = -1;
 
     /** How many times every contact is worked in a step. */
     public static final int ITERATIONS = 10;
@@ -39,10 +41,22 @@ public final class ContactSolver {
     private static final double SLOP = 0.005;
     /* The fastest a contact pushes a body out of another, in metres a second, so a deep one does not throw it. */
     private static final double MOST_PUSH = 3.0;
-    /* How much of last step's push a contact starts from. */
-    private static final double WARM = 0.85;
+    /*
+     * How much of last step's push a contact starts from: all of it, so a body resting on many points, a great hull on
+     * the ground, holds still from the first pass instead of sinking a little each step and righting itself.
+     */
+    private static final double WARM = 1.0;
+    /*
+     * What is kept of a contact from step to step: its three pushes, how fast it came while apart, and whether its
+     * bodies were still apart there.
+     */
+    private static final int KEPT = 5;
+    private static final int COMING = 3;
+    private static final int WAS_APART = 4;
     /* Below this a way is taken for none. */
     private static final double TINY = 1.0e-9;
+    /* A way leaning towards south or north more than this, the sine of 45 degrees, lies nearest that axis. */
+    private static final double NEAR_Z = Math.sqrt(0.5);
     /* A contact's point is known again to an eighth of a block. */
     private static final double GRID = 8;
     /* The steps of a key's mixing, the golden ratio's and two of good spread, so near points get far keys. */
@@ -64,8 +78,19 @@ public final class ContactSolver {
      */
     public Contact add(final RigidBody a, final RigidBody b, final Vector3d point, final Vector3d normal,
                        final double apart, final double grip, final long key) {
+        return add(a, b, point, normal, apart, grip, key, lone--);
+    }
+
+    /**
+     * A contact as {@link #add(RigidBody, RigidBody, Vector3d, Vector3d, double, double, long)}, one of the points
+     * where the same two shapes meet, {@code group} naming them, added one after another: the points of a group
+     * bounce together, once any of them touches, so a face landing a little tilted is not set turning.
+     */
+    public Contact add(final RigidBody a, final RigidBody b, final Vector3d point, final Vector3d normal,
+                       final double apart, final double grip, final long key, final long group) {
         final Contact contact = spare.isEmpty() ? new Contact() : spare.remove(spare.size() - 1);
         contact.set(a, b, point, normal, apart, grip, key);
+        contact.group = group;
         live.add(contact);
         return contact;
     }
@@ -96,8 +121,26 @@ public final class ContactSolver {
     /** Forgets everything, last step's pushes too. */
     public void reset() {
         clear();
+        forget();
+    }
+
+    /** Forgets the pushes its contacts gave, keeping the contacts. */
+    public void forget() {
         before.clear();
         after.clear();
+    }
+
+    /**
+     * Forgets the pushes its last step's contacts gave against any body but {@code kept}: for a body falling asleep,
+     * which next looks about afresh against what may have moved since, rather than with pushes of another moment that
+     * would kick what rests on it, while its pushes against {@code kept}, the ground, which does not move, still hold.
+     */
+    public void forgetBut(final RigidBody kept) {
+        for (final Contact contact : live) {
+            if (contact.a != kept && contact.b != kept) {
+                before.remove(contact.key);
+            }
+        }
     }
 
     /**
@@ -125,6 +168,21 @@ public final class ContactSolver {
      * {@code iterations}, more when a blow came. What holds the same bodies by joints may be worked between.
      */
     public int begin(final double seconds, final int iterations, final double settles) {
+        // The points of a group are as near as the nearest of them, so they bounce or close up together.
+        int start = 0;
+        while (start < live.size()) {
+            final long group = live.get(start).group;
+            double least = live.get(start).apart;
+            int end = start + 1;
+            while (end < live.size() && live.get(end).group == group) {
+                least = Math.min(least, live.get(end).apart);
+                end++;
+            }
+            for (int i = start; i < end; i++) {
+                live.get(i).groupApart = least;
+            }
+            start = end;
+        }
         // Every contact is readied as the bodies come, before any starts from its last push.
         boolean blow = false;
         for (final Contact contact : live) {
@@ -166,10 +224,12 @@ public final class ContactSolver {
         after.clear();
         for (final Contact contact : live) {
             final double[] kept = before.get(contact.key);
-            final double[] into = kept != null ? kept : new double[3];
+            final double[] into = kept != null ? kept : new double[KEPT];
             into[0] = contact.normalImpulse;
             into[1] = contact.firstImpulse;
             into[2] = contact.secondImpulse;
+            into[COMING] = contact.coming;
+            into[WAS_APART] = contact.groupApart > SLOP ? 1 : 0;
             after.put(contact.key, into);
         }
         final Map<Long, double[]> swapped = before;
@@ -185,24 +245,43 @@ public final class ContactSolver {
         contact.secondMass = mass(a, b, contact.second, contact.point);
         relativeAt(contact);
         final double closing = -relative.dot(contact.normal);
-        contact.closing = closing;
+        // Apart the step before, the bodies were let close only up to touching: they meet now as fast as they came.
+        final double[] last = before.get(contact.key);
+        final double came = last != null && closing > 0 ? Math.max(closing, last[COMING]) : closing;
+        // Only a meeting bounces, new or still apart the step before: a contact held touching from step to step is
+        // bodies resting, and bouncing it, as they shake by a hair, would set a stack jumping with the blows of those
+        // landing on it.
+        final boolean meeting = last == null || last[COMING] > 0 || last[WAS_APART] > 0;
         double bias;
         if (contact.apart > 0) {
             bias = -contact.apart / seconds;
         } else {
             bias = Math.min(MOST_PUSH, BAUMGARTE * Math.max(0, -contact.apart - SLOP) / seconds);
         }
-        // A blow within this step bounces a little.
-        if (closing > settles && closing * seconds > contact.apart) {
-            bias = Math.max(bias, ContactMath.bounce(closing) * closing);
+        contact.coming = 0;
+        if (contact.groupApart > SLOP) {
+            // Reached within this step, they close up to touching and no further; the blow comes as they touch, so
+            // a fast body bounces off the wall it meets, never off the air before it. Only a blow is remembered.
+            contact.closing = closing;
+            if (meeting && closing > settles && closing * seconds > contact.apart) {
+                contact.coming = came;
+            }
+        } else {
+            contact.closing = came;
+            if (meeting && came > settles && came * seconds > contact.apart) {
+                bias = Math.max(bias, ContactMath.bounce(came) * came);
+            }
         }
         contact.bias = bias;
     }
 
-    /* Starts the contact from the push it gave the step before, if it was there. */
+    /*
+     * Starts the contact from the push it gave the step before, if it was there and touching: one still apart then
+     * only slowed the bodies coming, unevenly from point to point, and its points share the blow out evenly afresh.
+     */
     private void warm(final Contact contact) {
         final double[] last = before.get(contact.key);
-        if (last != null) {
+        if (last != null && last[COMING] == 0) {
             contact.normalImpulse = last[0] * WARM;
             contact.firstImpulse = last[1] * WARM;
             contact.secondImpulse = last[2] * WARM;
@@ -285,6 +364,11 @@ public final class ContactSolver {
         private double secondMass;
         private double bias;
         private double closing;
+        /* How fast the bodies came at it while it was apart and reached this step, to bounce as fast when they meet. */
+        private double coming;
+        /* The shapes whose meeting it is one point of, and how near the nearest point of them is. */
+        private long group;
+        private double groupApart;
 
         /** Where it is, in the world. */
         public Vector3d point() {
@@ -309,6 +393,11 @@ public final class ContactSolver {
         /** Its name from step to step. */
         public long key() {
             return key;
+        }
+
+        /** The shapes whose meeting it is one point of. */
+        public long group() {
+            return group;
         }
 
         /** How hard it pushed the bodies apart this step, in newton seconds. */
@@ -350,16 +439,14 @@ public final class ContactSolver {
             this.firstImpulse = 0;
             this.secondImpulse = 0;
             this.closing = 0;
-            // The ways along the face, the same for the same way from step to step.
-            final double x = Math.abs(normal.x);
-            final double y = Math.abs(normal.y);
-            final double z = Math.abs(normal.z);
-            if (x <= y && x <= z) {
-                this.first.set(0, normal.z, -normal.y);
-            } else if (y <= z) {
-                this.first.set(-normal.z, 0, normal.x);
+            this.coming = 0;
+            // The ways along the face, chosen by the axis the way lies nearest, so a way a hair off upright keeps the
+            // same ways from step to step: chosen by its smallest parts instead, they swap at a hair's turn, and the
+            // grip carried over from the step before pushes the wrong way, setting a stack swaying.
+            if (Math.abs(normal.z) > NEAR_Z) {
+                this.first.set(0, -normal.z, normal.y);
             } else {
-                this.first.set(normal.y, -normal.x, 0);
+                this.first.set(-normal.y, normal.x, 0);
             }
             this.first.normalize();
             this.normal.cross(this.first, this.second);

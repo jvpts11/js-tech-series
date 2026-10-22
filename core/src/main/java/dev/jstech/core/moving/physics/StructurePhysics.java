@@ -86,6 +86,8 @@ public final class StructurePhysics {
     private Map<Long, Double> warmGiven = Map.of();
     /* The tick worked: where it stands in it, how many steps it took, and whether its balloons warmed. */
     private @Nullable StructureFrame at;
+    /* Where its body stood as its last tick ended, for where it goes once its island's tick ends. */
+    private @Nullable StructureFrame ended;
     private int taken;
     private boolean warming;
     /* The tick it was last worked in, with the structures it is joined to, and what came of it. */
@@ -580,16 +582,21 @@ public final class StructurePhysics {
      * where they stand mid-tick; false while a chunk one of them reaches is not loaded.
      */
     boolean findContacts(final ServerLevel level, final double seconds, final PhysicsIsland island) {
-        final double margin = (body.velocity().length() + body.spin().length() * reach()) * seconds + MARGIN;
-        if (!own.contacts.find(level, structure, at, own.parts, body, margin, island)) {
+        final double margin = margin(seconds);
+        if (!own.contacts.find(level, structure, at, own.parts, body, margin, seconds, island)) {
             return false;
         }
         for (final Piece piece : held.values()) {
-            if (!piece.contacts.find(level, piece.structure, piece.at, piece.parts, body, margin, island)) {
+            if (!piece.contacts.find(level, piece.structure, piece.at, piece.parts, body, margin, seconds, island)) {
                 return false;
             }
         }
         return true;
+    }
+
+    /* How far ahead of time it looks for what it meets over a step of {@code seconds}: as far as it may go then. */
+    double margin(final double seconds) {
+        return (body.velocity().length() + body.spin().length() * reach()) * seconds + MARGIN;
     }
 
     /* Readies its contacts for a step, giving how many times they are to be worked. */
@@ -644,13 +651,15 @@ public final class StructurePhysics {
     }
 
     /*
-     * The end of the tick: its blows break what broke, its faces heat, what it shows of itself going is told, it
-     * falls asleep or not, and where it goes.
+     * The end of the tick: its blows break what broke, its faces heat, what it shows of itself going is told, and how
+     * long it has been still is counted; whether it has been still long enough to fall asleep. Where it goes is
+     * {@link #rest}'s, once every structure of its island has ended its tick.
      */
-    IStructureMotion.Step finish(final ServerLevel level, final PhysicsMotion motion) {
+    boolean finish(final ServerLevel level) {
         forces.note(ForceSum.ForceKind.WHEELS, wheelForce.div(Math.max(1, taken)));
         own.contacts.breakWhatBroke(level);
         final StructureFrame after = frameOf(at);
+        ended = after;
         own.heating.heat(level, after, own.parts, body, 1 / TICKS);
         StructureSync.effects(structure, StructureShowing.of(level, structure.entity().getId(), after, own.gather,
                 own.heating, body));
@@ -666,7 +675,32 @@ public final class StructurePhysics {
         }
         // An engine pushing keeps it awake, as warming balloons do, whether it lifts it or not: asleep, it would
         // stop showing its flame, and a signal grown stronger would not wake it.
-        settle(level, warming || burning);
+        return quiet(warming || burning);
+    }
+
+    /*
+     * Where it goes this tick under {@code motion}, its island's tick ended: it falls asleep with its island when every
+     * structure of it has been still long enough, {@code quiet}, and stays where it stood; else it wakes, and goes
+     * where its body went. A stack falls asleep as one, so none of it is left holding up the rest as the ground does.
+     */
+    IStructureMotion.Step rest(final ServerLevel level, final boolean quiet, final PhysicsMotion motion) {
+        if (!quiet) {
+            asleep = false;
+        } else if (!asleep) {
+            asleep = true;
+            woke = level.getGameTime();
+            body.velocity().zero();
+            body.spin().zero();
+            // Its looks about measure from where it fell asleep, so settling by a hair as it looks does not wake it.
+            anchor.set(body.position());
+            anchorTurn.set(body.orientation());
+            // Its next look about starts afresh: last pushes, of a moment before, would kick what rests on it.
+            own.contacts.forget();
+            for (final Piece piece : held.values()) {
+                piece.contacts.forget();
+            }
+        }
+        final StructureFrame after = ended != null ? ended : structure.frame();
         if (asleep) {
             return new IStructureMotion.Step(structure.frame().pose(), saved(motion, warming));
         }
@@ -789,26 +823,20 @@ public final class StructurePhysics {
     }
 
     /*
-     * Falls asleep after a second still, nothing warming or burning: slow, and never more than a hair from where it
-     * stood a second ago, so a cart swaying on its springs in the wind, by a few millimetres, sleeps; or stays awake.
+     * Whether it has been still a second, nothing warming or burning: slow, and never more than a hair from where it
+     * stood a second ago, so a cart swaying on its springs in the wind, by a few millimetres, may sleep.
      */
-    private void settle(final ServerLevel level, final boolean working) {
+    private boolean quiet(final boolean working) {
         final boolean slow = body.velocity().length() < STILL_SPEED && body.spin().length() < STILL_SPIN;
         final boolean near = body.position().distance(anchor) < STILL_DRIFT && turnFromAnchor() < STILL_TURN;
         if (!working && slow && near) {
             still++;
-            if (still >= SLEEP_AFTER && !asleep) {
-                asleep = true;
-                woke = level.getGameTime();
-                body.velocity().zero();
-                body.spin().zero();
-            }
-        } else {
-            still = 0;
-            asleep = false;
-            anchor.set(body.position());
-            anchorTurn.set(body.orientation());
+            return still >= SLEEP_AFTER;
         }
+        still = 0;
+        anchor.set(body.position());
+        anchorTurn.set(body.orientation());
+        return false;
     }
 
     /* How far it is turned from where it stood when it last began to be still, in radians. */

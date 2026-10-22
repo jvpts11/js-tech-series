@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
@@ -31,8 +32,9 @@ import org.jetbrains.annotations.Nullable;
  * one level to another or within one, as a structure is made from the world, set down on it, or taken to another
  * dimension. The blocks are lifted and laid down quietly, telling no neighbour and dropping nothing on the way, so a
  * torch on a wall moved with the wall does not fall off; the world's blocks round them are told once at the end.
- * Each block entity that keeps other blocks' places is told where they went ({@link IMovesWithStructures}), and so is
- * every mod ({@link StructureBlocksMovedEvent}).
+ * Each block entity that keeps other blocks' places is told where they went ({@link IMovesWithStructures}); any other
+ * has the places it saved follow the blocks they name ({@link StructurePlaces}); and every mod is told
+ * ({@link StructureBlocksMovedEvent}).
  */
 final class BlockMover {
 
@@ -72,23 +74,32 @@ final class BlockMover {
             to.setBlock(block.to, turned, QUIETLY);
             moved.put(block.from, block.to);
         }
+        final BlockMove move = new BlockMove(from, to, moved, rotation);
         for (final Lifted block : lifted) {
             if (block.kept == null) {
                 continue;
             }
-            final BlockEntity there = to.getBlockEntity(block.to);
+            BlockEntity there = to.getBlockEntity(block.to);
             if (there != null) {
                 there.loadWithComponents(block.kept, to.registryAccess());
                 there.setChanged();
             } else {
-                final BlockEntity made = BlockEntity.loadStatic(block.to, to.getBlockState(block.to), block.kept,
+                there = BlockEntity.loadStatic(block.to, to.getBlockState(block.to), block.kept,
                         to.registryAccess());
-                if (made != null) {
-                    to.setBlockEntity(made);
+                if (there != null) {
+                    to.setBlockEntity(there);
+                }
+            }
+            // One that does not look after its places itself has those it saved follow the blocks they name.
+            if (there != null && !(there instanceof IMovesWithStructures)) {
+                final CompoundTag fixed = StructurePlaces.moved(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(
+                        there.getType()), block.kept, move);
+                if (fixed != null) {
+                    there.loadWithComponents(fixed, to.registryAccess());
+                    there.setChanged();
                 }
             }
         }
-        final BlockMove move = new BlockMove(from, to, moved, rotation);
         for (final Lifted block : lifted) {
             if (to.getBlockEntity(block.to) instanceof IMovesWithStructures told) {
                 told.moved(block.from, move);

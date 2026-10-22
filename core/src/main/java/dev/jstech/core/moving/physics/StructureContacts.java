@@ -62,6 +62,7 @@ final class StructureContacts {
     private final Vector3d scratch = new Vector3d();
     private final Vector3d middle = new Vector3d();
     private final Vector3d local = new Vector3d();
+    private final Vector3d onFace = new Vector3d();
     private final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
     /* For each contact of the step, in the solver's order: the structure's block, and the block it met. */
     private final LongArrayList cells = new LongArrayList();
@@ -97,6 +98,8 @@ final class StructureContacts {
     private long cell;
     private long other;
     private long pair;
+    /* The two boxes being met, counted, so the points where they meet bounce together. */
+    private long manifold;
     private double grip;
     private boolean counts = true;
     private boolean meetingForeign;
@@ -123,12 +126,13 @@ final class StructureContacts {
 
     /**
      * Finds where the structure standing at {@code frame}, moving as {@code body}, meets the world and the structures
-     * near it, ahead of time by {@code margin}, the structures of {@code island} worked with it standing where they
-     * stand mid-tick. False, and nothing found, while a chunk it reaches is not loaded: it waits there, as it would
-     * fall through what is unread.
+     * near it over a step of {@code seconds}, ahead of time by {@code margin}, the structures of {@code island} worked
+     * with it standing where they stand mid-tick. False, and nothing found, while a chunk it reaches is not loaded: it
+     * waits there, as it would fall through what is unread.
      */
     boolean find(final ServerLevel level, final MovingStructure structure, final StructureFrame standing,
-                 final StructureParts parts, final RigidBody body, final double margin, final PhysicsIsland island) {
+                 final StructureParts parts, final RigidBody body, final double margin, final double seconds,
+                 final PhysicsIsland island) {
         solver.clear();
         cells.clear();
         met.clear();
@@ -143,7 +147,7 @@ final class StructureContacts {
         this.ownParts = parts;
         FrameMath.axes(standing, axes);
         world(level, parts, body, box, margin);
-        structures(level, structure, parts, body, box, margin, island);
+        structures(level, structure, parts, body, box, margin, seconds, island);
         return true;
     }
 
@@ -199,7 +203,7 @@ final class StructureContacts {
         for (final ContactSolver.Contact contact : solver.contacts()) {
             if (contact.a() == body && contact.b() == ground) {
                 into.add(body, theGround, contact.point(), contact.normal(), contact.apart(), contact.grip(),
-                        contact.key());
+                        contact.key(), contact.group() | Long.MIN_VALUE);
             }
         }
     }
@@ -209,6 +213,11 @@ final class StructureContacts {
         solver.reset();
         cellBlows.clear();
         metBlows.clear();
+    }
+
+    /** Forgets what its contacts pushed against other structures, as the structure falls asleep. */
+    void forget() {
+        solver.forgetBut(ground);
     }
 
     /**
@@ -336,11 +345,15 @@ final class StructureContacts {
         }
     }
 
-    /* The other structures near: each block of theirs the structure's blocks may meet. */
+    /*
+     * The other structures near: each block of theirs the structure's blocks may meet over a step of {@code seconds}.
+     * One worked in the same steps is looked for as far ahead as both may go, as only one of the two works the pair.
+     */
     private void structures(final ServerLevel level, final MovingStructure structure, final StructureParts parts,
-                            final RigidBody body, final AABB box, final double margin, final PhysicsIsland island) {
+                            final RigidBody body, final AABB box, final double margin, final double seconds,
+                            final PhysicsIsland island) {
         final StructurePhysics mine = island.member(structure);
-        for (final IStructureBody near : MovingStructures.near(level, box)) {
+        for (final IStructureBody near : MovingStructures.near(level, box.inflate(island.widest(seconds)))) {
             if (near == structure || !near.ready() || !(near instanceof MovingStructure them)) {
                 continue;
             }
@@ -350,6 +363,10 @@ final class StructureContacts {
                 continue;
             }
             final boolean together = island.member(them) != null;
+            // Two worked in the same steps meet once: the one of the lower id works the pair, both bodies pushed.
+            if (together && structure.id().value().compareTo(them.id().value()) > 0) {
+                continue;
+            }
             final RigidBody theirBody;
             final StructureParts made;
             if (physics != null && physics.active()) {
@@ -368,14 +385,16 @@ final class StructureContacts {
                 made = null;
             }
             final StructureFrame theirs = island.standing(them);
-            final AABB overlap = box.intersect(worldBox(theirs, them.bounds()).inflate(margin));
+            final double theirGoing = together && physics != null ? physics.margin(seconds) : 0;
+            final double meeting = margin + theirGoing;
+            final AABB overlap = box.inflate(theirGoing).intersect(worldBox(theirs, them.bounds()).inflate(meeting));
             if (overlap.getXsize() < 0 || overlap.getYsize() < 0 || overlap.getZsize() < 0) {
                 continue;
             }
             // Two structures moving by their physics both work their blows: only the one of the lower id counts them.
             counts = made == null || structure.id().value().compareTo(them.id().value()) < 0;
             final int before = solver.contacts().size();
-            meetStructure(level, level, theirs, parts, made, body, theirBody, overlap.inflate(REACH), margin);
+            meetStructure(level, level, theirs, parts, made, body, theirBody, overlap.inflate(REACH), meeting);
             counts = true;
             // One worked in the same steps has its own contacts with the ground worked with these already.
             if (!together && physics != null && theirBody == physics.body() && solver.contacts().size() > before) {
@@ -490,6 +509,7 @@ final class StructureContacts {
     /* The pair worked next: its bodies, its blocks and how well they grip. */
     private void pairOf(final RigidBody a, final RigidBody b, final long ownKey, final long otherKey,
                         final double holding) {
+        this.manifold++;
         this.first = a;
         this.second = b;
         this.cell = ownKey;
@@ -506,8 +526,10 @@ final class StructureContacts {
         if (throughCoveredFace(way)) {
             return;
         }
-        FrameMath.yard(frame, point, local);
-        solver.add(first, second, point, way, apart, grip, ContactSolver.key(pair, local));
+        // Known by where it is on the structure's own face, half the gap from the point between the two: the same
+        // place whether still apart or touching, so what it pushed carries over as they close.
+        FrameMath.yard(frame, onFace.set(way).mul(apart / 2).add(point), local);
+        solver.add(first, second, point, way, apart, grip, ContactSolver.key(pair, local), manifold);
         cells.add(cell);
         met.add(other);
         counted.add(counts);

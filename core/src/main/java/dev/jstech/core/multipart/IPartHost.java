@@ -66,8 +66,11 @@ public interface IPartHost {
         return List.of();
     }
 
-    /** Whether a facade may stand on its faces: only where a cable runs, whose wires it hides. */
+    /**
+     * Whether a facade may stand on its faces: on any space's, so a microblock's look covers any face of a space; on a
+     * cable's it hides the wires and leaves the links open. A host whose faces must stay bare says no.
+     */
     default boolean takesFacades() {
-        return false;
+        return true;
     }
 }

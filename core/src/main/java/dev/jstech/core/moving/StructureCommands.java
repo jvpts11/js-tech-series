@@ -18,10 +18,12 @@ import dev.jstech.core.text.Text;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -30,7 +32,9 @@ import net.minecraft.world.phys.Vec3;
  * The commands of the moving structures, for those who build modpacks, maps and tests:
  * {@code /jstech structure assemble <from> <to>} and {@code assemble joined <block>} make one; {@code move},
  * {@code spin}, {@code swing}, {@code rails} and {@code stop} move it by the kit's rules, {@code physics} lets it go
- * by its physics; {@code setdown} sets it on the ground; {@code list} names those loaded here.
+ * by its physics; {@code freeze} holds it where it stands, in the air too, and {@code unfreeze} lets it go again;
+ * {@code setdown} sets it on the ground; {@code remove} takes it away, its blocks with it; {@code export <name>} saves
+ * its blocks as the game's structure file {@code name}; {@code list} names those loaded here.
  */
 public final class StructureCommands {
 
@@ -43,6 +47,7 @@ public final class StructureCommands {
     private static final String RATE = "rate";
     private static final String HINGE = "hinge";
     private static final String ANGLE = "angle";
+    private static final String NAME = "name";
     private static final SimpleCommandExceptionType NOT_ONE =
             new SimpleCommandExceptionType(GameText.component(StructureTexts.NOT_A_STRUCTURE));
 
@@ -88,6 +93,19 @@ public final class StructureCommands {
                 .then(Commands.literal("stop")
                         .then(Commands.argument(STRUCTURE, EntityArgument.entity())
                                 .executes(StructureCommands::stop)))
+                .then(Commands.literal("freeze")
+                        .then(Commands.argument(STRUCTURE, EntityArgument.entity())
+                                .executes(command -> freeze(command, true))))
+                .then(Commands.literal("unfreeze")
+                        .then(Commands.argument(STRUCTURE, EntityArgument.entity())
+                                .executes(command -> freeze(command, false))))
+                .then(Commands.literal("remove")
+                        .then(Commands.argument(STRUCTURE, EntityArgument.entity())
+                                .executes(StructureCommands::remove)))
+                .then(Commands.literal("export")
+                        .then(Commands.argument(STRUCTURE, EntityArgument.entity())
+                                .then(Commands.argument(NAME, ResourceLocationArgument.id())
+                                        .executes(StructureCommands::export))))
                 .then(Commands.literal("list").executes(StructureCommands::list)));
     }
 
@@ -159,6 +177,31 @@ public final class StructureCommands {
     private static int stop(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         structure(context).move(null);
         return said(context, StructureTexts.STOPPED.text());
+    }
+
+    private static int freeze(final CommandContext<CommandSourceStack> context, final boolean frozen)
+            throws CommandSyntaxException {
+        MovingStructures.freeze(structure(context), frozen);
+        return said(context, frozen ? StructureTexts.FROZEN.text() : StructureTexts.UNFROZEN.text());
+    }
+
+    private static int remove(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        final MovingStructure structure = structure(context);
+        final int blocks = structure.blocks();
+        MovingStructures.takeAway(structure);
+        said(context, StructureTexts.REMOVED.with(blocks));
+        return Math.max(1, blocks);
+    }
+
+    private static int export(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        final MovingStructure structure = structure(context);
+        final ResourceLocation id = ResourceLocationArgument.getId(context, NAME);
+        if (!MovingStructures.export(structure, id)) {
+            context.getSource().sendFailure(GameText.component(StructureTexts.NOT_EXPORTED.with(id.toString())));
+            return 0;
+        }
+        said(context, StructureTexts.EXPORTED.with(structure.blocks(), id.toString()));
+        return Math.max(1, structure.blocks());
     }
 
     private static int list(final CommandContext<CommandSourceStack> context) {

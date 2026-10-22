@@ -44,13 +44,15 @@ of the space, turned along an axis when its shape runs along one:
 | --- | --- | --- |
 | `FACE` | Against a face: the cover (1/8), the panel (2/8), the slab (4/8) and those between | 1 to 7 |
 | `HOLLOW` | Against a face, with an eight-pixel hole in its middle | 1 to 7 |
-| `FACADE` | Against a face of a cable, hiding it | 1 |
+| `FACADE` | Against any face of a space; on a cable's, hiding it | 1 |
 | `POST` | Along an edge, or through the centre along an axis | 1 to 7 |
 | `CORNER` | In a corner | 1 to 7 |
 
 Only a whole `FACE` piece cuts the link of the wires on its face; a hollow piece lets them through, and a facade
-hides them while they keep working. A microblock's item is the Core's one microblock item with its piece in the
-`jscore:microblock` component: `CoreSpaces.stack(piece)` makes one.
+hides them while they keep working. *Added 2026-10-22.* A facade stands on any face of a space, not only where a
+cable runs: placed against any block it makes a space there, as a cover does, so a microblock's look covers any face.
+A host of parts whose faces must stay bare says so with `takesFacades()`. A microblock's item is the Core's one
+microblock item with its piece in the `jscore:microblock` component: `CoreSpaces.stack(piece)` makes one.
 
 Microblocks are cut from any full block of any mod that is drawn by a model, has no block entity and has an item
 (`MicroblockMaterials.cuttable`). A pack keeps a block out with the block tag `jscore:not_cuttable`. Each piece is

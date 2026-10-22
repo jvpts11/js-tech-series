@@ -10,6 +10,7 @@ package dev.jstech.core.client.studio;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.developer.studio.StudioAnswers;
 import dev.jstech.core.developer.studio.StudioKeys;
 import dev.jstech.core.developer.studio.StudioServices;
@@ -33,7 +34,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Catching a structure: two corners taken from the blocks looked at, what lies between them counted by the server as a
  * structure file holds it, saved to the mod under a name, and shown on the page and, through
- * {@link StudioClient#caught()}, in the world by whatever shows multiblocks where they stand.
+ * {@link StudioClient#caught()}, in the world by whatever shows multiblocks where they stand. A structure caught is
+ * made a multiblock on the same page ({@link MultiblockMaker}).
  */
 final class StructuresPage extends StudioPage {
 
@@ -42,6 +44,8 @@ final class StructuresPage extends StudioPage {
     private final TextField name = this.panel.add(new TextField(LONGEST));
     private final Button save;
     private final Button project;
+    private final Button make;
+    private final MultiblockMaker maker;
     private final StudioScene scene = new StudioScene();
     private @Nullable CompoundTag counted;
     private String written = "";
@@ -64,6 +68,9 @@ final class StructuresPage extends StudioPage {
         this.save = this.panel.add(new Button(() -> words(ToolTexts.SAVE_TO_MOD), this::save).setPrimary(true));
         this.project = this.panel.add(new Button(() -> words(projecting ? ToolTexts.HIDE_PROJECTOR
                 : ToolTexts.SHOW_PROJECTOR), this::project));
+        this.make = this.panel.add(new Button(() -> words(ToolTexts.MAKE_MULTIBLOCK), this::startMaking));
+        this.maker = new MultiblockMaker(studio, this.panel, () -> this.name.edit(),
+                () -> this.layout(this.regions), this::project, () -> projecting);
     }
 
     /** The structure caught, while it is asked to be shown in the world, at its own place, as it stands now. */
@@ -74,6 +81,16 @@ final class StructuresPage extends StudioPage {
         final BlockPos min = new BlockPos(Math.min(first.getX(), second.getX()), Math.min(first.getY(),
                 second.getY()), Math.min(first.getZ(), second.getZ()));
         return Optional.of(new StudioClient.Caught(shown, min, ToolTexts.CATCH.text(), StudioTexts.STUDIO.text()));
+    }
+
+    /** The first corner caught, if any. */
+    static @Nullable BlockPos first() {
+        return first;
+    }
+
+    /** The second corner caught, if any. */
+    static @Nullable BlockPos second() {
+        return second;
     }
 
     @Override
@@ -88,28 +105,44 @@ final class StructuresPage extends StudioPage {
 
     @Override
     List<String> lines() {
+        if (MultiblockMaker.making()) {
+            return this.maker.lines();
+        }
         return this.counted == null ? List.of() : List.of(String.valueOf(this.counted.getInt(StudioKeys.BLOCKS)));
     }
 
     @Override
     void layout(final StudioLayout.Regions laid) {
         super.layout(laid);
+        final boolean making = MultiblockMaker.making();
+        this.maker.show(making);
+        for (final UiComponent catching : List.of(this.corner1, this.corner2, this.name, this.save, this.project,
+                this.make)) {
+            catching.setVisible(!making);
+        }
         final StudioLayout.Rect left = this.columns().get(0);
+        if (making) {
+            this.maker.layout(left);
+            return;
+        }
         final int x = left.x() + StudioDraw.INSET;
         final int wide = left.width() - 2 * StudioDraw.INSET;
         place(this.corner1, new StudioLayout.Rect(x, left.y() + 19, 70, 16));
         place(this.corner2, new StudioLayout.Rect(x, left.y() + 41, 70, 16));
         place(this.name, new StudioLayout.Rect(x, left.y() + 134, wide, 16));
         final int half = wide / 2 - 2;
+        final int makeY;
         if (fits(half, ToolTexts.SAVE_TO_MOD, ToolTexts.SHOW_PROJECTOR, ToolTexts.HIDE_PROJECTOR)) {
             place(this.save, new StudioLayout.Rect(x, left.y() + 156, half, 18));
             place(this.project, new StudioLayout.Rect(x + half + 4, left.y() + 156, wide - half - 4, 18));
-            this.writtenY = left.y() + 180;
+            makeY = left.y() + 178;
         } else {
             place(this.save, new StudioLayout.Rect(x, left.y() + 156, wide, 18));
             place(this.project, new StudioLayout.Rect(x, left.y() + 178, wide, 18));
-            this.writtenY = left.y() + 202;
+            makeY = left.y() + 200;
         }
+        place(this.make, new StudioLayout.Rect(x, makeY, wide, 18));
+        this.writtenY = makeY + 24;
     }
 
     @Override
@@ -132,6 +165,10 @@ final class StructuresPage extends StudioPage {
         final StudioPalette.Colours colours = StudioPalette.get();
         final List<StudioLayout.Rect> columns = this.columns();
         final StudioLayout.Rect left = columns.get(0);
+        if (MultiblockMaker.making()) {
+            this.maker.render(g, left, columns.get(1), this.viewArea(), mouseX, mouseY);
+            return;
+        }
         StudioDraw.panel(g, font(), left, words(ToolTexts.CATCH));
         final int x = this.corner1.x() + this.corner1.width() + 8;
         StudioDraw.text(g, font(), placeOf(first), x, this.corner1.y() + 4, left.right() - x - 20, colours.label());
@@ -169,12 +206,23 @@ final class StructuresPage extends StudioPage {
         this.scene.draw(g, view);
         Draw.outline(g, view.x(), view.y(), view.width(), view.height(), colours.frame());
         final boolean both = first != null && second != null;
-        this.save.setEnabled(both && ResourceLocation.tryParse(this.name.edit().trim()) != null);
+        final boolean named = ResourceLocation.tryParse(this.name.edit().trim()) != null;
+        this.save.setEnabled(both && named);
         this.project.setEnabled(both);
+        this.make.setEnabled(both && named);
     }
 
     @Override
     boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
+        if (MultiblockMaker.making()) {
+            if (this.viewArea().contains(mouseX, mouseY)) {
+                // The page of the viewers takes its own buttons' clicks; a drag from anywhere on it turns its view.
+                this.turning = true;
+                this.maker.mouseClicked(mouseX, mouseY, button);
+                return true;
+            }
+            return false;
+        }
         if (this.viewArea().contains(mouseX, mouseY)) {
             this.turning = true;
             return true;
@@ -184,6 +232,10 @@ final class StructuresPage extends StudioPage {
 
     @Override
     boolean mouseDragged(final double mouseX, final double mouseY, final double dragX, final double dragY) {
+        if (this.turning && MultiblockMaker.making()) {
+            this.maker.mouseDragged(mouseX, mouseY, dragX, dragY);
+            return true;
+        }
         if (this.turning) {
             this.scene.turn(dragX, dragY);
             return true;
@@ -253,6 +305,19 @@ final class StructuresPage extends StudioPage {
 
     private void project() {
         projecting = !projecting;
+        if (MultiblockMaker.making()) {
+            // The pattern recorded is shown where it was built, as the projector will show it to be built.
+            this.maker.preview().ifPresent(preview -> shown = preview);
+        } else if (first != null && second != null && Minecraft.getInstance().level != null) {
+            shown = shapeOf(Minecraft.getInstance(), first, second);
+        }
+    }
+
+    /* Starts making the structure caught a multiblock, its controller the block the studio opened on. */
+    private void startMaking() {
+        if (this.maker.start(first, second)) {
+            this.layout(this.regions);
+        }
     }
 
     private void ask(final boolean saving) {

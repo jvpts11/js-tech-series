@@ -189,18 +189,26 @@ What moves it, each tick:
   a block there that holds heat takes it in, and one that burns catches fire once the face glows as hot.
 
 What it meets: the world's blocks and the other structures' blocks, each by its real shape, a slab as a slab, met
-ahead of time so a fast structure stops where it touches, never through. It rests still on many points, slides as
-the blocks' slipperiness lets it, ice barely, and bounces a little from a hard blow. Another structure moving by its
-physics is pushed back as hard as it pushes; one moved by a motion carries what rests on it, a crate on a lift. A
-blow harder than a block holds, by its blast strength (`jscore:blast_strength`), breaks it, of the world or of the
-structure: a heavy block falling on glass goes through it.
+ahead of time so a fast structure stops where it touches, never through, and bounces off the wall it meets, never off
+the air before it. It rests still on many points, each contact starting from the push it gave the tick before, so a
+great hull on the ground holds still from the first; it slides as the blocks' slipperiness lets it, ice barely, and
+bounces a little from a hard blow, only as it meets, never while it rests. Another structure moving by its physics is
+pushed back as hard as it pushes; one moved by a motion carries what rests on it, a crate on a lift. A blow harder than
+a block holds, by its blast strength (`jscore:blast_strength`), breaks it, of the world or of the structure: a heavy
+block falling on glass goes through it.
+
+*Added 2026-10-22.* Structures that may meet in a tick are worked together, as one, as joined ones are: a stack of
+crates is held up from the ground through every crate in it, with more passes the taller it is and its tick cut into
+shorter steps, so it settles still rather than sinking or swaying. They fall asleep together too, once each of them has
+been still a second, and none is left holding the rest up as the ground does.
 
 A tick is worked in as many steps as keep a structure from going more than half a block in one, and its stiffest
 hold, a liquid's surface, steady. A structure still for a second, its engines and burners idle, falls asleep and
-costs next to nothing; it wakes the
-moment a block of it changes, it is pushed, something moves against it, or what held it goes. Nothing of a chunk not
-loaded is read: a structure reaching one waits there. Each structure's tick of physics is timed in the diagnostics as
-`jscore:structure_physics`; twenty small structures falling and landing at once take a few milliseconds a tick. The
+costs next to nothing; asleep, it looks about twice a second, and settling by a hair as it looks does not wake it. It
+wakes the moment a block of it changes, it is pushed, something moves against it, or what held it goes. Nothing of a
+chunk not loaded is read: a structure reaching one waits there. Each structure's tick of physics is timed in the
+diagnostics as `jscore:structure_physics`; twenty small structures falling and landing at once take a few
+milliseconds a tick. The
 physics of a dimension's structures takes no more of a tick than `moving_structures.physics_millis` lets it: past
 that, a structure waits a tick, and goes the next whatever the budget.
 
@@ -618,6 +626,24 @@ public class MyBlockEntity extends BlockEntity implements IMovesWithStructures {
 `BlockMove` says where each moved block went, in which levels, and how they were turned. A mod that cannot change
 its block entities listens for `StructureBlocksMovedEvent` on the game's bus, after every block entity was told.
 
+*Added 2026-10-22.* A block entity that does not look after its places itself, any mod's, a vanilla beehive's
+flower too, has the places it saved put right as it moves (`StructurePlaces`): each place written as the game writes
+places, three whole numbers in a row (`NbtUtils.writeBlockPos`), an `X`, a `Y` and a `Z` side by side under one name
+(`linkedXPos`, `linkedYPos`, `linkedZPos`), or a packed place under a name holding "pos", that names a block which
+moved with it, becomes where that block went, turned as it was; a place of a block that stayed is left as it is. Only
+a number that is exactly the place of a block moved with it is changed. A mod whose block entities keep their places
+some other way says how to put them right, by the block entity's type, from its own code or from another mod's that
+knows it, with no need of its classes:
+
+```java
+StructurePlaces.fixer(ResourceLocation.parse("othermod:relay"), (saved, move) -> {
+    final CompoundTag fixed = saved.copy();
+    fixed.putLong("Remote", move.where(BlockPos.of(saved.getLong("Remote"))).asLong());
+    return fixed;
+});
+StructurePlaces.leaveAlone(ResourceLocation.parse("othermod:counter"));   // its numbers are no places
+```
+
 A Core block entity's declared fields follow on their own: a place of a block that moved with it (a `BlockPos`, or a
 `GlobalPos` of the level it left) becomes where that block went, and a block's look it holds (a `BlockState`) turns
 as the blocks turned. What it keeps otherwise, it follows from a declared listener:
@@ -720,7 +746,11 @@ For game masters, as `/jstech structure ...`:
 | `rails <structure> <speed>` | runs it on the rails under it, the way you face |
 | `physics <structure>` | lets it go, to move by its physics |
 | `stop <structure>` | brings it to rest |
+| `freeze <structure>` | holds it where it stands, in the air too, its physics stopped |
+| `unfreeze <structure>` | lets it go to its physics again |
 | `setdown <structure>` | sets it down on the grid |
+| `remove <structure>` | takes it away for good, its blocks with it |
+| `export <structure> <name>` | saves its blocks, with their block entities, as the game's structure file `name`, in the world's `generated` folder, as a structure block saves one (`MovingStructures.export`) |
 | `list` | names the structures loaded in the dimension |
 
 ## Settings

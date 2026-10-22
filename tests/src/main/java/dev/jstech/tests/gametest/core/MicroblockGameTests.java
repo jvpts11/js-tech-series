@@ -52,8 +52,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * Microblocks in block spaces: placed where a click puts them, a space made where nothing stands and gone when its
  * last piece is taken, what fits beside what, a cable's face closed by a cover and not by a hollow piece or a facade,
- * what a cover hides of its neighbour and of the pieces beside it, the spaces drawn each frame for a part that
- * moves, and the saw's cuts, joins and facades in the crafting grid.
+ * a facade over any face, what a cover hides of its neighbour and of the pieces beside it, the spaces drawn each frame
+ * for a part that moves, and the saw's cuts, joins and facades in the crafting grid.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -63,7 +63,6 @@ public final class MicroblockGameTests {
     private static final BlockPos GROUND = new BlockPos(2, 2, 2);
     private static final BlockPos ABOVE = GROUND.above();
     private static final BlockPos CABLE = new BlockPos(2, 2, 3);
-    private static final BlockPos BESIDE = new BlockPos(4, 2, 4);
     private static final int DOWN = SpaceSlots.face(Direction.DOWN.get3DDataValue());
     private static final int UP = SpaceSlots.face(Direction.UP.get3DDataValue());
     private static final int NORTH = SpaceSlots.face(Direction.NORTH.get3DDataValue());
@@ -144,11 +143,21 @@ public final class MicroblockGameTests {
         helper.assertTrue(!parts.add(new Microblock(piece(MicroShape.FACE, MicroShape.SLAB, Blocks.STONE), EAST,
                 SpaceSlots.Y)), "a slab beside the cable would reach into it");
 
-        final BlockPos alone = helper.absolutePos(BESIDE);
-        helper.assertTrue(!SpacePlacement.place(helper.getLevel(), new SpacePlacement.Placement(alone,
-                new Microblock(piece(MicroShape.FACADE, MicroShape.COVER, Blocks.STONE), NORTH, SpaceSlots.Y))),
-                "no facade where no cable runs");
-        helper.assertBlockPresent(Blocks.AIR, BESIDE);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void facades_standOverAnyFaceNotOnlyACables(final GameTestHelper helper) {
+        helper.setBlock(GROUND, Blocks.STONE);
+        final BlockPos ground = helper.absolutePos(GROUND);
+        final Microblock.MicroblockPiece facade = piece(MicroShape.FACADE, MicroShape.COVER, Blocks.OAK_PLANKS);
+        final Optional<SpacePlacement.Placement> target = SpacePlacement.target(helper.getLevel(), ground,
+                Vec3.atCenterOf(ground).add(0, 0.5, 0), Direction.UP, facade);
+        helper.assertTrue(target.isPresent() && SpacePlacement.place(helper.getLevel(), target.get()),
+                "a facade stands on the stone's top, where no cable runs");
+        helper.assertTrue(helper.getLevel().getBlockEntity(ground.above()) instanceof SpaceBlockEntity space
+                && (space.parts().coveredFaces() & (1 << Direction.DOWN.get3DDataValue())) != 0,
+                "in a space of its own, covering its face whole as a cover does");
         helper.succeed();
     }
 

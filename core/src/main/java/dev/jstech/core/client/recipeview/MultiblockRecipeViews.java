@@ -48,6 +48,14 @@ public final class MultiblockRecipeViews {
         return out;
     }
 
+    /**
+     * {@code shape}, called {@code id}, as both recipe viewers would show it, though no mod declared it yet: what the
+     * studio's recorder shows of a pattern before it is written. None when it lays out to nothing.
+     */
+    public static Optional<MultiblockEntry> of(final ResourceLocation id, final IStructureShape shape) {
+        return shape.preview(0).map(preview -> entry(id, shape, preview));
+    }
+
     private static MultiblockEntry entry(final ResourceLocation id, final IStructureShape shape,
                                          final ShapePreview preview) {
         final List<MultiblockEntry.Material> materials = new ArrayList<>();

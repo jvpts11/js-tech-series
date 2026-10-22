@@ -30,6 +30,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,8 +39,10 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
@@ -156,6 +159,24 @@ public final class MovingStructures {
     /** Takes {@code structure} away for good, its blocks gone with it and its plot of the yard given back. */
     public static void takeAway(final MovingStructure structure) {
         remove(structure, true);
+    }
+
+    /**
+     * Saves the blocks of {@code structure}, with their block entities, as the game's structure file {@code id}, in
+     * the world's {@code generated} folder, as a structure block saves one: to be placed again by a structure block,
+     * a command or {@link #born}. Whether it was written.
+     */
+    public static boolean export(final MovingStructure structure, final ResourceLocation id) {
+        if (!(structure.level() instanceof ServerLevel level)) {
+            return false;
+        }
+        final Box yard = structure.bounds();
+        final StructureTemplateManager templates = level.getStructureManager();
+        final StructureTemplate template = templates.getOrCreate(id);
+        template.fillFromWorld(level, new BlockPos(yard.minX(), yard.minY(), yard.minZ()), new Vec3i(
+                yard.maxX() - yard.minX() + 1, yard.maxY() - yard.minY() + 1, yard.maxZ() - yard.minZ() + 1),
+                false, Blocks.STRUCTURE_VOID);
+        return templates.save(id);
     }
 
     /** Sets the rule that moves {@code structure} from the next tick, or null to bring it to rest. */

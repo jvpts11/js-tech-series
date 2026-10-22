@@ -6,10 +6,9 @@ Blocks and Chisels and Bits.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: block spaces
-with many occupants, microblocks of any block, the saw, facades, parts that move and act on their own faces, the game's
-small blocks in a space, and sensors among the parts. How a mod uses it, with code:
-[Block spaces and microblocks](../MULTIPART.md).
+Everything this page designs is built, as of October 2026: block spaces with many occupants, microblocks of any block,
+the saw, facades over any face, parts that move and act on their own faces, the game's small blocks in a space, and
+sensors among the parts. How a mod uses it, with code: [Block spaces and microblocks](../MULTIPART.md).
 
 ## The design
 
@@ -26,7 +25,8 @@ small blocks in a space, and sensors among the parts. How a mod uses it, with co
 - **Microblocks of the material of any full block, from any mod**: covers (an eighth thick), panels (a quarter), slabs
   (a half) and the thicknesses between; corners and posts; and **hollow covers**, with a hole for a cable to pass.
 - **Facades**: a cover that **hides the cable behind it** and looks like a whole block, while the cable keeps working,
-  as AE2's do, so cables run inside the walls of a handsome base.
+  as AE2's do, so cables run inside the walls of a handsome base. A facade stands over any face of a space, not only
+  where a cable runs, so a microblock's look covers any face.
 - **The saw** cuts microblocks: a tool of the Core's shared content, with a recipe of vanilla materials.
 
 ### What a part can do
@@ -54,7 +54,3 @@ small blocks in a space, and sensors among the parts. How a mod uses it, with co
 - **The wrench** turns or takes off a part.
 - **Multipart spaces travel in moving structures** like any block ([Moving structures](moving-structures.md)).
 - **A testing kit** for GameTests of multipart spaces.
-
-## Still to build
-
-- **Facades over any block**, not only where a cable runs, so a microblock's look covers any face of a space.

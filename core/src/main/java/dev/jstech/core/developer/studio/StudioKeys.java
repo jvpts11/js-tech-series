@@ -75,6 +75,14 @@ public final class StudioKeys {
     public static final String SWAPPED = "swapped";
     public static final String REPLACE = "replace";
     public static final String PROBLEM = "problem";
+    public static final String CONTROLLER = "controller";
+    public static final String MIRRORS = "mirrors";
+    public static final String LIES_DOWN = "lies_down";
+    public static final String PATTERN = "pattern";
+    public static final String LETTERS = "letters";
+    public static final String LETTER = "letter";
+    public static final String PORT = "port";
+    public static final String RELOAD = "reload";
 
     private StudioKeys() {
     }

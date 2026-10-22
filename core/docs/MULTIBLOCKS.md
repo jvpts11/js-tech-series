@@ -50,6 +50,16 @@ A pattern can also be read from a structure block's file, built in the game:
 PortKind.ITEM_INPUT))`: the named block is the controller, the blocks of the map are ports, air is free, and every
 other block must be there as it was saved.
 
+*Added 2026-10-22.* Or recorded off one built in the world, in the studio ([Developing](DEVELOPING.md)): on the page
+of structures, catch its two corners, open the studio looking at its controller and press **Make it a multiblock**.
+The page lists the letters the recorder gave each kind of block, the first of its name where that is free (`B` for
+bricks), a port block `I` or `O` by its kind, the controller at `#` and air left free, with how many of each and its
+layers as the file writes them; it may be mirrored or lie down; and beside it is the page the recipe viewers will show
+of it. **Write the pattern** writes `data/<mod>/multiblock/<name>.json` in the mod's source in this run, or, with no
+source of the mod here, in a data pack of the world's own, in force once its data is reloaded; **Show with the
+projector** shows the pattern where it was built. In code, `MultiblockRecorder.record(level, corner, otherCorner,
+controller, name, mirrors, liesDown)` reads the same pattern.
+
 ## Places that count and give
 
 *Added 2026-10-16.*
