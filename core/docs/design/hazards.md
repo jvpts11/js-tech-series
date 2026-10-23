@@ -9,8 +9,23 @@ as any other mod's would be.
 
 Everything this page designs is built, as of October 2026: the hazard kit, hazards of carried things and shielded
 containers, the lungs, a body's warmth, treatment, radiation and its kinds, ionizing radiation and contamination,
-dissonance and pollution and its cleaning, with the hazard devices and their maps. How a mod uses it, with code:
-[Hazards](../HAZARDS.md).
+dissonance and pollution and its cleaning, with the hazard devices and their maps, and the hazards of materials. How a
+mod uses it, with code: [Hazards](../HAZARDS.md).
+
+## The hazards of materials
+
+A material carries its **hazard classes** as real data, as a safety data sheet gives them: the GHS's (explosive,
+flammable, oxidising, corrosive, acutely toxic, harmful, health hazard, hazardous to the environment) and the two a
+sheet marks on their own (an asphyxiant gas, radioactivity). The series' elements and compounds carry theirs; a data pack
+changes any of them.
+
+- **The nine GHS pictograms follow from them**, in the order of their codes, GHS01 to GHS09. The exclamation mark gives
+  way to the skull, as the GHS says. The gas cylinder is no class of a substance but of its container: it shows for a gas
+  held above the open air's pressure, never for one in a room. A material's tooltip lists its pictograms by their
+  meaning, then the hazards outside the GHS.
+- **What a cloud of a gas does** is read off the same classes, for any mod that lets a gas out: it burns (flammable,
+  explosive), it poisons (acutely toxic, harmful), it suffocates (asphyxiant), it feeds a fire (oxidising), it eats metal
+  (corrosive), it irradiates (radioactive). Harm over time, a health hazard or to the environment, is no cloud's.
 
 ## The design
 

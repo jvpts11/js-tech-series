@@ -10,9 +10,9 @@ package dev.jstech.core.material;
 import java.util.Optional;
 
 /**
- * The rule a mineral's contents follow: its main element first, then its byproducts, each a share of what processing
- * it gives, every share above nothing and all of them together no more than the whole, no byproduct more than the main
- * element.
+ * The rule a mineral's contents follow: its main element first, then its byproducts, each a share of the mineral's
+ * mass, every share above nothing and all of them together no more than the whole. The main element is what the
+ * mineral is mined for, which need not be most of it: the sulfur of chalcopyrite weighs more than its copper.
  *
  * <p>Pure: no game types.
  */
@@ -28,9 +28,7 @@ public final class MineralShares {
         /** A share is not between nothing and the whole. */
         OUTSIDE_THE_WHOLE,
         /** The shares add up to more than the whole. */
-        MORE_THAN_THE_WHOLE,
-        /** A byproduct's share is more than the main element's. */
-        BYPRODUCT_OVER_MAIN
+        MORE_THAN_THE_WHOLE
     }
 
     private MineralShares() {
@@ -50,11 +48,6 @@ public final class MineralShares {
         }
         if (total > 1 + SLACK) {
             return Optional.of(Problem.MORE_THAN_THE_WHOLE);
-        }
-        for (int i = 1; i < shares.length; i++) {
-            if (shares[i] > shares[0]) {
-                return Optional.of(Problem.BYPRODUCT_OVER_MAIN);
-            }
         }
         return Optional.empty();
     }

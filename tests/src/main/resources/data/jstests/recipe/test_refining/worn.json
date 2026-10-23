@@ -1,0 +1,13 @@
+{
+  "type": "jstests:test_refining",
+  "inputs": [
+    {"item": "minecraft:raw_iron", "count": 1}
+  ],
+  "catalysts": [
+    {"item": "jstests:test_catalyst", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:iron_ingot", "count": 1}
+  ],
+  "ticks": 2
+}

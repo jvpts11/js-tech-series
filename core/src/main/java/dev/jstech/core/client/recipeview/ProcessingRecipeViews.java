@@ -27,6 +27,7 @@ import dev.jstech.core.recipeview.RecipeViews;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -109,7 +110,11 @@ public final class ProcessingRecipeViews {
         }
         for (final Byproduct byproduct : recipe.byproducts()) {
             final ProcessingViewLayout.Point at = layout.output(index++);
-            page.output(at.x(), at.y(), byproduct.stack()).chance(byproduct.chance());
+            if (byproduct.draw() == Byproduct.Draw.SHARE) {
+                page.output(at.x(), at.y(), byproduct.stack()).tooltip(counted(byproduct.amount()));
+            } else {
+                page.output(at.x(), at.y(), byproduct.stack()).chance(byproduct.chance());
+            }
         }
         page.arrow(layout.arrow().x(), layout.arrow().y(), recipe.ticks());
         page.line(layout.textLine().x(), layout.textLine().y(), layout.width(), workLine(recipe), colour);
@@ -205,6 +210,12 @@ public final class ProcessingRecipeViews {
         return GameText.component(MachineTexts.RECIPE_CATALYST.text());
     }
 
+    /** What a counted byproduct's slot says of how much comes: "0.25 each time, counted". */
+    public static Component counted(final float share) {
+        final String written = BigDecimal.valueOf(Math.round(share * 1_000.0) / 1_000.0).stripTrailingZeros()
+                .toPlainString();
+        return GameText.component(MachineTexts.RECIPE_COUNTED.with(Text.literal(written)));
+    }
 
     /**
      * A layout as large as the largest of {@code recipes}, which every one of them fits in: a layout only grows with

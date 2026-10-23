@@ -142,7 +142,7 @@
   "items": [
     "jsindustrial:electric_furnace"
   ],
-  "order": 6,
+  "order": 7,
   "section": "jsindustrial:getting_started",
   "title": "jsindustrial.guide.electric_furnace.title"
 }

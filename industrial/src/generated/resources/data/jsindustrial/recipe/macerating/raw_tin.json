@@ -1,0 +1,16 @@
+{
+  "type": "jsindustrial:macerating",
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/tin"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:tin_dust"
+    }
+  ]
+}

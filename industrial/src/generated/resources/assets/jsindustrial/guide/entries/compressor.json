@@ -160,7 +160,7 @@
   "items": [
     "jsindustrial:compressor"
   ],
-  "order": 7,
+  "order": 8,
   "section": "jsindustrial:machines",
   "title": "jsindustrial.guide.compressor.title"
 }

@@ -12,9 +12,23 @@ mod used without J's Industrial makes the ones it needs by a simpler path of its
 gases more than one mod uses (diesel, kerosene, hydrogen, helium, xenon...) and for generic components (servomotors,
 electric motors, LEDs, antennas, magnetic heads...).
 
-Today the catalogue holds five metals (iron, copper, gold, tin and bronze), in seven forms (ingot, nugget, dust, plate,
-bolt, rod and gear), and the Core registers three items of them: iron dust, iron plate and copper plate. Everything else
-on this page is still to build.
+## What exists today
+
+J's Core's catalogue is built: the 118 elements with their atomic weights, the isotopes, the elements beyond the known
+table, the exotic forms, the shared liquids and gases, the forms, the properties, the mineral families and the host
+rocks. On it, J's Industrial declares its **first rung**:
+
+- the five metals of the start (iron, copper, gold, tin and bronze) in the forms its machines and its hand tools make:
+  ingot, nugget, block, dust, plate, wire, and their **scraps**, a form of J's Industrial's own;
+- the "X ore" of iron, copper, gold and tin (the game's own for the first three);
+- nine real minerals in the Core's catalogue, one of each family a first industry meets: **hematite**, **magnetite**,
+  **siderite**, **pyrite**, **chalcopyrite**, **cuprite**, **malachite**, **electrum** and **cassiterite**, each with an
+  ore in every rock its veins cross and its raw mineral;
+- the dust of every element those minerals give, and the ingot of those a furnace melts.
+
+What each mineral is made of comes from its **formula**, by the atomic weights of its elements, so declaring the rest of
+[Minerals](minerals.md) is a line of data each. The veins still hold the elements; they take the minerals with
+[The world](world.md).
 
 ## To build
 
@@ -43,8 +57,8 @@ A material is of a **kind**, decided by its **state at room temperature**, and i
 - **Mercury** only exists as a liquid; its mineral, cinnabar, is its ore. **Native mercury** is droplets of liquid
   mercury inside its ore, which come out as liquid when the block is broken.
 - **Forms are a registry too**, open to any mod. Forms added when a real use appears; the frame (the casing of
-  multiblocks), lenses, boules and wafers are already in the base set. Whether metals get scraps, and whether ores go
-  through crushed and purified stages, is decided with [Metallurgy](metallurgy.md) and the machines.
+  multiblocks), lenses, boules and wafers are already in the base set. Metals get **scraps**, a form J's Industrial
+  adds ([Metallurgy](metallurgy.md)); whether ores go through crushed and purified stages is decided with the machines.
 - **A form only exists if an installed mod declares it uses it.** Mods declare their needs while the game starts, and
   the Core registers the union. Every form carries the common tag `c:<forms>/<material>` (`c:dusts/copper`,
   `c:plates/titanium`), so a recipe that asks for the tag takes the item from any mod. Forms the game already has (the
@@ -77,12 +91,31 @@ property says whether it shows in the tooltip, only with Shift, or never, and th
 J's Industrial registers nothing beyond the basics; a mod of ultra-realistic chemistry can add everything it wants
 without touching J's Core.
 
+Among the basics are a material's **hazards**: its classes as a real safety data sheet gives them, those of the GHS
+(explosive, flammable, oxidising, corrosive, acutely toxic, harmful, a health hazard, hazardous to the environment) and
+the two a sheet marks outside it (an asphyxiant gas, radioactivity). The pictograms its things and its safety data sheet
+show follow from them ([Manuals](manuals.md)), and so does what a cloud of a gas does
+([Fluids and gases](fluids-and-gases.md)). They are real data of the series' model, in J's Core, since J's Space and
+J's Warfare read the same toxic gases.
+
 A material has **no tier**: when something becomes available is decided by each mod's recipes.
 
 ### Minerals
 
 A **mineral** is what comes out of the ground: chalcopyrite, not copper. It knows what it contains (its main element and
-the byproducts it gives, in fixed proportions) and the **family** that decides how it is processed:
+the byproducts it gives, in fixed proportions) and the **family** that decides how it is processed.
+
+- **What it contains is real.** Its own elements come at their share of its mass, by its formula: chalcopyrite, CuFeS₂,
+  is 35% copper and 35% sulfur. A natural alloy with no one formula, electrum, says its parts.
+- **Its main element is the one it is mined for**, which need not be most of it: chalcopyrite's sulfur weighs more
+  than its copper.
+- **Traces are counted at a game grade.** A real chalcopyrite holds gold in parts per million, which no player would see
+  come out; as the air's rare gases count at a thousand times their real share, a trace counts at a thousand times its
+  real grade, and never more than a tenth of its mineral (a few percent of titanium in magnetite is no trace). The
+  traces take their room from the rest, as impurities do.
+- How much of each a machine gets out is the processing's to say ([Metallurgy](metallurgy.md)).
+
+The families:
 
 | Family | How it is processed | Examples |
 | --- | --- | --- |

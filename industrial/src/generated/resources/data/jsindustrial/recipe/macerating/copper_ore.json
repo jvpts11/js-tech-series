@@ -1,0 +1,16 @@
+{
+  "type": "jsindustrial:macerating",
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ores/copper"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:copper_dust"
+    }
+  ]
+}

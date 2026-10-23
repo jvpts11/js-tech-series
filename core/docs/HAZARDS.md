@@ -191,6 +191,29 @@ touches the hand (heat, acid, poison) does not act through a container.
 { "values": { "mymod:lead_container": { "density": 11340, "thickness": 0.05 } } }
 ```
 
+## The hazards of materials
+
+*Added 2026-10-23.*
+
+A material carries its hazard classes as real data, as a safety data sheet gives them: the property
+`MaterialHazards.HAZARDS`, a list of `HazardClass` (`explosive`, `flammable`, `oxidising`, `corrosive`, `acutely_toxic`,
+`harmful`, `health_hazard`, `environmental`, and the two outside the GHS, `asphyxiant` and `radioactive`). The series'
+elements and compounds carry theirs; a mod gives its own materials theirs, and a data pack changes any material's as it
+changes its other values.
+
+```java
+Materials.material(rl("phosgene"), MaterialKind.GAS, PHOSGENE_NAME)
+        .with(MaterialHazards.HAZARDS, List.of(HazardClass.ACUTELY_TOXIC, HazardClass.CORROSIVE)).declare();
+```
+
+- **The GHS pictograms** follow from the classes (`MaterialHazards.pictograms(material)`, `GhsPictograms.of`), GHS01 to
+  GHS09 in that order, the exclamation mark giving way to the skull. The gas cylinder is the container's:
+  `MaterialHazards.pictograms(material, kilopascals)` adds it for a gas held above the open air's pressure.
+- **The tooltip** of every thing of the material lists its pictograms by their meaning, then the hazards beyond them:
+  chlorine reads "Oxidising, Toxic, Hazardous to the environment".
+- **What a cloud of a gas does**, `MaterialHazards.gasHazards(material)`: `FLAMMABLE`, `TOXIC`, `ASPHYXIANT`,
+  `OXIDISING`, `CORROSIVE`, `RADIOACTIVE`, read off the classes, for any mod that lets a gas out to act on.
+
 ## The lungs
 
 *Added 2026-10-17.*

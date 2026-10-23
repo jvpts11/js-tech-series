@@ -10,7 +10,22 @@ nearby gets everything from coal, as Germany did in the 1930s and South Africa's
 ## What exists today
 
 J's Core moves chemicals that are neither items nor fluids (Mekanism's gases, for example) through a bridge, as an id
-and an amount. J's Industrial has no chemistry yet.
+and an amount. J's Industrial has the contract its chemistry stands on, with no chemical machine yet:
+
+- **A reaction is data**: each substance with its formula and its coefficient, solid or fluid, on the side it goes in or
+  comes out. A reaction that does not balance, atom for atom, is refused. One coefficient is **100 mB** of a fluid or
+  **one dust** of a solid; a recipe may run several batches at once. Ammonia from nitrogen and hydrogen is the first
+  reaction declared, at Haber-Bosch's 400 to 500 °C and 150 to 250 bar, over iron.
+- **A reaction becomes a chemical machine's recipe**: its gases taken from and made into the machine's tanks of gas, its
+  solids as dusts, its temperature and pressure the recipe's conditions, its catalyst in a slot of its own.
+- **No catalyst, no reaction**, as in a real plant. A catalyst lasts so many batches, its durability, and loses one each
+  batch; worn out, it becomes its **spent form** if it has one, which a data map names, or is gone. The equation on the
+  machine's screen comes with the screens.
+- **Gas is counted at 1 atm**: a millibucket of gas is a litre of it at the open air's pressure and 0 °C; the pressure
+  belongs to what holds it.
+- **Compressing costs the real work** of the gas law, cooled as it goes: the moles × R × T × the logarithm of the ratio
+  of the pressures, over the compressor's efficiency. It grows with the ratio, not the difference: pressing to 200 bar
+  costs about eight times pressing to 2.
 
 ## To build
 
@@ -26,8 +41,8 @@ and an amount. J's Industrial has no chemistry yet.
   works 50% faster.
 - **Pressure is the gases' own.** A real high-pressure reaction compresses the gases that react. The **Gas Compressor**
   (T2 reciprocating, T3 centrifugal) takes any gas from a gas pipe into a High-Pressure Pipe, and a reactor or a plant
-  that asks for pressure only takes gases already compressed. Compressing costs energy in proportion to the pressure: in
-  real Haber-Bosch plants it is a large part of the bill.
+  that asks for pressure only takes gases already compressed. Compressing costs the real work of the gas law, which
+  grows with the logarithm of the ratio of the pressures: in real Haber-Bosch plants it is a large part of the bill.
 - **Compressed air** ([Machines](machines.md)) goes where it goes in real life: as a **reactant** in reactions that use
   air (nitric acid, sulfuric acid, roasting, the blast furnace's blowers), and as **instrument air**: big plants move
   their control valves with it, and without air a plant stops.

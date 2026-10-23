@@ -92,13 +92,13 @@ public final class IndustrialFoundationsGameTests {
         helper.setBlock(MACERATOR, IndustrialModule.MACERATOR.get());
         final MaceratorBlockEntity macerator = helper.getBlockEntity(MACERATOR);
         macerator.own(Ownership.of(owner));
-        macerator.getInventory().setStackInSlot(0, new ItemStack(Items.GOLD_INGOT));
+        macerator.getInventory().setStackInSlot(0, new ItemStack(Items.QUARTZ));
         macerator.getEnergy().setEnergyStored(16_000);
         helper.startSequence()
                 .thenExecuteAfter(20, () -> {
                     helper.assertTrue(macerator.status() == MachineStatus.LOCKED,
                             "locked while the owner's team lacks the knowledge; it is " + macerator.status());
-                    helper.assertTrue(macerator.getInventory().getStackInSlot(0).is(Items.GOLD_INGOT),
+                    helper.assertTrue(macerator.getInventory().getStackInSlot(0).is(Items.QUARTZ),
                             "and it took nothing");
                     TeamProgress.grant(server, CoreTeams.teamOf(server, owner), TestProgression.FUSION, 1.0);
                 })

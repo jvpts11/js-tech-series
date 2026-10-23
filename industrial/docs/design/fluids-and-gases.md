@@ -12,6 +12,10 @@ in [Chemistry](chemistry.md); the states of matter themselves in [Materials](mat
 - A machine's tanks are exposed through NeoForge's fluid capability, so pipes and tanks of any mod work with them.
 - Chemicals that are neither items nor fluids (Mekanism's gases, for example) move through a bridge, as an id and an
   amount.
+- **A gas's hazards are data**: what a cloud of it does (it burns, it poisons, it suffocates, it feeds a fire, it eats
+  metal, it irradiates) follows from its material's hazard classes ([Materials](materials.md)), for every mod that
+  lets a gas out to read. Hydrogen burns; chlorine poisons and feeds a fire; nitrogen, argon, helium and carbon dioxide
+  suffocate. The clouds themselves come with the leaks.
 
 ## To build
 
@@ -49,7 +53,9 @@ Lines of different states never join. The danger is a fluid reaching a pipe of i
 **A broken pipe leaks.** Liquids spill into the world as fluid blocks: oil, acid, molten metal. Gases come out as a
 **cloud** that thins out over time.
 
-**The hazards come from each material's properties** ([Materials](materials.md)), shown in its tooltip:
+**The hazards come from each material's properties** ([Materials](materials.md)), shown in its tooltip. A gas's are
+read off its hazard classes (flammable, explosive; acutely toxic or harmful; asphyxiant; oxidising; corrosive;
+radioactive); the cryogenic and the hot are the state a fluid is held in, not its material:
 
 | Property | Examples | What it does |
 | --- | --- | --- |

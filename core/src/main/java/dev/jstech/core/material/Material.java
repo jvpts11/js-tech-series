@@ -366,8 +366,8 @@ public final class Material {
         }
 
         /**
-         * What the mineral contains, in the order declared, its main element first: {@code material}, in a share of
-         * what processing it yields.
+         * What the mineral contains, in the order declared, its main element first, the one it is mined for:
+         * {@code material}, in a share of the mineral's mass.
          */
         public Builder contains(final Material material, final double share) {
             this.contents.add(new Mineral.Content(material, share));
@@ -415,7 +415,6 @@ public final class Material {
                     case NOTHING -> "contains nothing";
                     case OUTSIDE_THE_WHOLE -> "has a share that is not between nothing and the whole";
                     case MORE_THAN_THE_WHOLE -> "has shares adding up to more than the whole";
-                    case BYPRODUCT_OVER_MAIN -> "has a byproduct with a greater share than its main element";
                 }, "give its main element first, then its byproducts, adding up to the whole at most");
             });
         }

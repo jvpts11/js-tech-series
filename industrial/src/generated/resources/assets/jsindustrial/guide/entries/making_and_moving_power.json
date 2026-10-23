@@ -94,7 +94,7 @@
   "items": [
     "jscore:insulated_copper_cable"
   ],
-  "order": 8,
+  "order": 9,
   "section": "jsindustrial:power",
   "title": "jsindustrial.guide.making_and_moving_power.title"
 }

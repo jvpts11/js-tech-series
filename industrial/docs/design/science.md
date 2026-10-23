@@ -8,7 +8,20 @@ second gate, only for frontier science: the discoveries that real scientists mad
 
 ## What exists today
 
-Nothing: J's Core has the idea of teams and of progression that any mod can read, and J's Industrial has no research.
+J's Core has the idea of teams and of progression that any mod can read, and J's Industrial has no research yet. It
+has **what counts as discovering an element**, which the research will stand on:
+
+- **an element is discovered at its first synthesis by a team**: the elements science discovered by making them
+  (technetium, promethium, astatine, everything from neptunium on, and every element beyond the known table), the
+  first time a team makes one in any form, an isotope of it among them;
+- the team **knows** the element from then on, which the research of its stable isotope asks for, and its players earn
+  the **Discovery** advancement, which opens that tab;
+- **the player who counts is the owner of the machine that made it**, who may be away: they earn the advancement as they
+  join;
+- for an element **beyond the known table**, the first to discover it on the server also gives it its name
+  ([Materials](materials.md)): a discoverer who was away is asked for it when they join, and the right waits for them;
+- **mining what holds traces of one discovers nothing**: the Deep Core Miner's traces and the Aleph's veins show an
+  element, but only making it discovers it.
 
 ## To build
 

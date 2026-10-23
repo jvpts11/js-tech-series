@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -40,7 +41,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * A machine of the test mod built on the whole of the Core's machine kit: a device block, energy of the test mod's
  * own through a port of the low class with a fuse and a battery, a tank of gas in and one out, a value of its own the
  * outside may set; it turns cobblestone into stone in twenty ticks, and works the refining recipes. A repair kit for
- * it. And a factory of three lanes on FE, working the choosing recipes.
+ * it, and a catalyst that wears into its spent form. And a factory of three lanes on FE, working the choosing recipes.
  */
 public final class TestKitMachine {
 
@@ -53,6 +54,8 @@ public final class TestKitMachine {
     /** What the test repair kit holds and gives back a second. */
     public static final int KIT_USES = 100;
     public static final int KIT_PER_SECOND = 25;
+    /** How many recipes the test catalyst lasts. */
+    public static final int CATALYST_USES = 3;
     public static final ProcessingMachineBlockEntity.Layout LAYOUT = ProcessingMachineBlockEntity.Layout.items(2, 2)
             .withMatter(MatterState.GAS, 1, 1, 1_000L, 10L).withUpgrades(2);
     /** Its first output slot. */
@@ -89,6 +92,13 @@ public final class TestKitMachine {
     public static final ItemEntry<RepairKitItem> REPAIR_KIT = TestSounds.CONTENT.item("test_repair_kit",
             properties -> new RepairKitItem(properties, KIT_USES, KIT_PER_SECOND)).named("Test Repair Kit")
             .look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    /** A catalyst that lasts {@value #CATALYST_USES} recipes and then becomes its spent form, as data names it. */
+    public static final ItemEntry<Item> CATALYST = TestSounds.CONTENT.item("test_catalyst", Item::new)
+            .named("Test Catalyst").look(IItemLook.parent("minecraft:item/blaze_powder")).durability(CATALYST_USES)
+            .tab(TestItems.ITEMS).register();
+    public static final ItemEntry<Item> SPENT_CATALYST = TestSounds.CONTENT.item("test_spent_catalyst", Item::new)
+            .named("Test Spent Catalyst").look(IItemLook.parent("minecraft:item/gunpowder")).tab(TestItems.ITEMS)
+            .register();
     /** The kit machine's recipes: a catalyst, a gas in and out, a byproduct, the pressure and temperature it needs. */
     public static final ProcessingKind REFINING = TestSounds.CONTENT.processing("test_refining", "Test Refining",
             () -> TestKitMachine.BLOCK);

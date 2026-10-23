@@ -1,0 +1,39 @@
+{
+  "type": "jsindustrial:macerating",
+  "byproducts": [
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:sulfur_dust"
+      },
+      "share": 0.574089
+    },
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:gold_dust"
+      },
+      "share": 0.0011947597
+    },
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:arsenic_dust"
+      },
+      "share": 0.119475976
+    }
+  ],
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ores/pyrite"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:iron_dust"
+    }
+  ]
+}

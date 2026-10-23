@@ -58,7 +58,7 @@
   "items": [
     "jsindustrial:tank"
   ],
-  "order": 10,
+  "order": 11,
   "section": "jsindustrial:fluids_and_gases",
   "title": "jsindustrial.guide.tank.title"
 }

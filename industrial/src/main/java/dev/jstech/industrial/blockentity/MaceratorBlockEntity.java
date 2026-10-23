@@ -17,16 +17,19 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * The Macerator: grinds its input into the recipe's result, spending {@value #FE_PER_TICK} FE per tick over the
- * recipe's processing time (Tier 1: 200 ticks, ore to two dusts).
+ * recipe's processing time (Tier 1: 200 ticks, ore to two dusts), with room besides for the byproducts a mineral
+ * gives as it is ground.
  */
 public class MaceratorBlockEntity extends ProcessingMachineBlockEntity {
 
     public static final int FE_PER_TICK = 40;
+    /** Its output slots: the dusts of what an ore is mined for, and its byproducts. */
+    public static final int OUTPUTS = 6;
     private static final int ENERGY_CAPACITY = 16_000;
     private static final int ENERGY_MAX_RECEIVE = 1_000;
 
     public MaceratorBlockEntity(final BlockPos pos, final BlockState state) {
-        super(IndustrialModule.MACERATOR_BE.get(), pos, state, Layout.items(1, 1), ENERGY_CAPACITY,
+        super(IndustrialModule.MACERATOR_BE.get(), pos, state, Layout.items(1, OUTPUTS), ENERGY_CAPACITY,
                 ENERGY_MAX_RECEIVE, FE_PER_TICK);
     }
 

@@ -6,10 +6,29 @@ and the alloys. The materials and their forms are in [Materials](materials.md); 
 
 ## What exists today
 
-- The **Macerator** grinds any iron ore or raw iron into 2 iron dusts, and an iron ingot back into 1 dust.
-- The **Compressor** presses an iron or copper ingot into a plate.
-- The **Electric Furnace** smelts what a furnace smelts, on energy.
-- Iron dust smelts into an iron ingot in a furnace or a blast furnace.
+Every recipe below comes from data: the table of forms, the minerals of the catalogue and the metals the mod uses.
+Adding a mineral, a metal or a machine adds its recipes without touching the code that writes them.
+
+- **Levels 1 and 2 of ore processing**, for the "X ore" of iron, copper, gold and tin and for the nine minerals of the
+  first rung ([Materials](materials.md)). A furnace smelts an "X ore" and the native metals, oxides and carbonates
+  raw into one ingot; never a sulfide or an arsenide. The **Macerator** grinds any of them, ore or raw, into two dusts
+  of what it is mined for and a quarter of its byproducts, each at its share of the mineral against the main element's:
+  chalcopyrite gives half a sulfur dust with each two copper dusts, and a little gold, silver, selenium and tellurium.
+  The Macerator has six output slots, the dusts and five byproducts.
+- **Byproducts and scraps come by count, never by chance.** The machine keeps the share of each, and puts out the whole
+  ones as they complete: a quarter a time is one every fourth time, exactly. The count is kept with the machine.
+- **The forms of the five metals**: plates (the Compressor, 1 → 1; the Forge Hammer, three ingots into two), wire (the
+  Draw Plate, 1 → 1, with its scraps), dust (the Macerator, 1 → 1; the Mortar, three into two), and nuggets and blocks
+  at the crafting table, nine for one.
+- **By hand always yields less**: where a machine makes two of one, by hand makes one; where a machine makes one of one,
+  by hand makes two of three. The hand tools stay in the grid, a use worn each time (the Forge Hammer and the Draw
+  Plate 128 uses, the Mortar 64), until they are worn out.
+- **Scraps**: drawing by hand leaves one every eight wires, which the player counts as a machine does. An ordinary
+  furnace melts a scrap into a nugget.
+- **Dusts melt back into their ingot** in a furnace for every metal that melts no hotter than iron: iron, copper, gold,
+  tin, bronze, silver, manganese. Titanium and vanadium wait for the electric arc and the vacuum.
+- The table of forms already says which machine makes each one, from what and with what yield, for the machines still
+  to come (the Wire Drawer, the Rolling Mill, the Lathe, the Coil Winder, the Extruder): each brings its recipes with it.
 
 ## To build
 
@@ -25,7 +44,11 @@ Every level is optional, and each is better than the one before:
 
 **Sulfides and arsenides don't go in a furnace**: like the real ones, they have to be roasted first. At the start, a
 player smelts the "X ore" that every vein holds ([The world](world.md)) and the simple minerals; the rest of the vein is
-worth processing properly later. That is what the "X ore" is for.
+worth processing properly later. That is what the "X ore" is for. The rule is the raw mineral's: the Macerator grinds
+any mineral, a sulfide too, into the dusts of what it is mined for, and those dusts go in a furnace.
+
+**Byproducts come in fixed proportions**: at each level, a share of what the mineral holds of each, counted by the
+machine, never by chance. The Macerator gets a quarter of them; the family's route gets them all.
 
 The routes of level 3, by family ([Materials](materials.md)):
 
@@ -58,7 +81,8 @@ and [Chemistry](chemistry.md).
 | Nugget, block | ingot | crafting table, 9 for 1 as in vanilla | | |
 
 - **The hand tools** (the Forge Hammer, the Draw Plate, the Mortar) yield less than the machines, so the start of the
-  game never waits on a machine.
+  game never waits on a machine: half of what a machine makes where it makes more than it takes (a wire of an ingot),
+  two of three where it makes one of one (two plates of three ingots).
 - **The Wire Drawer comes at T1**, because the T1 circuit already needs copper wire; the big multiblock one is for the
   special wires of later tiers.
 - **Dies** decide the shape of the small parts in the Extruder and the Hydraulic Press (bolts, gears, profiles), instead
@@ -70,11 +94,14 @@ and [Chemistry](chemistry.md).
 Rolling and drawing leave **scraps** of the metal they work, a form of every metal: copper scraps, steel scraps. An
 alloy's scraps go back to the same alloy.
 
-- They come out in **fixed proportion**: the machine counts, and every so many operations one scrap comes out. Nothing
-  is rolled at random.
-- The **Electric Arc Furnace** (T3) melts them back into ingots, losing nothing.
-- Before the T3, an ordinary furnace melts them **with a loss** (for example 2 scraps into 1 nugget), so nobody keeps a
-  chest of scraps waiting for the T3.
+- They come out in **fixed proportion**: the machine counts, and every so many operations one scrap comes out, one in
+  eight for rolling and drawing. Nothing is rolled at random. Drawing by hand through the Draw Plate leaves them too,
+  the player counting as a machine does.
+- A scrap holds **two nuggets** of its metal.
+- The **Electric Arc Furnace** (T3) melts them back into ingots, losing nothing: nine scraps into two ingots.
+- Before the T3, an ordinary furnace melts them **with a loss**, a scrap into one nugget, half of what it holds, so
+  nobody keeps a chest of scraps waiting for the T3. (A furnace of the game takes one item at a time, so a scrap holds
+  two nuggets rather than two scraps making one.)
 
 ### Steel
 

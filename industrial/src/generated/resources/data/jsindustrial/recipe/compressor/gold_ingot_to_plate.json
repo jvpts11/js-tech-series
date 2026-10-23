@@ -1,0 +1,17 @@
+{
+  "type": "jsindustrial:compressing",
+  "energy_per_tick": 30,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ingots/gold"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:gold_plate"
+    }
+  ],
+  "ticks": 120
+}

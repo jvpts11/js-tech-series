@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsindustrial:draw_plate"
+    },
+    {
+      "tag": "c:ingots/bronze"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:bronze_wire"
+  }
+}

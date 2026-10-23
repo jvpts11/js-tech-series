@@ -26,13 +26,22 @@ pack adds, changes or removes recipes with no code:
 The format is the Core's processing recipe, described field by field in
 [the Core's Machines page](../../core/docs/MACHINES.md#recipes): items and fluids in and out, the ticks it takes
 (200 when left out) and the energy a tick (the machine's own when left out or 0: 40 FE for the Macerator, 30 for
-the Compressor). Today's machines have one input slot and one output slot, so a recipe for them takes one kind
-of item and makes one.
+the Compressor). Each machine has one input slot; the Compressor one output slot, the Macerator six, for the dusts of
+what an ore is mined for and the byproducts it gives. The mod's byproducts are counted, never by chance
+(`"share"`, [counted byproducts](../../core/docs/MACHINES.md#counted-byproducts)).
 
-To replace one of the mod's own recipes, ship a file at the same path in your data pack: the mod's files are
-`data/jsindustrial/recipe/macerating/iron_ore_to_dust.json`, `raw_iron_to_dust.json`,
-`iron_ingot_to_dust.json`, and `data/jsindustrial/recipe/compressing/iron_ingot_to_plate.json` and
-`copper_ingot_to_plate.json`.
+Every recipe of the mod is written from data: the forms of its metals from their routes (which machine makes which
+form, and with what yield, by hand too), its ores and minerals from the catalogue's minerals (each one's main element
+and byproducts), the furnace's from the metals it uses. To replace one, ship a file at the same path in your data pack:
+
+| Path under `data/jsindustrial/recipe/` | What it is |
+| --- | --- |
+| `macerating/<ore>_ore.json`, `macerating/raw_<ore>.json` | grinding an ore or its raw form: `macerating/raw_chalcopyrite.json` |
+| `macerator/<metal>_ingot_to_dust.json` | grinding an ingot into dust |
+| `compressor/<metal>_ingot_to_plate.json` | pressing a plate |
+| `hand/<metal>_ingot_to_<form>.json` | a form by hand, with the Forge Hammer, the Draw Plate or the Mortar |
+| `crafting/<metal>_<form>_to_<form>.json` | nuggets and blocks, nine for one, where the game has none |
+| `smelting/...`, `blasting/...` | raw ores, ores, dusts and scraps in a furnace |
 
 The Electric Furnace has no kind of its own: it smelts by the game's smelting recipes (`minecraft:smelting`),
 so a smelting recipe from any mod or pack works in it.
@@ -43,10 +52,10 @@ JEI and EMI show both kinds on their own pages, with the machine that works each
 
 *Added 2026-06-15.*
 
-The mod's recipes ask for common tags rather than items (`c:ores/iron`, `c:raw_materials/iron`,
-`c:ingots/iron`, `c:ingots/copper`), so the ores and ingots of other mods work in them. What they make are the
-Core's material items, which are in the common tags too (`c:dusts/iron`, `c:plates/iron`, `c:plates/copper`),
-so other mods' recipes that ask for those tags take them.
+The mod's recipes ask for common tags rather than items (`c:ores/iron`, `c:raw_materials/chalcopyrite`,
+`c:ingots/copper`), so the ores and ingots of other mods work in them. What they make are the Core's material items,
+which are in the common tags too (`c:dusts/copper`, `c:plates/tin`, `c:wires/copper`, and `c:scraps/copper` for the
+scraps, a form of the mod's own), so other mods' recipes that ask for those tags take them.
 
 ## Capabilities
 

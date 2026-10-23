@@ -6,7 +6,12 @@ the machines). How minerals, "X ores" and host rocks work is in [Materials](mate
 veins is in [The world](world.md).
 
 The list reflects the Earth. Every planet of J's Space has mineral families of its own in the same registries: Mars need
-not mirror the Overworld. Nothing on this page exists yet: it is all to build.
+not mirror the Overworld.
+
+Nine of them exist today, the first rung: hematite, magnetite, siderite, pyrite, chalcopyrite, cuprite, malachite,
+electrum and cassiterite, in J's Core's catalogue, each with its ore in the rocks of its setting below and its raw
+mineral. Each is declared by its formula, its family, its rocks and its byproducts; its traces at their real grade,
+counted as the series counts traces ([Materials](materials.md)). The rest of the list joins the same way.
 
 ## To build
 

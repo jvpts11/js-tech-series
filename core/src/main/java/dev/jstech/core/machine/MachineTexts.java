@@ -22,6 +22,8 @@ public final class MachineTexts {
     public static final TextKey RECIPE_CATALYST = TextKey.of("jscore.recipe.catalyst", "Not used up");
     /** A byproduct's slot: how likely it comes. */
     public static final TextKey RECIPE_CHANCE = TextKey.of("jscore.recipe.chance", "%s%% chance");
+    /** A counted byproduct's slot: how much of it each time, never by chance. */
+    public static final TextKey RECIPE_COUNTED = TextKey.of("jscore.recipe.counted", "%s each time, counted");
     /** A line of matter a recipe takes from a tank, or makes into one: "Takes 250 mB of Hydrogen". */
     public static final TextKey RECIPE_MATTER_IN = TextKey.of("jscore.recipe.matter_in", "Takes %s mB of %s");
     public static final TextKey RECIPE_MATTER_OUT = TextKey.of("jscore.recipe.matter_out", "Makes %s mB of %s");

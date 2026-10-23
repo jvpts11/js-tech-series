@@ -1,0 +1,16 @@
+{
+  "type": "jsindustrial:macerating",
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ingots/tin"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:tin_dust"
+    }
+  ]
+}

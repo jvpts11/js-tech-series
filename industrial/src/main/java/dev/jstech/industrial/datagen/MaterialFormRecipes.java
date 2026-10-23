@@ -7,6 +7,8 @@
  */
 package dev.jstech.industrial.datagen;
 
+import dev.jstech.core.content.ItemEntry;
+import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipeBuilder;
 import dev.jstech.core.material.Form;
 import dev.jstech.core.material.Forms;
@@ -17,8 +19,22 @@ import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.JsIndustrial;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
 import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
+import dev.jstech.industrial.material.IndustrialMaterials;
+import dev.jstech.industrial.metallurgy.FormRoute;
+import dev.jstech.industrial.metallurgy.FormRoutes;
+import dev.jstech.industrial.metallurgy.Yield;
+import dev.jstech.industrial.tool.HandTool;
+import dev.jstech.industrial.tool.HandTools;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import net.minecraft.advancements.Criterion;
+import net.minecraft.advancements.critereon.InventoryChangeTrigger;
+import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
@@ -27,55 +43,50 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
 /**
- * Emits the machine recipe of every material form J's Industrial declares it uses, from the material's ingot.
- *
- * <p>Adding a production route for a new form is a single entry in {@link #PRODUCTIONS}; making a form of a material
- * is declaring its use in {@link IndustrialModule}. No other datagen files need to change.
- *
- * <p>Special-case recipes (ore doubling, dust to ingot smelting) live in {@link JsIndustrialRecipeProvider} because
- * they use fixed input tags or vanilla item outputs that are not derivable from the material and the form alone.
+ * Emits the recipes of every form of a metal J's Industrial uses, from its line of {@link FormRoutes}: each machine's
+ * that is in the game, with the scraps rolling and drawing leave, counted; and the hand tool's, at the crafting table,
+ * yielding less. Making a form of a metal is declaring its use; making a form by a new machine is the machine's line
+ * in the routes and its kind here. No other datagen file changes.
  */
 public final class MaterialFormRecipes {
 
-    @FunctionalInterface
-    private interface IFormRecipe {
-        void generate(RecipeOutput out, Material material, Form form);
-    }
-
     /** How long pressing and grinding (ingots and ores alike) take at Tier 1, in ticks. */
-    private static final int COMPRESSING_TICKS = 120;
+    static final int COMPRESSING_TICKS = 120;
     static final int MACERATING_TICKS = 200;
 
-    private static final Map<Form, IFormRecipe> PRODUCTIONS = Map.of(
-            // Compress one ingot into one plate.
-            Forms.PLATE, (out, material, form) -> ProcessingRecipeBuilder.of(IndustrialModule.COMPRESSING)
-                    .input(ingot(material), 1)
-                    .output(MaterialUses.item(material, form).get(), 1)
-                    .ticks(COMPRESSING_TICKS).energyPerTick(CompressorBlockEntity.FE_PER_TICK)
-                    .save(out, rl("compressing/" + id(material, form))),
-            // Macerate one ingot into one dust.
-            Forms.DUST, (out, material, form) -> macerating(out, ingot(material),
-                    new ItemStack(MaterialUses.item(material, form).get(), 1), id(material, form)));
+    /* The machines in the game, by their routes' names, with their recipe kinds, time and energy. */
+    private static final Map<String, Machine> MACHINES = Map.of(
+            "compressor", new Machine(IndustrialModule.COMPRESSING, COMPRESSING_TICKS,
+                    CompressorBlockEntity.FE_PER_TICK),
+            "macerator", new Machine(IndustrialModule.MACERATING, MACERATING_TICKS,
+                    MaceratorBlockEntity.FE_PER_TICK));
 
     private MaterialFormRecipes() {
     }
 
-    /** Generates the machine recipe of every form the mod uses that has a production route. */
+    /** Generates the recipes of every form of a metal the mod uses that has a route. */
     public static void generateAll(final RecipeOutput out) {
+        final Set<String> seen = new LinkedHashSet<>();
         for (final MaterialUse use : MaterialUses.all()) {
-            final IFormRecipe recipe = PRODUCTIONS.get(use.form());
-            if (use.modid().equals(JsIndustrial.MODID) && recipe != null) {
-                recipe.generate(out, use.material(), use.form());
+            if (!use.modid().equals(JsIndustrial.MODID) || use.rock() != null
+                    || !seen.add(use.material().id() + "/" + use.form().id())) {
+                continue;
             }
+            final Optional<FormRoute> route = FormRoutes.of(use.form().id().getPath());
+            final Optional<Form> from = route.flatMap(found -> Forms.all().stream()
+                    .filter(form -> form.id().getPath().equals(found.from())).findFirst());
+            if (route.isEmpty() || from.isEmpty() || !MaterialUses.used(use.material(), from.get())) {
+                continue;
+            }
+            machines(out, use.material(), use.form(), from.get(), route.get());
+            byHand(out, use.material(), use.form(), from.get(), route.get());
         }
     }
 
     /** Adds a macerating recipe under the {@code macerating/} prefix; the one place the grinding cost is set. */
-    static void macerating(final RecipeOutput out, final Ingredient ingredient, final ItemStack result,
-                           final String name) {
-        ProcessingRecipeBuilder.of(IndustrialModule.MACERATING).input(ingredient, 1).output(result)
-                .ticks(MACERATING_TICKS).energyPerTick(MaceratorBlockEntity.FE_PER_TICK)
-                .save(out, rl("macerating/" + name));
+    static ProcessingRecipeBuilder macerating(final Ingredient ingredient, final ItemStack result) {
+        return ProcessingRecipeBuilder.of(IndustrialModule.MACERATING).input(ingredient, 1).output(result)
+                .ticks(MACERATING_TICKS).energyPerTick(MaceratorBlockEntity.FE_PER_TICK);
     }
 
     /** The {@code c:} common item tag at {@code path}. */
@@ -83,17 +94,81 @@ public final class MaterialFormRecipes {
         return ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", path));
     }
 
-    /* The recipe's name: its material, from its ingot, to its form, "iron_ingot_to_plate". */
-    private static String id(final Material material, final Form form) {
-        return material.id().getPath() + "_" + Forms.INGOT.id().getPath() + "_to_" + form.id().getPath();
-    }
-
-    private static ResourceLocation rl(final String path) {
+    static ResourceLocation rl(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, path);
     }
 
-    /* Any ingot of the material, by its common tag. */
-    private static Ingredient ingot(final Material material) {
-        return Ingredient.of(Forms.INGOT.itemTag(material));
+    /* Each machine in the game that makes the form, with its yield, and the scraps of the work counted. */
+    private static void machines(final RecipeOutput out, final Material material, final Form form, final Form from,
+                                 final FormRoute route) {
+        for (final FormRoute.MachineWay way : route.machines()) {
+            final Machine machine = MACHINES.get(way.machine());
+            if (machine == null) {
+                continue;
+            }
+            final ProcessingRecipeBuilder builder = ProcessingRecipeBuilder.of(machine.kind())
+                    .input(from.itemTag(material), way.yield().in())
+                    .output(MaterialUses.item(material, form).get(), way.yield().out())
+                    .ticks(machine.ticks()).energyPerTick(machine.energyPerTick());
+            if (route.leavesScrap() && MaterialUses.used(material, IndustrialMaterials.SCRAP)) {
+                builder.countedByproduct(new ItemStack(MaterialUses.item(material, IndustrialMaterials.SCRAP).get()),
+                        (float) FormRoutes.SCRAP_SHARE);
+            }
+            builder.save(out, rl(way.machine() + "/" + name(material, from, form)));
+        }
+    }
+
+    /* The form by hand: with its hand tool at the crafting table, or as nuggets and blocks are, nine for one. */
+    private static void byHand(final RecipeOutput out, final Material material, final Form form, final Form from,
+                               final FormRoute route) {
+        if (route.handYield().isEmpty()) {
+            return;
+        }
+        final Yield yield = route.handYield().get();
+        final Item made = MaterialUses.item(material, form).get();
+        final Item source = MaterialUses.item(material, from).get();
+        if (route.hand() == FormRoute.ByHand.CRAFTING_TABLE) {
+            // The game has its own for its nuggets and blocks of iron and gold; the Core's are the rest.
+            if (material.provided(form).isPresent() && material.provided(from).isPresent()) {
+                return;
+            }
+            ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, made, yield.out())
+                    .requires(Ingredient.of(from.itemTag(material)), yield.in())
+                    .unlockedBy("has_" + from.id().getPath(), has(from.itemTag(material)))
+                    .save(out, rl("crafting/" + name(material, from, form)));
+            ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, source, yield.in())
+                    .requires(Ingredient.of(form.itemTag(material)), yield.out())
+                    .unlockedBy("has_" + form.id().getPath(), has(form.itemTag(material)))
+                    .save(out, rl("crafting/" + name(material, form, from)));
+            return;
+        }
+        final HandTool tool = tool(route.hand());
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, made, yield.out()).requires(tool)
+                .requires(Ingredient.of(from.itemTag(material)), yield.in())
+                .unlockedBy("has_" + from.id().getPath(), has(from.itemTag(material)))
+                .save(out, rl("hand/" + name(material, from, form)));
+    }
+
+    /** What unlocks a recipe: having any item of {@code tag}. */
+    static Criterion<InventoryChangeTrigger.TriggerInstance> has(final TagKey<Item> tag) {
+        return InventoryChangeTrigger.TriggerInstance.hasItems(ItemPredicate.Builder.item().of(tag).build());
+    }
+
+    private static HandTool tool(final FormRoute.ByHand hand) {
+        for (final ItemEntry<HandTool> entry : HandTools.all()) {
+            if (entry.get().work() == hand) {
+                return entry.get();
+            }
+        }
+        throw new IllegalStateException("no hand tool does " + hand);
+    }
+
+    /* A recipe's name: its material, from one form to another, "iron_ingot_to_plate". */
+    private static String name(final Material material, final Form from, final Form to) {
+        return material.id().getPath() + "_" + from.id().getPath() + "_to_" + to.id().getPath();
+    }
+
+    /* A machine in the game, as its recipes need it. */
+    private record Machine(ProcessingKind kind, int ticks, int energyPerTick) {
     }
 }

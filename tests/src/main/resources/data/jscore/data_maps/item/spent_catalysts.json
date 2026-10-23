@@ -1,0 +1,5 @@
+{
+  "values": {
+    "jstests:test_catalyst": "jstests:test_spent_catalyst"
+  }
+}

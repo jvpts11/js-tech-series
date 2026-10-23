@@ -20,6 +20,7 @@ import dev.jstech.core.material.IMaterialNamer;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialNames;
 import dev.jstech.core.material.MaterialProperties;
+import dev.jstech.core.material.Materials;
 import dev.jstech.core.material.NamingBalance;
 import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.CoreStates;
@@ -48,6 +49,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.util.thread.EffectiveSide;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 /**
@@ -59,7 +62,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
  * discoverer names it again. In a world where discoverers do not name elements, the series' own names are used.
  *
  * <p>What counts as discovering an element is the mod's that makes it: a mod calls {@link #discover} at its first
- * synthesis.
+ * synthesis, with the player whose machine made it, who may be away: they are asked for its name when they join.
  */
 @TextHolder
 public final class ElementNaming {
@@ -158,11 +161,12 @@ public final class ElementNaming {
             if (server != null && !on) {
                 DISCOVERED.update(server, all -> {
                     final Map<ResourceLocation, Discovery> out = new HashMap<>();
-                    all.forEach((id, found) -> out.put(id, new Discovery(found.by(), true)));
+                    all.forEach((id, found) -> out.put(id, new Discovery(found.by(), true, found.told())));
                     return Map.copyOf(out);
                 });
             }
         });
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, ElementNaming::onLoggedIn);
     }
 
     /**
@@ -172,26 +176,27 @@ public final class ElementNaming {
      */
     public static boolean discover(final ServerPlayer player, final Material element) {
         final MinecraftServer server = player.getServer();
-        final Optional<Integer> number = Superheavies.number(element);
-        if (server == null || number.isEmpty() || DISCOVERED.get(server).containsKey(element.id())) {
+        return server != null && discover(server, player.getUUID(), element);
+    }
+
+    /**
+     * The player {@code by} discovered {@code element}, here or away: a machine of theirs made it while they were not
+     * playing. The first discovery is theirs, and the name is theirs to give; they are asked to give it now, or the
+     * next time they join. False when it was discovered before or is no element beyond the known table.
+     */
+    public static boolean discover(final MinecraftServer server, final UUID by, final Material element) {
+        if (Superheavies.number(element).isEmpty() || DISCOVERED.get(server).containsKey(element.id())) {
             return false;
         }
+        final ServerPlayer player = server.getPlayerList().getPlayer(by);
         final boolean seriesName = !NamingBalance.discoverersName();
         DISCOVERED.update(server, all -> {
             final Map<ResourceLocation, Discovery> out = new HashMap<>(all);
-            out.put(element.id(), new Discovery(player.getUUID(), seriesName));
+            out.put(element.id(), new Discovery(by, seriesName, player != null));
             return Map.copyOf(out);
         });
-        if (seriesName) {
-            player.sendSystemMessage(GameText.component(DISCOVERED_SERIES.with(number.get(), element.name(),
-                    symbolOf(element))));
-        } else {
-            final String suggestion = String.join(" ", "/" + SeriesCommands.ROOT, NAME_COMMAND,
-                    String.valueOf(number.get()), "");
-            player.sendSystemMessage(GameText.component(DISCOVERED_YOU.with(number.get())));
-            player.sendSystemMessage(GameText.component(HOW.with(number.get())).withStyle(style -> style
-                    .withColor(ChatFormatting.AQUA)
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, suggestion))));
+        if (player != null) {
+            tell(player, element, seriesName);
         }
         return true;
     }
@@ -352,6 +357,49 @@ public final class ElementNaming {
         return out;
     }
 
+    /* Tells {@code player} of their discovery: its series' name, or how to give it theirs. */
+    private static void tell(final ServerPlayer player, final Material element, final boolean seriesName) {
+        final Optional<Integer> number = Superheavies.number(element);
+        if (number.isEmpty()) {
+            return;
+        }
+        if (seriesName) {
+            player.sendSystemMessage(GameText.component(DISCOVERED_SERIES.with(number.get(), element.name(),
+                    symbolOf(element))));
+        } else {
+            final String suggestion = String.join(" ", "/" + SeriesCommands.ROOT, NAME_COMMAND,
+                    String.valueOf(number.get()), "");
+            player.sendSystemMessage(GameText.component(DISCOVERED_YOU.with(number.get())));
+            player.sendSystemMessage(GameText.component(HOW.with(number.get())).withStyle(style -> style
+                    .withColor(ChatFormatting.AQUA)
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, suggestion))));
+        }
+    }
+
+    /* A player joining is told of what their machines discovered while they were away. */
+    private static void onLoggedIn(final PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || player.getServer() == null) {
+            return;
+        }
+        final MinecraftServer server = player.getServer();
+        final Map<ResourceLocation, Discovery> untold = new HashMap<>();
+        DISCOVERED.get(server).forEach((id, found) -> {
+            if (!found.told() && found.by().equals(player.getUUID())) {
+                untold.put(id, found);
+            }
+        });
+        if (untold.isEmpty()) {
+            return;
+        }
+        DISCOVERED.update(server, all -> {
+            final Map<ResourceLocation, Discovery> out = new HashMap<>(all);
+            untold.forEach((id, found) -> out.put(id, new Discovery(found.by(), found.seriesName(), true)));
+            return Map.copyOf(out);
+        });
+        untold.forEach((id, found) -> Materials.byId(id).ifPresent(element -> tell(player, element,
+                found.seriesName())));
+    }
+
     private static String symbolOf(final Material element) {
         return element.value(MaterialProperties.SYMBOL).orElse("");
     }
@@ -369,25 +417,34 @@ public final class ElementNaming {
     }
 
     /**
-     * Who discovered an element, and whether it keeps the series' name, as it does when found in a world where
-     * discoverers do not name elements.
+     * Who discovered an element, whether it keeps the series' name, as it does when found in a world where
+     * discoverers do not name elements, and whether its discoverer has been told, which one away when their machine
+     * made it is the next time they join.
      *
      * @param by         the discoverer
      * @param seriesName whether it keeps the series' name
+     * @param told       whether the discoverer has been told of it
      */
-    public record Discovery(UUID by, boolean seriesName) {
+    public record Discovery(UUID by, boolean seriesName, boolean told) {
 
-        /** How it is kept with the world. */
+        /** How it is kept with the world; a discovery kept before discoverers were told later was told at once. */
         public static final Codec<Discovery> CODEC = RecordCodecBuilder.create(found -> found.group(
                 UUIDUtil.CODEC.fieldOf("by").forGetter(Discovery::by),
-                Codec.BOOL.fieldOf("series_name").forGetter(Discovery::seriesName)
+                Codec.BOOL.fieldOf("series_name").forGetter(Discovery::seriesName),
+                Codec.BOOL.optionalFieldOf("told", true).forGetter(Discovery::told)
         ).apply(found, Discovery::new));
         /** How it is sent. */
         public static final StreamCodec<ByteBuf, Discovery> STREAM_CODEC = StreamCodec.composite(
-                UUIDUtil.STREAM_CODEC, Discovery::by, ByteBufCodecs.BOOL, Discovery::seriesName, Discovery::new);
+                UUIDUtil.STREAM_CODEC, Discovery::by, ByteBufCodecs.BOOL, Discovery::seriesName,
+                ByteBufCodecs.BOOL, Discovery::told, Discovery::new);
 
         public Discovery {
             Objects.requireNonNull(by, "by");
+        }
+
+        /** A discovery its discoverer was told of at once. */
+        public Discovery(final UUID by, final boolean seriesName) {
+            this(by, seriesName, true);
         }
     }
 }

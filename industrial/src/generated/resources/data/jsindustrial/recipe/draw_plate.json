@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "minecraft:flint"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    " F ",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsindustrial:draw_plate"
+  }
+}

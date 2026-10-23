@@ -59,10 +59,15 @@ The framework gathers what the machines of Mekanism, Thermal and EnderIO do, in 
 
 ### Recipes
 
-- **The recipe format covers everything**: every state of matter in and out, several outputs, byproducts by chance,
-  catalysts that are not used up, conditions of temperature and pressure, and the pieces of knowledge a recipe asks for
+- **The recipe format covers everything**: every state of matter in and out, several outputs, byproducts, catalysts
+  that are not used up, conditions of temperature and pressure, and the pieces of knowledge a recipe asks for
   ([Progression](progression.md#the-knowledge-gate)). JEI, EMI and the manuals always show a locked recipe, with its
   lock.
+- **A byproduct comes by chance or by count.** By chance, it comes so often on average, as luck has it. By a share, the
+  machine counts: a quarter of one each recipe is one every fourth recipe, exactly, never by chance, and a share above
+  one is more than one each time. Each lane keeps its count with the machine.
+- **A catalyst that wears** loses a use each time its recipe runs: one that can be damaged lasts its durability, and,
+  worn out, becomes its spent form, which a data map names, or is gone. One that cannot be damaged, a die, never wears.
 - **JEI and EMI fill the machine**: their "+" button moves what a recipe takes from the player's inventory into the
   machine's slots.
 

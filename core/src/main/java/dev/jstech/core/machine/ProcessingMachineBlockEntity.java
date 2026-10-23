@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.machine;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.CombinedTanks;
 import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.IntField;
@@ -55,7 +56,8 @@ import org.jetbrains.annotations.Nullable;
  * A machine that works its inputs into its outputs: while what its inputs hold makes something and its outputs have
  * room for it, byproducts and all, it spends energy each tick and, once the work's time has run, takes the inputs and
  * puts out the result. Short of energy, it spends what there is and works slower in the same proportion
- * ({@link PartialWork}); damaged, it works slower too.
+ * ({@link PartialWork}); damaged, it works slower too. Each lane counts its counted byproducts ({@link Tally}), and
+ * the catalysts that wear lose a use each time ({@link CatalystWear}).
  *
  * <p>Its slots are its inputs, then its outputs, then its upgrades; with several lanes, each lane's inputs, then each
  * lane's outputs. Each lane works on its own, as Mekanism's factories do, and the machine sorts what is put into its
@@ -87,6 +89,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
     /* The slots on a row of the process window, when the lanes are too many for rows of their own. */
     private static final int ROW = 6;
     private static final String CHOSEN = "chosen_recipe";
+    private static final Codec<Map<String, Double>> COUNTS = Codec.unboundedMap(Codec.STRING, Codec.DOUBLE);
 
     protected ProcessingMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
                                            final Layout layout, final int energyCapacity, final int energyMaxReceive,
@@ -240,11 +243,12 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
      * @param energyPerTick what it spends each tick, before upgrades; 0 for the machine's own
      * @param matterTakes   how many millibuckets each input tank of matter gives up, counted across every state's
      * @param matterOutputs the matter it makes
-     * @param byproducts    what it may make besides, by chance
+     * @param byproducts    what it makes besides, by chance or by a counted share
+     * @param catalysts     the input slots of the lane its catalysts sit in, which wear as it is done
      */
     public record Processing(List<Take> takes, List<Take> fluidTakes, List<ItemStack> outputs,
                              List<FluidStack> fluidOutputs, int ticks, int energyPerTick, List<Take> matterTakes,
-                             List<MatterStack> matterOutputs, List<Byproduct> byproducts) {
+                             List<MatterStack> matterOutputs, List<Byproduct> byproducts, List<Integer> catalysts) {
 
         public Processing {
             takes = List.copyOf(takes);
@@ -254,12 +258,14 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             matterTakes = List.copyOf(matterTakes);
             matterOutputs = List.copyOf(matterOutputs);
             byproducts = List.copyOf(byproducts);
+            catalysts = List.copyOf(catalysts);
         }
 
-        /** Work of items and liquids only, with no byproduct. */
+        /** Work of items and liquids only, with no byproduct and no catalyst. */
         public Processing(final List<Take> takes, final List<Take> fluidTakes, final List<ItemStack> outputs,
                           final List<FluidStack> fluidOutputs, final int ticks, final int energyPerTick) {
-            this(takes, fluidTakes, outputs, fluidOutputs, ticks, energyPerTick, List.of(), List.of(), List.of());
+            this(takes, fluidTakes, outputs, fluidOutputs, ticks, energyPerTick, List.of(), List.of(), List.of(),
+                    List.of());
         }
 
         /**
@@ -290,9 +296,10 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         /** What {@code recipe} does with {@code input}, or empty when the input no longer holds what it takes. */
         public static Optional<Processing> of(final ProcessingRecipe recipe, final ProcessingInput input) {
             final int[] slots = recipe.slotsFor(input);
+            final int[] catalystSlots = recipe.catalystSlotsFor(input);
             final int[] tanks = recipe.tanksFor(input);
             final int[] matterTanks = recipe.matterTanksFor(input);
-            if (slots == null || tanks == null || matterTanks == null
+            if (slots == null || catalystSlots == null || tanks == null || matterTanks == null
                     || !recipe.conditions().holds(input.temperature(), input.pressure())) {
                 return Optional.empty();
             }
@@ -309,9 +316,13 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                 matterTakes.add(new Take(matterTanks[i], (int) Math.min(Integer.MAX_VALUE,
                         recipe.matterInputs().get(i).amount())));
             }
+            final List<Integer> catalysts = new ArrayList<>();
+            for (final int slot : catalystSlots) {
+                catalysts.add(slot);
+            }
             return Optional.of(new Processing(takes, fluidTakes, recipe.outputs(), recipe.fluidOutputs(),
                     recipe.ticks(), recipe.energyPerTick(), matterTakes, recipe.matterOutputs(),
-                    recipe.byproducts()));
+                    recipe.byproducts(), catalysts));
         }
     }
 
@@ -826,7 +837,10 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         private final IntField maxProgress;
         private final LongField paid;
         private final IntField speed;
+        /* What the lane's count of its counted byproducts holds short of a whole item, kept with the machine. */
+        private final ValueField<Map<String, Double>> counted;
         private final PartialWork payment = new PartialWork();
+        private final Tally tally = new Tally();
         /* The work in hand last tick; empty after a load, when the saved progress is taken as belonging to it. */
         private @Nullable Processing lastWork;
 
@@ -838,6 +852,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             this.paid = fields().longInteger("Paid" + suffix, 0L).save();
             // Read on the server, where what a machine says to whoever looks at it is written.
             this.speed = fields().integer("Speed" + suffix, PartialWork.PERCENT);
+            this.counted = fields().value("Counted" + suffix, COUNTS, Map.<String, Double>of()).save();
         }
 
         /*
@@ -934,16 +949,29 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             return 0;
         }
 
-        /* The most items {@code times} sets can make: their outputs with the yield, every byproduct as if each came. */
+        /*
+         * The most items {@code times} sets can make: their outputs with the yield, every byproduct by chance as if
+         * each came, and every counted one as its count would give.
+         */
         private List<ItemStack> atMost(final Processing work, final UpgradeEffect effect, final int times) {
             final List<ItemStack> all = new ArrayList<>();
             for (final ItemStack output : work.outputs()) {
                 all.add(output.copyWithCount(saturatedInt(effect.mostMade(output.getCount()), times)));
             }
+            this.tally.restore(this.counted.get());
             for (final Byproduct byproduct : work.byproducts()) {
-                all.add(byproduct.stack().copyWithCount(saturatedInt(byproduct.stack().getCount(), times)));
+                final int each = byproduct.draw() == Byproduct.Draw.SHARE
+                        ? this.tally.peek(byproduct.countedAs(), share(byproduct, effect, times)) : times;
+                if (each > 0) {
+                    all.add(byproduct.stack().copyWithCount(saturatedInt(byproduct.stack().getCount(), each)));
+                }
             }
             return all;
+        }
+
+        /* What {@code times} sets add to the count of a counted byproduct, the upgrades' factor on byproducts in. */
+        private static double share(final Byproduct byproduct, final UpgradeEffect effect, final int times) {
+            return (double) byproduct.amount() * effect.byproducts() * times;
         }
 
         private void reset() {
@@ -1000,12 +1028,29 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                     count += many;
                 }
             }
+            this.tally.restore(this.counted.get());
             for (final Byproduct byproduct : work.byproducts()) {
+                if (byproduct.draw() == Byproduct.Draw.SHARE) {
+                    final int due = this.tally.add(byproduct.countedAs(), share(byproduct, effect, times));
+                    if (due > 0) {
+                        made.add(byproduct.stack().copyWithCount(saturatedInt(byproduct.stack().getCount(), due)));
+                    }
+                    continue;
+                }
                 final double chance = effect.byproductChance(byproduct.chance());
                 for (int each = 0; each < times; each++) {
                     if (random.nextDouble() < chance) {
                         made.add(byproduct.stack().copy());
                     }
+                }
+            }
+            this.counted.set(this.tally.snapshot());
+            // A catalyst is not used up, but one that wears loses a use for each time the recipe ran.
+            for (final int slot : work.catalysts()) {
+                final int at = layout.laneInput(this.index, slot);
+                final ItemStack held = getInventory().getStackInSlot(at);
+                if (CatalystWear.wears(held)) {
+                    getInventory().setStackInSlot(at, CatalystWear.worn(held, times));
                 }
             }
             outputs().put(made, times(work.fluidOutputs(), times), timesMatter(work.matterOutputs(), times));

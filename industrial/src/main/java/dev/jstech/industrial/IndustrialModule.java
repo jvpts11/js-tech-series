@@ -48,8 +48,8 @@ public final class IndustrialModule {
     public static final ModContent CONTENT = new ModContent(JsIndustrial.MODID);
 
     /*
-     * Creative tab: the machines, then the storage. What the mod uses of the series' shared content (its cable, its
-     * materials) is on the J's Tech tab, with everything else the series' mods share.
+     * Creative tab: the machines, then the storage, then the hand tools. What the mod uses of the series' shared
+     * content (its cable, its materials) is on the J's Tech tab, with everything else the series' mods share.
      */
 
     public static final ContentTab INDUSTRIAL_TAB =
@@ -57,6 +57,8 @@ public final class IndustrialModule {
 
     private static final ContentTab.Section MACHINES = INDUSTRIAL_TAB.section();
     private static final ContentTab.Section STORAGE = INDUSTRIAL_TAB.section();
+    /** The hand tools of the start. */
+    public static final ContentTab.Section TOOLS = INDUSTRIAL_TAB.section();
     /** The tab's last shelf: the mod's manual. */
     public static final ContentTab.Section MANUALS = INDUSTRIAL_TAB.section();
 

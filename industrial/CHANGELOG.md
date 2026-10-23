@@ -25,10 +25,28 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   drawing. Reading the drawings has a sheet for each kind of drawing the sections use, its symbols and a small
   example: single-line diagrams and P&IDs, which a switch shows as the scene of their blocks, and geological
   sections, which it shows in the rocks' own colours.
+- The ores of its first nine minerals, in the rocks their veins cross, each dropping its raw mineral, and
+  tin's ore.
+- The Macerator grinds every ore and raw mineral into two dusts of what it is mined for, with a counted
+  share of its byproducts: chalcopyrite gives sulfur, and a little gold, silver, selenium and tellurium.
+- A furnace smelts the simple minerals raw (native metals, oxides, carbonates) into one ingot, never a
+  sulfide; and every metal's dust melts back into its ingot where a furnace reaches its melting point.
+- The forms of iron, copper, gold, tin and bronze: plates, wire, dust, nuggets, blocks and their scraps.
+- Hand tools for the start: the Forge Hammer beats three ingots into two plates, the Draw Plate pulls an
+  ingot into a wire and leaves a scrap every eighth, the Mortar grinds three ingots into two dusts; each stays in the
+  grid, a use worn each time. A scrap melts into a nugget.
+- Elements discovered: a team's first synthesis of an element science discovered by making it is its
+  discovery, the team knows it from then on, and its players earn the Discovery advancement, the machine's owner too
+  when they join.
+- Plant Drawings: a page for the hand tools.
 
 ### Changed
 - Plant Drawings: every machine is shown as its block, which the reader turns and brings closer, with
   its balloons on it, in place of its three line views.
+- The Macerator has six output boxes, for the dusts and the byproducts.
+- Its recipes are written from its data and named by what makes them: `compressor/`, `macerator/`,
+  `macerating/` for ores, `hand/`, `crafting/`, `smelting/` and `blasting/`; a data pack that replaced one by its old
+  path replaces it by the new.
 - Listeners declared: every class of the three mods that answers the game's events is
   handed to the buses from its mod's constructor, through a `listen` method of its own, rather than found by an
   annotation, so what runs is what the constructor says; a mod's mistake in what it declares stops the load saying

@@ -151,6 +151,7 @@
     },
     {
       "type": "recipes",
+      "output": "jscore:tin_dust",
       "recipe_type": "jsindustrial:macerating"
     },
     {
@@ -170,7 +171,7 @@
   "items": [
     "jsindustrial:macerator"
   ],
-  "order": 5,
+  "order": 6,
   "section": "jsindustrial:getting_started",
   "title": "jsindustrial.guide.macerator.title"
 }

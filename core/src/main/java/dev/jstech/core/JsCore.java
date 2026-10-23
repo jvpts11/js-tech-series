@@ -38,6 +38,7 @@ import dev.jstech.core.recipe.RecipeChoiceSettings;
 import dev.jstech.core.recipe.RecipeChoices;
 import dev.jstech.core.variant.VariantData;
 import dev.jstech.core.variant.Variants;
+import dev.jstech.core.machine.CatalystWear;
 import dev.jstech.core.machine.DataMachines;
 import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.machine.Machines;
@@ -84,6 +85,7 @@ import dev.jstech.core.hazard.Radiation;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.ItemHazards;
 import dev.jstech.core.hazard.Lungs;
+import dev.jstech.core.hazard.MaterialHazards;
 import dev.jstech.core.hazard.Resistances;
 import dev.jstech.core.hazard.Shielding;
 import dev.jstech.core.hazard.Withering;
@@ -384,6 +386,8 @@ public final class JsCore {
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.
         Machines.declare();
         MachineWrench.declare();
+        // What a worn-out catalyst becomes, as data.
+        CatalystWear.listen(modEventBus);
         // The fonts every mod can draw in, declared with the licence and credit they come under.
         CoreFonts.declare();
         // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.
@@ -399,6 +403,7 @@ public final class JsCore {
         Forms.declare();
         MaterialProperties.declare();
         Thermal.declare();
+        MaterialHazards.declare();
         MineralFamilies.declare();
         HostRocks.declare();
         MaterialNames.declare();

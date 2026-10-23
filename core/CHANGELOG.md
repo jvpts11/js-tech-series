@@ -129,6 +129,20 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `GuidePiece.Way` pieces of each way, in the room `GuideLayout.SWITCH_ROW` leaves for the switch. `GuideSection`
   has a `code`, set with `ModGuide.SectionBuilder.code(letters)` (or `code:` in a Markdown section's header), that
   numbers a set's drawings by those letters.
+- Counted byproducts, wearing catalysts, formulas and the hazards of materials: J's Core's API stays at
+  version 12, all experimental. A `Byproduct` comes by a chance or by a counted share (`Byproduct.Draw`,
+  `Byproduct.counted`, `ProcessingRecipeBuilder.countedByproduct`, the field `"share"`), counted by a `Tally`; the
+  `Processing` of a recipe names its catalysts' slots (`ProcessingRecipe.catalystSlotsFor`), and `CatalystWear` wears a
+  damageable catalyst into the spent form its data map `jscore:spent_catalysts` names. `ChemicalFormula` reads a
+  formula, with its atoms, molar mass and mass fractions; `MaterialProperties.ATOMIC_WEIGHT` is an element's weight,
+  `Elements.atomicWeight` and `bySymbol` find it by symbol. The package `dev.jstech.core.hazard` adds `HazardClass`,
+  `GhsPictogram`, `GhsPictograms`, `GasHazard` and `MaterialHazards`, the hazard classes of a material and what follows
+  from them. `CompressionMath` is the work of compressing a gas. `MineralBuilder` and `TraceGrade` declare a mineral
+  from its formula, `SeriesMinerals` holds the catalogue's minerals and `SharedCatalogue.AMMONIA` ammonia; a mineral's
+  byproduct may weigh more than its main element (`MineralShares.Problem.BYPRODUCT_OVER_MAIN` is gone).
+  `ProgressionTriggers.whenMade(IMadeListener)` tells a mod of everything made, and
+  `ElementNaming.discover(server, player, element)` records a discoverer who is away, told when they join
+  (`Discovery.told`).
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1405,6 +1419,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   diagram and the scene of its blocks, a section of the ground in lines and in colours.
 - Manuals: a set of drawings numbers each section's drawings by the section's letters, as a real set numbers a
   discipline's sheets (JI-GS-001), and its drawing list heads each section's drawings with its title.
+- Minerals: hematite, magnetite, siderite, pyrite, chalcopyrite, cuprite, malachite, electrum and cassiterite,
+  each made of what its formula says, by its elements' atomic weights, its trace elements counted at a thousand times
+  their real grade; a mineral's tooltip shows its formula with its counts small, CuFeS₂.
+- The hazards of materials: every element and shared compound carries its hazard classes as a real safety data
+  sheet gives them, and its things' tooltips list the GHS pictograms they call for (the gas cylinder only for a gas
+  held under pressure) and the hazards beyond them, an asphyxiant gas and radioactivity; what a cloud of a gas does
+  follows from the same.
+- Every element's standard atomic weight, shown with Shift; and ammonia in the shared catalogue.
+- Machines: a byproduct can come by count, never by chance, a quarter of one each recipe being one every
+  fourth recipe exactly; a catalyst that wears loses a use each recipe and becomes its spent form.
+- A player whose machine discovered an element beyond the known table while they were away is asked for its
+  name when they join, and the right to name it waits for them.
 
 ### Changed
 - The body's screen is declared in a file, so its look can change: a resource pack lays it out again and the

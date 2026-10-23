@@ -7172,10 +7172,22 @@ stable 4
 10 dev.jstech.core.look.LookTexts  static final TextKey OWNER
 10 dev.jstech.core.look.LookTexts  static final TextKey REDSTONE
 10 dev.jstech.core.look.LookTexts  static final TextKey WORKING
-10 dev.jstech.core.machine.Byproduct  type record(ItemStack stack, float chance)
+12 dev.jstech.core.machine.Byproduct  type record(ItemStack stack, float amount, Draw draw)
+12 dev.jstech.core.machine.Byproduct  String countedAs()
 10 dev.jstech.core.machine.Byproduct  boolean comes(RandomSource)
+12 dev.jstech.core.machine.Byproduct  float chance()
+12 dev.jstech.core.machine.Byproduct  new(ItemStack, float)
+12 dev.jstech.core.machine.Byproduct  static Byproduct counted(ItemStack, float)
 10 dev.jstech.core.machine.Byproduct  static final Codec<Byproduct> CODEC
 10 dev.jstech.core.machine.Byproduct  static final StreamCodec<RegistryFriendlyByteBuf, Byproduct> STREAM_CODEC
+12 dev.jstech.core.machine.Byproduct  static final float MOST_SHARE
+12 dev.jstech.core.machine.Byproduct.Draw  type enum
+12 dev.jstech.core.machine.Byproduct.Draw  CHANCE
+12 dev.jstech.core.machine.Byproduct.Draw  SHARE
+12 dev.jstech.core.machine.CatalystWear  type final class
+12 dev.jstech.core.machine.CatalystWear  static ItemStack worn(ItemStack, int)
+12 dev.jstech.core.machine.CatalystWear  static boolean wears(ItemStack)
+12 dev.jstech.core.machine.CatalystWear  static final DataMapType<Item, Item> SPENT
 10 dev.jstech.core.machine.ComparatorReads  type enum implements IStableName
 10 dev.jstech.core.machine.ComparatorReads  ENERGY
 10 dev.jstech.core.machine.ComparatorReads  INPUT
@@ -7908,6 +7920,7 @@ stable 4
 10 dev.jstech.core.machine.MachineTexts  type final class
 10 dev.jstech.core.machine.MachineTexts  static final TextKey RECIPE_CATALYST
 10 dev.jstech.core.machine.MachineTexts  static final TextKey RECIPE_CHANCE
+12 dev.jstech.core.machine.MachineTexts  static final TextKey RECIPE_COUNTED
 10 dev.jstech.core.machine.MachineTexts  static final TextKey RECIPE_MATTER_IN
 10 dev.jstech.core.machine.MachineTexts  static final TextKey RECIPE_MATTER_OUT
 10 dev.jstech.core.machine.MachineTexts  static final TextKey RECIPE_NEEDS
@@ -8032,7 +8045,7 @@ stable 4
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity.Layout  int slots()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity.Layout  new(int, int, int, int, int, int)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity.Layout  static Layout items(int, int)
-10 dev.jstech.core.machine.ProcessingMachineBlockEntity.Processing  type record(List<Take> takes, List<Take> fluidTakes, List<ItemStack> outputs, List<FluidStack> fluidOutputs, int ticks, int energyPerTick, List<Take> matterTakes, List<MatterStack> matterOutputs, List<Byproduct> byproducts)
+12 dev.jstech.core.machine.ProcessingMachineBlockEntity.Processing  type record(List<Take> takes, List<Take> fluidTakes, List<ItemStack> outputs, List<FluidStack> fluidOutputs, int ticks, int energyPerTick, List<Take> matterTakes, List<MatterStack> matterOutputs, List<Byproduct> byproducts, List<Integer> catalysts)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity.Processing  boolean sameWork(Processing)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity.Processing  new(List<Take>, List<Take>, List<ItemStack>, List<FluidStack>, int, int)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity.Processing  static Optional<Processing> of(ProcessingRecipe, ProcessingInput)
@@ -8047,6 +8060,7 @@ stable 4
 10 dev.jstech.core.machine.ProcessingRecipe  boolean canCraftInDimensions(int, int)
 10 dev.jstech.core.machine.ProcessingRecipe  boolean isSpecial()
 10 dev.jstech.core.machine.ProcessingRecipe  boolean matches(ProcessingInput, Level)
+12 dev.jstech.core.machine.ProcessingRecipe  int[] catalystSlotsFor(ProcessingInput)
 10 dev.jstech.core.machine.ProcessingRecipe  int[] matterTanksFor(ProcessingInput)
 10 dev.jstech.core.machine.ProcessingRecipe  int[] slotsFor(ProcessingInput)
 10 dev.jstech.core.machine.ProcessingRecipe  int[] tanksFor(ProcessingInput)
@@ -8057,6 +8071,7 @@ stable 4
 10 dev.jstech.core.machine.ProcessingRecipeBuilder  ProcessingRecipeBuilder byproduct(ItemStack, float)
 10 dev.jstech.core.machine.ProcessingRecipeBuilder  ProcessingRecipeBuilder catalyst(Ingredient, int)
 10 dev.jstech.core.machine.ProcessingRecipeBuilder  ProcessingRecipeBuilder conditions(RecipeConditions)
+12 dev.jstech.core.machine.ProcessingRecipeBuilder  ProcessingRecipeBuilder countedByproduct(ItemStack, float)
 10 dev.jstech.core.machine.ProcessingRecipeBuilder  ProcessingRecipeBuilder energyPerTick(int)
 10 dev.jstech.core.machine.ProcessingRecipeBuilder  ProcessingRecipeBuilder fluidInput(Fluid, int)
 10 dev.jstech.core.machine.ProcessingRecipeBuilder  ProcessingRecipeBuilder fluidInput(TagKey<Fluid>, int)
@@ -8120,6 +8135,13 @@ stable 4
 10 dev.jstech.core.machine.SlotLocks  void save(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.machine.SlotLocks  void unlock(int)
 10 dev.jstech.core.machine.SlotLocks  void writeClient(CompoundTag, HolderLookup.Provider)
+12 dev.jstech.core.machine.Tally  type final class
+12 dev.jstech.core.machine.Tally  Map<String, Double> snapshot()
+12 dev.jstech.core.machine.Tally  double held(String)
+12 dev.jstech.core.machine.Tally  int add(String, double)
+12 dev.jstech.core.machine.Tally  int peek(String, double)
+12 dev.jstech.core.machine.Tally  void clear()
+12 dev.jstech.core.machine.Tally  void restore(Map<String, Double>)
 10 dev.jstech.core.machine.UpgradeEffect  type record(double speed, double energy, int parallel, double yield, double byproducts, double use, double heat, double sound, double buffer)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withBuffer(double)
 10 dev.jstech.core.machine.UpgradeEffect  UpgradeEffect withByproducts(double)
@@ -8205,6 +8227,19 @@ stable 4
 10 dev.jstech.core.material.CatalogueItems.CatalogueItem  Entry entry()
 10 dev.jstech.core.material.CatalogueItems.CatalogueItem  new(Properties, Entry)
 10 dev.jstech.core.material.CatalogueItems.Entry  type record(ResourceLocation id, TextKey name, ResourceLocation art)
+12 dev.jstech.core.material.ChemicalFormula  type final class
+12 dev.jstech.core.material.ChemicalFormula  Map<String, Double> massFractions(ToDoubleFunction<String>)
+12 dev.jstech.core.material.ChemicalFormula  Map<String, Integer> atoms()
+12 dev.jstech.core.material.ChemicalFormula  String subscripted()
+12 dev.jstech.core.material.ChemicalFormula  String toString()
+12 dev.jstech.core.material.ChemicalFormula  String written()
+12 dev.jstech.core.material.ChemicalFormula  boolean equals(Object)
+12 dev.jstech.core.material.ChemicalFormula  double massFraction(String, ToDoubleFunction<String>)
+12 dev.jstech.core.material.ChemicalFormula  double molarMass(ToDoubleFunction<String>)
+12 dev.jstech.core.material.ChemicalFormula  int count(String)
+12 dev.jstech.core.material.ChemicalFormula  int hashCode()
+12 dev.jstech.core.material.ChemicalFormula  static ChemicalFormula parse(String)
+12 dev.jstech.core.material.ChemicalFormula  static Optional<ChemicalFormula> read(String)
 10 dev.jstech.core.material.Form  type final class
 10 dev.jstech.core.material.Form  Optional<ResourceLocation> art()
 10 dev.jstech.core.material.Form  ResourceLocation id()
@@ -8451,12 +8486,14 @@ stable 4
 10 dev.jstech.core.material.MaterialProperties  static Optional<MaterialProperty<?>> byId(ResourceLocation)
 10 dev.jstech.core.material.MaterialProperties  static Text stateName(MatterState)
 10 dev.jstech.core.material.MaterialProperties  static final Codec<MatterState> STATE_CODEC
+12 dev.jstech.core.material.MaterialProperties  static final MaterialProperty<Double> ATOMIC_WEIGHT
 10 dev.jstech.core.material.MaterialProperties  static final MaterialProperty<Integer> ATOMIC_NUMBER
 10 dev.jstech.core.material.MaterialProperties  static final MaterialProperty<MatterState> ROOM_STATE
 10 dev.jstech.core.material.MaterialProperties  static final MaterialProperty<String> COLOUR
 10 dev.jstech.core.material.MaterialProperties  static final MaterialProperty<String> FORMULA
 10 dev.jstech.core.material.MaterialProperties  static final MaterialProperty<String> SYMBOL
 10 dev.jstech.core.material.MaterialProperties  static final TextKey ATOMIC_NUMBER_NAME
+12 dev.jstech.core.material.MaterialProperties  static final TextKey ATOMIC_WEIGHT_NAME
 10 dev.jstech.core.material.MaterialProperties  static final TextKey COLOUR_NAME
 10 dev.jstech.core.material.MaterialProperties  static final TextKey EXOTIC
 10 dev.jstech.core.material.MaterialProperties  static final TextKey FORMULA_NAME
@@ -8572,7 +8609,6 @@ stable 4
 10 dev.jstech.core.material.MineralShares  type final class
 10 dev.jstech.core.material.MineralShares  static Optional<Problem> problem(double...)
 10 dev.jstech.core.material.MineralShares.Problem  type enum
-10 dev.jstech.core.material.MineralShares.Problem  BYPRODUCT_OVER_MAIN
 10 dev.jstech.core.material.MineralShares.Problem  MORE_THAN_THE_WHOLE
 10 dev.jstech.core.material.MineralShares.Problem  NOTHING
 10 dev.jstech.core.material.MineralShares.Problem  OUTSIDE_THE_WHOLE
@@ -8621,6 +8657,9 @@ stable 4
 10 dev.jstech.core.material.VariantSettings  static final ConfigKey<List<String>> VARIANTS_SKIPPED_KINDS
 10 dev.jstech.core.material.VariantSettings  static final ConfigKey<List<String>> VARIANTS_SKIPPED_MATERIALS
 10 dev.jstech.core.material.VariantSettings  static final ConfigKey<List<String>> VARIANTS_SKIPPED_MODS
+12 dev.jstech.core.matter.CompressionMath  type final class
+12 dev.jstech.core.matter.CompressionMath  static double held(double, double)
+12 dev.jstech.core.matter.CompressionMath  static double work(double, double, double, double, double)
 10 dev.jstech.core.matter.ContainmentTank  type class extends MatterTank
 10 dev.jstech.core.matter.ContainmentTank  Optional<MatterStack> release()
 10 dev.jstech.core.matter.ContainmentTank  boolean powered()
@@ -11411,6 +11450,8 @@ stable 4
 12 dev.jstech.core.progression.IAxisStep  static final int PLAIN_COLOUR
 10 dev.jstech.core.progression.IKnowledgeGated  type interface
 10 dev.jstech.core.progression.IKnowledgeGated  abstract Optional<ResourceLocation> knowledge()
+12 dev.jstech.core.progression.IMadeListener  type interface
+12 dev.jstech.core.progression.IMadeListener  abstract void made(MinecraftServer, UUID, ItemStack)
 10 dev.jstech.core.progression.Knowledge  type record(ResourceLocation id, TextKey name, boolean partial)
 10 dev.jstech.core.progression.Knowledge  static Knowledge of(ResourceLocation, TextKey)
 10 dev.jstech.core.progression.KnowledgeGate  type final class
@@ -11479,6 +11520,7 @@ stable 4
 10 dev.jstech.core.progression.ProgressionTriggers  static <S extends IAxisStep> void whenPlaced(Block, ProgressionAxis<S>, S)
 10 dev.jstech.core.progression.ProgressionTriggers  static void made(MinecraftServer, UUID, ItemStack)
 10 dev.jstech.core.progression.ProgressionTriggers  static void placed(MinecraftServer, UUID, BlockState)
+12 dev.jstech.core.progression.ProgressionTriggers  static void whenMade(IMadeListener)
 10 dev.jstech.core.progression.QuestGoals  type final class
 10 dev.jstech.core.progression.QuestGoals  static boolean milestone(MinecraftServer, UUID, String)
 10 dev.jstech.core.progression.QuestGoals  static boolean step(MinecraftServer, UUID, String, String)

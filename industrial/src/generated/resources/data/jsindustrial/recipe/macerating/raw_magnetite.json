@@ -1,0 +1,32 @@
+{
+  "type": "jsindustrial:macerating",
+  "byproducts": [
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:titanium_dust"
+      },
+      "share": 0.08637412
+    },
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:vanadium_dust"
+      },
+      "share": 0.08637412
+    }
+  ],
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/magnetite"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:iron_dust"
+    }
+  ]
+}

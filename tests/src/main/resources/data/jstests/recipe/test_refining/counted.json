@@ -1,0 +1,13 @@
+{
+  "type": "jstests:test_refining",
+  "inputs": [
+    {"item": "minecraft:raw_copper", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:copper_ingot", "count": 1}
+  ],
+  "byproducts": [
+    {"item": {"id": "minecraft:gold_nugget"}, "share": 0.25}
+  ],
+  "ticks": 2
+}

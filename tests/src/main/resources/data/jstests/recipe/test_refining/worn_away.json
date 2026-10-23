@@ -1,0 +1,13 @@
+{
+  "type": "jstests:test_refining",
+  "inputs": [
+    {"item": "minecraft:raw_gold", "count": 1}
+  ],
+  "catalysts": [
+    {"item": "minecraft:shears", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:gold_ingot", "count": 1}
+  ],
+  "ticks": 2
+}

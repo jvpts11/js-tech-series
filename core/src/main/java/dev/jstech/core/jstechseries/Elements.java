@@ -8,6 +8,8 @@
 package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.hazard.HazardClass;
+import dev.jstech.core.hazard.MaterialHazards;
 import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.HostRocks;
@@ -19,6 +21,8 @@ import dev.jstech.core.material.OreLook;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -34,6 +38,7 @@ import net.minecraft.world.level.block.Blocks;
 public final class Elements {
 
     private static final Map<Element, Material> MATERIALS = new EnumMap<>(Element.class);
+    private static final Map<String, Element> BY_SYMBOL = new HashMap<>();
     /*
      * The elements mined as such, each with a generic "X ore" besides its real minerals: the game's own for iron, copper
      * and gold, the Core's for the rest. Those that come only as byproducts, the rare earths, and those whose ores are
@@ -49,6 +54,7 @@ public final class Elements {
     static {
         for (final Element element : Element.values()) {
             MATERIALS.put(element, declare(element));
+            BY_SYMBOL.put(element.symbol(), element);
         }
     }
 
@@ -78,6 +84,20 @@ public final class Elements {
         return GENERIC_ORES.contains(element);
     }
 
+    /**
+     * The standard atomic weight of the element whose symbol is {@code symbol}, in daltons, or none, 0, for no
+     * element of the known table: what a chemical formula's mass is worked out from.
+     */
+    public static double atomicWeight(final String symbol) {
+        final Element element = BY_SYMBOL.get(symbol);
+        return element == null ? 0.0 : ElementWeights.of(element.number());
+    }
+
+    /** The element whose symbol is {@code symbol}: Fe, or none. */
+    public static Optional<Element> bySymbol(final String symbol) {
+        return Optional.ofNullable(BY_SYMBOL.get(symbol));
+    }
+
     /** The element {@code material} is, or none for a material that is no element of the known table. */
     public static Optional<Element> element(final Material material) {
         for (final Map.Entry<Element, Material> entry : MATERIALS.entrySet()) {
@@ -93,7 +113,12 @@ public final class Elements {
                 ResourceLocation.fromNamespaceAndPath(JsCore.MODID, element.path()), element.kind(),
                 element.nameKey()).colour(element.colour())
                 .with(MaterialProperties.SYMBOL, element.symbol())
-                .with(MaterialProperties.ATOMIC_NUMBER, element.number());
+                .with(MaterialProperties.ATOMIC_NUMBER, element.number())
+                .with(MaterialProperties.ATOMIC_WEIGHT, ElementWeights.of(element.number()));
+        final List<HazardClass> hazards = ElementHazards.of(element);
+        if (!hazards.isEmpty()) {
+            builder.with(MaterialHazards.HAZARDS, hazards);
+        }
         ElementHeat.of(element).ifPresent(heat -> {
             builder.with(Thermal.DENSITY, heat.density()).with(Thermal.SPECIFIC_HEAT, heat.specificHeat())
                     .with(Thermal.CONDUCTIVITY, heat.conductivity()).with(Thermal.EMISSIVITY, heat.emissivity())

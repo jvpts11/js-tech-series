@@ -37,7 +37,8 @@
       "steps": [
         "jsindustrial.guide.dust_ingots_plates.use1",
         "jsindustrial.guide.dust_ingots_plates.use2",
-        "jsindustrial.guide.dust_ingots_plates.use3"
+        "jsindustrial.guide.dust_ingots_plates.use3",
+        "jsindustrial.guide.dust_ingots_plates.use4"
       ]
     },
     {
@@ -65,7 +66,7 @@
   ],
   "icon": "minecraft:iron_ingot",
   "id": "jsindustrial:dust_ingots_plates",
-  "order": 9,
+  "order": 10,
   "section": "jsindustrial:metallurgy",
   "title": "jsindustrial.guide.dust_ingots_plates.title"
 }

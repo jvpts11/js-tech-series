@@ -1,0 +1,16 @@
+{
+  "type": "jsindustrial:macerating",
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ingots/bronze"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:bronze_dust"
+    }
+  ]
+}

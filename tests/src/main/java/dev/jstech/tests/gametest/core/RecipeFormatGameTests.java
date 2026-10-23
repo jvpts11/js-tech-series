@@ -8,10 +8,12 @@
 package dev.jstech.tests.gametest.core;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
+import dev.jstech.core.machine.Byproduct;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.ProcessingRecipeBuilder;
@@ -94,6 +96,7 @@ public final class RecipeFormatGameTests {
                 .input(Items.IRON_INGOT, 2).catalyst(Ingredient.of(Items.BLAZE_ROD), 1)
                 .matterInput(Elements.of(Element.HYDROGEN), 100L).output(Items.IRON_NUGGET, 9)
                 .matterOutput(Elements.of(Element.OXYGEN), 50L).byproduct(new ItemStack(Items.GOLD_NUGGET), 0.25F)
+                .countedByproduct(new ItemStack(Items.FLINT), 1.5F)
                 .conditions(new RecipeConditions(300.0, 900.0, 50.0, Double.MAX_VALUE)).ticks(30).build();
         final Codec<ProcessingRecipe> codec = TestKitMachine.REFINING.serializer().codec().codec();
         final JsonElement file = codec.encodeStart(JsonOps.INSTANCE, built).getOrThrow();
@@ -101,8 +104,25 @@ public final class RecipeFormatGameTests {
         helper.assertTrue(back.catalysts().size() == 1 && back.matterInputs().equals(built.matterInputs())
                         && back.matterOutputs().equals(built.matterOutputs())
                         && back.byproducts().getFirst().chance() == 0.25F
+                        && back.byproducts().getFirst().draw() == Byproduct.Draw.CHANCE
+                        && back.byproducts().get(1).draw() == Byproduct.Draw.SHARE
+                        && back.byproducts().get(1).amount() == 1.5F
                         && back.conditions().equals(built.conditions()),
                 "every part comes back as written: " + file);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void byproduct_comesByAChanceOrAShareAndNeverBoth(final GameTestHelper helper) {
+        final JsonElement both = JsonParser.parseString("{\"item\": {\"id\": \"minecraft:flint\"}, \"chance\": 0.5,"
+                + " \"share\": 0.5}");
+        final JsonElement neither = JsonParser.parseString("{\"item\": {\"id\": \"minecraft:flint\"}}");
+        helper.assertTrue(Byproduct.CODEC.parse(JsonOps.INSTANCE, both).isError()
+                && Byproduct.CODEC.parse(JsonOps.INSTANCE, neither).isError(),
+                "a byproduct with both a chance and a share, or neither, is refused");
+        helper.assertTrue(Byproduct.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(
+                "{\"item\": {\"id\": \"minecraft:flint\"}, \"share\": 2.5}")).getOrThrow().draw()
+                == Byproduct.Draw.SHARE, "a share above one is more than one each time");
         helper.succeed();
     }
 

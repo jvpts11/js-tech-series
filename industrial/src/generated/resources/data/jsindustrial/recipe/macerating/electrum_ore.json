@@ -1,0 +1,25 @@
+{
+  "type": "jsindustrial:macerating",
+  "byproducts": [
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:silver_dust"
+      },
+      "share": 0.16666667
+    }
+  ],
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ores/electrum"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:gold_dust"
+    }
+  ]
+}

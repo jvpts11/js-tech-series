@@ -408,14 +408,41 @@ packs, with no code.
 | `fluid_outputs` | Fluids made, each `{"id": id, "amount": mb}`. | none |
 | `ticks` | How long it takes, at least 1. | 200 |
 | `energy_per_tick` | FE spent each tick; 0 means the machine's own default. | 0 |
-| `catalysts` | Items that must be in the machine, each in a slot of its own, and are not used up. | none |
+| `catalysts` | Items that must be in the machine, each in a slot of its own, and are not used up; one that can be damaged wears a use each time (below). | none |
 | `matter_inputs` | Matter taken from the machine's tanks of gas and the other states, each `{"material": id, "amount": mB}`, at the open air's pressure. | none |
 | `matter_outputs` | Matter made into those tanks, the same way. | none |
-| `byproducts` | Items made besides, by chance, each `{"item": {"id": id, "count": n}, "chance": 0.1}`; the machine starts only with room for all of them. | none |
+| `byproducts` | Items made besides, each `{"item": {"id": id, "count": n}}` with either a `"chance": 0.1`, which comes by luck, or a `"share": 0.25`, which the machine counts (below); the machine starts only with room for all of them. | none |
 | `conditions` | The temperature and pressure inside the machine it runs between: `min_temperature`, `max_temperature` (kelvin), `min_pressure`, `max_pressure` (kilopascals). A machine is at its dimension's air unless it says otherwise (`temperature()`, `pressure()`). | any |
 
 JEI and EMI show every part: the catalysts beside the inputs ("Not used up"), the byproducts beside the outputs with
-their chance, and the matter and the conditions as lines under the recipe.
+their chance or their counted share, and the matter and the conditions as lines under the recipe.
+
+### Counted byproducts
+
+*Added 2026-10-23.*
+
+A byproduct with a `share` never comes by chance: each lane of the machine keeps a count of it (`Tally`), adds its share
+each time the recipe runs, and puts out the whole ones as they complete. A quarter is one every fourth recipe, exactly;
+a share above one is more than one each time, `1.5` one and two in turn. The count is kept with the machine, so a
+byproduct due after a reload comes when it is due. Two recipes that give the same item count it together. An upgrade
+that raises byproducts multiplies the share.
+
+```java
+builder.countedByproduct(new ItemStack(MaterialUses.item(SULFUR, Forms.DUST).get()), 0.25F);
+```
+
+### Catalysts that wear
+
+*Added 2026-10-23.*
+
+A catalyst that can be damaged (an item with a durability) loses a use each time its recipe runs, as a real catalyst
+slowly loses its activity, and once worn out becomes its spent form, or is gone. The data map `jscore:spent_catalysts`
+of items names the spent form (`data/<namespace>/data_maps/item/spent_catalysts.json`); a catalyst that cannot be
+damaged, a die or a blaze rod, never wears. Without its catalyst a recipe does not run.
+
+```json
+{ "values": { "mymod:iron_catalyst": "mymod:spent_iron_catalyst" } }
+```
 
 A recipe takes at least one input (item or fluid) and makes at least one output, or it is refused with a line
 in the log when the data loads. Asking for a tag (`c:ingots/iron`) rather than an item lets the recipe take the

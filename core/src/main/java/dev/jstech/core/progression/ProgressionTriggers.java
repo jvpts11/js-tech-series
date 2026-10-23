@@ -40,6 +40,8 @@ public final class ProgressionTriggers {
 
     private static final List<Trigger<ItemStack, ?>> MADE = new ArrayList<>();
     private static final List<Trigger<BlockState, ?>> PLACED = new ArrayList<>();
+    /* The mods' own listeners, replaced whole on each one added, so making something reads them without a lock. */
+    private static volatile List<IMadeListener> listeners = List.of();
 
     private ProgressionTriggers() {
     }
@@ -78,6 +80,13 @@ public final class ProgressionTriggers {
         MADE.add(new Trigger<>(stack -> stack.is(tag), axis, step));
     }
 
+    /** Has {@code listener} told of everything any player makes, from a mod's constructor. */
+    public static synchronized void whenMade(final IMadeListener listener) {
+        final List<IMadeListener> more = new ArrayList<>(listeners);
+        more.add(Objects.requireNonNull(listener, "listener"));
+        listeners = List.copyOf(more);
+    }
+
     /** Placing {@code block} moves a player along {@code axis} to {@code step}, the first time. */
     public static synchronized <S extends IAxisStep> void whenPlaced(final Block block,
                                                                      final ProgressionAxis<S> axis, final S step) {
@@ -95,6 +104,9 @@ public final class ProgressionTriggers {
         }
         for (final Trigger<ItemStack, ?> trigger : snapshot(MADE)) {
             trigger.fire(server, player, stack);
+        }
+        for (final IMadeListener listener : listeners) {
+            listener.made(server, player, stack);
         }
     }
 

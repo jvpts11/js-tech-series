@@ -13,7 +13,7 @@ its first drawing, and the drawing list heads each section's drawings with its t
 | Section | Letters | Entries |
 | --- | --- | --- |
 | Reading the drawings | GN | How to read these drawings; Reading single-line diagrams; Reading P&IDs; Reading geological sections |
-| Getting Started | GS | Coal Generator, Macerator, Electric Furnace |
+| Getting Started | GS | Coal Generator, Hand tools, Macerator, Electric Furnace |
 | Metallurgy | MT | Materials: dust, ingots, plates |
 | Power | EL | Power: making it and moving it |
 | Machines | MC | Compressor |
@@ -56,8 +56,14 @@ The sections follow the pages of this design, each in the style of drawing its r
   Drawings; the Aleph will likely be one, a field notebook drawn as a ruled notebook written in pencil, what has not
   been seen marked NOT OBSERVED. Which manuals there are, and what goes in each, is settled with that content.
 - **Safety data sheets.** Each hazardous material has a page in the style of real safety data sheets, with the **GHS
-  pictograms** (flammable, toxic, corrosive, oxidising, gas under pressure, health hazard, environment, explosive) and
-  the gear that protects from it ([Tools and armour](tools-and-armour.md)). The pictograms come from the material's
-  properties ([Materials](materials.md)), so the tooltip can show them too.
+  pictograms** and the gear that protects from it ([Tools and armour](tools-and-armour.md)). The pictograms come from the
+  material's hazard classes ([Materials](materials.md)), so the tooltip shows them too, which it does today:
+  - **the nine of the GHS**: explosive, flammable, oxidising, gas under pressure, corrosive, toxic (the skull), harmful
+    (the exclamation mark, for irritants and the fourth category of toxicity), health hazard and hazardous to the
+    environment; the exclamation mark gives way to the skull, as the GHS says;
+  - **gas under pressure is the container's**, not the material's: it shows for a gas held above the open air's
+    pressure, a cylinder of hydrogen, never for hydrogen in a room;
+  - **the hazards outside the GHS** a real sheet marks on their own: an asphyxiant gas, and radioactivity with its
+    trefoil.
 - **The manual shows everything**, including what hasn't been researched, marked with the discovery it needs
   ([Science](science.md)). The only exception is the Aleph, which reveals itself as it is explored.

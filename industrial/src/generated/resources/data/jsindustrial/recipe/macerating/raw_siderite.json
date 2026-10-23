@@ -1,0 +1,25 @@
+{
+  "type": "jsindustrial:macerating",
+  "byproducts": [
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:manganese_dust"
+      },
+      "share": 0.11525253
+    }
+  ],
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/siderite"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:iron_dust"
+    }
+  ]
+}

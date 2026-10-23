@@ -1,0 +1,16 @@
+{
+  "type": "jsindustrial:macerating",
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ores/hematite"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:iron_dust"
+    }
+  ]
+}

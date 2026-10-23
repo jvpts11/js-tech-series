@@ -5,6 +5,10 @@ tuned in playtesting; the ones that can change without touching the code are set
 ([Implementation](implementation.md)). The units are real: joules, watts, volts, kilograms, cubic metres. A block is one
 cubic metre, and 1,000 mB are one cubic metre.
 
+Today J's Industrial holds them as a library of pure logic, each tested against the numbers on this page: its energy,
+its machines' upgrades, its fluids, its chemistry, its chips, its science and its transcendence. The formulas that are
+J's Core's (the rate between FE and J's Energy, the loss along a way, a machine's speed short of energy) stay the Core's.
+
 ## Energy
 
 | What | Formula | Page |
@@ -33,20 +37,24 @@ cubic metre, and 1,000 mB are one cubic metre.
 | A gas tank | its inner volume × its pressure in bar × 1,000 mB (the gas law) | [Fluids and gases](fluids-and-gases.md) |
 | A run of pipes | carries up to its worst pipe's top flow; no loss and no limit by length | [Fluids and gases](fluids-and-gases.md) |
 | Oil in reservoir rock | 200 mB per block (real reservoir rock is about 20% pores) | [Chemistry](chemistry.md) |
-| Air's main shares | 78.08% nitrogen, 20.95% oxygen, 0.93% argon, 0.04% carbon dioxide; the rare gases at a thousand times their real share | [Fluids and gases](fluids-and-gases.md) |
+| Air's main shares | 78.08% nitrogen, 20.95% oxygen, 0.93% argon, 0.04% carbon dioxide; the rare gases at a thousand times their real share; all of them together scaled to the whole, so nothing is made of nothing | [Fluids and gases](fluids-and-gases.md) |
+| Compressing a gas | the moles × R × T × ln(p₂ / p₁), over the compressor's efficiency; a mole is 22.4 normal litres, a millibucket of gas at the open air's pressure | [Chemistry](chemistry.md) |
 
 ## Chemistry
 
 | What | Formula | Page |
 | --- | --- | --- |
-| A reaction's amounts | the coefficients of its real equation: gases and liquids in mB, solids in dusts (N₂ + 3 H₂ → 2 NH₃: 100 mB and 300 mB give 200 mB) | [Chemistry](chemistry.md) |
+| A reaction's amounts | the coefficients of its real equation, which must balance: 100 mB of a gas or a liquid for each, one dust of a solid (N₂ + 3 H₂ → 2 NH₃: 100 mB and 300 mB give 200 mB) | [Chemistry](chemistry.md) |
+| A mineral's make-up | each of its elements at its share of its mass, by its formula and the atomic weights; a trace at a thousand times its real grade, at most a tenth | [Materials](materials.md) |
+| Byproducts of ore | at each level, the byproduct's share over the main element's, for each of the main element out, times the level's part: none in the furnace, a quarter in the Macerator, all by the family's route; counted, never by chance | [Metallurgy](metallurgy.md) |
+| By hand | half of what a machine makes where it makes more than it takes; two of three where it makes one of one | [Metallurgy](metallurgy.md) |
 | Rare earth cascade | 4 stages separate the light rare earths, 8 the middle ones, 16 the heavy ones | [Chemistry](chemistry.md) |
 
 ## Chips
 
 | What | Formula | Page |
 | --- | --- | --- |
-| Chips per wafer | by the wafer's area over the die's: a 300 mm wafer gives about 40 times the chips of a 50 mm one | [Clean Room](clean-room.md) |
+| Chips per wafer | the wafer's area over the die's, less the dies its round edge cuts through, π d² / 4S − π d / √(2S): a 300 mm wafer gives about 40 times the chips of a 50 mm one | [Clean Room](clean-room.md) |
 | Yield | the share of good chips falls as the room's particle count rises | [Clean Room](clean-room.md) |
 
 ## Science and nuclear
@@ -55,7 +63,7 @@ cubic metre, and 1,000 mB are one cubic metre.
 | --- | --- | --- |
 | A research group | the first CRC's power + 90% of each other CRC's | [Science](science.md) |
 | A synchrotron's energy | grows with its magnets' field × its ring's radius | [Science](science.md) |
-| Decay heat | about 7% of a reactor's power just after shutdown, falling over hours | [Nuclear](nuclear.md) |
+| Decay heat | about 7% of a reactor's power just after shutdown, falling over hours as the Way-Wigner formula has it, 6.6% × t^−0.2 (t in seconds): a little over 1% an hour on | [Nuclear](nuclear.md) |
 | Enrichment | power reactors 3 to 5% uranium-235, research reactors up to 20%, nothing above | [Nuclear](nuclear.md) |
 | Shielding | radiation crossing a block is weakened by its material: lead most, then concrete and stone, then water; air hardly at all | [Nuclear](nuclear.md) |
 

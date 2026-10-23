@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jsindustrial:mortar"
+    },
+    {
+      "tag": "c:ingots/manganese"
+    },
+    {
+      "tag": "c:ingots/manganese"
+    },
+    {
+      "tag": "c:ingots/manganese"
+    }
+  ],
+  "result": {
+    "count": 2,
+    "id": "jscore:manganese_dust"
+  }
+}

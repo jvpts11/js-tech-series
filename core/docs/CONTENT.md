@@ -456,10 +456,13 @@ series' charred wood and ash are drawn this way from the game's oak and grey pow
 
 The series' own materials are in `SeriesMaterials`, which any mod uses as it uses its own:
 
-- **The 118 known elements** (`Element`, `Elements.of(Element.URANIUM)`), as data: atomic number, symbol, the kind each
-  is at room temperature (bromine and mercury liquids, silicon and germanium crystals, the rest metals, non-metal
-  solids or gases), and a colour near the pure element's. A metal can be molten, a gas liquefied, hydrogen and helium
-  a plasma. Iron, copper and gold keep the game's ingots, nuggets, blocks, raw ores and ores.
+- **The 118 known elements** (`Element`, `Elements.of(Element.URANIUM)`), as data: atomic number, symbol, standard
+  atomic weight (`MaterialProperties.ATOMIC_WEIGHT`, `Elements.atomicWeight("Fe")`), the kind each is at room
+  temperature (bromine and mercury liquids, silicon and germanium crystals, the rest metals, non-metal solids or
+  gases), a colour near the pure element's, and its hazard classes. A metal can be molten, a gas liquefied, hydrogen
+  and helium a plasma. Iron, copper and gold keep the game's ingots, nuggets, blocks, raw ores and ores.
+- **The minerals** (`SeriesMinerals`): hematite, magnetite, siderite, pyrite, chalcopyrite, cuprite, malachite,
+  electrum and cassiterite, each declared from its formula (below).
 - **Isotopes** (`Isotopes`), materials of their own tied to their element by their mass number
   (`material.isotope()`), named after it ("Uranium-235") and written as chemists write them (²³⁵U): deuterium,
   tritium, helium-3, the reactor's fuels and targets, the sources of radiation, and the stable, neutron-rich isotope
@@ -482,10 +485,31 @@ Materials.material(rl("chalcopyrite"), MaterialKind.MINERAL, CHALCOPYRITE_NAME).
         .contains(Elements.of(Element.COPPER), 0.6).contains(Elements.of(Element.SULFUR), 0.3).declare();
 ```
 
-Its main element comes first, then its byproducts, each a share of what processing it yields, the shares adding up to
-the whole at most. Its ores are declared with `MaterialUses.ore(...)` as any material's, and drop its raw form. An
-element mined as such has a generic "X ore" too, in `c:ores/<element>` (`Elements.hasGenericOre(Element.TIN)`); the
-elements that come only as byproducts, the rare earths and those whose ores are their salts have none.
+Its main element comes first, the one it is mined for, then its byproducts, each a share of its mass, the shares adding
+up to the whole at most; the main element need not be most of it. Its ores are declared with `MaterialUses.ore(...)` as
+any material's, named for the rock and the mineral ("Deepslate Chalcopyrite Ore", `c:ores/chalcopyrite`), and drop its
+raw form ("Raw Chalcopyrite", `c:raw_materials/chalcopyrite`). An element mined as such has a generic "X ore" too, in
+`c:ores/<element>` (`Elements.hasGenericOre(Element.TIN)`); the elements that come only as byproducts, the rare earths
+and those whose ores are their salts have none.
+
+The series declares its minerals from their formulas, and a mod can too, with `MineralBuilder`: its own elements come at
+their shares by the atomic weights, a natural alloy says its parts, and a trace element is given at its real grade,
+counted at a thousand times it and never past a tenth of the mineral (`TraceGrade`), the traces taking their room from
+the rest:
+
+```java
+MineralBuilder.of(rl("chalcopyrite"), CHALCOPYRITE_NAME, MineralFamilies.SULFIDE, Element.COPPER).formula("CuFeS2")
+        .byproduct(Element.SULFUR).trace(Element.GOLD, 0.000_01).rocks(HostRocks.DEEPSLATE, HostRocks.GRANITE)
+        .declare();
+```
+
+A formula is read by `ChemicalFormula` as chemists write it (`Cu2CO3(OH)2`, `CuSO4·5H2O`), with its atoms, its molar mass
+and each element's share of the mass, and the formula's tooltip line shows its counts small, CuFeS₂.
+
+A material's hazards are data too: its hazard classes (`MaterialHazards.HAZARDS`, `HazardClass`), the nine GHS
+pictograms they call for (`MaterialHazards.pictograms(material)`, or with the pressure it is held at, which adds the gas
+cylinder for a gas), and what a cloud of a gas does (`MaterialHazards.gasHazards(material)`). See
+[Hazards](HAZARDS.md#the-hazards-of-materials).
 
 A material's things can bear marks in their tooltips (`MaterialMarks.declare(id, text, which)`): every mineral with
 uranium or thorium in it is marked naturally radioactive, unless the world's setting `hazards.natural_radioactivity`
@@ -505,7 +529,7 @@ A liquid is itself (gasoline), molten for a solid (`jscore:molten_tin`, "Molten 
 and is drawn as the game's water in its material's colour.
 
 The shared catalogue (`SharedCatalogue`) holds what the series' mods share that is no element: the common fuels
-(gasoline, kerosene, diesel) and the generic components (servomotor, electric motor, LED, sensor, oscillator,
+(gasoline, kerosene, diesel), carbon dioxide and ammonia, and the generic components (servomotor, electric motor, LED, sensor, oscillator,
 antenna, magnetic head). A component exists only when a mod uses it, through the catalogue any mod adds to:
 
 ```java
@@ -521,13 +545,15 @@ with `SimplePath.rule(MODID, () -> MySettings.INDUSTRIAL_CHAIN_ONLY.get())`.
 
 On a server, the player who first discovers an element beyond the known table gives it its name and its symbol, and
 the element and all its things take them, for everyone and in every language. A mod says when an element is
-discovered, at its first synthesis:
+discovered, at its first synthesis, with the player who made it, or the owner of the machine that did, who may be away:
 
 ```java
 ElementNaming.discover(player, Superheavies.of(119));
+ElementNaming.discover(server, machineOwner, Superheavies.of(119));
 ```
 
-The discoverer is told how to name it, `/jstech name_element 119 <name> <symbol>`. A name holds letters only, no more
+The discoverer is told how to name it, `/jstech name_element 119 <name> <symbol>`, at once or the next time they join;
+the right to name it is theirs from the first. A name holds letters only, no more
 than the world allows, repeats no other element's name and, where the world asks, ends in "-ium"; a symbol has one or
 two letters and repeats none. Once given a name is not changed, but an operator can take one back,
 `/jstech unname_element 119`, and its discoverer names it again. The names are kept with the world and sent to every

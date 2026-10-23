@@ -13,8 +13,9 @@ import java.util.Set;
 
 /**
  * What a mineral is, the part of a material that comes out of the ground (chalcopyrite, not copper): what it contains,
- * its main element first and then the byproducts it gives, each in a fixed share of what processing it yields; the
- * family whose chemistry decides how it is processed; and the host rocks its veins can cross, an ore of it in each.
+ * its main element first, the one it is mined for, and then the byproducts it gives, each in a fixed share of its
+ * mass; the family whose chemistry decides how it is processed; and the host rocks its veins can cross, an ore of it
+ * in each. How much of each a machine gets out is the processing's to say.
  *
  * @param family   its family: a sulfide, an oxide
  * @param contents what it contains, its main element first
@@ -52,7 +53,7 @@ public record Mineral(MineralFamily family, List<Content> contents, Set<HostRock
      * One thing a mineral contains.
      *
      * @param material the element or compound
-     * @param share    its share of what processing the mineral yields, more than nothing and at most the whole
+     * @param share    its share of the mineral's mass, more than nothing and at most the whole
      */
     public record Content(Material material, double share) {
 

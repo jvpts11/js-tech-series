@@ -123,6 +123,12 @@ public final class ProcessingRecipeBuilder {
         return this;
     }
 
+    /** {@code stack} made besides, {@code share} of it each time, counted by the machine: never by chance. */
+    public ProcessingRecipeBuilder countedByproduct(final ItemStack stack, final float share) {
+        byproducts.add(Byproduct.counted(stack, share));
+        return this;
+    }
+
     /** The temperature, in kelvin, and the pressure, in kilopascals, the recipe runs between. */
     public ProcessingRecipeBuilder conditions(final RecipeConditions value) {
         this.conditions = value;

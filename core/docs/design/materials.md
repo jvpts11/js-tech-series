@@ -9,9 +9,11 @@ own design; this page is the system they all live in.
 ## What exists today
 
 Everything this page designs is built, as of October 2026: materials, forms, properties, mineral families and host
-rocks as registries, the 118 elements, isotopes, what lies beyond the known table, the exotic forms, minerals, liquids
-made from materials, the shared catalogue and the J's Tech creative tab. How a mod uses it, with code:
-[Content](../CONTENT.md#materials). Nothing of this page is left to build.
+rocks as registries, the 118 elements with their atomic weights and their hazards, isotopes, what lies beyond the known
+table, the exotic forms, minerals, liquids made from materials, the shared catalogue and the J's Tech creative tab.
+The catalogue holds the first nine real minerals of J's Industrial's list, declared from their formulas, and ammonia
+beside carbon dioxide and the fuels. How a mod uses it, with code: [Content](../CONTENT.md#materials). Nothing of this
+page is left to build.
 
 ## The design
 
@@ -26,9 +28,16 @@ The closed lists give way to **registries**, open to any mod, each entry with an
 - **Forms**: the base set is ingot, nugget, block, dust, plate, sheet, wire, rod, bolt, gear, coil, spring, foil, frame,
   lens, boule, wafer, crystal, gem, ore and raw; a mod adds others when it has a real use for them.
 - **Properties**: the data a material carries, **real data, never game rules**. The Core declares a few (symbol, atomic
-  number, formula, colour, state at room temperature); a mod registers its own (molar mass, oxidation states...) and
-  gives values in code or from a data pack. Each property says whether its tooltip line shows always, only with Shift,
-  or never, and that can be changed material by material.
+  number, atomic weight, formula, colour, state at room temperature, hazards); a mod registers its own (molar mass,
+  oxidation states...) and gives values in code or from a data pack. Each property says whether its tooltip line shows
+  always, only with Shift, or never, and that can be changed material by material. A formula is read as chemists write
+  it (brackets, a hydrate's water) and shows with its counts small, CuFeS₂; with the atomic weights it gives a molar
+  mass and the share of the mass each element makes up.
+- **Hazards**: a material's hazard classes, the real ones of the GHS (explosive, flammable, oxidising, corrosive, acutely
+  toxic, harmful, health hazard, hazardous to the environment) and the two a safety data sheet marks outside it (an
+  asphyxiant gas, radioactivity), as data. The **nine GHS pictograms** follow from them, the exclamation mark giving way
+  to the skull as the GHS says, and the gas cylinder showing only for a gas held above the open air's pressure: it is
+  the container's, not the material's ([Hazards](hazards.md)). So does what a cloud of a gas does.
 - **Mineral families** (sulfide, oxide, carbonate, silicate, arsenide, native metal, halide, sulfate, phosphate...): the
   chemistry that decides how a mineral is processed.
 - **Host rocks**: the rocks ores sit in. The Core knows vanilla's (stone, deepslate, granite, diorite, andesite, tuff,
@@ -41,7 +50,12 @@ each mod's recipes.
 ### Minerals and ores
 
 - A **mineral** is what comes out of the ground (chalcopyrite, not copper). It knows its contents (the main element and
-  fixed byproducts, in fixed proportions), its family, and the host rocks its veins can cross.
+  fixed byproducts, in fixed proportions), its family, and the host rocks its veins can cross. Its contents are shares
+  of its mass, together no more than the whole; the main element is the one it is mined for, which need not be most of
+  it.
+- **The series declares a mineral from its formula**: each of its own elements at its share by the atomic weights, a
+  natural alloy by its parts, and its trace elements at their real grade, counted at a thousand times it and never past
+  a tenth of the mineral, so the rarest stay rare and are still there to find; the traces take their room from the rest.
 - **Ore blocks are a form of a material.** A mineral has an ore variant in **every rock its veins can cross**, each
   textured from the rock with the mineral's overlay, generated, never drawn by hand; every variant drops the same raw
   item. Block count is not a concern.

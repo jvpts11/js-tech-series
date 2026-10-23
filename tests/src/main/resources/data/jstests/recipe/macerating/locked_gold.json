@@ -2,7 +2,7 @@
   "type": "jsindustrial:macerating",
   "energy_per_tick": 40,
   "inputs": [
-    {"item": "minecraft:gold_ingot", "count": 1}
+    {"item": "minecraft:quartz", "count": 1}
   ],
   "outputs": [
     {"id": "minecraft:gold_nugget", "count": 2}

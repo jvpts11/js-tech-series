@@ -39,15 +39,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A recipe of a processing machine: items taken by the count, fluids by the millibucket, matter of every other state by
  * the millibucket at the open air's pressure, and what comes out, in so many ticks at so much energy a tick; catalysts
- * that must be in the machine but are not used up; byproducts that come by chance; and the temperature and pressure it
- * runs between. Every mod's processing machines share it; what tells a grinder's recipes from a press's is their
- * {@link ProcessingKind}, the recipe type each mod declares.
+ * that must be in the machine and are not used up, though one that wears loses a use each time
+ * ({@link CatalystWear}); byproducts that come by chance or by a share the machine counts; and the temperature and
+ * pressure it runs between. Every mod's processing machines share it; what tells a grinder's recipes from a press's is
+ * their {@link ProcessingKind}, the recipe type each mod declares.
  *
  * <pre>{@code
  * {"type": "jsindustrial:macerating",
  *  "inputs": [{"tag": "c:ores/iron", "count": 1}],
  *  "outputs": [{"id": "jscore:iron_dust", "count": 2}],
- *  "byproducts": [{"item": {"id": "jscore:gold_dust"}, "chance": 0.1}],
+ *  "byproducts": [{"item": {"id": "jscore:gold_dust"}, "share": 0.1}],
  *  "ticks": 200, "energy_per_tick": 40}
  * }</pre>
  *
@@ -58,10 +59,11 @@ import org.jetbrains.annotations.Nullable;
  * @param fluidOutputs  the fluids it makes
  * @param ticks         how long it takes, before upgrades
  * @param energyPerTick what it spends each tick, before upgrades
- * @param catalysts     the items that must be in the machine, each in a slot of its own, and are not used up
+ * @param catalysts     the items that must be in the machine, each in a slot of its own, and are not used up; one that
+ *                      wears loses a use each time the recipe runs
  * @param matterInputs  the matter it takes from the machine's tanks of gas and the other states
  * @param matterOutputs the matter it makes
- * @param byproducts    what it may make besides, by chance
+ * @param byproducts    what it makes besides, by chance or by a counted share
  * @param conditions    the temperature and the pressure it runs between
  * @param knowledge     the knowledge the machine's owner's team must have before the machine runs it
  *                      ({@code "knowledge": "myaddon:fusion"}); viewers always show it, with a lock
@@ -118,15 +120,28 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
      */
     @Nullable
     public int[] slotsFor(final ProcessingInput input) {
-        final List<SizedIngredient> wanted = new ArrayList<>(inputs);
-        wanted.addAll(catalysts);
-        final int[] all = assignAll(wanted, input.items(), SizedIngredient::test);
+        final int[] all = assignedSlots(input);
         if (all == null) {
             return null;
         }
         final int[] taken = new int[inputs.size()];
         System.arraycopy(all, 0, taken, 0, taken.length);
         return taken;
+    }
+
+    /**
+     * The input slot each catalyst sits in, in the order of {@link #catalysts()}, or null when the slots do not hold
+     * the recipe: what wears as the recipe runs.
+     */
+    @Nullable
+    public int[] catalystSlotsFor(final ProcessingInput input) {
+        final int[] all = assignedSlots(input);
+        if (all == null) {
+            return null;
+        }
+        final int[] held = new int[catalysts.size()];
+        System.arraycopy(all, inputs.size(), held, 0, held.length);
+        return held;
     }
 
     /** The input tank each fluid input is taken from, or null when the tanks do not hold them. */
@@ -254,6 +269,14 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
                 stacks.decode(buf), fluids.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf), ingredients.decode(buf), matter.decode(buf), matter.decode(buf),
                 byproducts.decode(buf), RecipeConditions.STREAM_CODEC.decode(buf), KNOWLEDGE_STREAM.decode(buf)));
+    }
+
+    /* The slot of each item input, then of each catalyst, or null when the slots do not hold them all. */
+    @Nullable
+    private int[] assignedSlots(final ProcessingInput input) {
+        final List<SizedIngredient> wanted = new ArrayList<>(inputs);
+        wanted.addAll(catalysts);
+        return assignAll(wanted, input.items(), SizedIngredient::test);
     }
 
     /*

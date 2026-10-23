@@ -25,8 +25,8 @@ import java.util.function.Function;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Every property a material can carry, open to any mod: the Core's few (symbol, atomic number, formula, colour, state
- * at room temperature), and those a mod registers, such as a molar mass or oxidation states.
+ * Every property a material can carry, open to any mod: the Core's few (symbol, atomic number, atomic weight,
+ * formula, colour, state at room temperature), and those a mod registers, such as a molar mass or oxidation states.
  *
  * <pre>{@code
  * public static final MaterialProperty<Double> MOLAR_MASS = MaterialProperties.property(rl("molar_mass"),
@@ -42,6 +42,8 @@ public final class MaterialProperties {
     public static final TextKey SYMBOL_NAME = TextKey.of("jscore.material_property.symbol", "Symbol");
     public static final TextKey ATOMIC_NUMBER_NAME = TextKey.of("jscore.material_property.atomic_number",
             "Atomic number");
+    public static final TextKey ATOMIC_WEIGHT_NAME = TextKey.of("jscore.material_property.atomic_weight",
+            "Atomic weight");
     public static final TextKey FORMULA_NAME = TextKey.of("jscore.material_property.formula", "Formula");
     public static final TextKey COLOUR_NAME = TextKey.of("jscore.material_property.colour", "Colour");
     public static final TextKey ROOM_STATE_NAME = TextKey.of("jscore.material_property.room_state",
@@ -67,9 +69,15 @@ public final class MaterialProperties {
     /** An element's atomic number. */
     public static final MaterialProperty<Integer> ATOMIC_NUMBER = property(id("atomic_number"), Codec.INT,
             ATOMIC_NUMBER_NAME).shown(MaterialProperty.Shown.SHIFT).declare();
-    /** A compound's or a mineral's formula: CuFeS2. */
+    /**
+     * An element's standard atomic weight, the mean mass of its atoms as the Earth holds them, in daltons: 55.845 for
+     * iron; for an element with no stable isotope, the mass number of its longest-lived one.
+     */
+    public static final MaterialProperty<Double> ATOMIC_WEIGHT = property(id("atomic_weight"), Codec.DOUBLE,
+            ATOMIC_WEIGHT_NAME).shown(MaterialProperty.Shown.SHIFT).declare();
+    /** A compound's or a mineral's formula, written plainly as CuFeS2 and read with its counts small, CuFeS₂. */
     public static final MaterialProperty<String> FORMULA = property(id("formula"), Codec.STRING, FORMULA_NAME)
-            .declare();
+            .format(MaterialProperties::formula).declare();
     /** The material's colour, as {@code #RRGGBB}, which its items and fluids are drawn in. */
     public static final MaterialProperty<String> COLOUR = property(id("colour"), ConfigColours.CODEC, COLOUR_NAME)
             .shown(MaterialProperty.Shown.NEVER).declare();
@@ -111,6 +119,11 @@ public final class MaterialProperties {
             case PLASMA -> PLASMA.text();
             case EXOTIC -> EXOTIC.text();
         };
+    }
+
+    /* A formula as print writes it, its counts small; one that cannot be read, as it is written. */
+    private static Text formula(final String written) {
+        return Text.literal(ChemicalFormula.read(written).map(ChemicalFormula::subscripted).orElse(written));
     }
 
     private static ResourceLocation id(final String path) {

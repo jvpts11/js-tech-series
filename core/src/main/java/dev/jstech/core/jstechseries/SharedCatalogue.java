@@ -8,6 +8,8 @@
 package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.hazard.HazardClass;
+import dev.jstech.core.hazard.MaterialHazards;
 import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.Material;
@@ -23,7 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * What the series' mods share that is no element: the common fuels, liquids every mod may burn or store, carbon
- * dioxide, which every body and fire breathes out (the other gases,
+ * dioxide, which every body and fire breathes out, ammonia, the first product of industrial chemistry (the other gases,
  * hydrogen, oxygen, nitrogen, helium, xenon and the rest, are their elements), and the generic components, items with
  * no game of their own. Each exists only when an installed mod declares it uses it ({@code MaterialLiquids},
  * {@link CatalogueItems}); each mod that makes one gives its own recipe, J's Industrial the whole industrial chain, a
@@ -37,6 +39,7 @@ public final class SharedCatalogue {
     public static final TextKey KEROSENE_NAME = TextKey.of("jscore.material.kerosene", "Kerosene");
     public static final TextKey DIESEL_NAME = TextKey.of("jscore.material.diesel", "Diesel");
     public static final TextKey CARBON_DIOXIDE_NAME = TextKey.of("jscore.material.carbon_dioxide", "Carbon Dioxide");
+    public static final TextKey AMMONIA_NAME = TextKey.of("jscore.material.ammonia", "Ammonia");
 
     public static final TextKey SERVOMOTOR_NAME = TextKey.of("item.jscore.servomotor", "Servomotor");
     public static final TextKey ELECTRIC_MOTOR_NAME = TextKey.of("item.jscore.electric_motor", "Electric Motor");
@@ -71,7 +74,19 @@ public final class SharedCatalogue {
             CARBON_DIOXIDE_NAME).colour(0xD8DCE0).with(MaterialProperties.FORMULA, "CO2")
             .with(Thermal.MOLAR_MASS, 0.044_01).with(Thermal.DENSITY, 1.977).with(Thermal.SPECIFIC_HEAT, 840.0)
             .with(Thermal.CONDUCTIVITY, 0.0146).with(Thermal.MELTING, 194.65).with(Thermal.BOILING, 194.65)
-            .declare();
+            .with(MaterialHazards.HAZARDS, List.of(HazardClass.ASPHYXIANT)).declare();
+    /*
+     * Ammonia, the first reaction of industrial chemistry, made from the air's nitrogen and hydrogen over iron: the
+     * fertiliser of the fields, the refrigerant of the first cold stores. Corrosive and toxic, though it burns only in
+     * so narrow a mixture that its label shows no flame. Its values are the gas's at 0 °C.
+     */
+    public static final Material AMMONIA = Materials.material(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "ammonia"), MaterialKind.GAS, AMMONIA_NAME)
+            .colour(0xE4EEF0).also(MatterState.LIQUID).with(MaterialProperties.FORMULA, "NH3")
+            .with(Thermal.MOLAR_MASS, 0.017_031).with(Thermal.DENSITY, 0.769).with(Thermal.SPECIFIC_HEAT, 2_060.0)
+            .with(Thermal.CONDUCTIVITY, 0.0246).with(Thermal.MELTING, 195.42).with(Thermal.BOILING, 239.82)
+            .with(MaterialHazards.HAZARDS, List.of(HazardClass.CORROSIVE, HazardClass.ACUTELY_TOXIC,
+                    HazardClass.ENVIRONMENTAL)).declare();
 
     public static final CatalogueItems.Entry SERVOMOTOR = component("servomotor", SERVOMOTOR_NAME);
     public static final CatalogueItems.Entry ELECTRIC_MOTOR = component("electric_motor", ELECTRIC_MOTOR_NAME);
@@ -99,9 +114,12 @@ public final class SharedCatalogue {
         return List.of(SERVOMOTOR, ELECTRIC_MOTOR, LED, SENSOR, OSCILLATOR, ANTENNA, MAGNETIC_HEAD);
     }
 
+    /* A fuel burns, harms the skin and the head, harms the lungs it is breathed into, and poisons the water. */
     private static Material fuel(final String path, final TextKey name, final int colour) {
         return Materials.material(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, path), MaterialKind.LIQUID,
-                name).colour(colour).also(MatterState.GAS).declare();
+                name).colour(colour).also(MatterState.GAS).with(MaterialHazards.HAZARDS, List.of(
+                HazardClass.FLAMMABLE, HazardClass.HARMFUL, HazardClass.HEALTH_HAZARD, HazardClass.ENVIRONMENTAL))
+                .declare();
     }
 
     /* A component's picture is in the Core's own textures, item/component/<its id>. */

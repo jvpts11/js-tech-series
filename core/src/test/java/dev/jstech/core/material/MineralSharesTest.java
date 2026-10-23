@@ -36,7 +36,8 @@ class MineralSharesTest {
     }
 
     @Test
-    void problem_refusesAByproductLargerThanTheMainElement() {
-        assertEquals(Optional.of(MineralShares.Problem.BYPRODUCT_OVER_MAIN), MineralShares.problem(0.2, 0.3));
+    void problem_acceptsAByproductHeavierThanTheMainElement() {
+        // Chalcopyrite's sulfur weighs a little more than its copper, which it is still mined for.
+        assertTrue(MineralShares.problem(0.346, 0.349).isEmpty());
     }
 }

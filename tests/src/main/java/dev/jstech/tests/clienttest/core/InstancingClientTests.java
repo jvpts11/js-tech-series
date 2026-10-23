@@ -173,13 +173,13 @@ public final class InstancingClientTests {
                 .then(0, () -> {
                     drawn[0] = KitInstancing.drawnLastFrame();
                     calls[0] = KitInstancing.callsLastFrame();
-                    field[0] = middle(ctx);
+                    field[0] = docks(ctx);
                 })
                 .thenWaitUntil(together, WARM + SECONDS * TICKS_A_SECOND + WAIT, "the frames drawn together counted")
                 .then(0, () -> together(false))
                 .thenWaitUntil(() -> KitInstancing.drawnLastFrame() == 0, WAIT, "the field drawn one by one")
                 .then(SETTLE, () -> {
-                    try (NativeImage each = middle(ctx)) {
+                    try (NativeImage each = docks(ctx)) {
                         ctx.assertSamePicture("field-together-and-one-by-one", each, field[0]);
                     }
                 })
@@ -289,6 +289,16 @@ public final class InstancingClientTests {
         final int width = ctx.mc().getWindow().getGuiScaledWidth();
         final int height = ctx.mc().getWindow().getGuiScaledHeight();
         return ctx.capture(width / 3, height / 3, width / 3, height / 3);
+    }
+
+    /*
+     * The field of docks below the horizon. The middle of the view would take the horizon in too, where the farthest
+     * row of land comes and goes at the edge of the view distance between two pictures taken seconds apart.
+     */
+    private static NativeImage docks(final ClientTestContext ctx) {
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        return ctx.capture(width / 3, height / 2, width / 3, height / 4);
     }
 
     private static void write(final String name, final BenchReport report) {

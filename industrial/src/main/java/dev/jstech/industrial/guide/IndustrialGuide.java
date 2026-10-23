@@ -20,8 +20,12 @@ import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
+import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.industrial.IndustrialModule;
+import dev.jstech.industrial.tool.HandTools;
 import net.minecraft.world.item.Items;
 
 /**
@@ -89,6 +93,7 @@ public final class IndustrialGuide {
         guide.section("tools_and_armour").titled("Tools and Armour").code("TA").register();
         ReadingPages.declare(guide, reading);
         coalGenerator(guide, starting);
+        handTools(guide, starting);
         macerator(guide, starting);
         electricFurnace(guide, starting);
         compressor(guide, machines);
@@ -148,6 +153,25 @@ public final class IndustrialGuide {
                 .register();
     }
 
+    private static void handTools(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("hand_tools", section).titled("Hand tools").icon(HandTools.FORGE_HAMMER)
+                .covers(HandTools.FORGE_HAMMER).covers(HandTools.DRAW_PLATE).covers(HandTools.MORTAR)
+                .whatItIs("Three tools for the first plates, wire and dust, before any machine: the Forge Hammer,"
+                        + " the Draw Plate and the Mortar.")
+                .whatItIsFor("Starting without waiting on a machine. By hand always gives less than a machine does.")
+                .howToGetIt("Make them at a crafting table, from iron, sticks, flint and stone.")
+                .nextColumn()
+                .howToUseIt("Put the tool and the ingots in a crafting table.",
+                        "Forge Hammer: three ingots make two plates.",
+                        "Draw Plate: an ingot makes a wire; every eighth wire leaves a scrap of the metal.",
+                        "Mortar: three ingots make two dusts.",
+                        "The tool stays in the grid, a use worn each time.")
+                .whatCanGoWrong("The tool is gone.",
+                        "It wore out: the hammer and the plate last 128 uses, the mortar 64. Make another.")
+                .seeAlso("jsindustrial:dust_ingots_plates")
+                .register();
+    }
+
     private static void compressor(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("compressor", section).titled("Compressor").icon(IndustrialModule.COMPRESSOR)
                 .covers(IndustrialModule.COMPRESSOR)
@@ -196,7 +220,7 @@ public final class IndustrialGuide {
                 .nextColumn()
                 .whatItIs("A machine that grinds ores and metals into dust.")
                 .whatItIsFor("Getting more from each ore: one ore or raw ore becomes two dusts, and each dust smelts"
-                        + " into an ingot.")
+                        + " into an ingot. A mineral gives a little of what it holds besides.")
                 .howToGetIt(FROM_THE_TAB)
                 .nextPage()
                 .plan(SET_UP_PLAN)
@@ -205,19 +229,22 @@ public final class IndustrialGuide {
                 .planOptional(SECOND_GENERATOR)
                 .howToUseIt("Place the Macerator, with a Coal Generator touching it.",
                         "Put coal in the generator.",
-                        "Put raw iron or iron ore in the Macerator's left box.",
-                        "Every 10 seconds two iron dusts appear in the right box. Smelt them into ingots.")
+                        "Put an ore, a raw ore or an ingot in the Macerator's left box.",
+                        "Every 10 seconds two dusts appear on the right, and now and then a byproduct: chalcopyrite"
+                                + " gives sulfur, and a little gold and silver.")
                 .nextColumn()
                 .whatCanGoWrong("It works in bursts.",
                         "It spends 40 FE a tick and one generator makes 20. Add a second generator.",
                         "It stopped with ore left.",
-                        "The right box is full. Take the dust out.",
+                        "Its boxes on the right are full. Take the dust out.",
                         "An item just sits there.",
-                        "Only iron ores, raw iron and iron ingots are ground today.")
+                        "It grinds ores, raw ores and the ingots of metals; nothing else.")
                 .nextPage()
-                .subheading("What it makes")
-                .recipes(IndustrialModule.MACERATING.id().toString())
-                .note("Each iron dust smelts into an iron ingot, in a furnace or the Electric Furnace.")
+                .subheading("What it makes of tin")
+                .recipes(IndustrialModule.MACERATING.id().toString(),
+                        MaterialUses.item(SeriesMaterials.TIN, Forms.DUST))
+                .note("Every ore, raw mineral and ingot is ground the same way; JEI or EMI lists them all, with the"
+                        + " byproducts each gives. Each dust of a metal smelts into its ingot.")
                 .seeAlso("jsindustrial:dust_ingots_plates", "jsindustrial:electric_furnace")
                 .register();
     }
@@ -285,15 +312,16 @@ public final class IndustrialGuide {
 
     private static void materials(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("dust_ingots_plates", section).titled("Materials: dust, ingots, plates").icon(() -> Items.IRON_INGOT)
-                .whatItIs("What the machines make: iron dust, ground from ore; iron and copper plates, pressed from"
-                        + " ingots.")
+                .whatItIs("What the machines make of iron, copper, gold, tin and bronze: dust ground from ores and"
+                        + " ingots, plates pressed from ingots, wire, nuggets, blocks, and the scraps drawing leaves.")
                 .whatItIsFor("They are the parts later machines and recipes are made from. They belong to J's Core,"
                         + " so every mod of the series uses the same ones.")
-                .howToGetIt("Make them with the machines, or take them from the J's Tech tab.")
+                .howToGetIt("Make them with the machines or the hand tools, or take them from the J's Tech tab.")
                 .nextColumn()
-                .howToUseIt("Grind raw iron in the Macerator: two dusts.",
+                .howToUseIt("Grind an ore in the Macerator: two dusts.",
                         "Smelt each dust in a furnace or the Electric Furnace: an ingot.",
-                        "Press the ingots in the Compressor: plates.")
+                        "Press the ingots in the Compressor: plates.",
+                        "Smelt a scrap: a nugget, half the metal it holds.")
                 .subheading("What smelts into an iron ingot")
                 .recipes("minecraft:smelting", () -> Items.IRON_INGOT)
                 .whatCanGoWrong("Dust will not go into the Compressor.",

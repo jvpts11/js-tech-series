@@ -139,14 +139,21 @@ public final class SeriesManualsClientTests {
                         && page("jsindustrial:compressor").folio().equals("JI-MC-001"),
                         "the Compressor is JI-MC-001, the first drawing of Machines")
                 .thenScreenshot(SETTLE, "series_drawings_compressor_1")
-                .then(0, () -> manual().turn(1))
+                .then(0, () -> {
+                    // Its second sheet faces its first when the drawing starts on a left page; else it is a turn on.
+                    final int first = manual().book().pageOf("jsindustrial:compressor").orElse(-1);
+                    if (!manual().showing(first + 1)) {
+                        manual().turn(1);
+                    }
+                })
                 .thenScreenshot(SETTLE, "series_drawings_compressor_2")
                 .thenAssert(0, () -> {
                     final GuideBook book = manual().book();
                     final int first = book.pageOf("jsindustrial:compressor").orElse(-1);
+                    // Its recipes grow with the metals the mod presses, so it is two sheets or more.
                     return manual().showing(first + 1) && book.pages().get(first + 1).sheet() == 2
-                            && book.pages().get(first).sheets() == 2;
-                }, "its drawing is two sheets, the second following the first")
+                            && book.pages().get(first).sheets() >= 2;
+                }, "its drawing is two sheets or more, the second following the first")
                 .thenAssert(0, () -> manual().goTo("jsindustrial:reading_drawings")
                         && page("jsindustrial:reading_drawings").folio().equals("JI-GN-001"),
                         "how to read the drawings is JI-GN-001")

@@ -106,8 +106,8 @@ public final class MaterialGameTests {
     public static void uses_registerOnlyWhatSomeModUses(final GameTestHelper helper) {
         helper.assertTrue(BuiltInRegistries.ITEM.get(id("tin_plate")) == TestMaterials.TIN_PLATE.get()
                 && TestMaterials.TIN_PLATE.get() instanceof MaterialFormItem, "tin's plate, which a mod uses");
-        helper.assertTrue(!BuiltInRegistries.ITEM.containsKey(id("copper_wire")),
-                "no copper wire, which no mod uses");
+        helper.assertTrue(!BuiltInRegistries.ITEM.containsKey(id("copper_foil")),
+                "no copper foil, which no mod uses");
         helper.assertTrue(TestMaterials.IRON_INGOT.get() == Items.IRON_INGOT
                 && !BuiltInRegistries.ITEM.containsKey(id("iron_ingot")), "the game's own iron ingot, not a second");
         helper.assertTrue(BuiltInRegistries.ITEM.containsKey(
@@ -182,7 +182,7 @@ public final class MaterialGameTests {
         helper.assertTrue(pack.getResource(PackType.SERVER_DATA, ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
                 "loot_table/blocks/deepslate_tin_ore.json")) != null, "the drops of tin's ore in deepslate");
         helper.assertTrue(pack.getResource(PackType.SERVER_DATA, ResourceLocation.fromNamespaceAndPath("c",
-                "tags/item/wires/copper.json")) == null, "nothing for what nobody uses");
+                "tags/item/foils/copper.json")) == null, "nothing for what nobody uses");
         helper.assertTrue(pack.getNamespaces(PackType.SERVER_DATA).containsAll(List.of("c", "minecraft",
                 JsCore.MODID)), "and only data");
         pack.close();

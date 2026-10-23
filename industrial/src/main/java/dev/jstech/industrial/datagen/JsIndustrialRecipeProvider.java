@@ -7,27 +7,20 @@
  */
 package dev.jstech.industrial.datagen;
 
-import dev.jstech.industrial.IndustrialModule;
-import dev.jstech.industrial.JsIndustrial;
+import dev.jstech.industrial.tool.HandTools;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
-import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.Ingredient;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
- * Generates the module's recipes: the Macerator's grinding recipes plus the vanilla cooking recipes
- * that smelt the resulting dust back into ingots, so macerating an ore drop genuinely doubles the
- * metal. All machine recipe ingredients use {@code c:} common tags for interop with other mods.
+ * Generates the module's recipes, every one from data: the forms of its metals from their routes, by machine and by
+ * hand; its ores and minerals by the levels of processing; the furnace's dusts and scraps; and the hand tools. Every
+ * ingredient is a {@code c:} common tag, so another mod's ingot or ore works as the mod's own.
  */
 public class JsIndustrialRecipeProvider extends RecipeProvider {
 
@@ -38,47 +31,31 @@ public class JsIndustrialRecipeProvider extends RecipeProvider {
 
     @Override
     protected void buildRecipes(final RecipeOutput recipeOutput) {
-        /*
-         * Ore doubling: both the ore block (c:ores/iron) and the raw drop accept two iron dust each,
-         * and each dust smelts back into an ingot, so one mined ore becomes two ingots.
-         */
-        macerating(recipeOutput, Ingredient.of(c("ores/iron")),
-                new ItemStack(IndustrialModule.IRON_DUST.get(), 2), "iron_ore_to_dust");
-        macerating(recipeOutput, Ingredient.of(c("raw_materials/iron")),
-                new ItemStack(IndustrialModule.IRON_DUST.get(), 2), "raw_iron_to_dust");
-
-        /*
-         * Derived machine recipes (ingot->dust macerating, ingot->plate compressing) are generated for
-         * every material form the mod uses from the c: ingot tag, so any ingot from another mod works
-         * as input and adding a new plate or dust later is a one-line use in IndustrialModule.
-         */
         MaterialFormRecipes.generateAll(recipeOutput);
-
-        /*
-         * Smelting and blasting dust back into ingots. The ingredient uses the c:dusts/iron tag so
-         * iron dust from other mods can also be smelted here.
-         */
-        SimpleCookingRecipeBuilder.smelting(
-                        Ingredient.of(c("dusts/iron")),
-                        RecipeCategory.MISC, Items.IRON_INGOT, 0.7F, 200)
-                .unlockedBy("has_iron_dust", has(c("dusts/iron")))
-                .save(recipeOutput, ResourceLocation.fromNamespaceAndPath(
-                        JsIndustrial.MODID, "iron_ingot_from_smelting_iron_dust"));
-
-        SimpleCookingRecipeBuilder.blasting(
-                        Ingredient.of(c("dusts/iron")),
-                        RecipeCategory.MISC, Items.IRON_INGOT, 0.7F, 100)
-                .unlockedBy("has_iron_dust", has(c("dusts/iron")))
-                .save(recipeOutput, ResourceLocation.fromNamespaceAndPath(
-                        JsIndustrial.MODID, "iron_ingot_from_blasting_iron_dust"));
+        OreRecipes.generateAll(recipeOutput);
+        MetalRecipes.generateAll(recipeOutput);
+        tools(recipeOutput);
     }
 
-    private static TagKey<Item> c(final String path) {
-        return MaterialFormRecipes.cTag(path);
-    }
-
-    private static void macerating(final RecipeOutput recipeOutput, final Ingredient ingredient,
-                                   final ItemStack result, final String name) {
-        MaterialFormRecipes.macerating(recipeOutput, ingredient, result, name);
+    /*
+     * The hand tools: a hammer's iron head on a stick; a plate of iron bored with flint, the holes the wire is pulled
+     * through; a stone bowl with its flint pestle.
+     */
+    private void tools(final RecipeOutput out) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, HandTools.FORGE_HAMMER.get())
+                .pattern("II").pattern("IS").pattern(" S")
+                .define('I', Items.IRON_INGOT).define('S', Items.STICK)
+                .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT))
+                .save(out, MaterialFormRecipes.rl("forge_hammer"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, HandTools.DRAW_PLATE.get())
+                .pattern(" F ").pattern("III")
+                .define('I', Items.IRON_INGOT).define('F', Items.FLINT)
+                .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT))
+                .save(out, MaterialFormRecipes.rl("draw_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, HandTools.MORTAR.get())
+                .pattern("  F").pattern("S S").pattern(" S ")
+                .define('S', Items.STONE).define('F', Items.FLINT)
+                .unlockedBy("has_flint", has(Items.FLINT))
+                .save(out, MaterialFormRecipes.rl("mortar"));
     }
 }

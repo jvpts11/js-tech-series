@@ -173,6 +173,25 @@ public final class CatalogueGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void naming_keepsTheRightOfADiscovererAwayUntilTheyJoin(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final UUID away = UUID.randomUUID();
+        final Material element = Superheavies.of(125);
+        try {
+            helper.assertTrue(ElementNaming.discover(server, away, element), "their machine discovered it");
+            final ElementNaming.Discovery found = ElementNaming.DISCOVERED.get(server).get(element.id());
+            helper.assertTrue(found != null && found.by().equals(away) && !found.told(),
+                    "the discovery is theirs, and they are told when they join: " + found);
+            helper.assertTrue(ElementNaming.refusal(server, away, element, "Awayium", "Aw").isEmpty(),
+                    "and the name is theirs to give, away or here");
+            helper.assertTrue(!ElementNaming.discover(server, UUID.randomUUID(), element), "only the first");
+        } finally {
+            reset(server);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void naming_keepsTheSeriesNamesWhereDiscoverersDoNotName(final GameTestHelper helper) {
         final MinecraftServer server = helper.getLevel().getServer();
         final ServerPlayer discoverer = FakePlayerFactory.get(helper.getLevel(),

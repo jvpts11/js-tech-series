@@ -3,8 +3,15 @@
 Where the minerals lie, how veins are shaped, the reservoirs of oil, gas and brine, and the rubber trees. The minerals
 themselves are in [Minerals](minerals.md); what a mineral and an ore are is in [Materials](materials.md).
 
-Nothing on this page exists yet. Today the world has vanilla's ores only; J's Core can already declare an ore that
-generates in vanilla's way (a vein size, veins per chunk, a height range, biomes), which the vein system below replaces.
+## What exists today
+
+- J's Core's vein kit, and the series' veins of iron, copper, gold and tin, which stand in for the game's scattered
+  ores and hold the "X ore" of their element.
+- The ores of the first minerals ([Minerals](minerals.md)), named by J's Core's rule: the rock, then the mineral,
+  "Deepslate Chalcopyrite Ore", `jscore:deepslate_chalcopyrite_ore`, filed under `c:ores/chalcopyrite`, each dropping
+  its raw mineral, "Raw Chalcopyrite", under `c:raw_materials/chalcopyrite`. A vein of the game's stone is named for
+  the mineral alone, "Chalcopyrite Ore".
+- The veins do not hold the minerals yet: they take them with the deposit types below.
 
 ## To build
 

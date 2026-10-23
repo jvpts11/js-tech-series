@@ -1,11 +1,11 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_iron_dust": {
+    "has_copper_scrap": {
       "conditions": {
         "items": [
           {
-            "items": "#c:dusts/iron"
+            "items": "#c:scraps/copper"
           }
         ]
       },
@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "jsindustrial:iron_ingot_from_smelting_iron_dust"
+        "recipe": "jsindustrial:blasting/copper_scrap"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
@@ -21,12 +21,12 @@
   "requirements": [
     [
       "has_the_recipe",
-      "has_iron_dust"
+      "has_copper_scrap"
     ]
   ],
   "rewards": {
     "recipes": [
-      "jsindustrial:iron_ingot_from_smelting_iron_dust"
+      "jsindustrial:blasting/copper_scrap"
     ]
   }
 }

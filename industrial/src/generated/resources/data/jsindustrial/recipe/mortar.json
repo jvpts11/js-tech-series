@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "minecraft:flint"
+    },
+    "S": {
+      "item": "minecraft:stone"
+    }
+  },
+  "pattern": [
+    "  F",
+    "S S",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsindustrial:mortar"
+  }
+}

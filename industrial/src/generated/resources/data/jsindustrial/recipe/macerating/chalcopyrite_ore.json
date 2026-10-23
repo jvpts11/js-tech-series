@@ -1,0 +1,53 @@
+{
+  "type": "jsindustrial:macerating",
+  "byproducts": [
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:sulfur_dust"
+      },
+      "share": 0.5045164
+    },
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:gold_dust"
+      },
+      "share": 0.017396657
+    },
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:silver_dust"
+      },
+      "share": 0.17396657
+    },
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:selenium_dust"
+      },
+      "share": 0.086983286
+    },
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:tellurium_dust"
+      },
+      "share": 0.017396657
+    }
+  ],
+  "energy_per_tick": 40,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ores/chalcopyrite"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:copper_dust"
+    }
+  ]
+}

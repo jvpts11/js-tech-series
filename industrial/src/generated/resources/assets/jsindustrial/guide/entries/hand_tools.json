@@ -1,0 +1,75 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.hand_tools.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.hand_tools.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.hand_tools.get"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.hand_tools.use1",
+        "jsindustrial.guide.hand_tools.use2",
+        "jsindustrial.guide.hand_tools.use3",
+        "jsindustrial.guide.hand_tools.use4",
+        "jsindustrial.guide.hand_tools.use5"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.hand_tools.fix1",
+          "problem": "jsindustrial.guide.hand_tools.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:dust_ingots_plates"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:forge_hammer",
+  "id": "jsindustrial:hand_tools",
+  "items": [
+    "jsindustrial:forge_hammer",
+    "jsindustrial:draw_plate",
+    "jsindustrial:mortar"
+  ],
+  "order": 5,
+  "section": "jsindustrial:getting_started",
+  "title": "jsindustrial.guide.hand_tools.title"
+}
