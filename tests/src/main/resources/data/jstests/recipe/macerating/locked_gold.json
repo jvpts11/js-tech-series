@@ -1,0 +1,11 @@
+{
+  "type": "jsindustrial:macerating",
+  "energy_per_tick": 40,
+  "inputs": [
+    {"item": "minecraft:gold_ingot", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:gold_nugget", "count": 2}
+  ],
+  "knowledge": "jstests:test_fusion"
+}

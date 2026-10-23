@@ -1,0 +1,296 @@
+{
+  "blocks": [
+    {
+      "type": "picture",
+      "caption": "jsindustrial.guide.pids.figure1",
+      "data": {
+        "boreholes": [],
+        "columns": [],
+        "faults": [],
+        "legend": [
+          "vessel",
+          "pump",
+          "valve",
+          "check_valve",
+          "instrument",
+          "pipe",
+          "signal"
+        ],
+        "lines": [],
+        "symbols": [],
+        "veins": []
+      },
+      "drawing": "jsindustrial:pid",
+      "height": 130
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "modes",
+      "labels": [
+        "jsindustrial.guide.pids.modes1_way1",
+        "jsindustrial.guide.pids.modes1_way2"
+      ],
+      "ways": [
+        {
+          "type": "picture",
+          "caption": "jsindustrial.guide.pids.figure2",
+          "data": {
+            "boreholes": [],
+            "columns": [],
+            "faults": [],
+            "lines": [
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 36,
+                "x1": 52,
+                "y0": 56,
+                "y1": 56
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 64,
+                "x1": 80,
+                "y0": 56,
+                "y1": 56
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 93,
+                "x1": 106,
+                "y0": 56,
+                "y1": 56
+              },
+              {
+                "arrow": true,
+                "dashed": false,
+                "x0": 118,
+                "x1": 146,
+                "y0": 56,
+                "y1": 56
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 100,
+                "x1": 100,
+                "y0": 38,
+                "y1": 56
+              }
+            ],
+            "symbols": [
+              {
+                "h": 50,
+                "kind": "vessel",
+                "tag": "TK-101",
+                "w": 30,
+                "x": 6,
+                "y": 14
+              },
+              {
+                "kind": "valve",
+                "note": "",
+                "tag": "V-1",
+                "x": 58,
+                "y": 56
+              },
+              {
+                "kind": "pump",
+                "note": "",
+                "tag": "P-101",
+                "x": 87,
+                "y": 56
+              },
+              {
+                "kind": "check_valve",
+                "note": "",
+                "tag": "",
+                "x": 112,
+                "y": 56
+              },
+              {
+                "kind": "instrument",
+                "note": "101",
+                "tag": "PI",
+                "x": 100,
+                "y": 30
+              },
+              {
+                "kind": "label",
+                "note": "",
+                "tag": "TO BOILER",
+                "tagKey": "jsindustrial.drawing.to_boiler",
+                "x": 132,
+                "y": 52
+              }
+            ],
+            "veins": []
+          },
+          "drawing": "jsindustrial:pid",
+          "height": 100
+        },
+        {
+          "type": "scene",
+          "balloons": [
+            {
+              "number": 1,
+              "part": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "text": "jsindustrial.guide.pids.balloon1"
+            },
+            {
+              "number": 2,
+              "part": {
+                "x": 2,
+                "y": 0,
+                "z": 0
+              },
+              "text": "jsindustrial.guide.pids.balloon2"
+            },
+            {
+              "number": 3,
+              "part": {
+                "x": 4,
+                "y": 0,
+                "z": 0
+              },
+              "text": "jsindustrial.guide.pids.balloon3"
+            },
+            {
+              "number": 4,
+              "part": {
+                "x": 5,
+                "y": 0,
+                "z": 0
+              },
+              "text": "jsindustrial.guide.pids.balloon4"
+            }
+          ],
+          "blocks": [
+            {
+              "state": "jsindustrial:tank",
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:copper_pipe\"}],Links:[I;0,0,0,0,4144,0,0,0,0]}",
+              "state": "jscore:cable",
+              "x": 1,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "state": "minecraft:iron_block",
+              "x": 2,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:copper_pipe\"}],Links:[I;0,0,0,0,48,0,0,0,0]}",
+              "state": "jscore:cable",
+              "x": 3,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "state": "minecraft:iron_block",
+              "x": 4,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:copper_pipe\"}],Links:[I;0,0,0,0,48,0,0,0,0]}",
+              "state": "jscore:cable",
+              "x": 5,
+              "y": 0,
+              "z": 0
+            }
+          ],
+          "caption": "jsindustrial.guide.pids.figure3",
+          "height": 60,
+          "view": {
+            "pitch": 30.0,
+            "zoom": 1.6
+          }
+        }
+      ]
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.pids.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.pids.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.pids.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.pids.use1",
+        "jsindustrial.guide.pids.use2",
+        "jsindustrial.guide.pids.use3"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.pids.fix1",
+          "problem": "jsindustrial.guide.pids.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:tank"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:tank",
+  "id": "jsindustrial:pids",
+  "order": 2,
+  "section": "jsindustrial:reading",
+  "title": "jsindustrial.guide.pids.title"
+}

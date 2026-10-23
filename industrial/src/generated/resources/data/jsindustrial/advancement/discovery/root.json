@@ -1,0 +1,29 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsindustrial:discovery_made"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/lapis_block.png",
+    "description": {
+      "translate": "advancements.jsindustrial.discovery.root.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:spyglass"
+    },
+    "title": {
+      "translate": "advancements.jsindustrial.discovery.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

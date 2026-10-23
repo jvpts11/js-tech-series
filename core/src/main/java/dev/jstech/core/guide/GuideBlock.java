@@ -910,6 +910,34 @@ public sealed interface GuideBlock {
     }
 
     /**
+     * One figure drawn more than one way, with a switch over it choosing which: a diagram and the scene of its blocks,
+     * a section of the ground in lines and in colours. Each way is a figure of its own (a figure, a picture or a
+     * drawing, a scene, a multiblock or a structure), named on the switch by its word; the first is shown first, and
+     * the figure keeps one number whichever is shown.
+     *
+     * @param labelKeys the switch's word for each way, a sentence's key
+     * @param ways      the figures, one for each word, in the switch's order
+     */
+    record Modes(List<String> labelKeys, List<GuideBlock> ways) implements GuideBlock {
+
+        public Modes {
+            labelKeys = List.copyOf(labelKeys);
+            ways = List.copyOf(ways);
+            if (ways.size() < 2 || labelKeys.size() != ways.size()) {
+                throw new IllegalArgumentException("a figure drawn more than one way has two ways at least and a word"
+                        + " for each; got " + ways.size() + " ways and " + labelKeys.size() + " words");
+            }
+            for (final GuideBlock way : ways) {
+                if (!(way instanceof Figure || way instanceof Picture || way instanceof Scene
+                        || way instanceof Multiblock || way instanceof Structure)) {
+                    throw new IllegalArgumentException("a way of drawing a figure is a figure, a picture, a scene, a"
+                            + " multiblock or a structure, not " + way.getClass().getSimpleName());
+                }
+            }
+        }
+    }
+
+    /**
      * The page of a command a mod's computers run, read from the command itself as the manual is laid out
      * ({@link GuideFacts#command}): what it is for, how it is typed, what it does, a table of its options and one of
      * its examples, the systems it runs on, and the commands to read next. A mod makes the command's page at its

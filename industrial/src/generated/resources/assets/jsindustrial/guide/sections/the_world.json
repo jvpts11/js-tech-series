@@ -1,0 +1,8 @@
+{
+  "chapter": "jsindustrial",
+  "code": "GE",
+  "icon": "minecraft:iron_ore",
+  "id": "jsindustrial:the_world",
+  "order": 2,
+  "title": "jsindustrial.guide.section.the_world"
+}

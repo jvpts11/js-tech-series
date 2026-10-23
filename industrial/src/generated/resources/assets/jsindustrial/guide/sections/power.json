@@ -1,7 +1,8 @@
 {
   "chapter": "jsindustrial",
-  "icon": "jsindustrial:coal_generator",
+  "code": "EL",
+  "icon": "jscore:insulated_copper_cable",
   "id": "jsindustrial:power",
-  "order": 2,
+  "order": 4,
   "title": "jsindustrial.guide.section.power"
 }

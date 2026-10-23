@@ -24,9 +24,13 @@ The framework gathers what the machines of Mekanism, Thermal and EnderIO do, in 
   the machine makes into the inventory or line next to it, as the discharge pumps of real machines do, and
   **auto-input** pulls from a neighbour; each with its rate and its filters, per face and per resource.
 - **Its state is always in view**: the screen says whether it is working, waiting for input, has its output full, has no
-  energy, is on undervoltage, has a blown fuse, is damaged, or is turned off by redstone. In the world, a working
-  machine shows it, with its sound and particles for starting, working and stopping.
+  energy, is on undervoltage or overvoltage, has a blown fuse, is damaged, or is turned off by redstone. In the world, a
+  working machine shows it, with its sound and particles for starting, working and stopping.
 - **No wear.** A machine is only damaged by overvoltage, an explosion, sabotage or overheating.
+- **Failing safe.** A machine built to be forgotten, as a mod's sources from fusion up are, declares that it fails
+  safe: a fault of its own only stops it. A line however high keeps it from starting rather than burn it, heat past its
+  limit stops it to cool without taking its health, and it starts again once the fault is gone; what strikes it from
+  outside still damages it.
 - **Damage and repair.** A damaged machine looks cracked and works worse until it is repaired, the way Factorio's repair
   packs work: a **repair kit** is held and used on the machine and repairs it over a few seconds, spending itself as it
   goes. How much worse a damaged machine works, and the kits, are each mod's.

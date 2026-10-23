@@ -153,6 +153,10 @@ public final class GuideSearch {
 
     /** The line of a piece holding the words, a session's row among them, or empty when it holds none. */
     private static String lineHolding(final GuidePiece piece, final String wanted) {
+        // Every way of a figure drawn more than one way is searched, whichever is shown.
+        if (piece instanceof GuidePiece.Way way) {
+            return lineHolding(way.piece(), wanted);
+        }
         if (piece instanceof GuidePiece.Text text && text.text().toLowerCase(Locale.ROOT).contains(wanted)) {
             return text.text().strip();
         }

@@ -138,6 +138,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private boolean ticked;
     /* Its heat, for a machine that makes heat; declared from its constructor. */
     private @Nullable MachineHeat heat;
+    /* Whether a fault of its own only stops it and harms nothing; declared from its constructor. */
+    private boolean failsSafe;
     /* Its shaft, for a motor or a dynamo; declared from its constructor. */
     private @Nullable MachineShaft shaft;
     /* Its structure, for a multiblock's controller; declared from its constructor. */
@@ -809,6 +811,20 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     }
 
     /**
+     * Declares that it fails safe, as a source a player builds to forget does: called from its constructor. A fault of
+     * its own then only stops it, and it starts again once the fault is gone: a line however high keeps it from
+     * starting rather than burn its port, and heat past its limit stops it to cool without taking its health. What
+     * strikes it from outside, an explosion or sabotage, still damages it.
+     */
+    protected final void failsSafe() {
+        failsSafe = true;
+        final EnergyStore store = power.portStore();
+        if (store != null) {
+            store.failsSafe();
+        }
+    }
+
+    /**
      * Declares it the controller of a multiblock, as {@code declared} says: called once from its constructor. It
      * stands {@link MachineStatus#NOT_FORMED} until the world holds its structure whole, checked again whenever a
      * block it watches changes; whether it is formed is saved, and shown to whoever looks at it.
@@ -922,7 +938,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         power.tick();
         if (heat != null) {
             final int harm = heat.tick(running.get(), effect.heat());
-            if (harm > 0) {
+            if (harm > 0 && !failsSafe) {
                 damage(harm);
             }
         }
@@ -974,7 +990,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
 
     /*
      * What keeps it from working now, in the order a player is told: its structure, its switch, redstone, its fuse,
-     * its heat, its health.
+     * its heat, its health, its line's voltage.
      */
     private @Nullable MachineStatus stopped(final long now) {
         if (structure != null && !structure.formed()) {
@@ -994,6 +1010,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
         if (power.burnt() || health.wrecked()) {
             return MachineStatus.DAMAGED;
+        }
+        if (power.overvoltage(now)) {
+            return MachineStatus.OVERVOLTAGE;
         }
         return power.undervoltage(now) ? MachineStatus.UNDERVOLTAGE : null;
     }

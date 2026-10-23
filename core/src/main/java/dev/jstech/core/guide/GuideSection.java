@@ -18,14 +18,24 @@ import java.util.Objects;
  * @param titleKey its title's sentence
  * @param icon     the item drawn beside it on the chapter's opening page, or empty
  * @param chapter  the id of the chapter it belongs to
+ * @param code     in a manual drawn as a set of drawings, the letters its drawings are numbered by, as a real set
+ *                 numbers each discipline's sheets ({@code GS} gives JI-GS-001); empty to number it by its place, in
+ *                 hundreds
  */
-public record GuideSection(String id, int order, String titleKey, String icon, String chapter) {
+public record GuideSection(String id, int order, String titleKey, String icon, String chapter, String code) {
 
     public GuideSection {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(titleKey, "titleKey");
         icon = icon == null ? "" : icon;
         chapter = chapter == null || chapter.isEmpty() ? GuideIds.namespace(id) : chapter;
+        code = code == null ? "" : code;
+    }
+
+    /** A section of a chapter, its drawings numbered by its place. */
+    public GuideSection(final String id, final int order, final String titleKey, final String icon,
+                        final String chapter) {
+        this(id, order, titleKey, icon, chapter, "");
     }
 
     /** A section of its mod's main chapter. */

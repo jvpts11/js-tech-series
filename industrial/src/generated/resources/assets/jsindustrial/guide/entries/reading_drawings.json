@@ -33,16 +33,16 @@
       "text": "jsindustrial.guide.reading_drawings.text1"
     },
     {
-      "type": "break",
-      "to": "column"
-    },
-    {
       "type": "heading",
       "text": "jsindustrial.guide.reading_drawings.heading2"
     },
     {
       "type": "text",
       "text": "jsindustrial.guide.reading_drawings.text2"
+    },
+    {
+      "type": "break",
+      "to": "column"
     },
     {
       "type": "heading",
@@ -71,6 +71,14 @@
     {
       "type": "text",
       "text": "jsindustrial.guide.reading_drawings.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.reading_drawings.heading6"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.text6"
     },
     {
       "type": "heading",
@@ -104,6 +112,7 @@
     {
       "type": "see",
       "entries": [
+        "jsindustrial:single_line_diagrams",
         "jsindustrial:coal_generator"
       ]
     }

@@ -6,7 +6,29 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+### API
+- Machines that fail safe, and J's Industrial's own API: J's Core's API stays at version 12 and
+  J's Industrial's is at version 1, all experimental. A machine declares from its constructor that it fails safe
+  (`MachineBlockEntity.failsSafe`, and its port's `EnergyStore.failsSafe`). `MachineStatus.OVERVOLTAGE` is a machine
+  that refused a line above its class rather than burn, read through `MachinePower.overvoltage` and shown on its face
+  with `MachineScreenTexts.LCD_OVERVOLTAGE`. J's Industrial's API is the package `dev.jstech.industrial.api`:
+  `JsIndustrialApi.VERSION`, `Consequences.of` (the switch every consequence of the mod has, on unless a server turns
+  it off, saying what happens instead), `IndustrialAdvancementTab` (the four tabs an add-on hangs its advancements
+  under) and `IndustrialSoundGroup` (the groups its sounds are mixed in, each in a channel of the Core's).
+
+### Added
+- The four tabs of its advancements: Foundation opens with the first machine, Industrialisation at the
+  third tier, Discovery with a team's first discovery and Transcendence at the sixth tier.
+- The Plant Drawings by the sections of the mod's design, each lettered for its trade: Reading the
+  drawings, Getting Started, The World, Metallurgy, Power, Machines, Fluids and Gases, Chemistry, Conveyors, Clean
+  Room, Science, Nuclear, Transcendence, The Aleph and Tools and Armour; a section shows once it has its first
+  drawing. Reading the drawings has a sheet for each kind of drawing the sections use, its symbols and a small
+  example: single-line diagrams and P&IDs, which a switch shows as the scene of their blocks, and geological
+  sections, which it shows in the rocks' own colours.
+
 ### Changed
+- Plant Drawings: every machine is shown as its block, which the reader turns and brings closer, with
+  its balloons on it, in place of its three line views.
 - Listeners declared: every class of the three mods that answers the game's events is
   handed to the buses from its mod's constructor, through a `listen` method of its own, rather than found by an
   annotation, so what runs is what the constructor says; a mod's mistake in what it declares stops the load saying

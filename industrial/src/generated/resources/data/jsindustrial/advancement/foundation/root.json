@@ -1,0 +1,38 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "jsindustrial:coal_generator",
+              "jsindustrial:macerator",
+              "jsindustrial:compressor",
+              "jsindustrial:electric_furnace"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/bricks.png",
+    "description": {
+      "translate": "advancements.jsindustrial.foundation.root.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsindustrial:coal_generator"
+    },
+    "title": {
+      "translate": "advancements.jsindustrial.foundation.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

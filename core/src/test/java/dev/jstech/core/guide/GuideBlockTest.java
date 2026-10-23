@@ -19,6 +19,25 @@ import org.junit.jupiter.api.Test;
 class GuideBlockTest {
 
     @Test
+    void modes_haveTwoWaysAtLeastAndAWordForEach() {
+        final GuideBlock.Picture one = new GuideBlock.Picture("a:one", "", "{}", 0, 40, "one");
+        final GuideBlock.Picture two = new GuideBlock.Picture("a:two", "", "{}", 0, 40, "two");
+
+        assertEquals(2, new GuideBlock.Modes(List.of("first", "second"), List.of(one, two)).ways().size());
+        assertThrows(IllegalArgumentException.class, () -> new GuideBlock.Modes(List.of("first"), List.of(one)));
+        assertThrows(IllegalArgumentException.class, () -> new GuideBlock.Modes(List.of("first"), List.of(one,
+                two)));
+    }
+
+    @Test
+    void modes_drawOnlyFiguresEachWay() {
+        final GuideBlock.Picture one = new GuideBlock.Picture("a:one", "", "{}", 0, 40, "one");
+
+        assertThrows(IllegalArgumentException.class, () -> new GuideBlock.Modes(List.of("first", "second"),
+                List.of(one, new GuideBlock.Paragraph("words"))));
+    }
+
+    @Test
     void scene_spansFromTheGridsCornerToItsFarthestBlock() {
         final GuideBlock.Scene scene = scene(List.of(block(0, 0, 0), block(2, 1, 0), block(0, 3, 4)), List.of());
 

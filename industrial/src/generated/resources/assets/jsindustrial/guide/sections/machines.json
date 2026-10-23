@@ -1,7 +1,8 @@
 {
   "chapter": "jsindustrial",
-  "icon": "jsindustrial:macerator",
+  "code": "MC",
+  "icon": "jsindustrial:compressor",
   "id": "jsindustrial:machines",
-  "order": 1,
+  "order": 5,
   "title": "jsindustrial.guide.section.machines"
 }

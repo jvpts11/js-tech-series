@@ -1,24 +1,53 @@
 {
   "blocks": [
     {
-      "type": "views",
-      "callouts": [
+      "type": "scene",
+      "balloons": [
         {
           "number": 1,
-          "text": "jsindustrial.manual.the_front",
-          "u": 8,
-          "v": 8,
-          "view": "front"
+          "part": {
+            "box": [
+              3,
+              3,
+              15,
+              13,
+              13,
+              16
+            ],
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "text": "jsindustrial.guide.electric_furnace.balloon1"
         },
         {
           "number": 2,
-          "text": "jsindustrial.manual.any_side",
-          "u": 8,
-          "v": 8,
-          "view": "side"
+          "part": {
+            "box": [
+              15,
+              3,
+              3,
+              16,
+              13,
+              13
+            ],
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "text": "jsindustrial.guide.electric_furnace.balloon2"
         }
       ],
-      "item": "jsindustrial:electric_furnace"
+      "blocks": [
+        {
+          "state": "jsindustrial:electric_furnace[facing=south]",
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "caption": "jsindustrial.guide.electric_furnace.figure1",
+      "height": 70
     },
     {
       "type": "note",
@@ -113,7 +142,7 @@
   "items": [
     "jsindustrial:electric_furnace"
   ],
-  "order": 4,
-  "section": "jsindustrial:machines",
+  "order": 6,
+  "section": "jsindustrial:getting_started",
   "title": "jsindustrial.guide.electric_furnace.title"
 }

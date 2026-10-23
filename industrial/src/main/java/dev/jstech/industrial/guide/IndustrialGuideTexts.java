@@ -12,8 +12,7 @@ import dev.jstech.core.text.TextKey;
 
 /**
  * The words many drawings of J's Industrial share, each declared once and translated once: where the machines and
- * the series' shared content come from, the plan every machine is set up by, and what the balloons on every machine's
- * views point at.
+ * the series' shared content come from, and the plan every machine is set up by.
  */
 @TextHolder
 public final class IndustrialGuideTexts {
@@ -29,10 +28,6 @@ public final class IndustrialGuideTexts {
     public static final TextKey GENERATOR = TextKey.of("jsindustrial.manual.generator", "Generator");
     public static final TextKey SECOND_GENERATOR = TextKey.of("jsindustrial.manual.second_generator",
             "second generator (optional)");
-    public static final TextKey THE_FRONT = TextKey.of("jsindustrial.manual.the_front",
-            "The front: the side you open it from.");
-    public static final TextKey ANY_SIDE = TextKey.of("jsindustrial.manual.any_side",
-            "Power and items go in on any side.");
 
     private IndustrialGuideTexts() {
     }

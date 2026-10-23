@@ -5,8 +5,12 @@ Performance, the settings and their keys, compatibility with other mods, and how
 ## What exists today
 
 J's Industrial has its three machines, the Coal Generator and one energy cable, built on J's Core's machine framework,
-cable block and energy grid. It has no settings of its own yet; J's Core's settings system (files, screen, ranges) is
-ready for them.
+cable block and energy grid. It has no settings of its own yet: each setting below waits for its mechanic, and
+`jsindustrial-server.toml` is born with the first. Every consequence will be made with the switch of the mod's API
+(`Consequences.of`), on by default and saying what happens when it is off. A source built to be forgotten declares
+that it fails safe, through J's Core's machine kit: a line too high only keeps it from starting, heat past its limit
+stops it without harm, and nothing it does of itself damages it; J's Core's containment already stops taking more and
+releases nothing without energy.
 
 ## To build
 

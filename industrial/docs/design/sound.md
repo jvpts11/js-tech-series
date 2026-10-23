@@ -5,7 +5,10 @@ J's Industrial sounds like real industry: machines, power, air, alarms. The soun
 
 ## What exists today
 
-None of its own.
+No sounds yet. The groups below are declared (`IndustrialSoundGroup`), each mixed in one of J's Core's channels
+(machines, power, air and fluids, science in the Machines channel; safety in Alerts; the Clean Room and Transcendence
+in Ambience), with the two rules: a machine drawing more power sounds louder, and an alarm carries far. The sounds
+come with their machines, in a pass of their own.
 
 ## To build
 

@@ -1,0 +1,30 @@
+# The public API of the mod in the folder 'industrial': every type and member a mod
+# built on it can reach. The number before a line is the version of the API that brought
+# it in the shape written there. Whatever came after the stable version carries
+# @ApiStatus.Experimental; the stable version rises only once what came up to
+# it meets the bar docs/API.md sets for a stable part. Kept by the API surface test,
+# which writes to build/api-photo what this file would have to say when the API changes.
+stable 0
+1 dev.jstech.industrial.api.Consequences  type final class
+1 dev.jstech.industrial.api.Consequences  static ConfigKey<Boolean> of(String, String, String, String)
+1 dev.jstech.industrial.api.IndustrialAdvancementTab  type enum
+1 dev.jstech.industrial.api.IndustrialAdvancementTab  DISCOVERY
+1 dev.jstech.industrial.api.IndustrialAdvancementTab  FOUNDATION
+1 dev.jstech.industrial.api.IndustrialAdvancementTab  INDUSTRIALISATION
+1 dev.jstech.industrial.api.IndustrialAdvancementTab  ResourceLocation advancement(String)
+1 dev.jstech.industrial.api.IndustrialAdvancementTab  ResourceLocation root()
+1 dev.jstech.industrial.api.IndustrialAdvancementTab  String path()
+1 dev.jstech.industrial.api.IndustrialAdvancementTab  TRANSCENDENCE
+1 dev.jstech.industrial.api.IndustrialSoundGroup  type enum
+1 dev.jstech.industrial.api.IndustrialSoundGroup  AIR_AND_FLUIDS
+1 dev.jstech.industrial.api.IndustrialSoundGroup  AudioChannel channel()
+1 dev.jstech.industrial.api.IndustrialSoundGroup  CLEAN_ROOM
+1 dev.jstech.industrial.api.IndustrialSoundGroup  MACHINES
+1 dev.jstech.industrial.api.IndustrialSoundGroup  POWER
+1 dev.jstech.industrial.api.IndustrialSoundGroup  SAFETY
+1 dev.jstech.industrial.api.IndustrialSoundGroup  SCIENCE
+1 dev.jstech.industrial.api.IndustrialSoundGroup  TRANSCENDENCE
+1 dev.jstech.industrial.api.IndustrialSoundGroup  boolean carriesFar()
+1 dev.jstech.industrial.api.IndustrialSoundGroup  boolean followsPower()
+1 dev.jstech.industrial.api.JsIndustrialApi  type final class
+1 dev.jstech.industrial.api.JsIndustrialApi  static final int VERSION

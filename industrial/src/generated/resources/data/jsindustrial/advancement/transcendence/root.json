@@ -1,0 +1,30 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "axis": "jscore:industrial_tier",
+        "step": "t6"
+      },
+      "trigger": "jscore:axis_step"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/obsidian.png",
+    "description": {
+      "translate": "advancements.jsindustrial.transcendence.root.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:end_crystal"
+    },
+    "title": {
+      "translate": "advancements.jsindustrial.transcendence.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

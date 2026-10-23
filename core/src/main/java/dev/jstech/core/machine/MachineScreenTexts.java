@@ -41,6 +41,7 @@ public final class MachineScreenTexts {
     public static final TextKey LCD_OUTPUT_FULL = TextKey.of("jscore.machine.screen.lcd.output_full", "OUT FULL");
     public static final TextKey LCD_NO_ENERGY = TextKey.of("jscore.machine.screen.lcd.no_energy", "NO POWER");
     public static final TextKey LCD_UNDERVOLTAGE = TextKey.of("jscore.machine.screen.lcd.undervoltage", "LOW LINE");
+    public static final TextKey LCD_OVERVOLTAGE = TextKey.of("jscore.machine.screen.lcd.overvoltage", "HI LINE");
     public static final TextKey LCD_FUSE_BLOWN = TextKey.of("jscore.machine.screen.lcd.fuse_blown", "FUSE OUT");
     public static final TextKey LCD_OVERHEATED = TextKey.of("jscore.machine.screen.lcd.overheated", "OVERHEAT");
     public static final TextKey LCD_TOO_SLOW = TextKey.of("jscore.machine.screen.lcd.too_slow", "TOO SLOW");

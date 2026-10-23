@@ -107,6 +107,14 @@ public final class MachinePower {
         return this.store != null && this.store.undervoltage(gameTime);
     }
 
+    /**
+     * Whether a live line of a class above met its port in tick {@code gameTime} or the one before, and the port
+     * refused it rather than burn: where its energy says so, or because the machine fails safe.
+     */
+    public boolean overvoltage(final long gameTime) {
+        return this.store != null && this.store.overvoltage(gameTime);
+    }
+
     /** Whether its fuse blew and cuts it off. */
     public boolean fuseBlown() {
         return this.protection != null && this.protection.cut();

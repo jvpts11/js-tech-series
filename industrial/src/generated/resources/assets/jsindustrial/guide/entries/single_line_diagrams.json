@@ -1,0 +1,375 @@
+{
+  "blocks": [
+    {
+      "type": "picture",
+      "caption": "jsindustrial.guide.single_line_diagrams.figure1",
+      "data": {
+        "boreholes": [],
+        "columns": [],
+        "faults": [],
+        "legend": [
+          "generator",
+          "breaker",
+          "transformer",
+          "bus",
+          "line",
+          "motor"
+        ],
+        "lines": [],
+        "symbols": [],
+        "veins": []
+      },
+      "drawing": "jsindustrial:single_line",
+      "height": 118
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "modes",
+      "labels": [
+        "jsindustrial.guide.single_line_diagrams.modes1_way1",
+        "jsindustrial.guide.single_line_diagrams.modes1_way2"
+      ],
+      "ways": [
+        {
+          "type": "picture",
+          "caption": "jsindustrial.guide.single_line_diagrams.figure2",
+          "data": {
+            "boreholes": [],
+            "columns": [],
+            "faults": [],
+            "lines": [
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 75,
+                "x1": 75,
+                "y0": 19,
+                "y1": 28
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 75,
+                "x1": 75,
+                "y0": 34,
+                "y1": 42
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 27,
+                "x1": 27,
+                "y0": 45,
+                "y1": 54
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 27,
+                "x1": 27,
+                "y0": 60,
+                "y1": 68
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 75,
+                "x1": 75,
+                "y0": 45,
+                "y1": 54
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 75,
+                "x1": 75,
+                "y0": 60,
+                "y1": 68
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 123,
+                "x1": 123,
+                "y0": 45,
+                "y1": 54
+              },
+              {
+                "arrow": false,
+                "dashed": false,
+                "x0": 123,
+                "x1": 123,
+                "y0": 60,
+                "y1": 68
+              }
+            ],
+            "symbols": [
+              {
+                "kind": "generator",
+                "note": "20 FE/t",
+                "tag": "COAL GEN 1",
+                "x": 75,
+                "y": 12
+              },
+              {
+                "kind": "breaker",
+                "note": "",
+                "tag": "CB-1",
+                "x": 75,
+                "y": 31
+              },
+              {
+                "kind": "bus",
+                "tag": "BUS A",
+                "to": 146,
+                "x": 5,
+                "y": 42
+              },
+              {
+                "kind": "breaker",
+                "note": "",
+                "tag": "",
+                "x": 27,
+                "y": 57
+              },
+              {
+                "kind": "motor",
+                "note": "40 FE/t",
+                "tag": "MACERATOR",
+                "under": true,
+                "x": 27,
+                "y": 76
+              },
+              {
+                "kind": "breaker",
+                "note": "",
+                "tag": "",
+                "x": 75,
+                "y": 57
+              },
+              {
+                "kind": "motor",
+                "note": "30 FE/t",
+                "tag": "COMPRESSOR",
+                "under": true,
+                "x": 75,
+                "y": 76
+              },
+              {
+                "kind": "breaker",
+                "note": "",
+                "tag": "",
+                "x": 123,
+                "y": 57
+              },
+              {
+                "kind": "motor",
+                "note": "30 FE/t",
+                "tag": "FURNACE",
+                "under": true,
+                "x": 123,
+                "y": 76
+              }
+            ],
+            "veins": []
+          },
+          "drawing": "jsindustrial:single_line",
+          "height": 100
+        },
+        {
+          "type": "scene",
+          "balloons": [
+            {
+              "number": 1,
+              "part": {
+                "x": 0,
+                "y": 0,
+                "z": 2
+              },
+              "text": "jsindustrial.guide.single_line_diagrams.balloon1"
+            },
+            {
+              "number": 2,
+              "part": {
+                "x": 4,
+                "y": 0,
+                "z": 0
+              },
+              "text": "jsindustrial.guide.single_line_diagrams.balloon2"
+            },
+            {
+              "number": 3,
+              "part": {
+                "x": 4,
+                "y": 0,
+                "z": 2
+              },
+              "text": "jsindustrial.guide.single_line_diagrams.balloon3"
+            },
+            {
+              "number": 4,
+              "part": {
+                "x": 4,
+                "y": 0,
+                "z": 4
+              },
+              "text": "jsindustrial.guide.single_line_diagrams.balloon4"
+            }
+          ],
+          "blocks": [
+            {
+              "state": "jsindustrial:coal_generator[facing=south]",
+              "x": 0,
+              "y": 0,
+              "z": 2
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:insulated_copper_cable\"}],Links:[I;0,0,0,0,0,0,0,4144,0]}",
+              "state": "jscore:cable",
+              "x": 1,
+              "y": 0,
+              "z": 2
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:insulated_copper_cable\"}],Links:[I;0,0,0,0,0,0,0,48,0]}",
+              "state": "jscore:cable",
+              "x": 2,
+              "y": 0,
+              "z": 2
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:insulated_copper_cable\"}],Links:[I;0,0,0,0,0,0,0,8232,0]}",
+              "state": "jscore:cable",
+              "x": 3,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:insulated_copper_cable\"}],Links:[I;0,0,0,0,0,0,0,12,0]}",
+              "state": "jscore:cable",
+              "x": 3,
+              "y": 0,
+              "z": 1
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:insulated_copper_cable\"}],Links:[I;0,0,0,0,0,0,0,8252,0]}",
+              "state": "jscore:cable",
+              "x": 3,
+              "y": 0,
+              "z": 2
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:insulated_copper_cable\"}],Links:[I;0,0,0,0,0,0,0,12,0]}",
+              "state": "jscore:cable",
+              "x": 3,
+              "y": 0,
+              "z": 3
+            },
+            {
+              "data": "{Wires:[{cable:\"jscore:insulated_copper_cable\"}],Links:[I;0,0,0,0,0,0,0,8228,0]}",
+              "state": "jscore:cable",
+              "x": 3,
+              "y": 0,
+              "z": 4
+            },
+            {
+              "state": "jsindustrial:macerator[facing=south]",
+              "x": 4,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "state": "jsindustrial:compressor[facing=south]",
+              "x": 4,
+              "y": 0,
+              "z": 2
+            },
+            {
+              "state": "jsindustrial:electric_furnace[facing=south]",
+              "x": 4,
+              "y": 0,
+              "z": 4
+            }
+          ],
+          "caption": "jsindustrial.guide.single_line_diagrams.figure3",
+          "height": 60,
+          "view": {
+            "pitch": 30.0,
+            "zoom": 1.6
+          }
+        }
+      ]
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.single_line_diagrams.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.single_line_diagrams.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.single_line_diagrams.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.single_line_diagrams.use1",
+        "jsindustrial.guide.single_line_diagrams.use2",
+        "jsindustrial.guide.single_line_diagrams.use3"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.single_line_diagrams.fix1",
+          "problem": "jsindustrial.guide.single_line_diagrams.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:making_and_moving_power"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:coal_generator",
+  "id": "jsindustrial:single_line_diagrams",
+  "order": 1,
+  "section": "jsindustrial:reading",
+  "title": "jsindustrial.guide.single_line_diagrams.title"
+}

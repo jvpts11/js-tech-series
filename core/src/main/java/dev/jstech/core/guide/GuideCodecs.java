@@ -43,6 +43,7 @@ import net.minecraft.util.ExtraCodecs;
  *  "view": {"yaw": -35, "pitch": 25, "zoom": 1},
  *  "balloons": [{"number": 1, "part": {"x": 0, "y": 0, "z": 0, "box": [5, 2, 15, 7, 4, 16]}, "text": "..."}]}
  * {"type": "multiblock", "multiblock": "mymod:coke_oven", "caption": "...", "height": 120}
+ * {"type": "modes", "labels": ["...", "..."], "ways": [{"type": "picture", ...}, {"type": "scene", ...}]}
  * }</pre>
  */
 public final class GuideCodecs {
@@ -69,7 +70,7 @@ public final class GuideCodecs {
     /** The type every kind of block is written with in a file, as {@link #BLOCK} reads it. */
     public static final Set<String> BLOCK_TYPES = Set.of("text", "heading", "figure", "picture", "table", "listing",
             "session", "recipes", "steps", "warning", "problems", "define", "see", "custom", "note", "break", "views",
-            "plan", "command", "scene", "multiblock", "structure");
+            "plan", "command", "scene", "multiblock", "structure", "modes");
 
     public static final Codec<GuideEntry> ENTRY = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("id").forGetter(GuideEntry::id),
@@ -88,7 +89,8 @@ public final class GuideCodecs {
             Codec.INT.optionalFieldOf("order", 0).forGetter(GuideSection::order),
             Codec.STRING.fieldOf("title").forGetter(GuideSection::titleKey),
             Codec.STRING.optionalFieldOf("icon", "").forGetter(GuideSection::icon),
-            Codec.STRING.optionalFieldOf("chapter", "").forGetter(GuideSection::chapter)
+            Codec.STRING.optionalFieldOf("chapter", "").forGetter(GuideSection::chapter),
+            Codec.STRING.optionalFieldOf("code", "").forGetter(GuideSection::code)
     ).apply(instance, GuideSection::new));
 
     public static final Codec<GuideChapter> CHAPTER = RecordCodecBuilder.create(instance -> instance.group(
@@ -357,6 +359,11 @@ public final class GuideCodecs {
                     Codec.INT.fieldOf("height").forGetter(GuideBlock.Structure::height),
                     Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Structure::captionKey)
             ).apply(instance, GuideBlock.Structure::new));
+    /* A figure drawn more than one way holds blocks itself, so it reads them through the codec of every block. */
+    private static final MapCodec<GuideBlock.Modes> MODES = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.STRING.listOf().fieldOf("labels").forGetter(GuideBlock.Modes::labelKeys),
+            Codec.lazyInitialized(() -> BLOCK).listOf().fieldOf("ways").forGetter(GuideBlock.Modes::ways)
+    ).apply(instance, GuideBlock.Modes::new));
     private static final MapCodec<GuideBlock.Multiblock> MULTIBLOCK = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
                     Codec.STRING.fieldOf("multiblock").forGetter(GuideBlock.Multiblock::multiblock),
@@ -393,6 +400,7 @@ public final class GuideCodecs {
             case GuideBlock.Scene scene -> "scene";
             case GuideBlock.Multiblock multiblock -> "multiblock";
             case GuideBlock.Structure structure -> "structure";
+            case GuideBlock.Modes modes -> "modes";
         };
     }
 
@@ -420,6 +428,7 @@ public final class GuideCodecs {
             case "scene" -> SCENE;
             case "multiblock" -> MULTIBLOCK;
             case "structure" -> STRUCTURE;
+            case "modes" -> MODES;
             default -> throw new IllegalArgumentException("no block of the type " + type);
         };
     }

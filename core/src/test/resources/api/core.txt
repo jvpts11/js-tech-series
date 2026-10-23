@@ -3678,6 +3678,7 @@ stable 4
 10 dev.jstech.core.energy.EnergyStore  long spend(long)
 10 dev.jstech.core.energy.EnergyStore  long stored()
 10 dev.jstech.core.energy.EnergyStore  new(String, Energy, EnergyClass, long, long, long, Runnable)
+12 dev.jstech.core.energy.EnergyStore  void failsSafe()
 10 dev.jstech.core.energy.EnergyStore  void guardedBy(EnergyProtection)
 10 dev.jstech.core.energy.EnergyStore  void load(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.energy.EnergyStore  void meetWrongClass(WrongClass, EnergyClass, long)
@@ -5204,6 +5205,7 @@ stable 4
 10 dev.jstech.core.guide.GuideBlock.Heading  boolean leadsIntoTrouble()
 10 dev.jstech.core.guide.GuideBlock.Listing  type record(String name, String language, List<String> lines) implements GuideBlock
 10 dev.jstech.core.guide.GuideBlock.Listing  String text()
+12 dev.jstech.core.guide.GuideBlock.Modes  type record(List<String> labelKeys, List<GuideBlock> ways) implements GuideBlock
 10 dev.jstech.core.guide.GuideBlock.Multiblock  type record(String multiblock, SceneView view, int height, String captionKey) implements GuideBlock
 10 dev.jstech.core.guide.GuideBlock.Multiblock  Scene scene(List<SceneBlock>)
 10 dev.jstech.core.guide.GuideBlock.Multiblock  static List<SceneBlock> blocksOf(ShapePreview, UnaryOperator<String>)
@@ -5409,6 +5411,7 @@ stable 4
 10 dev.jstech.core.guide.GuideLayout  static final int SESSION_HEAD
 10 dev.jstech.core.guide.GuideLayout  static final int SESSION_PAD
 10 dev.jstech.core.guide.GuideLayout  static final int SMALL_RECIPE_ROW
+12 dev.jstech.core.guide.GuideLayout  static final int SWITCH_ROW
 10 dev.jstech.core.guide.GuideLayout  static final int TITLE_BLOCK_HEIGHT
 10 dev.jstech.core.guide.GuideLayout  static final int TITLE_BLOCK_WIDTH
 10 dev.jstech.core.guide.GuideLayout  static final int VIEW
@@ -5465,8 +5468,12 @@ stable 4
 10 dev.jstech.core.guide.GuidePiece.SessionInk  PROMPT
 10 dev.jstech.core.guide.GuidePiece.SessionInk  TYPED
 10 dev.jstech.core.guide.GuidePiece.SessionRun  type record(String text, SessionInk ink)
+12 dev.jstech.core.guide.GuidePiece.Switch  type record(int x, int y, int width, int height, String group, List<String> labels) implements GuidePiece
 10 dev.jstech.core.guide.GuidePiece.Text  type record(int x, int y, String text, TextSize size, String colour, String link) implements GuidePiece
 10 dev.jstech.core.guide.GuidePiece.Views  type record(int x, int y, int width, String item, List<GuideBlock.Callout> callouts, List<String> labels) implements GuidePiece
+12 dev.jstech.core.guide.GuidePiece.Way  type record(String group, int way, GuidePiece piece) implements GuidePiece
+12 dev.jstech.core.guide.GuidePiece.Way  int x()
+12 dev.jstech.core.guide.GuidePiece.Way  int y()
 10 dev.jstech.core.guide.GuideProse  type final class
 10 dev.jstech.core.guide.GuideProse  static List<Early> usedBeforeExplained(GuideContents, IGuideText)
 10 dev.jstech.core.guide.GuideProse  static List<String> bareNumbers(String)
@@ -5484,8 +5491,9 @@ stable 4
 10 dev.jstech.core.guide.GuideSearch.Found  USE
 10 dev.jstech.core.guide.GuideSearch.Hit  type record(String text, String target, String folio, String icon, boolean term, int page, String line, Found found)
 10 dev.jstech.core.guide.GuideSearch.Hit  new(String, String, String, String, boolean, int, String)
-10 dev.jstech.core.guide.GuideSection  type record(String id, int order, String titleKey, String icon, String chapter)
+12 dev.jstech.core.guide.GuideSection  type record(String id, int order, String titleKey, String icon, String chapter, String code)
 10 dev.jstech.core.guide.GuideSection  new(String, int, String, String)
+12 dev.jstech.core.guide.GuideSection  new(String, int, String, String, String)
 10 dev.jstech.core.guide.GuideSite  type final class
 10 dev.jstech.core.guide.GuideSite  static Map<String, String> files(ManualReader, IGuideText, IRecipeWords, String)
 10 dev.jstech.core.guide.GuideSite  static String pathOf(String)
@@ -5865,6 +5873,7 @@ stable 4
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder layers()
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder listing(String, String...)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder listingIn(String, String, String...)
+12 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder modes(String...)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder multiblock(String, ResourceLocation, int)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder needs(ResourceLocation)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder nextColumn()
@@ -5921,6 +5930,7 @@ stable 4
 10 dev.jstech.core.guide.ModGuide.ManualBuilder  ManualBuilder titled(String)
 10 dev.jstech.core.guide.ModGuide.ManualBuilder  String register()
 10 dev.jstech.core.guide.ModGuide.SectionBuilder  type final class
+12 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder code(String)
 10 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder icon(Supplier<? extends ItemLike>)
 10 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder in(GuideChapter)
 10 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder titled(String)
@@ -7284,6 +7294,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  protected double outputShare()
 10 dev.jstech.core.machine.MachineBlockEntity  protected double progressShare()
 10 dev.jstech.core.machine.MachineBlockEntity  protected final UpgradeEffect withStructure(UpgradeEffect)
+12 dev.jstech.core.machine.MachineBlockEntity  protected final void failsSafe()
 10 dev.jstech.core.machine.MachineBlockEntity  protected final void formsWith(MachineStructure)
 10 dev.jstech.core.machine.MachineBlockEntity  protected final void holdsHeat(MachineHeat)
 10 dev.jstech.core.machine.MachineBlockEntity  protected final void turnsWith(MachineShaft)
@@ -7440,6 +7451,7 @@ stable 4
 10 dev.jstech.core.machine.MachinePower  Optional<EnergyClass> portClass()
 10 dev.jstech.core.machine.MachinePower  boolean burnt()
 10 dev.jstech.core.machine.MachinePower  boolean fuseBlown()
+12 dev.jstech.core.machine.MachinePower  boolean overvoltage(long)
 10 dev.jstech.core.machine.MachinePower  boolean undervoltage(long)
 10 dev.jstech.core.machine.MachinePower  long builtCapacity()
 10 dev.jstech.core.machine.MachinePower  long capacity()
@@ -7657,6 +7669,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_OFF_BY_REDSTONE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_OUTPUT_FULL
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_OVERHEATED
+12 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_OVERVOLTAGE
 11 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_SPAN
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_SWITCHED_OFF
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey LCD_TOO_SLOW
@@ -7829,6 +7842,7 @@ stable 4
 10 dev.jstech.core.machine.MachineStatus  OFF_BY_REDSTONE
 10 dev.jstech.core.machine.MachineStatus  OUTPUT_FULL
 10 dev.jstech.core.machine.MachineStatus  OVERHEATED
+12 dev.jstech.core.machine.MachineStatus  OVERVOLTAGE
 10 dev.jstech.core.machine.MachineStatus  SWITCHED_OFF
 10 dev.jstech.core.machine.MachineStatus  String serializedName()
 10 dev.jstech.core.machine.MachineStatus  TOO_SLOW

@@ -6,16 +6,28 @@ chapter, which also shows in the series' Technical Reference.
 
 ## What exists today
 
-Plant Drawings exists, with its chapter in the Technical Reference, four sections and seven entries:
+Plant Drawings exists, with its chapter in the Technical Reference. All the sections of the table below are declared,
+each numbering its drawings by the letters of its trade, as a real set does (JI-GS-001); a section shows once it has
+its first drawing, and the drawing list heads each section's drawings with its title. Those with drawings today:
 
-| Section | Entries |
-| --- | --- |
-| Reading the drawings | How to read these drawings |
-| Machines | Coal Generator, Compressor, Macerator, Electric Furnace |
-| Power | Power: making it and moving it |
-| Materials | Materials: dust, ingots, plates |
+| Section | Letters | Entries |
+| --- | --- | --- |
+| Reading the drawings | GN | How to read these drawings; Reading single-line diagrams; Reading P&IDs; Reading geological sections |
+| Getting Started | GS | Coal Generator, Macerator, Electric Furnace |
+| Metallurgy | MT | Materials: dust, ingots, plates |
+| Power | EL | Power: making it and moving it |
+| Machines | MC | Compressor |
+| Fluids and Gases | PI | Tank |
 
-Each machine is shown today as a drawing in three views.
+The others are lettered GE (The World), CH (Chemistry), CV (Conveyors), CR (Clean Room), SC (Science), NU (Nuclear), TR
+(Transcendence), AL (The Aleph) and TA (Tools and Armour).
+
+- **Machines show as their model**, the block in a scene the reader turns and brings closer, with its balloons on it.
+- **The drawings of the trades** are J's Industrial's own, drawn in the sheet's colours: single-line diagrams in the
+  symbols of IEC 60617, P&IDs in those of ISA 5.1, and geological sections in the hatching of each kind of rock.
+  Reading the drawings has a sheet for each, with its symbols and a small example. A switch over the example shows a
+  single-line diagram or a P&ID as the scene of its blocks, and a geological section in the rocks' own colours, each
+  layer in its block's texture; a part of a P&ID the mod does not have yet stands in its scene as a plain block.
 
 ## To build
 
@@ -40,8 +52,9 @@ The sections follow the pages of this design, each in the style of drawing its r
 | The Aleph | its laws, biomes and beings, as a **field notebook** that fills in as the Aleph is explored; what hasn't been seen shows as "not observed" | |
 | Tools and Armour | | |
 
-- **Machines show as their model**, the block's or the multiblock's, instead of a blue drawing; the system diagrams
-  (single-line, P&ID) stay, because they show how things connect, not one machine.
+- **More manuals, as J's Computers has.** J's Industrial will have several manuals of its own beside the Plant
+  Drawings; the Aleph will likely be one, a field notebook drawn as a ruled notebook written in pencil, what has not
+  been seen marked NOT OBSERVED. Which manuals there are, and what goes in each, is settled with that content.
 - **Safety data sheets.** Each hazardous material has a page in the style of real safety data sheets, with the **GHS
   pictograms** (flammable, toxic, corrosive, oxidising, gas under pressure, health hazard, environment, explosive) and
   the gear that protects from it ([Tools and armour](tools-and-armour.md)). The pictograms come from the material's

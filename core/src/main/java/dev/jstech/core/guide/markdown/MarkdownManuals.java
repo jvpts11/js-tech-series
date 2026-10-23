@@ -139,7 +139,7 @@ public final class MarkdownManuals {
                     final String id = qualified(ns, head.get("id", file.name()));
                     if (this.first(id, file)) {
                         this.sections.put(id, new GuideSection(id, head.number("order", 0), title,
-                                head.get("icon", ""), head.get("chapter", ns)));
+                                head.get("icon", ""), head.get("chapter", ns), head.get("code", "")));
                     }
                 }
                 case "chapter" -> {

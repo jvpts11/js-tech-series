@@ -6,7 +6,12 @@ keeps what J's Industrial adds on top of it, and the design behind it.
 
 ## What exists today
 
-Nothing of J's Industrial's own: add-ons use J's Core's API.
+The package `dev.jstech.industrial.api`, at version 1, all of it experimental: the number of the API
+(`JsIndustrialApi.VERSION`); the switch every consequence of the mod has (`Consequences.of`, on unless a server turns
+it off, saying what happens instead); the four tabs of its advancements, which an add-on hangs its own under
+(`IndustrialAdvancementTab`); and the groups its sounds are kept in, each mixed in one of J's Core's channels
+(`IndustrialSoundGroup`). It is written down line by line and held to that by the test of the API's surface, and
+explained in the mod's guide for mod authors. Everything else an add-on builds with is J's Core's.
 
 ## To build
 

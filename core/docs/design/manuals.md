@@ -25,6 +25,9 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
   scene sits in its own box: the step and its caption above ("2 of 3: it is pressed flat"), the timeline below with a
   mark for each step and the playhead, and buttons to step back, pause and step on.
 - **Animated pictures** on a page, from sprite sheets.
+- **One figure drawn more than one way**, with a switch over it: a diagram and the scene of its blocks, a section of
+  the ground in lines and in colours. A click on a word shows that way, every way in the same room, and the figure
+  keeps one number.
 - **Show it in the world**: from a page, a structure is projected into the world as ghosts, with the Structure Projector
   ([Multiblocks](multiblocks.md)).
 
@@ -42,6 +45,8 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
 
 ### For those who write
 
+- **A set of drawings numbered as a real one is**: each section's drawings by the section's letters, as a set numbers a
+  discipline's sheets (JI-GS-001), and its drawing list heads each section's drawings with its title.
 - **Live reload**: pages change in the game as they are edited, with no restart.
 - **Export to the web**: the same manual comes out as a static website, with search, so a mod's manual is also its
   online documentation, made from the same data.

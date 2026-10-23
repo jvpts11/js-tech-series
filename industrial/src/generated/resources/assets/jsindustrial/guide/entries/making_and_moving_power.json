@@ -81,6 +81,12 @@
           "problem": "jsindustrial.guide.making_and_moving_power.problem2"
         }
       ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:single_line_diagrams"
+      ]
     }
   ],
   "icon": "jsindustrial:coal_generator",
@@ -88,7 +94,7 @@
   "items": [
     "jscore:insulated_copper_cable"
   ],
-  "order": 5,
+  "order": 8,
   "section": "jsindustrial:power",
   "title": "jsindustrial.guide.making_and_moving_power.title"
 }

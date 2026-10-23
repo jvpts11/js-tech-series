@@ -109,6 +109,8 @@ public final class ManualScreen extends Screen {
     private final Map<String, Integer> colours = new HashMap<>();
     private final Map<String, Integer> tabColours = new HashMap<>();
     private final Map<String, CompoundTag> customData = new HashMap<>();
+    /* The way each figure drawn more than one way is shown in, by its switch; the first until the reader picks. */
+    private final Map<String, Integer> ways = new HashMap<>();
     /** The colours of each terminal a session names, read once when the manual's colours are. */
     private final Map<String, Map<String, Integer>> terminals = new HashMap<>();
     private final List<String> chapters = new ArrayList<>();
@@ -169,6 +171,10 @@ public final class ManualScreen extends Screen {
     /** How far below the lines of the index its dots sit, at the size they are drawn. */
     private static final int DOT_DROP = 6;
     private static final int DOT_PITCH = 3;
+    /** The room either side of a word of a figure's switch. */
+    private static final int SWITCH_PAD = 4;
+    /** How far under a switch a test looks at the figure it switches. */
+    private static final int SWITCHED_FIGURE = 60;
     /**
      * The row a link's underline is drawn on, the one under the letters' foot, as the game underlines text: a row
      * lower would touch the tall letters of the line below and read as a line struck through them.
@@ -199,7 +205,8 @@ public final class ManualScreen extends Screen {
     /** The title block's rows and the widths of its bottom row's cells. */
     private static final int BLOCK_ROW = 10;
     private static final int BLOCK_LAST_ROW = 22;
-    private static final int[] BLOCK_CELLS = {54, 62, 34};
+    /* The title block's last row: the number with its section's letters (JI-GS-001), the sheet, the revision. */
+    private static final int[] BLOCK_CELLS = {62, 58, 30};
     /** Every set of drawings is at its first revision. */
     private static final String REVISION = "A";
     private static final String SPACED_DASH = "  -  ";
@@ -477,6 +484,32 @@ public final class ManualScreen extends Screen {
         return this.linkPointOn(this.geometry.right(), this.rightPage(first), target);
     }
 
+    /**
+     * Where the word of the way {@code way} of the first switch on the spread shown stands, in the screen's
+     * coordinates, and below it the room its figure is drawn in, {@code x, y, width, height}; null when the spread
+     * shows no switch (client tests click it and look at the figure).
+     */
+    @Nullable
+    public int[] switchPoint(final int way) {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        for (final int index : new int[] {first, this.rightPage(first)}) {
+            final ManualScreenLayout.Rect page = index == first ? this.geometry.left() : this.geometry.right();
+            if (page == null || index < 0 || index >= this.book.pages().size()) {
+                continue;
+            }
+            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+                if (piece instanceof GuidePiece.Switch toggle && way >= 0 && way < toggle.labels().size()) {
+                    final int[] edges = this.switchEdges(toggle);
+                    final int x = this.left + page.x() + toggle.x();
+                    final int y = this.top + page.y() + toggle.y();
+                    return new int[] {x + (edges[way] + edges[way + 1]) / 2, y + toggle.height() / 2, x,
+                            y + toggle.height(), toggle.width(), SWITCHED_FIGURE};
+                }
+            }
+        }
+        return null;
+    }
+
     /** The middle of the Back button, in the screen's coordinates (client tests point at it). */
     public int[] backButtonPoint() {
         return this.middleOf(this.geometry.back());
@@ -499,7 +532,7 @@ public final class ManualScreen extends Screen {
             if (page == null || index < 0 || index >= this.book.pages().size()) {
                 continue;
             }
-            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+            for (final GuidePiece piece : this.shownPieces(index)) {
                 if (piece instanceof GuidePiece.Listing listing && listing.name().equals(name)) {
                     final int x = page.x() + listing.x();
                     final int y = page.y() + listing.y();
@@ -614,7 +647,7 @@ public final class ManualScreen extends Screen {
             if (page == null || index < 0 || index >= this.book.pages().size()) {
                 continue;
             }
-            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+            for (final GuidePiece piece : this.shownPieces(index)) {
                 if (piece instanceof GuidePiece.Recipes rows
                         && rows.first() < this.recipes.of(rows.type(), rows.output()).size()) {
                     final int inputs = this.recipes.of(rows.type(), rows.output()).get(rows.first()).inputs().size();
@@ -820,6 +853,9 @@ public final class ManualScreen extends Screen {
         // A recipe on a page opens in the recipe viewer installed, which comes back to the manual when it is closed.
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && RecipeViewers.showRecipesOf(this.recipeUnder)) {
             AudioEngine.playOnScreen(GuideSounds.CLICK);
+            return true;
+        }
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && this.switchAt(mx, my)) {
             return true;
         }
         final PlacedScene scene = this.sceneAt(mx, my);
@@ -1608,9 +1644,102 @@ public final class ManualScreen extends Screen {
         } else {
             this.drawRunning(g, page, shown, leftPage);
         }
-        for (final GuidePiece piece : shown.pieces()) {
+        for (final GuidePiece piece : this.shownPieces(index)) {
             this.drawPiece(g, page, piece, shown.chapter(), mx, my);
         }
+    }
+
+    /* A page's pieces as they are shown: of a figure drawn more than one way, only the way its switch stands at. */
+    private List<GuidePiece> shownPieces(final int index) {
+        final List<GuidePiece> all = this.book.pages().get(index).pieces();
+        final List<GuidePiece> shown = new ArrayList<>(all.size());
+        for (final GuidePiece piece : all) {
+            if (!(piece instanceof GuidePiece.Way way)) {
+                shown.add(piece);
+            } else if (this.ways.getOrDefault(way.group(), 0) == way.way()) {
+                shown.add(way.piece());
+            }
+        }
+        return shown;
+    }
+
+    /* The switch over a figure drawn more than one way: its words side by side, the way shown filled in. */
+    private void drawSwitch(final GuiGraphics g, final int x, final int y, final GuidePiece.Switch toggle,
+                            final String chapter) {
+        final int[] edges = this.switchEdges(toggle);
+        final int at = this.ways.getOrDefault(toggle.group(), 0);
+        final int line = this.colour(GuideStyle.RULE, chapter);
+        final int height = toggle.height() - 1;
+        g.fill(x + edges[0], y, x + edges[edges.length - 1], y + height, this.colour(GuideStyle.PAPER, chapter));
+        Draw.outline(g, x + edges[0], y, edges[edges.length - 1] - edges[0], height, line);
+        for (int i = 0; i < toggle.labels().size(); i++) {
+            final int cellX = x + edges[i];
+            if (i > 0) {
+                g.fill(cellX, y, cellX + 1, y + height, line);
+            }
+            final boolean shown = i == at;
+            if (shown) {
+                g.fill(cellX + 1, y + 1, x + edges[i + 1] - 1, y + height - 1, line);
+            }
+            GuideFonts.draw(g, this.font, this.switchWord(toggle, i), TextSize.SMALL, this.style, cellX + SWITCH_PAD,
+                    y + 2, this.colour(shown ? GuideStyle.PAPER : GuideStyle.INK, chapter));
+        }
+    }
+
+    /* Where a switch's cells start and end across its piece: a word each, side by side at the piece's right. */
+    private int[] switchEdges(final GuidePiece.Switch toggle) {
+        final int count = toggle.labels().size();
+        final int[] widths = new int[count];
+        int total = 0;
+        for (int i = 0; i < count; i++) {
+            widths[i] = GuideFonts.width(this.font, this.switchWord(toggle, i), TextSize.SMALL, this.style)
+                    + 2 * SWITCH_PAD;
+            total += widths[i];
+        }
+        final int[] edges = new int[count + 1];
+        edges[0] = toggle.width() - total;
+        for (int i = 0; i < count; i++) {
+            edges[i + 1] = edges[i] + widths[i];
+        }
+        return edges;
+    }
+
+    /* A switch's word, in capitals on a drawing, as a drawing letters everything. */
+    private String switchWord(final GuidePiece.Switch toggle, final int way) {
+        final String word = toggle.labels().get(way);
+        return this.drawing() ? word.toUpperCase(Locale.ROOT) : word;
+    }
+
+    /* A click on a word of a switch on the pages shown turns its figure to that way. */
+    private boolean switchAt(final double mx, final double my) {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        for (final int index : new int[] {first, this.rightPage(first)}) {
+            final ManualScreenLayout.Rect page = index == first ? this.geometry.left() : this.geometry.right();
+            if (page == null || index < 0 || index >= this.book.pages().size()) {
+                continue;
+            }
+            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+                if (!(piece instanceof GuidePiece.Switch toggle)) {
+                    continue;
+                }
+                final double px = mx - page.x() - toggle.x();
+                final double py = my - page.y() - toggle.y();
+                if (py < 0 || py >= toggle.height()) {
+                    continue;
+                }
+                final int[] edges = this.switchEdges(toggle);
+                for (int i = 0; i < toggle.labels().size(); i++) {
+                    if (px >= edges[i] && px < edges[i + 1]) {
+                        if (this.ways.getOrDefault(toggle.group(), 0) != i) {
+                            this.ways.put(toggle.group(), i);
+                            AudioEngine.playOnScreen(GuideSounds.CLICK);
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /** The head and the foot of a page: the chapter or the section, the folio and the manual's title. */
@@ -1766,6 +1895,9 @@ public final class ManualScreen extends Screen {
                     this.scenes.drawKey(g, x, y, key, mx, my);
                 }
             }
+            case GuidePiece.Switch toggle -> this.drawSwitch(g, x, y, toggle, chapter);
+            // The pages shown hand over a way's pieces already unwrapped; one met here is drawn as it is.
+            case GuidePiece.Way way -> this.drawPiece(g, page, way.piece(), chapter, mx, my);
         }
     }
 
@@ -2035,7 +2167,7 @@ public final class ManualScreen extends Screen {
         if (this.searching && page == this.geometry.left() || index < 0 || index >= this.book.pages().size()) {
             return null;
         }
-        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+        for (final GuidePiece piece : this.shownPieces(index)) {
             if (piece instanceof GuidePiece.Listing listing) {
                 final ManualScreenLayout.Rect rect = new ManualScreenLayout.Rect(page.x() + listing.x(),
                         page.y() + listing.y(), listing.width(), listing.height());
@@ -2070,7 +2202,7 @@ public final class ManualScreen extends Screen {
             if (page == null || index < 0 || index >= this.book.pages().size()) {
                 continue;
             }
-            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+            for (final GuidePiece piece : this.shownPieces(index)) {
                 if (piece instanceof GuidePiece.Scene scene && scene.id().equals(id)) {
                     return at.apply(new PlacedScene(scene, page.x() + scene.x(), page.y() + scene.y()));
                 }
@@ -2085,7 +2217,7 @@ public final class ManualScreen extends Screen {
         if (this.searching && page == this.geometry.left() || index < 0 || index >= this.book.pages().size()) {
             return null;
         }
-        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+        for (final GuidePiece piece : this.shownPieces(index)) {
             if (piece instanceof GuidePiece.Scene scene && new ManualScreenLayout.Rect(page.x() + scene.x(),
                     page.y() + scene.y(), scene.width(), scene.height()).contains(mx, my)) {
                 return new PlacedScene(scene, page.x() + scene.x(), page.y() + scene.y());
@@ -2116,7 +2248,7 @@ public final class ManualScreen extends Screen {
         if (index < 0 || index >= this.book.pages().size()) {
             return null;
         }
-        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+        for (final GuidePiece piece : this.shownPieces(index)) {
             if (piece instanceof GuidePiece.Plate plate) {
                 final List<String> row = plateRow(plate);
                 final int at = row.indexOf(item);
@@ -2133,7 +2265,7 @@ public final class ManualScreen extends Screen {
         if (index < 0 || index >= this.book.pages().size()) {
             return null;
         }
-        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+        for (final GuidePiece piece : this.shownPieces(index)) {
             if (piece instanceof GuidePiece.Text text && text.link().equals(target)) {
                 return new int[]{this.left + page.x() + text.x() + 2, this.top + page.y() + text.y() + 3};
             }
@@ -2540,7 +2672,7 @@ public final class ManualScreen extends Screen {
             final String wanted = found.getFirst().text();
             final String target = found.getFirst().target();
             for (int page = this.book.indexAt(); page < this.book.pages().size(); page++) {
-                for (final GuidePiece piece : this.book.pages().get(page).pieces()) {
+                for (final GuidePiece piece : this.shownPieces(page)) {
                     // A line too long for the index runs on, its page beside its last words.
                     if (piece instanceof GuidePiece.Leader leader && leader.link().equals(target)
                             && wanted.endsWith(leader.left())) {
@@ -2558,7 +2690,7 @@ public final class ManualScreen extends Screen {
         }
         final double px = mx - page.x();
         final double py = my - page.y();
-        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+        for (final GuidePiece piece : this.shownPieces(index)) {
             if (piece instanceof GuidePiece.Text text && !text.link().isEmpty() && py >= text.y() - 1
                     && py < text.y() + text.size().lineHeight() && px >= text.x()
                     && px < text.x() + GuideFonts.width(this.font, text.text(), text.size(), this.style)) {

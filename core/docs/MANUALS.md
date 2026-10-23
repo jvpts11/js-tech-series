@@ -101,7 +101,7 @@ What the header says depends on what the file is, which its `kind` says (an entr
 | Kind | Its header | Its body |
 | --- | --- | --- |
 | entry | `section` (required), `order`, `icon`, `covers` (the items it is the page of), `covers_family` (a family only your code knows, see below), `shows` (the items on the plate under its title, when they are others), `needs` (the knowledge it needs), and `id` when it is not the mod's id and the file's name | Its blocks |
-| `section` | `chapter` (the mod's main chapter unless it says), `order`, `icon` | Its title alone |
+| `section` | `chapter` (the mod's main chapter unless it says), `order`, `icon`, `code` (the letters a set of drawings numbers it by, below) | Its title alone |
 | `chapter` | `order`, `tab` (a palette's id or a colour written `"#AARRGGBB"`), `own_books_only: true` for a chapter the Technical Reference leaves out; the file named `chapter.md` is the mod's main chapter, any other `mymod:<name>` | What it is about, on its opening page |
 | `manual` | `style` and `chapters` (required; `[*]` for every chapter), `cover` (its cover's lines), `edition`, `part_number`, `priority`, `icon` | The paragraphs of its "About this manual" |
 
@@ -588,6 +588,27 @@ pack can change it, and it may be peeled layer by layer. Where its file is missi
 grid, the figure is left out. Its file is `{"type": "structure", "structure": "mymod:hut", "caption": "...",
 "height": 100}`.
 
+#### A figure drawn more than one way
+
+*Added 2026-10-23.*
+
+```java
+.modes("Diagram", "3D")
+.drawing("mymod:wiring", 100, wiring, "The kiln's wiring")
+.scene("The kiln's wiring, as its blocks", 70)
+.place(0, 0, 0, () -> MyContent.GENERATOR)
+.place(1, 0, 0, () -> MyContent.KILN, "facing=south", "")
+```
+
+One figure can be drawn more than one way: a diagram and the scene of its blocks, a section of the ground in lines
+and in colours. `modes` takes the switch's words, and the next as many figures (a figure, a picture or a drawing, a
+scene, a multiblock or a structure) are its ways, in the same order. The switch stands over the figure, at the
+column's right, the way shown filled in; a click on a word shows that way, and the first is shown first. Every way
+stands where the first does, in the room the tallest takes, and the figure keeps one number whichever is shown.
+Read as text, it is its number, then each way's word and caption; the search finds the words of every way. Its file
+is `{"type": "modes", "labels": ["...", "..."], "ways": [{"type": "picture", ...}, {"type": "scene", ...}]}`, and in
+Markdown a `modes` fence holds that JSON.
+
 ### Commands
 
 *Added 2026-10-11.*
@@ -725,8 +746,11 @@ Two helpers make the usual ones in code:
   game's own. The code font is drawn at its own size, so it should be a small one with lines no taller than eight
   pixels, as `jscore:fixed_5x8` is.
 - `folios` is `chapter_page` (3-14), `sequential` (1, 2, 3) or `drawing` (JI-102, with `drawing_prefix`). A set of
-  drawings opens with its drawing list in place of contents, the manual's `about` lines as the notes under it, and
-  has no index pages: its search still finds every entry by name.
+  drawings opens with its drawing list in place of contents, each section's drawings under its title, the manual's
+  `about` lines as the notes under it, and has no index pages: its search still finds every entry by name. A section
+  numbers its drawings by its place, in hundreds, unless it has letters of its own, as a real set numbers each
+  discipline's sheets: `GUIDE.section("power").titled("Power").code("EL")` makes its drawings JI-EL-001, JI-EL-002,
+  and the drawing list is sheet zero of the first section (JI-GN-000). A section with no drawing yet is not shown.
 - A chapter's tab takes its colour from the chapter's `tab`: a palette's id whose role `tab` it is, or a colour
   written `#AARRGGBB`.
 - `hold_bar` is the bar that fills while the manual key is held over an item this manual opens: `plain` (a thin bar

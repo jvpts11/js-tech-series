@@ -65,6 +65,10 @@ public final class GuideLayout {
     private String currentEntry = "";
     /** How many scenes the entry being laid has shown so far, which tells each from the others. */
     private int entryScenes;
+    /** How many figures drawn more than one way the manual has laid so far, which tells their switches apart. */
+    private int modeGroups;
+    /** Whether the ways of such a figure are being laid, which keep the room it took. */
+    private boolean measuring;
     /** The words the tables laid so far had to cut, too wide for any room they had. */
     private final List<String> cut = new ArrayList<>();
     private List<GuidePiece> pieces = new ArrayList<>();
@@ -89,6 +93,8 @@ public final class GuideLayout {
     private String pageLabel = "";
     private String drawing = "";
     private String drawingTitle = "";
+    /** The letters of the first section, which the drawing list is numbered by. */
+    private String listCode = "";
     private boolean open;
 
     /** Where the head of a page is written, and the rule under it; the client draws both. */
@@ -144,6 +150,8 @@ public final class GuideLayout {
     public static final String GLOSSARY = "glossary";
     /** The strip along the foot of a scene's frame, holding what the pointer does to it and its buttons. */
     public static final int SCENE_STRIP = 11;
+    /** How tall the switch over a figure drawn more than one way is. */
+    public static final int SWITCH_ROW = 11;
     /** A line of a scene's legend: how tall it is, and how far its words are set in past its balloon. */
     public static final int SCENE_KEY_ROW = 12;
     public static final int SCENE_KEY_ROOM = 15;
@@ -177,6 +185,10 @@ public final class GuideLayout {
     private static final int LIST_TITLE_X = 44;
     private static final int LIST_SHEETS_FROM_RIGHT = 90;
     private static final int LIST_ROW = 14;
+    /** How tall the row of a section's title is in the drawing list. */
+    private static final int LIST_HEADING_ROW = 10;
+    /** The room between a drawing's number and its title in the drawing list. */
+    private static final int LIST_NUMBER_GAP = 8;
     private static final int DRAWING_SECTION = 100;
     private static final String TAB = GuideStyle.TAB;
     private static final String ELLIPSIS = "...";
@@ -386,23 +398,29 @@ public final class GuideLayout {
             for (final GuideContents.Section section : chapter.sections()) {
                 sectionNo++;
                 sectionsBefore++;
-                this.numbers.put(section.section().id(), this.drawings
-                        ? this.drawingNumber((sectionsBefore - 1) * DRAWING_SECTION) : chapterNo + "." + sectionNo);
+                // A section with letters of its own numbers its drawings by them; one without, by its place.
+                final String code = section.section().code();
+                final int base = code.isEmpty() ? (sectionsBefore - 1) * DRAWING_SECTION : 0;
+                if (sectionsBefore == 1) {
+                    this.listCode = code;
+                }
+                this.numbers.put(section.section().id(), this.drawings ? this.drawingNumber(code, base)
+                        : chapterNo + "." + sectionNo);
                 int entryNo = 0;
                 for (final GuideEntry entry : section.entries()) {
                     entryNo++;
-                    this.numbers.put(entry.id(), this.drawings
-                            ? this.drawingNumber((sectionsBefore - 1) * DRAWING_SECTION + entryNo)
+                    this.numbers.put(entry.id(), this.drawings ? this.drawingNumber(code, base + entryNo)
                             : chapterNo + "." + sectionNo + "." + entryNo);
                 }
             }
         }
     }
 
-    /** A drawing's number: the style's letters and three figures, JI-102. */
-    private String drawingNumber(final int number) {
+    /** A drawing's number: the style's letters, its section's when it has them, and three figures, JI-GS-002. */
+    private String drawingNumber(final String code, final int number) {
         final String figures = String.format(Locale.ROOT, "%03d", number);
-        return this.style.drawingPrefix().isEmpty() ? figures : this.style.drawingPrefix() + "-" + figures;
+        final String lettered = code.isEmpty() ? figures : code + "-" + figures;
+        return this.style.drawingPrefix().isEmpty() ? lettered : this.style.drawingPrefix() + "-" + lettered;
     }
 
     private void chapter(final GuideContents.Chapter part) {
@@ -502,6 +520,11 @@ public final class GuideLayout {
     private void section(final GuideContents.Section part) {
         this.sectionLabel = this.numbers.get(part.section().id()) + " "
                 + this.text.text(part.section().titleKey());
+        if (this.drawings) {
+            // The drawing list heads each section's drawings with its title, as a set's list groups its disciplines.
+            this.drawingRows.add(new DrawingRow("", this.text.text(part.section().titleKey()).toUpperCase(Locale.ROOT),
+                    part.section().id(), true));
+        }
         boolean first = true;
         for (final GuideEntry entry : part.entries()) {
             this.entry(entry);
@@ -525,7 +548,7 @@ public final class GuideLayout {
             // A drawing's number and title stand in its title block, not over its views.
             this.drawing = number;
             this.drawingTitle = title;
-            this.drawingRows.add(new DrawingRow(number, title, entry.id()));
+            this.drawingRows.add(new DrawingRow(number, title, entry.id(), false));
         } else {
             this.lines(number + "  " + title, 0, this.width, TextSize.HEADING, GuideStyle.HEADING, "");
             this.y += TITLE_GAP;
@@ -588,7 +611,51 @@ public final class GuideLayout {
                         custom.data()));
                 this.y += height + BLOCK_GAP;
             }
+            case GuideBlock.Modes modes -> this.modes(modes, entry);
         }
+    }
+
+    /*
+     * A figure drawn more than one way: each way laid out alone first, to learn how tall it is; then the switch, and
+     * every way where the first stands, in the room the tallest takes, each piece marked with the way it belongs to.
+     * Nothing of it moves on to the next column but the whole, and it takes one number whichever way is shown.
+     */
+    private void modes(final GuideBlock.Modes modes, final GuideEntry entry) {
+        final int figuresBefore = this.figures;
+        final int scenesBefore = this.entryScenes;
+        final int startY = this.y;
+        int tallest = 0;
+        this.measuring = true;
+        for (final GuideBlock way : modes.ways()) {
+            final int from = this.pieces.size();
+            this.block(way, entry);
+            tallest = Math.max(tallest, this.y - startY);
+            this.pieces.subList(from, this.pieces.size()).clear();
+            this.y = startY;
+            this.figures = figuresBefore;
+            this.entryScenes = scenesBefore;
+        }
+        this.measuring = false;
+        this.ensure(SWITCH_ROW + tallest);
+        this.modeGroups++;
+        final String group = this.currentEntry + "#modes" + this.modeGroups;
+        this.place(new GuidePiece.Switch(this.x(), this.y, this.width, SWITCH_ROW, group,
+                modes.labelKeys().stream().map(this.text::text).toList()));
+        final int top = this.y + SWITCH_ROW;
+        int end = top;
+        this.measuring = true;
+        for (int i = 0; i < modes.ways().size(); i++) {
+            this.y = top;
+            this.figures = figuresBefore;
+            final int from = this.pieces.size();
+            this.block(modes.ways().get(i), entry);
+            for (int at = from; at < this.pieces.size(); at++) {
+                this.pieces.set(at, new GuidePiece.Way(group, i, this.pieces.get(at)));
+            }
+            end = Math.max(end, this.y);
+        }
+        this.measuring = false;
+        this.y = end;
     }
 
     /** A paragraph of running text, its links and keys drawn as such; nothing at all for no words. */
@@ -1445,6 +1512,10 @@ public final class GuideLayout {
 
     /** Moves on to the next column when what comes next is taller than the room left in this one. */
     private void ensure(final int height) {
+        // A figure drawn more than one way keeps its room as a whole, so none of its ways moves on alone.
+        if (this.measuring) {
+            return;
+        }
         if (this.y + height > this.bottom() && this.y > this.top) {
             this.nextColumn();
         }
@@ -1703,13 +1774,16 @@ public final class GuideLayout {
     }
 
     /**
-     * The drawing list a set of drawings opens with: each drawing's number, title and how many sheets it has, then
-     * the manual's notes on where to start; as many sheets of it as its rows need.
+     * The drawing list a set of drawings opens with: each drawing's number, title and how many sheets it has, under
+     * its section's title, then the manual's notes on where to start; as many sheets of it as its rows need.
      */
     private void layDrawingList(final List<GuideBook.Page> pages, final int[] sheets) {
         final String title = this.text.text(GuideTexts.DRAWING_LIST.key());
         final int x = this.style.margin();
-        final int titleX = x + LIST_TITLE_X;
+        // The titles stand clear of the widest number, which a section's letters make longer: JI-GS-001.
+        final int numbers = this.drawingRows.stream().filter(row -> !row.heading())
+                .mapToInt(row -> this.text.width(row.number(), TextSize.CODE)).max().orElse(0);
+        final int titleX = x + Math.max(LIST_TITLE_X, numbers + LIST_NUMBER_GAP);
         final int sheetsX = Math.max(titleX + LIST_TITLE_X, x + this.fullWidth - LIST_SHEETS_FROM_RIGHT);
         final int bottom = this.style.decor().titleBlock()
                 ? this.style.pageHeight() - FRAME - TITLE_BLOCK_HEIGHT - LABEL_GAP : bottom(this.style, 0);
@@ -1717,10 +1791,17 @@ public final class GuideLayout {
         List<GuidePiece> page = this.listSheet(title, x, titleX, sheetsX);
         int lineY = this.top + TextSize.TITLE.lineHeight() + 10;
         for (final DrawingRow row : this.drawingRows) {
-            if (lineY + LIST_ROW > bottom) {
+            // A section's title keeps to the sheet of its first drawing.
+            if (lineY + (row.heading() ? LIST_HEADING_ROW + LIST_ROW : LIST_ROW) > bottom) {
                 list.add(page);
                 page = this.listSheet(title, x, titleX, sheetsX);
                 lineY = this.top + TextSize.TITLE.lineHeight() + 10;
+            }
+            if (row.heading()) {
+                page.add(new GuidePiece.Text(x, lineY + 3, row.title(), TextSize.SMALL_BOLD, GuideStyle.ACCENT,
+                        row.target()));
+                lineY += LIST_HEADING_ROW;
+                continue;
             }
             lineY += 3;
             final Integer at = this.bodyTargets.get(row.target());
@@ -1747,7 +1828,8 @@ public final class GuideLayout {
             lineY += PARAGRAPH_GAP;
         }
         list.add(page);
-        final String number = this.drawingNumber(0);
+        // The list is sheet zero of the set, numbered as its first section is.
+        final String number = this.drawingNumber(this.listCode, 0);
         for (int i = 0; i < list.size(); i++) {
             pages.add(new GuideBook.Page(number, "", "", list.get(i), title, i + 1, list.size()));
         }
@@ -1924,6 +2006,7 @@ public final class GuideLayout {
     }
 
     /** A row of the drawing list: a drawing's number, its title, and the entry it is. */
-    private record DrawingRow(String number, String title, String target) {
+    /** A row of the drawing list: a drawing, or the title its section's drawings stand under. */
+    private record DrawingRow(String number, String title, String target, boolean heading) {
     }
 }

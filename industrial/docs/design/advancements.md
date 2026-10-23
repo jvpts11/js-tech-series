@@ -5,7 +5,9 @@ jokes most players will know, all of them public.
 
 ## What exists today
 
-None.
+The four tabs, each with its root: Foundation opens with the first machine in hand, Industrialisation on reaching
+T3, Discovery with a team's first discovery and Transcendence on reaching T6. The advancements in them come with the
+content.
 
 ## To build
 

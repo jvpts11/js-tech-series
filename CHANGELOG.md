@@ -118,6 +118,20 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `JsComputersApi.languages()`. `Device.fillsFromContainers` lets a bucket fill and empty a device's block, and
   `FluidBlockItem` is the item of a block that keeps its fluid in it. The old fixed catalogue of materials,
   `ModMaterial`, `MaterialForm` and `MaterialItems`, is gone: a mod declares the forms it uses with `MaterialUses.use`.
+- (Core, Industrial) Machines that fail safe, and J's Industrial's own API: J's Core's API stays at version 12 and
+  J's Industrial's is at version 1, all experimental. A machine declares from its constructor that it fails safe
+  (`MachineBlockEntity.failsSafe`, and its port's `EnergyStore.failsSafe`). `MachineStatus.OVERVOLTAGE` is a machine
+  that refused a line above its class rather than burn, read through `MachinePower.overvoltage` and shown on its face
+  with `MachineScreenTexts.LCD_OVERVOLTAGE`. J's Industrial's API is the package `dev.jstech.industrial.api`:
+  `JsIndustrialApi.VERSION`, `Consequences.of` (the switch every consequence of the mod has, on unless a server turns
+  it off, saying what happens instead), `IndustrialAdvancementTab` (the four tabs an add-on hangs its advancements
+  under) and `IndustrialSoundGroup` (the groups its sounds are mixed in, each in a channel of the Core's).
+- (Core) Figures drawn more than one way, and sections lettered: J's Core's API stays at version 12, all
+  experimental. `GuideBlock.Modes` is one figure with several ways of drawing it, declared with
+  `ModGuide.EntryBuilder.modes(words...)` before its ways and laid out as `GuidePiece.Switch` over the
+  `GuidePiece.Way` pieces of each way, in the room `GuideLayout.SWITCH_ROW` leaves for the switch. `GuideSection`
+  has a `code`, set with `ModGuide.SectionBuilder.code(letters)` (or `code:` in a Markdown section's header), that
+  numbers a set's drawings by those letters.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1384,8 +1398,28 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The scene in numbers: the MCP tool `scene_describe` tells an agent what the player sees, read along lines of
   sight across the view: the kinds of block with the nearest of each and where it lies, the creatures, players and
   items in sight, the way the player faces, the time, weather, light and biome.
+- (Core) Machines that fail safe: a source declared to fail safe, as the ones a player builds to forget are, is never
+  harmed by a fault of its own. A line however high only keeps it from starting, heat past its limit stops it to cool
+  without taking its health, and an arc flash neither burns it nor sets fire around it; an explosion from outside
+  still damages it.
+- (Core) Overvoltage, said: a machine that refuses a line above its class rather than burn says Overvoltage (HI LINE
+  on its display), and starts again by itself once the line is gone.
+- (Industrial) The four tabs of its advancements: Foundation opens with the first machine, Industrialisation at the
+  third tier, Discovery with a team's first discovery and Transcendence at the sixth tier.
+- (Core) Manuals: a figure drawn more than one way, with a switch over it, a click on a word showing it that way: a
+  diagram and the scene of its blocks, a section of the ground in lines and in colours.
+- (Core) Manuals: a set of drawings numbers each section's drawings by the section's letters, as a real set numbers a
+  discipline's sheets (JI-GS-001), and its drawing list heads each section's drawings with its title.
+- (Industrial) The Plant Drawings by the sections of the mod's design, each lettered for its trade: Reading the
+  drawings, Getting Started, The World, Metallurgy, Power, Machines, Fluids and Gases, Chemistry, Conveyors, Clean
+  Room, Science, Nuclear, Transcendence, The Aleph and Tools and Armour; a section shows once it has its first
+  drawing. Reading the drawings has a sheet for each kind of drawing the sections use, its symbols and a small
+  example: single-line diagrams and P&IDs, which a switch shows as the scene of their blocks, and geological
+  sections, which it shows in the rocks' own colours.
 
 ### Changed
+- (Industrial) Plant Drawings: every machine is shown as its block, which the reader turns and brings closer, with
+  its balloons on it, in place of its three line views.
 - (Core) The body's screen is declared in a file, so its look can change: a resource pack lays it out again and the
   style the player picks draws it, in the game's look by default. Beside what is worn and what it stops, it now holds
   how much heat the clothes let out and whether they keep the wind and the water out, and the core's warmth on a scale

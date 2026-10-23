@@ -299,6 +299,55 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_numbersASectionsDrawingsByItsLettersWhenItHasThem() {
+        final GuideBook book = drawings("GN", "MC");
+
+        assertEquals("JI-GN-001", book.numbers().get("alpha:intro"));
+        assertEquals("JI-MC-001", book.numbers().get("alpha:press"));
+        assertEquals("JI-MC-002", book.numbers().get("alpha:mill"));
+        assertEquals("JI-GN-000", book.pages().getFirst().folio(), "the list is sheet zero of the first section");
+    }
+
+    @Test
+    void lay_headsEachSectionsDrawingsWithItsTitleInTheList() {
+        final GuideBook book = drawings();
+
+        final List<GuidePiece> list = book.pages().getFirst().pieces();
+        final GuidePiece.Text head = list.stream().filter(piece -> piece instanceof GuidePiece.Text text
+                && text.text().equals("MACHINES.TITLE")).map(GuidePiece.Text.class::cast).findFirst().orElseThrow();
+        final GuidePiece.Text press = list.stream().filter(piece -> piece instanceof GuidePiece.Text text
+                && text.text().equals("press.title")).map(GuidePiece.Text.class::cast).findFirst().orElseThrow();
+        assertEquals(GuideStyle.ACCENT, head.colour(), "a section's title stands out from its drawings");
+        assertEquals("alpha:machines", head.link(), "and leads to its first drawing");
+        assertTrue(head.y() < press.y(), "over its drawings");
+    }
+
+    @Test
+    void lay_drawsAFigureMoreThanOneWayInOneRoomUnderItsSwitch() {
+        final GuideBlock.Modes modes = new GuideBlock.Modes(List.of("way.one", "way.two"), List.of(
+                new GuideBlock.Picture("a:short", "", "{}", 0, 40, "short.caption"),
+                new GuideBlock.Picture("a:tall", "", "{}", 0, 60, "tall.caption")));
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", modes,
+                new GuideBlock.Paragraph("after.text"), new GuideBlock.Figure("minecraft:stone", "next.caption"))))));
+
+        final List<GuidePiece> pieces = book.pages().get(book.pageOf("alpha:t").orElseThrow()).pieces();
+        final GuidePiece.Switch toggle = pieces.stream().filter(GuidePiece.Switch.class::isInstance)
+                .map(GuidePiece.Switch.class::cast).findFirst().orElseThrow();
+        assertEquals(List.of("way.one", "way.two"), toggle.labels());
+        final List<GuidePiece.Way> ways = pieces.stream().filter(GuidePiece.Way.class::isInstance)
+                .map(GuidePiece.Way.class::cast).filter(way -> way.piece() instanceof GuidePiece.Picture).toList();
+        assertEquals(2, ways.size(), "each way's picture is there, marked with its way");
+        assertEquals(ways.get(0).y(), ways.get(1).y(), "both ways stand where the first does");
+        assertTrue(ways.get(0).y() >= toggle.y() + toggle.height(), "under the switch");
+        assertTrue(ways.stream().allMatch(way -> way.group().equals(toggle.group())), "named by the switch");
+        final GuidePiece.Text after = texts(book, "alpha:t").stream().filter(text -> text.text().equals("after.text"))
+                .findFirst().orElseThrow();
+        assertTrue(after.y() >= ways.get(1).y() + 60, "what follows comes after the tallest way: " + after.y());
+        assertTrue(texts(book, "alpha:t").stream().anyMatch(text -> text.text().equals(GuideTexts.FIGURE.key()
+                + "[1-2]")), "and the figure took one number, the next figure being the second");
+    }
+
+    @Test
     void lay_runsTextOnInTheSecondColumnAndKeepsItAboveTheTitleBlock() {
         final String words = "word ".repeat(300);
         final GuideBook book = GuideLayout.lay(MANUAL, DRAWINGS, new GuideContents(List.of(chapter("alpha",
@@ -860,6 +909,11 @@ class GuideLayoutTest {
 
     /** A set of drawings: a first section of one drawing, a second of two, the first of them two sheets long. */
     private static GuideBook drawings() {
+        return drawings("", "");
+    }
+
+    /** The same set, its two sections numbered by the letters given, or by their place for none. */
+    private static GuideBook drawings(final String readingCode, final String machinesCode) {
         final GuideEntry intro = new GuideEntry("alpha:intro", "alpha:reading", 0, "intro.title", "", List.of(),
                 List.of(new GuideBlock.Paragraph("intro.text")));
         final GuideEntry press = new GuideEntry("alpha:press", "alpha:machines", 0, "press.title", "", List.of(),
@@ -869,10 +923,10 @@ class GuideLayoutTest {
                 List.of(new GuideBlock.Paragraph("mill.text")));
         return GuideLayout.lay(MANUAL, DRAWINGS, new GuideContents(List.of(new GuideContents.Chapter(
                 new GuideChapter("alpha", 0, "alpha.title", "", ""), List.of(
-                        new GuideContents.Section(new GuideSection("alpha:reading", 0, "reading.title", ""),
-                                List.of(intro)),
-                        new GuideContents.Section(new GuideSection("alpha:machines", 1, "machines.title", ""),
-                                List.of(press, mill)))))), new FixedText(Map.of()));
+                        new GuideContents.Section(new GuideSection("alpha:reading", 0, "reading.title", "", "alpha",
+                                readingCode), List.of(intro)),
+                        new GuideContents.Section(new GuideSection("alpha:machines", 1, "machines.title", "", "alpha",
+                                machinesCode), List.of(press, mill)))))), new FixedText(Map.of()));
     }
 
     private static GuideContents.Chapter chapter(final String namespace, final GuideEntry entry) {

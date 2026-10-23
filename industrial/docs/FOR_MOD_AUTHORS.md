@@ -1,9 +1,9 @@
 # For mod and pack authors
 
-How J's Industrial meets other mods and data packs: its recipes, its tags, and what its machines offer to pipes,
-cables and computers. It has no API package of its own: everything another mod needs goes through the game's
-own systems (recipes, tags, capabilities) and through [J's Core](../../core/docs/GETTING_STARTED.md), which its
-machines are built on.
+How J's Industrial meets other mods and data packs: its recipes, its tags, what its machines offer to pipes,
+cables and computers, and its API. Most of what another mod needs goes through the game's own systems (recipes,
+tags, capabilities) and through [J's Core](../../core/docs/GETTING_STARTED.md), which its machines are built on;
+what J's Industrial adds on top is the small API package at the end of this page.
 
 ## Recipes
 
@@ -73,3 +73,51 @@ The machines take energy; they never pull it. The Coal Generator pushes into wha
 J's Industrial does not need J's Computers and does not know about it. J's Computers drives these machines the
 way it drives any machine of any mod, through the capabilities above: a crafting computer's interface puts the
 inputs in and a bus takes the outputs, and the Pattern Studio knows which machine works which recipe kind.
+
+## The API
+
+*Added 2026-10-23.*
+
+J's Industrial's API is the package `dev.jstech.industrial.api`. Like J's Core's, it is versioned with one number,
+`JsIndustrialApi.VERSION` (1 today), raised whenever something is added, and everything in it is experimental until
+it has been through a release. Everything else in the mod is its own business and changes without warning. Nothing
+in it registers itself by annotation: it is declared through builders and constructors while the game loads.
+
+An add-on that needs something added later refuses to load below the number that added it:
+
+```java
+if (JsIndustrialApi.VERSION < 1) {
+    throw new IllegalStateException("MyAddon needs J's Industrial with API version 1 or newer");
+}
+```
+
+**Consequences.** Every consequence of J's Industrial (overvoltage burning machines, pipes corroding, boilers
+bursting) is a setting of its own, on unless a server turns it off, and off it gives way to what harms nothing; no
+setting turns a part of the mod off as a "module". `Consequences.of` makes such a switch in your own settings file,
+the J's Core way ([Settings](../../core/docs/SETTINGS.md)):
+
+```java
+public static final ConfigKey<Boolean> BOILERS_EXPLODE = Consequences.of("fluids.boilers_explode",
+        "Boilers explode", "A boiler held past its pressure bursts, as a real one does.",
+        "a blocked boiler just stops.");
+```
+
+**Advancements.** The mod's advancements are in four tabs, by the phases of its industry: Foundation (opened by the
+first machine), Industrialisation (the third tier), Discovery (a team's first discovery) and Transcendence (the
+sixth tier). An add-on hangs its own under one by naming a tab's root as its parent, in a data pack's advancement
+file (`"parent": "jsindustrial:foundation/root"`) or from code:
+
+```java
+ResourceLocation parent = IndustrialAdvancementTab.FOUNDATION.root();   // jsindustrial:foundation/root
+```
+
+**Sounds.** The mod's sounds are kept in groups (`IndustrialSoundGroup`: machines, power, air and fluids, safety, the
+Clean Room, science, transcendence), each mixed in one of J's Core's channels, so a player sets their volume where
+they set every other machine's or alarm's. An add-on's sound of the same kind goes in the group's channel:
+
+```java
+AudioChannel channel = IndustrialSoundGroup.SAFETY.channel();   // the Core's Alerts channel
+```
+
+A group of machines grows louder as the machine draws more power (`followsPower()`), and the safety group carries
+far, to warn in time (`carriesFar()`).

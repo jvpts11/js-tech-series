@@ -197,6 +197,41 @@ public sealed interface GuidePiece {
     record SceneKey(int x, int y, int width, int height, String scene, int number) implements GuidePiece {
     }
 
+    /**
+     * The switch over a figure drawn more than one way ({@link GuideBlock.Modes}): a word for each way, side by side
+     * at the column's right, the way shown filled in.
+     *
+     * @param group  the figure, which its ways' pieces name
+     * @param labels the word for each way, in the reader's language
+     */
+    record Switch(int x, int y, int width, int height, String group, List<String> labels) implements GuidePiece {
+
+        public Switch {
+            labels = List.copyOf(labels);
+        }
+    }
+
+    /**
+     * A piece of one way of drawing a figure drawn more than one way: shown only while the figure's switch stands at
+     * its way.
+     *
+     * @param group the figure's switch
+     * @param way   which of its ways it belongs to, from the first, 0
+     * @param piece the piece itself
+     */
+    record Way(String group, int way, GuidePiece piece) implements GuidePiece {
+
+        @Override
+        public int x() {
+            return this.piece.x();
+        }
+
+        @Override
+        public int y() {
+            return this.piece.y();
+        }
+    }
+
     /** Blocks seen from above side by side, each named under it, the optional ones outlined in dots. */
     record Plan(int x, int y, int width, List<PlanPart> parts) implements GuidePiece {
 

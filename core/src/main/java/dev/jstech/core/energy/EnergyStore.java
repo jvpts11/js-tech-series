@@ -41,6 +41,7 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
     private long overSince = NEVER;
     private Consumer<WrongClass> fault = what -> { };
     private @Nullable EnergyProtection guard;
+    private boolean failsSafe;
 
     private static final String STORED = "stored";
     private static final String DAMAGED = "damaged";
@@ -232,8 +233,21 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
         this.fault = Objects.requireNonNull(what, "what");
     }
 
+    /**
+     * Makes it fail safe, as the store of a source a player builds to forget: a line however high only keeps its block
+     * from starting, as a line one class too high does where the energy lets a block refuse, and never burns it or
+     * flashes over.
+     */
+    public void failsSafe() {
+        this.failsSafe = true;
+    }
+
     @Override
     public void meetWrongClass(final WrongClass met, final EnergyClass line, final long gameTime) {
+        if (this.failsSafe && (met == WrongClass.BURNS || met == WrongClass.ARC_FLASH)) {
+            this.overSince = gameTime;
+            return;
+        }
         WrongClass what = met;
         if (this.guard != null && (met == WrongClass.BURNS || met == WrongClass.ARC_FLASH)) {
             if (this.guard.cut()) {

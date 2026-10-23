@@ -98,6 +98,7 @@ Each tick the machine says what it is doing, a `MachineStatus`, which its screen
 | `OUTPUT_FULL` | WAIT | Its outputs have no room for everything the recipe makes. |
 | `NO_ENERGY` | FAULT | It has no energy for the tick. |
 | `UNDERVOLTAGE` | FAULT | A line of a class below its port's meets it: it does not start. |
+| `OVERVOLTAGE` | FAULT | A line of a class above its port's meets it and it refuses the line rather than burn: it does not start, and starts again once the line is gone. |
 | `FUSE_BLOWN` | FAULT | Its fuse blew on overvoltage: it is shut down, unharmed, until a good fuse is put in. |
 | `TOO_SLOW` | FAULT | Driven by a shaft that turns slower than the least it works at. |
 | `OVERHEATED` | FAULT | It is past the hottest it stands: it stopped to cool, and loses health while it stays past it. |
@@ -204,6 +205,26 @@ by implementing `IRepairKit`.
 public static final ItemEntry<RepairKitItem> REPAIR_KIT = CONTENT.item("repair_kit",
         properties -> new RepairKitItem(properties, 200, 20)).register();   // 200 health in all, 20 a second
 ```
+
+### Failing safe
+
+*Added 2026-10-23.*
+
+Some machines are built to be forgotten: a fusion reactor, the sources past it. A machine like that says once, from
+its constructor, that it fails safe, and a fault of its own then only stops it:
+
+```java
+public FusionReactorBlockEntity(final BlockPos pos, final BlockState state) {
+    super(MyContent.FUSION_BE.get(), pos, state, 0, MachineEnergy.of(MyEnergies.VOLTS, MyEnergies.HIGH,
+            1_000_000, 50_000));
+    holdsHeat(MachineHeat.of(Thermal.of(steel, false), 4.0, 2_000_000, 900));
+    failsSafe();
+}
+```
+
+A line however high only keeps it from starting (`OVERVOLTAGE`), as if its energy let every machine refuse a line too
+high, and it never burns or flashes over; heat past its limit stops it to cool (`OVERHEATED`) without taking its
+health. What strikes it from outside, an explosion or sabotage, still damages it.
 
 ### Values read and set from outside
 

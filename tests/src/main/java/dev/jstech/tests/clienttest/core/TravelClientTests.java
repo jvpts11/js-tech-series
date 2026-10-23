@@ -20,6 +20,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
 /**
@@ -54,10 +55,22 @@ public final class TravelClientTests {
                         "the test mod's screen to stand in for the game's loading terrain")
                 .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(key)
                         && ctx.mc().screen == null, WAIT, "the player to arrive and the land to be seen")
-                // The screen can close a tick before the player has settled, so the landing is waited for.
-                .thenWaitUntil(() -> ctx.player().getY() < 20 && ctx.player().onGround(), WAIT,
+                /*
+                 * Where the passage put the player is the server's to say: below where they were sent, on a block
+                 * that is not air. The client's own sense of the ground waits on its chunks, which a busy machine
+                 * can keep from it for a long while.
+                 */
+                .thenWaitUntilServer(level -> landed(ctx, key), WAIT,
                         "the player standing on the Moon's ground below where they were sent",
-                        () -> "at " + ctx.player().position() + ", on the ground: " + ctx.player().onGround())
+                        level -> "at " + ctx.serverPlayer().position() + " in " + ctx.serverPlayer().level()
+                                .dimension().location())
                 .thenScreenshot(20, "arrived");
+    }
+
+    /* Whether the player stands in the new dimension below where they were sent, on something solid. */
+    private static boolean landed(final ClientTestContext ctx, final ResourceKey<Level> key) {
+        final ServerPlayer player = ctx.serverPlayer();
+        return player.level().dimension().equals(key) && player.getY() < 20
+                && !player.level().getBlockState(player.blockPosition().below()).isAir();
     }
 }

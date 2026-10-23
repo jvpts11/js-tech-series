@@ -300,6 +300,7 @@ public final class ModGuide {
         private String title;
         private Supplier<? extends ItemLike> icon;
         private String chapterId;
+        private String code = "";
 
         private SectionBuilder(final String path) {
             this.path = path;
@@ -327,6 +328,20 @@ public final class ModGuide {
             return this;
         }
 
+        /**
+         * In a manual drawn as a set of drawings, the letters its drawings are numbered by, as a real set numbers each
+         * discipline's sheets: {@code "GS"} makes its drawings JI-GS-001, JI-GS-002. Without it they are numbered by
+         * the section's place, in hundreds.
+         */
+        public SectionBuilder code(final String letters) {
+            if (letters == null || !letters.matches("[A-Z]{1,3}")) {
+                throw new IllegalStateException("the section " + ModGuide.this.id(this.path) + " is numbered by one"
+                        + " to three capital letters, not " + letters);
+            }
+            this.code = letters;
+            return this;
+        }
+
         public SectionRef register() {
             if (this.title == null) {
                 throw new IllegalStateException("the section " + ModGuide.this.id(this.path) + " needs a title");
@@ -336,7 +351,9 @@ public final class ModGuide {
             final int order = ModGuide.this.sections.size();
             final Supplier<? extends ItemLike> sectionIcon = this.icon;
             final String chapter = this.chapterId == null ? ModGuide.this.namespace : this.chapterId;
-            ModGuide.this.sections.add(() -> new GuideSection(id, order, titleKey, itemId(sectionIcon), chapter));
+            final String letters = this.code;
+            ModGuide.this.sections.add(() -> new GuideSection(id, order, titleKey, itemId(sectionIcon), chapter,
+                    letters));
             return new SectionRef(id);
         }
     }
@@ -374,6 +391,10 @@ public final class ModGuide {
         private List<Supplier<GuideBlock.PlanPart>> planParts;
         private SceneDraft scene;
         private String needs = "";
+        private int modes;
+        /* The words of the figure drawn more than one way being declared, and the ways that followed so far. */
+        private List<String> modeWords;
+        private List<Supplier<GuideBlock>> modeWays;
 
         private EntryBuilder(final String path, final SectionRef section) {
             this.path = path;
@@ -677,6 +698,35 @@ public final class ModGuide {
             return this.add(() -> new GuideBlock.Command(source));
         }
 
+        /**
+         * Draws the figures that follow as one figure, in more than one way, with a switch over it choosing which:
+         * {@code words} are the switch's words in English, the first shown first, and the next as many figures (a
+         * figure, a picture or a drawing, a scene, a multiblock or a structure) are its ways, in the same order.
+         *
+         * <pre>{@code
+         * .modes("Diagram", "3D")
+         * .drawing("myaddon:single_line", 110, data, "A small plant")
+         * .scene("A small plant, as its blocks", 110).place(0, 0, 0, MyBlocks.GENERATOR)
+         * }</pre>
+         */
+        public EntryBuilder modes(final String... words) {
+            if (this.modeWays != null) {
+                throw new IllegalStateException("the entry " + ModGuide.this.id(this.path) + " starts a figure drawn"
+                        + " more than one way before the last one has all its ways");
+            }
+            if (words.length < 2) {
+                throw new IllegalArgumentException("a figure drawn more than one way has two ways at least");
+            }
+            this.modes++;
+            final List<String> keys = new ArrayList<>();
+            for (int i = 0; i < words.length; i++) {
+                keys.add(this.key("modes" + this.modes + "_way" + (i + 1), words[i]));
+            }
+            this.modeWords = keys;
+            this.modeWays = new ArrayList<>();
+            return this;
+        }
+
         /** A special block of a kind another mod draws, handed {@code data} (JSON). */
         public EntryBuilder custom(final String type, final int height, final String data) {
             return this.add(() -> new GuideBlock.Custom(type, height, data));
@@ -908,6 +958,10 @@ public final class ModGuide {
             if (this.title == null) {
                 throw new IllegalStateException("the entry " + ModGuide.this.id(this.path) + " needs a title");
             }
+            if (this.modeWays != null) {
+                throw new IllegalStateException("the entry " + ModGuide.this.id(this.path) + " draws a figure "
+                        + this.modeWords.size() + " ways, and only " + this.modeWays.size() + " of them follow");
+            }
             final String id = ModGuide.this.claim(this.path);
             final String titleKey = this.key("title", this.title);
             final int order = ModGuide.this.entries.size();
@@ -1028,7 +1082,19 @@ public final class ModGuide {
         }
 
         private EntryBuilder add(final Supplier<GuideBlock> block) {
-            this.blocks.add(block);
+            if (this.modeWays == null) {
+                this.blocks.add(block);
+                return this;
+            }
+            // The ways of a figure drawn more than one way, once they are all there, are one block.
+            this.modeWays.add(block);
+            if (this.modeWays.size() == this.modeWords.size()) {
+                final List<String> words = List.copyOf(this.modeWords);
+                final List<Supplier<GuideBlock>> ways = List.copyOf(this.modeWays);
+                this.modeWords = null;
+                this.modeWays = null;
+                this.blocks.add(() -> new GuideBlock.Modes(words, ways.stream().map(Supplier::get).toList()));
+            }
             return this;
         }
 

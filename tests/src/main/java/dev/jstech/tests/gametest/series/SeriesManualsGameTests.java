@@ -514,6 +514,8 @@ public final class SeriesManualsGameTests {
             case GuidePiece.Plan plan -> plan.y() + GuideLayout.PLAN_HEIGHT;
             case GuidePiece.Scene scene -> scene.y() + scene.height();
             case GuidePiece.SceneKey key -> key.y() + key.height();
+            case GuidePiece.Switch toggle -> toggle.y() + toggle.height();
+            case GuidePiece.Way way -> bottomOf(way.piece(), style);
         };
     }
 

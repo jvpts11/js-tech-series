@@ -204,6 +204,18 @@ public final class ManualReader {
         return name.strip().toLowerCase(Locale.ROOT).replaceAll(GAPS, "_");
     }
 
+    /* The caption's key of a way of drawing a figure, each of which is a figure of one kind. */
+    private static String captionOf(final GuideBlock way) {
+        return switch (way) {
+            case GuideBlock.Figure figure -> figure.captionKey();
+            case GuideBlock.Picture picture -> picture.captionKey();
+            case GuideBlock.Scene scene -> scene.captionKey();
+            case GuideBlock.Multiblock multiblock -> multiblock.captionKey();
+            case GuideBlock.Structure structure -> structure.captionKey();
+            default -> "";
+        };
+    }
+
     /** Numbers the chapters, sections and entries first, so a link may name one printed after it. */
     private void number(final GuideContents contents) {
         int chapterNo = 0;
@@ -358,6 +370,16 @@ public final class ManualReader {
                     for (int step = 0; step < scene.steps().size(); step++) {
                         pieces.add(new Piece.Item(this.text.text(GuideTexts.SCENE_STEP_NUMBER.key(), step + 1),
                                 this.text.text(scene.steps().get(step).captionKey())));
+                    }
+                }
+                // Read as text, a figure drawn more than one way is its number, then each way's word and caption.
+                case GuideBlock.Modes modes -> {
+                    figures++;
+                    pieces.add(new Piece.Picture("", this.text.text(GuideTexts.FIGURE.key(), chapterNo + "-"
+                            + figures)));
+                    for (int way = 0; way < modes.ways().size(); way++) {
+                        pieces.add(new Piece.Item(this.text.text(modes.labelKeys().get(way)),
+                                this.text.text(captionOf(modes.ways().get(way)))));
                     }
                 }
                 // Read as text, a saved structure is its caption, numbered with the figures, where its file is.

@@ -1,0 +1,358 @@
+{
+  "blocks": [
+    {
+      "type": "picture",
+      "caption": "jsindustrial.guide.geological_sections.figure1",
+      "data": {
+        "boreholes": [],
+        "columns": [],
+        "faults": [],
+        "lines": [],
+        "rocks": [
+          {
+            "block": "minecraft:dirt",
+            "pattern": "soil"
+          },
+          {
+            "block": "minecraft:sandstone",
+            "pattern": "sandstone"
+          },
+          {
+            "block": "minecraft:stone",
+            "pattern": "stone"
+          },
+          {
+            "block": "minecraft:granite",
+            "pattern": "granite"
+          },
+          {
+            "block": "minecraft:deepslate",
+            "pattern": "deepslate"
+          },
+          {
+            "block": "minecraft:iron_ore",
+            "pattern": "ore"
+          }
+        ],
+        "symbols": [],
+        "veins": []
+      },
+      "drawing": "jsindustrial:geology",
+      "height": 118
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "modes",
+      "labels": [
+        "jsindustrial.guide.geological_sections.modes1_way1",
+        "jsindustrial.guide.geological_sections.modes1_way2"
+      ],
+      "ways": [
+        {
+          "type": "picture",
+          "caption": "jsindustrial.guide.geological_sections.figure2",
+          "data": {
+            "boreholes": [
+              {
+                "depth": 66,
+                "kind": "borehole",
+                "tag": "BH-1",
+                "x": 44,
+                "y": 18
+              },
+              {
+                "depth": 60,
+                "kind": "borehole",
+                "tag": "BH-2",
+                "x": 112,
+                "y": 27
+              }
+            ],
+            "columns": [
+              {
+                "layers": [
+                  {
+                    "block": "minecraft:dirt",
+                    "depth": 7,
+                    "pattern": "soil"
+                  },
+                  {
+                    "block": "minecraft:sandstone",
+                    "depth": 18,
+                    "pattern": "sandstone"
+                  },
+                  {
+                    "block": "minecraft:stone",
+                    "depth": 22,
+                    "pattern": "stone"
+                  },
+                  {
+                    "block": "minecraft:granite",
+                    "depth": 20,
+                    "pattern": "granite"
+                  },
+                  {
+                    "block": "minecraft:deepslate",
+                    "depth": 21,
+                    "pattern": "deepslate"
+                  }
+                ],
+                "top": 18,
+                "x0": 0,
+                "x1": 74
+              },
+              {
+                "layers": [
+                  {
+                    "block": "minecraft:dirt",
+                    "depth": 7,
+                    "pattern": "soil"
+                  },
+                  {
+                    "block": "minecraft:sandstone",
+                    "depth": 18,
+                    "pattern": "sandstone"
+                  },
+                  {
+                    "block": "minecraft:stone",
+                    "depth": 22,
+                    "pattern": "stone"
+                  },
+                  {
+                    "block": "minecraft:granite",
+                    "depth": 20,
+                    "pattern": "granite"
+                  },
+                  {
+                    "block": "minecraft:deepslate",
+                    "depth": 12,
+                    "pattern": "deepslate"
+                  }
+                ],
+                "top": 27,
+                "x0": 74,
+                "x1": 148
+              }
+            ],
+            "faults": [
+              {
+                "x0": 68,
+                "x1": 80,
+                "y0": 106,
+                "y1": 18
+              }
+            ],
+            "lines": [],
+            "symbols": [],
+            "veins": [
+              {
+                "block": "minecraft:iron_ore",
+                "x0": 24,
+                "x1": 66,
+                "y0": 52,
+                "y1": 57
+              },
+              {
+                "block": "minecraft:iron_ore",
+                "x0": 80,
+                "x1": 132,
+                "y0": 61,
+                "y1": 66
+              }
+            ]
+          },
+          "drawing": "jsindustrial:geology",
+          "height": 110
+        },
+        {
+          "type": "picture",
+          "caption": "jsindustrial.guide.geological_sections.figure3",
+          "data": {
+            "boreholes": [
+              {
+                "depth": 66,
+                "kind": "borehole",
+                "tag": "BH-1",
+                "x": 44,
+                "y": 18
+              },
+              {
+                "depth": 60,
+                "kind": "borehole",
+                "tag": "BH-2",
+                "x": 112,
+                "y": 27
+              }
+            ],
+            "colours": true,
+            "columns": [
+              {
+                "layers": [
+                  {
+                    "block": "minecraft:dirt",
+                    "depth": 7,
+                    "pattern": "soil"
+                  },
+                  {
+                    "block": "minecraft:sandstone",
+                    "depth": 18,
+                    "pattern": "sandstone"
+                  },
+                  {
+                    "block": "minecraft:stone",
+                    "depth": 22,
+                    "pattern": "stone"
+                  },
+                  {
+                    "block": "minecraft:granite",
+                    "depth": 20,
+                    "pattern": "granite"
+                  },
+                  {
+                    "block": "minecraft:deepslate",
+                    "depth": 21,
+                    "pattern": "deepslate"
+                  }
+                ],
+                "top": 18,
+                "x0": 0,
+                "x1": 74
+              },
+              {
+                "layers": [
+                  {
+                    "block": "minecraft:dirt",
+                    "depth": 7,
+                    "pattern": "soil"
+                  },
+                  {
+                    "block": "minecraft:sandstone",
+                    "depth": 18,
+                    "pattern": "sandstone"
+                  },
+                  {
+                    "block": "minecraft:stone",
+                    "depth": 22,
+                    "pattern": "stone"
+                  },
+                  {
+                    "block": "minecraft:granite",
+                    "depth": 20,
+                    "pattern": "granite"
+                  },
+                  {
+                    "block": "minecraft:deepslate",
+                    "depth": 12,
+                    "pattern": "deepslate"
+                  }
+                ],
+                "top": 27,
+                "x0": 74,
+                "x1": 148
+              }
+            ],
+            "faults": [
+              {
+                "x0": 68,
+                "x1": 80,
+                "y0": 106,
+                "y1": 18
+              }
+            ],
+            "lines": [],
+            "symbols": [],
+            "veins": [
+              {
+                "block": "minecraft:iron_ore",
+                "x0": 24,
+                "x1": 66,
+                "y0": 52,
+                "y1": 57
+              },
+              {
+                "block": "minecraft:iron_ore",
+                "x0": 80,
+                "x1": 132,
+                "y0": 61,
+                "y1": 66
+              }
+            ]
+          },
+          "drawing": "jsindustrial:geology",
+          "height": 110
+        }
+      ]
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.geological_sections.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.geological_sections.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.geological_sections.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.geological_sections.use1",
+        "jsindustrial.guide.geological_sections.use2",
+        "jsindustrial.guide.geological_sections.use3"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.geological_sections.fix1",
+          "problem": "jsindustrial.guide.geological_sections.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:reading_drawings"
+      ]
+    }
+  ],
+  "icon": "minecraft:iron_ore",
+  "id": "jsindustrial:geological_sections",
+  "order": 3,
+  "section": "jsindustrial:reading",
+  "title": "jsindustrial.guide.geological_sections.title"
+}

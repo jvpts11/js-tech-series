@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.series;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.guide.ManualScreen;
@@ -20,14 +21,23 @@ import net.minecraft.client.Minecraft;
 /**
  * The series' three manuals as a player reads them: the Technical Reference, its cover, its contents, a chapter's
  * opening on a left page and an entry; the Guide to Operations, its own cover and an entry of its one chapter; and
- * the Plant Drawings, the folder, its drawing list, and a drawing's two sheets with their title block.
+ * the Plant Drawings, the folder, its drawing list, a drawing's two sheets with their title block, and the switch that
+ * shows a diagram as its blocks and a geological section in its rocks' colours.
  */
 public final class SeriesManualsClientTests {
 
     private static final int SETTLE = 4;
     private static final int OPEN = 40;
     /** The sheets of the Plant Drawings looked at one by one: the list and every drawing's sheets. */
-    private static final int MOST_SHEETS = 17;
+    private static final int MOST_SHEETS = 32;
+    /**
+     * How much bluer than red a pixel of the sheet is, and how bright every channel of its ink; and how many pixels
+     * of a figure, past those of the sheet, are many, or few.
+     */
+    private static final int BLUEPRINT = 30;
+    private static final int INK = 200;
+    private static final int MANY = 300;
+    private static final int FEW = 100;
     /** The most sheets a drawing of the set was written for: the Macerator's three, its recipes on the third. */
     private static final int MOST_SHEETS_A_DRAWING = 3;
     /** A part on the plate of the first computer's page, whose own page is the processors'. */
@@ -122,11 +132,12 @@ public final class SeriesManualsClientTests {
                 .then(SETTLE, SeriesManualsClientTests::toCover)
                 .thenScreenshot(SETTLE, "series_drawings_folder")
                 .then(0, () -> manual().turn(1))
-                .thenAssert(SETTLE, () -> manual().book().pages().getFirst().folio().equals("JI-000")
-                        && manual().showing(0), "the folder opens at its drawing list, JI-000")
+                .thenAssert(SETTLE, () -> manual().book().pages().getFirst().folio().equals("JI-GN-000")
+                        && manual().showing(0), "the folder opens at its drawing list, JI-GN-000")
                 .thenScreenshot(2, "series_drawings_list")
                 .thenAssert(0, () -> manual().goTo("jsindustrial:compressor")
-                        && page("jsindustrial:compressor").folio().equals("JI-102"), "the Compressor is JI-102")
+                        && page("jsindustrial:compressor").folio().equals("JI-MC-001"),
+                        "the Compressor is JI-MC-001, the first drawing of Machines")
                 .thenScreenshot(SETTLE, "series_drawings_compressor_1")
                 .then(0, () -> manual().turn(1))
                 .thenScreenshot(SETTLE, "series_drawings_compressor_2")
@@ -137,12 +148,39 @@ public final class SeriesManualsClientTests {
                             && book.pages().get(first).sheets() == 2;
                 }, "its drawing is two sheets, the second following the first")
                 .thenAssert(0, () -> manual().goTo("jsindustrial:reading_drawings")
-                        && page("jsindustrial:reading_drawings").folio().equals("JI-001"),
-                        "how to read the drawings is JI-001")
+                        && page("jsindustrial:reading_drawings").folio().equals("JI-GN-001"),
+                        "how to read the drawings is JI-GN-001")
                 .thenScreenshot(SETTLE, "series_drawings_reading")
                 .then(0, () -> manual().search("comp"))
                 .thenAssert(SETTLE, () -> !manual().found().isEmpty(), "the search finds the Compressor")
                 .thenScreenshot(2, "series_drawings_search")
+                .then(0, SeriesManualsClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 400)
+    public static void plantDrawings_switchADiagramToItsBlocksAndASectionToItsColours(final ClientTestContext ctx) {
+        final int[] counted = new int[2];
+        ctx.then(0, () -> GuideClient.open(IndustrialGuide.PLANT_DRAWINGS, "jsindustrial:single_line_diagrams"))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> manual().switchPoint(1) != null,
+                        "the example of a single-line diagram has its switch")
+                .then(0, () -> counted[0] = offTheSheet(ctx))
+                .thenScreenshot(0, "series_drawings_single_line_diagram")
+                .then(0, () -> clickWay(ctx, 1))
+                .thenAssert(SETTLE, () -> offTheSheet(ctx) > counted[0] + MANY,
+                        "3D shows the plant's blocks, in their own colours, where the diagram was")
+                .thenScreenshot(0, "series_drawings_single_line_3d")
+                .then(0, () -> clickWay(ctx, 0))
+                .thenAssert(SETTLE, () -> offTheSheet(ctx) < counted[0] + FEW, "and DIAGRAM brings the diagram back")
+                .thenAssert(0, () -> manual().goTo("jsindustrial:geological_sections")
+                        && manual().switchPoint(1) != null, "a geological section has its switch too")
+                .then(SETTLE, () -> counted[1] = offTheSheet(ctx))
+                .thenScreenshot(0, "series_drawings_section_lines")
+                .then(0, () -> clickWay(ctx, 1))
+                .thenScreenshot(SETTLE, "series_drawings_section_colours")
+                .thenAssert(0, () -> offTheSheet(ctx) > counted[1] + MANY,
+                        "COLOURS draws each rock in its own block's colours")
                 .then(0, SeriesManualsClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }
@@ -165,6 +203,34 @@ public final class SeriesManualsClientTests {
 
     private static ManualScreen manual() {
         return (ManualScreen) Minecraft.getInstance().screen;
+    }
+
+    /* How many pixels of the figure under the first switch shown are not the sheet's own: neither blue nor white. */
+    private static int offTheSheet(final ClientTestContext ctx) {
+        final int[] at = manual().switchPoint(0);
+        try (NativeImage figure = ctx.capture(at[2], at[3], at[4], at[5])) {
+            int off = 0;
+            for (int y = 0; y < figure.getHeight(); y++) {
+                for (int x = 0; x < figure.getWidth(); x++) {
+                    final int pixel = figure.getPixelRGBA(x, y);
+                    final int red = pixel & 0xFF;
+                    final int green = pixel >> 8 & 0xFF;
+                    final int blue = pixel >> 16 & 0xFF;
+                    final boolean sheet = blue > red + BLUEPRINT && blue >= green;
+                    final boolean ink = red > INK && green > INK && blue > INK;
+                    if (!sheet && !ink) {
+                        off++;
+                    }
+                }
+            }
+            return off;
+        }
+    }
+
+    /* Clicks the word of a way of the first switch shown. */
+    private static void clickWay(final ClientTestContext ctx, final int way) {
+        final int[] at = manual().switchPoint(way);
+        ctx.click(at[0], at[1]);
     }
 
     /* A manual opens where it was last closed; this turns it back to its cover. */

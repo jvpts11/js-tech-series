@@ -39,8 +39,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * A machine of the test mod's own that makes heat, to prove the machines' heat: a litre of iron for a casing that its
- * work warms by forty kilowatts, standing up to 400 K; and a thermocouple, a sensor that reads the heat of the block
- * under it.
+ * work warms by forty kilowatts, standing up to 400 K; the same machine on the test mod's energy declared to fail
+ * safe; and a thermocouple, a sensor that reads the heat of the block under it.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class TestHotMachine {
@@ -62,6 +62,12 @@ public final class TestHotMachine {
             .register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ThermocoupleBlockEntity>> SENSOR =
             TestSounds.CONTENT.blockEntity("test_thermocouple", ThermocoupleBlockEntity::new, THERMOCOUPLE);
+    /** The same machine on the test mod's energy, declared to fail safe, as the sources built to forget are. */
+    public static final BlockEntry<DeviceBlock> SAFE_BLOCK = TestSounds.CONTENT.block("test_safe_machine",
+            Device.of(() -> TestHotMachine.SAFE_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
+            .named("Test safe machine").look(IBlockLook.cubeAll("test_safe_machine")).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SafeMachineBlockEntity>> SAFE_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_safe_machine", SafeMachineBlockEntity::new, SAFE_BLOCK);
 
     private TestHotMachine() {
     }
@@ -82,6 +88,22 @@ public final class TestHotMachine {
         public HotMachineBlockEntity(final BlockPos pos, final BlockState state) {
             super(BLOCK_ENTITY.get(), pos, state, 0, MachineEnergy.fe(ENERGY, ENERGY, 0));
             holdsHeat(MachineHeat.of(Thermal.of(Elements.of(Element.IRON), false), TestHeat.LITRE, WATTS, LIMIT));
+        }
+
+        @Override
+        protected MachineStatus work(final ServerLevel level) {
+            return MachineStatus.WORKING;
+        }
+    }
+
+    /** The machine that fails safe: warming at its work like the other, through a port of the low class. */
+    public static final class SafeMachineBlockEntity extends MachineBlockEntity {
+
+        public SafeMachineBlockEntity(final BlockPos pos, final BlockState state) {
+            super(SAFE_ENTITY.get(), pos, state, 0, MachineEnergy.of(TestEnergies.VOLTS, TestEnergies.LOW, ENERGY,
+                    ENERGY));
+            holdsHeat(MachineHeat.of(Thermal.of(Elements.of(Element.IRON), false), TestHeat.LITRE, WATTS, LIMIT));
+            failsSafe();
         }
 
         @Override

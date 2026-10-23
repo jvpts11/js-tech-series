@@ -13,8 +13,8 @@ import dev.jstech.core.text.TextKey;
 
 /**
  * What a machine is doing, always in view on its screen and to whoever looks at it: working, waiting for input, its
- * output full, without energy, on undervoltage, its fuse blown, damaged, turned off by redstone, or switched off by
- * hand. Each lights one of the three lamps every machine's face has, RUN, WAIT or FAULT.
+ * output full, without energy, on undervoltage or overvoltage, its fuse blown, damaged, turned off by redstone, or
+ * switched off by hand. Each lights one of the three lamps every machine's face has, RUN, WAIT or FAULT.
  */
 @TextHolder
 public enum MachineStatus implements IStableName {
@@ -28,6 +28,8 @@ public enum MachineStatus implements IStableName {
     OUTPUT_FULL("output_full", TextKey.of("jscore.machine.status.output_full", "Output full"), Lamp.WAIT),
     NO_ENERGY("no_energy", TextKey.of("jscore.machine.status.no_energy", "No energy"), Lamp.FAULT),
     UNDERVOLTAGE("undervoltage", TextKey.of("jscore.machine.status.undervoltage", "Undervoltage"), Lamp.FAULT),
+    /** Met by a line above its class that it refused rather than burn: it waits, unharmed, for the right one. */
+    OVERVOLTAGE("overvoltage", TextKey.of("jscore.machine.status.overvoltage", "Overvoltage"), Lamp.FAULT),
     FUSE_BLOWN("fuse_blown", TextKey.of("jscore.machine.status.fuse_blown", "Fuse blown"), Lamp.FAULT),
     /** Driven by a shaft that turns slower than the least it works at. */
     TOO_SLOW("too_slow", TextKey.of("jscore.machine.status.too_slow", "Turning too slowly"), Lamp.FAULT),
@@ -63,9 +65,12 @@ public enum MachineStatus implements IStableName {
         return this.lamp;
     }
 
-    /** Whether it is a state the machine can rest in, asleep, until something it waits on changes. */
+    /**
+     * Whether it is a state the machine can rest in, asleep, until something it waits on changes. A line of the wrong
+     * class is not: nothing tells the machine when it goes, so it looks again every tick.
+     */
     public boolean restful() {
-        return this != WORKING && this != UNDERVOLTAGE;
+        return this != WORKING && this != UNDERVOLTAGE && this != OVERVOLTAGE;
     }
 
     /** The three lamps of a machine's face. */
