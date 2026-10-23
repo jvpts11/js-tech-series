@@ -30,7 +30,7 @@ import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

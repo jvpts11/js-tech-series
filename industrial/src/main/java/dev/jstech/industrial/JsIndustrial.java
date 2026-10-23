@@ -8,6 +8,7 @@
 package dev.jstech.industrial;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.industrial.datagen.JsIndustrialDataGenerators;
 import dev.jstech.industrial.guide.IndustrialGuide;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -31,5 +32,7 @@ public final class JsIndustrial {
         // The mod's chapter of the manuals and its own Plant Drawings, with the folder's item.
         IndustrialGuide.declare();
         IndustrialModule.register(modEventBus);
+        // The mod's data generation, which runs only in a data run.
+        JsIndustrialDataGenerators.listen(modEventBus);
     }
 }

@@ -20,7 +20,7 @@ import dev.jstech.computers.operation.payload.BusEditPayload;
 import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.computers.operation.payload.CraftingView;
 import dev.jstech.core.client.gui.component.Draw;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;

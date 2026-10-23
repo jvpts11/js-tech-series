@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.operation.payload;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -25,8 +24,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
  * after the menu it came from has already gone. So the desktop a player closes is remembered for a moment,
  * and only for the machine it was showing.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class ScreenSessions {
 
     /** How long a closed desktop's last word is still taken, in ticks. */
@@ -57,6 +54,12 @@ public final class ScreenSessions {
     private static final Map<UUID, Closed> CLOSED_DESKTOPS = new HashMap<>();
 
     private ScreenSessions() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(PlayerContainerEvent.Close.class, ScreenSessions::onMenuClosed);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, ScreenSessions::onLoggedOut);
     }
 
     /**
@@ -130,7 +133,6 @@ public final class ScreenSessions {
                 && player.level().getGameTime() - closed.tick() <= CLOSING_TICKS;
     }
 
-    @SubscribeEvent
     public static void onMenuClosed(final PlayerContainerEvent.Close event) {
         if (event.getContainer() instanceof DesktopMenu desktop) {
             CLOSED_DESKTOPS.put(event.getEntity().getUUID(), new Closed(event.getEntity().level().dimension(),
@@ -138,7 +140,6 @@ public final class ScreenSessions {
         }
     }
 
-    @SubscribeEvent
     public static void onLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
         CLOSED_DESKTOPS.remove(event.getEntity().getUUID());
     }

@@ -19,7 +19,7 @@ import dev.jstech.computers.scripting.JsComputersScripts;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.content.ScriptBinding;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.world.item.CreativeModeTab;

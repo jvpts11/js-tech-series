@@ -13,7 +13,7 @@ import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaFormat;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.CraftFiles;
 import net.minecraft.core.BlockPos;

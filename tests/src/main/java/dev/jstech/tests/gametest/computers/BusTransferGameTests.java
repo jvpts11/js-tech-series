@@ -16,7 +16,7 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.connect.Connection;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;

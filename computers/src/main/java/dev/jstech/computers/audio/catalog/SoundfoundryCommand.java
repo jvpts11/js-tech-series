@@ -7,17 +7,18 @@
  */
 package dev.jstech.computers.audio.catalog;
 
-import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.ComputersPermissions;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.audio.media.MediaStore;
+import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
@@ -25,7 +26,6 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  * album in its folder, without restarting the server.
  */
 @TextHolder
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class SoundfoundryCommand {
 
     static final TextKey READING = TextKey.of("jsc.soundfoundry.catalog.reading", "Reading the music catalogue...");
@@ -44,12 +44,23 @@ public final class SoundfoundryCommand {
     private SoundfoundryCommand() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RegisterCommandsEvent.class, SoundfoundryCommand::onRegisterCommands);
+    }
+
     public static void onRegisterCommands(final RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("soundfoundry")
-                .requires(source -> source.hasPermission(OPERATOR))
+                .requires(SoundfoundryCommand::mayReload)
                 .then(Commands.literal("catalog")
                         .then(Commands.literal("reload").executes(context -> reload(context.getSource())))));
+    }
+
+    /* A player by their permission node, as a server's permission mod grants it; the console and blocks by level. */
+    private static boolean mayReload(final CommandSourceStack source) {
+        final ServerPlayer player = source.getPlayer();
+        return player == null ? source.hasPermission(OPERATOR)
+                : CorePermissions.has(player, ComputersPermissions.reloadCatalog());
     }
 
     private static int reload(final CommandSourceStack source) {

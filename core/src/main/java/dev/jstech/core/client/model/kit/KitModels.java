@@ -116,7 +116,7 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
 
     /**
      * The model in the file {@code file} painted with {@code texture} and playing the animations of
-     * {@code animations}, as a family of GeckoLib's files lays them out, read the first time it is asked for; on the
+     * {@code animations}, as a family of geometry files lays them out, read the first time it is asked for; on the
      * render thread. None when it does not read, said once in the log.
      */
     public static Optional<KitModel> look(final ResourceLocation file, final ResourceLocation texture,

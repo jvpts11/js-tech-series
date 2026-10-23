@@ -13,7 +13,7 @@ import dev.jstech.computers.block.part.CraftingRouterPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.IFacePart;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import net.minecraft.core.BlockPos;

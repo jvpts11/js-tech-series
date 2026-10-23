@@ -82,8 +82,9 @@ registered from client setup:
 
 Each mod opens its registries once, while the game loads, by firing one event on the mod bus:
 
-- `CoreRegisterEvent`, for languages and kinds of Operation.
-- `ComputersRegisterEvent`, for instruction set architectures (ISAs), kernels, operating systems, programs,
+- `RegisterOperationTypesEvent`, J's Core's, for kinds of Operation.
+- `ComputersRegisterEvent`, for programming languages, instruction set architectures (ISAs), kernels, operating
+  systems, programs,
   desktops, Network Operations Engines and kinds of component for programs' windows, and for what the engines that take extensions (NextgreIQL among
   them) add to their planner: rules (`IPlannerRule`), hints (`IPlannerOperator`), statistics
   (`IPlannerStatistic`) and notes under a plan's steps (`IExplainNode`), all in `dev.jstech.computers.api.planner`.
@@ -96,7 +97,7 @@ Listen for the one you need and add what you have. After the loading is done eve
 refuses to change, so that what a world knows how to do does not change under it while somebody plays it.
 
 The mods of the series add their own through the same events. Sigma Sharp is registered as a language by
-J's Computers listening for `CoreRegisterEvent`, exactly as an addon would, so the way in is the one that
+J's Computers listening for `ComputersRegisterEvent`, exactly as an addon would, so the way in is the one that
 is tried every time the game starts rather than a path only addons take.
 
 Nothing quietly replaces anything, because which of two won would otherwise depend on the order the mods
@@ -162,7 +163,7 @@ and `computers.txt`: one line for every type and every member a mod can reach, e
 the API that brought it in the shape written there. A line reads like this:
 
 ```
-2 dev.jstech.core.language.IProgrammingLanguage  default CompileResult compile(List<SourceText>, CompileOptions)
+10 dev.jstech.core.material.Materials  static List<Material> all()
 ```
 
 The file also says the newest version that is no longer marked as new (`stable 1`). A test compares the

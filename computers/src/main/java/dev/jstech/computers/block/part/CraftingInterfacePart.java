@@ -21,7 +21,7 @@ import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Utf8Text;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

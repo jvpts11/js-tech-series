@@ -24,7 +24,7 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;

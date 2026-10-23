@@ -7,10 +7,10 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.core.JsCore;
-import dev.jstech.core.language.ILanguageProcess;
-import dev.jstech.core.language.IMachineView;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.api.language.ILanguageProcess;
+import dev.jstech.computers.api.language.IMachineView;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Set;
@@ -61,7 +61,7 @@ public class TickerBenchmarks {
 
     @Setup(Level.Trial)
     public void start() {
-        JsCore.languages().register(new BusyLanguage());
+        JsComputersApi.languages().register(new BusyLanguage());
         this.machine = new MachinePrograms();
         final int count = Integer.parseInt(this.programs);
         for (int i = 0; i < count; i++) {
@@ -74,7 +74,7 @@ public class TickerBenchmarks {
 
     @TearDown(Level.Trial)
     public void stop() {
-        JsCore.languages().unregister(LANGUAGE);
+        JsComputersApi.languages().unregister(LANGUAGE);
     }
 
     @Benchmark

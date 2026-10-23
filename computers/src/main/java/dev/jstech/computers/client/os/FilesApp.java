@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.gui.layout.FilesLayout;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
@@ -31,7 +32,6 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.os.media.MediaVolume;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
@@ -2019,7 +2019,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (MachineListing.claims(extension)) {
             return true;
         }
-        final var runner = JsCore.languages().runnerOf(extension);
+        final var runner = JsComputersApi.languages().runnerOf(extension);
         // A source file can be run too, but opening one means reading it, so it is not offered as "Run".
         return runner != null && !runner.sourceExtensions().contains(extension);
     }
@@ -2641,7 +2641,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (MachineListing.claims(lower)) {
             return GameText.resolve(MachineListing.LABEL);
         }
-        final var language = JsCore.languages().byExtension(lower);
+        final var language = JsComputersApi.languages().byExtension(lower);
         if (language != null) {
             return GameText.resolve((language.sourceExtensions().contains(lower) ? FilesTexts.SOURCE
                     : FilesTexts.PROGRAM).with(language.displayName()));

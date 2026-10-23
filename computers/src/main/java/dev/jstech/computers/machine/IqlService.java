@@ -38,7 +38,7 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.workshop.UpdateAction;
 import dev.jstech.computers.workshop.UpdateDoor;
 import dev.jstech.computers.workshop.UpdateRequest;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;

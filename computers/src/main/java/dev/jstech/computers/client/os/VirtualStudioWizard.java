@@ -9,11 +9,11 @@ package dev.jstech.computers.client.os;
 
 import static dev.jstech.computers.client.os.VirtualStudioLoader.join;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.os.edit.project.ProjectFile;
 import dev.jstech.computers.os.edit.project.ProjectTemplate;
 import dev.jstech.computers.os.edit.project.SolutionFile;
 import dev.jstech.computers.sigma.LanguageLevel;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Checkbox;
 import dev.jstech.core.client.gui.component.Draw;
@@ -23,7 +23,7 @@ import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -197,7 +197,7 @@ final class VirtualStudioWizard {
     /** The languages the machine knows, which is what the language filter cycles through. */
     private List<String> languageNames() {
         final List<String> out = new ArrayList<>();
-        for (final IProgrammingLanguage language : JsCore.languages().all()) {
+        for (final IProgrammingLanguage language : JsComputersApi.languages().all()) {
             out.add(language.displayName());
         }
         return out;

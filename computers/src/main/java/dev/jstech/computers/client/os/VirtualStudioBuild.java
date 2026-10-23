@@ -9,14 +9,14 @@ package dev.jstech.computers.client.os;
 
 import static dev.jstech.computers.client.os.VirtualStudioLoader.join;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.os.edit.project.ProjectFile;
-import dev.jstech.core.JsCore;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayDeque;
@@ -263,7 +263,7 @@ final class VirtualStudioBuild {
             buildNext();
             return;
         }
-        final IProgrammingLanguage language = JsCore.languages().get(
+        final IProgrammingLanguage language = JsComputersApi.languages().get(
                 ResourceLocation.tryParse(project.language()));
         if (language == null) {
             print(VirtualStudioTexts.NO_LANGUAGE_CALLED.with(project.name(), project.language()));

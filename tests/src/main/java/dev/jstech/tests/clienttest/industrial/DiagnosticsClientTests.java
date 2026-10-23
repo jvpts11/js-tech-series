@@ -11,8 +11,8 @@ import dev.jstech.core.audio.SoundMixerTexts;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.client.diagnostic.DiagnosticsClient;
 import dev.jstech.core.energy.LevelEnergy;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.text.GameText;
-import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
@@ -31,7 +31,7 @@ public final class DiagnosticsClientTests {
 
     @ClientTest(timeoutTicks = 200)
     public static void debugScreen_showsThePanelsAndTheTimings(final ClientTestContext ctx) {
-        ctx.thenServer(0, level -> Cables.lay(level, ctx.abs(CABLE), IndustrialModule.ENERGY_CABLE.get()))
+        ctx.thenServer(0, level -> Cables.lay(level, ctx.abs(CABLE), SharedEnergy.INSULATED_COPPER_CABLE.get()))
                 .thenWaitUntil(() -> DiagnosticsClient.lines().stream()
                         .anyMatch(line -> line.startsWith(LevelEnergy.TIMING + ": ")), 60,
                         "the energy grid's time on the debug screen")

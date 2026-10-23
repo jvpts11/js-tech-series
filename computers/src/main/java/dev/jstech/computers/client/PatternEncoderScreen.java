@@ -32,7 +32,7 @@ import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.BlockPos;

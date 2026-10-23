@@ -12,7 +12,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -71,7 +71,7 @@ public final class WorldEventCommands {
 
     /** Declares the commands, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("event", SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare("event", CommandRoot.GAME_MASTERS, (node, context) -> node
                 .then(Commands.literal("list").executes(WorldEventCommands::list))
                 .then(Commands.literal("start")
                         .then(Commands.argument(TYPE, ResourceLocationArgument.id()).suggests(TYPES)

@@ -17,7 +17,7 @@ import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.registry.ComputingContent;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Predicate;

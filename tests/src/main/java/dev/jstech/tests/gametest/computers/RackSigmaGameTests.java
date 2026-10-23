@@ -19,7 +19,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.ServerStacks;
 import java.util.List;

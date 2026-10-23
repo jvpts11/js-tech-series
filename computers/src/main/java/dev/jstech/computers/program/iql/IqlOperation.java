@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.program.iql;
 
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 
 import java.util.Objects;
 

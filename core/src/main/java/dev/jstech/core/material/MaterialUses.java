@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.material;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.IConfigValues;
 import dev.jstech.core.log.CoreLogs;
@@ -63,7 +62,6 @@ public final class MaterialUses {
 
     private static final Logger LOGGER = CoreLogs.CONTENT.logger();
     private static final List<MaterialUse> USES = new CopyOnWriteArrayList<>();
-    private static final List<Kept> KEPT = new CopyOnWriteArrayList<>();
     private static final Map<Item, MaterialThing> THINGS = new ConcurrentHashMap<>();
 
     /* An ore is a little harder to break than its rock, as the game's are, and as hard to blow up as stone ore. */
@@ -200,17 +198,6 @@ public final class MaterialUses {
         return Optional.ofNullable(THINGS.get(item));
     }
 
-    /**
-     * Keeps a thing of the old fixed catalogue registered, by its ids, without sharing it: the items J's Industrial
-     * still names through the old catalogue keep their ids until it declares its uses.
-     */
-    @ApiStatus.Internal
-    public static DeferredItem<Item> keep(final ResourceLocation material, final ResourceLocation form) {
-        KEPT.add(new Kept(material, form));
-        return DeferredItem.createItem(ResourceLocation.fromNamespaceAndPath(material.getNamespace(),
-                material.getPath() + "_" + form.getPath()));
-    }
-
     /** Hands the mod's bus the registering of the union, once, from the Core's constructor. */
     @ApiStatus.Internal
     public static void listen(final IEventBus modBus) {
@@ -284,15 +271,6 @@ public final class MaterialUses {
     /* The things the uses call for that no mod has already, each once, in the order sharedItems() gives. */
     private static List<RegisteredThing> union() {
         final List<MaterialUse> all = new ArrayList<>(USES);
-        for (final Kept kept : KEPT) {
-            final Material material = Materials.byId(kept.material()).orElseThrow(() -> DeclarationError.of(
-                    JsCore.MODID, "the kept thing " + kept.material() + "/" + kept.form(),
-                    "names a material nobody declared", "declare the material"));
-            final Form form = Forms.byId(kept.form()).orElseThrow(() -> DeclarationError.of(JsCore.MODID,
-                    "the kept thing " + kept.material() + "/" + kept.form(), "names a form nobody declared",
-                    "declare the form"));
-            all.add(new MaterialUse(JsCore.MODID, material, form, null, false));
-        }
         final List<Material> materials = Materials.all();
         final List<Form> forms = Forms.all();
         final List<HostRock> rocks = HostRocks.all();
@@ -407,9 +385,5 @@ public final class MaterialUses {
             default -> properties.mapColor(MapColor.STONE).instrument(NoteBlockInstrument.BASEDRUM)
                     .sound(SoundType.STONE);
         };
-    }
-
-    /* A thing of the old catalogue, by its ids. */
-    private record Kept(ResourceLocation material, ResourceLocation form) {
     }
 }

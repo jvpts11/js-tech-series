@@ -50,7 +50,7 @@ public final class StyleFileGameTests {
     private static final double TEXT_CONTRAST = 4.5;
     private static final double QUIET_CONTRAST = 3.0;
     /** The class whose loading declares the eras' palettes. */
-    private static final String ERA_THEMES = "dev.jstech.core.client.gui.theme.EraThemes";
+    private static final String ERA_THEMES = "dev.jstech.core.jstechseries.theme.client.EraThemes";
 
     private StyleFileGameTests() {
     }

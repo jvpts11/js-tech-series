@@ -23,7 +23,7 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;

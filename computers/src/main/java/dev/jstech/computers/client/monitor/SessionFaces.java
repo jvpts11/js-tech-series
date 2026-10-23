@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client.monitor;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.AbstractComputerScreen;
 import dev.jstech.computers.client.BootMenuScreen;
 import dev.jstech.computers.client.BootSequenceScreen;
@@ -37,11 +36,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -50,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
  * session opens for a player at it, built from the same opening, moved on tick by tick as an open one is, and drawn
  * onto the face. So the face and the open screen are one picture, not a picture and its summary.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class SessionFaces {
 
     /**
@@ -69,6 +65,12 @@ public final class SessionFaces {
     };
 
     private SessionFaces() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, SessionFaces::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, SessionFaces::onLeave);
     }
 
     /** Draws the face of the monitor at {@code monitor}, whose machine is in the session {@code picture} says. */
@@ -102,7 +104,6 @@ public final class SessionFaces {
         return shown == null ? null : shown.screen();
     }
 
-    @SubscribeEvent
     public static void onClientTick(final ClientTickEvent.Post event) {
         if (SHOWN.isEmpty() || Minecraft.getInstance().isPaused()) {
             return;
@@ -112,7 +113,6 @@ public final class SessionFaces {
         }
     }
 
-    @SubscribeEvent
     public static void onLeave(final ClientPlayerNetworkEvent.LoggingOut event) {
         SHOWN.clear();
     }

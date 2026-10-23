@@ -7,17 +7,17 @@
  */
 package dev.jstech.tests.gametest.core;
 
-import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLink;
-import dev.jstech.core.network.NetworkCategory;
-import dev.jstech.core.network.NetworkMemberEvent;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.network.NetworkTables;
-import dev.jstech.core.network.StateRow;
-import dev.jstech.core.network.StateTable;
-import dev.jstech.core.operation.OperationType;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.network.ConnectivityIndex;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.network.NetworkCategory;
+import dev.jstech.core.jstechseries.network.NetworkMemberEvent;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkTables;
+import dev.jstech.core.jstechseries.network.StateRow;
+import dev.jstech.core.jstechseries.network.StateTable;
+import dev.jstech.core.jstechseries.operation.OperationType;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.DeclarationError;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;

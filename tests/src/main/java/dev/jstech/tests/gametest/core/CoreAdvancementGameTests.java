@@ -10,8 +10,8 @@ package dev.jstech.tests.gametest.core;
 import dev.jstech.core.advancement.Advancements;
 import dev.jstech.core.advancement.AxisStepTrigger;
 import dev.jstech.core.progression.PlayerProgress;
-import dev.jstech.core.progression.ProgressionAxes;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.SeriesAxes;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.Optional;
@@ -58,10 +58,10 @@ public final class CoreAdvancementGameTests {
     public static void axisStep_isEarnedAtItsStepOrAnyPastIt(final GameTestHelper helper) {
         final ServerPlayer player = join(helper);
         try {
-            PlayerProgress.reach(player.server, player.getUUID(), ProgressionAxes.HARDWARE_ERA, HardwareEra.LEGACY);
+            PlayerProgress.reach(player.server, player.getUUID(), SeriesAxes.HARDWARE_ERA, HardwareEra.LEGACY);
             helper.assertFalse(done(player, "reached_transition"), "a step short of it earns nothing");
             // Straight from Legacy to Standard: the Transition step is skipped, and still counted as passed.
-            PlayerProgress.reach(player.server, player.getUUID(), ProgressionAxes.HARDWARE_ERA, HardwareEra.STANDARD);
+            PlayerProgress.reach(player.server, player.getUUID(), SeriesAxes.HARDWARE_ERA, HardwareEra.STANDARD);
             helper.assertTrue(done(player, "reached_transition"), "a step past it earns it");
         } finally {
             leave(player);
@@ -71,7 +71,7 @@ public final class CoreAdvancementGameTests {
 
     @GameTest(template = ARENA)
     public static void axisStep_neverMeetsAnAxisOrStepTheGameDoesNotKnow(final GameTestHelper helper) {
-        final ResourceLocation era = ProgressionAxes.HARDWARE_ERA.id();
+        final ResourceLocation era = SeriesAxes.HARDWARE_ERA.id();
         helper.assertFalse(new AxisStepTrigger.Instance(Optional.empty(), era, "steam_age").matches(era, 9),
                 "a step the axis does not have is never reached");
         final ResourceLocation gone = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "gone_axis");

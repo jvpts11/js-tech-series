@@ -11,7 +11,7 @@ import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.ProgramTable;
-import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.core.schedule.TickScheduler;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

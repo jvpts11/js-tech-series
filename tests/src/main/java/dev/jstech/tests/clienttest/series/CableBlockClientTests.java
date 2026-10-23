@@ -14,6 +14,7 @@ import dev.jstech.core.cable.Cables;
 import dev.jstech.core.cable.Lane;
 import dev.jstech.core.client.light.LightingClient;
 import dev.jstech.core.client.model.CableBakedModel;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -127,13 +128,13 @@ public final class CableBlockClientTests {
                             IndustrialModule.COMPRESSOR.get().defaultBlockState());
                     for (int x = -2; x <= 2; x++) {
                         final BlockPos at = ctx.abs(new BlockPos(x, FLOOR, ROW));
-                        Cables.lay(level, at, IndustrialModule.ENERGY_CABLE.get());
+                        Cables.lay(level, at, SharedEnergy.INSULATED_COPPER_CABLE.get());
                         Cables.lay(level, at, ComputingModule.ETHERNET_CABLE.get());
                     }
                 })
                 .thenWaitUntil(() -> {
                     final CableBlockEntity end = clientCable(ctx, last);
-                    return end != null && (end.plugs(Lane.BOTTOM_LEFT) & 1 << Direction.EAST.get3DDataValue()) != 0;
+                    return end != null && (end.plugs(Lane.BOTTOM) & 1 << Direction.EAST.get3DDataValue()) != 0;
                 }, 80, "the player's game to know the energy wire plugs into the machine")
                 .thenAssert(0, () -> {
                     final CableBlockEntity end = clientCable(ctx, last);

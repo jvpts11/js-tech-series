@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramEntry;
@@ -15,10 +16,9 @@ import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.ProgramTable;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.core.JsCore;
-import dev.jstech.core.language.ExecutionBalance;
-import dev.jstech.core.language.ILanguageProcess;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.ExecutionBalance;
+import dev.jstech.computers.api.language.ILanguageProcess;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -233,14 +233,14 @@ public final class MachinePrograms {
      * of a language that only compiles, which the machine compiles on the way in.
      */
     public static boolean runs(final String extension) {
-        return MachineListing.claims(extension) || JsCore.languages().runnerOf(extension) != null
+        return MachineListing.claims(extension) || JsComputersApi.languages().runnerOf(extension) != null
                 || compilerOnly(extension) != null;
     }
 
     /** The language that only compiles and is written in files with that extension, or null. */
     @Nullable
     private static IProgrammingLanguage compilerOnly(final String extension) {
-        final IProgrammingLanguage language = JsCore.languages().sourceOf(extension);
+        final IProgrammingLanguage language = JsComputersApi.languages().sourceOf(extension);
         return language != null && language.binaryExtensions().isEmpty() ? language : null;
     }
 
@@ -296,7 +296,7 @@ public final class MachinePrograms {
         final int dot = name.lastIndexOf('.');
         final String extension = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
         final boolean listing = MachineListing.claims(extension);
-        final IProgrammingLanguage runner = listing ? null : JsCore.languages().runnerOf(extension);
+        final IProgrammingLanguage runner = listing ? null : JsComputersApi.languages().runnerOf(extension);
         final IProgrammingLanguage compiler = listing || runner != null ? null : compilerOnly(extension);
         if (!listing && runner == null && compiler == null) {
             return Started.failed(NOTHING_RUNS.with(name, extension));
@@ -679,7 +679,7 @@ public final class MachinePrograms {
                                                  final int heapMb, final BlockEntity machine) {
         final String named = envelope.getString(LANGUAGE);
         final ResourceLocation id = ResourceLocation.tryParse(named);
-        final IProgrammingLanguage language = id == null ? null : JsCore.languages().get(id);
+        final IProgrammingLanguage language = id == null ? null : JsComputersApi.languages().get(id);
         if (language == null) {
             LOGGER.warn("The program '{}' on the machine at {} was left out: no language called {} is installed", name,
                     where(machine), named);

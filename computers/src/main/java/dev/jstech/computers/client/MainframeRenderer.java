@@ -7,102 +7,86 @@
  */
 package dev.jstech.computers.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.core.client.geo.LookGeoModel;
-import net.minecraft.client.renderer.MultiBufferSource;
+import dev.jstech.core.client.model.kit.IKitDriver;
+import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
+import dev.jstech.core.model.ModelAnimator;
+import dev.jstech.core.model.ModelPose;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 /**
- * Draws a Mainframe as one cabinet from its controller block. Every processor, memory stick, graphics
- * card, disk and the power supply is its own bone, shown only when that slot actually holds the part,
- * so what a player installs is what a player sees through the open service bay.
+ * Draws a Mainframe as one cabinet from its controller block, the model facing north with the controller in the
+ * middle of its bottom front row, so each facing turns it about that block onto the multiblock's own footprint. Every
+ * processor, memory stick, graphics card, disk and the power supply is its own bone, shown only when that slot
+ * actually holds the part, so what a player installs is what a player sees through the open service bay.
  *
  * <p>The machine states itself in hardware, never on a screen: three annunciator lamps for running,
  * network and fault. A Mainframe is read on a linked monitor like every other computer in the mod.
  */
-public final class MainframeRenderer extends GeoBlockRenderer<MainframeBlockEntity> {
+public final class MainframeRenderer implements IKitDriver<MainframeBlockEntity> {
 
-    public MainframeRenderer(final BlockEntityRendererProvider.Context context) {
-        super(new LookGeoModel<>(ComputingLooks.MAINFRAME));
+    /** The roof fans and the tape reels, which turn while the machine is up. */
+    private static final String WORK = "work";
+    private static final String WORK_CLIP = "animation.mainframe.work";
+    private static final String[] CPUS = DeviceLamps.numbered("cpu_", MainframeBlockEntity.CPU_SLOTS);
+    private static final String[] RAMS = DeviceLamps.numbered("ram_", MainframeBlockEntity.RAM_SLOTS);
+    private static final String[] GPUS = DeviceLamps.numbered("gpu_", MainframeBlockEntity.GPU_SLOTS);
+    private static final String[] DISKS = DeviceLamps.numbered("disk_", MainframeBlockEntity.DISK_SLOTS);
+    private static final String[] DISK_LAMPS = DeviceLamps.numbered("disk_lamp_", MainframeBlockEntity.DISK_SLOTS);
+
+    private MainframeRenderer() {
+    }
+
+    /** The renderer of the Mainframes; the cabinet spans twelve blocks, so it is drawn within its whole box. */
+    public static BlockEntityRenderer<MainframeBlockEntity> create(final BlockEntityRendererProvider.Context context) {
+        return KitBlockEntityRenderer.<MainframeBlockEntity>look(ComputingLooks.MAINFRAME)
+                .driver(new MainframeRenderer())
+                .box(MainframeBlockEntity::renderBox)
+                .build();
+    }
+
+    /* Every other visual (the installed hardware, the lamps, the panel) is a bone shown or hidden, not a clip. */
+    @Override
+    public void drive(final MainframeBlockEntity mainframe, final ModelAnimator animator, final double seconds) {
+        DeviceClips.play(animator, WORK, mainframe.visualRunning() ? WORK_CLIP : null, seconds);
     }
 
     @Override
-    protected Direction getFacing(final MainframeBlockEntity mainframe) {
-        final BlockState state = mainframe.getBlockState();
-        return state.hasProperty(HorizontalDirectionalBlock.FACING)
-                ? state.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
-    }
-
-    /**
-     * The model faces north with the controller in the middle of its bottom front row; each facing
-     * turns it about that block's centre so the cabinet lands on the multiblock's own footprint.
-     */
-    @Override
-    protected void rotateBlock(final Direction facing, final PoseStack poseStack) {
-        switch (facing) {
-            case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(180));
-            case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
-            case EAST -> poseStack.mulPose(Axis.YP.rotationDegrees(270));
-            default -> {
-            }
-        }
-    }
-
-    @Override
-    public void preRender(final PoseStack poseStack, final MainframeBlockEntity mainframe,
-                          final BakedGeoModel model, final MultiBufferSource bufferSource,
-                          final VertexConsumer buffer, final boolean isReRender, final float partialTick,
-                          final int packedLight, final int packedOverlay, final int colour) {
-        super.preRender(poseStack, mainframe, model, bufferSource, buffer, isReRender, partialTick,
-                packedLight, packedOverlay, colour);
-        // The baked model is shared by every Mainframe of this era, so every flag is set on every render.
+    public void move(final MainframeBlockEntity mainframe, final ModelPose pose, final double seconds) {
         for (int i = 0; i < MainframeBlockEntity.CPU_SLOTS; i++) {
-            show(model, "cpu_" + i, mainframe.hardwareInstalled(MainframeBlockEntity.CPU_SLOTS_START + i));
+            DeviceLamps.show(pose, CPUS[i], mainframe.hardwareInstalled(MainframeBlockEntity.CPU_SLOTS_START + i));
         }
         for (int i = 0; i < MainframeBlockEntity.RAM_SLOTS; i++) {
-            show(model, "ram_" + i, mainframe.hardwareInstalled(MainframeBlockEntity.RAM_SLOTS_START + i));
+            DeviceLamps.show(pose, RAMS[i], mainframe.hardwareInstalled(MainframeBlockEntity.RAM_SLOTS_START + i));
         }
         for (int i = 0; i < MainframeBlockEntity.GPU_SLOTS; i++) {
-            show(model, "gpu_" + i, mainframe.hardwareInstalled(MainframeBlockEntity.GPU_SLOTS_START + i));
+            DeviceLamps.show(pose, GPUS[i], mainframe.hardwareInstalled(MainframeBlockEntity.GPU_SLOTS_START + i));
         }
         for (int i = 0; i < MainframeBlockEntity.DISK_SLOTS; i++) {
             final boolean seated = mainframe.hardwareInstalled(MainframeBlockEntity.DISK_SLOTS_START + i);
-            show(model, "disk_" + i, seated);
-            show(model, "disk_lamp_" + i, seated && mainframe.diskCarriesSystem(i));
+            DeviceLamps.show(pose, DISKS[i], seated);
+            DeviceLamps.show(pose, DISK_LAMPS[i], seated && mainframe.diskCarriesSystem(i));
         }
-        show(model, "psu", mainframe.hardwareInstalled(MainframeBlockEntity.PSU_SLOT));
+        DeviceLamps.show(pose, "psu", mainframe.hardwareInstalled(MainframeBlockEntity.PSU_SLOT));
 
         final boolean running = mainframe.visualRunning();
         final boolean valid = mainframe.visualBuildValid();
-        show(model, "lamp_run", running && valid);
-        show(model, "lamp_net", running && mainframe.visualNetworked());
+        DeviceLamps.show(pose, "lamp_run", running && valid);
+        DeviceLamps.show(pose, "lamp_net", running && mainframe.visualNetworked());
         // Amber-and-red for "powered but the build will not come up": parts are in and it still fails.
-        show(model, "lamp_fault", running && !valid);
-        show(model, "lightbar_plinth", running && valid);
-        show(model, "lightbar_cornice", running && valid);
+        DeviceLamps.show(pose, "lamp_fault", running && !valid);
+        DeviceLamps.show(pose, "lightbar_plinth", running && valid);
+        DeviceLamps.show(pose, "lightbar_cornice", running && valid);
         // The Transition cabinet's blue slit down the mullion, the Advanced one's white lines up its sides.
-        show(model, "lightbar_slit", running && valid);
-        show(model, "lightbar_edges", running && valid);
-        show(model, "service_panel", !mainframe.servicePanelOff());
+        DeviceLamps.show(pose, "lightbar_slit", running && valid);
+        DeviceLamps.show(pose, "lightbar_edges", running && valid);
+        DeviceLamps.show(pose, "service_panel", !mainframe.servicePanelOff());
     }
 
-    private static void show(final BakedGeoModel model, final String bone, final boolean visible) {
-        model.getBone(bone).ifPresent(b -> b.setHidden(!visible));
-    }
-
-    /** The cabinet spans twelve blocks; culling by the controller's own block would blink it out. */
     @Override
-    public AABB getRenderBoundingBox(final MainframeBlockEntity mainframe) {
-        return mainframe.renderBox();
+    public boolean movesBones() {
+        return true;
     }
 }

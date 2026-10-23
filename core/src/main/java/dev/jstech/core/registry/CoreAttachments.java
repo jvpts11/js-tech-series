@@ -19,7 +19,6 @@ import dev.jstech.core.mechanical.LevelMechanics;
 import dev.jstech.core.moving.Footing;
 import dev.jstech.core.moving.LevelMovingStructures;
 import dev.jstech.core.multiblock.LevelStructures;
-import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
 import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.physics.Laws;
@@ -54,10 +53,6 @@ public final class CoreAttachments {
 
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, JsCore.MODID);
-
-    public static final Supplier<AttachmentType<NetworkSystem>> NETWORK_SYSTEM =
-            ATTACHMENT_TYPES.register("network_system",
-                    () -> AttachmentType.builder(NetworkSystem::new).build());
 
     /**
      * A dimension's grids of every kind but data, with the work that shares what each carries; never saved, since the

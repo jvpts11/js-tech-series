@@ -12,7 +12,7 @@ import dev.jstech.computers.crafting.PendingCraftOperation;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.CraftFiles;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;

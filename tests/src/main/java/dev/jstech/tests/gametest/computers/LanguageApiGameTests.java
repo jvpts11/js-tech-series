@@ -7,16 +7,16 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.core.JsCore;
-import dev.jstech.core.language.ILanguageProcess;
-import dev.jstech.core.language.IMachineView;
-import dev.jstech.core.language.IProgrammingLanguage;
-import dev.jstech.core.language.LanguageRegistry;
+import dev.jstech.computers.api.language.ILanguageProcess;
+import dev.jstech.computers.api.language.IMachineView;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.LanguageRegistry;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.ToyLanguage;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -262,10 +262,10 @@ public final class LanguageApiGameTests {
      */
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void machine_runsListingsNoLanguageClaims(final GameTestHelper helper) {
-        helper.assertTrue(JsCore.languages().isReserved("asm") && JsCore.languages().byExtension("asm") == null,
-                "no language claims .asm");
+        helper.assertTrue(JsComputersApi.languages().isReserved("asm")
+                && JsComputersApi.languages().byExtension("asm") == null, "no language claims .asm");
         helper.assertTrue(SigmaLanguage.SIGMA_SHARP.binaryExtensions().isEmpty()
-                && JsCore.languages().runnerOf("sgs") == null, "and Σ# runs nothing itself");
+                && JsComputersApi.languages().runnerOf("sgs") == null, "and Σ# runs nothing itself");
         final PersonalComputerBlockEntity computer =
                 TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
                         .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
@@ -315,8 +315,8 @@ public final class LanguageApiGameTests {
      */
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void sigma_isALanguageOfItsOwnHeldToItsOwnCut(final GameTestHelper helper) {
-        final IProgrammingLanguage sigma = JsCore.languages().byExtension("sg");
-        helper.assertTrue(sigma == SigmaLanguage.SIGMA && JsCore.languages().byExtension("sgs")
+        final IProgrammingLanguage sigma = JsComputersApi.languages().byExtension("sg");
+        helper.assertTrue(sigma == SigmaLanguage.SIGMA && JsComputersApi.languages().byExtension("sgs")
                 == SigmaLanguage.SIGMA_SHARP, "each extension finds its own language");
         helper.assertTrue("Σ".equals(sigma.displayName()) && !sigma.tokenize("class A { }").isEmpty(),
                 "which names itself and colours its sources");
@@ -412,8 +412,9 @@ public final class LanguageApiGameTests {
                 "nothing is added once it is closed");
         helper.assertTrue(!registry.unregister(ToyLanguage.ID), "and nothing is taken away");
         helper.assertTrue(registry.get(ToyLanguage.ID) != null, "what was there stays");
-        helper.assertTrue(JsCore.languages().isFrozen(), "the game's own registry is closed once every mod has loaded");
-        helper.assertTrue(JsCore.languages().runnerOf("toy") != null,
+        helper.assertTrue(JsComputersApi.languages().isFrozen(),
+                "the game's own registry is closed once every mod has loaded");
+        helper.assertTrue(JsComputersApi.languages().runnerOf("toy") != null,
                 "and holds the toy language the game-test server gave it while loading");
         helper.succeed();
     }

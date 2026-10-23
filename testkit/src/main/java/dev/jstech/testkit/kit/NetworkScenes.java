@@ -7,18 +7,18 @@
  */
 package dev.jstech.testkit.kit;
 
-import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLink;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.operation.IOperationArgs;
-import dev.jstech.core.operation.IOperationTask;
-import dev.jstech.core.operation.OperationDispatch;
-import dev.jstech.core.operation.OperationFailure;
-import dev.jstech.core.operation.OperationPriority;
-import dev.jstech.core.operation.OperationStatus;
-import dev.jstech.core.operation.OperationType;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.network.ConnectivityIndex;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.operation.IOperationArgs;
+import dev.jstech.core.jstechseries.operation.IOperationTask;
+import dev.jstech.core.jstechseries.operation.OperationDispatch;
+import dev.jstech.core.jstechseries.operation.OperationFailure;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationStatus;
+import dev.jstech.core.jstechseries.operation.OperationType;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.testkit.gametest.Expect;
 import java.util.ArrayList;

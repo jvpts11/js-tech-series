@@ -15,7 +15,7 @@ import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.os.crash.CrashStyle;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;

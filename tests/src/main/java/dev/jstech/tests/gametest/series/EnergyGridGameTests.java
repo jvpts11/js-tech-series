@@ -19,6 +19,8 @@ import dev.jstech.core.energy.LevelEnergy;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPolicies;
+import dev.jstech.core.jstechseries.energy.JsEnergy;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
@@ -41,8 +43,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * Energy in the Core: FE as the unit every other is counted against, energy kept in an item, and the energy grid moving
- * what a generator makes along the wires of a lane to the machines they plug into, losing what its cables lose; and
- * Industrial's energy cable, which loses nothing and limits nothing.
+ * what a generator makes along the wires of a lane to the machines they plug into, losing what its cables lose; and the
+ * series' basic cable, the Insulated Copper Cable, carrying J's Industrial's FE while J's Energy is off, up to its
+ * ceiling and losing a little.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -95,28 +98,27 @@ public final class EnergyGridGameTests {
 
     @GameTest(template = ARENA)
     public static void energyLane_runsBesideDataAndCarriesEnergyAlone(final GameTestHelper helper) {
-        final CoalGeneratorBlockEntity generator = generator(helper);
+        generator(helper);
         final CompressorBlockEntity machine = compressor(helper, MACHINE);
         for (final BlockPos at : RUN) {
-            TestCables.lay(helper, at, IndustrialModule.ENERGY_CABLE);
+            TestCables.lay(helper, at, SharedEnergy.INSULATED_COPPER_CABLE);
             TestCables.lay(helper, at, ComputingModule.ETHERNET_CABLE);
         }
 
         helper.succeedWhen(() -> {
             final CableBlockEntity last = TestCables.cable(helper, RUN.get(RUN.size() - 1));
+            final GridKind lowVoltage = JsEnergy.ENERGY.grid(JsEnergy.LOW);
             helper.assertTrue(last.wires().size() == 2, "energy and data share the blocks");
-            helper.assertTrue(last.wire(IndustrialModule.ENERGY_CABLE.get()).slot() == Lane.BOTTOM_LEFT,
-                    "energy runs in the bottom left lane");
+            helper.assertTrue(last.wire(SharedEnergy.INSULATED_COPPER_CABLE.get()).slot() == Lane.BOTTOM,
+                    "energy runs in the bottom lane");
             final int east = 1 << Direction.EAST.get3DDataValue();
-            helper.assertTrue((last.plugs(Lane.BOTTOM_LEFT) & east) != 0, "the energy wire plugs into the machine");
+            helper.assertTrue((last.plugs(Lane.BOTTOM) & east) != 0, "the energy wire plugs into the machine");
             helper.assertTrue((last.plugs(Lane.TOP_LEFT) & east) == 0, "the data wire does not");
-            helper.assertTrue(CoreGrids.contains(helper.getLevel(), GridKind.POWER,
-                    last.place(IndustrialModule.ENERGY_CABLE.get())), "the energy wire is in the energy grid");
-            helper.assertTrue(!CoreGrids.contains(helper.getLevel(), GridKind.POWER,
+            helper.assertTrue(CoreGrids.contains(helper.getLevel(), lowVoltage,
+                    last.place(SharedEnergy.INSULATED_COPPER_CABLE.get())), "the energy wire is in the energy grid");
+            helper.assertTrue(!CoreGrids.contains(helper.getLevel(), lowVoltage,
                     last.place(ComputingModule.ETHERNET_CABLE.get())), "the data wire is not");
             helper.assertTrue(machine.getEnergy().getEnergyStored() > 0, "energy arrives at the machine");
-            helper.assertTrue(FULL - generator.getEnergy().getEnergyStored() == machine.getEnergy().getEnergyStored(),
-                    "every FE the generator gave arrived");
         });
     }
 
@@ -178,43 +180,43 @@ public final class EnergyGridGameTests {
         helper.succeed();
     }
 
-    // Industrial's energy cable
+    // The series' basic cable, which J's Industrial's machines run on
 
     @GameTest(template = ARENA)
-    public static void energyCable_feedsMachinesWithoutLossOrLimit(final GameTestHelper helper) {
-        final CoalGeneratorBlockEntity generator = generator(helper);
+    public static void basicCable_feedsMachinesUpToItsCeilingLosingALittle(final GameTestHelper helper) {
+        generator(helper);
         final CompressorBlockEntity first = compressor(helper, MACHINE);
         final CompressorBlockEntity second = compressor(helper, BESIDE);
         for (final BlockPos at : RUN) {
-            TestCables.lay(helper, at, IndustrialModule.ENERGY_CABLE);
+            TestCables.lay(helper, at, SharedEnergy.INSULATED_COPPER_CABLE);
         }
 
         helper.succeedWhen(() -> {
-            final EnergyDistributionResult tick = lastTick(helper, IndustrialModule.ENERGY_CABLE.get());
-            // The generator gives a thousand a tick, and the two machines want six hundred each.
-            helper.assertTrue(tick.totalDelivered() == 1_000L, "the cable carries all the generator gives: "
-                    + tick.totalDelivered());
-            helper.assertTrue(tick.totalLost() == 0L, "the cable loses nothing");
-            final int got = first.getEnergy().getEnergyStored() + second.getEnergy().getEnergyStored();
-            helper.assertTrue(FULL - generator.getEnergy().getEnergyStored() == got,
-                    "every FE the generator gave arrived");
-            helper.assertTrue(first.getEnergy().getEnergyStored() == second.getEnergy().getEnergyStored(),
-                    "the two machines share it evenly");
+            final EnergyDistributionResult tick = lastTick(helper, SharedEnergy.INSULATED_COPPER_CABLE.get());
+            // The generator gives a thousand a tick and the two machines want six hundred each: the cable carries less.
+            helper.assertTrue(tick.totalDelivered() > 0L, "the cable carries energy: " + tick);
+            helper.assertTrue(tick.totalDelivered() + tick.totalLost() <= SharedEnergy.CABLE_CEILING,
+                    "no more than its ceiling a tick: " + tick);
+            helper.assertTrue(tick.totalLost() > 0L, "and loses a little on the way: " + tick);
+            helper.assertTrue(first.getEnergy().getEnergyStored() > 0
+                    && first.getEnergy().getEnergyStored() == second.getEnergy().getEnergyStored(),
+                    "the two machines share it evenly: " + first.getEnergy().getEnergyStored() + " and "
+                            + second.getEnergy().getEnergyStored());
         });
     }
 
     @GameTest(template = ARENA)
-    public static void energyCable_stopsFeedingWhenARunIsCut(final GameTestHelper helper) {
+    public static void basicCable_stopsFeedingWhenARunIsCut(final GameTestHelper helper) {
         final CoalGeneratorBlockEntity generator = generator(helper);
         final CompressorBlockEntity machine = compressor(helper, MACHINE);
         for (final BlockPos at : RUN) {
-            TestCables.lay(helper, at, IndustrialModule.ENERGY_CABLE);
+            TestCables.lay(helper, at, SharedEnergy.INSULATED_COPPER_CABLE);
         }
 
         final int[] before = new int[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(machine.getEnergy().getEnergyStored() > 0, "energy flows"))
-                .thenExecute(() -> TestCables.cable(helper, RUN.get(1)).take(IndustrialModule.ENERGY_CABLE.get()))
+                .thenExecute(() -> TestCables.cable(helper, RUN.get(1)).take(SharedEnergy.INSULATED_COPPER_CABLE.get()))
                 .thenIdle(2)
                 .thenExecute(() -> before[0] = generator.getEnergy().getEnergyStored())
                 .thenIdle(5)
@@ -223,10 +225,15 @@ public final class EnergyGridGameTests {
                 .thenSucceed();
     }
 
-    /* What the part of the grid the run's first wire is in moved in the last tick. */
+    /* What the part of the grid the run's first wire is in moved in the last tick, in its own kind of grid. */
     private static EnergyDistributionResult lastTick(final GameTestHelper helper, final CableType type) {
         final CableBlockEntity first = TestCables.cable(helper, RUN.get(0));
-        return CoreEnergy.lastTickAt(helper.getLevel(), first.place(type))
+        final OptionalLong number = CoreGrids.places(helper.getLevel()).find(first.place(type));
+        if (number.isEmpty()) {
+            return EnergyDistributionResult.empty();
+        }
+        return CoreGrids.mover(helper.getLevel(), type.grid())
+                .flatMap(mover -> ((LevelEnergy) mover).lastTickOf(number.getAsLong()))
                 .orElseGet(EnergyDistributionResult::empty);
     }
 

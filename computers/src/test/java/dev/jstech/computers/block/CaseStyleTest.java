@@ -9,7 +9,7 @@ package dev.jstech.computers.block;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
 /** A case's name in the models: the age alone for the one case of its age, the age and the style from Standard on. */

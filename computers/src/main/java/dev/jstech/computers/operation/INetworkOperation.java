@@ -8,7 +8,7 @@
 package dev.jstech.computers.operation;
 
 import dev.jstech.computers.operation.payload.OperationRecord;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 
 import java.util.UUID;
 

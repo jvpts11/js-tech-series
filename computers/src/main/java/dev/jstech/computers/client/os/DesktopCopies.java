@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CopyProgressPayload;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,23 +15,25 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The file copies under way on the machines this player started them on, as the machines said: when each starts
  * and ends, which is all a copy window needs to draw its progress smoothly. A machine copies one file after another,
  * so its copies make a run; the run lasts until its last copy ends, and a window shows the whole run.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class DesktopCopies {
 
     /** The copies of each machine's current run, in the order they run, the ended ones kept until the run ends. */
     private static final Map<BlockPos, Map<Long, Entry>> RUNS = new HashMap<>();
 
     private DesktopCopies() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, DesktopCopies::leftTheWorld);
     }
 
     /** Takes what a machine said of a copy: that it starts, or that it ended. */
@@ -81,7 +82,6 @@ public final class DesktopCopies {
     }
 
     /** Leaving a world leaves its machines' copies behind. */
-    @SubscribeEvent
     public static void leftTheWorld(final ClientPlayerNetworkEvent.LoggingOut event) {
         RUNS.clear();
     }

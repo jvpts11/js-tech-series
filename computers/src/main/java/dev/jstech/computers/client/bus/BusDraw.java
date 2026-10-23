@@ -10,7 +10,7 @@ package dev.jstech.computers.client.bus;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

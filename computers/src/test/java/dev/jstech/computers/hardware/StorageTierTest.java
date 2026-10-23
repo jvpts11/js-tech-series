@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.operation.OperationBalance;
+import dev.jstech.core.jstechseries.operation.OperationBalance;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

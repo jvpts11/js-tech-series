@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.operation.OperationBalance;
+import dev.jstech.core.jstechseries.operation.OperationBalance;
 
 /**
  * The performance class of a disk. The seek latency is a balance value the server config owns; the rest

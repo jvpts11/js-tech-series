@@ -24,8 +24,8 @@ import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.industrial.IndustrialModule;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestCableTypes;
 import dev.jstech.tests.testkit.TestCables;
@@ -357,10 +357,10 @@ public final class CableBlockGameTests {
         assertTooltip(helper, ComputingModule.HPC_CABLE, "HPC line", HardwareEra.STANDARD);
         assertTooltip(helper, ComputingModule.VINTAGE_PERIPHERAL_CABLE, "Peripheral line", HardwareEra.VINTAGE);
         assertTooltip(helper, ComputingModule.CRAFTING_CABLE, "Crafting line", null);
-        assertTooltip(helper, IndustrialModule.ENERGY_CABLE, "Energy line", null);
+        assertTooltip(helper, SharedEnergy.INSULATED_COPPER_CABLE, "Low voltage line", null);
         for (final CableEntry entry : ModContent.of("jsc").declaredCables()) {
             helper.assertTrue(entry.get().what().isPresent(), entry.id() + " says what it is for");
-            helper.assertTrue(entry.get().era().isPresent() != (entry == ComputingModule.CRAFTING_CABLE),
+            helper.assertTrue(entry.get().step().isPresent() != (entry == ComputingModule.CRAFTING_CABLE),
                     entry.id() + " names its era, unless it is the one cable of every era");
         }
         helper.succeed();

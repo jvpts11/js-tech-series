@@ -18,7 +18,7 @@ import dev.jstech.computers.client.bus.AbstractBusScreen;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;

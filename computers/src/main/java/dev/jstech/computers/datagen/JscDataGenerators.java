@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.datagen;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.datagen.advancement.JscAdvancementTabs;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
@@ -16,27 +15,31 @@ import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.datagen.ContentData;
 import dev.jstech.core.datagen.advancement.ConditionalAdvancementProvider;
 import java.util.function.BiConsumer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
  * Entry point for all data generation, run via {@code ./gradlew runData}: what the declared content needs, the names
- * the mod keeps in registries of its own, and its advancements.
+ * the mod keeps in registries of its own, and its advancements. The run fails, saying what, when something the
+ * content declares is missing.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class JscDataGenerators {
 
     private JscDataGenerators() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus the data generation, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(GatherDataEvent.class, JscDataGenerators::onGatherData);
+    }
+
     public static void onGatherData(final GatherDataEvent event) {
         final ContentData data = ContentData.gather(event, ComputingContent.CONTENT)
                 .alsoNaming(JscDataGenerators::systemsAndPrograms)
                 .alsoNaming(JscAdvancementTabs::translations);
         data.server(new JscAdvancementProvider(data.output(), data.lookup(), data.existingFiles()));
         data.server(new ConditionalAdvancementProvider(data.output(), data.lookup(), JscAdvancementTabs::all));
+        data.check();
     }
 
     /**

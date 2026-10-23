@@ -36,10 +36,19 @@ class CoreBoundariesTest {
     private static final Path SOURCES = Path.of("src", "main", "java");
     private static final List<String> FORBIDDEN = List.of("dev.jstech.computers", "dev.jstech.industrial", "dev.jstech.tests");
     private static final Path SERIES = Path.of("dev", "jstech", "core", "jstechseries");
-    /** Where the Core puts its two layers together: the mod's entry points and its data generation's. */
+    /**
+     * Where the Core puts its two layers together: the mod's entry points and its data generation's, and the list of
+     * what it promises, which names packages of both.
+     */
     private static final List<Path> JOINS = List.of(Path.of("dev", "jstech", "core", "JsCore.java"),
             Path.of("dev", "jstech", "core", "JsCoreClient.java"),
-            Path.of("dev", "jstech", "core", "datagen", "JsCoreDataGenerators.java"));
+            Path.of("dev", "jstech", "core", "datagen", "JsCoreDataGenerators.java"),
+            Path.of("dev", "jstech", "core", "api", "JsCoreApi.java"));
+    /**
+     * The adapters to other mods, which sit above both layers: each hands the scripts and the recipe viewers what the
+     * whole Core has, the series' events and kinds of Operation with the platform's.
+     */
+    private static final Path INTEGRATIONS = Path.of("dev", "jstech", "core", "integration");
 
     @Test
     void sources_nameNoModBuiltOnTheCore() {
@@ -51,7 +60,7 @@ class CoreBoundariesTest {
     void platform_neverReachesIntoTheSeriesModel() {
         final List<String> found = mentions(List.of("dev.jstech.core.jstechseries"), file -> {
             final Path relative = SOURCES.relativize(file);
-            return !relative.startsWith(SERIES) && !JOINS.contains(relative);
+            return !relative.startsWith(SERIES) && !relative.startsWith(INTEGRATIONS) && !JOINS.contains(relative);
         });
         assertTrue(found.isEmpty(), () -> "the platform reaches into the series' model:\n" + String.join("\n", found));
     }

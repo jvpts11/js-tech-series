@@ -42,6 +42,7 @@ public final class KitAnimations {
     private static final int WAITING_KEPT = 1024;
 
     private static final Map<BlockEntity, KitInstance> BLOCKS = new WeakHashMap<>();
+    private static final Map<BlockEntity, Map<String, KitInstance>> PARTS = new WeakHashMap<>();
     private static final Map<Integer, KitInstance> ENTITIES = new HashMap<>();
     private static final Map<Long, KitInstance> ITEMS = new LinkedHashMap<>(16, 0.75F, true) {
         @Override
@@ -89,6 +90,22 @@ public final class KitAnimations {
             // Drawn with another model now, as a structure that has just formed: what was just played goes on.
             recent(target, made);
         }
+        return made;
+    }
+
+    /**
+     * What moves one of the models a block entity draws besides its own, as a part a machine holds is drawn on the seat
+     * its case marks for it: one for each part, by its name, made the first time it is drawn with {@code model}. The
+     * server plays nothing on a part; its renderer moves it.
+     */
+    public static KitInstance part(final BlockEntity entity, final String part, final KitModel model) {
+        final Map<String, KitInstance> parts = PARTS.computeIfAbsent(entity, holder -> new HashMap<>());
+        final KitInstance kept = parts.get(part);
+        if (kept != null && kept.model() == model) {
+            return kept;
+        }
+        final KitInstance made = new KitInstance(model);
+        parts.put(part, made);
         return made;
     }
 
@@ -157,6 +174,7 @@ public final class KitAnimations {
     /** Forgets every model's things, whose models have been read again. */
     static void forgetModels() {
         BLOCKS.clear();
+        PARTS.clear();
         ENTITIES.clear();
         ITEMS.clear();
         ITEM_KINDS.clear();

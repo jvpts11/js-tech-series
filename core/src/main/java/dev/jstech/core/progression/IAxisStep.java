@@ -15,6 +15,9 @@ import dev.jstech.core.text.Text;
  */
 public interface IAxisStep {
 
+    /** The colour a step is shown in when it says none of its own: the grey of a tooltip's second line. */
+    int PLAIN_COLOUR = 0xAAAAAA;
+
     /** The step's place along its axis, counted from 0. */
     int level();
 
@@ -23,4 +26,14 @@ public interface IAxisStep {
 
     /** The step's name as a player reads it. */
     Text text();
+
+    /** The step's name with what it is a step of, as a tooltip says it ("Legacy era"); its bare name unless told. */
+    default Text named() {
+        return text();
+    }
+
+    /** The colour the step is shown in, as an RGB int, so a step reads at a glance before its word does. */
+    default int colour() {
+        return PLAIN_COLOUR;
+    }
 }

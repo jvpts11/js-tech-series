@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.CdeAppGroup;
@@ -18,7 +19,6 @@ import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.Programs;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.text.GameText;
 import java.util.HashMap;
 import java.util.List;
@@ -345,7 +345,7 @@ final class ProgramOpener {
     /** Whether a language on this computer runs files like this one, so opening it means running it. */
     private static boolean runsAsProgram(final String path) {
         final String extension = FileOpeners.extensionOf(path);
-        return !extension.isEmpty() && JsCore.languages().runnerOf(extension) != null;
+        return !extension.isEmpty() && JsComputersApi.languages().runnerOf(extension) != null;
     }
 
     /** The notice for a file that no program on this machine opens. */

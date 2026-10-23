@@ -8,7 +8,7 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.os.media.MediaFormat;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * How long installing a program takes.

@@ -11,7 +11,7 @@ import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

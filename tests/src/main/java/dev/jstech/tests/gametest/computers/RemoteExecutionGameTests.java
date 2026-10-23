@@ -17,7 +17,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;

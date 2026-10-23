@@ -9,7 +9,7 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.hardware.SoundCardSpec.SampleRate;
 import dev.jstech.computers.hardware.SoundCardSpec.Synthesis;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

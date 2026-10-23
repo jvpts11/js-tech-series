@@ -7,9 +7,9 @@
  */
 package dev.jstech.tests.testkit;
 
-import dev.jstech.core.language.ILanguageProcess;
-import dev.jstech.core.language.IMachineView;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.ILanguageProcess;
+import dev.jstech.computers.api.language.IMachineView;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import java.util.List;

@@ -24,7 +24,7 @@ import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;

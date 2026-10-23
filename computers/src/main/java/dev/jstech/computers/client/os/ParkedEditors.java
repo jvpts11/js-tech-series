@@ -7,14 +7,11 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.JsComputers;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,12 +25,16 @@ import org.jetbrains.annotations.Nullable;
  * buffer of files that went with the old run would only be written somewhere that no longer exists, so an
  * editor kept from another run is dropped instead of being brought back.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class ParkedEditors {
 
     private static final Map<BlockPos, Kept> KEPT = new HashMap<>();
 
     private ParkedEditors() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, ParkedEditors::leftTheWorld);
     }
 
     /** An editor, and the run of the machine it was open in. */
@@ -57,7 +58,6 @@ public final class ParkedEditors {
     }
 
     /** Leaving a world leaves its machines behind, and the same place in another world is another machine. */
-    @SubscribeEvent
     public static void leftTheWorld(final ClientPlayerNetworkEvent.LoggingOut event) {
         KEPT.clear();
     }

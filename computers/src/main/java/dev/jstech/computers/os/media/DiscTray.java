@@ -14,17 +14,11 @@ import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoAnimatable;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
 
 /**
  * The disc tray of a device, an optical drive or a Pattern Encoder that writes discs: out or in, as its eject button
@@ -93,35 +87,19 @@ public final class DiscTray {
     }
 
     /**
-     * The controller of the tray's clips, taken from {@code animations}, the file of clips the device's models share:
-     * the tray riding out and held there, riding back in, and standing out for a device that comes into view with it
-     * open.
+     * The clip of {@code clips} the tray plays at this moment, on the player's game: riding out and held there, then
+     * standing out, which is how a device that comes into view with it open is drawn; riding back in. None while it
+     * rests inside, and none for no clips, as a bay with no drive.
      */
-    public <T extends BlockEntity & GeoAnimatable> AnimationController<T> controller(final T device,
-                                                                                     final String animations) {
-        final Clips clips = new Clips("animation." + animations + ".open_tray",
-                "animation." + animations + ".close_tray", "animation." + animations + ".tray_out");
-        return controller(device, CONTROLLER, () -> clips);
-    }
-
-    /**
-     * The controller {@code name} of a tray whose clips are named apart from the device's others, as {@code clips} names
-     * them at the moment: a computer's bay plays the clips of the drive in it. Null clips stop it, as for a bay with no
-     * drive.
-     */
-    public <T extends BlockEntity & GeoAnimatable> AnimationController<T> controller(
-            final T device, final String name, final Supplier<@Nullable Clips> clips) {
-        return new AnimationController<>(device, name, 0, state -> {
-            final Clips now = clips.get();
-            if (now == null) {
-                return PlayState.STOP;
-            }
-            final boolean moving = moving(device.getLevel());
-            if (open.get()) {
-                return state.setAndContinue(moving ? now.opening() : now.standingOut());
-            }
-            return moving ? state.setAndContinue(now.closing()) : PlayState.STOP;
-        });
+    public @Nullable String playing(@Nullable final Clips clips, @Nullable final Level level) {
+        if (clips == null) {
+            return null;
+        }
+        final boolean moving = moving(level);
+        if (open.get()) {
+            return moving ? clips.opening() : clips.standingOut();
+        }
+        return moving ? clips.closing() : null;
     }
 
     /** Whether the tray is still riding from its last press, which the device draws it doing. */
@@ -130,18 +108,20 @@ public final class DiscTray {
     }
 
     /**
-     * A tray's three clips: riding out and held there, riding back in, and standing out for a device that comes into
-     * view with it open.
+     * A tray's three clips, by the names of their animations: riding out and held there, riding back in, and standing
+     * out for a device that comes into view with it open. Each file says how its clip ends: the two rides hold on
+     * their last frame.
      *
      * @param opening     out, and held
      * @param closing     back in
      * @param standingOut held out
      */
-    public record Clips(RawAnimation opening, RawAnimation closing, RawAnimation standingOut) {
+    public record Clips(String opening, String closing, String standingOut) {
 
-        public Clips(final String open, final String close, final String out) {
-            this(RawAnimation.begin().thenPlayAndHold(open), RawAnimation.begin().thenPlayAndHold(close),
-                    RawAnimation.begin().thenLoop(out));
+        /** The tray's clips in {@code animations}, the file of clips a device's models share. */
+        public static Clips of(final String animations) {
+            return new Clips("animation." + animations + ".open_tray", "animation." + animations + ".close_tray",
+                    "animation." + animations + ".tray_out");
         }
     }
 

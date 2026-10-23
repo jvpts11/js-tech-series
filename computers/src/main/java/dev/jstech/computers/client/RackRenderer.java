@@ -7,92 +7,72 @@
  */
 package dev.jstech.computers.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.core.client.geo.LookGeoModel;
-import net.minecraft.client.renderer.MultiBufferSource;
+import dev.jstech.core.client.model.kit.IKitDriver;
+import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
+import dev.jstech.core.model.ModelAnimator;
+import dev.jstech.core.model.ModelBone;
+import dev.jstech.core.model.ModelData;
+import dev.jstech.core.model.ModelPose;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.cache.object.GeoBone;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 /**
- * Draws a rack as one cabinet from its controller block. The cabinet bone is always there; every row
- * has one bone per unit type and only the one matching what is seated shows, so an installed server
- * is literally in the rack in its own era's shape. The supercomputer's light bar follows the bays,
- * its chassis bands follow the seated nodes, and its livery panel hides when taken off for service.
+ * Draws a rack as one cabinet from its controller block, the model facing north with the cabinet extending east and
+ * south of the controller, so each facing turns it about the controller onto the multiblock's own footprint. The
+ * cabinet bone is always there; every row has one bone per unit type and only the one matching what is seated shows,
+ * so an installed server is literally in the rack in its own era's shape. The supercomputer's light bar follows the
+ * bays, its chassis bands follow the seated nodes, and its livery panel hides when taken off for service.
  */
-public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> {
+public final class RackRenderer implements IKitDriver<ServerRackBlockEntity> {
 
     private static final int ROWS = ServerRackBlockEntity.CAPACITY_U;
+    /** The roof fans, which turn while any bay is powered. */
+    private static final String FANS = "fans";
+    private static final String FANS_CLIP = "animation.rack.fans";
+    private static final String ROW = "row_";
+    private static final String BAND = "band";
+    /* The bones of each cabinet's rows, worked out once from their names: row_<row>_<unit>. */
+    private static final ModelFacts<List<RowBone>> ROW_BONES = new ModelFacts<>(RackRenderer::rowBonesOf);
 
-    public RackRenderer(final BlockEntityRendererProvider.Context context) {
-        super(new LookGeoModel<>(ComputingLooks.RACK));
+    private RackRenderer() {
     }
 
+    /** The renderer of the racks; a cabinet spans twelve blocks, so it is drawn within its whole box. */
+    public static BlockEntityRenderer<ServerRackBlockEntity> create(final BlockEntityRendererProvider.Context context) {
+        return KitBlockEntityRenderer.<ServerRackBlockEntity>look(ComputingLooks.RACK)
+                .driver(new RackRenderer())
+                .box(ServerRackBlockEntity::renderBox)
+                .build();
+    }
+
+    /* The light bar and the seated units are bones shown or hidden, not clips. */
     @Override
-    protected Direction getFacing(final ServerRackBlockEntity rack) {
-        final BlockState state = rack.getBlockState();
-        return state.hasProperty(HorizontalDirectionalBlock.FACING)
-                ? state.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
+    public void drive(final ServerRackBlockEntity rack, final ModelAnimator animator, final double seconds) {
+        DeviceClips.play(animator, FANS, rack.anyBayOn() ? FANS_CLIP : null, seconds);
     }
 
-    /**
-     * The model faces north with the cabinet extending east and south of the controller; each facing
-     * turns it about the controller's centre so the front, the right column and the rear line up with
-     * the multiblock's own footprint (right = clockwise of facing, rear = opposite of facing).
+    /*
+     * Every row bone is decided here, including units the code has no seat for yet (a bone the model carries but
+     * nothing can mount stays hidden), so an empty row is really empty.
      */
     @Override
-    protected void rotateBlock(final Direction facing, final PoseStack poseStack) {
-        switch (facing) {
-            case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(180));
-            case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
-            case EAST -> poseStack.mulPose(Axis.YP.rotationDegrees(270));
-            default -> {
-            }
+    public void move(final ServerRackBlockEntity rack, final ModelPose pose, final double seconds) {
+        for (final RowBone bone : ROW_BONES.of(pose.model())) {
+            pose.setHidden(bone.index(), !rowBoneVisible(rack, bone.row(), bone.unit()));
         }
+        final boolean on = rack.anyBayOn();
+        DeviceLamps.show(pose, "lightbar_online", on);
+        DeviceLamps.show(pose, "lightbar_fault", !on && rack.anyComputerSeated());
+        DeviceLamps.show(pose, "service_panel", !rack.servicePanelOff());
     }
 
     @Override
-    public void preRender(final PoseStack poseStack, final ServerRackBlockEntity rack, final BakedGeoModel model,
-                          final MultiBufferSource bufferSource, final VertexConsumer buffer, final boolean isReRender,
-                          final float partialTick, final int packedLight, final int packedOverlay, final int colour) {
-        super.preRender(poseStack, rack, model, bufferSource, buffer, isReRender, partialTick, packedLight,
-                packedOverlay, colour);
-        /*
-         * The baked model is shared by every rack of this kind, so every flag is set on every render.
-         * Every row bone is decided here, including units the code has no seat for yet (a bone the
-         * model carries but nothing can mount stays hidden), so an empty row is really empty.
-         */
-        for (final GeoBone bone : model.topLevelBones()) {
-            applyRowVisibility(rack, bone);
-        }
-        final boolean on = rack.anyBayOn();
-        show(model, "lightbar_online", on);
-        show(model, "lightbar_fault", !on && rack.anyComputerSeated());
-        show(model, "service_panel", !rack.servicePanelOff());
-    }
-
-    private static void applyRowVisibility(final ServerRackBlockEntity rack, final GeoBone bone) {
-        final String name = bone.getName();
-        if (name.startsWith("row_")) {
-            final int cut = name.indexOf('_', 4);
-            if (cut > 4) {
-                final int row = Integer.parseInt(name.substring(4, cut));
-                final String unit = name.substring(cut + 1);
-                bone.setHidden(!rowBoneVisible(rack, row, unit));
-            }
-        }
-        for (final GeoBone child : bone.getChildBones()) {
-            applyRowVisibility(rack, child);
-        }
+    public boolean movesBones() {
+        return true;
     }
 
     /** Rows count from the top of the cabinet, like the rack's slots; a 2U unit at row r also covers r + 1. */
@@ -101,7 +81,7 @@ public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> 
             return false;
         }
         final int seated = rack.unitCodeAt(row);
-        if (unit.equals("band")) {
+        if (unit.equals(BAND)) {
             // A chassis band lights for both rows a seated 2U node covers.
             return ServerRackBlockEntity.isNodeUnit(seated)
                     || (row > 0 && ServerRackBlockEntity.isNodeUnit(rack.unitCodeAt(row - 1)));
@@ -110,13 +90,35 @@ public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> 
                 && unit.equals(ServerRackBlockEntity.UNIT_BONES[seated]);
     }
 
-    private static void show(final BakedGeoModel model, final String bone, final boolean visible) {
-        model.getBone(bone).ifPresent(b -> b.setHidden(!visible));
+    /* Every bone of a cabinet's model that is a row's unit. */
+    private static List<RowBone> rowBonesOf(final ModelData model) {
+        final List<RowBone> rows = new ArrayList<>();
+        final List<ModelBone> bones = model.bones();
+        for (int i = 0; i < bones.size(); i++) {
+            final String name = bones.get(i).name();
+            if (!name.startsWith(ROW)) {
+                continue;
+            }
+            final int cut = name.indexOf('_', ROW.length());
+            if (cut > ROW.length()) {
+                try {
+                    rows.add(new RowBone(i, Integer.parseInt(name.substring(ROW.length(), cut)),
+                            name.substring(cut + 1)));
+                } catch (final NumberFormatException notARow) {
+                    // A bone named as a row but numbered as none is no row's.
+                }
+            }
+        }
+        return List.copyOf(rows);
     }
 
-    /** The cabinet spans twelve blocks; culling by the controller's own block would blink it out. */
-    @Override
-    public AABB getRenderBoundingBox(final ServerRackBlockEntity rack) {
-        return rack.renderBox();
+    /**
+     * A bone of a row's unit.
+     *
+     * @param index its place among the model's bones
+     * @param row   the row it is in, from the top
+     * @param unit  the unit it shows, as {@link ServerRackBlockEntity#UNIT_BONES} names it, or a chassis band
+     */
+    private record RowBone(int index, int row, String unit) {
     }
 }

@@ -27,7 +27,7 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;

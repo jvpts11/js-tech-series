@@ -12,7 +12,7 @@ import dev.jstech.computers.bus.BusCondition;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.text.TextBounds;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

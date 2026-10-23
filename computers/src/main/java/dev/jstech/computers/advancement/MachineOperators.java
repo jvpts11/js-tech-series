@@ -20,9 +20,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -43,7 +42,6 @@ import java.util.function.Supplier;
  * is kept on the block entity as an attachment, so it is saved with the machine and survives a restart, and a job
  * that fires a week later still knows who set it up.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class MachineOperators {
 
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
@@ -64,6 +62,12 @@ public final class MachineOperators {
 
     public static void register(final IEventBus modEventBus) {
         ATTACHMENT_TYPES.register(modEventBus);
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(BlockEvent.EntityPlaceEvent.class, MachineOperators::onPlaced);
+        NeoForge.EVENT_BUS.addListener(PlayerInteractEvent.RightClickBlock.class, MachineOperators::onUsed);
     }
 
     /** Records {@code player} as the one working this machine. Machines acting as players never count. */
@@ -103,7 +107,6 @@ public final class MachineOperators {
     }
 
     /** A block with a machine in it is operated first by whoever put it there. */
-    @SubscribeEvent
     public static void onPlaced(final BlockEvent.EntityPlaceEvent event) {
         if (event.getEntity() instanceof Player player && event.getLevel() instanceof Level level
                 && !level.isClientSide()) {
@@ -115,7 +118,6 @@ public final class MachineOperators {
     }
 
     /** Using a machine makes the one using it its operator; a block that fronts for another notes that one itself. */
-    @SubscribeEvent
     public static void onUsed(final PlayerInteractEvent.RightClickBlock event) {
         if (!event.getLevel().isClientSide()) {
             final BlockEntity machine = event.getLevel().getBlockEntity(event.getPos());

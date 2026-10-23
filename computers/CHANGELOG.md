@@ -6,6 +6,43 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+### API
+- Each thing where it belongs: J's Core's API stays at version 12 and J's Computers' is at version
+  8. The series' model has its own package: `dev.jstech.core.network`, `operation`, `peripheral` and `tier` are now
+  `dev.jstech.core.jstechseries.network`, `.operation`, `.peripheral` and `.tier`, and the client side of the series'
+  look `dev.jstech.core.jstechseries.theme.client`. `CoreRegisterEvent` gives way to `RegisterOperationTypesEvent`,
+  for kinds of Operation, and the programming languages move to J's Computers' API, `dev.jstech.computers.api.language`
+  (`IProgrammingLanguage`, `ILanguageProcess`, `IMachineView`, `LanguageRegistry`, `ExecutionBalance`), registered
+  through `ComputersRegisterEvent.languages()` and read through `JsComputersApi.languages()`.
+  `Device.fillsFromContainers` lets a bucket fill and empty a device's block, and `FluidBlockItem` is the item of a
+  block that keeps its fluid in it.
+  The old fixed catalogue of materials, `ModMaterial`, `MaterialForm` and `MaterialItems`, is gone: a mod declares the
+  forms it uses with `MaterialUses.use`.
+
+### Changed
+- Listeners declared: every class of the three mods that answers the game's events is
+  handed to the buses from its mod's constructor, through a `listen` method of its own, rather than found by an
+  annotation, so what runs is what the constructor says; a mod's mistake in what it declares stops the load saying
+  what to change.
+- Its own settings: how long the disks take to answer, the share of its capacity a Subframe lends and the
+  time the computers' programs may take each tick leave J's Core's balance file for J's Computers' own,
+  `jscomputers-server.toml`, in a "Disks and programs" section, where a server that changed them sets them again; the
+  Operations engine's keep the series' file, `jstech-operations.toml`.
+- Programming languages are J's Computers': a mod adds one through J's Computers' registration event,
+  as Sigma and Sigma Sharp are added.
+- Drawn by J's Core's models: the Mainframes, the racks, the drives, the Dock Station, the Pattern
+  Encoders, the printers, the Redstone Interfaces and the small computers' cases and parts are drawn by J's Core's
+  models from the same files, with their lamps, trays, discs and parts as before, and GeckoLib is no longer needed by
+  any mod of the series.
+- The Redstone Interface speaks the Core's signals: whatever reads sensors (a comparator's reader, a
+  controller, another computer's interface) reads the strength its lens shows, read or emitted, and an interface
+  whose lens is on a sensor or a machine reads what that says, as it reads redstone.
+- Reduce motion is the Core's: the setting is J's Core's accessibility one, `motion.reduce` in
+  `jstech-accessibility.toml`, and J's Computers' own client setting of that name is gone.
+- Permissions: reading Soundfoundry's music catalogue again and acting on a Network Gateway from a
+  computer are permission nodes of their own, which a server's permission mod grants by player, dimension and claim;
+  without one, reloading the catalogue takes an operator and every player may act on a Gateway, as before.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.

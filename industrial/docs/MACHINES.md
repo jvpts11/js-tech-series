@@ -20,13 +20,13 @@ as the mod is balanced.
 1. Take the machines from the creative menu, tab "J's Industrial" (there are no crafting recipes for them yet).
 2. Place a **Coal Generator**, and a **Macerator** right against it: a generator gives its energy to every
    machine touching it, no cable needed.
-3. Open the generator (use it) and put coal in its slot. Its flame lights and its energy bar fills.
+3. Open the generator (use it) and put coal in its slot. Its state turns to working and its energy fills.
 4. Open the Macerator and put a raw iron in its left slot. The arrow fills and two iron dusts come out on the
    right.
 5. Smelt the dust in a furnace or in the **Electric Furnace**: each dust is an ingot. One raw iron, two
    ingots.
 
-To power a machine that is not touching the generator, lay **Energy Cable** from one to the other.
+To power a machine that is not touching the generator, lay **Insulated Copper Cable** from one to the other.
 
 ## Coal Generator
 
@@ -38,17 +38,18 @@ To power a machine that is not touching the generator, lay **Energy Cable** from
 
 **How to use it.** Put furnace fuel in its slot: coal, charcoal, planks, logs. It takes one item at a time and
 burns it for as long as a furnace would, making **20 FE a tick** the whole time. One coal burns for 1,600 ticks,
-so it makes 32,000 FE. Its buffer holds **16,000 FE**, and every tick it gives energy to every machine touching
-it, up to 1,000 FE a tick; Energy Cable carries it to machines further away. (Do not burn a lava bucket in it:
-it takes the whole bucket and gives no empty one back.)
+so it makes 32,000 FE. Its buffer holds **16,000 FE**, and twice a second it gives energy to every machine
+touching it, up to 1,000 FE each time; Insulated Copper Cable carries it to machines further away. A lava bucket
+burns too, and the empty bucket comes back into its slot.
 
-Its screen shows the fuel slot, a flame that shrinks as the fuel burns down, and its energy bar.
+Its screen is the one every machine has: the fuel slot and its energy on the Main tab, and on the Sides tab the
+faces energy leaves by and whether it gives it out by itself.
 
 **What can go wrong.**
-- *The flame is lit but nothing gets energy.* No machine or cable touches it. Put the machine against one of its
-  faces, or lay Energy Cable from it.
-- *It burns fuel but its bar stays full.* Nothing is taking its energy. While its buffer is full, the item
-  already burning keeps burning and its energy is lost; it does not start a new item until there is room.
+- *It works but nothing gets energy.* No machine or cable touches it, or the Sides tab closes that face to
+  energy. Put the machine against one of its faces, or lay Insulated Copper Cable from it.
+- *It stopped and its energy is full.* Nothing is taking its energy. While its buffer is full it stops burning,
+  keeping what is left of the item it burns, and goes on as soon as there is room; nothing is lost.
 - *A machine works in bursts.* One generator makes 20 FE a tick, and a Macerator spends 40. The machine runs
   until its buffer empties and waits for it to fill again. Put a second generator against it.
 
@@ -97,29 +98,32 @@ furnace, in **160 ticks** (8 s, a little faster than a furnace), spending **30 F
 
 It holds **12,000 FE** and takes up to **600 FE a tick**.
 
-## Energy Cable
+## Insulated Copper Cable
 
-*Added 2026-10-01.*
+*Added 2026-10-23, in place of the mod's own Energy Cable.*
 
-**What it is.** A cable that carries energy from generators to machines.
+**What it is.** The series' basic cable, J's Core's, which carries energy from generators to machines. It is on
+the "J's Tech" tab of the creative menu, with everything else the mods of the series share.
 
-**How to use it.** Place it like a block, in a line from a generator to a machine. It carries any amount of
-energy, any distance, and loses none on the way. It is laid in the shared cable block of the series, so it can
-run through the same block as the cables of other mods of the series, each in its own lane, without joining
-them.
+**How to use it.** Place it like a block, in a line from a generator to a machine. It carries up to **500 FE a
+tick** and loses a tenth of what it carries over a hundred blocks. It is laid in the shared cable block of the
+series, so it can run through the same block as the cables of other mods of the series, each in its own lane,
+without joining them.
 
 ## Iron Dust, Iron Plate, Copper Plate
 
 *Added 2026-06-15.*
 
 The materials the machines make. They belong to J's Core, so every mod of the series uses the same ones; this
-mod shows them in its tab and makes them. Iron Dust smelts into an Iron Ingot in a furnace (200 ticks) or a
-blast furnace (100 ticks).
+mod makes them, and they are on the "J's Tech" tab. Iron Dust smelts into an Iron Ingot in a furnace (200 ticks)
+or a blast furnace (100 ticks).
 
 ## What every machine has in common
 
-- It faces you when you place it, and opens its screen when you use it.
-- Its screen shows its slots, an arrow that fills as it works, and its energy bar.
+- It faces you when you place it, and opens its screen when you use it: the screen every machine of the series
+  has, from J's Core. **Main** shows its slots, an arrow that fills as it works, its state and its energy;
+  **Sides** sets what each face takes in and gives out; **Redstone** sets how it answers a signal; **Upgrades**
+  and **Protection** hold its upgrades and its fuse, on a machine that takes them.
 - **No energy:** it stops where it is and goes on when energy comes back; nothing is lost.
 - **Output slot full:** it does not start, because it only starts what it can finish. Empty the output slot.
 - **The input taken out halfway:** its progress starts over.

@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.bus;
 
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 import java.util.EnumSet;
 import java.util.Set;

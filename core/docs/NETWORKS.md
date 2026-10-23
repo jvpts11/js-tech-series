@@ -92,7 +92,7 @@ public class AcceleratorBlockEntity extends SyncedBlockEntity implements INetwor
 
     @Override
     public List<OperationType<?>> carriesOut() {
-        return List.of(MyOperations.ACCELERATE);    // registered from CoreRegisterEvent, open to C
+        return List.of(MyOperations.ACCELERATE);    // registered from RegisterOperationTypesEvent, open to C
     }
 }
 ```

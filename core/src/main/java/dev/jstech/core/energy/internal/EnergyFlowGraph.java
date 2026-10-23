@@ -31,7 +31,8 @@ import java.util.TreeMap;
  *
  * <p>A tick gives in three rounds: generators feed consumers; what generators have left fills storage; storage feeds
  * what consumers still want. In each round every supplier, in the order of its position, shares what it has among the
- * receivers it reaches in proportion to what they want, never more than the cables on the way still carry.
+ * receivers it reaches in proportion to what they want, never more than the cables on the way still carry, and a
+ * limited cable several ways run through shared evenly among them.
  */
 public final class EnergyFlowGraph {
 
@@ -255,6 +256,7 @@ public final class EnergyFlowGraph {
             if (wants.isEmpty()) {
                 return false;
             }
+            final boolean shared = shareCables(reached, wants.keySet(), caps);
             final Map<Long, Long> shares = ProportionalSplitter.split(this.supplyLeft.get(source), wants, caps);
             long given = 0L;
             boolean clamped = false;
@@ -295,7 +297,46 @@ public final class EnergyFlowGraph {
                 this.supplyLeft.merge(source, -given, Long::sum);
                 this.sent.merge(source, given, EnergyFlowGraph::saturatingAdd);
             }
-            return clamped && given > 0;
+            return (clamped || shared) && given > 0;
+        }
+
+        /*
+         * Brings each receiver's cap down to its fair part of every limited cable its way shares with the other ways of
+         * this pass, the cable's room split evenly among the ways through it, so the first receiver in order never
+         * takes all of a cable the others need too; whether any cap came down, so the room one leaves is offered again.
+         */
+        private boolean shareCables(final Map<Long, Route> reached, final Set<Long> receivers,
+                                    final Map<Long, Long> caps) {
+            final Map<Long, Integer> ways = new HashMap<>();
+            for (final Long receiver : receivers) {
+                final Route route = reached.get(receiver);
+                if (route.limited()) {
+                    for (final long cable : route.cables()) {
+                        if (left(cable) != Long.MAX_VALUE) {
+                            ways.merge(cable, 1, Integer::sum);
+                        }
+                    }
+                }
+            }
+            boolean cut = false;
+            for (final Long receiver : receivers) {
+                final Route route = reached.get(receiver);
+                if (!route.limited()) {
+                    continue;
+                }
+                long fair = Long.MAX_VALUE;
+                for (final long cable : route.cables()) {
+                    final long left = left(cable);
+                    if (left != Long.MAX_VALUE) {
+                        fair = Math.min(fair, Math.max(1L, left / ways.getOrDefault(cable, 1)));
+                    }
+                }
+                if (fair < caps.get(receiver)) {
+                    caps.put(receiver, fair);
+                    cut = true;
+                }
+            }
+            return cut;
         }
 
         /* The most the way still carries: the least any of its cables has left this tick. */

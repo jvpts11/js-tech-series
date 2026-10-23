@@ -12,7 +12,7 @@ import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MainframeBlock;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.ItemPredicate;

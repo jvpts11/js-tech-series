@@ -7,11 +7,10 @@
  */
 package dev.jstech.tests.clienttest.industrial;
 
+import dev.jstech.core.client.machine.MachineScreen;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
-import dev.jstech.industrial.client.CoalGeneratorScreen;
-import dev.jstech.industrial.client.ProcessingMachineScreen;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import net.minecraft.core.BlockPos;
@@ -21,8 +20,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 
 /**
- * The Industrial machines as a player uses them: using one opens its own screen, with a frame under every slot of
- * its menu, the progress and the stored energy the machine holds, all placed by the machine's layout.
+ * The Industrial machines as a player uses them: using one opens the screen every machine of the Core's has, its Main
+ * tab with the machine's slots on its face, the progress and the stored energy the machine holds.
  */
 public final class IndustrialScreensClientTests {
 
@@ -37,7 +36,7 @@ public final class IndustrialScreensClientTests {
     }
 
     @ClientTest(timeoutTicks = 600)
-    public static void industrialMachines_openTheirOwnScreens(final ClientTestContext ctx) {
+    public static void industrialMachines_openTheStandardMachineScreen(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     world.setBlock(COMPRESSOR, IndustrialModule.COMPRESSOR.get().defaultBlockState()
                             .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
@@ -52,15 +51,18 @@ public final class IndustrialScreensClientTests {
                 })
                 .thenTeleport(SETTLE, PLAYER, Direction.NORTH)
                 .thenRightClick(SETTLE, COMPRESSOR)
-                .thenAwaitScreen(ProcessingMachineScreen.class, SCREEN_WAIT)
+                .thenAwaitScreen(MachineScreen.class, SCREEN_WAIT)
                 .thenScreenshot(20, "compressor")
-                .thenAssert(0, () -> ctx.screen(ProcessingMachineScreen.class).getMenu().slots.size() == 2 + 36,
-                        "the Compressor's menu carries its input, its output and the player's inventory")
+                .thenAssert(0, () -> ctx.screen(MachineScreen.class).getMenu().faceSlots().size() == 2,
+                        "the Compressor's face carries its input and its output")
                 .then(0, () -> ctx.player().closeContainer())
                 .thenRightClick(SETTLE, GENERATOR)
-                .thenAwaitScreen(CoalGeneratorScreen.class, SCREEN_WAIT)
+                .thenAwaitScreen(MachineScreen.class, SCREEN_WAIT)
                 .thenScreenshot(20, "coal-generator")
-                .thenAssert(0, () -> ctx.screen(CoalGeneratorScreen.class).getMenu().generator().isBurning(),
+                .thenAssert(0, () -> ctx.screen(MachineScreen.class).getMenu().faceSlots().size() == 1,
+                        "the generator's face carries its fuel slot")
+                .thenAssert(0, () -> ctx.screen(MachineScreen.class).getMenu().machine()
+                                instanceof CoalGeneratorBlockEntity generator && generator.isBurning(),
                         "the generator's burning reaches the client's menu")
                 .then(0, () -> ctx.player().closeContainer());
     }

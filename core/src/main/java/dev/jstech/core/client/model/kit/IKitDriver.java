@@ -9,6 +9,7 @@ package dev.jstech.core.client.model.kit;
 
 import dev.jstech.core.model.ModelAnimation;
 import dev.jstech.core.model.ModelAnimator;
+import dev.jstech.core.model.ModelPose;
 
 /**
  * The code that drives the model of one kind of thing on the player's game, every frame it is drawn: which animation
@@ -39,7 +40,19 @@ public interface IKitDriver<T> {
      */
     void drive(T thing, ModelAnimator animator, double seconds);
 
-    /** Whether it moves bones itself every frame, through movers it added to the animator. */
+    /**
+     * Moves {@code thing}'s bones after its animations, every frame its pose is worked out: a lamp shown while the
+     * machine runs, a part hidden while its slot is empty, a fan turned as fast as the machine goes. A driver that
+     * moves bones here says so with {@link #movesBones()}.
+     *
+     * @param thing   what is drawn
+     * @param pose    its pose, as the animations and the animator's movers left it
+     * @param seconds the model's clock, in seconds
+     */
+    default void move(final T thing, final ModelPose pose, final double seconds) {
+    }
+
+    /** Whether it moves bones itself every frame, here or through movers it added to the animator. */
     default boolean movesBones() {
         return false;
     }

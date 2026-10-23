@@ -7,12 +7,12 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.os.edit.project.ProjectFile;
 import dev.jstech.computers.os.edit.project.SolutionFile;
 import dev.jstech.computers.sigma.LanguageLevel;
-import dev.jstech.core.JsCore;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -77,7 +77,7 @@ final class VirtualStudioLoader {
      */
     static String sourceSuffix(final ProjectFile project) {
         final IProgrammingLanguage language = project == null ? null
-                : JsCore.languages().get(ResourceLocation.tryParse(project.language()));
+                : JsComputersApi.languages().get(ResourceLocation.tryParse(project.language()));
         if (language == null || language.sourceExtensions().isEmpty()) {
             return "." + LanguageLevel.SIGMA_SHARP.sourceExtension();
         }

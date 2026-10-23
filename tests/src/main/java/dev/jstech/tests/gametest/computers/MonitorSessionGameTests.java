@@ -12,7 +12,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;

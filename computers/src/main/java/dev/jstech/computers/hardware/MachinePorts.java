@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.peripheral.PortKind;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * How many ports of each kind a machine's hardware gives it, as on a real computer: the board has its device ports

@@ -13,6 +13,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -137,9 +138,9 @@ public final class MainframeModelGameTests {
                 ComputingModule.LEGACY_MAINFRAME.get());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    helper.assertTrue(standard.mainframeEra() == dev.jstech.core.tier.HardwareEra.STANDARD
-                                    && vintage.mainframeEra() == dev.jstech.core.tier.HardwareEra.VINTAGE
-                                    && legacy.mainframeEra() == dev.jstech.core.tier.HardwareEra.LEGACY,
+                    helper.assertTrue(standard.mainframeEra() == HardwareEra.STANDARD
+                                    && vintage.mainframeEra() == HardwareEra.VINTAGE
+                                    && legacy.mainframeEra() == HardwareEra.LEGACY,
                             "each cabinet reports its own era, which picks its model and atlas");
                     /*
                      * The cabinet is three wide, two tall and two deep; culling by the controller's own

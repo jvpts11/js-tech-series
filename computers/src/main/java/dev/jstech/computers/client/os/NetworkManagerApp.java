@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -40,12 +40,12 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.component.WaitBar;
 import dev.jstech.core.gui.layout.DesktopZ;
-import dev.jstech.core.network.DataLink;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import net.minecraft.client.gui.Font;

@@ -9,7 +9,7 @@ package dev.jstech.computers.block;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.core.gui.Tube;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.util.StringRepresentable;
 
 /**

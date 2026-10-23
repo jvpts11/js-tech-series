@@ -9,8 +9,8 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.id.IStableId;
-import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 
 import java.util.Objects;
 

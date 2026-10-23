@@ -15,7 +15,7 @@ import dev.jstech.computers.crafting.ProcessingPattern.ProcessingOutput;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.gametest.framework.GameTest;

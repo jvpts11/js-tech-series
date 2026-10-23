@@ -70,16 +70,16 @@ import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLink;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.network.ServerNode;
-import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
-import dev.jstech.core.peripheral.PeripheralPorts;
-import dev.jstech.core.peripheral.PeripheralReconciler;
-import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.ServerNode;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.core.jstechseries.peripheral.PeripheralPorts;
+import dev.jstech.core.jstechseries.peripheral.PeripheralReconciler;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Arrays;
@@ -112,13 +112,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
  * A Server Rack: a passive container (network Category A, no UUID of its own) measured in rack
@@ -137,8 +130,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         IOsHost,
         IKernelHost,
         IComputerTerminalHost,
-        IWatchedConsole,
-        GeoBlockEntity {
+        IWatchedConsole {
 
     // the cabinet as one model: what the renderer needs to know about every row
 
@@ -179,12 +171,6 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             "storage_2u_vintage", "storage_2u_legacy", "storage_2u_transition", "storage_2u_advanced",
             "compute_2u_vintage", "compute_2u_legacy", "compute_2u_transition", "compute_2u_advanced"};
 
-    private static final RawAnimation FANS =
-            RawAnimation.begin().thenLoop("animation.rack.fans");
-
-    private final AnimatableInstanceCache geckoCache =
-            GeckoLibUtil.createInstanceCache(this);
-
     /*
      * What the client copy knows about the cabinet: it holds no inventory, so the server sends the unit
      * code of every row, the bay power mask and the service panel state with each block update.
@@ -195,23 +181,6 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     /** Supercomputer Rack only: the livery panel taken off, showing the nodes in the cavity. */
     private boolean servicePanelOff;
-
-    @Override
-    public void registerControllers(
-            final AnimatableManager.ControllerRegistrar controllers) {
-        /*
-         * The roof fans turn while any bay is powered; the light bar and the seated units are bone
-         * visibility set by the renderer, not animation.
-         */
-        controllers.add(new AnimationController<>(this, "fans", 0,
-                state -> anyBayOn() ? state.setAndContinue(FANS)
-                        : PlayState.STOP));
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return geckoCache;
-    }
 
     /** The era of this cabinet, read from its block. */
     public HardwareEra rackEra() {

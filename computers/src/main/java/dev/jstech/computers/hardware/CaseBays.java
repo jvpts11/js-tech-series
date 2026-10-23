@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * How many 5.25-inch bays the case of each era has on its front, where an internal drive or the hot-swap bay goes.

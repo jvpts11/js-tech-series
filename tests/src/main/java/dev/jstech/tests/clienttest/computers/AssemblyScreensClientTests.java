@@ -31,7 +31,7 @@ import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.content.BlockEntry;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.ServerStacks;

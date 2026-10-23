@@ -20,9 +20,9 @@ import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.config.format.IConfigFormat;
 import dev.jstech.core.config.format.NbtConfigFormat;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLink;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.DeclarationError;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestSettings;
@@ -262,7 +262,9 @@ public final class ConfigFileGameTests {
     public static void seriesFiles_keepTheirNamesAndTheirSettings(final GameTestHelper helper) {
         same(helper, "jstech-balance.toml", CoreConfigKeys.FILE.fileName(), "the balance file");
         same(helper, "jscomputers-server.toml", ComputersServerConfig.FILE.fileName(), "the computers' file");
-        same(helper, List.of("boot.show_boot_menu", "install_by_hand.gentoo_every_step",
+        same(helper, List.of("balance.hdd_latency_ticks", "balance.ssd_latency_ticks", "balance.nvme_latency_ticks",
+                        "balance.subframe_efficiency_factor", "balance.program_machine_micros",
+                        "balance.program_server_micros", "boot.show_boot_menu", "install_by_hand.gentoo_every_step",
                         "install_by_hand.arch_every_step", "prompt.list_commands", "soundfoundry.catalog",
                         "soundfoundry.ethernet_kilobytes_per_second", "programs.outside_components"),
                 ComputersServerConfig.FILE.keys().stream().map(ConfigKey::dottedPath).toList(),

@@ -15,7 +15,7 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;

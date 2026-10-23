@@ -19,7 +19,7 @@ import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.crash.OomKiller;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

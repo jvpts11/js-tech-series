@@ -8,8 +8,8 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.ServerNode;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;

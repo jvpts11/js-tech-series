@@ -8,13 +8,13 @@
 package dev.jstech.tests.gametest.core;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.jstechseries.command.SeriesCommands;
 import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.progression.PlayerProgress;
-import dev.jstech.core.progression.ProgressionAxes;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.SeriesAxes;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.List;
@@ -59,7 +59,7 @@ public final class SeriesCommandGameTests {
             final int moved = run(helper, player, SeriesCommands.GAME_MASTERS,
                     "jstech progress @s jscore:hardware_era transition");
             helper.assertTrue(moved == 1, "one player was moved; the command said " + moved);
-            helper.assertTrue(PlayerProgress.reached(player.server, player.getUUID(), ProgressionAxes.HARDWARE_ERA)
+            helper.assertTrue(PlayerProgress.reached(player.server, player.getUUID(), SeriesAxes.HARDWARE_ERA)
                     == HardwareEra.TRANSITION, "the player stands at Transition");
             helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS,
                     "jstech progress @s jscore:hardware_era") == 1, "and the command tells where they stand");

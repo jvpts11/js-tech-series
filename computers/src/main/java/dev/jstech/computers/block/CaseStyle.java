@@ -8,7 +8,7 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.core.id.IStableName;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * Which case a small computer (a Personal Computer, a Crafting Computer, a Cluster Management Computer) comes in. The

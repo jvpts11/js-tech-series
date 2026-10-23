@@ -13,7 +13,7 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliPackages;
 import dev.jstech.computers.sigma.pack.Packed;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;

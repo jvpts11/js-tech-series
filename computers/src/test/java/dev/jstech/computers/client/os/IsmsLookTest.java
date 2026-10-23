@@ -8,7 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.gui.ColorContrast;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

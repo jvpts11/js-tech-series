@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
 import dev.jstech.core.audio.media.MediaTags;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;

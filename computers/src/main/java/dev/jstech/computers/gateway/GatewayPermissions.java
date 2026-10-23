@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.gateway;
 
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 
 /**
  * What a Gateway lets the ComputerCraft side do. Two switches (read the network, run operations) and two

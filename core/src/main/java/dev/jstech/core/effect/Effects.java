@@ -12,7 +12,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.effect.ClientEffects;
 import dev.jstech.core.client.effect.EffectTools;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.commands.CommandSourceStack;
@@ -56,7 +56,7 @@ public final class Effects {
     /** Hands the buses what this answers, once, from the Core's constructor. */
     public static void listen(final IEventBus modBus) {
         modBus.addListener(RegisterPayloadHandlersEvent.class, Effects::onRegisterPayloads);
-        SeriesCommands.declare(EFFECT, SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare(EFFECT, CommandRoot.GAME_MASTERS, (node, context) -> node
                 .then(Commands.literal("edit").then(Commands.argument(EFFECT, ResourceLocationArgument.id())
                         .executes(command -> tool(command, EffectToolPayload.Tool.EDIT))))
                 .then(Commands.literal("new").executes(command -> tool(command, EffectToolPayload.Tool.NEW)))

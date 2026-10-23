@@ -53,17 +53,18 @@ import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
-import dev.jstech.core.network.FailoverRole;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.network.SubframeNode;
-import dev.jstech.core.operation.OperationBalance;
-import dev.jstech.core.operation.OperationDispatch;
-import dev.jstech.core.operation.OperationPriority;
-import dev.jstech.core.operation.IOperationTask;
-import dev.jstech.core.operation.OperationStatistics;
-import dev.jstech.core.operation.SelfTestOperationTask;
+import dev.jstech.core.jstechseries.network.FailoverRole;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.SubframeNode;
+import dev.jstech.core.jstechseries.operation.OperationBalance;
+import dev.jstech.core.jstechseries.operation.OperationDispatch;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.IOperationTask;
+import dev.jstech.core.jstechseries.operation.OperationStatistics;
+import dev.jstech.core.jstechseries.operation.SelfTestOperationTask;
 import dev.jstech.core.audio.LoopRequest;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.time.GameCalendar;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -99,13 +100,6 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
  * The Mainframe BlockEntity: the binding that turns installed hardware item stacks into a
@@ -114,8 +108,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * than reading one from a cable.
  */
 public class MainframeBlockEntity extends AbstractComputerBlockEntity
-        implements IComputerTerminalHost,
-        GeoBlockEntity {
+        implements IComputerTerminalHost {
 
     @Override
     public Set<Long> occupiedPositions(final long ownerPos) {
@@ -162,15 +155,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     private static final int FLAG_NETWORKED = 4;
     private static final int FLAG_PANEL_OFF = 8;
 
-    private static final RawAnimation WORK =
-            RawAnimation.begin().thenLoop("animation.mainframe.work");
     /** The controller the power button's press plays on, and the press. */
     private static final String POWER = "power";
-    private static final String PRESS = "press_power";
-    private static final RawAnimation PRESS_POWER = RawAnimation.begin().thenPlay("animation.mainframe.press_power");
-
-    private final AnimatableInstanceCache geckoCache =
-            GeckoLibUtil.createInstanceCache(this);
+    private static final String PRESS = "animation.mainframe.press_power";
 
     /** The service panel taken off, showing the card bay and everything seated in it. */
     private final BoolField servicePanelOff = fields().flag("ServicePanelOff", false).save();
@@ -178,29 +165,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     private final DerivedInt visualSystems = fields().derived("VisualSystems", () -> systemsMask()).toClient();
     private final DerivedInt visualFlags = fields().derived("VisualFlags", () -> machineFlags()).toClient();
 
-    @Override
-    public void registerControllers(
-            final AnimatableManager.ControllerRegistrar controllers) {
-        /*
-         * The roof fans and the tape reels turn while the machine is up; every other visual (installed
-         * hardware, the lamps, the panel) is bone visibility set by the renderer, not animation.
-         */
-        controllers.add(new AnimationController<>(this, "work", 0,
-                state -> visualRunning() ? state.setAndContinue(WORK)
-                        : PlayState.STOP));
-        // The power button on the sill goes in when pressed, a clip the server sets off for whoever sees it.
-        controllers.add(new AnimationController<>(this, POWER, 0, state -> PlayState.STOP)
-                .triggerableAnim(PRESS, PRESS_POWER));
-    }
-
     /** The power button pressed on the sill: the button goes in for whoever sees the cabinet. */
     public void showPowerPressed() {
-        triggerAnim(POWER, PRESS);
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return geckoCache;
+        ModelAnimations.replay(this, POWER, PRESS);
     }
 
     /** A Vintage cabinet's tape reels are heard turning while it runs, as they are seen turning. */

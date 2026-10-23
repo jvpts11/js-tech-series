@@ -13,7 +13,7 @@ import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.core.network.payload.IPayloadGate;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.UUID;

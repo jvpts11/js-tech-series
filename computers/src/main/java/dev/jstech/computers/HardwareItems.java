@@ -33,7 +33,7 @@ import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.core.content.ItemBuilder;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 

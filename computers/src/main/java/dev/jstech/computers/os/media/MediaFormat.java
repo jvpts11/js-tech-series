@@ -10,7 +10,7 @@ package dev.jstech.computers.os.media;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * The physical format of a medium, independent of the {@link MediaKind content} it carries.

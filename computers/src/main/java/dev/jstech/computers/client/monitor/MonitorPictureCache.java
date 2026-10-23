@@ -7,27 +7,28 @@
  */
 package dev.jstech.computers.client.monitor;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.monitor.MonitorPicturePayload;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * What each monitor near this player shows, as the server last described it. A monitor the server has said nothing
  * about is dark glass; everything is forgotten on leaving the world.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class MonitorPictureCache {
 
     private static final Map<BlockPos, IMonitorPicture> PICTURES = new HashMap<>();
 
     private MonitorPictureCache() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, MonitorPictureCache::onLeave);
     }
 
     /** Keeps what the server says that monitor shows. */
@@ -45,7 +46,6 @@ public final class MonitorPictureCache {
         PICTURES.remove(pos);
     }
 
-    @SubscribeEvent
     public static void onLeave(final ClientPlayerNetworkEvent.LoggingOut event) {
         PICTURES.clear();
     }

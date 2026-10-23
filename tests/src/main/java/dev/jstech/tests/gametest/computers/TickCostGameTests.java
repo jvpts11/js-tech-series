@@ -8,8 +8,8 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.ServerNode;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;

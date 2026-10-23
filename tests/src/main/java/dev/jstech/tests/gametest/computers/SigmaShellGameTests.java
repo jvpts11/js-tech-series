@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.os.FilesystemKind;
@@ -193,7 +194,7 @@ public final class SigmaShellGameTests {
                     helper.assertTrue(asked[0].console().contains("hello Ada"),
                             "the line typed is what the program read; console " + asked[0].console());
                     helper.assertFalse(asked[0].waitingForInput(), "it is no longer waiting");
-                    helper.assertTrue(asked[0].state() == dev.jstech.core.language.ILanguageProcess.State.FINISHED,
+                    helper.assertTrue(asked[0].state() == ILanguageProcess.State.FINISHED,
                             "and it returned; state " + asked[0].state());
                 })
                 .thenExecuteAfter(SETTLE * 2, () -> {

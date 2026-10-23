@@ -9,8 +9,8 @@ package dev.jstech.tests.gametest.core;
 
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.multiblock.IMatchResult;
-import dev.jstech.core.operation.OperationStatus;
-import dev.jstech.core.operation.SelfTestOperationTask;
+import dev.jstech.core.jstechseries.operation.OperationStatus;
+import dev.jstech.core.jstechseries.operation.SelfTestOperationTask;
 import dev.jstech.core.optional.OptionalMod;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.testkit.gametest.Arenas;

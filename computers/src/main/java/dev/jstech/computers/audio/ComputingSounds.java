@@ -14,7 +14,7 @@ import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Map;

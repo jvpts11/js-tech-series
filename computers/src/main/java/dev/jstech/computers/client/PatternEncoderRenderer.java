@@ -8,16 +8,20 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.os.media.MediaBay;
-import dev.jstech.core.client.geo.LookGeoModel;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.client.model.kit.IKitDriver;
+import dev.jstech.core.client.model.kit.IKitExtras;
+import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
+import dev.jstech.core.client.model.kit.KitInstance;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.model.ModelAnimator;
+import dev.jstech.core.model.ModelPose;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 /**
  * Draws a Pattern Encoder as its era's device. It states what it is doing with its lamps: the power lamp lit while a
@@ -25,24 +29,50 @@ import software.bernie.geckolib.renderer.GeoBlockRenderer;
  * on an error. The medium in the bay is the very item the player put in, drawn where the model marks its place: on
  * the tray, in the slot or in the port, moving with the clip that takes it in or out.
  */
-public final class PatternEncoderRenderer extends GeoBlockRenderer<PatternEncoderBlockEntity> {
+public final class PatternEncoderRenderer implements IKitDriver<PatternEncoderBlockEntity>,
+        IKitExtras<PatternEncoderBlockEntity> {
 
-    public PatternEncoderRenderer(final BlockEntityRendererProvider.Context context) {
-        super(new LookGeoModel<>(ComputingLooks.PATTERN_ENCODER));
-        // The Standard's USB port stands upright; the Advanced's USB-C lies wide across.
-        addRenderLayer(new BayMediumLayer<>(this, PatternEncoderBlockEntity::drawnMedium,
-                encoder -> encoder.era() == HardwareEra.ADVANCED));
+    private static final DiscTray.Clips TRAY = DiscTray.Clips.of("pattern_encoder");
+
+    private PatternEncoderRenderer() {
+    }
+
+    /** The renderer of the Pattern Encoders. */
+    public static BlockEntityRenderer<PatternEncoderBlockEntity> create(
+            final BlockEntityRendererProvider.Context context) {
+        final PatternEncoderRenderer drawn = new PatternEncoderRenderer();
+        return KitBlockEntityRenderer.<PatternEncoderBlockEntity>look(ComputingLooks.PATTERN_ENCODER)
+                .driver(drawn)
+                .extras(drawn)
+                .build();
+    }
+
+    /*
+     * The body moves in two ways. A floppy sliding through its slot plays once, set off by the server when the bay's
+     * slot fills or empties; the tray rides out and in as its button is pressed, and stands where it was left.
+     */
+    @Override
+    public void drive(final PatternEncoderBlockEntity encoder, final ModelAnimator animator, final double seconds) {
+        DeviceClips.play(animator, DiscTray.CONTROLLER, encoder.tray().playing(TRAY, encoder.getLevel()), seconds);
     }
 
     @Override
-    public void preRender(final PoseStack poseStack, final PatternEncoderBlockEntity encoder,
-                          final BakedGeoModel model, final MultiBufferSource bufferSource,
-                          final VertexConsumer buffer, final boolean isReRender, final float partialTick,
-                          final int packedLight, final int packedOverlay, final int colour) {
-        super.preRender(poseStack, encoder, model, bufferSource, buffer, isReRender, partialTick,
-                packedLight, packedOverlay, colour);
-        DeviceLamps.show(model, MediaBay.POWER_LAMP, encoder.ownerPos() != null);
-        DeviceLamps.show(model, MediaBay.BUSY_LAMP, activityLit(encoder));
+    public void move(final PatternEncoderBlockEntity encoder, final ModelPose pose, final double seconds) {
+        DeviceLamps.show(pose, MediaBay.POWER_LAMP, encoder.ownerPos() != null);
+        DeviceLamps.show(pose, MediaBay.BUSY_LAMP, activityLit(encoder));
+    }
+
+    @Override
+    public boolean movesBones() {
+        return true;
+    }
+
+    /* The Standard's USB port stands upright; the Advanced's USB-C lies wide across. */
+    @Override
+    public void draw(final PatternEncoderBlockEntity encoder, final KitInstance instance, final PoseStack poses,
+                     final MultiBufferSource buffers, final int light, final int overlay, final float partialTick) {
+        BayMedium.draw(encoder.drawnMedium(), encoder.era() == HardwareEra.ADVANCED, instance, poses, buffers, light,
+                overlay, encoder.getLevel());
     }
 
     /* The activity lamp: blinking while a pattern is written, held lit on an error, dark otherwise. */

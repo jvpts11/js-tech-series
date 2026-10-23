@@ -19,7 +19,7 @@ import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RackThermals;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.EraParts;
 import dev.jstech.tests.testkit.computers.ServerStacks;

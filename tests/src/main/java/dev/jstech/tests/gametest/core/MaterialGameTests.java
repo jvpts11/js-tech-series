@@ -13,13 +13,12 @@ import com.mojang.serialization.JsonOps;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.SeriesMaterials;
+import dev.jstech.core.jstechseries.SharedUses;
 import dev.jstech.core.material.Form;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.HostRocks;
 import dev.jstech.core.material.MaterialFormBlock;
 import dev.jstech.core.material.MaterialFormItem;
-import dev.jstech.core.material.MaterialForm;
-import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.MaterialKind;
 import dev.jstech.core.material.MaterialProperties;
 import dev.jstech.core.material.MaterialProperty;
@@ -29,7 +28,6 @@ import dev.jstech.core.material.MaterialValues;
 import dev.jstech.core.material.Materials;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.material.MineralFamilies;
-import dev.jstech.core.material.ModMaterial;
 import dev.jstech.core.material.RegisteredThing;
 import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.util.DeclarationError;
@@ -219,12 +217,13 @@ public final class MaterialGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void oldCatalogue_keepsItsIdsUnshared(final GameTestHelper helper) {
-        final Item dust = MaterialItems.get(ModMaterial.IRON, MaterialForm.DUST).get();
+    public static void ironDust_isAUseWithTheIdItHad(final GameTestHelper helper) {
+        final Item dust = MaterialUses.item(SeriesMaterials.IRON, Forms.DUST).get();
         helper.assertTrue(BuiltInRegistries.ITEM.getKey(dust).equals(id("iron_dust")), "iron dust keeps its id");
         helper.assertTrue(Materials.of(dust).orElseThrow().equals(new MaterialThing(SeriesMaterials.IRON,
                 Forms.DUST)), "and is iron as a dust");
-        helper.assertTrue(!MaterialUses.shared(dust), "but no mod has said it shares it yet");
+        helper.assertTrue(MaterialUses.shared(dust) && SharedUses.usersOf(dust).contains("jsindustrial"),
+                "shared, since J's Industrial says it uses it");
         helper.assertTrue(english(dust).equals("Iron Dust"), "named as before");
         helper.succeed();
     }

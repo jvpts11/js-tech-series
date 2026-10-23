@@ -9,7 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.core.client.gui.logic.TextDocument;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import java.util.ArrayList;
 import java.util.List;
 

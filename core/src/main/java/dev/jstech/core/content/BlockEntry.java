@@ -83,7 +83,7 @@ public final class BlockEntry<B extends Block> extends DeferredBlock<B> {
         return tags;
     }
 
-    /** How it is drawn with GeckoLib, when it is. */
+    /** The family of geometry files its block entity draws it from, when it is drawn so. */
     public Optional<GeoLook<?>> geoLook() {
         return Optional.ofNullable(geoLook);
     }

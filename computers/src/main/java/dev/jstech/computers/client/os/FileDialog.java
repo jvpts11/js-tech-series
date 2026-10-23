@@ -7,13 +7,13 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.SystemLayout;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
@@ -24,7 +24,7 @@ import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -99,7 +99,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         /** One filter per language the machine knows, its sources by their extensions, then every file. */
         public static List<Filter> sources() {
             final List<Filter> out = new ArrayList<>();
-            for (final IProgrammingLanguage language : JsCore.languages().all()) {
+            for (final IProgrammingLanguage language : JsComputersApi.languages().all()) {
                 final List<String> extensions = new ArrayList<>(language.sourceExtensions());
                 Collections.sort(extensions);
                 out.add(of(Text.literal(language.displayName()), extensions.toArray(new String[0])));

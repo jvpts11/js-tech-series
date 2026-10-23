@@ -235,7 +235,7 @@ public final class EraProgrammingClientTests {
                         .insert(StorageKey.of(Items.COBBLESTONE), STONE))
                 .thenWaitUntilServer(level -> level.getBlockState(ctx.abs(LAMP)).getValue(RedstoneLampBlock.LIT),
                         WAIT, "the script to hear the stone pass its mark and light the lamp",
-                        level -> "strength=" + sensor(ctx, level).strength() + " stone=" + stored(ctx, level,
+                        level -> "strength=" + sensor(ctx, level).emitStrength() + " stone=" + stored(ctx, level,
                                 Items.COBBLESTONE) + "; processes " + processes(ctx, level));
         ctx.then(SETTLE, () -> {
                     final int[] at = ctx.screen(DesktopScreen.class).emptyPanelPoint();
@@ -342,7 +342,7 @@ public final class EraProgrammingClientTests {
     private static void lampLit(final ClientTestContext ctx, final EraKit kit) {
         ctx.thenWaitUntilServer(level -> level.getBlockState(ctx.abs(LAMP)).getValue(RedstoneLampBlock.LIT), WAIT,
                         "the program to light the lamp through the interface",
-                        level -> "strength=" + sensor(ctx, level).strength() + "; the prompt said "
+                        level -> "strength=" + sensor(ctx, level).emitStrength() + "; the prompt said "
                                 + lastLines(computer(ctx, level)))
                 .thenScreenshot(SETTLE, shot(kit, "lamp-lit"));
     }

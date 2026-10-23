@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.api;
 
+import dev.jstech.computers.api.language.LanguageRegistry;
 import dev.jstech.computers.api.planner.IExplainNode;
 import dev.jstech.computers.api.planner.IPlannerOperator;
 import dev.jstech.computers.api.planner.IPlannerRule;
@@ -22,14 +23,15 @@ import dev.jstech.computers.os.ProgramSpec;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.event.IModBusEvent;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The one moment anything may be added to what the computers know.
  *
  * <p>Fired once on the mod bus while the game loads, after every mod has been built and before anything
- * has run. Listening for it is how an addon brings a kind of machine, a kernel, an operating system, a
- * program or a desktop; there is no other way in, because after the loading is done every one of these is
- * closed and refuses to change.
+ * has run. Listening for it is how an addon brings a language, a kind of machine, a kernel, an operating
+ * system, a program or a desktop; there is no other way in, because after the loading is done every one of
+ * these is closed and refuses to change.
  *
  * <p>What a program can call is not here, and that is deliberate. A call is part of what the language
  * means, and a listing built on one machine runs on every machine of its line only because the same
@@ -37,6 +39,20 @@ import net.neoforged.fml.event.IModBusEvent;
  * and both keep that true.
  */
 public final class ComputersRegisterEvent extends Event implements IModBusEvent {
+
+    /**
+     * The languages the computers of a world can be programmed in: a player writes a program in one and a machine
+     * runs it.
+     *
+     * <p>A language claims the file extensions it writes and the ones it runs. One already claimed is refused, and
+     * so is one the machines keep for themselves, such as that of the listings they run (the assembly a compiler of
+     * the series turns a program into). A language under an id already taken replaces the one before it, so an
+     * addon can improve a language in place, and the log says so.
+     */
+    @ApiStatus.Experimental
+    public LanguageRegistry languages() {
+        return JsComputersApi.languages();
+    }
 
     /** Adds an instruction set architecture, a kind of machine that programs can then be built for. */
     public void isa(final IsaSpec isa) {

@@ -107,7 +107,7 @@ public final class BlockBuilder<B extends Block> {
         return this;
     }
 
-    /** It is drawn with GeckoLib, by its block entity, as {@code family} says. */
+    /** It is drawn by its block entity, from the geometry files {@code family} names, with the Core's models. */
     public BlockBuilder<B> geo(final GeoLook<?> family) {
         this.geoLook = family;
         return this;

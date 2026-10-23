@@ -9,7 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.core.client.gui.component.Draw;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 

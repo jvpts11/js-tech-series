@@ -14,7 +14,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.client.gui.component.Grounds;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;

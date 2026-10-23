@@ -28,9 +28,9 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
-import dev.jstech.core.peripheral.IPeripheralEndpoint;
-import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
+import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
+import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,13 +42,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
  * A printer: a peripheral of a computer, linked over the peripheral cable like a drive, that prints whatever the
@@ -60,9 +53,8 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * <p>The players who see it are sent what it prints, how far it is, its queue as rows, and whether it is printing,
  * waiting or paused; the documents themselves stay on the server until they come out.
  */
-public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible, GeoBlockEntity {
+public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible {
 
-    private final AnimatableInstanceCache geckoCache = GeckoLibUtil.createInstanceCache(this);
     /* The tray takes plain paper only, a sheet a page. */
     private final FieldItemHandler paper = fields().items("Paper", 1).save().toClient().dropsWhenBroken()
             .accepts((index, stack) -> stack.is(Items.PAPER));
@@ -267,18 +259,6 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
     @Override
     public List<LoopRequest> loops() {
         return printing.get() ? List.of(LoopRequest.of(sound(model()))) : List.of();
-    }
-
-    /* The page sliding out of the printer, looping while it prints; the lamps are shown and hidden by the renderer. */
-    @Override
-    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "printer", 0, state -> printing.get()
-                ? state.setAndContinue(RawAnimation.begin().thenLoop(clip(model()))) : PlayState.STOP));
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return geckoCache;
     }
 
     /** The sound a printer makes while a page comes out. */

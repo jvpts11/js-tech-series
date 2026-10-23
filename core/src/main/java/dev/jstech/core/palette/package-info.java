@@ -22,9 +22,8 @@
  * loaded on a dedicated server.
  *
  * <p>How to declare one, from zero, is in {@code core/docs/TEXT_AND_COLOUR.md}. An example that compiles is J's
- * Industrial's machine screens
- * ({@code industrial/src/main/java/dev/jstech/industrial/client/MachineScreenSupport.java}), whose palette
- * {@code jsindustrial:machine/screen} a resource pack can recolour.
+ * Computers' boot menu ({@code computers/src/main/java/dev/jstech/computers/client/BootMenuScreen.java}), whose
+ * palette {@code jsc:screen/boot_menu} a resource pack can recolour.
  */
 @ApiStatus.Experimental
 package dev.jstech.core.palette;

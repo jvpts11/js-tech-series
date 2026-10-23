@@ -8,7 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.os.media.MediaDriveType;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
 /**

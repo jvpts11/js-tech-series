@@ -9,7 +9,7 @@ package dev.jstech.computers.program;
 
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.id.StableNames;
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import io.netty.buffer.ByteBuf;

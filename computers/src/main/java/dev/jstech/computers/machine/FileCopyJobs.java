@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CopyProgressPayload;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
@@ -23,8 +22,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -39,7 +37,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * time is carried out at once and told to nobody. A copy still under way when the server stops is carried out then,
  * so a file is never lost to a copy that was cut short.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class FileCopyJobs {
 
     private static final Map<Long, Job> JOBS = new LinkedHashMap<>();
@@ -48,6 +45,12 @@ public final class FileCopyJobs {
     private static long nextId = 1L;
 
     private FileCopyJobs() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, FileCopyJobs::onServerTick);
+        NeoForge.EVENT_BUS.addListener(ServerStoppingEvent.class, FileCopyJobs::onServerStopping);
     }
 
     /**
@@ -162,7 +165,6 @@ public final class FileCopyJobs {
         return PAUSED.containsKey(new Host(level.dimension(), host));
     }
 
-    @SubscribeEvent
     public static void onServerTick(final ServerTickEvent.Post event) {
         if (JOBS.isEmpty()) {
             return;
@@ -184,7 +186,6 @@ public final class FileCopyJobs {
         }
     }
 
-    @SubscribeEvent
     public static void onServerStopping(final ServerStoppingEvent event) {
         final List<Job> left = new ArrayList<>(JOBS.values());
         JOBS.clear();

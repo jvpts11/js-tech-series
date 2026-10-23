@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.DeviceFront;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.ITrayBlock;
@@ -19,23 +18,24 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderHighlightEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The outline the eject button of a drive or a Pattern Encoder gets while the player looks at it: the
  * {@link ButtonOutline button alone}, measured on the front as a click is, so it stands exactly where a click opens
  * and closes the tray. Looked at anywhere else, the device is outlined whole.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class EjectButtonOutline {
 
     private EjectButtonOutline() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RenderHighlightEvent.Block.class, EjectButtonOutline::onBlockHighlight);
+    }
+
     public static void onBlockHighlight(final RenderHighlightEvent.Block event) {
         final Minecraft minecraft = Minecraft.getInstance();
         final Entity viewer = minecraft.getCameraEntity();

@@ -90,9 +90,9 @@ public final class RedstoneInterfaceClientTests {
                 .thenWaitUntilServer(level -> sensorAt(ctx, level, vintage).emits(), SCREEN_WAIT,
                         "OUT to reach the interface", level -> "it still reads")
                 .then(SETTLE, () -> ctx.click(window(ctx).cellCenter(9)[0], window(ctx).cellCenter(9)[1]))
-                .thenWaitUntilServer(level -> sensorAt(ctx, level, vintage).strength() == 9, SCREEN_WAIT,
+                .thenWaitUntilServer(level -> sensorAt(ctx, level, vintage).emitStrength() == 9, SCREEN_WAIT,
                         "the cell clicked to set the strength",
-                        level -> "its strength is " + sensorAt(ctx, level, vintage).strength())
+                        level -> "its strength is " + sensorAt(ctx, level, vintage).emitStrength())
                 .then(SETTLE, () -> ctx.click(window(ctx).nameCenter()[0], window(ctx).nameCenter()[1]))
                 .then(SETTLE, () -> ctx.type("Gate"))
                 .thenWaitUntil(() -> window(ctx).softwareLines()[0].equals("SET REDSTONE 'Gate' OUT 9"),

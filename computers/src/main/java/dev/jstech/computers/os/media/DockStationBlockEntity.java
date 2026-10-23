@@ -27,7 +27,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import software.bernie.geckolib.animation.AnimatableManager;
 
 /**
  * The Dock Station: a reader on the desk that takes a disk of any era besides the flash drive in its port. Its three
@@ -134,11 +133,6 @@ public class DockStationBlockEntity extends MediaReaderBlockEntity {
     public void diskChanged() {
         setChanged();
         fields().syncToClients();
-    }
-
-    /* The dock has no clips; its lamps and the stick are shown and hidden by its renderer. */
-    @Override
-    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
     }
 
     /*

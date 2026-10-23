@@ -13,7 +13,7 @@ import dev.jstech.computers.block.DataWires;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.Neighbours;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;

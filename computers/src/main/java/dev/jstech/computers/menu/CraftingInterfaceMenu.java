@@ -19,7 +19,7 @@ import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.menu.CoreMenu;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

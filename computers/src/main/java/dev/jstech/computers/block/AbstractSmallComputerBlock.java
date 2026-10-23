@@ -14,7 +14,7 @@ import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.IStandingParts;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.ArrayList;

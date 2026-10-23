@@ -98,7 +98,7 @@ public final class StudioContext {
         return this.languages.computeIfAbsent(modid, this::readLanguages);
     }
 
-    /** The bones of every GeckoLib model of {@code modid}, in {@code assets/<mod>/geo/}. */
+    /** The bones of every geometry model of {@code modid}, in {@code assets/<mod>/geo/}. */
     public Set<String> geoBones(final String modid) {
         return this.bones.computeIfAbsent(modid, this::readBones);
     }

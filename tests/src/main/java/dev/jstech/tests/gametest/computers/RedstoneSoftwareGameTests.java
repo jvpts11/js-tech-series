@@ -82,7 +82,7 @@ public final class RedstoneSoftwareGameTests {
                     helper.assertTrue(gate.rename("Gate"), "and is named");
                     final IqlEngine.Outcome out = run(helper, mainframe, "SET REDSTONE 'Gate' OUT 12");
                     helper.assertTrue(out.ok(), "OUT runs: " + out.message());
-                    helper.assertTrue(gate.emits() && gate.strength() == 12, "it emits 12");
+                    helper.assertTrue(gate.emits() && gate.emitStrength() == 12, "it emits 12");
                     helper.assertValueEqual(gate.setBy(), IqlBusSetter.TYPED, "marked as typed");
                     helper.assertTrue(run(helper, mainframe, "set redstone 'gate' in").ok(),
                             "IN runs, the name in any letters");
@@ -122,7 +122,7 @@ public final class RedstoneSoftwareGameTests {
                             "it read the lever and set the gate; it said " + said);
                     helper.assertTrue(!said.contains("never"), "16 stopped it; it said " + said);
                     final RedstoneInterfaceBlockEntity gate = sensor(helper, GATE);
-                    helper.assertTrue(gate.emits() && gate.strength() == 15, "the gate emits 15");
+                    helper.assertTrue(gate.emits() && gate.emitStrength() == 15, "the gate emits 15");
                     helper.assertFalse(gate.setBy().isEmpty() || gate.setBy().equals(IqlBusSetter.TYPED),
                             "marked with the program; got " + gate.setBy());
                 })

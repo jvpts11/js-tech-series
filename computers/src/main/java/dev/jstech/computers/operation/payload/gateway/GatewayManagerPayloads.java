@@ -59,7 +59,7 @@ public final class GatewayManagerPayloads {
             return;
         }
         final Text status = GatewayManager.act(level, host, payload.gatewayPos(),
-                payload.action(), payload.value(), payload.text());
+                payload.action(), payload.value(), payload.text(), player.getUUID());
         PacketDistributor.sendToPlayer(player,
                 GatewayManager.state(level, host, payload.gatewayPos(), status));
     }

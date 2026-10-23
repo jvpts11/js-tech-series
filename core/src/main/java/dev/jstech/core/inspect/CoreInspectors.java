@@ -19,8 +19,6 @@ import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.mechanical.IMechanicalPart;
 import dev.jstech.core.mechanical.MechanicalPorts;
 import dev.jstech.core.multiblock.LevelStructures;
-import dev.jstech.core.network.NetworkMembers;
-import dev.jstech.core.network.NetworkMembership;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.core.team.CoreTeams;
@@ -55,8 +53,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The Core's own parts of an inspection: the block, its state and its block entity's fields as they are saved now;
- * what it offers on each face (items, energy, fluids, heat, a shaft), every face alike shown once; the data network it
- * is a member of; the grids laid there; the sealed room it stands in; and the multiblock it is a part of.
+ * what it offers on each face (items, energy, fluids, heat, a shaft), every face alike shown once; the grids laid
+ * there; the sealed room it stands in; and the multiblock it is a part of.
  */
 public final class CoreInspectors {
 
@@ -83,7 +81,6 @@ public final class CoreInspectors {
     public static void declare() {
         Inspectors.provide(CoreLogs.CONTENT, CoreInspectors::block);
         Inspectors.provide(CoreLogs.CONTENT, CoreInspectors::offers);
-        Inspectors.provide(CoreLogs.NETWORK, CoreInspectors::network);
         Inspectors.provide(CoreLogs.CABLES, CoreInspectors::grids);
         Inspectors.provide(CoreLogs.ROOMS, CoreInspectors::room);
         Inspectors.provide(CoreLogs.WORLD, CoreInspectors::multiblock);
@@ -216,20 +213,6 @@ public final class CoreInspectors {
             lines.line(Text.literal(String.valueOf(tank)), (held.isEmpty() ? "" : BuiltInRegistries.FLUID.getKey(
                     held.getFluid()) + SPACE) + held.getAmount() + OUT_OF + fluids.getTankCapacity(tank) + MB);
         }
-    }
-
-    private static void network(final ServerLevel level, final BlockPos pos, final Inspectors.Inspection report) {
-        final Optional<NetworkMembership> member = NetworkMembers.at(level, pos);
-        if (member.isEmpty()) {
-            return;
-        }
-        report.under(InspectTexts.NETWORK.text(), lines -> {
-            lines.line(InspectTexts.NODE.text(), member.get().node().value());
-            member.get().network().ifPresentOrElse(network -> {
-                lines.line(InspectTexts.NETWORK.text(), network.value());
-                lines.line(InspectTexts.MEMBERS.text(), NetworkMembers.on(level, network));
-            }, () -> lines.line(InspectTexts.OFF_NETWORK.text()));
-        });
     }
 
     private static void grids(final ServerLevel level, final BlockPos pos, final Inspectors.Inspection report) {

@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.rack;
 
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * How hot a cabinet runs, and what that costs the machines in it.

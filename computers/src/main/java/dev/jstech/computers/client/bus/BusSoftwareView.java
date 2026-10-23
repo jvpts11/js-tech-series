@@ -11,7 +11,7 @@ import dev.jstech.computers.bus.BusScript;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.computers.menu.AbstractBusMenu;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;

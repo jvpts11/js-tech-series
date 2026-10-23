@@ -9,8 +9,8 @@ package dev.jstech.computers.block;
 
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
-import dev.jstech.core.peripheral.PeripheralLine;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * Where a peripheral takes its cable: the port of its era in the middle of its back, where its model has it. The port

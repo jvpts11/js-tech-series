@@ -12,7 +12,7 @@ import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

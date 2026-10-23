@@ -14,7 +14,7 @@ import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.SigmaLanguage;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.core.BlockPos;

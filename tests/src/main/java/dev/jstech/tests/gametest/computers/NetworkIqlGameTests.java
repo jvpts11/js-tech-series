@@ -22,7 +22,7 @@ import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.connect.Connection;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;

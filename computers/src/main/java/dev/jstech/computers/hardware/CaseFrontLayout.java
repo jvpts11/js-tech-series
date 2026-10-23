@@ -9,7 +9,7 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.os.media.EjectButton;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 

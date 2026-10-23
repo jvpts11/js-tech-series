@@ -8,7 +8,7 @@
 package dev.jstech.tests;
 
 import com.mojang.logging.LogUtils;
-import dev.jstech.core.JsCore;
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.core.registry.StableNamespaces;
 import dev.jstech.testkit.client.ClientTestRunner;
 import dev.jstech.testkit.gametest.Arenas;
@@ -157,7 +157,7 @@ public final class JsTests {
              * The language API's tests need a language that is not the series' own, and languages are only taken
              * while the game loads; a client run stays as a player sees it.
              */
-            JsCore.languages().register(new ToyLanguage());
+            JsComputersApi.languages().register(new ToyLanguage());
             // A world's settings file in every format, where the settings tests can read and write them.
             TestSettings.register(modEventBus, modContainer);
             // A permission held only inside a claim, to see the place's contexts reach a permission's rule.

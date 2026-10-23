@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.config;
 
-import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.ConfigKey;
@@ -17,17 +16,12 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 
 /**
- * A player's own settings for the computers, {@code jscomputers-client.toml} beside the game's options: how the
- * desktops move and whether they draw their own pointer. Read on the player's game only.
+ * A player's own settings for the computers, {@code jscomputers-client.toml} beside the game's options: whether the
+ * desktops draw their own pointer, and what of the world outside the game they show. Read on the player's game only.
+ * Whether they move is the Core's accessibility setting, which every motion of the series follows; each system's own
+ * settings page turns its motions off one by one.
  */
 public final class ComputersClientConfig {
-
-    public static final ConfigKey<Boolean> REDUCE_MOTION = ConfigKey.flag("client.reduce_motion", false)
-            .comment("Whether every desktop acts at once: no window, menu or boot moves, everything is drawn where it "
-                            + "ends.",
-                    "Each system's own settings page turns its motions off one by one; this turns them all off for "
-                            + "this player.")
-            .named("Reduce motion");
 
     public static final ConfigKey<Boolean> DESKTOP_CURSORS = ConfigKey.flag("client.desktop_cursors", true)
             .comment("Whether the desktops draw their own pointer over the monitor's glass: each system's arrow, and "
@@ -44,9 +38,8 @@ public final class ComputersClientConfig {
                     ConfigFormats.TOML)
             .comment("How the computers of J's Computers look on this player's game.")
             .sectionNamed("client", "Client")
-            .sectionComment("client", "How the desktops look on this game: whether they move, whose pointer they "
-                    + "draw, and what of the world outside the game they show.")
-            .key(REDUCE_MOTION, MotionClock::setReduced)
+            .sectionComment("client", "How the desktops look on this game: whose pointer they draw, and what of the "
+                    + "world outside the game they show.")
             .key(DESKTOP_CURSORS)
             .key(OUTSIDE_COMPONENTS)
             .build();

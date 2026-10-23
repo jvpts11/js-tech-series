@@ -29,7 +29,7 @@ import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.function.Function;

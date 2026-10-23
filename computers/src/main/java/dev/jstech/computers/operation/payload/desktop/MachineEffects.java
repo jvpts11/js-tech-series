@@ -12,7 +12,7 @@ import dev.jstech.computers.hardware.ExperienceIndex;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ComputerSettings;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;

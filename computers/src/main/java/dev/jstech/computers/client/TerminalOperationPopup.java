@@ -11,7 +11,7 @@ import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.core.client.gui.component.Draw;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.Nullable;

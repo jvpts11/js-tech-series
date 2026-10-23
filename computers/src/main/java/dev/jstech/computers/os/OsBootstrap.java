@@ -8,22 +8,21 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.os.install.InstallerStyle;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.IEventBus;
 
-import static dev.jstech.core.tier.HardwareEra.LEGACY;
-import static dev.jstech.core.tier.HardwareEra.STANDARD;
-import static dev.jstech.core.tier.HardwareEra.VINTAGE;
+import static dev.jstech.core.jstechseries.tier.HardwareEra.LEGACY;
+import static dev.jstech.core.jstechseries.tier.HardwareEra.STANDARD;
+import static dev.jstech.core.jstechseries.tier.HardwareEra.VINTAGE;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.engine.nextgre.NextgreEngine;
 import dev.jstech.computers.engine.prophet.ProphetEngine;
-import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.Optional;
 
@@ -33,12 +32,15 @@ import java.util.Optional;
  * <p>Every one of them is added the way an addon adds one, by listening for the same event, so the way in
  * is the one that is tried every time the game starts rather than a path only addons take.
  */
-@EventBusSubscriber(modid = "jsc", bus = EventBusSubscriber.Bus.MOD)
 public final class OsBootstrap {
 
     private OsBootstrap() {}
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this adds, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(ComputersRegisterEvent.class, OsBootstrap::onRegister);
+    }
+
     public static void onRegister(final ComputersRegisterEvent event) {
         registerBuiltins();
     }

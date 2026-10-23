@@ -8,7 +8,7 @@
 package dev.jstech.core.modpack;
 
 import com.mojang.brigadier.context.CommandContext;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.content.ScriptBinding;
 import dev.jstech.core.developer.mcp.McpToolsPage;
@@ -78,7 +78,7 @@ public final class ModpackDumps {
 
     /** Declares {@code /jstech dump}, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("dump", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("dump", CommandRoot.ADMINS, (node, context) -> node
                 .then(Commands.literal("permissions").executes(ProtectionCommands::dumpPermissions))
                 .then(Commands.literal("materials").executes(source -> page(source, "materials.md",
                         server -> materials())))

@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.block;
 
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.Nullable;
 

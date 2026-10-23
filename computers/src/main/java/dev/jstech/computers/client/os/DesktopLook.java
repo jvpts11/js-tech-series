@@ -9,7 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.Platform;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;

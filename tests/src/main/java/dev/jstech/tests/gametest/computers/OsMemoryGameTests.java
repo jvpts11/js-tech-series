@@ -26,7 +26,7 @@ import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;

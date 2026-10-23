@@ -7,23 +7,27 @@
  */
 package dev.jstech.computers.config;
 
+import dev.jstech.computers.api.language.ExecutionBalance;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigSide;
 import dev.jstech.core.config.format.ConfigFormats;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLink;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.operation.OperationBalance;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The settings of the computers themselves, {@code jscomputers-server.toml} beside the world.
+ * The settings of the computers themselves, {@code jscomputers-server.toml} beside the world: how long their disks
+ * take to answer, the share a Subframe lends its Mainframe, and how long their programs run, besides how they boot,
+ * install, prompt and play music.
  *
- * <p>Apart from the series' balance file, which the Core owns: what is in here is about how the machines of this
- * mod behave, and the Core has no business knowing that a boot menu exists.
+ * <p>Apart from the Core's balance file and the series' Operations engine's: what is in here is about how the
+ * machines of this mod behave, and the Core has no business knowing that a boot menu exists.
  */
 public final class ComputersServerConfig {
 
@@ -32,6 +36,47 @@ public final class ComputersServerConfig {
     private static final int MOST_SPEED = 1_048_576;
     /* The cable the Ethernet speed is set for; every other line and era goes in proportion to what it carries. */
     private static final DataLink ETHERNET = new DataLink(DataLine.ACCESS, HardwareEra.STANDARD);
+    /** What the machines lend the Operations engine and how long their programs may run. */
+    public static final String BALANCE = "balance";
+    private static final int MAX_LATENCY_TICKS = 200;
+    private static final int MIN_MACHINE_MICROS = 50;
+    private static final int MAX_MACHINE_MICROS = 1_000_000;
+    private static final int MIN_SERVER_MICROS = 100;
+    private static final int MAX_SERVER_MICROS = 10_000_000;
+
+    /** The seek latency of a hard disk drive, in ticks. */
+    public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(BALANCE + ".hdd_latency_ticks",
+                    OperationBalance.DEFAULT_HDD_LATENCY_TICKS).range(0, MAX_LATENCY_TICKS)
+            .comment("How long a hard disk drive takes to find what it is asked for, in ticks.")
+            .named("Hard disk latency").unit("ticks");
+    /** The seek latency of a solid-state drive, in ticks. */
+    public static final ConfigKey<Integer> SSD_LATENCY_TICKS = ConfigKey.whole(BALANCE + ".ssd_latency_ticks",
+                    OperationBalance.DEFAULT_SSD_LATENCY_TICKS).range(0, MAX_LATENCY_TICKS)
+            .comment("How long a solid-state drive takes to find what it is asked for, in ticks.")
+            .named("SSD latency").unit("ticks");
+    /** The seek latency of an NVMe drive, in ticks. */
+    public static final ConfigKey<Integer> NVME_LATENCY_TICKS = ConfigKey.whole(BALANCE + ".nvme_latency_ticks",
+                    OperationBalance.DEFAULT_NVME_LATENCY_TICKS).range(0, MAX_LATENCY_TICKS)
+            .comment("How long an NVMe drive takes to find what it is asked for, in ticks.")
+            .named("NVMe latency").unit("ticks");
+    /** The share of a Subframe's own capacity it lends to the Mainframe orchestrating it. */
+    public static final ConfigKey<Double> SUBFRAME_EFFICIENCY_FACTOR = ConfigKey.number(
+                    BALANCE + ".subframe_efficiency_factor", OperationBalance.DEFAULT_SUBFRAME_EFFICIENCY_FACTOR)
+            .range(0.0, 1.0)
+            .comment("The share of its own capacity a Subframe lends the Mainframe it works for.")
+            .named("Subframe share");
+    /** Real time one machine may spend running its programs in a tick, in microseconds. */
+    public static final ConfigKey<Integer> PROGRAM_MACHINE_MICROS = ConfigKey.whole(
+                    BALANCE + ".program_machine_micros", ExecutionBalance.DEFAULT_MACHINE_MICROS)
+            .range(MIN_MACHINE_MICROS, MAX_MACHINE_MICROS)
+            .comment("The real time one machine may spend running its programs in a tick, in microseconds.")
+            .named("Program time per machine").unit("µs");
+    /** Real time every machine together may spend running programs in a tick, in microseconds. */
+    public static final ConfigKey<Integer> PROGRAM_SERVER_MICROS = ConfigKey.whole(
+                    BALANCE + ".program_server_micros", ExecutionBalance.DEFAULT_SERVER_MICROS)
+            .range(MIN_SERVER_MICROS, MAX_SERVER_MICROS)
+            .comment("The real time every machine together may spend running programs in a tick, in microseconds.")
+            .named("Program time per server").unit("µs");
 
     public static final ConfigKey<Boolean> SHOW_BOOT_MENU = ConfigKey.flag("boot.show_boot_menu", true)
             .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: GRUB "
@@ -95,8 +140,9 @@ public final class ComputersServerConfig {
 
     public static final ConfigFile FILE = ConfigFile.builder("jscomputers-server", ConfigSide.SERVER,
                     ConfigFormats.TOML)
-            .comment("How the computers of J's Computers behave. Balance of the Operations engine lives in the "
-                    + "series' own file beside this one.")
+            .comment("How the computers of J's Computers behave, and what they lend the Operations engine, whose own "
+                    + "settings live in the series' file beside this one.")
+            .sectionNamed(BALANCE, "Disks and programs")
             .sectionNamed("boot", "Starting up")
             .sectionNamed("install_by_hand", "Installing by hand")
             .sectionNamed("prompt", "The prompt")
@@ -109,6 +155,14 @@ public final class ComputersServerConfig {
             .sectionComment("soundfoundry", "The music service: the catalogue the server offers, and how fast a song "
                     + "travels over each kind of cable into a computer.")
             .sectionComment("programs", "What the programs players write may put in their windows.")
+            .sectionComment(BALANCE, "How long the disks take to answer the network, the share a Subframe lends its "
+                    + "Mainframe, and how long the machines' programs may run each tick.")
+            .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
+            .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
+            .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
+            .key(SUBFRAME_EFFICIENCY_FACTOR, OperationBalance::setSubframeEfficiencyFactor)
+            .key(PROGRAM_MACHINE_MICROS, ExecutionBalance::setMachineMicros)
+            .key(PROGRAM_SERVER_MICROS, ExecutionBalance::setServerMicros)
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
             .key(ARCH_EVERY_STEP)

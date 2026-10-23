@@ -28,7 +28,7 @@ import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;

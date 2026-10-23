@@ -11,7 +11,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.moving.physics.PhysicsMotion;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -56,7 +56,7 @@ public final class StructureCommands {
 
     /** Declares the commands, from the kit's start. */
     static void declare() {
-        SeriesCommands.declare("structure", SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare("structure", CommandRoot.GAME_MASTERS, (node, context) -> node
                 .then(Commands.literal("assemble")
                         .then(Commands.argument(FROM, BlockPosArgument.blockPos())
                                 .then(Commands.argument(TO, BlockPosArgument.blockPos())

@@ -8,7 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.client.gui.component.Draw;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;

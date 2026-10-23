@@ -9,7 +9,7 @@ package dev.jstech.computers.os;
 
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * The firmware variant shown when a computer has no operating system installed.

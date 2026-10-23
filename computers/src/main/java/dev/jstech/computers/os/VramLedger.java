@@ -9,7 +9,7 @@ package dev.jstech.computers.os;
 
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 

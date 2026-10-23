@@ -18,7 +18,7 @@ import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
 import dev.jstech.core.audio.media.MediaReceipt;
 import dev.jstech.core.audio.media.MediaStore;
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.text.Text;
 import java.io.IOException;
 import java.util.List;

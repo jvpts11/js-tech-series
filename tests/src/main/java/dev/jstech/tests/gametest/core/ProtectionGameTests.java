@@ -9,7 +9,7 @@ package dev.jstech.tests.gametest.core;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.JavaOps;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.jstechseries.command.SeriesCommands;
 import dev.jstech.core.protection.Actor;
 import dev.jstech.core.protection.AuditLog;
 import dev.jstech.core.protection.IProtectionAdapter;

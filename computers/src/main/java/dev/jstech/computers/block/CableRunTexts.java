@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.block;
 
-import dev.jstech.core.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import org.jetbrains.annotations.Nullable;

@@ -21,7 +21,7 @@ import dev.jstech.computers.program.SongDownload;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.logic.TextEditState;
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;

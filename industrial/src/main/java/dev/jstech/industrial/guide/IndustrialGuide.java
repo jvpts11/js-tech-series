@@ -8,6 +8,7 @@
 package dev.jstech.industrial.guide;
 
 import static dev.jstech.industrial.guide.IndustrialGuideTexts.ANY_SIDE;
+import static dev.jstech.industrial.guide.IndustrialGuideTexts.FROM_THE_JS_TECH_TAB;
 import static dev.jstech.industrial.guide.IndustrialGuideTexts.FROM_THE_TAB;
 import static dev.jstech.industrial.guide.IndustrialGuideTexts.GENERATOR;
 import static dev.jstech.industrial.guide.IndustrialGuideTexts.SECOND_GENERATOR;
@@ -21,6 +22,7 @@ import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.industrial.IndustrialModule;
 import net.minecraft.world.item.Items;
 
@@ -147,13 +149,14 @@ public final class IndustrialGuide {
                 .howToUseIt("Place the generator, and a machine against it.",
                         "Put fuel in its slot: coal, charcoal, planks, logs.",
                         "One coal burns 1,600 ticks and makes 32,000 FE.",
-                        "It holds 16,000 FE and gives up to 1,000 FE a tick.")
+                        "It holds 16,000 FE and gives up to 1,000 FE twice a second.")
                 .nextColumn()
-                .whatCanGoWrong("The flame is lit but nothing gets energy.",
-                        "No machine or cable touches it. Put a machine against a face, or lay Energy Cable.",
-                        "It burns fuel but its bar stays full.",
-                        "Nothing takes its energy. While it is full, the fuel burning goes on and its energy is"
-                                + " lost.",
+                .whatCanGoWrong("It works but nothing gets energy.",
+                        "No machine or cable touches it, or its Sides tab closes that face. Put a machine against a"
+                                + " face, or lay Insulated Copper Cable.",
+                        "It stopped and its energy is full.",
+                        "Nothing takes its energy. While it is full it stops burning, and goes on when there is"
+                                + " room.",
                         "A machine works in bursts.",
                         "One generator makes 20 FE a tick; a Macerator spends 40. Put a second generator against"
                                 + " it.")
@@ -263,29 +266,31 @@ public final class IndustrialGuide {
     private static void power(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("making_and_moving_power", section).titled("Power: making it and moving it")
                 .icon(IndustrialModule.COAL_GENERATOR)
-                .covers(() -> IndustrialModule.ENERGY_CABLE)
+                .covers(() -> SharedEnergy.INSULATED_COPPER_CABLE)
                 .whatItIs("How energy goes from a generator to the machines: through the faces that touch, or along"
-                        + " Energy Cable.")
+                        + " Insulated Copper Cable.")
                 .whatItIsFor("Running machines that cannot stand against a generator, and running many from a few"
                         + " generators.")
-                .howToGetIt(FROM_THE_TAB)
+                .howToGetIt(FROM_THE_JS_TECH_TAB)
                 .define("Buffer", "The energy a machine can store, like a small battery inside it. It keeps a machine"
                         + " working for a while after its power stops.")
                 .nextColumn()
                 .howToUseIt("Place the generator and the machines.",
-                        "Lay Energy Cable from the generator to each machine, like a line of blocks.",
+                        "Lay Insulated Copper Cable from the generator to each machine, like a line of blocks.",
                         "Add generators until the machines stop working in bursts.")
                 .subheading("What each machine spends")
                 .paragraph("Coal Generator: makes 20 FE a tick. Macerator: 40. Compressor: 30. Electric Furnace: 30.")
                 .nextPage()
-                .paragraph("The Energy Cable carries any amount of energy, any distance, and loses none. It is laid"
-                        + " in the shared cable block of the series, in a lane of its own, so it runs beside the"
-                        + " cables of other mods without joining them.")
+                .paragraph("The Insulated Copper Cable is the series' basic cable, J's Core's: it carries up to 500 FE"
+                        + " a tick and loses a tenth over a hundred blocks. It is laid in the shared cable block of the"
+                        + " series, in a lane of its own, so it runs beside the cables of other mods without joining"
+                        + " them.")
                 .nextColumn()
                 .whatCanGoWrong("A machine on the cable gets nothing.",
                         "The cable does not reach it, or the generator has no fuel.",
                         "The machines work in bursts.",
-                        "Together they spend more than the generators make. Add a generator.")
+                        "Together they spend more than the generators make, or more than the cable carries. Add a"
+                                + " generator, or a second cable.")
                 .register();
     }
 
@@ -295,7 +300,7 @@ public final class IndustrialGuide {
                         + " ingots.")
                 .whatItIsFor("They are the parts later machines and recipes are made from. They belong to J's Core,"
                         + " so every mod of the series uses the same ones.")
-                .howToGetIt("Make them with the machines, or take them from the J's Industrial tab.")
+                .howToGetIt("Make them with the machines, or take them from the J's Tech tab.")
                 .nextColumn()
                 .howToUseIt("Grind raw iron in the Macerator: two dusts.",
                         "Smelt each dust in a furnace or the Electric Furnace: an ingot.",

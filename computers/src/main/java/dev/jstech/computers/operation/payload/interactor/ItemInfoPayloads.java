@@ -23,7 +23,7 @@ import dev.jstech.computers.operation.payload.RequestItemRecipesPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.HashSet;

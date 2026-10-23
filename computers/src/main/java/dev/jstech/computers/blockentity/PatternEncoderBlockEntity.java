@@ -36,15 +36,15 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
-import dev.jstech.core.peripheral.IPeripheralEndpoint;
-import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
+import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
+import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
 import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.text.TextTags;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -56,10 +56,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
@@ -84,9 +80,8 @@ import java.util.Optional;
  * written, the link and how many jobs wait; the waiting jobs themselves stay on the server.
  */
 @TextHolder
-public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, GeoBlockEntity {
+public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint {
 
-    private final AnimatableInstanceCache geckoCache = GeckoLibUtil.createInstanceCache(this);
     /** What the bay sounds like taking a disc or a USB drive in and giving it back. */
     private final MediaBaySounds baySounds = new MediaBaySounds();
     /** On the client, the medium drawn in the bay, kept a moment after it is taken so its way out is seen. */
@@ -420,22 +415,6 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
         return link.ownerPos();
     }
 
-    /*
-     * The body moves in two ways. A floppy sliding through its slot or a stick going into its port plays once, triggered
-     * by the server when the bay's slot fills or empties; the tray rides out and in as its button is pressed, and stands
-     * where it was left. The lamps are bone visibility set by the renderer, which blinks them.
-     */
-    @Override
-    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(MediaBay.controller(this, "pattern_encoder"));
-        controllers.add(tray.controller(this, "pattern_encoder"));
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return geckoCache;
-    }
-
     @Override
     protected void beforeClientUpdate() {
         beforeUpdate = mediaStack().copy();
@@ -483,7 +462,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
         final MediaBaySounds.Move move = baySounds.changed(level, worldPosition, mediaStack());
         final String clip = move == null || move.format() == null ? null : MediaBay.clip(move.format(), move.in());
         if (clip != null) {
-            triggerAnim(MediaBay.CONTROLLER, clip);
+            MediaBay.play(this, clip);
         }
     }
 

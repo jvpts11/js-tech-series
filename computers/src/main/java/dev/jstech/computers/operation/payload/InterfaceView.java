@@ -12,7 +12,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 

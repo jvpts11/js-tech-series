@@ -8,8 +8,8 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.crafting.CraftingEras;
-import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 
 import java.util.Objects;
 

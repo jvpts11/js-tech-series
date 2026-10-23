@@ -22,7 +22,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.program.Programs;
-import dev.jstech.core.network.SubframeNode;
+import dev.jstech.core.jstechseries.network.SubframeNode;
 import dev.jstech.core.util.ShortId;
 import java.util.ArrayList;
 import java.util.List;

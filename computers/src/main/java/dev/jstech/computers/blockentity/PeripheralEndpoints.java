@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.core.peripheral.PeripheralPorts;
+import dev.jstech.core.jstechseries.peripheral.PeripheralPorts;
 import net.minecraft.nbt.CompoundTag;
 
 /**

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.GatewayManager;
 import dev.jstech.computers.gateway.GatewayPermissions;
@@ -359,7 +360,8 @@ public final class GatewayCommand implements ICliCommand {
 
     private static void act(final CliContext ctx, final ServerLevel level, final BlockEntity host, final long pos,
                             final int action, final int value, final String text) {
-        final Text said = GatewayManager.act(level, host, pos, action, value, text);
+        // Whoever typed the command, or works the machine a program runs it on; nobody is asked when nobody acts.
+        final Text said = GatewayManager.act(level, host, pos, action, value, text, Acting.current().orElse(null));
         if (said.isEmpty()) {
             ctx.out().dim(DONE);
         } else {

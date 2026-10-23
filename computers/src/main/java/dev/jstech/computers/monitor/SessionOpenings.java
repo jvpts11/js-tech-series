@@ -30,7 +30,7 @@ import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;

@@ -10,7 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaVersions;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 
 /**
  * The version of a language the open desktop's machine can build, which is what its installed compiler knows, and

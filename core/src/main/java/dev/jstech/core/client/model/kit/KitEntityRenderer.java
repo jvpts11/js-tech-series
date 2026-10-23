@@ -75,7 +75,7 @@ public final class KitEntityRenderer<T extends Entity> extends EntityRenderer<T>
             final double seconds = KitClock.seconds(partialTick);
             EntityQueries.hand(instance.animator().context(), entity, partialTick);
             this.driver.drive(entity, instance.animator(), seconds);
-            instance.animate(KitClock.frame(), seconds, this.driver.movesBones(), KitEvents.of(entity, this.driver,
+            instance.animate(KitClock.frame(), seconds, this.driver, entity, KitEvents.of(entity, this.driver,
                     instance, entity.level(), () -> new Matrix4f().translation((float) entity.getX(),
                             (float) entity.getY(), (float) entity.getZ()).rotateY((float) Math.toRadians(180 - yaw)),
                     SoundSource.NEUTRAL));

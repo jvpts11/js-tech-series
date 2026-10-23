@@ -193,6 +193,44 @@ class EnergyNetworkTest {
     }
 
     @Test
+    void sharedBottleneckCable_isSharedEvenlyByTheWaysThroughIt() {
+        // 1000 FE through one cable of 500 to two consumers wanting 600 each: neither takes the whole cable.
+        EnergyNetwork net = new EnergyNetwork();
+        net.addNode(GEN_A, TestNode.generator(1_000L));
+        net.addCable(CABLE_1, new TestCable(COPPER));
+        net.addNode(CONS_A, TestNode.consumer(600L));
+        net.addNode(CONS_B, TestNode.consumer(600L));
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+        net.connect(CABLE_1, CONS_B);
+
+        EnergyDistributionResult result = net.tickDistribute();
+
+        assertEquals(Long.valueOf(250L), result.perConsumerDelivered().get(CONS_A));
+        assertEquals(Long.valueOf(250L), result.perConsumerDelivered().get(CONS_B));
+        assertEquals(Long.valueOf(COPPER), result.perCableUsage().get(CABLE_1));
+    }
+
+    @Test
+    void sharedBottleneckCable_givesWhatOneWayLeavesToTheOther() {
+        // One consumer wants 100 of the cable's 500: the other takes the remaining 400, not only half.
+        EnergyNetwork net = new EnergyNetwork();
+        net.addNode(GEN_A, TestNode.generator(1_000L));
+        net.addCable(CABLE_1, new TestCable(COPPER));
+        net.addNode(CONS_A, TestNode.consumer(100L));
+        net.addNode(CONS_B, TestNode.consumer(600L));
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+        net.connect(CABLE_1, CONS_B);
+
+        EnergyDistributionResult result = net.tickDistribute();
+
+        assertEquals(Long.valueOf(100L), result.perConsumerDelivered().get(CONS_A));
+        assertEquals(Long.valueOf(400L), result.perConsumerDelivered().get(CONS_B));
+        assertEquals(Long.valueOf(COPPER), result.perCableUsage().get(CABLE_1));
+    }
+
+    @Test
     void clampedShare_isOfferedToReceiversWhoseWayIsStillFree() {
         // 100 FE; A and B want 100 each through one cable of 60; C wants 40 through a cable with no limit.
         EnergyNetwork net = new EnergyNetwork();

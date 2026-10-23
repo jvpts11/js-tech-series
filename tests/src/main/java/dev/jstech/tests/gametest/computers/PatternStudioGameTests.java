@@ -22,7 +22,7 @@ import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.CraftFiles;
 import dev.jstech.tests.testkit.computers.CraftingRig;

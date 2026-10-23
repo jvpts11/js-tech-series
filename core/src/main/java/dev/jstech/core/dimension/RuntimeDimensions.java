@@ -139,6 +139,12 @@ public final class RuntimeDimensions {
                     player.getXRot());
         }
         level.save(null, true, false);
+        /*
+         * What the game left queued for the level (the point of interest of a block it just set) runs while the level
+         * is open: run after the level is closed, it would wait for ever on the level's closed storage, and the
+         * server with it.
+         */
+        server.managedBlock(() -> server.getPendingTasksCount() == 0);
         NeoForge.EVENT_BUS.post(new LevelEvent.Unload(level));
         server.forgeGetWorldMap().remove(key);
         server.markWorldsDirty();

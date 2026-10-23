@@ -36,6 +36,7 @@ public final class Device<E extends BlockEntity> {
     private final Supplier<? extends BlockEntityType<E>> type;
     private @Nullable BlockEntityTicker<E> serverTicker;
     private @Nullable IMenuFactory<E> menu;
+    private boolean fillsFromContainers;
 
     private Device(final Supplier<? extends BlockEntityType<E>> type) {
         this.type = type;
@@ -58,6 +59,15 @@ public final class Device<E extends BlockEntity> {
         return this;
     }
 
+    /**
+     * Lets a bucket, or any other container of fluid, used on the block fill and empty what the block entity offers
+     * through the game's fluid capability on the face used, as a tank is filled by hand.
+     */
+    public Device<E> fillsFromContainers() {
+        this.fillsFromContainers = true;
+        return this;
+    }
+
     /** The block, made with these properties. */
     public DeviceBlock block(final BlockBehaviour.Properties properties) {
         return new DeviceBlock(properties, this);
@@ -74,6 +84,10 @@ public final class Device<E extends BlockEntity> {
 
     boolean opensMenu() {
         return menu != null;
+    }
+
+    boolean fillsFromContainersByHand() {
+        return fillsFromContainers;
     }
 
     /** Opens the menu on the block entity at {@code pos}, telling the client where it is. */

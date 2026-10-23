@@ -11,7 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
 /**

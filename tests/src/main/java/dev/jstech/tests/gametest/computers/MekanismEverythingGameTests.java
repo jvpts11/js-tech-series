@@ -21,7 +21,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.CraftingRig;

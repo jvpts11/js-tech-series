@@ -96,7 +96,6 @@ class HardcodedTextTest {
     private static final Pattern THROWABLE_CLASS = Pattern.compile("extends\\s+\\w*(Exception|Error)\\b");
 
     private static final String COMPUTERS = "computers/src/main/java/dev/jstech/computers/";
-    private static final String INDUSTRIAL = "industrial/src/main/java/dev/jstech/industrial/";
 
     private static final String ORIGIN = "the name an Operation's origin is logged under, an identifier of what asked";
     private static final String LOGO = "a product's name and maker, drawn as part of its logo";
@@ -217,7 +216,7 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 13,
                     "why a configuration value was set aside, written to the log"),
             data("core/src/main/java/dev/jstech/core/config/ConfigKey.java", 1, SETTINGS_FILE),
-            data("core/src/main/java/dev/jstech/core/operation/OperationDispatch.java", 1,
+            data(CORE + "jstechseries/operation/OperationDispatch.java", 1,
                     "a line for the log, when nobody gives the dispatcher a log of its own"),
             data("core/src/main/java/dev/jstech/core/font/CoreFonts.java", 4,
                     "a font's licence and who made it, named as its makers name them"),
@@ -251,7 +250,6 @@ class HardcodedTextTest {
             data(CORE + "worldgen/structure/StructureReport.java", 11, MODPACK_PAGES),
             data(CORE + "worldgen/modify/DensityFunctionModifier.java", 1, MODIFIER_PROBLEMS),
             data(CORE + "worldgen/modify/StructureSetModifier.java", 3, MODIFIER_PROBLEMS),
-            data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"),
             data(CORE + "developer/mcp/McpHttp.java", 29, MCP),
             data(CORE + "developer/mcp/McpGuard.java", 10, MCP),
             data(CORE + "developer/mcp/McpToolsPage.java", 22, "the page of the MCP servers' tools: its markup, its "

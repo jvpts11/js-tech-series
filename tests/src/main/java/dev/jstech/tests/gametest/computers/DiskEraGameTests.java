@@ -22,7 +22,7 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

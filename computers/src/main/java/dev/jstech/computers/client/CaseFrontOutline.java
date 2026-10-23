@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.AbstractSmallComputerBlock;
 import dev.jstech.computers.block.DeviceFront;
 import dev.jstech.computers.block.MainframeBlock;
@@ -27,10 +26,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderHighlightEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
  * USB port and the hot-swap bay, each measured on the front as a click is, so it stands exactly where a click works
  * it. Looked at anywhere else, the machine is outlined whole.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class CaseFrontOutline {
 
     /*
@@ -56,7 +52,11 @@ public final class CaseFrontOutline {
     private CaseFrontOutline() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RenderHighlightEvent.Block.class, CaseFrontOutline::onBlockHighlight);
+    }
+
     public static void onBlockHighlight(final RenderHighlightEvent.Block event) {
         final Minecraft minecraft = Minecraft.getInstance();
         final Entity viewer = minecraft.getCameraEntity();

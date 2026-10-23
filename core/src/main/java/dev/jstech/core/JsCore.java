@@ -10,7 +10,6 @@ package dev.jstech.core;
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.advancement.Advancements;
 import dev.jstech.core.advancement.CoreTriggers;
-import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.audio.AudioNetwork;
 import dev.jstech.core.audio.AudioSettings;
 import dev.jstech.core.audio.acoustics.AcousticCues;
@@ -44,8 +43,8 @@ import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.machine.Machines;
 import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.signal.SignalRadio;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.command.CoreCommands;
-import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.command.TeamProgressCommands;
 import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.datagen.JsCoreDataGenerators;
@@ -102,9 +101,12 @@ import dev.jstech.core.mechanical.MechanicalPorts;
 import dev.jstech.core.mechanical.ShaftLinkItem;
 import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.multipart.CoreSpaces;
-import dev.jstech.core.network.NetworkMembers;
-import dev.jstech.core.peripheral.PeripheralReconciler;
-import dev.jstech.core.network.StateTables;
+import dev.jstech.core.jstechseries.network.DataGrids;
+import dev.jstech.core.jstechseries.network.NetworkAttachments;
+import dev.jstech.core.jstechseries.network.NetworkInspection;
+import dev.jstech.core.jstechseries.network.NetworkMembers;
+import dev.jstech.core.jstechseries.peripheral.PeripheralReconciler;
+import dev.jstech.core.jstechseries.network.StateTables;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
 import dev.jstech.core.module.CoreModuleEffects;
@@ -180,7 +182,6 @@ import dev.jstech.core.jstechseries.probe.NetworkProbe;
 import dev.jstech.core.jstechseries.probe.SignalProbe;
 import dev.jstech.core.jstechseries.tools.PhysicsTool;
 import dev.jstech.core.jstechseries.tools.SharedTools;
-import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.light.CoreLights;
 import dev.jstech.core.light.LightingSettings;
 import dev.jstech.core.log.LogCommand;
@@ -208,9 +209,12 @@ import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.notification.NotificationSettings;
 import dev.jstech.core.notification.NotificationSounds;
 import dev.jstech.core.notification.Notifications;
-import dev.jstech.core.operation.OperationTypeRegistry;
+import dev.jstech.core.jstechseries.operation.OperationSettings;
+import dev.jstech.core.jstechseries.operation.OperationTypeRegistry;
+import dev.jstech.core.jstechseries.operation.RegisterOperationTypesEvent;
 import dev.jstech.core.persistence.NetworkRegistry;
-import dev.jstech.core.progression.Eras;
+import dev.jstech.core.jstechseries.tier.Eras;
+import dev.jstech.core.jstechseries.tier.SeriesAxes;
 import dev.jstech.core.progression.KnowledgeShapedRecipe;
 import dev.jstech.core.progression.KnowledgeShapelessRecipe;
 import dev.jstech.core.progression.Knowledges;
@@ -272,8 +276,6 @@ public final class JsCore {
 
     private static final CoreEventDispatcher EVENTS = new CoreEventDispatcher();
     private static final OperationTypeRegistry OPERATIONS = new OperationTypeRegistry();
-    private static final LanguageRegistry LANGUAGES =
-            new LanguageRegistry();
 
     /**
      * The series' internal event bus: an orchestrator posts the lifecycle of its Operations here and any mod
@@ -288,22 +290,13 @@ public final class JsCore {
         return OPERATIONS;
     }
 
-    /**
-     * The languages the computers of this world can be programmed in.
-     *
-     * <p>An addon may add one and may take one away, this series' own included: everything that deals in
-     * programs resolves through here by extension rather than by naming a language.
-     */
-    public static LanguageRegistry languages() {
-        return LANGUAGES;
-    }
-
     public JsCore(final IEventBus modEventBus, final ModContainer modContainer) {
         LOGGER.info("J's Core {} loaded.", modContainer.getModInfo().getVersion());
         // The series' worlds open with no warning about experimental settings: its data is no experiment.
         SeriesMods.declareStable();
-        // The data network lives on the level and the chunks as attachments the core owns.
+        // What the Core keeps on the levels and the chunks as attachments, the series' data networks among them.
         CoreAttachments.register(modEventBus);
+        NetworkAttachments.register(modEventBus);
         // The cable block every mod's cables are laid in, and the screen of a line's end, are the Core's own content.
         CoreCables.declare();
         // The space of parts alone and the microblock, which any block space holds as a cable's does.
@@ -486,8 +479,9 @@ public final class JsCore {
         // The series' permissions, asked of the server's permission system, and what each player may have.
         CorePermissions.listen();
         PlayerLimits.register();
-        // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
+        // The balance of the Core's systems in the world, and the series' Operations engine's own settings.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
+        ConfigFiles.register(OperationSettings.FILE, modEventBus, modContainer);
         // J's Energy's settings: whether it is on, what the wrong voltage does, and how it speaks FE.
         ConfigFiles.register(JsEnergySettings.FILE, modEventBus, modContainer);
         // What the Space Persistor's chunks cost in power, which may be nothing.
@@ -533,7 +527,9 @@ public final class JsCore {
         // What the Core keeps with a world: each dimension's data networks, and the ledger of its recordings.
         CoreStates.register(NetworkRegistry.NETWORKS);
         MediaLedgers.register();
-        // How far each player has come along each progression axis, and the advancement triggers every mod stands on.
+        // How far each player has come along each progression axis, the series' two first, and the advancement
+        // triggers every mod stands on.
+        SeriesAxes.declare();
         PlayerProgress.register();
         TeamProgress.register();
         ProgressionTriggers.listen();
@@ -558,6 +554,7 @@ public final class JsCore {
         // operators are notified of.
         CoreHealth.declare();
         CoreInspectors.declare();
+        NetworkInspection.declare();
         DiagnosticNotifications.declare();
         // The multiblock patterns of every mod, read from data and declared in code.
         MultiblockPatterns.register();
@@ -620,6 +617,8 @@ public final class JsCore {
         DayClocks.listen();
         FieldCapabilities.listen(modEventBus);
         CoreGrids.listen();
+        // The series' data network keeps the grid of data cables with itself.
+        DataGrids.declare();
         GuideGifts.listen();
         Holograms.listen(modEventBus);
         InspectWatch.listen(modEventBus);
@@ -652,7 +651,7 @@ public final class JsCore {
         DimensionTravel.listen(modEventBus);
         RuntimePacks.listen(modEventBus);
         Sections.listen();
-        SeriesCommands.listen();
+        CommandRoot.listen();
         StateNetwork.listen(modEventBus);
         // The one payload every screen's call travels in, the one the menus' values travel in, and the server's work
         // away from the tick.
@@ -668,11 +667,10 @@ public final class JsCore {
          * because what it fills is shared and would otherwise be filled from several threads at once.
          */
         modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(
-                () -> ModLoader.postEvent(new CoreRegisterEvent(LANGUAGES, OPERATIONS))));
+                () -> ModLoader.postEvent(new RegisterOperationTypesEvent(OPERATIONS))));
         // Every cable is registered by now: two lines given one lane stop the game here, not in a world.
         modEventBus.addListener(FMLCommonSetupEvent.class, event -> CoreCables.checkLanes());
         modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(() -> {
-            LANGUAGES.freeze();
             OPERATIONS.freeze();
             StateTables.freeze();
             Eras.freeze();

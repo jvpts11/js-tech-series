@@ -13,7 +13,7 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import java.util.EnumMap;
 import java.util.EnumSet;

@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.os.fs.FileType;
-import dev.jstech.core.JsCore;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -43,7 +43,7 @@ public final class FileIcons {
         if (MachineListing.claims(lower)) {
             return Kind.PROGRAM;
         }
-        final var language = JsCore.languages().byExtension(lower);
+        final var language = JsComputersApi.languages().byExtension(lower);
         if (language != null) {
             return language.sourceExtensions().contains(lower) ? Kind.SOURCE : Kind.PROGRAM;
         }

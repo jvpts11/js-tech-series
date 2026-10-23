@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.core.language.ExecutionBalance;
+import dev.jstech.computers.api.language.ExecutionBalance;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.LongSupplier;

@@ -15,7 +15,7 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.IAudible;
 import dev.jstech.core.audio.LoopRequest;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;

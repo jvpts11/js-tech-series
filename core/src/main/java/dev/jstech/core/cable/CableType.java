@@ -12,10 +12,9 @@ import dev.jstech.core.energy.EnergyLoss;
 import dev.jstech.core.fluid.PipeLimits;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridMember;
-import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.progression.IAxisStep;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -63,12 +62,12 @@ public final class CableType {
     private final PipeLimits pipe;
     private final ResourceLocation jacket;
     private final ResourceLocation plug;
-    private final Map<PortKind, ResourceLocation> plugs;
+    private final Map<String, ResourceLocation> plugs;
     private final Supplier<? extends Item> item;
     private final boolean straight;
     private final int mostJoins;
     private final @Nullable TextKey what;
-    private final @Nullable HardwareEra era;
+    private final @Nullable IAxisStep step;
     private final @Nullable TextKey renewal;
     private final IBreachRule breach;
     private final @Nullable ResourceLocation window;
@@ -101,7 +100,7 @@ public final class CableType {
         this.plugs = builder.plugs.isEmpty() ? Map.of() : Map.copyOf(builder.plugs);
         this.item = Objects.requireNonNull(item, "item");
         this.what = builder.what;
-        this.era = builder.era;
+        this.step = builder.step;
         this.renewal = builder.renewal;
         this.breach = builder.breach;
         this.window = builder.window;
@@ -121,9 +120,12 @@ public final class CableType {
         return Optional.ofNullable(this.renewal);
     }
 
-    /** The era the cable belongs to, as its item's tooltip says it; empty for a cable of no era. */
-    public Optional<HardwareEra> era() {
-        return Optional.ofNullable(this.era);
+    /**
+     * The step of progression the cable belongs to (an era of hardware, say), as its item's tooltip says it in the
+     * step's colour; empty for a cable of none.
+     */
+    public Optional<IAxisStep> step() {
+        return Optional.ofNullable(this.step);
     }
 
     /** Starts declaring a cable of {@code line}. */
@@ -245,8 +247,11 @@ public final class CableType {
         return this.plug;
     }
 
-    /** The plug it ends in at a peripheral whose port is of {@code kind}: its own for that kind, or its plug. */
-    public ResourceLocation plug(final PortKind kind) {
+    /**
+     * The plug it ends in at a device whose port is of the kind named {@code kind} ({@link IPlugged}): its own for that
+     * kind, or its plug.
+     */
+    public ResourceLocation plug(final String kind) {
         return this.plugs.getOrDefault(kind, this.plug);
     }
 
@@ -295,11 +300,11 @@ public final class CableType {
         private final Set<TagKey<Fluid>> takes = new HashSet<>();
         private @Nullable ResourceLocation jacket;
         private @Nullable ResourceLocation plug;
-        private final Map<PortKind, ResourceLocation> plugs = new EnumMap<>(PortKind.class);
+        private final Map<String, ResourceLocation> plugs = new HashMap<>();
         private boolean straight;
         private int mostJoins;
         private @Nullable TextKey what;
-        private @Nullable HardwareEra era;
+        private @Nullable IAxisStep step;
         private @Nullable TextKey renewal;
         private IBreachRule breach = BreachRules.HOLDS;
         private @Nullable ResourceLocation window;
@@ -442,12 +447,12 @@ public final class CableType {
 
         /**
          * What the cable is for, in a sentence its item's tooltip shows ("Access line: joins the small computers to
-         * a router"), and the era it belongs to, which the tooltip names in that era's colour; null for a cable of no
-         * era.
+         * a router"), and the step of progression it belongs to, an era of hardware say, which the tooltip names in
+         * the step's colour; null for a cable of none.
          */
-        public Builder describe(final TextKey job, @Nullable final HardwareEra ofEra) {
+        public Builder describe(final TextKey job, @Nullable final IAxisStep ofStep) {
             this.what = Objects.requireNonNull(job, "job");
-            this.era = ofEra;
+            this.step = ofStep;
             return this;
         }
 
@@ -498,10 +503,10 @@ public final class CableType {
         }
 
         /**
-         * The standalone model of the plug it ends in at a peripheral whose port is of {@code kind}: a video plug at a
-         * screen, say, where the others take the cable's own plug.
+         * The standalone model of the plug it ends in at a device whose port is of the kind named {@code kind}
+         * ({@link IPlugged}): a video plug at a screen, say, where the others take the cable's own plug.
          */
-        public Builder plug(final PortKind kind, final ResourceLocation model) {
+        public Builder plug(final String kind, final ResourceLocation model) {
             this.plugs.put(Objects.requireNonNull(kind, "kind"), Objects.requireNonNull(model, "model"));
             return this;
         }

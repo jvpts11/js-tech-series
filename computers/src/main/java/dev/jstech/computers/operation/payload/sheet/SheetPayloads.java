@@ -15,7 +15,7 @@ import dev.jstech.computers.operation.payload.RequestSheetFactsPayload;
 import dev.jstech.computers.operation.payload.SheetFactsPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

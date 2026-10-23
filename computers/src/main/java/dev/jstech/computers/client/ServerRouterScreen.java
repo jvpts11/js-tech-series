@@ -12,7 +12,7 @@ import dev.jstech.computers.gui.layout.ServerRouterLayout;
 import dev.jstech.computers.menu.ServerRouterMenu;
 import dev.jstech.computers.operation.payload.RenameServerRouterPayload;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;

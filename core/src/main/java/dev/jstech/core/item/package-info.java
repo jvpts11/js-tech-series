@@ -22,9 +22,12 @@
  * {@link SwitchedShapedRecipe} is a shaped recipe that matches only while the setting it names is on, so a server takes
  * an item out of survival with no data pack.
  *
+ * <p>A block that keeps its fluid in its item when it is broken gives it a {@link FluidBlockItem}, whose tooltip reads
+ * the fluid from the same component.
+ *
  * <p>How to declare one, from zero, is in {@code core/docs/CONTENT.md} and {@code core/docs/TOOLS.md}. Examples that
- * compile are J's Industrial's tank item ({@code industrial/src/main/java/dev/jstech/industrial/item/TankItem.java}),
- * which reads the fluid it carries from the Core's fluid component, and the test mod's items
+ * compile are J's Industrial's tank ({@code industrial/src/main/java/dev/jstech/industrial/IndustrialModule.java}),
+ * a {@link FluidBlockItem} that reads the fluid it carries from the Core's fluid component, and the test mod's items
  * ({@code tests/src/main/java/dev/jstech/tests/TestItems.java}), which hold modes, energy, a fluid and stacks.
  */
 @ApiStatus.Experimental

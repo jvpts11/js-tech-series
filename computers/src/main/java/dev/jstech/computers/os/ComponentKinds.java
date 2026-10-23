@@ -12,6 +12,7 @@ import dev.jstech.computers.api.ComponentKind;
 import dev.jstech.computers.vm.program.ComponentRules;
 import dev.jstech.computers.vm.program.IComponentRule;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.util.DeclarationError;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,11 +56,13 @@ public final class ComponentKinds {
             return;
         }
         if (RESERVED.contains(kind.id().getNamespace())) {
-            throw new IllegalStateException("The component kind " + kind.id() + " cannot be added: a kind is named "
-                    + "in the namespace of the mod that adds it, and that one is the game's or the series' own");
+            throw DeclarationError.of(kind.id().getNamespace(), "the component kind " + kind.id(),
+                    "is named in the game's or the series' own namespace",
+                    "name it in the namespace of the mod that adds it");
         }
         if (KINDS.putIfAbsent(kind.id().toString(), kind) != null) {
-            throw new IllegalStateException("A component kind is already registered as " + kind.id());
+            throw DeclarationError.of(kind.id().getNamespace(), "the component kind " + kind.id(),
+                    "is registered twice", "register it once, under an id of its own mod's");
         }
     }
 

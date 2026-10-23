@@ -7,8 +7,8 @@
  */
 package dev.jstech.tests;
 
-import dev.jstech.core.progression.Era;
-import dev.jstech.core.progression.Eras;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.progression.IAxisStep;
 import dev.jstech.core.progression.Knowledge;
 import dev.jstech.core.progression.Knowledges;
@@ -20,7 +20,7 @@ import dev.jstech.core.progression.ProgressionTriggers;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;

@@ -12,7 +12,7 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;

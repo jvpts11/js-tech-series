@@ -9,7 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
-import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.ArrayList;

@@ -8,7 +8,7 @@
 package dev.jstech.computers.gui.layout;
 
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * The Cluster Management Computer's assembly screen: its era's tower case, its expansion slots, and four readouts on its

@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.crafting;
 
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * How much the autocrafting hardware of each era holds, in one place: how many Crafting Interfaces a Crafting Card

@@ -10,7 +10,7 @@ package dev.jstech.tests.testkit.computers;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.core.cable.CableEntry;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;

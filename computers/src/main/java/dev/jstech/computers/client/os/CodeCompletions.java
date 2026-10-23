@@ -19,7 +19,7 @@ import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;

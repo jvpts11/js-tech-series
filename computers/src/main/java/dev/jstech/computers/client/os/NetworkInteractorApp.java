@@ -47,7 +47,7 @@ import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;

@@ -11,7 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;

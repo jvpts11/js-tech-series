@@ -11,7 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.VramLedger;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.DiskUse;

@@ -14,7 +14,7 @@ import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.testkit.gametest.ScenarioBuilder;
 import java.util.Optional;

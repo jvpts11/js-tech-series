@@ -20,7 +20,7 @@ import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;

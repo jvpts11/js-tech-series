@@ -9,10 +9,10 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.AbstractAssemblyComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

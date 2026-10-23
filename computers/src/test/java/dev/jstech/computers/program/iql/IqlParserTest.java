@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.program.iql.IIqlCondition.Comparison;
 import dev.jstech.computers.program.iql.IIqlCondition.Op;
 import dev.jstech.computers.workshop.UpdateAction;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import org.junit.jupiter.api.Test;
 
 class IqlParserTest {

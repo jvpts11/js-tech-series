@@ -12,9 +12,9 @@ import java.util.function.Function;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * How a family of machines drawn with GeckoLib looks, said once: which model each one is drawn with (by era, by
- * kind), the folder their textures are in, and the animation they share. Each model is a file of its own, its
- * texture an atlas named after it, so a family's files sit side by side:
+ * How a family of machines drawn from geometry files looks, said once: which model each one is drawn with (by era,
+ * by kind), the folder their textures are in, and the animation they share. Each model is a file of its own, its
+ * texture an atlas named after it, so a family's files sit side by side, laid out as GeckoLib and Bedrock lay them:
  *
  * <pre>{@code
  * assets/<mod>/geo/<model>.geo.json
@@ -22,13 +22,13 @@ import net.minecraft.resources.ResourceLocation;
  * assets/<mod>/animations/<animation>.animation.json
  * }</pre>
  *
- * <p>It names nothing of GeckoLib, so it is declared with the blocks, where both sides see it; the player's game
- * draws with it through the Core's GeckoLib model, and a mod that draws with GeckoLib brings GeckoLib with it:
+ * <p>It is declared with the blocks, where both sides see it; the player's game draws the family with the Core's
+ * models, from the same files:
  *
  * <pre>{@code
  * GeoLook<RackEntity> RACK = GeoLook.of(MODID, "rack", "rack", rack -> rack.modelName());
  * CONTENT.block("server_rack", ServerRackBlock::new).geo(RACK)...
- * super(new LookGeoModel<>(RACK));   // in the renderer
+ * event.registerBlockEntityRenderer(RACK_ENTITY.get(), context -> KitBlockEntityRenderer.look(RACK).build());
  * }</pre>
  *
  * @param modid     the mod whose files they are

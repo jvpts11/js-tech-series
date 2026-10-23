@@ -19,7 +19,7 @@ import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;

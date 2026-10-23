@@ -20,7 +20,7 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;

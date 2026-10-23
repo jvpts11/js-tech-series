@@ -22,8 +22,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 /**
@@ -38,7 +37,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
  * <p>It is a state of each player, kept in the file it has always been kept in. A file from before the state had
  * versions held one list of players, each with their awards; the first step of the layout reads it.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class PendingAwards {
 
     /** The most awards kept for one player; far more than there are advancements an event can earn. */
@@ -60,6 +58,11 @@ public final class PendingAwards {
             .player();
 
     private PendingAwards() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, PendingAwards::onLogin);
     }
 
     /** Keeps an award for a player who is not here to be given it. */
@@ -94,7 +97,6 @@ public final class PendingAwards {
     }
 
     /** A player joining is given what they earned while they were away. */
-    @SubscribeEvent
     public static void onLogin(final PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             deliver(player);

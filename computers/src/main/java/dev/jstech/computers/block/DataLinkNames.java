@@ -7,10 +7,10 @@
  */
 package dev.jstech.computers.block;
 
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * The short names the data cables go by where a screen says which cable a way runs over: a download's slowest cable, a

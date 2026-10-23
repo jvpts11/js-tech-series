@@ -12,7 +12,7 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;

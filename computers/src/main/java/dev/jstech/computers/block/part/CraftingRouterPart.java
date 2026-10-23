@@ -11,7 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.menu.CraftingRouterMenu;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.UUID;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;

@@ -21,8 +21,7 @@
  * the families of minerals ({@link MineralFamilies}). A material's liquid exists the same way, once a mod uses it
  * ({@link MaterialLiquids}), and so does a generic component that is no material ({@link CatalogueItems}). A data
  * pack gives properties' values over a material's own ({@link MaterialValues}), and a mod marks the things of some
- * materials in their tooltips ({@link MaterialMarks}). The old fixed catalogue of five metals ({@link ModMaterial},
- * {@link MaterialForm} and {@link MaterialItems}) stays, deprecated, for J's Industrial until it declares its uses.
+ * materials in their tooltips ({@link MaterialMarks}).
  *
  * <p>How to use it, from zero, is in {@code core/docs/CONTENT.md}, under Materials. Examples that compile are the test
  * mod's materials and uses ({@code tests/src/main/java/dev/jstech/tests/TestMaterials.java}) and the series' own

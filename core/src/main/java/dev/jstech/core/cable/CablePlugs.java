@@ -9,7 +9,6 @@ package dev.jstech.core.cable;
 
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PlacedModel;
-import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -70,8 +69,8 @@ public record CablePlugs(List<Socket> sockets) {
 
         /** The plug of the port it enters, a video plug at a screen; the wire's own before anything else. */
         PlacedModel placed(@Nullable final BlockEntity beyond) {
-            final ResourceLocation model = beyond instanceof IPeripheralEndpoint peripheral
-                    ? this.type.plug(peripheral.portKind()) : this.type.plug();
+            final ResourceLocation model = beyond instanceof IPlugged plugged
+                    ? this.type.plug(plugged.plugKind()) : this.type.plug();
             return new PlacedModel(model, this.face, this.dx, this.dy, this.dz);
         }
     }

@@ -10,7 +10,7 @@ package dev.jstech.computers.program.iql;
 import dev.jstech.computers.program.iql.IqlLexer.Token;
 import dev.jstech.computers.program.iql.IqlLexer.Type;
 import dev.jstech.computers.workshop.UpdateAction;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 

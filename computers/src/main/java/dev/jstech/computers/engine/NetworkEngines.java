@@ -10,7 +10,8 @@ package dev.jstech.computers.engine;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.program.Programs;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.util.DeclarationError;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -82,7 +83,8 @@ public final class NetworkEngines {
             return;
         }
         if (ENGINES.containsKey(def.program())) {
-            throw new IllegalStateException("An engine is already registered as " + def.program());
+            throw DeclarationError.of(def.program().getNamespace(), "the engine " + def.program(),
+                    "is registered twice", "register it once, under its program's id");
         }
         ENGINES.put(def.program(), engine);
     }

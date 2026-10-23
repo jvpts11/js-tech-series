@@ -37,7 +37,7 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;

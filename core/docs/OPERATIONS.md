@@ -21,15 +21,15 @@ This part of the Core is in the API: what it promises is on [docs/API.md](../../
 
 *Added 2026-09-17.*
 
-Your mod can add a kind of Operation. Declare it once, while the game loads, by listening for `CoreRegisterEvent`
-on your mod's event bus:
+Your mod can add a kind of Operation. Declare it once, while the game loads, by listening for
+`RegisterOperationTypesEvent` (`dev.jstech.core.jstechseries.operation`) on your mod's event bus:
 
 ```java
 public record CountItemsArgs(String item) implements IOperationArgs {
 }
 
 // In your mod's constructor:
-modBus.addListener(CoreRegisterEvent.class, event -> event.operations().register(new OperationType<>(
+modBus.addListener(RegisterOperationTypesEvent.class, event -> event.operations().register(new OperationType<>(
         "myaddon:count_items",         // saved in worlds: never change it
         CountItemsArgs.class,           // what the request carries
         OperationCategory.STORAGE,      // the family it belongs to
@@ -103,6 +103,6 @@ order they subscribed; unsubscribe with the same listener when you are done.
 ## What can go wrong
 
 - **"Operation type already registered".** Another mod, or your own code twice, registered that id.
-- **`register` gives back null.** It was called after loading. Register from `CoreRegisterEvent` only.
+- **`register` gives back null.** It was called after loading. Register from `RegisterOperationTypesEvent` only.
 - **"requiredCategories must contain at least one".** Say who may run it; the computers are `NetworkCategory.C`.
 - **The id is refused.** It must be `namespace:path` in lower case letters, digits, `_` and `/`.

@@ -9,8 +9,8 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec.Reach;
 import dev.jstech.computers.rack.RackChassis.RackType;
-import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -22,7 +22,7 @@ import dev.jstech.computers.sigma.pack.Packed;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

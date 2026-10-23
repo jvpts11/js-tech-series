@@ -8,7 +8,7 @@
 package dev.jstech.computers.gateway;
 
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
-import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;

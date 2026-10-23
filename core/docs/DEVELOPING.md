@@ -137,7 +137,7 @@ It is built around the things of the game, never around kinds of files:
   three buttons, Working, Idle and Jammed, which tell its block entity it is working, waiting for input or with its
   output full, so you see each look its model has. A creature stands on the bench; anything else is held up large.
 - **On the right, what the thing is made of**, each part the ordinary file it always was, with its state: its model
-  (the states file, or the GeckoLib model), its screen, its effects, its sounds, its names in each language its mod
+  (the states file, or the `.geo.json` model), its screen, its effects, its sounds, its names in each language its mod
   has, the recipes that make it, its manual page, its tags, its drops, its settings and the GameTests that name it. A
   click on a part opens its file in what your computer opens such files with.
 - **Under the bench, the checks across its parts**: what no single file can see on its own. The Core checks that a

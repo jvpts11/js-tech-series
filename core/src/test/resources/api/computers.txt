@@ -2,12 +2,13 @@
 # built on it can reach. The number before a line is the version of the API that brought
 # it in the shape written there. Whatever came after the stable version carries
 # @ApiStatus.Experimental; the stable version rises only once what came up to
-# it meets the bar docs/API.md sets for a stable part. Kept by ApiSurfaceTest,
+# it meets the bar docs/API.md sets for a stable part. Kept by the API surface test,
 # which writes to build/api-photo what this file would have to say when the API changes.
 stable 7
 5 dev.jstech.computers.api.ComponentKind  type record(ResourceLocation id, boolean reachesOutside, IComponentValidator validator)
 5 dev.jstech.computers.api.ComponentKind  new(ResourceLocation)
 1 dev.jstech.computers.api.ComputersRegisterEvent  type final class extends Event implements IModBusEvent
+8 dev.jstech.computers.api.ComputersRegisterEvent  LanguageRegistry languages()
 1 dev.jstech.computers.api.ComputersRegisterEvent  deprecated void architecture(ArchitectureSpec)
 5 dev.jstech.computers.api.ComputersRegisterEvent  void componentKind(ComponentKind)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void desktop(DesktopEnvironmentDef)
@@ -29,6 +30,7 @@ stable 7
 5 dev.jstech.computers.api.IComponentValidator  static final IComponentValidator ANYTHING
 1 dev.jstech.computers.api.JsComputersApi  type final class
 1 dev.jstech.computers.api.JsComputersApi  deprecated static void registerArchitecture(ArchitectureSpec)
+8 dev.jstech.computers.api.JsComputersApi  static LanguageRegistry languages()
 1 dev.jstech.computers.api.JsComputersApi  static final int VERSION
 5 dev.jstech.computers.api.JsComputersApi  static void registerComponentKind(ComponentKind)
 1 dev.jstech.computers.api.JsComputersApi  static void registerDesktop(DesktopEnvironmentDef)
@@ -85,6 +87,86 @@ stable 7
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  type final class
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  static IOperatingSpaceScreen get(ResourceLocation)
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  static void register(ResourceLocation, IOperatingSpaceScreen)
+8 dev.jstech.computers.api.language.ExecutionBalance  type final class
+8 dev.jstech.computers.api.language.ExecutionBalance  static final int DEFAULT_MACHINE_MICROS
+8 dev.jstech.computers.api.language.ExecutionBalance  static final int DEFAULT_SERVER_MICROS
+8 dev.jstech.computers.api.language.ExecutionBalance  static final int LEAST_INSTRUCTIONS_PER_TICK
+8 dev.jstech.computers.api.language.ExecutionBalance  static final int MEGAHERTZ_PER_INSTRUCTION
+8 dev.jstech.computers.api.language.ExecutionBalance  static long machineNanos()
+8 dev.jstech.computers.api.language.ExecutionBalance  static long serverNanos()
+8 dev.jstech.computers.api.language.ExecutionBalance  static void setMachineMicros(int)
+8 dev.jstech.computers.api.language.ExecutionBalance  static void setServerMicros(int)
+8 dev.jstech.computers.api.language.ILanguageProcess  type interface
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract State state()
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract Text message()
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract boolean isService()
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract int step(int)
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract long heldBytes()
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract long spent()
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract void onStop(int)
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract void onTick()
+8 dev.jstech.computers.api.language.ILanguageProcess  abstract void save(CompoundTag)
+8 dev.jstech.computers.api.language.ILanguageProcess  default List<String> watching()
+8 dev.jstech.computers.api.language.ILanguageProcess  default String name()
+8 dev.jstech.computers.api.language.ILanguageProcess  default boolean waitingForInput()
+8 dev.jstech.computers.api.language.ILanguageProcess  default void deliver(Map<String, Long>)
+8 dev.jstech.computers.api.language.ILanguageProcess  default void identify(int)
+8 dev.jstech.computers.api.language.ILanguageProcess  default void offerInput(String)
+8 dev.jstech.computers.api.language.ILanguageProcess.State  type enum
+8 dev.jstech.computers.api.language.ILanguageProcess.State  FINISHED
+8 dev.jstech.computers.api.language.ILanguageProcess.State  HALTED
+8 dev.jstech.computers.api.language.ILanguageProcess.State  PARKED
+8 dev.jstech.computers.api.language.ILanguageProcess.State  RUNNING
+8 dev.jstech.computers.api.language.IMachineView  type interface
+8 dev.jstech.computers.api.language.IMachineView  abstract long day()
+8 dev.jstech.computers.api.language.IMachineView  abstract long dayTime()
+8 dev.jstech.computers.api.language.IMachineView  abstract long memoryQuota()
+8 dev.jstech.computers.api.language.IMachineView  abstract long tick()
+8 dev.jstech.computers.api.language.IMachineView  abstract void print(String)
+8 dev.jstech.computers.api.language.IProgrammingLanguage  type interface
+8 dev.jstech.computers.api.language.IProgrammingLanguage  abstract CompileResult compile(List<SourceText>)
+8 dev.jstech.computers.api.language.IProgrammingLanguage  abstract List<Token> tokenize(String)
+8 dev.jstech.computers.api.language.IProgrammingLanguage  abstract ResourceLocation id()
+8 dev.jstech.computers.api.language.IProgrammingLanguage  abstract Set<String> binaryExtensions()
+8 dev.jstech.computers.api.language.IProgrammingLanguage  abstract Set<String> sourceExtensions()
+8 dev.jstech.computers.api.language.IProgrammingLanguage  abstract String displayName()
+8 dev.jstech.computers.api.language.IProgrammingLanguage  default CompileResult compile(List<SourceText>, CompileOptions)
+8 dev.jstech.computers.api.language.IProgrammingLanguage  default CompileResult compile(List<SourceText>, String)
+8 dev.jstech.computers.api.language.IProgrammingLanguage  default ILanguageProcess restore(String, CompoundTag, int, IMachineView)
+8 dev.jstech.computers.api.language.IProgrammingLanguage  default ILanguageProcess start(String, IMachineView, List<String>)
+8 dev.jstech.computers.api.language.IProgrammingLanguage  default int stateVersion()
+8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileOptions  type record(String isa, int languageVersion)
+8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileOptions  static CompileOptions forIsa(String)
+8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileOptions  static final int NEWEST
+8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileResult  type record(String binary, List<Complaint> complaints)
+8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileResult  boolean ok()
+8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileResult  static CompileResult failed(List<Complaint>)
+8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileResult  static CompileResult of(String)
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Complaint  type record(String file, int line, int column, String code, Text message, List<String> arguments)
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Complaint  String format()
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Complaint  Text text()
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Complaint  new(String, int, int, String, Text)
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Kind  type enum
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Kind  COMMENT
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Kind  KEYWORD
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Kind  NAME
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Kind  NUMBER
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Kind  SYMBOL
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Kind  TEXT
+8 dev.jstech.computers.api.language.IProgrammingLanguage.SourceText  type record(String name, String text)
+8 dev.jstech.computers.api.language.IProgrammingLanguage.Token  type record(int line, int column, int length, Kind kind)
+8 dev.jstech.computers.api.language.LanguageRegistry  type final class
+8 dev.jstech.computers.api.language.LanguageRegistry  IProgrammingLanguage byExtension(String)
+8 dev.jstech.computers.api.language.LanguageRegistry  IProgrammingLanguage get(ResourceLocation)
+8 dev.jstech.computers.api.language.LanguageRegistry  IProgrammingLanguage runnerOf(String)
+8 dev.jstech.computers.api.language.LanguageRegistry  IProgrammingLanguage sourceOf(String)
+8 dev.jstech.computers.api.language.LanguageRegistry  List<IProgrammingLanguage> all()
+8 dev.jstech.computers.api.language.LanguageRegistry  boolean isFrozen()
+8 dev.jstech.computers.api.language.LanguageRegistry  boolean isReserved(String)
+8 dev.jstech.computers.api.language.LanguageRegistry  boolean register(IProgrammingLanguage)
+8 dev.jstech.computers.api.language.LanguageRegistry  boolean reserve(String)
+8 dev.jstech.computers.api.language.LanguageRegistry  boolean unregister(ResourceLocation)
+8 dev.jstech.computers.api.language.LanguageRegistry  void freeze()
 4 dev.jstech.computers.api.planner.IExplainNode  type interface
 4 dev.jstech.computers.api.planner.IExplainNode  abstract List<Component> notes(PlanStep)
 4 dev.jstech.computers.api.planner.IExplainNode  abstract ResourceLocation id()

@@ -10,7 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.gui.layout.PersonalComputerLayout;
 import dev.jstech.computers.menu.PersonalComputerMenu;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.List;

@@ -11,7 +11,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.jstech.core.JsCore;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.content.ModContent;
 import net.minecraft.commands.CommandSourceStack;
@@ -40,7 +40,7 @@ public final class ModelCommands {
 
     /** Declares the commands, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare(MODEL, SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare(MODEL, CommandRoot.GAME_MASTERS, (node, context) -> node
                 .then(Commands.literal("preview")
                         .then(Commands.argument(MODEL, ResourceLocationArgument.id()).suggests(DECLARED)
                                 .executes(ModelCommands::preview)))

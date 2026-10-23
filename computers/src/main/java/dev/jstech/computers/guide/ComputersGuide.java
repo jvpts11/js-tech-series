@@ -62,6 +62,8 @@ public final class ComputersGuide {
         // The tables the pages read from the things themselves: the cables, the servers and the storage cards.
         CableFacts.declare();
         RackFacts.declare();
+        // A listing in one of the machines' languages is coloured as the game's editors colour it.
+        LanguageHighlighting.declare();
         final ModGuide guide = ComputingContent.CONTENT.guide();
         // Held over an item, the manual key lights blue blocks one after another, as Frames XP did while it loaded.
         guide.style("operations", CoreGuide.binder("jsc:guide/operations", true)

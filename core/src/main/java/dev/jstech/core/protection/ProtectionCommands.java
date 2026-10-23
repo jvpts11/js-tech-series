@@ -12,7 +12,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.text.GameText;
@@ -79,7 +79,7 @@ public final class ProtectionCommands {
 
     /** Declares the commands, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("audit", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("audit", CommandRoot.ADMINS, (node, context) -> node
                 .executes(source -> audit(source, entry -> true, 1))
                 .then(Commands.argument(PAGE_ARGUMENT, IntegerArgumentType.integer(1))
                         .executes(source -> audit(source, entry -> true, page(source))))

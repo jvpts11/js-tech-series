@@ -47,7 +47,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.CliStyle;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;

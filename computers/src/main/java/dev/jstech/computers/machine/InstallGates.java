@@ -21,7 +21,7 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.Locale;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;

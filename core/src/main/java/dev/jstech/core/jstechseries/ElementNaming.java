@@ -14,7 +14,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.JsCore;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.jstechseries.command.SeriesCommands;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.material.IMaterialNamer;
 import dev.jstech.core.material.Material;

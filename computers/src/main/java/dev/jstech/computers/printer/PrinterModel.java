@@ -11,7 +11,7 @@ import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
 /**

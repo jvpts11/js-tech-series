@@ -12,6 +12,7 @@ import static dev.jstech.computers.client.os.VirtualStudioLoader.shortName;
 import static dev.jstech.computers.client.os.VirtualStudioLoader.sourceSuffix;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
@@ -28,7 +29,6 @@ import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.vm.listing.AsmProgram;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.AmountStepper;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Checkbox;
@@ -43,7 +43,7 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -524,7 +524,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private String languageName(final String id) {
         final IProgrammingLanguage language = id.contains(":")
-                ? JsCore.languages().get(ResourceLocation.tryParse(id)) : null;
+                ? JsComputersApi.languages().get(ResourceLocation.tryParse(id)) : null;
         return language == null ? id : language.displayName();
     }
 

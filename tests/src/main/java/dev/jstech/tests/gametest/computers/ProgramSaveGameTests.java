@@ -11,7 +11,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;

@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.engine;
 
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;

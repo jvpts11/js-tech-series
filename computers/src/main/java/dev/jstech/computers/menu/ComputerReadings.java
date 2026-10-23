@@ -9,8 +9,8 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.menu.MenuValue;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.IntSupplier;

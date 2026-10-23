@@ -15,7 +15,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SourceAdvantage;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.program.ComputerConsoleState;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TerminalAt;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;

@@ -23,7 +23,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.operation.OperationBalance;
+import dev.jstech.core.jstechseries.operation.OperationBalance;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachineBlockEntity;

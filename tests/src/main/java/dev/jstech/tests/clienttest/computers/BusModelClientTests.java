@@ -15,7 +15,7 @@ import dev.jstech.core.cable.Cables;
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.multipart.PlacedModel;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;

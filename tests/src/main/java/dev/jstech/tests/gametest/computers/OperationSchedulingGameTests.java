@@ -18,7 +18,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.StorageNetworkFixture;
 import dev.jstech.tests.testkit.computers.TestCli;

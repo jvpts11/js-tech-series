@@ -17,7 +17,7 @@ import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StorageVolume;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.BenchReport;

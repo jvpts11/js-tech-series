@@ -13,7 +13,7 @@ import dev.jstech.core.event.IOperationLifecycleEvent;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructureEvent;
-import dev.jstech.core.network.NetworkMemberEvent;
+import dev.jstech.core.jstechseries.network.NetworkMemberEvent;
 import dev.jstech.core.progression.AxisStepReachedEvent;
 import dev.jstech.core.progression.TeamProgressEvent;
 import dev.jstech.core.room.Room;

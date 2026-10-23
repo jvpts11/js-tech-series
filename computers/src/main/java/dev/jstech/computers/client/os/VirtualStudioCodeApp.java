@@ -8,11 +8,11 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.sigma.LanguageLevel;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.AmountStepper;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ContextMenu;
@@ -26,7 +26,7 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -168,7 +168,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         this.dialog = new FileDialog(host, this);
         this.explorer = this.root.add(new ListView<>(this::sideRows, SIDE_ROW_H, this::drawSideRow))
                 .setOnClick(this::onSideRow);
-        this.extensions = this.root.add(new ListView<>(() -> JsCore.languages().all(), ROW_H + 2, this::drawLanguage));
+        this.extensions = this.root.add(new ListView<>(() -> JsComputersApi.languages().all(), ROW_H + 2,
+                this::drawLanguage));
         this.tabs = this.root.add(new TabStrip(this.workspace::tabLabels).fitToLabels(10).setUnderline(false));
         this.tabs.setCloseable(this::closeTab);
         this.askClose.add(new Button(GameText.resolve(StudioTexts.SAVE), () -> {

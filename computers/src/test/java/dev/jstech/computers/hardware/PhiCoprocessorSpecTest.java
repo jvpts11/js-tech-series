@@ -10,7 +10,7 @@ package dev.jstech.computers.hardware;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import org.junit.jupiter.api.Test;
 
 class PhiCoprocessorSpecTest {

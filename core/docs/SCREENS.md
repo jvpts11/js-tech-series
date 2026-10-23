@@ -278,8 +278,9 @@ Models the Core puts together while the game loads, registered from your client 
 - `CoreModels.connected(block, IJoinRule.sameBlock(), tiles)`: a block whose faces join their neighbours' into one
   picture (glass, panels), from five tiles: alone, across, upright, inner corner, whole.
 - `CoreModels.multipart(block)`: a block that holds several parts its block entity places (the Core wires its own cable block itself; register yours, not that one).
-- `GeoLook` with `.geo(look)` on a block: drawn by a GeckoLib model, `assets/<mod>/geo/<model>.geo.json` with its
-  texture and animations; `LookGeoModel` is the model class to hand its renderer.
+- `GeoLook` with `.geo(look)` on a block: drawn by the Core's models from files laid out as GeckoLib lays them,
+  `assets/<mod>/geo/<model>.geo.json` with its texture and animations; `KitBlockEntityRenderer.look(look)` is its
+  renderer ([Models](MODELS.md#drawing-a-block)).
 
 ## Screens in the world
 

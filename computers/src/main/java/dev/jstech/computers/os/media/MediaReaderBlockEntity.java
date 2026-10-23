@@ -23,9 +23,9 @@ import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
-import dev.jstech.core.peripheral.IPeripheralEndpoint;
-import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
+import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
+import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -36,10 +36,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,14 +56,12 @@ import java.util.Optional;
  * open tray is not read. The Dock Station is a reader of a kind of its own, its stick port being this slot, with
  * trays for disks besides.
  */
-public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible,
-        GeoBlockEntity {
+public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible {
 
     /** What the drive sounds like taking a medium in and giving it back. */
     private final MediaBaySounds baySounds = new MediaBaySounds();
     /** On the client, the medium drawn in the drive, kept a moment after it is taken so its way out is seen. */
     private final MediaBay bay = new MediaBay();
-    private final AnimatableInstanceCache geckoCache = GeckoLibUtil.createInstanceCache(this);
     private final FieldItemHandler slot = fields().items("MediaSlot", 1).save().toClient().dropsWhenBroken()
             .slotLimit(1).accepts((index, stack) -> acceptsMedia(stack))
             .onChange(index -> mediaMoved()).onLoad(() -> baySounds.settle(mediaStack()));
@@ -201,17 +195,6 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
         };
     }
 
-    @Override
-    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(MediaBay.controller(this, "media_drive"));
-        controllers.add(tray.controller(this, "media_drive"));
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return geckoCache;
-    }
-
     /** Whether this reader plays a drive's clips as its medium moves: the drives do, the Dock Station has none. */
     public boolean modelled() {
         return driveType() != MediaDriveType.DOCK_STATION;
@@ -326,7 +309,7 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
         }
         final String clip = MediaBay.clip(move.format(), move.in());
         if (modelled() && clip != null) {
-            triggerAnim(MediaBay.CONTROLLER, clip);
+            MediaBay.play(this, clip);
         }
     }
 

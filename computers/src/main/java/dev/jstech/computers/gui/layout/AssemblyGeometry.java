@@ -9,7 +9,7 @@ package dev.jstech.computers.gui.layout;
 
 import dev.jstech.computers.hardware.CaseBays;
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -8,7 +8,7 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.os.install.SetupTiming;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * How long a machine takes to come up: the self-test, the system booting, and shutting down again.

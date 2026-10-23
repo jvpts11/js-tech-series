@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.bus.BusCondition;
 import dev.jstech.computers.bus.BusScript;
 import dev.jstech.computers.bus.BusSettings;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;

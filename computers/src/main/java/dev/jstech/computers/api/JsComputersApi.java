@@ -8,6 +8,7 @@
 package dev.jstech.computers.api;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.api.language.LanguageRegistry;
 import dev.jstech.computers.api.planner.IExplainNode;
 import dev.jstech.computers.api.planner.IPlannerOperator;
 import dev.jstech.computers.api.planner.IPlannerRule;
@@ -28,6 +29,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.ComponentKinds;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What J's Computers promises to anything built on it.
@@ -47,9 +49,21 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 7;
+    public static final int VERSION = 8;
+
+    /* The languages the computers of a world can be programmed in. */
+    private static final LanguageRegistry LANGUAGES = new LanguageRegistry();
 
     private JsComputersApi() {
+    }
+
+    /**
+     * The languages the computers of a world can be programmed in: one is added while the game loads, through
+     * {@link ComputersRegisterEvent#languages()}, and the registry closes once the game has loaded.
+     */
+    @ApiStatus.Experimental
+    public static LanguageRegistry languages() {
+        return LANGUAGES;
     }
 
     /**

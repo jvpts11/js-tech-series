@@ -10,7 +10,7 @@ package dev.jstech.computers.os;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.program.ComputerConsoleState;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;

@@ -16,7 +16,7 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.os.MinSpecTooltip;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;

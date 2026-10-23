@@ -17,7 +17,7 @@ import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.api.client.ISkin;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Supplier;

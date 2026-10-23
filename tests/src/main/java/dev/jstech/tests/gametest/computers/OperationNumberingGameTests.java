@@ -9,7 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.operation.OperationTypeId;
 import dev.jstech.computers.operation.payload.OperationRecord;
-import dev.jstech.core.operation.OperationStatus;
+import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.tests.JsTests;
 import java.util.Map;
 import net.minecraft.gametest.framework.GameTest;

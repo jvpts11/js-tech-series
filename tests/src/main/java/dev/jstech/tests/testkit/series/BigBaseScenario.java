@@ -27,7 +27,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.testkit.computers.CraftFiles;
 import dev.jstech.tests.testkit.computers.CraftingRig;

@@ -15,7 +15,7 @@ import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.program.ProgramKeyboard;
 import dev.jstech.computers.program.cli.CliStyle;
-import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;

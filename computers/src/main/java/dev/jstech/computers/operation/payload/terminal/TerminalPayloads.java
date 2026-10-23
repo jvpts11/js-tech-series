@@ -29,7 +29,7 @@ import dev.jstech.computers.operation.payload.terminal.MoveDestinations.Dest;
 import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;

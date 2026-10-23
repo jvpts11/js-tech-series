@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client.monitor;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.AbstractComputerScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
@@ -16,10 +15,8 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,13 +24,17 @@ import org.jetbrains.annotations.Nullable;
  * Drawn over the finished screen and asked about a click before the screen is, so no screen can draw over it or take
  * its clicks.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class MonitorChrome {
 
     private MonitorChrome() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, MonitorChrome::onRender);
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.MouseButtonPressed.Pre.class, MonitorChrome::onClick);
+    }
+
     public static void onRender(final ScreenEvent.Render.Post event) {
         final MonitorFrameStyle.Geometry frame = frameOf(event.getScreen());
         if (frame == null) {
@@ -47,7 +48,6 @@ public final class MonitorChrome {
         }
     }
 
-    @SubscribeEvent
     public static void onClick(final ScreenEvent.MouseButtonPressed.Pre event) {
         if (event.getButton() != 0 || !(event.getScreen() instanceof AbstractContainerScreen<?> container)
                 || !(container.getMenu() instanceof IMonitorMenu at)) {

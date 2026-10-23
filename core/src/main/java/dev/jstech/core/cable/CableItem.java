@@ -59,8 +59,8 @@ public final class CableItem extends Item {
                                 final TooltipFlag flag) {
         final CableType cable = type();
         cable.what().ifPresent(what -> tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY)));
-        cable.era().ifPresent(era -> tooltip.add(GameText.component(era.named())
-                .withStyle(style -> style.withColor(era.screenColor()))));
+        cable.step().ifPresent(step -> tooltip.add(GameText.component(step.named())
+                .withStyle(style -> style.withColor(step.colour()))));
         tooltip.add(GameText.component(cable.range() > 0 ? CableTexts.REACH.with(cable.range())
                 : CableTexts.ANY_LENGTH.with()).withStyle(ChatFormatting.GRAY));
         cable.renewal().ifPresent(renewal -> tooltip.add(GameText.component(renewal)

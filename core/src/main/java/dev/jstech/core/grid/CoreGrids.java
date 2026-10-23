@@ -7,34 +7,64 @@
  */
 package dev.jstech.core.grid;
 
-import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.registry.CoreAttachments;
+import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Where a dimension's grids are found: one of each kind, data's being the data network's own, and the numbers they
- * know their places by. A cable or a device puts itself in and takes itself out through here, so a wire of data takes
- * the identity of the network it joins as any other data cable does.
+ * Where a dimension's grids are found: one of each kind, those that carry networks kept by the networks' own keeper
+ * ({@link INetworkGrids}), and the numbers they know their places by. A cable or a device puts itself in and takes
+ * itself out through here, so a wire of a network takes the identity of the network it joins as any other cable of it
+ * does.
  */
 public final class CoreGrids {
 
+    /* What keeps the grids that carry networks, handed in once as the game loads. */
+    private static volatile @Nullable INetworkGrids networks;
+
     private CoreGrids() {
+    }
+
+    /** Hands in what keeps the grids that carry networks, once, from the constructor of the mod whose they are. */
+    public static void keepNetworksIn(final INetworkGrids keeper) {
+        if (networks != null) {
+            throw new IllegalStateException("the grids that carry networks are kept already");
+        }
+        networks = Objects.requireNonNull(keeper, "keeper");
     }
 
     /** The grid of {@code kind} in {@code level}. */
     public static Grid of(final ServerLevel level, final GridKind kind) {
         if (kind.carriesNetwork()) {
-            return NetworkSystem.get(level).connectivity().grid();
+            return networks().grid(level);
         }
         return level.getData(CoreAttachments.GRIDS).of(kind);
+    }
+
+    /** The network the place {@code number} of a grid that carries networks reaches, within its runs' reach. */
+    public static Optional<NetworkUuid> networkOf(final ServerLevel level, final long number) {
+        return networks().reached(level, number);
+    }
+
+    /** The network the place {@code number} of a grid that carries networks is joined into, reached or not. */
+    public static Optional<NetworkUuid> joinedNetwork(final ServerLevel level, final long number) {
+        return networks().joined(level, number);
+    }
+
+    /**
+     * Joins the place {@code number} of a grid that carries networks into {@code network} again, unless it is in one.
+     */
+    public static void assignNetwork(final ServerLevel level, final long number, final NetworkUuid network) {
+        networks().assign(level, number, network);
     }
 
     /** The numbers every grid of {@code level} knows its places by. */
@@ -58,7 +88,7 @@ public final class CoreGrids {
             places.find(neighbour).ifPresent(joined::add);
         }
         if (kind.carriesNetwork()) {
-            NetworkSystem.get(level).connectivity().place(number, joined, member);
+            networks().place(level, number, joined, member);
         } else {
             of(level, kind).place(number, member, joined);
         }
@@ -72,8 +102,7 @@ public final class CoreGrids {
             return;
         }
         if (kind.carriesNetwork()) {
-            final ConnectivityIndex index = NetworkSystem.get(level).connectivity();
-            index.onCableRemovedIfRegistered(number.getAsLong());
+            networks().remove(level, number.getAsLong());
         } else {
             final Grid grid = of(level, kind);
             if (grid.contains(number.getAsLong())) {
@@ -103,6 +132,14 @@ public final class CoreGrids {
     /** Hands the game's bus the ticking of every grid, once, from the Core's constructor. */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, CoreGrids::afterTick);
+    }
+
+    private static INetworkGrids networks() {
+        final INetworkGrids keeper = networks;
+        if (keeper == null) {
+            throw new IllegalStateException("no mod keeps the grids that carry networks; hand one to keepNetworksIn");
+        }
+        return keeper;
     }
 
     /* After the machines have ticked, what each grid carries moves through its wires, the grids in declared order. */

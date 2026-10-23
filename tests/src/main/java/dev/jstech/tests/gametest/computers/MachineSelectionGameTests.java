@@ -15,7 +15,7 @@ import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachineBlockEntity;
 import dev.jstech.tests.TestMachines;

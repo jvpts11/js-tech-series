@@ -8,7 +8,7 @@
 package dev.jstech.tests.gametest.core;
 
 import com.google.gson.JsonParser;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.jstechseries.command.SeriesCommands;
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.model.CadLook;
 import dev.jstech.core.model.ModelBone;

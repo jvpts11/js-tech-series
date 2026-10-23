@@ -97,6 +97,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   place's contexts, `DIMENSION` and `CLAIM` (`NO_CLAIM` outside one), through `has(player, node, level, pos)`,
   `has(uuid, node, level, pos)` and `contextsAt`; `ITeamSource.membersOf`, `CoreTeams.membersOf` and `soloPlayer`
   name a team's players. `DiagnosticPage` writes the diagnostic file as a page (`sections`, `marked`, `Section`).
+- Each thing where it belongs: J's Core's API stays at version 12 and J's Computers' is at version
+  8. The series' model has its own package: `dev.jstech.core.network`, `operation`, `peripheral` and `tier` are now
+  `dev.jstech.core.jstechseries.network`, `.operation`, `.peripheral` and `.tier`, and the client side of the series'
+  look `dev.jstech.core.jstechseries.theme.client`. `CoreRegisterEvent` gives way to `RegisterOperationTypesEvent`,
+  for kinds of Operation, and the programming languages move to J's Computers' API, `dev.jstech.computers.api.language`
+  (`IProgrammingLanguage`, `ILanguageProcess`, `IMachineView`, `LanguageRegistry`, `ExecutionBalance`), registered
+  through `ComputersRegisterEvent.languages()` and read through `JsComputersApi.languages()`.
+  `Device.fillsFromContainers` lets a bucket fill and empty a device's block, and `FluidBlockItem` is the item of a
+  block that keeps its fluid in it.
+  The old fixed catalogue of materials, `ModMaterial`, `MaterialForm` and `MaterialItems`, is gone: a mod declares the
+  forms it uses with `MaterialUses.use`.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1404,13 +1415,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   cameras on screens draw with too; the portal shows what it showed.
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
   industrial control link; telemetry becomes a line of its own, which J's Space lays.
-- Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
-  Energy, the shared content) gets a package of its own, `dev.jstech.core.jstechseries`, and the rest of the Core,
-  the platform any technology mod can build on, never reaches into it. What is new of the series is born there; what
-  the Core already has of it moves there a domain at a time.
-- Listeners declared: every class of the Core that answers the game's events is handed to the buses from the
-  Core's constructor, through a `listen` method of its own, rather than found by an annotation, so what runs is what
-  the constructor says.
+- Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations and their
+  kinds, the peripheral links, the `/jstech` command, the series' look, J's Energy, the shared content) has a package
+  of its own, `dev.jstech.core.jstechseries`, and the rest of the Core, the platform any technology mod can build on,
+  never reaches into it: the platform offers hooks (a command root, a cable's own eras and ports, listeners on lines,
+  axes and styles declared from outside) and the series plugs into them.
+- Listeners declared: every class of the three mods that answers the game's events is
+  handed to the buses from its mod's constructor, through a `listen` method of its own, rather than found by an
+  annotation, so what runs is what the constructor says; a mod's mistake in what it declares stops the load saying
+  what to change.
+- Models: a block entity's renderer of the Core draws what a machine holds besides its model, each part on the
+  bone it rides on, gives each part a model of its own to move, says the box it is drawn within and when it is drawn,
+  and lets a driver move bones after the animations.
 - Integrations behind one guard: the work with Mekanism, FTB Teams, Accessories and Curios starts through
   `OptionalMod`, so one of them failing to start no longer stops the game.
 - The style chosen for J's Computers' screens, or for every screen, is worn by its computing blocks' screens
@@ -1442,6 +1458,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The packets counted tick by tick keep the biggest one of each kind too.
 
 ### Fixed
+- A limited cable two machines are fed through is shared between them: the first one in order took the whole
+  of what it carried, and the other got nothing until the first was full.
+- A dimension made while the game runs is taken away only once what the server still had to do in it has run:
+  a block's point of interest set just before could otherwise wait for ever on the dimension's closed storage, and
+  the server with it.
 - A dimension made while the game runs keeps loaded again the chunks it kept loaded, each time it is made
   again; it held them as kept but loaded none after the server restarted.
 - A multiblock's controller lifted whole, as by a piston or by a mod that moves blocks as Create's

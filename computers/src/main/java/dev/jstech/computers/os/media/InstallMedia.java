@@ -11,7 +11,7 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * Which physical medium a piece of software ships on. One axis, the generation the software belongs

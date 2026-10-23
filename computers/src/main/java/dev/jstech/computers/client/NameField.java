@@ -9,7 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

@@ -28,7 +28,7 @@ import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import io.netty.buffer.Unpooled;

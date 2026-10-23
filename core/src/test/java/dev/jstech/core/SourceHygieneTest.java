@@ -57,9 +57,9 @@ class SourceHygieneTest {
 
     /**
      * The modules whose every listener is declared from their mod's constructor, so that what runs is what the
-     * constructor says; the other mods join as they are moved onto the Core.
+     * constructor says.
      */
-    private static final List<String> DECLARED_LISTENERS = List.of("core");
+    private static final List<String> DECLARED_LISTENERS = List.of("core", "computers", "industrial");
 
     /** The annotation by which a class registers itself, written in two halves so this file does not hold it. */
     private static final String SELF_REGISTERING = "@EventBus" + "Subscriber";

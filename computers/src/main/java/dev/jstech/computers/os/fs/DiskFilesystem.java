@@ -15,7 +15,7 @@ import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.audio.media.MediaStore;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.world.item.ItemStack;
 
 import java.nio.charset.StandardCharsets;

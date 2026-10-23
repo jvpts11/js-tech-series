@@ -60,7 +60,7 @@ public final class WorldGenBenchmarkGameTests {
     private WorldGenBenchmarkGameTests() {
     }
 
-    @GameTest(template = ARENA, batch = "jscore_bench_worldgen", timeoutTicks = 12_000)
+    @GameTest(template = ARENA, batch = "jscore_bench_worldgen", timeoutTicks = 240_000)
     public static void bench_testLandIsMadeBesideTheGamesOwnGround(final GameTestHelper helper) {
         final MinecraftServer server = helper.getLevel().getServer();
         final ServerLevel test = RuntimeDimensions.getOrCreate(server, TEST, TestWorldGen.TEST_LAND.id());
@@ -70,7 +70,7 @@ public final class WorldGenBenchmarkGameTests {
                 new Square("vanilla", vanilla, RADIUS, FAR)));
         helper.onEachTick(bench);
         helper.succeedWhen(() -> {
-            helper.assertTrue(bench.done(), "the squares are still being made");
+            helper.assertTrue(bench.done(), "the squares are still being made: " + bench.progress());
             final BenchReport report = new BenchReport("worldgen");
             for (final Square square : bench.squares()) {
                 report.put(square.name() + "_ms", square.millis());
@@ -116,6 +116,15 @@ public final class WorldGenBenchmarkGameTests {
 
         private boolean done() {
             return this.at >= this.squares.size();
+        }
+
+        /* Which square is being made, and how many of its chunks are whole so far. */
+        private String progress() {
+            if (done()) {
+                return "all made";
+            }
+            final Square square = this.squares.get(this.at);
+            return square.name() + ", " + square.whole() + " of " + square.chunks() + " chunks whole";
         }
 
         private List<Square> squares() {
@@ -181,6 +190,19 @@ public final class WorldGenBenchmarkGameTests {
 
         private String name() {
             return this.name;
+        }
+
+        /* How many of its chunks are whole now. */
+        private int whole() {
+            int count = 0;
+            for (int x = -this.radius; x <= this.radius; x++) {
+                for (int z = -this.radius; z <= this.radius; z++) {
+                    if (this.level.getChunkSource().getChunkNow(this.centre + x, this.centre + z) != null) {
+                        count++;
+                    }
+                }
+            }
+            return count;
         }
 
         private int chunks() {

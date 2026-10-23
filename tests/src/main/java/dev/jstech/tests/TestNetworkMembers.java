@@ -7,26 +7,26 @@
  */
 package dev.jstech.tests;
 
-import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
-import dev.jstech.core.network.INetworkMember;
-import dev.jstech.core.network.NetworkCategory;
-import dev.jstech.core.network.NetworkMembers;
-import dev.jstech.core.network.NetworkMembership;
-import dev.jstech.core.network.StateRow;
-import dev.jstech.core.network.StateTable;
-import dev.jstech.core.network.StateTables;
-import dev.jstech.core.operation.IOperationArgs;
-import dev.jstech.core.operation.OperationCategory;
-import dev.jstech.core.operation.OperationStatus;
-import dev.jstech.core.operation.OperationType;
+import dev.jstech.core.jstechseries.network.INetworkMember;
+import dev.jstech.core.jstechseries.network.NetworkCategory;
+import dev.jstech.core.jstechseries.network.NetworkMembers;
+import dev.jstech.core.jstechseries.network.NetworkMembership;
+import dev.jstech.core.jstechseries.network.StateRow;
+import dev.jstech.core.jstechseries.network.StateTable;
+import dev.jstech.core.jstechseries.network.StateTables;
+import dev.jstech.core.jstechseries.operation.IOperationArgs;
+import dev.jstech.core.jstechseries.operation.OperationCategory;
+import dev.jstech.core.jstechseries.operation.OperationStatus;
+import dev.jstech.core.jstechseries.operation.OperationType;
+import dev.jstech.core.jstechseries.operation.RegisterOperationTypesEvent;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import java.util.EnumSet;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -83,7 +83,7 @@ public final class TestNetworkMembers {
 
     /** Declares the machines, before the test mod's content is registered, and its kind of Operation. */
     public static void declare(final IEventBus modBus) {
-        modBus.addListener(CoreRegisterEvent.class, event -> event.operations().register(ACCELERATE));
+        modBus.addListener(RegisterOperationTypesEvent.class, event -> event.operations().register(ACCELERATE));
     }
 
     /** What a request to accelerate carries: nothing. */

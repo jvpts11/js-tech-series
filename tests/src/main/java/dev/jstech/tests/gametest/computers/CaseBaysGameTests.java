@@ -18,7 +18,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.BayDriveItem;
 import dev.jstech.computers.item.DiskItem;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import java.util.Map;

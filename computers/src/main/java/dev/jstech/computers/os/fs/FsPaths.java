@@ -8,7 +8,7 @@
 package dev.jstech.computers.os.fs;
 
 import dev.jstech.computers.os.FilesystemKind;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * Pure utility methods for filesystem paths and file-size accounting.

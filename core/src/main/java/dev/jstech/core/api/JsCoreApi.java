@@ -67,17 +67,18 @@ public final class JsCoreApi {
             "dev.jstech.core.font", "dev.jstech.core.grid", "dev.jstech.core.gui.flex",
             "dev.jstech.core.gui.layout", "dev.jstech.core.gui.screen", "dev.jstech.core.gui.style",
             "dev.jstech.core.guide", "dev.jstech.core.heat", "dev.jstech.core.id", "dev.jstech.core.input",
-            "dev.jstech.core.inventory", "dev.jstech.core.item", "dev.jstech.core.language",
+            "dev.jstech.core.inventory", "dev.jstech.core.item", "dev.jstech.core.jstechseries.network",
+            "dev.jstech.core.jstechseries.operation", "dev.jstech.core.jstechseries.peripheral",
+            "dev.jstech.core.jstechseries.theme.client", "dev.jstech.core.jstechseries.tier",
             "dev.jstech.core.log", "dev.jstech.core.look", "dev.jstech.core.machine", "dev.jstech.core.map",
             "dev.jstech.core.material", "dev.jstech.core.matter", "dev.jstech.core.mechanical",
             "dev.jstech.core.menu", "dev.jstech.core.model", "dev.jstech.core.motion", "dev.jstech.core.moving",
             "dev.jstech.core.moving.physics", "dev.jstech.core.multiblock", "dev.jstech.core.multipart",
-            "dev.jstech.core.network", "dev.jstech.core.notification", "dev.jstech.core.operation",
-            "dev.jstech.core.optional", "dev.jstech.core.palette", "dev.jstech.core.peripheral",
+            "dev.jstech.core.notification", "dev.jstech.core.optional", "dev.jstech.core.palette",
             "dev.jstech.core.persistence",
             "dev.jstech.core.progression", "dev.jstech.core.region", "dev.jstech.core.resource",
             "dev.jstech.core.signal", "dev.jstech.core.state", "dev.jstech.core.task", "dev.jstech.core.team",
-            "dev.jstech.core.text", "dev.jstech.core.tier", "dev.jstech.core.tool", "dev.jstech.core.uuid",
+            "dev.jstech.core.text", "dev.jstech.core.tool", "dev.jstech.core.uuid",
             "dev.jstech.core.worldgen.reservoir", "dev.jstech.core.worldgen.vein");
 
     /**

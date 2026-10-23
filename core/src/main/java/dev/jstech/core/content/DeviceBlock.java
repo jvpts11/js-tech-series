@@ -17,7 +17,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -32,12 +34,14 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
+import net.neoforged.neoforge.fluids.FluidUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A block that makes a block entity and does what its {@link Device} says: it faces whoever placed it, ticks its
- * block entity on the server, opens its menu when used with an empty hand, and spills the block entity's inventories
- * declared {@code dropsWhenBroken()} when it is broken or replaced, however that happens.
+ * block entity on the server, opens its menu when used with an empty hand, is filled and emptied by a bucket when it
+ * takes one, and spills the block entity's inventories declared {@code dropsWhenBroken()} when it is broken or
+ * replaced, however that happens.
  *
  * <p>A block that does more than that (takes a medium into a slot, forms a structure) extends this one and adds only
  * what it does besides.
@@ -91,6 +95,18 @@ public class DeviceBlock extends HorizontalDirectionalBlock implements EntityBlo
             device.openMenu(server, level.getBlockEntity(pos), getName(), pos);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    /* A container of fluid in the hand fills or empties a device that takes them, before anything else it does. */
+    @Override
+    protected ItemInteractionResult useItemOn(final ItemStack stack, final BlockState state, final Level level,
+                                              final BlockPos pos, final Player player, final InteractionHand hand,
+                                              final BlockHitResult hit) {
+        if (device.fillsFromContainersByHand()
+                && FluidUtil.interactWithFluidHandler(player, hand, level, pos, hit.getDirection())) {
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hit);
     }
 
     /* The block entity hears which of its faces saw its neighbour change, as it declared it wants to. */

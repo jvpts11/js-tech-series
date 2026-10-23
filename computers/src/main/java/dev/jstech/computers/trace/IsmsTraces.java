@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.trace;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.engine.INetworkEngine;
@@ -27,8 +26,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
  * that network picks the event's group, so a network nobody traces pays one map read for each thing that happens.
  * Everything here runs on the server thread.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class IsmsTraces {
 
     private static final Map<NetworkUuid, List<Listener>> LISTENERS = new HashMap<>();
@@ -50,6 +47,11 @@ public final class IsmsTraces {
     private static final String NETWORK = "network";
 
     private IsmsTraces() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, IsmsTraces::onServerStopped);
     }
 
     /**
@@ -182,7 +184,6 @@ public final class IsmsTraces {
     }
 
     /** Ends every trace when the server stops, so none outlives the world it watched. */
-    @SubscribeEvent
     public static void onServerStopped(final ServerStoppedEvent event) {
         LISTENERS.clear();
     }

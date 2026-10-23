@@ -8,7 +8,7 @@
 package dev.jstech.computers.gui.layout;
 
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * The Personal Computer's assembly screen: its era's tower case, its graphics cards' slots, and three readouts on its

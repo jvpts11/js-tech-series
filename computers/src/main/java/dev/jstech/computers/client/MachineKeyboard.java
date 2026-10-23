@@ -7,12 +7,9 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.JsComputers;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Gives a machine's screen its keys before anything else in the game sees them.
@@ -24,10 +21,15 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
  * had no use for goes on to everybody else, which is what keeps another mod's keys working over the parts of
  * a desktop that are not taking text.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class MachineKeyboard {
 
     private MachineKeyboard() {
+    }
+
+    /** Hands the game's bus what this answers, first of all, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ScreenEvent.KeyPressed.Pre.class,
+                MachineKeyboard::pressed);
     }
 
     /** A screen that is a machine's glass, and is asked about every key before the rest of the game is. */
@@ -42,7 +44,6 @@ public final class MachineKeyboard {
         boolean keyFirst(int key, int scanCode, int modifiers);
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void pressed(final ScreenEvent.KeyPressed.Pre event) {
         if (event.getScreen() instanceof ITakesKeysFirst glass
                 && glass.keyFirst(event.getKeyCode(), event.getScanCode(), event.getModifiers())) {

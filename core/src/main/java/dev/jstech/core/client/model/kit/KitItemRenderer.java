@@ -80,7 +80,7 @@ public final class KitItemRenderer extends BlockEntityWithoutLevelRenderer {
         final KitInstance instance = KitAnimations.of(stack, context, found.get());
         final double seconds = KitClock.now();
         this.driver.drive(stack, instance.animator(), seconds);
-        instance.animate(KitClock.frame(), seconds, this.driver.movesBones(), IAnimationListener.NONE);
+        instance.animate(KitClock.frame(), seconds, this.driver, stack, IAnimationListener.NONE);
         poses.pushPose();
         poses.translate(0.5, 0, 0.5);
         KitRenderer.draw(instance, ModelDefinition.Variant.NONE, stack, poses, buffers, light, overlay, this.held,

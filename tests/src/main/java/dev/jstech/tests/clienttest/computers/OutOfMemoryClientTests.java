@@ -17,7 +17,7 @@ import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.RamLedger;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;

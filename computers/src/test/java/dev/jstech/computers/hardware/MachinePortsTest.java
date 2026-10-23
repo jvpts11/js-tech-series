@@ -9,8 +9,8 @@ package dev.jstech.computers.hardware;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import dev.jstech.core.peripheral.PortKind;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;

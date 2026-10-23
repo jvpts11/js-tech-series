@@ -17,6 +17,7 @@ import dev.jstech.core.multiblock.Orientation;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -57,6 +58,10 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
     private final @Nullable ResourceLocation formed;
     private final IKitDriver<? super T> driver;
     private final IHeldThings<? super T> held;
+    private final @Nullable IKitExtras<? super T> extras;
+    private final @Nullable Function<? super T, AABB> box;
+    private final Predicate<? super T> drawn;
+    private final boolean upAndDownAboutMiddle;
     private final int viewDistance;
     private final double animateDistance;
 
@@ -64,12 +69,17 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
     public static final int VIEW_DISTANCE = 64;
     /** How far away, in blocks, a block entity drawn is animated unless its renderer says. */
     public static final double ANIMATE_DISTANCE = 48;
+    private static final double HALF_BLOCK = 0.5;
 
     private KitBlockEntityRenderer(final Builder<T> builder) {
         this.model = builder.model;
         this.formed = builder.formed;
         this.driver = builder.driver;
         this.held = builder.held;
+        this.extras = builder.extras;
+        this.box = builder.box;
+        this.drawn = builder.drawn;
+        this.upAndDownAboutMiddle = builder.upAndDownAboutMiddle;
         this.viewDistance = builder.viewDistance;
         this.animateDistance = builder.animateDistance;
     }
@@ -85,8 +95,8 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
     }
 
     /**
-     * A renderer drawing each block entity of a family laid out for GeckoLib with the Core's models instead: the
-     * model, the texture and the animation file its look names, read as they are.
+     * A renderer drawing each block entity of a family of geometry files laid out as GeckoLib lays them: the model,
+     * the texture and the animation file its look names, read as they are.
      */
     public static <T extends BlockEntity> Builder<T> look(final GeoLook<? super T> look) {
         return new Builder<T>(entity -> KitModels.look(look.modelOf(entity), look.textureOf(entity),
@@ -104,6 +114,9 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
     @Override
     public void render(final T entity, final float partialTick, final PoseStack poses,
                        final MultiBufferSource buffers, final int light, final int overlay) {
+        if (!this.drawn.test(entity)) {
+            return;
+        }
         final Optional<Orientation> standing = standing(entity);
         final Optional<KitModel> found = standing.isPresent() ? KitModels.get(this.formed) : this.model.apply(entity);
         if (found.isEmpty()) {
@@ -118,20 +131,23 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         final Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         if (camera.distanceToSqr(Vec3.atCenterOf(pos)) <= this.animateDistance * this.animateDistance) {
             this.driver.drive(entity, instance.animator(), seconds);
-            instance.animate(KitClock.frame(), seconds, this.driver.movesBones(), listener(entity, instance,
-                    pos, facing, standing));
+            instance.animate(KitClock.frame(), seconds, driver(), entity, listener(entity, instance, pos, facing,
+                    standing));
         }
         poses.pushPose();
         if (standing.isPresent()) {
             stand(poses, standing.get());
         } else {
-            place(poses, facing);
+            place(poses, facing, this.upAndDownAboutMiddle);
         }
         // Inside a whole block no light reaches: a model drawn from one, or spread over a structure, takes its
         // surroundings' light.
         final int lit = standing.isPresent() || entity.getBlockState().canOcclude() ? lightAround(entity.getLevel(),
                 pos, light) : light;
         KitRenderer.draw(instance, variant, entity, poses, buffers, lit, overlay, held(), entity.getLevel(), true);
+        if (this.extras != null) {
+            this.extras.draw(entity, instance, poses, buffers, lit, overlay, partialTick);
+        }
         poses.popPose();
     }
 
@@ -165,6 +181,9 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
 
     @Override
     public AABB getRenderBoundingBox(final T entity) {
+        if (this.box != null) {
+            return this.box.apply(entity);
+        }
         final Optional<KitModel> found = standing(entity).isPresent() ? KitModels.get(this.formed)
                 : this.model.apply(entity);
         final BlockPos pos = entity.getBlockPos();
@@ -181,17 +200,7 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
 
     /** Stands a model on the middle of a block's floor, facing as the block does. */
     static void place(final PoseStack poses, final Direction facing) {
-        poses.translate(0.5, 0, 0.5);
-        switch (facing) {
-            case SOUTH -> poses.mulPose(Axis.YP.rotationDegrees(180));
-            case WEST -> poses.mulPose(Axis.YP.rotationDegrees(90));
-            case EAST -> poses.mulPose(Axis.YP.rotationDegrees(270));
-            case UP -> poses.mulPose(Axis.XP.rotationDegrees(90));
-            case DOWN -> poses.mulPose(Axis.XN.rotationDegrees(90));
-            default -> {
-                // A model faces north as it is drawn.
-            }
-        }
+        place(poses, facing, false);
     }
 
     /*
@@ -209,6 +218,32 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         poses.translate(0, -0.5, 0);
     }
 
+    /*
+     * Stands a model on the middle of a block's floor, facing as the block does; faced up or down, turned about the
+     * middle of its block rather than of its floor, when {@code aboutMiddle} says.
+     */
+    private static void place(final PoseStack poses, final Direction facing, final boolean aboutMiddle) {
+        final boolean upright = aboutMiddle && facing.getAxis() == Direction.Axis.Y;
+        poses.translate(0.5, upright ? HALF_BLOCK : 0, 0.5);
+        turn(poses, facing);
+        if (upright) {
+            poses.translate(0, -HALF_BLOCK, 0);
+        }
+    }
+
+    private static void turn(final PoseStack poses, final Direction facing) {
+        switch (facing) {
+            case SOUTH -> poses.mulPose(Axis.YP.rotationDegrees(180));
+            case WEST -> poses.mulPose(Axis.YP.rotationDegrees(90));
+            case EAST -> poses.mulPose(Axis.YP.rotationDegrees(270));
+            case UP -> poses.mulPose(Axis.XP.rotationDegrees(90));
+            case DOWN -> poses.mulPose(Axis.XN.rotationDegrees(90));
+            default -> {
+                // A model faces north as it is drawn.
+            }
+        }
+    }
+
     /* How the structure the block entity controls stands, when it is formed and draws a model formed; or none. */
     private Optional<Orientation> standing(final T entity) {
         if (this.formed == null || !(entity instanceof IStructureController controller) || !controller.merged()) {
@@ -222,6 +257,11 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         return (IHeldThings<T>) this.held;
     }
 
+    @SuppressWarnings("unchecked")
+    private IKitDriver<T> driver() {
+        return (IKitDriver<T>) this.driver;
+    }
+
     private IAnimationListener listener(final T entity, final KitInstance instance, final BlockPos pos,
                                         final Direction facing, final Optional<Orientation> standing) {
         return KitEvents.of(entity, this.driver, instance, entity.getLevel(), () -> {
@@ -230,14 +270,15 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
             if (standing.isPresent()) {
                 stand(placed, standing.get());
             } else {
-                place(placed, facing);
+                place(placed, facing, this.upAndDownAboutMiddle);
             }
             return new Matrix4f(placed.last().pose());
         }, SoundSource.BLOCKS);
     }
 
     /**
-     * A renderer being declared: its model, and what drives it, what it holds, how far it is seen and animated.
+     * A renderer being declared: its model, and what drives it, what it holds and draws besides, the box it is drawn
+     * within and while, how it turns, how far it is seen and animated.
      *
      * @param <T> the block entity
      */
@@ -247,6 +288,10 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         private @Nullable ResourceLocation formed;
         private IKitDriver<? super T> driver = IKitDriver.none();
         private IHeldThings<? super T> held = IHeldThings.none();
+        private @Nullable IKitExtras<? super T> extras;
+        private @Nullable Function<? super T, AABB> box;
+        private Predicate<? super T> drawn = entity -> true;
+        private boolean upAndDownAboutMiddle;
         private int viewDistance = VIEW_DISTANCE;
         private double animateDistance = ANIMATE_DISTANCE;
 
@@ -272,6 +317,37 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         /** What it holds at its locators. */
         public Builder<T> held(final IHeldThings<? super T> things) {
             this.held = Objects.requireNonNull(things, "held");
+            return this;
+        }
+
+        /** What it draws besides its model, every frame, where its model stands. */
+        public Builder<T> extras(final IKitExtras<? super T> more) {
+            this.extras = Objects.requireNonNull(more, "extras");
+            return this;
+        }
+
+        /**
+         * The box it is drawn within, in the world's blocks, in place of its model's: for a machine that knows how far
+         * it reaches better than its model at rest says, as one whose parts ride out of it.
+         */
+        public Builder<T> box(final Function<? super T, AABB> bounds) {
+            this.box = Objects.requireNonNull(bounds, "box");
+            return this;
+        }
+
+        /** Draws it only while {@code shown} holds: a reader drawn by its block's own model in some of its forms. */
+        public Builder<T> drawnWhile(final Predicate<? super T> shown) {
+            this.drawn = Objects.requireNonNull(shown, "drawnWhile");
+            return this;
+        }
+
+        /**
+         * Faced up or down, it turns about the middle of its block rather than of its floor, so a model made to stand
+         * on a wall comes as close to the block above or below as it comes to the wall; facing a side, it stands as
+         * ever.
+         */
+        public Builder<T> upAndDownAboutMiddle() {
+            this.upAndDownAboutMiddle = true;
             return this;
         }
 

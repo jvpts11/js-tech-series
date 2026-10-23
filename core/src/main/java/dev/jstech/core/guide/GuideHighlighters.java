@@ -7,20 +7,20 @@
  */
 package dev.jstech.core.guide;
 
-import dev.jstech.core.JsCore;
-import dev.jstech.core.language.IProgrammingLanguage;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 /**
- * How a manual colours the code of a listing, by the language the listing names. A language that the game can compile
- * colours itself: a listing named as one of its files ({@code Hello.sgs}), or naming one of its extensions, is
- * coloured as the editors of the game colour it. A language that is no programming language of the game, such as a
- * query language, registers how it is coloured here, under its own name.
+ * How a manual colours the code of a listing, by the language the listing names. A language registers how it is
+ * coloured here, under its name as listings name it; a mod whose machines run languages of their own hands in what
+ * finds one of them by a listing's name or extension ({@link #findWith}), so a listing named as one of their files
+ * ({@code Hello.sgs}) is coloured as the editors of the game colour it.
  *
  * <pre>{@code
  * GuideHighlighters.register("iql", lines -> GuideCode.runs(lines, MyQueries.spans(lines)));
@@ -29,6 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class GuideHighlighters {
 
     private static final Map<String, IGuideHighlighter> REGISTERED = new ConcurrentHashMap<>();
+    /* What finds how a language no highlighter is registered under is coloured, asked in the order handed in. */
+    private static final List<Function<String, Optional<IGuideHighlighter>>> FINDERS = new CopyOnWriteArrayList<>();
 
     private GuideHighlighters() {
     }
@@ -43,8 +45,16 @@ public final class GuideHighlighters {
     }
 
     /**
+     * Hands in what finds how a language is coloured by the name a listing gives it, in lower case, when no
+     * highlighter is registered under that name: a mod's own languages, found by their extension.
+     */
+    public static void findWith(final Function<String, Optional<IGuideHighlighter>> finder) {
+        FINDERS.add(Objects.requireNonNull(finder, "finder"));
+    }
+
+    /**
      * The runs of every line of a listing in that language: as a highlighter registered under its name colours them,
-     * or as the game's language of that extension does, or plain when neither knows it.
+     * or as one a mod's finder finds for it does, or plain when none knows it.
      */
     public static List<List<GuideCode.Run>> colour(final String language, final List<String> lines) {
         final String name = language.toLowerCase(Locale.ROOT);
@@ -52,29 +62,13 @@ public final class GuideHighlighters {
         if (registered != null) {
             return registered.colour(lines);
         }
-        final IProgrammingLanguage known = JsCore.languages().byExtension(name);
-        if (known == null) {
-            return GuideCode.plain(lines);
+        for (final Function<String, Optional<IGuideHighlighter>> finder : FINDERS) {
+            final Optional<IGuideHighlighter> found = finder.apply(name);
+            if (found.isPresent()) {
+                return found.get().colour(lines);
+            }
         }
-        final List<IProgrammingLanguage.Token> tokens;
-        try {
-            tokens = known.tokenize(String.join("\n", lines));
-        } catch (final RuntimeException e) {
-            // A listing its language cannot read is still printed, in one colour.
-            return GuideCode.plain(lines);
-        }
-        final List<GuideCode.Span> spans = new ArrayList<>();
-        for (final IProgrammingLanguage.Token token : tokens) {
-            spans.add(new GuideCode.Span(token.line(), token.column(), token.length(), switch (token.kind()) {
-                case KEYWORD -> GuideCode.Ink.KEYWORD;
-                case NAME -> GuideCode.Ink.NAME;
-                case TEXT -> GuideCode.Ink.TEXT;
-                case NUMBER -> GuideCode.Ink.NUMBER;
-                case COMMENT -> GuideCode.Ink.COMMENT;
-                case SYMBOL -> GuideCode.Ink.SYMBOL;
-            }));
-        }
-        return GuideCode.runs(lines, spans);
+        return GuideCode.plain(lines);
     }
 
     /** How the lines of a listing in one language are coloured. */

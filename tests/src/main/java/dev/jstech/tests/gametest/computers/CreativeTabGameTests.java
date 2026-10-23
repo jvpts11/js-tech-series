@@ -19,7 +19,7 @@ import dev.jstech.computers.item.NetworkCardItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.os.media.MediaItem;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.HashMap;

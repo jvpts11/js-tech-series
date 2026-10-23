@@ -14,7 +14,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ReadyDisks;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.registry.ComputingContent;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;

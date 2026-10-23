@@ -112,8 +112,8 @@ import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Lane;
 import dev.jstech.core.grid.GridKind;
-import dev.jstech.core.peripheral.PeripheralLine;
-import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.CableBuilder;
 import dev.jstech.core.content.BlockEntry;
@@ -126,12 +126,12 @@ import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.multipart.PartType;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLines;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -1193,7 +1193,7 @@ public final class ComputingModule {
                 .renewedBy(CableRunTexts.HUB)
                 .jacket(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/" + jacket))
                 .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + devicePlug))
-                .plug(PortKind.VIDEO,
+                .plug(PortKind.VIDEO.serializedName(),
                         ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + videoPlug));
         return CONTENT.cable(id, builder).tab(shelf(Shelf.PERIPHERALS, era));
     }

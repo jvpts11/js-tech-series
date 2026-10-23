@@ -11,7 +11,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;

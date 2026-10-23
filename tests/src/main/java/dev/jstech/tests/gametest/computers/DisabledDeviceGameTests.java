@@ -19,7 +19,7 @@ import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.audio.AudioOutput;
-import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -113,7 +113,7 @@ public final class DisabledDeviceGameTests {
                     helper.assertTrue(sensor.linkedOwner().isPresent(), "still linked");
                     helper.assertTrue(RedstoneInterfaceBlockEntity.linkedTo(helper.getLevel(), pc, "Door") == null,
                             "and no program of its computer finds it by its name");
-                    helper.assertTrue(sensor.emits() && sensor.strength() == 15, "keeping its setting");
+                    helper.assertTrue(sensor.emits() && sensor.emitStrength() == 15, "keeping its setting");
                 })
                 .thenExecute(() -> pc.setDisabled(at, false))
                 .thenExecuteAfter(LINKED, () -> helper.assertTrue(

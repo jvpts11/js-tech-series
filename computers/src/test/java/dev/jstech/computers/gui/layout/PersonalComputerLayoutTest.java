@@ -14,7 +14,7 @@ import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.hardware.CaseBays;
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
 class PersonalComputerLayoutTest {

@@ -7,9 +7,7 @@
  */
 package dev.jstech.industrial.datagen;
 
-import dev.jstech.core.material.MaterialForm;
-import dev.jstech.core.material.MaterialItems;
-import dev.jstech.core.material.ModMaterial;
+import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.JsIndustrial;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
@@ -45,14 +43,14 @@ public class JsIndustrialRecipeProvider extends RecipeProvider {
          * and each dust smelts back into an ingot, so one mined ore becomes two ingots.
          */
         macerating(recipeOutput, Ingredient.of(c("ores/iron")),
-                new ItemStack(MaterialItems.get(ModMaterial.IRON, MaterialForm.DUST).get(), 2), "iron_ore_to_dust");
+                new ItemStack(IndustrialModule.IRON_DUST.get(), 2), "iron_ore_to_dust");
         macerating(recipeOutput, Ingredient.of(c("raw_materials/iron")),
-                new ItemStack(MaterialItems.get(ModMaterial.IRON, MaterialForm.DUST).get(), 2), "raw_iron_to_dust");
+                new ItemStack(IndustrialModule.IRON_DUST.get(), 2), "raw_iron_to_dust");
 
         /*
          * Derived machine recipes (ingot->dust macerating, ingot->plate compressing) are generated for
-         * every active (material, form) pair from the c: ingot tag, so any ingot from another mod works
-         * as input and adding a new plate or dust later is a one-line change in ModMaterial.
+         * every material form the mod uses from the c: ingot tag, so any ingot from another mod works
+         * as input and adding a new plate or dust later is a one-line use in IndustrialModule.
          */
         MaterialFormRecipes.generateAll(recipeOutput);
 

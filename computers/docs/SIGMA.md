@@ -214,10 +214,10 @@ the cores of its processors times their megahertz, divided by eight, never fewer
 ceiling. A faster machine gets through more of a program in the same second, and a loop that never ends
 costs its machine the same tick as a program that does nothing.
 
-What protects the server is the clock, not a cap on the credits. Two limits live in
-`jstech-balance.toml`: how much real time one machine may spend on its programs in a tick
-(`program_machine_micros`, 1000 by default) and how much every machine together may
-(`program_server_micros`, 8000). A machine that finds the server's time already spent runs nothing that
+What protects the server is the clock, not a cap on the credits. Two limits live in J's Computers'
+`jscomputers-server.toml`: how much real time one machine may spend on its programs in a tick
+(`balance.program_machine_micros`, 1000 by default) and how much every machine together may
+(`balance.program_server_micros`, 8000). A machine that finds the server's time already spent runs nothing that
 tick and goes first the next, so a busy server slows every computer evenly and never stops one.
 
 Credits are dealt out in turns of at most 64 instructions, going round every program on the machine

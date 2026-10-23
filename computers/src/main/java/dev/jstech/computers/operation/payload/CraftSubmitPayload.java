@@ -8,7 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.engine.CraftRequest;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

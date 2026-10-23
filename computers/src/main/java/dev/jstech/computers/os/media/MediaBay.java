@@ -7,13 +7,11 @@
  */
 package dev.jstech.computers.os.media;
 
+import dev.jstech.core.model.network.ModelAnimations;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoAnimatable;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
 
 /**
  * The bay of a device drawn as a model in the world, a Pattern Encoder or a drive: the names its model and its
@@ -45,19 +43,14 @@ public final class MediaBay {
     /** How long a medium taken out is still drawn when its format is not known: the longest eject clip, and more. */
     public static final int LEAVING_TICKS = 40;
 
-    private static final String[] CLIPS = {"insert_floppy", "eject_floppy"};
-
     /**
-     * The controller of a device's bay, with a one-shot clip for every way a medium goes in and comes out by itself,
-     * taken from {@code animations}, the file of clips the device's models share. A device only ever plays the clips of
-     * the media it takes.
+     * Plays {@code clip} on the bay of {@code device}, from the server, for every player who sees it: one of the
+     * one-shot clips of a medium going in or coming out by itself, which the file of clips the device's models share
+     * names after it ({@code animation.<file>.insert_floppy}). A device only ever plays the clips of the media it
+     * takes.
      */
-    public static <T extends GeoAnimatable> AnimationController<T> controller(final T device, final String animations) {
-        final AnimationController<T> bay = new AnimationController<>(device, CONTROLLER, 0, state -> PlayState.STOP);
-        for (final String clip : CLIPS) {
-            bay.triggerableAnim(clip, RawAnimation.begin().thenPlay("animation." + animations + "." + clip));
-        }
-        return bay;
+    public static void play(final BlockEntity device, final String clip) {
+        ModelAnimations.replay(device, CONTROLLER, clip);
     }
 
     /**

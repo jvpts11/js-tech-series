@@ -8,7 +8,7 @@
 package dev.jstech.tests.gametest.core;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.jstechseries.command.SeriesCommands;
 import dev.jstech.core.world.event.WorldEventBalance;
 import dev.jstech.core.world.event.WorldEventStage;
 import dev.jstech.core.world.event.WorldEvents;

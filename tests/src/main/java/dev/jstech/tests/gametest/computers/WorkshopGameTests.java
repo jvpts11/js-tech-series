@@ -23,7 +23,7 @@ import dev.jstech.computers.workshop.UpdateDoor;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
 import dev.jstech.computers.workshop.WorkshopRates;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;

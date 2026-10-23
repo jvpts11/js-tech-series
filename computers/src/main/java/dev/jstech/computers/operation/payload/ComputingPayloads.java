@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.operation.payload;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.automation.AutomationPayloads;
 import dev.jstech.computers.operation.payload.cluster.ClusterManagerPayloads;
 import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
@@ -50,8 +49,7 @@ import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.operation.payload.program.ProgramPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalLocalPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -59,13 +57,16 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  * Hands the payload registrar to each feature class, which registers the payloads it handles beside their
  * handlers, so the gate on a payload a client sends is read in the same place as the code it protects.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class ComputingPayloads {
 
     private ComputingPayloads() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus the payloads, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, ComputingPayloads::register);
+    }
+
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar("1");
         ProgramPayloads.register(registrar);

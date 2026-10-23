@@ -27,13 +27,13 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The axes moving by playing: a mod says what moves a player, and the player's team, to a step the first time they do
- * it. Making an item, at a crafting table, in a furnace, or in a machine they own; or placing a block. The hardware era
- * moves as a player first builds a computer of that era, and the industrial tier as they first make that tier's
- * circuit, each declared by the mod that adds them.
+ * it. Making an item, at a crafting table, in a furnace, or in a machine they own; or placing a block: a mod's tier
+ * moves as a player first makes that tier's circuit, or first places its machine, each declared by the mod that adds
+ * them.
  *
  * <pre>{@code
- * ProgressionTriggers.whenMade(MyItems.T2_CIRCUIT.get(), ProgressionAxes.INDUSTRIAL_TIER, IndustrialTier.T2);
- * ProgressionTriggers.whenPlaced(MyBlocks.LEGACY_PC.get(), ProgressionAxes.HARDWARE_ERA, HardwareEra.LEGACY);
+ * ProgressionTriggers.whenMade(MyItems.T2_CIRCUIT.get(), MyAxes.TIER, MyTier.T2);
+ * ProgressionTriggers.whenPlaced(MyBlocks.T3_PRESS.get(), MyAxes.TIER, MyTier.T3);
  * }</pre>
  */
 public final class ProgressionTriggers {

@@ -104,8 +104,7 @@ Everything is explained, from your first computer to building on the mod, in the
 ## Requirements
 
 - Minecraft 1.21.1 and NeoForge 21.1.248 or newer.
-- [J's Core](../core/README.md) at the same version (required).
-- [GeckoLib](https://github.com/bernie-g/geckolib) 4.7 or newer (required).
+- [J's Core](../core/README.md) at the same version (required), which draws its models; nothing else is required.
 - [JEI](https://github.com/mezz/JustEnoughItems) or [EMI](https://github.com/emilyploszaj/emi) (optional, for
   recipe lookup beside the monitors).
 - [Mekanism](https://github.com/mekanism/Mekanism) (optional, its machines and chemicals join the network).

@@ -85,8 +85,8 @@ public final class SettingsScreenClientTests {
                         "a tab for the world's settings and one for the player's")
                 .thenAssert(0, () -> {
                     final List<String> rail = screen(ctx).railLabels();
-                    return rail.equals(List.of("Starting up", "Installing by hand", "The prompt", "Soundfoundry",
-                            "Programs")) && untranslated(rail).isEmpty();
+                    return rail.equals(List.of("Disks and programs", "Starting up", "Installing by hand", "The prompt",
+                            "Soundfoundry", "Programs")) && untranslated(rail).isEmpty();
                 }, "the world's tab lists its sections under their names")
                 .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Soundfoundry"), "the music section opens"))
                 .thenAssert(1, () -> screen(ctx).rowNames().containsAll(List.of("Music catalogue",
@@ -94,8 +94,9 @@ public final class SettingsScreenClientTests {
                         "its settings under their names")
                 .thenScreenshot(2, "computers-soundfoundry-settings")
                 .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Client"), "the player's section opens"))
-                .thenAssert(1, () -> screen(ctx).rowNames().containsAll(List.of("Reduce motion", "Desktop cursors")),
-                        "the player's own settings: Reduce motion and Desktop cursors")
+                .thenAssert(1, () -> screen(ctx).rowNames().contains("Desktop cursors")
+                                && !screen(ctx).rowNames().contains("Reduce motion"),
+                        "the player's own settings: Desktop cursors, and no Reduce motion, which is the Core's")
                 .thenScreenshot(2, "computers-client-settings")
                 // The search finds a setting under any tab by what it does.
                 .then(0, () -> screen(ctx).search("boot manager"))
@@ -111,7 +112,7 @@ public final class SettingsScreenClientTests {
                 .thenAwaitScreen(CoreConfigScreen.class, 40)
                 .thenAssert(1, () -> {
                     final List<String> rail = screen(ctx).railLabels();
-                    return rail.containsAll(List.of("Engine and programs", "Recordings"))
+                    return rail.containsAll(List.of("The Operations engine", "Recordings"))
                             && untranslated(rail).isEmpty();
                 }, "the Core's world settings, each section under its name")
                 .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Recordings"), "the recordings open"))

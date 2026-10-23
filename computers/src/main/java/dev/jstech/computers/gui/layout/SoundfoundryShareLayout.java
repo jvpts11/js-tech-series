@@ -9,9 +9,9 @@ package dev.jstech.computers.gui.layout;
 
 import dev.jstech.computers.gui.layout.SoundfoundryLayout.Rect;
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLink;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToIntFunction;

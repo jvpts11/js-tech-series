@@ -134,11 +134,33 @@ it forms ([Multiblocks](MULTIBLOCKS.md)), and parts of mechanical power are draw
 | --- | --- | --- |
 | `driver(...)` | the code that chooses what plays each frame and moves bones | plays what the server says |
 | `held(...)` | what the model holds at each locator, drawn as an item in a frame is | nothing |
+| `extras(...)` | what it draws besides its model each frame, where the model stands (`IKitExtras`) | nothing |
+| `box(entity -> aabb)` | the box it is drawn within, for a model whose parts ride out of it | the model's own |
+| `drawnWhile(entity -> shown)` | draws it only while that holds, as a block whose own model shows some of its forms | always |
+| `upAndDownAboutMiddle()` | faced up or down, it turns about the middle of its block, not of its floor | about its floor |
 | `viewDistance(blocks)` | how far away it is drawn | 64 |
 | `animateDistance(blocks)` | how far away it is animated; farther, it keeps its last pose | 48 |
 
 A family of files laid out for GeckoLib (a `GeoLook`) is drawn by the Core's models as it is:
 `KitBlockEntityRenderer.look(MY_LOOK)`. The model, the texture and the animation file are the ones the look names.
+
+*Added 2026-10-23:* **What a machine holds**, each part a model of its own, is drawn by its `extras`. In there,
+`KitRenderer.toBone(instance, bone, poses)` brings the drawing onto one of the model's bones as this frame has it, so
+a disc rides out with its drive's tray, and `KitAnimations.part(entity, name, model)` gives each such part a model
+instance of its own, kept with the block entity, for the code to move as it moves the main one:
+
+```java
+.extras((computer, instance, poses, buffers, light, overlay, partialTick) -> {
+    for (final InstalledPart part : computer.parts()) {
+        poses.pushPose();
+        if (KitRenderer.toBone(instance, part.seat(), poses)) {
+            KitRenderer.draw(KitAnimations.part(computer, part.name(), part.model()), ModelDefinition.Variant.NONE,
+                    computer, poses, buffers, light, overlay, null, computer.getLevel(), true);
+        }
+        poses.popPose();
+    }
+})
+```
 
 ## Drawing an item, an entity, armour
 
@@ -171,7 +193,9 @@ animator.mover((pose, seconds) -> pose.addEuler(pose.index("needle"), 0, 0, gaug
 
 **Bones moved by code** are a layer over the animations: a mover added to the animator turns, moves, sizes or hides
 bones every frame (`addEuler`, `setTurn`, `addMove`, `multiplySize`, `setHidden`, `setWeight` for a morph target). A
-driver that adds movers says so with `movesBones()`, so its model is never taken to be at rest.
+driver that adds movers says so with `movesBones()`, so its model is never taken to be at rest. A driver may also move
+the bones itself, after the animations, in its `move(thing, pose, seconds)`: a lamp shown while the machine runs, a
+part hidden while its slot is empty, a fan turned as fast as the machine goes (saying `movesBones()` too).
 
 **Expressions** in keyframes are Molang, as Bedrock's files write it: numbers and arithmetic, comparisons, `&&`, `||`,
 `?:`, `??`, `math.*` (angles in degrees), statements and `return`, `variable.`/`v.`, `temp.`/`t.`, `context.`/`c.`,

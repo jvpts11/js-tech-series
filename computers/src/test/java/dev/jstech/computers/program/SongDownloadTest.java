@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.core.audio.media.MediaId;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLink;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.Text;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

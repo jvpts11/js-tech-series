@@ -38,7 +38,7 @@ public static final BlockEntry<Block> COPPER_BOX = CONTENT.block("copper_box", B
 | `drops(Drops.SELF)` / `drops(Drops.NONE)` | What breaking it gives. The default is itself when it has an item, nothing otherwise. `Drops.SELF_WITH_CONTENTS` keeps what its block entity holds in the item; `Drops.HANDMADE` uses a loot table written by hand in the mod's data (grass giving dirt unless broken with silk touch) and generates none. | no |
 | `tab(section)` | The creative tab section it shows in. | no |
 | `tag(tagKey)` | A block tag it belongs to; repeat for more. | no |
-| `geo(look)` | Drawn by a GeckoLib model instead of a block model ([Screens](SCREENS.md#models)). | no |
+| `geo(look)` | Drawn from a `.geo.json` model, not a block model ([Models](MODELS.md#drawing-a-block)). | no |
 | `register()` | Checks the declaration and registers it. | yes |
 
 `register()` refuses a declaration that does not hold together, with an exception naming what is wrong: a
@@ -534,12 +534,6 @@ two letters and repeats none. Once given a name is not changed, but an operator 
 player (`MaterialNames`, which any mod can use for materials of its own that a world names). In a world whose
 settings turn naming off, an element takes the series' own name when discovered (Genevium, Teslium... Aeternium, for
 seventeen of them), or keeps its systematic one. The settings are in `jstech-balance.toml`, section `elements`.
-
-### The old catalogue
-
-The fixed catalogue of five metals in seven forms (`ModMaterial`, `MaterialForm`, `MaterialItems`) stays, deprecated,
-for J's Industrial until it declares its uses: its three items keep their ids (`jscore:iron_dust`, `jscore:iron_plate`,
-`jscore:copper_plate`) and are now things of the open catalogue, registered, named and drawn as the rest.
 
 ## Ids that are saved
 

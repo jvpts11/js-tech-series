@@ -14,7 +14,7 @@ import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;

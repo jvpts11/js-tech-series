@@ -9,7 +9,7 @@ package dev.jstech.core.world.edit;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.Optional;
@@ -46,7 +46,7 @@ public final class EditCommands {
 
     /** Declares the command, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("edit", SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare("edit", CommandRoot.GAME_MASTERS, (node, context) -> node
                 .then(Commands.literal("export")
                         .then(Commands.argument(NAME, ResourceLocationArgument.id())
                                 .then(Commands.argument(FROM, BlockPosArgument.blockPos())

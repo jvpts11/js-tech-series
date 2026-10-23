@@ -22,7 +22,7 @@
     },
     {
       "type": "text",
-      "text": "jsindustrial.manual.from_the_tab"
+      "text": "jsindustrial.manual.from_the_js_tech_tab"
     },
     {
       "type": "define",
@@ -86,7 +86,7 @@
   "icon": "jsindustrial:coal_generator",
   "id": "jsindustrial:making_and_moving_power",
   "items": [
-    "jsindustrial:energy_cable"
+    "jscore:insulated_copper_cable"
   ],
   "order": 5,
   "section": "jsindustrial:power",

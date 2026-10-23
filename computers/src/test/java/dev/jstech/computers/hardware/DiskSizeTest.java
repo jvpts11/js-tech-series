@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,10 +60,8 @@ class DiskSizeTest {
     @Test
     void capacityMb_matchesDiskSpec() {
         // A disk built from a size yields capacityMb = items × 256, regardless of tier.
-        final DiskSpec hdd = new DiskSpec(StorageTier.HDD, dev.jstech.core.tier.HardwareEra.STANDARD,
-                DiskSize.TB_1.capacityItems(), 6);
-        final DiskSpec nvme = new DiskSpec(StorageTier.NVME, dev.jstech.core.tier.HardwareEra.STANDARD,
-                DiskSize.TB_1.capacityItems(), 5);
+        final DiskSpec hdd = new DiskSpec(StorageTier.HDD, HardwareEra.STANDARD, DiskSize.TB_1.capacityItems(), 6);
+        final DiskSpec nvme = new DiskSpec(StorageTier.NVME, HardwareEra.STANDARD, DiskSize.TB_1.capacityItems(), 5);
         assertEquals(hdd.capacityMb(), nvme.capacityMb());
         assertEquals(1_048_576L, hdd.capacityMb());
     }

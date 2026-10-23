@@ -18,7 +18,7 @@ import dev.jstech.core.client.gui.component.ScrollBar;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.api.client.ISkin;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;

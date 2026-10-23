@@ -130,19 +130,17 @@ degrades a setting instead of breaking the world; the file is re-read when it ch
 
 | Key | Default | What it tunes |
 | --- | --- | --- |
-| `balance.hdd_latency_ticks`, `ssd_latency_ticks`, `nvme_latency_ticks` | 10, 3, 1 | The seek latency of each disk class before a transfer starts streaming. |
-| `balance.operation_waiting_timeout_ticks` | 1200 | How long an Operation waits on a locked resource or a busy executor before it gives up. |
-| `balance.operation_priority_aging_ticks` | 600 | Ticks a queued Operation waits per priority level it gains while others jump ahead; 0 disables aging. |
-| `balance.subframe_efficiency_factor` | 0.6 | The share of its own capacity a Subframe lends to the Mainframe orchestrating it. |
-| `balance.orphaned_operations_expiry_hours` | 24 | How long a saved, never-resumed Operation may sit before a reload discards it instead of resuming it; 0 never expires. |
-| `balance.program_machine_micros` | 1000 | The real time, in microseconds, one machine may spend running its programs in a tick. |
-| `balance.program_server_micros` | 8000 | The same for every machine of the server together. |
 | `media.download_kilobytes_per_second` | 1024 | How fast the server sends recordings to each player. |
 | `media.upload_kilobytes_per_second` | 512 | How fast each player sends a recording they bring. |
 | `media.max_file_megabytes` | 32 | The largest recording a player may bring; 0 takes none from players at all. |
 | `media.player_quota_megabytes` | 512 | How much the recordings one player brought may take together; 0 sets no limit. |
 | `calendar.days_per_season` | 28 | How many days a season of the world's year lasts; a year is four seasons. |
 | `world.chunks_per_owner` | 25 | How many chunks one player or team may keep loaded through machines, across the world. |
+
+The series' Operations engine keeps its own in `jstech-operations.toml`: how long an Operation waits before it gives
+up (`engine.waiting_timeout_ticks`, 1200), how fast a waiting one climbs in priority (`engine.priority_aging_ticks`,
+600) and how long a saved one nobody resumed is kept (`engine.orphaned_expiry_hours`, 24). How long the disks take,
+the share a Subframe lends and the time programs may take are J's Computers' own, in `jscomputers-server.toml`.
 
 The same settings, and every other mod's, can be changed on the Core's settings screen, from the game's Mods list.
 Each player's own sound settings (channel volumes, muted sounds, what the Sound Mixer shows) are kept on their

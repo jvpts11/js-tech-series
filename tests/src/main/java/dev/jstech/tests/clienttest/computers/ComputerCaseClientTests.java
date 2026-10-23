@@ -27,6 +27,7 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -47,8 +48,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import software.bernie.geckolib.cache.GeckoLibCache;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
 
 /**
  * The small computers' cases in every age: the Personal Computer, the Crafting Computer and the Cluster Management
@@ -703,9 +702,14 @@ public final class ComputerCaseClientTests {
 
     /** Whether the lamp of the CD drive in the first bay was last drawn hidden (or, given false, lit). */
     private static boolean bayLamp(final ClientTestContext ctx, final boolean hidden) {
-        final BakedGeoModel model = GeckoLibCache.getBakedModels().get(
-                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "geo/computer_legacy_personal_computer.geo.json"));
-        return model != null && model.getBone(BAY_LAMP).map(bone -> bone.isHidden() == hidden).orElse(false);
+        if (ctx.mc().level == null || !(ctx.mc().level.getBlockEntity(ctx.abs(BAYS_AT))
+                instanceof AbstractSmallComputerBlockEntity computer)) {
+            return false;
+        }
+        return KitAnimations.drawn(computer).map(drawn -> {
+            final int lamp = drawn.pose().index(BAY_LAMP);
+            return lamp >= 0 && drawn.pose().hides(lamp) == hidden;
+        }).orElse(false);
     }
 
     /** An age's cases, row by row from the floor up. */

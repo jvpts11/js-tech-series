@@ -45,7 +45,6 @@ import static dev.jstech.computers.operation.payload.PatternStudioTexts.STAGE_AD
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.SYSTEM_DISK;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.TOO_LARGE_TO_BURN;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -85,8 +84,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -104,7 +102,6 @@ import java.util.Optional;
  * crafts folder, or this Crafting Computer's Recipe ROM. Every handler resolves the host through the monitor
  * the player is at, so a far-away computer cannot be edited by sending its position.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class PatternStudioPayloads {
 
     /** The system disk drive key in the Studio's file list. */
@@ -114,7 +111,11 @@ public final class PatternStudioPayloads {
     private PatternStudioPayloads() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus the payloads, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, PatternStudioPayloads::register);
+    }
+
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar("1");
         ComputerAccess.accept(registrar, RequestPatternStudioPayload.TYPE, RequestPatternStudioPayload.STREAM_CODEC,

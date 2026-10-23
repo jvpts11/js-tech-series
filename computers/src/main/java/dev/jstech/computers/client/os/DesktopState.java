@@ -39,7 +39,7 @@ import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.motion.MotionScope;
 import dev.jstech.core.motion.Rhythm;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

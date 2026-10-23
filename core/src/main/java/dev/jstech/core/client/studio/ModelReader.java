@@ -31,10 +31,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The model: a block's states file and the model the game baked from it, or the GeckoLib model, atlas and animation
- * of a block drawn with GeckoLib; an item's model file and its baked model. Wrong when a file is missing, when the
- * game draws the missing model, when a model names a texture that is not there, or when an animation moves a bone the
- * model does not have.
+ * The model: a block's states file and the model the game baked from it, or the geometry, atlas and animation of a
+ * block drawn from a family of geometry files; an item's model file and its baked model. Wrong when a file is
+ * missing, when the game draws the missing model, when a model names a texture that is not there, or when an animation
+ * moves a bone the model does not have.
  */
 final class ModelReader implements IStudioReader {
 
@@ -105,7 +105,7 @@ final class ModelReader implements IStudioReader {
         }
     }
 
-    /* A block drawn with GeckoLib: the model its block entity names, the atlas, and the family's animation. */
+    /* A block drawn from geometry files: the model its block entity names, the atlas, and the family's animation. */
     @SuppressWarnings("unchecked")
     private static void geo(final StudioThing thing, final Block block, final GeoLook<?> look,
                             final StudioContext context, final StudioSheet sheet) {

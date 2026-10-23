@@ -20,7 +20,7 @@ import dev.jstech.computers.gateway.GatewayPermissions;
 import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;

@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.integration.jei.payload;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.PatternStudioPayloads;
 import dev.jstech.computers.os.IOsHost;
@@ -15,8 +14,7 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -27,7 +25,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  * the payloads are only ever sent by the viewer plugin, which exists only when the viewer is installed.
  */
 @TextHolder
-@EventBusSubscriber(modid = JsComputers.MODID, bus = EventBusSubscriber.Bus.MOD)
 public final class JeiPayloads {
 
     private static final TextKey PLACED_ON_BENCH =
@@ -38,7 +35,11 @@ public final class JeiPayloads {
     private JeiPayloads() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus the payloads, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, JeiPayloads::register);
+    }
+
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar("1");
         ComputerAccess.accept(registrar, SetPatternPayload.TYPE, SetPatternPayload.STREAM_CODEC,

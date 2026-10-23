@@ -16,7 +16,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.menu.MainframeMenu;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

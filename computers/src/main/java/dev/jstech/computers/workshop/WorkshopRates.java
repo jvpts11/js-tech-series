@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.workshop;
 
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * What the personal-use cards charge and how fast they work, beside the blocks they stand in for. The Furnace Card

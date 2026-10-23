@@ -40,10 +40,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
  * after, to the whole picture.
  */
 @PaletteHolder
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class MonitorPainter {
 
     /** The inks of a text screen on a monitor's face. */
@@ -143,7 +140,11 @@ public final class MonitorPainter {
         }
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, MonitorPainter::onLeave);
+    }
+
     public static void onLeave(final ClientPlayerNetworkEvent.LoggingOut event) {
         DESKTOPS.clear();
     }

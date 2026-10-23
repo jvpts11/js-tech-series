@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.operation.payload.update;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.os.UpdatePopup;
@@ -39,8 +38,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -51,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
  * cards, and the UPDATE it sends, through the same door and the same checks as the network's language.
  */
 @TextHolder
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class UpdatePayloads {
 
     public static final TextKey QUEUED = TextKey.of("jsc.update.queued", "UPDATE queued: %s %s");
@@ -61,7 +58,11 @@ public final class UpdatePayloads {
     private UpdatePayloads() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus the payloads, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, UpdatePayloads::register);
+    }
+
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar("1");
         ComputerAccess.accept(registrar, UpdatePreviewRequestPayload.TYPE, UpdatePreviewRequestPayload.STREAM_CODEC,

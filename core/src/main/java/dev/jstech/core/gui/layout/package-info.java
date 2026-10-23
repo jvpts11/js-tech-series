@@ -22,10 +22,9 @@
  * developer's tools) are here too, each checked by a test of its own.
  *
  * <p>How to write a layout class and its test, from zero, is in {@code core/docs/SCREENS.md}, and how a menu reads it
- * in {@code core/docs/CONTENT.md}. An example that compiles is J's Industrial's Coal Generator: its layout
- * ({@code industrial/src/main/java/dev/jstech/industrial/gui/layout/CoalGeneratorLayout.java}), which its menu and its
- * screen both read, and its test
- * ({@code industrial/src/test/java/dev/jstech/industrial/gui/layout/CoalGeneratorLayoutTest.java}).
+ * in {@code core/docs/CONTENT.md}. An example that compiles is J's Computers' Printer: its layout
+ * ({@code computers/src/main/java/dev/jstech/computers/gui/layout/PrinterLayout.java}), which its menu and its screen
+ * both read, and its test ({@code computers/src/test/java/dev/jstech/computers/gui/layout/PrinterLayoutTest.java}).
  */
 @ApiStatus.Experimental
 package dev.jstech.core.gui.layout;

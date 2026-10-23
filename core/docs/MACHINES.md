@@ -405,7 +405,7 @@ From code, in the data generation, a recipe is written with `ProcessingRecipeBui
 ```java
 ProcessingRecipeBuilder.of(MyContent.PRESSING)
         .input(Ingredient.of(Tags.Items.INGOTS_IRON), 2)
-        .output(MaterialItems.get(ModMaterial.IRON, MaterialForm.PLATE).get(), 1)
+        .output(MaterialUses.item(SeriesMaterials.IRON, Forms.PLATE).get(), 1)
         .ticks(120)
         .energyPerTick(30)
         .save(output, ResourceLocation.fromNamespaceAndPath(MyMod.MODID, "pressing/iron_plate"));

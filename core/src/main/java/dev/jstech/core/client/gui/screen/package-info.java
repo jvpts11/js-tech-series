@@ -21,9 +21,9 @@
  * back the answer, Escape being Cancel. Their colours are a palette a resource pack can change,
  * {@code jscore:gui/screens}.
  *
- * <p>Examples that compile are J's Industrial's machine screens, each a {@link CoreContainerScreen} on its menu that
- * draws from the layout its menu places the slots from
- * ({@code industrial/src/main/java/dev/jstech/industrial/client/CoalGeneratorScreen.java}).
+ * <p>An example that compiles is J's Computers' Printer screen, a {@link CoreContainerScreen} on its menu that draws
+ * from the layout its menu places the slots from
+ * ({@code computers/src/main/java/dev/jstech/computers/client/PrinterScreen.java}).
  */
 @ApiStatus.Experimental
 package dev.jstech.core.client.gui.screen;

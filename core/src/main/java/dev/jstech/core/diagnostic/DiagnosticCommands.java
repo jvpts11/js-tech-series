@@ -11,7 +11,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.team.IOwned;
 import dev.jstech.core.team.Ownership;
@@ -117,17 +117,17 @@ public final class DiagnosticCommands {
 
     /** Declares the commands, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("health", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("health", CommandRoot.ADMINS, (node, context) -> node
                 .executes(DiagnosticCommands::health));
-        SeriesCommands.declare("bandwidth", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("bandwidth", CommandRoot.ADMINS, (node, context) -> node
                 .executes(source -> bandwidth(source, null))
                 .then(Commands.argument(PLAYER, EntityArgument.player())
                         .executes(source -> bandwidth(source, EntityArgument.getPlayer(source, PLAYER)))));
-        SeriesCommands.declare("cost", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("cost", CommandRoot.ADMINS, (node, context) -> node
                 .executes(source -> cost(source, DEFAULT_SECONDS))
                 .then(Commands.argument(SECONDS, IntegerArgumentType.integer(1, CostMap.LONGEST_SECONDS))
                         .executes(source -> cost(source, IntegerArgumentType.getInteger(source, SECONDS)))));
-        SeriesCommands.declare("diagnostics", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("diagnostics", CommandRoot.ADMINS, (node, context) -> node
                 .executes(DiagnosticCommands::diagnostics));
     }
 

@@ -1,6 +1,0 @@
-{
-  "parent": "jscore:block/cable/item_4",
-  "textures": {
-    "jacket": "jsindustrial:block/cable/energy"
-  }
-}

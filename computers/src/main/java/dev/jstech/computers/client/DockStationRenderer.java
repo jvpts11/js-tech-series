@@ -8,78 +8,87 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
-import dev.jstech.core.client.geo.LookGeoModel;
+import dev.jstech.core.client.model.kit.IKitDriver;
+import dev.jstech.core.client.model.kit.IKitExtras;
+import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
+import dev.jstech.core.client.model.kit.KitInstance;
+import dev.jstech.core.client.model.kit.KitRenderer;
+import dev.jstech.core.model.ModelAnimator;
+import dev.jstech.core.model.ModelPose;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.cache.object.GeoBone;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
-import software.bernie.geckolib.renderer.layer.BlockAndItemGeoLayer;
 
 /**
  * Draws the Dock Station: each tray's window shows the very disk the player put in, small, its face out; the stick
  * stands in the USB port while one is plugged in; the power ring is lit while a computer is on the other end of its
- * cable, and each tray's lamp while it holds a disk the computer can see.
+ * cable, and each tray's lamp while it holds a disk the computer can see. Nothing on it moves by a clip.
  */
-public final class DockStationRenderer extends GeoBlockRenderer<DockStationBlockEntity> {
+public final class DockStationRenderer implements IKitDriver<DockStationBlockEntity>,
+        IKitExtras<DockStationBlockEntity> {
 
     /** How big a disk is drawn in its tray's window, of its full size. */
     private static final float DISK_SCALE = 0.16F;
 
-    public DockStationRenderer(final BlockEntityRendererProvider.Context context) {
-        super(new LookGeoModel<>(ComputingLooks.DOCK_STATION));
-        addRenderLayer(new TrayDisks(this));
-        // The stick in the port is the stick's own item, as the Pattern Encoder draws it, lying as its port does.
-        addRenderLayer(new BayMediumLayer<>(this, dock -> dock.mediaSlot().getStackInSlot(0), dock -> true));
+    private DockStationRenderer() {
+    }
+
+    /** The renderer of the Dock Station. */
+    public static BlockEntityRenderer<DockStationBlockEntity> create(
+            final BlockEntityRendererProvider.Context context) {
+        final DockStationRenderer drawn = new DockStationRenderer();
+        return KitBlockEntityRenderer.<DockStationBlockEntity>look(ComputingLooks.DOCK_STATION)
+                .driver(drawn)
+                .extras(drawn)
+                .build();
     }
 
     @Override
-    public void preRender(final PoseStack poseStack, final DockStationBlockEntity dock, final BakedGeoModel model,
-                          final MultiBufferSource bufferSource, final VertexConsumer buffer, final boolean isReRender,
-                          final float partialTick, final int packedLight, final int packedOverlay, final int colour) {
-        super.preRender(poseStack, dock, model, bufferSource, buffer, isReRender, partialTick, packedLight,
-                packedOverlay, colour);
+    public void drive(final DockStationBlockEntity dock, final ModelAnimator animator, final double seconds) {
+    }
+
+    @Override
+    public void move(final DockStationBlockEntity dock, final ModelPose pose, final double seconds) {
         final boolean linked = dock.ownerPos() != null;
-        DeviceLamps.show(model, ComputingLooks.DOCK_POWER_LAMP, linked);
+        DeviceLamps.show(pose, ComputingLooks.DOCK_POWER_LAMP, linked);
         for (int bay = 0; bay < DockStationBlockEntity.BAYS; bay++) {
-            DeviceLamps.show(model, ComputingLooks.DOCK_BAY_LAMPS.get(bay), linked && !dock.disk(bay).isEmpty());
+            DeviceLamps.show(pose, ComputingLooks.DOCK_BAY_LAMPS.get(bay), linked && !dock.disk(bay).isEmpty());
         }
     }
 
-    /** The disks in the trays' windows, each at the bone that marks its tray. */
-    private static final class TrayDisks extends BlockAndItemGeoLayer<DockStationBlockEntity> {
+    @Override
+    public boolean movesBones() {
+        return true;
+    }
 
-        TrayDisks(final DockStationRenderer renderer) {
-            super(renderer);
-        }
-
-        @Override
-        @Nullable
-        protected ItemStack getStackForBone(final GeoBone bone, final DockStationBlockEntity dock) {
-            final int bay = ComputingLooks.DOCK_BAYS.indexOf(bone.getName());
-            if (bay < 0) {
-                return null;
-            }
+    /*
+     * The disks in the trays' windows, each at the bone that marks its tray; and the stick in the port, the stick's
+     * own item as the Pattern Encoder draws it, lying as its port does.
+     */
+    @Override
+    public void draw(final DockStationBlockEntity dock, final KitInstance instance, final PoseStack poses,
+                     final MultiBufferSource buffers, final int light, final int overlay, final float partialTick) {
+        for (int bay = 0; bay < DockStationBlockEntity.BAYS; bay++) {
             final ItemStack disk = dock.disk(bay);
-            return disk.isEmpty() ? null : disk;
+            if (disk.isEmpty()) {
+                continue;
+            }
+            poses.pushPose();
+            if (KitRenderer.toBone(instance, ComputingLooks.DOCK_BAYS.get(bay), poses)) {
+                poses.scale(DISK_SCALE, DISK_SCALE, DISK_SCALE);
+                poses.mulPose(Axis.YP.rotationDegrees(180));
+                Minecraft.getInstance().getItemRenderer().renderStatic(disk, ItemDisplayContext.NONE, light, overlay,
+                        poses, buffers, dock.getLevel(), 0);
+            }
+            poses.popPose();
         }
-
-        @Override
-        protected void renderStackForBone(final PoseStack poseStack, final GeoBone bone, final ItemStack stack,
-                                          final DockStationBlockEntity dock, final MultiBufferSource bufferSource,
-                                          final float partialTick, final int packedLight, final int packedOverlay) {
-            poseStack.pushPose();
-            poseStack.scale(DISK_SCALE, DISK_SCALE, DISK_SCALE);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180));
-            super.renderStackForBone(poseStack, bone, stack, dock, bufferSource, partialTick, packedLight,
-                    packedOverlay);
-            poseStack.popPose();
-        }
+        BayMedium.draw(dock.mediaSlot().getStackInSlot(0), true, instance, poses, buffers, light, overlay,
+                dock.getLevel());
     }
 }

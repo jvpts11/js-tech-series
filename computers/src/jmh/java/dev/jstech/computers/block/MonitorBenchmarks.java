@@ -9,7 +9,7 @@ package dev.jstech.computers.block;
 
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.operation.payload.WireLine;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

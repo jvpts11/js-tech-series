@@ -16,7 +16,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.gateway;
 
+import dev.jstech.computers.ComputersPermissions;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
@@ -23,13 +24,15 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
+import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -57,6 +60,8 @@ public final class GatewayManager {
     private static final TextKey SELECT_FIRST =
             TextKey.of("jsc.service.gateway.select_first", "select a gateway first");
     private static final TextKey BLINKING = TextKey.of("jsc.service.gateway.blinking", "%s is blinking");
+    private static final TextKey NOT_ALLOWED = TextKey.of("jsc.service.gateway.not_allowed",
+            "you may not act on gateways here");
     private static final TextKey READ_ALLOWED =
             TextKey.of("jsc.service.gateway.read_allowed", "reading the network allowed");
     private static final TextKey READ_DENIED =
@@ -215,12 +220,17 @@ public final class GatewayManager {
 
     /**
      * Carries out one action on the Gateway at {@code gatewayPos}, which must be one of {@code host}'s, and
-     * says what happened for the status line.
+     * says what happened for the status line. {@code actor}, the player who asked, must hold the node of acting on
+     * a gateway there; an action no player asked for, a program's alone, is carried out.
      */
     public static Text act(final ServerLevel level, @Nullable final BlockEntity host, final long gatewayPos,
-                           final int action, final int value, final String text) {
+                           final int action, final int value, final String text, @Nullable final UUID actor) {
         if (action == GatewayManagerActionPayload.ACTION_REFRESH) {
             return Text.EMPTY;
+        }
+        if (actor != null && !CorePermissions.has(actor, ComputersPermissions.configureGateways(), level,
+                BlockPos.of(gatewayPos))) {
+            return NOT_ALLOWED.text();
         }
         if (!(host instanceof IPeripheralOwner owner)) {
             return NO_PORTS.text();

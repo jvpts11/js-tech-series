@@ -13,7 +13,7 @@ import dev.jstech.computers.program.SongDownload;
 import dev.jstech.computers.program.SoundfoundryState;
 import dev.jstech.core.audio.media.MediaTags;
 import dev.jstech.core.id.StableNames;
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;

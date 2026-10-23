@@ -8,7 +8,7 @@
 package dev.jstech.core.audio.media;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.text.GameText;
 import java.io.IOException;
 import java.util.Locale;
@@ -33,7 +33,7 @@ public final class MediaCommand {
 
     /** Declares the command, from the Core's constructor; clearing the store is the server's own maintenance. */
     public static void declare() {
-        SeriesCommands.declare("media", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("media", CommandRoot.ADMINS, (node, context) -> node
                 .executes(source -> held(source.getSource()))
                 .then(Commands.literal("prune")
                         .then(Commands.argument(DAYS, IntegerArgumentType.integer(0, MOST_DAYS))

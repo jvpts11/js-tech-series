@@ -9,7 +9,6 @@ package dev.jstech.core.registry;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.content.ModContent;
-import dev.jstech.core.material.MaterialItems;
 import net.neoforged.bus.api.IEventBus;
 
 /**
@@ -19,11 +18,6 @@ import net.neoforged.bus.api.IEventBus;
 public final class CoreItems {
 
     public static final ModContent CONTENT = new ModContent(JsCore.MODID);
-
-    static {
-        // The old fixed catalogue keeps its things registered by id, before anything can look one up.
-        MaterialItems.register(CONTENT);
-    }
 
     private CoreItems() {
     }

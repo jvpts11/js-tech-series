@@ -235,9 +235,6 @@ dependencies {
     implementation project(':example')
     implementation project(':testkit')
 
-    // The computing mod's dependencies, present so the runs load them as well.
-    implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
-
     // Dev-runtime mods for the integration batteries: Mekanism (the Fusion Reactor battery), AE2 (a second
     // network beside ours) and JEI (recipe lookups while testing autocrafting).
     localRuntime "mekanism:Mekanism:${mekanism_version}"

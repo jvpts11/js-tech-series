@@ -11,7 +11,9 @@ import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SharedUses;
-import dev.jstech.core.material.MaterialItems;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.material.MaterialUses;
+import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,7 +34,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The J's Tech creative tab: the series' one tab of shared content, in its three sections, showing only what the
- * installed mods use, and leaving what it shows out of the other tabs of the mods that use it, so nothing shows twice.
+ * installed mods use, and leaving what it shows out of the other tabs of the mods that use it, so nothing shows twice:
+ * J's Industrial's cable and materials among them.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -59,9 +62,9 @@ public final class JsTechTabGameTests {
     public static void tab_showsOnlyWhatTheInstalledModsUse(final GameTestHelper helper) {
         final List<Item> shown = contents(helper.getLevel(), JsTechTab.TAB.id());
         helper.assertTrue(shown.contains(CoreGuide.MANUAL.get()), "the series' manual, which every player has");
-        for (final var material : MaterialItems.all()) {
-            helper.assertTrue(shown.contains(material.get()) == SharedUses.used(material.get()),
-                    material.getId() + " is shown only while a mod says it uses it");
+        for (final Item material : MaterialUses.sharedItems()) {
+            helper.assertTrue(shown.contains(material), BuiltInRegistries.ITEM.getKey(material)
+                    + ", which a mod says it uses, is shown");
         }
         // An item may show in several stacks, as each shape of microblock is; the items, once each, are what it says.
         final List<Item> items = new ArrayList<>(new LinkedHashSet<>(shown));
@@ -93,6 +96,23 @@ public final class JsTechTabGameTests {
         }
         helper.assertTrue(twice.isEmpty(), "nothing of J's Tech shows again in the tab of a mod that uses it: "
                 + twice);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void industrial_showsItsCableAndMaterialsOnTheJsTechTab(final GameTestHelper helper) {
+        final List<Item> jsTech = contents(helper.getLevel(), JsTechTab.TAB.id());
+        final List<Item> industrial = contents(helper.getLevel(), IndustrialModule.INDUSTRIAL_TAB.id());
+        for (final Item used : List.of(SharedEnergy.INSULATED_COPPER_CABLE.asItem(),
+                IndustrialModule.IRON_DUST.get(), IndustrialModule.IRON_PLATE.get(),
+                IndustrialModule.COPPER_PLATE.get())) {
+            final ResourceLocation id = BuiltInRegistries.ITEM.getKey(used);
+            helper.assertTrue(SharedUses.usersOf(used).contains("jsindustrial"), "J's Industrial uses " + id);
+            helper.assertTrue(jsTech.contains(used) && !industrial.contains(used),
+                    id + " is on the J's Tech tab, not on J's Industrial's");
+        }
+        helper.assertTrue(industrial.contains(IndustrialModule.MACERATOR.get().asItem())
+                && industrial.contains(IndustrialModule.TANK.get().asItem()), "its own tab keeps its machines");
         helper.succeed();
     }
 

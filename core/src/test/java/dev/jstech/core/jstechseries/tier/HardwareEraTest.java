@@ -1,0 +1,162 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Core.
+ */
+package dev.jstech.core.jstechseries.tier;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class HardwareEraTest {
+
+    @Test
+    void values_hasSevenEras() {
+        assertEquals(7, HardwareEra.values().length);
+    }
+
+    @Test
+    void values_areOrderedVintageToSingularity() {
+        assertEquals(HardwareEra.VINTAGE, HardwareEra.values()[0]);
+        assertEquals(HardwareEra.LEGACY, HardwareEra.values()[1]);
+        assertEquals(HardwareEra.TRANSITION, HardwareEra.values()[2]);
+        assertEquals(HardwareEra.STANDARD, HardwareEra.values()[3]);
+        assertEquals(HardwareEra.ADVANCED, HardwareEra.values()[4]);
+        assertEquals(HardwareEra.EXA, HardwareEra.values()[5]);
+        assertEquals(HardwareEra.SINGULARITY, HardwareEra.values()[6]);
+    }
+
+    @Test
+    void level_countsFromZeroWithoutGaps() {
+        for (final HardwareEra era : HardwareEra.values()) {
+            assertEquals(era.ordinal(), era.level());
+        }
+    }
+
+    @Test
+    void next_advancesByOne() {
+        assertEquals(HardwareEra.LEGACY, HardwareEra.VINTAGE.next());
+        assertEquals(HardwareEra.TRANSITION, HardwareEra.LEGACY.next());
+        assertEquals(HardwareEra.STANDARD, HardwareEra.TRANSITION.next());
+        assertEquals(HardwareEra.ADVANCED, HardwareEra.STANDARD.next());
+    }
+
+    @Test
+    void next_clampsAtSingularity() {
+        assertEquals(HardwareEra.SINGULARITY, HardwareEra.SINGULARITY.next());
+    }
+
+    @Test
+    void prev_decrementsByOne() {
+        assertEquals(HardwareEra.EXA, HardwareEra.SINGULARITY.prev());
+        assertEquals(HardwareEra.TRANSITION, HardwareEra.STANDARD.prev());
+        assertEquals(HardwareEra.VINTAGE, HardwareEra.LEGACY.prev());
+    }
+
+    @Test
+    void prev_clampsAtVintage() {
+        assertEquals(HardwareEra.VINTAGE, HardwareEra.VINTAGE.prev());
+    }
+
+    @Test
+    void isAtLeast_acceptsEqualOrHigher() {
+        assertTrue(HardwareEra.ADVANCED.isAtLeast(HardwareEra.VINTAGE));
+        assertTrue(HardwareEra.ADVANCED.isAtLeast(HardwareEra.ADVANCED));
+        assertTrue(HardwareEra.STANDARD.isAtLeast(HardwareEra.TRANSITION));
+        assertFalse(HardwareEra.LEGACY.isAtLeast(HardwareEra.EXA));
+        assertFalse(HardwareEra.LEGACY.isAtLeast(HardwareEra.TRANSITION));
+    }
+
+    @Test
+    void isAtMost_acceptsEqualOrLower() {
+        assertTrue(HardwareEra.TRANSITION.isAtMost(HardwareEra.STANDARD));
+        assertTrue(HardwareEra.TRANSITION.isAtMost(HardwareEra.TRANSITION));
+        assertFalse(HardwareEra.TRANSITION.isAtMost(HardwareEra.LEGACY));
+    }
+
+    @Test
+    void fromLevel_returnsEraAtThatLevel() {
+        assertEquals(HardwareEra.VINTAGE, HardwareEra.fromLevel(0));
+        assertEquals(HardwareEra.TRANSITION, HardwareEra.fromLevel(2));
+        assertEquals(HardwareEra.STANDARD, HardwareEra.fromLevel(3));
+        assertEquals(HardwareEra.SINGULARITY, HardwareEra.fromLevel(6));
+    }
+
+    @Test
+    void fromLevel_isInverseOfLevel() {
+        for (final HardwareEra era : HardwareEra.values()) {
+            assertEquals(era, HardwareEra.fromLevel(era.level()));
+        }
+    }
+
+    @Test
+    void fromLevel_rejectsOutOfRange() {
+        assertThrows(IllegalArgumentException.class, () -> HardwareEra.fromLevel(-1));
+        assertThrows(IllegalArgumentException.class, () -> HardwareEra.fromLevel(7));
+    }
+
+    @Test
+    void find_readsBackEveryEraByItsIdAndNothingElse() {
+        for (final HardwareEra era : HardwareEra.values()) {
+            assertEquals(era, HardwareEra.find(era.id()));
+        }
+        assertNull(HardwareEra.find(-1));
+        assertNull(HardwareEra.find(7));
+    }
+
+    @Test
+    void bits_climbFromSixteenToSixtyFourAndStayThere() {
+        assertEquals(16, HardwareEra.VINTAGE.bits());
+        assertEquals(32, HardwareEra.LEGACY.bits());
+        assertEquals(64, HardwareEra.TRANSITION.bits());
+        assertEquals(64, HardwareEra.STANDARD.bits());
+        assertEquals(64, HardwareEra.ADVANCED.bits());
+        assertEquals(64, HardwareEra.SINGULARITY.bits());
+    }
+
+    @Test
+    void mbPerItem_isTheLadderOneSixteenTwoFiftySix() {
+        assertEquals(1L, HardwareEra.VINTAGE.mbPerItem());
+        assertEquals(16L, HardwareEra.LEGACY.mbPerItem());
+        assertEquals(256L, HardwareEra.TRANSITION.mbPerItem());
+        assertEquals(256L, HardwareEra.STANDARD.mbPerItem());
+        assertEquals(256L, HardwareEra.ADVANCED.mbPerItem());
+        assertEquals(256L, HardwareEra.EXA.mbPerItem());
+    }
+
+    @Test
+    void itemsFor_roundsAMegabyteSizeUpToWholeItems() {
+        assertEquals(0L, HardwareEra.STANDARD.itemsFor(0));
+        assertEquals(1L, HardwareEra.STANDARD.itemsFor(1));
+        assertEquals(80L, HardwareEra.STANDARD.itemsFor(20_480));
+        assertEquals(81L, HardwareEra.STANDARD.itemsFor(20_481));
+        assertEquals(20_480L, HardwareEra.VINTAGE.itemsFor(20_480));
+        assertEquals(3L, HardwareEra.LEGACY.itemsFor(48));
+    }
+
+    @Test
+    void bytesPerMbEq_isAThousandthOfAnItemInBytes() {
+        assertEquals(1_048L, HardwareEra.VINTAGE.bytesPerMbEq());
+        assertEquals(16_777L, HardwareEra.LEGACY.bytesPerMbEq());
+        assertEquals(268_435L, HardwareEra.STANDARD.bytesPerMbEq());
+    }
+
+    @Test
+    void screenColor_givesEveryEraItsOwnColour() {
+        final Set<Integer> seen = new HashSet<>();
+        for (final HardwareEra era : HardwareEra.values()) {
+            assertTrue(seen.add(era.screenColor()), () -> era + " shares its screen colour");
+        }
+        assertEquals(0x3FA9E0, HardwareEra.TRANSITION.screenColor());
+    }
+}

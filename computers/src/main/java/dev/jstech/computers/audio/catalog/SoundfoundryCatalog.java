@@ -12,7 +12,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundfoundryCovers;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.os.fs.FileType;
@@ -41,9 +40,8 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -61,7 +59,6 @@ import org.slf4j.Logger;
  * every byte of it, so it is done off the game's thread, when the server has started, when its data packs are
  * reloaded, and when an operator asks; the new catalogue takes the old one's place in one step.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class SoundfoundryCatalog {
 
     /** Where the albums are, under the server's config folder and under a data pack's namespace. */
@@ -88,6 +85,13 @@ public final class SoundfoundryCatalog {
     private static volatile Snapshot current = Snapshot.EMPTY;
 
     private SoundfoundryCatalog() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ServerStartedEvent.class, SoundfoundryCatalog::onServerStarted);
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, SoundfoundryCatalog::onServerStopped);
+        NeoForge.EVENT_BUS.addListener(AddReloadListenerEvent.class, SoundfoundryCatalog::onAddReloadListeners);
     }
 
     /** The catalogue as it was last read. */
@@ -170,19 +174,16 @@ public final class SoundfoundryCatalog {
         return new Snapshot(albums, songs, reading.skipped, reading.covers);
     }
 
-    @SubscribeEvent
     public static void onServerStarted(final ServerStartedEvent event) {
         final MinecraftServer server = event.getServer();
         reload(server, server.getResourceManager(), null);
     }
 
-    @SubscribeEvent
     public static void onServerStopped(final ServerStoppedEvent event) {
         READING.incrementAndGet();
         current = Snapshot.EMPTY;
     }
 
-    @SubscribeEvent
     public static void onAddReloadListeners(final AddReloadListenerEvent event) {
         event.addListener(new Listener());
     }

@@ -18,7 +18,7 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

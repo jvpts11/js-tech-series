@@ -14,7 +14,7 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
-import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;

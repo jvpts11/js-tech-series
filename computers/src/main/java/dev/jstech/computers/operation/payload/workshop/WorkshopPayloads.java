@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.operation.payload.workshop;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.os.WorkshopApp;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -26,8 +25,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -39,13 +37,16 @@ import org.jetbrains.annotations.Nullable;
  * container, so nothing is copied or lost; a slot of a card that is not in the computer takes nothing new, though
  * what it still holds can always be taken out.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class WorkshopPayloads {
 
     private WorkshopPayloads() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus the payloads, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, WorkshopPayloads::register);
+    }
+
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar("1");
         ComputerAccess.accept(registrar, WorkshopActionPayload.TYPE, WorkshopActionPayload.STREAM_CODEC,

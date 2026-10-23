@@ -9,7 +9,7 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
 import io.netty.buffer.ByteBuf;
 import java.util.function.Function;
 import net.minecraft.network.codec.ByteBufCodecs;

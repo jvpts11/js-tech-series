@@ -9,7 +9,7 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.Opcode;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;

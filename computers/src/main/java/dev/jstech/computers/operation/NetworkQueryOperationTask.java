@@ -8,9 +8,9 @@
 package dev.jstech.computers.operation;
 
 import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
-import dev.jstech.core.operation.IOperationContext;
-import dev.jstech.core.operation.IOperationResult;
-import dev.jstech.core.operation.IOperationTask;
+import dev.jstech.core.jstechseries.operation.IOperationContext;
+import dev.jstech.core.jstechseries.operation.IOperationResult;
+import dev.jstech.core.jstechseries.operation.IOperationTask;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

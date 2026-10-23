@@ -6,6 +6,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+### Changed
+- Listeners declared: every class of the three mods that answers the game's events is
+  handed to the buses from its mod's constructor, through a `listen` method of its own, rather than found by an
+  annotation, so what runs is what the constructor says; a mod's mistake in what it declares stops the load saying
+  what to change.
+- The standard machine screen: the Macerator, the Compressor, the Electric Furnace and the Coal Generator
+  open the screen every machine of the series has, its Main tab with their slots, their progress and their energy,
+  and the Sides, Redstone, Upgrades and Protection tabs; their own screens are gone.
+- The Coal Generator is a machine of the Core's: it gives its energy to the machines touching it twice
+  a second, through the faces its Sides tab opens to energy, and while its store is full it stops burning, keeping
+  what is left of the fuel, instead of burning it away.
+- The series' basic cable: its machines run on J's Core's Insulated Copper Cable, which carries 500 FE a
+  tick and loses a tenth over a hundred blocks, and the mod's own Energy Cable is gone. The cable and the Iron Dust,
+  Iron Plate and Copper Plate are on the J's Tech tab, with the rest of what the mods of the series share.
+- The Tank is a block of the Core's: a bucket fills and empties it, and its item says what it carries.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.

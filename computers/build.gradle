@@ -68,13 +68,6 @@ dependencies {
     implementation project(':core')
 
     // ============================================================
-    // Mod-loaded dependencies, included in the released JAR's requirements
-    // ============================================================
-    // GeckoLib: bone-based block models and animation. The Server Rack and Supercomputer Rack are one
-    // model each, rendered by a GeckoLib block-entity renderer that shows the seated units per row.
-    implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
-
-    // ============================================================
     // Soft integrations, compiled against their APIs only; the runtime jars live with the dev runs (tests).
     // ============================================================
     // Mekanism API: the chemical bridge adapter compiles against it but the mod never loads a Mekanism class

@@ -75,7 +75,7 @@ public final class TeamProgressCommands {
 
     /** Declares the commands, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("knowledge", SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare("knowledge", CommandRoot.GAME_MASTERS, (node, context) -> node
                 .then(Commands.argument(PLAYERS, EntityArgument.players())
                         .executes(TeamProgressCommands::show)
                         .then(Commands.literal("grant")
@@ -87,7 +87,7 @@ public final class TeamProgressCommands {
                         .then(Commands.literal("forget")
                                 .then(Commands.argument(ID, ResourceLocationArgument.id()).suggests(KNOWLEDGE)
                                         .executes(TeamProgressCommands::forget)))));
-        SeriesCommands.declare("milestone", SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare("milestone", CommandRoot.GAME_MASTERS, (node, context) -> node
                 .then(Commands.argument(PLAYERS, EntityArgument.players())
                         .then(Commands.argument(ID, ResourceLocationArgument.id()).suggests(MILESTONES)
                                 .executes(TeamProgressCommands::reach))));

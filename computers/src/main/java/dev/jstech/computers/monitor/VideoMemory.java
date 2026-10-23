@@ -17,7 +17,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.gui.Tube;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.HashMap;

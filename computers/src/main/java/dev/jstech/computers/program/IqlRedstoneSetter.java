@@ -10,7 +10,7 @@ package dev.jstech.computers.program;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IqlRedstoneStatement;
-import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.server.level.ServerLevel;

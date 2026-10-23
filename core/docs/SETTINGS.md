@@ -219,13 +219,6 @@ The Core's server settings are in `jstech-balance.toml`, in each world's `server
 
 | Setting | Default | What it tunes |
 | --- | --- | --- |
-| `balance.hdd_latency_ticks`, `ssd_latency_ticks`, `nvme_latency_ticks` | 10, 3, 1 | How long each kind of disk waits before a transfer starts. |
-| `balance.operation_waiting_timeout_ticks` | 1200 | How long an Operation waits on something busy before it gives up. |
-| `balance.operation_priority_aging_ticks` | 600 | How long a waiting Operation waits per step of priority it climbs; 0 never climbs. |
-| `balance.subframe_efficiency_factor` | 0.6 | The share of its capacity a Subframe lends its Mainframe. |
-| `balance.orphaned_operations_expiry_hours` | 24 | How long a saved Operation nobody resumed may wait before a reload drops it; 0 never. |
-| `balance.program_machine_micros` | 1000 | Real time, in microseconds, one machine may spend running its programs in a tick. |
-| `balance.program_server_micros` | 8000 | The same for every machine of the server together. |
 | `media.download_kilobytes_per_second` | 1024 | How fast the server sends recordings to each player. |
 | `media.upload_kilobytes_per_second` | 512 | How fast a player sends a recording. |
 | `media.max_file_megabytes` | 32 | The largest recording a player may bring; 0 takes none. |
@@ -243,6 +236,17 @@ The Core's server settings are in `jstech-balance.toml`, in each world's `server
 | `diagnostics.stall_millis` | 1000 | How long a section of a mod's work may run before the watchdog writes down what it was doing, in milliseconds (50 to 60,000) ([Diagnostics](DIAGNOSTICS.md#the-watchdog)). |
 | `diagnostics.count_network` | true | Whether what the server sends each player is counted, for `/jstech bandwidth`. |
 | `diagnostics.warn_operators` | true | Whether operators are told in chat when a section stalls or slows itself. |
+
+The series' Operations engine keeps its own, in `jstech-operations.toml` beside the world:
+
+| Setting | Default | What it tunes |
+| --- | --- | --- |
+| `engine.waiting_timeout_ticks` | 1200 | How long an Operation waits on something busy before it gives up. |
+| `engine.priority_aging_ticks` | 600 | How long a waiting Operation waits per step of priority it climbs; 0 never climbs. |
+| `engine.orphaned_expiry_hours` | 24 | How long a saved Operation nobody resumed may wait before a reload drops it; 0 never. |
+
+How long the disks take, the share a Subframe lends and the time programs may take are J's Computers' own, in
+`jscomputers-server.toml` ([its server settings](../../computers/docs/NETWORK.md#server-settings)).
 
 ## What can go wrong
 

@@ -15,10 +15,10 @@ import dev.jstech.computers.program.RedstoneScript;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.component.Texts;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -147,8 +147,8 @@ public final class RedstoneInterfaceScreen extends AbstractComputerScreen<Redsto
     public String[] softwareLines() {
         final RedstoneInterfaceBlockEntity sensor = menu.sensor();
         final String name = shownName();
-        return new String[] {RedstoneScript.iql(name, sensor.emits(), sensor.strength()),
-                RedstoneScript.sigma(name, sensor.emits(), sensor.strength())};
+        return new String[] {RedstoneScript.iql(name, sensor.emits(), sensor.emitStrength()),
+                RedstoneScript.sigma(name, sensor.emits(), sensor.emitStrength())};
     }
 
     /** The interface's era, which this screen wears as its skin. */
@@ -221,7 +221,7 @@ public final class RedstoneInterfaceScreen extends AbstractComputerScreen<Redsto
             signal = GameText.resolve(RedstoneInterfaceTexts.NO_POWER);
             signalColor = JsTechTheme.dim();
         } else if (sensor.emits()) {
-            signal = GameText.resolve(RedstoneInterfaceTexts.EMITS.with(sensor.strength()));
+            signal = GameText.resolve(RedstoneInterfaceTexts.EMITS.with(sensor.emitStrength()));
             signalColor = JsTechTheme.amber();
         } else {
             signal = GameText.resolve(RedstoneInterfaceTexts.READS.with(sensor.reading()));

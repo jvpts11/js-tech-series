@@ -13,8 +13,9 @@ import dev.jstech.core.progression.AxisStepReachedEvent;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionAxes;
 import dev.jstech.core.progression.ProgressionGate;
-import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.SeriesAxes;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,11 +44,11 @@ public final class ProgressionGameTests {
 
     @GameTest(template = ARENA)
     public static void axes_haveTheSeriesTwoRegistered(final GameTestHelper helper) {
-        helper.assertTrue(ProgressionAxes.byId(ProgressionAxes.HARDWARE_ERA.id()) == ProgressionAxes.HARDWARE_ERA,
+        helper.assertTrue(ProgressionAxes.byId(SeriesAxes.HARDWARE_ERA.id()) == SeriesAxes.HARDWARE_ERA,
                 "the eras are an axis");
-        helper.assertTrue(ProgressionAxes.INDUSTRIAL_TIER.byName("t3") == IndustrialTier.T3,
+        helper.assertTrue(SeriesAxes.INDUSTRIAL_TIER.byName("t3") == IndustrialTier.T3,
                 "the tiers are an axis, written t0 to t9");
-        helper.assertTrue(ProgressionAxes.HARDWARE_ERA.byName("legacy") == HardwareEra.LEGACY,
+        helper.assertTrue(SeriesAxes.HARDWARE_ERA.byName("legacy") == HardwareEra.LEGACY,
                 "an era is found by its saved name");
         helper.succeed();
     }
@@ -64,17 +65,17 @@ public final class ProgressionGameTests {
         };
         NeoForge.EVENT_BUS.addListener(AxisStepReachedEvent.class, listener);
         try {
-            helper.assertTrue(PlayerProgress.reached(server, player, ProgressionAxes.HARDWARE_ERA)
+            helper.assertTrue(PlayerProgress.reached(server, player, SeriesAxes.HARDWARE_ERA)
                     == HardwareEra.VINTAGE, "a player starts at the first era");
-            helper.assertTrue(PlayerProgress.reach(server, player, ProgressionAxes.HARDWARE_ERA,
+            helper.assertTrue(PlayerProgress.reach(server, player, SeriesAxes.HARDWARE_ERA,
                     HardwareEra.TRANSITION), "reaching the Transition moves them on");
-            helper.assertTrue(!PlayerProgress.reach(server, player, ProgressionAxes.HARDWARE_ERA,
+            helper.assertTrue(!PlayerProgress.reach(server, player, SeriesAxes.HARDWARE_ERA,
                     HardwareEra.LEGACY), "reaching an era already passed does nothing");
-            helper.assertTrue(PlayerProgress.reached(server, player, ProgressionAxes.HARDWARE_ERA)
+            helper.assertTrue(PlayerProgress.reached(server, player, SeriesAxes.HARDWARE_ERA)
                     == HardwareEra.TRANSITION, "they stay at the furthest");
             helper.assertTrue(heard.size() == 1 && heard.getFirst().from() == HardwareEra.VINTAGE
                     && heard.getFirst().to() == HardwareEra.TRANSITION, "the move was told once; heard " + heard);
-            helper.assertTrue(PlayerProgress.reached(server, player, ProgressionAxes.INDUSTRIAL_TIER)
+            helper.assertTrue(PlayerProgress.reached(server, player, SeriesAxes.INDUSTRIAL_TIER)
                     == IndustrialTier.T0, "each axis is its own");
         } finally {
             NeoForge.EVENT_BUS.unregister(listener);
@@ -89,7 +90,7 @@ public final class ProgressionGameTests {
         final ProgressionGate gate = ProgressionGate.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(
                 "{\"axis\": \"jscore:industrial_tier\", \"step\": \"t4\"}")).getOrThrow();
         helper.assertTrue(gate.resolves() && !gate.passes(server, player), "the gate is shut at T0");
-        PlayerProgress.set(server, player, ProgressionAxes.INDUSTRIAL_TIER, IndustrialTier.T5);
+        PlayerProgress.set(server, player, SeriesAxes.INDUSTRIAL_TIER, IndustrialTier.T5);
         helper.assertTrue(gate.passes(server, player), "and open past T4");
         final ProgressionGate missing = new ProgressionGate(ResourceLocation.fromNamespaceAndPath("nobody", "axis"),
                 "one");

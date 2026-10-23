@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.DeclarationError;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
@@ -95,7 +96,8 @@ public final class OsRegistry {
             return;
         }
         if (into.containsKey(id)) {
-            throw new IllegalStateException("A " + what + " is already registered as " + id);
+            throw DeclarationError.of(id.getNamespace(), "the " + what + " " + id, "is registered twice",
+                    "register it once, under an id of its own mod's");
         }
         into.put(id, def);
     }

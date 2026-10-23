@@ -16,7 +16,7 @@ import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.unify.Unification;
 import dev.jstech.tests.testkit.computers.CraftingRig;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;

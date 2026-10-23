@@ -16,13 +16,16 @@ import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
-import dev.jstech.core.peripheral.IPeripheralEndpoint;
-import dev.jstech.core.peripheral.IPeripheralOwner;
-import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
+import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
+import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
+import dev.jstech.core.signal.ISignalOutput;
+import dev.jstech.core.signal.Reading;
+import dev.jstech.core.signal.Signals;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,11 +35,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -51,11 +51,10 @@ import java.util.Optional;
  */
 @TextHolder
 public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
-        implements IPeripheralEndpoint, GeoBlockEntity, INamedDevice {
+        implements IPeripheralEndpoint, INamedDevice, ISignalOutput {
 
     private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
             PeripheralLinks.COMPUTING);
-    private final AnimatableInstanceCache geckoCache = GeckoLibUtil.createInstanceCache(this);
     /** The name a player gave it; empty until one is given, when it answers to the word for it. */
     private final ValueField<String> name = fields().value("InterfaceName", Codec.STRING, "").save().toClient();
     /** Whether it emits; it reads otherwise. */
@@ -84,6 +83,8 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
     /** What an interface with no name of its own answers to. */
     public static final TextKey DEFAULT_NAME = TextKey.of("jsc.redstone_interface.default_name",
             "Redstone Interface");
+    /** Its one reading, as the Core's signals name it. */
+    public static final TextKey SIGNAL = TextKey.of("jsc.redstone_interface.reading.signal", "Signal");
 
     public RedstoneInterfaceBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.REDSTONE_INTERFACE_BE.get(), pos, state);
@@ -219,8 +220,11 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
         return emits.get();
     }
 
-    /** The strength it emits while it emits. */
-    public int strength() {
+    /**
+     * The strength it emits while it emits, as it was set; what it says to readers of the Core's signals is
+     * {@link #strength()}, the strength its lens shows.
+     */
+    public int emitStrength() {
         return strength.get();
     }
 
@@ -239,7 +243,16 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
         if (!live()) {
             return 0;
         }
-        return emits() ? strength() : reading();
+        return emits() ? emitStrength() : reading();
+    }
+
+    /**
+     * What it says to whatever reads the Core's signals (another computer's interface, a comparator's reader, a
+     * controller): the strength it reads or emits, as its lens shows it.
+     */
+    @Override
+    public List<Reading> readings() {
+        return List.of(new Reading(SIGNAL, shownStrength(), 0, MAX_STRENGTH, null));
     }
 
     /** The program that last set it; empty when a player did, or nothing has. */
@@ -270,16 +283,6 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
                 : HardwareEra.STANDARD;
     }
 
-    /* Nothing on it moves: its lens and lamps are shown and hidden by its renderer. */
-    @Override
-    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return geckoCache;
-    }
-
     /*
      * Once a tick, after its link: reads the signal at its lens while it reads, and tells the block in front when what
      * it emits changed, so a signal follows the computer within the tick it was set.
@@ -290,7 +293,7 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
                 && linkedTo.isDisabled(pos.asLong()));
         final boolean powered = live();
         reading.set(powered && !emits() ? readFront(level, pos, state) : 0);
-        final int now = powered && emits() ? strength() : 0;
+        final int now = powered && emits() ? emitStrength() : 0;
         if (now != output) {
             output = now;
             setChanged();
@@ -302,12 +305,14 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
 
     /*
      * The signal coming into its lens's face, read as a repeater reads its input: what the block there emits toward
-     * it, or the power of a redstone wire lying there.
+     * it, or the power of a redstone wire lying there; and what a sensor or a machine there says on that face through
+     * the Core's signals, as a comparator would read it, though it gives no redstone of its own.
      */
     private static int readFront(final ServerLevel level, final BlockPos pos, final BlockState state) {
         final Direction facing = state.getValue(RedstoneInterfaceBlock.FACING);
         final BlockPos front = pos.relative(facing);
-        final int signal = level.getSignal(front, facing);
+        final int signal = Math.max(level.getSignal(front, facing), Signals.strengthAt(level, front,
+                facing.getOpposite()));
         if (signal >= MAX_STRENGTH) {
             return signal;
         }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.audio.ProgramCue;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.crafting.PatternWorkbench;
@@ -19,9 +20,8 @@ import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.IInstallingMachine;
 import dev.jstech.computers.program.ComputerConsoleState;
-import dev.jstech.core.JsCore;
-import dev.jstech.core.peripheral.IPeripheralOwner;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.List;
@@ -367,7 +367,7 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
          * a program and not for the disk it sits on. A service registered under a language's own name is that
          * language's runtime, so nothing has to be named here for this to hold for an addon's language too.
          */
-        if (JsCore.languages().get(service.id()) == null) {
+        if (JsComputersApi.languages().get(service.id()) == null) {
             return true;
         }
         final MachinePrograms running = programs();

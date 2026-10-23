@@ -13,7 +13,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -59,7 +59,7 @@ public final class LogCommand {
 
     /** Declares the command, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("log", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("log", CommandRoot.ADMINS, (node, context) -> node
                 .executes(LogCommand::list)
                 .then(Commands.argument(SYSTEM, ResourceLocationArgument.id()).suggests(SYSTEMS)
                         .executes(LogCommand::show)

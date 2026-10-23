@@ -15,7 +15,7 @@ import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.media.InstallerProjection;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

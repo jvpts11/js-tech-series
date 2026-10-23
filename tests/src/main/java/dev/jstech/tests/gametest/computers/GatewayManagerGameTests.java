@@ -17,17 +17,22 @@ import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
+import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -83,11 +88,11 @@ public final class GatewayManagerGameTests {
         return GatewayManager.state(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), Text.EMPTY);
     }
 
-    /** What the action said, in English. */
+    /** What the action said, in English, with no player asking, as a program's own action. */
     private static String act(final GameTestHelper helper, final Fleet fleet, final int action, final int value,
                               final String text) {
         return GatewayManager.act(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), action, value,
-                text).english();
+                text, null).english();
     }
 
     @GameTest(template = ARENA)
@@ -133,6 +138,35 @@ public final class GatewayManagerGameTests {
                     helper.assertTrue("gateway-1".equals(gateway(helper).name()), "an empty name goes back to the default; " + missing);
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void playerAction_isAllowedByTheNodeEveryPlayerHolds(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        final UUID player = helper.makeMockPlayer(GameType.SURVIVAL).getUUID();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final String said = GatewayManager.act(helper.getLevel(), fleet.host(),
+                            helper.absolutePos(GATEWAY).asLong(), GatewayManagerActionPayload.ACTION_RENAME, 0,
+                            "Bridge", player).english();
+                    helper.assertTrue("bridge".equals(gateway(helper).name()),
+                            "a player who is no operator renames the gateway; got " + said);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void permissions_areDeclaredWithTheCoreAtTheirLevels(final GameTestHelper helper) {
+        final Map<String, Integer> levels = new HashMap<>();
+        for (final CorePermissions.Declared declared : CorePermissions.declared()) {
+            levels.put(declared.node().getNodeName(), declared.level());
+        }
+        helper.assertTrue(Integer.valueOf(0).equals(levels.get("jsc.gateway.configure")),
+                "every player may act on a gateway unless a server says; got " + levels.get("jsc.gateway.configure"));
+        helper.assertTrue(Integer.valueOf(CorePermissions.OPERATORS).equals(levels.get(
+                "jsc.soundfoundry.catalog.reload")), "reading the music catalogue again is an operator's; got "
+                + levels.get("jsc.soundfoundry.catalog.reload"));
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 400)

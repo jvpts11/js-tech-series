@@ -12,7 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.content.ContentTab;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.List;

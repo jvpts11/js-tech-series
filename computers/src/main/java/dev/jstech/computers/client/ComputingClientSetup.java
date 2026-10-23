@@ -40,27 +40,30 @@ import dev.jstech.computers.client.bus.ReceivingBusScreen;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.SigmaImages;
+import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.registry.ComputingMenus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.world.item.Item;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RenderItemInFrameEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Client-only wiring for the Computing module: binds each computer menu to its screen, registers the data-cable renderer that draws mounted bus parts, and makes the standalone funnel part models available to the model manager.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class ComputingClientSetup {
 
     /** The operating space the mod itself brings, which is what MC-NET ships with. */
@@ -70,7 +73,15 @@ public final class ComputingClientSetup {
     private ComputingClientSetup() {
     }
 
-    @SubscribeEvent
+    /** Hands the buses what this answers, once, from the mod's client constructor. */
+    public static void listen(final IEventBus modBus) {
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, ComputingClientSetup::onLoggingOut);
+        NeoForge.EVENT_BUS.addListener(RenderItemInFrameEvent.class, ComputingClientSetup::onRenderItemInFrame);
+        modBus.addListener(RegisterMenuScreensEvent.class, ComputingClientSetup::registerScreens);
+        modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, ComputingClientSetup::registerRenderers);
+        modBus.addListener(RegisterClientExtensionsEvent.class, ComputingClientSetup::registerItemRenderers);
+    }
+
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         // The desktop's per-machine caches belong to the world being left.
         ActiveDesktop.forgetClientState();
@@ -84,12 +95,10 @@ public final class ComputingClientSetup {
     }
 
     /** A printed picture in an item frame shows on it, as a map does. */
-    @SubscribeEvent
     public static void onRenderItemInFrame(final RenderItemInFrameEvent event) {
         PrintedPaperFrames.onRenderItemInFrame(event);
     }
 
-    @SubscribeEvent
     public static void registerScreens(final RegisterMenuScreensEvent event) {
         // Wire the client-side firmware screen opener so blocks can open it without importing Minecraft.
         IFirmwareScreenOpener.Holder.set((pos, monitorPos, kind, name) -> FirmwareScreen.expect(kind, name));
@@ -190,27 +199,37 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.CRAFTING_INTERFACE_MENU.get(), CraftingInterfaceScreen::new);
     }
 
-    @SubscribeEvent
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
-        // Every rack cabinet (server, per era, and supercomputer) is one GeckoLib model on its controller.
-        event.registerBlockEntityRenderer(ComputingModule.SERVER_RACK_BE.get(), RackRenderer::new);
+        // Every rack cabinet (server, per era, and supercomputer) is one model on its controller.
+        event.registerBlockEntityRenderer(ComputingModule.SERVER_RACK_BE.get(), RackRenderer::create);
         // The Mainframe is the same idea: one cabinet per era, drawn from the controller block.
-        event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), MainframeRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), MainframeRenderer::create);
         // The Pattern Encoder: one burner body per era, with its bay and lamps.
-        event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::new);
-        event.registerBlockEntityRenderer(ComputingModule.PRINTER_BE.get(), PrinterRenderer::new);
-        event.registerBlockEntityRenderer(ComputingModule.DOCK_STATION_BE.get(), DockStationRenderer::new);
-        // The floppy, CD and DVD drives the same way; the Dock Station keeps its block model.
-        event.registerBlockEntityRenderer(ComputingModule.MEDIA_READER_BE.get(), MediaDriveRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::create);
+        event.registerBlockEntityRenderer(ComputingModule.PRINTER_BE.get(), PrinterRenderer::create);
+        event.registerBlockEntityRenderer(ComputingModule.DOCK_STATION_BE.get(), DockStationRenderer::create);
+        // The floppy, CD and DVD drives the same way.
+        event.registerBlockEntityRenderer(ComputingModule.MEDIA_READER_BE.get(), MediaDriveRenderer::create);
         // The Redstone Interfaces: the sensor of each era, its lens and mode lamps showing what it does.
         event.registerBlockEntityRenderer(ComputingModule.REDSTONE_INTERFACE_BE.get(),
-                RedstoneInterfaceRenderer::new);
+                RedstoneInterfaceRenderer::create);
         // The small computers: each machine's case, by its age and the case it comes in.
-        event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::new);
-        event.registerBlockEntityRenderer(ComputingModule.CRAFTING_COMPUTER_BE.get(), ComputerRenderer::new);
-        event.registerBlockEntityRenderer(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(), ComputerRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::create);
+        event.registerBlockEntityRenderer(ComputingModule.CRAFTING_COMPUTER_BE.get(), ComputerRenderer::create);
+        event.registerBlockEntityRenderer(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(),
+                ComputerRenderer::create);
         // The monitors: what the machine shows, live on the glass, and a big screen drawn whole.
         event.registerBlockEntityRenderer(ComputingModule.MONITOR_BE.get(), MonitorScreenRenderer::new);
+    }
+
+    /** The item of every cabinet shows the cabinet, drawn with the same model the world shows. */
+    public static void registerItemRenderers(final RegisterClientExtensionsEvent event) {
+        final IClientItemExtensions cabinets = CabinetItemRenderer.extensions();
+        for (final Item item : BuiltInRegistries.ITEM) {
+            if (item instanceof CabinetBlockItem) {
+                event.registerItem(cabinets, item);
+            }
+        }
     }
 
     /*

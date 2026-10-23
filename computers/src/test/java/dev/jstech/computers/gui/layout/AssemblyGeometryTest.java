@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;

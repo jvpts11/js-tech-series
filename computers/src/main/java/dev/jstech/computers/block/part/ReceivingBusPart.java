@@ -15,7 +15,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

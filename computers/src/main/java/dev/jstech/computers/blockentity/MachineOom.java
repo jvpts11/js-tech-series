@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
@@ -18,7 +19,6 @@ import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.crash.OomKiller;
-import dev.jstech.core.JsCore;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -113,7 +113,7 @@ final class MachineOom {
                 }
                 case SERVICE -> {
                     final ResourceLocation id = ResourceLocation.tryParse(entry.key());
-                    if (id != null && JsCore.languages().get(id) != null) {
+                    if (id != null && JsComputersApi.languages().get(id) != null) {
                         // A language's runtime is in memory for the programs it runs, so ending it ends them all.
                         if (programs != null) {
                             front |= programs.held() != 0;

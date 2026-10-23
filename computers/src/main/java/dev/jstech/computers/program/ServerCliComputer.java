@@ -9,6 +9,7 @@ package dev.jstech.computers.program;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.ProgramTravels;
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.ProgramService;
@@ -35,7 +36,6 @@ import dev.jstech.computers.program.install.LiveTurn;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -374,7 +374,7 @@ public final class ServerCliComputer extends ServerCliNetwork {
             return null;
         }
         final ResourceLocation id = ResourceLocation.tryParse(entry.key());
-        if (id == null || JsCore.languages().get(id) != null || OsRegistry.serviceIndex(id) < 0) {
+        if (id == null || JsComputersApi.languages().get(id) != null || OsRegistry.serviceIndex(id) < 0) {
             return null;
         }
         return OsRegistry.getProgram(id);

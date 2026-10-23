@@ -12,16 +12,13 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
-import dev.jstech.core.material.MaterialForm;
-import dev.jstech.core.material.MaterialItems;
-import dev.jstech.core.material.ModMaterial;
-import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
 import dev.jstech.industrial.blockentity.TankBlockEntity;
-import dev.jstech.industrial.menu.ProcessingMachineMenu;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,6 +28,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -155,12 +153,9 @@ public final class CoreKitGameTests {
         final CompressorBlockEntity machine = compressor(helper);
         final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         player.getInventory().setItem(0, new ItemStack(Items.IRON_INGOT, 5));
-        final ProcessingMachineMenu menu = new ProcessingMachineMenu(IndustrialModule.COMPRESSOR_MENU.get(), 1,
-                player.getInventory(), machine);
-        // The input, the output, the 27 of the main grid, then the hotbar, whose first slot is index 29.
-        final int firstHotbarSlot = 29;
+        final MachineMenu menu = new MachineMenu(1, player.getInventory(), machine);
 
-        menu.quickMoveStack(player, firstHotbarSlot);
+        menu.quickMoveStack(player, firstHotbarSlot(menu, player));
         helper.assertTrue(machine.getInventory().getStackInSlot(INPUT_SLOT)
                 .getCount() == 5, "a shift-click in the player's inventory sends the stack to the input");
 
@@ -179,8 +174,7 @@ public final class CoreKitGameTests {
         // A player left out of the world: one in it would be sent the packets of every other test.
         final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         player.moveTo(helper.absoluteVec(IN_FRONT));
-        final ProcessingMachineMenu menu = new ProcessingMachineMenu(IndustrialModule.COMPRESSOR_MENU.get(), 1,
-                player.getInventory(), machine);
+        final MachineMenu menu = new MachineMenu(1, player.getInventory(), machine);
 
         helper.assertTrue(menu.stillValid(player), "the menu stays open beside its machine");
         helper.setBlock(MACHINE, Blocks.AIR);
@@ -279,7 +273,7 @@ public final class CoreKitGameTests {
 
         helper.succeedWhen(() -> helper.assertTrue(machine.getInventory()
                 .getStackInSlot(OUTPUT_SLOT)
-                .is(MaterialItems.get(ModMaterial.IRON, MaterialForm.PLATE).get()),
+                .is(IndustrialModule.IRON_PLATE.get()),
                 "the ingot comes out a plate"));
     }
 
@@ -304,5 +298,16 @@ public final class CoreKitGameTests {
             helper.fail("no " + type.getSimpleName() + " at " + MACHINE);
         }
         return type.cast(found);
+    }
+
+    /* The menu's slot of the first of the player's hotbar, after the machine's own and the main grid. */
+    private static int firstHotbarSlot(final MachineMenu menu, final Player player) {
+        for (int i = 0; i < menu.slots.size(); i++) {
+            final Slot slot = menu.slots.get(i);
+            if (slot.container == player.getInventory() && slot.getContainerSlot() == 0) {
+                return i;
+            }
+        }
+        throw new IllegalStateException("the menu shows no hotbar");
     }
 }

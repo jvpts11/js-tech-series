@@ -17,7 +17,7 @@ import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;

@@ -8,7 +8,7 @@
 package dev.jstech.computers.advancement;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * What a computer's parts can earn once they are in: a board with every RAM slot taken, and a working build of

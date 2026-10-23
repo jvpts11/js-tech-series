@@ -14,7 +14,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import org.jetbrains.annotations.Nullable;
 

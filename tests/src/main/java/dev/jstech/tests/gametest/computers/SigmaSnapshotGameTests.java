@@ -20,7 +20,7 @@ import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Snapshot;
 import dev.jstech.computers.vm.program.SnapshotException;
-import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;

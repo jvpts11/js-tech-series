@@ -30,7 +30,7 @@ extended.
 
 ## What is in the box today
 
-Four machines, each a block that faces the way you placed it, with a screen of its own:
+Four machines, each a block that faces the way you placed it, opening the screen every machine of the series has:
 
 - The Coal Generator burns furnace fuel and produces energy (FE), pushing it into the machines next to it.
 - The Macerator grinds ores and raw ores into two dusts each, and ingots into dust: one ore becomes two
@@ -38,13 +38,14 @@ Four machines, each a block that faces the way you placed it, with a screen of i
 - The Compressor presses ingots into plates.
 - The Electric Furnace smelts with energy instead of fuel, using the vanilla smelting recipes.
 
-And the Energy Cable, which carries energy from the generators to the machines at any distance, losing none.
+Their energy runs along the series' basic cable, J's Core's Insulated Copper Cable, and the dusts and plates they
+make are J's Core's too: both are on the "J's Tech" tab, with the rest of what the mods of the series share.
 Every machine, with its numbers and what can go wrong, is explained in [the machines](docs/MACHINES.md); recipes,
 tags and capabilities for other mods and data packs are in [for mod and pack authors](docs/FOR_MOD_AUTHORS.md).
 
 The dusts and plates themselves are the material items of J's Core, so every mod of the series shares
-them; this mod adds their recipes and tags them the common way (`c:dusts/iron`, `c:plates/copper`, and so
-on), so machines from other mods accept them and their ingots work here.
+them; this mod declares that it uses them and adds their recipes, and J's Core tags them the common way
+(`c:dusts/iron`, `c:plates/copper`, and so on), so machines from other mods accept them and their ingots work here.
 
 Every machine exposes its inventory and its energy buffer as capabilities: hoppers and pipes move items in
 and out, and any FE generator can power it. When J's Computers is installed, the Pattern Studio knows

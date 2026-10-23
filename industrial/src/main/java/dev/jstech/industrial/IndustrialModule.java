@@ -7,10 +7,6 @@
  */
 package dev.jstech.industrial;
 
-import dev.jstech.core.cable.CableEntry;
-import dev.jstech.core.cable.CableType;
-import dev.jstech.core.cable.Lane;
-import dev.jstech.core.connect.Connection;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
@@ -20,57 +16,46 @@ import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.ModContent;
-import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.item.FluidBlockItem;
+import dev.jstech.core.jstechseries.SeriesMaterials;
+import dev.jstech.core.jstechseries.SharedUses;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.ProcessingKind;
-import dev.jstech.core.machine.ProcessingMachineBlockEntity;
-import dev.jstech.core.material.MaterialForm;
-import dev.jstech.core.material.MaterialItems;
-import dev.jstech.core.material.ModMaterial;
-import dev.jstech.industrial.block.TankBlock;
+import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
 import dev.jstech.industrial.blockentity.ElectricFurnaceBlockEntity;
 import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
 import dev.jstech.industrial.blockentity.TankBlockEntity;
-import dev.jstech.industrial.item.TankItem;
-import dev.jstech.industrial.menu.CoalGeneratorMenu;
-import dev.jstech.industrial.menu.ProcessingMachineMenu;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import java.util.function.Supplier;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * Everything the industrial mod registers: its machines, their block entities, recipes, menus and its
- * creative tab.
+ * Everything the industrial mod registers: its machines, their block entities, recipes and its creative tab, and what
+ * it uses of the series' shared content. Its machines open the screen every machine of the series has, the Core's.
  */
 public final class IndustrialModule {
 
     public static final ModContent CONTENT = new ModContent(JsIndustrial.MODID);
 
-    public static final DeferredRegister<MenuType<?>> MENUS =
-            DeferredRegister.create(Registries.MENU, JsIndustrial.MODID);
-
-    // Creative tab: the machines, then the core's material items, which have no tab of their own.
+    /*
+     * Creative tab: the machines, then the storage. What the mod uses of the series' shared content (its cable, its
+     * materials) is on the J's Tech tab, with everything else the series' mods share.
+     */
 
     public static final ContentTab INDUSTRIAL_TAB =
             CONTENT.tab("industrial", "J's Industrial", () -> IndustrialModule.MACERATOR);
 
-    private static final ContentTab.Section MACHINES = INDUSTRIAL_TAB.section().alsoShowing(output -> {
-        for (final ModMaterial material : ModMaterial.values()) {
-            for (final MaterialForm form : material.activeModForms()) {
-                output.accept(MaterialItems.get(material, form).get());
-            }
-        }
-    });
-    private static final ContentTab.Section CABLES = INDUSTRIAL_TAB.section();
+    private static final ContentTab.Section MACHINES = INDUSTRIAL_TAB.section();
     private static final ContentTab.Section STORAGE = INDUSTRIAL_TAB.section();
     /** The tab's last shelf: the mod's manual. */
     public static final ContentTab.Section MANUALS = INDUSTRIAL_TAB.section();
@@ -84,62 +69,63 @@ public final class IndustrialModule {
     public static final ProcessingKind COMPRESSING =
             CONTENT.processing("compressing", "Compressing", () -> IndustrialModule.COMPRESSOR);
 
-    // Machines, in the order the tab shows them: each ticks its block entity and opens its menu when used
+    /*
+     * Machines, in the order the tab shows them: each is ticked by the Core's machine kit, which runs its work, its
+     * sides and its state, and opens the screen every machine has when used.
+     */
 
     public static final BlockEntry<DeviceBlock> MACERATOR = machine("macerator",
-            Device.of(() -> IndustrialModule.MACERATOR_BE.get()).ticks(ProcessingMachineBlockEntity::serverTick)
-                    .opensMenu((id, inventory, machine) ->
-                            new ProcessingMachineMenu(IndustrialModule.MACERATOR_MENU.get(), id, inventory, machine)))
+            Device.of(() -> IndustrialModule.MACERATOR_BE.get()).ticks(MachineBlockEntity::serverTick)
+                    .opensMenu(MachineMenu::new))
             .named("Macerator").register();
 
     public static final BlockEntry<DeviceBlock> ELECTRIC_FURNACE = machine("electric_furnace",
-            Device.of(() -> IndustrialModule.ELECTRIC_FURNACE_BE.get())
-                    .ticks(ProcessingMachineBlockEntity::serverTick)
-                    .opensMenu((id, inventory, machine) -> new ProcessingMachineMenu(
-                            IndustrialModule.ELECTRIC_FURNACE_MENU.get(), id, inventory, machine)))
+            Device.of(() -> IndustrialModule.ELECTRIC_FURNACE_BE.get()).ticks(MachineBlockEntity::serverTick)
+                    .opensMenu(MachineMenu::new))
             .named("Electric Furnace").register();
 
     public static final BlockEntry<DeviceBlock> COMPRESSOR = machine("compressor",
-            Device.of(() -> IndustrialModule.COMPRESSOR_BE.get()).ticks(ProcessingMachineBlockEntity::serverTick)
-                    .opensMenu((id, inventory, machine) ->
-                            new ProcessingMachineMenu(IndustrialModule.COMPRESSOR_MENU.get(), id, inventory, machine)))
+            Device.of(() -> IndustrialModule.COMPRESSOR_BE.get()).ticks(MachineBlockEntity::serverTick)
+                    .opensMenu(MachineMenu::new))
             .named("Compressor").register();
 
     public static final BlockEntry<DeviceBlock> COAL_GENERATOR = machine("coal_generator",
-            Device.of(() -> IndustrialModule.COAL_GENERATOR_BE.get()).ticks(CoalGeneratorBlockEntity::serverTick)
-                    .opensMenu(CoalGeneratorMenu::new))
+            Device.of(() -> IndustrialModule.COAL_GENERATOR_BE.get()).ticks(MachineBlockEntity::serverTick)
+                    .opensMenu(MachineMenu::new))
             .named("Coal Generator").register();
 
-    // Cables
+    // Materials: the series' shared ones the machines make, which the Core registers because the mod uses them.
 
-    /** The line energy runs along between machines. */
-    public static final Connection ENERGY_LINE =
-            Connection.of(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "energy"));
+    /** Iron Dust, which the Macerator grinds from ore and from ingots. */
+    public static final Supplier<Item> IRON_DUST =
+            MaterialUses.use(JsIndustrial.MODID, SeriesMaterials.IRON, Forms.DUST);
+    /** Iron Plate, which the Compressor presses from an ingot. */
+    public static final Supplier<Item> IRON_PLATE =
+            MaterialUses.use(JsIndustrial.MODID, SeriesMaterials.IRON, Forms.PLATE);
+    /** Copper Plate, which the Compressor presses from an ingot. */
+    public static final Supplier<Item> COPPER_PLATE =
+            MaterialUses.use(JsIndustrial.MODID, SeriesMaterials.COPPER, Forms.PLATE);
 
-    /**
-     * The energy cable, laid in the Core's shared cable block in the energy lane: for now the only one, carrying any
-     * amount of energy any distance and losing none of it.
-     */
-    public static final CableEntry ENERGY_CABLE = CONTENT.cable("energy_cable", CableType.builder(ENERGY_LINE)
-                    .describe(IndustrialTexts.ENERGY_CABLE_JOB, null)
-                    .grid(GridKind.POWER).lane(Lane.BOTTOM_LEFT).carries(Long.MAX_VALUE, 0)
-                    .jacket(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "block/cable/energy"))
-                    .plug(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "block/cable/plug/energy")))
-            .named("Energy Cable").tab(CABLES).register();
+    static {
+        // Its machines' energy runs along the series' basic cable, J's Core's: it has no energy cable of its own.
+        SharedUses.declare(JsIndustrial.MODID, () -> SharedEnergy.INSULATED_COPPER_CABLE);
+    }
 
     // Storage
 
     /*
-     * The Tank: glass walls in a metal casing, so it reads as a vessel rather than a solid block. Broken, it keeps its
-     * fluid in its item.
+     * The Tank: glass walls in a metal casing, so it reads as a vessel rather than a solid block. A bucket fills and
+     * empties it, and broken, it keeps its liquid in its item.
      */
-    public static final BlockEntry<TankBlock> TANK = CONTENT.block("tank", TankBlock::new)
+    public static final BlockEntry<DeviceBlock> TANK = CONTENT.block("tank",
+                    Device.of(() -> IndustrialModule.TANK_BE.get()).fillsFromContainers()::block)
             .properties(properties -> properties.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(0.6F)
                     .sound(SoundType.GLASS).noOcclusion())
             .named("Tank")
             .look(IBlockLook.fixed(new IBlockModel.BottomTop("tank", "minecraft:block/glass",
                     "block/tank_casing", "block/tank_casing", "cutout")))
-            .item(TankItem::new).tab(STORAGE).drops(Drops.SELF_WITH_CONTENTS).register();
+            .item((block, properties) -> new FluidBlockItem(block, properties, TankBlockEntity.CAPACITY_MB))
+            .tab(STORAGE).drops(Drops.SELF_WITH_CONTENTS).register();
 
     // Block entities
 
@@ -158,30 +144,11 @@ public final class IndustrialModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TankBlockEntity>> TANK_BE =
             CONTENT.blockEntity("tank", TankBlockEntity::new, TANK);
 
-    // Menus
-
-    public static final DeferredHolder<MenuType<?>, MenuType<ProcessingMachineMenu>> MACERATOR_MENU =
-            MENUS.register("macerator", () -> IMenuTypeExtension.create((id, inventory, buf) ->
-                    ProcessingMachineMenu.fromNetwork(IndustrialModule.MACERATOR_MENU.get(), id, inventory, buf)));
-
-    public static final DeferredHolder<MenuType<?>, MenuType<CoalGeneratorMenu>> COAL_GENERATOR_MENU =
-            MENUS.register("coal_generator", () -> IMenuTypeExtension.create(CoalGeneratorMenu::new));
-
-    public static final DeferredHolder<MenuType<?>, MenuType<ProcessingMachineMenu>> ELECTRIC_FURNACE_MENU =
-            MENUS.register("electric_furnace", () -> IMenuTypeExtension.create((id, inventory, buf) ->
-                    ProcessingMachineMenu.fromNetwork(IndustrialModule.ELECTRIC_FURNACE_MENU.get(), id, inventory,
-                            buf)));
-
-    public static final DeferredHolder<MenuType<?>, MenuType<ProcessingMachineMenu>> COMPRESSOR_MENU =
-            MENUS.register("compressor", () -> IMenuTypeExtension.create((id, inventory, buf) ->
-                    ProcessingMachineMenu.fromNetwork(IndustrialModule.COMPRESSOR_MENU.get(), id, inventory, buf)));
-
     private IndustrialModule() {
     }
 
     public static void register(final IEventBus modEventBus) {
         CONTENT.register(modEventBus);
-        MENUS.register(modEventBus);
     }
 
     /**

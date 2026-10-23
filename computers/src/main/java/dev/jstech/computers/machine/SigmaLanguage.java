@@ -18,7 +18,7 @@ import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.edit.CommentSpans;
 import dev.jstech.computers.sigma.lex.Lexer;
 import dev.jstech.computers.sigma.lex.TokenKind;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

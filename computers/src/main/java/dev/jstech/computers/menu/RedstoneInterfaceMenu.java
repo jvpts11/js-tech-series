@@ -13,7 +13,7 @@ import dev.jstech.computers.gui.layout.RedstoneInterfaceLayout;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -48,7 +48,7 @@ public class RedstoneInterfaceMenu extends CoreMenu {
         this.opening = opening;
         data(sensor.fields().menuData());
         button(BUTTON_IN, player -> sensor.read(""));
-        button(BUTTON_OUT, player -> sensor.emit(sensor.strength(), ""));
+        button(BUTTON_OUT, player -> sensor.emit(sensor.emitStrength(), ""));
         for (int strength = 0; strength < RedstoneInterfaceLayout.CELLS; strength++) {
             final int chosen = strength;
             button(BUTTON_STRENGTH + strength, player -> {

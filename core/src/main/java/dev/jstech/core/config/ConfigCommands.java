@@ -13,7 +13,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.team.CorePermissions;
@@ -95,7 +95,7 @@ public final class ConfigCommands {
 
     /** Declares the command, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("config", CorePermissions.OPERATORS, (node, context) -> node
+        CommandRoot.CORE.declare("config", CorePermissions.OPERATORS, (node, context) -> node
                 .then(Commands.literal("get").then(Commands.argument(FILE, StringArgumentType.word()).suggests(FILES)
                         .then(Commands.argument(SETTING, StringArgumentType.word()).suggests(SETTINGS)
                                 .executes(ConfigCommands::get))))

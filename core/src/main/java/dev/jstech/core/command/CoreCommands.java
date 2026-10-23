@@ -116,20 +116,20 @@ public final class CoreCommands {
 
     /** Declares the commands, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("progress", SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare("progress", CommandRoot.GAME_MASTERS, (node, context) -> node
                 .then(Commands.argument(PLAYERS, EntityArgument.players())
                         .then(Commands.argument(AXIS, ResourceLocationArgument.id()).suggests(AXES)
                                 .executes(CoreCommands::showProgress)
                                 .then(Commands.argument(STEP, StringArgumentType.word()).suggests(STEPS)
                                         .executes(CoreCommands::setProgress)))));
-        SeriesCommands.declare("chunks", SeriesCommands.GAME_MASTERS, (node, context) -> node
+        CommandRoot.CORE.declare("chunks", CommandRoot.GAME_MASTERS, (node, context) -> node
                 .executes(CoreCommands::showServerChunks)
                 .then(Commands.literal("map").executes(CoreCommands::mapChunks)
                         .then(Commands.literal("hide").executes(CoreCommands::unmapChunks)))
                 .then(Commands.argument(PLAYERS, EntityArgument.players())
                         .executes(CoreCommands::showChunks)
                         .then(Commands.literal("release").executes(CoreCommands::releaseChunks))));
-        SeriesCommands.declare("dimension", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("dimension", CommandRoot.ADMINS, (node, context) -> node
                 .then(Commands.literal("create")
                         .then(Commands.argument(DIMENSION, ResourceLocationArgument.id())
                                 .then(Commands.argument(TEMPLATE, ResourceLocationArgument.id()).suggests(TEMPLATES)

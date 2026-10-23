@@ -22,7 +22,7 @@ import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
 import net.minecraft.gametest.framework.GameTest;

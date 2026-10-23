@@ -23,7 +23,7 @@ import dev.jstech.computers.os.InstallMode;
 import dev.jstech.core.api.client.IGuideBlockRenderer;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.lang.ref.WeakReference;
 import java.util.EnumMap;
 import java.util.List;

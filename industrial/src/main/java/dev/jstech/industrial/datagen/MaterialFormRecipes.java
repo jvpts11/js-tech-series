@@ -8,13 +8,16 @@
 package dev.jstech.industrial.datagen;
 
 import dev.jstech.core.machine.ProcessingRecipeBuilder;
-import dev.jstech.core.material.MaterialForm;
-import dev.jstech.core.material.MaterialItems;
-import dev.jstech.core.material.ModMaterial;
+import dev.jstech.core.material.Form;
+import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.Material;
+import dev.jstech.core.material.MaterialUse;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.JsIndustrial;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
 import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
+import java.util.Map;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
@@ -23,62 +26,46 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
-import java.util.EnumMap;
-import java.util.Locale;
-
 /**
- * Loops over every active (material, form) pair and emits the appropriate machine recipe.
+ * Emits the machine recipe of every material form J's Industrial declares it uses, from the material's ingot.
  *
- * <p>Adding a production route for a new form is a single entry in {@link #PRODUCTIONS}.
- * Activating that form for a material is a single addition to {@link ModMaterial#activeModForms()}.
- * No other datagen files need to change.
+ * <p>Adding a production route for a new form is a single entry in {@link #PRODUCTIONS}; making a form of a material
+ * is declaring its use in {@link IndustrialModule}. No other datagen files need to change.
  *
- * <p>Special-case recipes (ore doubling, dust→ingot smelting) live in
- * {@link JsIndustrialRecipeProvider} because they use fixed input tags or vanilla item outputs
- * that are not derivable from the material/form pair alone.
+ * <p>Special-case recipes (ore doubling, dust to ingot smelting) live in {@link JsIndustrialRecipeProvider} because
+ * they use fixed input tags or vanilla item outputs that are not derivable from the material and the form alone.
  */
 public final class MaterialFormRecipes {
 
     @FunctionalInterface
     private interface IFormRecipe {
-        void generate(RecipeOutput out, ModMaterial mat, MaterialForm form);
+        void generate(RecipeOutput out, Material material, Form form);
     }
 
-    private static final EnumMap<MaterialForm, IFormRecipe> PRODUCTIONS = new EnumMap<>(MaterialForm.class);
     /** How long pressing and grinding (ingots and ores alike) take at Tier 1, in ticks. */
     private static final int COMPRESSING_TICKS = 120;
     static final int MACERATING_TICKS = 200;
 
-    static {
-        // Compress one ingot into one plate.
-        PRODUCTIONS.put(MaterialForm.PLATE, (out, mat, form) ->
-                ProcessingRecipeBuilder.of(IndustrialModule.COMPRESSING)
-                        .input(cTag(mat, MaterialForm.INGOT), 1)
-                        .output(MaterialItems.get(mat, form).get(), 1)
-                        .ticks(COMPRESSING_TICKS).energyPerTick(CompressorBlockEntity.FE_PER_TICK)
-                        .save(out, rl("compressing/" + id(mat, MaterialForm.INGOT, form))));
+    private static final Map<Form, IFormRecipe> PRODUCTIONS = Map.of(
+            // Compress one ingot into one plate.
+            Forms.PLATE, (out, material, form) -> ProcessingRecipeBuilder.of(IndustrialModule.COMPRESSING)
+                    .input(ingot(material), 1)
+                    .output(MaterialUses.item(material, form).get(), 1)
+                    .ticks(COMPRESSING_TICKS).energyPerTick(CompressorBlockEntity.FE_PER_TICK)
+                    .save(out, rl("compressing/" + id(material, form))),
+            // Macerate one ingot into one dust.
+            Forms.DUST, (out, material, form) -> macerating(out, ingot(material),
+                    new ItemStack(MaterialUses.item(material, form).get(), 1), id(material, form)));
 
-        // Macerate one ingot into one dust.
-        PRODUCTIONS.put(MaterialForm.DUST, (out, mat, form) ->
-                macerating(out, cTag(mat, MaterialForm.INGOT),
-                        new ItemStack(MaterialItems.get(mat, form).get(), 1), id(mat, MaterialForm.INGOT, form)));
-
-        /*
-         * BOLT, ROD, GEAR: production routes not yet established.
-         * Add one entry here per form when input, machine and ratio are defined.
-         */
+    private MaterialFormRecipes() {
     }
 
-    private MaterialFormRecipes() {}
-
-    /** Generates all machine recipes that have a defined production route. */
+    /** Generates the machine recipe of every form the mod uses that has a production route. */
     public static void generateAll(final RecipeOutput out) {
-        for (final ModMaterial mat : ModMaterial.values()) {
-            for (final MaterialForm form : mat.activeModForms()) {
-                final IFormRecipe recipe = PRODUCTIONS.get(form);
-                if (recipe != null) {
-                    recipe.generate(out, mat, form);
-                }
+        for (final MaterialUse use : MaterialUses.all()) {
+            final IFormRecipe recipe = PRODUCTIONS.get(use.form());
+            if (use.modid().equals(JsIndustrial.MODID) && recipe != null) {
+                recipe.generate(out, use.material(), use.form());
             }
         }
     }
@@ -96,16 +83,17 @@ public final class MaterialFormRecipes {
         return ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", path));
     }
 
-    private static String id(final ModMaterial mat, final MaterialForm inputForm, final MaterialForm outputForm) {
-        return mat.materialName() + "_" + inputForm.name().toLowerCase(Locale.ROOT)
-                + "_to_" + outputForm.name().toLowerCase(Locale.ROOT);
+    /* The recipe's name: its material, from its ingot, to its form, "iron_ingot_to_plate". */
+    private static String id(final Material material, final Form form) {
+        return material.id().getPath() + "_" + Forms.INGOT.id().getPath() + "_to_" + form.id().getPath();
     }
 
     private static ResourceLocation rl(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, path);
     }
 
-    private static Ingredient cTag(final ModMaterial mat, final MaterialForm inputForm) {
-        return Ingredient.of(cTag(inputForm.tagPath(mat.materialName())));
+    /* Any ingot of the material, by its common tag. */
+    private static Ingredient ingot(final Material material) {
+        return Ingredient.of(Forms.INGOT.itemTag(material));
     }
 }

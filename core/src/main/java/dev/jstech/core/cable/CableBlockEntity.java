@@ -32,8 +32,6 @@ import dev.jstech.core.multipart.PlacedModel;
 import dev.jstech.core.multipart.SmallBlockLayout;
 import dev.jstech.core.multipart.SpaceParts;
 import dev.jstech.core.multipart.SpaceSlots;
-import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
@@ -285,12 +283,12 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
 
     /**
      * The network the wire of {@code type} is on, on the server: the one it reaches the owner of without crossing a run
-     * longer than its cable reaches. Empty for none, or a wire not of data.
+     * longer than its cable reaches. Empty for none, or a wire of a grid that carries no network.
      */
     public Optional<NetworkUuid> network(final CableType type) {
         final OptionalLong number = dataNumber(type);
         return number.isEmpty() ? Optional.empty()
-                : NetworkSystem.get((ServerLevel) this.level).connectivity().networkOf(number.getAsLong());
+                : CoreGrids.networkOf((ServerLevel) this.level, number.getAsLong());
     }
 
     // The parts
@@ -589,11 +587,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         CoreGrids.place(server, wire.type().grid(), place, wire.member(), neighbours);
         final NetworkUuid saved = this.savedNetworks.get(wire.slot());
         if (saved != null && wire.type().grid().carriesNetwork()) {
-            final long number = CoreGrids.places(server).number(place);
-            final ConnectivityIndex index = NetworkSystem.get(server).connectivity();
-            if (index.joinedNetwork(number).isEmpty()) {
-                index.assignUuid(number, saved);
-            }
+            CoreGrids.assignNetwork(server, CoreGrids.places(server).number(place), saved);
         }
     }
 
@@ -863,7 +857,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                     // What the wire is joined into is kept, reached or not: reaching is worked out again on load.
                     final OptionalLong number = dataNumber(wire.type());
                     final Optional<NetworkUuid> joined = number.isEmpty() ? Optional.empty()
-                            : NetworkSystem.get(server).connectivity().joinedNetwork(number.getAsLong());
+                            : CoreGrids.joinedNetwork(server, number.getAsLong());
                     joined.ifPresent(network -> {
                         final CompoundTag entry = new CompoundTag();
                         entry.putString(LANE, wire.slot().serializedName());

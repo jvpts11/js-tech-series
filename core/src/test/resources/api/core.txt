@@ -5,10 +5,6 @@
 # it meets the bar docs/API.md sets for a stable part. Kept by the API surface test,
 # which writes to build/api-photo what this file would have to say when the API changes.
 stable 4
-1 dev.jstech.core.api.CoreRegisterEvent  type final class extends Event implements IModBusEvent
-1 dev.jstech.core.api.CoreRegisterEvent  LanguageRegistry languages()
-1 dev.jstech.core.api.CoreRegisterEvent  OperationTypeRegistry operations()
-1 dev.jstech.core.api.CoreRegisterEvent  new(LanguageRegistry, OperationTypeRegistry)
 1 dev.jstech.core.api.JsCoreApi  type final class
 5 dev.jstech.core.api.JsCoreApi  static final List<String> PROMISED_PACKAGES
 1 dev.jstech.core.api.JsCoreApi  static final boolean SETTLED
@@ -943,7 +939,7 @@ stable 4
 10 dev.jstech.core.cable.CableType  IBreachRule breach()
 10 dev.jstech.core.cable.CableType  Item item()
 10 dev.jstech.core.cable.CableType  ItemStack stack()
-10 dev.jstech.core.cable.CableType  Optional<HardwareEra> era()
+12 dev.jstech.core.cable.CableType  Optional<IAxisStep> step()
 10 dev.jstech.core.cable.CableType  Optional<Lane> lane()
 10 dev.jstech.core.cable.CableType  Optional<ResourceLocation> fitting()
 10 dev.jstech.core.cable.CableType  Optional<ResourceLocation> window()
@@ -953,7 +949,7 @@ stable 4
 10 dev.jstech.core.cable.CableType  ResourceLocation id()
 10 dev.jstech.core.cable.CableType  ResourceLocation jacket()
 10 dev.jstech.core.cable.CableType  ResourceLocation plug()
-10 dev.jstech.core.cable.CableType  ResourceLocation plug(PortKind)
+12 dev.jstech.core.cable.CableType  ResourceLocation plug(String)
 10 dev.jstech.core.cable.CableType  Set<ResourceLocation> allPlugs()
 10 dev.jstech.core.cable.CableType  boolean alone()
 10 dev.jstech.core.cable.CableType  boolean breaks()
@@ -972,7 +968,7 @@ stable 4
 10 dev.jstech.core.cable.CableType.Builder  Builder alone()
 10 dev.jstech.core.cable.CableType.Builder  Builder beyond(IBreachRule)
 10 dev.jstech.core.cable.CableType.Builder  Builder carries(long, int)
-10 dev.jstech.core.cable.CableType.Builder  Builder describe(TextKey, HardwareEra)
+12 dev.jstech.core.cable.CableType.Builder  Builder describe(TextKey, IAxisStep)
 10 dev.jstech.core.cable.CableType.Builder  Builder fitting(ResourceLocation)
 10 dev.jstech.core.cable.CableType.Builder  Builder grid(GridKind)
 10 dev.jstech.core.cable.CableType.Builder  Builder hangs(int)
@@ -982,8 +978,8 @@ stable 4
 10 dev.jstech.core.cable.CableType.Builder  Builder joinsAtMost(int)
 10 dev.jstech.core.cable.CableType.Builder  Builder lane(Lane)
 10 dev.jstech.core.cable.CableType.Builder  Builder loses(int)
-10 dev.jstech.core.cable.CableType.Builder  Builder plug(PortKind, ResourceLocation)
 10 dev.jstech.core.cable.CableType.Builder  Builder plug(ResourceLocation)
+12 dev.jstech.core.cable.CableType.Builder  Builder plug(String, ResourceLocation)
 10 dev.jstech.core.cable.CableType.Builder  Builder renewedBy(TextKey)
 10 dev.jstech.core.cable.CableType.Builder  Builder runsStraight()
 10 dev.jstech.core.cable.CableType.Builder  Builder takes(TagKey<Fluid>)
@@ -1088,6 +1084,8 @@ stable 4
 10 dev.jstech.core.cable.FlowSight  static final TextKey PER_TICK
 10 dev.jstech.core.cable.IBreachRule  type interface
 10 dev.jstech.core.cable.IBreachRule  abstract void exposed(ServerLevel, LineBreach, long)
+12 dev.jstech.core.cable.IPlugged  type interface
+12 dev.jstech.core.cable.IPlugged  abstract String plugKind()
 10 dev.jstech.core.cable.Lane  type enum implements IStableId, IStableName
 10 dev.jstech.core.cable.Lane  BOTTOM
 10 dev.jstech.core.cable.Lane  BOTTOM_LEFT
@@ -1178,12 +1176,6 @@ stable 4
 10 dev.jstech.core.capability.CapabilityKinds  type final class
 10 dev.jstech.core.capability.CapabilityKinds  static <T> CapabilityKind<T> declare(ResourceLocation, Class<T>)
 10 dev.jstech.core.capability.CapabilityKinds  static List<CapabilityKind<?>> all()
-10 dev.jstech.core.capability.IMonitorable  type interface extends INetworkNodeCapability
-10 dev.jstech.core.capability.IMonitorable  abstract List<Reading> readings()
-10 dev.jstech.core.capability.INetworkNodeCapability  type interface
-10 dev.jstech.core.capability.INetworkNodeCapability  abstract NetworkCategory getCategory()
-10 dev.jstech.core.capability.INetworkNodeCapability  abstract NodeUuid getNodeUuid()
-10 dev.jstech.core.capability.INetworkNodeCapability  abstract Optional<NetworkUuid> getNetworkUuid()
 10 dev.jstech.core.client.config.ConfigChoosers  type final class
 10 dev.jstech.core.client.config.ConfigChoosers  static Component describe(ConfigKey<?>, Object)
 10 dev.jstech.core.client.config.ConfigChoosers  static Optional<IConfigChooser> get(String)
@@ -2342,61 +2334,6 @@ stable 4
 10 dev.jstech.core.client.gui.theme.EraTheme  void track(GuiGraphics, int, int, int, double, int)
 10 dev.jstech.core.client.gui.theme.EraTheme  void vLine(GuiGraphics, int, int, int)
 10 dev.jstech.core.client.gui.theme.EraTheme  void window(GuiGraphics, int, int, int, int)
-10 dev.jstech.core.client.gui.theme.EraThemes  type final class
-10 dev.jstech.core.client.gui.theme.EraThemes  static EraTheme of(HardwareEra)
-10 dev.jstech.core.client.gui.theme.EraThemes  static EraTheme ofNullable(HardwareEra)
-10 dev.jstech.core.client.gui.theme.EraThemes  static final EraTheme ADVANCED
-10 dev.jstech.core.client.gui.theme.EraThemes  static final EraTheme LEGACY
-10 dev.jstech.core.client.gui.theme.EraThemes  static final EraTheme STANDARD
-10 dev.jstech.core.client.gui.theme.EraThemes  static final EraTheme TRANSITION
-10 dev.jstech.core.client.gui.theme.EraThemes  static final EraTheme VINTAGE
-10 dev.jstech.core.client.gui.theme.EraThemes  static final Palette<EraPalette> ADVANCED_COLOURS
-10 dev.jstech.core.client.gui.theme.EraThemes  static final Palette<EraPalette> LEGACY_COLOURS
-10 dev.jstech.core.client.gui.theme.EraThemes  static final Palette<EraPalette> STANDARD_COLOURS
-10 dev.jstech.core.client.gui.theme.EraThemes  static final Palette<EraPalette> TRANSITION_COLOURS
-10 dev.jstech.core.client.gui.theme.EraThemes  static final Palette<EraPalette> VINTAGE_COLOURS
-10 dev.jstech.core.client.gui.theme.JsTechTheme  type final class
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static EraTheme active()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static String fmt(long)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static float small()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int accent()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int accent2()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int amber()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int dim()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int green()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int hover()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int line()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int outer()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int panel()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int rail()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int red()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int screen()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int slotBg()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int slotEdge()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int tabLabelOn()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int tabOn()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int text()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int track()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static int widthS(Font, String)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void bind(EraTheme)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void button(GuiGraphics, int, int, int, int, boolean)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void hLine(GuiGraphics, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void headerBar(GuiGraphics, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void panel(GuiGraphics, int, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void selectedTab(GuiGraphics, int, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void slot(GuiGraphics, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void text(GuiGraphics, Font, String, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void textCenter(GuiGraphics, Font, String, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void textRight(GuiGraphics, Font, String, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void textS(GuiGraphics, Font, String, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void textSCenter(GuiGraphics, Font, String, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void textSRight(GuiGraphics, Font, String, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void tileText(GuiGraphics, Font, int, int, String, String, String, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void tileTextS(GuiGraphics, Font, int, int, String, String, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void track(GuiGraphics, int, int, int, double, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void unbind()
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void vLine(GuiGraphics, int, int, int)
-10 dev.jstech.core.client.gui.theme.JsTechTheme  static void window(GuiGraphics, int, int, int, int)
 6 dev.jstech.core.codec.NetworkCodecs  type final class
 6 dev.jstech.core.codec.NetworkCodecs  static <T> StreamCodec<ByteBuf, T> fromSaveWithoutRegistries(Codec<T>)
 6 dev.jstech.core.codec.NetworkCodecs  static <T> StreamCodec<RegistryFriendlyByteBuf, T> fromSave(Codec<T>)
@@ -2760,14 +2697,12 @@ stable 4
 12 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> WORLD_CHUNKS_WHILE_AWAY
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> WORLD_EVENTS_ENABLED
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Double> MOVING_PHYSICS_MILLIS
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Double> SUBFRAME_EFFICIENCY_FACTOR
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Double> TOOLS_HARDNESS_MARGIN
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> CALENDAR_DAYS_PER_SEASON
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> DIAGNOSTICS_STALL_MILLIS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> ELEMENTS_LONGEST_NAME
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> EXPLOSIONS_BROKEN
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> EXPLOSIONS_LOOKED_AT
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> HDD_LATENCY_TICKS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> MEDIA_DOWNLOAD_KILOBYTES_PER_SECOND
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> MEDIA_MAX_FILE_MEGABYTES
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> MEDIA_PLAYER_QUOTA_MEGABYTES
@@ -2775,18 +2710,11 @@ stable 4
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> MOVING_MOST_BLOCKS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> MULTIBLOCK_BLOCKS_PER_SECOND
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> MULTIBLOCK_BUILD_REACH
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> NVME_LATENCY_TICKS
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> OPERATION_PRIORITY_AGING_TICKS
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> OPERATION_WAITING_TIMEOUT_TICKS
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> ORPHANED_OPERATIONS_EXPIRY_HOURS
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROGRAM_MACHINE_MICROS
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROGRAM_SERVER_MICROS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROTECTION_AUDIT_ENTRIES
 11 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROTECTION_EDITS_PER_PLAYER
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROTECTION_ROBOTS_PER_PLAYER
 11 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> PROTECTION_STRUCTURES_PER_PLAYER
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> ROOMS_LARGEST
-10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> SSD_LATENCY_TICKS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> TOOLS_MOST_BROKEN
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> TOOLS_MOST_COPIED
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> TOOLS_MOST_PLACED
@@ -2801,7 +2729,6 @@ stable 4
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Map<String, Double>> VEINS_RARITY
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Map<String, Double>> VEINS_SPREAD
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Map<String, Double>> WORLD_EVENTS_FREQUENCY
-10 dev.jstech.core.config.CoreConfigKeys  static final String BALANCE
 10 dev.jstech.core.config.CoreConfigKeys  static final String CALENDAR
 10 dev.jstech.core.config.CoreConfigKeys  static final String DIAGNOSTICS
 10 dev.jstech.core.config.CoreConfigKeys  static final String ELEMENTS
@@ -3015,6 +2942,7 @@ stable 4
 10 dev.jstech.core.content.DeclaredModel  static final String DEFINITION_ENDING
 10 dev.jstech.core.content.DeclaredModel  static final String FOLDER
 10 dev.jstech.core.content.Device  type final class<E extends BlockEntity>
+12 dev.jstech.core.content.Device  Device<E> fillsFromContainers()
 10 dev.jstech.core.content.Device  Device<E> opensMenu(IMenuFactory<E>)
 10 dev.jstech.core.content.Device  Device<E> ticks(BlockEntityTicker<E>)
 10 dev.jstech.core.content.Device  DeviceBlock block(BlockBehaviour.Properties)
@@ -3027,6 +2955,7 @@ stable 4
 10 dev.jstech.core.content.DeviceBlock  BlockState getStateForPlacement(BlockPlaceContext)
 10 dev.jstech.core.content.DeviceBlock  new(Properties, Device<?>)
 10 dev.jstech.core.content.DeviceBlock  protected InteractionResult useWithoutItem(BlockState, Level, BlockPos, Player, BlockHitResult)
+12 dev.jstech.core.content.DeviceBlock  protected ItemInteractionResult useItemOn(ItemStack, BlockState, Level, BlockPos, Player, InteractionHand, BlockHitResult)
 10 dev.jstech.core.content.DeviceBlock  protected MapCodec<? extends HorizontalDirectionalBlock> codec()
 10 dev.jstech.core.content.DeviceBlock  protected boolean hasAnalogOutputSignal(BlockState)
 10 dev.jstech.core.content.DeviceBlock  protected int getAnalogOutputSignal(BlockState, Level, BlockPos)
@@ -4110,7 +4039,11 @@ stable 4
 10 dev.jstech.core.grid.CoreGrids  static Grid of(ServerLevel, GridKind)
 10 dev.jstech.core.grid.CoreGrids  static GridPlaces places(ServerLevel)
 10 dev.jstech.core.grid.CoreGrids  static Optional<IGridMover> mover(ServerLevel, GridKind)
+12 dev.jstech.core.grid.CoreGrids  static Optional<NetworkUuid> joinedNetwork(ServerLevel, long)
+12 dev.jstech.core.grid.CoreGrids  static Optional<NetworkUuid> networkOf(ServerLevel, long)
 10 dev.jstech.core.grid.CoreGrids  static boolean contains(ServerLevel, GridKind, GridPlace)
+12 dev.jstech.core.grid.CoreGrids  static void assignNetwork(ServerLevel, long, NetworkUuid)
+12 dev.jstech.core.grid.CoreGrids  static void keepNetworksIn(INetworkGrids)
 10 dev.jstech.core.grid.CoreGrids  static void listen()
 10 dev.jstech.core.grid.CoreGrids  static void place(ServerLevel, GridKind, GridPlace, GridMember, Collection<GridPlace>)
 10 dev.jstech.core.grid.CoreGrids  static void remove(ServerLevel, GridKind, GridPlace)
@@ -4249,6 +4182,13 @@ stable 4
 10 dev.jstech.core.grid.IGridPolicy  abstract Optional<IGridMover> mover(GridKind)
 10 dev.jstech.core.grid.IGridPolicy  default boolean plugsInto(ServerLevel, BlockPos, Direction)
 10 dev.jstech.core.grid.IGridPolicy  default boolean routesEnds()
+12 dev.jstech.core.grid.INetworkGrids  type interface
+12 dev.jstech.core.grid.INetworkGrids  abstract Grid grid(ServerLevel)
+12 dev.jstech.core.grid.INetworkGrids  abstract Optional<NetworkUuid> joined(ServerLevel, long)
+12 dev.jstech.core.grid.INetworkGrids  abstract Optional<NetworkUuid> reached(ServerLevel, long)
+12 dev.jstech.core.grid.INetworkGrids  abstract void assign(ServerLevel, long, NetworkUuid)
+12 dev.jstech.core.grid.INetworkGrids  abstract void place(ServerLevel, long, List<Long>, GridMember)
+12 dev.jstech.core.grid.INetworkGrids  abstract void remove(ServerLevel, long)
 10 dev.jstech.core.grid.LevelGrids  type final class
 10 dev.jstech.core.grid.LevelGrids  Grid of(GridKind)
 10 dev.jstech.core.grid.LevelGrids  GridPlaces places()
@@ -5419,6 +5359,7 @@ stable 4
 10 dev.jstech.core.guide.GuideGifts  static void welcome(ServerPlayer)
 10 dev.jstech.core.guide.GuideHighlighters  type final class
 10 dev.jstech.core.guide.GuideHighlighters  static List<List<GuideCode.Run>> colour(String, List<String>)
+12 dev.jstech.core.guide.GuideHighlighters  static void findWith(Function<String, Optional<IGuideHighlighter>>)
 10 dev.jstech.core.guide.GuideHighlighters  static void register(String, IGuideHighlighter)
 10 dev.jstech.core.guide.GuideHighlighters.IGuideHighlighter  type interface
 10 dev.jstech.core.guide.GuideHighlighters.IGuideHighlighter  abstract List<List<GuideCode.Run>> colour(List<String>)
@@ -6435,6 +6376,10 @@ stable 4
 10 dev.jstech.core.inventory.Transfers  static int moveEnergy(IEnergyStorage, IEnergyStorage, int)
 10 dev.jstech.core.inventory.Transfers  static int moveFluid(IFluidHandler, IFluidHandler, int)
 10 dev.jstech.core.inventory.Transfers  static int moveItems(IItemHandler, IItemHandler, ItemFilter, int)
+12 dev.jstech.core.item.FluidBlockItem  type class extends BlockItem
+12 dev.jstech.core.item.FluidBlockItem  int capacity()
+12 dev.jstech.core.item.FluidBlockItem  new(Block, Properties, int)
+12 dev.jstech.core.item.FluidBlockItem  void appendHoverText(ItemStack, TooltipContext, List<Component>, TooltipFlag)
 10 dev.jstech.core.item.ItemActions  type final class
 10 dev.jstech.core.item.ItemActions  static KeyAction declare(KeyAction.Builder, Predicate<ItemStack>, IItemPress)
 10 dev.jstech.core.item.ItemActions  static Optional<ItemStack> find(ServerPlayer, Predicate<ItemStack>)
@@ -6522,86 +6467,631 @@ stable 4
 10 dev.jstech.core.item.SwitchedShapedRecipe  static final MapCodec<SwitchedShapedRecipe> CODEC
 10 dev.jstech.core.item.SwitchedShapedRecipe  static final StreamCodec<RegistryFriendlyByteBuf, SwitchedShapedRecipe> STREAM_CODEC
 10 dev.jstech.core.item.SwitchedShapedRecipe  static void declare()
-10 dev.jstech.core.language.ExecutionBalance  type final class
-10 dev.jstech.core.language.ExecutionBalance  static final int DEFAULT_MACHINE_MICROS
-10 dev.jstech.core.language.ExecutionBalance  static final int DEFAULT_SERVER_MICROS
-10 dev.jstech.core.language.ExecutionBalance  static final int LEAST_INSTRUCTIONS_PER_TICK
-10 dev.jstech.core.language.ExecutionBalance  static final int MEGAHERTZ_PER_INSTRUCTION
-10 dev.jstech.core.language.ExecutionBalance  static long machineNanos()
-10 dev.jstech.core.language.ExecutionBalance  static long serverNanos()
-10 dev.jstech.core.language.ExecutionBalance  static void setMachineMicros(int)
-10 dev.jstech.core.language.ExecutionBalance  static void setServerMicros(int)
-10 dev.jstech.core.language.ILanguageProcess  type interface
-10 dev.jstech.core.language.ILanguageProcess  abstract State state()
-10 dev.jstech.core.language.ILanguageProcess  abstract Text message()
-10 dev.jstech.core.language.ILanguageProcess  abstract boolean isService()
-10 dev.jstech.core.language.ILanguageProcess  abstract int step(int)
-10 dev.jstech.core.language.ILanguageProcess  abstract long heldBytes()
-10 dev.jstech.core.language.ILanguageProcess  abstract long spent()
-10 dev.jstech.core.language.ILanguageProcess  abstract void onStop(int)
-10 dev.jstech.core.language.ILanguageProcess  abstract void onTick()
-10 dev.jstech.core.language.ILanguageProcess  abstract void save(CompoundTag)
-10 dev.jstech.core.language.ILanguageProcess  default List<String> watching()
-10 dev.jstech.core.language.ILanguageProcess  default String name()
-10 dev.jstech.core.language.ILanguageProcess  default boolean waitingForInput()
-10 dev.jstech.core.language.ILanguageProcess  default void deliver(Map<String, Long>)
-10 dev.jstech.core.language.ILanguageProcess  default void identify(int)
-10 dev.jstech.core.language.ILanguageProcess  default void offerInput(String)
-10 dev.jstech.core.language.ILanguageProcess.State  type enum
-10 dev.jstech.core.language.ILanguageProcess.State  FINISHED
-10 dev.jstech.core.language.ILanguageProcess.State  HALTED
-10 dev.jstech.core.language.ILanguageProcess.State  PARKED
-10 dev.jstech.core.language.ILanguageProcess.State  RUNNING
-10 dev.jstech.core.language.IMachineView  type interface
-10 dev.jstech.core.language.IMachineView  abstract long day()
-10 dev.jstech.core.language.IMachineView  abstract long dayTime()
-10 dev.jstech.core.language.IMachineView  abstract long memoryQuota()
-10 dev.jstech.core.language.IMachineView  abstract long tick()
-10 dev.jstech.core.language.IMachineView  abstract void print(String)
-1 dev.jstech.core.language.IProgrammingLanguage  type interface
-1 dev.jstech.core.language.IProgrammingLanguage  abstract CompileResult compile(List<SourceText>)
-1 dev.jstech.core.language.IProgrammingLanguage  abstract List<Token> tokenize(String)
-1 dev.jstech.core.language.IProgrammingLanguage  abstract ResourceLocation id()
-1 dev.jstech.core.language.IProgrammingLanguage  abstract Set<String> binaryExtensions()
-1 dev.jstech.core.language.IProgrammingLanguage  abstract Set<String> sourceExtensions()
-1 dev.jstech.core.language.IProgrammingLanguage  abstract String displayName()
-2 dev.jstech.core.language.IProgrammingLanguage  default CompileResult compile(List<SourceText>, CompileOptions)
-1 dev.jstech.core.language.IProgrammingLanguage  default CompileResult compile(List<SourceText>, String)
-1 dev.jstech.core.language.IProgrammingLanguage  default ILanguageProcess restore(String, CompoundTag, int, IMachineView)
-1 dev.jstech.core.language.IProgrammingLanguage  default ILanguageProcess start(String, IMachineView, List<String>)
-1 dev.jstech.core.language.IProgrammingLanguage  default int stateVersion()
-2 dev.jstech.core.language.IProgrammingLanguage.CompileOptions  type record(String isa, int languageVersion)
-2 dev.jstech.core.language.IProgrammingLanguage.CompileOptions  static CompileOptions forIsa(String)
-2 dev.jstech.core.language.IProgrammingLanguage.CompileOptions  static final int NEWEST
-1 dev.jstech.core.language.IProgrammingLanguage.CompileResult  type record(String binary, List<Complaint> complaints)
-1 dev.jstech.core.language.IProgrammingLanguage.CompileResult  boolean ok()
-1 dev.jstech.core.language.IProgrammingLanguage.CompileResult  static CompileResult failed(List<Complaint>)
-1 dev.jstech.core.language.IProgrammingLanguage.CompileResult  static CompileResult of(String)
-2 dev.jstech.core.language.IProgrammingLanguage.Complaint  type record(String file, int line, int column, String code, Text message, List<String> arguments)
-1 dev.jstech.core.language.IProgrammingLanguage.Complaint  String format()
-2 dev.jstech.core.language.IProgrammingLanguage.Complaint  Text text()
-2 dev.jstech.core.language.IProgrammingLanguage.Complaint  new(String, int, int, String, Text)
-1 dev.jstech.core.language.IProgrammingLanguage.Kind  type enum
-1 dev.jstech.core.language.IProgrammingLanguage.Kind  COMMENT
-1 dev.jstech.core.language.IProgrammingLanguage.Kind  KEYWORD
-1 dev.jstech.core.language.IProgrammingLanguage.Kind  NAME
-1 dev.jstech.core.language.IProgrammingLanguage.Kind  NUMBER
-1 dev.jstech.core.language.IProgrammingLanguage.Kind  SYMBOL
-1 dev.jstech.core.language.IProgrammingLanguage.Kind  TEXT
-1 dev.jstech.core.language.IProgrammingLanguage.SourceText  type record(String name, String text)
-1 dev.jstech.core.language.IProgrammingLanguage.Token  type record(int line, int column, int length, Kind kind)
-1 dev.jstech.core.language.LanguageRegistry  type final class
-1 dev.jstech.core.language.LanguageRegistry  IProgrammingLanguage byExtension(String)
-1 dev.jstech.core.language.LanguageRegistry  IProgrammingLanguage get(ResourceLocation)
-1 dev.jstech.core.language.LanguageRegistry  IProgrammingLanguage runnerOf(String)
-1 dev.jstech.core.language.LanguageRegistry  IProgrammingLanguage sourceOf(String)
-1 dev.jstech.core.language.LanguageRegistry  List<IProgrammingLanguage> all()
-1 dev.jstech.core.language.LanguageRegistry  boolean isFrozen()
-1 dev.jstech.core.language.LanguageRegistry  boolean isReserved(String)
-1 dev.jstech.core.language.LanguageRegistry  boolean register(IProgrammingLanguage)
-1 dev.jstech.core.language.LanguageRegistry  boolean reserve(String)
-1 dev.jstech.core.language.LanguageRegistry  boolean unregister(ResourceLocation)
-1 dev.jstech.core.language.LanguageRegistry  void freeze()
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  type final class
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Grid grid()
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  IPlacementResult onCablePlaced(long, Set<Long>)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  IPlacementResult onCablePlaced(long, Set<Long>, DataLink)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  IPlacementResult place(long, Collection<Long>, GridMember)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Optional<DataLink> linkOf(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Optional<DataLink> slowestBetween(Collection<Long>, Collection<Long>)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Optional<NetworkUuid> joinedNetwork(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Optional<NetworkUuid> networkOf(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  RemovalResult onCableRemoved(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> bridgedBy(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> componentPositions(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> cutOffPositions(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> positionsOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> reachableFrom(long, Set<Long>)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  boolean contains(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  boolean inSameNetwork(long, long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  boolean runTooLong(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  int componentCount()
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  int componentSize(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  int runLength(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  int size()
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  static GridMember member(DataLink)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void anchor(long, NetworkUuid, Set<Long>)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void assignUuid(long, NetworkUuid)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void bridge(long, Collection<Long>)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void clear()
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void clearNetwork(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void forgetBridge(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void onCableRemovedIfRegistered(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void unanchor(long)
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex.IPlacementResult  type sealed interface permits IPlacementResult.Isolated, IPlacementResult.MergedWithoutUuid, IPlacementResult.Inherited, IPlacementResult.Conflict
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex.IPlacementResult  static final Isolated ISOLATED
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex.IPlacementResult  static final MergedWithoutUuid MERGED_WITHOUT_UUID
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex.IPlacementResult.Conflict  type record(NetworkUuid first, NetworkUuid second) implements IPlacementResult
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex.IPlacementResult.Inherited  type record(NetworkUuid uuid) implements IPlacementResult
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex.IPlacementResult.Isolated  type record() implements IPlacementResult
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex.IPlacementResult.MergedWithoutUuid  type record() implements IPlacementResult
+12 dev.jstech.core.jstechseries.network.ConnectivityIndex.RemovalResult  type record(Optional<NetworkUuid> previousUuid, int resultingComponents)
+12 dev.jstech.core.jstechseries.network.DataGrids  type final class implements INetworkGrids
+12 dev.jstech.core.jstechseries.network.DataGrids  Grid grid(ServerLevel)
+12 dev.jstech.core.jstechseries.network.DataGrids  Optional<NetworkUuid> joined(ServerLevel, long)
+12 dev.jstech.core.jstechseries.network.DataGrids  Optional<NetworkUuid> reached(ServerLevel, long)
+12 dev.jstech.core.jstechseries.network.DataGrids  void assign(ServerLevel, long, NetworkUuid)
+12 dev.jstech.core.jstechseries.network.DataGrids  void place(ServerLevel, long, List<Long>, GridMember)
+12 dev.jstech.core.jstechseries.network.DataGrids  void remove(ServerLevel, long)
+12 dev.jstech.core.jstechseries.network.DataLine  type enum implements IStableId, IStableName
+12 dev.jstech.core.jstechseries.network.DataLine  ACCESS
+12 dev.jstech.core.jstechseries.network.DataLine  BACKBONE
+12 dev.jstech.core.jstechseries.network.DataLine  CRAFTING
+12 dev.jstech.core.jstechseries.network.DataLine  HPC
+12 dev.jstech.core.jstechseries.network.DataLine  LONG_DISTANCE
+12 dev.jstech.core.jstechseries.network.DataLine  String lineId()
+12 dev.jstech.core.jstechseries.network.DataLine  String serializedName()
+12 dev.jstech.core.jstechseries.network.DataLine  TextKey job()
+12 dev.jstech.core.jstechseries.network.DataLine  int generation(HardwareEra)
+12 dev.jstech.core.jstechseries.network.DataLine  int id()
+12 dev.jstech.core.jstechseries.network.DataLine  static DataLine byId(int)
+12 dev.jstech.core.jstechseries.network.DataLine  static DataLine byName(String)
+12 dev.jstech.core.jstechseries.network.DataLine  static DataLine ofLineId(String)
+12 dev.jstech.core.jstechseries.network.DataLines  type final class
+12 dev.jstech.core.jstechseries.network.DataLines  static Connection of(DataLink)
+12 dev.jstech.core.jstechseries.network.DataLines  static Connection upTo(HardwareEra, DataLine)
+12 dev.jstech.core.jstechseries.network.DataLines  static Connection[] upTo(HardwareEra, DataLine...)
+12 dev.jstech.core.jstechseries.network.DataLines  static DataLine of(ResourceLocation)
+12 dev.jstech.core.jstechseries.network.DataLines  static DataLink linkOf(Connection)
+12 dev.jstech.core.jstechseries.network.DataLines  static ResourceLocation id(DataLine)
+12 dev.jstech.core.jstechseries.network.DataLines  static boolean isData(ResourceLocation)
+12 dev.jstech.core.jstechseries.network.DataLink  type record(DataLine line, HardwareEra era)
+12 dev.jstech.core.jstechseries.network.DataLink  String serializedName()
+12 dev.jstech.core.jstechseries.network.DataLink  boolean betweenTwoEnds()
+12 dev.jstech.core.jstechseries.network.DataLink  boolean exists()
+12 dev.jstech.core.jstechseries.network.DataLink  boolean straight()
+12 dev.jstech.core.jstechseries.network.DataLink  int generation()
+12 dev.jstech.core.jstechseries.network.DataLink  int range()
+12 dev.jstech.core.jstechseries.network.DataLink  long throughput()
+12 dev.jstech.core.jstechseries.network.DataLink  static DataLink byName(String)
+12 dev.jstech.core.jstechseries.network.DataLink  static DataLink of(String, int)
+12 dev.jstech.core.jstechseries.network.DataLink  static final int ENDS
+12 dev.jstech.core.jstechseries.network.FailoverRole  type enum implements IStableId
+12 dev.jstech.core.jstechseries.network.FailoverRole  ACTIVE
+12 dev.jstech.core.jstechseries.network.FailoverRole  NONE
+12 dev.jstech.core.jstechseries.network.FailoverRole  PASSIVE
+12 dev.jstech.core.jstechseries.network.FailoverRole  boolean isPaired()
+12 dev.jstech.core.jstechseries.network.FailoverRole  int id()
+12 dev.jstech.core.jstechseries.network.FailoverRole  static FailoverRole byId(int)
+12 dev.jstech.core.jstechseries.network.IComputerNode  type sealed interface extends INetworkNode permits MainframeNode, SubframeNode
+12 dev.jstech.core.jstechseries.network.IComputerNode  abstract NetworkUuid networkUuid()
+12 dev.jstech.core.jstechseries.network.IComputerNode  abstract NodeUuid nodeUuid()
+12 dev.jstech.core.jstechseries.network.IComputerNode  abstract long contributedCapacity()
+12 dev.jstech.core.jstechseries.network.IMonitorable  type interface extends INetworkNodeCapability
+12 dev.jstech.core.jstechseries.network.IMonitorable  abstract List<Reading> readings()
+12 dev.jstech.core.jstechseries.network.INetworkBridge  type interface
+12 dev.jstech.core.jstechseries.network.INetworkMember  type interface
+12 dev.jstech.core.jstechseries.network.INetworkMember  abstract NetworkCategory category()
+12 dev.jstech.core.jstechseries.network.INetworkMember  default List<OperationType<?>> carriesOut()
+12 dev.jstech.core.jstechseries.network.INetworkMember  default List<StateTable> tables()
+12 dev.jstech.core.jstechseries.network.INetworkMember  default void fill(StateTable, StateRow.Writer)
+12 dev.jstech.core.jstechseries.network.INetworkNode  type sealed interface permits IComputerNode, IServiceNode
+12 dev.jstech.core.jstechseries.network.INetworkNode  abstract NetworkCategory category()
+12 dev.jstech.core.jstechseries.network.INetworkNode  abstract NetworkUuid networkUuid()
+12 dev.jstech.core.jstechseries.network.INetworkNode  abstract NodeUuid nodeUuid()
+12 dev.jstech.core.jstechseries.network.INetworkNodeCapability  type interface
+12 dev.jstech.core.jstechseries.network.INetworkNodeCapability  abstract NetworkCategory getCategory()
+12 dev.jstech.core.jstechseries.network.INetworkNodeCapability  abstract NodeUuid getNodeUuid()
+12 dev.jstech.core.jstechseries.network.INetworkNodeCapability  abstract Optional<NetworkUuid> getNetworkUuid()
+12 dev.jstech.core.jstechseries.network.INetworkTopologyElement  type sealed interface permits ServerRouterElement
+12 dev.jstech.core.jstechseries.network.INetworkTopologyElement  abstract NetworkUuid networkUuid()
+12 dev.jstech.core.jstechseries.network.INetworkTopologyElement  abstract long pos()
+12 dev.jstech.core.jstechseries.network.IServiceNode  type sealed interface extends INetworkNode permits ServerNode
+12 dev.jstech.core.jstechseries.network.MainframeNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long ownCapacity, FailoverRole failoverRole, Optional<NodeUuid> failoverPartnerUuid, long lastHeartbeatTick) implements IComputerNode
+12 dev.jstech.core.jstechseries.network.MainframeNode  NetworkCategory category()
+12 dev.jstech.core.jstechseries.network.MainframeNode  long contributedCapacity()
+12 dev.jstech.core.jstechseries.network.NetworkAttachments  type final class
+12 dev.jstech.core.jstechseries.network.NetworkAttachments  static final Supplier<AttachmentType<NetworkSystem>> NETWORK_SYSTEM
+12 dev.jstech.core.jstechseries.network.NetworkCategory  type enum
+12 dev.jstech.core.jstechseries.network.NetworkCategory  A
+12 dev.jstech.core.jstechseries.network.NetworkCategory  B
+12 dev.jstech.core.jstechseries.network.NetworkCategory  C
+12 dev.jstech.core.jstechseries.network.NetworkCategory  boolean canReceiveOperations()
+12 dev.jstech.core.jstechseries.network.NetworkCategory  boolean hasUuid()
+12 dev.jstech.core.jstechseries.network.NetworkInspection  type final class
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent  type abstract sealed class extends Event
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent  BlockPos pos()
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent  NetworkUuid network()
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent  NodeUuid node()
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent  ServerLevel level()
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent  new(ServerLevel, BlockPos, NodeUuid, NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent.Joined  type static final class extends NetworkMemberEvent
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent.Joined  new(ServerLevel, BlockPos, NodeUuid, NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent.Left  type static final class extends NetworkMemberEvent
+12 dev.jstech.core.jstechseries.network.NetworkMemberEvent.Left  new(ServerLevel, BlockPos, NodeUuid, NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkMembers  type final class
+12 dev.jstech.core.jstechseries.network.NetworkMembers  static NetworkMembership keep(SyncedBlockEntity)
+12 dev.jstech.core.jstechseries.network.NetworkMembers  static Optional<NetworkMembership> at(ServerLevel, BlockPos)
+12 dev.jstech.core.jstechseries.network.NetworkMembers  static int on(ServerLevel, NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkMembership  type final class
+12 dev.jstech.core.jstechseries.network.NetworkMembership  INetworkMember member()
+12 dev.jstech.core.jstechseries.network.NetworkMembership  NodeUuid node()
+12 dev.jstech.core.jstechseries.network.NetworkMembership  Optional<NetworkUuid> network()
+12 dev.jstech.core.jstechseries.network.NetworkSystem  type final class
+12 dev.jstech.core.jstechseries.network.NetworkSystem  ConnectivityIndex connectivity()
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<CraftingComputerNode> craftingComputersOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<MemberNode> membersCarryingOut(NetworkUuid, String)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<MemberNode> membersOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<PersonalComputerNode> personalComputersOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<ServerNode> serversOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<ServerRouterElement> routersOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<SubframeNode> subframesOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<SupercomputerNode> supercomputersOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  Optional<Long> mainframePositionOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  Optional<MainframeNode> mainframeOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  Optional<MemberNode> memberAt(long)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  Optional<NetworkUuid> networkOf(long)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  Optional<ServerLocation> locationOf(NodeUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  boolean inSameNetwork(long, long)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  int subframeQueuesOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  long totalOrchestrationCapacityOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  long totalStorageItemsOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  static NetworkSystem get(ServerLevel)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void clear()
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void recordMainframePosition(NetworkUuid, long)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerCraftingComputer(CraftingComputerNode)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerMainframe(MainframeNode)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerMember(MemberNode)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerPersonalComputer(PersonalComputerNode)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerRouter(ServerRouterElement)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerServer(ServerNode)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerServer(ServerNode, long, int)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerSubframe(SubframeNode)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void registerSupercomputer(SupercomputerNode)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void unregisterCraftingComputer(NetworkUuid, NodeUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void unregisterMainframe(NetworkUuid, NodeUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void unregisterMemberAt(long)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void unregisterPersonalComputer(NetworkUuid, NodeUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void unregisterRouter(NetworkUuid, long)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void unregisterServer(NetworkUuid, NodeUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void unregisterSubframe(NetworkUuid, NodeUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  void unregisterSupercomputer(NetworkUuid, NodeUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem.CraftingComputerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long capacity, long pos)
+12 dev.jstech.core.jstechseries.network.NetworkSystem.MemberNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long pos, NetworkCategory category, List<String> operations, List<ResourceLocation> tables)
+12 dev.jstech.core.jstechseries.network.NetworkSystem.MemberNode  boolean carriesOut(String)
+12 dev.jstech.core.jstechseries.network.NetworkSystem.PersonalComputerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long capacity, long pos)
+12 dev.jstech.core.jstechseries.network.NetworkSystem.ServerLocation  type record(long rackPos, int slot)
+12 dev.jstech.core.jstechseries.network.NetworkSystem.SupercomputerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long parallelCrafts, long pos)
+12 dev.jstech.core.jstechseries.network.NetworkTables  type final class
+12 dev.jstech.core.jstechseries.network.NetworkTables  static List<StateRow> rows(ServerLevel, NetworkUuid, StateTable)
+12 dev.jstech.core.jstechseries.network.NetworkTables  static List<StateTable> tablesOf(ServerLevel, NetworkUuid)
+12 dev.jstech.core.jstechseries.network.ServerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long storageItems) implements IServiceNode
+12 dev.jstech.core.jstechseries.network.ServerNode  NetworkCategory category()
+12 dev.jstech.core.jstechseries.network.ServerRouterElement  type record(NetworkUuid networkUuid, long pos, IndustrialTier tier) implements INetworkTopologyElement
+12 dev.jstech.core.jstechseries.network.ServerRouterElement  int maxRacks()
+12 dev.jstech.core.jstechseries.network.ServerRouterElement  static int maxRacksFor(IndustrialTier)
+12 dev.jstech.core.jstechseries.network.StateColumn  type record(String name, TextKey title, StateValueKind kind, String unit)
+12 dev.jstech.core.jstechseries.network.StateRow  type final class
+12 dev.jstech.core.jstechseries.network.StateRow  NodeUuid member()
+12 dev.jstech.core.jstechseries.network.StateRow  Object value(String)
+12 dev.jstech.core.jstechseries.network.StateRow  Optional<Boolean> flag(String)
+12 dev.jstech.core.jstechseries.network.StateRow  Optional<String> text(String)
+12 dev.jstech.core.jstechseries.network.StateRow  OptionalDouble number(String)
+12 dev.jstech.core.jstechseries.network.StateRow  StateTable table()
+12 dev.jstech.core.jstechseries.network.StateRow  long pos()
+12 dev.jstech.core.jstechseries.network.StateRow.Writer  type static final class
+12 dev.jstech.core.jstechseries.network.StateRow.Writer  StateRow done(NodeUuid, long)
+12 dev.jstech.core.jstechseries.network.StateRow.Writer  Writer set(String, String)
+12 dev.jstech.core.jstechseries.network.StateRow.Writer  Writer set(String, boolean)
+12 dev.jstech.core.jstechseries.network.StateRow.Writer  Writer set(String, double)
+12 dev.jstech.core.jstechseries.network.StateRow.Writer  new(StateTable)
+12 dev.jstech.core.jstechseries.network.StateTable  type final class
+12 dev.jstech.core.jstechseries.network.StateTable  List<StateColumn> columns()
+12 dev.jstech.core.jstechseries.network.StateTable  Optional<StateColumn> column(String)
+12 dev.jstech.core.jstechseries.network.StateTable  ResourceLocation id()
+12 dev.jstech.core.jstechseries.network.StateTable  TextKey title()
+12 dev.jstech.core.jstechseries.network.StateTable  int indexOf(String)
+12 dev.jstech.core.jstechseries.network.StateTable  static Builder builder(ResourceLocation, TextKey)
+12 dev.jstech.core.jstechseries.network.StateTable.Builder  type static final class
+12 dev.jstech.core.jstechseries.network.StateTable.Builder  Builder flag(String, TextKey)
+12 dev.jstech.core.jstechseries.network.StateTable.Builder  Builder number(String, TextKey, String)
+12 dev.jstech.core.jstechseries.network.StateTable.Builder  Builder text(String, TextKey)
+12 dev.jstech.core.jstechseries.network.StateTable.Builder  StateTable build()
+12 dev.jstech.core.jstechseries.network.StateTables  type final class
+12 dev.jstech.core.jstechseries.network.StateTables  static List<StateTable> all()
+12 dev.jstech.core.jstechseries.network.StateTables  static Optional<StateTable> get(ResourceLocation)
+12 dev.jstech.core.jstechseries.network.StateTables  static StateTable declare(StateTable)
+12 dev.jstech.core.jstechseries.network.StateValueKind  type enum
+12 dev.jstech.core.jstechseries.network.StateValueKind  FLAG
+12 dev.jstech.core.jstechseries.network.StateValueKind  NUMBER
+12 dev.jstech.core.jstechseries.network.StateValueKind  TEXT
+12 dev.jstech.core.jstechseries.network.SubframeNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long ownCapacity, Optional<NodeUuid> orchestratingMainframeUuid, int parallelQueues, String software) implements IComputerNode
+12 dev.jstech.core.jstechseries.network.SubframeNode  NetworkCategory category()
+12 dev.jstech.core.jstechseries.network.SubframeNode  boolean runsWith(String)
+12 dev.jstech.core.jstechseries.network.SubframeNode  int contributedQueues()
+12 dev.jstech.core.jstechseries.network.SubframeNode  long contributedCapacity()
+12 dev.jstech.core.jstechseries.network.SubframeNode  new(NodeUuid, NetworkUuid, long, Optional<NodeUuid>)
+12 dev.jstech.core.jstechseries.network.SubframeNode  new(NodeUuid, NetworkUuid, long, Optional<NodeUuid>, int)
+12 dev.jstech.core.jstechseries.network.SubframeNode  static final String ANY_SOFTWARE
+12 dev.jstech.core.jstechseries.network.SubframeNode  static final double CONTRIBUTION_FACTOR
+12 dev.jstech.core.jstechseries.operation.ILatencyScheduler  type interface
+12 dev.jstech.core.jstechseries.operation.ILatencyScheduler  abstract void afterTicks(int, Runnable)
+12 dev.jstech.core.jstechseries.operation.IOperationArgs  type interface
+12 dev.jstech.core.jstechseries.operation.IOperationContext  type interface
+12 dev.jstech.core.jstechseries.operation.IOperationContext  abstract <T> T runOnMain(Supplier<T>)
+12 dev.jstech.core.jstechseries.operation.IOperationContext  abstract boolean isActive()
+12 dev.jstech.core.jstechseries.operation.IOperationContext  abstract long currentTick()
+12 dev.jstech.core.jstechseries.operation.IOperationContext  abstract void awaitTicks(int)
+12 dev.jstech.core.jstechseries.operation.IOperationContext  abstract void onMainThread(Runnable)
+12 dev.jstech.core.jstechseries.operation.IOperationContext  default void doOnMain(Runnable)
+12 dev.jstech.core.jstechseries.operation.IOperationHandler  type interface<T extends IOperationArgs>
+12 dev.jstech.core.jstechseries.operation.IOperationHandler  abstract OperationStatus execute(T)
+12 dev.jstech.core.jstechseries.operation.IOperationResult  type sealed interface
+12 dev.jstech.core.jstechseries.operation.IOperationResult  static IOperationResult failure(OperationFailure)
+12 dev.jstech.core.jstechseries.operation.IOperationResult  static IOperationResult failure(String, String...)
+12 dev.jstech.core.jstechseries.operation.IOperationResult  static IOperationResult success()
+12 dev.jstech.core.jstechseries.operation.IOperationResult.Failure  type record(OperationFailure cause) implements IOperationResult
+12 dev.jstech.core.jstechseries.operation.IOperationResult.Success  type record() implements IOperationResult
+12 dev.jstech.core.jstechseries.operation.IOperationTask  type interface
+12 dev.jstech.core.jstechseries.operation.IOperationTask  abstract IOperationResult run(IOperationContext)
+12 dev.jstech.core.jstechseries.operation.OperationBalance  type final class
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static double subframeEfficiencyFactor()
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static final double DEFAULT_SUBFRAME_EFFICIENCY_FACTOR
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static final int DEFAULT_HDD_LATENCY_TICKS
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static final int DEFAULT_NVME_LATENCY_TICKS
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static final int DEFAULT_ORPHANED_OPERATIONS_EXPIRY_HOURS
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static final int DEFAULT_PRIORITY_AGING_TICKS
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static final int DEFAULT_SSD_LATENCY_TICKS
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static final int DEFAULT_WAITING_TIMEOUT_TICKS
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static final long TICKS_PER_HOUR
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static int hddLatencyTicks()
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static int nvmeLatencyTicks()
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static int priorityAgingTicks()
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static int ssdLatencyTicks()
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static int waitingTimeoutTicks()
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static long orphanedOperationsExpiryTicks()
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void reset()
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void setHddLatencyTicks(int)
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void setNvmeLatencyTicks(int)
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void setOrphanedOperationsExpiryHours(int)
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void setOrphanedOperationsExpiryTicks(long)
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void setPriorityAgingTicks(int)
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void setSsdLatencyTicks(int)
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void setSubframeEfficiencyFactor(double)
+12 dev.jstech.core.jstechseries.operation.OperationBalance  static void setWaitingTimeoutTicks(int)
+12 dev.jstech.core.jstechseries.operation.OperationCancelledException  type final class extends RuntimeException
+12 dev.jstech.core.jstechseries.operation.OperationCancelledException  new()
+12 dev.jstech.core.jstechseries.operation.OperationCategory  type enum
+12 dev.jstech.core.jstechseries.operation.OperationCategory  AGRICULTURE
+12 dev.jstech.core.jstechseries.operation.OperationCategory  CONCURRENCY
+12 dev.jstech.core.jstechseries.operation.OperationCategory  CONSTRUCTION
+12 dev.jstech.core.jstechseries.operation.OperationCategory  CRAFTING
+12 dev.jstech.core.jstechseries.operation.OperationCategory  GEOLOGICAL
+12 dev.jstech.core.jstechseries.operation.OperationCategory  INDUSTRIAL
+12 dev.jstech.core.jstechseries.operation.OperationCategory  MILITARY
+12 dev.jstech.core.jstechseries.operation.OperationCategory  NETWORK
+12 dev.jstech.core.jstechseries.operation.OperationCategory  OCEANIC
+12 dev.jstech.core.jstechseries.operation.OperationCategory  ROBOTICS
+12 dev.jstech.core.jstechseries.operation.OperationCategory  SECURITY
+12 dev.jstech.core.jstechseries.operation.OperationCategory  SPACE
+12 dev.jstech.core.jstechseries.operation.OperationCategory  STORAGE
+12 dev.jstech.core.jstechseries.operation.OperationCategory  TRANSPORT
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  type final class implements AutoCloseable, ILatencyScheduler
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  OperationFailure failureOf(UUID)
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  OperationStatus statusOf(UUID)
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  UUID submit(IOperationTask, OperationPriority)
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  boolean cancel(UUID)
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  int parallelQueues()
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  int pendingCount()
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  int runningCount()
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  long completedCount()
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  long failedCount()
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  long tickCount()
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  new(int)
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  new(int, Consumer<Throwable>)
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  void afterTicks(int, Runnable)
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  void close()
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  void setParallelQueues(int)
+12 dev.jstech.core.jstechseries.operation.OperationDispatch  void tick()
+12 dev.jstech.core.jstechseries.operation.OperationFailure  type record(String key, List<String> arguments)
+12 dev.jstech.core.jstechseries.operation.OperationFailure  boolean isPresent()
+12 dev.jstech.core.jstechseries.operation.OperationFailure  static OperationFailure of(String, String...)
+12 dev.jstech.core.jstechseries.operation.OperationFailure  static OperationFailure of(TextKey, String...)
+12 dev.jstech.core.jstechseries.operation.OperationFailure  static final OperationFailure NONE
+12 dev.jstech.core.jstechseries.operation.OperationFailure  static final int MAX_ARGUMENTS
+12 dev.jstech.core.jstechseries.operation.OperationFailure  static final int MAX_ARGUMENT_BYTES
+12 dev.jstech.core.jstechseries.operation.OperationFailure  static final int MAX_KEY_BYTES
+12 dev.jstech.core.jstechseries.operation.OperationPriority  type enum implements IStableId, IStableName
+12 dev.jstech.core.jstechseries.operation.OperationPriority  HIGH
+12 dev.jstech.core.jstechseries.operation.OperationPriority  LOW
+12 dev.jstech.core.jstechseries.operation.OperationPriority  MEDIUM
+12 dev.jstech.core.jstechseries.operation.OperationPriority  MEDIUM_HIGH
+12 dev.jstech.core.jstechseries.operation.OperationPriority  MEDIUM_LOW
+12 dev.jstech.core.jstechseries.operation.OperationPriority  OperationPriority lower()
+12 dev.jstech.core.jstechseries.operation.OperationPriority  OperationPriority raise()
+12 dev.jstech.core.jstechseries.operation.OperationPriority  String label()
+12 dev.jstech.core.jstechseries.operation.OperationPriority  String serializedName()
+12 dev.jstech.core.jstechseries.operation.OperationPriority  Text text()
+12 dev.jstech.core.jstechseries.operation.OperationPriority  int id()
+12 dev.jstech.core.jstechseries.operation.OperationPriority  static OperationPriority byId(int)
+12 dev.jstech.core.jstechseries.operation.OperationPriority  static Optional<OperationPriority> fromKeyword(String)
+12 dev.jstech.core.jstechseries.operation.OperationPriority  static final OperationPriority DEFAULT
+12 dev.jstech.core.jstechseries.operation.OperationSettings  type final class
+12 dev.jstech.core.jstechseries.operation.OperationSettings  static final ConfigFile FILE
+12 dev.jstech.core.jstechseries.operation.OperationSettings  static final ConfigKey<Integer> ORPHANED_EXPIRY_HOURS
+12 dev.jstech.core.jstechseries.operation.OperationSettings  static final ConfigKey<Integer> PRIORITY_AGING_TICKS
+12 dev.jstech.core.jstechseries.operation.OperationSettings  static final ConfigKey<Integer> WAITING_TIMEOUT_TICKS
+12 dev.jstech.core.jstechseries.operation.OperationSettings  static final String ENGINE
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  type final class
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  List<TypeSummary> summaries(long)
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  int peakConcurrentLastDay(long)
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  long movedLastHour(long)
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  long settledTotal()
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  static final int HOURS_PER_DAY
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  static final int MINUTES_PER_HOUR
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  static final int TICKS_PER_MINUTE
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  static final int WINDOW_TICKS
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  void observeConcurrency(long, int)
+12 dev.jstech.core.jstechseries.operation.OperationStatistics  void record(long, int, boolean, int, int, long)
+12 dev.jstech.core.jstechseries.operation.OperationStatistics.TypeSummary  type record(int type, int count, int shortfalls, int averageWait, int averageRun, long moved)
+12 dev.jstech.core.jstechseries.operation.OperationStatistics.TypeSummary  int shortfallPercent()
+12 dev.jstech.core.jstechseries.operation.OperationStatus  type enum implements IStableId
+12 dev.jstech.core.jstechseries.operation.OperationStatus  COMPLETED
+12 dev.jstech.core.jstechseries.operation.OperationStatus  COMPLETED_PARTIAL
+12 dev.jstech.core.jstechseries.operation.OperationStatus  DISCARDED
+12 dev.jstech.core.jstechseries.operation.OperationStatus  FAILED
+12 dev.jstech.core.jstechseries.operation.OperationStatus  PENDING
+12 dev.jstech.core.jstechseries.operation.OperationStatus  PROCESSING
+12 dev.jstech.core.jstechseries.operation.OperationStatus  RESOURCE_LOCKED
+12 dev.jstech.core.jstechseries.operation.OperationStatus  WAITING
+12 dev.jstech.core.jstechseries.operation.OperationStatus  boolean isActive()
+12 dev.jstech.core.jstechseries.operation.OperationStatus  boolean isTerminal()
+12 dev.jstech.core.jstechseries.operation.OperationStatus  int id()
+12 dev.jstech.core.jstechseries.operation.OperationStatus  static Optional<OperationStatus> of(int)
+12 dev.jstech.core.jstechseries.operation.OperationStatus  static final byte UNKNOWN
+12 dev.jstech.core.jstechseries.operation.OperationType  type record<T extends IOperationArgs>(String id, Class<T> argsClass, OperationCategory category, IndustrialTier minTier, EnumSet<NetworkCategory> requiredCategories, IOperationHandler<T> handler)
+12 dev.jstech.core.jstechseries.operation.OperationType  EnumSet<NetworkCategory> requiredCategories()
+12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  type final class
+12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  <T extends IOperationArgs> OperationType<T> register(OperationType<T>)
+12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  Collection<OperationType<?>> all()
+12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  Optional<OperationType<?>> get(String)
+12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  boolean contains(String)
+12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  boolean isFrozen()
+12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  int size()
+12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  void freeze()
+12 dev.jstech.core.jstechseries.operation.RegisterOperationTypesEvent  type final class extends Event implements IModBusEvent
+12 dev.jstech.core.jstechseries.operation.RegisterOperationTypesEvent  OperationTypeRegistry operations()
+12 dev.jstech.core.jstechseries.operation.SelfTestOperationTask  type record(int workUnits) implements IOperationTask
+12 dev.jstech.core.jstechseries.operation.SelfTestOperationTask  IOperationResult run(IOperationContext)
+12 dev.jstech.core.jstechseries.peripheral.ILinkResult  type sealed interface permits ILinkResult.Established, ILinkResult.AlreadyLinked, ILinkResult.OwnerAtCapacity, ILinkResult.HubAtCapacity, ILinkResult.NoPathFound, ILinkResult.ExceedsMaxLength, ILinkResult.CableTypeMismatch
+12 dev.jstech.core.jstechseries.peripheral.ILinkResult.AlreadyLinked  type record(long endpointPos, long existingOwnerPos) implements ILinkResult
+12 dev.jstech.core.jstechseries.peripheral.ILinkResult.CableTypeMismatch  type record(PeripheralCableType expected, PeripheralCableType actual) implements ILinkResult
+12 dev.jstech.core.jstechseries.peripheral.ILinkResult.Established  type record(long ownerPos, long endpointPos, int pathLength) implements ILinkResult
+12 dev.jstech.core.jstechseries.peripheral.ILinkResult.ExceedsMaxLength  type record(long ownerPos, long endpointPos, int pathLength, int maxAllowed) implements ILinkResult
+12 dev.jstech.core.jstechseries.peripheral.ILinkResult.HubAtCapacity  type record(long hubPos, PortKind kind, int currentCount, int maxAllowed) implements ILinkResult
+12 dev.jstech.core.jstechseries.peripheral.ILinkResult.NoPathFound  type record(long ownerPos, long endpointPos) implements ILinkResult
+12 dev.jstech.core.jstechseries.peripheral.ILinkResult.OwnerAtCapacity  type record(long ownerPos, PortKind kind, int currentCount, int maxAllowed) implements ILinkResult
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint  type interface extends IPlugged
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint  abstract Optional<Long> linkedOwner()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint  abstract PeripheralCableType cableType()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint  abstract void onOwnerLinked(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint  abstract void onOwnerUnlinked()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint  default PortKind portKind()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint  default String plugKind()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralHub  type interface extends IPeripheralEndpoint
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralHub  abstract int hubPorts()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralHub  default boolean passes(PortKind)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  type interface
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract List<Long> linkedEndpoints()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract OptionalLong hubOf(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract PeripheralCableType cableType()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract boolean holdsPort(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract int ports(PortKind)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract int portsInUse(PortKind)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract int portsInUseThrough(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract void onEndpointLinked(long, PortKind)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract void onEndpointLinkedThrough(long, PortKind, long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  abstract void onEndpointUnlinked(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default List<Long> enabledEndpoints()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default PortKind kindOf(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default Set<Long> occupiedPositions(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default boolean isDisabled(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default boolean isLinked(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default boolean setDisabled(long, boolean)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  type interface extends IPeripheralOwner
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  abstract PeripheralPorts peripheralPorts()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  abstract void markPeripheralChange()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default List<Long> enabledEndpoints()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default List<Long> linkedEndpoints()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default OptionalLong hubOf(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default PeripheralCableType cableType()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default PortKind kindOf(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default Set<Long> peripheralEndpoints()
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default boolean holdsPort(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default boolean isDisabled(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default boolean isLinked(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default boolean setDisabled(long, boolean)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default int portsInUse(PortKind)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default int portsInUseThrough(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default void onEndpointLinked(long, PortKind)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default void onEndpointLinkedThrough(long, PortKind, long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  default void onEndpointUnlinked(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralCableType  type enum
+12 dev.jstech.core.jstechseries.peripheral.PeripheralCableType  COMPUTING
+12 dev.jstech.core.jstechseries.peripheral.PeripheralCableType  INDUSTRIAL_CONTROL
+12 dev.jstech.core.jstechseries.peripheral.PeripheralCableType  String translationKey()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralCableType  int maxLength()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  type final class
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static Connection of(HardwareEra)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static ResourceLocation id()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static boolean is(ResourceLocation)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static final TextKey JOB
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static int range(HardwareEra)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  type final class
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  BlockPos ownerPos()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  Optional<Long> linkedOwner()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  PeripheralCableType cableType()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  new(BlockEntityFields, PeripheralCableType, ILinkWorld)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  static final int SEARCH_INTERVAL_TICKS
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  void linked(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  void tick(ServerLevel, BlockPos)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  void unlink(ServerLevel, BlockPos)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  void unlinked()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink.ILinkWorld  type interface
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink.ILinkWorld  abstract OptionalLong discoverOwner(ServerLevel, long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLink.ILinkWorld  abstract PeripheralLinkValidator validator(ServerLevel)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator  type final class
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator  ILinkResult tryEstablishLink(long, long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator  boolean isLinkStillValid(long, long, PeripheralCableType)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator  new(ICableLookup, IOwnerLookup, IEndpointLookup, INeighborLookup)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator  new(ICableLookup, IOwnerLookup, IEndpointLookup, INeighborLookup, IReachLookup)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator  static INeighborLookup adjacencyFrom(Map<Long, List<Long>>)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.ICableLookup  type interface
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.ICableLookup  abstract Optional<PeripheralCableType> cableTypeAt(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.IEndpointLookup  type interface
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.IEndpointLookup  abstract Optional<IPeripheralEndpoint> endpointAt(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.INeighborLookup  type interface
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.INeighborLookup  abstract List<Long> neighborsOf(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.IOwnerLookup  type interface
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.IOwnerLookup  abstract Optional<IPeripheralOwner> ownerAt(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.IReachLookup  type interface
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLinkValidator.IReachLookup  abstract int reachAt(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  type final class
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  List<Long> enabled()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  OptionalLong hubOf(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  PortKind kindOf(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  Set<Long> endpoints()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  boolean disabled(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  boolean holds(long, int)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  boolean link(long, PortKind)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  boolean linkThrough(long, PortKind, long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  boolean setDisabled(long, boolean)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  boolean unlink(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  int inUse(PortKind)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  int inUseThrough(long)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  int[] kindIds()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  long[] disabledPositions()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  long[] hubPositions()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  long[] positions()
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  void moved(LongUnaryOperator)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  void restore(long[], int[])
+12 dev.jstech.core.jstechseries.peripheral.PeripheralPorts  void restore(long[], int[], long[], long[])
+12 dev.jstech.core.jstechseries.peripheral.PeripheralReconciler  type final class
+12 dev.jstech.core.jstechseries.peripheral.PeripheralReconciler  static final long INTERVAL_TICKS
+12 dev.jstech.core.jstechseries.peripheral.PeripheralReconciler  static void reconcile(IPeripheralOwnerSupport, ServerLevel, long)
+12 dev.jstech.core.jstechseries.peripheral.PortKind  type enum implements IStableId, IStableName
+12 dev.jstech.core.jstechseries.peripheral.PortKind  AUDIO
+12 dev.jstech.core.jstechseries.peripheral.PortKind  DEVICE
+12 dev.jstech.core.jstechseries.peripheral.PortKind  String serializedName()
+12 dev.jstech.core.jstechseries.peripheral.PortKind  VIDEO
+12 dev.jstech.core.jstechseries.peripheral.PortKind  int id()
+12 dev.jstech.core.jstechseries.peripheral.PortKind  static PortKind byId(int)
+12 dev.jstech.core.jstechseries.peripheral.PortKind  static PortKind byName(String)
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  type final class
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static EraTheme of(HardwareEra)
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static EraTheme ofNullable(HardwareEra)
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final EraTheme ADVANCED
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final EraTheme LEGACY
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final EraTheme STANDARD
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final EraTheme TRANSITION
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final EraTheme VINTAGE
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final Palette<EraPalette> ADVANCED_COLOURS
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final Palette<EraPalette> LEGACY_COLOURS
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final Palette<EraPalette> STANDARD_COLOURS
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final Palette<EraPalette> TRANSITION_COLOURS
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final Palette<EraPalette> VINTAGE_COLOURS
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  type final class
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static EraTheme active()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static String fmt(long)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static float small()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int accent()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int accent2()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int amber()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int dim()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int green()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int hover()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int line()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int outer()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int panel()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int rail()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int red()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int screen()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int slotBg()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int slotEdge()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int tabLabelOn()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int tabOn()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int text()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int track()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static int widthS(Font, String)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void bind(EraTheme)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void button(GuiGraphics, int, int, int, int, boolean)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void hLine(GuiGraphics, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void headerBar(GuiGraphics, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void panel(GuiGraphics, int, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void selectedTab(GuiGraphics, int, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void slot(GuiGraphics, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void text(GuiGraphics, Font, String, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void textCenter(GuiGraphics, Font, String, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void textRight(GuiGraphics, Font, String, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void textS(GuiGraphics, Font, String, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void textSCenter(GuiGraphics, Font, String, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void textSRight(GuiGraphics, Font, String, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void tileText(GuiGraphics, Font, int, int, String, String, String, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void tileTextS(GuiGraphics, Font, int, int, String, String, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void track(GuiGraphics, int, int, int, double, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void unbind()
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void vLine(GuiGraphics, int, int, int)
+12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void window(GuiGraphics, int, int, int, int)
+12 dev.jstech.core.jstechseries.tier.Era  type record(ResourceLocation id, Text name, int colour)
+12 dev.jstech.core.jstechseries.tier.Eras  type final class
+12 dev.jstech.core.jstechseries.tier.Eras  static Era declare(Era)
+12 dev.jstech.core.jstechseries.tier.Eras  static Era declareAfter(Era, ResourceLocation)
+12 dev.jstech.core.jstechseries.tier.Eras  static Era of(HardwareEra)
+12 dev.jstech.core.jstechseries.tier.Eras  static List<Era> ordered()
+12 dev.jstech.core.jstechseries.tier.Eras  static Optional<Era> byId(ResourceLocation)
+12 dev.jstech.core.jstechseries.tier.Eras  static ResourceLocation idOf(HardwareEra)
+12 dev.jstech.core.jstechseries.tier.Eras  static boolean atLeast(Era, Era)
+12 dev.jstech.core.jstechseries.tier.Eras  static final Codec<Era> CODEC
+12 dev.jstech.core.jstechseries.tier.Eras  static int position(Era)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  type enum implements IStableId, IStableName, IAxisStep
+12 dev.jstech.core.jstechseries.tier.HardwareEra  ADVANCED
+12 dev.jstech.core.jstechseries.tier.HardwareEra  EXA
+12 dev.jstech.core.jstechseries.tier.HardwareEra  HardwareEra next()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  HardwareEra prev()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  LEGACY
+12 dev.jstech.core.jstechseries.tier.HardwareEra  SINGULARITY
+12 dev.jstech.core.jstechseries.tier.HardwareEra  STANDARD
+12 dev.jstech.core.jstechseries.tier.HardwareEra  String serializedName()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  TRANSITION
+12 dev.jstech.core.jstechseries.tier.HardwareEra  Text named()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  Text text()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  VINTAGE
+12 dev.jstech.core.jstechseries.tier.HardwareEra  boolean isAtLeast(HardwareEra)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  boolean isAtMost(HardwareEra)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  int bits()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  int colour()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  int id()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  int level()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  int screenColor()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  long bytesPerMbEq()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  long itemsFor(long)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  long mbPerItem()
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static HardwareEra find(int)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static HardwareEra fromLevel(int)
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  type enum implements IStableId, IAxisStep
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  IndustrialTier next()
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  IndustrialTier prev()
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  String serializedName()
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T0
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T1
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T2
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T3
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T4
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T5
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T6
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T7
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T8
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  T9
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  Text text()
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  boolean isAtLeast(IndustrialTier)
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  boolean isAtMost(IndustrialTier)
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  int id()
+12 dev.jstech.core.jstechseries.tier.IndustrialTier  int level()
+12 dev.jstech.core.jstechseries.tier.SeriesAxes  type final class
+12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final ProgressionAxis<HardwareEra> HARDWARE_ERA
+12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final ProgressionAxis<IndustrialTier> INDUSTRIAL_TIER
+12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final TextKey HARDWARE_ERA_NAME
+12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final TextKey INDUSTRIAL_TIER_NAME
 10 dev.jstech.core.log.CoreLogs  type final class
 10 dev.jstech.core.log.CoreLogs  static final LogSystem CABLES
 10 dev.jstech.core.log.CoreLogs  static final LogSystem CONFIG
@@ -7873,16 +8363,6 @@ stable 4
 10 dev.jstech.core.material.MaterialData  Map<String, Supplier<byte[]>> files()
 10 dev.jstech.core.material.MaterialData  static final TextKey TITLE
 10 dev.jstech.core.material.MaterialData  static void declare()
-10 dev.jstech.core.material.MaterialForm  type enum
-10 dev.jstech.core.material.MaterialForm  BOLT
-10 dev.jstech.core.material.MaterialForm  DUST
-10 dev.jstech.core.material.MaterialForm  GEAR
-10 dev.jstech.core.material.MaterialForm  INGOT
-10 dev.jstech.core.material.MaterialForm  NUGGET
-10 dev.jstech.core.material.MaterialForm  PLATE
-10 dev.jstech.core.material.MaterialForm  ROD
-10 dev.jstech.core.material.MaterialForm  String itemKey(String)
-10 dev.jstech.core.material.MaterialForm  String tagPath(String)
 10 dev.jstech.core.material.MaterialFormBlock  type class extends Block
 10 dev.jstech.core.material.MaterialFormBlock  MaterialThing thing()
 10 dev.jstech.core.material.MaterialFormBlock  MutableComponent getName()
@@ -7897,10 +8377,6 @@ stable 4
 10 dev.jstech.core.material.MaterialFormItem  Component getName(ItemStack)
 10 dev.jstech.core.material.MaterialFormItem  MaterialThing thing()
 10 dev.jstech.core.material.MaterialFormItem  new(Properties, MaterialThing)
-10 dev.jstech.core.material.MaterialItems  type deprecated final class
-10 dev.jstech.core.material.MaterialItems  static DeferredItem<Item> get(ModMaterial, MaterialForm)
-10 dev.jstech.core.material.MaterialItems  static List<DeferredItem<Item>> all()
-10 dev.jstech.core.material.MaterialItems  static void register(ModContent)
 10 dev.jstech.core.material.MaterialKind  type enum
 10 dev.jstech.core.material.MaterialKind  CRYSTAL
 10 dev.jstech.core.material.MaterialKind  EXOTIC
@@ -8085,19 +8561,6 @@ stable 4
 10 dev.jstech.core.material.MineralShares.Problem  MORE_THAN_THE_WHOLE
 10 dev.jstech.core.material.MineralShares.Problem  NOTHING
 10 dev.jstech.core.material.MineralShares.Problem  OUTSIDE_THE_WHOLE
-10 dev.jstech.core.material.ModMaterial  type enum
-10 dev.jstech.core.material.ModMaterial  BRONZE
-10 dev.jstech.core.material.ModMaterial  COPPER
-10 dev.jstech.core.material.ModMaterial  GOLD
-10 dev.jstech.core.material.ModMaterial  IRON
-10 dev.jstech.core.material.ModMaterial  Set<MaterialForm> activeModForms()
-10 dev.jstech.core.material.ModMaterial  Set<MaterialForm> vanillaForms()
-10 dev.jstech.core.material.ModMaterial  String materialName()
-10 dev.jstech.core.material.ModMaterial  TIN
-10 dev.jstech.core.material.ModMaterial  boolean isFormActive(MaterialForm)
-10 dev.jstech.core.material.ModMaterial  boolean isModForm(MaterialForm)
-10 dev.jstech.core.material.ModMaterial  boolean isVanillaForm(MaterialForm)
-10 dev.jstech.core.material.ModMaterial  int tier()
 10 dev.jstech.core.material.ModTagFiles  type final class
 10 dev.jstech.core.material.ModTagFiles  static Set<String> blockTagsIn(String)
 10 dev.jstech.core.material.ModTagFiles  static Set<String> blocks(String)
@@ -10700,227 +11163,6 @@ stable 4
 10 dev.jstech.core.multipart.SpaceSlots  static int faceAxis(int)
 10 dev.jstech.core.multipart.SpaceSlots  static int faceOf(int)
 10 dev.jstech.core.multipart.SpaceSlots  static int[] across(int)
-10 dev.jstech.core.network.ConnectivityIndex  type final class
-10 dev.jstech.core.network.ConnectivityIndex  Grid grid()
-10 dev.jstech.core.network.ConnectivityIndex  IPlacementResult onCablePlaced(long, Set<Long>)
-10 dev.jstech.core.network.ConnectivityIndex  IPlacementResult onCablePlaced(long, Set<Long>, DataLink)
-10 dev.jstech.core.network.ConnectivityIndex  IPlacementResult place(long, Collection<Long>, GridMember)
-10 dev.jstech.core.network.ConnectivityIndex  Optional<DataLink> linkOf(long)
-10 dev.jstech.core.network.ConnectivityIndex  Optional<DataLink> slowestBetween(Collection<Long>, Collection<Long>)
-10 dev.jstech.core.network.ConnectivityIndex  Optional<NetworkUuid> joinedNetwork(long)
-10 dev.jstech.core.network.ConnectivityIndex  Optional<NetworkUuid> networkOf(long)
-10 dev.jstech.core.network.ConnectivityIndex  RemovalResult onCableRemoved(long)
-10 dev.jstech.core.network.ConnectivityIndex  Set<Long> bridgedBy(long)
-10 dev.jstech.core.network.ConnectivityIndex  Set<Long> componentPositions(long)
-10 dev.jstech.core.network.ConnectivityIndex  Set<Long> cutOffPositions(NetworkUuid)
-10 dev.jstech.core.network.ConnectivityIndex  Set<Long> positionsOf(NetworkUuid)
-10 dev.jstech.core.network.ConnectivityIndex  Set<Long> reachableFrom(long, Set<Long>)
-10 dev.jstech.core.network.ConnectivityIndex  boolean contains(long)
-10 dev.jstech.core.network.ConnectivityIndex  boolean inSameNetwork(long, long)
-10 dev.jstech.core.network.ConnectivityIndex  boolean runTooLong(long)
-10 dev.jstech.core.network.ConnectivityIndex  int componentCount()
-10 dev.jstech.core.network.ConnectivityIndex  int componentSize(long)
-10 dev.jstech.core.network.ConnectivityIndex  int runLength(long)
-10 dev.jstech.core.network.ConnectivityIndex  int size()
-10 dev.jstech.core.network.ConnectivityIndex  static GridMember member(DataLink)
-10 dev.jstech.core.network.ConnectivityIndex  void anchor(long, NetworkUuid, Set<Long>)
-10 dev.jstech.core.network.ConnectivityIndex  void assignUuid(long, NetworkUuid)
-10 dev.jstech.core.network.ConnectivityIndex  void bridge(long, Collection<Long>)
-10 dev.jstech.core.network.ConnectivityIndex  void clear()
-10 dev.jstech.core.network.ConnectivityIndex  void clearNetwork(NetworkUuid)
-10 dev.jstech.core.network.ConnectivityIndex  void forgetBridge(long)
-10 dev.jstech.core.network.ConnectivityIndex  void onCableRemovedIfRegistered(long)
-10 dev.jstech.core.network.ConnectivityIndex  void unanchor(long)
-10 dev.jstech.core.network.ConnectivityIndex.IPlacementResult  type sealed interface permits IPlacementResult.Isolated, IPlacementResult.MergedWithoutUuid, IPlacementResult.Inherited, IPlacementResult.Conflict
-10 dev.jstech.core.network.ConnectivityIndex.IPlacementResult  static final Isolated ISOLATED
-10 dev.jstech.core.network.ConnectivityIndex.IPlacementResult  static final MergedWithoutUuid MERGED_WITHOUT_UUID
-10 dev.jstech.core.network.ConnectivityIndex.IPlacementResult.Conflict  type record(NetworkUuid first, NetworkUuid second) implements IPlacementResult
-10 dev.jstech.core.network.ConnectivityIndex.IPlacementResult.Inherited  type record(NetworkUuid uuid) implements IPlacementResult
-10 dev.jstech.core.network.ConnectivityIndex.IPlacementResult.Isolated  type record() implements IPlacementResult
-10 dev.jstech.core.network.ConnectivityIndex.IPlacementResult.MergedWithoutUuid  type record() implements IPlacementResult
-10 dev.jstech.core.network.ConnectivityIndex.RemovalResult  type record(Optional<NetworkUuid> previousUuid, int resultingComponents)
-10 dev.jstech.core.network.DataLine  type enum implements IStableId, IStableName
-10 dev.jstech.core.network.DataLine  ACCESS
-10 dev.jstech.core.network.DataLine  BACKBONE
-10 dev.jstech.core.network.DataLine  CRAFTING
-10 dev.jstech.core.network.DataLine  HPC
-10 dev.jstech.core.network.DataLine  LONG_DISTANCE
-10 dev.jstech.core.network.DataLine  String lineId()
-10 dev.jstech.core.network.DataLine  String serializedName()
-10 dev.jstech.core.network.DataLine  TextKey job()
-10 dev.jstech.core.network.DataLine  int generation(HardwareEra)
-10 dev.jstech.core.network.DataLine  int id()
-10 dev.jstech.core.network.DataLine  static DataLine byId(int)
-10 dev.jstech.core.network.DataLine  static DataLine byName(String)
-10 dev.jstech.core.network.DataLine  static DataLine ofLineId(String)
-10 dev.jstech.core.network.DataLines  type final class
-10 dev.jstech.core.network.DataLines  static Connection of(DataLink)
-10 dev.jstech.core.network.DataLines  static Connection upTo(HardwareEra, DataLine)
-10 dev.jstech.core.network.DataLines  static Connection[] upTo(HardwareEra, DataLine...)
-10 dev.jstech.core.network.DataLines  static DataLine of(ResourceLocation)
-10 dev.jstech.core.network.DataLines  static DataLink linkOf(Connection)
-10 dev.jstech.core.network.DataLines  static ResourceLocation id(DataLine)
-10 dev.jstech.core.network.DataLines  static boolean isData(ResourceLocation)
-10 dev.jstech.core.network.DataLink  type record(DataLine line, HardwareEra era)
-10 dev.jstech.core.network.DataLink  String serializedName()
-10 dev.jstech.core.network.DataLink  boolean betweenTwoEnds()
-10 dev.jstech.core.network.DataLink  boolean exists()
-10 dev.jstech.core.network.DataLink  boolean straight()
-10 dev.jstech.core.network.DataLink  int generation()
-10 dev.jstech.core.network.DataLink  int range()
-10 dev.jstech.core.network.DataLink  long throughput()
-10 dev.jstech.core.network.DataLink  static DataLink byName(String)
-10 dev.jstech.core.network.DataLink  static DataLink of(String, int)
-10 dev.jstech.core.network.DataLink  static final int ENDS
-10 dev.jstech.core.network.FailoverRole  type enum implements IStableId
-10 dev.jstech.core.network.FailoverRole  ACTIVE
-10 dev.jstech.core.network.FailoverRole  NONE
-10 dev.jstech.core.network.FailoverRole  PASSIVE
-10 dev.jstech.core.network.FailoverRole  boolean isPaired()
-10 dev.jstech.core.network.FailoverRole  int id()
-10 dev.jstech.core.network.FailoverRole  static FailoverRole byId(int)
-10 dev.jstech.core.network.IComputerNode  type sealed interface extends INetworkNode permits MainframeNode, SubframeNode
-10 dev.jstech.core.network.IComputerNode  abstract NetworkUuid networkUuid()
-10 dev.jstech.core.network.IComputerNode  abstract NodeUuid nodeUuid()
-10 dev.jstech.core.network.IComputerNode  abstract long contributedCapacity()
-10 dev.jstech.core.network.INetworkBridge  type interface
-10 dev.jstech.core.network.INetworkMember  type interface
-10 dev.jstech.core.network.INetworkMember  abstract NetworkCategory category()
-10 dev.jstech.core.network.INetworkMember  default List<OperationType<?>> carriesOut()
-10 dev.jstech.core.network.INetworkMember  default List<StateTable> tables()
-10 dev.jstech.core.network.INetworkMember  default void fill(StateTable, StateRow.Writer)
-10 dev.jstech.core.network.INetworkNode  type sealed interface permits IComputerNode, IServiceNode
-10 dev.jstech.core.network.INetworkNode  abstract NetworkCategory category()
-10 dev.jstech.core.network.INetworkNode  abstract NetworkUuid networkUuid()
-10 dev.jstech.core.network.INetworkNode  abstract NodeUuid nodeUuid()
-10 dev.jstech.core.network.INetworkTopologyElement  type sealed interface permits ServerRouterElement
-10 dev.jstech.core.network.INetworkTopologyElement  abstract NetworkUuid networkUuid()
-10 dev.jstech.core.network.INetworkTopologyElement  abstract long pos()
-10 dev.jstech.core.network.IServiceNode  type sealed interface extends INetworkNode permits ServerNode
-10 dev.jstech.core.network.MainframeNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long ownCapacity, FailoverRole failoverRole, Optional<NodeUuid> failoverPartnerUuid, long lastHeartbeatTick) implements IComputerNode
-10 dev.jstech.core.network.MainframeNode  NetworkCategory category()
-10 dev.jstech.core.network.MainframeNode  long contributedCapacity()
-10 dev.jstech.core.network.NetworkCategory  type enum
-10 dev.jstech.core.network.NetworkCategory  A
-10 dev.jstech.core.network.NetworkCategory  B
-10 dev.jstech.core.network.NetworkCategory  C
-10 dev.jstech.core.network.NetworkCategory  boolean canReceiveOperations()
-10 dev.jstech.core.network.NetworkCategory  boolean hasUuid()
-10 dev.jstech.core.network.NetworkMemberEvent  type abstract sealed class extends Event
-10 dev.jstech.core.network.NetworkMemberEvent  BlockPos pos()
-10 dev.jstech.core.network.NetworkMemberEvent  NetworkUuid network()
-10 dev.jstech.core.network.NetworkMemberEvent  NodeUuid node()
-10 dev.jstech.core.network.NetworkMemberEvent  ServerLevel level()
-10 dev.jstech.core.network.NetworkMemberEvent  new(ServerLevel, BlockPos, NodeUuid, NetworkUuid)
-10 dev.jstech.core.network.NetworkMemberEvent.Joined  type static final class extends NetworkMemberEvent
-10 dev.jstech.core.network.NetworkMemberEvent.Joined  new(ServerLevel, BlockPos, NodeUuid, NetworkUuid)
-10 dev.jstech.core.network.NetworkMemberEvent.Left  type static final class extends NetworkMemberEvent
-10 dev.jstech.core.network.NetworkMemberEvent.Left  new(ServerLevel, BlockPos, NodeUuid, NetworkUuid)
-10 dev.jstech.core.network.NetworkMembers  type final class
-10 dev.jstech.core.network.NetworkMembers  static NetworkMembership keep(SyncedBlockEntity)
-10 dev.jstech.core.network.NetworkMembers  static Optional<NetworkMembership> at(ServerLevel, BlockPos)
-10 dev.jstech.core.network.NetworkMembers  static int on(ServerLevel, NetworkUuid)
-10 dev.jstech.core.network.NetworkMembership  type final class
-10 dev.jstech.core.network.NetworkMembership  INetworkMember member()
-10 dev.jstech.core.network.NetworkMembership  NodeUuid node()
-10 dev.jstech.core.network.NetworkMembership  Optional<NetworkUuid> network()
-10 dev.jstech.core.network.NetworkSystem  type final class
-10 dev.jstech.core.network.NetworkSystem  ConnectivityIndex connectivity()
-10 dev.jstech.core.network.NetworkSystem  List<CraftingComputerNode> craftingComputersOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  List<MemberNode> membersCarryingOut(NetworkUuid, String)
-10 dev.jstech.core.network.NetworkSystem  List<MemberNode> membersOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  List<PersonalComputerNode> personalComputersOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  List<ServerNode> serversOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  List<ServerRouterElement> routersOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  List<SubframeNode> subframesOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  List<SupercomputerNode> supercomputersOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  Optional<Long> mainframePositionOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  Optional<MainframeNode> mainframeOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  Optional<MemberNode> memberAt(long)
-10 dev.jstech.core.network.NetworkSystem  Optional<NetworkUuid> networkOf(long)
-10 dev.jstech.core.network.NetworkSystem  Optional<ServerLocation> locationOf(NodeUuid)
-10 dev.jstech.core.network.NetworkSystem  boolean inSameNetwork(long, long)
-10 dev.jstech.core.network.NetworkSystem  int subframeQueuesOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  long totalOrchestrationCapacityOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  long totalStorageItemsOf(NetworkUuid)
-10 dev.jstech.core.network.NetworkSystem  static NetworkSystem get(ServerLevel)
-10 dev.jstech.core.network.NetworkSystem  void clear()
-10 dev.jstech.core.network.NetworkSystem  void recordMainframePosition(NetworkUuid, long)
-10 dev.jstech.core.network.NetworkSystem  void registerCraftingComputer(CraftingComputerNode)
-10 dev.jstech.core.network.NetworkSystem  void registerMainframe(MainframeNode)
-10 dev.jstech.core.network.NetworkSystem  void registerMember(MemberNode)
-10 dev.jstech.core.network.NetworkSystem  void registerPersonalComputer(PersonalComputerNode)
-10 dev.jstech.core.network.NetworkSystem  void registerRouter(ServerRouterElement)
-10 dev.jstech.core.network.NetworkSystem  void registerServer(ServerNode)
-10 dev.jstech.core.network.NetworkSystem  void registerServer(ServerNode, long, int)
-10 dev.jstech.core.network.NetworkSystem  void registerSubframe(SubframeNode)
-10 dev.jstech.core.network.NetworkSystem  void registerSupercomputer(SupercomputerNode)
-10 dev.jstech.core.network.NetworkSystem  void unregisterCraftingComputer(NetworkUuid, NodeUuid)
-10 dev.jstech.core.network.NetworkSystem  void unregisterMainframe(NetworkUuid, NodeUuid)
-10 dev.jstech.core.network.NetworkSystem  void unregisterMemberAt(long)
-10 dev.jstech.core.network.NetworkSystem  void unregisterPersonalComputer(NetworkUuid, NodeUuid)
-10 dev.jstech.core.network.NetworkSystem  void unregisterRouter(NetworkUuid, long)
-10 dev.jstech.core.network.NetworkSystem  void unregisterServer(NetworkUuid, NodeUuid)
-10 dev.jstech.core.network.NetworkSystem  void unregisterSubframe(NetworkUuid, NodeUuid)
-10 dev.jstech.core.network.NetworkSystem  void unregisterSupercomputer(NetworkUuid, NodeUuid)
-10 dev.jstech.core.network.NetworkSystem.CraftingComputerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long capacity, long pos)
-10 dev.jstech.core.network.NetworkSystem.MemberNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long pos, NetworkCategory category, List<String> operations, List<ResourceLocation> tables)
-10 dev.jstech.core.network.NetworkSystem.MemberNode  boolean carriesOut(String)
-10 dev.jstech.core.network.NetworkSystem.PersonalComputerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long capacity, long pos)
-10 dev.jstech.core.network.NetworkSystem.ServerLocation  type record(long rackPos, int slot)
-10 dev.jstech.core.network.NetworkSystem.SupercomputerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long parallelCrafts, long pos)
-10 dev.jstech.core.network.NetworkTables  type final class
-10 dev.jstech.core.network.NetworkTables  static List<StateRow> rows(ServerLevel, NetworkUuid, StateTable)
-10 dev.jstech.core.network.NetworkTables  static List<StateTable> tablesOf(ServerLevel, NetworkUuid)
-10 dev.jstech.core.network.ServerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long storageItems) implements IServiceNode
-10 dev.jstech.core.network.ServerNode  NetworkCategory category()
-10 dev.jstech.core.network.ServerRouterElement  type record(NetworkUuid networkUuid, long pos, IndustrialTier tier) implements INetworkTopologyElement
-10 dev.jstech.core.network.ServerRouterElement  int maxRacks()
-10 dev.jstech.core.network.ServerRouterElement  static int maxRacksFor(IndustrialTier)
-10 dev.jstech.core.network.StateColumn  type record(String name, TextKey title, StateValueKind kind, String unit)
-10 dev.jstech.core.network.StateRow  type final class
-10 dev.jstech.core.network.StateRow  NodeUuid member()
-10 dev.jstech.core.network.StateRow  Object value(String)
-10 dev.jstech.core.network.StateRow  Optional<Boolean> flag(String)
-10 dev.jstech.core.network.StateRow  Optional<String> text(String)
-10 dev.jstech.core.network.StateRow  OptionalDouble number(String)
-10 dev.jstech.core.network.StateRow  StateTable table()
-10 dev.jstech.core.network.StateRow  long pos()
-10 dev.jstech.core.network.StateRow.Writer  type static final class
-10 dev.jstech.core.network.StateRow.Writer  StateRow done(NodeUuid, long)
-10 dev.jstech.core.network.StateRow.Writer  Writer set(String, String)
-10 dev.jstech.core.network.StateRow.Writer  Writer set(String, boolean)
-10 dev.jstech.core.network.StateRow.Writer  Writer set(String, double)
-10 dev.jstech.core.network.StateRow.Writer  new(StateTable)
-10 dev.jstech.core.network.StateTable  type final class
-10 dev.jstech.core.network.StateTable  List<StateColumn> columns()
-10 dev.jstech.core.network.StateTable  Optional<StateColumn> column(String)
-10 dev.jstech.core.network.StateTable  ResourceLocation id()
-10 dev.jstech.core.network.StateTable  TextKey title()
-10 dev.jstech.core.network.StateTable  int indexOf(String)
-10 dev.jstech.core.network.StateTable  static Builder builder(ResourceLocation, TextKey)
-10 dev.jstech.core.network.StateTable.Builder  type static final class
-10 dev.jstech.core.network.StateTable.Builder  Builder flag(String, TextKey)
-10 dev.jstech.core.network.StateTable.Builder  Builder number(String, TextKey, String)
-10 dev.jstech.core.network.StateTable.Builder  Builder text(String, TextKey)
-10 dev.jstech.core.network.StateTable.Builder  StateTable build()
-10 dev.jstech.core.network.StateTables  type final class
-10 dev.jstech.core.network.StateTables  static List<StateTable> all()
-10 dev.jstech.core.network.StateTables  static Optional<StateTable> get(ResourceLocation)
-10 dev.jstech.core.network.StateTables  static StateTable declare(StateTable)
-10 dev.jstech.core.network.StateValueKind  type enum
-10 dev.jstech.core.network.StateValueKind  FLAG
-10 dev.jstech.core.network.StateValueKind  NUMBER
-10 dev.jstech.core.network.StateValueKind  TEXT
-10 dev.jstech.core.network.SubframeNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long ownCapacity, Optional<NodeUuid> orchestratingMainframeUuid, int parallelQueues, String software) implements IComputerNode
-10 dev.jstech.core.network.SubframeNode  NetworkCategory category()
-10 dev.jstech.core.network.SubframeNode  boolean runsWith(String)
-10 dev.jstech.core.network.SubframeNode  int contributedQueues()
-10 dev.jstech.core.network.SubframeNode  long contributedCapacity()
-10 dev.jstech.core.network.SubframeNode  new(NodeUuid, NetworkUuid, long, Optional<NodeUuid>)
-10 dev.jstech.core.network.SubframeNode  new(NodeUuid, NetworkUuid, long, Optional<NodeUuid>, int)
-10 dev.jstech.core.network.SubframeNode  static final String ANY_SOFTWARE
-10 dev.jstech.core.network.SubframeNode  static final double CONTRIBUTION_FACTOR
 10 dev.jstech.core.notification.Notification  type record(ResourceLocation kind, NotificationLevel level, Text title, Text body, Optional<NotificationAction> action)
 10 dev.jstech.core.notification.Notification  Notification withAction(NotificationAction)
 10 dev.jstech.core.notification.Notification  static final StreamCodec<ByteBuf, Notification> STREAM_CODEC
@@ -11023,147 +11265,6 @@ stable 4
 10 dev.jstech.core.notification.Notifications  static void send(ServerPlayer, Notification)
 10 dev.jstech.core.notification.Notifications  static void sendTo(MinecraftServer, UUID, Notification)
 10 dev.jstech.core.notification.Notifications  static void sendToTeamOf(MinecraftServer, UUID, Notification)
-10 dev.jstech.core.operation.ILatencyScheduler  type interface
-10 dev.jstech.core.operation.ILatencyScheduler  abstract void afterTicks(int, Runnable)
-1 dev.jstech.core.operation.IOperationArgs  type interface
-10 dev.jstech.core.operation.IOperationContext  type interface
-10 dev.jstech.core.operation.IOperationContext  abstract <T> T runOnMain(Supplier<T>)
-10 dev.jstech.core.operation.IOperationContext  abstract boolean isActive()
-10 dev.jstech.core.operation.IOperationContext  abstract long currentTick()
-10 dev.jstech.core.operation.IOperationContext  abstract void awaitTicks(int)
-10 dev.jstech.core.operation.IOperationContext  abstract void onMainThread(Runnable)
-10 dev.jstech.core.operation.IOperationContext  default void doOnMain(Runnable)
-10 dev.jstech.core.operation.IOperationHandler  type interface<T extends IOperationArgs>
-10 dev.jstech.core.operation.IOperationHandler  abstract OperationStatus execute(T)
-10 dev.jstech.core.operation.IOperationResult  type sealed interface
-10 dev.jstech.core.operation.IOperationResult  static IOperationResult failure(OperationFailure)
-10 dev.jstech.core.operation.IOperationResult  static IOperationResult failure(String, String...)
-10 dev.jstech.core.operation.IOperationResult  static IOperationResult success()
-10 dev.jstech.core.operation.IOperationResult.Failure  type record(OperationFailure cause) implements IOperationResult
-10 dev.jstech.core.operation.IOperationResult.Success  type record() implements IOperationResult
-10 dev.jstech.core.operation.IOperationTask  type interface
-10 dev.jstech.core.operation.IOperationTask  abstract IOperationResult run(IOperationContext)
-10 dev.jstech.core.operation.OperationBalance  type final class
-10 dev.jstech.core.operation.OperationBalance  static double subframeEfficiencyFactor()
-10 dev.jstech.core.operation.OperationBalance  static final double DEFAULT_SUBFRAME_EFFICIENCY_FACTOR
-10 dev.jstech.core.operation.OperationBalance  static final int DEFAULT_HDD_LATENCY_TICKS
-10 dev.jstech.core.operation.OperationBalance  static final int DEFAULT_NVME_LATENCY_TICKS
-10 dev.jstech.core.operation.OperationBalance  static final int DEFAULT_ORPHANED_OPERATIONS_EXPIRY_HOURS
-10 dev.jstech.core.operation.OperationBalance  static final int DEFAULT_PRIORITY_AGING_TICKS
-10 dev.jstech.core.operation.OperationBalance  static final int DEFAULT_SSD_LATENCY_TICKS
-10 dev.jstech.core.operation.OperationBalance  static final int DEFAULT_WAITING_TIMEOUT_TICKS
-10 dev.jstech.core.operation.OperationBalance  static final long TICKS_PER_HOUR
-10 dev.jstech.core.operation.OperationBalance  static int hddLatencyTicks()
-10 dev.jstech.core.operation.OperationBalance  static int nvmeLatencyTicks()
-10 dev.jstech.core.operation.OperationBalance  static int priorityAgingTicks()
-10 dev.jstech.core.operation.OperationBalance  static int ssdLatencyTicks()
-10 dev.jstech.core.operation.OperationBalance  static int waitingTimeoutTicks()
-10 dev.jstech.core.operation.OperationBalance  static long orphanedOperationsExpiryTicks()
-10 dev.jstech.core.operation.OperationBalance  static void reset()
-10 dev.jstech.core.operation.OperationBalance  static void setHddLatencyTicks(int)
-10 dev.jstech.core.operation.OperationBalance  static void setNvmeLatencyTicks(int)
-10 dev.jstech.core.operation.OperationBalance  static void setOrphanedOperationsExpiryHours(int)
-10 dev.jstech.core.operation.OperationBalance  static void setOrphanedOperationsExpiryTicks(long)
-10 dev.jstech.core.operation.OperationBalance  static void setPriorityAgingTicks(int)
-10 dev.jstech.core.operation.OperationBalance  static void setSsdLatencyTicks(int)
-10 dev.jstech.core.operation.OperationBalance  static void setSubframeEfficiencyFactor(double)
-10 dev.jstech.core.operation.OperationBalance  static void setWaitingTimeoutTicks(int)
-10 dev.jstech.core.operation.OperationCancelledException  type final class extends RuntimeException
-10 dev.jstech.core.operation.OperationCancelledException  new()
-10 dev.jstech.core.operation.OperationCategory  type enum
-10 dev.jstech.core.operation.OperationCategory  AGRICULTURE
-10 dev.jstech.core.operation.OperationCategory  CONCURRENCY
-10 dev.jstech.core.operation.OperationCategory  CONSTRUCTION
-10 dev.jstech.core.operation.OperationCategory  CRAFTING
-10 dev.jstech.core.operation.OperationCategory  GEOLOGICAL
-10 dev.jstech.core.operation.OperationCategory  INDUSTRIAL
-10 dev.jstech.core.operation.OperationCategory  MILITARY
-10 dev.jstech.core.operation.OperationCategory  NETWORK
-10 dev.jstech.core.operation.OperationCategory  OCEANIC
-10 dev.jstech.core.operation.OperationCategory  ROBOTICS
-10 dev.jstech.core.operation.OperationCategory  SECURITY
-10 dev.jstech.core.operation.OperationCategory  SPACE
-10 dev.jstech.core.operation.OperationCategory  STORAGE
-10 dev.jstech.core.operation.OperationCategory  TRANSPORT
-10 dev.jstech.core.operation.OperationDispatch  type final class implements AutoCloseable, ILatencyScheduler
-10 dev.jstech.core.operation.OperationDispatch  OperationFailure failureOf(UUID)
-10 dev.jstech.core.operation.OperationDispatch  OperationStatus statusOf(UUID)
-10 dev.jstech.core.operation.OperationDispatch  UUID submit(IOperationTask, OperationPriority)
-10 dev.jstech.core.operation.OperationDispatch  boolean cancel(UUID)
-10 dev.jstech.core.operation.OperationDispatch  int parallelQueues()
-10 dev.jstech.core.operation.OperationDispatch  int pendingCount()
-10 dev.jstech.core.operation.OperationDispatch  int runningCount()
-10 dev.jstech.core.operation.OperationDispatch  long completedCount()
-10 dev.jstech.core.operation.OperationDispatch  long failedCount()
-10 dev.jstech.core.operation.OperationDispatch  long tickCount()
-10 dev.jstech.core.operation.OperationDispatch  new(int)
-10 dev.jstech.core.operation.OperationDispatch  new(int, Consumer<Throwable>)
-10 dev.jstech.core.operation.OperationDispatch  void afterTicks(int, Runnable)
-10 dev.jstech.core.operation.OperationDispatch  void close()
-10 dev.jstech.core.operation.OperationDispatch  void setParallelQueues(int)
-10 dev.jstech.core.operation.OperationDispatch  void tick()
-10 dev.jstech.core.operation.OperationFailure  type record(String key, List<String> arguments)
-10 dev.jstech.core.operation.OperationFailure  boolean isPresent()
-10 dev.jstech.core.operation.OperationFailure  static OperationFailure of(String, String...)
-10 dev.jstech.core.operation.OperationFailure  static OperationFailure of(TextKey, String...)
-10 dev.jstech.core.operation.OperationFailure  static final OperationFailure NONE
-10 dev.jstech.core.operation.OperationFailure  static final int MAX_ARGUMENTS
-10 dev.jstech.core.operation.OperationFailure  static final int MAX_ARGUMENT_BYTES
-10 dev.jstech.core.operation.OperationFailure  static final int MAX_KEY_BYTES
-10 dev.jstech.core.operation.OperationPriority  type enum implements IStableId, IStableName
-10 dev.jstech.core.operation.OperationPriority  HIGH
-10 dev.jstech.core.operation.OperationPriority  LOW
-10 dev.jstech.core.operation.OperationPriority  MEDIUM
-10 dev.jstech.core.operation.OperationPriority  MEDIUM_HIGH
-10 dev.jstech.core.operation.OperationPriority  MEDIUM_LOW
-10 dev.jstech.core.operation.OperationPriority  OperationPriority lower()
-10 dev.jstech.core.operation.OperationPriority  OperationPriority raise()
-10 dev.jstech.core.operation.OperationPriority  String label()
-10 dev.jstech.core.operation.OperationPriority  String serializedName()
-10 dev.jstech.core.operation.OperationPriority  Text text()
-10 dev.jstech.core.operation.OperationPriority  int id()
-10 dev.jstech.core.operation.OperationPriority  static OperationPriority byId(int)
-10 dev.jstech.core.operation.OperationPriority  static Optional<OperationPriority> fromKeyword(String)
-10 dev.jstech.core.operation.OperationPriority  static final OperationPriority DEFAULT
-10 dev.jstech.core.operation.OperationStatistics  type final class
-10 dev.jstech.core.operation.OperationStatistics  List<TypeSummary> summaries(long)
-10 dev.jstech.core.operation.OperationStatistics  int peakConcurrentLastDay(long)
-10 dev.jstech.core.operation.OperationStatistics  long movedLastHour(long)
-10 dev.jstech.core.operation.OperationStatistics  long settledTotal()
-10 dev.jstech.core.operation.OperationStatistics  static final int HOURS_PER_DAY
-10 dev.jstech.core.operation.OperationStatistics  static final int MINUTES_PER_HOUR
-10 dev.jstech.core.operation.OperationStatistics  static final int TICKS_PER_MINUTE
-10 dev.jstech.core.operation.OperationStatistics  static final int WINDOW_TICKS
-10 dev.jstech.core.operation.OperationStatistics  void observeConcurrency(long, int)
-10 dev.jstech.core.operation.OperationStatistics  void record(long, int, boolean, int, int, long)
-10 dev.jstech.core.operation.OperationStatistics.TypeSummary  type record(int type, int count, int shortfalls, int averageWait, int averageRun, long moved)
-10 dev.jstech.core.operation.OperationStatistics.TypeSummary  int shortfallPercent()
-10 dev.jstech.core.operation.OperationStatus  type enum implements IStableId
-10 dev.jstech.core.operation.OperationStatus  COMPLETED
-10 dev.jstech.core.operation.OperationStatus  COMPLETED_PARTIAL
-10 dev.jstech.core.operation.OperationStatus  DISCARDED
-10 dev.jstech.core.operation.OperationStatus  FAILED
-10 dev.jstech.core.operation.OperationStatus  PENDING
-10 dev.jstech.core.operation.OperationStatus  PROCESSING
-10 dev.jstech.core.operation.OperationStatus  RESOURCE_LOCKED
-10 dev.jstech.core.operation.OperationStatus  WAITING
-10 dev.jstech.core.operation.OperationStatus  boolean isActive()
-10 dev.jstech.core.operation.OperationStatus  boolean isTerminal()
-10 dev.jstech.core.operation.OperationStatus  int id()
-10 dev.jstech.core.operation.OperationStatus  static Optional<OperationStatus> of(int)
-10 dev.jstech.core.operation.OperationStatus  static final byte UNKNOWN
-1 dev.jstech.core.operation.OperationType  type record<T extends IOperationArgs>(String id, Class<T> argsClass, OperationCategory category, IndustrialTier minTier, EnumSet<NetworkCategory> requiredCategories, IOperationHandler<T> handler)
-1 dev.jstech.core.operation.OperationType  EnumSet<NetworkCategory> requiredCategories()
-1 dev.jstech.core.operation.OperationTypeRegistry  type final class
-1 dev.jstech.core.operation.OperationTypeRegistry  <T extends IOperationArgs> OperationType<T> register(OperationType<T>)
-1 dev.jstech.core.operation.OperationTypeRegistry  Collection<OperationType<?>> all()
-1 dev.jstech.core.operation.OperationTypeRegistry  Optional<OperationType<?>> get(String)
-1 dev.jstech.core.operation.OperationTypeRegistry  boolean contains(String)
-1 dev.jstech.core.operation.OperationTypeRegistry  boolean isFrozen()
-1 dev.jstech.core.operation.OperationTypeRegistry  int size()
-1 dev.jstech.core.operation.OperationTypeRegistry  void freeze()
-10 dev.jstech.core.operation.SelfTestOperationTask  type record(int workUnits) implements IOperationTask
-10 dev.jstech.core.operation.SelfTestOperationTask  IOperationResult run(IOperationContext)
 6 dev.jstech.core.optional.OptionalDependencyCheck  type final class
 6 dev.jstech.core.optional.OptionalDependencyCheck  List<String> violations(Collection<Path>)
 6 dev.jstech.core.optional.OptionalDependencyCheck  static OptionalDependencyCheck of(List<String>)
@@ -11198,129 +11299,6 @@ stable 4
 10 dev.jstech.core.palette.Palettes  static List<Palette<?>> of(String)
 10 dev.jstech.core.palette.Palettes  static void load(Palette<?>, Map<String, Integer>)
 10 dev.jstech.core.palette.Palettes  static void reset(Palette<?>)
-10 dev.jstech.core.peripheral.ILinkResult  type sealed interface permits ILinkResult.Established, ILinkResult.AlreadyLinked, ILinkResult.OwnerAtCapacity, ILinkResult.HubAtCapacity, ILinkResult.NoPathFound, ILinkResult.ExceedsMaxLength, ILinkResult.CableTypeMismatch
-10 dev.jstech.core.peripheral.ILinkResult.AlreadyLinked  type record(long endpointPos, long existingOwnerPos) implements ILinkResult
-10 dev.jstech.core.peripheral.ILinkResult.CableTypeMismatch  type record(PeripheralCableType expected, PeripheralCableType actual) implements ILinkResult
-10 dev.jstech.core.peripheral.ILinkResult.Established  type record(long ownerPos, long endpointPos, int pathLength) implements ILinkResult
-10 dev.jstech.core.peripheral.ILinkResult.ExceedsMaxLength  type record(long ownerPos, long endpointPos, int pathLength, int maxAllowed) implements ILinkResult
-10 dev.jstech.core.peripheral.ILinkResult.HubAtCapacity  type record(long hubPos, PortKind kind, int currentCount, int maxAllowed) implements ILinkResult
-10 dev.jstech.core.peripheral.ILinkResult.NoPathFound  type record(long ownerPos, long endpointPos) implements ILinkResult
-10 dev.jstech.core.peripheral.ILinkResult.OwnerAtCapacity  type record(long ownerPos, PortKind kind, int currentCount, int maxAllowed) implements ILinkResult
-10 dev.jstech.core.peripheral.IPeripheralEndpoint  type interface
-10 dev.jstech.core.peripheral.IPeripheralEndpoint  abstract Optional<Long> linkedOwner()
-10 dev.jstech.core.peripheral.IPeripheralEndpoint  abstract PeripheralCableType cableType()
-10 dev.jstech.core.peripheral.IPeripheralEndpoint  abstract void onOwnerLinked(long)
-10 dev.jstech.core.peripheral.IPeripheralEndpoint  abstract void onOwnerUnlinked()
-10 dev.jstech.core.peripheral.IPeripheralEndpoint  default PortKind portKind()
-10 dev.jstech.core.peripheral.IPeripheralHub  type interface extends IPeripheralEndpoint
-10 dev.jstech.core.peripheral.IPeripheralHub  abstract int hubPorts()
-10 dev.jstech.core.peripheral.IPeripheralHub  default boolean passes(PortKind)
-10 dev.jstech.core.peripheral.IPeripheralOwner  type interface
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract List<Long> linkedEndpoints()
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract OptionalLong hubOf(long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract PeripheralCableType cableType()
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract boolean holdsPort(long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract int ports(PortKind)
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract int portsInUse(PortKind)
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract int portsInUseThrough(long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract void onEndpointLinked(long, PortKind)
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract void onEndpointLinkedThrough(long, PortKind, long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  abstract void onEndpointUnlinked(long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  default List<Long> enabledEndpoints()
-10 dev.jstech.core.peripheral.IPeripheralOwner  default PortKind kindOf(long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  default Set<Long> occupiedPositions(long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  default boolean isDisabled(long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  default boolean isLinked(long)
-10 dev.jstech.core.peripheral.IPeripheralOwner  default boolean setDisabled(long, boolean)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  type interface extends IPeripheralOwner
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  abstract PeripheralPorts peripheralPorts()
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  abstract void markPeripheralChange()
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default List<Long> enabledEndpoints()
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default List<Long> linkedEndpoints()
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default OptionalLong hubOf(long)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default PeripheralCableType cableType()
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default PortKind kindOf(long)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default Set<Long> peripheralEndpoints()
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default boolean holdsPort(long)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default boolean isDisabled(long)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default boolean isLinked(long)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default boolean setDisabled(long, boolean)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default int portsInUse(PortKind)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default int portsInUseThrough(long)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default void onEndpointLinked(long, PortKind)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default void onEndpointLinkedThrough(long, PortKind, long)
-10 dev.jstech.core.peripheral.IPeripheralOwnerSupport  default void onEndpointUnlinked(long)
-10 dev.jstech.core.peripheral.PeripheralCableType  type enum
-10 dev.jstech.core.peripheral.PeripheralCableType  COMPUTING
-10 dev.jstech.core.peripheral.PeripheralCableType  INDUSTRIAL_CONTROL
-10 dev.jstech.core.peripheral.PeripheralCableType  String translationKey()
-10 dev.jstech.core.peripheral.PeripheralCableType  int maxLength()
-10 dev.jstech.core.peripheral.PeripheralLine  type final class
-10 dev.jstech.core.peripheral.PeripheralLine  static Connection of(HardwareEra)
-10 dev.jstech.core.peripheral.PeripheralLine  static ResourceLocation id()
-10 dev.jstech.core.peripheral.PeripheralLine  static boolean is(ResourceLocation)
-10 dev.jstech.core.peripheral.PeripheralLine  static final TextKey JOB
-10 dev.jstech.core.peripheral.PeripheralLine  static int range(HardwareEra)
-10 dev.jstech.core.peripheral.PeripheralLink  type final class
-10 dev.jstech.core.peripheral.PeripheralLink  BlockPos ownerPos()
-10 dev.jstech.core.peripheral.PeripheralLink  Optional<Long> linkedOwner()
-10 dev.jstech.core.peripheral.PeripheralLink  PeripheralCableType cableType()
-10 dev.jstech.core.peripheral.PeripheralLink  new(BlockEntityFields, PeripheralCableType, ILinkWorld)
-10 dev.jstech.core.peripheral.PeripheralLink  static final int SEARCH_INTERVAL_TICKS
-10 dev.jstech.core.peripheral.PeripheralLink  void linked(long)
-10 dev.jstech.core.peripheral.PeripheralLink  void tick(ServerLevel, BlockPos)
-10 dev.jstech.core.peripheral.PeripheralLink  void unlink(ServerLevel, BlockPos)
-10 dev.jstech.core.peripheral.PeripheralLink  void unlinked()
-10 dev.jstech.core.peripheral.PeripheralLink.ILinkWorld  type interface
-10 dev.jstech.core.peripheral.PeripheralLink.ILinkWorld  abstract OptionalLong discoverOwner(ServerLevel, long)
-10 dev.jstech.core.peripheral.PeripheralLink.ILinkWorld  abstract PeripheralLinkValidator validator(ServerLevel)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator  type final class
-10 dev.jstech.core.peripheral.PeripheralLinkValidator  ILinkResult tryEstablishLink(long, long)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator  boolean isLinkStillValid(long, long, PeripheralCableType)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator  new(ICableLookup, IOwnerLookup, IEndpointLookup, INeighborLookup)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator  new(ICableLookup, IOwnerLookup, IEndpointLookup, INeighborLookup, IReachLookup)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator  static INeighborLookup adjacencyFrom(Map<Long, List<Long>>)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.ICableLookup  type interface
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.ICableLookup  abstract Optional<PeripheralCableType> cableTypeAt(long)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.IEndpointLookup  type interface
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.IEndpointLookup  abstract Optional<IPeripheralEndpoint> endpointAt(long)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.INeighborLookup  type interface
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.INeighborLookup  abstract List<Long> neighborsOf(long)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.IOwnerLookup  type interface
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.IOwnerLookup  abstract Optional<IPeripheralOwner> ownerAt(long)
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.IReachLookup  type interface
-10 dev.jstech.core.peripheral.PeripheralLinkValidator.IReachLookup  abstract int reachAt(long)
-10 dev.jstech.core.peripheral.PeripheralPorts  type final class
-10 dev.jstech.core.peripheral.PeripheralPorts  List<Long> enabled()
-10 dev.jstech.core.peripheral.PeripheralPorts  OptionalLong hubOf(long)
-10 dev.jstech.core.peripheral.PeripheralPorts  PortKind kindOf(long)
-10 dev.jstech.core.peripheral.PeripheralPorts  Set<Long> endpoints()
-10 dev.jstech.core.peripheral.PeripheralPorts  boolean disabled(long)
-10 dev.jstech.core.peripheral.PeripheralPorts  boolean holds(long, int)
-10 dev.jstech.core.peripheral.PeripheralPorts  boolean link(long, PortKind)
-10 dev.jstech.core.peripheral.PeripheralPorts  boolean linkThrough(long, PortKind, long)
-10 dev.jstech.core.peripheral.PeripheralPorts  boolean setDisabled(long, boolean)
-10 dev.jstech.core.peripheral.PeripheralPorts  boolean unlink(long)
-10 dev.jstech.core.peripheral.PeripheralPorts  int inUse(PortKind)
-10 dev.jstech.core.peripheral.PeripheralPorts  int inUseThrough(long)
-10 dev.jstech.core.peripheral.PeripheralPorts  int[] kindIds()
-10 dev.jstech.core.peripheral.PeripheralPorts  long[] disabledPositions()
-10 dev.jstech.core.peripheral.PeripheralPorts  long[] hubPositions()
-10 dev.jstech.core.peripheral.PeripheralPorts  long[] positions()
-10 dev.jstech.core.peripheral.PeripheralPorts  void moved(LongUnaryOperator)
-10 dev.jstech.core.peripheral.PeripheralPorts  void restore(long[], int[])
-10 dev.jstech.core.peripheral.PeripheralPorts  void restore(long[], int[], long[], long[])
-10 dev.jstech.core.peripheral.PeripheralReconciler  type final class
-10 dev.jstech.core.peripheral.PeripheralReconciler  static final long INTERVAL_TICKS
-10 dev.jstech.core.peripheral.PeripheralReconciler  static void reconcile(IPeripheralOwnerSupport, ServerLevel, long)
-10 dev.jstech.core.peripheral.PortKind  type enum implements IStableId, IStableName
-10 dev.jstech.core.peripheral.PortKind  AUDIO
-10 dev.jstech.core.peripheral.PortKind  DEVICE
-10 dev.jstech.core.peripheral.PortKind  String serializedName()
-10 dev.jstech.core.peripheral.PortKind  VIDEO
-10 dev.jstech.core.peripheral.PortKind  int id()
-10 dev.jstech.core.peripheral.PortKind  static PortKind byId(int)
-10 dev.jstech.core.peripheral.PortKind  static PortKind byName(String)
 10 dev.jstech.core.persistence.CoreChunkData  type final class
 10 dev.jstech.core.persistence.CoreChunkData  CoreChunkData withNetwork(NetworkUuid)
 10 dev.jstech.core.persistence.CoreChunkData  CoreChunkData withoutNetwork(NetworkUuid)
@@ -11409,21 +11387,13 @@ stable 4
 10 dev.jstech.core.progression.AxisStepReachedEvent  ProgressionAxis<?> axis()
 10 dev.jstech.core.progression.AxisStepReachedEvent  UUID player()
 10 dev.jstech.core.progression.AxisStepReachedEvent  new(MinecraftServer, UUID, ProgressionAxis<?>, IAxisStep, IAxisStep)
-10 dev.jstech.core.progression.Era  type record(ResourceLocation id, Text name, int colour)
-10 dev.jstech.core.progression.Eras  type final class
-10 dev.jstech.core.progression.Eras  static Era declare(Era)
-10 dev.jstech.core.progression.Eras  static Era declareAfter(Era, ResourceLocation)
-10 dev.jstech.core.progression.Eras  static Era of(HardwareEra)
-10 dev.jstech.core.progression.Eras  static List<Era> ordered()
-10 dev.jstech.core.progression.Eras  static Optional<Era> byId(ResourceLocation)
-10 dev.jstech.core.progression.Eras  static ResourceLocation idOf(HardwareEra)
-10 dev.jstech.core.progression.Eras  static boolean atLeast(Era, Era)
-10 dev.jstech.core.progression.Eras  static final Codec<Era> CODEC
-10 dev.jstech.core.progression.Eras  static int position(Era)
 10 dev.jstech.core.progression.IAxisStep  type interface
 10 dev.jstech.core.progression.IAxisStep  abstract String serializedName()
 10 dev.jstech.core.progression.IAxisStep  abstract Text text()
 10 dev.jstech.core.progression.IAxisStep  abstract int level()
+12 dev.jstech.core.progression.IAxisStep  default Text named()
+12 dev.jstech.core.progression.IAxisStep  default int colour()
+12 dev.jstech.core.progression.IAxisStep  static final int PLAIN_COLOUR
 10 dev.jstech.core.progression.IKnowledgeGated  type interface
 10 dev.jstech.core.progression.IKnowledgeGated  abstract Optional<ResourceLocation> knowledge()
 10 dev.jstech.core.progression.Knowledge  type record(ResourceLocation id, TextKey name, boolean partial)
@@ -11472,10 +11442,6 @@ stable 4
 10 dev.jstech.core.progression.ProgressionAxes  type final class
 10 dev.jstech.core.progression.ProgressionAxes  static Collection<ProgressionAxis<?>> all()
 10 dev.jstech.core.progression.ProgressionAxes  static ProgressionAxis<?> byId(ResourceLocation)
-10 dev.jstech.core.progression.ProgressionAxes  static final ProgressionAxis<HardwareEra> HARDWARE_ERA
-10 dev.jstech.core.progression.ProgressionAxes  static final ProgressionAxis<IndustrialTier> INDUSTRIAL_TIER
-10 dev.jstech.core.progression.ProgressionAxes  static final TextKey HARDWARE_ERA_NAME
-10 dev.jstech.core.progression.ProgressionAxes  static final TextKey INDUSTRIAL_TIER_NAME
 10 dev.jstech.core.progression.ProgressionAxes  static void register(ProgressionAxis<?>)
 10 dev.jstech.core.progression.ProgressionAxis  type final class<S extends IAxisStep>
 10 dev.jstech.core.progression.ProgressionAxis  List<S> steps()
@@ -11970,49 +11936,6 @@ stable 4
 10 dev.jstech.core.text.TextTags  static List<Text> readAll(ListTag)
 10 dev.jstech.core.text.TextTags  static ListTag writeAll(List<Text>)
 10 dev.jstech.core.text.TextTags  static Text read(CompoundTag)
-10 dev.jstech.core.tier.HardwareEra  type enum implements IStableId, IStableName, IAxisStep
-10 dev.jstech.core.tier.HardwareEra  ADVANCED
-10 dev.jstech.core.tier.HardwareEra  EXA
-10 dev.jstech.core.tier.HardwareEra  HardwareEra next()
-10 dev.jstech.core.tier.HardwareEra  HardwareEra prev()
-10 dev.jstech.core.tier.HardwareEra  LEGACY
-10 dev.jstech.core.tier.HardwareEra  SINGULARITY
-10 dev.jstech.core.tier.HardwareEra  STANDARD
-10 dev.jstech.core.tier.HardwareEra  String serializedName()
-10 dev.jstech.core.tier.HardwareEra  TRANSITION
-10 dev.jstech.core.tier.HardwareEra  Text named()
-10 dev.jstech.core.tier.HardwareEra  Text text()
-10 dev.jstech.core.tier.HardwareEra  VINTAGE
-10 dev.jstech.core.tier.HardwareEra  boolean isAtLeast(HardwareEra)
-10 dev.jstech.core.tier.HardwareEra  boolean isAtMost(HardwareEra)
-10 dev.jstech.core.tier.HardwareEra  int bits()
-10 dev.jstech.core.tier.HardwareEra  int id()
-10 dev.jstech.core.tier.HardwareEra  int level()
-10 dev.jstech.core.tier.HardwareEra  int screenColor()
-10 dev.jstech.core.tier.HardwareEra  long bytesPerMbEq()
-10 dev.jstech.core.tier.HardwareEra  long itemsFor(long)
-10 dev.jstech.core.tier.HardwareEra  long mbPerItem()
-10 dev.jstech.core.tier.HardwareEra  static HardwareEra find(int)
-10 dev.jstech.core.tier.HardwareEra  static HardwareEra fromLevel(int)
-10 dev.jstech.core.tier.IndustrialTier  type enum implements IStableId, IAxisStep
-10 dev.jstech.core.tier.IndustrialTier  IndustrialTier next()
-10 dev.jstech.core.tier.IndustrialTier  IndustrialTier prev()
-10 dev.jstech.core.tier.IndustrialTier  String serializedName()
-10 dev.jstech.core.tier.IndustrialTier  T0
-10 dev.jstech.core.tier.IndustrialTier  T1
-10 dev.jstech.core.tier.IndustrialTier  T2
-10 dev.jstech.core.tier.IndustrialTier  T3
-10 dev.jstech.core.tier.IndustrialTier  T4
-10 dev.jstech.core.tier.IndustrialTier  T5
-10 dev.jstech.core.tier.IndustrialTier  T6
-10 dev.jstech.core.tier.IndustrialTier  T7
-10 dev.jstech.core.tier.IndustrialTier  T8
-10 dev.jstech.core.tier.IndustrialTier  T9
-10 dev.jstech.core.tier.IndustrialTier  Text text()
-10 dev.jstech.core.tier.IndustrialTier  boolean isAtLeast(IndustrialTier)
-10 dev.jstech.core.tier.IndustrialTier  boolean isAtMost(IndustrialTier)
-10 dev.jstech.core.tier.IndustrialTier  int id()
-10 dev.jstech.core.tier.IndustrialTier  int level()
 10 dev.jstech.core.tool.AreaMining  type final class
 10 dev.jstech.core.tool.AreaMining  static Direction face(Player, BlockPos)
 10 dev.jstech.core.tool.AreaMining  static List<BlockPos> around(Level, Player, ItemStack, BlockPos, Direction, MiningShape)

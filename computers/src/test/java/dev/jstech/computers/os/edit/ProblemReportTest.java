@@ -10,7 +10,7 @@ package dev.jstech.computers.os.edit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.Text;
 import java.util.LinkedHashMap;
 import java.util.List;

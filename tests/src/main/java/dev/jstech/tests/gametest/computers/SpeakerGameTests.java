@@ -16,7 +16,7 @@ import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.AudioOutput;
 import dev.jstech.core.audio.FrequencyResponse;
 import dev.jstech.core.audio.StereoSide;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;

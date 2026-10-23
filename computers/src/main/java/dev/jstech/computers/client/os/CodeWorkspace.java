@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
@@ -21,9 +22,8 @@ import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.SigmaFrontEnd;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.ast.IDecl;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.logic.TextDocument;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayDeque;
@@ -493,7 +493,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         if (dot < 0 || dot == path.length() - 1) {
             return null;
         }
-        return JsCore.languages().byExtension(path.substring(dot + 1).toLowerCase(Locale.ROOT));
+        return JsComputersApi.languages().byExtension(path.substring(dot + 1).toLowerCase(Locale.ROOT));
     }
 
     /** The language that compiles {@code path}: the one claiming it as a source, not as its output. */
@@ -503,7 +503,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
             return null;
         }
         final String ext = path.substring(dot + 1).toLowerCase(Locale.ROOT);
-        final IProgrammingLanguage language = JsCore.languages().byExtension(ext);
+        final IProgrammingLanguage language = JsComputersApi.languages().byExtension(ext);
         return language != null && language.sourceExtensions().contains(ext) ? language : null;
     }
 

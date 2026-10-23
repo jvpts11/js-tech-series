@@ -15,7 +15,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;

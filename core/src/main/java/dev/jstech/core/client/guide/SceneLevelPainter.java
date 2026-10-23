@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 
 /**
  * Paints the blocks of a manual's scene as the game draws blocks in its world: each block's model shaded as its
- * neighbours shade it, and each block entity through its renderer, the Core's models and GeckoLib's among them, all
- * in full light. The scene is drawn into its surface by the {@link SceneRenderer}.
+ * neighbours shade it, and each block entity through its renderer, the Core's models among them, all in full light.
+ * The scene is drawn into its surface by the {@link SceneRenderer}.
  */
 final class SceneLevelPainter implements SceneRenderer.IScenePainter {
 

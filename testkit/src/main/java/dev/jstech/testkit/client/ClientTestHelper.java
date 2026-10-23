@@ -10,7 +10,7 @@ package dev.jstech.testkit.client;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.logging.LogUtils;
-import dev.jstech.core.peripheral.IPeripheralEndpoint;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

@@ -27,6 +27,7 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.ServerStacks;
@@ -356,15 +357,13 @@ public final class RackUnitGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final var net = mainframe.networkUuid();
                     helper.assertTrue(net != null, "the mainframe owns a network");
-                    helper.assertTrue(dev.jstech.core.network.NetworkSystem
-                                    .get(helper.getLevel()).serversOf(net).size() == 1,
+                    helper.assertTrue(NetworkSystem.get(helper.getLevel()).serversOf(net).size() == 1,
                             "the powered bay registers its server on the network");
                     rack.toggleBayPower(0);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final var net = mainframe.networkUuid();
-                    helper.assertTrue(dev.jstech.core.network.NetworkSystem
-                                    .get(helper.getLevel()).serversOf(net).isEmpty(),
+                    helper.assertTrue(NetworkSystem.get(helper.getLevel()).serversOf(net).isEmpty(),
                             "switching the bay off drops the node from the network");
                     helper.assertTrue(!rack.isRunning(), "the delegating host is off with the bay");
                     // Leave a window on the machine's desktop: the power cycle must not carry it over.
@@ -375,8 +374,7 @@ public final class RackUnitGameTests {
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final var net = mainframe.networkUuid();
-                    helper.assertTrue(dev.jstech.core.network.NetworkSystem
-                                    .get(helper.getLevel()).serversOf(net).size() == 1,
+                    helper.assertTrue(NetworkSystem.get(helper.getLevel()).serversOf(net).size() == 1,
                             "switching the bay back on re-registers the node");
                     helper.assertTrue(rack.needsPost(), "a power-cycled machine POSTs again");
                     helper.assertTrue(rack.openWindows().isEmpty(),

@@ -112,13 +112,17 @@ network that runs another.
 
 ## Server settings
 
-The settings of Operations are in J's Core's server settings file (`jstech-balance.toml`, in the world's
+The settings of the Operations engine are the series' own, in `jstech-operations.toml` (in the world's
 `serverconfig` folder; also on the settings screen): how long an Operation waits before it gives up, how fast a
-waiting one climbs in priority, how long a disk waits before a transfer, how much of its capacity a Subframe lends.
-J's Computers' own are in `jscomputers-server.toml`:
+waiting one climbs in priority, how long a saved one nobody resumed is kept. J's Computers' own are in
+`jscomputers-server.toml`:
 
 | Setting | Default | What it does |
 | --- | --- | --- |
+| `balance.hdd_latency_ticks`, `ssd_latency_ticks`, `nvme_latency_ticks` | 10, 3, 1 | How long each kind of disk waits before a transfer starts. |
+| `balance.subframe_efficiency_factor` | 0.6 | The share of its capacity a Subframe lends its Mainframe. |
+| `balance.program_machine_micros` | 1000 | Real time, in microseconds, one machine may spend running its programs in a tick. |
+| `balance.program_server_micros` | 8000 | The same for every machine of the server together. |
 | `boot.show_boot_menu` | on | Stop at the boot manager when a computer starts. |
 | `install_by_hand.arch_every_step` | off | Ask for every step of Arch Linux's guide. |
 | `install_by_hand.gentoo_every_step` | off | Ask for every step of Gentoo's handbook. |
@@ -129,8 +133,9 @@ J's Computers' own are in `jscomputers-server.toml`:
 | `soundfoundry.hbw_kilobytes_per_second` | 2048 | The same over HBW. |
 | `soundfoundry.hpc_kilobytes_per_second` | 8192 | The same over the high compute cable. |
 
-Each player's own (`jscomputers-client.toml`): `client.reduce_motion` (desktops act at once, without animation),
-`client.desktop_cursors` (each system's own pointer) and `client.outside_components`.
+Each player's own (`jscomputers-client.toml`): `client.desktop_cursors` (each system's own pointer) and
+`client.outside_components`. Desktops act at once, without animation, for a player who turns on `motion.reduce` in
+J's Core's `jstech-accessibility.toml`, as every motion of the series does.
 
 ## What can go wrong
 

@@ -9,7 +9,7 @@ package dev.jstech.computers.program;
 
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.id.IStableName;
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.text.Text;
 import org.jetbrains.annotations.Nullable;
 

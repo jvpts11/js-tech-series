@@ -20,7 +20,7 @@ import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.core.text.TextBounds;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;

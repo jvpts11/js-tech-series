@@ -7,6 +7,19 @@
  */
 package dev.jstech.computers;
 
+import dev.jstech.computers.client.CaseFrontOutline;
+import dev.jstech.computers.client.ComputingClientSetup;
+import dev.jstech.computers.client.EjectButtonOutline;
+import dev.jstech.computers.client.MachineKeyboard;
+import dev.jstech.computers.client.StandingPartOutline;
+import dev.jstech.computers.client.guide.ComputersGuideClient;
+import dev.jstech.computers.client.monitor.MonitorButtonOutline;
+import dev.jstech.computers.client.monitor.MonitorChrome;
+import dev.jstech.computers.client.monitor.MonitorPainter;
+import dev.jstech.computers.client.monitor.MonitorPictureCache;
+import dev.jstech.computers.client.monitor.SessionFaces;
+import dev.jstech.computers.client.os.DesktopCopies;
+import dev.jstech.computers.client.os.ParkedEditors;
 import dev.jstech.computers.config.ComputersClientConfig;
 import dev.jstech.core.client.config.CoreConfigScreen;
 import dev.jstech.core.client.config.IConfigBadge;
@@ -40,5 +53,20 @@ public class JsComputersClient {
                 (mod, parent) -> new CoreConfigScreen(mod, parent, MONITOR));
         // The player's own settings, read on their game only: how the desktops move, and their pointer.
         ComputersClientConfig.register(modEventBus, container);
+        // What the mod answers on the player's game: its screens and renderers, the monitors and their glass, the
+        // outlines of the machines' fronts, the keys a machine takes first and what is forgotten on leaving a world.
+        ComputingClientSetup.listen(modEventBus);
+        ComputersGuideClient.listen(modEventBus);
+        MachineKeyboard.listen();
+        StandingPartOutline.listen();
+        CaseFrontOutline.listen();
+        EjectButtonOutline.listen();
+        MonitorButtonOutline.listen();
+        MonitorChrome.listen();
+        MonitorPainter.listen();
+        MonitorPictureCache.listen();
+        SessionFaces.listen();
+        DesktopCopies.listen();
+        ParkedEditors.listen();
     }
 }

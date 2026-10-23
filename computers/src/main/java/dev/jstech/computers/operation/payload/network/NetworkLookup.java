@@ -11,7 +11,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;

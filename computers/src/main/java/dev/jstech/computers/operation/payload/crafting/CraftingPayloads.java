@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.operation.payload.crafting;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
@@ -35,9 +34,9 @@ import dev.jstech.computers.operation.payload.crafting.CraftPlanMath.PlanPreview
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.operation.IOperationResult;
-import dev.jstech.core.operation.OperationPriority;
-import dev.jstech.core.operation.OperationStatus;
+import dev.jstech.core.jstechseries.operation.IOperationResult;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
@@ -55,8 +54,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -75,7 +73,6 @@ import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.craf
 /**
  * The payloads that plan and submit a craft from a terminal and send the list of what the network can craft.
  */
-@EventBusSubscriber(modid = JsComputers.MODID)
 public final class CraftingPayloads {
 
     /** How long a built catalog is reused at most, in ticks, however still the network looks. */
@@ -91,8 +88,12 @@ public final class CraftingPayloads {
     private CraftingPayloads() {
     }
 
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, CraftingPayloads::onServerStopped);
+    }
+
     /* The kept catalogs hold their level; a server that stops lets them go, so a world left is not kept alive. */
-    @SubscribeEvent
     public static void onServerStopped(final ServerStoppedEvent event) {
         CATALOGS.clear();
     }

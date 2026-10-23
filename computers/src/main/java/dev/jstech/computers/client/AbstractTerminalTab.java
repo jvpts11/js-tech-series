@@ -11,7 +11,7 @@ import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

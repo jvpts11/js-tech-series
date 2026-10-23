@@ -9,7 +9,8 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.vm.listing.Opcode;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.util.DeclarationError;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -71,7 +72,8 @@ public final class Isas {
     public static void add(final IsaSpec isa) {
         final IsaSpec taken = KNOWN.putIfAbsent(isa.id(), isa);
         if (taken != null && !taken.equals(isa)) {
-            throw new IllegalStateException("the ISA id '" + isa.id() + "' is already taken");
+            throw DeclarationError.of(null, "the ISA " + isa.id(), "takes an id another ISA already has",
+                    "give it an id of its own");
         }
     }
 

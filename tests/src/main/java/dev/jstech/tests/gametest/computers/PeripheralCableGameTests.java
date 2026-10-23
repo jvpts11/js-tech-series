@@ -18,7 +18,7 @@ import dev.jstech.core.cable.CablePlugs;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PlacedModel;
-import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;

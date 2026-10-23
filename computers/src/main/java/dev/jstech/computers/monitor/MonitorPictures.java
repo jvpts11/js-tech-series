@@ -24,7 +24,7 @@ import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;

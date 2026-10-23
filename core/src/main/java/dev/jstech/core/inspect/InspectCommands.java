@@ -9,7 +9,7 @@ package dev.jstech.core.inspect;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.CommandRoot;
 import dev.jstech.core.diagnostic.Bandwidth;
 import dev.jstech.core.diagnostic.DiagnosticBalance;
 import dev.jstech.core.diagnostic.DiagnosticCommands;
@@ -55,7 +55,7 @@ public final class InspectCommands {
 
     /** Declares the commands, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("inspect", SeriesCommands.ADMINS, (node, context) -> node
+        CommandRoot.CORE.declare("inspect", CommandRoot.ADMINS, (node, context) -> node
                 .executes(source -> inspect(source, null))
                 .then(Commands.argument(POS, BlockPosArgument.blockPos())
                         .executes(source -> inspect(source, BlockPosArgument.getLoadedBlockPos(source, POS))))

@@ -11,7 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * The look of the physical monitor frame a software screen is shown inside, chosen by the host computer's

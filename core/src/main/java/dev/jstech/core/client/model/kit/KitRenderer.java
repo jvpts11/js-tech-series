@@ -159,6 +159,27 @@ public final class KitRenderer {
         poses.popPose();
     }
 
+    /**
+     * Moves the pose stack, standing where {@code instance}'s model stands, in blocks, onto the pivot of its bone
+     * {@code bone}, turned as the bone is this frame: where a thing held on that bone is drawn, riding with it. Nothing
+     * is moved when the model has no such bone, or it is hidden this frame.
+     *
+     * @return whether it moved, so there is something to draw there
+     */
+    public static boolean toBone(final KitInstance instance, final String bone, final PoseStack poses) {
+        final int index = instance.pose().index(bone);
+        if (index < 0 || instance.pose().hidden(index)) {
+            return false;
+        }
+        final float size = PIXEL * instance.model().scale();
+        final ModelBone found = instance.model().data().bones().get(index);
+        poses.scale(size, size, size);
+        poses.mulPose(instance.world()[index]);
+        poses.translate(found.pivot().x(), found.pivot().y(), found.pivot().z());
+        poses.scale(1 / size, 1 / size, 1 / size);
+        return true;
+    }
+
     /** The way the faces painted with picture {@code texture} are drawn. */
     static RenderType type(final KitModel model, final int texture, @Nullable final ResourceLocation painted) {
         return own(model, location(model, texture, painted));

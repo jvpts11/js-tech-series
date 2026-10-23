@@ -13,7 +13,7 @@ import dev.jstech.computers.menu.NetworkGatewayMenu;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.gui.theme.EraTheme;
-import dev.jstech.core.client.gui.theme.EraThemes;
+import dev.jstech.core.jstechseries.theme.client.EraThemes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;

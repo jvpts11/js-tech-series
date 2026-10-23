@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client.monitor;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.MonitorKind;
 import dev.jstech.computers.client.ButtonOutline;
@@ -20,16 +19,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderHighlightEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The outline a monitor's power button gets while the player looks at it: the {@link ButtonOutline button alone},
  * rather than the whole monitor. Looked at anywhere else, the monitor is outlined whole, and a click opens its screen.
  */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class MonitorButtonOutline {
 
     /** How far the button stands out of the bezel, as its model draws it: half a pixel. */
@@ -38,7 +34,11 @@ public final class MonitorButtonOutline {
     private MonitorButtonOutline() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's client constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RenderHighlightEvent.Block.class, MonitorButtonOutline::onBlockHighlight);
+    }
+
     public static void onBlockHighlight(final RenderHighlightEvent.Block event) {
         final Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {

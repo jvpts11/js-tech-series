@@ -20,7 +20,7 @@ import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.menu.SlotGroup;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

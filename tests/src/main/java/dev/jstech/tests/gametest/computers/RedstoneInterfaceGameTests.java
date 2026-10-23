@@ -13,6 +13,7 @@ import dev.jstech.computers.block.RedstoneInterfaceBlock;
 import dev.jstech.computers.blockentity.HubBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
+import dev.jstech.core.signal.Signals;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -32,8 +33,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * The Redstone Interface: linked to a computer, it reads the signal coming into its lens's face, or emits its strength
- * there and nowhere else; with no computer it reads and emits nothing; it takes a device port; and its name is unique
- * among its computer's interfaces.
+ * there and nowhere else, and tells any reader of the Core's signals the same; with no computer it reads and emits
+ * nothing; it takes a device port; and its name is unique among its computer's interfaces.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -135,6 +136,42 @@ public final class RedstoneInterfaceGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * It tells whatever reads the Core's signals what its lens shows, read or emitted; and another computer's
+     * interface whose lens is on it reads that, though it gives no redstone that way.
+     */
+    @GameTest(template = ARENA)
+    public static void signals_tellAnyReaderWhatItReadsOrEmits(final GameTestHelper helper) {
+        vintagePc(helper);
+        placeSensor(helper, SENSOR, Direction.EAST);
+        helper.setBlock(FRONT, Blocks.REDSTONE_BLOCK);
+        // A second computer south of the first interface, and its interface between them, its lens on the first.
+        final BlockPos reader = SENSOR.south();
+        TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(reader.south());
+        placeSensor(helper, reader, Direction.NORTH);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE_TICKS, () -> {
+                    final int said = Signals.strengthAt(helper.getLevel(), helper.absolutePos(SENSOR), null);
+                    helper.assertTrue(said == 15, "it says the signal it reads; got " + said);
+                    helper.assertTrue(sensor(helper, reader).live() && sensor(helper, reader).reading() == 15,
+                            "the other interface reads it; got " + sensor(helper, reader).reading());
+                })
+                .thenExecute(() -> {
+                    helper.setBlock(FRONT, Blocks.AIR);
+                    sensor(helper, SENSOR).emit(7, "");
+                })
+                .thenExecuteAfter(SETTLE_TICKS, () -> {
+                    final int said = Signals.strengthAt(helper.getLevel(), helper.absolutePos(SENSOR), null);
+                    helper.assertTrue(said == 7, "emitting, it says its strength; got " + said);
+                    helper.assertTrue(sensor(helper, reader).reading() == 7, "and the other reads it");
+                })
+                .thenExecute(() -> helper.setBlock(PC, Blocks.AIR))
+                .thenExecuteAfter(SETTLE_TICKS, () -> helper.assertTrue(
+                        Signals.strengthAt(helper.getLevel(), helper.absolutePos(SENSOR), null) == 0,
+                        "unlinked, it says nothing"))
+                .thenSucceed();
+    }
+
     /** Its computer taken away, it goes quiet: the lamp it was lighting goes dark. */
     @GameTest(template = ARENA)
     public static void lostComputer_goesQuiet(final GameTestHelper helper) {
@@ -150,7 +187,7 @@ public final class RedstoneInterfaceGameTests {
                     helper.assertTrue(!sensor(helper, SENSOR).live(), "the interface is unlinked");
                     helper.assertTrue(!helper.getBlockState(FRONT).getValue(RedstoneLampBlock.LIT),
                             "and the lamp goes dark");
-                    helper.assertTrue(sensor(helper, SENSOR).emits() && sensor(helper, SENSOR).strength() == 15,
+                    helper.assertTrue(sensor(helper, SENSOR).emits() && sensor(helper, SENSOR).emitStrength() == 15,
                             "keeping its setting for when it is cabled again");
                 })
                 .thenSucceed();

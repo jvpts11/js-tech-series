@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The bones of a GeckoLib model and the bones its animations move, read from their files as Blockbench writes them:
+ * The bones of a geometry model and the bones its animations move, read from their files as Blockbench writes them:
  * a model's {@code minecraft:geometry} holds its bones by name, an animation file's {@code animations} each animation
  * and, under it, the bones it moves. What is not of that form is read as no bones.
  */

@@ -28,7 +28,7 @@ import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Containers;

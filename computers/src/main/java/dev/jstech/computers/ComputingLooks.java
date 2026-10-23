@@ -17,7 +17,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.content.GeoLook;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;

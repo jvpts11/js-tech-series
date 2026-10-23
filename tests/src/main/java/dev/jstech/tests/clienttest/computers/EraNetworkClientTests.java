@@ -28,8 +28,8 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableEntry;
-import dev.jstech.core.network.DataLine;
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -298,11 +298,11 @@ public final class EraNetworkClientTests {
         statement(ctx, "iql SET REDSTONE '" + GATE + "' OUT 15");
         ctx.thenWaitUntilServer(level -> level.getBlockState(ctx.abs(LAMP)).getValue(RedstoneLampBlock.LIT), WAIT,
                         "the statement to set the interface emitting and the lamp before it to light",
-                        level -> "strength=" + sensor(ctx, level).strength())
+                        level -> "strength=" + sensor(ctx, level).emitStrength())
                 .thenScreenshot(SETTLE, shot(kit, "lamp-on"));
         statement(ctx, "iql SET REDSTONE '" + GATE + "' OUT 0");
         ctx.thenWaitUntilServer(level -> !level.getBlockState(ctx.abs(LAMP)).getValue(RedstoneLampBlock.LIT), WAIT,
-                "the next statement to put the lamp out", level -> "strength=" + sensor(ctx, level).strength());
+                "the next statement to put the lamp out", level -> "strength=" + sensor(ctx, level).emitStrength());
     }
 
     /*

@@ -141,12 +141,6 @@ subprojects {
             url = 'https://maven.maxhenkel.de/repository/public'
             content { includeGroup 'de.maxhenkel.voicechat' }
         }
-        // GeckoLib: shipped dependency of the computing mod, for the large block models with bones and animation.
-        maven {
-            name = 'GeckoLib'
-            url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
-            content { includeGroupByRegex 'software\\.bernie.*' }
-        }
     }
 
     // Sets up a dependency configuration called 'localRuntime': a dependency present for runtime testing that

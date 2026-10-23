@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.core.language.ILanguageProcess;
-import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.computers.api.language.ILanguageProcess;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;

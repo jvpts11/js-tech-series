@@ -19,7 +19,7 @@ import dev.jstech.computers.gui.help.HelpForm;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.io.File;
 import java.lang.reflect.Modifier;
 import java.net.URL;

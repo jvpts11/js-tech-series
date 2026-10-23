@@ -7,21 +7,21 @@
  */
 package dev.jstech.computers.client.guide;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.core.api.client.GuideBlockRenderers;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 /** What J's Computers draws on the manuals' pages itself: its machines' firmware screens. */
-@EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class ComputersGuideClient {
 
     private ComputersGuideClient() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's client constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(FMLClientSetupEvent.class, ComputersGuideClient::onClientSetup);
+    }
+
     public static void onClientSetup(final FMLClientSetupEvent event) {
         GuideBlockRenderers.register(FirmwarePictures.KIND, new FirmwarePictures());
     }

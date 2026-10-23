@@ -79,9 +79,6 @@ dependencies {
     // Mekanism API: the chemical bridge compiles against it, but no Mekanism class is loaded unless Mekanism is
     // present (soft dependency, guarded at runtime).
     compileOnly "mekanism:Mekanism:${mekanism_version}:api"
-    // GeckoLib: the Core's one model class for machines drawn with it compiles against it; only a mod that draws
-    // with GeckoLib, and so requires it, ever loads that class.
-    compileOnly "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
     /*
      * The Core's soft integrations: each compiles against its mod and is reached only behind a check that the mod
      * is loaded, or through the mod's own discovery of its plugins, so none of them is ever required.

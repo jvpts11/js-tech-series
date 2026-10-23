@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.os.media.EjectButton;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;

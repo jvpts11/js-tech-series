@@ -99,7 +99,6 @@ class ApiSurfaceTest {
         final List<Path> found = SURFACE.apiSources();
 
         assertTrue(found.stream().anyMatch(path -> path.endsWith("JsCoreApi.java")), () -> "found " + found);
-        assertTrue(found.stream().anyMatch(path -> path.endsWith("CoreRegisterEvent.java")));
         assertTrue(found.stream().anyMatch(path -> path.endsWith("JsComputersApi.java")));
         assertTrue(found.stream().anyMatch(path -> path.endsWith("ComputersRegisterEvent.java")));
     }

@@ -21,7 +21,7 @@ import dev.jstech.computers.operation.payload.TerminalSelectPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;

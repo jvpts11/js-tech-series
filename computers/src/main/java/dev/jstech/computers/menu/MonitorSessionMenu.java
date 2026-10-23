@@ -14,7 +14,7 @@ import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

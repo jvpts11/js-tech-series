@@ -8,7 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.ProgramConsole;
-import dev.jstech.core.language.IMachineView;
+import dev.jstech.computers.api.language.IMachineView;
 import dev.jstech.core.text.Text;
 import java.util.List;
 import net.minecraft.world.level.Level;

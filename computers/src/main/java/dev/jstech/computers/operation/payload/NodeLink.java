@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
-import dev.jstech.core.network.DataLink;
+import dev.jstech.core.jstechseries.network.DataLink;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.Nullable;
