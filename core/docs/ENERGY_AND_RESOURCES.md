@@ -278,10 +278,10 @@ public void serverTick() {
 A tank that bursts is emptied, its block is gone, what it held is let out (`MatterRelease`) and a blast of the Core's
 goes off where it stood, named by the block, of the energy the gas held above the air around it
 (`MatterTank.burstEnergy`, by `BlastMath.burstEnergy`: (p - p0) V / 0.4, the gas taken as air). A cubic metre at two
-hundred atmospheres holds about fifty megajoules, twelve kilograms of TNT. `pressureNow()` says the pressure it holds
-what it holds at, and each `IMatterHandler` says it of each tank (`pressureNow(tank)`; the open air's for a store
-that keeps no pressure). Only what is held under pressure bursts: `bursts` refuses a tank of slurry, plasma or exotic
-matter.
+hundred atmospheres holds about fifty megajoules, twelve kilograms of TNT. `pressureNow()` says the pressure what a
+tank holds is at now, in times the open air's, and each `IMatterHandler` says it of each tank (`pressureNow(tank)`;
+the open air's for a store that keeps no pressure). Only what is held under pressure bursts: `bursts` refuses a tank
+of slurry, plasma or exotic matter.
 
 A pipe of gas may say the pressure it holds (`CableType.Builder.holds`): a store holding a gas at more gives the line
 none of it, and the gas reaches each pipe of the part that holds less as a breach of `OVERPRESSURE`

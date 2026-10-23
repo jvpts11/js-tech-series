@@ -29,9 +29,9 @@ mod's design, never added in passing. The series' lines:
 
 ### Grids are a registry
 
-The seven grids are a closed list today; with a line per state of matter and lines that only group what they join, grids
-become a **registry**, each with an id, and a mod adds the grid its line needs. Each grid has its **policy**: how what
-it carries is shared along a run. The Core's energy and fluid policies are the defaults.
+With a line per state of matter and lines that only group what they join, grids are a **registry**, each with an id,
+and a mod adds the grid its line needs. Each grid has its **policy**: how what it carries is shared along a run. The
+Core's energy and fluid policies are the defaults.
 
 ### Lines that group
 

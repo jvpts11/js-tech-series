@@ -100,17 +100,24 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   place's contexts, `DIMENSION` and `CLAIM` (`NO_CLAIM` outside one), through `has(player, node, level, pos)`,
   `has(uuid, node, level, pos)` and `contextsAt`; `ITeamSource.membersOf`, `CoreTeams.membersOf` and `soloPlayer`
   name a team's players. `DiagnosticPage` writes the diagnostic file as a page (`sections`, `marked`, `Section`).
+  `ModelDefinitionProvider.check` checks a declared model against its files as the data run does, and
+  `KitLayers.remove` takes a layer off the models again.
 - (Core, Computers) Each thing where it belongs: J's Core's API stays at version 12 and J's Computers' is at version
   8. The series' model has its own package: `dev.jstech.core.network`, `operation`, `peripheral` and `tier` are now
   `dev.jstech.core.jstechseries.network`, `.operation`, `.peripheral` and `.tier`, and the client side of the series'
-  look `dev.jstech.core.jstechseries.theme.client`. `CoreRegisterEvent` gives way to `RegisterOperationTypesEvent`,
-  for kinds of Operation, and the programming languages move to J's Computers' API, `dev.jstech.computers.api.language`
-  (`IProgrammingLanguage`, `ILanguageProcess`, `IMachineView`, `LanguageRegistry`, `ExecutionBalance`), registered
-  through `ComputersRegisterEvent.languages()` and read through `JsComputersApi.languages()`.
-  `Device.fillsFromContainers` lets a bucket fill and empty a device's block, and `FluidBlockItem` is the item of a
-  block that keeps its fluid in it.
-  The old fixed catalogue of materials, `ModMaterial`, `MaterialForm` and `MaterialItems`, is gone: a mod declares the
-  forms it uses with `MaterialUses.use`.
+  look `dev.jstech.core.jstechseries.theme.client`; `IMonitorable` and `INetworkNodeCapability` go to the network's
+  package, `Era` and `Eras` to the tiers', the progression axes of eras and tiers to `SeriesAxes`, and the Operations
+  engine's settings to `OperationSettings`. The platform names none of it: a cable's era is any `IAxisStep`
+  (`CableType.step`, `Builder.describe(TextKey, IAxisStep)`, `IAxisStep.named` and `colour`), its plugs are by the kind
+  of port they enter (`CableType.plug(String)`, `IPlugged`), a mod's networks keep their own grid
+  (`INetworkGrids`, `CoreGrids.keepNetworksIn`, `networkOf`, `joinedNetwork` and `assignNetwork`), and a manual's
+  highlighters are found through `GuideHighlighters.findWith`. `CoreRegisterEvent` gives way to
+  `RegisterOperationTypesEvent`, for kinds of Operation, and the programming languages move to J's Computers' API,
+  `dev.jstech.computers.api.language` (`IProgrammingLanguage`, `ILanguageProcess`, `IMachineView`, `LanguageRegistry`,
+  `ExecutionBalance`), registered through `ComputersRegisterEvent.languages()` and read through
+  `JsComputersApi.languages()`. `Device.fillsFromContainers` lets a bucket fill and empty a device's block, and
+  `FluidBlockItem` is the item of a block that keeps its fluid in it. The old fixed catalogue of materials,
+  `ModMaterial`, `MaterialForm` and `MaterialItems`, is gone: a mod declares the forms it uses with `MaterialUses.use`.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -318,8 +325,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   ever lost; broken, it keeps what it holds in the item it drops, and placed again it holds it again. Antihydrogen
   joins the catalogue, and a material's mark says whether it is antimatter. A matter tank can be set to what it holds,
   as one placed from its item is.
-- (Core) The ends of a line: each end where a pipe or a line of items plugs into a block is set on its own: normal, push,
-  pull or off; a priority, the highest filling first and ends of one priority taking turns; a rate; one of sixteen
+- (Core) The ends of a line: each end where a pipe or a line of items plugs into a block is set on its own: normal,
+  push, pull or off; a priority, the highest filling first and ends of one priority taking turns; a rate; one of sixteen
   channels; and a filter by item, tag, mod or components, or by fluid, whose amounts keep that much in the block and
   no more. Every default keeps a pipe from an output to an input working as before; an end offers the first thing some
   other end would take, so nothing holds the line up.
@@ -1243,8 +1250,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   not have.
 - (Core) The studio's tools: a strip of tabs under the studio's bar opens twelve tools beside the things of the game.
   Block reads a block entity's fields live, what each face offers, and what crossed each face each second, counted
-  for a block entity of the Core while the tab watches it, at no cost to any other; Cost times every machine, dearest first, with a heat map in the world; Payloads
-  shows the packets sent tick by tick, by kind and mod; Recipes says where each recipe came from and what a pack
+  for a block entity of the Core while the tab watches it, at no cost to any other; Cost times every machine,
+  dearest first, with a heat map in the world; Payloads shows the packets sent tick by tick, by kind and mod;
+  Recipes says where each recipe came from and what a pack
   changed, draws it as the recipe viewers do, lists the recipes with the same inputs, and writes, tries and saves a
   recipe; Tags says which pack put each entry in a tag; Loot rolls a table up to ten thousand times with a tool,
   Fortune or Silk Touch; Translations shows what each language lacks and the texts too long for their place; Settings
@@ -1491,6 +1499,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 ### Fixed
 - (Core) A limited cable two machines are fed through is shared between them: the first one in order took the whole
   of what it carried, and the other got nothing until the first was full.
+- (Core) A torus in a STEP file is drawn whole: a face of one bounded by both of its seams was left out.
+- (Core) A surface a STEP file sweeps from a closed curve, turned round an axis or drawn along a line, is drawn: its
+  faces were left out, the curve's seam not taken for one.
+- (Core) A turn a USD text file writes, as an `orient` or a skeleton's animation, is read real part first, as the text
+  writes it: it was read as a binary file keeps it, so a joint at rest was drawn turned half round.
 - (Core) A dimension made while the game runs is taken away only once what the server still had to do in it has run:
   a block's point of interest set just before could otherwise wait for ever on the dimension's closed storage, and
   the server with it.

@@ -11,5 +11,8 @@
  * the screen then calls {@code send}, and the server handles it only while the player still has a menu of that kind
  * open and in reach, the menu the server opened being the proof of what the player is using. Every call travels in
  * one payload the Core registers.
+ *
+ * <p>How to declare one, from zero, is in {@code core/docs/TOOLKIT.md}. An example that compiles is the test mod's
+ * toolkit ({@code tests/src/main/java/dev/jstech/tests/TestToolkit.java}), whose call sets a value on a chest's menu.
  */
 package dev.jstech.core.call;

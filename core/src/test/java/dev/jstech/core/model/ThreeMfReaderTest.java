@@ -68,6 +68,97 @@ class ThreeMfReaderTest {
               </build>
             </model>
             """;
+    /* A plate painted from a colour group: green on the whole, one triangle blue. */
+    private static final String PLATE = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <model unit="millimeter" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
+                   xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02">
+              <resources>
+                <m:colorgroup id="5">
+                  <m:color color="#00FF00"/>
+                  <m:color color="#0000FF"/>
+                </m:colorgroup>
+                <object id="1" name="plate" type="model" pid="5" pindex="0">
+                  <mesh>
+                    <vertices>
+                      <vertex x="0" y="0" z="0"/>
+                      <vertex x="10" y="0" z="0"/>
+                      <vertex x="10" y="10" z="0"/>
+                      <vertex x="0" y="10" z="0"/>
+                    </vertices>
+                    <triangles>
+                      <triangle v1="0" v2="1" v3="2"/>
+                      <triangle v1="0" v2="2" v3="3" pid="5" p1="1"/>
+                    </triangles>
+                  </mesh>
+                </object>
+              </resources>
+              <build>
+                <item objectid="1"/>
+              </build>
+            </model>
+            """;
+    /* A gearbox whose build names a gear the production extension keeps in a part of its own. */
+    private static final String GEARBOX = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <model unit="millimeter" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
+                   xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06">
+              <resources/>
+              <build>
+                <item objectid="1" p:path="/3D/Objects/gear.model"/>
+              </build>
+            </model>
+            """;
+    private static final String GEAR = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <model unit="millimeter" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+              <resources>
+                <object id="1" name="gear" type="model">
+                  <mesh>
+                    <vertices>
+                      <vertex x="0" y="0" z="0"/>
+                      <vertex x="4" y="0" z="0"/>
+                      <vertex x="0" y="4" z="0"/>
+                    </vertices>
+                    <triangles>
+                      <triangle v1="0" v2="1" v3="2"/>
+                    </triangles>
+                  </mesh>
+                </object>
+              </resources>
+              <build/>
+            </model>
+            """;
+    /* A sign painted with a picture, laid by the file's own coordinates. */
+    private static final String SIGN = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <model unit="millimeter" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
+                   xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02">
+              <resources>
+                <m:texture2d id="7" path="/3D/Textures/sign.png" contenttype="image/png"/>
+                <m:texture2dgroup id="8" texid="7">
+                  <m:tex2coord u="0" v="0"/>
+                  <m:tex2coord u="1" v="0"/>
+                  <m:tex2coord u="1" v="1"/>
+                </m:texture2dgroup>
+                <object id="1" name="sign" type="model" pid="8" pindex="0">
+                  <mesh>
+                    <vertices>
+                      <vertex x="0" y="0" z="0"/>
+                      <vertex x="10" y="0" z="0"/>
+                      <vertex x="10" y="0" z="10"/>
+                    </vertices>
+                    <triangles>
+                      <triangle v1="0" v2="1" v3="2" p1="0" p2="1" p3="2"/>
+                    </triangles>
+                  </mesh>
+                </object>
+              </resources>
+              <build>
+                <item objectid="1"/>
+              </build>
+            </model>
+            """;
 
     @Test
     void read_makesEachPartOfTheAssemblyABone() {
@@ -98,6 +189,46 @@ class ThreeMfReaderTest {
     void read_standsThePumpOnItsOrigin() {
         final ModelBone root = read().bones().getFirst();
         assertEquals(0, root.translation().y(), EPSILON, "lifted 5 cm by the build, then stood back on 0");
+    }
+
+    @Test
+    void read_paintsEachTriangleTheColourOfItsColourGroup() {
+        final ModelData read = ThreeMfReader.read("plate", zip(Map.of("_rels/.rels", RELATIONS, "3D/pump.model",
+                PLATE)));
+        final ModelBone plate = read.bone("plate").orElseThrow();
+        assertEquals(2, plate.meshes().size(), "the group's first colour for the object, its second for a triangle");
+        assertTrue(read.textures().stream().anyMatch(texture -> texture.name().contains("ff00ff00")),
+                "the green");
+        assertTrue(read.textures().stream().anyMatch(texture -> texture.name().contains("ff0000ff")),
+                "and the blue");
+    }
+
+    @Test
+    void read_takesAPartTheProductionExtensionKeepsInAFileOfItsOwn() {
+        final ModelData read = ThreeMfReader.read("gearbox", zip(Map.of("_rels/.rels", RELATIONS, "3D/pump.model",
+                GEARBOX, "3D/Objects/gear.model", GEAR)));
+        final ModelBone gear = read.bone("gear").orElseThrow();
+        assertEquals(1, gear.meshes().size(), "the gear's mesh, read from its own file");
+        assertEquals(3, gear.meshes().getFirst().triangles().length);
+    }
+
+    @Test
+    void read_laysAPictureByTheFilesOwnCoordinates() {
+        final ModelData read = ThreeMfReader.read("sign", zip(Map.of("_rels/.rels", RELATIONS, "3D/pump.model",
+                SIGN, "3D/Textures/sign.png", "picture")));
+        final ModelMesh mesh = read.bone("sign").orElseThrow().meshes().getFirst();
+        assertEquals(1, read.textures().size(), "the picture, and no colour");
+        assertTrue(read.textures().getFirst().name().endsWith("sign.png"), read.textures().getFirst().name());
+        assertTrue(read.textures().getFirst().bytes().length > 0, "taken from the package");
+        // The file counts a picture's height from its bottom, the game from its top.
+        final float[] uvs = mesh.uvs();
+        assertEquals(6, uvs.length);
+        assertEquals(0, uvs[0], EPSILON);
+        assertEquals(1, uvs[1], EPSILON);
+        assertEquals(1, uvs[2], EPSILON);
+        assertEquals(1, uvs[3], EPSILON);
+        assertEquals(1, uvs[4], EPSILON);
+        assertEquals(0, uvs[5], EPSILON);
     }
 
     @Test

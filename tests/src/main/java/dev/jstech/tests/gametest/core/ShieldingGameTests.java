@@ -31,8 +31,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * Shielded containers and the cleaning of pollution: a radioactive thing carried loose gives its carrier its whole
  * rate, in an ordinary box all of it still, and in a box with lead walls five centimetres thick a thirtieth of it, as
- * a block of lead does; a cleaner takes up to its rate a second from its chunk's pollution and keeps what it took, and
- * never more than lay there. The test mod makes echo shards radioactive and the black shulker box lead-walled.
+ * a block of lead does; what is hot or corrosive burns the hand loose and not from a box; a cleaner takes up to its
+ * rate a second from its chunk's pollution and keeps what it took, and never more than lay there. The test mod makes
+ * echo shards radioactive, magma cream hot, fermented spider eyes corrosive and the black shulker box lead-walled.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -62,6 +63,23 @@ public final class ShieldingGameTests {
         final double lead = SHARDS * Math.exp(-0.0003 * 11_340);
         helper.assertTrue(Math.abs(rays(carrier) - lead) < 1.0e-6, "five centimetres of lead let a thirtieth through, "
                 + "as a block of lead does: " + rays(carrier));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void containers_keepWhatIsHotOrCorrosiveOffTheHand(final GameTestHelper helper) {
+        for (final Item thing : List.of(Items.MAGMA_CREAM, Items.FERMENTED_SPIDER_EYE)) {
+            final Player boxed = helper.makeMockPlayer(GameType.SURVIVAL);
+            boxed.getInventory().items.set(0, boxed(Items.WHITE_SHULKER_BOX, thing, 4));
+            ItemHazards.second(boxed);
+            helper.assertTrue(boxed.getHealth() == boxed.getMaxHealth(), "in a box, " + thing + " does not touch the "
+                    + "hand: " + boxed.getHealth());
+            final Player bare = helper.makeMockPlayer(GameType.SURVIVAL);
+            bare.getInventory().items.set(0, new ItemStack(thing));
+            ItemHazards.second(bare);
+            helper.assertTrue(bare.getHealth() < bare.getMaxHealth(), "loose, " + thing + " hurts the hand that "
+                    + "carries it");
+        }
         helper.succeed();
     }
 
@@ -99,9 +117,12 @@ public final class ShieldingGameTests {
 
     /* A box of {@code box} holding four echo shards. */
     private static ItemStack boxed(final Item box) {
+        return boxed(box, Items.ECHO_SHARD, 4);
+    }
+
+    private static ItemStack boxed(final Item box, final Item thing, final int count) {
         final ItemStack stack = new ItemStack(box);
-        stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(new ItemStack(Items.ECHO_SHARD,
-                4))));
+        stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(new ItemStack(thing, count))));
         return stack;
     }
 }

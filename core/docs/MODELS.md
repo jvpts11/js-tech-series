@@ -71,6 +71,9 @@ Add the provider when your mod does not gather its data through `ContentData`:
 generator.addProvider(event.includeClient(), new ModelDefinitionProvider(output, CONTENT, existingFiles));
 ```
 
+`ModelDefinitionProvider.check(model, existingFiles)` makes the same checks of one declared model, for a provider of
+your own.
+
 ## From CAD programs and scenes
 
 *Added 2026-10-22.* A part drawn in a CAD program (Fusion, SolidWorks, FreeCAD, Onshape, a slicer) or a scene from
@@ -284,7 +287,11 @@ model's faces into a way of their own, or draw anything else there:
 KitLayers.add(rl("reactor"), (instance, faces, buffers, light, overlay) ->
         faces.into(texture -> RenderType.energySwirl(SHIELD, 0, 0), LightTexture.FULL_BRIGHT, overlay));
 KitLayers.everywhere(myOutline);   // over every model of the Core's
+KitLayers.remove(myOutline);       // and taken off again
 ```
+
+A model with a layer over it is drawn by itself, never in one batch with the others like it, so a layer laid only for
+a while (an outline as something is chosen, a shield while it is up) is best taken off once it is not needed.
 
 **The player's arms in first person**: an item's model with a bone named `player_right_arm` or `player_left_arm` has
 that arm of the player drawn at the bone's pivot while it is held in first person, in the player's own skin and

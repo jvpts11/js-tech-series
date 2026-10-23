@@ -23,8 +23,9 @@ their own screens without it: **the network gives a machine more; it never makes
 ### Kinds of Operation from every mod
 
 Each mod registers the kinds of Operation its machines carry out: J's Computers its storage and crafting, J's Industrial
-its accelerators, research and miners, J's Space its rockets, satellites, probes and cargo, and so on. They are
-dispatched by the Mainframe like any other, with queues, priority and the log.
+its accelerators, research and miners, J's Space its rockets, satellites, probes and cargo, and so on. A mod declares
+them as the game loads, through `RegisterOperationTypesEvent`, and none can be added later. They are dispatched by the
+Mainframe like any other, with queues, priority and the log.
 
 ### State as tables
 
@@ -40,5 +41,5 @@ stay point-to-point links.
 
 ## Still to build
 
-J's Computers' side, when it moves onto the Core: its SELECT reading the tables of state, its storage keeping every
-state of matter, the network reading the world's events, and what an era or a tier reached sets off.
+J's Computers' side: its SELECT reading the tables of state, its storage keeping every state of matter, the network
+reading the world's events, and what an era or a tier reached sets off.

@@ -45,7 +45,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * sprinting, swimming, swinging an arm. Past the edges of the normal warmth come the two kinds of the hazard kit,
  * measured from the core: hypothermia below 35 °C, mild, moderate below 32 °C and severe below 28 °C; overheating above
  * 37.5 °C, heat exhaustion, and heatstroke above 40 °C. A body that stays in a cold or a hot climate gets used to it
- * over hours of play, its bands moving half a degree and more toward it, and loses that away from it. A player is born
+ * over hours of play, its bands moving up to three quarters of a degree toward it, and loses that away from it. A
+ * player is born
  * with a normal core and keeps one in creative; the server can turn the whole of it off.
  */
 @TextHolder

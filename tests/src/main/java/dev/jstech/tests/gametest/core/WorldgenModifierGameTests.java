@@ -14,6 +14,7 @@ import dev.jstech.core.worldgen.modify.WorldgenModifiers;
 import dev.jstech.core.worldgen.structure.OperatorStructures;
 import dev.jstech.core.worldgen.structure.StructureReport;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestWorldGen;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The world generation of the game and of every mod changed as data and by the operator: the test mod's datapack
  * wraps a density function twice in the order of its priorities, spaces a structure set out and adds a structure to
- * it, and names a function that is not there; the Core's kinds of density function work as their files say; and the
+ * it, names a function that is not there, and writes one of a kind of the test mod's own, made by its own code; the
+ * Core's kinds of density function work as their files say; and the
  * operator's settings turn a structure off, give one other biomes and space out a mod's sets.
  */
 @GameTestHolder(JsTests.MODID)
@@ -73,6 +75,16 @@ public final class WorldgenModifierGameTests {
                 "name_nothing"));
         helper.assertTrue(!wrong.done() && wrong.problems().stream().anyMatch(problem -> problem.contains(
                 "jstests:nothing_by_this_name")), "not made, saying what is missing: " + wrong);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void aModsOwnKind_isReadAndMadeAsTheCoresAre(final GameTestHelper helper) {
+        final int at = indexOf(WorldgenModifiers.made(), "note_test_modified");
+        helper.assertTrue(at >= 0, "the file of the test mod's own kind is read: " + WorldgenModifiers.made());
+        final WorldgenModifiers.Made note = WorldgenModifiers.made().get(at);
+        helper.assertTrue(note.done() && note.kind().equals(TestWorldGen.NOTE_KIND)
+                && note.target().equals(id("test_modified")), "and made, by its kind's own code: " + note);
         helper.succeed();
     }
 

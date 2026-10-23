@@ -6,7 +6,7 @@ Performance, diagnostics, the Core's settings, and how its state is kept.
 
 Everything this page designs is built, as of October 2026: the performance rules, the diagnostics, the settings and the
 state. How a mod uses them, with code: [Diagnostics](../DIAGNOSTICS.md), [Settings](../SETTINGS.md) and
-[State and saves](../STATE_AND_SAVES.md). What is not built yet is under *Still to build* at the end.
+[State and saves](../STATE_AND_SAVES.md).
 
 ## The design
 
@@ -44,7 +44,8 @@ Besides that, the Core does only what Spark doesn't:
 
 ### Settings
 
-The Core's own settings stay in its files, and J's Computers' numbers leave them for J's Computers' file
+The Core's own settings are in its files; J's Computers' numbers are in J's Computers' file,
+`jscomputers-server.toml`, and the Operations framework's in the series' own, `jstech-operations.toml`
 ([The platform](platform.md)). They are settings of consequence: none turns a part of a mod off.
 
 | Setting | Default | Page |
@@ -72,7 +73,11 @@ The Core's own settings stay in its files, and J's Computers' numbers leave them
 | Don't generate a material's ore | off | [The world](world.md) |
 | Try brute-force oregen | off | [The world](world.md) |
 | Chunks each owner may keep loaded | 25 | [The world](world.md) |
+| Chunks kept while their owner is away | on | [The world](world.md) |
+| Hours chunks are kept for an owner away | 0, for as long as the owner is away | [The world](world.md) |
 | The server's budget of loaded chunks | | [The world](world.md) |
+| Any mod's structures turned off, spaced or kept to biomes (`jstech-structures.toml`) | as each mod has them | [The world](world.md) |
+| How long an Operation waits, how it ages, how long a saved one is kept (`jstech-operations.toml`) | 1200 ticks, 600 ticks, 24 hours | [Networks and Operations](networks-and-operations.md) |
 | The Space Persistor's energy | | [The world](world.md) |
 | Naming discovered elements | on | [Materials](materials.md) |
 | Requiring the "-ium" ending | off | [Materials](materials.md) |
@@ -91,8 +96,3 @@ Empty defaults are set when the system is built. Every number on these pages is 
 - **Moving structures**: their region of blocks and where each structure is, kept through restarts.
 
 Everything saved has a version and a way to read older saves; a save from a newer version is never written over.
-
-## Still to build
-
-- **J's Computers' numbers leave the Core's balance file** (the disks' latency, the Subframe's share, the time programs
-  may spend, the media) for J's Computers' own settings, when J's Computers moves onto the Core.

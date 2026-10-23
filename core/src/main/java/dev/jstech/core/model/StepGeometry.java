@@ -511,6 +511,12 @@ final class StepGeometry {
             return new double[] {this.curve.parameterOf(back), v};
         }
 
+        /* A closed curve swept round comes round in U as well, as a circle swept round is a torus. */
+        @Override
+        public double periodU() {
+            return this.curve.period();
+        }
+
         @Override
         public double periodV() {
             return TURN;
@@ -553,6 +559,12 @@ final class StepGeometry {
                 v = new Vector3d(point).sub(this.curve.at(u)).dot(this.way) / this.way.lengthSquared();
             }
             return new double[] {u, v};
+        }
+
+        /* A closed curve drawn out comes round as the curve does: a circle's is a cylinder's band. */
+        @Override
+        public double periodU() {
+            return this.curve.period();
         }
 
         @Override

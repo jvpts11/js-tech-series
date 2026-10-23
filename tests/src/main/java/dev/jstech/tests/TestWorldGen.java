@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests;
 
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.material.HostRocks;
 import dev.jstech.core.sky.Skies;
@@ -15,6 +17,8 @@ import dev.jstech.core.worldgen.biome.WorldBiomes;
 import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.landform.LandformKind;
 import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.modify.IWorldgenModifier;
+import dev.jstech.core.worldgen.modify.WorldgenModifiers;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.structure.Growth;
 import dev.jstech.core.worldgen.structure.StructureFit;
@@ -22,6 +26,8 @@ import dev.jstech.core.worldgen.structure.Structures;
 import dev.jstech.core.worldgen.terrain.DensitySpec;
 import dev.jstech.core.worldgen.terrain.NoiseSpec;
 import dev.jstech.core.worldgen.terrain.Terrains;
+import java.util.List;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -45,6 +51,8 @@ public final class TestWorldGen {
     /** A biome tag with no biome in it. */
     public static final TagKey<Biome> NOWHERE =
             TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "nowhere"));
+    /** The test mod's own kind of worldgen modifier, as its datapack's files name it. */
+    public static final ResourceLocation NOTE_KIND = id("note");
 
     public static final WorldGen.OreVein ORE = WorldGen.ore(id("test_ore")).stone(() -> Blocks.AMETHYST_BLOCK)
             .vein(12).perChunk(4).heights(-16, 48).triangle().biomes(NOWHERE).declare();
@@ -187,6 +195,10 @@ public final class TestWorldGen {
     private TestWorldGen() {
     }
 
+    static {
+        WorldgenModifiers.declareKind(NOTE_KIND, NoteModifier.CODEC);
+    }
+
     /** Declares the vein and the structure, before the generator runs. */
     public static void declare() {
         // Loading the class declares them.
@@ -194,5 +206,35 @@ public final class TestWorldGen {
 
     private static ResourceLocation id(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsTests.MODID, path);
+    }
+
+    /**
+     * A worldgen modifier of the test mod's own kind, as a mod adds one: it changes nothing, and is made when the
+     * density function it names is there, saying so when it is not.
+     */
+    public record NoteModifier(ResourceLocation target) implements IWorldgenModifier {
+
+        static final MapCodec<NoteModifier> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+                ResourceLocation.CODEC.fieldOf("target").forGetter(NoteModifier::target))
+                .apply(instance, NoteModifier::new));
+
+        @Override
+        public ResourceLocation kind() {
+            return NOTE_KIND;
+        }
+
+        @Override
+        public ResourceLocation changes() {
+            return this.target;
+        }
+
+        @Override
+        public boolean apply(final RegistryAccess registries, final List<String> problems) {
+            if (registries.registryOrThrow(Registries.DENSITY_FUNCTION).containsKey(this.target)) {
+                return true;
+            }
+            problems.add("no density function is called " + this.target);
+            return false;
+        }
     }
 }

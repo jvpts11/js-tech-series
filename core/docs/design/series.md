@@ -8,7 +8,9 @@ mod takes from the Core. How the series is versioned and released is in the seri
 
 J's Computers and J's Industrial are built on the Core, at the same version, and so are J's Example, built on the
 Core's promise alone, and a mod for testing that is never published. Everything this page designs holds as of October
-2026, except what *Still to build* at the end lists.
+2026: J's Industrial's machines are on the machine framework, both mods' cables and links on the grids, their
+settings and permissions on the Core's kits, their numbers out of the Core's balance file, and J's Computers' models
+drawn by the Core's own, so GeckoLib has left the series.
 
 ## The design
 
@@ -38,11 +40,5 @@ technology mod outside the series may stand on the Core too.
 ### What the Core takes from no one
 
 The Core depends on NeoForge alone. Integrations with other mods (JEI, EMI, Jade, FTB Teams, Curios, Accessories,
-GeckoLib until the Core's own models replace it, Mekanism's chemicals) wake up only when those mods are installed, each
-behind a guard, so none of them is ever required.
-
-## Still to build
-
-- **J's Computers and J's Industrial moved onto the Core** as it now is: their blocks that are machines on the machine
-  framework, their cables and links on the grids, their settings and permissions on the Core's kits, their numbers out
-  of the Core's balance file, and J's Computers' models on the Core's own, so GeckoLib leaves the series.
+Mekanism's chemicals) wake up only when those mods are installed, each behind a guard, so none of them is ever
+required.

@@ -86,6 +86,6 @@ Core's sake: its content is there because other mods need it, and a world with t
 
 ## Still to build
 
-What each page lists at its end, and one move of the whole: the series' model that the Core holds today (the eras and
-tiers, the network's model, the Operations and their kinds, the peripheral links, the `/jstech` root, the series' theme)
-goes into the series' own package when J's Computers and J's Industrial move onto the Core.
+What each page lists at its end. The series' model (the eras and tiers, the network's model, the Operations and their
+kinds, the peripheral links, the `/jstech` root, the series' theme) is in the series' own package,
+`dev.jstech.core.jstechseries`, and J's Computers and J's Industrial are on the Core as it now is.

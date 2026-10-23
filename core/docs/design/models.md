@@ -6,12 +6,12 @@ Maya, 3ds Max and Cinema 4D.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: the readers of
-Blockbench, Bedrock, glTF, FBX and OBJ, and of STL, 3MF, STEP and USD with their way into the game, what a model holds,
-the animation with its controllers, expressions, events and bones moved by code, what entities need ready-made (their
-own queries, and the game's creatures drawn with a model by data), textures that move and glow, layers, the player's
-arms in first person, the drawing with every copy of a model drawn together, the preview with each part's triangles
-and live reload, and connected textures. How a mod uses it, with code:
+Everything this page designs is built, as of October 2026: the readers of Blockbench, Bedrock, glTF, FBX and OBJ, and
+of STL, 3MF, STEP and USD with their way into the game, what a model holds, the animation with its controllers,
+expressions, events and bones moved by code, what entities need ready-made (their own queries, and the game's
+creatures drawn with a model by data), textures that move and glow, layers, the player's arms in first person, the
+drawing with every copy of a model drawn together, the preview with each part's triangles and live reload, connected
+textures, and J's Computers' models drawn by the kit, with no GeckoLib. How a mod uses it, with code:
 [Models](../MODELS.md) and [Connected textures](../CONNECTED_TEXTURES.md).
 
 ## The design
@@ -79,8 +79,9 @@ modelling kernel: what the exporting program worked out is laid out as it says.
   ([For those who make mods](developers.md)): the model turning on a grid, its animations as buttons (looped or once,
   playing or not), its bones and locators shown, and the timeline under it; it reloads when the file changes.
 - **Models declared once**, with the data generation.
-- **Moving over**: J's Computers' Mainframes, racks, drives and encoders come across to the kit, and the Core's optional
-  integration with GeckoLib goes away.
+- **Moved over**: J's Computers' Mainframes, racks, drives, encoders, printers, interfaces and computer cases are drawn
+  by the kit, and the Core's optional integration with GeckoLib is gone; a family of files laid out the GeckoLib way
+  is read as it is.
 
 ### Connected textures
 
@@ -94,8 +95,3 @@ In the spirit of CTM and Continuity:
 - **They step aside for Continuity and CTM** when those are installed ([Modpacks](modpacks.md)).
 - **Glowing block textures in OptiFine's form** (a texture's `_e` beside it, the ending the pack says), as Continuity
   reads them, for resource packs made for it: drawn over their faces at full light.
-
-## Still to build
-
-- **J's Computers' models move onto the kit** (the Mainframes, racks, drives and encoders), and GeckoLib leaves the
-  series, when J's Computers moves onto the Core.

@@ -8,6 +8,7 @@
 package dev.jstech.core.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -101,6 +102,99 @@ class UsdReaderTest {
                 }
             }
             """;
+    /*
+     * An arm: a skeleton of a shoulder and an elbow 10 cm above it, a sleeve whose top bends with the elbow, and an
+     * animation turning the elbow a quarter round Z in a second. The text writes a quaternion real part first.
+     */
+    private static final String ARM = """
+            #usda 1.0
+            (
+                defaultPrim = "Arm"
+                metersPerUnit = 0.01
+                upAxis = "Y"
+                startTimeCode = 0
+                endTimeCode = 10
+                timeCodesPerSecond = 10
+            )
+
+            def SkelRoot "Arm"
+            {
+                def Skeleton "Bones"
+                {
+                    uniform token[] joints = ["Shoulder", "Shoulder/Elbow"]
+                    uniform matrix4d[] bindTransforms = [((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1)),
+                        ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 10, 0, 1))]
+                    uniform matrix4d[] restTransforms = [((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1)),
+                        ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 10, 0, 1))]
+                    rel skel:animationSource = </Arm/Bones/Wave>
+
+                    def SkelAnimation "Wave"
+                    {
+                        uniform token[] joints = ["Shoulder/Elbow"]
+                        float3[] translations = [(0, 10, 0)]
+                        quatf[] rotations.timeSamples = {
+                            0: [(1, 0, 0, 0)],
+                            10: [(0.70710677, 0, 0, 0.70710677)],
+                        }
+                    }
+                }
+
+                def Mesh "Sleeve"
+                {
+                    point3f[] points = [(0, 0, 0), (2, 0, 0), (2, 20, 0), (0, 20, 0)]
+                    int[] faceVertexCounts = [4]
+                    int[] faceVertexIndices = [0, 1, 2, 3]
+                    int[] primvars:skel:jointIndices = [0, 0, 1, 1] (
+                        elementSize = 1
+                        interpolation = "vertex"
+                    )
+                    float[] primvars:skel:jointWeights = [1, 1, 1, 1] (
+                        elementSize = 1
+                        interpolation = "vertex"
+                    )
+                    rel skel:skeleton = </Arm/Bones>
+                }
+            }
+            """;
+    /* A fan whose blade is another file's, moved 5 cm, and a spare taken from the blade in the fan's own stage. */
+    private static final String FAN = """
+            #usda 1.0
+            (
+                defaultPrim = "Fan"
+                metersPerUnit = 0.01
+                upAxis = "Y"
+            )
+
+            def Xform "Fan"
+            {
+                def "Blade" (
+                    references = @./parts/blade.usda@
+                )
+                {
+                    double3 xformOp:translate = (5, 0, 0)
+                    uniform token[] xformOpOrder = ["xformOp:translate"]
+                }
+
+                def "Spare" (
+                    references = </Fan/Blade>
+                )
+                {
+                }
+            }
+            """;
+    private static final String BLADE = """
+            #usda 1.0
+            (
+                defaultPrim = "Blade"
+            )
+
+            def Mesh "Blade"
+            {
+                point3f[] points = [(0, 0, 0), (4, 0, 0), (4, 1, 0)]
+                int[] faceVertexCounts = [3]
+                int[] faceVertexIndices = [0, 1, 2]
+            }
+            """;
 
     @Test
     void text_placesEachPrimAsABoneInTheStagesUnit() {
@@ -160,6 +254,62 @@ class UsdReaderTest {
         final Vector3f corner = new Vector3f(blade.positions()[0], blade.positions()[1], blade.positions()[2]);
         assertEquals(-4 * CENTIMETRE, corner.x, EPSILON, "its points read from the crate");
         assertEquals(1, pump.animations().size(), "and its sampled turn");
+    }
+
+    @Test
+    void skeleton_makesEachJointABoneUnderItsParentJoint() {
+        final ModelData arm = read("arm.usda", ARM.getBytes(StandardCharsets.UTF_8));
+        assertEquals("Bones", arm.bone("Shoulder").orElseThrow().parent(),
+                "a joint of no parent hangs from its skeleton");
+        final ModelBone elbow = arm.bone("Elbow").orElseThrow();
+        assertEquals("Shoulder", elbow.parent());
+        assertEquals(10 * CENTIMETRE, elbow.translation().y(), EPSILON, "at its rest, 10 cm above the shoulder");
+    }
+
+    @Test
+    void skeleton_bendsAMeshByItsJointsAndWeights() {
+        final ModelData arm = read("arm.usda", ARM.getBytes(StandardCharsets.UTF_8));
+        final ModelSkin skin = arm.skins().get("Sleeve");
+        assertEquals(List.of("Shoulder", "Elbow"), skin.joints());
+        assertEquals(-10 * CENTIMETRE, skin.inverseBinds()[16 + 13], EPSILON, "the elbow's bind undone");
+        final ModelMesh sleeve = arm.bone("Sleeve").orElseThrow().meshes().getFirst();
+        assertTrue(sleeve.skinned());
+        final int corners = sleeve.positions().length / 3;
+        assertEquals(corners * 4, sleeve.joints().length, "four joints a corner");
+        for (int i = 0; i < corners; i++) {
+            final int top = sleeve.positions()[i * 3 + 1] > 10 * CENTIMETRE ? 1 : 0;
+            assertEquals(top, sleeve.joints()[i * 4], "the top bends with the elbow, the bottom with the shoulder");
+            assertEquals(1, sleeve.weights()[i * 4], EPSILON);
+        }
+    }
+
+    @Test
+    void skeleton_animatesItsJointsByItsAnimationsSamples() {
+        final ModelAnimation wave = read("arm.usda", ARM.getBytes(StandardCharsets.UTF_8)).animations().getFirst();
+        assertEquals(1.0, wave.length(), EPSILON, "10 frames at 10 a second");
+        assertTrue(wave.bones().containsKey("Elbow"));
+        assertFalse(wave.bones().containsKey("Shoulder"), "a joint the animation does not name stays at its rest");
+        final float[] turn = new float[4];
+        final AnimationChannel rotation = wave.bones().get("Elbow").rotation();
+        rotation.evaluate(0, new ExpressionContext(), turn);
+        assertEquals(1, Math.abs(turn[3]), EPSILON, "unturned at the start, read real part first");
+        rotation.evaluate(1.0, new ExpressionContext(), turn);
+        assertEquals(0.70710677, Math.abs(turn[2]), EPSILON, "a quarter round Z at the end");
+        assertEquals(0, turn[0], EPSILON, "and none round X");
+    }
+
+    @Test
+    void text_takesInWhatAPrimReferencesFromAnotherFileOrItsOwnStage() {
+        final ModelData fan = UsdReader.read("fan.usda", FAN.getBytes(StandardCharsets.UTF_8),
+                path -> path.equals("parts/blade.usda") ? BLADE.getBytes(StandardCharsets.UTF_8) : null);
+        final ModelBone blade = fan.bone("Blade").orElseThrow();
+        assertEquals("Fan", blade.parent());
+        assertEquals(1, blade.meshes().size(), "the mesh of the file it references");
+        assertEquals(3, blade.meshes().getFirst().triangles().length);
+        assertEquals(5 * CENTIMETRE, blade.translation().x(), EPSILON, "moved by its own opinion");
+        final ModelBone spare = fan.bone("Spare").orElseThrow();
+        assertEquals(1, spare.meshes().size(), "and the spare the blade's, taken in from its own stage");
+        assertEquals(5 * CENTIMETRE, spare.translation().x(), EPSILON);
     }
 
     @Test

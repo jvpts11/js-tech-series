@@ -35,7 +35,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The Core's conveyors: a run carries its items along and into a chest in front, the end of the run alone ticking;
  * items wait a gap apart at an end with nowhere to go, or fall off one that drops them; a belt hands its items into a
- * belt across its end; a belt a shaft turns moves only while it turns, and one on energy only while it has some; a
+ * belt across its end; a run is walked again as a piece is laid behind it, turned away or broken; a belt a shaft turns
+ * moves only while it turns, and one on energy only while it has some; a
  * hopper and an item lying on the belt put items on; what stands on it is carried; and its items are kept in a save.
  */
 @GameTestHolder(JsTests.MODID)
@@ -97,6 +98,61 @@ public final class ConveyorGameTests {
         belt(helper, FIRST).put(new ItemStack(Items.GOLD_INGOT), 0.5);
         helper.succeedWhen(() -> helper.assertTrue(!belt(helper, SECOND).lane().isEmpty(),
                 "the ingot handed onto the belt across"));
+    }
+
+    @GameTest(template = ARENA)
+    public static void belts_walkTheirRunAgainWhenAPieceIsLaidBehindIt(final GameTestHelper helper) {
+        run(helper, TestConveyors.BELT.get(), SECOND, THIRD);
+        belt(helper, THIRD).put(new ItemStack(Items.STONE), 0.0);
+        // The run's end has walked its two pieces by then, and moves them while its stone waits there.
+        helper.runAfterDelay(STILL, () -> {
+            run(helper, TestConveyors.BELT.get(), FIRST);
+            belt(helper, FIRST).put(new ItemStack(Items.DIAMOND), 0.0);
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(helper.getBlockState(FIRST).is(TestConveyors.BELT.get()), "the third piece laid");
+            helper.assertTrue(belt(helper, FIRST).lane().isEmpty()
+                    && belt(helper, SECOND).lane().size() + belt(helper, THIRD).lane().size() == 2,
+                    "the diamond on the piece laid behind the run carried on along it");
+        });
+    }
+
+    @GameTest(template = ARENA)
+    public static void belts_walkTheirRunAgainWhenAPieceOfItIsTurnedAway(final GameTestHelper helper) {
+        run(helper, TestConveyors.BELT.get(), FIRST, SECOND, THIRD);
+        belt(helper, THIRD).put(new ItemStack(Items.STONE), 0.0);
+        helper.runAfterDelay(STILL, () -> {
+            helper.setBlock(FIRST, TestConveyors.BELT.get().defaultBlockState().setValue(ConveyorBlock.FACING,
+                    Direction.NORTH));
+            belt(helper, FIRST).put(new ItemStack(Items.DIAMOND), 0.0);
+            helper.runAfterDelay(STILL, () -> {
+                helper.assertTrue(belt(helper, SECOND).lane().isEmpty(), "nothing is carried from the turned "
+                        + "piece into the run it left");
+                helper.assertTrue(belt(helper, FIRST).lane().size() == 1
+                        && belt(helper, FIRST).lane().entries().getFirst().at() >= 1.0,
+                        "the diamond waits at the end of the turned piece, a run of its own");
+                helper.succeed();
+            });
+        });
+    }
+
+    @GameTest(template = ARENA)
+    public static void belts_walkTheirRunAgainWhenAPieceOfItIsBroken(final GameTestHelper helper) {
+        run(helper, TestConveyors.BELT.get(), FIRST, SECOND, THIRD);
+        belt(helper, THIRD).put(new ItemStack(Items.STONE), 0.0);
+        helper.runAfterDelay(STILL, () -> {
+            helper.setBlock(SECOND, Blocks.AIR);
+            belt(helper, FIRST).put(new ItemStack(Items.DIAMOND), 0.0);
+            helper.runAfterDelay(STILL, () -> {
+                helper.assertTrue(helper.getBlockState(FIRST).getValue(ConveyorBlock.END), "the piece before the "
+                        + "gap ends a run of its own");
+                helper.assertTrue(belt(helper, FIRST).lane().size() == 1
+                        && belt(helper, FIRST).lane().entries().getFirst().at() >= 1.0,
+                        "and its diamond waits at that end");
+                helper.assertTrue(belt(helper, THIRD).lane().size() == 1, "the stone alone on the piece after");
+                helper.succeed();
+            });
+        });
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)

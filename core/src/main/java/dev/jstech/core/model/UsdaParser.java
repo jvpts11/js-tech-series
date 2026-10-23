@@ -155,7 +155,7 @@ final class UsdaParser {
                 if (relationship || suffix.equals(".connect")) {
                     targets(value, property.targets);
                 } else {
-                    property.value = value;
+                    property.value = quaternions(property.typeName, value);
                 }
             }
             skip();
@@ -163,6 +163,29 @@ final class UsdaParser {
         if (this.at < this.text.length() && peek() == '(') {
             metadata(property.metadata);
         }
+    }
+
+    /*
+     * A quaternion as the crate keeps it, its imaginary part and then its real, which the text writes real part
+     * first; one or a list of them, the rest as they are.
+     */
+    @Nullable
+    private static Object quaternions(final String type, @Nullable final Object value) {
+        if (!type.startsWith("quat")) {
+            return value;
+        }
+        if (value instanceof double[] one && one.length == 4) {
+            return new double[] {one[1], one[2], one[3], one[0]};
+        }
+        if (value instanceof double[][] rows) {
+            final double[][] out = new double[rows.length][];
+            for (int i = 0; i < rows.length; i++) {
+                out[i] = rows[i].length == 4 ? new double[] {rows[i][1], rows[i][2], rows[i][3], rows[i][0]}
+                        : rows[i];
+            }
+            return out;
+        }
+        return value;
     }
 
     private static void targets(@Nullable final Object value, final List<String> into) {
@@ -186,7 +209,7 @@ final class UsdaParser {
             skip();
             expect(':');
             skip();
-            property.samples.put(time, value());
+            property.samples.put(time, quaternions(property.typeName, value()));
             skip();
             if (peek() == ',') {
                 this.at++;

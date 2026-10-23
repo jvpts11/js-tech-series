@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * The layers laid over the Core's models as they are drawn ({@link IKitLayer}): those of one model, and those of every
- * model. Added from a mod's client setup; they stay for as long as the game runs.
+ * model. Added from a mod's client setup; they stay until they are taken off.
  */
 public final class KitLayers {
 
@@ -35,6 +35,16 @@ public final class KitLayers {
     /** Lays {@code layer} over every model of the Core's. */
     public static void everywhere(final IKitLayer layer) {
         EVERYWHERE.add(Objects.requireNonNull(layer, "layer"));
+    }
+
+    /**
+     * Takes {@code layer} off again, from every model or from the models it was laid over. A model with a layer is
+     * drawn alone, never together with others like it, so a layer laid for a while is best taken off after it.
+     */
+    public static void remove(final IKitLayer layer) {
+        EVERYWHERE.remove(layer);
+        BY_MODEL.values().forEach(layers -> layers.remove(layer));
+        BY_MODEL.values().removeIf(List::isEmpty);
     }
 
     /** The layers over {@code model}: every model's first, then its own. */

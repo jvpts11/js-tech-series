@@ -10,7 +10,9 @@
  * it moves, for how long, along which curve and under which of its switches; the mods declare each system's profile
  * with the real system's timings, the data generation writes it as a file a resource pack can replace, and every
  * motion is read against one clock each frame. A component of a screen is moved by one in one call,
- * {@code UiComponent.animate}. How it all reads, from the start: {@code core/docs/MOTION.md}.
+ * {@code UiComponent.animate}. How it all reads, from the start: {@code core/docs/MOTION.md}. An example that
+ * compiles is J's Computers' systems' profiles
+ * ({@code computers/src/main/java/dev/jstech/computers/os/OsMotions.java}).
  */
 @ApiStatus.Experimental
 package dev.jstech.core.motion;

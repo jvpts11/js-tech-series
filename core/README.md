@@ -38,10 +38,12 @@ What a technology mod needs, whichever mod it is.
 - The Operations framework the network runs on: the Operation types a mod declares, their lifecycle and
   statuses, priorities and aging, queues, latency and progress, cancellation and failure, and the lifecycle
   events any mod can observe.
-- The energy network (FE), distributed from each generator with a split that never creates or loses energy.
+- [Energy](docs/ENERGY_AND_RESOURCES.md): any mod's energy, FE among them, and J's Energy in joules, watts and
+  voltage classes, moved by grids of cables that lose what they lose and share a cable's room fairly, never
+  creating or losing energy in the split; fluids, chemicals and every state of matter kept apart, with tanks and
+  pipes that burst past their pressure.
 - The point-to-point links between a computer and its peripherals, and the capabilities a block exposes to take
   part in any of that.
-- Multiblock shapes, the four rotations and their validation.
 
 ### Sound
 
@@ -87,27 +89,37 @@ What a technology mod needs, whichever mod it is.
   suits its ground, layouts that can be tested without the game, and the
   [components](docs/UI_COMPONENTS.md) desktop programs are composed from.
 - [Fonts](docs/FONTS.md): a mod declares a font with its licence and credit, the data generation turns its
-  free source (a BDF bitmap font) into the font the game draws from, and a grid painter puts text on a
-  monospace grid in it, drawing the box lines and blocks itself so frames and bars join. The Core carries Misc
-  Fixed, the fixed font of the old Unix terminals, in four sizes (5x8, 6x10, 9x15, 10x20), for any mod's
-  terminal-like views and the manuals' code and figures.
+  free source (a BDF bitmap font, or a TrueType or OpenType one drawn at a size) into the font the game draws
+  from, and a grid painter puts text on a monospace grid in it, drawing the box lines and blocks itself so frames
+  and bars join. The Core carries Misc Fixed, the fixed font of the old Unix terminals, in four sizes (5x8, 6x10,
+  9x15, 10x20), for any mod's terminal-like views and the manuals' code and figures.
 - [Models](docs/MODELS.md): animated models for blocks, items, entities and armour, read by the Core's own readers
-  from Blockbench projects, Bedrock and GeckoLib geometry, glTF, FBX and OBJ; controllers that blend from one
+  from Blockbench projects, Bedrock and GeckoLib geometry, glTF, FBX and OBJ, and from CAD files and scenes (STL,
+  3MF, STEP and USD) brought to the game's look; alike models drawn together; controllers that blend from one
   animation to the next, Molang in keyframes, sounds and particles on their times, bones moved by code, animations
   the server plays for everyone who sees them, and a preview in the game that reloads as the files change.
-- [Motion](docs/MOTION.md): curves written as CSS writes them, a profile of motions for each look a mod
+- [Motion](docs/MOTION.md): curves written as CSS writes them, and springs that pass their end and settle, a
+  component moved in one call, a whole window faded as one picture, a profile of motions for each look a mod
   declares (growing, sliding, going down to a place and back, an outline travelling, a colour giving way), kept as
   a file a resource pack replaces, and one clock every motion is read against, smooth between ticks and still for a
   player who reduces motion.
-- The registry of programming languages a machine can run, the configuration system (with ranges every value
-  is clamped into), the series' internal event bus, persistence helpers, the payload framework and the unit
-  formatter.
+- The configuration system (with ranges every value is clamped into), the series' internal event bus,
+  persistence helpers, the payload framework and the unit formatter. The programming languages a machine can run
+  are J's Computers' own, in its API.
 
 ### Machines, the world and the rest
 
 - [Processing machines](docs/MACHINES.md) with slots, tanks, energy, progress and upgrades; recipes of several
   items and fluids in data files; and a page in JEI and in EMI for every recipe kind.
-- [Multiblocks](docs/MULTIBLOCKS.md) as data, with ports that pass pipes through to the controller.
+- [Multiblocks](docs/MULTIBLOCKS.md) as data or by rule, with ports that pass pipes through to the controller, the
+  projector that shows where each block goes, and the recorder that reads a pattern off one built.
+- [Moving structures](docs/MOVING_STRUCTURES.md) of real blocks that keep working as they move by rules or by
+  physics, are stood on, joined and docked, and are frozen, removed or exported as structure files by command;
+  [block spaces](docs/MULTIPART.md) that hold several parts, microblocks of any block and facades on any face;
+  [conveyors](docs/CONVEYORS.md) and [mechanical power](docs/MECHANICAL_POWER.md).
+- [Hazards](docs/HAZARDS.md) built up in a body in bands, radiation and its shielding, a body's warmth from its place
+  and its clothes, used to its climate over hours, and pollution that cleaners take up; and
+  [heat](docs/HEAT.md) in blocks.
 - [The world](docs/WORLD.md): ores and structures declared for the data generation, dimensions with rules for
   gravity, air, heat, weather and pressure, dimensions made while the game runs, data over areas, and chunk
   loading by owner.

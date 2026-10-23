@@ -6,7 +6,7 @@ page ([The API of the J's Tech Series](../../../docs/API.md)).
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026: the API is at version 11; the Core's kits are promised,
+Everything this page designs is built, as of October 2026: the API is at version 12; the Core's kits are promised,
 experimental, each listed in `JsCoreApi.PROMISED_PACKAGES` and documented from zero; the photo of the promise, line by
 line, travels in the Core's jar for a mod to check against; and J's Example builds on the promise alone. How a mod
 uses it: [The API of the J's Tech Series](../../../docs/API.md) and [Getting started](../GETTING_STARTED.md). What is
@@ -24,7 +24,7 @@ on it (the series' model); is it a concrete implementation of one mod (not the C
 
 **What is the series' own lives in one package, `dev.jstech.core.jstechseries`**, and everything outside it is the
 platform. A mod outside the series can tell at a glance what it may build on without taking the series' model with it.
-The parts are moved into their place domain by domain, with no big rewrite:
+Every part is in its place:
 
 | In `jstechseries` (the series' own) | Outside it (the platform) |
 | --- | --- |
@@ -36,8 +36,8 @@ The parts are moved into their place domain by domain, with no big rewrite:
 | the shared content: the basic lines, battery and wrench, the saw, the Configuration Card, the FE converters, the Space Persistor, the Atmosphere Detector, the containment blocks, the Structure Projector, the handheld instruments, the physics tool, the "J's Tech" creative tab | machines, mechanical power, heat, multiblocks, multipart, the world kits, hazards, explosions and fire, sealed rooms, moving structures, entities and vehicles, tools and items |
 | the `/jstech` command root, the series' look (its theme), the Technical Reference | screens, themes, fonts, motion, overlays, sound, models, lighting and effects, the guide framework, low level, testing, the tools for those who make mods and for modpacks |
 
-What is plainly another mod's leaves the Core: the **programming languages**, which belong with programs, move to J's
-Computers' API.
+What is plainly another mod's has left the Core: the **programming languages**, which belong with programs, are in J's
+Computers' API (`dev.jstech.computers.api.language`), registered through its `ComputersRegisterEvent`.
 
 ### A wider promise
 

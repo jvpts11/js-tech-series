@@ -43,9 +43,10 @@ import org.jetbrains.annotations.Nullable;
  * The block entity of a piece of conveyor ({@link ConveyorPieceBlock}): the items on it, in order along it, saved and
  * sent to the players who see it. The end of a run moves the whole run each tick, from its end back, so an item handed
  * on frees room behind it in the same tick; it keeps the run it walked, walking it again only once a piece is laid,
- * broken or turned somewhere, so a long run costs its items, not a search of its pieces every tick: each piece's items go as far as the run moves, and the first of each goes
- * on into the piece after it when there is room. What reaches the end goes to the piece's outlets, through the game's
- * item capability: a belt, a chute, an inventory; with nowhere to go, it waits there or falls off, as its kind says.
+ * broken or turned somewhere, so a long run costs its items, not a search of its pieces every tick. Each piece's
+ * items go as far as the run moves, and the first of each goes on into the piece after it when there is room. What
+ * reaches the end goes to the piece's outlets, through the game's item capability: a belt, a chute, an inventory;
+ * with nowhere to go, it waits there or falls off, as its kind says.
  *
  * <p>Its kind's drive moves it: by itself; by a shaft at any of its run's pieces' sides, the run's pieces joined in
  * one network of mechanical power, as fast as the shaft turns against its rated speed; or by energy any of its run's

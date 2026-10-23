@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.ToIntFunction;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
@@ -84,6 +85,54 @@ class StepReaderTest {
         assertTrue(triangles(read.model()) > 8, "a curved patch takes more than two triangles");
         final float top = size(read.model()).y;
         assertTrue(top > 1 * MILLIMETRE && top < 4 * MILLIMETRE, "it bulges as its control points say: " + top);
+    }
+
+    @Test
+    void cone_boundByItsTwoCircles_isLaidAsAFrustum() {
+        final StepReader.Counted read = read(cone());
+        assertEquals(0, read.dropped());
+        final double low = 2.5 * MILLIMETRE;
+        final double high = 5 * MILLIMETRE;
+        final double slant = Math.sqrt(Math.pow(10 * MILLIMETRE, 2) + Math.pow(high - low, 2));
+        final double expected = Math.PI * (low + high) * slant + Math.PI * low * low + Math.PI * high * high;
+        assertEquals(expected, area(read.model()), SHARE * expected);
+        assertOutward(read.model());
+    }
+
+    @Test
+    void torus_ofItsTwoSeams_isLaidWhole() {
+        final StepReader.Counted read = read(torus());
+        assertEquals(0, read.dropped());
+        final double expected = 4 * Math.PI * Math.PI * (10 * MILLIMETRE) * (3 * MILLIMETRE);
+        assertEquals(expected, area(read.model()), SHARE * expected);
+    }
+
+    @Test
+    void surfaceOfRevolution_isLaidAsTheSurfaceItSweeps() {
+        final StepReader.Counted read = read(cylinderOn(revolution()));
+        assertEquals(0, read.dropped());
+        final double radius = 5 * MILLIMETRE;
+        final double height = 10 * MILLIMETRE;
+        final double expected = 2 * Math.PI * radius * height + 2 * Math.PI * radius * radius;
+        assertEquals(expected, area(read.model()), SHARE * expected, "a line swept round its axis is a cylinder");
+    }
+
+    @Test
+    void surfaceOfLinearExtrusion_isLaidAsTheSurfaceItSweeps() {
+        final StepReader.Counted read = read(cylinderOn(extrusion()));
+        assertEquals(0, read.dropped());
+        final double radius = 5 * MILLIMETRE;
+        final double height = 10 * MILLIMETRE;
+        final double expected = 2 * Math.PI * radius * height + 2 * Math.PI * radius * radius;
+        assertEquals(expected, area(read.model()), SHARE * expected, "a circle drawn out along its axis");
+    }
+
+    @Test
+    void tessellatedSolid_isDrawnByItsOwnTrianglesInPlaceOfTheExactSolid() {
+        final ModelData read = read(tessellated()).model();
+        assertEquals(4, triangles(read), "the AP242 triangles, and not the cube's exact faces as well");
+        final double expected = 3 * 50 * MILLIMETRE * MILLIMETRE + Math.sqrt(3) / 4 * 200 * MILLIMETRE * MILLIMETRE;
+        assertEquals(expected, area(read), 1e-3 * expected, "a corner of a cube, ten millimetres a side");
     }
 
     @Test
@@ -164,6 +213,93 @@ class StepReaderTest {
         final int topFace = step.face(List.of(step.loop(step.oriented(topCircle, true))), List.of(),
                 step.add("PLANE(''," + step.placement(new double[] {0, 0, 10}, new double[] {0, 0, 1}) + ")"));
         step.solid(List.of(side, bottomFace, topFace));
+        return step.text();
+    }
+
+    /* A frustum 10 mm high, 2.5 mm across at its foot and 5 mm at its top, closed by two discs. */
+    private static String cone() {
+        final Writer step = new Writer();
+        final int bottom = step.vertex(new double[] {2.5, 0, 0});
+        final int top = step.vertex(new double[] {5, 0, 10});
+        final int bottomCircle = step.edge(bottom, bottom, step.add("CIRCLE(''," + step.placement(new double[3],
+                new double[] {0, 0, 1}) + ",2.5)"));
+        final int topCircle = step.edge(top, top, step.add("CIRCLE(''," + step.placement(new double[] {0, 0, 10},
+                new double[] {0, 0, 1}) + ",5.)"));
+        final int surface = step.add("CONICAL_SURFACE(''," + step.placement(new double[3], new double[] {0, 0, 1})
+                + ",2.5," + number(Math.atan(0.25)) + ")");
+        final int side = step.face(List.of(step.loop(step.oriented(bottomCircle, true))),
+                List.of(step.loop(step.oriented(topCircle, false))), surface);
+        final int bottomFace = step.face(List.of(step.loop(step.oriented(bottomCircle, false))), List.of(),
+                step.add("PLANE(''," + step.placement(new double[3], new double[] {0, 0, -1}) + ")"));
+        final int topFace = step.face(List.of(step.loop(step.oriented(topCircle, true))), List.of(),
+                step.add("PLANE(''," + step.placement(new double[] {0, 0, 10}, new double[] {0, 0, 1}) + ")"));
+        step.solid(List.of(side, bottomFace, topFace));
+        return step.text();
+    }
+
+    /* A ring 10 mm from its axis to the middle of its tube, the tube 3 mm across, one face with its two seams. */
+    private static String torus() {
+        final Writer step = new Writer();
+        final int start = step.vertex(new double[] {13, 0, 0});
+        final int round = step.edge(start, start, step.add("CIRCLE(''," + step.placement(new double[3],
+                new double[] {0, 0, 1}, new double[] {1, 0, 0}) + ",13.)"));
+        final int tube = step.edge(start, start, step.add("CIRCLE(''," + step.placement(new double[] {10, 0, 0},
+                new double[] {0, -1, 0}, new double[] {1, 0, 0}) + ",3.)"));
+        final int surface = step.add("TOROIDAL_SURFACE(''," + step.placement(new double[3], new double[] {0, 0, 1},
+                new double[] {1, 0, 0}) + ",10.,3.)");
+        step.solid(List.of(step.face(List.of(step.loop(step.oriented(round, true), step.oriented(tube, true),
+                step.oriented(round, false), step.oriented(tube, false))), List.of(), surface)));
+        return step.text();
+    }
+
+    /* The cylinder of {@link #cylinder}, its side laid on the surface {@code side} writes. */
+    private static String cylinderOn(final ToIntFunction<Writer> side) {
+        final Writer step = new Writer();
+        final int bottom = step.vertex(new double[] {5, 0, 0});
+        final int top = step.vertex(new double[] {5, 0, 10});
+        final int bottomCircle = step.edge(bottom, bottom, step.add("CIRCLE(''," + step.placement(new double[3],
+                new double[] {0, 0, 1}) + ",5.)"));
+        final int topCircle = step.edge(top, top, step.add("CIRCLE(''," + step.placement(new double[] {0, 0, 10},
+                new double[] {0, 0, 1}) + ",5.)"));
+        final int around = step.face(List.of(step.loop(step.oriented(bottomCircle, true))),
+                List.of(step.loop(step.oriented(topCircle, false))), side.applyAsInt(step));
+        final int bottomFace = step.face(List.of(step.loop(step.oriented(bottomCircle, false))), List.of(),
+                step.add("PLANE(''," + step.placement(new double[3], new double[] {0, 0, -1}) + ")"));
+        final int topFace = step.face(List.of(step.loop(step.oriented(topCircle, true))), List.of(),
+                step.add("PLANE(''," + step.placement(new double[] {0, 0, 10}, new double[] {0, 0, 1}) + ")"));
+        step.solid(List.of(around, bottomFace, topFace));
+        return step.text();
+    }
+
+    /* A line 5 mm from the axis, swept round it. */
+    private static ToIntFunction<Writer> revolution() {
+        return step -> {
+            final int line = step.line(new double[] {5, 0, 0}, new double[] {5, 0, 10});
+            final int axis = step.add("AXIS1_PLACEMENT(''," + ref(step.point(new double[3])) + ","
+                    + ref(step.direction(new double[] {0, 0, 1})) + ")");
+            return step.add("SURFACE_OF_REVOLUTION(''," + ref(line) + "," + ref(axis) + ")");
+        };
+    }
+
+    /* A circle 5 mm across its middle, drawn 10 mm out along its axis. */
+    private static ToIntFunction<Writer> extrusion() {
+        return step -> {
+            final int circle = step.add("CIRCLE(''," + step.placement(new double[3], new double[] {0, 0, 1})
+                    + ",5.)");
+            final int vector = step.add("VECTOR(''," + ref(step.direction(new double[] {0, 0, 1})) + ",10.)");
+            return step.add("SURFACE_OF_LINEAR_EXTRUSION(''," + ref(circle) + "," + ref(vector) + ")");
+        };
+    }
+
+    /* The cube's exact solid, and a corner of it as AP242 carries triangles: what the file draws by. */
+    private static String tessellated() {
+        final Writer step = new Writer();
+        final String cube = cube(false);
+        step.raw(cube.substring(cube.indexOf("DATA;") + 5, cube.indexOf("ENDSEC;", cube.indexOf("DATA;"))));
+        final int points = step.add("COORDINATES_LIST('',4,((0.,0.,0.),(10.,0.,0.),(0.,10.,0.),(0.,0.,10.)))");
+        final int face = step.add("TRIANGULATED_FACE(''," + ref(points) + ",4,(),$,(),((1,3,2),(1,2,4),(2,3,4),"
+                + "(3,1,4)))");
+        step.add("TESSELLATED_SOLID(''," + list(face) + ",$)");
         return step.text();
     }
 

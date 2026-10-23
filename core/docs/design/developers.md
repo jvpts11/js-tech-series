@@ -73,7 +73,11 @@ of the game, never around kinds of files or a tree of scenes: a machine is opene
   - **The cost a tick** of each machine, in microseconds, with a heat map in the world of the dearest blocks.
   - **A payload monitor**: what goes over the network each tick, with each payload's size.
   - **A recipe bench**: write and try recipes, see conflicts (two recipes with the same inputs) and missing items, with
-    the recipe viewer's preview; for a modpack, what the pack changed against the mods' own.
+    the recipe viewer's preview; for a modpack, what the pack changed against the mods' own, and what unification
+    would change, tag by tag, before it is turned on ([Modpacks](modpacks.md)).
+  - **Who may act at a place**: the eight actions (break, place, use, explode, burn, flow, move a structure, shoot)
+    for you, your team, a named player and that player's machines, beside what each protection answered, the claim
+    and the rule of PvP ([The platform](platform.md)).
   - **Tags and registries**: which tags an item is in, what a tag holds, and which mod or data pack each thing came
     from.
   - **A loot tester**: roll a table a thousand times and see how the drops spread.
@@ -120,7 +124,12 @@ outside the game: everything the studio does, the server does, so a mod is made 
 - **Tools to play the game, for automated tests**:
   - **Seeing**: where the player is and looks, what the crosshair points at, the inventory, the screen open and its
     tree of components (the inspector's, by stable names), a picture of the window, the blocks and block entities
-    around, the chat and the log.
+    around, the chat and the log; and the scene described in words (`scene_describe`): the kinds of block in sight,
+    the nearest of each and where, the creatures, players and items seen, the time, the weather, the light and the
+    biome.
+- **The page of its tools**, made from the tools themselves: each tool with its mod, whether it reads or acts, whether
+  it is off, its arguments with their types and limits, and its schema, served by the MCP server and written by
+  `/jstech dump mcp`.
   - **Moving and acting as a player**: walk to a place, jump, sneak, look at a block or an entity, pick a hotbar slot,
     use, break, place, open a block, click a component by its name, type, press a key, close the screen. It goes
     through the same input the player uses, so the test is real.

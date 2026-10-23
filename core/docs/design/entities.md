@@ -30,6 +30,8 @@ The kits gather what Immersive Vehicles, Small Ships and the robots of many mods
 - **Physics**: suspension, grip by the ground, a gearbox, collisions that push, damage by part and its repair.
 - **Trailers and hitches** between vehicles.
 - **Several seats with roles**: driver, passengers, and the roles a mod adds, moving between them.
+- **A rolling aircraft seen rolling**: whoever sits in it is turned with the vehicle's lean for every player who sees
+  them, each seat where it stands on the leaning body, not only in the pilot's own view.
 - **A boot and cargo tanks.**
 - **Paints and variants** as data.
 - **Vehicles inside moving structures**: a car driven into a starship's hangar travels with it.
@@ -63,7 +65,5 @@ in a screen of its own. J's Industrial's exo-suits and J's Space's suits use the
 
 ## Still to build
 
-- **A rolling aircraft seen rolling**: the player's model turned with the vehicle's roll for every player who sees it,
-  not only in the pilot's own view.
 - **Two screens come with the mods that use them**: a vehicle's panel and instruments with J's Transport, and the
   screen of a worn thing's modules with the mod of the suits.

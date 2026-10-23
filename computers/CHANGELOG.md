@@ -10,14 +10,19 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Each thing where it belongs: J's Core's API stays at version 12 and J's Computers' is at version
   8. The series' model has its own package: `dev.jstech.core.network`, `operation`, `peripheral` and `tier` are now
   `dev.jstech.core.jstechseries.network`, `.operation`, `.peripheral` and `.tier`, and the client side of the series'
-  look `dev.jstech.core.jstechseries.theme.client`. `CoreRegisterEvent` gives way to `RegisterOperationTypesEvent`,
-  for kinds of Operation, and the programming languages move to J's Computers' API, `dev.jstech.computers.api.language`
-  (`IProgrammingLanguage`, `ILanguageProcess`, `IMachineView`, `LanguageRegistry`, `ExecutionBalance`), registered
-  through `ComputersRegisterEvent.languages()` and read through `JsComputersApi.languages()`.
-  `Device.fillsFromContainers` lets a bucket fill and empty a device's block, and `FluidBlockItem` is the item of a
-  block that keeps its fluid in it.
-  The old fixed catalogue of materials, `ModMaterial`, `MaterialForm` and `MaterialItems`, is gone: a mod declares the
-  forms it uses with `MaterialUses.use`.
+  look `dev.jstech.core.jstechseries.theme.client`; `IMonitorable` and `INetworkNodeCapability` go to the network's
+  package, `Era` and `Eras` to the tiers', the progression axes of eras and tiers to `SeriesAxes`, and the Operations
+  engine's settings to `OperationSettings`. The platform names none of it: a cable's era is any `IAxisStep`
+  (`CableType.step`, `Builder.describe(TextKey, IAxisStep)`, `IAxisStep.named` and `colour`), its plugs are by the kind
+  of port they enter (`CableType.plug(String)`, `IPlugged`), a mod's networks keep their own grid
+  (`INetworkGrids`, `CoreGrids.keepNetworksIn`, `networkOf`, `joinedNetwork` and `assignNetwork`), and a manual's
+  highlighters are found through `GuideHighlighters.findWith`. `CoreRegisterEvent` gives way to
+  `RegisterOperationTypesEvent`, for kinds of Operation, and the programming languages move to J's Computers' API,
+  `dev.jstech.computers.api.language` (`IProgrammingLanguage`, `ILanguageProcess`, `IMachineView`, `LanguageRegistry`,
+  `ExecutionBalance`), registered through `ComputersRegisterEvent.languages()` and read through
+  `JsComputersApi.languages()`. `Device.fillsFromContainers` lets a bucket fill and empty a device's block, and
+  `FluidBlockItem` is the item of a block that keeps its fluid in it. The old fixed catalogue of materials,
+  `ModMaterial`, `MaterialForm` and `MaterialItems`, is gone: a mod declares the forms it uses with `MaterialUses.use`.
 
 ### Changed
 - Listeners declared: every class of the three mods that answers the game's events is

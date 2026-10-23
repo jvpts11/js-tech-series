@@ -43,7 +43,8 @@ place.
 
 - **Reloading clearly**: `/reload` applies recipes, properties and tables; what needs a restart (registering new
   things) is said in a clear message.
-- **A dump command**: `/jstech dump` writes every material, form, kind of recipe, tag, hazard and id to files.
+- **A dump command**: `/jstech dump` writes every material, form, kind of recipe, tag, hazard and id to files, and the
+  structures of every mod, the scripts' typings for an editor and the page of the MCP server's tools.
 - **A generated reference**: every data format with examples, and every id, taken from the registries themselves, and
   exported to the web.
 - **Server changes reach the players**: recipes and data changed by scripts on the server are sent to the clients.

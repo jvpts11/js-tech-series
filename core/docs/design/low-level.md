@@ -6,8 +6,8 @@ live in J's Core alone, so the other mods of the series ask the Core instead of 
 ## What exists today
 
 Everything this page designs is built, as of October 2026: the Core's few reaches into the game, each with its reason
-and its test, and its own animated models. How each reach is kept: [Reaches into the game](../REACHES.md). What is left
-of the models is on their own page ([Models](models.md)).
+and its test, and its own animated models. How each reach is kept: [Reaches into the game](../REACHES.md). The models
+have their own page ([Models](models.md)).
 
 ## The design
 
@@ -141,5 +141,5 @@ Checked against NeoForge's code; each already has an event or an API:
 
 ### Native animated models
 
-GeckoLib is replaced by the Core's own models, as the series' README promises for every required dependency. The
-kit has a page of its own: [Models](models.md).
+The Core's own models have replaced GeckoLib, as the series' README promises for every required dependency. The kit
+has a page of its own: [Models](models.md).

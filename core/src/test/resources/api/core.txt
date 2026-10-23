@@ -3320,6 +3320,7 @@ stable 4
 10 dev.jstech.core.datagen.ModelDefinitionProvider  CompletableFuture<?> run(CachedOutput)
 10 dev.jstech.core.datagen.ModelDefinitionProvider  String getName()
 10 dev.jstech.core.datagen.ModelDefinitionProvider  new(PackOutput, ModContent, ExistingFileHelper)
+12 dev.jstech.core.datagen.ModelDefinitionProvider  static void check(DeclaredModel, ExistingFileHelper)
 10 dev.jstech.core.datagen.MotionProfileProvider  type final class implements DataProvider
 10 dev.jstech.core.datagen.MotionProfileProvider  CompletableFuture<?> run(CachedOutput)
 10 dev.jstech.core.datagen.MotionProfileProvider  String getName()

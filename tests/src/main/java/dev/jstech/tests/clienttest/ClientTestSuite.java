@@ -125,6 +125,7 @@ import dev.jstech.tests.clienttest.computers.WorkshopClientTests;
 import dev.jstech.tests.clienttest.computers.WreckedMachineClientTests;
 import dev.jstech.tests.clienttest.core.AcousticsClientTests;
 import dev.jstech.tests.clienttest.core.AudioClientTests;
+import dev.jstech.tests.clienttest.core.AwayOwnersClientTests;
 import dev.jstech.tests.clienttest.core.BigPayloadClientTests;
 import dev.jstech.tests.clienttest.core.ConnectedPacksClientTests;
 import dev.jstech.tests.clienttest.core.ConveyorClientTests;
@@ -341,6 +342,7 @@ public final class ClientTestSuite {
             ReachClientTests.class,
             ModelKitClientTests.class,
             ModelKitEntitiesClientTests.class,
+            AwayOwnersClientTests.class,
             InstancingClientTests.class,
             FadeLayerClientTests.class,
             ComponentMotionClientTests.class,

@@ -5,6 +5,9 @@
     },
     "minecraft:echo_shard": {
       "jscore:radioactive": 10
+    },
+    "minecraft:fermented_spider_eye": {
+      "jscore:corrosive": 1
     }
   }
 }

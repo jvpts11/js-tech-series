@@ -54,8 +54,10 @@ public final class TravelClientTests {
                         "the test mod's screen to stand in for the game's loading terrain")
                 .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(key)
                         && ctx.mc().screen == null, WAIT, "the player to arrive and the land to be seen")
-                .thenAssert(0, () -> ctx.player().getY() < 20 && ctx.player().onGround(),
-                        "standing on the Moon's ground below where they were sent; " + ctx.player().position())
+                // The screen can close a tick before the player has settled, so the landing is waited for.
+                .thenWaitUntil(() -> ctx.player().getY() < 20 && ctx.player().onGround(), WAIT,
+                        "the player standing on the Moon's ground below where they were sent",
+                        () -> "at " + ctx.player().position() + ", on the ground: " + ctx.player().onGround())
                 .thenScreenshot(20, "arrived");
     }
 }

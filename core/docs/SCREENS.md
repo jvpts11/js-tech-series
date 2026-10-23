@@ -184,6 +184,56 @@ Text typed in a field takes `field_text` in every style, through `ISkin.fieldTex
 What a style does not change: the drawing of a machine's face, which is its mod's art, and the inside of a computer,
 whose look is the installed system's skin.
 
+## Screens in code
+
+*Added 2026-10-23.*
+
+A screen the files cannot say, one that draws a machine's own art, is a class. It extends one of the Core's, in
+`dev.jstech.core.client.gui.screen`, which already does what every screen does:
+
+- **`CoreContainerScreen<M>`**, for a screen on a menu: it draws the tooltips over everything, `drawSlotFrames`
+  frames each slot the menu shows where the menu placed it, `hover` tests the pointer against a rectangle given in
+  the screen's own space, and `sendButton` presses the menu's button of an id, which the menu answers on the server.
+- **`CoreScreen`**, for a screen with no menu: it draws in `renderContent`, and it does not pause a game played alone,
+  so a running machine keeps ticking while it is open.
+- **`TabbedScreen`**, a `CoreScreen` with a row of tabs: each `IGuiTab` has a title and draws in the room under the
+  row, and is told when it is chosen (`onSelected`) and when another takes over (`onDeselected`).
+- **`ModalDialog`**, a Confirm or Cancel asked over the screen it was opened from, which hands back the answer;
+  Escape is Cancel.
+
+```java
+public final class KilnScreen extends CoreContainerScreen<KilnMenu> {
+
+    public KilnScreen(final KilnMenu menu, final Inventory inventory, final Component title) {
+        super(menu, inventory, title);
+        this.imageWidth = KilnLayout.WIDTH;
+        this.imageHeight = KilnLayout.HEIGHT;
+    }
+
+    @Override
+    protected void renderBg(final GuiGraphics graphics, final float partialTick, final int mouseX,
+                            final int mouseY) {
+        super.renderBg(graphics, partialTick, mouseX, mouseY);   // the screens' ground, from their palette
+        drawSlotFrames(graphics, 0xFF373737, 0xFF8B8B8B);
+    }
+
+    @Override
+    public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
+        if (hover((int) mouseX, (int) mouseY, 150, 6, 18, 12)) {
+            sendButton(KilnMenu.EMPTY);                           // the menu empties the kiln on the server
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+}
+```
+
+The ground of a container screen, the dialog's colours and the tabs' are the palette `jscore:gui/screens`
+([Text and colour](TEXT_AND_COLOUR.md)), which a resource pack can change; the frames take the colours the screen
+hands them. An example that compiles is J's Computers' Printer screen,
+`computers/src/main/java/dev/jstech/computers/client/PrinterScreen.java`, which draws from the layout its menu
+places its slots from.
+
 ## Layouts you can test
 
 *Added 2026-08-26.*

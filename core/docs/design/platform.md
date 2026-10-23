@@ -6,10 +6,9 @@ have pages of their own.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: content
-declared once, text and colour, state and saves, settings and their screen, commands, teams and owners, time and
-diagnostics, the Core's own settings, permissions (by dimension and claim too) and protection. How a mod uses it,
-with code:
+Everything this page designs is built, as of October 2026: content declared once, text and colour, state and saves,
+settings and their screen, commands, teams and owners, time and diagnostics, the Core's own settings, permissions (by
+dimension and claim too) and protection. How a mod uses it, with code:
 [Content](../CONTENT.md), [Text and colour](../TEXT_AND_COLOUR.md), [State and saves](../STATE_AND_SAVES.md),
 [Settings](../SETTINGS.md), [Commands](../COMMANDS.md), [Ownership](../OWNERSHIP.md),
 [Protection](../PROTECTION.md) and [Diagnostics](../DIAGNOSTICS.md).
@@ -18,9 +17,10 @@ with code:
 
 ### The Core's own settings
 
-- **The Core's file keeps only the Core's settings.** Today `jstech-balance.toml` also holds J's Computers' numbers
-  (the disks' latency, the Subframe's share, the time programs may spend); they move to J's Computers' own file. The
-  Operations framework's settings (how long an Operation waits, how it ages) stay in the Core.
+- **The Core's file keeps only the Core's settings.** `jstech-balance.toml` holds the Core's own. J's Computers'
+  numbers (the disks' latency, the Subframe's share, the time programs may spend) are in J's Computers' file,
+  `jscomputers-server.toml`, and the Operations framework's (how long an Operation waits, how it ages, how long a saved
+  one nobody resumed is kept) in the series' own, `jstech-operations.toml`.
 - **Settings of consequence** for every system of the Core that can hurt a world (radiation, dissonance, pollution,
   overvoltage) live in the Core's file, each with its page ([Implementation](implementation.md)).
 
@@ -54,6 +54,9 @@ The kit gathers what PermNodes, Open Parties and Claims and FTB Chunks do with a
 - **Permission nodes for everything the Core does**: commands, opening another's machine, editing settings, using or
   breaking what has an owner, building multiblocks. They go through NeoForge's permission API, so LuckPerms and FTB
   Ranks work; without them, the operator levels apply.
+- **Asked by place**: every permission is asked with the place's contexts, `jscore:dimension` and `jscore:claim` (the
+  claim's owner, or none outside a claim), so a server grants a node in one dimension only, or only inside a claim,
+  and asks for an owner who is away by their id.
 - **The nodes written out**: LuckPerms doesn't find NeoForge mods' nodes by itself, so `/jstech dump permissions`
   writes the list and a **template group** ready to import.
 - **Everything the Core moves or changes respects claimed land**: robots, machines that break and place blocks, tools
@@ -69,8 +72,3 @@ The kit gathers what PermNodes, Open Parties and Claims and FTB Chunks do with a
 - **Limits per player** on robots, moving structures and large edits, besides loaded chunks, so nobody can bring a
   server down on purpose.
 - **PvP and teams respected**: damage between players follows the server's PvP rule and the teams' friend or foe.
-
-## Still to build
-
-- **J's Computers' numbers leave the Core's balance file** for J's Computers' own settings, when J's Computers moves
-  onto the Core ([Implementation](implementation.md)).

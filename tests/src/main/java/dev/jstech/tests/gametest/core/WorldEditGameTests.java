@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.text.Text;
@@ -20,11 +21,15 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import net.minecraft.Util;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -39,8 +44,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * Large edits of the world: planned away from the server's thread from a snapshot of what they read, set a share of
  * each tick until done; stopped where they are; a planning that fails setting nothing; an undoable edit undone, a
- * chest's contents and all; and a box saved as a structure file and set again elsewhere, turned. Each edit works far
- * out in the test world's sky, at a place of its own each run.
+ * chest's contents and all; a box saved as a structure file and set again elsewhere, turned; and the same from the
+ * chat, through {@code /jstech edit}. Each edit works far out in the test world's sky, at a place of its own each run,
+ * but the chat's, which works in its test's own place.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -52,6 +58,7 @@ public final class WorldEditGameTests {
     private static final int SKY = 200;
     private static final int WIDE = 47;
     private static final int HIGH = 7;
+    private static final String COMMAND_FILE = JsTests.MODID + ":edit_command_test";
 
     private WorldEditGameTests() {
     }
@@ -227,6 +234,55 @@ public final class WorldEditGameTests {
                             && held.getItem(0).is(Items.EMERALD), "the chest holds its emerald");
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void editCommands_exportImportAndUndoFromTheChat(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos from = helper.absolutePos(new BlockPos(1, 2, 1));
+        final BlockPos to = helper.absolutePos(new BlockPos(1, 2, 3));
+        level.setBlockAndUpdate(from, Blocks.CHEST.defaultBlockState());
+        ((ChestBlockEntity) level.getBlockEntity(from)).setItem(0, new ItemStack(Items.EMERALD));
+        level.setBlockAndUpdate(from.east(), Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(to, Blocks.DIRT.defaultBlockState());
+        helper.assertTrue(edit(helper, "export " + COMMAND_FILE + " " + at(from) + " " + at(from.east())) == 1,
+                "the box is saved as a structure file from the chat");
+        helper.assertTrue(edit(helper, "import " + JsTests.MODID + ":no_such_file " + at(to)) == 0,
+                "a file that is not there is not set");
+        helper.assertTrue(edit(helper, "import " + COMMAND_FILE + " " + at(to)) == 1, "the file is set where it says");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(console().over(), "the import is not over"))
+                .thenExecute(() -> {
+                    helper.assertTrue(level.getBlockEntity(to) instanceof ChestBlockEntity held
+                            && held.getItem(0).is(Items.EMERALD) && level.getBlockState(to.east()).is(Blocks.STONE),
+                            "the chest with its emerald and the stone are set there");
+                    helper.assertTrue(edit(helper, "undo") == 1, "and the import is undone");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(console().over(), "the undo is not over"))
+                .thenExecute(() -> helper.assertTrue(level.getBlockState(to).is(Blocks.DIRT)
+                        && level.getBlockState(to.east()).isAir(), "what the import replaced is back"))
+                .thenSucceed();
+    }
+
+    /* Runs {@code /jstech edit} with {@code arguments} as the console does; what it gives back. */
+    private static int edit(final GameTestHelper helper, final String arguments) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final CommandSourceStack console = server.createCommandSourceStack().withLevel(helper.getLevel())
+                .withSuppressedOutput();
+        try {
+            return server.getCommands().getDispatcher().execute("jstech edit " + arguments, console);
+        } catch (final CommandSyntaxException wrong) {
+            throw new GameTestAssertException("/jstech edit " + arguments + " does not read: " + wrong.getMessage());
+        }
+    }
+
+    /* The console's last edit: the command's edits are the console's when the console gives them. */
+    private static WorldEdit console() {
+        return WorldEdits.lastFor(Util.NIL_UUID).orElseThrow();
+    }
+
+    private static String at(final BlockPos pos) {
+        return pos.getX() + " " + pos.getY() + " " + pos.getZ();
     }
 
     /* A corner far out in the sky, at a place of its own each run, its chunks never touched before. */

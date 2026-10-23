@@ -58,14 +58,22 @@ public final class ModelDefinitionProvider implements DataProvider {
     public CompletableFuture<?> run(final CachedOutput cache) {
         final List<CompletableFuture<?>> written = new ArrayList<>();
         for (final DeclaredModel model : this.content.declaredModels()) {
-            check(model);
+            check(model, this.files);
             written.add(DataProvider.saveStable(cache, model.definition().toJson(),
                     ContentFiles.resourcePackFile(this.output, DeclaredModel.definitionFile(model.id()))));
         }
         return CompletableFuture.allOf(written.toArray(CompletableFuture[]::new));
     }
 
-    private void check(final DeclaredModel model) {
+    /**
+     * Checks a declared model against its files as the data run does before it writes the model's definition: every
+     * file it names is there, its model reads, the bones it names are the model's, and each of its files is within the
+     * triangles it may be drawn with.
+     *
+     * @param files where its files are looked for
+     * @throws DeclarationError when it is not, saying how
+     */
+    public static void check(final DeclaredModel model, final ExistingFileHelper files) {
         final ModelDefinition definition = model.definition();
         final List<String> named = new ArrayList<>(definition.textures());
         named.add(definition.model());
@@ -79,20 +87,20 @@ public final class ModelDefinitionProvider implements DataProvider {
             }
         }
         for (final String file : named) {
-            if (!this.files.exists(ResourceLocation.parse(file), PackType.CLIENT_RESOURCES)) {
+            if (!files.exists(ResourceLocation.parse(file), PackType.CLIENT_RESOURCES)) {
                 throw DeclarationError.of(model.id().getNamespace(), "the model " + model.id(), "names " + file
                         + ", which is not there", "put the file there, or name the one that is");
             }
         }
         final Set<String> bones = new HashSet<>();
-        final List<ModelData> drawn = read(model, definition.model());
+        final List<ModelData> drawn = read(model, definition.model(), files);
         for (final ModelData data : drawn) {
             data.bones().forEach(bone -> bones.add(bone.name()));
         }
         budget(model, definition.model(), drawn.getFirst());
         for (final ModelDefinition.Variant variant : definition.variants()) {
             if (!variant.model().isEmpty()) {
-                budget(model, variant.model(), read(model, variant.model()).getFirst());
+                budget(model, variant.model(), read(model, variant.model(), files).getFirst());
             }
         }
         final Set<String> wanted = new HashSet<>(definition.glow());
@@ -117,15 +125,16 @@ public final class ModelDefinitionProvider implements DataProvider {
         });
     }
 
-    private List<ModelData> read(final DeclaredModel model, final String file) {
+    private static List<ModelData> read(final DeclaredModel model, final String file,
+                                        final ExistingFileHelper files) {
         final ResourceLocation location = ResourceLocation.parse(file);
         final String folder = location.getPath().contains("/")
                 ? location.getPath().substring(0, location.getPath().lastIndexOf('/') + 1) : "";
         try {
-            return ModelReaders.read(location.getPath(), bytes(location), beside -> {
+            return ModelReaders.read(location.getPath(), bytes(location, files), beside -> {
                 final ResourceLocation besideFile = ResourceLocation.fromNamespaceAndPath(location.getNamespace(),
                         folder + beside);
-                return this.files.exists(besideFile, PackType.CLIENT_RESOURCES) ? bytes(besideFile) : null;
+                return files.exists(besideFile, PackType.CLIENT_RESOURCES) ? bytes(besideFile, files) : null;
             });
         } catch (final ModelFormatException broken) {
             throw DeclarationError.of(model.id().getNamespace(), "the model " + model.id(), "has a file that does"
@@ -133,8 +142,8 @@ public final class ModelDefinitionProvider implements DataProvider {
         }
     }
 
-    private byte[] bytes(final ResourceLocation file) {
-        try (InputStream in = this.files.getResource(file, PackType.CLIENT_RESOURCES).open()) {
+    private static byte[] bytes(final ResourceLocation file, final ExistingFileHelper files) {
+        try (InputStream in = files.getResource(file, PackType.CLIENT_RESOURCES).open()) {
             return in.readAllBytes();
         } catch (final IOException e) {
             throw new UncheckedIOException("the model file " + file + " could not be read", e);

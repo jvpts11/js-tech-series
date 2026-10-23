@@ -21,7 +21,7 @@ goes away when its last piece is taken. Both hold their things in a `SpaceParts`
 
 The block entity that owns the space is its `IPartHost`: it says where it is, saves and sends when a part changes,
 and says what runs through its middle (`middle()`, the boxes no piece but one against a face may share) and whether
-its faces take facades (`takesFacades()`, true only where a cable runs).
+its faces take facades (`takesFacades()`, true unless a host says otherwise).
 
 ## What fits
 

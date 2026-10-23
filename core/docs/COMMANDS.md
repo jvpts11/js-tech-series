@@ -44,6 +44,7 @@ level always may run it, and a server's permission mod may grant it to a player 
 | `/jstech chunks <players> [release]` | level 2 | Shows how many chunks players keep loaded, and each place keeping them with its reason; or lets them all go ([World](WORLD.md#keeping-chunks-loaded)). |
 | `/jstech chunks` | level 2 | Shows how many chunks every owner together keeps loaded, against the server's budget ([World](WORLD.md#keeping-chunks-loaded)). *Added 2026-10-17.* |
 | `/jstech chunks map [hide]` | level 2 | Shows every place keeping chunks loaded, in every dimension, whose it is and why, on the map of who runs it; or takes them off ([World](WORLD.md#keeping-chunks-loaded)). *Added 2026-10-17.* |
+| `/jstech structure assemble`, `move`, `spin`, `swing`, `rails`, `physics`, `stop`, `freeze`, `unfreeze`, `setdown`, `remove`, `export`, `list` | level 2 | Makes a moving structure of blocks, moves it, holds it, sets it down, takes it away, saves it as a structure file, or lists those loaded ([Moving structures](MOVING_STRUCTURES.md#commands)). *Added 2026-10-20.* |
 | `/jstech dimension create <id> <template>` | level 3 | Makes a dimension from a declared one, while the game runs ([World](WORLD.md#dimensions-made-while-the-game-runs)). |
 | `/jstech dimension remove <id>` | level 3 | Takes away a dimension made that way; refuses any other. |
 | `/jstech media` | level 3 | Shows how many recordings the server keeps and how much room they take. |

@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.core;
 import com.google.gson.JsonParser;
 import dev.jstech.core.jstechseries.command.SeriesCommands;
 import dev.jstech.core.content.DeclaredModel;
+import dev.jstech.core.datagen.ModelDefinitionProvider;
 import dev.jstech.core.model.CadLook;
 import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelData;
@@ -20,6 +21,7 @@ import dev.jstech.core.model.ModelShaping;
 import dev.jstech.core.model.network.ModelAnimationPayload;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.model.network.ModelTarget;
+import dev.jstech.core.util.DeclarationError;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestModels;
 import dev.jstech.tests.TestSounds;
@@ -27,10 +29,15 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -38,13 +45,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Core's models as the server sees them: every model a mod declares has its definition written beside its file,
  * the same the declaration says, and its file reads, whatever its format; the files of CAD programs and scenes read as
- * their parts, in their colours, at their size, within the triangles they may have; what the server plays on a model
+ * their parts, in their colours, at their size, within the triangles they may have, and a file over them stops the data
+ * run; what the server plays on a model
  * crosses the wire as it left, and a name too long for the wire is refused where it is made, not where it is sent; an
  * item the server animates is given its number once; and the models' commands are there.
  */
@@ -54,6 +63,11 @@ public final class ModelGameTests {
 
     private static final String ARENA = "empty";
     private static final BlockPos PRESS = new BlockPos(1, 2, 1);
+    private static final String OVER_BUDGET = JsTests.MODID + ":jsmodels/test_kit_over_budget.stl";
+    private static final int TOO_MANY = ModelDefinition.Detail.MOST_UNSAID + 1;
+    private static final int STL_HEADER = 80;
+    private static final int STL_TRIANGLE = 50;
+    private static final int SHEET_ROW = 200;
 
     private ModelGameTests() {
     }
@@ -125,6 +139,28 @@ public final class ModelGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void dataRun_stopsAtAModelOverTheTrianglesItMayHaveUnsaid(final GameTestHelper helper) {
+        final Path pack = budgetPack();
+        try {
+            final ExistingFileHelper files = new ExistingFileHelper(List.of(pack), Set.of(), true, null, null);
+            String refusal = "";
+            try {
+                ModelDefinitionProvider.check(overBudget("{\"model\": \"" + OVER_BUDGET + "\"}"), files);
+            } catch (final DeclarationError stopped) {
+                refusal = stopped.getMessage();
+            }
+            helper.assertTrue(refusal.contains(TOO_MANY + " triangles"), "a file of more triangles than a model may "
+                    + "have without saying how many it is drawn with stops the run: " + refusal);
+            // Said how many it is drawn with, the same file is drawn with fewer, and the run goes on.
+            ModelDefinitionProvider.check(overBudget("{\"model\": \"" + OVER_BUDGET + "\", \"triangles\": 800}"),
+                    files);
+        } finally {
+            delete(pack);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void animationPayload_crossesTheWireAsItLeft(final GameTestHelper helper) {
         final ModelAnimationPayload sent = new ModelAnimationPayload(ModelTarget.block(new BlockPos(3, -60, 9)),
                 "main", ModelAnimationPayload.Action.REPLAY, "animation.test_kit_press.strike", 0.25F, 1.5F);
@@ -178,6 +214,49 @@ public final class ModelGameTests {
     public static void modelCommands_areDeclared(final GameTestHelper helper) {
         helper.assertTrue(SeriesCommands.names().contains("model"), "/jstech model is declared");
         helper.succeed();
+    }
+
+    private static DeclaredModel overBudget(final String definition) {
+        final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "test_kit_over_budget");
+        return new DeclaredModel(id, ModelDefinition.fromJson(id.toString(), JsonParser.parseString(definition)
+                .getAsJsonObject()));
+    }
+
+    /* A pack of one model's file: a binary STL sheet of one triangle more than a model may have unsaid. */
+    private static Path budgetPack() {
+        try {
+            final Path pack = Files.createTempDirectory("jstests-model-budget");
+            final Path file = pack.resolve("assets").resolve(JsTests.MODID).resolve(
+                    ResourceLocation.parse(OVER_BUDGET).getPath());
+            Files.createDirectories(file.getParent());
+            final ByteBuffer stl = ByteBuffer.allocate(STL_HEADER + 4 + TOO_MANY * STL_TRIANGLE)
+                    .order(ByteOrder.LITTLE_ENDIAN);
+            stl.position(STL_HEADER);
+            stl.putInt(TOO_MANY);
+            for (int i = 0; i < TOO_MANY; i++) {
+                final float x = i % SHEET_ROW;
+                final float z = (float) (i / SHEET_ROW);
+                stl.putFloat(0).putFloat(1).putFloat(0);
+                stl.putFloat(x).putFloat(0).putFloat(z);
+                stl.putFloat(x).putFloat(0).putFloat(z + 1);
+                stl.putFloat(x + 1).putFloat(0).putFloat(z);
+                stl.putShort((short) 0);
+            }
+            Files.write(file, stl.array());
+            return pack;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static void delete(final Path folder) {
+        try (Stream<Path> paths = Files.walk(folder)) {
+            for (final Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                Files.delete(path);
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static ModelData read(final DeclaredModel model) {

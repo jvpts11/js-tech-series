@@ -197,9 +197,18 @@ final class FaceLayout {
         return new Unrolled(out, points, flags);
     }
 
-    /* Puts a seam's second pass a turn from its first, whichever way the rest of the loop lies. */
+    /*
+     * Puts a seam's second pass a turn from its first, whichever way the rest of the loop lies; a pass already a turn
+     * from its first in either parameter, as a torus's seams come out, is left where it is.
+     */
     private void shiftSeam(final double[] out, final int from, final int to, final double[] mean,
                            final double[] first, final List<Integer> edgeOf, final Map<Integer, Integer> passes) {
+        for (int axis = 0; axis < 2; axis++) {
+            final double period = axis == 0 ? this.periodU : this.periodV;
+            if (period > 0 && Math.abs(mean[axis] - first[axis]) > period / 2) {
+                return;
+            }
+        }
         for (int axis = 0; axis < 2; axis++) {
             final double period = axis == 0 ? this.periodU : this.periodV;
             if (period <= 0 || Math.abs(mean[axis] - first[axis]) > period / 2) {
