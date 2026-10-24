@@ -101,16 +101,18 @@ public final class MaterialsClientTests {
     public static void tooltip_showsTheMaterialsLinesAndKeepsSomeForShift(final ClientTestContext ctx) {
         ctx.then(0, () -> {
             final MaterialThing ingot = new MaterialThing(SeriesMaterials.IRON, Forms.INGOT);
-            final List<String> plain = strings(MaterialTooltips.lines(ingot, false));
+            final List<Component> lines = MaterialTooltips.lines(ingot, false);
+            final List<String> plain = strings(lines);
             final List<String> shifted = strings(MaterialTooltips.lines(ingot, true));
-            ctx.assertTrue(plain.contains("Symbol: Fe") && plain.contains("Hold Shift for more")
-                    && plain.stream().noneMatch(line -> line.startsWith("Atomic number")),
-                    "without Shift, the symbol and a hint: " + plain);
+            ctx.assertTrue(plain.getFirst().equals("Fe") && lines.getFirst().getStyle().isBold()
+                    && plain.contains("Hold Shift for more") && plain.stream().noneMatch(line -> line.startsWith(
+                    "Symbol") || line.startsWith("Atomic number")),
+                    "without Shift, the symbol alone and set apart first, and a hint: " + plain);
             ctx.assertTrue(shifted.contains("Atomic number: 26") && shifted.contains("At room temperature: solid")
                     && !shifted.contains("Hold Shift for more"), "with Shift, the rest: " + shifted);
             final List<Component> onTheGame = new ItemStack(Items.IRON_INGOT).getTooltipLines(
                     Item.TooltipContext.EMPTY, ctx.mc().player, TooltipFlag.NORMAL);
-            ctx.assertTrue(strings(onTheGame).contains("Symbol: Fe"), "the game's own iron ingot shows them too");
+            ctx.assertTrue(strings(onTheGame).contains("Fe"), "the game's own iron ingot shows them too");
             final List<String> testium = strings(MaterialTooltips.lines(
                     new MaterialThing(TestMaterials.TESTIUM, Forms.DUST), true));
             ctx.assertTrue(testium.equals(List.of("At room temperature: solid")),

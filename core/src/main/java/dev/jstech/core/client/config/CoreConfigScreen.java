@@ -263,6 +263,16 @@ public final class CoreConfigScreen extends Screen {
         return popup;
     }
 
+    /** The centre of the button labelled {@code label} over or under the list, where a click lands on it. */
+    public Optional<int[]> buttonCentre(final String label) {
+        for (final UiComponent part : fixed.children()) {
+            if (part instanceof Button button && button.label().equals(label)) {
+                return Optional.of(button.center());
+            }
+        }
+        return Optional.empty();
+    }
+
     /** Presses the button labelled {@code label} over or under the list (Presets..., Done), as a click does. */
     public boolean press(final String label) {
         for (final UiComponent part : fixed.children()) {
@@ -721,6 +731,10 @@ public final class CoreConfigScreen extends Screen {
 
     /* Puts everything in place for this frame. */
     private void place() {
+        // The controls over and under the list are reached through their panel, which a click only enters within its
+        // bounds: it spans the screen, or Done and the rest would answer the keyboard alone.
+        root.setBounds(0, 0, width, height);
+        fixed.setBounds(0, 0, width, height);
         final boolean hasBanner = banner().isPresent();
         final List<Integer> left = footerLeft.stream().map(button -> skin.textWidth(font, button.label())).toList();
         final List<Integer> right = footerRight.stream().map(button -> skin.textWidth(font, button.label()))

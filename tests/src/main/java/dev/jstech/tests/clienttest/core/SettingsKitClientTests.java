@@ -13,6 +13,7 @@ import dev.jstech.core.client.config.ConfigTextPopup;
 import dev.jstech.core.client.config.CoreConfigScreen;
 import dev.jstech.core.config.ConfigDraft;
 import dev.jstech.core.config.ConfigKey;
+import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.config.ConfigScreenTexts;
 import dev.jstech.core.text.GameText;
 import dev.jstech.tests.JsTests;
@@ -210,6 +211,29 @@ public final class SettingsKitClientTests {
                     draft.toggle(flag);
                     screen(ctx).done();
                 });
+    }
+
+    /** A world's setting changed and Done clicked with the mouse is kept, as a player changes one in game. */
+    @ClientTest(timeoutTicks = 300)
+    public static void settingsScreen_keepsAChangeWhenDoneIsClicked(final ClientTestContext ctx) {
+        ctx.afterTest(() -> {
+            ctx.mc().setScreen(null);
+            CoreConfigKeys.FILE.set(CoreConfigKeys.HAZARDS_POLLUTION, true);
+        });
+        ctx.then(0, () -> ctx.mc().setScreen(coreScreen()))
+                .thenAwaitScreen(CoreConfigScreen.class, 40)
+                .then(1, () -> {
+                    ctx.assertTrue(screen(ctx).openSection("Hazards"), "the world's hazards are a section");
+                    screen(ctx).openDraft().toggle(CoreConfigKeys.HAZARDS_POLLUTION);
+                })
+                .then(1, () -> {
+                    final int[] done = screen(ctx).buttonCentre(GameText.resolve(ConfigScreenTexts.DONE))
+                            .orElseThrow();
+                    screen(ctx).mouseClicked(done[0], done[1], GLFW.GLFW_MOUSE_BUTTON_LEFT);
+                })
+                .thenAwaitNoScreen(20)
+                .thenAssert(1, () -> !CoreConfigKeys.FILE.get(CoreConfigKeys.HAZARDS_POLLUTION),
+                        "Done clicked keeps the change");
     }
 
     /* The Core's own settings screen, as the mods list opens it. */

@@ -2246,6 +2246,7 @@
   "jscore.machine.screen.tip.pull": "Pulls %s in through its taking faces by itself: %s",
   "jscore.machine.screen.tip.push": "Pushes %s out of its giving faces by itself: %s",
   "jscore.machine.screen.tip.reads": "What a comparator reads of it: %s",
+  "jscore.machine.screen.tip.recipes": "Show recipes",
   "jscore.machine.screen.tip.resource": "Show what each face does with %s",
   "jscore.machine.screen.tip.runs": "How it answers redstone: %s",
   "jscore.machine.screen.tip.signal": "Redstone coming in: %s of 15",

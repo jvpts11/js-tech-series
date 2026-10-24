@@ -3264,5 +3264,6 @@
   "jscore.material_property.share_of_air": "%s%% do ar",
   "jscore.material_property.upper_explosive": "Explode até",
   "jscore.valve.flow": "Vazão",
-  "jscore.valve.per_tick": "mB por tick"
+  "jscore.valve.per_tick": "mB por tick",
+  "jscore.machine.screen.tip.recipes": "Ver receitas"
 }

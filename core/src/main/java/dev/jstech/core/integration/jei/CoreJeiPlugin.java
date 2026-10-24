@@ -266,6 +266,18 @@ public final class CoreJeiPlugin implements IModPlugin {
             return CoreJeiPlugin.showUsesOf(stack);
         }
 
+        /* The kinds of recipe the machine is the catalyst of, which JEI shows for a catalyst's focus. */
+        @Override
+        public boolean showRecipesMadeIn(final ItemStack machine) {
+            final IJeiRuntime running = runtime;
+            if (running == null) {
+                return false;
+            }
+            running.getRecipesGui().show(running.getJeiHelpers().getFocusFactory()
+                    .createFocus(RecipeIngredientRole.CATALYST, VanillaTypes.ITEM_STACK, machine));
+            return true;
+        }
+
         @Override
         public ItemStack hovered() {
             final IJeiRuntime running = runtime;

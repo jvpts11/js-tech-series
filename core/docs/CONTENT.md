@@ -437,7 +437,9 @@ A data pack gives properties' values over a material's own, one file per materia
 
 A material's things show its properties in their tooltips, the game's iron ingot included: each property's line
 always, only with Shift held (with a line saying so), or never, as the property says unless the material or a data
-pack says otherwise. A mod registers properties of its own with `MaterialProperties.property(id, codec, name)`.
+pack says otherwise. A mod registers properties of its own with `MaterialProperties.property(id, codec, name)`. A
+property declared `headline()` shows its value alone, set apart at the head of the tooltip, as an element's symbol
+does: "Fe", in gold, rather than "Symbol: Fe" (*added 2026-10-24*).
 
 ### Packs made as the game loads
 

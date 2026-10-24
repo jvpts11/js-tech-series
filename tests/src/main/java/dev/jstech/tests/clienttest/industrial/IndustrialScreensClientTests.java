@@ -8,6 +8,8 @@
 package dev.jstech.tests.clienttest.industrial;
 
 import dev.jstech.core.client.machine.MachineScreen;
+import dev.jstech.core.client.recipeview.RecipeViewers;
+import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
@@ -56,6 +58,18 @@ public final class IndustrialScreensClientTests {
                 .thenScreenshot(20, "compressor")
                 .thenAssert(0, () -> ctx.screen(MachineScreen.class).getMenu().faceSlots().size() == 2,
                         "the Compressor's face carries its input and its output")
+                .then(0, () -> {
+                    final MachineScreen screen = ctx.screen(MachineScreen.class);
+                    ctx.click(screen.getGuiLeft() + MachineScreenLayout.faceX(MachineScreenLayout.arrowX(1) + 4),
+                            screen.getGuiTop() + MachineScreenLayout.faceY(MachineScreenLayout.laneY(0, 1)
+                                    + MachineScreenLayout.LANE_PITCH / 2 - 1));
+                })
+                .thenAssert(SETTLE, () -> !RecipeViewers.any() || ctx.mc().screen != null
+                        && !(ctx.mc().screen instanceof MachineScreen), "a click on its arrow opens its recipes")
+                .thenScreenshot(SETTLE, "compressor-recipes")
+                .then(0, () -> ctx.mc().setScreen(null))
+                .thenRightClick(SETTLE, COMPRESSOR)
+                .thenAwaitScreen(MachineScreen.class, SCREEN_WAIT)
                 .then(0, () -> ctx.player().closeContainer())
                 .thenRightClick(SETTLE, GENERATOR)
                 .thenAwaitScreen(MachineScreen.class, SCREEN_WAIT)

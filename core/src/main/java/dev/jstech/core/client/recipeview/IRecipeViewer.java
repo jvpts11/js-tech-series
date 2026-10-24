@@ -22,6 +22,14 @@ public interface IRecipeViewer {
     /** Opens the viewer on the recipes {@code stack} goes into; whether it was running to open. */
     boolean showUsesOf(ItemStack stack);
 
+    /**
+     * Opens the viewer on the recipes worked in {@code machine}, a machine's item, as its workstation; whether it was
+     * running to open. A viewer that has no more than its uses opens those, the recipes it works listed first.
+     */
+    default boolean showRecipesMadeIn(final ItemStack machine) {
+        return showUsesOf(machine);
+    }
+
     /** The item under the pointer in the viewer's own lists and recipe screens, or an empty stack. */
     ItemStack hovered();
 }

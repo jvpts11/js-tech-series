@@ -70,10 +70,17 @@ public final class MaterialTooltips {
     /* The lines shown always, then the marks, into always; those that wait for Shift into shifted. */
     private static void collect(final MaterialThing thing, final List<Component> always,
                                 final List<Component> shifted) {
+        int heads = 0;
         for (final MaterialValues.Line line : MaterialValues.lines(thing.material(), true)) {
-            final Component said = GameText.component(LINE.with(line.property().name().text(), line.value()))
-                    .copy().withStyle(ChatFormatting.GRAY);
-            (line.shown() == MaterialProperty.Shown.SHIFT ? shifted : always).add(said);
+            final List<Component> into = line.shown() == MaterialProperty.Shown.SHIFT ? shifted : always;
+            if (line.property().headline()) {
+                // An element's symbol, its value alone, set apart at the head, as a periodic table's cell shows it.
+                into.add(into == always ? heads++ : 0, GameText.component(line.value()).copy()
+                        .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+                continue;
+            }
+            into.add(GameText.component(LINE.with(line.property().name().text(), line.value())).copy()
+                    .withStyle(ChatFormatting.GRAY));
         }
         for (final MaterialMarks.Mark mark : MaterialMarks.of(thing.material())) {
             always.add(GameText.component(mark.text()).copy().withStyle(ChatFormatting.YELLOW));

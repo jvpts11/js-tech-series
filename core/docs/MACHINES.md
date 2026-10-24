@@ -336,7 +336,9 @@ Device.of(() -> MY_MACHINE.get()).ticks(MachineBlockEntity::serverTick).opensMen
   an LCD of what it made the last minute and how far through its work it is, or what keeps it waiting, the process
   window with its slots and each lane's arrow lit as far as its work has gone, its ON/OFF rocker, and a sight glass
   of its first tank (or of its stored energy, for a machine with none). Ctrl and a click on an input slot locks it to
-  what it holds, or unlocks it; a locked empty slot shows its item faded. A click on the LCD turns it to its page of
+  what it holds, or unlocks it; a locked empty slot shows its item faded. A click on a lane's arrow (or on the bar
+  under the window, when the lanes do not fit) opens the recipes the machine works in JEI, EMI or REI, whichever is
+  installed (*added 2026-10-24*). A click on the LCD turns it to its page of
   statistics and back: how much of the last minute the machine worked, and a chart of its last ten minutes, what it
   made a minute as green columns and what it drew as amber dots, a reading every twelve seconds. Its tooltip tells it
   in full: what it makes a minute and the most it made, what it draws now and on the whole, how many seconds of the

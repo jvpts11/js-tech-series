@@ -31,6 +31,7 @@ import static dev.jstech.core.machine.MachineScreenLayout.SWITCH_Y;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.recipeview.RecipeViewers;
 import dev.jstech.core.energy.Energy;
 import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.machine.MachineBlockEntity;
@@ -159,6 +160,9 @@ public final class StandardFace implements IMachineFace {
             this.statistics = !this.statistics;
             return true;
         }
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && onProgress(v, x, y)) {
+            return RecipeViewers.showRecipesMadeIn(new ItemStack(v.machine().getBlockState().getBlock()));
+        }
         return false;
     }
 
@@ -182,6 +186,9 @@ public final class StandardFace implements IMachineFace {
         }
         if (MachineScreenLayout.on(x, y, GLASS_X - 3, GLASS_Y - 4, GLASS_WIDTH + 6, GLASS_HEIGHT + 8)) {
             return glassTooltip(machine);
+        }
+        if (RecipeViewers.any() && onProgress(v, x, y)) {
+            return List.of(GameText.component(MachineScreenTexts.TIP_RECIPES));
         }
         return List.of();
     }
@@ -226,6 +233,15 @@ public final class StandardFace implements IMachineFace {
     /* Whether ({@code x}, {@code y}) is on the LCD or its bezel. */
     private static boolean onLcd(final double x, final double y) {
         return MachineScreenLayout.on(x, y, LCD_X - 3, LCD_Y - 3, LCD_WIDTH + 6, LCD_HEIGHT + 6);
+    }
+
+    /* Whether the pointer is on a processing machine's progress, its lanes' arrows or its bar. */
+    private static boolean onProgress(final MachineView v, final double x, final double y) {
+        if (!(v.machine() instanceof ProcessingMachineBlockEntity processing)) {
+            return false;
+        }
+        final ProcessingMachineBlockEntity.Layout layout = processing.layout();
+        return MachineScreenLayout.onProgress(x, y, layout.lanes(), layout.inputs(), layout.outputs());
     }
 
     /* The LCD's two lines: what it made the last minute, then how far its work is and what it draws, or its state. */

@@ -50,6 +50,20 @@ class MachineScreenLayoutTest {
     }
 
     @Test
+    void onProgress_takesTheArrowOfEachLaneAndTheBarWhenTheLanesDoNotFit() {
+        final int middle = MachineScreenLayout.laneY(1, 3) + MachineScreenLayout.LANE_PITCH / 2 - 1;
+        final int tip = MachineScreenLayout.arrowX(1) + MachineScreenLayout.ARROW_WIDTH - 1;
+        assertTrue(MachineScreenLayout.onProgress(MachineScreenLayout.arrowX(1) + 1, middle, 3, 1, 1));
+        assertTrue(MachineScreenLayout.onProgress(tip, middle + MachineScreenLayout.ARROW_REACH, 3, 1, 1));
+        assertFalse(MachineScreenLayout.onProgress(tip + 1, middle, 3, 1, 1));
+        assertFalse(MachineScreenLayout.onProgress(MachineScreenLayout.arrowX(1) - 1, middle, 3, 1, 1));
+        assertTrue(MachineScreenLayout.onProgress(MachineScreenLayout.PROCESS_X + 8,
+                MachineScreenLayout.PROCESS_BOTTOM - 4, 1, 4, 3));
+        assertFalse(MachineScreenLayout.onProgress(MachineScreenLayout.PROCESS_X + 8,
+                MachineScreenLayout.PROCESS_Y + 2, 1, 4, 3));
+    }
+
+    @Test
     void meterMark_putsThePeakOnTheScaleWithANiceMark() {
         assertEquals(1, MachineScreenLayout.meterMark(0));
         assertEquals(1, MachineScreenLayout.meterMark(4));

@@ -81,6 +81,21 @@ public final class RecipeViewers {
         return false;
     }
 
+    /** Opens a viewer on the recipes worked in {@code machine}, a machine's item; whether one opened. */
+    public static boolean showRecipesMadeIn(final ItemStack machine) {
+        if (machine.isEmpty()) {
+            return false;
+        }
+        final Screen from = Minecraft.getInstance().screen;
+        for (final IRecipeViewer viewer : VIEWERS) {
+            if (viewer.showRecipesMadeIn(machine)) {
+                opened(from);
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** The item under the pointer in a viewer's lists and recipe screens, or an empty stack. */
     public static ItemStack hovered() {
         for (final IRecipeViewer viewer : VIEWERS) {

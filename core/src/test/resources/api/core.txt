@@ -1248,6 +1248,7 @@ stable 4
 10 dev.jstech.core.client.config.CoreConfigScreen  List<String> railLabels()
 10 dev.jstech.core.client.config.CoreConfigScreen  List<String> rowNames()
 10 dev.jstech.core.client.config.CoreConfigScreen  List<String> scopeLabels()
+12 dev.jstech.core.client.config.CoreConfigScreen  Optional<int[]> buttonCentre(String)
 10 dev.jstech.core.client.config.CoreConfigScreen  Popup openPopup()
 10 dev.jstech.core.client.config.CoreConfigScreen  String bannerText()
 10 dev.jstech.core.client.config.CoreConfigScreen  String statusText()
@@ -7633,15 +7634,18 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean fits(int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean on(double, double, int, int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean onDisc(double, double, int, int, int)
+12 dev.jstech.core.machine.MachineScreenLayout  static boolean onProgress(double, double, int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean onWord(double, double, int[], int)
 10 dev.jstech.core.machine.MachineScreenLayout  static double keyAngle(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static double knobAngle(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static final float SMALL
+12 dev.jstech.core.machine.MachineScreenLayout  static final int ARROW_REACH
 10 dev.jstech.core.machine.MachineScreenLayout  static final int ARROW_WIDTH
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BANK_HEIGHT
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BANK_WIDTH
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BANK_X
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BANK_Y
+12 dev.jstech.core.machine.MachineScreenLayout  static final int BAR_REACH
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BATTERY_HEIGHT
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BATTERY_WIDTH
 10 dev.jstech.core.machine.MachineScreenLayout  static final int BATTERY_X
@@ -7900,6 +7904,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_PULL
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_PUSH
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_READS
+12 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_RECIPES
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_RESOURCE
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_RUNS
 10 dev.jstech.core.machine.MachineScreenTexts  static final TextKey TIP_SIGNAL
@@ -8645,11 +8650,13 @@ stable 4
 10 dev.jstech.core.material.MaterialProperties  static void declare()
 10 dev.jstech.core.material.MaterialProperties.Builder  type static final class<T>
 10 dev.jstech.core.material.MaterialProperties.Builder  Builder<T> format(Function<T, Text>)
+12 dev.jstech.core.material.MaterialProperties.Builder  Builder<T> headline()
 10 dev.jstech.core.material.MaterialProperties.Builder  Builder<T> shown(MaterialProperty.Shown)
 10 dev.jstech.core.material.MaterialProperties.Builder  MaterialProperty<T> declare()
-10 dev.jstech.core.material.MaterialProperty  type record<T>(ResourceLocation id, Codec<T> codec, Shown shown, TextKey name, Function<T, Text> format)
+12 dev.jstech.core.material.MaterialProperty  type record<T>(ResourceLocation id, Codec<T> codec, Shown shown, TextKey name, Function<T, Text> format, boolean headline)
 10 dev.jstech.core.material.MaterialProperty  String toString()
 10 dev.jstech.core.material.MaterialProperty  Text read(Object)
+12 dev.jstech.core.material.MaterialProperty  new(ResourceLocation, Codec<T>, Shown, TextKey, Function<T, Text>)
 10 dev.jstech.core.material.MaterialProperty.Shown  type enum
 10 dev.jstech.core.material.MaterialProperty.Shown  ALWAYS
 10 dev.jstech.core.material.MaterialProperty.Shown  NEVER

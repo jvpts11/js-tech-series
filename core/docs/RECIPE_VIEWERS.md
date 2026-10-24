@@ -68,6 +68,10 @@ A screen that implements `IKeepsViewersClear` returns the rectangles (in screen 
 every viewer keeps its lists off them. A viewer opened from a screen that is not a container's, such as a manual
 page, comes back to that screen when it closes, whichever viewer it is.
 
+`RecipeViewers.showRecipesMadeIn(machineStack)` opens whichever viewer is installed on the recipes a machine works, as
+its workstation: JEI on what the machine is the catalyst of, EMI and REI on its uses, its own recipes first. Every
+machine's screen does it from its progress arrow (*added 2026-10-24*).
+
 ## What can go wrong
 
 - **A kind has no page.** It was declared after the game registered its things, or its recipes come from a level

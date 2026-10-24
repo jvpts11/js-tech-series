@@ -53,6 +53,7 @@ public final class MachineScreenTexts {
             "Drawing %s; each mark on the scale is %s");
     public static final TextKey TIP_SWITCH = TextKey.of("jscore.machine.screen.tip.switch",
             "Its switch, %s: click to throw it");
+    public static final TextKey TIP_RECIPES = TextKey.of("jscore.machine.screen.tip.recipes", "Show recipes");
     public static final TextKey TIP_TANK = TextKey.of("jscore.machine.screen.tip.tank", "%s: %s of %s mB");
     public static final TextKey TIP_EMPTY_TANK = TextKey.of("jscore.machine.screen.tip.empty_tank",
             "An empty tank of %s mB");

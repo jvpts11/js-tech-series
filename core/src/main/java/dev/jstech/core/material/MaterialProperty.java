@@ -23,11 +23,12 @@ import net.minecraft.resources.ResourceLocation;
  * @param codec  how its value is written in a data pack and sent
  * @param shown  when its line shows in a tooltip, unless a material says otherwise
  * @param name   what its line calls it: "Symbol"
- * @param format how its value reads on that line
- * @param <T>    what its value is
+ * @param format   how its value reads on that line
+ * @param headline whether its line is its value alone, set apart at the head of the tooltip, as an element's symbol
+ * @param <T>      what its value is
  */
 public record MaterialProperty<T>(ResourceLocation id, Codec<T> codec, Shown shown, TextKey name,
-                                  Function<T, Text> format) {
+                                  Function<T, Text> format, boolean headline) {
 
     /** When a property's line shows in a tooltip. */
     public enum Shown {
@@ -66,6 +67,12 @@ public record MaterialProperty<T>(ResourceLocation id, Codec<T> codec, Shown sho
         Objects.requireNonNull(shown, "shown");
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(format, "format");
+    }
+
+    /** A property whose line says its name and its value. */
+    public MaterialProperty(final ResourceLocation id, final Codec<T> codec, final Shown shown, final TextKey name,
+                            final Function<T, Text> format) {
+        this(id, codec, shown, name, format, false);
     }
 
     /** How its value reads, for a value of any kind: what the tooltip shows. */

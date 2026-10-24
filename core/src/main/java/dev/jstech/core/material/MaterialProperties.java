@@ -65,7 +65,7 @@ public final class MaterialProperties {
 
     /** The element's or the compound's chemical symbol: Fe. */
     public static final MaterialProperty<String> SYMBOL = property(id("symbol"), Codec.STRING, SYMBOL_NAME)
-            .declare();
+            .headline().declare();
     /** An element's atomic number. */
     public static final MaterialProperty<Integer> ATOMIC_NUMBER = property(id("atomic_number"), Codec.INT,
             ATOMIC_NUMBER_NAME).shown(MaterialProperty.Shown.SHIFT).declare();
@@ -143,6 +143,7 @@ public final class MaterialProperties {
         private final TextKey name;
         private MaterialProperty.Shown shown = MaterialProperty.Shown.ALWAYS;
         private Function<T, Text> format = value -> Text.literal(String.valueOf(value));
+        private boolean headline;
 
         private Builder(final ResourceLocation id, final Codec<T> codec, final TextKey name) {
             this.id = Objects.requireNonNull(id, "id");
@@ -162,6 +163,12 @@ public final class MaterialProperties {
             return this;
         }
 
+        /** Its line is its value alone, set apart at the head of the tooltip, as an element's symbol is. */
+        public Builder<T> headline() {
+            this.headline = true;
+            return this;
+        }
+
         /**
          * Declares the property.
          *
@@ -169,7 +176,7 @@ public final class MaterialProperties {
          */
         public MaterialProperty<T> declare() {
             final MaterialProperty<T> property = new MaterialProperty<>(this.id, this.codec, this.shown, this.name,
-                    this.format);
+                    this.format, this.headline);
             if (BY_ID.putIfAbsent(this.id, property) != null) {
                 throw DeclarationError.of(this.id.getNamespace(), "the material property " + this.id,
                         "is declared twice", "declare it once, as a static final");

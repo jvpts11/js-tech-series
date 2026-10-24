@@ -88,6 +88,9 @@ public final class MachineScreenLayout {
     /** A lane of the process window: its row, the arrow between its inputs and outputs. */
     public static final int LANE_PITCH = 20;
     public static final int ARROW_WIDTH = 16;
+    /** How far above and below its middle an arrow takes a click, and how far above the window's foot its bar does. */
+    public static final int ARROW_REACH = 5;
+    public static final int BAR_REACH = 9;
 
     /** The Sides tab: the resources' pushbuttons, the two cubes, the face's knob, pushing and pulling. */
     public static final int RESOURCE_X = 6;
@@ -346,6 +349,25 @@ public final class MachineScreenLayout {
     /** The top of resource pushbutton {@code index} of {@code count}, closer together when there are five. */
     public static int resourceY(final int index, final int count) {
         return RESOURCE_Y + index * (count >= RESOURCES_SHOWN ? RESOURCE_PITCH_TIGHT : RESOURCE_PITCH);
+    }
+
+    /**
+     * Whether ({@code x}, {@code y}) is on the progress of a machine of {@code lanes} lanes of {@code inputs} and
+     * {@code outputs} slots: the arrow of a lane, or, when the lanes do not fit, the bar along the window's foot. A
+     * click there opens the recipes the machine works, in the recipe viewer.
+     */
+    public static boolean onProgress(final double x, final double y, final int lanes, final int inputs,
+                                     final int outputs) {
+        if (!fits(lanes, inputs, outputs)) {
+            return on(x, y, PROCESS_X + 6, PROCESS_BOTTOM - BAR_REACH, PROCESS_RIGHT - PROCESS_X - 12, BAR_REACH - 1);
+        }
+        for (int lane = 0; lane < lanes; lane++) {
+            final int middle = laneY(lane, lanes) + LANE_PITCH / 2 - 1;
+            if (on(x, y, arrowX(inputs), middle - ARROW_REACH, ARROW_WIDTH, 2 * ARROW_REACH + 2)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether ({@code x}, {@code y}) is on the part at ({@code px}, {@code py}) sized {@code w} by {@code h}. */

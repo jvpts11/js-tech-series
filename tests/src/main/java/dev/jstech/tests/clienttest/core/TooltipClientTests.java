@@ -78,7 +78,7 @@ public final class TooltipClientTests {
                     && indexStarting(numbers, "Gives up to") >= 0 && !numbers.contains("94 Iron Ingot"),
                     "with Ctrl, how fast it charges and gives, and not the list: " + numbers);
             final List<String> ingot = strings(lines(ctx, new ItemStack(Items.IRON_INGOT), false, false));
-            ctx.assertTrue(ingot.contains("Symbol: Fe")
+            ctx.assertTrue(ingot.contains("Fe")
                     && ingot.contains(GameText.resolve(TooltipTexts.MORE.text())),
                     "the game's own iron ingot shows its material and that Shift shows more: " + ingot);
         });

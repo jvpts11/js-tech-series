@@ -206,6 +206,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `Deposits.superseded` reads them. `ModuleDef` says how many of it one host takes (`most`, `upTo`) and what a host
   needs to take it (`needs`, `needing`), and `ModuleHostDef` its traits (`traits`, `with`, `has`); `SeriesModules`
   names the series' sockets, pieces and seal.
+- (Core) Recipes from a machine's screen and a symbol set apart: J's Core's API stays at version 12, all experimental.
+  `MachineScreenLayout.onProgress` is where a click on a machine's progress lands, with `ARROW_REACH` and
+  `BAR_REACH`; `MaterialProperty` carries `headline`, which `MaterialProperties.Builder.headline()` sets, a record
+  component of its own beside the constructor without it; `CoreConfigScreen.buttonCentre` is where a test clicks a
+  button of the settings screen.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1621,6 +1626,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   creative tab away.
 
 ### Changed
+- (Core) A click on a machine's progress arrow opens the recipes it works in JEI, EMI or REI, as "Show recipes" says
+  over it; the bar under the window takes the click when the lanes do not fit.
+- (Core) An element's symbol shows alone at the head of its tooltip, in gold, rather than as "Symbol: Fe".
 - (Core, Industrial) With J's Industrial installed, its deposit types take the place of the Core's plain veins of
   iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
   Nether's gold stays the Core's.
@@ -1749,6 +1757,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   controller, in the Structure Projector, the Multiblock Builder, the recipe viewers, the manuals, the studio and Jade.
 
 ### Fixed
+- (Core) The settings screen's Done, Undo, Redo, Defaults, Export and Import buttons and its search field answer the
+  mouse: the panel they sit in had no size, so a click never reached them and a change could not be kept.
+- (Core) The screens of the network probe, the signal probe and the clamp meter no longer show dark stairs outside
+  their corners: the dark rim round the instrument follows its rounded corner.
 - (Core) A cable's item is drawn whatever its thickness: only cables four, six or ten pixels thick had a model for
   their item, so the item of any other was drawn as the missing model; the Core now has one for every thickness.
 - (Core) A limited cable two machines are fed through is shared between them: the first one in order took the whole
