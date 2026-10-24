@@ -527,6 +527,7 @@ stable 4
 10 dev.jstech.core.blockentity.ClientUpdates  type final class
 10 dev.jstech.core.blockentity.ClientUpdates  static void afterTick(LevelTickEvent.Post)
 10 dev.jstech.core.blockentity.ClientUpdates  static void listen()
+12 dev.jstech.core.blockentity.ClientUpdates  static void sendNow(ServerLevel, BlockPos)
 10 dev.jstech.core.blockentity.ClientUpdates  static void unload(LevelEvent.Unload)
 10 dev.jstech.core.blockentity.CombinedTanks  type final class implements IFluidHandler
 10 dev.jstech.core.blockentity.CombinedTanks  FluidStack drain(FluidStack, FluidAction)
@@ -729,6 +730,7 @@ stable 4
 10 dev.jstech.core.cable.CableBlock  <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level, BlockState, BlockEntityType<T>)
 10 dev.jstech.core.cable.CableBlock  BlockEntity newBlockEntity(BlockPos, BlockState)
 10 dev.jstech.core.cable.CableBlock  ItemStack getCloneItemStack(BlockState, HitResult, LevelReader, BlockPos, Player)
+12 dev.jstech.core.cable.CableBlock  SoundType getSoundType(BlockState, LevelReader, BlockPos, Entity)
 10 dev.jstech.core.cable.CableBlock  boolean canConnectRedstone(BlockState, BlockGetter, BlockPos, Direction)
 10 dev.jstech.core.cable.CableBlock  new(Properties)
 10 dev.jstech.core.cable.CableBlock  static CableBlockEntity.Aim aimOf(BlockGetter, BlockPos, Player)
@@ -933,7 +935,9 @@ stable 4
 10 dev.jstech.core.cable.CableItem  CableType type()
 10 dev.jstech.core.cable.CableItem  InteractionResult useOn(UseOnContext)
 10 dev.jstech.core.cable.CableItem  new(Properties, Supplier<CableType>)
+12 dev.jstech.core.cable.CableItem  static Optional<BlockPos> landing(Level, Player, InteractionHand, BlockHitResult, CableType)
 10 dev.jstech.core.cable.CableItem  static boolean lay(Level, BlockPos, CableType)
+12 dev.jstech.core.cable.CableItem  static void showNow(ServerLevel, Collection<BlockPos>)
 10 dev.jstech.core.cable.CableItem  void appendHoverText(ItemStack, TooltipContext, List<Component>, TooltipFlag)
 10 dev.jstech.core.cable.CableParts  type final class
 10 dev.jstech.core.cable.CableParts  static List<Part> of(ServerLevel, Grid)
@@ -982,6 +986,7 @@ stable 4
 10 dev.jstech.core.cable.CableType  ResourceLocation plug()
 12 dev.jstech.core.cable.CableType  ResourceLocation plug(String)
 10 dev.jstech.core.cable.CableType  Set<ResourceLocation> allPlugs()
+12 dev.jstech.core.cable.CableType  SoundType sound()
 10 dev.jstech.core.cable.CableType  boolean alone()
 10 dev.jstech.core.cable.CableType  boolean breaks()
 10 dev.jstech.core.cable.CableType  boolean hangs()
@@ -1014,6 +1019,7 @@ stable 4
 12 dev.jstech.core.cable.CableType.Builder  Builder plug(String, ResourceLocation)
 10 dev.jstech.core.cable.CableType.Builder  Builder renewedBy(TextKey)
 10 dev.jstech.core.cable.CableType.Builder  Builder runsStraight()
+12 dev.jstech.core.cable.CableType.Builder  Builder sounds(SoundType)
 10 dev.jstech.core.cable.CableType.Builder  Builder takes(TagKey<Fluid>)
 10 dev.jstech.core.cable.CableType.Builder  Builder thickness(int)
 10 dev.jstech.core.cable.CableType.Builder  Builder windows(ResourceLocation)

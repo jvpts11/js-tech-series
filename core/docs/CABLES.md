@@ -60,6 +60,7 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
 | `windows(glass)` | Its jacket leaves windows clear and `glass` fills them: a pipe shows its liquid or gas moving through them at its level, a line of items its items sliding through ([Seeing what flows](#seeing-what-flows)). |
 | `fitting(texture)` | It turns and branches in a solid fitting of that texture, as a pipe does, rather than in its jacket. |
 | `beyond(rule)` | What befalls it when a fluid it is not made for reaches it ([Beyond a line's limits](#beyond-a-lines-limits)). |
+| `sounds(soundType)` | How it sounds laid, taken out, struck and walked on, as what it is made of; metal unless said (*added 2026-10-24*). |
 
 `register()` registers the cable type and the item that lays it. The lanes the series uses: access `TOP_LEFT`,
 backbone `TOP`, peripheral `LEFT`, high compute `MIDDLE`, crafting `RIGHT`, energy `BOTTOM_LEFT`; the long distance
@@ -169,6 +170,13 @@ takes: the axis the run covers most first, then the next, then the last; straigh
 run stops at the first block it cannot be laid in (something in the way, a place protected against the player, or no
 cable left in hand) and says where. A join the player does not want is turned off afterwards, face by face, as any
 end is, with a wrench set to off.
+
+Where a click lays its wire is one decision, `CableItem.landing`, which the player's game uses to outline the run and
+the server uses to lay it: in the cable block clicked when it takes the wire, in a block that gives way (a snow layer,
+grass) in its place, against the face clicked otherwise. A wire laid or taken out by hand is shown at once, with the
+cables beside it (`CableItem.showNow`), so a new cable appears already joined to its neighbours rather than a tick
+later (*added 2026-10-24*). Any mod can do the same for what a player's hand changes with `ClientUpdates.sendNow`,
+which sends a block and its block entity to the players watching it without waiting for the end of the tick.
 
 ## Overhead lines
 

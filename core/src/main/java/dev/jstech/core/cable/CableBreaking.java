@@ -9,6 +9,7 @@ package dev.jstech.core.cable;
 
 import dev.jstech.core.multipart.SpaceBreaking;
 import dev.jstech.core.multipart.SpaceSlots;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -61,7 +62,10 @@ public final class CableBreaking {
                 return;
             }
             back = aim.wire().type().stack();
-            level.playSound(null, pos, SoundType.WOOL.getBreakSound(), SoundSource.BLOCKS, 1.0F, 0.9F);
+            final SoundType sound = aim.wire().type().sound();
+            level.playSound(null, pos, sound.getBreakSound(), SoundSource.BLOCKS, (sound.getVolume() + 1.0F) / 2.0F,
+                    sound.getPitch() * 0.8F);
+            CableItem.showNow(level, List.of(pos));
         }
         if (!player.getAbilities().instabuild && !player.getInventory().add(back)) {
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), back);

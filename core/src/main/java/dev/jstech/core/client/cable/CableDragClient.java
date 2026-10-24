@@ -192,18 +192,25 @@ public final class CableDragClient {
     }
 
     /*
-     * Where a click with {@code item} on {@code hit} lays its wire: in the cable block looked at, when it takes it and
-     * the player is not sneaking; against the face looked at otherwise.
+     * Where a click with {@code item} on {@code hit} lays its wire, as the server decides it (CableItem.landing): in
+     * the cable block looked at when it takes or already holds the wire and the player is not sneaking, so a run starts
+     * from a cable of its own; in a block that gives way, such as a snow layer, itself; against the face otherwise.
      */
     private static BlockPos target(final CableItem item, final BlockHitResult hit) {
         final Minecraft minecraft = Minecraft.getInstance();
         final BlockPos clicked = hit.getBlockPos();
-        if (minecraft.player != null && minecraft.level != null && !minecraft.player.isSecondaryUseActive()
+        if (minecraft.player == null || minecraft.level == null) {
+            return clicked.relative(hit.getDirection());
+        }
+        if (!minecraft.player.isSecondaryUseActive()
                 && minecraft.level.getBlockEntity(clicked) instanceof CableBlockEntity cable
-                && (cable.holds(item.type()) || cable.takes(Wire.of(item.type())))) {
+                && cable.holds(item.type())) {
             return clicked;
         }
-        return clicked.relative(hit.getDirection());
+        final InteractionHand holding = minecraft.player.getMainHandItem().getItem() == item
+                ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        return CableItem.landing(minecraft.level, minecraft.player, holding, hit, item.type())
+                .orElse(clicked.relative(hit.getDirection()));
     }
 
     /**

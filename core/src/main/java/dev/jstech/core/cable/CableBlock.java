@@ -35,6 +35,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -241,6 +242,19 @@ public final class CableBlock extends Block implements EntityBlock {
             return SpaceBlock.itemOf(cable.parts(), SpaceSlots.face(aim.part().get3DDataValue()));
         }
         return ItemStack.EMPTY;
+    }
+
+    /*
+     * A cable block sounds as the wire in its first lane is made, struck and walked on; a block of parts alone as the
+     * block does. A wire laid or taken out plays its own sound, whatever the block holds besides.
+     */
+    @Override
+    public SoundType getSoundType(final BlockState state, final LevelReader level, final BlockPos pos,
+                                  @Nullable final Entity entity) {
+        if (level.getBlockEntity(pos) instanceof CableBlockEntity cable && !cable.wires().isEmpty()) {
+            return cable.wires().getFirst().type().sound();
+        }
+        return super.getSoundType(state, level, pos, entity);
     }
 
     /* The block gives back every wire's cable and every part; its loot table gives nothing of its own. */

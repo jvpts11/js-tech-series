@@ -28,6 +28,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +79,7 @@ public final class CableType {
     private final int span;
     private final boolean insulated;
     private final long holds;
+    private final SoundType sound;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -111,6 +113,7 @@ public final class CableType {
         this.span = builder.span;
         this.insulated = builder.insulated;
         this.holds = builder.holds;
+        this.sound = builder.sound;
     }
 
     /** What the cable is for, as its item's tooltip says it; empty for a cable that says nothing. */
@@ -237,6 +240,11 @@ public final class CableType {
         return this.holds;
     }
 
+    /** How it sounds as it is laid, taken out, struck and walked on: as what it is made of, metal unless said. */
+    public SoundType sound() {
+        return this.sound;
+    }
+
     /**
      * Its jacket's texture, 32 pixels square: the side with the length along u in the top left (16 by its thickness),
      * the same side with the length along v beside it, and the cut end below.
@@ -316,6 +324,7 @@ public final class CableType {
         private int span;
         private boolean insulated;
         private long holds = Long.MAX_VALUE;
+        private SoundType sound = SoundType.METAL;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -453,6 +462,12 @@ public final class CableType {
                 throw new IllegalArgumentException("a hung wire spans at least a block, not " + longestSpan);
             }
             this.span = longestSpan;
+            return this;
+        }
+
+        /** It sounds as {@code made} sounds, laid, taken out, struck and walked on; metal unless said. */
+        public Builder sounds(final SoundType made) {
+            this.sound = Objects.requireNonNull(made, "made");
             return this;
         }
 

@@ -76,6 +76,7 @@ public final class CableRuns {
         }
         final CableType type = item.type();
         final List<BlockPos> path = path(from, to, type.runsStraight());
+        final List<BlockPos> laidAt = new ArrayList<>();
         int laid = 0;
         int done = 0;
         BlockPos stopped = null;
@@ -104,14 +105,16 @@ public final class CableRuns {
             held.consume(1, player);
             laid++;
             done++;
+            laidAt.add(pos);
             final BlockState state = level.getBlockState(pos);
             level.gameEvent(GameEvent.BLOCK_PLACE, pos, GameEvent.Context.of(player, state));
             if (laid == 1) {
-                final SoundType sound = state.getSoundType(level, pos, player);
+                final SoundType sound = type.sound();
                 level.playSound(null, pos, sound.getPlaceSound(), SoundSource.BLOCKS,
                         (sound.getVolume() + 1.0F) / 2.0F, sound.getPitch() * 0.8F);
             }
         }
+        CableItem.showNow(level, laidAt);
         final Text said = stopped == null ? LAID.with(done, path.size()) : STOPPED.with(done, path.size(),
                 Text.literal(stopped.getX() + ", " + stopped.getY() + ", " + stopped.getZ()), why.text());
         player.displayClientMessage(GameText.component(said), true);

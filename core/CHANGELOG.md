@@ -208,6 +208,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `BAR_REACH`; `MaterialProperty` carries `headline`, which `MaterialProperties.Builder.headline()` sets, a record
   component of its own beside the constructor without it; `CoreConfigScreen.buttonCentre` is where a test clicks a
   button of the settings screen.
+- Cables laid by hand: J's Core's API stays at version 12, all experimental. `CableType.sound()` and
+  `CableType.Builder.sounds(SoundType)` say how a cable sounds, metal unless said; `CableItem.landing` is where a click
+  with a cable lays it, the same for the player's game and the server; `CableItem.showNow` shows the players cables
+  laid or taken out by hand, with their neighbours, at once; `ClientUpdates.sendNow` sends any block and its block
+  entity to the players watching it without waiting for the end of the tick.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1530,6 +1535,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A click on a machine's progress arrow opens the recipes it works in JEI, EMI or REI, as "Show recipes" says
   over it; the bar under the window takes the click when the lanes do not fit.
 - An element's symbol shows alone at the head of its tooltip, in gold, rather than as "Symbol: Fe".
+- Every cable sounds as metal, laid, taken out, struck and walked on, rather than as wool; a mod may give its
+  own cable another sound.
+- A cable laid beside another shows joined to it the moment it appears, and a wire taken out lets go of its
+  neighbours at once, rather than a tick or two later.
 - With J's Industrial installed, its deposit types take the place of the Core's plain veins of
   iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
   Nether's gold stays the Core's.
@@ -1620,6 +1629,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 ### Fixed
 - The settings screen's Done, Undo, Redo, Defaults, Export and Import buttons and its search field answer the
   mouse: the panel they sit in had no size, so a click never reached them and a change could not be kept.
+- A click with a cable on a snow layer, or on anything else that gives way, lays one cable in its place: the
+  player's game started the run above it, so letting go of the click laid a second cable on top of the first.
 - The screens of the network probe, the signal probe and the clamp meter no longer show dark stairs outside
   their corners: the dark rim round the instrument follows its rounded corner.
 - A cable's item is drawn whatever its thickness: only cables four, six or ten pixels thick had a model for
