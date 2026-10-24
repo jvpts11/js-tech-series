@@ -16,7 +16,7 @@
       "share": 0.08637412
     }
   ],
-  "energy_per_tick": 40,
+  "energy_per_tick": 200,
   "inputs": [
     {
       "count": 1,

@@ -1,0 +1,29 @@
+{
+  "key": {
+    "B": {
+      "blocks": [
+        "jstests:test_oven_bricks"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "B#B",
+      "BBB",
+      "BBB"
+    ],
+    [
+      "BBB",
+      "BBB",
+      "BBB"
+    ]
+  ],
+  "name": "test_oven_battery",
+  "repeat": {
+    "axis": "z",
+    "index": 1,
+    "least": 1,
+    "most": 4
+  },
+  "terminal": "jstests:test_oven_battery_terminal"
+}

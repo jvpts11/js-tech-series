@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.core.energy.EnergyPorts;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
@@ -76,7 +77,7 @@ public final class CoreKitGameTests {
         final CompressorBlockEntity machine = compressor(helper);
         machine.getInventory().setStackInSlot(INPUT_SLOT,
                 new ItemStack(Items.IRON_INGOT, 3));
-        machine.getEnergy().setEnergyStored(5_000);
+        machine.power().generate(5_000);
         final HolderLookup.Provider registries = helper.getLevel().registryAccess();
 
         final CompoundTag saved = machine.saveWithFullMetadata(registries);
@@ -87,7 +88,7 @@ public final class CoreKitGameTests {
         final CompressorBlockEntity copy = (CompressorBlockEntity) loaded;
         helper.assertTrue(copy.getInventory().getStackInSlot(INPUT_SLOT).getCount() == 3,
                 "the inventory is saved");
-        helper.assertTrue(copy.getEnergy().getEnergyStored() == 5_000, "the stored energy is saved");
+        helper.assertTrue(copy.power().stored() == 5_000, "the stored energy is saved");
         helper.succeed();
     }
 
@@ -99,8 +100,9 @@ public final class CoreKitGameTests {
 
         final CompoundTag update = machine.getUpdateTag(helper.getLevel().registryAccess());
 
-        // Every machine sends what its screen shows of it (its state, its switch, its health); never its inventory.
-        helper.assertTrue(!update.contains("Inventory") && !update.contains("Energy") && !update.contains("Progress"),
+        // Every machine sends what its screen shows of it (its state, its switch, its health, the port its energy is
+        // in); never its inventory, nor its progress, which goes only to a screen open on it.
+        helper.assertTrue(!update.contains("Inventory") && !update.contains("Progress"),
                 "a machine sends the players only what is declared for them, got " + update);
         helper.assertTrue(update.contains("Status"), "every machine's state is in view: " + update);
         helper.succeed();
@@ -113,8 +115,8 @@ public final class CoreKitGameTests {
         for (final Direction side : Direction.values()) {
             helper.assertTrue(helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, at, side)
                     == machine.getInventory(), "the inventory is offered on the " + side + " side");
-            helper.assertTrue(helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, at, side)
-                    == machine.getEnergy(), "the energy is offered on the " + side + " side");
+            helper.assertTrue(helper.getLevel().getCapability(EnergyPorts.PORT, at, side)
+                    == machine.power().portStore(), "the energy port is offered on the " + side + " side");
         }
         helper.succeed();
     }
@@ -123,15 +125,16 @@ public final class CoreKitGameTests {
     public static void menuData_carriesTheFieldsBothWays(final GameTestHelper helper) {
         final CompressorBlockEntity machine = compressor(helper);
         final ContainerData data = machine.fields().menuData();
-        machine.getEnergy().setEnergyStored(1_234);
 
-        helper.assertTrue(data.getCount() == 8, "energy, progress, the processing time, what it drew last tick and "
-                + "what it holds at most (longs, in two halves each) and what it made the last minute, got "
+        // Its energy is in its port, which goes to the players with the machine, not in the menu's numbers.
+        helper.assertTrue(data.getCount() == 7, "what it drew last tick and what it holds at most (longs, in two "
+                + "halves each), what it made the last minute, its progress and its processing time, got "
                 + data.getCount());
-        helper.assertTrue(data.get(0) == 1_234, "the menu reads the stored energy");
-        data.set(0, 77);
-        helper.assertTrue(machine.getEnergy().getEnergyStored() == 77,
+        final int progress = data.getCount() - 2;
+        data.set(progress, 77);
+        helper.assertTrue(machine.getProgress() == 77,
                 "a value the menu receives is written into the field, as on the client");
+        helper.assertTrue(data.get(progress) == 77, "and the menu reads it back");
         helper.succeed();
     }
 
@@ -269,7 +272,7 @@ public final class CoreKitGameTests {
         final CompressorBlockEntity machine = compressor(helper);
         machine.getInventory().setStackInSlot(INPUT_SLOT,
                 new ItemStack(Items.IRON_INGOT));
-        machine.getEnergy().setEnergyStored(machine.getEnergy().getMaxEnergyStored());
+        helper.onEachTick(() -> machine.power().generate(machine.power().capacity()));
 
         helper.succeedWhen(() -> helper.assertTrue(machine.getInventory()
                 .getStackInSlot(OUTPUT_SLOT)
@@ -284,7 +287,7 @@ public final class CoreKitGameTests {
         generator.getInventory().setStackInSlot(CoalGeneratorBlockEntity.FUEL_SLOT, new ItemStack(Items.COAL));
 
         helper.succeedWhen(() -> helper.assertTrue(generator.isBurning()
-                && generator.getEnergy().getEnergyStored() > 0, "the coal burns into energy"));
+                && generator.power().stored() > 0, "the coal burns into energy"));
     }
 
     private static CompressorBlockEntity compressor(final GameTestHelper helper) {

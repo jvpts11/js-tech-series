@@ -23,14 +23,17 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 /**
  * The ends the tests of the test energy's lines feed from and into, each a store of its own kept by its position:
  * cut copper gives low, exposed cut copper takes low, weathered cut copper takes medium, oxidized cut copper gives high,
  * and waxed cut copper takes extra-high; the copper bulb is a low generator that follows its load. An end an arc flash
- * hits is remembered. Only the test mod gives these blocks the capability, and only in development.
+ * hits is remembered. The ends of the Core's FE lines are of the game's energy alone: a block of copper gives FE and
+ * exposed copper takes it. Only the test mod gives these blocks the capability, and only in development.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class TestEnergyEnds {
@@ -46,7 +49,12 @@ public final class TestEnergyEnds {
     public static final long GENERATOR_LEAST = 100L;
     public static final long GENERATOR_RAMP = 200L;
 
+    /** What the FE taking end takes at most in a tick, and what the FE giving end, full as it comes, gives. */
+    public static final int FE_TAKES = 600;
+    public static final int FE_GIVES = 100_000;
+
     private static final Map<End, EnergyStore> STORES = new ConcurrentHashMap<>();
+    private static final Map<End, EnergyStorage> FE_STORES = new ConcurrentHashMap<>();
     private static final Map<End, GeneratorPort> GENERATORS = new ConcurrentHashMap<>();
     private static final Set<End> ARCED = ConcurrentHashMap.newKeySet();
 
@@ -57,6 +65,14 @@ public final class TestEnergyEnds {
     public static EnergyStore storeAt(final Level level, final BlockPos pos) {
         final End end = new End(level.dimension(), pos.immutable());
         return STORES.computeIfAbsent(end, key -> make(level.getBlockState(pos).getBlock(), key));
+    }
+
+    /** The FE store behind the end at {@code pos}: a block of copper's gives, exposed copper's takes. */
+    public static EnergyStorage feStoreAt(final Level level, final BlockPos pos) {
+        final boolean gives = level.getBlockState(pos).is(Blocks.COPPER_BLOCK);
+        return FE_STORES.computeIfAbsent(new End(level.dimension(), pos.immutable()), key -> gives
+                ? new EnergyStorage((int) CAPACITY, 0, FE_GIVES, (int) CAPACITY)
+                : new EnergyStorage((int) CAPACITY, FE_TAKES, 0));
     }
 
     /** The low generator behind the copper bulb at {@code pos}, which follows its load. */
@@ -75,6 +91,7 @@ public final class TestEnergyEnds {
     public static void clear(final Level level, final BlockPos pos) {
         final End end = new End(level.dimension(), pos.immutable());
         STORES.remove(end);
+        FE_STORES.remove(end);
         GENERATORS.remove(end);
         ARCED.remove(end);
     }
@@ -83,6 +100,7 @@ public final class TestEnergyEnds {
     @SubscribeEvent
     public static void onServerStopped(final ServerStoppedEvent event) {
         STORES.clear();
+        FE_STORES.clear();
         GENERATORS.clear();
         ARCED.clear();
     }
@@ -94,6 +112,8 @@ public final class TestEnergyEnds {
                 Blocks.WAXED_CUT_COPPER);
         event.registerBlock(EnergyPorts.PORT, (level, pos, state, entity, side) -> generatorAt(level, pos),
                 Blocks.COPPER_BULB);
+        event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, entity, side) ->
+                feStoreAt(level, pos), Blocks.COPPER_BLOCK, Blocks.EXPOSED_COPPER);
     }
 
     private static EnergyStore make(final Block block, final End end) {

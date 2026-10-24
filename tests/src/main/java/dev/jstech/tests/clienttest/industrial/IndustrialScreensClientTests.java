@@ -29,7 +29,8 @@ public final class IndustrialScreensClientTests {
     private static final int SCREEN_WAIT = 60;
 
     private static final BlockPos COMPRESSOR = new BlockPos(4, 2, 2);
-    private static final BlockPos GENERATOR = new BlockPos(6, 2, 2);
+    /* Against the Compressor, so it feeds it and both are seen working. */
+    private static final BlockPos GENERATOR = new BlockPos(5, 2, 2);
     private static final BlockPos PLAYER = new BlockPos(5, 2, 4);
 
     private IndustrialScreensClientTests() {
@@ -45,7 +46,7 @@ public final class IndustrialScreensClientTests {
                     final CompressorBlockEntity compressor = world.blockEntity(COMPRESSOR, CompressorBlockEntity.class);
                     // Its one input is the first slot.
                     compressor.getInventory().setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 8));
-                    compressor.getEnergy().setEnergyStored(compressor.getEnergy().getMaxEnergyStored() / 2);
+                    compressor.power().generate(compressor.power().capacity() / 2);
                     world.blockEntity(GENERATOR, CoalGeneratorBlockEntity.class).getInventory()
                             .setStackInSlot(CoalGeneratorBlockEntity.FUEL_SLOT, new ItemStack(Items.COAL, 16));
                 })

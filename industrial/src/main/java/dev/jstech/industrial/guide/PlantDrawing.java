@@ -20,7 +20,7 @@ import dev.jstech.core.text.Text;
  * <pre>{@code
  * guide.page("power", section)...
  *         .drawing(PlantDrawing.SINGLE_LINE, 100, PlantDrawing.drawn()
- *                 .symbol("generator", 75, 14, Text.literal("COAL GEN 1"), Text.literal("20 FE/t"))
+ *                 .symbol("generator", 75, 14, Text.literal("COAL GEN 1"), Text.literal("5 kW"))
  *                 .line(75, 21, 75, 40)
  *                 .bus(5, 40, 145, Text.literal("BUS A"))
  *                 .json(), "A small plant")

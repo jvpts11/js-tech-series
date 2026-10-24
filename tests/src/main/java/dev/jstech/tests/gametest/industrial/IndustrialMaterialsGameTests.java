@@ -76,7 +76,6 @@ public final class IndustrialMaterialsGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos MACERATOR = new BlockPos(2, 2, 2);
     private static final int GROUND = 4;
-    private static final int FULL = 16_000;
     private static final int WIRES = 8;
 
     private IndustrialMaterialsGameTests() {
@@ -108,7 +107,7 @@ public final class IndustrialMaterialsGameTests {
         final MaceratorBlockEntity macerator = helper.getBlockEntity(MACERATOR);
         macerator.getInventory().setStackInSlot(0, new ItemStack(MaterialUses.item(SeriesMinerals.CHALCOPYRITE,
                 Forms.RAW).get(), GROUND));
-        helper.onEachTick(() -> macerator.getEnergy().setEnergyStored(FULL));
+        helper.onEachTick(() -> macerator.power().generate(macerator.power().capacity()));
         final Mineral mineral = SeriesMinerals.CHALCOPYRITE.mineral().orElseThrow();
         final double sulfur = OreLevel.MACERATOR.byproduct(mineral.main().share(), share(mineral, Element.SULFUR),
                 OreLevel.MACERATOR.mainOut());

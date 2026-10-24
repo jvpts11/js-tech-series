@@ -12,10 +12,12 @@ import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.machine.IUpgrade;
 import dev.jstech.core.machine.UpgradeEffect;
 import dev.jstech.core.machine.UpgradeItem;
+import dev.jstech.industrial.machine.IndustrialMachines;
 
 /**
  * Upgrades of the test mod, one for each effect the Core's machines know: two recipes at once, twice the items, no
- * byproducts, half the fluid and matter, a doubled buffer, and silence; the first two fit in a machine only once.
+ * byproducts, half the fluid and matter, a doubled buffer, and silence; the first two fit in a machine only once. And
+ * two for J's Industrial's machines: a motor, faster for more energy, and a shielding that holds radiation in.
  */
 public final class TestUpgrades {
 
@@ -40,6 +42,16 @@ public final class TestUpgrades {
             properties -> new UpgradeItem(properties, UpgradeEffect.NONE.withBuffer(2.0).withSound(0.0),
                     IUpgrade.ANY))
             .named("Test Buffer Upgrade").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    /** Half again as fast for a quarter more energy, as a motor makes a machine; any number fit. */
+    public static final ItemEntry<UpgradeItem> MOTOR = TestSounds.CONTENT.item("test_motor_upgrade",
+            properties -> new UpgradeItem(properties, UpgradeEffect.NONE.withSpeed(1.5).withEnergy(1.25),
+                    IUpgrade.ANY))
+            .named("Test Motor Upgrade").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    /** Nothing for the work, and the machine's radiation held in, as a Lead Shielding does; one fits. */
+    public static final ItemEntry<UpgradeItem> SHIELDING = TestSounds.CONTENT.item("test_shielding_upgrade",
+            properties -> new UpgradeItem(properties, UpgradeEffect.NONE, 1))
+            .named("Test Shielding Upgrade").look(IItemLook.HANDMADE).tab(TestItems.ITEMS)
+            .tag(IndustrialMachines.SHIELDS_RADIATION).register();
 
     private TestUpgrades() {
     }

@@ -9,8 +9,11 @@ package dev.jstech.core.machine;
 
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.energy.Energies;
+import dev.jstech.core.energy.Energy;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
@@ -37,6 +40,7 @@ public final class ProcessingKind {
     private final Supplier<RecipeSerializer<ProcessingRecipe>> serializer;
     // Declared while the mod's classes load, read once the game runs: a list safe to read while it was written.
     private final List<Supplier<? extends ItemLike>> machines = new CopyOnWriteArrayList<>();
+    private volatile Energy energy = Energies.FE;
 
     public ProcessingKind(final ResourceLocation id, final TextKey title,
                           final Supplier<RecipeType<ProcessingRecipe>> type,
@@ -72,6 +76,20 @@ public final class ProcessingKind {
     public ProcessingKind alsoWorkedBy(final Supplier<? extends ItemLike> machine) {
         machines.add(machine);
         return this;
+    }
+
+    /**
+     * Says its machines run on {@code runOn}, so its recipes' energy a tick is shown in its unit: as power, "4 kW", for
+     * an energy of a unit of power. FE unless it says otherwise.
+     */
+    public ProcessingKind runsOn(final Energy runOn) {
+        this.energy = Objects.requireNonNull(runOn, "runOn");
+        return this;
+    }
+
+    /** The energy its machines run on, which its recipes' energy a tick is counted in. */
+    public Energy energy() {
+        return this.energy;
     }
 
     /** The machines that work recipes of this kind, the one it was declared with first. */

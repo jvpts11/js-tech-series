@@ -9,8 +9,6 @@ package dev.jstech.core.client.recipeview;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.content.ModContent;
-import dev.jstech.core.format.Unit;
-import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.machine.Byproduct;
 import dev.jstech.core.machine.MachineTexts;
 import dev.jstech.core.machine.ProcessingKind;
@@ -241,7 +239,7 @@ public final class ProcessingRecipeViews {
             return GameText.component(MachineTexts.RECIPE_TIME.with(seconds));
         }
         return GameText.component(MachineTexts.RECIPE_TIME_AND_ENERGY.with(seconds,
-                UnitFormatter.forCurrentLocale().compact(recipe.energyPerTick(), Unit.FE_PER_TICK)));
+                recipe.kind().energy().rate(recipe.energyPerTick())));
     }
 
     /* A line for a span from {@code least} to {@code most}, when it says anything at all. */

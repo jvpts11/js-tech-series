@@ -8,8 +8,6 @@
 package dev.jstech.core.client.guide;
 
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
-import dev.jstech.core.format.Unit;
-import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.guide.IRecipeWords;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
@@ -119,8 +117,7 @@ public final class GuideRecipes {
                 inputs.add(Arrays.asList(input.getItems()));
             }
             final Component energy = processing.energyPerTick() <= 0 ? Component.empty()
-                    : Component.literal(UnitFormatter.forCurrentLocale().compact(processing.energyPerTick(),
-                            Unit.FE_PER_TICK));
+                    : GameText.component(processing.kind().energy().rate(processing.energyPerTick()));
             return new View(inputs, List.copyOf(processing.outputs()), GameText.component(
                     MachineTexts.RECIPE_TIME.with(ProcessingViewLayout.seconds(processing.ticks()))), energy,
                     ProcessingRecipeViews.locked(processing), kind);

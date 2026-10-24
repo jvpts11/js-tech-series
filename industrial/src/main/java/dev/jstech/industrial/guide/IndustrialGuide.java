@@ -128,10 +128,10 @@ public final class IndustrialGuide {
                 .balloon(2, SIDE, "Energy goes out on every side.")
                 .note(SET_UP_NEXT)
                 .nextColumn()
-                .whatItIs("A block that burns fuel to make energy: 20 FE a tick while the fuel burns.")
-                .define("FE", "Forge Energy, the energy most machine mods count in. A generator makes it, a cable"
-                        + " carries it, a machine spends it.")
-                .define("Tick", "The game's beat: 20 ticks make a second.")
+                .whatItIs("A block that burns fuel to make energy: up to 5 kW, as much as the machines on it draw.")
+                .define("kW", "Kilowatts: how fast energy flows, a thousand joules a second. A generator makes it, a"
+                        + " cable carries it, a machine draws it.")
+                .define("kJ", "Kilojoules: an amount of energy, a thousand joules. A kilowatt for a second is one.")
                 .whatItIsFor("Powering the other machines, at the start, before anything better exists.")
                 .howToGetIt(FROM_THE_TAB)
                 .nextPage()
@@ -141,18 +141,18 @@ public final class IndustrialGuide {
                 .planOptional("any machine touching it (optional)")
                 .howToUseIt("Place the generator, and a machine against it.",
                         "Put fuel in its slot: coal, charcoal, planks, logs.",
-                        "One coal burns 1,600 ticks and makes 32,000 FE.",
-                        "It holds 16,000 FE and gives up to 1,000 FE twice a second.")
+                        "One coal holds 400 kJ: 80 seconds at the full 5 kW, longer when the machines draw less.",
+                        "It burns only what is drawn: with nothing drawing, it rests and keeps its fuel.")
                 .nextColumn()
                 .whatCanGoWrong("It works but nothing gets energy.",
                         "No machine or cable touches it, or its Sides tab closes that face. Put a machine against a"
                                 + " face, or lay Insulated Copper Cable.",
-                        "It stopped and its energy is full.",
-                        "Nothing takes its energy. While it is full it stops burning, and goes on when there is"
-                                + " room.",
+                        "It is not burning.",
+                        "Nothing draws its energy: it burns only what the machines take, and rests until they take"
+                                + " more.",
                         "A machine works in bursts.",
-                        "One generator makes 20 FE a tick; a Macerator spends 40. Put a second generator against"
-                                + " it.")
+                        "One generator makes 5 kW, enough for one machine: a Macerator draws 4 kW, a Compressor or"
+                                + " an Electric Furnace 3 kW. Put a second generator against them.")
                 .register();
     }
 
@@ -203,8 +203,8 @@ public final class IndustrialGuide {
                 .whatCanGoWrong("Nothing happens.",
                         "No power: the generator needs coal and must touch the Compressor.",
                         "It stops and starts.",
-                        "One generator makes 20 FE (units of power) a tick (a twentieth of a second); the"
-                                + " Compressor needs 30. Add a second generator.",
+                        "One generator makes 5 kW and the Compressor draws 3 kW: two machines on one generator take"
+                                + " turns. Add a second generator.",
                         "It stopped with ingots left.",
                         "The right box is full. Take the plates out.",
                         "An item just sits there.",
@@ -237,7 +237,8 @@ public final class IndustrialGuide {
                                 + " gives sulfur, and a little gold and silver.")
                 .nextColumn()
                 .whatCanGoWrong("It works in bursts.",
-                        "It spends 40 FE a tick and one generator makes 20. Add a second generator.",
+                        "It draws 4 kW and one generator makes 5 kW, enough for it alone: a second machine on the"
+                                + " same generator leaves it short. Add a second generator.",
                         "It stopped with ore left.",
                         "Its boxes on the right are full. Take the dust out.",
                         "An item just sits there.",
@@ -263,7 +264,7 @@ public final class IndustrialGuide {
                 .nextColumn()
                 .whatItIs("A furnace that runs on energy instead of fuel.")
                 .whatItIsFor("Smelting anything a furnace smelts, by the same recipes, in 8 seconds an item, a little"
-                        + " faster than a furnace, for 30 FE a tick.")
+                        + " faster than a furnace, drawing 3 kW.")
                 .howToGetIt(FROM_THE_TAB)
                 .nextPage()
                 .plan(SET_UP_PLAN)
@@ -275,7 +276,8 @@ public final class IndustrialGuide {
                         "Put what to smelt in the furnace's left box; take the result from the right one.")
                 .nextColumn()
                 .whatCanGoWrong("It stops and starts.",
-                        "It spends 30 FE a tick and one generator makes 20. Add a second generator.",
+                        "It draws 3 kW and one generator makes 5 kW, enough for it alone: a second machine on the"
+                                + " same generator leaves it short. Add a second generator.",
                         "An item just sits there.",
                         "A furnace does not smelt it either.")
                 .register();
@@ -296,13 +298,14 @@ public final class IndustrialGuide {
                 .howToUseIt("Place the generator and the machines.",
                         "Lay Insulated Copper Cable from the generator to each machine, like a line of blocks.",
                         "Add generators until the machines stop working in bursts.")
-                .subheading("What each machine spends")
-                .paragraph("Coal Generator: makes 20 FE a tick. Macerator: 40. Compressor: 30. Electric Furnace: 30.")
+                .subheading("What each machine draws")
+                .paragraph("Coal Generator: makes up to 5 kW. Macerator: draws 4 kW. Compressor: 3 kW. Electric"
+                        + " Furnace: 3 kW. All of them at low voltage.")
                 .nextPage()
-                .paragraph("The Insulated Copper Cable is the series' basic cable, J's Core's: it carries up to 500 FE"
-                        + " a tick and loses a tenth over a hundred blocks. It is laid in the shared cable block of the"
-                        + " series, in a lane of its own, so it runs beside the cables of other mods without joining"
-                        + " them.")
+                .paragraph("The Insulated Copper Cable is the series' basic cable, J's Core's: a low-voltage line"
+                        + " carrying up to 10 kW, losing a tenth over a hundred blocks. It is laid in the shared cable"
+                        + " block of the series, in a lane of its own, so it runs beside the cables of other mods"
+                        + " without joining them.")
                 .nextColumn()
                 .whatCanGoWrong("A machine on the cable gets nothing.",
                         "The cable does not reach it, or the generator has no fuel.",

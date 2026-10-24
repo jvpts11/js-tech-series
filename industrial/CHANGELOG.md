@@ -65,10 +65,33 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   from, how far the computing is and how long the rest takes, and researches it now or queues it; under the chart
   are what the group works now, its pace and the queue. Group draws the CRCs on their cable and tables what each
   computes, how much its team counts and each team's pace. Sides, Redstone and Protection are every machine's.
+- The contract of its machines: each says its tier, the class of J's Energy of its port and its power,
+  and has the upgrade slots of its tier, two on a machine of the T1, three on the T2 and T3, four from the T4. What
+  its upgrades gain adds up and what they save multiplies, so two upgrades that each make it half again as fast make
+  it twice as fast. Damaged, it runs at half speed and draws a quarter more, its upgrades idle until it is repaired.
+  As it works it gives off what it declares, a pollution on its chunk each second and a radiation while it runs,
+  which a shielding in its upgrade slots holds in; none of its machines gives off anything yet. Its generators follow
+  their load, burning only what is drawn from them.
+- The rules of its multiblocks: each is built of a material of its time, brick, wood or iron before the
+  T3 and steel from it, which sets how its blocks stand, sound and break; each says what its size gives, a longer one
+  more recipes at once; and its terminal is the whole machine screen, keeping what it holds while the structure
+  stands apart. The Computational Research Centre is one, of steel.
+- The kit of its grid equipment and its batteries: a transformer joins two neighbouring classes of
+  alternating current and an HVDC converter station the extra-high class to the ultra-high, each carrying up to the
+  ceiling of the higher class it joins, from the side the energy comes from, either way, making and losing nothing;
+  and a battery, an item of J's Energy at low voltage, which a machine's battery slot charges and draws on.
+- The wrench takes its machines away whole, and a multiblock's terminal with what it holds, the
+  structure forming again once the terminal is back.
 - Plant Drawings: the Science section opens, with drawings of the Computational Research Centre and its
   parts, of the research data and of research groups; and Fluids and Gases has one of hot water.
 
 ### Changed
+- Its machines run on J's Energy at low voltage, all of the T1: the Coal Generator makes up to 5 kW,
+  burning only what is drawn from it, so a coal lasts 80 seconds at its full power and longer when less is drawn; the
+  Macerator draws 4 kW, the Compressor and the Electric Furnace 3 kW. A machine holds two seconds of its work and takes
+  half a second of it at once, and a generator holds what it gives the machines touching it each half second. As it
+  comes, the world counts J's Energy as FE, a joule an FE, so the machines of other mods still meet them. Their
+  recipes, the recipe viewers and the Plant Drawings say their power in kW.
 - Plant Drawings: every machine is shown as its block, which the reader turns and brings closer, with
   its balloons on it, in place of its three line views.
 - The Macerator has six output boxes, for the dusts and the byproducts.
@@ -85,8 +108,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Coal Generator is a machine of the Core's: it gives its energy to the machines touching it twice
   a second, through the faces its Sides tab opens to energy, and while its store is full it stops burning, keeping
   what is left of the fuel, instead of burning it away.
-- The series' basic cable: its machines run on J's Core's Insulated Copper Cable, which carries 500 FE a
-  tick and loses a tenth over a hundred blocks, and the mod's own Energy Cable is gone. The cable and the Iron Dust,
+- The series' basic cable: its machines run on J's Core's Insulated Copper Cable, a low-voltage line
+  that carries 10 kW and loses a tenth over a hundred blocks, and the mod's own Energy Cable is gone. The cable and the Iron Dust,
   Iron Plate and Copper Plate are on the J's Tech tab, with the rest of what the mods of the series share.
 - The Tank is a block of the Core's: a bucket fills and empties it, and its item says what it carries.
 

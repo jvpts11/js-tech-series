@@ -19,9 +19,8 @@ import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.energy.VoltageClass;
-import dev.jstech.industrial.IndustrialModule;
-import dev.jstech.industrial.blockentity.CompressorBlockEntity;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestEnergyEnds;
 import dev.jstech.tests.testkit.TestCables;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -31,6 +30,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -101,10 +101,12 @@ public final class EnergyConverterGameTests {
         final BatteryBankBlockEntity battery = battery(helper);
         battery.store().setStored(SharedEnergy.BATTERY_CAPACITY);
         TestCables.lay(helper, CABLE, SharedEnergy.INSULATED_COPPER_CABLE);
-        helper.setBlock(MACHINE, IndustrialModule.COMPRESSOR.get());
+        // A machine of the game's energy alone: the test mod's FE taking end.
+        helper.setBlock(MACHINE, Blocks.EXPOSED_COPPER);
+        TestEnergyEnds.clear(helper.getLevel(), helper.absolutePos(MACHINE));
         helper.succeedWhen(() -> {
-            final CompressorBlockEntity machine = helper.getBlockEntity(MACHINE);
-            helper.assertTrue(machine.getEnergy().getEnergyStored() > 0, "it pushes FE into the machine");
+            helper.assertTrue(TestEnergyEnds.feStoreAt(helper.getLevel(), helper.absolutePos(MACHINE))
+                    .getEnergyStored() > 0, "it pushes FE into the machine");
             helper.assertTrue(battery.store().stored() < SharedEnergy.BATTERY_CAPACITY, "drawn from the battery");
         });
     }

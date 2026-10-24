@@ -93,7 +93,7 @@ public final class IndustrialFoundationsGameTests {
         final MaceratorBlockEntity macerator = helper.getBlockEntity(MACERATOR);
         macerator.own(Ownership.of(owner));
         macerator.getInventory().setStackInSlot(0, new ItemStack(Items.QUARTZ));
-        macerator.getEnergy().setEnergyStored(16_000);
+        helper.onEachTick(() -> macerator.power().generate(macerator.power().capacity()));
         helper.startSequence()
                 .thenExecuteAfter(20, () -> {
                     helper.assertTrue(macerator.status() == MachineStatus.LOCKED,

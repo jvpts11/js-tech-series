@@ -86,6 +86,18 @@ public final class CoreEnergy {
                 (stack, context) -> new ItemEnergyStorage(stack, capacity, maxReceive, maxExtract), items);
     }
 
+    /**
+     * Gives {@code items} a port of {@code energy} in {@code portClass} ({@link EnergyPorts#ITEM}), holding up to
+     * {@code capacity} of it in their {@link #ENERGY} component and taking and giving at most {@code maxReceive} and
+     * {@code maxExtract} at a time: a battery of a mod's own energy, which a machine's battery slot takes.
+     */
+    public static void holdsPort(final RegisterCapabilitiesEvent event, final ItemLike items, final Energy energy,
+                                 final EnergyClass portClass, final long capacity, final long maxReceive,
+                                 final long maxExtract) {
+        event.registerItem(EnergyPorts.ITEM, (stack, context) -> new ItemEnergyPort(stack, energy, portClass,
+                capacity, maxReceive, maxExtract), items);
+    }
+
     /** How the Core's energy grid of {@code level} moves energy, and what it moved in the last tick. */
     public static LevelEnergy of(final ServerLevel level) {
         return (LevelEnergy) CoreGrids.mover(level, GridKind.POWER).orElseThrow();

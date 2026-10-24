@@ -188,7 +188,7 @@ public final class BigBaseScenario {
             if (!machines.isEmpty()) {
                 hooks.add(() -> {
                     for (final MachineBlockEntity machine : machines) {
-                        machine.getEnergy().setEnergyStored(machine.getEnergy().getMaxEnergyStored());
+                        machine.power().generate(machine.power().capacity() - machine.power().stored());
                     }
                 });
             }

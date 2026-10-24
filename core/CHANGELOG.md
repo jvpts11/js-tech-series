@@ -176,6 +176,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   a title of its own, as a multiblock's terminal opens under its machine's name.
 - `CableType.THICKEST`, the thickest a cable is, and `CableItemModelProvider`, which writes the length of cable
   of every thickness that every mod's cable items are drawn from.
+- A machine's own rules for its upgrades and its damage, recipes in their own energy, and batteries of any
+  energy: J's Core's API stays at version 12, all experimental. `ProcessingMachineBlockEntity.combineUpgrades` is how
+  a machine's upgrades come together, `UpgradeEffect.combine` as before or `UpgradeEffect.addGains`, which adds what
+  each gains and multiplies what each saves. `MachineBlockEntity.damageRule` is what damage does to a machine, an
+  `IMachineDamage`: `GRADUAL` as before, or `flat(speed, energy)`, a set speed and draw while damaged at all, its
+  upgrades idle. `ProcessingKind.runsOn` names the energy a kind's machines run on, `energy()` reads it, and its
+  recipes show the power they draw in it. `ItemEnergyPort` is the energy an item holds of a mod's own energy, in one
+  class, and `CoreEnergy.holdsPort` makes items batteries of it.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

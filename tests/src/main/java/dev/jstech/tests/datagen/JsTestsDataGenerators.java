@@ -10,6 +10,7 @@ package dev.jstech.tests.datagen;
 import dev.jstech.core.datagen.BiomeClimateProvider;
 import dev.jstech.core.datagen.ContentCueProvider;
 import dev.jstech.core.datagen.ContentFluidTagsProvider;
+import dev.jstech.core.datagen.ContentItemTagsProvider;
 import dev.jstech.core.datagen.ContentItemModelProvider;
 import dev.jstech.core.datagen.ContentLanguageProvider;
 import dev.jstech.core.datagen.ContentPartModelProvider;
@@ -57,6 +58,8 @@ public final class JsTestsDataGenerators {
         generator.addProvider(event.includeServer(), DeclaredFilesProvider.reservoirs(output, JsTests.MODID));
         generator.addProvider(event.includeServer(), DeclaredFilesProvider.researchCosts(output, JsTests.MODID));
         generator.addProvider(event.includeServer(), new ContentFluidTagsProvider(output,
+                event.getLookupProvider(), TestSounds.CONTENT, event.getExistingFileHelper()));
+        generator.addProvider(event.includeServer(), new ContentItemTagsProvider(output,
                 event.getLookupProvider(), TestSounds.CONTENT, event.getExistingFileHelper()));
         generator.addProvider(event.includeClient(),
                 new ContentSoundProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));

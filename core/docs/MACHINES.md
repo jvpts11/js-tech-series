@@ -32,6 +32,14 @@ That one line registers a recipe type and its serializer named `mymod:pressing`,
 title "Pressing" (written to your language file as `mymod.recipe_kind.pressing`), and names the press as the
 machine that works it. Another machine can work the same kind too: `PRESSING.alsoWorkedBy(() -> BIG_PRESS)`.
 
+*Added 2026-10-24:* a kind whose machines run on an energy other than FE says so, so its recipes show the power they
+draw in that energy, `"4 kW"` and not FE a tick, in the manuals and the recipe viewers:
+
+```java
+public static final ProcessingKind PRESSING = CONTENT.processing("pressing", "Pressing", () -> MyContent.PRESS)
+        .runsOn(MyEnergy.ENERGY);
+```
+
 ## The machine
 
 *Added 2026-10-05.*
@@ -204,6 +212,17 @@ by implementing `IRepairKit`.
 ```java
 public static final ItemEntry<RepairKitItem> REPAIR_KIT = CONTENT.item("repair_kit",
         properties -> new RepairKitItem(properties, 200, 20)).register();   // 200 health in all, 20 a second
+```
+
+*Added 2026-10-24:* what damage does is the machine's rule, `damageRule()`, an `IMachineDamage`: the Core's
+`IMachineDamage.GRADUAL` above, or `IMachineDamage.flat(speed, energy)`, by which a machine damaged at all works at
+`speed` of whole, draws `energy` times as much a tick and leaves its upgrades idle until it is whole again:
+
+```java
+@Override
+protected IMachineDamage damageRule() {
+    return IMachineDamage.flat(0.5, 1.25);   // half speed, a quarter more energy, upgrades idle
+}
 ```
 
 ### Failing safe
@@ -524,6 +543,18 @@ CONTENT.item("speed_upgrade", properties -> new UpgradeItem(properties,
 
 What the upgrades do together is worked out again only when an upgrade slot changes; the Upgrades tab shows each
 effect as a bar.
+
+*Added 2026-10-24:* how the upgrades come together is the machine's to say, `combineUpgrades`. The Core's way,
+`UpgradeEffect.combine`, multiplies every effect; `UpgradeEffect.addGains` adds what each gains and multiplies what
+each saves, so two upgrades of 1.5 speed make a machine twice as fast, not 2.25 times, while two of 0.8 energy still
+leave it 0.64:
+
+```java
+@Override
+protected UpgradeEffect combineUpgrades(final List<UpgradeEffect.Counted> each) {
+    return UpgradeEffect.addGains(each);
+}
+```
 
 ## Setting up fast
 

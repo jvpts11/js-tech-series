@@ -3573,6 +3573,7 @@ stable 4
 10 dev.jstech.core.energy.CoreEnergy  static final Registry<EnergyUnit> UNITS
 10 dev.jstech.core.energy.CoreEnergy  static final ResourceKey<Registry<EnergyUnit>> UNITS_KEY
 10 dev.jstech.core.energy.CoreEnergy  static void holds(RegisterCapabilitiesEvent, ItemLike, long, int, int)
+12 dev.jstech.core.energy.CoreEnergy  static void holdsPort(RegisterCapabilitiesEvent, ItemLike, Energy, EnergyClass, long, long, long)
 10 dev.jstech.core.energy.CoreEnergy  static void listen(IEventBus)
 10 dev.jstech.core.energy.CoreEnergy  static void onNewRegistry(NewRegistryEvent)
 10 dev.jstech.core.energy.CoreEnergy  static void register(IEventBus)
@@ -3803,6 +3804,18 @@ stable 4
 10 dev.jstech.core.energy.IWrongClassRule  static final IWrongClassRule ANY
 10 dev.jstech.core.energy.IWrongClassRule  static final IWrongClassRule REFUSES
 10 dev.jstech.core.energy.IWrongClassRule  static final IWrongClassRule STANDARD
+12 dev.jstech.core.energy.ItemEnergyPort  type final class implements IEnergyPort
+12 dev.jstech.core.energy.ItemEnergyPort  Energy energy()
+12 dev.jstech.core.energy.ItemEnergyPort  EnergyClass portClass()
+12 dev.jstech.core.energy.ItemEnergyPort  boolean canExtract()
+12 dev.jstech.core.energy.ItemEnergyPort  boolean canReceive()
+12 dev.jstech.core.energy.ItemEnergyPort  long capacity()
+12 dev.jstech.core.energy.ItemEnergyPort  long extract(long, boolean)
+12 dev.jstech.core.energy.ItemEnergyPort  long receive(long, boolean)
+12 dev.jstech.core.energy.ItemEnergyPort  long stored()
+12 dev.jstech.core.energy.ItemEnergyPort  new(ItemStack, Energy, EnergyClass, long, long, long)
+12 dev.jstech.core.energy.ItemEnergyPort  void meetWrongClass(WrongClass, EnergyClass, long)
+12 dev.jstech.core.energy.ItemEnergyPort  void setStored(long)
 10 dev.jstech.core.energy.ItemEnergyStorage  type final class implements IEnergyStorage
 10 dev.jstech.core.energy.ItemEnergyStorage  boolean canExtract()
 10 dev.jstech.core.energy.ItemEnergyStorage  boolean canReceive()
@@ -7263,6 +7276,17 @@ stable 4
 10 dev.jstech.core.machine.FaceModes  type final class
 10 dev.jstech.core.machine.FaceModes  static List<FaceMode> round()
 10 dev.jstech.core.machine.FaceSlot  type record(int index, int x, int y, boolean output)
+12 dev.jstech.core.machine.IMachineDamage  type interface
+12 dev.jstech.core.machine.IMachineDamage  abstract UpgradeEffect effect(MachineHealth, UpgradeEffect)
+12 dev.jstech.core.machine.IMachineDamage  abstract double workShare(MachineHealth)
+12 dev.jstech.core.machine.IMachineDamage  static IMachineDamage flat(double, double)
+12 dev.jstech.core.machine.IMachineDamage  static final IMachineDamage GRADUAL
+12 dev.jstech.core.machine.IMachineDamage.Flat  type record(double speed, double energy) implements IMachineDamage
+12 dev.jstech.core.machine.IMachineDamage.Flat  UpgradeEffect effect(MachineHealth, UpgradeEffect)
+12 dev.jstech.core.machine.IMachineDamage.Flat  double workShare(MachineHealth)
+12 dev.jstech.core.machine.IMachineDamage.Gradual  type record() implements IMachineDamage
+12 dev.jstech.core.machine.IMachineDamage.Gradual  UpgradeEffect effect(MachineHealth, UpgradeEffect)
+12 dev.jstech.core.machine.IMachineDamage.Gradual  double workShare(MachineHealth)
 10 dev.jstech.core.machine.IMachineParameters  type interface
 10 dev.jstech.core.machine.IMachineParameters  abstract List<MachineParameter> parameters()
 10 dev.jstech.core.machine.IMachineParameters  default Optional<MachineParameter> parameter(String)
@@ -7337,6 +7361,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  protected IItemHandler itemsIn(int)
 10 dev.jstech.core.machine.MachineBlockEntity  protected IItemHandler itemsOut()
 10 dev.jstech.core.machine.MachineBlockEntity  protected IItemHandler itemsOut(int)
+12 dev.jstech.core.machine.MachineBlockEntity  protected IMachineDamage damageRule()
 10 dev.jstech.core.machine.MachineBlockEntity  protected IMatterHandler matterHandler(MatterState)
 10 dev.jstech.core.machine.MachineBlockEntity  protected List<MatterTank> matterIn(MatterState)
 10 dev.jstech.core.machine.MachineBlockEntity  protected List<MatterTank> matterOut(MatterState)
@@ -8025,11 +8050,13 @@ stable 4
 10 dev.jstech.core.machine.ProcessingInput  static final double AMBIENT_KELVIN
 10 dev.jstech.core.machine.ProcessingInput  static final double AMBIENT_KPA
 10 dev.jstech.core.machine.ProcessingKind  type final class
+12 dev.jstech.core.machine.ProcessingKind  Energy energy()
 10 dev.jstech.core.machine.ProcessingKind  List<ItemLike> machines()
 10 dev.jstech.core.machine.ProcessingKind  List<RecipeHolder<ProcessingRecipe>> all(Level)
 10 dev.jstech.core.machine.ProcessingKind  List<RecipeHolder<ProcessingRecipe>> findAll(Level, ProcessingInput)
 10 dev.jstech.core.machine.ProcessingKind  Optional<RecipeHolder<ProcessingRecipe>> find(Level, ProcessingInput)
 10 dev.jstech.core.machine.ProcessingKind  ProcessingKind alsoWorkedBy(Supplier<? extends ItemLike>)
+12 dev.jstech.core.machine.ProcessingKind  ProcessingKind runsOn(Energy)
 10 dev.jstech.core.machine.ProcessingKind  RecipeSerializer<ProcessingRecipe> newSerializer()
 10 dev.jstech.core.machine.ProcessingKind  RecipeSerializer<ProcessingRecipe> serializer()
 10 dev.jstech.core.machine.ProcessingKind  RecipeType<ProcessingRecipe> type()
@@ -8068,6 +8095,7 @@ stable 4
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  protected MachineStatus work(ServerLevel)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  protected Optional<Processing> byKind(Level, ProcessingKind, ProcessingInput)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  protected Set<MachineResource> resources()
+12 dev.jstech.core.machine.ProcessingMachineBlockEntity  protected UpgradeEffect combineUpgrades(List<UpgradeEffect.Counted>)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  protected UpgradeEffect effect()
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  protected abstract Optional<Processing> process(Level, ProcessingInput)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  protected double inputShare()
@@ -8211,6 +8239,7 @@ stable 4
 10 dev.jstech.core.machine.UpgradeEffect  long spent(long)
 10 dev.jstech.core.machine.UpgradeEffect  long storage(long)
 10 dev.jstech.core.machine.UpgradeEffect  new(double, double)
+12 dev.jstech.core.machine.UpgradeEffect  static UpgradeEffect addGains(List<Counted>)
 10 dev.jstech.core.machine.UpgradeEffect  static UpgradeEffect combine(List<Counted>)
 10 dev.jstech.core.machine.UpgradeEffect  static final UpgradeEffect NONE
 10 dev.jstech.core.machine.UpgradeEffect  static final int MOST_PARALLEL

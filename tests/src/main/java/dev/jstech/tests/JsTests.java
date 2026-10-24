@@ -82,6 +82,10 @@ public final class JsTests {
         TestMechanical.declare();
         // A tank of any size the player builds block by block, to prove multiblocks that form in the world.
         TestStructures.declare();
+        // A battery of brick ovens declared as J's Industrial declares its multiblocks, to prove its rules.
+        TestOvenBattery.declare();
+        // A transformer and a battery on J's Industrial's energy contract.
+        TestIndustrialEnergy.declare();
         // Robots that walk, fly and swim, a bolt, a slug and two creatures, to prove the Core's entities.
         TestEntities.declare();
         // A helmet that takes modules, two modules and a robots' charging station.

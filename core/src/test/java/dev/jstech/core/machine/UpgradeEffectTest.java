@@ -38,6 +38,35 @@ class UpgradeEffectTest {
     }
 
     @Test
+    void addGains_addsWhatEachGainsSoFourMotorsMakeAMachineThreeTimesAsFast() {
+        final UpgradeEffect effect = UpgradeEffect.addGains(List.of(
+                new UpgradeEffect.Counted(new UpgradeEffect(1.5, 1.75), 4)));
+        assertEquals(3.0, effect.speed(), 1e-9);
+        assertEquals(4.0, effect.energy(), 1e-9);
+        assertEquals(4.0 / 3.0, effect.energy() / effect.speed(), 1e-9, "a third more energy an item");
+    }
+
+    @Test
+    void addGains_multipliesSavingsSoFourDrivesLeaveFortyOnePercent() {
+        final UpgradeEffect effect = UpgradeEffect.addGains(List.of(
+                new UpgradeEffect.Counted(new UpgradeEffect(1.0, 0.8), 4)));
+        assertEquals(0.4096, effect.energy(), 1e-9);
+        assertEquals(1.0, effect.speed(), 1e-9);
+    }
+
+    @Test
+    void addGains_appliesTheSavingsToWhatTheGainsAddUpTo() {
+        final UpgradeEffect effect = UpgradeEffect.addGains(List.of(
+                new UpgradeEffect.Counted(new UpgradeEffect(1.5, 1.75), 2),
+                new UpgradeEffect.Counted(new UpgradeEffect(1.0, 0.8), 2),
+                new UpgradeEffect.Counted(UpgradeEffect.NONE.withParallel(1), 3)));
+        assertEquals(2.0, effect.speed(), 1e-9);
+        assertEquals(2.5 * 0.64, effect.energy(), 1e-9);
+        assertEquals(3, effect.parallel());
+        assertEquals(UpgradeEffect.NONE, UpgradeEffect.addGains(List.of()));
+    }
+
+    @Test
     void combine_staysFiniteWithAGreatManyUpgrades() {
         final UpgradeEffect effect = UpgradeEffect.combine(List.of(
                 new UpgradeEffect.Counted(new UpgradeEffect(10.0, 10.0), 400)));

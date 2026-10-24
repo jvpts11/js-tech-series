@@ -19,6 +19,7 @@ import dev.jstech.core.content.ModContent;
 import dev.jstech.core.item.FluidBlockItem;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SharedUses;
+import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
@@ -64,14 +65,16 @@ public final class IndustrialModule {
     /** The tab's last shelf: the mod's manual. */
     public static final ContentTab.Section MANUALS = INDUSTRIAL_TAB.section();
 
-    // Recipes: the kinds of the processing machines, each a recipe type of its own, read the Core's way.
+    // Recipes: the kinds of the processing machines, each a recipe type of its own, read the Core's way, their
+    // machines on J's Energy, so their recipes show the power they draw.
 
     /** Grinding: an ore or a block into its dusts. */
     public static final ProcessingKind MACERATING =
-            CONTENT.processing("macerating", "Macerating", () -> IndustrialModule.MACERATOR);
+            CONTENT.processing("macerating", "Macerating", () -> IndustrialModule.MACERATOR).runsOn(JsEnergy.ENERGY);
     /** Pressing: an ingot into a plate. */
     public static final ProcessingKind COMPRESSING =
-            CONTENT.processing("compressing", "Compressing", () -> IndustrialModule.COMPRESSOR);
+            CONTENT.processing("compressing", "Compressing", () -> IndustrialModule.COMPRESSOR)
+                    .runsOn(JsEnergy.ENERGY);
 
     /*
      * Machines, in the order the tab shows them: each is ticked by the Core's machine kit, which runs its work, its

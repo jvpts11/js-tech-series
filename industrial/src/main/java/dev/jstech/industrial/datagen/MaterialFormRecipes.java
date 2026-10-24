@@ -57,9 +57,9 @@ public final class MaterialFormRecipes {
     /* The machines in the game, by their routes' names, with their recipe kinds, time and energy. */
     private static final Map<String, Machine> MACHINES = Map.of(
             "compressor", new Machine(IndustrialModule.COMPRESSING, COMPRESSING_TICKS,
-                    CompressorBlockEntity.FE_PER_TICK),
+                    (int) CompressorBlockEntity.RATING.joulesPerTick()),
             "macerator", new Machine(IndustrialModule.MACERATING, MACERATING_TICKS,
-                    MaceratorBlockEntity.FE_PER_TICK));
+                    (int) MaceratorBlockEntity.RATING.joulesPerTick()));
 
     private MaterialFormRecipes() {
     }
@@ -86,7 +86,7 @@ public final class MaterialFormRecipes {
     /** Adds a macerating recipe under the {@code macerating/} prefix; the one place the grinding cost is set. */
     static ProcessingRecipeBuilder macerating(final Ingredient ingredient, final ItemStack result) {
         return ProcessingRecipeBuilder.of(IndustrialModule.MACERATING).input(ingredient, 1).output(result)
-                .ticks(MACERATING_TICKS).energyPerTick(MaceratorBlockEntity.FE_PER_TICK);
+                .ticks(MACERATING_TICKS).energyPerTick((int) MaceratorBlockEntity.RATING.joulesPerTick());
     }
 
     /** The {@code c:} common item tag at {@code path}. */

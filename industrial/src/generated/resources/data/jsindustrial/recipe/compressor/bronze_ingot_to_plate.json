@@ -1,6 +1,6 @@
 {
   "type": "jsindustrial:compressing",
-  "energy_per_tick": 30,
+  "energy_per_tick": 150,
   "inputs": [
     {
       "count": 1,

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.machine;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,6 +39,8 @@ public record UpgradeEffect(double speed, double energy, int parallel, double yi
     public static final UpgradeEffect NONE = new UpgradeEffect(1.0, 1.0, 0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
     /** The most recipes at once a machine works besides the first, however many upgrades say more. */
     public static final int MOST_PARALLEL = 1_024;
+    /* How many factors an effect has besides its recipes at once. */
+    private static final int FACTORS = 8;
 
     public UpgradeEffect {
         if (!(speed > 0.0) || Double.isInfinite(speed)) {
@@ -89,6 +92,37 @@ public record UpgradeEffect(double speed, double energy, int parallel, double yi
         // product stays at the largest (or, for slowing ones, the smallest) value it can.
         return new UpgradeEffect(within(speed), finite(energy), (int) Math.min(MOST_PARALLEL, parallel),
                 finite(yield), finite(byproducts), finite(use), finite(heat), finite(sound), within(buffer));
+    }
+
+    /**
+     * What every upgrade in {@code each} does together where gains add up and savings multiply, as a mod whose
+     * upgrades are real parts says: a factor above 1 adds what it gains, a factor below 1 multiplies, so four motors of
+     * half again as fast make a machine 3 times as fast, and four drives of a fifth less energy leave it at 41%. Its
+     * recipes at once add up, as in {@link #combine}.
+     */
+    public static UpgradeEffect addGains(final List<Counted> each) {
+        final double[] gains = new double[FACTORS];
+        final double[] savings = new double[FACTORS];
+        Arrays.fill(savings, 1.0);
+        long parallel = 0L;
+        for (final Counted counted : each) {
+            final double[] factors = counted.effect().factors();
+            for (int k = 0; k < FACTORS; k++) {
+                if (factors[k] >= 1.0) {
+                    gains[k] += (factors[k] - 1.0) * counted.count();
+                } else {
+                    savings[k] *= Math.pow(factors[k], counted.count());
+                }
+            }
+            parallel += (long) counted.effect().parallel() * counted.count();
+        }
+        final double[] together = new double[FACTORS];
+        for (int k = 0; k < FACTORS; k++) {
+            together[k] = (1.0 + gains[k]) * savings[k];
+        }
+        return new UpgradeEffect(within(together[0]), finite(together[1]), (int) Math.min(MOST_PARALLEL, parallel),
+                finite(together[2]), finite(together[3]), finite(together[4]), finite(together[5]),
+                finite(together[6]), within(together[7]));
     }
 
     /** The same, {@code to} times as fast. */
@@ -180,6 +214,11 @@ public record UpgradeEffect(double speed, double energy, int parallel, double yi
     /** The energy a store of {@code capacity} holds with this effect, at least one. */
     public long storage(final long capacity) {
         return Math.max(1L, (long) Math.min(Long.MAX_VALUE, Math.floor(capacity * buffer)));
+    }
+
+    /* Its factors, in the order addGains works them: speed, energy, yield, byproducts, use, heat, sound, buffer. */
+    private double[] factors() {
+        return new double[] {speed, energy, yield, byproducts, use, heat, sound, buffer};
     }
 
     private static double within(final double factor) {

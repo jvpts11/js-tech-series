@@ -59,8 +59,7 @@ public final class SharedEnergyGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void battery_feedsAnFeMachineAlongTheBasicCableWhileTheSeriesSpeaksFe(
-            final GameTestHelper helper) {
+    public static void battery_feedsAMachineAlongTheBasicCable(final GameTestHelper helper) {
         helper.assertTrue(JsEnergy.speaksFe(), "J's Energy is off, as it comes");
         final BatteryBankBlockEntity battery = battery(helper);
         battery.store().setStored(SharedEnergy.BATTERY_CAPACITY);
@@ -70,7 +69,7 @@ public final class SharedEnergyGameTests {
         }
         helper.succeedWhen(() -> {
             final CompressorBlockEntity machine = helper.getBlockEntity(MACHINE);
-            helper.assertTrue(machine.getEnergy().getEnergyStored() > 0, "the machine's FE comes from the battery");
+            helper.assertTrue(machine.power().stored() > 0, "the machine's energy comes from the battery");
             helper.assertTrue(battery.store().stored() < SharedEnergy.BATTERY_CAPACITY, "which gives it");
         });
     }

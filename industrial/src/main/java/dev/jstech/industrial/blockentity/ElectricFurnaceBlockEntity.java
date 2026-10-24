@@ -7,9 +7,12 @@
  */
 package dev.jstech.industrial.blockentity;
 
+import dev.jstech.core.jstechseries.energy.JsEnergy;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import dev.jstech.core.machine.ProcessingInput;
-import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.IndustrialModule;
+import dev.jstech.industrial.machine.IndustrialProcessingMachine;
+import dev.jstech.industrial.machine.MachineRating;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -18,19 +21,17 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * The Electric Furnace: smelts its input by the game's own smelting recipes, spending {@value #FE_PER_TICK} FE per
- * tick over {@value #PROCESS_TIME} ticks (Tier 1).
+ * The Electric Furnace: smelts its input by the game's own smelting recipes, drawing 3 kW at low voltage over
+ * {@value #PROCESS_TIME} ticks (Tier 1).
  */
-public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
+public class ElectricFurnaceBlockEntity extends IndustrialProcessingMachine {
 
-    public static final int FE_PER_TICK = 30;
+    /** A T1 machine on low voltage, drawing 3 kW as it works, as a small electric furnace does. */
+    public static final MachineRating RATING = MachineRating.of(IndustrialTier.T1, JsEnergy.LOW, 3_000);
     public static final int PROCESS_TIME = 160;
-    private static final int ENERGY_CAPACITY = 12_000;
-    private static final int ENERGY_MAX_RECEIVE = 600;
 
     public ElectricFurnaceBlockEntity(final BlockPos pos, final BlockState state) {
-        super(IndustrialModule.ELECTRIC_FURNACE_BE.get(), pos, state, Layout.items(1, 1), ENERGY_CAPACITY,
-                ENERGY_MAX_RECEIVE, FE_PER_TICK);
+        super(IndustrialModule.ELECTRIC_FURNACE_BE.get(), pos, state, RATING, Layout.items(1, 1));
     }
 
     @Override

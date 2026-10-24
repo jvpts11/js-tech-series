@@ -17,18 +17,19 @@ import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.grid.LineGroups;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.multiblock.MultiblockPorts;
 import dev.jstech.industrial.IndustrialModule;
+import dev.jstech.industrial.multiblock.CasingMaterial;
+import dev.jstech.industrial.multiblock.IndustrialMultiblock;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
@@ -41,8 +42,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  */
 public final class CrcContent {
 
-    /* Every block of it: steel cabinets, painted. */
-    private static final float STRENGTH = 3.5F;
+    /** What it is as a multiblock: of the T3, so its cabinets are steel, painted; of one size. */
+    public static final IndustrialMultiblock CRC = IndustrialMultiblock.of(IndustrialTier.T3, CasingMaterial.STEEL);
     private static final String CASING_TEXTURE = "block/crc/crc_casing";
     /* The formed model's register lamps, which blink while it works. */
     private static final int LAMPS = 12;
@@ -119,11 +120,10 @@ public final class CrcContent {
 
     /* A block of the structure with nothing of its own, which merges into the formed model. */
     private static BlockBuilder<Block> structural(final String path) {
-        return IndustrialModule.CONTENT.block(path, Block::new)
-                .properties(properties -> properties.mapColor(MapColor.SAND).strength(STRENGTH).sound(SoundType.METAL)
-                        .requiresCorrectToolForDrops())
+        return CRC.built(IndustrialModule.CONTENT.block(path, Block::new))
+                .properties(properties -> properties.mapColor(MapColor.SAND))
                 .look(IBlockLook.fixed(new IBlockModel.CubeAll(path, "block/crc/" + path)))
-                .item().tab(IndustrialModule.RESEARCH).tag(BlockTags.MINEABLE_WITH_PICKAXE);
+                .item().tab(IndustrialModule.RESEARCH);
     }
 
     /*
@@ -131,13 +131,12 @@ public final class CrcContent {
      * nothing of its own while the structure stands formed.
      */
     private static BlockBuilder<CrcBlock> facing(final String path, final Device<?> device) {
-        return IndustrialModule.CONTENT.block(path, properties -> new CrcBlock(properties, device))
-                .properties(properties -> properties.mapColor(MapColor.SAND).strength(STRENGTH).sound(SoundType.METAL)
-                        .requiresCorrectToolForDrops())
+        return CRC.built(IndustrialModule.CONTENT.block(path, properties -> new CrcBlock(properties, device)))
+                .properties(properties -> properties.mapColor(MapColor.SAND))
                 .look(IBlockLook.facing(new IBlockModel.Orientable(path, CASING_TEXTURE, "block/crc/" + path,
                         CASING_TEXTURE)).whileOn(CrcBlock.FORMED, new IBlockModel.ParticleOnly(path + "_formed",
                         CASING_TEXTURE)))
-                .item().tab(IndustrialModule.RESEARCH).tag(BlockTags.MINEABLE_WITH_PICKAXE);
+                .item().tab(IndustrialModule.RESEARCH);
     }
 
     /* An entry of its rear: a block of the structure through which something comes in or goes out. */

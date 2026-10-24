@@ -10,13 +10,20 @@ The machines follow the real history of industry: each tier has the machines of 
 ## What exists today
 
 - J's Core has a **processing machine** for any mod: input and output slots, tanks, upgrade slots, and the recipes every
-  kind of machine shares. Pipes put into its inputs and its upgrade slots and take from anywhere. Upgrades multiply its
-  speed and the energy it spends.
+  kind of machine shares. Pipes put into its inputs and its upgrade slots and take from anywhere. A mod says how its
+  upgrades come together and what damage does.
 - J's Core has **multiblocks**: a shape drawn in layers, a terminal that checks the blocks in the world make it, in
-  any of the four horizontal directions, and ports at fixed places of the shape (items, fluids, energy, in or out). The
+  any of the four horizontal directions, ports and entries at the places of the shape, and a slice that repeats. The
   shapes are data.
+- J's Industrial's machines keep its contract: each says its tier, the class of its port and its power; it has the
+  upgrade slots of its tier, whose gains add up and whose savings multiply; damaged, it runs at half speed and draws a
+  quarter more, its upgrades idle; it gives off what it declares as it works, its radiation held in by a shielding in
+  its upgrade slots (no machine gives off anything yet); and a wrench takes it away whole.
+- J's Industrial's multiblocks keep their rules: a material of their time (brick, wood or iron before the T3, steel
+  from it), what their size gives, and a terminal that is the whole screen and keeps what it holds. The Computational
+  Research Centre is the first ([Science](science.md)).
 - J's Industrial has the **Electric Furnace**, the **Macerator** and the **Compressor**, and the Coal Generator
-  ([Energy](energy.md)).
+  ([Energy](energy.md)), all of the T1 at low voltage.
 
 ## To build
 

@@ -7,85 +7,84 @@
  */
 package dev.jstech.industrial.blockentity;
 
-import dev.jstech.core.blockentity.FieldEnergyStorage;
-import dev.jstech.core.blockentity.IntField;
+import dev.jstech.core.blockentity.LongField;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.energy.JsEnergy;
+import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import dev.jstech.core.machine.FaceSlot;
-import dev.jstech.core.machine.MachineBlockEntity;
-import dev.jstech.core.machine.MachineResource;
 import dev.jstech.core.machine.MachineScreenLayout;
-import dev.jstech.core.machine.MachineSides;
-import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.industrial.IndustrialModule;
+import dev.jstech.industrial.machine.IndustrialGenerator;
+import dev.jstech.industrial.machine.MachineRating;
 import java.util.List;
-import java.util.Objects;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * The Coal Generator, the first FE source: burns furnace fuel (coal, charcoal and the like) to make
- * {@value #FE_PER_TICK} FE per tick while it has burn time left and room for what it makes.
- *
- * <p>It is a machine of the Core's, worked by its kit: it shows its fuel slot and its energy on the screen every
- * machine has, and pushes what it stores into the blocks beside it through the faces its Sides tab gives energy out
- * of, as it does from the start, at most {@value #ENERGY_MAX_EXTRACT} FE a tick.
+ * The Coal Generator, the first source of energy: a small steam set with its water loop closed inside, making up to
+ * 5 kW at low voltage from furnace fuel (coal, charcoal and the like). It follows its load: it burns only what the
+ * grid draws, so a piece of fuel lasts as long as a furnace burns it at the generator's full power, and longer when
+ * less is drawn ({@link IndustrialGenerator}).
  */
-public class CoalGeneratorBlockEntity extends MachineBlockEntity {
+public class CoalGeneratorBlockEntity extends IndustrialGenerator {
 
-    private final IntField burnTime;
-    private final IntField maxBurnTime;
+    private final LongField fuelLeft;
+    private final LongField fuelOfPiece;
 
+    /** A T1 generator on low voltage, making up to 5 kW. */
+    public static final MachineRating RATING = MachineRating.of(IndustrialTier.T1, JsEnergy.LOW, 5_000);
     public static final int FUEL_SLOT = 0;
-    public static final int FE_PER_TICK = 20;
-    private static final int ENERGY_CAPACITY = 16_000;
-    private static final int ENERGY_MAX_EXTRACT = 1_000;
-    private static final int TICKS_A_SECOND = 20;
 
     public CoalGeneratorBlockEntity(final BlockPos pos, final BlockState state) {
-        super(IndustrialModule.COAL_GENERATOR_BE.get(), pos, state, 1, ENERGY_CAPACITY, 0, ENERGY_MAX_EXTRACT);
-        this.burnTime = fields().integer("BurnTime", 0).save().toMenu();
-        this.maxBurnTime = fields().integer("MaxBurnTime", 0).save().toMenu();
+        super(IndustrialModule.COAL_GENERATOR_BE.get(), pos, state, 1, RATING);
+        this.fuelLeft = fields().longInteger("FuelLeft", 0L).save().toMenu();
+        this.fuelOfPiece = fields().longInteger("FuelOfPiece", 0L).save().toMenu();
         getInventory().accepts((slot, stack) -> stack.getBurnTime(null) > 0);
-        // A generator placed beside a machine feeds it, unless its Sides tab says otherwise.
-        sides().setAutomation(MachineResource.ENERGY,
-                MachineSides.Automation.NONE.pushing(true, ENERGY_MAX_EXTRACT * TICKS_A_SECOND));
     }
 
+    /** The energy a piece of {@code fuel} holds, in joules: as long as a furnace burns it, at the full 5 kW. */
+    public static long joulesOf(final ItemStack fuel) {
+        return fuel.getBurnTime(null) * RATING.joulesPerTick();
+    }
+
+    /** Whether a piece of fuel is lit, with energy left in it. */
     public boolean isBurning() {
-        return burnTime.get() > 0;
+        return this.fuelLeft.get() > 0;
+    }
+
+    /** The energy left in the piece of fuel lit, in joules. */
+    public long fuelLeft() {
+        return this.fuelLeft.get();
     }
 
     @Override
     public List<FaceSlot> mainSlots() {
-        final var at = MachineScreenLayout.laneSlot(0, 1, 0, false, 1);
+        final GuiLayout.SlotPosition at = MachineScreenLayout.laneSlot(0, 1, 0, false, 1);
         return List.of(new FaceSlot(FUEL_SLOT, at.x(), at.y(), false));
     }
 
     @Override
-    protected MachineStatus work(final ServerLevel level) {
-        final FieldEnergyStorage energy = Objects.requireNonNull(getEnergy(), "the Coal Generator runs on FE");
-        if (energy.getEnergyStored() >= energy.getMaxEnergyStored()) {
-            return MachineStatus.OUTPUT_FULL;
+    protected long burn(final long joules) {
+        long covered = 0L;
+        while (covered < joules && (this.fuelLeft.get() > 0 || lightFuel())) {
+            final long taken = Math.min(joules - covered, this.fuelLeft.get());
+            this.fuelLeft.set(this.fuelLeft.get() - taken);
+            covered += taken;
         }
-        if (burnTime.get() <= 0 && !lightFuel()) {
-            return MachineStatus.WAITING;
-        }
-        burnTime.add(-1);
-        energy.generate(FE_PER_TICK);
-        return MachineStatus.WORKING;
+        return covered;
     }
 
     @Override
     protected double progressShare() {
-        return maxBurnTime.get() == 0 ? 0.0 : (double) burnTime.get() / maxBurnTime.get();
+        return this.fuelOfPiece.get() == 0 ? 0.0 : (double) this.fuelLeft.get() / this.fuelOfPiece.get();
     }
 
     /* Takes the next piece of fuel from its slot and lights it, giving back what it leaves (a lava bucket's bucket). */
     private boolean lightFuel() {
         final ItemStack fuel = getInventory().getStackInSlot(FUEL_SLOT);
-        final int duration = fuel.getBurnTime(null);
-        if (duration <= 0) {
+        final long joules = joulesOf(fuel);
+        if (joules <= 0) {
             return false;
         }
         final ItemStack remainder = fuel.getCraftingRemainingItem();
@@ -93,8 +92,8 @@ public class CoalGeneratorBlockEntity extends MachineBlockEntity {
         if (!remainder.isEmpty() && getInventory().getStackInSlot(FUEL_SLOT).isEmpty()) {
             getInventory().setStackInSlot(FUEL_SLOT, remainder);
         }
-        burnTime.set(duration);
-        maxBurnTime.set(duration);
+        this.fuelLeft.set(joules);
+        this.fuelOfPiece.set(joules);
         return true;
     }
 }

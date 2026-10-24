@@ -180,6 +180,16 @@ burnFuelFor(made);
 ([Content](CONTENT.md#items-that-hold-things)); `.holdsEnergy()` on an entity's, for one that implements
 `IEnergyHolder` (a vehicle's battery, a robot), does the same for entities.
 
+*Added 2026-10-24:* an item can hold an energy of a mod's own, in one class of it, as a port
+(`EnergyPorts.ITEM`, an `ItemEnergyPort`): a battery a machine's battery slot charges and draws on. Its charge is the
+item's `CoreEnergy.ENERGY` component, so it goes with the item. Give your items it from the mod bus's
+`RegisterCapabilitiesEvent`:
+
+```java
+CoreEnergy.holdsPort(event, MyItems.BATTERY.get(), MyEnergy.ENERGY, MyEnergy.LOW,
+        2_500_000L, 1_000L, 1_000L);   // holds 2.5 MJ, takes and gives 1 kJ a tick at most
+```
+
 ### Other units
 
 A mod that counts energy in a unit of its own registers an `EnergyUnit` in `CoreEnergy.UNITS`, with its name, its

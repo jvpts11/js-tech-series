@@ -12,13 +12,19 @@ machine is one machine, and it plugs into one class.
 
 ## What exists today
 
-- J's Core moves FE through the power lines of its cable block, in the same tick and with no buffer in the cables: each
-  generator's energy is split among the consumers it reaches, in proportion, without a unit lost or created by rounding.
-  A cable can lose thousandths of what crosses each block of it, added up along the way; no cable sets a loss yet.
-- J's Core has the seven energy tiers as a type, with their ceilings.
-- J's Industrial has one **Energy Cable**, with no ceiling and no loss, the **Coal Generator** (it burns furnace fuel
-  and makes 20 FE per tick, 400 W) and three machines that draw FE: the Electric Furnace, the Macerator and the
-  Compressor.
+- J's Core moves energy through the lines of its cable block, in the same tick and with no buffer in the cables: each
+  generator's energy is split among the consumers it reaches, in proportion, without a unit lost or created by rounding,
+  and a line loses its share of what crosses each block of it, added up along the way.
+- J's Core has **J's Energy**, with its five classes, its ceilings, what a line of the wrong class does, and the bridge
+  with FE, off as it comes; its basic line is the **Insulated Copper Cable** (low, 10 kW, a tenth lost over a hundred
+  blocks), its basic storage the **Lead-Acid Battery Bank**, and the **Energy Converters** stand between FE and it.
+- J's Industrial's machines run on it, all of the T1 at low voltage: the **Coal Generator** makes up to 5 kW and
+  follows its load, burning only what is drawn from it; the **Macerator** draws 4 kW, the **Electric Furnace** and the
+  **Compressor** 3 kW.
+- J's Industrial has the kit of its **grid equipment** (a transformer between neighbouring classes, an HVDC converter
+  station between the extra-high and the ultra-high, each carrying up to the ceiling of the higher class, either way)
+  and of its **batteries** (items of J's Energy at low voltage, which a machine's battery slot charges and draws on);
+  none of their blocks and items is built yet.
 
 ## To build
 

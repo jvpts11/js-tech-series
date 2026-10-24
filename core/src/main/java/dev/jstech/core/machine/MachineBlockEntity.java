@@ -795,6 +795,11 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return UpgradeEffect.NONE;
     }
 
+    /** What damage does to its work: slower with the damage, from whole down to half, unless its mod says otherwise. */
+    protected IMachineDamage damageRule() {
+        return IMachineDamage.GRADUAL;
+    }
+
     /** Adds to its setup what only a machine of its kind can take: its input locks, the recipe picked. */
     protected void writeSetup(final CompoundTag setup, final HolderLookup.Provider registries) {
     }

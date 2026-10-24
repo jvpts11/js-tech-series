@@ -19,14 +19,14 @@ pack adds, changes or removes recipes with no code:
   "inputs": [ { "tag": "c:ores/tin", "count": 1 } ],
   "outputs": [ { "id": "mymod:tin_dust", "count": 2 } ],
   "ticks": 200,
-  "energy_per_tick": 40
+  "energy_per_tick": 200
 }
 ```
 
 The format is the Core's processing recipe, described field by field in
 [the Core's Machines page](../../core/docs/MACHINES.md#recipes): items and fluids in and out, the ticks it takes
-(200 when left out) and the energy a tick (the machine's own when left out or 0: 40 FE for the Macerator, 30 for
-the Compressor). Each machine has one input slot; the Compressor one output slot, the Macerator six, for the dusts of
+(200 when left out) and the energy a tick, in joules of J's Energy (the machine's own when left out or 0: 200 J,
+4 kW, for the Macerator, 150 J, 3 kW, for the Compressor). Each machine has one input slot; the Compressor one output slot, the Macerator six, for the dusts of
 what an ore is mined for and the byproducts it gives. The mod's byproducts are counted, never by chance
 (`"share"`, [counted byproducts](../../core/docs/MACHINES.md#counted-byproducts)).
 
@@ -61,21 +61,26 @@ scraps, a form of the mod's own), so other mods' recipes that ask for those tags
 
 *Added 2026-06-05.*
 
-Every machine offers the game's standard capabilities on every side:
+*Changed 2026-10-24: the machines run on J's Energy.*
+
+Every machine offers these on every side its Sides tab opens:
 
 | What | Who can reach it | Notes |
 | --- | --- | --- |
 | Items (`Capabilities.ItemHandler.BLOCK`) | hoppers, pipes, the computers' buses | inputs take, outputs only give |
-| Energy (`Capabilities.EnergyStorage.BLOCK`) | any FE cable or generator | the Coal Generator only gives |
+| J's Energy (J's Core's `EnergyPorts.PORT`) | the series' cables and lines of its class | a port of low voltage; the Coal Generator only gives |
+| Energy as FE (`Capabilities.EnergyStorage.BLOCK`) | any FE cable or generator | while J's Energy speaks FE, as it comes: one FE a joule |
 
-| Machine | Holds | Takes at most a tick | Spends a tick |
+| Machine | Power | Holds | Takes at most at once |
 | --- | --- | --- | --- |
-| Coal Generator | 16,000 FE | (gives up to 1,000) | makes 20 |
-| Macerator | 16,000 FE | 1,000 FE | 40 |
-| Compressor | 12,000 FE | 600 FE | 30 |
-| Electric Furnace | 12,000 FE | 600 FE | 30 |
+| Coal Generator | makes up to 5 kW (250 J a tick) | 2,500 J | (gives up to 2,500 J) |
+| Macerator | draws 4 kW (200 J a tick) | 8,000 J | 2,000 J |
+| Compressor | draws 3 kW (150 J a tick) | 6,000 J | 1,500 J |
+| Electric Furnace | draws 3 kW (150 J a tick) | 6,000 J | 1,500 J |
 
-The machines take energy; they never pull it. The Coal Generator pushes into whatever touches it.
+The machines take energy; they never pull it. The Coal Generator pushes into whatever touches it, twice a second,
+and burns only what is drawn from it. A machine's battery slot takes any item holding J's Energy (J's Core's
+`EnergyPorts.ITEM`) or FE.
 
 ## With J's Computers
 

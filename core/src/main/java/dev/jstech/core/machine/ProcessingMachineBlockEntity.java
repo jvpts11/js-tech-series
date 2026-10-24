@@ -444,7 +444,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                 each.add(new UpgradeEffect.Counted(upgrade.effect(stack), counted));
             }
         }
-        final UpgradeEffect combined = UpgradeEffect.combine(each);
+        final UpgradeEffect combined = combineUpgrades(each);
         this.effect = combined;
         return combined;
     }
@@ -600,10 +600,18 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return level == null ? ProcessingInput.AMBIENT_KPA : HeatClimate.pressure(level, worldPosition);
     }
 
-    /** What its upgrades do to it. */
+    /** What its upgrades do to it, as its damage leaves them. */
     @Override
     protected UpgradeEffect effect() {
-        return upgradeEffect();
+        return damageRule().effect(health(), upgradeEffect());
+    }
+
+    /**
+     * What its upgrades do together, each counted as many times as fit: their factors multiplied, unless its mod's
+     * upgrades add what they gain ({@link UpgradeEffect#addGains}).
+     */
+    protected UpgradeEffect combineUpgrades(final List<UpgradeEffect.Counted> each) {
+        return UpgradeEffect.combine(each);
     }
 
     /** Its input locks and the recipe picked, which only a machine of its kind can take. */
@@ -663,8 +671,8 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         if (driven != null && driven.tooSlow()) {
             return MachineStatus.TOO_SLOW;
         }
-        final UpgradeEffect effect = withStructure(upgradeEffect());
-        final double share = health().workShare() * (driven == null ? 1.0 : driven.share());
+        final UpgradeEffect effect = withStructure(effect());
+        final double share = damageRule().workShare(health()) * (driven == null ? 1.0 : driven.share());
         MachineStatus result = MachineStatus.WAITING;
         for (final Lane lane : lanes) {
             final MachineStatus worked = lane.work(level, effect, share);

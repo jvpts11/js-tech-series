@@ -162,7 +162,7 @@ public class CrcBlockEntity extends MachineBlockEntity implements IMenuTitle {
         fields().whenBroken((level, at) -> unflagEntries(level));
         getInventory().accepts(CrcBlockEntity::fits);
         getInventory().stackLimit((slot, stack) -> slot < PLACES ? 1 : STACK);
-        formsWith(MachineStructure.of(CrcStructure.PATTERN).merges());
+        formsWith(CrcContent.CRC.structure(CrcStructure.PATTERN).merges());
     }
 
     /** Whether its structure stands formed. */

@@ -93,12 +93,12 @@ final class ReadingPages {
         final String symbols = PlantDrawing.drawn()
                 .legend("generator", "breaker", "transformer", "bus", "line", "motor").json();
         final PlantDrawing plant = PlantDrawing.drawn()
-                .symbol("generator", 75, 12, Text.literal("COAL GEN 1"), Text.literal("20 FE/t")).line(75, 19, 75, 28)
+                .symbol("generator", 75, 12, Text.literal("COAL GEN 1"), Text.literal("5 kW")).line(75, 19, 75, 28)
                 .symbol("breaker", 75, 31, Text.literal("CB-1"), Text.EMPTY).line(75, 34, 75, 42)
                 .bus(5, 42, 146, Text.literal("BUS A"));
         int load = 0;
-        for (final String[] machine : new String[][] {{"MACERATOR", "40 FE/t"}, {"COMPRESSOR", "30 FE/t"},
-                {"FURNACE", "30 FE/t"}}) {
+        for (final String[] machine : new String[][] {{"MACERATOR", "4 kW"}, {"COMPRESSOR", "3 kW"},
+                {"FURNACE", "3 kW"}}) {
             final int x = 27 + 48 * load++;
             plant.line(x, 45, x, 54).symbol("breaker", x, 57, Text.EMPTY, Text.EMPTY).line(x, 60, x, 68)
                     .symbolOver("motor", x, 76, Text.literal(machine[0]), Text.literal(machine[1]));
