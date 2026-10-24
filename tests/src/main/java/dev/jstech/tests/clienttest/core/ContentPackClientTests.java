@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * The test mod's content pack on a player's game: its blocks are drawn with the models the Core made for them rather
- * than the missing model, a machine's controller as it faces, and every thing has its English name, a material's
+ * than the missing model, a machine's terminal as it faces, and every thing has its English name, a material's
  * ingot named for its material.
  */
 public final class ContentPackClientTests {

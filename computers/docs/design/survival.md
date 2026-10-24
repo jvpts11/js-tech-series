@@ -88,7 +88,8 @@ Without J's Industrial, the computronium of the Singularity comes from the cosmo
 
 ### The machines
 
-Every machine is a multiblock, built with J's Core's multiblock kit (four rotations) and shown by the Structure
+Every machine is a multiblock of its own blocks and its terminal, with its entries on the places it declares, as every
+multiblock of the series, built with J's Core's multiblock kit (four rotations) and shown by the Structure
 Projector. The sizes are first estimates; their looks are drawn and approved before any code. Every machine takes the
 Crafting Interface, so the network's autocrafting runs the whole chain ([Autocrafting](autocrafting.md)).
 
@@ -288,7 +289,7 @@ it does today.
 - What comes out is the **assembled computer** as an item, with its parts inside, listed in its tooltip. Placed, it is
   the assembled computer, switched off and owing its first self-test.
 - It builds every computer that is one block: the Personal Computer, the Crafting Computer, the Cluster Management
-  Computer, the small computers to come, and every rack server chassis. The Mainframe and the other multiblocks are
+  Computer, the small computers to come, and every rack server chassis. The Mainframe and the other big blocks are
   assembled where they stand.
 - It takes the Crafting Interface, so the network orders computers like any other craft.
 

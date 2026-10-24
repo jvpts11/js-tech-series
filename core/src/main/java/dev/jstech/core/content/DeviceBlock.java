@@ -92,7 +92,8 @@ public class DeviceBlock extends HorizontalDirectionalBlock implements EntityBlo
             return InteractionResult.PASS;
         }
         if (!level.isClientSide() && player instanceof ServerPlayer server) {
-            device.openMenu(server, level.getBlockEntity(pos), getName(), pos);
+            final BlockEntity at = level.getBlockEntity(pos);
+            device.openMenu(server, at, at instanceof IMenuTitle titled ? titled.menuTitle() : getName(), pos);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }

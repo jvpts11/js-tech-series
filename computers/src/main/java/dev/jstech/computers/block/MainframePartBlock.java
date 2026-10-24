@@ -15,7 +15,7 @@ import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
+import dev.jstech.core.bigblock.AbstractBigBlock;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
@@ -45,15 +45,15 @@ import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A structural part of the Mainframe multiblock, one of the 11 non-controller blocks.
+ * A part of the Mainframe, a big block: one of the 11 blocks round its origin.
  */
 public class MainframePartBlock extends HorizontalDirectionalBlock
         implements EntityBlock, IFaceConnector {
 
     public static final MapCodec<MainframePartBlock> CODEC = simpleCodec(MainframePartBlock::new);
     /*
-     * The backbone, on any face, as the controller takes it. A part does not know its Mainframe's age, so it takes
-     * every era's backbone; the controller's own faces are where the age is held to.
+     * The backbone, on any face, as the origin takes it. A part does not know its Mainframe's age, so it takes
+     * every era's backbone; the origin's own faces are where the age is held to.
      */
     private static final FacePorts PORTS =
             FacePorts.everyFace(DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE),
@@ -64,7 +64,7 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     public static final BooleanProperty CORE = BooleanProperty.create("core");
 
     /*
-     * The part inherits its controller's hardware era so the whole footprint wears one skin. The value
+     * The part inherits its origin's hardware era so the whole footprint wears one skin. The value
      * is the era's level() (0=Vintage, 1=Legacy, 2=Transition, 3=Standard, 4=Advanced), from the first era with a
      * Mainframe to the last. Storing the level keeps the Minecraft-aware property type out of the pure HardwareEra
      * enum; consumers map it back with HardwareEra.fromLevel(int).
@@ -93,8 +93,8 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     }
 
     /*
-     * The cables of the Mainframe's own era and the earlier ones, read from the era its controller stamps on every
-     * part, as its controller takes them; and the fibre only while the Mainframe holds an Optical Network Card.
+     * The cables of the Mainframe's own era and the earlier ones, read from the era its origin stamps on every
+     * part, as its origin takes them; and the fibre only while the Mainframe holds an Optical Network Card.
      */
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
@@ -112,23 +112,23 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
                                                final Player player, final BlockHitResult hit) {
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MainframePartBlockEntity part
-                && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof MainframeBlockEntity controller) {
-            final BlockPos controllerPos = part.controllerPos();
-            MachineOperators.note(controller, player);
+                && part.originPos() != null
+                && level.getBlockEntity(part.originPos()) instanceof MainframeBlockEntity origin) {
+            final BlockPos originPos = part.originPos();
+            MachineOperators.note(origin, player);
             /*
              * Sneaking anywhere on the cabinet takes its service panel off, the same as on the
-             * controller: a player has no way to tell which of the twelve blocks they are looking at.
+             * origin: a player has no way to tell which of the twelve blocks they are looking at.
              */
             if (player.isShiftKeyDown()) {
-                controller.toggleServicePanel();
+                origin.toggleServicePanel();
                 return InteractionResult.sidedSuccess(false);
             }
             serverPlayer.openMenu(
                     new SimpleMenuProvider(
-                            (id, inventory, p) -> new MainframeMenu(id, inventory, controller),
-                            level.getBlockState(controllerPos).getBlock().getName()),
-                    buf -> buf.writeBlockPos(controllerPos));
+                            (id, inventory, p) -> new MainframeMenu(id, inventory, origin),
+                            level.getBlockState(originPos).getBlock().getName()),
+                    buf -> buf.writeBlockPos(originPos));
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
@@ -139,10 +139,10 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
         // The whole Mainframe goes with any of its blocks, so a player's break here is a break of the Mainframe.
         if (level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof MainframePartBlockEntity part
-                && part.controllerPos() != null
-                && level.getBlockState(part.controllerPos()).getBlock()
-                        instanceof AbstractMultiblockControllerBlock controller) {
-            controller.brokenBy(serverLevel, part.controllerPos(), player);
+                && part.originPos() != null
+                && level.getBlockState(part.originPos()).getBlock()
+                        instanceof AbstractBigBlock origin) {
+            origin.brokenBy(serverLevel, part.originPos(), player);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
@@ -157,10 +157,10 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
                                                                 final HitResult target,
                                                                 final LevelReader level,
                                                                 final BlockPos pos, final Player player) {
-        if (level.getBlockEntity(pos) instanceof MainframePartBlockEntity part && part.controllerPos() != null) {
-            final BlockState controller = level.getBlockState(part.controllerPos());
-            if (controller.getBlock() instanceof MainframeBlock) {
-                return new ItemStack(controller.getBlock());
+        if (level.getBlockEntity(pos) instanceof MainframePartBlockEntity part && part.originPos() != null) {
+            final BlockState origin = level.getBlockState(part.originPos());
+            if (origin.getBlock() instanceof MainframeBlock) {
+                return new ItemStack(origin.getBlock());
             }
         }
         return super.getCloneItemStack(state, target, level, pos, player);
@@ -171,10 +171,10 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
                             final BlockState newState, final boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof MainframePartBlockEntity part
-                && part.controllerPos() != null
-                && level.getBlockState(part.controllerPos()).getBlock()
-                        instanceof AbstractMultiblockControllerBlock controller) {
-            controller.dissolve(serverLevel, part.controllerPos(), state.getValue(FACING));
+                && part.originPos() != null
+                && level.getBlockState(part.originPos()).getBlock()
+                        instanceof AbstractBigBlock origin) {
+            origin.dissolve(serverLevel, part.originPos(), state.getValue(FACING));
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

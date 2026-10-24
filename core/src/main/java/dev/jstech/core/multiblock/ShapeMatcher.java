@@ -21,17 +21,17 @@ final class ShapeMatcher {
     private ShapeMatcher() {
     }
 
-    /** The pattern formed with its controller at {@code controller}, or the failure of the likeliest attempt. */
-    static ShapeMatch match(final MultiblockPattern pattern, final IBlockProvider provider, final long controller) {
+    /** The pattern formed with its terminal at {@code terminal}, or the failure of the likeliest attempt. */
+    static ShapeMatch match(final MultiblockPattern pattern, final IBlockProvider provider, final long terminal) {
         final Cells.Best best = new Cells.Best();
         final int least = pattern.repeat().map(r -> r.times().least()).orElse(1);
         for (final Orientation orientation : pattern.orientations()) {
             final int most = pattern.repeat().isPresent()
-                    ? Math.max(least, copies(pattern, orientation, provider, controller)) : 1;
+                    ? Math.max(least, copies(pattern, orientation, provider, terminal)) : 1;
             for (int times = most; times >= least; times--) {
                 final ShapeTally tally = new ShapeTally();
                 final ShapeMatch result = attempt(pattern, pattern.grown(times), orientation, times, provider,
-                        controller, tally);
+                        terminal, tally);
                 if (result instanceof ShapeMatch.Failure failure) {
                     best.offer(failure, tally.matched());
                 } else {
@@ -45,8 +45,8 @@ final class ShapeMatcher {
     /* One attempt: the grown pattern stood one way, every place read in the drawing's order. */
     private static ShapeMatch attempt(final MultiblockPattern pattern, final MultiblockPattern.Grid grid,
                                       final Orientation orientation, final int times, final IBlockProvider provider,
-                                      final long controller, final ShapeTally tally) {
-        final int[] c = PatternMatcher.decodePosition(controller);
+                                      final long terminal, final ShapeTally tally) {
+        final int[] c = PatternMatcher.decodePosition(terminal);
         final char insideLetter = pattern.inside().map(MultiblockPattern.Inside::letter)
                 .orElse(MultiblockPattern.IGNORE_CHAR);
         final List<Long> parts = new ArrayList<>();
@@ -62,13 +62,13 @@ final class ShapeMatcher {
                     if (letter == MultiblockPattern.IGNORE_CHAR) {
                         continue;
                     }
-                    final int[] w = orientation.apply(x - grid.controllerX(), y - grid.controllerY(),
-                            z - grid.controllerZ());
+                    final int[] w = orientation.apply(x - grid.terminalX(), y - grid.terminalY(),
+                            z - grid.terminalZ());
                     for (int axis = 0; axis < 3; axis++) {
                         min[axis] = Math.min(min[axis], w[axis]);
                         max[axis] = Math.max(max[axis], w[axis]);
                     }
-                    if (letter == MultiblockPattern.CONTROLLER_CHAR) {
+                    if (letter == MultiblockPattern.TERMINAL_CHAR) {
                         continue;
                     }
                     final long pos = PatternMatcher.encodePosition(c[0] + w[0], c[1] + w[1], c[2] + w[2]);
@@ -79,11 +79,13 @@ final class ShapeMatcher {
                     final Place place = pattern.places().get(letter);
                     final String id = Cells.blockAt(provider, pos);
                     if (!place.fits().matchesAt(provider, pos, id)) {
-                        return Cells.wrongBlock(controller, pos, String.valueOf(letter), id);
+                        return Cells.wrongBlock(terminal, pos, String.valueOf(letter), id);
                     }
                     tally.place(place, provider, pos, id);
                     parts.add(pos);
-                    final PortKind port = pattern.ports().get(letter);
+                    // An entry standing at a place makes it the port of its own kind; else the letter's port, if any.
+                    final Place.Entry entry = place.entryAt(provider, pos, id);
+                    final PortKind port = entry != null ? entry.port() : pattern.ports().get(letter);
                     if (port != null) {
                         ports.put(pos, port);
                     }
@@ -91,29 +93,33 @@ final class ShapeMatcher {
             }
         }
         if (pattern.inside().isPresent()) {
-            final ShapeMatch.Failure wrong = pattern.inside().get().rule().read(provider, inside, controller, tally);
+            final ShapeMatch.Failure wrong = pattern.inside().get().rule().read(provider, inside, terminal, tally);
             if (wrong != null) {
                 return wrong;
             }
         }
-        final ShapeMatch.Failure counts = tally.outOfLimits(pattern.limits(), controller);
+        final ShapeMatch.Failure counts = tally.outOfLimits(pattern.limits(), terminal);
         if (counts != null) {
             return counts;
         }
-        return new ShapeMatch.Formed(orientation, controller, parts, ports, inside, max[0] - min[0] + 1,
+        final ShapeMatch.Failure apart = tally.apart(pattern.together(), terminal);
+        if (apart != null) {
+            return apart;
+        }
+        return new ShapeMatch.Formed(orientation, terminal, parts, ports, inside, max[0] - min[0] + 1,
                 max[1] - min[1] + 1, max[2] - min[2] + 1, times, tally.counts(), tally.values());
     }
 
     /*
      * How many times, up to its most, the repeated slice stands in the world one after another, from the copy nearest
-     * the controller outwards: the times to try first, so a structure that grows is found in one attempt.
+     * the terminal outwards: the times to try first, so a structure that grows is found in one attempt.
      */
     private static int copies(final MultiblockPattern pattern, final Orientation orientation,
-                              final IBlockProvider provider, final long controller) {
+                              final IBlockProvider provider, final long terminal) {
         final MultiblockPattern.Repeat repeat = pattern.repeat().orElseThrow();
         final int axis = repeat.axis();
-        final int[] c = PatternMatcher.decodePosition(controller);
-        final int[] from = {pattern.controllerX(), pattern.controllerY(), pattern.controllerZ()};
+        final int[] c = PatternMatcher.decodePosition(terminal);
+        final int[] from = {pattern.terminalX(), pattern.terminalY(), pattern.terminalZ()};
         final int step = from[axis] < repeat.index() ? 1 : -1;
         final int[] size = {pattern.sizeX(), pattern.sizeY(), pattern.sizeZ()};
         final int[] others = otherAxes(axis);

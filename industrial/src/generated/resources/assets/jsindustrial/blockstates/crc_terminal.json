@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=east,formed=false": {
+      "model": "jsindustrial:block/crc_terminal",
+      "y": 90
+    },
+    "facing=east,formed=true": {
+      "model": "jsindustrial:block/crc_terminal_formed",
+      "y": 90
+    },
+    "facing=north,formed=false": {
+      "model": "jsindustrial:block/crc_terminal"
+    },
+    "facing=north,formed=true": {
+      "model": "jsindustrial:block/crc_terminal_formed"
+    },
+    "facing=south,formed=false": {
+      "model": "jsindustrial:block/crc_terminal",
+      "y": 180
+    },
+    "facing=south,formed=true": {
+      "model": "jsindustrial:block/crc_terminal_formed",
+      "y": 180
+    },
+    "facing=west,formed=false": {
+      "model": "jsindustrial:block/crc_terminal",
+      "y": 270
+    },
+    "facing=west,formed=true": {
+      "model": "jsindustrial:block/crc_terminal_formed",
+      "y": 270
+    }
+  }
+}

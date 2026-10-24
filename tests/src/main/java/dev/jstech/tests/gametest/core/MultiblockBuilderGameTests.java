@@ -36,7 +36,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The Multiblock Builder: aimed at a controller it sees what of the multiblock is missing and what the player has,
+ * The Multiblock Builder: aimed at a terminal it sees what of the multiblock is missing and what the player has,
  * builds it block by block from the player's inventory, takes the block the player chose where a place takes several,
  * and stops when the player runs out, having placed what it could.
  */
@@ -45,8 +45,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class MultiblockBuilderGameTests {
 
     private static final String ARENA = "empty";
-    /* The baker's controller stands amid the north face of a box of three that runs south of it, off the floor. */
-    private static final BlockPos CONTROLLER = new BlockPos(3, 3, 2);
+    /* The baker's terminal stands amid the north face of a box of three that runs south of it, off the floor. */
+    private static final BlockPos TERMINAL = new BlockPos(3, 3, 2);
     private static final String IRON = "minecraft:iron_block";
     private static final String GLASS = "minecraft:glass";
     private static final int TIME = 400;
@@ -73,7 +73,7 @@ public final class MultiblockBuilderGameTests {
         final FakePlayer player = builder(helper, "build");
         player.getInventory().add(new ItemStack(Items.IRON_BLOCK, 64));
         final int wanted = plan(helper, player, BuilderState.DEFAULT).wants().size();
-        BuildJobs.start(player, helper.absolutePos(CONTROLLER), BuilderState.DEFAULT);
+        BuildJobs.start(player, helper.absolutePos(TERMINAL), BuilderState.DEFAULT);
         helper.succeedWhen(() -> {
             helper.assertTrue(plan(helper, player, BuilderState.DEFAULT).wants().isEmpty(), "still building");
             helper.assertTrue(player.getInventory().countItem(Items.IRON_BLOCK) == 64 - wanted,
@@ -91,7 +91,7 @@ public final class MultiblockBuilderGameTests {
         final String faces = before.groups().stream().filter(group -> group.fits().contains(GLASS)).findFirst()
                 .orElseThrow().key();
         final BuilderState glassFaces = BuilderState.DEFAULT.choosing(faces, GLASS);
-        BuildJobs.start(player, helper.absolutePos(CONTROLLER), glassFaces);
+        BuildJobs.start(player, helper.absolutePos(TERMINAL), glassFaces);
         helper.succeedWhen(() -> {
             helper.assertTrue(plan(helper, player, glassFaces).wants().isEmpty(), "still building");
             final ProjectorView view = plan(helper, player, glassFaces).view();
@@ -105,7 +105,7 @@ public final class MultiblockBuilderGameTests {
         final FakePlayer player = builder(helper, "short");
         player.getInventory().add(new ItemStack(Items.IRON_BLOCK, 3));
         final int wanted = plan(helper, player, BuilderState.DEFAULT).wants().size();
-        BuildJobs.start(player, helper.absolutePos(CONTROLLER), BuilderState.DEFAULT);
+        BuildJobs.start(player, helper.absolutePos(TERMINAL), BuilderState.DEFAULT);
         helper.succeedWhen(() -> {
             helper.assertTrue(BuildJobs.building(player).isEmpty(), "it stops");
             helper.assertTrue(player.getInventory().countItem(Items.IRON_BLOCK) == 0, "having used all it had");
@@ -115,15 +115,15 @@ public final class MultiblockBuilderGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void item_isAimedAtAControllerItIsUsedOn(final GameTestHelper helper) {
+    public static void item_isAimedAtATerminalItIsUsedOn(final GameTestHelper helper) {
         final FakePlayer player = builder(helper, "aim");
         final ItemStack stack = new ItemStack(MultiblockBuilder.ITEM.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-        final BlockPos controller = helper.absolutePos(CONTROLLER);
+        final BlockPos terminal = helper.absolutePos(TERMINAL);
         final InteractionResult used = stack.onItemUseFirst(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                new BlockHitResult(Vec3.atCenterOf(controller), Direction.NORTH, controller, false)));
-        helper.assertTrue(used.consumesAction(), "used on a controller, it answers before the controller does");
-        helper.assertTrue(MultiblockBuilder.aim(stack, player).equals(Optional.of(controller)),
+                new BlockHitResult(Vec3.atCenterOf(terminal), Direction.NORTH, terminal, false)));
+        helper.assertTrue(used.consumesAction(), "used on a terminal, it answers before the terminal does");
+        helper.assertTrue(MultiblockBuilder.aim(stack, player).equals(Optional.of(terminal)),
                 "and is aimed at it, in the player's world");
         final BlockPos floor = helper.absolutePos(new BlockPos(0, 1, 0));
         final ItemStack other = new ItemStack(MultiblockBuilder.ITEM.get());
@@ -136,18 +136,18 @@ public final class MultiblockBuilderGameTests {
         helper.succeed();
     }
 
-    /* The baker's controller placed, and a player of the test's own standing north of it, out of the way. */
+    /* The baker's terminal placed, and a player of the test's own standing north of it, out of the way. */
     private static FakePlayer builder(final GameTestHelper helper, final String name) {
-        helper.setBlock(CONTROLLER, TestStructures.BAKER.get());
+        helper.setBlock(TERMINAL, TestStructures.BAKER.get());
         final FakePlayer player = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.nameUUIDFromBytes(
                 ("builder-" + name).getBytes(StandardCharsets.UTF_8)), "builder-" + name));
         player.getInventory().clearContent();
-        final BlockPos stand = helper.absolutePos(CONTROLLER.north(2));
+        final BlockPos stand = helper.absolutePos(TERMINAL.north(2));
         player.setPos(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5);
         return player;
     }
 
     private static BuilderPlan plan(final GameTestHelper helper, final FakePlayer player, final BuilderState state) {
-        return BuilderPlan.of(helper.getLevel(), helper.absolutePos(CONTROLLER), player, state).orElseThrow();
+        return BuilderPlan.of(helper.getLevel(), helper.absolutePos(TERMINAL), player, state).orElseThrow();
     }
 }

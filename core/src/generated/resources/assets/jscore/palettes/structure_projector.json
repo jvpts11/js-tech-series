@@ -1,8 +1,8 @@
 {
-  "controllerMark": "#005FE6F0",
   "faint": "#20FFFFFF",
   "ground": "#C0262E3A",
   "missing": "#FF5FE6F0",
+  "terminalMark": "#005FE6F0",
   "title": "#FFFFFFFF",
   "words": "#FFB4BCC6",
   "wrong": "#FFF0564A",

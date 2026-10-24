@@ -841,7 +841,7 @@ public final class ModGuide {
 
         /**
          * The multiblock of {@code id} as a scene of the figures, {@code height} pixels tall, peeled layer by layer:
-         * laid out from the multiblock in force when the manual is read, its controller in its place, and left out
+         * laid out from the multiblock in force when the manual is read, its terminal in its place, and left out
          * where the multiblock is not installed.
          */
         public EntryBuilder multiblock(final String caption, final ResourceLocation id, final int height) {

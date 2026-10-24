@@ -22,9 +22,8 @@ public enum Drops {
     SELF_WITH_CONTENTS,
 
     /**
-     * Nothing from the table: the block has no item, or it hands its item over itself when it is broken (a
-     * multiblock whose controller spills what it holds and pops its item while the rest of the structure is taken
-     * down without drops).
+     * Nothing from the table: the block has no item, or it hands its item over itself when it is broken (a big
+     * block whose origin spills what it holds and pops its item while its parts are taken down without drops).
      */
     NONE,
 

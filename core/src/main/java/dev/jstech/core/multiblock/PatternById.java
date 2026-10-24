@@ -30,9 +30,9 @@ public record PatternById(ResourceLocation id) implements IStructureShape {
     }
 
     @Override
-    public ShapeMatch check(final IBlockProvider provider, final long controller) {
-        return MultiblockPatterns.get(this.id).<ShapeMatch>map(pattern -> pattern.check(provider, controller))
-                .orElseGet(() -> new ShapeMatch.Failure(ShapeMatch.Wrong.BLOCK, controller, 0, 0, 0, MISSING,
+    public ShapeMatch check(final IBlockProvider provider, final long terminal) {
+        return MultiblockPatterns.get(this.id).<ShapeMatch>map(pattern -> pattern.check(provider, terminal))
+                .orElseGet(() -> new ShapeMatch.Failure(ShapeMatch.Wrong.BLOCK, terminal, 0, 0, 0, MISSING,
                         this.id.toString()));
     }
 

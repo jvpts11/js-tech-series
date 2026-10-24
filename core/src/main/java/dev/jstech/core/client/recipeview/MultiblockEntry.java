@@ -16,18 +16,18 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * One multiblock as both recipe viewers show it: laid out at its least size, what it is called, what it takes, the
- * choice of a place where more than one block will do, how it may stand, and its controller's item.
+ * choice of a place where more than one block will do, how it may stand, and its terminal's item.
  *
  * @param id         the multiblock's id
  * @param preview    its places, standing facing north
  * @param name       what it is called
- * @param materials  what it takes, most first, its controller last
+ * @param materials  what it takes, most first, its terminal last
  * @param choice     the first place where more than one block will do, when there is one
  * @param turns      the lines that say how it may stand
- * @param controller its controller's item, or an empty stack when it is not known
+ * @param terminal its terminal's item, or an empty stack when it is not known
  */
 public record MultiblockEntry(ResourceLocation id, ShapePreview preview, Component name, List<Material> materials,
-                              Optional<Choice> choice, List<Component> turns, ItemStack controller) {
+                              Optional<Choice> choice, List<Component> turns, ItemStack terminal) {
 
     public MultiblockEntry {
         materials = List.copyOf(materials);
@@ -39,9 +39,9 @@ public record MultiblockEntry(ResourceLocation id, ShapePreview preview, Compone
      *
      * @param stacks     the items, any of which does
      * @param count      how many it takes
-     * @param controller whether it is the controller
+     * @param terminal whether it is the terminal
      */
-    public record Material(List<ItemStack> stacks, int count, boolean controller) {
+    public record Material(List<ItemStack> stacks, int count, boolean terminal) {
 
         public Material {
             stacks = List.copyOf(stacks);

@@ -13,16 +13,16 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A multiblock's shape, drawn as a pattern or given by a rule (a box, a floor and walls, a cuboid), checked against
- * the world from its controller. Pure: the world is read through an {@link IBlockProvider}.
+ * the world from its terminal. Pure: the world is read through an {@link IBlockProvider}.
  */
 public interface IStructureShape {
 
-    /** Checks the world with the controller at {@code controller}: formed, with what it gives, or the first wrong. */
-    ShapeMatch check(IBlockProvider provider, long controller);
+    /** Checks the world with the terminal at {@code terminal}: formed, with what it gives, or the first wrong. */
+    ShapeMatch check(IBlockProvider provider, long terminal);
 
     /**
-     * The farthest from its controller, along any axis, that checking it reads the world, the places beside it
-     * counted: what has to be loaded for it to be checked, and what its controller watches.
+     * The farthest from its terminal, along any axis, that checking it reads the world, the places beside it
+     * counted: what has to be loaded for it to be checked, and what its terminal watches.
      */
     int reach();
 

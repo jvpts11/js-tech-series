@@ -231,6 +231,7 @@ import dev.jstech.core.region.AwayOwners;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
+import dev.jstech.core.research.Discoveries;
 import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.StateNetwork;
@@ -303,7 +304,7 @@ public final class JsCore {
         CoreCables.declare();
         // The space of parts alone and the microblock, which any block space holds as a cable's does.
         CoreSpaces.declare();
-        // The block a formed structure's plain blocks merge into, its controller's model drawing them.
+        // The block a formed structure's plain blocks merge into, its terminal's model drawing them.
         FormedParts.declare();
         // Light standing in the air, the colours of light, its kinds as data, and the spotlights' light.
         CoreLights.declare(modEventBus);
@@ -538,6 +539,8 @@ public final class JsCore {
         PlayerProgress.register();
         TeamProgress.register();
         ProgressionTriggers.listen();
+        // Research for any mod: which mods turned theirs off, sent to every player, and what that leaves open.
+        Discoveries.register();
         // The manuals each player was handed as they first joined, so each is handed once.
         GuideGifts.register();
         CoreTriggers.register(modEventBus);

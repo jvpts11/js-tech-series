@@ -152,6 +152,74 @@ A recipe is locked for running, never for seeing: JEI, EMI and the manuals alway
 knowledge it needs in the locked colour while the player's team lacks it, so a player can always plan.
 `KnowledgeGate.allows(server, owner, knowledge)` is the same rule for a mod's own machines.
 
+*Added 2026-10-24.* A mod may open knowledge to every team whatever they know, with
+`KnowledgeGate.openWhen(opener)`: research turned off does that ([Research](#research)). And
+`KnowledgeGate.opens(level, knowledge)` names what the recipes that ask for a piece of knowledge make, as a research
+screen tells a player what a discovery opens; it reads every recipe, so a screen asks it once and keeps the answer.
+
+## Research
+
+*Added 2026-10-24.*
+
+Research, for any mod, in `dev.jstech.core.research`: discoveries a team makes with research computers. A discovery
+is a piece of knowledge the team holds in part while its research goes, its share the progress made, and whole once
+it is made, when the recipes that ask for it open. So the progress is the team's, whichever computer worked it, and
+nothing is lost when a computer stops.
+
+**Kinds of data**, an open list any mod adds to, each with its item:
+
+```java
+public static final DataKind CRYSTAL = DataKinds.declare(new DataKind(rl("crystal"), MyTexts.CRYSTAL));
+public static final ItemEntry<ResearchDataItem> CRYSTAL_DATA = CONTENT.item("crystal_data",
+        properties -> new ResearchDataItem(properties, CRYSTAL, MyTexts.CRYSTAL_FROM)).named("Crystal Data")
+        .register();
+```
+
+The item's tooltip says what gives it (`CRYSTAL_FROM`: "From the X-ray Diffractometer"); `DataKinds.of(stack)` says
+what kind an item is.
+
+**Discoveries**, declared with a builder, their names and dates as `TextKey`s of a `@TextHolder` class:
+
+```java
+public static final Discovery HIGH_TC = Discovery.builder(rl("high_tc"), MyTexts.HIGH_TC)
+        .when(MyTexts.HIGH_TC_WHEN).year(1986).field(MyTexts.SOLID_STATE)
+        .costs(36_000).needs(CRYSTAL, 10)
+        .after(SUPERCONDUCTIVITY)
+        .declare();
+```
+
+- `costs` is the research it takes, in points; `needs` how many data of a kind, each covering an equal share of the
+  way: the first of ten is spent as the research starts, the next as it passes a tenth, and so on.
+- `after` takes another discovery, any knowledge, or a milestone: the research starts only once the team knows them
+  all. `year` and `field` lay the discovery out in a tree by the year it was made and its field of science; a
+  discovery not made yet in the real world has no year.
+- What a discovery costs is content: the data generation writes each declared cost to
+  `data/<namespace>/jstech/research/<path>.json` (`DeclaredFilesProvider.researchCosts`), and a data pack's file of
+  the same id says otherwise:
+
+```json
+{"points": 36000, "data": {"myaddon:crystal": 10}}
+```
+
+- A discovery whose cost names a kind of data no installed mod declares, or that comes after knowledge no installed
+  mod gives, is not there to research: `Discoveries.exists(level, discovery)`, and `Discoveries.existing(level)` lists
+  the ones that are.
+
+**Working it on.** A research computer works once a second, with the points it made in that second, through
+`Research.work(server, team, discovery, points, store)`; the store (`Research.IDataStore`) says how many data of each
+kind it holds and gives up what is spent. The research goes as far as the points go, but never past the edge of the
+last share its data pays for, and not at all before the team knows what the discovery comes after. It answers
+`WORKED`, `NEEDS_DATA`, `LOCKED`, `MADE` or `ABSENT`. `Research.check` answers the same without spending, for a
+computer to ask before it draws power. `Research.share`, `made`, `ready` and `missing` say where a team is. The
+arithmetic alone, with nothing of the game, is `ResearchMath`, with the power of several computers working together:
+`ResearchMath.groupShares(powers, eachOther)` gives the strongest its whole and each other `eachOther` of its own.
+J's Industrial's Computational Research Centre is a research computer built on all this.
+
+**Turning research off.** A mod's own setting may turn its research off: `Discoveries.gate(MODID, MySettings::require)`.
+Off, nothing that asks for one of its discoveries is locked and none is granted; research can still be done, for its
+advancements. The server sends every player which mods turned theirs off, once a second when it changes, so the recipe
+viewers and the manuals show no padlock either.
+
 ## Commands
 
 *Added 2026-10-16.*
@@ -210,5 +278,8 @@ descriptions in your English file.
   player (a machine).
 - **A step does not move.** `reach` refuses to go back; an operator uses `set` for that.
 - **A machine says `Needs knowledge`.** Its recipe asks for knowledge its owner's team lacks, or it has no owner.
+- **A research stops short.** `NEEDS_DATA`: the data held covers no further; put more of the kind it asks for in the
+  computer. `LOCKED`: the team does not know yet what the discovery comes after (`Research.missing` says what).
+  `ABSENT`: its cost names a kind of data, or it comes after knowledge, that no installed mod declares.
 - **The game stops while loading, naming an era, a piece of knowledge or a milestone.** It is declared twice, after the
   game has loaded, or after an era no mod declared before it.

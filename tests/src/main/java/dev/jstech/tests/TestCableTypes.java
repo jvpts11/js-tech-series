@@ -54,8 +54,8 @@ public final class TestCableTypes {
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
                             "own_grid_energy")))
                     .grid(OWN_POWER).alone().carries(Long.MAX_VALUE, 0)
-                    .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
-                    .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/insulated_copper"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/plug/insulated_copper"))
                     .build(() -> Items.GLOWSTONE_DUST));
     public static final DeferredHolder<CableType, CableType> LONG_DISTANCE = CABLES.register("long_distance",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
@@ -68,8 +68,8 @@ public final class TestCableTypes {
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
                             "lossy_energy")))
                     .grid(GridKind.POWER).alone().carries(Long.MAX_VALUE, 0).loses(100_000)
-                    .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
-                    .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/insulated_copper"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/plug/insulated_copper"))
                     .build(() -> Items.REDSTONE));
     /** The coolest pipe: a hundred millibuckets a tick, nothing above 1000 K, no gas and nothing corrosive. */
     public static final DeferredHolder<CableType, CableType> PLAIN_PIPE = CABLES.register("plain_pipe",

@@ -37,8 +37,8 @@ import net.minecraft.world.item.Items;
 
 /**
  * Every multiblock that can be shown before it is built, in JEI: its preview, its layers, its materials as the
- * ingredients it takes, so looking up the uses of a block finds the multiblocks built of it, and its controller as
- * what it makes, so looking up the controller finds how to build it.
+ * ingredients it takes, so looking up the uses of a block finds the multiblocks built of it, and its terminal as
+ * what it makes, so looking up the terminal finds how to build it.
  */
 final class MultiblockCategory implements IRecipeCategory<MultiblockEntry> {
 
@@ -88,9 +88,9 @@ final class MultiblockCategory implements IRecipeCategory<MultiblockEntry> {
             final MultiblockViewLayout.Point at = MultiblockViewLayout.material(index);
             final IRecipeSlotBuilder slot = builder.addInputSlot(at.x() + SLOT_INSET, at.y() + SLOT_INSET)
                     .setStandardSlotBackground().addItemStacks(material.stacks());
-            if (material.controller()) {
+            if (material.terminal()) {
                 slot.addRichTooltipCallback((view, tooltip) -> tooltip.add(GameText.component(
-                        MultiblockViewTexts.CONTROLLER)));
+                        MultiblockViewTexts.TERMINAL)));
             }
         }
         entry.choice().ifPresent(choice -> {
@@ -104,8 +104,8 @@ final class MultiblockCategory implements IRecipeCategory<MultiblockEntry> {
                         .addItemStacks(held);
             }
         });
-        if (!entry.controller().isEmpty()) {
-            builder.addInvisibleIngredients(RecipeIngredientRole.OUTPUT).addItemStack(entry.controller());
+        if (!entry.terminal().isEmpty()) {
+            builder.addInvisibleIngredients(RecipeIngredientRole.OUTPUT).addItemStack(entry.terminal());
         }
     }
 

@@ -1295,7 +1295,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             if (p.equals(worldPosition)) {
                 inside.add(p.asLong());
             } else if (level.getBlockEntity(p) instanceof ServerRackPartBlockEntity part
-                    && worldPosition.equals(part.controllerPos())) {
+                    && worldPosition.equals(part.originPos())) {
                 inside.add(p.asLong());
             }
         }
@@ -2596,7 +2596,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     @Override
     public Set<Long> occupiedPositions(final long ownerPos) {
-        // A peripheral cable may touch any block of the 2x2x? cabinet, not just the controller.
+        // A peripheral cable may touch any block of the 2x2x? cabinet, not just the origin.
         final BlockState state = getBlockState();
         if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) {
             return Set.of(ownerPos);

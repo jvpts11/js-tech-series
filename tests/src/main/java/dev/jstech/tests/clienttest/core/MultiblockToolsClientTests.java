@@ -37,7 +37,7 @@ import net.neoforged.fml.ModList;
 /**
  * The tools that show and build multiblocks, as a player meets them, to set beside the approved designs: the Structure
  * Projector showing the test furnace's ghosts, a wrong block in red, and its screen; the multiblocks in the recipe
- * viewer; the Multiblock Builder aimed at the test baker's controller, its pages, and the box it builds; and a
+ * viewer; the Multiblock Builder aimed at the test baker's terminal, its pages, and the box it builds; and a
  * multiblock drawn in a manual.
  */
 public final class MultiblockToolsClientTests {
@@ -48,7 +48,7 @@ public final class MultiblockToolsClientTests {
     private static final BlockPos FURNACE_MIDDLE = new BlockPos(0, 2, 4);
     /* Within reach of the projector, on its far side from the furnace. */
     private static final BlockPos BEHIND_PROJECTOR = new BlockPos(0, 2, 8);
-    /* The baker's controller stands amid the north face of the box it forms, off the floor. */
+    /* The baker's terminal stands amid the north face of the box it forms, off the floor. */
     private static final BlockPos BAKER = new BlockPos(0, 3, 1);
     private static final int WAIT = 200;
     private static final int BUILD_WAIT = 800;

@@ -45,7 +45,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Making a caught structure a multiblock, on the studio's page of structures: the block chosen as its controller, the
+ * Making a caught structure a multiblock, on the studio's page of structures: the block chosen as its terminal, the
  * letters the recorder gave each kind of block with how many it found, its layers as the pattern's file writes them,
  * how it may stand, and, written, the pattern's file; beside it, the page the recipe viewers will show of it.
  */
@@ -82,8 +82,8 @@ final class MultiblockMaker {
     private static final char AIR_SHOWN = '.';
     private static final StableNames<PortKind> PORTS = StableNames.of(PortKind.class);
 
-    /* The controller chosen, kept while the game runs, and how the pattern may stand. */
-    private static @Nullable BlockPos controller;
+    /* The terminal chosen, kept while the game runs, and how the pattern may stand. */
+    private static @Nullable BlockPos terminal;
     private static boolean mirrors;
     private static boolean liesDown;
     private static boolean making;
@@ -120,16 +120,16 @@ final class MultiblockMaker {
     }
 
     /**
-     * Starts making the structure between {@code first} and {@code second} a multiblock, its controller the block the
+     * Starts making the structure between {@code first} and {@code second} a multiblock, its terminal the block the
      * studio was opened looking at; whether it could, the block looked at being between them.
      */
     boolean start(@Nullable final BlockPos first, @Nullable final BlockPos second) {
         final Optional<BlockPos> looked = this.studio.lookedAt();
         if (first == null || second == null || looked.isEmpty() || !between(looked.get(), first, second)) {
-            this.studio.say(words(ToolTexts.LOOK_AT_CONTROLLER));
+            this.studio.say(words(ToolTexts.LOOK_AT_TERMINAL));
             return false;
         }
-        controller = looked.get();
+        terminal = looked.get();
         making = true;
         this.path = "";
         this.ask(false);
@@ -210,11 +210,11 @@ final class MultiblockMaker {
                                 this.recorded.getInt(StudioKeys.BLOCKS))), colours.label());
             }
         }
-        final BlockPos at = controller;
+        final BlockPos at = terminal;
         final Minecraft game = Minecraft.getInstance();
         if (at != null && game.level != null) {
-            StudioDraw.row(g, font, left, left.y() + 30, words(ToolTexts.CONTROLLER), GameText.resolve(
-                    ToolTexts.CONTROLLER_VALUE.with(game.level.getBlockState(at).getBlock().getName().getString(),
+            StudioDraw.row(g, font, left, left.y() + 30, words(ToolTexts.TERMINAL), GameText.resolve(
+                    ToolTexts.TERMINAL_VALUE.with(game.level.getBlockState(at).getBlock().getName().getString(),
                             at.getX(), at.getY(), at.getZ())), colours.label());
         }
         this.drawLetters(g, font, left, colours);
@@ -345,7 +345,7 @@ final class MultiblockMaker {
         return true;
     }
 
-    /* Each row of the letters: the letter, what it stands for, and how many; the controller and air last. */
+    /* Each row of the letters: the letter, what it stands for, and how many; the terminal and air last. */
     private List<String[]> tableLines() {
         final List<String[]> out = new ArrayList<>();
         if (this.recorded == null) {
@@ -360,7 +360,7 @@ final class MultiblockMaker {
                     ToolTexts.A_PORT.with(found.text()))).orElse(letter.getString(StudioKeys.BLOCK)),
                     String.valueOf(letter.getInt(StudioKeys.COUNT))});
         }
-        out.add(new String[] {String.valueOf(MultiblockPattern.CONTROLLER_CHAR), words(ToolTexts.THE_CONTROLLER),
+        out.add(new String[] {String.valueOf(MultiblockPattern.TERMINAL_CHAR), words(ToolTexts.THE_TERMINAL),
                 "1"});
         out.add(new String[] {String.valueOf(AIR_SHOWN), words(ToolTexts.AIR_ANY), "-"});
         return out;
@@ -376,14 +376,14 @@ final class MultiblockMaker {
     private void ask(final boolean saving) {
         final BlockPos first = StructuresPage.first();
         final BlockPos second = StructuresPage.second();
-        final BlockPos chosen = controller;
+        final BlockPos chosen = terminal;
         if (first == null || second == null || chosen == null || Minecraft.getInstance().getConnection() == null) {
             return;
         }
         final CompoundTag args = new CompoundTag();
         args.putLong(StudioKeys.FROM, first.asLong());
         args.putLong(StudioKeys.TO, second.asLong());
-        args.putLong(StudioKeys.CONTROLLER, chosen.asLong());
+        args.putLong(StudioKeys.TERMINAL, chosen.asLong());
         args.putString(StudioKeys.NAME, this.name.get().trim());
         args.putBoolean(StudioKeys.MIRRORS, mirrors);
         args.putBoolean(StudioKeys.LIES_DOWN, liesDown);

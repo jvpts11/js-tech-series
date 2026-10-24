@@ -48,7 +48,7 @@ class CuboidShapeTest {
     }
 
     @Test
-    void check_namesAUnitMissingOnALineThroughTheControllerRatherThanFormingSmaller() {
+    void check_namesAUnitMissingOnALineThroughTheTerminalRatherThanFormingSmaller() {
         final Map<Long, String> world = new HashMap<>();
         fill(world, 3, 3, 3);
         world.put(pos(0, 0, 0), STORAGE);

@@ -1,0 +1,20 @@
+{
+  "glow": [
+    "lamp_0",
+    "lamp_1",
+    "lamp_10",
+    "lamp_11",
+    "lamp_2",
+    "lamp_3",
+    "lamp_4",
+    "lamp_5",
+    "lamp_6",
+    "lamp_7",
+    "lamp_8",
+    "lamp_9"
+  ],
+  "model": "jsindustrial:jsmodels/computational_research_centre.geo.json",
+  "textures": [
+    "jsindustrial:textures/model/computational_research_centre.png"
+  ]
+}

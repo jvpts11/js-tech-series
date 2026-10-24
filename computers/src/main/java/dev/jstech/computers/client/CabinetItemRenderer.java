@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Draws a cabinet's item as the cabinet: the same model the world shows, scaled into the slot, as the machine comes,
- * empty and switched off. A cabinet is several blocks around an origin at its controller, so it is shrunk to fit a
+ * empty and switched off. A cabinet is several blocks around its origin block, so it is shrunk to fit a
  * single block of room and re-centred on the item's own middle; otherwise it would render at full size, mostly
  * outside the slot. An item in a slot is a still photograph of the cabinet: nothing plays on it.
  */

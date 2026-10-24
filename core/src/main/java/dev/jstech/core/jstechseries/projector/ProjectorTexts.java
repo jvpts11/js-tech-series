@@ -45,7 +45,7 @@ public final class ProjectorTexts {
     public static final TextKey LOOK = TextKey.of("jscore.projector.look",
             "Look at a ghost to see what goes there");
     public static final TextKey GHOST_LAYER = TextKey.of("jscore.projector.ghost_layer", "layer %s of %s");
-    public static final TextKey CONTROLLER = TextKey.of("jscore.projector.controller", "The controller");
+    public static final TextKey TERMINAL = TextKey.of("jscore.projector.terminal", "The terminal");
     public static final TextKey COUNTED = TextKey.of("jscore.projector.counted", "%s %s");
     public static final TextKey AND_MORE = TextKey.of("jscore.projector.and_more", "%s, %s");
 

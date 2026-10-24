@@ -7,7 +7,7 @@ packs and resource packs that change the rest. The design behind it is in [Modpa
 
 *Added 2026-10-21.*
 
-A content pack declares blocks, items, materials, kinds of processing machine and the controllers of machines in
+A content pack declares blocks, items, materials, kinds of processing machine and the terminals of machines in
 JSON files, which the Core registers as if a mod had declared them. The game registers what it holds once, as it
 starts and before any world's data packs are read, so content packs are read then too, from two places:
 
@@ -52,7 +52,7 @@ pack, so a pack that brings its own file replaces any of these:
 
 - the English names, `assets/<namespace>/lang/en_us.json`; a resource pack's own language files say them in others;
 - a block state and a model for each block, its whole cube drawn with `<namespace>:block/<path>`, and for a
-  machine's controller the game's furnace model turned the way it faces, drawn with `<path>_front`, `<path>_side`
+  machine's terminal the game's furnace model turned the way it faces, drawn with `<path>_front`, `<path>_side`
   and `<path>_top`;
 - a flat model for each item, drawn with `<namespace>:item/<path>`;
 - each block's drop, itself as long as a blast leaves it, and its place in the tags of its tool and of the tier it

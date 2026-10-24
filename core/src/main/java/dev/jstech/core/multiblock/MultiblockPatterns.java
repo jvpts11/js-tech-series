@@ -55,11 +55,11 @@ import net.minecraft.world.level.block.Block;
  * {"layers": [["AIA", "A#A", "AOA"]],
  *  "key": {"A": {"blocks": ["minecraft:iron_block"]}, "I": {"tags": ["minecraft:logs"]}, ...},
  *  "ports": {"I": "item_input", "O": "item_output"},
- *  "controller": "mymod:smelter"}
+ *  "terminal": "mymod:smelter"}
  * }</pre>
  *
  * <p>A structure saved with a structure block reads as a pattern too, through {@link #fromStructure}: the block that
- * is the controller is named, air and structure voids are left free, and every other block must be there as saved.
+ * is the terminal is named, air and structure voids are left free, and every other block must be there as saved.
  */
 public final class MultiblockPatterns {
 
@@ -74,6 +74,8 @@ public final class MultiblockPatterns {
                                     .optionalFieldOf("ports", Map.of()).forGetter(RawPattern::ports),
                             Codec.unboundedMap(Codec.STRING, ShapeCodecs.LIMIT).optionalFieldOf("limits", Map.of())
                                     .forGetter(RawPattern::limits),
+                            ShapeCodecs.TOGETHER.listOf().optionalFieldOf("together", List.of())
+                                    .forGetter(RawPattern::together),
                             Codec.BOOL.optionalFieldOf("mirrors", false).forGetter(RawPattern::mirrors),
                             Codec.BOOL.optionalFieldOf("lies_down", false).forGetter(RawPattern::liesDown),
                             ShapeCodecs.REPEAT.optionalFieldOf("repeat").forGetter(RawPattern::repeat),
@@ -84,7 +86,7 @@ public final class MultiblockPatterns {
                                                     .forGetter(MultiblockPattern.Inside::rule))
                                     .apply(inside, MultiblockPattern.Inside::new)).optionalFieldOf("inside")
                                     .forGetter(RawPattern::inside),
-                            Codec.STRING.optionalFieldOf("controller").forGetter(RawPattern::controller))
+                            Codec.STRING.optionalFieldOf("terminal").forGetter(RawPattern::terminal))
                             .apply(instance, RawPattern::new))
             .flatXmap(MultiblockPatterns::build, MultiblockPatterns::raw);
 
@@ -122,8 +124,8 @@ public final class MultiblockPatterns {
                         + "\", which is not an id");
             }
         }
-        pattern.controllerBlock().filter(block -> ResourceLocation.tryParse(block) == null).ifPresent(block -> {
-            throw new IllegalArgumentException("the multiblock pattern " + id + " names its controller \"" + block
+        pattern.terminalBlock().filter(block -> ResourceLocation.tryParse(block) == null).ifPresent(block -> {
+            throw new IllegalArgumentException("the multiblock pattern " + id + " names its terminal \"" + block
                     + "\", which is not an id");
         });
         if (DECLARED.putIfAbsent(id, pattern) != null) {
@@ -189,13 +191,13 @@ public final class MultiblockPatterns {
     }
 
     /**
-     * Matches {@code pattern} against the world with its controller at {@code controller}, in any of the four
+     * Matches {@code pattern} against the world with its terminal at {@code terminal}, in any of the four
      * rotations, block tags included.
      */
     public static IMatchResult match(final MultiblockPattern pattern, final BlockGetter level,
-                                     final BlockPos controller) {
-        return PatternMatcher.match(pattern, provider(level), PatternMatcher.encodePosition(controller.getX(),
-                controller.getY(), controller.getZ()));
+                                     final BlockPos terminal) {
+        return PatternMatcher.match(pattern, provider(level), PatternMatcher.encodePosition(terminal.getX(),
+                terminal.getY(), terminal.getZ()));
     }
 
     /**
@@ -225,15 +227,15 @@ public final class MultiblockPatterns {
     }
 
     /**
-     * Reads a structure block's file as a pattern: the block named {@code controllerBlock} is the controller, the
+     * Reads a structure block's file as a pattern: the block named {@code terminalBlock} is the terminal, the
      * blocks of {@code portBlocks} are ports of their kind, air and structure voids are free, and every other block
      * must be there as it was saved.
      *
-     * @throws IllegalArgumentException when the structure holds no controller, or more than one, or is not a
+     * @throws IllegalArgumentException when the structure holds no terminal, or more than one, or is not a
      *                                  structure file
      */
     public static MultiblockPattern fromStructure(final String name, final CompoundTag structure,
-                                                  final String controllerBlock,
+                                                  final String terminalBlock,
                                                   final Map<String, PortKind> portBlocks) {
         final ListTag size = structure.getList("size", Tag.TAG_INT);
         final ListTag palette = structure.getList("palette", Tag.TAG_COMPOUND);
@@ -274,8 +276,8 @@ public final class MultiblockPatterns {
                 continue;
             }
             final char letter;
-            if (id.equals(controllerBlock)) {
-                letter = MultiblockPattern.CONTROLLER_CHAR;
+            if (id.equals(terminalBlock)) {
+                letter = MultiblockPattern.TERMINAL_CHAR;
             } else {
                 Character known = letters.get(id);
                 if (known == null) {
@@ -287,7 +289,7 @@ public final class MultiblockPatterns {
             }
             grid[pos.getInt(1)][pos.getInt(2)][pos.getInt(0)] = letter;
         }
-        final MultiblockPattern.Builder builder = MultiblockPattern.builder(name).controller(controllerBlock);
+        final MultiblockPattern.Builder builder = MultiblockPattern.builder(name).terminal(terminalBlock);
         for (final char[][] layer : grid) {
             final String[] rows = new String[sz];
             for (int z = 0; z < sz; z++) {
@@ -316,14 +318,14 @@ public final class MultiblockPatterns {
      * @throws IOException when the file is missing or unreadable
      */
     public static MultiblockPattern loadStructure(final ResourceManager resources, final ResourceLocation id,
-                                                  final String controllerBlock,
+                                                  final String terminalBlock,
                                                   final Map<String, PortKind> portBlocks) throws IOException {
         final ResourceLocation file = id.withPath(path -> "structure/" + path + ".nbt");
         final Resource resource = resources.getResource(file)
                 .orElseThrow(() -> new IOException("no structure file " + file));
         try (InputStream in = resource.open()) {
             final CompoundTag tag = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap());
-            return fromStructure(id.toString(), tag, controllerBlock, portBlocks);
+            return fromStructure(id.toString(), tag, terminalBlock, portBlocks);
         } catch (final IllegalArgumentException unreadable) {
             throw new IOException(unreadable.getMessage(), unreadable);
         }
@@ -337,7 +339,7 @@ public final class MultiblockPatterns {
     /* The next letter a structure's block can take, past the two the pattern keeps for itself. */
     private static char nextLetter(final char from) {
         char letter = from;
-        while (letter == MultiblockPattern.CONTROLLER_CHAR || letter == MultiblockPattern.IGNORE_CHAR) {
+        while (letter == MultiblockPattern.TERMINAL_CHAR || letter == MultiblockPattern.IGNORE_CHAR) {
             letter++;
         }
         return letter;
@@ -352,6 +354,7 @@ public final class MultiblockPatterns {
             raw.key().forEach(builder::where);
             raw.ports().forEach(builder::port);
             raw.limits().forEach((count, limit) -> builder.limit(count, limit.least(), limit.most()));
+            raw.together().forEach(pair -> builder.together(pair.first(), pair.second()));
             if (raw.mirrors()) {
                 builder.mirrors();
             }
@@ -360,7 +363,7 @@ public final class MultiblockPatterns {
             }
             raw.repeat().ifPresent(builder::repeat);
             raw.inside().ifPresent(inside -> builder.inside(inside.letter(), inside.rule()));
-            raw.controller().ifPresent(builder::controller);
+            raw.terminal().ifPresent(builder::terminal);
             return DataResult.success(builder.build());
         } catch (final IllegalArgumentException | IllegalStateException wrong) {
             return DataResult.error(wrong::getMessage);
@@ -379,13 +382,14 @@ public final class MultiblockPatterns {
             layers.add(List.of(pattern.rows(y)));
         }
         return DataResult.success(new RawPattern(pattern.name(), layers, pattern.places(), pattern.ports(),
-                pattern.limits(), pattern.mirrors(), pattern.liesDown(), pattern.repeat(), pattern.inside(),
-                pattern.controllerBlock()));
+                pattern.limits(), pattern.together(), pattern.mirrors(), pattern.liesDown(), pattern.repeat(),
+                pattern.inside(), pattern.terminalBlock()));
     }
 
     private record RawPattern(String name, List<List<String>> layers, Map<Character, Place> key,
-                              Map<Character, PortKind> ports, Map<String, Limit> limits, boolean mirrors,
-                              boolean liesDown, Optional<MultiblockPattern.Repeat> repeat,
-                              Optional<MultiblockPattern.Inside> inside, Optional<String> controller) {
+                              Map<Character, PortKind> ports, Map<String, Limit> limits,
+                              List<MultiblockPattern.Together> together, boolean mirrors, boolean liesDown,
+                              Optional<MultiblockPattern.Repeat> repeat, Optional<MultiblockPattern.Inside> inside,
+                              Optional<String> terminal) {
     }
 }

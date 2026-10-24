@@ -38,7 +38,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The crafting recipes that ask for knowledge ({@code data/jstests/recipe/knowledge}): at a crafting table they make
  * nothing for a player whose team does not know Test Fusion and make their result once it does, shaped and shapeless
- * alike, and where no player is at the grid, as in a crafter block, they never match.
+ * alike, and where no player is at the grid, as in a crafter block, they never match. What the knowledge opens names
+ * each of their results.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -62,6 +63,17 @@ public final class KnowledgeCraftingGameTests {
     @GameTest(template = ARENA)
     public static void shaped_craftsOnlyOnceTheTeamKnows(final GameTestHelper helper) {
         crafts(helper, List.of(Items.GRAVEL, Items.DIRT), Items.LAPIS_LAZULI);
+    }
+
+    @GameTest(template = ARENA)
+    public static void opens_namesWhatEveryRecipeThatAsksForTheKnowledgeMakes(final GameTestHelper helper) {
+        final List<ItemStack> opened = KnowledgeGate.opens(helper.getLevel(), TestProgression.FUSION.id());
+        helper.assertTrue(opened.stream().anyMatch(stack -> stack.is(Items.LAPIS_LAZULI))
+                && opened.stream().anyMatch(stack -> stack.is(Items.EMERALD)),
+                "knowing Test Fusion opens the shaped recipe's lapis and the shapeless one's emerald: " + opened);
+        helper.assertTrue(KnowledgeGate.opens(helper.getLevel(), ResourceLocation.fromNamespaceAndPath(
+                JsTests.MODID, "test_nothing_asks")).isEmpty(), "and knowledge nothing asks for opens nothing");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

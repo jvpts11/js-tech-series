@@ -22,6 +22,8 @@ public final class MachineScreenLayout {
     public static final int HEIGHT = 257;
     /** The tabs along the top: Main, Sides, Redstone, Upgrades and Protection. */
     public static final int TABS = 5;
+    /** The most tabs a machine's own screen has, its own after these five. */
+    public static final int MOST_TABS = 10;
     public static final int TAB_X = 3;
     public static final int TAB_PITCH = 30;
     public static final int TAB_WIDTH = 28;
@@ -182,7 +184,12 @@ public final class MachineScreenLayout {
 
     /** The tab under ({@code x}, {@code y}), or -1 for none. */
     public static int tabAt(final double x, final double y) {
-        for (int i = 0; i < TABS; i++) {
+        return tabAt(x, y, TABS);
+    }
+
+    /** The tab under ({@code x}, {@code y}) of a row of {@code count}, or -1 for none. */
+    public static int tabAt(final double x, final double y, final int count) {
+        for (int i = 0; i < count; i++) {
             if (x >= tabX(i) && x < tabX(i) + TAB_WIDTH && y >= 0 && y < TAB_HEIGHT) {
                 return i;
             }
@@ -192,7 +199,20 @@ public final class MachineScreenLayout {
 
     /** Where the player's inventory grid starts, the hotbar under it. */
     public static GuiLayout.SlotPosition playerInventory() {
-        return new GuiLayout.SlotPosition(INVENTORY_X + 8, INVENTORY_Y + 18);
+        return playerInventory(WIDTH);
+    }
+
+    /** Where the player's inventory grid starts on a screen {@code width} wide, centred under it. */
+    public static GuiLayout.SlotPosition playerInventory(final int width) {
+        return new GuiLayout.SlotPosition(INVENTORY_X + kitShift(width) + 8, INVENTORY_Y + 18);
+    }
+
+    /**
+     * How far right the standard tabs' face and slots sit on a machine's own screen {@code width} wide, centred on
+     * it: none on every machine's.
+     */
+    public static int kitShift(final int width) {
+        return Math.max(0, (width - WIDTH) / 2);
     }
 
     /** Where upgrade bay {@code index}'s slot sits, the item inside its frame. */

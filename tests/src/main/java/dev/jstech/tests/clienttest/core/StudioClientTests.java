@@ -309,7 +309,7 @@ public final class StudioClientTests {
                 .then(SETTLE, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.STRUCTURES)))
                 .thenAwaitScreen(StudioScreen.class, WAIT)
                 .then(SETTLE, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(ToolTexts.MAKE_MULTIBLOCK)),
-                        "the furnace looked at is made its controller"))
+                        "the furnace looked at is made its terminal"))
                 .thenWaitUntil(() -> studio(ctx).lines().stream().anyMatch(line -> line.contains(
                         "minecraft:bricks")), WAIT, "the server records the pattern")
                 .then(0, () -> {

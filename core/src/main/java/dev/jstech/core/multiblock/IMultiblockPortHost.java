@@ -19,7 +19,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The block entity of a multiblock's controller, as the structure's ports reach it: what a pipe or a cable beside a
+ * The block entity of a multiblock's terminal, as the structure's ports reach it: what a pipe or a cable beside a
  * port gets when it asks the port for items, fluid, energy, another state of matter or heat. A port asks only for what
  * its kind moves, and a host answers null for a port it does not serve, or while the structure is not formed.
  */

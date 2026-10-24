@@ -766,7 +766,7 @@ final class ComputerKindsPages {
         entry.scene("A Standard Mainframe, running, with its service panel off so that its parts show. Drag it to"
                 + " turn it.", 130);
         entry.place(16, 0, 16, () -> ComputingModule.MAINFRAME.get(), "facing=south,optical=false", MAINFRAME_DATA);
-        /* The cabinet is drawn whole by its controller; its other eleven blocks only hold the places. */
+        /* The cabinet is drawn whole by its origin; its other eleven blocks only hold the places. */
         for (int up = 0; up < 2; up++) {
             for (int back = 0; back < 2; back++) {
                 for (int across = -1; across <= 1; across++) {
@@ -902,8 +902,8 @@ final class ComputerKindsPages {
     }
 
     /**
-     * A rack and the eleven blocks of its cabinet that only hold the places, standing where its controller stands. The
-     * cabinet is two blocks across, to the right of the controller, two deep, behind it, and three tall.
+     * A rack and the eleven blocks of its cabinet that only hold the places, standing where its origin stands. The
+     * cabinet is two blocks across, to the right of the origin, two deep, behind it, and three tall.
      */
     private static void rackAt(final ModGuide.EntryBuilder entry, final Supplier<? extends Block> cabinet,
                                final int x, final int z, final String facing, final boolean compute,

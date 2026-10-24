@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 
 /**
- * The controller block of a multiblock machine declared as data ({@link DataMachines}): a device whose block entity,
+ * The terminal block of a multiblock machine declared as data ({@link DataMachines}): a device whose block entity,
  * a {@link DataMachineBlockEntity}, takes its shape, its slots, its energy and its recipes from the machine file the
  * block names. One block for each machine, its look its own; the machine itself is the file.
  *
@@ -35,7 +35,7 @@ public class DataMachineBlock extends DeviceBlock {
         this.codec = simpleCodec(made -> new DataMachineBlock(made, device, machine));
     }
 
-    /** The id of the machine file it is the controller of. */
+    /** The id of the machine file it is the terminal of. */
     public ResourceLocation machine() {
         return this.machine;
     }

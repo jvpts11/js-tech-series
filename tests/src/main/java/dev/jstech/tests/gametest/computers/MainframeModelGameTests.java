@@ -27,7 +27,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * The Mainframe is drawn as one cabinet from its controller, with a bone per installed part, so the
+ * The Mainframe is drawn as one cabinet from its origin, with a bone per installed part, so the
  * block entity has to report what is seated, what condition the machine is in and whether the service
  * panel is off. None of that is in the client's copy of a computer by default: it travels in the block
  * update, which is what these tests pin down.
@@ -143,12 +143,12 @@ public final class MainframeModelGameTests {
                                     && legacy.mainframeEra() == HardwareEra.LEGACY,
                             "each cabinet reports its own era, which picks its model and atlas");
                     /*
-                     * The cabinet is three wide, two tall and two deep; culling by the controller's own
+                     * The cabinet is three wide, two tall and two deep; culling by the origin's own
                      * block would blink the whole machine out as the player walks past it.
                      */
                     final net.minecraft.world.phys.AABB box = standard.renderBox();
                     helper.assertTrue(box.getXsize() >= 3.0D && box.getYsize() >= 2.0D && box.getZsize() >= 2.0D,
-                            "the render box covers the whole footprint, not just the controller");
+                            "the render box covers the whole footprint, not just the origin");
                 })
                 .thenSucceed();
     }

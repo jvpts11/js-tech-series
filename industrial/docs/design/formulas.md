@@ -61,7 +61,8 @@ J's Core's (the rate between FE and J's Energy, the loss along a way, a machine'
 
 | What | Formula | Page |
 | --- | --- | --- |
-| A research group | the first CRC's power + 90% of each other CRC's | [Science](science.md) |
+| A research group | the strongest CRC's power + 90% of each other CRC's | [Science](science.md) |
+| A CRC's heat | all its processors draw becomes heat; a Heat Sink sheds 5 kW, a Liquid Cooler up to 15 kW, a Heat Pipe Cooler up to 25 kW; above 100 °C the part that heats most burns | [Science](science.md) |
 | A synchrotron's energy | grows with its magnets' field × its ring's radius | [Science](science.md) |
 | Decay heat | about 7% of a reactor's power just after shutdown, falling over hours as the Way-Wigner formula has it, 6.6% × t^−0.2 (t in seconds): a little over 1% an hour on | [Nuclear](nuclear.md) |
 | Enrichment | power reactors 3 to 5% uranium-235, research reactors up to 20%, nothing above | [Nuclear](nuclear.md) |

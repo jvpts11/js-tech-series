@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
  * claiming it, whether it should be running the thing or standing by for whoever is, and what to leave behind
  * when it is switched off or broken.
  *
- * <p>None of that is simple. It is a multiblock, so it looks for cables across a whole footprint and bridges
+ * <p>None of that is simple. It is a big block, so it looks for cables across a whole footprint and bridges
  * every one it touches into a single network. Two running Mainframes on one segment are a conflict, and the
  * network collapses until they are pulled apart. Switched to standby, it waits for the one it is backing to
  * disappear and then, after a delay and only if it is the lowest-placed of the standbys, takes that same
@@ -135,7 +135,7 @@ final class MainframeNetworking {
     /**
      * Works out, for this tick, which network this Mainframe is on and what its part in it is.
      *
-     * <p>Every cable the multiblock touches is bridged into one segment first, so whatever is wired through
+     * <p>Every cable the cabinet touches is bridged into one segment first, so whatever is wired through
      * the machine is one network rather than several that happen to meet at it.
      */
     void update(final ServerLevel level) {
@@ -361,9 +361,9 @@ final class MainframeNetworking {
         if (be instanceof MainframeBlockEntity found) {
             return found;
         }
-        if (be instanceof MainframePartBlockEntity part && part.controllerPos() != null
-                && Loaded.blockEntity(level, part.controllerPos()) instanceof MainframeBlockEntity controller) {
-            return controller;
+        if (be instanceof MainframePartBlockEntity part && part.originPos() != null
+                && Loaded.blockEntity(level, part.originPos()) instanceof MainframeBlockEntity origin) {
+            return origin;
         }
         return null;
     }
@@ -382,7 +382,7 @@ final class MainframeNetworking {
     }
 
     /**
-     * Every data wire crossing into the outside of the multiblock, by the number its grid knows it by.
+     * Every data wire crossing into the outside of the cabinet, by the number its grid knows it by.
      *
      * <p>The Mainframe is 3x2x2, so it looks across its whole footprint rather than at one side, and it takes
      * every wire it finds rather than the first, because it bridges all of them into its single network.
@@ -395,7 +395,7 @@ final class MainframeNetworking {
             if (p.equals(origin)) {
                 inside.add(p.asLong());
             } else if (level.getBlockEntity(p) instanceof MainframePartBlockEntity part
-                    && origin.equals(part.controllerPos())) {
+                    && origin.equals(part.originPos())) {
                 inside.add(p.asLong());
             }
         }
@@ -405,7 +405,7 @@ final class MainframeNetworking {
             for (final Direction direction : SIDES) {
                 final BlockPos neighbor = p.relative(direction);
                 if (inside.contains(neighbor.asLong())) {
-                    continue; // a face internal to the multiblock
+                    continue; // a face internal to the cabinet
                 }
                 cables.addAll(DataWires.numbersReaching(level, p, direction, DataWires::isNetwork));
             }

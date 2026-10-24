@@ -13,9 +13,9 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.menu.MainframeMenu;
-import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
-import dev.jstech.core.multiblock.IMultiblockGeometry;
-import dev.jstech.core.multiblock.MultiblockPatternGeometry;
+import dev.jstech.core.bigblock.AbstractBigBlock;
+import dev.jstech.core.bigblock.BigBlockFootprint;
+import dev.jstech.core.bigblock.IBigBlockGeometry;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
@@ -53,7 +53,7 @@ import java.util.List;
 /**
  * The Mainframe, the network's orchestrator: one block for every era, the era given where it is declared.
  */
-public class MainframeBlock extends AbstractMultiblockControllerBlock
+public class MainframeBlock extends AbstractBigBlock
         implements IFaceConnector, IEraChassisBlock {
 
     private final HardwareEra era;
@@ -115,19 +115,19 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     }
 
     /** Says on the Mainframe and every part of it whether it holds an Optical Network Card. */
-    public void setOptical(final Level level, final BlockPos controller, final boolean optical) {
-        final BlockState state = level.getBlockState(controller);
+    public void setOptical(final Level level, final BlockPos origin, final boolean optical) {
+        final BlockState state = level.getBlockState(origin);
         if (!(state.getBlock() instanceof MainframeBlock)) {
             return;
         }
-        final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(controller, state.getValue(FACING)));
-        blocks.add(controller);
+        final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(origin, state.getValue(FACING)));
+        blocks.add(origin);
         OpticalPort.set(level, blocks, OpticalPort.OPTICAL, optical);
     }
 
     @Override
-    protected IMultiblockGeometry geometry() {
-        return new MultiblockPatternGeometry(MainframeStructure.PATTERN);
+    protected IBigBlockGeometry geometry() {
+        return new BigBlockFootprint(MainframeStructure.PATTERN);
     }
 
     @Override
@@ -136,39 +136,39 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     }
 
     @Override
-    protected boolean isOwnController(final BlockState state) {
+    protected boolean isOwnOrigin(final BlockState state) {
         return state.getBlock() instanceof MainframeBlock;
     }
 
     @Override
-    protected BlockState partStateFor(final BlockPos controller, final Direction facing,
-                                      final BlockPos part, final BlockState controllerState) {
-        // Stamp the controller's era onto every structural part so the whole footprint wears one skin.
+    protected BlockState partStateFor(final BlockPos origin, final Direction facing,
+                                      final BlockPos part, final BlockState originState) {
+        // Stamp the origin's era onto every structural part so the whole footprint wears one skin.
         final HardwareEra era =
-                controllerState.getBlock() instanceof MainframeBlock mf
+                originState.getBlock() instanceof MainframeBlock mf
                         ? mf.era()
                         : HardwareEra.STANDARD;
         return ComputingModule.MAINFRAME_PART.get().defaultBlockState()
                 .setValue(FACING, facing)
                 .setValue(MainframePartBlock.CORE,
-                        MainframeStructure.isCentralColumn(controller, facing, part))
+                        MainframeStructure.isCentralColumn(origin, facing, part))
                 .setValue(MainframePartBlock.ERA, era.level())
-                .setValue(OpticalPort.OPTICAL, controllerState.hasProperty(OpticalPort.OPTICAL)
-                        && controllerState.getValue(OpticalPort.OPTICAL));
+                .setValue(OpticalPort.OPTICAL, originState.hasProperty(OpticalPort.OPTICAL)
+                        && originState.getValue(OpticalPort.OPTICAL));
     }
 
     @Override
-    protected void dropContents(final ServerLevel level, final BlockPos controller) {
+    protected void dropContents(final ServerLevel level, final BlockPos origin) {
         // Its own item, so a broken Mainframe gives back the era it was.
-        Block.popResource(level, controller, new ItemStack(asItem()));
-        if (level.getBlockEntity(controller) instanceof MainframeBlockEntity be) {
-            BlockDrops.spill(level, controller, be.getInventory());
+        Block.popResource(level, origin, new ItemStack(asItem()));
+        if (level.getBlockEntity(origin) instanceof MainframeBlockEntity be) {
+            BlockDrops.spill(level, origin, be.getInventory());
         }
     }
 
     @Override
-    protected void onControllerBroken(final ServerLevel level, final BlockPos controller) {
-        if (level.getBlockEntity(controller) instanceof MainframeBlockEntity be) {
+    protected void onOriginBroken(final ServerLevel level, final BlockPos origin) {
+        if (level.getBlockEntity(origin) instanceof MainframeBlockEntity be) {
             be.onBroken();
         }
     }

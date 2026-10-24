@@ -36,14 +36,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 /**
- * What a Multiblock Builder makes of the controller it is aimed at, worked out alike on either side from the world
- * that side holds: the controller's own shape at its least size, turned the way the controller faces; what of it is in
+ * What a Multiblock Builder makes of the terminal it is aimed at, worked out alike on either side from the world
+ * that side holds: the terminal's own shape at its least size, turned the way the terminal faces; what of it is in
  * place, missing and wrong; the places still to fill and the blocks that fit each; the places that take several blocks,
  * grouped; and what building it takes from the player's source.
  *
  * @param name    what the multiblock is called
- * @param preview its places, turned as the controller faces
- * @param facing  the way the controller faces
+ * @param preview its places, turned as the terminal faces
+ * @param facing  the way the terminal faces
  * @param view    what of it is in place, missing and wrong
  * @param wants   the places still to fill, the bottom layer first, each with the blocks that fit it
  * @param groups  the places that take several blocks, grouped by the blocks they take
@@ -58,12 +58,12 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
     }
 
     /**
-     * What the builder set as {@code state}, held by {@code player}, makes of the controller at {@code controller} in
-     * {@code level}; none where no controller of a multiblock stands, or its shape cannot be laid out.
+     * What the builder set as {@code state}, held by {@code player}, makes of the terminal at {@code terminal} in
+     * {@code level}; none where no terminal of a multiblock stands, or its shape cannot be laid out.
      */
-    public static Optional<BuilderPlan> of(final Level level, final BlockPos controller, final Player player,
+    public static Optional<BuilderPlan> of(final Level level, final BlockPos terminal, final Player player,
                                            final BuilderState state) {
-        if (!(level.getBlockEntity(controller) instanceof MachineBlockEntity machine)) {
+        if (!(level.getBlockEntity(terminal) instanceof MachineBlockEntity machine)) {
             return Optional.empty();
         }
         final MachineStructure structure = machine.structure();
@@ -75,16 +75,16 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
         if (laid.isEmpty()) {
             return Optional.empty();
         }
-        final BlockState standing = level.getBlockState(controller);
+        final BlockState standing = level.getBlockState(terminal);
         final Direction facing = standing.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
                 ? standing.getValue(BlockStateProperties.HORIZONTAL_FACING) : Direction.NORTH;
-        final ShapePreview preview = laid.get().withController(MultiblockBlocks.idOf(standing.getBlock()))
+        final ShapePreview preview = laid.get().withTerminal(MultiblockBlocks.idOf(standing.getBlock()))
                 .turned(orientation(facing));
-        final ProjectorView view = ProjectorView.of(level, preview, controller);
+        final ProjectorView view = ProjectorView.of(level, preview, terminal);
         final List<BuildOrder.Want> wants = new ArrayList<>();
         final Map<String, Group> groups = new LinkedHashMap<>();
         for (final ProjectorView.Place place : view.places()) {
-            if (place.state() != ProjectorView.State.MISSING || place.ghost().controller()) {
+            if (place.state() != ProjectorView.State.MISSING || place.ghost().terminal()) {
                 continue;
             }
             final List<String> fits = new ArrayList<>();
@@ -114,9 +114,9 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
                 List.copyOf(groups.values()), order));
     }
 
-    /** How many places already hold the right block, its controller's apart. */
+    /** How many places already hold the right block, its terminal's apart. */
     public int already() {
-        return (int) this.view.places().stream().filter(place -> !place.ghost().controller()
+        return (int) this.view.places().stream().filter(place -> !place.ghost().terminal()
                 && place.state() == ProjectorView.State.PLACED).count();
     }
 
@@ -136,8 +136,8 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
         };
     }
 
-    /* What the multiblock is called: the name of the multiblock its shape is, else its controller's. */
-    private static Text nameOf(final IStructureShape shape, final BlockState controller) {
+    /* What the multiblock is called: the name of the multiblock its shape is, else its terminal's. */
+    private static Text nameOf(final IStructureShape shape, final BlockState terminal) {
         if (shape instanceof PatternById byId) {
             return Projectables.name(byId.id());
         }
@@ -146,7 +146,7 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
                 return Projectables.name(shown.getKey());
             }
         }
-        return GameText.of(controller.getBlock().getName());
+        return GameText.of(terminal.getBlock().getName());
     }
 
     /**

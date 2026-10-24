@@ -96,7 +96,7 @@ public final class ClientGuideText implements IGuideText {
         return GuideLibrary.loaded().titleKeyOf(target).map(key -> this.text(key)).orElse("");
     }
 
-    /** The multiblock in force on the player's side, its controller in its place, each place its first block. */
+    /** The multiblock in force on the player's side, its terminal in its place, each place its first block. */
     @Override
     public List<GuideBlock.SceneBlock> multiblock(final String id) {
         final ResourceLocation multiblock = ResourceLocation.tryParse(id);

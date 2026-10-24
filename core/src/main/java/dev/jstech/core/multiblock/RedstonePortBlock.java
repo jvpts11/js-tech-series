@@ -28,13 +28,13 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The block of a multiblock's redstone port, which a mod registers with its own look: it reads the signal round it
- * for its controller, or, switched with an empty hand, gives out its controller's signal.
+ * for its terminal, or, switched with an empty hand, gives out its terminal's signal.
  */
 public class RedstonePortBlock extends Block implements EntityBlock {
 
     private final Supplier<? extends BlockEntityType<? extends RedstonePortBlockEntity>> type;
 
-    /** Whether it gives its controller's signal, rather than reading the one round it. */
+    /** Whether it gives its terminal's signal, rather than reading the one round it. */
     public static final BooleanProperty GIVES = BooleanProperty.create("gives");
 
     public RedstonePortBlock(final Properties properties,

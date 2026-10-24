@@ -1,0 +1,116 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.computational_research_centre.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.computational_research_centre.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.computational_research_centre.use1",
+        "jsindustrial.guide.computational_research_centre.use2",
+        "jsindustrial.guide.computational_research_centre.use3",
+        "jsindustrial.guide.computational_research_centre.use4",
+        "jsindustrial.guide.computational_research_centre.use5"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.computational_research_centre.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.computational_research_centre.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.computational_research_centre.text2"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.computational_research_centre.fix1",
+          "problem": "jsindustrial.guide.computational_research_centre.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.computational_research_centre.fix2",
+          "problem": "jsindustrial.guide.computational_research_centre.problem2"
+        },
+        {
+          "fix": "jsindustrial.guide.computational_research_centre.fix3",
+          "problem": "jsindustrial.guide.computational_research_centre.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:research_data",
+        "jsindustrial:research_groups"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:crc_terminal",
+  "id": "jsindustrial:computational_research_centre",
+  "items": [
+    "jsindustrial:crc_terminal",
+    "jsindustrial:crc_casing",
+    "jsindustrial:crc_gate",
+    "jsindustrial:crc_bus",
+    "jsindustrial:crc_power_entry",
+    "jsindustrial:crc_link_socket",
+    "jsindustrial:crc_coolant_inlet",
+    "jsindustrial:crc_coolant_outlet",
+    "jsindustrial:crc_heat_port",
+    "jsindustrial:research_processor",
+    "jsindustrial:integrated_research_processor",
+    "jsindustrial:nanoscale_research_processor",
+    "jsindustrial:heat_sink",
+    "jsindustrial:liquid_cooler",
+    "jsindustrial:heat_pipe_cooler"
+  ],
+  "order": 12,
+  "section": "jsindustrial:science",
+  "title": "jsindustrial.guide.computational_research_centre.title"
+}

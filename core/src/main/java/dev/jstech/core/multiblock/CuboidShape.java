@@ -16,8 +16,8 @@ import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Any cuboid filled with units, as a crafting processor: every place of it holds a unit, the controller one of them,
- * and its size is however far the units run from the controller along each axis, within the limits. The kinds of
+ * Any cuboid filled with units, as a crafting processor: every place of it holds a unit, the terminal one of them,
+ * and its size is however far the units run from the terminal along each axis, within the limits. The kinds of
  * units are counted through the unit's place ("at least one storage unit"). Pure.
  *
  * @param unit   what fits each place, and what each counts and gives
@@ -45,15 +45,15 @@ public record CuboidShape(Place unit, Limit sides, Map<String, Limit> limits) im
     }
 
     @Override
-    public ShapeMatch check(final IBlockProvider provider, final long controller) {
-        final int[] c = PatternMatcher.decodePosition(controller);
+    public ShapeMatch check(final IBlockProvider provider, final long terminal) {
+        final int[] c = PatternMatcher.decodePosition(terminal);
         final int[] lo = c.clone();
         final int[] hi = c.clone();
         final String[] names = {ShapeMatch.SIZE_X, ShapeMatch.SIZE_Y, ShapeMatch.SIZE_Z};
         for (int axis = 0; axis < 3; axis++) {
             extend(provider, c, axis, lo, hi);
         }
-        // Along its edges too, so a unit missing on a line through the controller is told as missing rather than
+        // Along its edges too, so a unit missing on a line through the terminal is told as missing rather than
         // leaving a smaller cuboid that forms.
         for (int round = 0; round < 2; round++) {
             for (int axis = 0; axis < 3; axis++) {
@@ -72,7 +72,7 @@ public record CuboidShape(Place unit, Limit sides, Map<String, Limit> limits) im
         for (int axis = 0; axis < 3; axis++) {
             final int size = hi[axis] - lo[axis] + 1;
             if (!this.sides.contains(size)) {
-                return Cells.wrongSize(controller, names[axis], size);
+                return Cells.wrongSize(terminal, names[axis], size);
             }
         }
         final ShapeTally tally = new ShapeTally();
@@ -81,27 +81,27 @@ public record CuboidShape(Place unit, Limit sides, Map<String, Limit> limits) im
             for (int z = lo[2]; z <= hi[2]; z++) {
                 for (int x = lo[0]; x <= hi[0]; x++) {
                     final long pos = PatternMatcher.encodePosition(x, y, z);
-                    if (pos == controller) {
+                    if (pos == terminal) {
                         continue;
                     }
                     final String id = Cells.blockAt(provider, pos);
                     if (!this.unit.fits().matchesAt(provider, pos, id)) {
-                        return Cells.wrongBlock(controller, pos, ShapeMatch.UNIT, id);
+                        return Cells.wrongBlock(terminal, pos, ShapeMatch.UNIT, id);
                     }
                     tally.place(this.unit, provider, pos, id);
                     parts.add(pos);
                 }
             }
         }
-        final ShapeMatch.Failure counts = tally.outOfLimits(this.limits, controller);
+        final ShapeMatch.Failure counts = tally.outOfLimits(this.limits, terminal);
         if (counts != null) {
             return counts;
         }
-        return new ShapeMatch.Formed(Orientation.NORTH, controller, parts, Map.of(), List.of(), hi[0] - lo[0] + 1,
+        return new ShapeMatch.Formed(Orientation.NORTH, terminal, parts, Map.of(), List.of(), hi[0] - lo[0] + 1,
                 hi[1] - lo[1] + 1, hi[2] - lo[2] + 1, 1, tally.counts(), tally.values());
     }
 
-    /** As far as its walks read: its most side from the controller, and one beyond. */
+    /** As far as its walks read: its most side from the terminal, and one beyond. */
     @Override
     public int reach() {
         return this.sides.most() + 1;

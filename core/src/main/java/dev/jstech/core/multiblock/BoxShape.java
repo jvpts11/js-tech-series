@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Any box between a least and a most size, as a dynamic tank: a frame on its twelve edges, faces between them (casing,
- * glass, ports), and an inside read by its {@link InsideRule}. The controller stands anywhere on its shell; the box is
+ * glass, ports), and an inside read by its {@link InsideRule}. The terminal stands anywhere on its shell; the box is
  * found from it, walking along the shell to its edges, so it is whatever size the player built. Pure.
  *
  * @param frame  what fits the edges
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, Limit height,
                        Map<String, Limit> limits) implements RuleShape {
 
-    /* The six ways the inside can lie from the controller: south, north, east, west, below, above. */
+    /* The six ways the inside can lie from the terminal: south, north, east, west, below, above. */
     private static final int[][] INWARD = {{0, 0, 1}, {0, 0, -1}, {1, 0, 0}, {-1, 0, 0}, {0, -1, 0}, {0, 1, 0}};
 
     public BoxShape {
@@ -56,11 +56,11 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
     }
 
     @Override
-    public ShapeMatch check(final IBlockProvider provider, final long controller) {
+    public ShapeMatch check(final IBlockProvider provider, final long terminal) {
         final Cells.Best best = new Cells.Best();
         for (final int[] inward : INWARD) {
             final ShapeTally tally = new ShapeTally();
-            final ShapeMatch result = attempt(provider, controller, inward, tally);
+            final ShapeMatch result = attempt(provider, terminal, inward, tally);
             if (result instanceof ShapeMatch.Failure failure) {
                 best.offer(failure, tally.matched());
             } else {
@@ -70,7 +70,7 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
         return best.failure();
     }
 
-    /** As far as its walks read: its most side or height from the controller, and one beyond. */
+    /** As far as its walks read: its most side or height from the terminal, and one beyond. */
     @Override
     public int reach() {
         return Math.max(this.sides.most(), this.height.most()) + 1;
@@ -92,20 +92,20 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
     }
 
     /*
-     * One attempt, the inside lying one way from the controller: the controller's face found by walking along the
+     * One attempt, the inside lying one way from the terminal: the terminal's face found by walking along the
      * shell from it, the depth by walking along an edge from the face's corner, then every place of the box read.
      */
-    private ShapeMatch attempt(final IBlockProvider provider, final long controller, final int[] inward,
+    private ShapeMatch attempt(final IBlockProvider provider, final long terminal, final int[] inward,
                                final ShapeTally tally) {
         final int axis = inward[0] != 0 ? 0 : inward[1] != 0 ? 1 : 2;
         final int u = axis == 0 ? 1 : 0;
         final int v = axis == 2 ? 1 : 2;
-        final int[] c = PatternMatcher.decodePosition(controller);
+        final int[] c = PatternMatcher.decodePosition(terminal);
         final int[] lo = c.clone();
         final int[] hi = c.clone();
         extend(provider, c, u, lo, hi, tally);
         extend(provider, c, v, lo, hi, tally);
-        // Along the face's edges too, so one block missing on the controller's row is told as missing.
+        // Along the face's edges too, so one block missing on the terminal's row is told as missing.
         for (int round = 0; round < 2; round++) {
             for (final int along : new int[] {u, v}) {
                 final int across = along == u ? v : u;
@@ -135,7 +135,7 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
         for (int each = 0; each < 3; each++) {
             final int size = hi[each] - lo[each] + 1;
             if (!(each == 1 ? this.height : this.sides).contains(size)) {
-                return Cells.wrongSize(controller, names[each], size);
+                return Cells.wrongSize(terminal, names[each], size);
             }
         }
         final List<Long> parts = new ArrayList<>();
@@ -144,7 +144,7 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
             for (int z = lo[2]; z <= hi[2]; z++) {
                 for (int x = lo[0]; x <= hi[0]; x++) {
                     final long pos = PatternMatcher.encodePosition(x, y, z);
-                    if (pos == controller) {
+                    if (pos == terminal) {
                         continue;
                     }
                     final int bounds = (x == lo[0] || x == hi[0] ? 1 : 0) + (y == lo[1] || y == hi[1] ? 1 : 0)
@@ -156,22 +156,22 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
                     final Place place = bounds >= 2 ? this.frame : this.face;
                     final String id = Cells.blockAt(provider, pos);
                     if (!place.fits().matchesAt(provider, pos, id)) {
-                        return Cells.wrongBlock(controller, pos, bounds >= 2 ? ShapeMatch.FRAME : ShapeMatch.FACE, id);
+                        return Cells.wrongBlock(terminal, pos, bounds >= 2 ? ShapeMatch.FRAME : ShapeMatch.FACE, id);
                     }
                     tally.place(place, provider, pos, id);
                     parts.add(pos);
                 }
             }
         }
-        final ShapeMatch.Failure wrong = this.inside.read(provider, within, controller, tally);
+        final ShapeMatch.Failure wrong = this.inside.read(provider, within, terminal, tally);
         if (wrong != null) {
             return wrong;
         }
-        final ShapeMatch.Failure counts = tally.outOfLimits(this.limits, controller);
+        final ShapeMatch.Failure counts = tally.outOfLimits(this.limits, terminal);
         if (counts != null) {
             return counts;
         }
-        return new ShapeMatch.Formed(Orientation.NORTH, controller, parts, Map.of(), within, hi[0] - lo[0] + 1,
+        return new ShapeMatch.Formed(Orientation.NORTH, terminal, parts, Map.of(), within, hi[0] - lo[0] + 1,
                 hi[1] - lo[1] + 1, hi[2] - lo[2] + 1, 1, tally.counts(), tally.values());
     }
 

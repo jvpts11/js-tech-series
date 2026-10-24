@@ -55,6 +55,7 @@ public final class JsTestsDataGenerators {
                 new BiomeClimateProvider(output, event.getLookupProvider(), JsTests.MODID));
         generator.addProvider(event.includeServer(), DeclaredFilesProvider.deposits(output, JsTests.MODID));
         generator.addProvider(event.includeServer(), DeclaredFilesProvider.reservoirs(output, JsTests.MODID));
+        generator.addProvider(event.includeServer(), DeclaredFilesProvider.researchCosts(output, JsTests.MODID));
         generator.addProvider(event.includeServer(), new ContentFluidTagsProvider(output,
                 event.getLookupProvider(), TestSounds.CONTENT, event.getExistingFileHelper()));
         generator.addProvider(event.includeClient(),

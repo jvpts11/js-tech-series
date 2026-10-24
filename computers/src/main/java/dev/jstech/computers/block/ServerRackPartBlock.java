@@ -16,7 +16,7 @@ import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
+import dev.jstech.core.bigblock.AbstractBigBlock;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
@@ -51,7 +51,7 @@ import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A structural part of the Server Rack, one of the 11 non-controller blocks of the 2x3x2 cabinet.
+ * A structural part of the Server Rack, one of the 11 non-origin blocks of the 2x3x2 cabinet.
  */
 public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConnector {
 
@@ -62,7 +62,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     public static final BooleanProperty FRONT = BooleanProperty.create("front");
     /**
      * Whether this part belongs to a Supercomputer Rack. The parts are one shared block, and a model
-     * cannot ask the controller what cabinet it is, so the controller stamps the cabinet type on each
+     * cannot ask the origin what cabinet it is, so the origin stamps the cabinet type on each
      * part it raises, and that is what lets the whole cabinet wear one livery, not just its base block.
      */
     public static final BooleanProperty COMPUTE = BooleanProperty.create("compute");
@@ -71,7 +71,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
             BlockStateProperties.HORIZONTAL_FACING;
 
     /*
-     * The era of the cabinet the part belongs to, as the era's level(), stamped by the controller as it raises the
+     * The era of the cabinet the part belongs to, as the era's level(), stamped by the origin as it raises the
      * part: the parts are one shared block, and the cabinet's age is what sets the cables they take.
      */
     public static final IntegerProperty ERA = IntegerProperty.create(
@@ -102,7 +102,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
                 .setValue(OpticalPort.FIBRE, FibreReach.NONE));
     }
 
-    /** A part is collision and a link back to the controller; the cabinet model is drawn from there. */
+    /** A part is collision and a link back to the origin; the cabinet model is drawn from there. */
     @Override
     protected RenderShape getRenderShape(final BlockState state) {
         return RenderShape.INVISIBLE;
@@ -145,10 +145,10 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
             return ItemInteractionResult.sidedSuccess(true);
         }
         if (level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part
-                && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack) {
-            // The part knows its cabinet; the row under the crosshair is resolved against the controller.
-            return ServerRackBlock.mountFromHand(rack, part.controllerPos(), pos, stack, player, hit);
+                && part.originPos() != null
+                && level.getBlockEntity(part.originPos()) instanceof ServerRackBlockEntity rack) {
+            // The part knows its cabinet; the row under the crosshair is resolved against the origin.
+            return ServerRackBlock.mountFromHand(rack, part.originPos(), pos, stack, player, hit);
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
@@ -158,15 +158,15 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
                                                final Player player, final BlockHitResult hit) {
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part
-                && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack) {
-            final BlockPos controllerPos = part.controllerPos();
+                && part.originPos() != null
+                && level.getBlockEntity(part.originPos()) instanceof ServerRackBlockEntity rack) {
+            final BlockPos originPos = part.originPos();
             MachineOperators.note(rack, player);
             serverPlayer.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> new ServerRackMenu(id, inv, rack),
                     // The cabinet names itself; every era and the compute cabinet have their own.
                     rack.getBlockState().getBlock().getName()),
-                    buf -> buf.writeBlockPos(controllerPos));
+                    buf -> buf.writeBlockPos(originPos));
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
@@ -180,10 +180,10 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     public ItemStack getCloneItemStack(final BlockState state, final HitResult target,
                                        final LevelReader level, final BlockPos pos,
                                        final Player player) {
-        if (level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack
+        if (level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part && part.originPos() != null
+                && level.getBlockEntity(part.originPos()) instanceof ServerRackBlockEntity rack
                 && rack.getBlockState().getBlock() instanceof ServerRackBlock cabinet) {
-            return ServerRackBlock.pickFrom(rack, part.controllerPos(), pos, target, cabinet.asItem());
+            return ServerRackBlock.pickFrom(rack, part.originPos(), pos, target, cabinet.asItem());
         }
         return super.getCloneItemStack(state, target, level, pos, player);
     }
@@ -194,10 +194,10 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
         // The whole cabinet goes with any of its blocks, so a player's break here is a break of the cabinet.
         if (level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part
-                && part.controllerPos() != null
-                && level.getBlockState(part.controllerPos()).getBlock()
-                        instanceof AbstractMultiblockControllerBlock controller) {
-            controller.brokenBy(serverLevel, part.controllerPos(), player);
+                && part.originPos() != null
+                && level.getBlockState(part.originPos()).getBlock()
+                        instanceof AbstractBigBlock origin) {
+            origin.brokenBy(serverLevel, part.originPos(), player);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
@@ -207,16 +207,16 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
                             final BlockState newState, final boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part
-                && part.controllerPos() != null) {
+                && part.originPos() != null) {
             /*
-             * The controller is still present when a part is broken; read its facing
+             * The origin is still present when a part is broken; read its facing
              * so the whole cabinet dissolves. (Re-entrant calls are guarded.)
              */
-            final BlockState controller = level.getBlockState(part.controllerPos());
-            if (controller.getBlock()
-                    instanceof AbstractMultiblockControllerBlock owner) {
-                owner.dissolve(serverLevel, part.controllerPos(),
-                        controller.getValue(HorizontalDirectionalBlock.FACING));
+            final BlockState origin = level.getBlockState(part.originPos());
+            if (origin.getBlock()
+                    instanceof AbstractBigBlock owner) {
+                owner.dissolve(serverLevel, part.originPos(),
+                        origin.getValue(HorizontalDirectionalBlock.FACING));
             }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 public final class MainframeButtonGameTests {
 
     private static final String ARENA = "empty";
-    /** The controller, the middle of the cabinet's bottom front row, with room for the cabinet round it. */
+    /** The origin, the middle of the cabinet's bottom front row, with room for the cabinet round it. */
     private static final BlockPos WHERE = new BlockPos(3, 2, 2);
     private static final List<BlockEntry<MainframeBlock>> ERAS = List.of(ComputingModule.VINTAGE_MAINFRAME,
             ComputingModule.LEGACY_MAINFRAME, ComputingModule.TRANSITION_MAINFRAME, ComputingModule.MAINFRAME,
@@ -78,7 +78,7 @@ public final class MainframeButtonGameTests {
         helper.setBlock(WHERE, ComputingModule.MAINFRAME.get().defaultBlockState());
         final MainframeBlockEntity mainframe = helper.getBlockEntity(WHERE);
         final MenuWatcher player = new MenuWatcher(helper.getLevel());
-        // The middle of the controller's front, above the sill.
+        // The middle of the origin's front, above the sill.
         click(helper, player, 32, 20);
         final AbstractContainerMenu menu = player.opened == null ? null
                 : player.opened.createMenu(1, player.getInventory(), player);
@@ -87,7 +87,7 @@ public final class MainframeButtonGameTests {
         helper.succeed();
     }
 
-    /* Clicks the controller's front at (x, y), in sixty-fourths from its top left as seen. */
+    /* Clicks the origin's front at (x, y), in sixty-fourths from its top left as seen. */
     private static void click(final GameTestHelper helper, final Player player, final double x, final double y) {
         final BlockPos at = helper.absolutePos(WHERE);
         final Direction front = helper.getLevel().getBlockState(at).getValue(HorizontalDirectionalBlock.FACING);

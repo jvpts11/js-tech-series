@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * A multiblock machine declared entirely as data, as a data pack writes it: its shape, the kind of recipe it works,
- * its slots, lanes and tanks, its energy, and how many recipes it runs at once. A controller block that names it
+ * its slots, lanes and tanks, its energy, and how many recipes it runs at once. A terminal block that names it
  * ({@link DataMachineBlock}) is all it takes in the game.
  *
  * @param shape    its shape: a pattern, drawn or by id, or a shape by rule

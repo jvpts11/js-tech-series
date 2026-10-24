@@ -48,13 +48,13 @@ class PatternMatcherTest {
 
     @Test
     void singleCellPattern_alwaysMatchesNorth() {
-        // Pattern: just the controller. No other slots.
+        // Pattern: just the terminal. No other slots.
         var pattern = MultiblockPattern.builder("just_ctrl")
                 .layer("#")
                 .build();
         /*
          * World is empty (any block at 0,0,0, even air, is fine, because
-         * the controller slot doesn't validate blocks beyond "is controller").
+         * the terminal slot doesn't validate blocks beyond "is terminal").
          */
         IBlockProvider provider = providerFrom(Map.of());
         var result = PatternMatcher.match(pattern, provider, pos(0, 0, 0));
@@ -67,16 +67,16 @@ class PatternMatcherTest {
     void horizontalLine_matchesNorthOrientation() {
         /*
          * Pattern in canonical NORTH orientation: a 3x1x1 line where
-         * x=-1 and x=+1 are casing, x=0 is controller.
+         * x=-1 and x=+1 are casing, x=0 is terminal.
          */
         var pattern = MultiblockPattern.builder("hline")
                 .layer("C#C")
                 .where('C', IBlockMatcher.exact("jsc:casing"))
                 .build();
-        // World: place controller at origin, casing at x=-1 and x=+1.
+        // World: place terminal at origin, casing at x=-1 and x=+1.
         Map<Long, String> world = new HashMap<>();
         world.put(pos(-1, 0, 0), "jsc:casing");
-        world.put(pos(0, 0, 0), "jsc:controller");
+        world.put(pos(0, 0, 0), "jsc:terminal");
         world.put(pos(1, 0, 0), "jsc:casing");
         var result = PatternMatcher.match(pattern, providerFrom(world), pos(0, 0, 0));
         var success = assertInstanceOf(IMatchResult.Success.class, result);
@@ -96,7 +96,7 @@ class PatternMatcherTest {
         // World: same line but along the Z-axis (north-south).
         Map<Long, String> world = new HashMap<>();
         world.put(pos(0, 0, -1), "jsc:casing");
-        world.put(pos(0, 0, 0), "jsc:controller");
+        world.put(pos(0, 0, 0), "jsc:terminal");
         world.put(pos(0, 0, 1), "jsc:casing");
         var result = PatternMatcher.match(pattern, providerFrom(world), pos(0, 0, 0));
         var success = assertInstanceOf(IMatchResult.Success.class, result);
@@ -111,9 +111,9 @@ class PatternMatcherTest {
                 .layer("C#C")
                 .where('C', IBlockMatcher.exact("jsc:casing"))
                 .build();
-        // World has only the controller, both casings missing.
+        // World has only the terminal, both casings missing.
         Map<Long, String> world = new HashMap<>();
-        world.put(pos(0, 0, 0), "jsc:controller");
+        world.put(pos(0, 0, 0), "jsc:terminal");
         var result = PatternMatcher.match(pattern, providerFrom(world), pos(0, 0, 0));
         var failure = assertInstanceOf(IMatchResult.Failure.class, result);
         /*
@@ -136,7 +136,7 @@ class PatternMatcherTest {
         // World has stone where casing should be.
         Map<Long, String> world = new HashMap<>();
         world.put(pos(-1, 0, 0), "minecraft:stone");
-        world.put(pos(0, 0, 0), "jsc:controller");
+        world.put(pos(0, 0, 0), "jsc:terminal");
         world.put(pos(1, 0, 0), "jsc:casing");
         var result = PatternMatcher.match(pattern, providerFrom(world), pos(0, 0, 0));
         var failure = assertInstanceOf(IMatchResult.Failure.class, result);
@@ -165,27 +165,27 @@ class PatternMatcherTest {
                 )
                 .where('C', IBlockMatcher.exact("jsc:casing"))
                 .build();
-        // Build the cube around origin. Controller is at center (0,1,0).
+        // Build the cube around origin. Terminal is at center (0,1,0).
         Map<Long, String> world = new HashMap<>();
         for (int x = -1; x <= 1; x++) {
             for (int y = 0; y <= 2; y++) {
                 for (int z = -1; z <= 1; z++) {
-                    if (x == 0 && y == 1 && z == 0) continue; // skip controller pos
+                    if (x == 0 && y == 1 && z == 0) continue; // skip terminal pos
                     world.put(pos(x, y, z), "jsc:casing");
                 }
             }
         }
-        world.put(pos(0, 1, 0), "jsc:controller");
+        world.put(pos(0, 1, 0), "jsc:terminal");
         var result = PatternMatcher.match(pattern, providerFrom(world), pos(0, 1, 0));
         var success = assertInstanceOf(IMatchResult.Success.class, result);
-        // 3x3x3 = 27 cells, minus 1 controller = 26 slaves.
+        // 3x3x3 = 27 cells, minus 1 terminal = 26 slaves.
         assertEquals(26, success.slavePositions().size());
         assertSame(Rotation.NORTH, success.rotation());
     }
 
     @Test
     void asymmetricPattern_eastRotation() {
-        // L-shape: controller at origin, casing south, casing east-of-south.
+        // L-shape: terminal at origin, casing south, casing east-of-south.
         var pattern = MultiblockPattern.builder("L")
                 .layer(
                         "#  ",
@@ -196,7 +196,7 @@ class PatternMatcherTest {
                 .build();
         // Place world to match EAST rotation:
         Map<Long, String> world = new HashMap<>();
-        world.put(pos(0, 0, 0), "jsc:controller");
+        world.put(pos(0, 0, 0), "jsc:terminal");
         world.put(pos(-1, 0, 0), "jsc:casing");
         world.put(pos(-2, 0, 0), "jsc:casing");
         world.put(pos(-2, 0, 1), "jsc:casing");
@@ -215,7 +215,7 @@ class PatternMatcherTest {
                 .build();
         // World has anything (even stone) where the space is, so it should still match.
         Map<Long, String> world = new HashMap<>();
-        world.put(pos(0, 0, 0), "jsc:controller");
+        world.put(pos(0, 0, 0), "jsc:terminal");
         world.put(pos(1, 0, 0), "minecraft:stone"); // would normally fail
         world.put(pos(2, 0, 0), "jsc:casing");
         var result = PatternMatcher.match(pattern, providerFrom(world), pos(0, 0, 0));
@@ -227,7 +227,7 @@ class PatternMatcherTest {
 
     @Test
     void verticalStack_matches() {
-        // Three vertical layers, casing top and bottom, controller middle.
+        // Three vertical layers, casing top and bottom, terminal middle.
         var pattern = MultiblockPattern.builder("stack")
                 .layer("C")
                 .layer("#")
@@ -236,7 +236,7 @@ class PatternMatcherTest {
                 .build();
         Map<Long, String> world = new HashMap<>();
         world.put(pos(0, 0, 0), "jsc:casing");
-        world.put(pos(0, 1, 0), "jsc:controller");
+        world.put(pos(0, 1, 0), "jsc:terminal");
         world.put(pos(0, 2, 0), "jsc:casing");
         var result = PatternMatcher.match(pattern, providerFrom(world), pos(0, 1, 0));
         var success = assertInstanceOf(IMatchResult.Success.class, result);
@@ -244,7 +244,7 @@ class PatternMatcherTest {
     }
 
     @Test
-    void controllerPosition_isNeverInSlavesList() {
+    void terminalPosition_isNeverInSlavesList() {
         var pattern = MultiblockPattern.builder("cube_3x3")
                 .layer("CCC", "C#C", "CCC")
                 .where('C', IBlockMatcher.exact("jsc:casing"))
@@ -256,10 +256,10 @@ class PatternMatcherTest {
                 world.put(pos(x, 0, z), "jsc:casing");
             }
         }
-        world.put(pos(0, 0, 0), "jsc:controller");
+        world.put(pos(0, 0, 0), "jsc:terminal");
         var result = PatternMatcher.match(pattern, providerFrom(world), pos(0, 0, 0));
         var success = assertInstanceOf(IMatchResult.Success.class, result);
-        // Controller pos must not be in the slaves list.
+        // Terminal pos must not be in the slaves list.
         assertTrue(success.slavePositions().stream().noneMatch(p -> p == pos(0, 0, 0)));
     }
 

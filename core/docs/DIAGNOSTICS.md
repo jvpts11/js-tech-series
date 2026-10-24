@@ -140,7 +140,7 @@ in one place, such as a structure, adds it while a measure runs:
 
 ```java
 if (CostMap.measuring()) {
-    CostMap.add(level, controllerPos, rl("crane"), nanos);
+    CostMap.add(level, cranePos, rl("crane"), nanos);
 }
 ```
 

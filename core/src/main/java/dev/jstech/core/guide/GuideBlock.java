@@ -724,7 +724,7 @@ public sealed interface GuideBlock {
 
     /**
      * A multiblock drawn as a scene the reader turns, brings nearer and peels layer by layer, numbered with the
-     * figures. Its blocks are laid out from the multiblock in force when the manual is read, its controller in its
+     * figures. Its blocks are laid out from the multiblock in force when the manual is read, its terminal in its
      * place, so a data pack's change to the multiblock shows in it; where the multiblock is not installed, or is too
      * big for a scene, it is left out.
      *

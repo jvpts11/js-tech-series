@@ -1,0 +1,71 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.hot_water.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.hot_water.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.hot_water.get"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.hot_water.use1",
+        "jsindustrial.guide.hot_water.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.hot_water.fix1",
+          "problem": "jsindustrial.guide.hot_water.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:computational_research_centre",
+        "jsindustrial:tank"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:hot_water_bucket",
+  "id": "jsindustrial:hot_water",
+  "items": [
+    "jsindustrial:hot_water_bucket"
+  ],
+  "order": 15,
+  "section": "jsindustrial:fluids_and_gases",
+  "title": "jsindustrial.guide.hot_water.title"
+}

@@ -34,7 +34,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * Integration coverage for the era-variant Crafting Computers and Mainframes: the assembly menu stays
  * open (stillValid validates the block family, not the Standard block alone, the bug that made an
  * era GUI flash for one tick and close), the era board gate (a board of the wrong era never powers the
- * machine on), the Mainframe multiblock stamping its era onto every structural part, and the
+ * machine on), the Mainframe cabinet stamping its era onto every structural part, and the
  * era-correct block dropping.
  */
 @GameTestHolder(JsTests.MODID)
@@ -272,7 +272,7 @@ public final class EraMachineGameTests {
                 .thenSucceed();
     }
 
-    // Mainframe multiblock: every structural part inherits the controller's era
+    // Mainframe cabinet: every structural part inherits the origin's era
 
     @GameTest(template = ARENA)
     public static void vintageMainframe_formsWithEraParts(final GameTestHelper helper) {
@@ -287,16 +287,16 @@ public final class EraMachineGameTests {
 
     private static void assertPartsCarryEra(final GameTestHelper helper, final MainframeBlock block,
                                             final HardwareEra era) {
-        final BlockPos controller = new BlockPos(4, 2, 4);
+        final BlockPos origin = new BlockPos(4, 2, 4);
         final Direction facing = Direction.NORTH;
-        helper.setBlock(controller, block.defaultBlockState().setValue(MainframeBlock.FACING, facing));
-        block.setPlacedBy(helper.getLevel(), helper.absolutePos(controller), helper.getBlockState(controller), null,
+        helper.setBlock(origin, block.defaultBlockState().setValue(MainframeBlock.FACING, facing));
+        block.setPlacedBy(helper.getLevel(), helper.absolutePos(origin), helper.getBlockState(origin), null,
                 ItemStack.EMPTY);
         helper.startSequence()
                 .thenExecuteAfter(2, () -> {
                     int parts = 0;
                     int eraParts = 0;
-                    for (final BlockPos p : MainframeStructure.allPositions(controller, facing)) {
+                    for (final BlockPos p : MainframeStructure.allPositions(origin, facing)) {
                         final var state = helper.getBlockState(p);
                         if (state.getBlock() instanceof MainframePartBlock) {
                             parts++;

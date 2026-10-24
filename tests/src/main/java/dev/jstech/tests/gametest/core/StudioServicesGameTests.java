@@ -156,7 +156,7 @@ public final class StudioServicesGameTests {
         final CompoundTag args = new CompoundTag();
         args.putLong(StudioKeys.FROM, helper.absolutePos(new BlockPos(1, 2, 1)).asLong());
         args.putLong(StudioKeys.TO, helper.absolutePos(new BlockPos(3, 2, 2)).asLong());
-        args.putLong(StudioKeys.CONTROLLER, helper.absolutePos(new BlockPos(2, 2, 1)).asLong());
+        args.putLong(StudioKeys.TERMINAL, helper.absolutePos(new BlockPos(2, 2, 1)).asLong());
         // A namespace no mod of this run has a source of, so the file goes to the world's own pack, not into a mod.
         args.putString(StudioKeys.NAME, "jstests_recorded:furnace_" + Math.abs(helper.absolutePos(AT).asLong()));
         args.putBoolean(StudioKeys.SAVE, true);

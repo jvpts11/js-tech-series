@@ -21,13 +21,14 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A multiblock's shape drawn in letters: a 3D grid of places, one letter each, layer by layer from the bottom, and
- * what each letter stands for. {@code #} is the controller and a space a place left free; every other letter is a
- * {@link Place}: what fits there, and what a block there counts and gives.
+ * what each letter stands for. A multiblock is made of its own structural blocks and one terminal, the block the
+ * player works it from: {@code #} is the terminal and a space a place left free; every other letter is a
+ * {@link Place}: what fits there, what a block there counts and gives, and the entries that may stand there.
  *
- * <p>Besides the drawing, a pattern may declare the least and the most of each count ("from one to four energy
- * ports"); that it is also found mirrored, or lying on its side, besides its four horizontal turns; one slice repeated
- * a number of times, for a structure that grows (a tower's middle layer, a battery's oven); and one letter that is its
- * inside, read by an {@link InsideRule}.
+ * <p>Besides the drawing, a pattern may declare the least and the most of each count ("one power entry", "from one to
+ * four energy ports"); counts that go together ({@link Together}); that it is also found mirrored, or lying on its
+ * side, besides its four horizontal turns; one slice repeated a number of times, for a structure that grows (a tower's
+ * middle layer, a battery's oven); and one letter that is its inside, read by an {@link InsideRule}.
  */
 public final class MultiblockPattern implements IStructureShape {
 
@@ -38,19 +39,20 @@ public final class MultiblockPattern implements IStructureShape {
     /** The chars whose slots are ports, with what each opens onto. */
     private final Map<Character, PortKind> ports;
     private final Map<String, Limit> limits;
+    private final List<Together> together;
     private final boolean mirrors;
     private final boolean liesDown;
     @Nullable
     private final Repeat repeat;
     @Nullable
     private final Inside inside;
-    private final int controllerX;
-    private final int controllerY;
-    private final int controllerZ;
+    private final int terminalX;
+    private final int terminalY;
+    private final int terminalZ;
     @Nullable
-    private final String controllerBlock;
+    private final String terminalBlock;
 
-    public static final char CONTROLLER_CHAR = '#';
+    public static final char TERMINAL_CHAR = '#';
 
     public static final char IGNORE_CHAR = ' ';
 
@@ -61,8 +63,8 @@ public final class MultiblockPattern implements IStructureShape {
     /** Along its rows, north to south. */
     public static final int AXIS_Z = 2;
 
-    private MultiblockPattern(final Builder from, final char[][][] layers, final int controllerX,
-                              final int controllerY, final int controllerZ) {
+    private MultiblockPattern(final Builder from, final char[][][] layers, final int terminalX,
+                              final int terminalY, final int terminalZ) {
         this.name = from.name;
         this.layers = layers;
         this.places = Map.copyOf(from.places);
@@ -71,14 +73,15 @@ public final class MultiblockPattern implements IStructureShape {
         this.mapping = Map.copyOf(fits);
         this.ports = Map.copyOf(from.ports);
         this.limits = Map.copyOf(from.limits);
+        this.together = List.copyOf(from.together);
         this.mirrors = from.mirrors;
         this.liesDown = from.liesDown;
         this.repeat = from.repeat;
         this.inside = from.inside;
-        this.controllerX = controllerX;
-        this.controllerY = controllerY;
-        this.controllerZ = controllerZ;
-        this.controllerBlock = from.controllerBlock;
+        this.terminalX = terminalX;
+        this.terminalY = terminalY;
+        this.terminalZ = terminalZ;
+        this.terminalBlock = from.terminalBlock;
     }
 
     public static Builder builder(String name) {
@@ -112,6 +115,11 @@ public final class MultiblockPattern implements IStructureShape {
     /** The least and the most of each count, by name. */
     public Map<String, Limit> limits() {
         return this.limits;
+    }
+
+    /** The pairs of counts that go together, as a coolant's inlet with its outlet. */
+    public List<Together> together() {
+        return this.together;
     }
 
     /** Whether it is also found mirrored. */
@@ -153,23 +161,23 @@ public final class MultiblockPattern implements IStructureShape {
         return rows;
     }
 
-    public int controllerX() { return controllerX; }
+    public int terminalX() { return terminalX; }
 
-    public int controllerY() { return controllerY; }
+    public int terminalY() { return terminalY; }
 
-    public int controllerZ() { return controllerZ; }
+    public int terminalZ() { return terminalZ; }
 
     /**
      * The id of the block that stands at {@code #}, when the pattern names it: the matcher never needs it, since the
-     * controller is the one matching, but a projector, a recipe viewer and a manual show it there and list it.
+     * terminal is the one matching, but a projector, a recipe viewer and a manual show it there and list it.
      */
-    public Optional<String> controllerBlock() {
-        return Optional.ofNullable(this.controllerBlock);
+    public Optional<String> terminalBlock() {
+        return Optional.ofNullable(this.terminalBlock);
     }
 
     @Override
-    public ShapeMatch check(final IBlockProvider provider, final long controller) {
-        return ShapeMatcher.match(this, provider, controller);
+    public ShapeMatch check(final IBlockProvider provider, final long terminal) {
+        return ShapeMatcher.match(this, provider, terminal);
     }
 
     /** Its longest side, grown to its repeated slice's most: however it stands, no place is farther than that. */
@@ -203,12 +211,12 @@ public final class MultiblockPattern implements IStructureShape {
     }
 
     /**
-     * The pattern with its repeated slice there {@code times} times, and where its controller then stands: the
+     * The pattern with its repeated slice there {@code times} times, and where its terminal then stands: the
      * drawing itself for a pattern with no repeated slice.
      */
     Grid grown(final int times) {
         if (this.repeat == null) {
-            return new Grid(this.layers, this.controllerX, this.controllerY, this.controllerZ);
+            return new Grid(this.layers, this.terminalX, this.terminalY, this.terminalZ);
         }
         final int[] size = {sizeX(), sizeY(), sizeZ()};
         final int extra = times - 1;
@@ -226,11 +234,11 @@ public final class MultiblockPattern implements IStructureShape {
                 }
             }
         }
-        final int[] controller = {this.controllerX, this.controllerY, this.controllerZ};
-        if (controller[this.repeat.axis()] > this.repeat.index()) {
-            controller[this.repeat.axis()] += extra;
+        final int[] terminal = {this.terminalX, this.terminalY, this.terminalZ};
+        if (terminal[this.repeat.axis()] > this.repeat.index()) {
+            terminal[this.repeat.axis()] += extra;
         }
-        return new Grid(grown, controller[0], controller[1], controller[2]);
+        return new Grid(grown, terminal[0], terminal[1], terminal[2]);
     }
 
     /**
@@ -267,8 +275,27 @@ public final class MultiblockPattern implements IStructureShape {
         }
     }
 
-    /** A pattern's places, grown to a number of repeats, with its controller's place. */
-    record Grid(char[][][] cells, int controllerX, int controllerY, int controllerZ) {
+    /** A pattern's places, grown to a number of repeats, with its terminal's place. */
+    record Grid(char[][][] cells, int terminalX, int terminalY, int terminalZ) {
+    }
+
+    /**
+     * Two counts that go together: a structure forms only when both are the same, as a coolant's inlet and its outlet,
+     * neither without the other.
+     *
+     * @param first  the name of one count
+     * @param second the name of the other
+     */
+    public record Together(String first, String second) {
+
+        public Together {
+            Objects.requireNonNull(first, "first");
+            Objects.requireNonNull(second, "second");
+            if (first.equals(second)) {
+                throw new IllegalArgumentException("a count goes together with another count, not with itself: "
+                        + first);
+            }
+        }
     }
 
     /**
@@ -280,6 +307,7 @@ public final class MultiblockPattern implements IStructureShape {
         private final Map<Character, Place> places = new HashMap<>();
         private final Map<Character, PortKind> ports = new HashMap<>();
         private final Map<String, Limit> limits = new LinkedHashMap<>();
+        private final List<Together> together = new ArrayList<>();
         private boolean mirrors;
         private boolean liesDown;
         @Nullable
@@ -287,7 +315,7 @@ public final class MultiblockPattern implements IStructureShape {
         @Nullable
         private Inside inside;
         @Nullable
-        private String controllerBlock;
+        private String terminalBlock;
 
         private Builder(String name) {
             this.name = Objects.requireNonNull(name, "name must not be null");
@@ -345,7 +373,7 @@ public final class MultiblockPattern implements IStructureShape {
          */
         public Builder port(char c, PortKind kind) {
             Objects.requireNonNull(kind, "kind must not be null");
-            if (c == CONTROLLER_CHAR || c == IGNORE_CHAR) {
+            if (c == TERMINAL_CHAR || c == IGNORE_CHAR) {
                 throw new IllegalArgumentException("Char '" + c + "' is reserved and cannot be a port");
             }
             ports.put(c, kind);
@@ -358,9 +386,32 @@ public final class MultiblockPattern implements IStructureShape {
             return this;
         }
 
+        /**
+         * Lets the entry {@code which} stand at any of {@code c}'s places in place of its own block: the multiblock
+         * declares where its entries may go, and the player puts each where it suits. The entry is counted under
+         * {@code name}, which a {@link #limit} keeps between its least and its most, and makes its place a port of
+         * {@code port} (none for an entry onto a line of a mod's own). Declare the place with {@link #where} first.
+         */
+        public Builder entry(final char c, final String name, final IBlockMatcher which,
+                             @Nullable final PortKind port) {
+            final Place place = places.get(c);
+            if (place == null) {
+                throw new IllegalArgumentException("Char '" + c + "' takes an entry but is no place; call .where for"
+                        + " it first");
+            }
+            places.put(c, place.entry(name, which, port));
+            return this;
+        }
+
+        /** Forms the structure only when the counts {@code first} and {@code second} are the same. */
+        public Builder together(final String first, final String second) {
+            together.add(new Together(first, second));
+            return this;
+        }
+
         /** Names the block that stands at {@code #}, by id, for the views that show it before it is built. */
-        public Builder controller(final String block) {
-            this.controllerBlock = Objects.requireNonNull(block, "block must not be null");
+        public Builder terminal(final String block) {
+            this.terminalBlock = Objects.requireNonNull(block, "block must not be null");
             return this;
         }
 
@@ -425,8 +476,8 @@ public final class MultiblockPattern implements IStructureShape {
 
             // Convert to 3D char array.
             char[][][] grid = new char[sizeY][sizeZ][sizeX];
-            int controllerX = -1, controllerY = -1, controllerZ = -1;
-            int controllerCount = 0;
+            int terminalX = -1, terminalY = -1, terminalZ = -1;
+            int terminalCount = 0;
             var unmappedChars = new HashSet<Character>();
 
             for (int y = 0; y < sizeY; y++) {
@@ -436,11 +487,11 @@ public final class MultiblockPattern implements IStructureShape {
                     for (int x = 0; x < sizeX; x++) {
                         char c = row.charAt(x);
                         grid[y][z][x] = c;
-                        if (c == CONTROLLER_CHAR) {
-                            controllerCount++;
-                            controllerX = x;
-                            controllerY = y;
-                            controllerZ = z;
+                        if (c == TERMINAL_CHAR) {
+                            terminalCount++;
+                            terminalX = x;
+                            terminalY = y;
+                            terminalZ = z;
                         } else if (c != IGNORE_CHAR && !places.containsKey(c) && !isInside(c)) {
                             unmappedChars.add(c);
                         }
@@ -448,14 +499,14 @@ public final class MultiblockPattern implements IStructureShape {
                 }
             }
 
-            if (controllerCount == 0) {
+            if (terminalCount == 0) {
                 throw new IllegalStateException(
-                        "Pattern has no controller (no '" + CONTROLLER_CHAR + "' char)");
+                        "Pattern has no terminal (no '" + TERMINAL_CHAR + "' char)");
             }
-            if (controllerCount > 1) {
+            if (terminalCount > 1) {
                 throw new IllegalStateException(
-                        "Pattern has " + controllerCount + " controllers; exactly one '"
-                                + CONTROLLER_CHAR + "' is required");
+                        "Pattern has " + terminalCount + " terminals; exactly one '"
+                                + TERMINAL_CHAR + "' is required");
             }
             if (!unmappedChars.isEmpty()) {
                 throw new IllegalStateException(
@@ -471,17 +522,17 @@ public final class MultiblockPattern implements IStructureShape {
             requireOneGatherPerKey();
             if (repeat != null) {
                 final int[] size = {sizeX, sizeY, sizeZ};
-                final int[] controller = {controllerX, controllerY, controllerZ};
+                final int[] terminal = {terminalX, terminalY, terminalZ};
                 if (repeat.index() >= size[repeat.axis()]) {
                     throw new IllegalStateException("The repeated slice " + repeat.index() + " is outside the pattern,"
                             + " which is " + size[repeat.axis()] + " across");
                 }
-                if (controller[repeat.axis()] == repeat.index()) {
-                    throw new IllegalStateException("The controller stands in the repeated slice; a structure has one"
-                            + " controller");
+                if (terminal[repeat.axis()] == repeat.index()) {
+                    throw new IllegalStateException("The terminal stands in the repeated slice; a structure has one"
+                            + " terminal");
                 }
             }
-            return new MultiblockPattern(this, grid, controllerX, controllerY, controllerZ);
+            return new MultiblockPattern(this, grid, terminalX, terminalY, terminalZ);
         }
 
         private boolean isInside(final char c) {
@@ -490,20 +541,24 @@ public final class MultiblockPattern implements IStructureShape {
 
         /* Refuses the two letters a pattern keeps for itself. */
         private static void requireFree(final char c) {
-            if (c == CONTROLLER_CHAR || c == IGNORE_CHAR) {
+            if (c == TERMINAL_CHAR || c == IGNORE_CHAR) {
                 throw new IllegalArgumentException(
-                        "Char '" + c + "' is reserved (controller or ignore) "
+                        "Char '" + c + "' is reserved (terminal or ignore) "
                                 + "and must not be mapped");
             }
         }
 
-        /* Every limit names a count some place or inside part keeps, so a misspelt name does not go unnoticed. */
+        /*
+         * Every limit and every pair that goes together names a count some place, entry or inside part keeps, so a
+         * misspelt name does not go unnoticed.
+         */
         private void requireCounted() {
             final Set<String> counted = new HashSet<>();
             for (final Place place : places.values()) {
                 if (place.counted() != null) {
                     counted.add(place.counted().name());
                 }
+                place.entries().forEach(entry -> counted.add(entry.name()));
             }
             if (inside != null) {
                 for (final InsidePart part : inside.rule().parts()) {
@@ -513,6 +568,12 @@ public final class MultiblockPattern implements IStructureShape {
             for (final String count : limits.keySet()) {
                 if (!counted.contains(count)) {
                     throw new IllegalStateException("The limit " + count + " names a count no place keeps");
+                }
+            }
+            for (final Together pair : together) {
+                if (!counted.contains(pair.first()) || !counted.contains(pair.second())) {
+                    throw new IllegalStateException("The pair " + pair.first() + " and " + pair.second()
+                            + " names a count no place keeps");
                 }
             }
         }

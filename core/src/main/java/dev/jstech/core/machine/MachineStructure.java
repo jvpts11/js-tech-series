@@ -54,7 +54,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A machine that is a multiblock's controller: its shape, drawn or by rule, and whether the world holds it whole.
+ * A machine that is a multiblock's terminal: its shape, drawn or by rule, and whether the world holds it whole.
  * Until it does the machine stands {@link MachineStatus#NOT_FORMED}, and once it does its parts are bound to it, its
  * ports pass to it, and it knows its size, its counts, its numbers and how many recipes it runs at once.
  *
@@ -104,11 +104,13 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     public static final TextKey FORMED_SIZE = TextKey.of("jscore.multiblock.formed_size", "Formed: %s by %s by %s");
     public static final TextKey PARALLEL = TextKey.of("jscore.multiblock.parallel", "Runs %s at once");
     public static final TextKey NEEDS_BLOCK = TextKey.of("jscore.multiblock.needs_block",
-            "Needs %s at %s, %s, %s from the controller; found %s");
+            "Needs %s at %s, %s, %s from the terminal; found %s");
     public static final TextKey NEEDS_COUNT = TextKey.of("jscore.multiblock.needs_count",
             "Needs from %s to %s of %s; has %s");
     public static final TextKey NEEDS_AT_LEAST = TextKey.of("jscore.multiblock.needs_at_least",
             "Needs at least %s of %s; has %s");
+    public static final TextKey NEEDS_TOGETHER = TextKey.of("jscore.multiblock.needs_together",
+            "Takes %s and %s together, as many of one as of the other");
     public static final TextKey WRONG_SIZE = TextKey.of("jscore.multiblock.wrong_size", "Not a size it may be: %s %s");
     public static final TextKey OR_ANOTHER = TextKey.of("jscore.multiblock.or_another", "%s or another");
     public static final TextKey NO_PATTERN = TextKey.of("jscore.multiblock.no_pattern",
@@ -137,7 +139,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     private static final String PARALLEL_KEY = "Parallel";
     private static final String MERGED_KEY = "Merged";
     private static final String ORIENTATION_KEY = "Orientation";
-    /** The controller of its model that plays the animation of its forming. */
+    /** The animation controller of its model that plays the animation of its forming. */
     public static final String FORMING_CONTROLLER = "structure";
     private static final int AXES = 3;
     private static final List<Orientation> ORIENTATIONS = Orientation.lyingAndMirrors();
@@ -146,7 +148,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         this.shape = Objects.requireNonNull(shape, "shape");
     }
 
-    /** A controller of {@code shape}, running one recipe at a time when formed. */
+    /** A terminal of {@code shape}, running one recipe at a time when formed. */
     public static MachineStructure of(final IStructureShape shape) {
         return new MachineStructure(shape);
     }
@@ -161,7 +163,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     }
 
     /**
-     * Once formed, its plain blocks merge into its controller's model, which its renderer draws whole, as
+     * Once formed, its plain blocks merge into its terminal's model, which its renderer draws whole, as
      * {@code KitBlockEntityRenderer.formed(...)} says; its ports, and every block that keeps something, stay where
      * they are. It comes apart, and they come back, as soon as a block of it goes.
      */
@@ -177,7 +179,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     }
 
     /**
-     * Plays the animation {@code animation} of its controller's model as it forms, on the model's controller
+     * Plays the animation {@code animation} of its terminal's model as it forms, on the model's animation controller
      * {@link #FORMING_CONTROLLER}, for everyone who sees it.
      */
     public MachineStructure formingAnimation(final String animation) {
@@ -207,8 +209,8 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     }
 
     /**
-     * The places of its formed structure that show its cracks as their own, its controller's aside: every place of
-     * its shell, unless its blocks merged into its model, which shows the cracks as the controller's.
+     * The places of its formed structure that show its cracks as their own, its terminal's aside: every place of
+     * its shell, unless its blocks merged into its model, which shows the cracks as the terminal's.
      */
     public List<BlockPos> crackedPlaces() {
         if (!this.formed || this.merges && !this.merged.isEmpty()) {
@@ -440,6 +442,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
                     blockName(wrong.found()));
             case COUNT -> counted(wrong);
             case SIZE -> WRONG_SIZE.with(wrong.found(), measure(wrong.wanted()));
+            case APART -> NEEDS_TOGETHER.with(countName(wrong.wanted()), countName(wrong.found()));
         });
     }
 
@@ -668,9 +671,17 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     private Text counted(final ShapeMatch.Failure wrong) {
         final Limit limit = this.shape.limits().get(wrong.wanted());
         if (limit == null || limit.most() == Integer.MAX_VALUE) {
-            return NEEDS_AT_LEAST.with(limit == null ? 0 : limit.least(), wrong.wanted(), wrong.found());
+            return NEEDS_AT_LEAST.with(limit == null ? 0 : limit.least(), countName(wrong.wanted()), wrong.found());
         }
-        return NEEDS_COUNT.with(limit.least(), limit.most(), wrong.wanted(), wrong.found());
+        return NEEDS_COUNT.with(limit.least(), limit.most(), countName(wrong.wanted()), wrong.found());
+    }
+
+    /*
+     * What a count is called to the player: the block's name when the count is named by a block's id, as an entry's
+     * count is; else its name as the multiblock gave it.
+     */
+    private static Text countName(final String count) {
+        return count.indexOf(':') > 0 ? blockName(count) : Text.literal(count);
     }
 
     private static Text measure(final String which) {

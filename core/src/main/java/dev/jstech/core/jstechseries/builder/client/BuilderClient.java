@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The Multiblock Builder on the player's side: its screen, held up when it is used; how the server says the building
- * goes; what it makes of the controller it is aimed at, read again every half second; and, while its SHOW key is on,
+ * goes; what it makes of the terminal it is aimed at, read again every half second; and, while its SHOW key is on,
  * the multiblock's ghosts in the world, drawn as a projector draws them.
  */
 public final class BuilderClient {
@@ -58,7 +58,7 @@ public final class BuilderClient {
         return status;
     }
 
-    /** What the builder in {@code stack} makes of the controller it is aimed at, read again every half second. */
+    /** What the builder in {@code stack} makes of the terminal it is aimed at, read again every half second. */
     public static Optional<BuilderPlan> plan(final ItemStack stack) {
         final Minecraft minecraft = Minecraft.getInstance();
         final LocalPlayer player = minecraft.player;
@@ -113,7 +113,7 @@ public final class BuilderClient {
         return Optional.empty();
     }
 
-    /** What a plan was read as, of which controller, with the builder set how, and when. */
+    /** What a plan was read as, of which terminal, with the builder set how, and when. */
     private record Cached(BlockPos at, BuilderState state, long time, Optional<BuilderPlan> plan) {
     }
 }

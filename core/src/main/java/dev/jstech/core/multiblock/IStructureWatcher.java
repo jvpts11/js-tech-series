@@ -8,7 +8,7 @@
 package dev.jstech.core.multiblock;
 
 /**
- * A structure's controller as the level's index of structures knows it ({@link LevelStructures}): told when a place it
+ * A structure's terminal as the level's index of structures knows it ({@link LevelStructures}): told when a place it
  * watches changes, so it checks itself again then and never every tick, and asked whether its formed structure is
  * made of a place, for whoever guards what it is made of.
  */

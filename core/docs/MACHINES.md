@@ -373,10 +373,18 @@ MachineScreens.register(machine -> machine instanceof MyLoaderBlockEntity, MyLoa
 ```
 
 The screen is a `CoreContainerScreen<MachineMenu>`; `MachineChrome` draws the tabs, the plates and the lamps as the
-standard screen does, and `ProtectionTab` is the tab itself. Three hooks of the machine go with it:
+standard screen does, and `ProtectionTab` is the tab itself. These hooks of the machine go with it:
 
-- `inventoryOnMain()` false leaves the player's inventory off its Main tab, neither drawn nor clicked, for a machine
-  that holds no items; it shows on the tabs that take items.
+- `inventoryOn(tab)` false leaves the player's inventory off that tab, neither drawn nor clicked, for a tab that
+  takes no items (`MachineMenu.MAIN` for a machine that holds none); it shows on the tabs that take items.
+- `screenWidth()` gives a screen wider than every machine's (`MachineScreenLayout.WIDTH`): the menu centres the
+  player's inventory under it, and the standard tabs' slots with their face, `MachineScreenLayout.kitShift(width)`
+  to the right, where the screen draws that face.
+- `ownTabs()` gives the screen tabs of its own after the five every machine has: tab `MachineScreenLayout.TABS` is
+  the first of them, and `MachineMenu.showTab` and the tab buttons take them as the others.
+- `screenData()` gives what the screen shows that only the server knows, a `MachineScreenData` of a record, its
+  codec, what it is until the first word, and how the server works it out; the menu carries it while the screen is
+  open and only when it changed, and the screen reads it with `menu.screenData(MyReadings.class)`.
 - `takesEnergy()` false offers no port and no FE, for a machine whose energy a setting turns off.
 - `settled(level, status)` runs after every tick's work, with what it came to: what the machine does when it stops
   (lets go of what it held, say) goes there.

@@ -27,17 +27,17 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * A multiblock whose blocks merge into its controller's model once it forms: its iron turns into merged blocks that
+ * A multiblock whose blocks merge into its terminal's model once it forms: its iron turns into merged blocks that
  * remember being iron, built facing any way; breaking one drops its iron and gives every other back as it was; and a
- * merged block whose controller has gone turns back by itself.
+ * merged block whose terminal has gone turns back by itself.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class FormedModelGameTests {
 
     private static final String ARENA = "empty";
-    /* The controller, in the middle of the south side of a turbine built facing north. */
-    private static final BlockPos CONTROLLER = new BlockPos(4, 1, 5);
+    /* The terminal, in the middle of the south side of a turbine built facing north. */
+    private static final BlockPos TERMINAL = new BlockPos(4, 1, 5);
     private static final int WAIT = 200;
 
     private FormedModelGameTests() {
@@ -57,7 +57,7 @@ public final class FormedModelGameTests {
                 helper.assertTrue(helper.getBlockEntity(at) instanceof FormedPartBlockEntity part
                         && part.original().is(Blocks.IRON_BLOCK), "and remembers being iron");
             }
-            helper.assertBlockPresent(TestModels.TURBINE_BLOCK.get(), CONTROLLER);
+            helper.assertBlockPresent(TestModels.TURBINE_BLOCK.get(), TERMINAL);
         });
     }
 
@@ -96,12 +96,12 @@ public final class FormedModelGameTests {
     }
 
     @GameTest(template = ARENA, timeoutTicks = WAIT * 2)
-    public static void mergedBlock_whoseControllerIsGoneTurnsBack(final GameTestHelper helper) {
+    public static void mergedBlock_whoseTerminalIsGoneTurnsBack(final GameTestHelper helper) {
         final List<BlockPos> iron = build(helper, false);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(structure(helper).merged(), "the turbine merges first"))
-                // The controller replaced at once, without its block's breaking: its structure never comes apart.
-                .thenExecute(() -> helper.getLevel().removeBlock(helper.absolutePos(CONTROLLER), false))
+                // The terminal replaced at once, without its block's breaking: its structure never comes apart.
+                .thenExecute(() -> helper.getLevel().removeBlock(helper.absolutePos(TERMINAL), false))
                 .thenWaitUntil(() -> {
                     for (final BlockPos at : iron) {
                         helper.assertBlockPresent(Blocks.IRON_BLOCK, at);
@@ -121,7 +121,7 @@ public final class FormedModelGameTests {
     }
 
     /*
-     * The turbine: two layers of iron three by three, its controller in the middle of the south side, or of the west
+     * The turbine: two layers of iron three by three, its terminal in the middle of the south side, or of the west
      * side for one turned to face east; the places of its iron.
      */
     private static List<BlockPos> build(final GameTestHelper helper, final boolean turned) {
@@ -129,21 +129,21 @@ public final class FormedModelGameTests {
         for (int y = 0; y < 2; y++) {
             for (int a = -1; a <= 1; a++) {
                 for (int b = 0; b <= 2; b++) {
-                    // Facing north the turbine runs north of its controller; turned, it runs east of it.
-                    final BlockPos at = turned ? CONTROLLER.offset(b, y, a) : CONTROLLER.offset(a, y, -b);
-                    if (!at.equals(CONTROLLER)) {
+                    // Facing north the turbine runs north of its terminal; turned, it runs east of it.
+                    final BlockPos at = turned ? TERMINAL.offset(b, y, a) : TERMINAL.offset(a, y, -b);
+                    if (!at.equals(TERMINAL)) {
                         helper.setBlock(at, Blocks.IRON_BLOCK);
                         iron.add(at);
                     }
                 }
             }
         }
-        helper.setBlock(CONTROLLER, TestModels.TURBINE_BLOCK.get());
+        helper.setBlock(TERMINAL, TestModels.TURBINE_BLOCK.get());
         return iron;
     }
 
     private static MachineStructure structure(final GameTestHelper helper) {
-        final TestModels.TurbineEntity turbine = helper.getBlockEntity(CONTROLLER);
+        final TestModels.TurbineEntity turbine = helper.getBlockEntity(TERMINAL);
         return turbine.structure();
     }
 }

@@ -28,7 +28,7 @@ public class CabinetBlockItem extends BlockItem {
     /**
      * How a cabinet is fitted into an item slot: its longest side in model units (16 to a block), which
      * decides how far it shrinks, and the offset in blocks that brings the cabinet's own middle onto the
-     * item's middle. A cabinet is modelled around its controller block, which is rarely its centre.
+     * item's middle. A cabinet is modelled around its origin block, which is rarely its centre.
      */
     public record Fit(float span, float offsetX, float offsetY, float offsetZ) {
     }

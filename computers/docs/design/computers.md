@@ -48,7 +48,7 @@ memory and runs the network engine ([Operations](operations.md)). Its processors
 graphics card one more parallel queue ([Hardware](hardware.md)). Its disks hold its system, its engine and its programs,
 not the network's storage. It joins the network on the backbone.
 
-It is a 3×2×2 multiblock drawn as **one** model by its controller block, with running, network and fault lights and a
+It is a 3×2×2 big block, placed whole, drawn as **one** model by its origin block, with running, network and fault lights and a
 service panel that comes off. It has no operator panel: it is read on a monitor. It has a failover switch (below).
 
 ### Crafting Computer

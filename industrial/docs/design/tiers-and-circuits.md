@@ -8,7 +8,10 @@ player can have an Advanced computer next to a T2 industry, or the other way rou
 
 ## What exists today
 
-J's Core has the industrial tiers (`IndustrialTier`, T0 to T9) as a type. No circuit exists yet.
+J's Core has the industrial tiers (`IndustrialTier`, T0 to T9) as a type and a progression axis. J's Industrial has
+the ten circuits of the table below as a model, the first three made by hand, each known by its item tag
+(`jsindustrial:circuits/<name>`): making any item of a circuit's tag moves the player, and their team, to its tier.
+The circuits' items and recipes come with the machines that make them.
 
 ## To build
 

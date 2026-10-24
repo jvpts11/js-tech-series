@@ -12,7 +12,7 @@ import com.mojang.math.Axis;
 import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelDefinition;
-import dev.jstech.core.multiblock.IStructureController;
+import dev.jstech.core.multiblock.IStructureTerminal;
 import dev.jstech.core.multiblock.Orientation;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,7 +37,7 @@ import org.joml.Matrix4f;
 /**
  * Draws a block entity with a model of the Core's: standing on the middle of its block's floor and facing the way
  * its block faces, as Bedrock's models of blocks do; drawn as the variant its block's state chooses; moved by its
- * driver and by what the server plays on it; holding what it holds at its locators. The controller of a structure
+ * driver and by what the server plays on it; holding what it holds at its locators. The terminal of a structure
  * whose blocks merge into its model draws, once formed, its structure's model instead, standing as the structure
  * stands. Only a block entity in sight is drawn, as the game draws any, and only one near enough to see move is
  * animated: one farther keeps its last pose.
@@ -104,7 +104,7 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
     }
 
     /**
-     * A renderer drawing a structure's controller only as the declared model {@code model} of its formed structure,
+     * A renderer drawing a structure's terminal only as the declared model {@code model} of its formed structure,
      * and nothing while it is not formed, its block's own model showing then.
      */
     public static <T extends BlockEntity> Builder<T> formedOnly(final ResourceLocation model) {
@@ -205,7 +205,7 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
 
     /*
      * Stands a structure's model as its structure stands: made as the structure stands facing north, as its pattern
-     * is drawn, on its controller's floor, it is turned, laid down or mirrored about the controller's middle.
+     * is drawn, on its terminal's floor, it is turned, laid down or mirrored about the terminal's middle.
      */
     static void stand(final PoseStack poses, final Orientation orientation) {
         final Matrix4f turn = new Matrix4f().zero();
@@ -246,10 +246,10 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
 
     /* How the structure the block entity controls stands, when it is formed and draws a model formed; or none. */
     private Optional<Orientation> standing(final T entity) {
-        if (this.formed == null || !(entity instanceof IStructureController controller) || !controller.merged()) {
+        if (this.formed == null || !(entity instanceof IStructureTerminal terminal) || !terminal.merged()) {
             return Optional.empty();
         }
-        return controller.formedOrientation();
+        return terminal.formedOrientation();
     }
 
     @SuppressWarnings("unchecked")

@@ -39,7 +39,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 /**
  * Multiblock machines declared as data: the baker's file gives it its shape, its slots, its energy, its recipes and
  * its three at once, and it bakes clay through ports of its own; a file that names a pattern by its id forms on that
- * pattern; a controller that names a file there is not never forms and says so; and a machine's file reads back as it
+ * pattern; a terminal that names a file there is not never forms and says so; and a machine's file reads back as it
  * was written.
  */
 @GameTestHolder(JsTests.MODID)
@@ -49,7 +49,7 @@ public final class DataMachineGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos LOW = new BlockPos(1, 1, 1);
     private static final BlockPos HIGH = new BlockPos(3, 3, 3);
-    private static final BlockPos CONTROLLER = new BlockPos(2, 2, 1);
+    private static final BlockPos TERMINAL = new BlockPos(2, 2, 1);
     private static final BlockPos WEST = new BlockPos(1, 2, 2);
     private static final BlockPos EAST = new BlockPos(3, 2, 2);
     private static final BlockPos SOUTH = new BlockPos(2, 2, 3);
@@ -111,8 +111,8 @@ public final class DataMachineGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void controller_ofAFileThereIsNotNeverFormsAndSaysSo(final GameTestHelper helper) {
-        helper.setBlock(CONTROLLER, TestStructures.NO_MACHINE.get());
+    public static void terminal_ofAFileThereIsNotNeverFormsAndSaysSo(final GameTestHelper helper) {
+        helper.setBlock(TERMINAL, TestStructures.NO_MACHINE.get());
         helper.runAfterDelay(10, () -> {
             final DataMachineBlockEntity none = machine(helper);
             helper.assertTrue(none.machine().isEmpty(), "no file is found for it");
@@ -144,8 +144,8 @@ public final class DataMachineGameTests {
         helper.succeed();
     }
 
-    /* A box of iron edges and glass faces, the controller in the middle of its north face. */
-    private static void box(final GameTestHelper helper, final Block controller) {
+    /* A box of iron edges and glass faces, the terminal in the middle of its north face. */
+    private static void box(final GameTestHelper helper, final Block terminal) {
         for (int x = LOW.getX(); x <= HIGH.getX(); x++) {
             for (int y = LOW.getY(); y <= HIGH.getY(); y++) {
                 for (int z = LOW.getZ(); z <= HIGH.getZ(); z++) {
@@ -161,11 +161,11 @@ public final class DataMachineGameTests {
                 }
             }
         }
-        helper.setBlock(CONTROLLER, controller);
+        helper.setBlock(TERMINAL, terminal);
     }
 
     private static DataMachineBlockEntity machine(final GameTestHelper helper) {
-        if (helper.getBlockEntity(CONTROLLER) instanceof DataMachineBlockEntity machine) {
+        if (helper.getBlockEntity(TERMINAL) instanceof DataMachineBlockEntity machine) {
             return machine;
         }
         throw new IllegalStateException("no data machine where the test put it");

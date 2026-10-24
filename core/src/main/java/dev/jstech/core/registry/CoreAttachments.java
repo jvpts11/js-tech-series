@@ -76,7 +76,7 @@ public final class CoreAttachments {
             ATTACHMENT_TYPES.register("mechanics", () -> AttachmentType.builder(LevelMechanics::new).build());
 
     /**
-     * A dimension's multiblock structures, by the places their controllers watch; never saved, since each controller
+     * A dimension's multiblock structures, by the places their terminals watch; never saved, since each terminal
      * files itself again as it loads.
      */
     public static final Supplier<AttachmentType<LevelStructures>> STRUCTURES =

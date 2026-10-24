@@ -23,6 +23,19 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `JsComputersApi.languages()`. `Device.fillsFromContainers` lets a bucket fill and empty a device's block, and
   `FluidBlockItem` is the item of a block that keeps its fluid in it. The old fixed catalogue of materials,
   `ModMaterial`, `MaterialForm` and `MaterialItems`, is gone: a mod declares the forms it uses with `MaterialUses.use`.
+- Multiblocks worked from their terminal, entries where they say, and big blocks apart: J's Core's
+  API stays at version 12, all experimental. The block a multiblock is worked from is its terminal, where it was its
+  controller: `MultiblockPattern.Builder.terminal`, `terminalBlock()`, `terminalX()`, `terminalY()`, `terminalZ()`
+  and `TERMINAL_CHAR`, `IStructureTerminal`, `LevelStructures.terminalHolding`, `MultiblockPartBlockEntity.terminalPos`
+  and `setTerminal`, `FormedPartBlockEntity.terminal()`, `Projectables.terminalOf` and `addTerminals`,
+  `ShapePreview.terminalBlock` and `withTerminal`, and `"terminal"` in a pattern's file. A place takes entries
+  (`Place.entry`, `Place.Entry`, `MultiblockPattern.Builder.entry`, `"entries"` in a file), counted under their name
+  and making their place a port of their kind, and two counts may go together (`MultiblockPattern.Builder.together`,
+  `MultiblockPattern.Together`, `"together"` in a file, `ShapeMatch.Wrong.APART`, `MachineStructure.NEEDS_TOGETHER`).
+  A block bigger than a block, placed whole, is a big block, in the new package `dev.jstech.core.bigblock`
+  (`AbstractBigBlock`, `IBigBlock`, `IBigBlockGeometry`, `BigBlockFootprint`, and `BigBlockPartBlockEntity` with its
+  `originPos`), which takes the place of `AbstractMultiblockControllerBlock`, `IMultiblockBlock`,
+  `IMultiblockGeometry` and `MultiblockPatternGeometry`; J's Computers' Mainframe and racks stand on it.
 
 ### Changed
 - Listeners declared: every class of the three mods that answers the game's events is

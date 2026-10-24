@@ -55,7 +55,8 @@ public final class JsCoreApi {
      */
     @ApiStatus.Experimental
     public static final List<String> PROMISED_PACKAGES = List.of(
-            "dev.jstech.core.audio", "dev.jstech.core.audio.pcm", "dev.jstech.core.blockentity",
+            "dev.jstech.core.audio", "dev.jstech.core.audio.pcm", "dev.jstech.core.bigblock",
+            "dev.jstech.core.blockentity",
             "dev.jstech.core.cable", "dev.jstech.core.call", "dev.jstech.core.capability",
             "dev.jstech.core.client.config", "dev.jstech.core.client.gui.component",
             "dev.jstech.core.client.gui.data", "dev.jstech.core.client.gui.logic",
@@ -76,7 +77,8 @@ public final class JsCoreApi {
             "dev.jstech.core.moving.physics", "dev.jstech.core.multiblock", "dev.jstech.core.multipart",
             "dev.jstech.core.notification", "dev.jstech.core.optional", "dev.jstech.core.palette",
             "dev.jstech.core.persistence",
-            "dev.jstech.core.progression", "dev.jstech.core.region", "dev.jstech.core.resource",
+            "dev.jstech.core.progression", "dev.jstech.core.region", "dev.jstech.core.research",
+            "dev.jstech.core.resource",
             "dev.jstech.core.signal", "dev.jstech.core.state", "dev.jstech.core.task", "dev.jstech.core.team",
             "dev.jstech.core.text", "dev.jstech.core.tool", "dev.jstech.core.uuid",
             "dev.jstech.core.worldgen.reservoir", "dev.jstech.core.worldgen.vein");

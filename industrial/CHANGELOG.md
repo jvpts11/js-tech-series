@@ -39,6 +39,34 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   discovery, the team knows it from then on, and its players earn the Discovery advancement, the machine's owner too
   when they join.
 - Plant Drawings: a page for the hand tools.
+- Circuits: the ten circuits, one for each tier from the mechanical to the omniversal, each known by its
+  item tag; making any item of one moves its maker's team to its tier.
+- Research: four kinds of data, sample, crystal, spectral and particle, an item each, its tooltip saying
+  what gives it; and a world setting, on unless turned off, whether the research locks what the discoveries open.
+- Research Link Cable: a line of the series' cable block that joins research computers into a group,
+  one group for each connected run; a dyed run is a group of its own.
+- Hot water, what the coolant's water becomes as it takes heat away.
+- Computational Research Centre: a research computer of nine blocks deep and three by three across, built
+  of CRC Casings, Gates and Buses with its CRC Terminal in front and its entries in the lower two rows of its rear, a
+  CRC Power Entry at 11 kV, a CRC Link Socket, a CRC Coolant Inlet and Outlet, and a CRC Heat Port. Formed, it is
+  drawn as one machine, its places seen through its doors and its entries in its rear. Its 27 places take research
+  processors of three tiers, which compute and draw power that all becomes heat, and what takes the heat away: heat
+  sinks to the air, liquid coolers into the water of its coolant loop, which comes out hot, and heat pipe coolers out
+  through its Heat Port. Past 100 °C the hungriest processor burns, and its owner is told. Its four data places hold
+  the data its discoveries spend. CRCs on one run of Research Link Cable work one discovery, which any of them may
+  choose or queue; each team counts its own, the strongest whole and each other at 90%, and keeps its own progress,
+  so cutting the cable loses nothing.
+- Computational Research Centre: its screen, wider than every machine's, with three tabs of its own.
+  Processors holds its three sections of places and its data, the lamps of its coolant and Heat Port, what it
+  computes, draws and sheds on mechanical counters, a thermometer, its switch and its RUN, WAIT and HOT lamps, the
+  part that would burn first rimmed in red past 90 °C. Research charts the discoveries by the year each was made, a
+  lane for each field, what its team knows, works now, has begun, may start and may not start yet; the card of the
+  one picked says what it comes after, the data it asks for against what the team holds and where that data comes
+  from, how far the computing is and how long the rest takes, and researches it now or queues it; under the chart
+  are what the group works now, its pace and the queue. Group draws the CRCs on their cable and tables what each
+  computes, how much its team counts and each team's pace. Sides, Redstone and Protection are every machine's.
+- Plant Drawings: the Science section opens, with drawings of the Computational Research Centre and its
+  parts, of the research data and of research groups; and Fluids and Gases has one of hot water.
 
 ### Changed
 - Plant Drawings: every machine is shown as its block, which the reader turns and brings closer, with

@@ -271,7 +271,7 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         return EraParts.board(board).formFactor() == FormFactor.EEB;
     }
 
-    /* Sets a multiblock's controller and forms it, as a player placing it does. */
+    /* Sets a big block's origin and raises its parts, as a player placing it does. */
     private static void formed(final TestWorldBuilder world, final BlockPos at, final BlockState state) {
         world.setBlock(at, state);
         final Block block = state.getBlock();

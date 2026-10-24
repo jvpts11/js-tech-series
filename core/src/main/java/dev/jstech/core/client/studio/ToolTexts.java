@@ -264,22 +264,22 @@ public final class ToolTexts {
             "Make it a multiblock");
     public static final TextKey CATCH_ANOTHER = TextKey.of("gui.jscore.studio.structures.catch_another",
             "Catch another");
-    public static final TextKey LOOK_AT_CONTROLLER = TextKey.of("gui.jscore.studio.structures.look_controller",
-            "Look at the block that runs it, its controller, inside the corners, and press again");
+    public static final TextKey LOOK_AT_TERMINAL = TextKey.of("gui.jscore.studio.structures.look_terminal",
+            "Look at the block that runs it, its terminal, inside the corners, and press again");
     public static final TextKey CAUGHT = TextKey.of("gui.jscore.studio.structures.caught", "Caught");
     /* Its three sides, and how many blocks. */
     public static final TextKey CAUGHT_VALUE = TextKey.of("gui.jscore.studio.structures.caught_value",
             "%s x %s x %s, %s blocks");
-    public static final TextKey CONTROLLER = TextKey.of("gui.jscore.studio.structures.controller", "Controller");
+    public static final TextKey TERMINAL = TextKey.of("gui.jscore.studio.structures.terminal", "Terminal");
     /* The block, and its place's three numbers. */
-    public static final TextKey CONTROLLER_VALUE = TextKey.of("gui.jscore.studio.structures.controller_value",
+    public static final TextKey TERMINAL_VALUE = TextKey.of("gui.jscore.studio.structures.terminal_value",
             "the %s at %s, %s, %s");
     public static final TextKey LETTERS_FOUND = TextKey.of("gui.jscore.studio.structures.letters",
             "The letters it found");
     /* Its number, from the bottom. */
     public static final TextKey LAYER = TextKey.of("gui.jscore.studio.structures.layer", "layer %s");
-    public static final TextKey THE_CONTROLLER = TextKey.of("gui.jscore.studio.structures.the_controller",
-            "the controller");
+    public static final TextKey THE_TERMINAL = TextKey.of("gui.jscore.studio.structures.the_terminal",
+            "the terminal");
     /* What goes through it. */
     public static final TextKey A_PORT = TextKey.of("gui.jscore.studio.structures.a_port", "a port: %s");
     public static final TextKey AIR_ANY = TextKey.of("gui.jscore.studio.structures.air_any", "air, left as any");

@@ -174,7 +174,7 @@ public final class ComputingModule {
 
     /**
      * How a rack cabinet sits in an item slot: 3 blocks tall is its longest side, and its model spans
-     * x -1.5..0.5, y 0..3, z -0.5..1.5 blocks around the controller, so its middle moves by this much.
+     * x -1.5..0.5, y 0..3, z -0.5..1.5 blocks around the origin, so its middle moves by this much.
      */
     private static final CabinetBlockItem.Fit RACK_FIT = new CabinetBlockItem.Fit(48.0F, 0.5F, -1.5F, -0.5F);
     /** A rack's parts shown only when fitted or lit: the units seated in its rows and its light bars. */
@@ -336,7 +336,7 @@ public final class ComputingModule {
 
     /*
      * Mainframes: the same orchestrator and block entity in every era, differing by era, accepted board, cabinet and
-     * skin. A 3x2x2 cabinet drawn as one model by the controller; the controller hands its item over itself when
+     * skin. A 3x2x2 cabinet drawn as one model by the origin; the origin hands its item over itself when
      * broken, and the part blocks of the structure are taken down without drops.
      */
 
@@ -702,7 +702,7 @@ public final class ComputingModule {
     /*
      * The Server Racks, one per era, and the Supercomputer Racks of the Standard and the Advanced, which seat only
      * Supercomputer Nodes and whose rear port takes only the high-compute fabric. A cabinet takes servers of its own
-     * era or earlier; it is drawn as one model by its controller, which hands its item over itself when broken.
+     * era or earlier; it is drawn as one model by its origin, which hands its item over itself when broken.
      */
 
     public static final BlockEntry<ServerRackBlock> VINTAGE_SERVER_RACK =
@@ -1137,7 +1137,7 @@ public final class ComputingModule {
     }
 
     /*
-     * The cabinet is one model drawn by the controller, so the twelve blocks render nothing themselves: without
+     * The cabinet is one model drawn by the origin, so the twelve blocks render nothing themselves: without
      * noOcclusion they would still cull their neighbours' faces and block light, leaving a machine-shaped hole in
      * the world around the model.
      */

@@ -1,5 +1,4 @@
 {
-  "controller": "jstests:test_kit_turbine",
   "key": {
     "I": {
       "blocks": [
@@ -19,5 +18,6 @@
       "III"
     ]
   ],
-  "name": "test_kit_turbine"
+  "name": "test_kit_turbine",
+  "terminal": "jstests:test_kit_turbine"
 }

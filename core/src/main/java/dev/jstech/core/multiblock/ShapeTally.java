@@ -8,6 +8,7 @@
 package dev.jstech.core.multiblock;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import org.jetbrains.annotations.Nullable;
@@ -24,12 +25,16 @@ final class ShapeTally {
     private final Map<String, double[]> numbers = new HashMap<>();
     private int matched;
 
-    /** Adds a place that fits: its count and its number, when it has them. */
+    /** Adds a place that fits: its count, the entry standing there and its number, when it has them. */
     void place(final Place place, final IBlockProvider provider, final long pos, final String blockId) {
         this.matched++;
         final Place.Counted counted = place.counted();
         if (counted != null && counted.which().matchesAt(provider, pos, blockId)) {
             count(counted.name(), 1);
+        }
+        final Place.Entry entry = place.entryAt(provider, pos, blockId);
+        if (entry != null) {
+            count(entry.name(), 1);
         }
         final Place.Valued valued = place.valued();
         if (valued != null) {
@@ -84,12 +89,29 @@ final class ShapeTally {
 
     /** The first count, by name, outside its limit; none when every count is within. */
     @Nullable
-    ShapeMatch.Failure outOfLimits(final Map<String, Limit> limits, final long controller) {
+    ShapeMatch.Failure outOfLimits(final Map<String, Limit> limits, final long terminal) {
         for (final Map.Entry<String, Limit> limit : new TreeMap<>(limits).entrySet()) {
             final int count = this.counts.getOrDefault(limit.getKey(), 0);
             if (!limit.getValue().contains(count)) {
-                return new ShapeMatch.Failure(ShapeMatch.Wrong.COUNT, controller, 0, 0, 0, limit.getKey(),
+                return new ShapeMatch.Failure(ShapeMatch.Wrong.COUNT, terminal, 0, 0, 0, limit.getKey(),
                         Integer.toString(count));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The first pair of counts that must go together and do not, as a coolant's inlet with its outlet: the count of
+     * the first is wrong, against the count of the second; none when every pair agrees.
+     */
+    @Nullable
+    ShapeMatch.Failure apart(final List<MultiblockPattern.Together> pairs, final long terminal) {
+        for (final MultiblockPattern.Together pair : pairs) {
+            final int first = this.counts.getOrDefault(pair.first(), 0);
+            final int second = this.counts.getOrDefault(pair.second(), 0);
+            if (first != second) {
+                return new ShapeMatch.Failure(ShapeMatch.Wrong.APART, terminal, 0, 0, 0, pair.first(),
+                        pair.second());
             }
         }
         return null;

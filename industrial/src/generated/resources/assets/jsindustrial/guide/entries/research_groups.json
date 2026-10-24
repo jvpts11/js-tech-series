@@ -1,0 +1,76 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.research_groups.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.research_groups.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.research_groups.use1",
+        "jsindustrial.guide.research_groups.use2",
+        "jsindustrial.guide.research_groups.use3",
+        "jsindustrial.guide.research_groups.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.research_groups.fix1",
+          "problem": "jsindustrial.guide.research_groups.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.research_groups.fix2",
+          "problem": "jsindustrial.guide.research_groups.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:computational_research_centre"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:research_link_cable",
+  "id": "jsindustrial:research_groups",
+  "items": [
+    "jsindustrial:research_link_cable"
+  ],
+  "order": 14,
+  "section": "jsindustrial:science",
+  "title": "jsindustrial.guide.research_groups.title"
+}

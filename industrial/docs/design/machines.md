@@ -12,7 +12,7 @@ The machines follow the real history of industry: each tier has the machines of 
 - J's Core has a **processing machine** for any mod: input and output slots, tanks, upgrade slots, and the recipes every
   kind of machine shares. Pipes put into its inputs and its upgrade slots and take from anywhere. Upgrades multiply its
   speed and the energy it spends.
-- J's Core has **multiblocks**: a shape drawn in layers, a controller that checks the blocks in the world make it, in
+- J's Core has **multiblocks**: a shape drawn in layers, a terminal that checks the blocks in the world make it, in
   any of the four horizontal directions, and ports at fixed places of the shape (items, fluids, energy, in or out). The
   shapes are data.
 - J's Industrial has the **Electric Furnace**, the **Macerator** and the **Compressor**, and the Coal Generator
@@ -91,18 +91,21 @@ factory:
 ### Multiblocks
 
 - **Materials of their time:** brick, wood and iron before the T3; steel from the T3 ([Metallurgy](metallurgy.md)).
-- **Ports are blocks** the player places anywhere on the shell, as the valves and hatches of a real plant: the
-  connection goes where the pipe arrives. There is one for each resource, the energy port (with its class), the
-  compressed air port, and an **optional redstone port** that reads and gives signals.
+- **Each multiblock is built of blocks of its own and its terminal**, as every multiblock of the series, so each
+  machine looks like itself.
+- **Its entries are blocks** the player places on the places the multiblock declares for them, as the valves and
+  hatches of a real plant, on the faces where the real machine has its connections: the connection goes where the
+  pipe arrives. There is one for each resource, the energy entry (with its class), the compressed air entry, and an
+  **optional redstone entry** that reads and gives signals; each multiblock says how many of each it takes.
 - **Once formed, a multiblock becomes one detailed, animated model**: the turbine spins, the Steam Engine's flywheel
-  turns, the tower lets out steam. The ports stay visible where they were placed. Breaking one block undoes the
-  structure; the controller keeps what it held.
+  turns, the tower lets out steam. The entries stay visible where they were placed. Breaking one block undoes the
+  structure; the terminal keeps what it held.
 - **Help to build:** the manual shows the structure layer by layer, in 3D, and the **Structure Projector** shows the
   missing blocks in the world as ghosts, with a count of what is missing.
 - **Size can vary**, by machine: a longer Coke Oven is a battery of more ovens, a bigger Blast Furnace takes more at
   once, a longer potline has more cells; storage grows its capacity with its size. Each multiblock says what its size
   gives.
-- **The controller is the multiblock's screen**, with the same tabs as every machine, upgrades and protection included.
+- **The terminal is the multiblock's screen**, with the same tabs as every machine, upgrades and protection included.
 
 ### By hand, before electricity (T0)
 

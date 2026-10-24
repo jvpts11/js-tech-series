@@ -24,7 +24,7 @@ tick, on a virtual thread, with its result landing on the main thread.
 - **Pollution, radiation and fallout** are kept per chunk and spread at a low rate, not every tick.
 - **The Aleph's laws** are read per region, in O(1).
 - **Machines tick only when they have something to do**; a machine waiting for input costs nothing.
-- **Giant multiblocks** (the Creation Forge, the LHC, the Superheavy Fusion Ring) run from their controller; their other
+- **Giant multiblocks** (the Creation Forge, the LHC, the Superheavy Fusion Ring) run from their terminal; their other
   blocks don't tick.
 - **Reactors** simulate their physics (temperature, xenon, decay heat) at a coarse step, not every tick.
 
@@ -79,7 +79,7 @@ part of the mod off as a "module".
 
 ### Saving state
 
-- Machines and multiblocks keep their state in their block entities; a formed multiblock keeps it in its controller.
+- Machines and multiblocks keep their state in their block entities; a formed multiblock keeps it in its terminal.
 - **Reservoirs** of oil, gas and brine are kept in J's Core's data over areas, so other mods read them.
 - **Pollution, radiation and fallout** are kept per chunk.
 - **Research** is kept per team, as a J's Core progression.

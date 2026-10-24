@@ -1,0 +1,6 @@
+{
+  "parent": "jscore:block/cable/item_3",
+  "textures": {
+    "jacket": "jsindustrial:block/cable/research_link"
+  }
+}

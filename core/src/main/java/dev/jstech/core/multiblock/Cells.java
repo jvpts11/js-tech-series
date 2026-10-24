@@ -43,17 +43,17 @@ final class Cells {
     }
 
     /** A place holding the wrong block. */
-    static ShapeMatch.Failure wrongBlock(final long controller, final long at, final String wanted,
+    static ShapeMatch.Failure wrongBlock(final long terminal, final long at, final String wanted,
                                          final String found) {
-        final int[] c = PatternMatcher.decodePosition(controller);
+        final int[] c = PatternMatcher.decodePosition(terminal);
         final int[] p = PatternMatcher.decodePosition(at);
         return new ShapeMatch.Failure(ShapeMatch.Wrong.BLOCK, at, p[0] - c[0], p[1] - c[1], p[2] - c[2], wanted,
                 found);
     }
 
     /** A shape too small or too large along {@code which}. */
-    static ShapeMatch.Failure wrongSize(final long controller, final String which, final int size) {
-        return new ShapeMatch.Failure(ShapeMatch.Wrong.SIZE, controller, 0, 0, 0, which, Integer.toString(size));
+    static ShapeMatch.Failure wrongSize(final long terminal, final String which, final int size) {
+        return new ShapeMatch.Failure(ShapeMatch.Wrong.SIZE, terminal, 0, 0, 0, which, Integer.toString(size));
     }
 
     /**

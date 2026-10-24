@@ -56,9 +56,25 @@ public final class ShapeCodecs {
                     limit -> DataResult.success(new RawLimit(limit.least(), limit.most() == Integer.MAX_VALUE
                             ? Optional.empty() : Optional.of(limit.most()))));
 
+    /* An entry a place takes: the name of its count, its block or tag, and the port it makes of its place. */
+    private static final Codec<RawEntry> ENTRY = RecordCodecBuilder.create(instance -> instance.group(
+                    Codec.STRING.fieldOf("name").forGetter(RawEntry::name),
+                    MATCH.fieldOf("which").forGetter(RawEntry::which),
+                    StableCodecs.byName(PortKind.class).optionalFieldOf("port").forGetter(RawEntry::port))
+            .apply(instance, RawEntry::new));
+
+    /** Two counts that go together. */
+    public static final Codec<MultiblockPattern.Together> TOGETHER = RecordCodecBuilder.<RawTogether>create(instance ->
+                    instance.group(
+                            Codec.STRING.fieldOf("first").forGetter(RawTogether::first),
+                            Codec.STRING.fieldOf("second").forGetter(RawTogether::second))
+                            .apply(instance, RawTogether::new))
+            .flatXmap(raw -> attempt(() -> new MultiblockPattern.Together(raw.first(), raw.second())),
+                    pair -> DataResult.success(new RawTogether(pair.first(), pair.second())));
+
     /**
      * A place: its blocks and tags; a count, whose blocks are the place's own when it names none; a number by block,
-     * a tag written {@code #namespace:path}, and how the numbers are gathered.
+     * a tag written {@code #namespace:path}, and how the numbers are gathered; the entries it takes.
      */
     public static final Codec<Place> PLACE = RecordCodecBuilder.<RawPlace>create(instance -> instance.group(
                     Codec.STRING.listOf().optionalFieldOf("blocks", List.of()).forGetter(RawPlace::blocks),
@@ -73,7 +89,8 @@ public final class ShapeCodecs {
                                             .forGetter(RawValue::by),
                                     StableCodecs.byName(Place.Gather.class).fieldOf("gather")
                                             .forGetter(RawValue::gather))
-                            .apply(value, RawValue::new)).optionalFieldOf("value").forGetter(RawPlace::value))
+                            .apply(value, RawValue::new)).optionalFieldOf("value").forGetter(RawPlace::value),
+                    ENTRY.listOf().optionalFieldOf("entries", List.of()).forGetter(RawPlace::entries))
             .apply(instance, RawPlace::new))
             .flatXmap(ShapeCodecs::place, ShapeCodecs::rawPlace);
 
@@ -195,6 +212,7 @@ public final class ShapeCodecs {
             if (place.counted() != null) {
                 all.add(place.counted().which());
             }
+            place.entries().forEach(entry -> all.add(entry.which()));
         }
         pattern.inside().ifPresent(inside -> {
             all.add(inside.rule().allows());
@@ -239,6 +257,9 @@ public final class ShapeCodecs {
                 final RawValue value = raw.value().get();
                 place = place.valued(value.key(), value.by(), value.gather());
             }
+            for (final RawEntry entry : raw.entries()) {
+                place = place.entry(entry.name(), entry.which(), entry.port().orElse(null));
+            }
             return place;
         }));
     }
@@ -258,9 +279,17 @@ public final class ShapeCodecs {
             count = Optional.of(new RawCount(place.counted().name(),
                     counted.equals(fits) ? Optional.empty() : Optional.of(counted)));
         }
+        final List<RawEntry> entries = new ArrayList<>();
+        for (final Place.Entry entry : place.entries()) {
+            if (!(entry.which() instanceof BlockMatch which)) {
+                return DataResult.error(() -> "the entry " + entry.name() + " is made in code and cannot be written"
+                        + " to a file; declare it with BlockMatch");
+            }
+            entries.add(new RawEntry(entry.name(), which, Optional.ofNullable(entry.port())));
+        }
         final Place.Valued valued = place.valued();
         return DataResult.success(new RawPlace(fits.blocks(), fits.tags(), count, valued == null ? Optional.empty()
-                : Optional.of(new RawValue(valued.key(), valued.byBlock(), valued.how()))));
+                : Optional.of(new RawValue(valued.key(), valued.byBlock(), valued.how())), entries));
     }
 
     private static DataResult<MultiblockPattern.Repeat> repeat(final RawRepeat raw) {
@@ -318,7 +347,13 @@ public final class ShapeCodecs {
     }
 
     private record RawPlace(List<String> blocks, List<String> tags, Optional<RawCount> count,
-                            Optional<RawValue> value) {
+                            Optional<RawValue> value, List<RawEntry> entries) {
+    }
+
+    private record RawEntry(String name, BlockMatch which, Optional<PortKind> port) {
+    }
+
+    private record RawTogether(String first, String second) {
     }
 
     private record RawPart(String name, IBlockMatcher which, Map<String, Double> gives, List<InsidePart.Bonus> bonuses,

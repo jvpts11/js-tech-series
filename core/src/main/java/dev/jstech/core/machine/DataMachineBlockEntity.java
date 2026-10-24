@@ -17,9 +17,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The controller of a multiblock machine declared as data: a processing machine whose slots, lanes, tanks and energy
+ * The terminal of a multiblock machine declared as data: a processing machine whose slots, lanes, tanks and energy
  * are its machine file's, made as it is placed or loaded, which forms as the file's shape says and works the file's
- * kind of recipe, as many at once as the file says. A controller whose block names no file the game knows never forms,
+ * kind of recipe, as many at once as the file says. A terminal whose block names no file the game knows never forms,
  * and says so.
  */
 public class DataMachineBlockEntity extends ProcessingMachineBlockEntity {
@@ -27,7 +27,7 @@ public class DataMachineBlockEntity extends ProcessingMachineBlockEntity {
     private final ResourceLocation id;
     private final @Nullable DataMachine machine;
 
-    /* The slots of a controller whose file is missing: it never forms, so they never fill. */
+    /* The slots of a terminal whose file is missing: it never forms, so they never fill. */
     private static final Layout MISSING = Layout.items(1, 1);
 
     public DataMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {

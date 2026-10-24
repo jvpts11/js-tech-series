@@ -33,9 +33,6 @@ public final class ContentItemModelProvider extends ItemModelProvider {
 
     private final ModContent content;
 
-    /* The Core's item model of a cable this thick draws its windows, so it is given glass. */
-    private static final int WINDOWED_THICKNESS = 10;
-
     public ContentItemModelProvider(final PackOutput output, final ModContent content,
                                     final ExistingFileHelper existingFiles) {
         super(output, content.modid(), existingFiles);
@@ -97,11 +94,12 @@ public final class ContentItemModelProvider extends ItemModelProvider {
                     "is drawn as a cable but lays none", "declare it with cable(...), or give it another look");
         }
         final CableType type = laid.type();
-        // A pipe's item shows its glass in its windows; a cable with none fills them with its jacket.
+        // A pipe's item shows its glass in its windows; a cable with none fills them with its jacket. The Core writes
+        // the model of every thickness (CableItemModelProvider).
         final ItemModelBuilder model = getBuilder(id)
                 .parent(new ModelFile.UncheckedModelFile(JsCore.MODID + ":block/cable/item_" + type.thickness()))
                 .texture("jacket", type.jacket());
-        if (type.window().isPresent() || type.thickness() == WINDOWED_THICKNESS) {
+        if (type.window().isPresent() || type.thickness() == CableItemModelProvider.WINDOWED_THICKNESS) {
             model.texture("glass", type.window().orElse(type.jacket()));
         }
     }

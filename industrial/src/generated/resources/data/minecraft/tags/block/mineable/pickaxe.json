@@ -3,6 +3,15 @@
     "jsindustrial:macerator",
     "jsindustrial:electric_furnace",
     "jsindustrial:compressor",
-    "jsindustrial:coal_generator"
+    "jsindustrial:coal_generator",
+    "jsindustrial:crc_casing",
+    "jsindustrial:crc_gate",
+    "jsindustrial:crc_bus",
+    "jsindustrial:crc_terminal",
+    "jsindustrial:crc_power_entry",
+    "jsindustrial:crc_link_socket",
+    "jsindustrial:crc_coolant_inlet",
+    "jsindustrial:crc_coolant_outlet",
+    "jsindustrial:crc_heat_port"
   ]
 }

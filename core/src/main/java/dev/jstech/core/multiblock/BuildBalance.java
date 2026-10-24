@@ -9,13 +9,13 @@ package dev.jstech.core.multiblock;
 
 /**
  * The world's rules for building a multiblock for a player, as its settings file gives them: how many blocks a second
- * a tool that builds one places, and how far from the controller the player may walk before it stops.
+ * a tool that builds one places, and how far from the terminal the player may walk before it stops.
  */
 public final class BuildBalance {
 
     /** How many blocks a second a tool builds, unless the settings say otherwise. */
     public static final int DEFAULT_BLOCKS_PER_SECOND = 5;
-    /** How far from the controller, in blocks, the player may be while it builds, unless the settings say otherwise. */
+    /** How far from the terminal, in blocks, the player may be while it builds, unless the settings say otherwise. */
     public static final int DEFAULT_REACH = 32;
 
     private static volatile int blocksPerSecond = DEFAULT_BLOCKS_PER_SECOND;
@@ -29,7 +29,7 @@ public final class BuildBalance {
         return blocksPerSecond;
     }
 
-    /** How far from the controller, in blocks, the player may be while it builds. */
+    /** How far from the terminal, in blocks, the player may be while it builds. */
     public static int reach() {
         return reach;
     }

@@ -43,7 +43,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 /**
  * Ports a player places on a multiblock's shell: ports of one colour feed the lane of their colour and never another,
  * energy goes in through its own port, a dye gives a port its colour and takes it off, a redstone port reads the
- * signal round it for the controller or gives the controller's signal out, and the structure runs as many recipes at
+ * signal round it for the terminal or gives the terminal's signal out, and the structure runs as many recipes at
  * once as it says.
  */
 @GameTestHolder(JsTests.MODID)
@@ -53,7 +53,7 @@ public final class StructurePortGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos LOW = new BlockPos(1, 1, 1);
     private static final BlockPos HIGH = new BlockPos(3, 3, 3);
-    private static final BlockPos CONTROLLER = new BlockPos(2, 2, 1);
+    private static final BlockPos TERMINAL = new BlockPos(2, 2, 1);
     private static final BlockPos WEST = new BlockPos(1, 2, 2);
     private static final BlockPos EAST = new BlockPos(3, 2, 2);
     private static final BlockPos TOP = new BlockPos(2, 3, 2);
@@ -134,13 +134,13 @@ public final class StructurePortGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void redstonePort_readsTheSignalRoundItForTheController(final GameTestHelper helper) {
+    public static void redstonePort_readsTheSignalRoundItForTheTerminal(final GameTestHelper helper) {
         build(helper, TestStructures.REDSTONE.get());
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(smelter(helper).structure().formed(), "the smelter forms"))
                 .thenExecute(() -> helper.setBlock(SOUTH.south(), Blocks.REDSTONE_BLOCK))
                 .thenWaitUntil(() -> helper.assertTrue(smelter(helper).control().signal() == 15,
-                        "the controller hears the redstone beside its port; got " + smelter(helper).control()
+                        "the terminal hears the redstone beside its port; got " + smelter(helper).control()
                                 .signal()))
                 .thenExecute(() -> helper.setBlock(SOUTH.south(), Blocks.AIR))
                 .thenWaitUntil(() -> helper.assertTrue(smelter(helper).control().signal() == 0,
@@ -149,7 +149,7 @@ public final class StructurePortGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void redstonePort_givesTheControllersSignalOut(final GameTestHelper helper) {
+    public static void redstonePort_givesTheTerminalsSignalOut(final GameTestHelper helper) {
         build(helper, TestStructures.REDSTONE.get());
         helper.setBlock(SOUTH, TestStructures.REDSTONE.get().defaultBlockState().setValue(RedstonePortBlock.GIVES,
                 true));
@@ -162,12 +162,12 @@ public final class StructurePortGameTests {
                 .thenWaitUntil(() -> {
                     final int given = helper.getLevel().getSignal(helper.absolutePos(SOUTH), Direction.NORTH);
                     helper.assertTrue(given > 0 && given == smelter(helper).strength(),
-                            "the port gives what a comparator reads of the full controller; got " + given);
+                            "the port gives what a comparator reads of the full terminal; got " + given);
                 })
                 .thenSucceed();
     }
 
-    /* The smelter: iron on its edges, glass on its faces, the controller north and {@code south} on its south. */
+    /* The smelter: iron on its edges, glass on its faces, the terminal north and {@code south} on its south. */
     private static void build(final GameTestHelper helper, final Block south) {
         for (int x = LOW.getX(); x <= HIGH.getX(); x++) {
             for (int y = LOW.getY(); y <= HIGH.getY(); y++) {
@@ -185,7 +185,7 @@ public final class StructurePortGameTests {
             }
         }
         helper.setBlock(SOUTH, south);
-        helper.setBlock(CONTROLLER, TestStructures.SMELTER.get());
+        helper.setBlock(TERMINAL, TestStructures.SMELTER.get());
     }
 
     private static void colour(final GameTestHelper helper, final BlockPos at, final DyeColor colour) {
@@ -197,9 +197,9 @@ public final class StructurePortGameTests {
     }
 
     private static TestStructures.SmelterBlockEntity smelter(final GameTestHelper helper) {
-        if (helper.getBlockEntity(CONTROLLER) instanceof TestStructures.SmelterBlockEntity smelter) {
+        if (helper.getBlockEntity(TERMINAL) instanceof TestStructures.SmelterBlockEntity smelter) {
             return smelter;
         }
-        throw new IllegalStateException("no smelter controller where the test put it");
+        throw new IllegalStateException("no smelter terminal where the test put it");
     }
 }

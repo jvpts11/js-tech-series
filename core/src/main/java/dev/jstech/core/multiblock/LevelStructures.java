@@ -21,15 +21,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A dimension's structures, by the places they watch: each controller watches a box round itself (the farthest its
+ * A dimension's structures, by the places they watch: each terminal watches a box round itself (the farthest its
  * shape reaches, or its formed structure and the places beside it), filed by the chunks the box touches, so a block
  * that changes anywhere finds the few structures it concerns at once and tells them to check again. Never saved: each
- * controller files itself again as it loads.
+ * terminal files itself again as it loads.
  */
 public final class LevelStructures {
 
     private final Map<Long, List<Watch>> byChunk = new HashMap<>();
-    private final Map<BlockPos, Watch> byController = new HashMap<>();
+    private final Map<BlockPos, Watch> byTerminal = new HashMap<>();
 
     /** The structures of {@code level}. */
     public static LevelStructures of(final ServerLevel level) {
@@ -47,14 +47,14 @@ public final class LevelStructures {
     }
 
     /**
-     * Files the controller at {@code controller} as watching the box from {@code min} to {@code max}, both counted
+     * Files the terminal at {@code terminal} as watching the box from {@code min} to {@code max}, both counted
      * in, in place of what it watched before.
      */
-    public void watch(final BlockPos controller, final BlockPos min, final BlockPos max,
+    public void watch(final BlockPos terminal, final BlockPos min, final BlockPos max,
                       final IStructureWatcher watcher) {
-        forget(controller);
-        final Watch watch = new Watch(controller.immutable(), min.immutable(), max.immutable(), watcher);
-        this.byController.put(watch.controller(), watch);
+        forget(terminal);
+        final Watch watch = new Watch(terminal.immutable(), min.immutable(), max.immutable(), watcher);
+        this.byTerminal.put(watch.terminal(), watch);
         for (int cx = min.getX() >> 4; cx <= max.getX() >> 4; cx++) {
             for (int cz = min.getZ() >> 4; cz <= max.getZ() >> 4; cz++) {
                 this.byChunk.computeIfAbsent(ChunkPos.asLong(cx, cz), key -> new ArrayList<>(1)).add(watch);
@@ -62,9 +62,9 @@ public final class LevelStructures {
         }
     }
 
-    /** Stops watching for the controller at {@code controller}: broken, or its chunk gone. */
-    public void forget(final BlockPos controller) {
-        final Watch gone = this.byController.remove(controller);
+    /** Stops watching for the terminal at {@code terminal}: broken, or its chunk gone. */
+    public void forget(final BlockPos terminal) {
+        final Watch gone = this.byTerminal.remove(terminal);
         if (gone == null) {
             return;
         }
@@ -95,9 +95,9 @@ public final class LevelStructures {
         }
     }
 
-    /** The controller of the formed structure made of the place {@code pos}, or none. */
+    /** The terminal of the formed structure made of the place {@code pos}, or none. */
     @Nullable
-    public BlockPos controllerHolding(final BlockPos pos) {
+    public BlockPos terminalHolding(final BlockPos pos) {
         final List<Watch> watches = this.byChunk.get(ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4));
         if (watches == null) {
             return null;
@@ -105,19 +105,19 @@ public final class LevelStructures {
         final long packed = PatternMatcher.encodePosition(pos.getX(), pos.getY(), pos.getZ());
         for (final Watch watch : watches) {
             if (watch.contains(pos) && watch.watcher().holds(packed)) {
-                return watch.controller();
+                return watch.terminal();
             }
         }
         return null;
     }
 
-    /** How many controllers watch, for the diagnostics. */
+    /** How many terminals watch, for the diagnostics. */
     public int watching() {
-        return this.byController.size();
+        return this.byTerminal.size();
     }
 
-    /** What one controller watches. */
-    private record Watch(BlockPos controller, BlockPos min, BlockPos max, IStructureWatcher watcher) {
+    /** What one terminal watches. */
+    private record Watch(BlockPos terminal, BlockPos min, BlockPos max, IStructureWatcher watcher) {
 
         boolean contains(final BlockPos pos) {
             return pos.getX() >= this.min.getX() && pos.getX() <= this.max.getX() && pos.getY() >= this.min.getY()

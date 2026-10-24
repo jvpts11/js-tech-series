@@ -86,14 +86,14 @@ public final class StructureProjectorBlockEntity extends SyncedBlockEntity {
                 : Orientation.turns().get(index);
     }
 
-    /** What it shows laid out as it stands, every layer, its controller's block in when known, when one is chosen. */
+    /** What it shows laid out as it stands, every layer, its terminal's block in when known, when one is chosen. */
     public Optional<ShapePreview> preview() {
         return Optional.ofNullable(this.chosen.get()).flatMap(id -> Projectables.preview(id, 0))
                 .map(preview -> preview.turned(orientation()));
     }
 
-    /** Where the controller of what it shows stands: in front of it. */
-    public BlockPos controllerOf(final ShapePreview preview) {
+    /** Where the terminal of what it shows stands: in front of it. */
+    public BlockPos terminalOf(final ShapePreview preview) {
         final Direction facing = getBlockState().hasProperty(HorizontalDirectionalBlock.FACING)
                 ? getBlockState().getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
         final int axis = facing.getAxis() == Direction.Axis.X ? 0 : 2;

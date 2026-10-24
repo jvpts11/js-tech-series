@@ -7,7 +7,6 @@
  */
 package dev.jstech.tests.gametest.series;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
@@ -30,7 +29,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -97,7 +95,7 @@ public final class ScaleBenchmarkGameTests {
     /**
      * The base must come up whole when it is raised in SOLID GROUND, which is where a player raises it with
      * {@code /jsc benchmark build}. A cabinet will not raise its parts into occupied space, so before this
-     * was handled every cabinet in a real world stayed a lone controller: no racks, no servers, no network,
+     * was handled every cabinet in a real world stayed a lone origin block: no racks, no servers, no network,
      * and a benchmark that measured an empty base while reporting success.
      */
     @GameTest(template = ARENA, batch = "jsc_bench_ground", timeoutTicks = 900)

@@ -46,6 +46,8 @@ public final class JsCoreDataGenerators {
         data.server(new UndergroundProvider(data.output(), data.lookup()));
         // What a screen's file may say, for an editor to complete it.
         data.client(new ScreenSchemaProvider(data.output(), JsCore.MODID));
+        // The length of cable of every thickness, which every mod's cable items are drawn from.
+        data.client(new CableItemModelProvider(data.output(), data.existingFiles()));
         data.check();
     }
 }

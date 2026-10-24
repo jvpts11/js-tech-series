@@ -102,7 +102,7 @@ public final class RackUnitGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     /*
-                     * Half a block up the controller's front is texel 16: the second rack unit from the
+                     * Half a block up the origin's front is texel 16: the second rack unit from the
                      * bottom, which is row 6 counted from the top.
                      */
                     player.setItemInHand(InteractionHand.MAIN_HAND, ServerStacks.defaultServer());

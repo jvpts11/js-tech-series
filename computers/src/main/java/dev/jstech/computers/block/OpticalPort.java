@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * The fibre port of a machine on the backbone. The fibre enters a Mainframe or a Cluster Management Computer only when
  * the machine holds an Optical Network Card, and a server rack only as far as the Fibre Optic Interface mounted in it
  * reaches; without either the machine takes the copper of its backbone alone. What the port takes is kept in the
- * block's state, on the controller and on every part of a cabinet, because a cable asks a face what it takes knowing
+ * block's state, on the origin and on every part of a cabinet, because a cable asks a face what it takes knowing
  * only the block's state.
  */
 public final class OpticalPort {

@@ -805,17 +805,17 @@ public final class MovingStructureGameTests {
     public static void fields_followTheBlocksTheyHoldThePlacesOf(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos part = helper.absolutePos(new BlockPos(3, 3, 3));
-        final BlockPos controller = helper.absolutePos(new BlockPos(4, 3, 3));
+        final BlockPos terminal = helper.absolutePos(new BlockPos(4, 3, 3));
         level.setBlock(part, Blocks.STONE.defaultBlockState(), 3);
-        level.setBlock(controller, Blocks.GOLD_BLOCK.defaultBlockState(), 3);
-        FormedParts.merge(level, controller, List.of(part.asLong()));
+        level.setBlock(terminal, Blocks.GOLD_BLOCK.defaultBlockState(), 3);
+        FormedParts.merge(level, terminal, List.of(part.asLong()));
         warm(level);
-        final StructureResult made = MovingStructures.assemble(level, part, controller);
+        final StructureResult made = MovingStructures.assemble(level, part, terminal);
         helper.assertTrue(made.ok(), "the two are made a structure: " + refusal(made));
         final BlockPos gold = find(level, made.structure(), state -> state.is(Blocks.GOLD_BLOCK));
         final BlockPos merged = find(level, made.structure(), state -> state.is(FormedParts.BLOCK.get()));
         helper.assertTrue(merged != null && level.getBlockEntity(merged) instanceof FormedPartBlockEntity formed
-                && gold.equals(formed.controller()), "the part's controller is the gold block where it went: "
+                && gold.equals(formed.terminal()), "the part's terminal is the gold block where it went: "
                 + gold + " for " + (merged == null ? null : level.getBlockEntity(merged)));
         MovingStructures.takeAway(made.structure());
         helper.succeed();

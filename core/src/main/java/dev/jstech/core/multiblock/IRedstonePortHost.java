@@ -10,7 +10,7 @@ package dev.jstech.core.multiblock;
 import net.minecraft.core.BlockPos;
 
 /**
- * A multiblock's controller as its redstone ports reach it: told what signal each port that reads hears, and asked
+ * A multiblock's terminal as its redstone ports reach it: told what signal each port that reads hears, and asked
  * what signal the ports that give give.
  */
 public interface IRedstonePortHost {
@@ -18,6 +18,6 @@ public interface IRedstonePortHost {
     /** The port at {@code port}, reading, hears {@code signal} from round it, nought to fifteen. */
     void heard(BlockPos port, int signal);
 
-    /** What the ports that give put out, nought to fifteen: what a comparator would read of the controller. */
+    /** What the ports that give put out, nought to fifteen: what a comparator would read of the terminal. */
     int givenSignal();
 }

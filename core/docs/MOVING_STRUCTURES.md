@@ -611,7 +611,7 @@ for, when that dimension's yard is full, while its blocks are not loaded, and wh
 
 *Added 2026-10-20.*
 
-Any mod's blocks work aboard as they are. A block entity that keeps the place of another block (a link, a controller)
+Any mod's blocks work aboard as they are. A block entity that keeps the place of another block (a link, a multiblock's part)
 is told where the blocks moved:
 
 ```java

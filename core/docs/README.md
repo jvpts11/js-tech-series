@@ -18,7 +18,7 @@ every build.
 | [Content](CONTENT.md) | Blocks, items, looks, creative tabs, block entities, devices, menus, materials, items that hold things, ids that are saved. |
 | [Text and colour](TEXT_AND_COLOUR.md) | Sentences in every language, and the palettes screens paint with. |
 | [Machines](MACHINES.md) | Processing machines, recipes with counts and fluids, upgrades, JEI and EMI. |
-| [Multiblocks](MULTIBLOCKS.md) | Shapes of many blocks, as data or by rule, with ports; what they hold inside, the projector, the builder, the recorder of patterns. |
+| [Multiblocks](MULTIBLOCKS.md) | Shapes of many blocks, as data or by rule, with ports and entries; what they hold inside, the projector, the builder, the recorder of patterns; big blocks placed whole. |
 | [Block spaces and microblocks](MULTIPART.md) | Several things in one block space, microblocks of any block, the saw, facades. |
 | [Tools and items](TOOLS.md) | Tools with modes, areas and veins mined, building tools and copies of regions, tools on energy, fuel or air, heat, waits and charging, modules in tools, keys for items not held, durability from a material. |
 | [Entities](ENTITIES.md) | Entities, vehicles, robots, projectiles, and what is worn. |
@@ -50,7 +50,7 @@ every build.
 | [Protection](PROTECTION.md) | Claims, permissions, limits, the audit log and damage between players. |
 | [Diagnostics](DIAGNOSTICS.md) | Sections of work, profilers, the watchdog, budgets, network use, cost, `/jstech health`, crash reports. |
 | [Notifications](NOTIFICATIONS.md) | Notifications on the HUD: levels, alike ones grouped, the history, actions, silencing, do not disturb. |
-| [Progression](PROGRESSION.md) | Eras as a registry, tiers, axes that move by playing, what a team reaches, milestones, knowledge and the knowledge gate, advancements. |
+| [Progression](PROGRESSION.md) | Eras as a registry, tiers, axes that move by playing, what a team reaches, milestones, knowledge and the knowledge gate, research with its discoveries and kinds of data, advancements. |
 | [Commands](COMMANDS.md) | Commands under `/jstech`. |
 | [Settings](SETTINGS.md) | Settings files, their ranges, and the settings screen. |
 | [Modpacks](MODPACKS.md) | Content packs, conditions on data, recipes that ask for knowledge, unification, and what KubeJS, CraftTweaker and FTB Quests reach. |

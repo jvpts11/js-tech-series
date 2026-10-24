@@ -37,33 +37,33 @@ class ShapePreviewTest {
         assertEquals(8, preview.layer(1).size());
         assertEquals(3, preview.sizeX());
         assertEquals(17, preview.blocks());
-        assertTrue(preview.layer(0).stream().anyMatch(ShapePreview.Ghost::controller));
+        assertTrue(preview.layer(0).stream().anyMatch(ShapePreview.Ghost::terminal));
         assertEquals(Map.of(CASING, 12, GLASS, 4), preview.materials());
     }
 
     @Test
-    void pattern_showsTheControllerItNamesAndListsItApart() {
+    void pattern_showsTheTerminalItNamesAndListsItApart() {
         final MultiblockPattern pattern = MultiblockPattern.builder("smelter")
                 .layer("C#C")
                 .where('C', BlockMatch.blocks(CASING))
-                .controller("test:smelter")
+                .terminal("test:smelter")
                 .build();
         final ShapePreview preview = ShapePreviews.pattern(pattern, Orientation.NORTH, 0);
-        assertEquals(Optional.of("test:smelter"), preview.controllerBlock());
+        assertEquals(Optional.of("test:smelter"), preview.terminalBlock());
         assertEquals(Map.of(CASING, 2), preview.materials());
     }
 
     @Test
-    void withController_namesOnlyAControllerTheShapeLeftUnnamed() {
+    void withTerminal_namesOnlyATerminalTheShapeLeftUnnamed() {
         final MultiblockPattern bare = MultiblockPattern.builder("bare")
                 .layer("C#")
                 .where('C', BlockMatch.blocks(CASING))
                 .build();
         final ShapePreview unnamed = ShapePreviews.pattern(bare, Orientation.NORTH, 0);
-        assertEquals(Optional.empty(), unnamed.controllerBlock());
-        final ShapePreview named = unnamed.withController("test:first");
-        assertEquals(Optional.of("test:first"), named.controllerBlock());
-        assertEquals(Optional.of("test:first"), named.withController("test:second").controllerBlock());
+        assertEquals(Optional.empty(), unnamed.terminalBlock());
+        final ShapePreview named = unnamed.withTerminal("test:first");
+        assertEquals(Optional.of("test:first"), named.terminalBlock());
+        assertEquals(Optional.of("test:first"), named.withTerminal("test:second").terminalBlock());
         assertEquals(unnamed.blocks(), named.blocks());
     }
 
@@ -127,7 +127,7 @@ class ShapePreviewTest {
     }
 
     @Test
-    void turned_movesEveryPlaceRoundTheController() {
+    void turned_movesEveryPlaceRoundTheTerminal() {
         final MultiblockPattern hook = MultiblockPattern.builder("hook")
                 .layer("#CC", "  C")
                 .where('C', BlockMatch.blocks(CASING))
@@ -149,12 +149,12 @@ class ShapePreviewTest {
         assertArrayEquals(new int[] {12, 64, 20}, preview.anchor(10, 64, 20, 0, 1));
     }
 
-    /* Builds the preview's first choices round a controller at the origin, and checks the shape forms there. */
+    /* Builds the preview's first choices round a terminal at the origin, and checks the shape forms there. */
     private static void assertFormsAsShown(final IStructureShape shape, final ShapePreview preview) {
         final Map<Long, String> world = new HashMap<>();
         for (final ShapePreview.Ghost ghost : preview.ghosts()) {
             world.put(PatternMatcher.encodePosition(ghost.x(), ghost.y(), ghost.z()),
-                    ghost.controller() ? "test:controller" : ghost.first());
+                    ghost.terminal() ? "test:terminal" : ghost.first());
         }
         assertInstanceOf(ShapeMatch.Formed.class, shape.check(pos -> world.getOrDefault(pos, Cells.AIR),
                 PatternMatcher.encodePosition(0, 0, 0)));

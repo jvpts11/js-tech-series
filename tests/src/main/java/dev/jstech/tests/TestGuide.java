@@ -212,7 +212,7 @@ public final class TestGuide {
                 .whatCanGoWrong("The scene is empty.", "None of its blocks is one the game knows.")
                 .register();
         GUIDE.page("multiblock", IDEAS).titled("A Multiblock").icon(() -> Items.BLAST_FURNACE)
-                .whatItIs("An entry with the test furnace drawn from its pattern as it stands now, its controller in"
+                .whatItIs("An entry with the test furnace drawn from its pattern as it stands now, its terminal in"
                         + " its place.")
                 .multiblock("The test furnace, from its pattern. Peel it layer by layer.", TestMultiblocks.FURNACE_ID,
                         100)

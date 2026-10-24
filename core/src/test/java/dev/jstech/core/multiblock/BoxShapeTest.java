@@ -38,7 +38,7 @@ class BoxShapeTest {
     }
 
     @Test
-    void check_findsTheBoxFromAControllerOnItsTop() {
+    void check_findsTheBoxFromATerminalOnItsTop() {
         final Map<Long, String> world = new HashMap<>();
         box(world, 0, 0, 0, 3, 3, 3, GLASS);
         final ShapeMatch.Formed formed = assertInstanceOf(ShapeMatch.Formed.class,
@@ -73,7 +73,7 @@ class BoxShapeTest {
     }
 
     @Test
-    void check_namesAFaceBlockMissingBesideTheController() {
+    void check_namesAFaceBlockMissingBesideTheTerminal() {
         final Map<Long, String> world = new HashMap<>();
         box(world, 0, 0, 0, 4, 4, 4, GLASS);
         world.remove(pos(3, 2, 0));

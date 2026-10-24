@@ -44,9 +44,9 @@ public final class BuilderTexts {
     public static final TextKey BUILT = TextKey.of("jscore.builder.built", "BUILT");
     public static final TextKey BUILT_LINE = TextKey.of("jscore.builder.built_line", "Nothing is missing");
     public static final TextKey NOT_AIMED = TextKey.of("jscore.builder.not_aimed",
-            "Use it on a multiblock's controller");
+            "Use it on a multiblock's terminal");
     public static final TextKey UNKNOWN = TextKey.of("jscore.builder.unknown",
-            "This controller forms no multiblock it knows");
+            "This terminal forms no multiblock it knows");
     public static final TextKey CHOOSE = TextKey.of("jscore.builder.choose", "CHOOSE WHAT GOES WHERE");
     public static final TextKey NO_CHOICES = TextKey.of("jscore.builder.no_choices",
             "Every place takes one block only");

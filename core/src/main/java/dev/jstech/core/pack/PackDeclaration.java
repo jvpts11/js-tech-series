@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * One thing a content pack declares, as its file says it ({@link PackReader}): a block, an item, a material with its
- * forms and ores, a kind of processing machine, the controller block of a machine declared as data, or the creative
+ * forms and ores, a kind of processing machine, the terminal block of a machine declared as data, or the creative
  * tab the pack's things are shown in. Every id is {@code namespace:path}, the namespace the pack's own.
  */
 public sealed interface PackDeclaration {
@@ -79,7 +79,7 @@ public sealed interface PackDeclaration {
     }
 
     /**
-     * The controller block of a multiblock machine declared as data, which reads the machine file of its own id
+     * The terminal block of a multiblock machine declared as data, which reads the machine file of its own id
      * ({@code data/<namespace>/multiblock_machine/<path>.json}).
      *
      * @param strength how long it takes to break

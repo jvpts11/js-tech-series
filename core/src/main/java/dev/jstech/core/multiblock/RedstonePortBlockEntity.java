@@ -15,8 +15,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A redstone port of a multiblock's shell: one that reads tells its controller the signal round it, as a lever beside
- * a machine would; one that gives puts out its controller's signal, as a comparator reading it would. Which it does
+ * A redstone port of a multiblock's shell: one that reads tells its terminal the signal round it, as a lever beside
+ * a machine would; one that gives puts out its terminal's signal, as a comparator reading it would. Which it does
  * is its block's state ({@link RedstonePortBlock#GIVES}), so it never reads what it gives.
  */
 public class RedstonePortBlockEntity extends MultiblockPartBlockEntity {
@@ -25,7 +25,7 @@ public class RedstonePortBlockEntity extends MultiblockPartBlockEntity {
         super(type, pos, state);
     }
 
-    /** Tells its controller what it hears now, or nothing once it gives. */
+    /** Tells its terminal what it hears now, or nothing once it gives. */
     public void hear(final ServerLevel level) {
         final IRedstonePortHost host = host(level);
         if (host != null) {
@@ -35,7 +35,7 @@ public class RedstonePortBlockEntity extends MultiblockPartBlockEntity {
         }
     }
 
-    /** What it puts out while it gives: its controller's signal, or none while it is part of nothing. */
+    /** What it puts out while it gives: its terminal's signal, or none while it is part of nothing. */
     public int given(final BlockGetter level) {
         final IRedstonePortHost host = host(level);
         return host == null ? 0 : host.givenSignal();
@@ -43,10 +43,10 @@ public class RedstonePortBlockEntity extends MultiblockPartBlockEntity {
 
     @Nullable
     private IRedstonePortHost host(final BlockGetter level) {
-        final BlockPos controller = controllerPos();
-        if (controller == null) {
+        final BlockPos terminal = terminalPos();
+        if (terminal == null) {
             return null;
         }
-        return level.getBlockEntity(controller) instanceof IRedstonePortHost host ? host : null;
+        return level.getBlockEntity(terminal) instanceof IRedstonePortHost host ? host : null;
     }
 }

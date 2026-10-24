@@ -40,7 +40,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class MachineLooksClientTests {
 
-    /* The turbine's controller, the middle of its south side; it runs north of it. */
+    /* The turbine's terminal, the middle of its south side; it runs north of it. */
     private static final BlockPos TURBINE = new BlockPos(0, 2, 4);
     private static final BlockPos TURBINE_STAND = new BlockPos(0, 3, 8);
     /* The parts' line runs along X; they are looked at from the east, face on. */

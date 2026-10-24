@@ -25,7 +25,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -111,13 +110,13 @@ public final class NetworkFixtures {
     }
 
     public static MainframeBlockEntity formRunningMainframe(final GameTestHelper helper,
-                                                            final BlockPos controller, final Direction facing) {
-        helper.setBlock(controller, ComputingModule.MAINFRAME.get().defaultBlockState()
+                                                            final BlockPos origin, final Direction facing) {
+        helper.setBlock(origin, ComputingModule.MAINFRAME.get().defaultBlockState()
                 .setValue(MainframeBlock.FACING, facing));
         ((MainframeBlock) ComputingModule.MAINFRAME.get()).setPlacedBy(
-                helper.getLevel(), helper.absolutePos(controller),
-                helper.getBlockState(controller), null, ItemStack.EMPTY);
-        final MainframeBlockEntity be = mainframeAt(helper, controller);
+                helper.getLevel(), helper.absolutePos(origin),
+                helper.getBlockState(origin), null, ItemStack.EMPTY);
+        final MainframeBlockEntity be = mainframeAt(helper, origin);
         installValidBuild(be);
         be.togglePower();
         return be;

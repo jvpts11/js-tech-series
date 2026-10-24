@@ -62,7 +62,7 @@ class WallsShapeTest {
     }
 
     @Test
-    void check_failsAWallBrokenAtTheControllersLayer() {
+    void check_failsAWallBrokenAtTheTerminalsLayer() {
         final Map<Long, String> world = new HashMap<>();
         build(world, 2);
         world.put(pos(1, 1, 1), "minecraft:dirt");

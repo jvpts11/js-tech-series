@@ -53,7 +53,7 @@ public final class MultiblockCard {
     public MultiblockCard(final MultiblockEntry entry, final boolean drags) {
         this.entry = entry;
         this.drags = drags;
-        this.hasPage = !entry.controller().isEmpty() && GuideClient.hasPage(entry.controller());
+        this.hasPage = !entry.terminal().isEmpty() && GuideClient.hasPage(entry.terminal());
     }
 
     /** Draws it, the mouse at ({@code mouseX}, {@code mouseY}) from its top left. */
@@ -115,7 +115,7 @@ public final class MultiblockCard {
         }
         if (MultiblockViewLayout.onPage(x, y) && this.hasPage) {
             click();
-            GuideClient.openPageOf(this.entry.controller(), Minecraft.getInstance().screen);
+            GuideClient.openPageOf(this.entry.terminal(), Minecraft.getInstance().screen);
             return true;
         }
         if (!this.drags && MultiblockViewLayout.onPreview(x, y)) {

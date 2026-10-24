@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The multiblock machines data packs declare, by id: each file under {@code data/<namespace>/multiblock_machine/}
- * is one {@link DataMachine}, read whenever the server reloads its data and sent to every player, so a controller
+ * is one {@link DataMachine}, read whenever the server reloads its data and sent to every player, so a terminal
  * block built on {@link DataMachineBlock} reads the same machine on both sides. A file:
  *
  * <pre>{@code
@@ -47,8 +47,8 @@ import org.jetbrains.annotations.Nullable;
  * }</pre>
  *
  * <p>The shape is one of {@code "pattern"} (a pattern's id), {@code "drawn"} (a pattern written in the file),
- * {@code "box"}, {@code "walls"} or {@code "cuboid"}. A machine's slots are made as its controller is placed or loaded,
- * so a change to its layout reaches the controllers placed or loaded after the reload; its shape and its recipes, at
+ * {@code "box"}, {@code "walls"} or {@code "cuboid"}. A machine's slots are made as its terminal is placed or loaded,
+ * so a change to its layout reaches the terminals placed or loaded after the reload; its shape and its recipes, at
  * once.
  */
 public final class DataMachines {
@@ -126,14 +126,14 @@ public final class DataMachines {
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "multiblock_machine"), "multiblock_machine", CODEC)
             .synced().register();
 
-    /* Every controller block built on DataMachineBlock, read once the blocks are all registered. */
+    /* Every terminal block built on DataMachineBlock, read once the blocks are all registered. */
     @Nullable
-    private static volatile List<DataMachineBlock> controllers;
+    private static volatile List<DataMachineBlock> terminals;
 
     static {
         // A machine whose shape names a pattern by id is shown as that pattern; the others are shown as themselves.
         Projectables.addSource(DataMachines::shown);
-        Projectables.addControllers(DataMachines::controllerOf);
+        Projectables.addTerminals(DataMachines::terminalOf);
     }
 
     private DataMachines() {
@@ -172,21 +172,21 @@ public final class DataMachines {
     }
 
     /*
-     * The block of the controller of the multiblock {@code id}: the controller block of the machine of that id, or of
+     * The block of the terminal of the multiblock {@code id}: the terminal block of the machine of that id, or of
      * a machine whose shape is the pattern of that id. A block naming a file there is not controls nothing.
      */
-    private static Optional<String> controllerOf(final ResourceLocation id) {
-        List<DataMachineBlock> known = controllers;
+    private static Optional<String> terminalOf(final ResourceLocation id) {
+        List<DataMachineBlock> known = terminals;
         if (known == null) {
             known = BuiltInRegistries.BLOCK.stream().filter(DataMachineBlock.class::isInstance)
                     .map(DataMachineBlock.class::cast).toList();
-            controllers = known;
+            terminals = known;
         }
-        for (final DataMachineBlock controller : known) {
-            final ResourceLocation machine = controller.machine();
+        for (final DataMachineBlock terminal : known) {
+            final ResourceLocation machine = terminal.machine();
             if (get(machine).map(DataMachine::shape).filter(shape -> machine.equals(id)
                     || shape instanceof PatternById byId && byId.id().equals(id)).isPresent()) {
-                return Optional.of(BuiltInRegistries.BLOCK.getKey(controller).toString());
+                return Optional.of(BuiltInRegistries.BLOCK.getKey(terminal).toString());
             }
         }
         return Optional.empty();

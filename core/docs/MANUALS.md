@@ -540,7 +540,7 @@ blocks written:
 .multiblock("The coke oven. Peel it to see its inside.", rl("coke_oven"), 120)
 ```
 
-Every place shows its first block (a tag's place, the tag's first block), and the controller stands in its place
+Every place shows its first block (a tag's place, the tag's first block), and the terminal stands in its place
 when its block is known ([Multiblocks](MULTIBLOCKS.md#showing-a-multiblock-before-it-is-built)). The scene may always
 be peeled layer by layer and has no balloons. Where the multiblock is not installed, or is bigger than a scene's grid,
 the figure is left out and the next one takes its number. Its file is

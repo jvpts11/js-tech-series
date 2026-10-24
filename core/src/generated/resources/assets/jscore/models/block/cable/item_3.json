@@ -1,0 +1,76 @@
+{
+  "parent": "minecraft:block/block",
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#jacket",
+          "uv": [
+            0.0,
+            0.0,
+            8.0,
+            1.5
+          ]
+        },
+        "east": {
+          "texture": "#jacket",
+          "uv": [
+            0.0,
+            8.0,
+            1.5,
+            9.5
+          ]
+        },
+        "north": {
+          "texture": "#jacket",
+          "uv": [
+            0.0,
+            0.0,
+            8.0,
+            1.5
+          ]
+        },
+        "south": {
+          "texture": "#jacket",
+          "uv": [
+            0.0,
+            0.0,
+            8.0,
+            1.5
+          ]
+        },
+        "up": {
+          "texture": "#jacket",
+          "uv": [
+            0.0,
+            0.0,
+            8.0,
+            1.5
+          ]
+        },
+        "west": {
+          "texture": "#jacket",
+          "uv": [
+            0.0,
+            8.0,
+            1.5,
+            9.5
+          ]
+        }
+      },
+      "from": [
+        0,
+        6.5,
+        6.5
+      ],
+      "to": [
+        16,
+        9.5,
+        9.5
+      ]
+    }
+  ],
+  "textures": {
+    "particle": "#jacket"
+  }
+}

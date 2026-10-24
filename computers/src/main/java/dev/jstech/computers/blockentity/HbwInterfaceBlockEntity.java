@@ -147,7 +147,7 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
 
     private void survey(final ServerLevel serverLevel) {
         final List<NodeRef> discovered = new ArrayList<>();
-        final Set<BlockPos> seenControllers = new HashSet<>();
+        final Set<BlockPos> seenOrigins = new HashSet<>();
         final Set<BlockPos> visited = new HashSet<>();
         final ArrayDeque<Reach> queue = new ArrayDeque<>();
         final FacePorts own = getBlockState().getBlock() instanceof IFaceConnector connector ? connector.ports() : null;
@@ -177,7 +177,7 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
                 final ServerRackBlockEntity rack = cabinetAt(serverLevel, neighbor);
                 if (rack != null && rack.rackType() == RackChassis.RackType.SUPERCOMPUTER
                         && (current.fabric() == null || takes(portsOf(rack), current.fabric()))
-                        && seenControllers.add(rack.getBlockPos())) {
+                        && seenOrigins.add(rack.getBlockPos())) {
                     /*
                      * The cabinet's link light: this survey already walks the whole fabric every tick, so
                      * the cabinet is told here rather than walking it again itself.
@@ -258,15 +258,15 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
         return rack.getBlockState().getBlock() instanceof IFaceConnector connector ? connector.ports() : null;
     }
 
-    /** The rack a block belongs to (the controller itself or any part of the cabinet), or null. */
+    /** The rack a block belongs to (the origin itself or any part of the cabinet), or null. */
     @Nullable
     private static ServerRackBlockEntity cabinetAt(final ServerLevel level, final BlockPos pos) {
         final BlockEntity be = Loaded.blockEntity(level, pos);
         if (be instanceof ServerRackBlockEntity rack) {
             return rack;
         }
-        if (be instanceof ServerRackPartBlockEntity part && part.controllerPos() != null
-                && Loaded.blockEntity(level, part.controllerPos()) instanceof ServerRackBlockEntity rack) {
+        if (be instanceof ServerRackPartBlockEntity part && part.originPos() != null
+                && Loaded.blockEntity(level, part.originPos()) instanceof ServerRackBlockEntity rack) {
             return rack;
         }
         return null;

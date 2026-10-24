@@ -145,7 +145,7 @@ public final class TestWorldBuilder extends ScenarioBuilder {
         }
     }
 
-    /** Places a Mainframe controller, installs the valid build and powers it on. */
+    /** Places a Mainframe's origin, installs the valid build and powers it on. */
     public MainframeBlockEntity placeRunningMainframe(final BlockPos relative) {
         setBlock(relative, ComputingModule.MAINFRAME.get());
         final MainframeBlockEntity be = blockEntity(relative, MainframeBlockEntity.class);

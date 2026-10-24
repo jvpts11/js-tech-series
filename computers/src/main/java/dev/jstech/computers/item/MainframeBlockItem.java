@@ -28,7 +28,7 @@ public class MainframeBlockItem extends CabinetBlockItem {
 
     /**
      * How a Mainframe cabinet sits in an item slot: 3 blocks wide is its longest side, and its model
-     * spans x -1.5..1.5, y 0..2, z -0.5..1.5 blocks around the controller, which sits in the middle of
+     * spans x -1.5..1.5, y 0..2, z -0.5..1.5 blocks around the origin, which sits in the middle of
      * the bottom front row, so only the height and the depth need re-centring.
      */
     private static final Fit MAINFRAME_FIT = new Fit(48.0F, 0.0F, -1.0F, -0.5F);

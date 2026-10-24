@@ -10,7 +10,7 @@ What the viewers show with nothing written by you:
 
 - **Every processing machine's recipes**, each kind on its own page with its machines beside it ([Machines](MACHINES.md)),
   and the button that moves a recipe into the open machine: JEI's "+", EMI's fill button, REI's "+".
-- **Every multiblock** the Structure Projector can show, with its preview, its materials and its controller.
+- **Every multiblock** the Structure Projector can show, with its preview, its materials and its terminal.
 - **The microblocks' rules** among the crafting recipes, one entry each going through every block.
 - **The crafting recipes that ask for knowledge**, with a padlock while the player's team lacks it (in JEI and EMI).
 

@@ -329,7 +329,7 @@ public final class MultiblockBuilderScreen extends Screen {
     private void ready(final GuiGraphics g, final NetworkProbeScreen.Colours c, final Colours b,
                        final BuilderPlan plan) {
         final BuildStatus status = BuilderClient.status();
-        final boolean ours = aim().filter(status.controller()::equals).isPresent();
+        final boolean ours = aim().filter(status.terminal()::equals).isPresent();
         final BuildStatus.Phase phase = ours ? status.phase() : BuildStatus.Phase.IDLE;
         final Text word;
         final Text line;
@@ -472,7 +472,7 @@ public final class MultiblockBuilderScreen extends Screen {
     private void keys(final GuiGraphics g, final NetworkProbeScreen.Colours c) {
         final BuildStatus status = BuilderClient.status();
         final boolean holding = status.phase() == BuildStatus.Phase.HELD
-                && aim().filter(status.controller()::equals).isPresent();
+                && aim().filter(status.terminal()::equals).isPresent();
         key(g, c, BuilderTexts.HOLD, ProbeLayout.HOLD_X, ProbeLayout.HOLD_Y, holding, c.amberInk());
         key(g, c, BuilderTexts.SHOW, ProbeLayout.SHOW_X, ProbeLayout.SHOW_Y, this.state.show(), c.tealInk());
         key(g, c, BuilderTexts.LIGHT, ProbeLayout.LIGHT_X, ProbeLayout.LIGHT_Y, this.state.light(), c.silk());

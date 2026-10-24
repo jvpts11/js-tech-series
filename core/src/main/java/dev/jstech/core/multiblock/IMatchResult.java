@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Outcome of attempting to match a {@link MultiblockPattern} against the world at a candidate controller position.
+ * Outcome of attempting to match a {@link MultiblockPattern} against the world at a candidate terminal position.
  */
 public sealed interface IMatchResult permits IMatchResult.Success, IMatchResult.Failure {
 

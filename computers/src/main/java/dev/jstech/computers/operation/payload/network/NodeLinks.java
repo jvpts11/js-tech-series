@@ -108,7 +108,7 @@ final class NodeLinks {
 
     /**
      * The machines joined to the network that lost their link, each once, by the block it stands at (a cabinet by its
-     * controller), with why: first those beyond a fibre that bends, then those beyond a run too long.
+     * origin), with why: first those beyond a fibre that bends, then those beyond a run too long.
      */
     Map<BlockPos, NodeLink> lost() {
         final Map<BlockPos, NodeLink> lost = new LinkedHashMap<>();
@@ -198,8 +198,8 @@ final class NodeLinks {
 
     private void addMachine(final BlockPos pos, final Set<BlockPos> machines) {
         final BlockEntity entity = Loaded.blockEntity(level, pos);
-        if (entity instanceof ServerRackPartBlockEntity part && part.controllerPos() != null) {
-            addMachine(part.controllerPos(), machines);
+        if (entity instanceof ServerRackPartBlockEntity part && part.originPos() != null) {
+            addMachine(part.originPos(), machines);
         } else if (entity instanceof ServerRackBlockEntity rack && !network.equals(rack.networkUuid())) {
             machines.add(pos.immutable());
         } else if (entity instanceof AbstractComputerBlockEntity computer && !(entity instanceof MainframeBlockEntity)

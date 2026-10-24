@@ -26,9 +26,9 @@ import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
- * The blocks of a formed structure merged into its controller's model, and given back: a structure that merges turns
+ * The blocks of a formed structure merged into its terminal's model, and given back: a structure that merges turns
  * each plain block of its shell into a {@link FormedPartBlock} that remembers it, and turns them back as it comes
- * apart. Only a block with no block entity merges; a port, a part that keeps something, the controller itself stay as
+ * apart. Only a block with no block entity merges; a port, a part that keeps something, the terminal itself stay as
  * they are, where they were.
  */
 public final class FormedParts {
@@ -66,12 +66,12 @@ public final class FormedParts {
     }
 
     /**
-     * Merges into the model of the controller at {@code controller} every plain block at {@code places}, with a puff
+     * Merges into the model of the terminal at {@code terminal} every plain block at {@code places}, with a puff
      * of smoke at each.
      *
      * @return the places that merged
      */
-    public static List<Long> merge(final ServerLevel level, final BlockPos controller, final Collection<Long> places) {
+    public static List<Long> merge(final ServerLevel level, final BlockPos terminal, final Collection<Long> places) {
         final List<Long> out = new ArrayList<>();
         for (final long place : places) {
             final BlockPos at = MultiblockPatterns.decode(place);
@@ -82,7 +82,7 @@ public final class FormedParts {
             // Its neighbours are not told: nothing round it changed, as the structure sees it.
             level.setBlock(at, BLOCK.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part) {
-                part.merged(was, controller);
+                part.merged(was, terminal);
                 out.add(place);
                 puff(level, at);
             }

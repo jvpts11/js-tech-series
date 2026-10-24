@@ -70,7 +70,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The Structure Projector on the player's side: for every projector loaded near the player that shows a multiblock,
  * the blocks still missing are drawn as ghosts, pale and see-through, a block that is wrong is outlined in red through
- * whatever stands between, the controller's place is outlined in cyan until it is built, and above the structure float
+ * whatever stands between, the terminal's place is outlined in cyan until it is built, and above the structure float
  * its name, its size and how much is in place, missing and wrong. A ghost looked at says what goes there and on which
  * layer, beside the crosshair. A multiblock a recipe viewer's button asks to show is shown the same way, as a projector
  * at the player's feet would show it, until it is built or the player walks away. Its screen is registered here too.
@@ -222,7 +222,7 @@ public final class ProjectorClient {
         return out;
     }
 
-    /* The ghosts of what is missing, the red outline of what is wrong, the cyan outline of a missing controller. */
+    /* The ghosts of what is missing, the red outline of what is wrong, the cyan outline of a missing terminal. */
     private static void drawGhosts(final PoseStack pose, final Camera camera,
                                    final MultiBufferSource.BufferSource buffers, final BlockRenderDispatcher blocks,
                                    final ProjectorView view, final ProjectorSettings settings) {
@@ -243,7 +243,7 @@ public final class ProjectorClient {
             }
             final BlockState state = GhostBlocks.stateOf(place.ghost());
             if (state == null) {
-                outline(pose, eye, lines, at, PALETTE.get().controllerMark());
+                outline(pose, eye, lines, at, PALETTE.get().terminalMark());
                 continue;
             }
             pose.pushPose();
@@ -270,7 +270,7 @@ public final class ProjectorClient {
                                   final MultiBufferSource buffers, final Projection projection) {
         final ProjectorView view = projection.view();
         final ShapePreview preview = view.preview();
-        final Vec3 top = Vec3.atLowerCornerOf(view.controller()).add(preview.minX() + preview.sizeX() / 2.0,
+        final Vec3 top = Vec3.atLowerCornerOf(view.terminal()).add(preview.minX() + preview.sizeX() / 2.0,
                 preview.minY() + preview.sizeY() + 1.2, preview.minZ() + preview.sizeZ() / 2.0);
         final List<Line> lines = words(projection);
         final Vec3 from = top.subtract(camera.getPosition());
@@ -338,7 +338,7 @@ public final class ProjectorClient {
             return;
         }
         final ShapePreview.Ghost ghost = looked.place().ghost();
-        final Component what = ghost.first() == null ? GameText.component(ProjectorTexts.CONTROLLER)
+        final Component what = ghost.first() == null ? GameText.component(ProjectorTexts.TERMINAL)
                 : GhostBlocks.nameOf(ghost.first());
         g.renderComponentTooltip(minecraft.font, List.of(what, GameText.component(ProjectorTexts.GHOST_LAYER.with(
                 ghost.layer() + 1, looked.layers()))), g.guiWidth() / 2 + TOOLTIP_OFFSET,
@@ -444,10 +444,10 @@ public final class ProjectorClient {
                 return null;
             }
             final int axis = this.facing.getAxis() == Direction.Axis.X ? 0 : 2;
-            final int[] controller = preview.get().anchor(this.at.getX(), this.at.getY(), this.at.getZ(), axis,
+            final int[] terminal = preview.get().anchor(this.at.getX(), this.at.getY(), this.at.getZ(), axis,
                     this.facing.getAxisDirection().getStep());
             this.seen = ProjectorView.of(player.level(), preview.get(),
-                    new BlockPos(controller[0], controller[1], controller[2]));
+                    new BlockPos(terminal[0], terminal[1], terminal[2]));
             this.seenAt = now;
             return this.seen;
         }
@@ -491,11 +491,11 @@ public final class ProjectorClient {
      * @param wrong          the line of what is wrong
      * @param ground         the dim ground behind the words
      * @param wrongMark      the outline of a block that is wrong, without its alpha
-     * @param controllerMark the outline of the controller's place, without its alpha
+     * @param terminalMark the outline of the terminal's place, without its alpha
      * @param faint          the words as they show through what stands between, faint
      */
     public record Colours(int title, int words, int missing, int wrong, int ground, int wrongMark,
-                          int controllerMark, int faint) {
+                          int terminalMark, int faint) {
     }
 
     /* Lines drawn over everything, as a mark seen through walls is: the game's own lines with no depth test. */

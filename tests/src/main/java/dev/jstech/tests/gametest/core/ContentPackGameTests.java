@@ -44,7 +44,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The test mod's content pack, {@code jstech_content/jstestpack.json}, declared with no Java: a lamp that needs a
  * stone pickaxe and gives light, a block with no item, a token stacking to sixteen, a material with its ingot, its
- * dust and its ore, a kind of processing machine with a recipe, and the controller of a machine declared as data,
+ * dust and its ore, a kind of processing machine with a recipe, and the terminal of a machine declared as data,
  * each with the names, models and drops the Core made for it as the game loaded.
  */
 @GameTestHolder(JsTests.MODID)

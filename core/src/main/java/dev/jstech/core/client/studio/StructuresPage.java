@@ -313,7 +313,7 @@ final class StructuresPage extends StudioPage {
         }
     }
 
-    /* Starts making the structure caught a multiblock, its controller the block the studio opened on. */
+    /* Starts making the structure caught a multiblock, its terminal the block the studio opened on. */
     private void startMaking() {
         if (this.maker.start(first, second)) {
             this.layout(this.regions);

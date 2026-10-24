@@ -200,9 +200,9 @@ public final class ComputingClientSetup {
     }
 
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
-        // Every rack cabinet (server, per era, and supercomputer) is one model on its controller.
+        // Every rack cabinet (server, per era, and supercomputer) is one model on its origin.
         event.registerBlockEntityRenderer(ComputingModule.SERVER_RACK_BE.get(), RackRenderer::create);
-        // The Mainframe is the same idea: one cabinet per era, drawn from the controller block.
+        // The Mainframe is the same idea: one cabinet per era, drawn from the origin block.
         event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), MainframeRenderer::create);
         // The Pattern Encoder: one burner body per era, with its bay and lamps.
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::create);

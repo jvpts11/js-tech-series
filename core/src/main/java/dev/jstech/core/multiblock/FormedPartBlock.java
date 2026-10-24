@@ -30,14 +30,14 @@ import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A block of a formed structure that has merged into its controller's model: drawn as nothing, since the model draws
+ * A block of a formed structure that has merged into its terminal's model: drawn as nothing, since the model draws
  * it, but solid as it was, as hard to break, as loud, as bright, and dropping what the block it was drops. Breaking it
- * breaks the structure, which gives every other block back. It looks for its controller now and then, and a block
- * whose controller has gone, broken by any means, turns back into what it was by itself.
+ * breaks the structure, which gives every other block back. It looks for its terminal now and then, and a block
+ * whose terminal has gone, broken by any means, turns back into what it was by itself.
  */
 public final class FormedPartBlock extends Block implements EntityBlock {
 
-    /** How often a merged block looks for its controller, in ticks. */
+    /** How often a merged block looks for its terminal, in ticks. */
     public static final int LOOKS_EVERY = 100;
 
     public FormedPartBlock(final Properties properties) {
@@ -113,20 +113,20 @@ public final class FormedPartBlock extends Block implements EntityBlock {
         level.scheduleTick(pos, this, LOOKS_EVERY);
     }
 
-    /* It looks for its controller; one that does not hold it any more, broken or undone, gives it back. */
+    /* It looks for its terminal; one that does not hold it any more, broken or undone, gives it back. */
     @Override
     protected void tick(final BlockState state, final ServerLevel level, final BlockPos pos,
                         final RandomSource random) {
         if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part)) {
             return;
         }
-        final BlockPos controller = part.controller();
-        if (controller != null && !(level.isLoaded(controller) && level.shouldTickBlocksAt(controller))) {
-            // A controller not running now is not taken for gone: its structure is only as it was saved.
+        final BlockPos terminal = part.terminal();
+        if (terminal != null && !(level.isLoaded(terminal) && level.shouldTickBlocksAt(terminal))) {
+            // A terminal not running now is not taken for gone: its structure is only as it was saved.
             level.scheduleTick(pos, this, LOOKS_EVERY);
             return;
         }
-        if (controller == null || !(level.getBlockEntity(controller) instanceof IStructureController owner)
+        if (terminal == null || !(level.getBlockEntity(terminal) instanceof IStructureTerminal owner)
                 || !owner.holdsPlace(pos)) {
             FormedParts.restoreAt(level, pos);
             return;

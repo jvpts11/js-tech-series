@@ -50,10 +50,10 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 /**
  * Multiblock machines of the test mod's own, built by the player block by block. A tank of any size from three to
  * seven a side, iron on its edges, iron or glass on its faces with hoppers among them as its valves, and empty inside,
- * its controller on a face: it runs as many recipes at once as it has valves. And a smelter of the same build whose
+ * its terminal on a face: it runs as many recipes at once as it has valves. And a smelter of the same build whose
  * faces take ports of their own (items in, items out, energy in, redstone): it has three lanes, so ports of up to
  * three colours each feed their own, and runs two recipes at once in each. And machines declared in their files
- * alone: a baker, a furnace on the test furnace's pattern, and a controller whose file is nowhere.
+ * alone: a baker, a furnace on the test furnace's pattern, and a terminal whose file is nowhere.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class TestStructures {
@@ -79,16 +79,16 @@ public final class TestStructures {
     private static final long SMELTER_SPENDS = 10L;
 
     /* Their block states and models are written by hand: the test mod writes no models of its own. */
-    public static final BlockEntry<DeviceBlock> TANK = TestSounds.CONTENT.block("test_tank_controller",
+    public static final BlockEntry<DeviceBlock> TANK = TestSounds.CONTENT.block("test_tank_terminal",
             Device.of(() -> TestStructures.TANK_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
-            .named("Test tank controller").look(IBlockLook.cubeAll("test_tank_controller")).register();
+            .named("Test tank terminal").look(IBlockLook.cubeAll("test_tank_terminal")).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TankBlockEntity>> TANK_ENTITY =
-            TestSounds.CONTENT.blockEntity("test_tank_controller", TankBlockEntity::new, TANK);
-    public static final BlockEntry<DeviceBlock> SMELTER = TestSounds.CONTENT.block("test_smelter_controller",
+            TestSounds.CONTENT.blockEntity("test_tank_terminal", TankBlockEntity::new, TANK);
+    public static final BlockEntry<DeviceBlock> SMELTER = TestSounds.CONTENT.block("test_smelter_terminal",
             Device.of(() -> TestStructures.SMELTER_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
-            .named("Test smelter controller").look(IBlockLook.cubeAll("test_smelter_controller")).register();
+            .named("Test smelter terminal").look(IBlockLook.cubeAll("test_smelter_terminal")).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SmelterBlockEntity>> SMELTER_ENTITY =
-            TestSounds.CONTENT.blockEntity("test_smelter_controller", SmelterBlockEntity::new, SMELTER);
+            TestSounds.CONTENT.blockEntity("test_smelter_terminal", SmelterBlockEntity::new, SMELTER);
     public static final BlockEntry<MultiblockPortBlock> ITEM_INPUT = port("test_item_input_port",
             "Test item input port");
     public static final BlockEntry<MultiblockPortBlock> ITEM_OUTPUT = port("test_item_output_port",
@@ -122,7 +122,7 @@ public final class TestStructures {
     private TestStructures() {
     }
 
-    /** Declares the controllers and the ports, before the test mod's content is registered. */
+    /** Declares the terminals and the ports, before the test mod's content is registered. */
     public static void declare() {
         // Loading the class declares them.
     }
@@ -132,7 +132,7 @@ public final class TestStructures {
         MultiblockPorts.register(event, PORT_ENTITY.get());
     }
 
-    /* The controller of the machine of the test mod's file {@code machine}. */
+    /* The terminal of the machine of the test mod's file {@code machine}. */
     private static BlockEntry<DataMachineBlock> dataMachine(final String name, final String english,
                                                             final String machine) {
         return TestSounds.CONTENT.block(name, properties -> new DataMachineBlock(properties,
@@ -148,7 +148,7 @@ public final class TestStructures {
                 () -> TestStructures.PORT_ENTITY.get())).named(english).look(IBlockLook.cubeAll(name)).register();
     }
 
-    /** The tank's controller: works whenever its structure stands, running a recipe at once for each valve. */
+    /** The tank's terminal: works whenever its structure stands, running a recipe at once for each valve. */
     public static final class TankBlockEntity extends MachineBlockEntity {
 
         public TankBlockEntity(final BlockPos pos, final BlockState state) {
@@ -162,7 +162,7 @@ public final class TestStructures {
         }
     }
 
-    /** The smelter's controller: cobblestone into stone in each lane, two at once. */
+    /** The smelter's terminal: cobblestone into stone in each lane, two at once. */
     public static final class SmelterBlockEntity extends ProcessingMachineBlockEntity {
 
         public SmelterBlockEntity(final BlockPos pos, final BlockState state) {

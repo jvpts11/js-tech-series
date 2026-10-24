@@ -33,7 +33,7 @@ import net.minecraft.world.item.Items;
 
 /**
  * The multiblocks in REI, as in JEI and EMI: each one's preview, which a drag turns, its materials and its choice
- * beside it, and its controller.
+ * beside it, and its terminal.
  */
 final class MultiblockReiCategory implements DisplayCategory<MultiblockReiDisplay> {
 
@@ -79,8 +79,8 @@ final class MultiblockReiCategory implements DisplayCategory<MultiblockReiDispla
             final MultiblockViewLayout.Point at = MultiblockViewLayout.material(index);
             final Slot slot = Widgets.createSlot(new Point(x0 + at.x() + SLOT_INSET, y0 + at.y() + SLOT_INSET))
                     .entries(display.materials().get(index)).markInput();
-            widgets.add(display.entry().materials().get(index).controller() ? Widgets.withTooltip(slot,
-                    GameText.component(MultiblockViewTexts.CONTROLLER)) : slot);
+            widgets.add(display.entry().materials().get(index).terminal() ? Widgets.withTooltip(slot,
+                    GameText.component(MultiblockViewTexts.TERMINAL)) : slot);
         }
         for (int index = 0; index < display.choices().size(); index++) {
             final MultiblockViewLayout.Point at = MultiblockViewLayout.choice(index);

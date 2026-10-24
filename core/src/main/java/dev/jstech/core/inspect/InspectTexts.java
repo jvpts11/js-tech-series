@@ -52,7 +52,7 @@ public final class InspectTexts {
     public static final TextKey PRESSURE = TextKey.of("jscore.inspect.pressure", "Pressure");
     public static final TextKey LEAKS = TextKey.of("jscore.inspect.leaks", "Leaks");
     public static final TextKey MULTIBLOCK = TextKey.of("jscore.inspect.multiblock", "Part of a multiblock");
-    public static final TextKey CONTROLLER = TextKey.of("jscore.inspect.controller", "Controller");
+    public static final TextKey TERMINAL = TextKey.of("jscore.inspect.terminal", "Terminal");
     /* Which tick, how many packets and how many bytes. */
     public static final TextKey PAYLOADS_TICK = TextKey.of("jscore.inspect.payloads_tick",
             "Tick %s: %s packets, %s bytes");

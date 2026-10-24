@@ -21,7 +21,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * One multiblock in REI, as JEI and EMI show it: its materials and its choice as what it takes, its controller as what
+ * One multiblock in REI, as JEI and EMI show it: its materials and its choice as what it takes, its terminal as what
  * it makes, so looking up a block finds the multiblocks built of it.
  */
 final class MultiblockReiDisplay implements Display {
@@ -74,7 +74,7 @@ final class MultiblockReiDisplay implements Display {
 
     @Override
     public List<EntryIngredient> getOutputEntries() {
-        return this.entry.controller().isEmpty() ? List.of() : List.of(EntryIngredients.of(this.entry.controller()));
+        return this.entry.terminal().isEmpty() ? List.of() : List.of(EntryIngredients.of(this.entry.terminal()));
     }
 
     @Override

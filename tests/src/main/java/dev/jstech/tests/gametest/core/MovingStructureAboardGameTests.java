@@ -64,8 +64,8 @@ public final class MovingStructureAboardGameTests {
 
     private static final String ARENA = "empty";
     private static final String TICKS = "jscore_moving_aboard_ticks";
-    /* The turbine's controller, in the middle of the south side of a turbine built facing north. */
-    private static final BlockPos CONTROLLER = new BlockPos(4, 3, 5);
+    /* The turbine's terminal, in the middle of the south side of a turbine built facing north. */
+    private static final BlockPos TERMINAL = new BlockPos(4, 3, 5);
     /* The game's own number of blocks a section ticks at random a tick, which the test server sets to none. */
     private static final int RANDOM_TICKS = 3;
     /* The brightest light, of the open sky or a lantern itself. */
@@ -91,7 +91,7 @@ public final class MovingStructureAboardGameTests {
         turbine(helper);
         final List<MovingStructure> made = new ArrayList<>();
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(turbineAt(helper, helper.absolutePos(CONTROLLER)).merged(),
+                .thenWaitUntil(() -> helper.assertTrue(turbineAt(helper, helper.absolutePos(TERMINAL)).merged(),
                         "the turbine forms and merges its iron"))
                 .thenExecute(() -> {
                     warm(level);
@@ -103,9 +103,9 @@ public final class MovingStructureAboardGameTests {
                 })
                 .thenExecuteAfter(20, () -> {
                     final MovingStructure structure = made.getFirst();
-                    final BlockPos controller = find(level, structure, state -> state.is(TestModels.TURBINE_BLOCK
+                    final BlockPos terminal = find(level, structure, state -> state.is(TestModels.TURBINE_BLOCK
                             .get()));
-                    final MachineStructure turbine = turbineAt(helper, controller);
+                    final MachineStructure turbine = turbineAt(helper, terminal);
                     helper.assertTrue(turbine.formed() && turbine.merged(),
                             "in the yard it stays formed and merged, never formed again");
                     final List<BlockPos> parts = all(level, structure, state -> state.getBlock()
@@ -113,8 +113,8 @@ public final class MovingStructureAboardGameTests {
                     helper.assertTrue(parts.size() == 17, "every iron block still merged: " + parts.size());
                     for (final BlockPos part : parts) {
                         helper.assertTrue(level.getBlockEntity(part) instanceof FormedPartBlockEntity formed
-                                && controller.equals(formed.controller()) && formed.original().is(Blocks.IRON_BLOCK),
-                                "each held by its controller where it is now, and still iron: " + part);
+                                && terminal.equals(formed.terminal()) && formed.original().is(Blocks.IRON_BLOCK),
+                                "each held by its terminal where it is now, and still iron: " + part);
                     }
                     for (final BlockPos at : BlockPos.betweenClosed(helper.absolutePos(new BlockPos(3, 3, 3)),
                             helper.absolutePos(new BlockPos(5, 4, 5)))) {
@@ -127,15 +127,15 @@ public final class MovingStructureAboardGameTests {
                     helper.assertTrue(down.ok() && down.blocks() == 18, "it is set down turned: " + refusal(down));
                 })
                 .thenExecuteAfter(20, () -> {
-                    BlockPos controller = null;
+                    BlockPos terminal = null;
                     for (final BlockPos each : BlockPos.betweenClosed(helper.absolutePos(new BlockPos(0, 1, 0)),
                             helper.absolutePos(new BlockPos(8, 6, 8)))) {
                         if (level.getBlockState(each).is(TestModels.TURBINE_BLOCK.get())) {
-                            controller = each.immutable();
+                            terminal = each.immutable();
                         }
                     }
-                    helper.assertTrue(controller != null, "the turbine is on the ground again");
-                    final MachineStructure turbine = turbineAt(helper, controller);
+                    helper.assertTrue(terminal != null, "the turbine is on the ground again");
+                    final MachineStructure turbine = turbineAt(helper, terminal);
                     helper.assertTrue(turbine.formed() && turbine.merged(), "formed and merged as it lands");
                     helper.assertTrue(turbine.orientation().orElse(Orientation.NORTH) != Orientation.NORTH,
                             "and standing turned as the structure was: " + turbine.orientation());
@@ -300,19 +300,19 @@ public final class MovingStructureAboardGameTests {
                 .thenSucceed();
     }
 
-    /* The turbine: two layers of iron three by three, its controller in the middle of the south side. */
+    /* The turbine: two layers of iron three by three, its terminal in the middle of the south side. */
     private static void turbine(final GameTestHelper helper) {
         for (int y = 0; y < 2; y++) {
             for (int a = -1; a <= 1; a++) {
                 for (int b = 0; b <= 2; b++) {
-                    final BlockPos at = CONTROLLER.offset(a, y, -b);
-                    if (!at.equals(CONTROLLER)) {
+                    final BlockPos at = TERMINAL.offset(a, y, -b);
+                    if (!at.equals(TERMINAL)) {
                         helper.setBlock(at, Blocks.IRON_BLOCK);
                     }
                 }
             }
         }
-        helper.setBlock(CONTROLLER, TestModels.TURBINE_BLOCK.get());
+        helper.setBlock(TERMINAL, TestModels.TURBINE_BLOCK.get());
     }
 
     private static MachineStructure turbineAt(final GameTestHelper helper, final BlockPos absolute) {

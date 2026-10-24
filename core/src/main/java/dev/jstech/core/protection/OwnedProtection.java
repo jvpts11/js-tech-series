@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * What another player owns, kept from those its owner does not let: a block whose block entity is owned is broken only
  * by its owner and those trusted to break it, and used only by those its access or its trust lets in; every block of
- * a formed multiblock whose controller is owned the same, as its controller; an owned entity the same, attacking it
+ * a formed multiblock whose terminal is owned the same, as its terminal; an owned entity the same, attacking it
  * standing for breaking it. Each is written to the audit log when the server keeps one.
  */
 public final class OwnedProtection {
@@ -49,10 +49,10 @@ public final class OwnedProtection {
         }
         BlockEntity block = level.getBlockEntity(event.getPos());
         if (!(block instanceof IOwned)) {
-            // A block of a formed multiblock is its controller's, whatever block it is.
-            final BlockPos controller = LevelStructures.of(level).controllerHolding(event.getPos());
-            if (controller != null && level.isLoaded(controller)) {
-                block = level.getBlockEntity(controller);
+            // A block of a formed multiblock is its terminal's, whatever block it is.
+            final BlockPos terminal = LevelStructures.of(level).terminalHolding(event.getPos());
+            if (terminal != null && level.isLoaded(terminal)) {
+                block = level.getBlockEntity(terminal);
             }
         }
         if (block instanceof IOwned owned && owned.ownership() != null) {
@@ -75,10 +75,10 @@ public final class OwnedProtection {
         final BlockPos pos = event.getPos();
         BlockEntity block = level.getBlockEntity(pos);
         if (!(block instanceof IOwned)) {
-            // A port or a part of a formed multiblock is used as its controller is.
-            final BlockPos controller = LevelStructures.of(level).controllerHolding(pos);
-            if (controller != null && level.isLoaded(controller)) {
-                block = level.getBlockEntity(controller);
+            // A port or a part of a formed multiblock is used as its terminal is.
+            final BlockPos terminal = LevelStructures.of(level).terminalHolding(pos);
+            if (terminal != null && level.isLoaded(terminal)) {
+                block = level.getBlockEntity(terminal);
             }
         }
         if (block instanceof IOwned owned && owned.ownership() != null) {

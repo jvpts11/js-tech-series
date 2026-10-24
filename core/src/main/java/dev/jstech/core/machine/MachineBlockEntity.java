@@ -49,7 +49,7 @@ import dev.jstech.core.heat.IHeatPort;
 import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multiblock.IMultiblockPortHost;
 import dev.jstech.core.multiblock.IRedstonePortHost;
-import dev.jstech.core.multiblock.IStructureController;
+import dev.jstech.core.multiblock.IStructureTerminal;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.physics.Physics;
@@ -108,7 +108,7 @@ import org.jetbrains.annotations.Nullable;
 @TextHolder
 public abstract class MachineBlockEntity extends SyncedBlockEntity implements IOwned, IMachineParameters,
         ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder, IMechanicalHolder, IMultiblockPortHost,
-        IRedstonePortHost, IStructureController {
+        IRedstonePortHost, IStructureTerminal {
 
     private final FieldItemHandler inventory;
     private final @Nullable FieldEnergyStorage energy;
@@ -142,7 +142,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private boolean failsSafe;
     /* Its shaft, for a motor or a dynamo; declared from its constructor. */
     private @Nullable MachineShaft shaft;
-    /* Its structure, for a multiblock's controller; declared from its constructor. */
+    /* Its structure, for a multiblock's terminal; declared from its constructor. */
     private @Nullable MachineStructure structure;
     /* What each of its structure's redstone ports that read hears, by the port's place. */
     private final Map<BlockPos, Integer> portSignals = new HashMap<>();
@@ -274,12 +274,33 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     }
 
     /**
-     * Whether the player's inventory is under its Main tab: a machine that holds no items and draws a screen of its
-     * own ({@code MachineScreens}) leaves it off there, where its slots are neither drawn nor clicked, and shows it on
-     * the tabs that take items. Every machine has it, unless it says otherwise.
+     * Whether the player's inventory is under its tab {@code tab} ({@link MachineMenu#MAIN} and the others): a machine
+     * that draws a screen of its own ({@code MachineScreens}) leaves it off a tab that takes no items, where its slots
+     * are neither drawn nor clicked. Every machine has it under every tab, unless it says otherwise.
      */
-    public boolean inventoryOnMain() {
+    public boolean inventoryOn(final int tab) {
         return true;
+    }
+
+    /**
+     * How wide its screen is: every machine's is {@link MachineScreenLayout#WIDTH}, and a machine whose own screen is
+     * wider says so, for its menu to centre the player's inventory and the standard tabs' slots under it.
+     */
+    public int screenWidth() {
+        return MachineScreenLayout.WIDTH;
+    }
+
+    /**
+     * How many tabs of its own its screen has after the five every machine has, numbered on from
+     * {@link MachineScreenLayout#TABS}: none, unless a machine with a screen of its own says otherwise.
+     */
+    public int ownTabs() {
+        return 0;
+    }
+
+    /** What its own screen shows that only the server knows ({@link MachineScreenData}); none unless it says. */
+    public @Nullable MachineScreenData<?> screenData() {
+        return null;
     }
 
     /** Its switch, its answer to redstone and what a comparator reads of it. */
@@ -307,12 +328,12 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return shaft;
     }
 
-    /** Its structure, for a multiblock's controller; none for a machine of one block. */
+    /** Its structure, for a multiblock's terminal; none for a machine of one block. */
     public @Nullable MachineStructure structure() {
         return structure;
     }
 
-    /** How many recipes it works at once: its upgrades', and its structure's when it is a multiblock's controller. */
+    /** How many recipes it works at once: its upgrades', and its structure's when it is a multiblock's terminal. */
     public int recipesAtOnce() {
         return withStructure(effect()).recipesAtOnce();
     }
@@ -825,7 +846,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     }
 
     /**
-     * Declares it the controller of a multiblock, as {@code declared} says: called once from its constructor. It
+     * Declares it the terminal of a multiblock, as {@code declared} says: called once from its constructor. It
      * stands {@link MachineStatus#NOT_FORMED} until the world holds its structure whole, checked again whenever a
      * block it watches changes; whether it is formed is saved, and shown to whoever looks at it.
      */
@@ -855,7 +876,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
 
     /**
      * What it works with, its structure's recipes at once counted: {@code effect} with as many more at once as the
-     * structure runs, for a multiblock's controller; {@code effect} itself otherwise.
+     * structure runs, for a multiblock's terminal; {@code effect} itself otherwise.
      */
     protected final UpgradeEffect withStructure(final UpgradeEffect effect) {
         if (structure == null || structure.parallel() <= 1) {

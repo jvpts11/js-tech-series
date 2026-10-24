@@ -593,10 +593,10 @@ public final class CoreConfigKeys {
                     + "menu gives it.")
             .named("Physics tool recipe");
 
-    /** How far from the controller the player may be while a tool builds a multiblock. */
+    /** How far from the terminal the player may be while a tool builds a multiblock. */
     public static final ConfigKey<Integer> MULTIBLOCK_BUILD_REACH = ConfigKey.whole(
             MULTIBLOCK + ".build_reach", BuildBalance.DEFAULT_REACH).range(MIN_BUILD_REACH, MAX_BUILD_REACH)
-            .comment("How far from a multiblock's controller, in blocks, the player may walk while a tool builds it; "
+            .comment("How far from a multiblock's terminal, in blocks, the player may walk while a tool builds it; "
                     + "past that it stops.")
             .named("Building reach").unit("blocks");
 

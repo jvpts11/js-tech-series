@@ -20,7 +20,7 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A floor of any outline with walls round it, as a smeltery: the controller stands in a wall, the inside behind it is
+ * A floor of any outline with walls round it, as a smeltery: the terminal stands in a wall, the inside behind it is
  * filled out over the floor to whatever outline the walls close, and the walls rise as high as they run unbroken,
  * within the limits. The corners where two walls meet are not needed. The inside is read by its {@link InsideRule}.
  * Pure.
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area, Limit height,
                          Map<String, Limit> limits) implements RuleShape {
 
-    /* The four ways the inside can lie from the controller: north, east, south, west. */
+    /* The four ways the inside can lie from the terminal: north, east, south, west. */
     private static final int[][] INWARD = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
     public WallsShape {
@@ -61,11 +61,11 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
     }
 
     @Override
-    public ShapeMatch check(final IBlockProvider provider, final long controller) {
+    public ShapeMatch check(final IBlockProvider provider, final long terminal) {
         final Cells.Best best = new Cells.Best();
         for (final int[] inward : INWARD) {
             final ShapeTally tally = new ShapeTally();
-            final ShapeMatch result = attempt(provider, controller, inward, tally);
+            final ShapeMatch result = attempt(provider, terminal, inward, tally);
             if (result instanceof ShapeMatch.Failure failure) {
                 best.offer(failure, tally.matched());
             } else {
@@ -76,7 +76,7 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
     }
 
     /**
-     * As far as it reads: a floor no farther from the controller than its area allows in a line, nor than the most a
+     * As far as it reads: a floor no farther from the terminal than its area allows in a line, nor than the most a
      * side of a shape may be, with the walls beyond it; and its walls' most height.
      */
     @Override
@@ -100,27 +100,27 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
     }
 
     /*
-     * One attempt, the inside lying one way from the controller: down to the floor from the place behind it, the
+     * One attempt, the inside lying one way from the terminal: down to the floor from the place behind it, the
      * floor's outline filled out at that level, then the walls read layer by layer up from it.
      */
-    private ShapeMatch attempt(final IBlockProvider provider, final long controller, final int[] inward,
+    private ShapeMatch attempt(final IBlockProvider provider, final long terminal, final int[] inward,
                                final ShapeTally tally) {
-        final long start = Cells.offset(controller, inward[0], 0, inward[1]);
+        final long start = Cells.offset(terminal, inward[0], 0, inward[1]);
         if (!fitsInside(provider, start)) {
-            return Cells.wrongBlock(controller, start, ShapeMatch.INSIDE, Cells.blockAt(provider, start));
+            return Cells.wrongBlock(terminal, start, ShapeMatch.INSIDE, Cells.blockAt(provider, start));
         }
         long low = start;
         int down = 0;
         while (fitsInside(provider, Cells.offset(low, 0, -1, 0))) {
             low = Cells.offset(low, 0, -1, 0);
             if (++down >= this.height.most()) {
-                return Cells.wrongSize(controller, ShapeMatch.SIZE_Y, down + 1);
+                return Cells.wrongSize(terminal, ShapeMatch.SIZE_Y, down + 1);
             }
         }
         final Set<Long> region = new LinkedHashSet<>();
         final Set<Long> walls = new LinkedHashSet<>();
         final Deque<Long> queue = new ArrayDeque<>();
-        final int[] c = PatternMatcher.decodePosition(controller);
+        final int[] c = PatternMatcher.decodePosition(terminal);
         final int span = span();
         region.add(low);
         queue.add(low);
@@ -131,13 +131,13 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
                 if (region.contains(next) || walls.contains(next)) {
                     continue;
                 }
-                if (next != controller && fitsInside(provider, next)) {
+                if (next != terminal && fitsInside(provider, next)) {
                     region.add(next);
                     tally.fits();
                     final int[] xyz = PatternMatcher.decodePosition(next);
                     if (region.size() > this.area.most() || Math.abs(xyz[0] - c[0]) > span
                             || Math.abs(xyz[2] - c[2]) > span) {
-                        return Cells.wrongSize(controller, ShapeMatch.AREA, region.size());
+                        return Cells.wrongSize(terminal, ShapeMatch.AREA, region.size());
                     }
                     queue.add(next);
                 } else {
@@ -146,33 +146,33 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
             }
         }
         if (region.size() < this.area.least()) {
-            return Cells.wrongSize(controller, ShapeMatch.AREA, region.size());
+            return Cells.wrongSize(terminal, ShapeMatch.AREA, region.size());
         }
         final List<Long> parts = new ArrayList<>();
         for (final long cell : region) {
             final long under = Cells.offset(cell, 0, -1, 0);
             final String id = Cells.blockAt(provider, under);
             if (!this.floor.fits().matchesAt(provider, under, id)) {
-                return Cells.wrongBlock(controller, under, ShapeMatch.FLOOR, id);
+                return Cells.wrongBlock(terminal, under, ShapeMatch.FLOOR, id);
             }
             tally.place(this.floor, provider, under, id);
             parts.add(under);
         }
-        final int controllerLayer = PatternMatcher.decodePosition(controller)[1]
+        final int terminalLayer = PatternMatcher.decodePosition(terminal)[1]
                 - PatternMatcher.decodePosition(low)[1];
         final List<Long> within = new ArrayList<>();
         int layers = 0;
         while (layers < this.height.most()) {
-            final Long broken = brokenWall(provider, walls, layers, controller);
+            final Long broken = brokenWall(provider, walls, layers, terminal);
             if (broken != null) {
-                if (layers <= controllerLayer || layers < this.height.least()) {
-                    return Cells.wrongBlock(controller, broken, ShapeMatch.WALL, Cells.blockAt(provider, broken));
+                if (layers <= terminalLayer || layers < this.height.least()) {
+                    return Cells.wrongBlock(terminal, broken, ShapeMatch.WALL, Cells.blockAt(provider, broken));
                 }
                 break;
             }
             for (final long column : walls) {
                 final long pos = Cells.offset(column, 0, layers, 0);
-                if (pos != controller) {
+                if (pos != terminal) {
                     tally.place(this.wall, provider, pos, Cells.blockAt(provider, pos));
                     parts.add(pos);
                 }
@@ -182,11 +182,11 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
             }
             layers++;
         }
-        final ShapeMatch.Failure wrong = this.inside.read(provider, within, controller, tally);
+        final ShapeMatch.Failure wrong = this.inside.read(provider, within, terminal, tally);
         if (wrong != null) {
             return wrong;
         }
-        final ShapeMatch.Failure counts = tally.outOfLimits(this.limits, controller);
+        final ShapeMatch.Failure counts = tally.outOfLimits(this.limits, terminal);
         if (counts != null) {
             return counts;
         }
@@ -199,17 +199,17 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
             lo[2] = Math.min(lo[2], xyz[2]);
             hi[2] = Math.max(hi[2], xyz[2]);
         }
-        return new ShapeMatch.Formed(Orientation.NORTH, controller, parts, Map.of(), within, hi[0] - lo[0] + 1,
+        return new ShapeMatch.Formed(Orientation.NORTH, terminal, parts, Map.of(), within, hi[0] - lo[0] + 1,
                 layers + 1, hi[2] - lo[2] + 1, 1, tally.counts(), tally.values());
     }
 
     /* The first place of the walls' layer that is not a wall, or null when the layer is whole. */
     @Nullable
     private Long brokenWall(final IBlockProvider provider, final Set<Long> walls, final int layer,
-                            final long controller) {
+                            final long terminal) {
         for (final long column : walls) {
             final long pos = Cells.offset(column, 0, layer, 0);
-            if (pos != controller && !this.wall.fits().matchesAt(provider, pos, Cells.blockAt(provider, pos))) {
+            if (pos != terminal && !this.wall.fits().matchesAt(provider, pos, Cells.blockAt(provider, pos))) {
                 return pos;
             }
         }
@@ -220,7 +220,7 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
         return this.inside.fits(provider, pos, Cells.blockAt(provider, pos));
     }
 
-    /* The farthest along x or z a place of the floor may be from the controller. */
+    /* The farthest along x or z a place of the floor may be from the terminal. */
     private int span() {
         return Math.min(this.area.most(), MOST_SIDE);
     }

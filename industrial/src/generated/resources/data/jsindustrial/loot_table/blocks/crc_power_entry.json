@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsindustrial:crc_power_entry"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsindustrial:blocks/crc_power_entry"
+}

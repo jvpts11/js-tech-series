@@ -98,7 +98,7 @@ computer:
 
 ## The Server Rack
 
-A 2 wide × 3 tall × 2 deep multiblock (12 blocks), drawn as **one** model by its controller block. It holds servers and
+A 2 wide × 3 tall × 2 deep big block (12 blocks, placed whole), drawn as **one** model by its origin block. It holds servers and
 rack units in bays measured in U, and it is the only place servers work. There is a Server Rack per era (Vintage,
 Legacy, Transition, Standard, Advanced), and each takes servers of its era or older: a chassis of a later era is
 refused.
@@ -350,8 +350,9 @@ Items keep their state in data components, never in raw NBT:
 
 ## Models
 
-The Server Racks (five eras), the Supercomputer Racks and the Mainframes (five eras) are each **one** GeckoLib model,
-drawn by the controller block, with every other block of the multiblock invisible (rack 2×3×2, Mainframe 3×2×2).
+The Server Racks (five eras), the Supercomputer Racks and the Mainframes (five eras) are each **one** model of the
+Core's model kit, drawn by the origin block, with every other block of the big block invisible (rack 2×3×2, Mainframe
+3×2×2). A big block is placed whole and is no multiblock: nothing in it is built block by block.
 
 - The rack shows every mounted unit at its U (counted from the top), and its fans spin while any bay is on.
 - The Supercomputer Rack has a light bar and a service panel; its coolant inlet and outlet are on separate top blocks,

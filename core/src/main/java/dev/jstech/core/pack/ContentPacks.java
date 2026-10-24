@@ -70,7 +70,7 @@ import net.neoforged.neoforgespi.language.IModFileInfo;
 import org.slf4j.Logger;
 
 /**
- * Content packs: blocks, items, materials, kinds of processing machine and the controllers of machines declared as
+ * Content packs: blocks, items, materials, kinds of processing machine and the terminals of machines declared as
  * data, written in files rather than in Java, so a modpack adds them with no code. Since the game registers what it
  * holds before any world's data packs are read, the files are read as the game starts: from the game's folder, under
  * {@code jstech/content/}, and from every mod's own files, under {@code jstech_content/}, each file of

@@ -8,10 +8,18 @@
 package dev.jstech.industrial;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.research.Discoveries;
+import dev.jstech.industrial.circuit.Circuit;
+import dev.jstech.industrial.config.IndustrialServerConfig;
+import dev.jstech.industrial.crc.CrcCalls;
+import dev.jstech.industrial.crc.CrcContent;
+import dev.jstech.industrial.crc.CrcStructure;
 import dev.jstech.industrial.datagen.JsIndustrialDataGenerators;
 import dev.jstech.industrial.discovery.ElementDiscovery;
 import dev.jstech.industrial.guide.IndustrialGuide;
 import dev.jstech.industrial.material.IndustrialMaterials;
+import dev.jstech.industrial.research.IndustrialResearch;
+import dev.jstech.industrial.research.ResearchLink;
 import dev.jstech.industrial.tool.HandScrap;
 import dev.jstech.industrial.tool.HandTools;
 import net.neoforged.bus.api.IEventBus;
@@ -41,6 +49,21 @@ public final class JsIndustrial {
         HandTools.declare();
         HandScrap.register(modEventBus);
         ElementDiscovery.declare();
+        // Making a tier's circuit moves a player to that tier.
+        Circuit.declare();
+        // The world's settings: the first, whether its research locks what its discoveries open.
+        IndustrialServerConfig.register(modEventBus, modContainer);
+        Discoveries.gate(MODID, IndustrialServerConfig::requireResearch);
+        // The kinds of data its instruments give and its discoveries ask for, an item each.
+        IndustrialResearch.declare();
+        // The Research Link Cable, whose runs join research computers into groups.
+        ResearchLink.declare();
+        // Hot water, the coolant's water warmed; and the Computational Research Centre, its shape and its content.
+        IndustrialFluids.declare();
+        CrcStructure.declare();
+        CrcContent.register(modEventBus);
+        // What its Research tab asks of the server: a discovery researched now, or queued.
+        CrcCalls.declare();
         IndustrialModule.register(modEventBus);
         // The mod's data generation, which runs only in a data run.
         JsIndustrialDataGenerators.listen(modEventBus);

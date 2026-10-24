@@ -28,7 +28,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
- * A multiblock of the test mod, to prove the Core's: a controller and the casing round it, four of whose parts are
+ * A multiblock of the test mod, to prove the Core's: a terminal and the casing round it, four of whose parts are
  * ports (items in on the north, items out on the south, energy in on the west, gas in on the east), declared as a
  * pattern in code and written to its file by the generator.
  */
@@ -40,18 +40,18 @@ public final class TestMultiblocks {
             ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "test_furnace");
 
     /* Their block states and models are written by hand: the test mod writes no models of its own. */
-    public static final BlockEntry<ControllerBlock> CONTROLLER = TestSounds.CONTENT.block("test_furnace_controller",
-            ControllerBlock::new).named("Test furnace controller").look(IBlockLook.cubeAll("test_furnace_controller"))
+    public static final BlockEntry<TerminalBlock> TERMINAL = TestSounds.CONTENT.block("test_furnace_terminal",
+            TerminalBlock::new).named("Test furnace terminal").look(IBlockLook.cubeAll("test_furnace_terminal"))
             .register();
     public static final BlockEntry<PartBlock> PART = TestSounds.CONTENT.block("test_furnace_part", PartBlock::new)
             .named("Test furnace part").look(IBlockLook.cubeAll("test_furnace_part")).register();
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TestFurnaceBlockEntity>> CONTROLLER_BE =
-            TestSounds.CONTENT.blockEntity("test_furnace_controller", TestFurnaceBlockEntity::new, CONTROLLER);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TestFurnaceBlockEntity>> TERMINAL_BE =
+            TestSounds.CONTENT.blockEntity("test_furnace_terminal", TestFurnaceBlockEntity::new, TERMINAL);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PartBlockEntity>> PART_BE =
             TestSounds.CONTENT.blockEntity("test_furnace_part", PartBlockEntity::new, PART);
 
     /**
-     * Three wide and deep, the controller in the middle: items in at the north, out at the south, energy at the west,
+     * Three wide and deep, the terminal in the middle: items in at the north, out at the south, energy at the west,
      * gas at the east.
      */
     public static final MultiblockPattern FURNACE = MultiblockPatterns.declare(FURNACE_ID,
@@ -66,7 +66,7 @@ public final class TestMultiblocks {
                     .port('O', PortKind.ITEM_OUTPUT)
                     .port('E', PortKind.ENERGY_INPUT)
                     .port('G', PortKind.GAS_INPUT)
-                    .controller("jstests:test_furnace_controller")
+                    .terminal("jstests:test_furnace_terminal")
                     .build());
 
     /** A pattern its mod declares not to be shown before it is built, to prove the projector leaves it out. */
@@ -91,10 +91,10 @@ public final class TestMultiblocks {
         MultiblockPorts.register(event, PART_BE.get());
     }
 
-    /** The controller, whose block entity forms the structure when asked. */
-    public static final class ControllerBlock extends Block implements EntityBlock {
+    /** The terminal, whose block entity forms the structure when asked. */
+    public static final class TerminalBlock extends Block implements EntityBlock {
 
-        public ControllerBlock(final Properties properties) {
+        public TerminalBlock(final Properties properties) {
             super(properties);
         }
 
@@ -117,7 +117,7 @@ public final class TestMultiblocks {
         }
     }
 
-    /** A part's block entity, which remembers its controller and its port. */
+    /** A part's block entity, which remembers its terminal and its port. */
     public static final class PartBlockEntity extends MultiblockPartBlockEntity {
 
         public PartBlockEntity(final BlockPos pos, final BlockState state) {

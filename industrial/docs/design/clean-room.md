@@ -19,7 +19,7 @@ catalogue.
 - **The Clean Room is a closed space the player builds, of variable size**: walls and ceiling of **clean room panels**,
   **Fan Filter Units** in the ceiling, which draw air through filters (HEPA at T4, ULPA at T5) and spend energy, and one
   **Airlock with an Air Shower**, the only door.
-- Its **controller** counts the particles in the air and gives the room's **ISO class**, from 8 (dirty) to 1 (the
+- Its **terminal** counts the particles in the air and gives the room's **ISO class**, from 8 (dirty) to 1 (the
   cleanest), as real particle counters do.
 - **The tools are machines of their own** (furnaces, steppers, etchers) that **only work inside a room of the class they
   ask for**. A bigger room holds more tools.

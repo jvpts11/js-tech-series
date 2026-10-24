@@ -50,14 +50,14 @@ import net.neoforged.neoforge.items.IItemHandler;
 /**
  * The Core's multiblocks: a pattern with ports declared in code, written to its file and read back; one read from a
  * datapack's file alone, with a tag slot; one read from a structure block's file; and a formed structure whose ports
- * pass items, energy and gas to its controller while its plain parts offer nothing.
+ * pass items, energy and gas to its terminal while its plain parts offer nothing.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class MultiblockGameTests {
 
     private static final String ARENA = "empty";
-    private static final BlockPos CONTROLLER = new BlockPos(2, 2, 2);
+    private static final BlockPos TERMINAL = new BlockPos(2, 2, 2);
 
     private MultiblockGameTests() {
     }
@@ -120,8 +120,8 @@ public final class MultiblockGameTests {
                 ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "test_tower"));
         helper.assertTrue(tower.isPresent(), "the tower is read from its file, with no declaration in code");
         helper.assertTrue(tower.get().ports().get('S') == PortKind.FLUID_INPUT, "its ports come with it");
-        // The tower stands on logs of any kind, which its tag slot fits, and stone bricks beside the controller.
-        final BlockPos at = CONTROLLER.above();
+        // The tower stands on logs of any kind, which its tag slot fits, and stone bricks beside the terminal.
+        final BlockPos at = TERMINAL.above();
         helper.setBlock(at.west(), Blocks.STONE_BRICKS);
         helper.setBlock(at.east(), Blocks.STONE_BRICKS);
         helper.setBlock(at, Blocks.FURNACE);
@@ -135,12 +135,12 @@ public final class MultiblockGameTests {
 
     @GameTest(template = ARENA)
     public static void structure_readsAsAPattern(final GameTestHelper helper) {
-        // A structure block's file of a 3x1x1 row: casing, controller, casing, and air left free above it.
+        // A structure block's file of a 3x1x1 row: casing, terminal, casing, and air left free above it.
         final CompoundTag structure = new CompoundTag();
         structure.put("size", ints(3, 2, 1));
         final ListTag palette = new ListTag();
         palette.add(named("jstests:test_furnace_part"));
-        palette.add(named("jstests:test_furnace_controller"));
+        palette.add(named("jstests:test_furnace_terminal"));
         palette.add(named("minecraft:air"));
         structure.put("palette", palette);
         final ListTag blocks = new ListTag();
@@ -150,9 +150,9 @@ public final class MultiblockGameTests {
         blocks.add(block(1, 1, 0, 2));
         structure.put("blocks", blocks);
         final MultiblockPattern pattern = MultiblockPatterns.fromStructure("row", structure,
-                "jstests:test_furnace_controller", Map.of("jstests:test_furnace_part", PortKind.ITEM_INPUT));
-        helper.assertTrue(pattern.controllerX() == 1 && pattern.controllerY() == 0,
-                "the named block is the controller");
+                "jstests:test_furnace_terminal", Map.of("jstests:test_furnace_part", PortKind.ITEM_INPUT));
+        helper.assertTrue(pattern.terminalX() == 1 && pattern.terminalY() == 0,
+                "the named block is the terminal");
         helper.assertTrue(pattern.charAt(1, 1, 0) == MultiblockPattern.IGNORE_CHAR, "air is left free");
         helper.assertTrue(pattern.ports().get(pattern.charAt(0, 0, 0)) == PortKind.ITEM_INPUT,
                 "the part is a port of the kind named for its block");
@@ -172,7 +172,7 @@ public final class MultiblockGameTests {
             structure.put("blocks", blocks);
             boolean refused = false;
             try {
-                MultiblockPatterns.fromStructure("bad", structure, "jstests:test_furnace_controller", Map.of());
+                MultiblockPatterns.fromStructure("bad", structure, "jstests:test_furnace_terminal", Map.of());
             } catch (final IllegalArgumentException expected) {
                 refused = expected.getMessage().contains("bad");
             }
@@ -196,48 +196,48 @@ public final class MultiblockGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void ports_passToTheControllerThroughThePartsTheyMark(final GameTestHelper helper) {
+    public static void ports_passToTheTerminalThroughThePartsTheyMark(final GameTestHelper helper) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 if (dx != 0 || dz != 0) {
-                    helper.setBlock(CONTROLLER.offset(dx, 0, dz), TestMultiblocks.PART.get());
+                    helper.setBlock(TERMINAL.offset(dx, 0, dz), TestMultiblocks.PART.get());
                 }
             }
         }
-        helper.setBlock(CONTROLLER, TestMultiblocks.CONTROLLER.get());
-        final TestFurnaceBlockEntity furnace = helper.getBlockEntity(CONTROLLER);
+        helper.setBlock(TERMINAL, TestMultiblocks.TERMINAL.get());
+        final TestFurnaceBlockEntity furnace = helper.getBlockEntity(TERMINAL);
         final IMatchResult match = furnace.form();
         helper.assertTrue(match instanceof IMatchResult.Success success && success.ports().size() == 4,
                 "the casing forms with four ports; got " + match);
         final ServerLevel level = helper.getLevel();
         final IItemHandler input = level.getCapability(Capabilities.ItemHandler.BLOCK,
-                helper.absolutePos(CONTROLLER.north()), null);
+                helper.absolutePos(TERMINAL.north()), null);
         helper.assertTrue(input != null, "the north part takes items in");
         input.insertItem(0, new ItemStack(Items.RAW_IRON, 4), false);
         helper.assertTrue(furnace.slots().getStackInSlot(TestFurnaceBlockEntity.INPUT).getCount() == 4,
-                "what goes into the port lands in the controller's input");
+                "what goes into the port lands in the terminal's input");
         helper.assertTrue(level.getCapability(Capabilities.ItemHandler.BLOCK,
-                        helper.absolutePos(CONTROLLER.north().east()), null) == null,
+                        helper.absolutePos(TERMINAL.north().east()), null) == null,
                 "a plain part of the casing offers nothing");
         final IMatterHandler gas = level.getCapability(MatterCapabilities.GAS,
-                helper.absolutePos(CONTROLLER.east()), null);
+                helper.absolutePos(TERMINAL.east()), null);
         helper.assertTrue(gas != null && gas.insert(new MatterStack(Elements.of(Element.HYDROGEN), 500L), false)
                         == 500L && furnace.gas().held().map(MatterStack::amount).orElse(0L) == 500L,
-                "the east part takes gas into the controller's tank");
-        helper.assertTrue(level.getCapability(MatterCapabilities.SLURRY, helper.absolutePos(CONTROLLER.east()),
+                "the east part takes gas into the terminal's tank");
+        helper.assertTrue(level.getCapability(MatterCapabilities.SLURRY, helper.absolutePos(TERMINAL.east()),
                 null) == null && level.getCapability(Capabilities.ItemHandler.BLOCK,
-                helper.absolutePos(CONTROLLER.east()), null) == null,
+                helper.absolutePos(TERMINAL.east()), null) == null,
                 "and offers no other state, nor items");
         final IEnergyStorage energy = level.getCapability(Capabilities.EnergyStorage.BLOCK,
-                helper.absolutePos(CONTROLLER.west()), null);
+                helper.absolutePos(TERMINAL.west()), null);
         helper.assertTrue(energy != null && energy.receiveEnergy(100, false) == 100
                         && furnace.energy().getEnergyStored() == 100,
-                "the west part takes energy into the controller");
+                "the west part takes energy into the terminal");
         furnace.slots().setStackInSlot(TestFurnaceBlockEntity.OUTPUT, new ItemStack(Items.IRON_INGOT, 2));
         final IItemHandler output = level.getCapability(Capabilities.ItemHandler.BLOCK,
-                helper.absolutePos(CONTROLLER.south()), null);
+                helper.absolutePos(TERMINAL.south()), null);
         helper.assertTrue(output != null && output.extractItem(0, 1, false).is(Items.IRON_INGOT),
-                "the south part gives out what the controller made");
+                "the south part gives out what the terminal made");
         helper.succeed();
     }
 

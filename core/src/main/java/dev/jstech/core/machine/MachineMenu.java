@@ -31,11 +31,13 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * The menu every machine of every mod opens, behind its five tabs: its Main tab's slots where its face shows them,
- * its upgrade bays on the Upgrades tab, its fuse and its battery on the Protection tab, and the player's inventory
- * under every tab. Each setting of its tabs is a button the server answers, for a player the machine lets set it up:
+ * The menu every machine of every mod opens, behind its five tabs and any of its own screen's: its Main tab's slots
+ * where its face shows them, its upgrade bays on the Upgrades tab, its fuse and its battery on the Protection tab, and
+ * the player's inventory under every tab that takes items. Each setting of its tabs is a button the server answers, for
+ * a player the machine lets set it up:
  * its switch, its redstone mode and what its comparator reads, who may use it, what each face does with each resource,
  * what it pushes and pulls by itself, and its input slots' locks.
  */
@@ -44,6 +46,8 @@ public final class MachineMenu extends CoreMenu {
     private final MachineBlockEntity machine;
     private final List<Slot> faceSlots = new ArrayList<>();
     private final SyncedValue<MachineHistory> history;
+    private final @Nullable SyncedValue<?> screenData;
+    private final int tabs;
     private int tab;
 
     /** The tabs, in their order along the top. */
@@ -85,6 +89,10 @@ public final class MachineMenu extends CoreMenu {
     public MachineMenu(final int containerId, final Inventory inventory, final MachineBlockEntity machine) {
         super(Machines.MENU.get(), containerId, inventory, MenuValidity.blockEntity(machine));
         this.machine = machine;
+        this.tabs = Math.clamp(MachineScreenLayout.TABS + machine.ownTabs(), MachineScreenLayout.TABS,
+                MachineScreenLayout.MOST_TABS);
+        // On a machine's own wider screen the standard tabs' face sits centred, and their slots with it.
+        final int shift = MachineScreenLayout.kitShift(machine.screenWidth());
         final List<Slot> mains = new ArrayList<>();
         for (final FaceSlot at : machine.mainSlots()) {
             final Slot slot = new TabSlot(machine.getInventory(), at.index(), at.x(), at.y(), MAIN, at.output());
@@ -97,22 +105,22 @@ public final class MachineMenu extends CoreMenu {
             final ProcessingMachineBlockEntity.Layout layout = processing.layout();
             for (int i = 0; i < Math.min(layout.upgrades(), MachineScreenLayout.BAYS); i++) {
                 final GuiLayout.SlotPosition at = MachineScreenLayout.bay(i);
-                bays.add(new TabSlot(machine.getInventory(), layout.firstUpgrade() + i, at.x(), at.y(), UPGRADES,
-                        false));
+                bays.add(new TabSlot(machine.getInventory(), layout.firstUpgrade() + i, at.x() + shift, at.y(),
+                        UPGRADES, false));
             }
         }
         final SlotGroup upgrades = slots(bays.toArray(Slot[]::new));
         final List<Slot> guards = new ArrayList<>();
         final EnergyProtection protection = machine.power().protection();
         if (protection != null) {
-            guards.add(new TabSlot(protection.slots(), EnergyProtection.FUSE, MachineScreenLayout.fuse().x(),
+            guards.add(new TabSlot(protection.slots(), EnergyProtection.FUSE, MachineScreenLayout.fuse().x() + shift,
                     MachineScreenLayout.fuse().y(), PROTECTION, false));
-            guards.add(new TabSlot(protection.slots(), EnergyProtection.BATTERY, MachineScreenLayout.battery().x(),
-                    MachineScreenLayout.battery().y(), PROTECTION, false));
+            guards.add(new TabSlot(protection.slots(), EnergyProtection.BATTERY,
+                    MachineScreenLayout.battery().x() + shift, MachineScreenLayout.battery().y(), PROTECTION, false));
         }
         final SlotGroup protections = slots(guards.toArray(Slot[]::new));
-        final PlayerSlots player = playerInventory(inventory, MachineScreenLayout.playerInventory(),
-                () -> tab != MAIN || machine.inventoryOnMain());
+        final PlayerSlots player = playerInventory(inventory,
+                MachineScreenLayout.playerInventory(machine.screenWidth()), () -> machine.inventoryOn(tab));
         shiftClick(player.main(), main, upgrades, protections, player.hotbar());
         shiftClick(player.hotbar(), main, upgrades, protections, player.main());
         shiftClick(main, player.main(), player.hotbar());
@@ -121,6 +129,8 @@ public final class MachineMenu extends CoreMenu {
         data(machine.fields().menuData());
         // Carried only while the screen is open, and only when its second's reading changed it.
         this.history = synced("history", MachineHistory.STREAM_CODEC, MachineHistory.NONE, machine::history);
+        final MachineScreenData<?> own = machine.screenData();
+        this.screenData = own == null ? null : declareScreenData(own);
         declareButtons();
     }
 
@@ -141,7 +151,25 @@ public final class MachineMenu extends CoreMenu {
 
     /** Shows tab {@code index}: its slots only are there to click. */
     public void showTab(final int index) {
-        this.tab = Math.max(0, Math.min(MachineScreenLayout.TABS - 1, index));
+        this.tab = Math.max(0, Math.min(this.tabs - 1, index));
+    }
+
+    /** How many tabs the machine's screen has: the five every machine has, then its own. */
+    public int tabs() {
+        return this.tabs;
+    }
+
+    /**
+     * What the machine's own screen shows that only the server knows ({@link MachineScreenData}): worked out on the
+     * server, as last received on the player's side, its {@code none} until then.
+     *
+     * @throws IllegalStateException for a machine that gives its screen nothing
+     */
+    public <T> T screenData(final Class<T> kind) {
+        if (this.screenData == null) {
+            throw new IllegalStateException(this.machine + " gives its screen no data");
+        }
+        return kind.cast(this.screenData.get());
     }
 
     /** The slots its Main tab shows. */
@@ -165,8 +193,12 @@ public final class MachineMenu extends CoreMenu {
         return FIRST_AUTOMATION + MachineResource.round().indexOf(resource) * 16 + what;
     }
 
+    private <T> SyncedValue<T> declareScreenData(final MachineScreenData<T> own) {
+        return synced("screen", own.codec(), own.none(), own.read());
+    }
+
     private void declareButtons() {
-        for (int i = 0; i < MachineScreenLayout.TABS; i++) {
+        for (int i = 0; i < this.tabs; i++) {
             final int index = i;
             button(FIRST_TAB + i, player -> showTab(index));
         }

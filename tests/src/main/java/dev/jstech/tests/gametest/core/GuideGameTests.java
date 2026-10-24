@@ -223,7 +223,7 @@ public final class GuideGameTests {
 
     /*
      * A multiblock's scene names the multiblock by its id and reads back the same; its blocks are those of the pattern
-     * in force, the controller in its place, laid out as a scene holds them.
+     * in force, the terminal in its place, laid out as a scene holds them.
      */
     @GameTest(template = ARENA)
     public static void multiblockScene_namesItsMultiblockAndLaysOutItsPattern(final GameTestHelper helper) {
@@ -235,10 +235,10 @@ public final class GuideGameTests {
         helper.assertTrue(roundTrips(GuideCodecs.ENTRY, entry(TestGuide.MULTIBLOCK)), "and reads back the same");
         final List<GuideBlock.SceneBlock> blocks = GuideBlock.Multiblock.blocksOf(
                 Projectables.preview(TestMultiblocks.FURNACE_ID, 0).orElseThrow(), first -> first);
-        helper.assertTrue(blocks.size() == 9, "the furnace's nine places, its controller's counted; got "
+        helper.assertTrue(blocks.size() == 9, "the furnace's nine places, its terminal's counted; got "
                 + blocks.size());
-        helper.assertTrue(blocks.stream().anyMatch(block -> block.state().equals("jstests:test_furnace_controller")
-                && block.x() == 1 && block.z() == 1), "the controller stands amid its casing");
+        helper.assertTrue(blocks.stream().anyMatch(block -> block.state().equals("jstests:test_furnace_terminal")
+                && block.x() == 1 && block.z() == 1), "the terminal stands amid its casing");
         blocks.forEach(placed -> readable(helper, TestGuide.MULTIBLOCK, placed));
         helper.succeed();
     }

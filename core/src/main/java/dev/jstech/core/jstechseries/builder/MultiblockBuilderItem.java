@@ -19,8 +19,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
 /**
- * The Multiblock Builder as an item: used on a multiblock's controller it is aimed at it and held up, before the
- * controller opens its own screen; used on anything else, or in the air, it is held up as it is, to read or to set.
+ * The Multiblock Builder as an item: used on a multiblock's terminal it is aimed at it and held up, before the
+ * terminal opens its own screen; used on anything else, or in the air, it is held up as it is, to read or to set.
  */
 public final class MultiblockBuilderItem extends Item {
 
@@ -28,7 +28,7 @@ public final class MultiblockBuilderItem extends Item {
         super(properties.stacksTo(1));
     }
 
-    /* Before the block it is used on answers: a controller's own screen would open otherwise. */
+    /* Before the block it is used on answers: a terminal's own screen would open otherwise. */
     @Override
     public InteractionResult onItemUseFirst(final ItemStack stack, final UseOnContext context) {
         final Level level = context.getLevel();

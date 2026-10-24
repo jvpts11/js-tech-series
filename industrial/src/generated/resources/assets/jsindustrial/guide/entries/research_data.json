@@ -1,0 +1,73 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.research_data.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.research_data.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.research_data.use1",
+        "jsindustrial.guide.research_data.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.research_data.fix1",
+          "problem": "jsindustrial.guide.research_data.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:computational_research_centre"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:crystal_data",
+  "id": "jsindustrial:research_data",
+  "items": [
+    "jsindustrial:sample_data",
+    "jsindustrial:crystal_data",
+    "jsindustrial:spectral_data",
+    "jsindustrial:particle_data"
+  ],
+  "order": 13,
+  "section": "jsindustrial:science",
+  "title": "jsindustrial.guide.research_data.title"
+}

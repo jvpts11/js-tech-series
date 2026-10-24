@@ -28,7 +28,7 @@ import net.neoforged.neoforge.items.wrapper.RangedWrapper;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The test furnace's controller: an input slot and an output slot, some energy and a tank of gas, reached only through
+ * The test furnace's terminal: an input slot and an output slot, some energy and a tank of gas, reached only through
  * the ports of its formed structure. It makes nothing; the tests only see what goes through the ports.
  */
 public final class TestFurnaceBlockEntity extends BlockEntity implements IMultiblockPortHost {
@@ -42,10 +42,10 @@ public final class TestFurnaceBlockEntity extends BlockEntity implements IMultib
     public static final int OUTPUT = 1;
 
     public TestFurnaceBlockEntity(final BlockPos pos, final BlockState state) {
-        super(TestMultiblocks.CONTROLLER_BE.get(), pos, state);
+        super(TestMultiblocks.TERMINAL_BE.get(), pos, state);
     }
 
-    /** Matches the pattern round the controller and, when it fits, binds its parts and stamps its ports. */
+    /** Matches the pattern round the terminal and, when it fits, binds its parts and stamps its ports. */
     public IMatchResult form() {
         final IMatchResult match = MultiblockPatterns.match(TestMultiblocks.FURNACE, level, worldPosition);
         formed = match instanceof IMatchResult.Success;
@@ -53,7 +53,7 @@ public final class TestFurnaceBlockEntity extends BlockEntity implements IMultib
             for (final long encoded : success.slavePositions()) {
                 if (level.getBlockEntity(MultiblockPatterns.decode(encoded))
                         instanceof MultiblockPartBlockEntity part) {
-                    part.setController(worldPosition);
+                    part.setTerminal(worldPosition);
                 }
             }
             MultiblockPorts.stamp(level, success);

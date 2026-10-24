@@ -21,8 +21,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 
 /**
- * Draws a rack as one cabinet from its controller block, the model facing north with the cabinet extending east and
- * south of the controller, so each facing turns it about the controller onto the multiblock's own footprint. The
+ * Draws a rack as one cabinet from its origin block, the model facing north with the cabinet extending east and
+ * south of the origin, so each facing turns it about the origin onto the cabinet's own footprint. The
  * cabinet bone is always there; every row has one bone per unit type and only the one matching what is seated shows,
  * so an installed server is literally in the rack in its own era's shape. The supercomputer's light bar follows the
  * bays, its chassis bands follow the seated nodes, and its livery panel hides when taken off for service.

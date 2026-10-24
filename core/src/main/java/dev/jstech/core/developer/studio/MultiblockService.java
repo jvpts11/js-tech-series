@@ -34,7 +34,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 
 /**
- * Recording a multiblock: the blocks between two corners read as a pattern, the block named its controller, each kind
+ * Recording a multiblock: the blocks between two corners read as a pattern, the block named its terminal, each kind
  * of block a letter, ports their kind. Asked to write it, the pattern's file goes to the mod's own source in this run,
  * {@code data/<mod>/multiblock/<name>.json}, or, with no source here, into a data pack of the world's own, in force
  * once the world's data is reloaded.
@@ -55,8 +55,8 @@ final class MultiblockService implements IStudioService {
     private static final int PACK_FORMAT = 48;
     private static final TextKey NOT_A_NAME = TextKey.of("gui.jscore.studio.structures.not_a_name",
             "%s is not a name a pattern can have");
-    private static final TextKey CONTROLLER_OUTSIDE = TextKey.of("gui.jscore.studio.structures.controller_outside",
-            "The controller must be a block between the corners");
+    private static final TextKey TERMINAL_OUTSIDE = TextKey.of("gui.jscore.studio.structures.terminal_outside",
+            "The terminal must be a block between the corners");
     private static final TextKey PACK_DESCRIPTION = TextKey.of("gui.jscore.studio.structures.pack",
             "The multiblocks written by J's Core's studio");
 
@@ -71,10 +71,10 @@ final class MultiblockService implements IStudioService {
         final MultiblockRecorder.Recording recording;
         try {
             recording = MultiblockRecorder.record(level, BlockPos.of(args.getLong(StudioKeys.FROM)),
-                    BlockPos.of(args.getLong(StudioKeys.TO)), BlockPos.of(args.getLong(StudioKeys.CONTROLLER)),
+                    BlockPos.of(args.getLong(StudioKeys.TO)), BlockPos.of(args.getLong(StudioKeys.TERMINAL)),
                     name.toString(), args.getBoolean(StudioKeys.MIRRORS), args.getBoolean(StudioKeys.LIES_DOWN));
         } catch (final IllegalArgumentException wrong) {
-            reply.accept(refused(GameText.resolve(CONTROLLER_OUTSIDE)));
+            reply.accept(refused(GameText.resolve(TERMINAL_OUTSIDE)));
             return;
         }
         final JsonElement json = MultiblockPatterns.CODEC.encodeStart(JsonOps.INSTANCE, recording.pattern())

@@ -22,13 +22,13 @@ import net.minecraft.resources.ResourceLocation;
  * How a Multiblock Builder's building goes, as the server tells the player holding it: what it is doing, how many
  * blocks it has placed, and when it stopped, why.
  *
- * @param controller the controller of the multiblock it builds
+ * @param terminal the terminal of the multiblock it builds
  * @param phase      what it is doing
  * @param placed     how many blocks it has placed since it began
  * @param reason     why it stopped, or {@link Reason#NONE}
  * @param block      the block the reason names (the one it ran out of), by id, or empty
  */
-public record BuildStatus(BlockPos controller, Phase phase, int placed, Reason reason, String block)
+public record BuildStatus(BlockPos terminal, Phase phase, int placed, Reason reason, String block)
         implements CustomPacketPayload {
 
     /** Nothing being built. */
@@ -36,7 +36,7 @@ public record BuildStatus(BlockPos controller, Phase phase, int placed, Reason r
     public static final Type<BuildStatus> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "build_status"));
     public static final StreamCodec<RegistryFriendlyByteBuf, BuildStatus> STREAM_CODEC = StreamCodec.composite(
-            BlockPos.STREAM_CODEC, BuildStatus::controller,
+            BlockPos.STREAM_CODEC, BuildStatus::terminal,
             ByteBufCodecs.fromCodec(StableCodecs.byName(Phase.class)), BuildStatus::phase,
             ByteBufCodecs.VAR_INT, BuildStatus::placed,
             ByteBufCodecs.fromCodec(StableCodecs.byName(Reason.class)), BuildStatus::reason,
@@ -79,9 +79,9 @@ public record BuildStatus(BlockPos controller, Phase phase, int placed, Reason r
         NONE("none", BuilderTexts.STOPPED),
         /** The player may not build multiblocks. */
         NOT_ALLOWED("not_allowed", BuilderTexts.NOT_ALLOWED),
-        /** The controller forms no multiblock the builder knows, or is gone. */
+        /** The terminal forms no multiblock the builder knows, or is gone. */
         UNKNOWN("unknown", BuilderTexts.UNKNOWN),
-        /** The player walked too far from the controller. */
+        /** The player walked too far from the terminal. */
         TOO_FAR("too_far", BuilderTexts.TOO_FAR),
         /** A place is protected from the player. */
         PROTECTED("protected", BuilderTexts.PROTECTED),

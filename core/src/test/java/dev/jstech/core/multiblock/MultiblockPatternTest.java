@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multiblock;
 
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MultiblockPatternTest {
 
     @Test
-    void minimalPattern_singleControllerCell() {
+    void minimalPattern_singleTerminalCell() {
         var p = MultiblockPattern.builder("min")
                 .layer("#")
                 .build();
@@ -26,9 +27,9 @@ class MultiblockPatternTest {
         assertEquals(1, p.sizeY());
         assertEquals(1, p.sizeZ());
         assertEquals('#', p.charAt(0, 0, 0));
-        assertEquals(0, p.controllerX());
-        assertEquals(0, p.controllerY());
-        assertEquals(0, p.controllerZ());
+        assertEquals(0, p.terminalX());
+        assertEquals(0, p.terminalY());
+        assertEquals(0, p.terminalZ());
     }
 
     @Test
@@ -56,9 +57,9 @@ class MultiblockPatternTest {
         assertEquals(3, p.sizeZ());
         assertEquals('#', p.charAt(1, 1, 1));
         assertEquals('C', p.charAt(0, 0, 0));
-        assertEquals(1, p.controllerX());
-        assertEquals(1, p.controllerY());
-        assertEquals(1, p.controllerZ());
+        assertEquals(1, p.terminalX());
+        assertEquals(1, p.terminalY());
+        assertEquals(1, p.terminalZ());
     }
 
     @Test
@@ -68,7 +69,7 @@ class MultiblockPatternTest {
     }
 
     @Test
-    void noController_throws() {
+    void noTerminal_throws() {
         // Layer with valid blocks but no '#' anywhere.
         assertThrows(IllegalStateException.class, () ->
                 MultiblockPattern.builder("noctrl")
@@ -79,7 +80,7 @@ class MultiblockPatternTest {
     }
 
     @Test
-    void multipleControllers_throws() {
+    void multipleTerminals_throws() {
         assertThrows(IllegalStateException.class, () ->
                 MultiblockPattern.builder("twoctrl")
                         .layer("# #")
@@ -150,8 +151,8 @@ class MultiblockPatternTest {
     }
 
     @Test
-    void controllerAtEdge_locatesCorrectly() {
-        // Controller in corner of a 2x1x2 pattern (top of an L-shape).
+    void terminalAtEdge_locatesCorrectly() {
+        // Terminal in corner of a 2x1x2 pattern (top of an L-shape).
         var p = MultiblockPattern.builder("corner")
                 .layer(
                         "#C",
@@ -159,9 +160,9 @@ class MultiblockPatternTest {
                 )
                 .where('C', IBlockMatcher.exact("jsc:casing"))
                 .build();
-        assertEquals(0, p.controllerX());
-        assertEquals(0, p.controllerY());
-        assertEquals(0, p.controllerZ());
+        assertEquals(0, p.terminalX());
+        assertEquals(0, p.terminalY());
+        assertEquals(0, p.terminalZ());
         assertEquals('#', p.charAt(0, 0, 0));
         assertEquals('C', p.charAt(1, 0, 0));
         assertEquals('C', p.charAt(0, 0, 1));
@@ -183,7 +184,7 @@ class MultiblockPatternTest {
                 .port('H', PortKind.ENERGY_INPUT)
                 .build();
         assertEquals(PortKind.ENERGY_INPUT, p.ports().get('H'));
-        assertTrue(p.ports().get('#') == null, "the controller is never a port");
+        assertTrue(p.ports().get('#') == null, "the terminal is never a port");
     }
 
     @Test
@@ -217,7 +218,7 @@ class MultiblockPatternTest {
     }
 
     @Test
-    void repeat_refusesTheControllersSliceAndASecondSlice() {
+    void repeat_refusesTheTerminalsSliceAndASecondSlice() {
         assertThrows(IllegalStateException.class, () -> MultiblockPattern.builder("tower")
                 .layer("#").layer("C")
                 .where('C', BlockMatch.blocks("jsc:casing"))
@@ -242,6 +243,38 @@ class MultiblockPatternTest {
                 .layer("#x")
                 .inside('x', InsideRule.empty())
                 .where('x', BlockMatch.blocks("jsc:casing")));
+    }
+
+    @Test
+    void entry_needsItsPlaceDeclaredFirst() {
+        assertThrows(IllegalArgumentException.class, () -> MultiblockPattern.builder("entry")
+                .layer("#R")
+                .entry('R', "power_entry", BlockMatch.blocks("jsc:power_entry"), PortKind.ENERGY_INPUT));
+    }
+
+    @Test
+    void entry_widensWhatFitsItsPlaceAndKeepsItsCount() {
+        var p = MultiblockPattern.builder("entry")
+                .layer("#R")
+                .where('R', BlockMatch.blocks("jsc:casing"))
+                .entry('R', "power_entry", BlockMatch.blocks("jsc:power_entry"), PortKind.ENERGY_INPUT)
+                .limit("power_entry", 1, 1)
+                .build();
+        var place = p.places().get('R');
+        assertEquals(new BlockMatch(List.of("jsc:casing", "jsc:power_entry"), List.of()), place.fits());
+        assertEquals("power_entry", place.entries().getFirst().name());
+        assertEquals(PortKind.ENERGY_INPUT, place.entries().getFirst().port());
+    }
+
+    @Test
+    void together_needsTwoCountsSomePlaceKeeps() {
+        assertThrows(IllegalArgumentException.class, () -> new MultiblockPattern.Together("inlet", "inlet"));
+        assertThrows(IllegalStateException.class, () -> MultiblockPattern.builder("cooled")
+                .layer("#R")
+                .where('R', BlockMatch.blocks("jsc:casing"))
+                .entry('R', "inlet", BlockMatch.blocks("jsc:inlet"), PortKind.FLUID_INPUT)
+                .together("inlet", "outlet")
+                .build());
     }
 
     @Test

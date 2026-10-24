@@ -357,10 +357,10 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
             if (scan.hasMainframe) {
                 continue; // a section branch must not loop back to the Mainframe (miswired), ignore
             }
-            if (scan.rackControllers.isEmpty()) {
+            if (scan.rackOrigins.isEmpty()) {
                 continue; // an empty branch carries no datacenter
             }
-            if (!seenRackSets.add(scan.rackControllers)) {
+            if (!seenRackSets.add(scan.rackOrigins)) {
                 continue; // a looped topology surfaced the same racks on two faces, count once
             }
 
@@ -368,12 +368,12 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
             long storage = 0L;
             for (final ServerNode server : system.serversOf(network)) {
                 final var location = system.locationOf(server.nodeUuid());
-                if (location.isPresent() && scan.rackControllers.contains(location.get().rackPos())) {
+                if (location.isPresent() && scan.rackOrigins.contains(location.get().rackPos())) {
                     servers.add(server.nodeUuid());
                     storage += server.storageItems();
                 }
             }
-            found.add(new DatacenterSection(face, new LinkedHashSet<>(scan.rackControllers), servers, storage));
+            found.add(new DatacenterSection(face, new LinkedHashSet<>(scan.rackOrigins), servers, storage));
         }
 
         // Capacity is a single budget across every section: walk the racks in section order and mark
@@ -416,11 +416,11 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
                     if (rack.rackType() != RackChassis.RackType.SUPERCOMPUTER) {
                         racks.add(rack.getBlockPos().asLong());
                     }
-                } else if (neighbor instanceof ServerRackPartBlockEntity part && part.controllerPos() != null) {
-                    if (Loaded.blockEntity(level, part.controllerPos()) instanceof ServerRackBlockEntity controller
-                            && controller.rackType()
+                } else if (neighbor instanceof ServerRackPartBlockEntity part && part.originPos() != null) {
+                    if (Loaded.blockEntity(level, part.originPos()) instanceof ServerRackBlockEntity origin
+                            && origin.rackType()
                                     != RackChassis.RackType.SUPERCOMPUTER) {
-                        racks.add(part.controllerPos().asLong());
+                        racks.add(part.originPos().asLong());
                     }
                 } else if (neighbor instanceof MainframeBlockEntity || neighbor instanceof MainframePartBlockEntity) {
                     hasMainframe = true;
@@ -443,7 +443,7 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
     /**
      * Result of walking one router branch: the racks it contains and whether it reaches the Mainframe.
      */
-    private record BranchScan(Set<Long> rackControllers, boolean hasMainframe) {
+    private record BranchScan(Set<Long> rackOrigins, boolean hasMainframe) {
     }
 
     /** One of the values a summary row shows of its section. */

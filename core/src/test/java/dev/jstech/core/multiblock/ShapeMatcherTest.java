@@ -10,6 +10,7 @@ package dev.jstech.core.multiblock;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,9 @@ class ShapeMatcherTest {
     private static final String CASING = "test:casing";
     private static final String GLASS = "test:glass";
     private static final String HATCH = "test:hatch";
+    private static final String POWER_ENTRY = "test:power_entry";
+    private static final String INLET = "test:coolant_inlet";
+    private static final String OUTLET = "test:coolant_outlet";
 
     @Test
     void check_countsThePlacesThatHoldACountedBlock() {
@@ -37,7 +41,7 @@ class ShapeMatcherTest {
     }
 
     @Test
-    void check_failsACountOutsideItsLimitAtTheController() {
+    void check_failsACountOutsideItsLimitAtTheTerminal() {
         final MultiblockPattern pattern = MultiblockPattern.builder("limited")
                 .layer("H#H")
                 .where('H', Place.of(BlockMatch.blocks(CASING, HATCH)).counting("hatch", BlockMatch.blocks(HATCH)))
@@ -127,7 +131,7 @@ class ShapeMatcherTest {
     }
 
     @Test
-    void check_growsARepeatedRowTowardsAControllerStandingAfterIt() {
+    void check_growsARepeatedRowTowardsATerminalStandingAfterIt() {
         final MultiblockPattern pattern = MultiblockPattern.builder("battery")
                 .layer("C", "O", "#")
                 .where('C', BlockMatch.blocks(CASING))
@@ -235,6 +239,81 @@ class ShapeMatcherTest {
         assertEquals(3, formed.sizeX());
         assertEquals(2, formed.sizeZ());
         assertEquals(6, formed.blocks());
+    }
+
+    @Test
+    void check_countsAnEntryAndMakesItsPlaceAPortOfItsKind() {
+        final MultiblockPattern pattern = MultiblockPattern.builder("entries")
+                .layer("R#R")
+                .where('R', BlockMatch.blocks(CASING))
+                .entry('R', "power_entry", BlockMatch.blocks(POWER_ENTRY), PortKind.ENERGY_INPUT)
+                .limit("power_entry", 1, 1)
+                .build();
+        final Map<Long, String> world = new HashMap<>();
+        world.put(pos(-1, 0, 0), POWER_ENTRY);
+        world.put(pos(1, 0, 0), CASING);
+        final ShapeMatch.Formed formed = assertInstanceOf(ShapeMatch.Formed.class,
+                pattern.check(provider(world), pos(0, 0, 0)));
+        assertEquals(1, formed.count("power_entry"));
+        assertEquals(PortKind.ENERGY_INPUT, formed.ports().get(pos(-1, 0, 0)));
+        assertNull(formed.ports().get(pos(1, 0, 0)));
+        world.put(pos(1, 0, 0), POWER_ENTRY);
+        final ShapeMatch.Failure failure = assertInstanceOf(ShapeMatch.Failure.class,
+                pattern.check(provider(world), pos(0, 0, 0)));
+        assertEquals(ShapeMatch.Wrong.COUNT, failure.wrong());
+        assertEquals("power_entry", failure.wanted());
+        assertEquals("2", failure.found());
+    }
+
+    @Test
+    void check_refusesAnEntryWhereItsMultiblockTakesNone() {
+        final MultiblockPattern pattern = MultiblockPattern.builder("rear")
+                .layer("R#R", "CCC")
+                .where('R', BlockMatch.blocks(CASING))
+                .where('C', BlockMatch.blocks(CASING))
+                .entry('R', "power_entry", BlockMatch.blocks(POWER_ENTRY), PortKind.ENERGY_INPUT)
+                .build();
+        final Map<Long, String> world = new HashMap<>();
+        for (int x = -1; x <= 1; x++) {
+            world.put(pos(x, 0, 0), CASING);
+            world.put(pos(x, 0, 1), CASING);
+        }
+        world.remove(pos(0, 0, 0));
+        world.put(pos(0, 0, 1), POWER_ENTRY);
+        final ShapeMatch.Failure failure = assertInstanceOf(ShapeMatch.Failure.class,
+                pattern.check(provider(world), pos(0, 0, 0)));
+        assertEquals(ShapeMatch.Wrong.BLOCK, failure.wrong());
+        assertEquals("C", failure.wanted());
+        assertEquals(POWER_ENTRY, failure.found());
+    }
+
+    @Test
+    void check_formsCountsThatGoTogetherOnlyWhenTheyAgree() {
+        final MultiblockPattern pattern = MultiblockPattern.builder("cooled")
+                .layer("R#R")
+                .where('R', BlockMatch.blocks(CASING))
+                .entry('R', "inlet", BlockMatch.blocks(INLET), PortKind.FLUID_INPUT)
+                .entry('R', "outlet", BlockMatch.blocks(OUTLET), PortKind.FLUID_OUTPUT)
+                .together("inlet", "outlet")
+                .build();
+        final Map<Long, String> world = new HashMap<>();
+        world.put(pos(-1, 0, 0), INLET);
+        world.put(pos(1, 0, 0), CASING);
+        final ShapeMatch.Failure failure = assertInstanceOf(ShapeMatch.Failure.class,
+                pattern.check(provider(world), pos(0, 0, 0)));
+        assertEquals(ShapeMatch.Wrong.APART, failure.wrong());
+        assertEquals("inlet", failure.wanted());
+        assertEquals("outlet", failure.found());
+        world.put(pos(1, 0, 0), OUTLET);
+        final ShapeMatch.Formed formed = assertInstanceOf(ShapeMatch.Formed.class,
+                pattern.check(provider(world), pos(0, 0, 0)));
+        assertEquals(1, formed.count("inlet"));
+        assertEquals(1, formed.count("outlet"));
+        assertEquals(PortKind.FLUID_INPUT, formed.ports().get(pos(-1, 0, 0)));
+        assertEquals(PortKind.FLUID_OUTPUT, formed.ports().get(pos(1, 0, 0)));
+        world.put(pos(-1, 0, 0), CASING);
+        world.put(pos(1, 0, 0), CASING);
+        assertInstanceOf(ShapeMatch.Formed.class, pattern.check(provider(world), pos(0, 0, 0)));
     }
 
     private static IBlockProvider provider(final Map<Long, String> world) {

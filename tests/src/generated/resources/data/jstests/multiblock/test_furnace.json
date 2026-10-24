@@ -1,5 +1,4 @@
 {
-  "controller": "jstests:test_furnace_controller",
   "key": {
     "E": {
       "blocks": [
@@ -40,5 +39,6 @@
     "G": "gas_input",
     "I": "item_input",
     "O": "item_output"
-  }
+  },
+  "terminal": "jstests:test_furnace_terminal"
 }

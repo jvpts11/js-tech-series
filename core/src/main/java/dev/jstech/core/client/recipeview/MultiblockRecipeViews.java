@@ -65,19 +65,19 @@ public final class MultiblockRecipeViews {
                 materials.add(new MultiblockEntry.Material(stacks, count, false));
             }
         });
-        final List<ItemStack> controllers = itemsOf(GhostBlocks.blocksOf(preview.controllerBlock().orElse(null)), 1);
-        final int room = MultiblockViewLayout.MOST_MATERIALS - (controllers.isEmpty() ? 0 : 1);
+        final List<ItemStack> terminals = itemsOf(GhostBlocks.blocksOf(preview.terminalBlock().orElse(null)), 1);
+        final int room = MultiblockViewLayout.MOST_MATERIALS - (terminals.isEmpty() ? 0 : 1);
         final List<MultiblockEntry.Material> shown = new ArrayList<>(materials.subList(0,
                 Math.min(room, materials.size())));
-        if (!controllers.isEmpty()) {
-            shown.add(new MultiblockEntry.Material(controllers, 1, true));
+        if (!terminals.isEmpty()) {
+            shown.add(new MultiblockEntry.Material(terminals, 1, true));
         }
         final Optional<MultiblockEntry.Choice> choice = preview.choices().stream()
                 .map(each -> new MultiblockEntry.Choice(itemsOf(GhostBlocks.choicesOf(each.blocks(), each.tags()), 1),
                         each.places()))
                 .filter(each -> each.stacks().size() > 1).findFirst();
         return new MultiblockEntry(id, preview, GameText.component(Projectables.name(id)), shown, choice,
-                turns(shape), controllers.isEmpty() ? ItemStack.EMPTY : controllers.getFirst());
+                turns(shape), terminals.isEmpty() ? ItemStack.EMPTY : terminals.getFirst());
     }
 
     /* How it may stand, a line or three: its four turns always, and its mirror and lying down when it has them. */

@@ -1,0 +1,136 @@
+{
+  "key": {
+    "B": {
+      "blocks": [
+        "jsindustrial:crc_bus"
+      ]
+    },
+    "C": {
+      "blocks": [
+        "jsindustrial:crc_casing"
+      ]
+    },
+    "G": {
+      "blocks": [
+        "jsindustrial:crc_gate"
+      ]
+    },
+    "R": {
+      "blocks": [
+        "jsindustrial:crc_casing",
+        "jsindustrial:crc_coolant_inlet",
+        "jsindustrial:crc_coolant_outlet",
+        "jsindustrial:crc_heat_port",
+        "jsindustrial:crc_link_socket",
+        "jsindustrial:crc_power_entry"
+      ],
+      "entries": [
+        {
+          "name": "jsindustrial:crc_power_entry",
+          "port": "energy_input",
+          "which": {
+            "blocks": [
+              "jsindustrial:crc_power_entry"
+            ]
+          }
+        },
+        {
+          "name": "jsindustrial:crc_link_socket",
+          "which": {
+            "blocks": [
+              "jsindustrial:crc_link_socket"
+            ]
+          }
+        },
+        {
+          "name": "jsindustrial:crc_coolant_inlet",
+          "port": "fluid_input",
+          "which": {
+            "blocks": [
+              "jsindustrial:crc_coolant_inlet"
+            ]
+          }
+        },
+        {
+          "name": "jsindustrial:crc_coolant_outlet",
+          "port": "fluid_output",
+          "which": {
+            "blocks": [
+              "jsindustrial:crc_coolant_outlet"
+            ]
+          }
+        },
+        {
+          "name": "jsindustrial:crc_heat_port",
+          "port": "heat",
+          "which": {
+            "blocks": [
+              "jsindustrial:crc_heat_port"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "layers": [
+    [
+      "C#C",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "RRR"
+    ],
+    [
+      "CCC",
+      "CBC",
+      "CGC",
+      "CBC",
+      "CGC",
+      "CBC",
+      "CGC",
+      "CBC",
+      "RRR"
+    ],
+    [
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC",
+      "CCC"
+    ]
+  ],
+  "limits": {
+    "jsindustrial:crc_coolant_inlet": {
+      "least": 0,
+      "most": 1
+    },
+    "jsindustrial:crc_heat_port": {
+      "least": 0,
+      "most": 1
+    },
+    "jsindustrial:crc_link_socket": {
+      "least": 0,
+      "most": 1
+    },
+    "jsindustrial:crc_power_entry": {
+      "least": 1,
+      "most": 1
+    }
+  },
+  "name": "computational_research_centre",
+  "terminal": "jsindustrial:crc_terminal",
+  "together": [
+    {
+      "first": "jsindustrial:crc_coolant_inlet",
+      "second": "jsindustrial:crc_coolant_outlet"
+    }
+  ]
+}

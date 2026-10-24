@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "jsindustrial:block/crc/crc_power_entry",
+    "side": "jsindustrial:block/crc/crc_casing",
+    "top": "jsindustrial:block/crc/crc_casing"
+  }
+}

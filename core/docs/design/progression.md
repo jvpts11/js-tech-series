@@ -7,7 +7,8 @@ reached without depending on it.
 
 Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: the axes and
 the eras as a registry, axes that move by playing, progression kept per team, milestones, knowledge and the knowledge
-gate, the knowledge seal of structures, advancements, and naming what is discovered. How a mod uses it, with code:
+gate, the knowledge seal of structures, research with its discoveries and its kinds of data, advancements, and naming
+what is discovered. How a mod uses it, with code:
 [Progression](../PROGRESSION.md).
 
 ## The design
@@ -48,6 +49,25 @@ Written once for every mod: a **recipe may ask for a piece of knowledge**.
 - A **machine refuses to run** a locked recipe until its **owner's team** has the knowledge.
 - A **structure** can keep a door or a chamber shut behind a piece of knowledge, such as J's Space's sealed chambers
   ([The world](world.md)).
+
+### Research
+
+Research is written once in the Core, so J's Industrial's Computational Research Centre and J's Space's own research
+computer stand on the same thing and neither mod needs the other.
+
+- **A discovery** is declared in code by its mod, with a builder: its name and its date, the research it costs, the
+  data it asks for and its prerequisites. It is a piece of knowledge a team holds **in part** while its research goes,
+  its share the progress made, and whole once it is done; only then does it open what it unlocks.
+- **Research is counted in points a second**, which research computers make; what each discovery costs is content,
+  set in data, so a modpack changes it.
+- **Data come in kinds**, an open list any mod adds to: sample, crystal, spectral and particle data now, astronomical
+  data with J's Space, singularity data with the Aleph. Data are items, spent as the research goes, each one covering
+  an equal share of it.
+- **Prerequisites**: other discoveries, knowledge the team has, milestones. A discovery starts only once they are all
+  known, and one that asks for what a mod not installed gives does not exist.
+- **The whole tree shows**, every discovery with what it needs, so a player can plan.
+- **A mod may open the gate**: with its setting off, none of its discoveries locks anything and none is granted;
+  research can still be done, for its advancements.
 
 ### Naming what is discovered
 

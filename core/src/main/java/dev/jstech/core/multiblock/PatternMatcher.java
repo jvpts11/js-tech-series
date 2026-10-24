@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Matches a {@link MultiblockPattern} against a world (abstracted as an {@link IBlockProvider}) at a candidate
- * controller position, in the older form a controller of four turns reads: the pattern's own {@link
+ * terminal position, in the older form a terminal of four turns reads: the pattern's own {@link
  * MultiblockPattern#check} says all a formed structure counts and gives.
  */
 public final class PatternMatcher {
@@ -22,16 +22,16 @@ public final class PatternMatcher {
     }
 
     /**
-     * The match: every place of the structure but the controller's, its inside with them, and its ports; or the
+     * The match: every place of the structure but the terminal's, its inside with them, and its ports; or the
      * wrong place of the attempt that went furthest, the four turns tried first, north first. A structure found
      * mirrored or lying down reads as north.
      */
     public static IMatchResult match(
             MultiblockPattern pattern,
             IBlockProvider provider,
-            long controllerEncodedPos
+            long terminalEncodedPos
     ) {
-        return switch (pattern.check(provider, controllerEncodedPos)) {
+        return switch (pattern.check(provider, terminalEncodedPos)) {
             case ShapeMatch.Formed formed -> {
                 final List<Long> slaves = new ArrayList<>(formed.parts());
                 slaves.addAll(formed.inside());

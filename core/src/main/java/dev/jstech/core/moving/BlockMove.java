@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.Rotation;
 
 /**
  * Blocks moved together, as a structure is made, set down or taken to another dimension: where each block went, and
- * how they were turned on the way. A block entity that keeps the place of another block, a link, a controller, a
+ * how they were turned on the way. A block entity that keeps the place of another block, a link, a terminal, a
  * network's end, asks this where that block went, and keeps it unchanged when that block did not move with it.
  *
  * @param from     the level the blocks left

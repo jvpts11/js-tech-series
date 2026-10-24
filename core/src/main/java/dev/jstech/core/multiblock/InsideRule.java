@@ -93,7 +93,7 @@ public record InsideRule(IBlockMatcher allows, List<InsidePart> parts) {
      * the working parts count and give added to {@code tally}.
      */
     @Nullable
-    ShapeMatch.Failure read(final IBlockProvider provider, final List<Long> inside, final long controller,
+    ShapeMatch.Failure read(final IBlockProvider provider, final List<Long> inside, final long terminal,
                             final ShapeTally tally) {
         final Map<Long, String> ids = new HashMap<>();
         final Map<Long, InsidePart> partAt = new LinkedHashMap<>();
@@ -102,7 +102,7 @@ public record InsideRule(IBlockMatcher allows, List<InsidePart> parts) {
             ids.put(pos, id);
             final InsidePart part = partOf(provider, pos, id);
             if (part == null && !this.allows.matchesAt(provider, pos, id)) {
-                return Cells.wrongBlock(controller, pos, ShapeMatch.INSIDE, id);
+                return Cells.wrongBlock(terminal, pos, ShapeMatch.INSIDE, id);
             }
             tally.fits();
             if (part != null) {

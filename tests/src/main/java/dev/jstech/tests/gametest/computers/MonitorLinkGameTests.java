@@ -99,14 +99,14 @@ public final class MonitorLinkGameTests {
 
     @GameTest(template = ARENA)
     public static void monitor_linksThroughMainframePartFace(final GameTestHelper helper) {
-        final BlockPos controller = new BlockPos(3, 2, 3);
+        final BlockPos origin = new BlockPos(3, 2, 3);
         final Direction facing = Direction.NORTH;
-        final MainframeBlockEntity be = formRunningMainframe(helper, controller, facing);
+        final MainframeBlockEntity be = formRunningMainframe(helper, origin, facing);
         // A graphics card gives the Mainframe the video outputs its monitors take.
         be.getInventory().setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
-        // A cable on the far side-column part's outward face never touches the controller.
-        final BlockPos farPart = controller.relative(facing.getClockWise());
+        // A cable on the far side-column part's outward face never touches the origin.
+        final BlockPos farPart = origin.relative(facing.getClockWise());
         final BlockPos cable = farPart.relative(facing.getClockWise());
         final BlockPos mon = cable.relative(facing.getClockWise());
         TestCables.lay(helper, cable, ComputingModule.PERIPHERAL_CABLE);
@@ -119,7 +119,7 @@ public final class MonitorLinkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> helper.assertTrue(
                         monitor.ownerPos() != null
-                                && monitor.ownerPos().equals(helper.absolutePos(controller)),
+                                && monitor.ownerPos().equals(helper.absolutePos(origin)),
                         "monitor must link to the Mainframe through a cable on a PART face"))
                 .thenSucceed();
     }

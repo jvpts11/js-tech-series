@@ -28,7 +28,7 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.world.item.ItemStack;
 
 /**
- * One multiblock in EMI, laid out as JEI lays it out: its materials and its choice as what it takes, its controller as
+ * One multiblock in EMI, laid out as JEI lays it out: its materials and its choice as what it takes, its terminal as
  * what it makes. EMI passes no drags to a recipe, so a click turns its preview.
  */
 final class MultiblockEmiRecipe extends BasicEmiRecipe {
@@ -55,8 +55,8 @@ final class MultiblockEmiRecipe extends BasicEmiRecipe {
         });
         inputs.addAll(this.materials);
         inputs.addAll(this.choices);
-        if (!entry.controller().isEmpty()) {
-            outputs.add(EmiStack.of(entry.controller()));
+        if (!entry.terminal().isEmpty()) {
+            outputs.add(EmiStack.of(entry.terminal()));
         }
     }
 
@@ -66,8 +66,8 @@ final class MultiblockEmiRecipe extends BasicEmiRecipe {
         for (int index = 0; index < this.materials.size(); index++) {
             final MultiblockViewLayout.Point at = MultiblockViewLayout.material(index);
             final SlotWidget slot = widgets.addSlot(this.materials.get(index), at.x(), at.y());
-            if (this.entry.materials().get(index).controller()) {
-                slot.appendTooltip(GameText.component(MultiblockViewTexts.CONTROLLER));
+            if (this.entry.materials().get(index).terminal()) {
+                slot.appendTooltip(GameText.component(MultiblockViewTexts.TERMINAL));
             }
         }
         for (int index = 0; index < this.choices.size(); index++) {

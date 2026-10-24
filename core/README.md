@@ -111,8 +111,9 @@ What a technology mod needs, whichever mod it is.
 
 - [Processing machines](docs/MACHINES.md) with slots, tanks, energy, progress and upgrades; recipes of several
   items and fluids in data files; and a page in JEI and in EMI for every recipe kind.
-- [Multiblocks](docs/MULTIBLOCKS.md) as data or by rule, with ports that pass pipes through to the controller, the
-  projector that shows where each block goes, and the recorder that reads a pattern off one built.
+- [Multiblocks](docs/MULTIBLOCKS.md) as data or by rule, with ports that pass pipes through to the terminal and
+  entries the player puts where each multiblock lets them go, the projector that shows where each block goes, the
+  recorder that reads a pattern off one built, and big blocks placed whole.
 - [Moving structures](docs/MOVING_STRUCTURES.md) of real blocks that keep working as they move by rules or by
   physics, are stood on, joined and docked, and are frozen, removed or exported as structure files by command;
   [block spaces](docs/MULTIPART.md) that hold several parts, microblocks of any block and facades on any face;
@@ -124,7 +125,7 @@ What a technology mod needs, whichever mod it is.
   gravity, air, heat, weather and pressure, dimensions made while the game runs, data over areas, and chunk
   loading by owner.
 - [Ownership](docs/OWNERSHIP.md) and teams (FTB Teams when it is installed), [progression](docs/PROGRESSION.md)
-  axes and advancements, and [commands](docs/COMMANDS.md) under `/jstech`.
+  axes, research and advancements, and [commands](docs/COMMANDS.md) under `/jstech`.
 - [Entities](docs/ENTITIES.md), vehicles, robots that work a list of tasks, projectiles, and what a player wears
   (Curios or Accessories when installed).
 - [Overlays](docs/OVERLAYS.md): HUD elements that stack, holograms, and Jade's lines.

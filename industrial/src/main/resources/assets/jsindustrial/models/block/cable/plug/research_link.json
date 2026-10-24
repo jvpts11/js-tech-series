@@ -1,0 +1,20 @@
+{
+  "textures": {
+    "cable": "jsindustrial:block/cable/research_link",
+    "particle": "jsindustrial:block/cable/research_link"
+  },
+  "elements": [
+    {
+      "from": [6.5, 6.5, 0],
+      "to": [9.5, 9.5, 3],
+      "faces": {
+        "north": {"uv": [0, 8, 2, 10], "texture": "#cable"},
+        "south": {"uv": [0, 8, 2, 10], "texture": "#cable"},
+        "east": {"uv": [0, 0, 1.5, 2], "texture": "#cable"},
+        "west": {"uv": [0, 0, 1.5, 2], "texture": "#cable"},
+        "up": {"uv": [0, 0, 1.5, 2], "texture": "#cable"},
+        "down": {"uv": [0, 0, 1.5, 2], "texture": "#cable"}
+      }
+    }
+  ]
+}

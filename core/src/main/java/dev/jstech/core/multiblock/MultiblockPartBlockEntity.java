@@ -16,13 +16,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Shared base for the non-controller parts of a multiblock structure. Each part remembers its controller's position
- * so a break or an interaction on the part can reach the controller, declared once here as a saved field for every
+ * Shared base for the non-terminal parts of a multiblock structure. Each part remembers its terminal's position
+ * so a break or an interaction on the part can reach the terminal, declared once here as a saved field for every
  * structure that uses it.
  */
 public abstract class MultiblockPartBlockEntity extends SyncedBlockEntity {
 
-    private final ValueField<BlockPos> controller = fields().nullable("Controller", BlockPos.CODEC).save();
+    private final ValueField<BlockPos> terminal = fields().nullable("Terminal", BlockPos.CODEC).save();
     /** What the part opens onto when the structure's pattern makes it a port; null for a plain part. */
     private final ValueField<PortKind> port = fields().nullable("Port", StableCodecs.byName(PortKind.class)).save();
 
@@ -32,17 +32,17 @@ public abstract class MultiblockPartBlockEntity extends SyncedBlockEntity {
     }
 
     @Nullable
-    public BlockPos controllerPos() {
-        return controller.get();
+    public BlockPos terminalPos() {
+        return terminal.get();
     }
 
-    public void setController(final BlockPos pos) {
-        controller.set(pos.immutable());
+    public void setTerminal(final BlockPos pos) {
+        terminal.set(pos.immutable());
     }
 
-    /** Lets go of its controller and its port: the structure it was part of came apart. */
+    /** Lets go of its terminal and its port: the structure it was part of came apart. */
     public void release() {
-        controller.set(null);
+        terminal.set(null);
         port.set(null);
     }
 

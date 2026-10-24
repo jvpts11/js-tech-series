@@ -16,12 +16,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A shape laid out as it stands, for showing it before it is built: in the world as ghosts, in a screen layer by
- * layer, in a recipe viewer with its materials. Each place has its offset from the controller, its layer from the
- * bottom, and the blocks and tags that go there; the controller's place is marked, and places left empty (air
+ * layer, in a recipe viewer with its materials. Each place has its offset from the terminal, its layer from the
+ * bottom, and the blocks and tags that go there; the terminal's place is marked, and places left empty (air
  * inside a tank) are not in it. Pure.
  *
  * @param ghosts the places, the bottom layer first
- * @param minX   the least offset from the controller along x of any place, the controller's counted in
+ * @param minX   the least offset from the terminal along x of any place, the terminal's counted in
  * @param minY   along y
  * @param minZ   along z
  * @param sizeX  its size along x, in blocks
@@ -35,8 +35,8 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
     }
 
     /**
-     * Lays out {@code places}, each an offset from the controller with what goes there, the controller's included:
-     * also blocks that are no multiblock, such as a manual's scene shown in the world, with no controller among them.
+     * Lays out {@code places}, each an offset from the terminal with what goes there, the terminal's included:
+     * also blocks that are no multiblock, such as a manual's scene shown in the world, with no terminal among them.
      */
     public static ShapePreview of(final List<Ghost> places) {
         final int[] lo = {0, 0, 0};
@@ -51,7 +51,7 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
         final List<Ghost> layered = new ArrayList<>();
         for (final Ghost ghost : places) {
             layered.add(new Ghost(ghost.x(), ghost.y(), ghost.z(), ghost.y() - lo[1], ghost.blocks(), ghost.tags(),
-                    ghost.controller()));
+                    ghost.terminal()));
         }
         layered.sort((a, b) -> a.layer() != b.layer() ? Integer.compare(a.layer(), b.layer())
                 : a.z() != b.z() ? Integer.compare(a.z(), b.z()) : Integer.compare(a.x(), b.x()));
@@ -59,18 +59,18 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
                 hi[2] - lo[2] + 1);
     }
 
-    /** The same standing {@code orientation}: each place turned, mirrored or laid down round the controller. */
+    /** The same standing {@code orientation}: each place turned, mirrored or laid down round the terminal. */
     public ShapePreview turned(final Orientation orientation) {
         final List<Ghost> moved = new ArrayList<>();
         for (final Ghost ghost : this.ghosts) {
             final int[] w = orientation.apply(ghost.x(), ghost.y(), ghost.z());
-            moved.add(new Ghost(w[0], w[1], w[2], 0, ghost.blocks(), ghost.tags(), ghost.controller()));
+            moved.add(new Ghost(w[0], w[1], w[2], 0, ghost.blocks(), ghost.tags(), ghost.terminal()));
         }
         return of(moved);
     }
 
     /**
-     * Where its controller stands when it is shown in front of something at {@code x}, {@code y}, {@code z} that
+     * Where its terminal stands when it is shown in front of something at {@code x}, {@code y}, {@code z} that
      * faces along axis {@code axis} (0 for x, 2 for z) the way {@code sign} says: its near side one block in front,
      * its middle across from it, its bottom level with it.
      */
@@ -78,30 +78,30 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
         final int[] at = {x, y, z};
         final int[] lo = {this.minX, this.minY, this.minZ};
         final int[] hi = {this.minX + this.sizeX - 1, this.minY + this.sizeY - 1, this.minZ + this.sizeZ - 1};
-        final int[] controller = new int[3];
+        final int[] terminal = new int[3];
         final int across = axis == 0 ? 2 : 0;
-        controller[axis] = at[axis] + sign - (sign > 0 ? lo[axis] : hi[axis]);
-        controller[across] = at[across] - Math.floorDiv(lo[across] + hi[across], 2);
-        controller[1] = at[1] - lo[1];
-        return controller;
+        terminal[axis] = at[axis] + sign - (sign > 0 ? lo[axis] : hi[axis]);
+        terminal[across] = at[across] - Math.floorDiv(lo[across] + hi[across], 2);
+        terminal[1] = at[1] - lo[1];
+        return terminal;
     }
 
     /**
-     * The same with {@code block}, by id, at its controller's place, when the shape named none there: the block a
-     * machine's controller is, known to whoever declared the machine rather than to its shape.
+     * The same with {@code block}, by id, at its terminal's place, when the shape named none there: the block a
+     * machine's terminal is, known to whoever declared the machine rather than to its shape.
      */
-    public ShapePreview withController(final String block) {
+    public ShapePreview withTerminal(final String block) {
         final List<Ghost> named = new ArrayList<>();
         for (final Ghost ghost : this.ghosts) {
-            named.add(ghost.controller() && ghost.blocks().isEmpty() ? new Ghost(ghost.x(), ghost.y(), ghost.z(),
+            named.add(ghost.terminal() && ghost.blocks().isEmpty() ? new Ghost(ghost.x(), ghost.y(), ghost.z(),
                     ghost.layer(), List.of(block), List.of(), true) : ghost);
         }
         return new ShapePreview(named, this.minX, this.minY, this.minZ, this.sizeX, this.sizeY, this.sizeZ);
     }
 
-    /** The id of the block at its controller's place, when it is known. */
-    public Optional<String> controllerBlock() {
-        return this.ghosts.stream().filter(Ghost::controller).findFirst().map(Ghost::first);
+    /** The id of the block at its terminal's place, when it is known. */
+    public Optional<String> terminalBlock() {
+        return this.ghosts.stream().filter(Ghost::terminal).findFirst().map(Ghost::first);
     }
 
     /**
@@ -112,7 +112,7 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
     public List<Choice> choices() {
         final Map<List<String>, Choice> groups = new LinkedHashMap<>();
         for (final Ghost ghost : this.ghosts) {
-            if (ghost.controller()) {
+            if (ghost.terminal()) {
                 continue;
             }
             final List<String> blocks = ghost.blocks().stream().filter(block -> !Cells.AIR.equals(block)).toList();
@@ -137,19 +137,19 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
         return this.ghosts.stream().filter(ghost -> ghost.layer() == layer).toList();
     }
 
-    /** How many places it has, its controller's counted in. */
+    /** How many places it has, its terminal's counted in. */
     public int blocks() {
         return this.ghosts.size();
     }
 
     /**
-     * What it takes to build, but its controller: how many of each first choice of its places, by block id or, for a
+     * What it takes to build, but its terminal: how many of each first choice of its places, by block id or, for a
      * place that names only tags, by its first tag written {@code #namespace:path}, most first.
      */
     public Map<String, Integer> materials() {
         final Map<String, Integer> counts = new LinkedHashMap<>();
         for (final Ghost ghost : this.ghosts) {
-            if (!ghost.controller() && ghost.first() != null) {
+            if (!ghost.terminal() && ghost.first() != null) {
                 counts.merge(ghost.first(), 1, Integer::sum);
             }
         }
@@ -178,15 +178,15 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
     /**
      * A place of a shape, as it is shown.
      *
-     * @param x          its offset from the controller along x, as the shape stands
+     * @param x          its offset from the terminal along x, as the shape stands
      * @param y          along y
      * @param z          along z
      * @param layer      its layer, from 0 at the bottom
      * @param blocks     the blocks that go there, by id, the first the one shown
      * @param tags       the tags whose blocks go there too
-     * @param controller whether it is the controller's place, which takes the controller's block
+     * @param terminal whether it is the terminal's place, which takes the terminal's block
      */
-    public record Ghost(int x, int y, int z, int layer, List<String> blocks, List<String> tags, boolean controller) {
+    public record Ghost(int x, int y, int z, int layer, List<String> blocks, List<String> tags, boolean terminal) {
 
         public Ghost {
             blocks = List.copyOf(blocks);
@@ -199,8 +199,8 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
                     : new Ghost(x, y, z, 0, List.of(), List.of(), false);
         }
 
-        /** The controller's place. */
-        static Ghost controllerAt(final int x, final int y, final int z) {
+        /** The terminal's place. */
+        static Ghost terminalAt(final int x, final int y, final int z) {
             return new Ghost(x, y, z, 0, List.of(), List.of(), true);
         }
 
@@ -218,7 +218,7 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
          * chosen by code, which names none.
          */
         boolean empty() {
-            return !this.controller && this.tags.isEmpty() && this.blocks.stream().allMatch(Cells.AIR::equals);
+            return !this.terminal && this.tags.isEmpty() && this.blocks.stream().allMatch(Cells.AIR::equals);
         }
     }
 }

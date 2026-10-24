@@ -10,6 +10,8 @@ package dev.jstech.core.datagen;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import dev.jstech.core.research.Discoveries;
+import dev.jstech.core.research.ResearchCost;
 import dev.jstech.core.worldgen.reservoir.ReservoirType;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.vein.DepositType;
@@ -65,6 +67,12 @@ public final class DeclaredFilesProvider<T> implements DataProvider {
     public static DeclaredFilesProvider<ReservoirType> reservoirs(final PackOutput output, final String modid) {
         return new DeclaredFilesProvider<>(output, modid, "reservoirs", "jstech/reservoirs", ReservoirType.CODEC,
                 Reservoirs::declared);
+    }
+
+    /** What the discoveries {@code modid} declares cost, to {@code data/<mod>/jstech/research/}. */
+    public static DeclaredFilesProvider<ResearchCost> researchCosts(final PackOutput output, final String modid) {
+        return new DeclaredFilesProvider<>(output, modid, "research", "jstech/research", ResearchCost.CODEC,
+                Discoveries::declaredCosts);
     }
 
     /** Whether {@code modid} declared anything this writes. */

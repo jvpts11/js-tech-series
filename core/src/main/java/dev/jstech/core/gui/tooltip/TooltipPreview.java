@@ -13,7 +13,7 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * A turning 3D picture of a block or of a whole structure in a tooltip, as a multiblock's controller shows the
+ * A turning 3D picture of a block or of a whole structure in a tooltip, as a multiblock's terminal shows the
  * furnace it builds. It turns slowly by itself, and stands still for a player who asked for less movement.
  *
  * @param blocks the blocks, by where each stands

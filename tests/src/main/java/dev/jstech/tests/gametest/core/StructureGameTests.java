@@ -45,10 +45,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class StructureGameTests {
 
     private static final String ARENA = "empty";
-    /* The tank from one corner to the other, its controller in the middle of its north face. */
+    /* The tank from one corner to the other, its terminal in the middle of its north face. */
     private static final BlockPos LOW = new BlockPos(1, 1, 1);
     private static final BlockPos HIGH = new BlockPos(3, 3, 3);
-    private static final BlockPos CONTROLLER = new BlockPos(2, 2, 1);
+    private static final BlockPos TERMINAL = new BlockPos(2, 2, 1);
     private static final BlockPos CORNER = new BlockPos(1, 1, 1);
 
     private StructureGameTests() {
@@ -125,9 +125,9 @@ public final class StructureGameTests {
             helper.assertTrue(formed(helper), "the tank forms");
             final BlockPos edge = helper.absolutePos(CORNER);
             final BlockState iron = helper.getLevel().getBlockState(edge);
-            helper.assertTrue(LevelStructures.of(helper.getLevel()).controllerHolding(edge)
-                    .equals(helper.absolutePos(CONTROLLER)), "its corner is known as the tank's");
-            helper.assertTrue(LevelStructures.of(helper.getLevel()).controllerHolding(
+            helper.assertTrue(LevelStructures.of(helper.getLevel()).terminalHolding(edge)
+                    .equals(helper.absolutePos(TERMINAL)), "its corner is known as the tank's");
+            helper.assertTrue(LevelStructures.of(helper.getLevel()).terminalHolding(
                     helper.absolutePos(new BlockPos(5, 1, 5))) == null, "a block apart from it is not");
             final BlockEvent.BreakEvent byStranger = new BlockEvent.BreakEvent(helper.getLevel(), edge, iron,
                     stranger);
@@ -155,7 +155,7 @@ public final class StructureGameTests {
         });
     }
 
-    /* The tank: iron on its edges, glass on its faces, air inside, the controller on its north face. */
+    /* The tank: iron on its edges, glass on its faces, air inside, the terminal on its north face. */
     private static void build(final GameTestHelper helper) {
         for (int x = LOW.getX(); x <= HIGH.getX(); x++) {
             for (int y = LOW.getY(); y <= HIGH.getY(); y++) {
@@ -172,14 +172,14 @@ public final class StructureGameTests {
                 }
             }
         }
-        helper.setBlock(CONTROLLER, TestStructures.TANK.get());
+        helper.setBlock(TERMINAL, TestStructures.TANK.get());
     }
 
     private static TestStructures.TankBlockEntity tank(final GameTestHelper helper) {
-        if (helper.getBlockEntity(CONTROLLER) instanceof TestStructures.TankBlockEntity tank) {
+        if (helper.getBlockEntity(TERMINAL) instanceof TestStructures.TankBlockEntity tank) {
             return tank;
         }
-        throw new IllegalStateException("no tank controller where the test put it");
+        throw new IllegalStateException("no tank terminal where the test put it");
     }
 
     private static boolean formed(final GameTestHelper helper) {

@@ -18,9 +18,9 @@ import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
-import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
-import dev.jstech.core.multiblock.IMultiblockGeometry;
-import dev.jstech.core.multiblock.MultiblockPatternGeometry;
+import dev.jstech.core.bigblock.AbstractBigBlock;
+import dev.jstech.core.bigblock.BigBlockFootprint;
+import dev.jstech.core.bigblock.IBigBlockGeometry;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
@@ -67,11 +67,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Server Rack: a 2-wide, 3-tall, 2-deep multiblock cabinet that is logically a single rack, one block for every
+ * The Server Rack: a 2-wide, 3-tall, 2-deep cabinet, a big block that is logically a single rack, one block for every
  * era, the era given where it is declared.
  */
 @TextHolder
-public class ServerRackBlock extends AbstractMultiblockControllerBlock
+public class ServerRackBlock extends AbstractBigBlock
         implements IFaceConnector {
 
     private final HardwareEra era;
@@ -132,7 +132,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     }
 
     /**
-     * The whole cabinet is one model drawn by the controller's block-entity renderer; the block itself
+     * The whole cabinet is one model drawn by the origin's block-entity renderer; the block itself
      * shows nothing, so the eleven part blocks and this one never paint a seam over it.
      */
     @Override
@@ -158,19 +158,19 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     }
 
     /** Says on the cabinet and every part of it how much of the fibre its Fibre Optic Interface lets in. */
-    public void setFibre(final Level level, final BlockPos controller, final FibreReach reach) {
-        final BlockState state = level.getBlockState(controller);
+    public void setFibre(final Level level, final BlockPos origin, final FibreReach reach) {
+        final BlockState state = level.getBlockState(origin);
         if (!(state.getBlock() instanceof ServerRackBlock)) {
             return;
         }
-        final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(controller, state.getValue(FACING)));
-        blocks.add(controller);
+        final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(origin, state.getValue(FACING)));
+        blocks.add(origin);
         OpticalPort.set(level, blocks, OpticalPort.FIBRE, reach);
     }
 
     @Override
-    protected IMultiblockGeometry geometry() {
-        return new MultiblockPatternGeometry(ServerRackStructure.PATTERN);
+    protected IBigBlockGeometry geometry() {
+        return new BigBlockFootprint(ServerRackStructure.PATTERN);
     }
 
     @Override
@@ -179,40 +179,40 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     }
 
     @Override
-    protected boolean isOwnController(final BlockState state) {
+    protected boolean isOwnOrigin(final BlockState state) {
         return state.getBlock() instanceof ServerRackBlock;
     }
 
     @Override
-    protected BlockState partStateFor(final BlockPos controller, final Direction facing,
-                                      final BlockPos part, final BlockState controllerState) {
+    protected BlockState partStateFor(final BlockPos origin, final Direction facing,
+                                      final BlockPos part, final BlockState originState) {
         return ComputingModule.SERVER_RACK_PART.get().defaultBlockState()
-                .setValue(ServerRackPartBlock.TOP, ServerRackStructure.isTopLayer(controller, part))
+                .setValue(ServerRackPartBlock.TOP, ServerRackStructure.isTopLayer(origin, part))
                 .setValue(ServerRackPartBlock.FACING, facing)
                 .setValue(ServerRackPartBlock.ERA, era().level())
                 .setValue(ServerRackPartBlock.COMPUTE,
                         rackType() == RackChassis.RackType.SUPERCOMPUTER)
                 .setValue(ServerRackPartBlock.FRONT,
-                        ServerRackStructure.isFrontBayBlock(controller, facing, part))
-                .setValue(OpticalPort.FIBRE, controllerState.hasProperty(OpticalPort.FIBRE)
-                        ? controllerState.getValue(OpticalPort.FIBRE) : FibreReach.NONE);
+                        ServerRackStructure.isFrontBayBlock(origin, facing, part))
+                .setValue(OpticalPort.FIBRE, originState.hasProperty(OpticalPort.FIBRE)
+                        ? originState.getValue(OpticalPort.FIBRE) : FibreReach.NONE);
     }
 
     @Override
-    protected void dropContents(final ServerLevel level, final BlockPos controller) {
+    protected void dropContents(final ServerLevel level, final BlockPos origin) {
         // Its own item, so a broken cabinet gives back its era, and a Supercomputer Rack never a Server Rack.
-        Block.popResource(level, controller, new ItemStack(asItem()));
-        if (level.getBlockEntity(controller) instanceof ServerRackBlockEntity rack) {
+        Block.popResource(level, origin, new ItemStack(asItem()));
+        if (level.getBlockEntity(origin) instanceof ServerRackBlockEntity rack) {
             // The servers fall out with the cabinet rather than slide out of it, which is heard as the cabinet.
-            rack.quietly(() -> BlockDrops.spill(level, controller, rack.getServers()));
+            rack.quietly(() -> BlockDrops.spill(level, origin, rack.getServers()));
             // The hotswap drives belong to the rack, not to the servers, so they spill too.
-            BlockDrops.spill(level, controller, rack.getFrontSlots());
+            BlockDrops.spill(level, origin, rack.getFrontSlots());
         }
     }
 
     @Override
-    protected void onControllerBroken(final ServerLevel level, final BlockPos controller) {
-        if (level.getBlockEntity(controller) instanceof ServerRackBlockEntity rack) {
+    protected void onOriginBroken(final ServerLevel level, final BlockPos origin) {
+        if (level.getBlockEntity(origin) instanceof ServerRackBlockEntity rack) {
             rack.onBroken(level); // unregister the housed Server nodes
         }
     }
@@ -259,9 +259,9 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
      * Seats a server or rack unit held in the hand. Aimed at the cabinet's front, it goes into the rack
      * row under the crosshair (the row the player is looking at, counted from the top like the rack's
      * slots) and is refused with the reason when that row cannot take it. Aimed anywhere else, it
-     * takes the first row that fits, top down. Shared by the controller and the cabinet's part blocks.
+     * takes the first row that fits, top down. Shared by the origin and the cabinet's part blocks.
      */
-    static ItemInteractionResult mountFromHand(final ServerRackBlockEntity rack, final BlockPos controllerPos,
+    static ItemInteractionResult mountFromHand(final ServerRackBlockEntity rack, final BlockPos originPos,
                                                final BlockPos hitPos, final ItemStack stack, final Player player,
                                                final BlockHitResult hit) {
         if (IMountableRackUnit.of(stack) == null) {
@@ -273,7 +273,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
             return ItemInteractionResult.sidedSuccess(false);
         }
         final ItemStackHandler servers = rack.getServers();
-        final int aimed = aimedRow(rack, controllerPos, hitPos, hit);
+        final int aimed = aimedRow(rack, originPos, hitPos, hit);
         if (aimed >= 0) {
             /*
              * isItemValid enforces the rack-unit fit: a row covered by a taller chassis is empty but
@@ -305,7 +305,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     }
 
     /** The rack row under the crosshair when the hit lands on the cabinet's front face, else -1. */
-    private static int aimedRow(final ServerRackBlockEntity rack, final BlockPos controllerPos,
+    private static int aimedRow(final ServerRackBlockEntity rack, final BlockPos originPos,
                                 final BlockPos hitPos, final BlockHitResult hit) {
         final BlockState state = rack.getBlockState();
         if (!state.hasProperty(FACING)) {
@@ -315,12 +315,12 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         if (hit.getDirection() != facing) {
             return -1;
         }
-        // Only the front layer's blocks show the units: the controller's column and the one clockwise of it.
-        final BlockPos flat = hitPos.atY(controllerPos.getY());
-        if (!flat.equals(controllerPos) && !flat.equals(controllerPos.relative(facing.getClockWise()))) {
+        // Only the front layer's blocks show the units: the origin's column and the one clockwise of it.
+        final BlockPos flat = hitPos.atY(originPos.getY());
+        if (!flat.equals(originPos) && !flat.equals(originPos.relative(facing.getClockWise()))) {
             return -1;
         }
-        final double texel = (hit.getLocation().y - controllerPos.getY()) * TEXELS_PER_BLOCK;
+        final double texel = (hit.getLocation().y - originPos.getY()) * TEXELS_PER_BLOCK;
         final int fromBottom = (int) Math.floor((texel - ROW_BASE_TEXELS) / ROW_TEXELS);
         return Mth.clamp(ServerRackBlockEntity.CAPACITY_U - 1 - fromBottom, 0, ServerRackBlockEntity.CAPACITY_U - 1);
     }
@@ -331,10 +331,10 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
      * because a player aiming anywhere at a rack expects to pick the rack, since the parts have no item of their
      * own, so picking them used to hand back nothing at all.
      */
-    static ItemStack pickFrom(final ServerRackBlockEntity rack, final BlockPos controllerPos,
+    static ItemStack pickFrom(final ServerRackBlockEntity rack, final BlockPos originPos,
                               final BlockPos hitPos, final HitResult target, final Item cabinetItem) {
         if (target instanceof BlockHitResult hit) {
-            final int row = aimedRow(rack, controllerPos, hitPos, hit);
+            final int row = aimedRow(rack, originPos, hitPos, hit);
             if (row >= 0) {
                 final ItemStack seated = rack.getServers().getStackInSlot(unitTopRow(rack, row));
                 if (!seated.isEmpty()) {

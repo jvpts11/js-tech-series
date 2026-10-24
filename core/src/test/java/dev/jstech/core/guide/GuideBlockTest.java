@@ -110,7 +110,7 @@ class GuideBlockTest {
         assertEquals(0, blocks.getFirst().x());
         assertEquals(2, blocks.getFirst().z(), "the northmost place stands on the grid's first line");
         assertTrue(blocks.stream().anyMatch(block -> block.state().equals("test:oven") && block.x() == 1),
-                "the controller stands in its place");
+                "the terminal stands in its place");
         assertTrue(blocks.stream().anyMatch(block -> block.state().equals("test:windows") && block.y() == 1
                 && block.z() == 0), "a tag's place shows the block it gives");
     }
@@ -165,7 +165,7 @@ class GuideBlockTest {
 
         assertEquals(3, world.sizeZ());
         assertEquals(-2, world.minZ(), "the scene's back, north, is the world's negative z");
-        assertTrue(world.ghosts().stream().allMatch(ghost -> !ghost.controller()
+        assertTrue(world.ghosts().stream().allMatch(ghost -> !ghost.terminal()
                 && ghost.blocks().equals(List.of("minecraft:stone"))));
     }
 
@@ -201,8 +201,8 @@ class GuideBlockTest {
     }
 
     private static ShapePreview.Ghost ghost(final int x, final int y, final int z, final List<String> blocks,
-                                            final List<String> tags, final boolean controller) {
-        return new ShapePreview.Ghost(x, y, z, y, blocks, tags, controller);
+                                            final List<String> tags, final boolean terminal) {
+        return new ShapePreview.Ghost(x, y, z, y, blocks, tags, terminal);
     }
 
     private static GuideBlock.Scene scene(final List<GuideBlock.SceneBlock> blocks,

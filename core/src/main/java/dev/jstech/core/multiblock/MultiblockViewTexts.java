@@ -34,7 +34,7 @@ public final class MultiblockViewTexts {
     public static final TextKey MATERIALS = TextKey.of("jscore.multiblock_view.materials", "Materials");
     public static final TextKey BLOCKS = TextKey.of("jscore.multiblock_view.blocks", "%s blocks");
     public static final TextKey SIZE = TextKey.of("jscore.multiblock_view.size", "%s x %s x %s");
-    public static final TextKey CONTROLLER = TextKey.of("jscore.multiblock_view.controller", "The controller");
+    public static final TextKey TERMINAL = TextKey.of("jscore.multiblock_view.terminal", "The terminal");
     public static final TextKey SHOW = TextKey.of("jscore.multiblock_view.show", "Show in world");
     public static final TextKey HIDE = TextKey.of("jscore.multiblock_view.hide", "Hide in world");
     public static final TextKey PAGE = TextKey.of("jscore.multiblock_view.page", "Open the page");

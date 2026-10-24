@@ -80,8 +80,8 @@ public final class ServerRackGameTests {
     @GameTest(template = ARENA)
     public static void serverRack_formsCabinetAndReadsCableOnPartFace(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);
-        final BlockPos rack = new BlockPos(4, 2, 2);     // controller; footprint x[4,5] y[2,4] z[2,3]
-        final BlockPos part = new BlockPos(4, 3, 2);     // a front part, one up from the controller
+        final BlockPos rack = new BlockPos(4, 2, 2);     // origin; footprint x[4,5] y[2,4] z[2,3]
+        final BlockPos part = new BlockPos(4, 3, 2);     // a front part, one up from the origin
         // A cable run from the part's outward face to the mainframe, and it touches the
         final BlockPos[] cables = {
             new BlockPos(2, 3, 2), // against the REAR face of part (3,3,2), parts only
@@ -91,7 +91,7 @@ public final class ServerRackGameTests {
         for (final BlockPos c : cables) {
             TestCables.lay(helper, c, ComputingModule.HBW_CABLE);
         }
-        // Place the controller and drive its self-assembly so all 11 parts exist.
+        // Place the origin and drive its self-assembly so all 11 parts exist.
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -108,14 +108,14 @@ public final class ServerRackGameTests {
                             "placing the rack must raise its structural parts");
                     final NetworkUuid net = mainframe.networkUuid();
                     helper.assertTrue(net != null, "mainframe owns a network");
-                    // The controller touches no cable; only a part does.
+                    // The origin touches no cable; only a part does.
                     helper.assertTrue(NetworkSystem.get(helper.getLevel()).serversOf(net).size() == 1,
                             "a cable on a rack PART face must join the rack to the network");
                 })
                 .thenExecute(() -> helper.setBlock(part, Blocks.AIR)) // break one part
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(helper.getBlockState(rack).isAir(),
-                            "breaking a part must take the controller down too");
+                            "breaking a part must take the origin down too");
                     helper.assertTrue(helper.getBlockState(part).isAir(),
                             "the broken part must be gone");
                     helper.assertTrue(helper.getBlockState(new BlockPos(5, 4, 3)).isAir(),

@@ -44,7 +44,7 @@ The number of cards is limited by the motherboard's slots; past that, another IC
 
 ### Machines that become computers
 
-Some machines can **also be computers**: their controller gains a server assembly window (an EEB motherboard, CPU,
+Some machines can **also be computers**: their terminal gains a server assembly window (an EEB motherboard, CPU,
 memory, power supply), boots a system, joins the network and runs its Operations and programs. **The hardware puts the
 machine on the network; it is never what makes it run**: without it, the machine is still a machine, and installing J's
 Computers in an existing world breaks nothing.
@@ -56,7 +56,7 @@ They are the machines that **make data**, or that in real life **need real-time 
 | Accelerators | Cyclotron, Heavy-Ion Cyclotron, Synchrotron, Linear Accelerator, Collider, LHC, SHE Factory |
 | Instruments | Mass Spectrometer, ICP Mass Spectrometer, X-ray Diffractometer, Electron Microscope, NMR Spectrometer |
 | Research | the CRC |
-| Production | the Clean Room's controller (real fabs run on a manufacturing execution system), the Antimatter Factory |
+| Production | the Clean Room's terminal (real fabs run on a manufacturing execution system), the Antimatter Factory |
 | Mining | the Deep Core Miner, the Orion Miner |
 | Fusion | the Tokamak and the Stellarator (real plasma only holds under real-time computer control) |
 | Transcendence | the Wormhole Gate, the Aleph Gate, the Reality Projector |
@@ -88,7 +88,7 @@ states of an Operation:
 | `ACCEL_RUN`, `ACCEL_ABORT`, `ACCEL_STATUS` | accelerators | a run: beam, target, energy, duration; it fails without its target and completes partially if the energy fails halfway |
 | `ANALYZE` | instruments | analyses a sample and writes its data |
 | `RESEARCH_START`, `RESEARCH_ABORT`, `RESEARCH_STATUS` | the CRC and its groups | a discovery; big ones are split into SubOperations among groups |
-| `FAB_START`, `FAB_STATUS` | the Clean Room's controller | starts a lot with a product and follows it layer by layer; with the network, lots move by themselves between tools, and a busy tool locks the resource |
+| `FAB_START`, `FAB_STATUS` | the Clean Room's terminal | starts a lot with a product and follows it layer by layer; with the network, lots move by themselves between tools, and a busy tool locks the resource |
 | `MINER_START`, `MINER_STOP`, `MINER_STATUS` | the Deep Core Miner, the Orion Miner | |
 | `PLASMA_START`, `PLASMA_STOP` | the Tokamak, the Stellarator | starts and stops the plasma |
 | `GATE_OPEN`, `GATE_CLOSE` | the Wormhole Gate, the Aleph Gate | opens to a destination and closes |

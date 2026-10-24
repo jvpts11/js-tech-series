@@ -12,6 +12,7 @@ import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineResource;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.moving.BlockMove;
@@ -156,8 +157,8 @@ public final class SpacePersistorBlockEntity extends MachineBlockEntity {
 
     /* It holds no items: its face fills its screen, and the inventory shows only where its fuse and battery go. */
     @Override
-    public boolean inventoryOnMain() {
-        return false;
+    public boolean inventoryOn(final int tab) {
+        return tab != MachineMenu.MAIN;
     }
 
     /* It shows nothing as it works: no smoke rises from a chunk loader. */

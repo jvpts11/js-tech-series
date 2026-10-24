@@ -454,6 +454,37 @@ stable 4
 10 dev.jstech.core.audio.pcm.Waveform  double at(double, double)
 10 dev.jstech.core.audio.pcm.Waveform  int id()
 10 dev.jstech.core.audio.pcm.Waveform  static Waveform byId(int)
+12 dev.jstech.core.bigblock.AbstractBigBlock  type abstract class extends HorizontalDirectionalBlock implements EntityBlock, IBigBlock
+12 dev.jstech.core.bigblock.AbstractBigBlock  BlockState playerWillDestroy(Level, BlockPos, BlockState, Player)
+12 dev.jstech.core.bigblock.AbstractBigBlock  final List<BlockPos> footprint(BlockPos, Direction)
+12 dev.jstech.core.bigblock.AbstractBigBlock  new(Properties)
+12 dev.jstech.core.bigblock.AbstractBigBlock  protected abstract BlockState partStateFor(BlockPos, Direction, BlockPos, BlockState)
+12 dev.jstech.core.bigblock.AbstractBigBlock  protected abstract IBigBlockGeometry geometry()
+12 dev.jstech.core.bigblock.AbstractBigBlock  protected abstract boolean isOwnOrigin(BlockState)
+12 dev.jstech.core.bigblock.AbstractBigBlock  protected abstract boolean isOwnPart(BlockState)
+12 dev.jstech.core.bigblock.AbstractBigBlock  protected abstract void dropContents(ServerLevel, BlockPos)
+12 dev.jstech.core.bigblock.AbstractBigBlock  protected void onOriginBroken(ServerLevel, BlockPos)
+12 dev.jstech.core.bigblock.AbstractBigBlock  protected void onRemove(BlockState, Level, BlockPos, BlockState, boolean)
+12 dev.jstech.core.bigblock.AbstractBigBlock  void brokenBy(ServerLevel, BlockPos, Player)
+12 dev.jstech.core.bigblock.AbstractBigBlock  void dissolve(ServerLevel, BlockPos, Direction)
+12 dev.jstech.core.bigblock.AbstractBigBlock  void setPlacedBy(Level, BlockPos, BlockState, LivingEntity, ItemStack)
+12 dev.jstech.core.bigblock.BigBlockFootprint  type final class implements IBigBlockGeometry
+12 dev.jstech.core.bigblock.BigBlockFootprint  List<BlockPos> allPositions(BlockPos, Direction)
+12 dev.jstech.core.bigblock.BigBlockFootprint  List<BlockPos> partPositions(BlockPos, Direction)
+12 dev.jstech.core.bigblock.BigBlockFootprint  int blockCount()
+12 dev.jstech.core.bigblock.BigBlockFootprint  new(MultiblockPattern)
+12 dev.jstech.core.bigblock.BigBlockPartBlockEntity  type abstract class extends SyncedBlockEntity
+12 dev.jstech.core.bigblock.BigBlockPartBlockEntity  BlockPos originPos()
+12 dev.jstech.core.bigblock.BigBlockPartBlockEntity  new(BlockEntityType<?>, BlockPos, BlockState)
+12 dev.jstech.core.bigblock.BigBlockPartBlockEntity  void setOrigin(BlockPos)
+12 dev.jstech.core.bigblock.IBigBlock  type interface
+12 dev.jstech.core.bigblock.IBigBlock  abstract List<BlockPos> footprint(BlockPos, Direction)
+12 dev.jstech.core.bigblock.IBigBlock  default List<BlockPos> getObstructedBlocks(BlockGetter, BlockPos, Direction)
+12 dev.jstech.core.bigblock.IBigBlock  default void spawnMisplaceParticles(Level, List<BlockPos>)
+12 dev.jstech.core.bigblock.IBigBlockGeometry  type interface
+12 dev.jstech.core.bigblock.IBigBlockGeometry  abstract List<BlockPos> allPositions(BlockPos, Direction)
+12 dev.jstech.core.bigblock.IBigBlockGeometry  abstract List<BlockPos> partPositions(BlockPos, Direction)
+12 dev.jstech.core.bigblock.IBigBlockGeometry  abstract int blockCount()
 10 dev.jstech.core.blockentity.BlockEntityFields  type final class
 10 dev.jstech.core.blockentity.BlockEntityFields  <T extends Comparable<T>> void mirror(Property<T>, Supplier<T>)
 10 dev.jstech.core.blockentity.BlockEntityFields  <T> T capability(BlockCapability<T, ?>)
@@ -964,6 +995,7 @@ stable 4
 12 dev.jstech.core.cable.CableType  long holds()
 10 dev.jstech.core.cable.CableType  long throughput()
 10 dev.jstech.core.cable.CableType  static Builder builder(Connection)
+12 dev.jstech.core.cable.CableType  static final int THICKEST
 10 dev.jstech.core.cable.CableType.Builder  type static final class
 10 dev.jstech.core.cable.CableType.Builder  Builder alone()
 10 dev.jstech.core.cable.CableType.Builder  Builder beyond(IBreachRule)
@@ -3071,6 +3103,8 @@ stable 4
 10 dev.jstech.core.content.IItemLook.Standard  FLAT
 10 dev.jstech.core.content.IItemLook.Standard  HANDMADE
 10 dev.jstech.core.content.IItemLook.Standard  OF_BLOCK
+12 dev.jstech.core.content.IMenuTitle  type interface
+12 dev.jstech.core.content.IMenuTitle  abstract Component menuTitle()
 10 dev.jstech.core.content.IStandingParts  type interface
 10 dev.jstech.core.content.IStandingParts  abstract List<AABB> standingParts(BlockState, BlockGetter, BlockPos)
 10 dev.jstech.core.content.ItemBuilder  type final class<I extends Item>
@@ -3252,6 +3286,10 @@ stable 4
 12 dev.jstech.core.datagen.BlockTemperatureProvider  type final class extends DataMapProvider
 12 dev.jstech.core.datagen.BlockTemperatureProvider  String getName()
 12 dev.jstech.core.datagen.BlockTemperatureProvider  new(PackOutput, CompletableFuture<HolderLookup.Provider>)
+12 dev.jstech.core.datagen.CableItemModelProvider  type final class extends BlockModelProvider
+12 dev.jstech.core.datagen.CableItemModelProvider  String getName()
+12 dev.jstech.core.datagen.CableItemModelProvider  new(PackOutput, ExistingFileHelper)
+12 dev.jstech.core.datagen.CableItemModelProvider  static final int WINDOWED_THICKNESS
 12 dev.jstech.core.datagen.ClothingProvider  type final class extends DataMapProvider
 12 dev.jstech.core.datagen.ClothingProvider  String getName()
 12 dev.jstech.core.datagen.ClothingProvider  new(PackOutput, CompletableFuture<HolderLookup.Provider>)
@@ -3295,6 +3333,7 @@ stable 4
 10 dev.jstech.core.datagen.DeclaredFilesProvider  boolean declares()
 10 dev.jstech.core.datagen.DeclaredFilesProvider  new(PackOutput, String, String, String, Codec<T>, Supplier<Map<ResourceLocation, T>>)
 10 dev.jstech.core.datagen.DeclaredFilesProvider  static DeclaredFilesProvider<DepositType> deposits(PackOutput, String)
+12 dev.jstech.core.datagen.DeclaredFilesProvider  static DeclaredFilesProvider<ResearchCost> researchCosts(PackOutput, String)
 10 dev.jstech.core.datagen.DeclaredFilesProvider  static DeclaredFilesProvider<ReservoirType> reservoirs(PackOutput, String)
 10 dev.jstech.core.datagen.DeclaredTexts  type final class
 10 dev.jstech.core.datagen.DeclaredTexts  static Collection<TextKey> of(String)
@@ -7236,7 +7275,7 @@ stable 4
 10 dev.jstech.core.machine.IUpgrade  abstract UpgradeEffect effect(ItemStack)
 10 dev.jstech.core.machine.IUpgrade  default int most(ItemStack)
 10 dev.jstech.core.machine.IUpgrade  static final int ANY
-10 dev.jstech.core.machine.MachineBlockEntity  type abstract class extends SyncedBlockEntity implements IOwned, IMachineParameters, ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder, IMechanicalHolder, IMultiblockPortHost, IRedstonePortHost, IStructureController
+12 dev.jstech.core.machine.MachineBlockEntity  type abstract class extends SyncedBlockEntity implements IOwned, IMachineParameters, ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder, IMechanicalHolder, IMultiblockPortHost, IRedstonePortHost, IStructureTerminal
 10 dev.jstech.core.machine.MachineBlockEntity  <T> T throughFace(BlockCapability<T, ?>, Direction, T)
 10 dev.jstech.core.machine.MachineBlockEntity  CompoundTag copySetup(HolderLookup.Provider)
 10 dev.jstech.core.machine.MachineBlockEntity  FieldEnergyStorage getEnergy()
@@ -7258,6 +7297,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  MachineHeat heat()
 11 dev.jstech.core.machine.MachineBlockEntity  MachineHistory history()
 10 dev.jstech.core.machine.MachineBlockEntity  MachinePower power()
+12 dev.jstech.core.machine.MachineBlockEntity  MachineScreenData<?> screenData()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineShaft shaft()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineSides sides()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineStatus status()
@@ -7267,7 +7307,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  UpgradeEffect upgrades()
 10 dev.jstech.core.machine.MachineBlockEntity  boolean asleep()
 10 dev.jstech.core.machine.MachineBlockEntity  boolean holdsPlace(BlockPos)
-10 dev.jstech.core.machine.MachineBlockEntity  boolean inventoryOnMain()
+12 dev.jstech.core.machine.MachineBlockEntity  boolean inventoryOn(int)
 10 dev.jstech.core.machine.MachineBlockEntity  boolean merged()
 10 dev.jstech.core.machine.MachineBlockEntity  boolean pasteSetup(CompoundTag, boolean, HolderLookup.Provider)
 10 dev.jstech.core.machine.MachineBlockEntity  boolean running()
@@ -7279,9 +7319,11 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  int chosen()
 10 dev.jstech.core.machine.MachineBlockEntity  int damage(int)
 10 dev.jstech.core.machine.MachineBlockEntity  int givenSignal()
+12 dev.jstech.core.machine.MachineBlockEntity  int ownTabs()
 10 dev.jstech.core.machine.MachineBlockEntity  int perMinute()
 10 dev.jstech.core.machine.MachineBlockEntity  int recipesAtOnce()
 10 dev.jstech.core.machine.MachineBlockEntity  int repair(int)
+12 dev.jstech.core.machine.MachineBlockEntity  int screenWidth()
 10 dev.jstech.core.machine.MachineBlockEntity  int strength()
 10 dev.jstech.core.machine.MachineBlockEntity  long capacityShown()
 10 dev.jstech.core.machine.MachineBlockEntity  long drawn()
@@ -7418,10 +7460,12 @@ stable 4
 10 dev.jstech.core.machine.MachineInstallerItem  static final TextKey WRONG_TIER
 10 dev.jstech.core.machine.MachineInstallerItem  void appendHoverText(ItemStack, TooltipContext, List<Component>, TooltipFlag)
 10 dev.jstech.core.machine.MachineMenu  type final class extends CoreMenu
+12 dev.jstech.core.machine.MachineMenu  <T> T screenData(Class<T>)
 10 dev.jstech.core.machine.MachineMenu  List<Slot> faceSlots()
 10 dev.jstech.core.machine.MachineMenu  MachineBlockEntity machine()
 11 dev.jstech.core.machine.MachineMenu  MachineHistory history()
 10 dev.jstech.core.machine.MachineMenu  int tab()
+12 dev.jstech.core.machine.MachineMenu  int tabs()
 10 dev.jstech.core.machine.MachineMenu  new(int, Inventory, MachineBlockEntity)
 10 dev.jstech.core.machine.MachineMenu  new(int, Inventory, RegistryFriendlyByteBuf)
 10 dev.jstech.core.machine.MachineMenu  static final int FIRST_ACCESS
@@ -7494,6 +7538,7 @@ stable 4
 10 dev.jstech.core.machine.MachineResource  TextKey text()
 10 dev.jstech.core.machine.MachineResource  static List<MachineResource> round()
 10 dev.jstech.core.machine.MachineResource  static Optional<MachineResource> of(MatterState)
+12 dev.jstech.core.machine.MachineScreenData  type record<T>(StreamCodec<? super RegistryFriendlyByteBuf, T> codec, T none, Supplier<T> read)
 10 dev.jstech.core.machine.MachineScreenLayout  type final class
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout layout()
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition battery()
@@ -7501,6 +7546,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition fuse()
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition laneSlot(int, int, int, boolean, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition playerInventory()
+12 dev.jstech.core.machine.MachineScreenLayout  static GuiLayout.SlotPosition playerInventory(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean fits(int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean on(double, double, int, int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static boolean onDisc(double, double, int, int, int)
@@ -7570,6 +7616,7 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static final int METER_WIDTH
 10 dev.jstech.core.machine.MachineScreenLayout  static final int METER_X
 10 dev.jstech.core.machine.MachineScreenLayout  static final int METER_Y
+12 dev.jstech.core.machine.MachineScreenLayout  static final int MOST_TABS
 10 dev.jstech.core.machine.MachineScreenLayout  static final int NAME_PLATE_MOST
 10 dev.jstech.core.machine.MachineScreenLayout  static final int NAME_PLATE_Y
 10 dev.jstech.core.machine.MachineScreenLayout  static final int OUT_METER_HEIGHT
@@ -7629,9 +7676,11 @@ stable 4
 10 dev.jstech.core.machine.MachineScreenLayout  static int cubeFaceAt(double, double, int, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int faceX(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int faceY(int)
+12 dev.jstech.core.machine.MachineScreenLayout  static int kitShift(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int laneY(int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int resourceY(int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int tabAt(double, double)
+12 dev.jstech.core.machine.MachineScreenLayout  static int tabAt(double, double, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int tabX(int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int wheelDrumAt(double, double, int, int)
 10 dev.jstech.core.machine.MachineScreenLayout  static int[] keyWord(int, int, double)
@@ -7899,6 +7948,7 @@ stable 4
 10 dev.jstech.core.machine.MachineStructure  static final TextKey NEEDS_AT_LEAST
 10 dev.jstech.core.machine.MachineStructure  static final TextKey NEEDS_BLOCK
 10 dev.jstech.core.machine.MachineStructure  static final TextKey NEEDS_COUNT
+12 dev.jstech.core.machine.MachineStructure  static final TextKey NEEDS_TOGETHER
 10 dev.jstech.core.machine.MachineStructure  static final TextKey NO_PATTERN
 10 dev.jstech.core.machine.MachineStructure  static final TextKey OF_FLOOR
 10 dev.jstech.core.machine.MachineStructure  static final TextKey OR_ANOTHER
@@ -10380,20 +10430,6 @@ stable 4
 10 dev.jstech.core.moving.physics.StructurePhysics  void prepareBody()
 10 dev.jstech.core.moving.physics.StructurePhysics  void push(Vector3d, Vector3d)
 10 dev.jstech.core.moving.physics.StructurePhysics  void wake()
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  type abstract class extends HorizontalDirectionalBlock implements EntityBlock, IMultiblockBlock
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  BlockState playerWillDestroy(Level, BlockPos, BlockState, Player)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  final List<BlockPos> footprint(BlockPos, Direction)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  new(Properties)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  protected abstract BlockState partStateFor(BlockPos, Direction, BlockPos, BlockState)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  protected abstract IMultiblockGeometry geometry()
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  protected abstract boolean isOwnController(BlockState)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  protected abstract boolean isOwnPart(BlockState)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  protected abstract void dropContents(ServerLevel, BlockPos)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  protected void onControllerBroken(ServerLevel, BlockPos)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  protected void onRemove(BlockState, Level, BlockPos, BlockState, boolean)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  void brokenBy(ServerLevel, BlockPos, Player)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  void dissolve(ServerLevel, BlockPos, Direction)
-10 dev.jstech.core.multiblock.AbstractMultiblockControllerBlock  void setPlacedBy(Level, BlockPos, BlockState, LivingEntity, ItemStack)
 10 dev.jstech.core.multiblock.BlockMatch  type record(List<String> blocks, List<String> tags) implements IBlockMatcher
 10 dev.jstech.core.multiblock.BlockMatch  boolean matches(String)
 10 dev.jstech.core.multiblock.BlockMatch  boolean matchesAt(IBlockProvider, long, String)
@@ -10436,7 +10472,7 @@ stable 4
 10 dev.jstech.core.multiblock.FormedPartBlock  static BlockState originalAt(BlockGetter, BlockPos, BlockState)
 10 dev.jstech.core.multiblock.FormedPartBlock  static final int LOOKS_EVERY
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  type final class extends SyncedBlockEntity
-10 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockPos controller()
+12 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockPos terminal()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockState original()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  new(BlockPos, BlockState)
 10 dev.jstech.core.multiblock.FormedParts  type final class
@@ -10461,14 +10497,6 @@ stable 4
 10 dev.jstech.core.multiblock.IMatchResult.Failure  type record(int relX, int relY, int relZ, char expectedChar, String actualBlockId) implements IMatchResult
 10 dev.jstech.core.multiblock.IMatchResult.Success  type record(Rotation rotation, List<Long> slavePositions, Map<Long, PortKind> ports) implements IMatchResult
 10 dev.jstech.core.multiblock.IMatchResult.Success  new(Rotation, List<Long>)
-10 dev.jstech.core.multiblock.IMultiblockBlock  type interface
-10 dev.jstech.core.multiblock.IMultiblockBlock  abstract List<BlockPos> footprint(BlockPos, Direction)
-10 dev.jstech.core.multiblock.IMultiblockBlock  default List<BlockPos> getObstructedBlocks(BlockGetter, BlockPos, Direction)
-10 dev.jstech.core.multiblock.IMultiblockBlock  default void spawnMisplaceParticles(Level, List<BlockPos>)
-10 dev.jstech.core.multiblock.IMultiblockGeometry  type interface
-10 dev.jstech.core.multiblock.IMultiblockGeometry  abstract List<BlockPos> allPositions(BlockPos, Direction)
-10 dev.jstech.core.multiblock.IMultiblockGeometry  abstract List<BlockPos> partPositions(BlockPos, Direction)
-10 dev.jstech.core.multiblock.IMultiblockGeometry  abstract int blockCount()
 10 dev.jstech.core.multiblock.IMultiblockPortHost  type interface
 10 dev.jstech.core.multiblock.IMultiblockPortHost  default <T> T otherPort(BlockCapability<T, ?>, BlockPos, Direction)
 10 dev.jstech.core.multiblock.IMultiblockPortHost  default IEnergyPort energyClassPort(PortKind, BlockPos, Direction)
@@ -10480,10 +10508,6 @@ stable 4
 10 dev.jstech.core.multiblock.IRedstonePortHost  type interface
 10 dev.jstech.core.multiblock.IRedstonePortHost  abstract int givenSignal()
 10 dev.jstech.core.multiblock.IRedstonePortHost  abstract void heard(BlockPos, int)
-10 dev.jstech.core.multiblock.IStructureController  type interface
-10 dev.jstech.core.multiblock.IStructureController  abstract Optional<Orientation> formedOrientation()
-10 dev.jstech.core.multiblock.IStructureController  abstract boolean holdsPlace(BlockPos)
-10 dev.jstech.core.multiblock.IStructureController  abstract boolean merged()
 10 dev.jstech.core.multiblock.IStructureShape  type interface
 10 dev.jstech.core.multiblock.IStructureShape  abstract IBlockMatcher wanted(String)
 10 dev.jstech.core.multiblock.IStructureShape  abstract Map<String, Limit> limits()
@@ -10492,6 +10516,10 @@ stable 4
 10 dev.jstech.core.multiblock.IStructureShape  default Optional<ShapePreview> preview(int)
 10 dev.jstech.core.multiblock.IStructureShape  default boolean liesDown()
 10 dev.jstech.core.multiblock.IStructureShape  default boolean mirrors()
+12 dev.jstech.core.multiblock.IStructureTerminal  type interface
+12 dev.jstech.core.multiblock.IStructureTerminal  abstract Optional<Orientation> formedOrientation()
+12 dev.jstech.core.multiblock.IStructureTerminal  abstract boolean holdsPlace(BlockPos)
+12 dev.jstech.core.multiblock.IStructureTerminal  abstract boolean merged()
 10 dev.jstech.core.multiblock.IStructureWatcher  type interface
 10 dev.jstech.core.multiblock.IStructureWatcher  abstract boolean holds(long)
 10 dev.jstech.core.multiblock.IStructureWatcher  abstract void changed()
@@ -10514,7 +10542,7 @@ stable 4
 10 dev.jstech.core.multiblock.InsideRule  static InsideRule empty()
 10 dev.jstech.core.multiblock.InsideRule  static InsideRule of(IBlockMatcher)
 10 dev.jstech.core.multiblock.LevelStructures  type final class
-10 dev.jstech.core.multiblock.LevelStructures  BlockPos controllerHolding(BlockPos)
+12 dev.jstech.core.multiblock.LevelStructures  BlockPos terminalHolding(BlockPos)
 10 dev.jstech.core.multiblock.LevelStructures  int watching()
 10 dev.jstech.core.multiblock.LevelStructures  static LevelStructures of(ServerLevel)
 10 dev.jstech.core.multiblock.LevelStructures  void changed(BlockPos)
@@ -10531,15 +10559,16 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockBlocks  static List<Block> choicesOf(ShapePreview.Ghost)
 10 dev.jstech.core.multiblock.MultiblockBlocks  static String idOf(Block)
 10 dev.jstech.core.multiblock.MultiblockPartBlockEntity  type abstract class extends SyncedBlockEntity
-10 dev.jstech.core.multiblock.MultiblockPartBlockEntity  BlockPos controllerPos()
+12 dev.jstech.core.multiblock.MultiblockPartBlockEntity  BlockPos terminalPos()
 10 dev.jstech.core.multiblock.MultiblockPartBlockEntity  PortKind port()
 10 dev.jstech.core.multiblock.MultiblockPartBlockEntity  new(BlockEntityType<?>, BlockPos, BlockState)
 10 dev.jstech.core.multiblock.MultiblockPartBlockEntity  void release()
-10 dev.jstech.core.multiblock.MultiblockPartBlockEntity  void setController(BlockPos)
 10 dev.jstech.core.multiblock.MultiblockPartBlockEntity  void setPort(PortKind)
+12 dev.jstech.core.multiblock.MultiblockPartBlockEntity  void setTerminal(BlockPos)
 10 dev.jstech.core.multiblock.MultiblockPattern  type final class implements IStructureShape
 10 dev.jstech.core.multiblock.MultiblockPattern  IBlockMatcher wanted(String)
 10 dev.jstech.core.multiblock.MultiblockPattern  List<Orientation> orientations()
+12 dev.jstech.core.multiblock.MultiblockPattern  List<Together> together()
 10 dev.jstech.core.multiblock.MultiblockPattern  Map<Character, IBlockMatcher> mapping()
 10 dev.jstech.core.multiblock.MultiblockPattern  Map<Character, Place> places()
 10 dev.jstech.core.multiblock.MultiblockPattern  Map<Character, PortKind> ports()
@@ -10547,28 +10576,28 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockPattern  Optional<Inside> inside()
 10 dev.jstech.core.multiblock.MultiblockPattern  Optional<Repeat> repeat()
 10 dev.jstech.core.multiblock.MultiblockPattern  Optional<ShapePreview> preview(int)
-10 dev.jstech.core.multiblock.MultiblockPattern  Optional<String> controllerBlock()
+12 dev.jstech.core.multiblock.MultiblockPattern  Optional<String> terminalBlock()
 10 dev.jstech.core.multiblock.MultiblockPattern  ShapeMatch check(IBlockProvider, long)
 10 dev.jstech.core.multiblock.MultiblockPattern  String name()
 10 dev.jstech.core.multiblock.MultiblockPattern  String[] rows(int)
 10 dev.jstech.core.multiblock.MultiblockPattern  boolean liesDown()
 10 dev.jstech.core.multiblock.MultiblockPattern  boolean mirrors()
 10 dev.jstech.core.multiblock.MultiblockPattern  char charAt(int, int, int)
-10 dev.jstech.core.multiblock.MultiblockPattern  int controllerX()
-10 dev.jstech.core.multiblock.MultiblockPattern  int controllerY()
-10 dev.jstech.core.multiblock.MultiblockPattern  int controllerZ()
 10 dev.jstech.core.multiblock.MultiblockPattern  int reach()
 10 dev.jstech.core.multiblock.MultiblockPattern  int sizeX()
 10 dev.jstech.core.multiblock.MultiblockPattern  int sizeY()
 10 dev.jstech.core.multiblock.MultiblockPattern  int sizeZ()
+12 dev.jstech.core.multiblock.MultiblockPattern  int terminalX()
+12 dev.jstech.core.multiblock.MultiblockPattern  int terminalY()
+12 dev.jstech.core.multiblock.MultiblockPattern  int terminalZ()
 10 dev.jstech.core.multiblock.MultiblockPattern  static Builder builder(String)
-10 dev.jstech.core.multiblock.MultiblockPattern  static final char CONTROLLER_CHAR
 10 dev.jstech.core.multiblock.MultiblockPattern  static final char IGNORE_CHAR
+12 dev.jstech.core.multiblock.MultiblockPattern  static final char TERMINAL_CHAR
 10 dev.jstech.core.multiblock.MultiblockPattern  static final int AXIS_X
 10 dev.jstech.core.multiblock.MultiblockPattern  static final int AXIS_Y
 10 dev.jstech.core.multiblock.MultiblockPattern  static final int AXIS_Z
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  type static final class
-10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder controller(String)
+12 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder entry(char, String, IBlockMatcher, PortKind)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder inside(char, InsideRule)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder layer(String...)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder liesDown()
@@ -10579,17 +10608,15 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder repeatColumn(int, int, int)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder repeatLayer(int, int, int)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder repeatRow(int, int, int)
+12 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder terminal(String)
+12 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder together(String, String)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder where(char, IBlockMatcher)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder where(char, Place)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  MultiblockPattern build()
 10 dev.jstech.core.multiblock.MultiblockPattern.Inside  type record(char letter, InsideRule rule)
 10 dev.jstech.core.multiblock.MultiblockPattern.Repeat  type record(int axis, int index, Limit times)
 10 dev.jstech.core.multiblock.MultiblockPattern.Repeat  static final int MOST_TIMES
-10 dev.jstech.core.multiblock.MultiblockPatternGeometry  type final class implements IMultiblockGeometry
-10 dev.jstech.core.multiblock.MultiblockPatternGeometry  List<BlockPos> allPositions(BlockPos, Direction)
-10 dev.jstech.core.multiblock.MultiblockPatternGeometry  List<BlockPos> partPositions(BlockPos, Direction)
-10 dev.jstech.core.multiblock.MultiblockPatternGeometry  int blockCount()
-10 dev.jstech.core.multiblock.MultiblockPatternGeometry  new(MultiblockPattern)
+12 dev.jstech.core.multiblock.MultiblockPattern.Together  type record(String first, String second)
 10 dev.jstech.core.multiblock.MultiblockPatterns  type final class
 10 dev.jstech.core.multiblock.MultiblockPatterns  static BlockPos decode(long)
 10 dev.jstech.core.multiblock.MultiblockPatterns  static IBlockProvider provider(BlockGetter)
@@ -10678,7 +10705,6 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey BLOCKS
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey CATEGORY
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey CLICK
-10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey CONTROLLER
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey DRAG
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey EITHER
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey HIDE
@@ -10698,6 +10724,7 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey SHOW
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey SHOW_HOW
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey SIZE
+12 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey TERMINAL
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey TURNS
 10 dev.jstech.core.multiblock.MultiblockViewTexts  static final TextKey TURNS_AND
 10 dev.jstech.core.multiblock.Orientation  type record(int xFrom, int xSign, int yFrom, int ySign, int zFrom, int zSign)
@@ -10727,11 +10754,15 @@ stable 4
 10 dev.jstech.core.multiblock.PatternMatcher  static IMatchResult match(MultiblockPattern, IBlockProvider, long)
 10 dev.jstech.core.multiblock.PatternMatcher  static int[] decodePosition(long)
 10 dev.jstech.core.multiblock.PatternMatcher  static long encodePosition(int, int, int)
-10 dev.jstech.core.multiblock.Place  type record(IBlockMatcher fits, Counted counted, Valued valued)
+12 dev.jstech.core.multiblock.Place  type record(IBlockMatcher fits, Counted counted, Valued valued, List<Entry> entries)
+12 dev.jstech.core.multiblock.Place  Entry entryAt(IBlockProvider, long, String)
 10 dev.jstech.core.multiblock.Place  Place counting(String, IBlockMatcher)
+12 dev.jstech.core.multiblock.Place  Place entry(String, IBlockMatcher, PortKind)
 10 dev.jstech.core.multiblock.Place  Place valued(String, Map<String, Double>, Gather)
+12 dev.jstech.core.multiblock.Place  new(IBlockMatcher, Counted, Valued)
 10 dev.jstech.core.multiblock.Place  static Place of(IBlockMatcher)
 10 dev.jstech.core.multiblock.Place.Counted  type record(String name, IBlockMatcher which)
+12 dev.jstech.core.multiblock.Place.Entry  type record(String name, IBlockMatcher which, PortKind port)
 10 dev.jstech.core.multiblock.Place.Gather  type enum implements IStableName
 10 dev.jstech.core.multiblock.Place.Gather  LEAST
 10 dev.jstech.core.multiblock.Place.Gather  MEAN
@@ -10773,11 +10804,11 @@ stable 4
 10 dev.jstech.core.multiblock.Projectables  static Map<ResourceLocation, IStructureShape> all()
 10 dev.jstech.core.multiblock.Projectables  static Optional<IStructureShape> get(ResourceLocation)
 10 dev.jstech.core.multiblock.Projectables  static Optional<ShapePreview> preview(ResourceLocation, int)
-10 dev.jstech.core.multiblock.Projectables  static Optional<String> controllerOf(ResourceLocation)
+12 dev.jstech.core.multiblock.Projectables  static Optional<String> terminalOf(ResourceLocation)
 10 dev.jstech.core.multiblock.Projectables  static Text name(ResourceLocation)
 10 dev.jstech.core.multiblock.Projectables  static final String KEY_PREFIX
-10 dev.jstech.core.multiblock.Projectables  static void addControllers(Function<ResourceLocation, Optional<String>>)
 10 dev.jstech.core.multiblock.Projectables  static void addSource(Supplier<Map<ResourceLocation, IStructureShape>>)
+12 dev.jstech.core.multiblock.Projectables  static void addTerminals(Function<ResourceLocation, Optional<String>>)
 10 dev.jstech.core.multiblock.RedstonePortBlock  type class extends Block implements EntityBlock
 10 dev.jstech.core.multiblock.RedstonePortBlock  BlockEntity newBlockEntity(BlockPos, BlockState)
 10 dev.jstech.core.multiblock.RedstonePortBlock  new(Properties, Supplier<? extends BlockEntityType<? extends RedstonePortBlockEntity>>)
@@ -10816,6 +10847,7 @@ stable 4
 10 dev.jstech.core.multiblock.ShapeCodecs  static final Codec<InsideRule> INSIDE
 10 dev.jstech.core.multiblock.ShapeCodecs  static final Codec<Limit> LIMIT
 10 dev.jstech.core.multiblock.ShapeCodecs  static final Codec<MultiblockPattern.Repeat> REPEAT
+12 dev.jstech.core.multiblock.ShapeCodecs  static final Codec<MultiblockPattern.Together> TOGETHER
 10 dev.jstech.core.multiblock.ShapeCodecs  static final Codec<Place> PLACE
 10 dev.jstech.core.multiblock.ShapeCodecs  static final Codec<WallsShape> WALLS
 10 dev.jstech.core.multiblock.ShapeMatch  type sealed interface permits ShapeMatch.Formed, ShapeMatch.Failure
@@ -10830,11 +10862,12 @@ stable 4
 10 dev.jstech.core.multiblock.ShapeMatch  static final String UNIT
 10 dev.jstech.core.multiblock.ShapeMatch  static final String WALL
 10 dev.jstech.core.multiblock.ShapeMatch.Failure  type record(Wrong wrong, long at, int relX, int relY, int relZ, String wanted, String found) implements ShapeMatch
-10 dev.jstech.core.multiblock.ShapeMatch.Formed  type record(Orientation orientation, long controller, List<Long> parts, Map<Long, PortKind> ports, List<Long> inside, int sizeX, int sizeY, int sizeZ, int repeats, Map<String, Integer> counts, Map<String, Double> values) implements ShapeMatch
+12 dev.jstech.core.multiblock.ShapeMatch.Formed  type record(Orientation orientation, long terminal, List<Long> parts, Map<Long, PortKind> ports, List<Long> inside, int sizeX, int sizeY, int sizeZ, int repeats, Map<String, Integer> counts, Map<String, Double> values) implements ShapeMatch
 10 dev.jstech.core.multiblock.ShapeMatch.Formed  double value(String, double)
 10 dev.jstech.core.multiblock.ShapeMatch.Formed  int blocks()
 10 dev.jstech.core.multiblock.ShapeMatch.Formed  int count(String)
 10 dev.jstech.core.multiblock.ShapeMatch.Wrong  type enum
+12 dev.jstech.core.multiblock.ShapeMatch.Wrong  APART
 10 dev.jstech.core.multiblock.ShapeMatch.Wrong  BLOCK
 10 dev.jstech.core.multiblock.ShapeMatch.Wrong  COUNT
 10 dev.jstech.core.multiblock.ShapeMatch.Wrong  SIZE
@@ -10842,15 +10875,15 @@ stable 4
 10 dev.jstech.core.multiblock.ShapePreview  List<Choice> choices()
 10 dev.jstech.core.multiblock.ShapePreview  List<Ghost> layer(int)
 10 dev.jstech.core.multiblock.ShapePreview  Map<String, Integer> materials()
-10 dev.jstech.core.multiblock.ShapePreview  Optional<String> controllerBlock()
+12 dev.jstech.core.multiblock.ShapePreview  Optional<String> terminalBlock()
 10 dev.jstech.core.multiblock.ShapePreview  ShapePreview turned(Orientation)
-10 dev.jstech.core.multiblock.ShapePreview  ShapePreview withController(String)
+12 dev.jstech.core.multiblock.ShapePreview  ShapePreview withTerminal(String)
 10 dev.jstech.core.multiblock.ShapePreview  int blocks()
 10 dev.jstech.core.multiblock.ShapePreview  int layers()
 10 dev.jstech.core.multiblock.ShapePreview  int[] anchor(int, int, int, int, int)
 10 dev.jstech.core.multiblock.ShapePreview  static ShapePreview of(List<Ghost>)
 10 dev.jstech.core.multiblock.ShapePreview.Choice  type record(List<String> blocks, List<String> tags, int places)
-10 dev.jstech.core.multiblock.ShapePreview.Ghost  type record(int x, int y, int z, int layer, List<String> blocks, List<String> tags, boolean controller)
+12 dev.jstech.core.multiblock.ShapePreview.Ghost  type record(int x, int y, int z, int layer, List<String> blocks, List<String> tags, boolean terminal)
 10 dev.jstech.core.multiblock.ShapePreview.Ghost  String first()
 10 dev.jstech.core.multiblock.WallsShape  type record(Place floor, Place wall, InsideRule inside, Limit area, Limit height, Map<String, Limit> limits) implements RuleShape
 10 dev.jstech.core.multiblock.WallsShape  IBlockMatcher wanted(String)
@@ -11450,14 +11483,19 @@ stable 4
 12 dev.jstech.core.progression.IAxisStep  static final int PLAIN_COLOUR
 10 dev.jstech.core.progression.IKnowledgeGated  type interface
 10 dev.jstech.core.progression.IKnowledgeGated  abstract Optional<ResourceLocation> knowledge()
+12 dev.jstech.core.progression.IKnowledgeOpener  type interface
+12 dev.jstech.core.progression.IKnowledgeOpener  abstract boolean open(MinecraftServer, ResourceLocation)
 12 dev.jstech.core.progression.IMadeListener  type interface
 12 dev.jstech.core.progression.IMadeListener  abstract void made(MinecraftServer, UUID, ItemStack)
 10 dev.jstech.core.progression.Knowledge  type record(ResourceLocation id, TextKey name, boolean partial)
 10 dev.jstech.core.progression.Knowledge  static Knowledge of(ResourceLocation, TextKey)
 10 dev.jstech.core.progression.KnowledgeGate  type final class
+12 dev.jstech.core.progression.KnowledgeGate  static List<ItemStack> opens(Level, ResourceLocation)
 10 dev.jstech.core.progression.KnowledgeGate  static boolean allows(MinecraftServer, UUID, Optional<ResourceLocation>)
 10 dev.jstech.core.progression.KnowledgeGate  static boolean craftable(Level, Optional<ResourceLocation>)
 10 dev.jstech.core.progression.KnowledgeGate  static boolean openHere(Optional<ResourceLocation>)
+12 dev.jstech.core.progression.KnowledgeGate  static boolean opened(MinecraftServer, ResourceLocation)
+12 dev.jstech.core.progression.KnowledgeGate  static void openWhen(IKnowledgeOpener)
 10 dev.jstech.core.progression.KnowledgeShapedRecipe  type final class extends ShapedRecipe implements IKnowledgeGated
 10 dev.jstech.core.progression.KnowledgeShapedRecipe  Optional<ResourceLocation> knowledge()
 10 dev.jstech.core.progression.KnowledgeShapedRecipe  RecipeSerializer<?> getSerializer()
@@ -11645,6 +11683,78 @@ stable 4
 10 dev.jstech.core.region.SpatialIndex  static final int REGION_SHIFT
 10 dev.jstech.core.region.SpatialIndex  void put(K, Box, T)
 10 dev.jstech.core.region.SpatialIndex.Entry  type record<K, T>(K key, Box box, T value)
+12 dev.jstech.core.research.DataKind  type record(ResourceLocation id, TextKey name)
+12 dev.jstech.core.research.DataKinds  type final class
+12 dev.jstech.core.research.DataKinds  static DataKind declare(DataKind)
+12 dev.jstech.core.research.DataKinds  static List<DataKind> all()
+12 dev.jstech.core.research.DataKinds  static Optional<DataKind> byId(ResourceLocation)
+12 dev.jstech.core.research.DataKinds  static Optional<DataKind> of(ItemStack)
+12 dev.jstech.core.research.Discoveries  type final class
+12 dev.jstech.core.research.Discoveries  static List<Discovery> all()
+12 dev.jstech.core.research.Discoveries  static List<Discovery> existing(Level)
+12 dev.jstech.core.research.Discoveries  static Map<ResourceLocation, ResearchCost> declaredCosts()
+12 dev.jstech.core.research.Discoveries  static Optional<Discovery> byId(ResourceLocation)
+12 dev.jstech.core.research.Discoveries  static Optional<ResearchCost> cost(Level, ResourceLocation)
+12 dev.jstech.core.research.Discoveries  static boolean exists(Level, Discovery)
+12 dev.jstech.core.research.Discoveries  static boolean required(MinecraftServer, String)
+12 dev.jstech.core.research.Discoveries  static void gate(String, BooleanSupplier)
+12 dev.jstech.core.research.Discovery  type final class
+12 dev.jstech.core.research.Discovery  Knowledge knowledge()
+12 dev.jstech.core.research.Discovery  List<ResourceLocation> after()
+12 dev.jstech.core.research.Discovery  OptionalInt year()
+12 dev.jstech.core.research.Discovery  ResourceLocation id()
+12 dev.jstech.core.research.Discovery  String toString()
+12 dev.jstech.core.research.Discovery  TextKey field()
+12 dev.jstech.core.research.Discovery  TextKey name()
+12 dev.jstech.core.research.Discovery  TextKey when()
+12 dev.jstech.core.research.Discovery  static Builder builder(ResourceLocation, TextKey)
+12 dev.jstech.core.research.Discovery.Builder  type static final class
+12 dev.jstech.core.research.Discovery.Builder  Builder after(Discovery)
+12 dev.jstech.core.research.Discovery.Builder  Builder after(Knowledge)
+12 dev.jstech.core.research.Discovery.Builder  Builder after(Milestone)
+12 dev.jstech.core.research.Discovery.Builder  Builder costs(long)
+12 dev.jstech.core.research.Discovery.Builder  Builder field(TextKey)
+12 dev.jstech.core.research.Discovery.Builder  Builder needs(DataKind, int)
+12 dev.jstech.core.research.Discovery.Builder  Builder when(TextKey)
+12 dev.jstech.core.research.Discovery.Builder  Builder year(int)
+12 dev.jstech.core.research.Discovery.Builder  Discovery declare()
+12 dev.jstech.core.research.IResearchData  type interface
+12 dev.jstech.core.research.IResearchData  abstract DataKind dataKind()
+12 dev.jstech.core.research.Research  type final class
+12 dev.jstech.core.research.Research  static List<ResourceLocation> missing(MinecraftServer, String, Discovery)
+12 dev.jstech.core.research.Research  static Outcome check(MinecraftServer, String, Discovery, IDataStore)
+12 dev.jstech.core.research.Research  static Outcome work(MinecraftServer, String, Discovery, double, IDataStore)
+12 dev.jstech.core.research.Research  static boolean made(MinecraftServer, String, Discovery)
+12 dev.jstech.core.research.Research  static boolean ready(MinecraftServer, String, Discovery)
+12 dev.jstech.core.research.Research  static double share(MinecraftServer, String, Discovery)
+12 dev.jstech.core.research.Research.IDataStore  type interface
+12 dev.jstech.core.research.Research.IDataStore  abstract int held(DataKind)
+12 dev.jstech.core.research.Research.IDataStore  abstract void spend(DataKind, int)
+12 dev.jstech.core.research.Research.Outcome  type enum implements IStableId
+12 dev.jstech.core.research.Research.Outcome  ABSENT
+12 dev.jstech.core.research.Research.Outcome  LOCKED
+12 dev.jstech.core.research.Research.Outcome  MADE
+12 dev.jstech.core.research.Research.Outcome  NEEDS_DATA
+12 dev.jstech.core.research.Research.Outcome  WORKED
+12 dev.jstech.core.research.Research.Outcome  int id()
+12 dev.jstech.core.research.ResearchCost  type record(long points, Map<ResourceLocation, Integer> data)
+12 dev.jstech.core.research.ResearchCost  ResearchCost with(DataKind, int)
+12 dev.jstech.core.research.ResearchCost  int data(ResourceLocation)
+12 dev.jstech.core.research.ResearchCost  static ResearchCost of(long)
+12 dev.jstech.core.research.ResearchCost  static final Codec<ResearchCost> CODEC
+12 dev.jstech.core.research.ResearchDataItem  type class extends Item implements IResearchData
+12 dev.jstech.core.research.ResearchDataItem  DataKind dataKind()
+12 dev.jstech.core.research.ResearchDataItem  Optional<TextKey> from()
+12 dev.jstech.core.research.ResearchDataItem  new(Properties, DataKind)
+12 dev.jstech.core.research.ResearchDataItem  new(Properties, DataKind, TextKey)
+12 dev.jstech.core.research.ResearchDataItem  void appendHoverText(ItemStack, TooltipContext, List<Component>, TooltipFlag)
+12 dev.jstech.core.research.ResearchMath  type final class
+12 dev.jstech.core.research.ResearchMath  static Step advance(double, double, long, int[], int[])
+12 dev.jstech.core.research.ResearchMath  static double groupPower(double[], double)
+12 dev.jstech.core.research.ResearchMath  static double[] groupShares(double[], double)
+12 dev.jstech.core.research.ResearchMath  static int spent(double, int)
+12 dev.jstech.core.research.ResearchMath.Step  type record(double share, int[] spends)
+12 dev.jstech.core.research.ResearchMath.Step  boolean made()
 10 dev.jstech.core.resource.CachedRuntimeFiles  type final class implements IRuntimeFiles
 10 dev.jstech.core.resource.CachedRuntimeFiles  Map<String, Supplier<byte[]>> files()
 10 dev.jstech.core.resource.CachedRuntimeFiles  static IRuntimeFiles of(Path, IRuntimeFiles, Supplier<String>)

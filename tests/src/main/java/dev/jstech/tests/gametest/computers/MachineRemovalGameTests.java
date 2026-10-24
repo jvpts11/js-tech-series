@@ -142,21 +142,21 @@ public final class MachineRemovalGameTests {
         broken.onDestroyedByPlayer(level, pos, player, true, level.getFluidState(pos));
     }
 
-    /* A whole cabinet stands up as one placed by a player does, its parts around the controller. */
+    /* A whole cabinet stands up as one placed by a player does, its parts around the origin. */
     private static void standUp(final GameTestHelper helper, final BlockPos relative) {
         final BlockPos pos = helper.absolutePos(relative);
         final BlockState state = helper.getLevel().getBlockState(pos);
         state.getBlock().setPlacedBy(helper.getLevel(), pos, state, null, ItemStack.EMPTY);
     }
 
-    /* A block of the Mainframe's cabinet other than its controller. */
+    /* A block of the Mainframe's cabinet other than its origin. */
     private static BlockPos partOfTheMainframe(final GameTestHelper helper) {
         for (final BlockPos near : BlockPos.betweenClosed(AT.offset(-2, -1, -2), AT.offset(2, 3, 2))) {
             if (helper.getBlockState(near).getBlock() instanceof MainframePartBlock) {
                 return near.immutable();
             }
         }
-        throw new IllegalStateException("the Mainframe stands with no part around its controller");
+        throw new IllegalStateException("the Mainframe stands with no part around its origin");
     }
 
     private static List<ItemStack> contents(final ItemStackHandler handler) {

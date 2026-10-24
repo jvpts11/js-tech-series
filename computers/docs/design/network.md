@@ -195,7 +195,7 @@ The **WAN Gateway Computer** links distant places through the **long-distance li
 Line, the T3 Line, the VLDC and the Dark Fibre, one per era. (The Network Gateway is something else: the bridge with
 ComputerCraft, [Peripherals](peripherals.md).) Today only the long-distance line exists, with no function.
 
-**Its shape:** a very wide computer, a 4×2×2 multiblock, bigger than the Mainframe's 3×2×2, drawn as one model per era
+**Its shape:** a very wide computer, a 4×2×2 big block, bigger than the Mainframe's 3×2×2, drawn as one model per era
 from the Vintage to the Advanced, like the long-distance line, with 4 ports for that line. It takes hardware like any
 computer (motherboard, processors, memory, power supply), runs a system, and its function is **software**: the
 **Nouvell BorderLink** service, by Nouvell Networks after the real BorderManager, one version per era, installed on it.

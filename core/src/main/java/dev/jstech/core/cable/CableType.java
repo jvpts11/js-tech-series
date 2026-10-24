@@ -49,6 +49,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class CableType {
 
+    /** The thickest a cable is, in pixels: three quarters of a block, a pipe alone in its block. */
+    public static final int THICKEST = 12;
     /* The widest a wire in an outer lane can be and still stay inside the block, half a block less the lane pitch. */
     private static final int MOST_PIXELS_IN_A_LANE = 2 * (8 - Lane.PITCH);
 
@@ -316,7 +318,7 @@ public final class CableType {
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
         /* No thicker than three quarters of a block: a pipe alone in its block, as pipes are in every mod. */
-        private static final int MOST_PIXELS = 12;
+        private static final int MOST_PIXELS = THICKEST;
 
         private Builder(final Connection line) {
             this.line = Objects.requireNonNull(line, "line");

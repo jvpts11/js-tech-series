@@ -107,6 +107,10 @@ public final class JsTests {
         TestNetworkMembers.declare(modEventBus);
         // An era between two of the series', an axis, milestones and knowledge, to prove the Core's progression.
         TestProgression.declare();
+        // A kind of data and discoveries, one locked behind another, to prove the Core's research.
+        TestResearch.declare();
+        // Discoveries for J's Industrial's research computer to work.
+        TestCrcResearch.declare();
         // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.
         TestFluids.declare();
         // Materials in every form and ores in several rocks, to prove the Core's catalogue and the art it draws.

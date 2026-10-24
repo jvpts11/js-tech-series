@@ -65,20 +65,20 @@ public final class BuildJobs {
     }
 
     /**
-     * Starts building the multiblock of the controller at {@code controller} for {@code player}, as their builder is
+     * Starts building the multiblock of the terminal at {@code terminal} for {@code player}, as their builder is
      * set, in place of anything they were building; tells them when they may not, or when it is not a multiblock's.
      */
-    public static void start(final ServerPlayer player, final BlockPos controller, final BuilderState state) {
+    public static void start(final ServerPlayer player, final BlockPos terminal, final BuilderState state) {
         JOBS.remove(player.getUUID());
         if (!CorePermissions.has(player, CorePermissions.BUILD_MULTIBLOCKS)) {
-            tell(player, new BuildStatus(controller, BuildStatus.Phase.STOPPED, 0, BuildStatus.Reason.NOT_ALLOWED, ""));
+            tell(player, new BuildStatus(terminal, BuildStatus.Phase.STOPPED, 0, BuildStatus.Reason.NOT_ALLOWED, ""));
             return;
         }
-        if (BuilderPlan.of(player.level(), controller, player, state).isEmpty()) {
-            tell(player, new BuildStatus(controller, BuildStatus.Phase.STOPPED, 0, BuildStatus.Reason.UNKNOWN, ""));
+        if (BuilderPlan.of(player.level(), terminal, player, state).isEmpty()) {
+            tell(player, new BuildStatus(terminal, BuildStatus.Phase.STOPPED, 0, BuildStatus.Reason.UNKNOWN, ""));
             return;
         }
-        final Job job = new Job(player, player.level().dimension(), controller.immutable(), state);
+        final Job job = new Job(player, player.level().dimension(), terminal.immutable(), state);
         JOBS.put(player.getUUID(), job);
         tell(player, job.status(BuildStatus.Phase.BUILDING, BuildStatus.Reason.NONE, ""));
     }
@@ -101,10 +101,10 @@ public final class BuildJobs {
         }
     }
 
-    /** What {@code player} is building, if anything: its controller. */
+    /** What {@code player} is building, if anything: its terminal. */
     public static Optional<BlockPos> building(final ServerPlayer player) {
         final Job job = JOBS.get(player.getUUID());
-        return job == null ? Optional.empty() : Optional.of(job.controller);
+        return job == null ? Optional.empty() : Optional.of(job.terminal);
     }
 
     private static void tick() {
@@ -140,11 +140,11 @@ public final class BuildJobs {
     @Nullable
     private static BuildStatus step(final ServerPlayer player, final Job job) {
         final double reach = BuildBalance.reach();
-        if (player.blockPosition().distSqr(job.controller) > reach * reach) {
+        if (player.blockPosition().distSqr(job.terminal) > reach * reach) {
             return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.TOO_FAR, "");
         }
         final Level level = player.level();
-        final Optional<BuilderPlan> plan = BuilderPlan.of(level, job.controller, player, job.state);
+        final Optional<BuilderPlan> plan = BuilderPlan.of(level, job.terminal, player, job.state);
         if (plan.isEmpty()) {
             return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.UNKNOWN, "");
         }
@@ -201,24 +201,24 @@ public final class BuildJobs {
 
         private final ServerPlayer player;
         private final ResourceKey<Level> dimension;
-        private final BlockPos controller;
+        private final BlockPos terminal;
         private final BuilderState state;
         private int placed;
         private int credit;
         private boolean held;
 
-        private Job(final ServerPlayer player, final ResourceKey<Level> dimension, final BlockPos controller,
+        private Job(final ServerPlayer player, final ResourceKey<Level> dimension, final BlockPos terminal,
                     final BuilderState state) {
             this.player = player;
             this.dimension = dimension;
-            this.controller = controller;
+            this.terminal = terminal;
             this.state = state;
             this.credit = TICKS_PER_SECOND;
         }
 
         private BuildStatus status(final BuildStatus.Phase phase, final BuildStatus.Reason reason,
                                    final String block) {
-            return new BuildStatus(this.controller, phase, this.placed, reason, block);
+            return new BuildStatus(this.terminal, phase, this.placed, reason, block);
         }
     }
 }

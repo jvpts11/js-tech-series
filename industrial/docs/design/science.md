@@ -8,8 +8,20 @@ second gate, only for frontier science: the discoveries that real scientists mad
 
 ## What exists today
 
-J's Core has the idea of teams and of progression that any mod can read, and J's Industrial has no research yet. It
-has **what counts as discovering an element**, which the research will stand on:
+J's Core has the **research** every mod shares (below): discoveries a team makes part by part, each costing research
+points and data, set in data so a modpack can change them, starting once the team knows what it comes after, and the
+knowledge gate, which locks a recipe for running and never for seeing. J's Industrial has:
+
+- the **four kinds of data**, sample, crystal, spectral and particle, an item each, its tooltip saying which
+  instruments give it; until the instruments come, they come from the creative tab;
+- the **`require_research`** setting, on by default;
+- the **Research Link Cable**;
+- the **Computational Research Centre**, whole: its blocks and entries, its 27 places with the processors of T3 to T5
+  and the three ways of cooling, its heat, which burns the hungriest processor past 100 °C, its groups with their
+  queue, its formed model, and its screen with its Processors, Research and Group tabs.
+
+The discoveries themselves (the table below) are content still to declare: no recipe asks for one yet. It also has
+**what counts as discovering an element**, which the research stands on:
 
 - **an element is discovered at its first synthesis by a team**: the elements science discovered by making them
   (technetium, promethium, astatine, everything from neptunium on, and every element beyond the known table), the
@@ -44,43 +56,84 @@ has **what counts as discovering an element**, which the research will stand on:
 - **Discoveries ask for data from different instruments** (below): **sample data** for materials (rare earths,
   isotopes), **crystal data** for solid state physics (superconductivity, giant magnetoresistance), **spectral data**
   for the laser, **particle data** for nuclear physics (fission, fusion, superheavy elements), and, only with J's Space
-  installed, **astronomical data**. Each discovery also asks for an amount of computing in the CRC; the numbers are in
-  [Implementation](implementation.md).
+  installed, **astronomical data**. The kinds of data are an open list, so a mod adds its own: J's Space the
+  astronomical data, the Aleph the singularity data ([The Aleph](aleph.md)).
+- **Data are items**, one for each kind, made by the instruments and put in the CRC, which spends them as the research
+  goes: each one covers an equal share of it, so a discovery that asks for eight crystal data takes one every eighth
+  of the way.
+- **Each discovery asks for an amount of research**, counted in research points: a T3 processor makes one point a
+  second. What each discovery costs is content, set in data, so a modpack can change it.
+- **Each discovery has its prerequisites**: other discoveries, elements the team knows, and, with J's Space, its
+  milestones. It starts only once they are all known. A discovery that asks for astronomical data or for a milestone
+  of J's Space exists only when J's Space is installed.
 - **Not researched:** common metals, steel, alloys, petrochemistry and circuits.
 - Discoveries come in their real order: fission before fusion, superconductivity before the high-temperature kind.
 - **Knowledge belongs to the team** (J's Core's teams, FTB Teams when it is installed, or else the player), kept as a
-  J's Core progression that other mods can read. A machine runs a locked recipe only if its owner's team has researched
-  it.
+  J's Core progression that other mods can read. A discovery is a knowledge the team holds in part as its research
+  goes and whole once it is done. A machine runs a locked recipe only if its owner's team has researched it. The
+  research itself is J's Core's, so J's Space's own research computer stands on the same discoveries.
 - **A recipe is never hidden.** JEI, EMI, the manuals and J's Computers' Pattern Studio always show every recipe and
   mark the ones that need research with the discovery they need; only running it is refused. The whole tree of
   discoveries is visible, so a player can plan.
-- A server setting, `require_research`, on by default, turns research off: everything is unlocked from the start.
+- A server setting, `require_research`, on by default, turns the gate off: no recipe is locked and nothing is granted;
+  research can still be done, for its advancements. It is the first setting of `jsindustrial-server.toml`.
 
 ### The Computational Research Centre
 
-The **CRC** is a multiblock 3 blocks high, 3 wide and 9 deep, one model through its controller. It comes at **T3**, as
-the transistor research computers of the 1950s and 1960s (the IBM 7090, 1959).
+The **CRC** is a multiblock 3 blocks high, 3 wide and 9 deep, built of blocks of its own, as every multiblock of the
+series. It comes at **T3**, as the transistor research computers of the 1950s and 1960s (the IBM 7090, 1959), and
+once formed it is one model of three cabinets in their style, the parts installed in it seen through its glazed doors
+and the lamps of its registers blinking while it works.
 
-Its grid has **three sections of 3 by 3 along its body, 27 places**, filled with the processors of each tier:
+**Its blocks:**
+
+| Block | Where |
+| --- | --- |
+| CRC Terminal | the middle of the bottom row of its front, its console; it opens the CRC's screen |
+| CRC Casing | the rest of the outside: smooth sheet, a louvred vent along the top of the rear |
+| CRC Gate | three, inside, one for each section, as IBM called the racks of its cards |
+| CRC Bus | four, inside, between and at the ends of the gates |
+| Its entries | on the six places of the two lower rows of the rear face, and nowhere else |
+
+**Its entries**, where the lines arrive, each placed by the player on one of the six rear places:
+
+| Entry | How many | What comes through |
+| --- | --- | --- |
+| Power Entry | exactly one | energy at **medium voltage**: a CRC full of T5 processors draws 2.16 MW ([Energy](energy.md)) |
+| Link Socket | at most one | the Research Link Cable (below) |
+| Coolant Inlet and Coolant Outlet | at most one pair, always together | cold water in and hot water out, for the Liquid Coolers |
+| Heat Port | at most one | the heat pipe to the Central Cooling Plant, for the Heat Pipe Coolers ([Machines](machines.md)) |
+
+Its screen has **three sections of 3 by 3, 27 places**, one for each gate, filled with the processors of each tier and
+what cools them:
 
 | Part | Tier | Research | Energy | Heat |
 | --- | --- | --- | --- | --- |
-| Research Processor (transistor boards) | T3 | 1 | 5 kW | +1 |
-| Integrated Research Processor | T4 | 4 | 20 kW | +2 |
-| Nanoscale Research Processor | T5 | 16 | 80 kW | +4 |
+| Research Processor (transistor boards) | T3 | 1 point a second | 5 kW | 5 kW |
+| Integrated Research Processor | T4 | 4 | 20 kW | 20 kW |
+| Nanoscale Research Processor | T5 | 16 | 80 kW | 80 kW |
 | Quantum Research Processor | T6 | [Exotic materials](exotic-materials.md); it needs a **dilution refrigerator**, since real qubits work at 15 millikelvin | | |
-| Heat Sink | T3 | | | −1, passive |
-| Liquid Cooler | T3 | | | −3, taking the heat through the heat port, by heat pipe to the Central Cooling Plant ([Machines](machines.md)) |
+| Heat Sink | T3 | | | sheds 5 kW, by itself |
+| Liquid Cooler | T3 | | | sheds up to 15 kW into the water that runs from the Coolant Inlet to the Coolant Outlet; cheap |
+| Heat Pipe Cooler | T4 | | | sheds up to 25 kW through the Heat Port, by heat pipe to the Central Cooling Plant; dear, and no water |
 
-- When the cooling is enough, the temperature settles; when it isn't, it rises, and **above 100 °C a processor burns**
-  and is lost, as Overdrive damages a machine.
-- A CRC full of T5 processors draws more than 2 MW, so its port is **medium voltage** ([Energy](energy.md)).
+- **The heat is real**: all the power a processor draws becomes heat. When its coolers shed it all, the temperature
+  settles; when they don't, it rises, and **above 100 °C the part that heats most burns** and is lost, as Overdrive
+  damages a machine.
+- **A cooler sheds nothing without its entry**: a Liquid Cooler needs the coolant pair and water flowing through it,
+  and the water leaves hotter the more it carries; a Heat Pipe Cooler needs the Heat Port and the plant at the other
+  end of the pipe. Water is the cheap way, the heat pipe the dear one that needs no water; a CRC full of T5
+  processors needs the Central Cooling Plant.
+- Its screen has the kit's tabs and three of its own: **Processors** (the 27 places, a place for each kind of data,
+  the coolant's lamp, the thermometer and the counters, with the inventory), **Research** (the tree of discoveries) and
+  **Group** (the CRCs of its group and what each gives).
 
-**Groups.** The **Research Link Cable** joins CRCs: each connected run is **one group**, working on one discovery. It is
-one cable, with no tiers and no length limit; it takes colours, and different colours don't join. Every CRC beyond the
-first adds **90% of its power**: coordinating costs, as in any real parallel computing, but every CRC more helps. Any
-CRC of the group picks the research, and all show the current one, its progress, what each contributes, and a **queue**
-of the next ones.
+**Groups.** The **Research Link Cable** joins CRCs through their Link Sockets: each connected run is **one group**,
+working on one discovery. It is one cable, with no tiers and no length limit; it takes colours, and different colours
+don't join. The group's power is **its strongest CRC's whole and 90% of each other's**: coordinating costs, as in any
+real parallel computing, but every CRC more helps. Any CRC of the group picks the research, and all show the current
+one, its progress, what each contributes, and a **queue** of the next ones. The progress belongs to the team, so
+cutting the cable loses nothing; in a group of several teams, each team counts its own CRCs.
 
 With J's Computers installed ([Computers](computers.md)), the CRC can also take server hardware and join the network, a
 **Research Router** groups CRCs as the Server Router groups servers, the Cluster Management Computer manages research

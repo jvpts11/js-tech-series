@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 /**
  * The data a content pack's blocks need on the server, made as it loads its data under every data pack, so a pack
  * that brings its own replaces any of it: each block with an item drops itself, as long as a blast leaves it, and is
- * in the tags of the tool that breaks it fast and of the tier it needs; a machine's controller breaks with a pickaxe.
+ * in the tags of the tool that breaks it fast and of the tier it needs; a machine's terminal breaks with a pickaxe.
  */
 final class PackData implements IRuntimeFiles {
 

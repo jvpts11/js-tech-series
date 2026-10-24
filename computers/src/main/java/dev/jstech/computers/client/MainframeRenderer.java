@@ -17,8 +17,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 
 /**
- * Draws a Mainframe as one cabinet from its controller block, the model facing north with the controller in the
- * middle of its bottom front row, so each facing turns it about that block onto the multiblock's own footprint. Every
+ * Draws a Mainframe as one cabinet from its origin block, the model facing north with the origin in the
+ * middle of its bottom front row, so each facing turns it about that block onto the cabinet's own footprint. Every
  * processor, memory stick, graphics card, disk and the power supply is its own bone, shown only when that slot
  * actually holds the part, so what a player installs is what a player sees through the open service bay.
  *

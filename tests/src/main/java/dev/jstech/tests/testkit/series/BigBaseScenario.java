@@ -9,6 +9,7 @@ package dev.jstech.tests.testkit.series;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
@@ -24,9 +25,9 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.bigblock.AbstractBigBlock;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.machine.MachineBlockEntity;
-import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.testkit.computers.CraftFiles;
@@ -278,9 +279,9 @@ public final class BigBaseScenario {
      */
     private static MainframeBlockEntity placeMainframe(final TestWorldBuilder world, final Params params, final BlockPos pos) {
         /*
-         * The controller alone, deliberately: the layout packs the backbone right against it, and a raised
+         * The origin alone, deliberately: the layout packs the backbone right against it, and a raised
          * Mainframe's side parts would land on the first cable of that backbone and cut the network at its
-         * source. The orchestrator works from its controller, which is what this base measures.
+         * source. The orchestrator works from its origin, which is what this base measures.
          */
         world.setBlock(pos, ComputingModule.MAINFRAME.get());
         final MainframeBlockEntity mainframe = world.blockEntity(pos, MainframeBlockEntity.class);
@@ -431,8 +432,8 @@ public final class BigBaseScenario {
 
     /**
      * A cable running from {@code (x, start)} away from the backbone, with cabinets on both sides, rear to
-     * the cable. Cabinets are two blocks wide and deep with the controller at the front-right, so a cabinet
-     * whose rear meets a cable at {@code x} has its controller two blocks off the cable, and the two sides
+     * the cable. Cabinets are two blocks wide and deep with the origin at the front-right, so a cabinet
+     * whose rear meets a cable at {@code x} has its origin two blocks off the cable, and the two sides
      * are staggered by one so their footprints tile the cable without touching.
      */
     private static List<ServerRackBlockEntity> placeCabinetRow(final TestWorldBuilder world, final CableEntry cable,
@@ -462,18 +463,18 @@ public final class BigBaseScenario {
         return racks;
     }
 
-    /** Places a cabinet the way a player does: the controller plus its eleven part blocks. */
+    /** Places a cabinet the way a player does: the origin plus its eleven part blocks. */
     private static ServerRackBlockEntity placeCabinet(final TestWorldBuilder world, final Block rackBlock,
                                                       final BlockPos pos, final Direction facing) {
         final BlockState state = rackBlock.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, facing);
         /*
          * A cabinet refuses to raise its eleven parts into occupied space, so in a real world (as opposed to
          * an empty test arena) the ground has to come out first, because otherwise every cabinet stays a lone
-         * controller block, no rack forms, and the base has nothing on its network at all.
+         * origin block, no rack forms, and the base has nothing on its network at all.
          */
-        world.clearFor(dev.jstech.computers.block.ServerRackStructure.allPositions(pos, facing));
+        world.clearFor(ServerRackStructure.allPositions(pos, facing));
         world.setBlock(pos, state);
-        ((AbstractMultiblockControllerBlock) rackBlock).setPlacedBy(world.level(), world.absolute(pos), state,
+        ((AbstractBigBlock) rackBlock).setPlacedBy(world.level(), world.absolute(pos), state,
                 null, ItemStack.EMPTY);
         return world.blockEntity(pos, ServerRackBlockEntity.class);
     }

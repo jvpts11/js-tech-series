@@ -95,7 +95,7 @@ public final class CableLineGameTests {
     }
 
     /**
-     * A Mainframe's parts take the cables of their Mainframe's era and the earlier ones, as its controller does: a
+     * A Mainframe's parts take the cables of their Mainframe's era and the earlier ones, as its origin does: a
      * Vintage Mainframe's cabinet took an Advanced peripheral cable on any of its parts.
      */
     @GameTest(template = ARENA)
@@ -121,9 +121,9 @@ public final class CableLineGameTests {
         final BlockPos at = new BlockPos(2, 2, 2);
         final ServerRackBlock rack = (ServerRackBlock) ComputingModule.VINTAGE_SERVER_RACK.get();
         helper.setBlock(at, rack);
-        final BlockState controller = helper.getBlockState(at);
-        rack.setPlacedBy(helper.getLevel(), helper.absolutePos(at), controller, null, ItemStack.EMPTY);
-        final Direction facing = controller.getValue(ServerRackBlock.FACING);
+        final BlockState origin = helper.getBlockState(at);
+        rack.setPlacedBy(helper.getLevel(), helper.absolutePos(at), origin, null, ItemStack.EMPTY);
+        final Direction facing = origin.getValue(ServerRackBlock.FACING);
         BlockState part = null;
         for (final BlockPos placed : rack.footprint(helper.absolutePos(at), facing)) {
             final BlockState there = helper.getLevel().getBlockState(placed);

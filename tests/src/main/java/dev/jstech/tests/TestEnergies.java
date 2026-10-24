@@ -72,24 +72,24 @@ public final class TestEnergies {
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
                             "volts_low_line")))
                     .grid(VOLTS.grid(LOW)).alone().carries(LINE_RATE, 0)
-                    .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
-                    .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/insulated_copper"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/plug/insulated_copper"))
                     .build(() -> Items.LIGHTNING_ROD));
     /** A line of the low class whose wire is also hung, across sixteen blocks at most. */
     public static final DeferredHolder<CableType, CableType> HUNG_LINE = CABLES.register("volts_hung_line",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
                             "volts_hung_line")))
                     .grid(VOLTS.grid(LOW)).alone().carries(LINE_RATE, 0).hangs(HUNG_SPAN)
-                    .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
-                    .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/insulated_copper"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/plug/insulated_copper"))
                     .build(() -> Items.STRING));
     /** A line of the high class. */
     public static final DeferredHolder<CableType, CableType> HIGH_LINE = CABLES.register("volts_high_line",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
                             "volts_high_line")))
                     .grid(VOLTS.grid(HIGH)).alone().carries(LINE_RATE, 0)
-                    .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
-                    .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/insulated_copper"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jscore", "block/cable/plug/insulated_copper"))
                     .build(() -> Items.CHAIN));
 
     private TestEnergies() {

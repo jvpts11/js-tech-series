@@ -42,9 +42,9 @@ public sealed interface ShapeMatch permits ShapeMatch.Formed, ShapeMatch.Failure
      * A formed structure.
      *
      * @param orientation how it stands, for a drawn pattern; north for a shape by rule
-     * @param controller  its controller's place
-     * @param parts       the places of its shell but the controller's: where ports may stand as blocks of their own
-     * @param ports       the places a pattern makes ports, with what each opens onto
+     * @param terminal  its terminal's place
+     * @param parts       the places of its shell but the terminal's: where ports may stand as blocks of their own
+     * @param ports       the places a pattern makes ports, and those holding entries, with what each opens onto
      * @param inside      the places inside it, empty ones too
      * @param sizeX       its size along the world's x, in blocks
      * @param sizeY       its height
@@ -53,7 +53,7 @@ public sealed interface ShapeMatch permits ShapeMatch.Formed, ShapeMatch.Failure
      * @param counts      how many blocks of each count it has
      * @param values      the numbers its blocks give, each gathered into one, by key
      */
-    record Formed(Orientation orientation, long controller, List<Long> parts, Map<Long, PortKind> ports,
+    record Formed(Orientation orientation, long terminal, List<Long> parts, Map<Long, PortKind> ports,
                   List<Long> inside, int sizeX, int sizeY, int sizeZ, int repeats, Map<String, Integer> counts,
                   Map<String, Double> values) implements ShapeMatch {
 
@@ -66,7 +66,7 @@ public sealed interface ShapeMatch permits ShapeMatch.Formed, ShapeMatch.Failure
             values = Map.copyOf(values);
         }
 
-        /** How many places its shell has, its controller's with them. */
+        /** How many places its shell has, its terminal's with them. */
         public int blocks() {
             return this.parts.size() + 1;
         }
@@ -86,8 +86,8 @@ public sealed interface ShapeMatch permits ShapeMatch.Formed, ShapeMatch.Failure
      * Not formed.
      *
      * @param wrong  what is wrong
-     * @param at     the first place that is wrong, or the controller's for a count or a size
-     * @param relX   that place's offset from the controller along x
+     * @param at     the first place that is wrong, or the terminal's for a count or a size
+     * @param relX   that place's offset from the terminal along x
      * @param relY   along y
      * @param relZ   along z
      * @param wanted for a block, what goes there: a pattern's letter, or the part of a shape ({@link #FRAME},
@@ -111,6 +111,11 @@ public sealed interface ShapeMatch permits ShapeMatch.Formed, ShapeMatch.Failure
         /** A count is below its least or above its most. */
         COUNT,
         /** The shape is smaller or larger than it may be. */
-        SIZE
+        SIZE,
+        /**
+         * Two counts that go together, as a coolant's inlet and its outlet, differ: {@code wanted} names the first and
+         * {@code found} the second.
+         */
+        APART
     }
 }

@@ -184,7 +184,7 @@ public final class BenchCraftGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     /*
                      * Each visual bay block covers two rack-unit rows (bay b = rows 2b and 2b+1),
-                     * so servers in U0, U2 and U4 light the controller, second column and upper bay.
+                     * so servers in U0, U2 and U4 light the origin, second column and upper bay.
                      */
                     rackBe.getServers().setStackInSlot(0, ServerStacks.defaultServer());
                     rackBe.getServers().setStackInSlot(2, ServerStacks.defaultServer());
@@ -192,7 +192,7 @@ public final class BenchCraftGameTests {
                 })
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(helper.getBlockState(rack).getValue(ServerRackBlock.BAYS) == 3,
-                            "the controller bay lights up for its server");
+                            "the origin bay lights up for its server");
                     helper.assertTrue(helper.getBlockState(second).getValue(ServerRackBlock.BAYS) == 3,
                             "the second column lights up for its server");
                     helper.assertTrue(helper.getBlockState(upper).getValue(ServerRackBlock.BAYS) == 3,
@@ -203,7 +203,7 @@ public final class BenchCraftGameTests {
                     helper.assertTrue(helper.getBlockState(second).getValue(ServerRackBlock.BAYS) == 0,
                             "pulling a Server empties its bay on the face");
                     helper.assertTrue(helper.getBlockState(rack).getValue(ServerRackBlock.BAYS) == 3,
-                            "the controller bay keeps its own server");
+                            "the origin bay keeps its own server");
                 })
                 .thenSucceed();
     }

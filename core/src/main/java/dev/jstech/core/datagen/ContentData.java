@@ -85,7 +85,8 @@ public final class ContentData {
             data.server(new BiomeClimateProvider(output, data.lookup(), content.modid()));
         }
         for (final DeclaredFilesProvider<?> files : List.of(DeclaredFilesProvider.deposits(output, content.modid()),
-                DeclaredFilesProvider.reservoirs(output, content.modid()))) {
+                DeclaredFilesProvider.reservoirs(output, content.modid()),
+                DeclaredFilesProvider.researchCosts(output, content.modid()))) {
             if (files.declares()) {
                 data.server(files);
             }

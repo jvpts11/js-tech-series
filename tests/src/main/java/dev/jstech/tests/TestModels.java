@@ -105,12 +105,12 @@ public final class TestModels {
             .named("Test kit helmet").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
     public static final EntityEntry<Walker> WALKER_ENTITY = TestSounds.CONTENT.entity("test_kit_walker",
             Walker::new, MobCategory.MISC).size(0.6F, 1.3F).named("Test kit walker").register();
-    /** The turbine's model: its casing round its controller's front, and the rotor on its top. */
+    /** The turbine's model: its casing round its terminal's front, and the rotor on its top. */
     public static final DeclaredModel TURBINE = TestSounds.CONTENT.model("test_kit_turbine")
             .file("jsmodels/test_kit_turbine.bbmodel")
             .texture("minecraft:textures/block/iron_block.png")
             .register();
-    /** The turbine's pattern: two layers of iron three by three, its controller in the middle of its south side. */
+    /** The turbine's pattern: two layers of iron three by three, its terminal in the middle of its south side. */
     public static final ResourceLocation TURBINE_PATTERN_ID = ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
             "test_kit_turbine");
     public static final MultiblockPattern TURBINE_PATTERN = MultiblockPatterns.declare(TURBINE_PATTERN_ID,
@@ -118,7 +118,7 @@ public final class TestModels {
                     .layer("III", "III", "I#I")
                     .layer("III", "III", "III")
                     .where('I', BlockMatch.blocks("minecraft:iron_block"))
-                    .controller("jstests:test_kit_turbine")
+                    .terminal("jstests:test_kit_turbine")
                     .build());
     public static final BlockEntry<DeviceBlock> TURBINE_BLOCK = TestSounds.CONTENT.block("test_kit_turbine",
             Device.of(() -> TestModels.TURBINE_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
@@ -310,7 +310,7 @@ public final class TestModels {
     }
 
     /**
-     * The turbine's controller: once its iron stands whole, the iron merges into its model, which grows into place as
+     * The turbine's terminal: once its iron stands whole, the iron merges into its model, which grows into place as
      * it forms; it works whenever its structure stands, and its rotor turns while it works.
      */
     public static final class TurbineEntity extends MachineBlockEntity {

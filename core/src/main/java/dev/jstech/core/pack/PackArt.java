@@ -19,7 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * The art and the words a content pack's things need on a player's game, made as it loads under every resource pack,
  * so a pack that brings its own replaces any of it: each namespace's English names, a block state and a model for
- * each block, its whole cube drawn with {@code <namespace>:block/<path>}, a machine's controller as the game's
+ * each block, its whole cube drawn with {@code <namespace>:block/<path>}, a machine's terminal as the game's
  * furnaces are drawn, with its {@code _front}, {@code _side} and {@code _top}, turned the way it faces, and each item
  * flat, drawn with {@code <namespace>:item/<path>}. The textures themselves are the packs' own.
  */
@@ -100,7 +100,7 @@ final class PackArt implements IRuntimeFiles {
         return state;
     }
 
-    /* A controller's state: its model turned a quarter for each way it may face, north first. */
+    /* A terminal's state: its model turned a quarter for each way it may face, north first. */
     private static JsonObject facing(final String model) {
         final JsonObject variants = new JsonObject();
         for (int i = 0; i < FACINGS.length; i++) {

@@ -33,7 +33,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
- * The Multiblock Builder, a handheld instrument of the probes' family: used on a multiblock's controller, it is aimed
+ * The Multiblock Builder, a handheld instrument of the probes' family: used on a multiblock's terminal, it is aimed
  * at it, and its display says what of the multiblock is missing, what the player has to build it with, and asks what
  * goes where a place takes several blocks; OK builds it, block by block, from the player's inventory or another
  * source a mod gives. Its keys hold the building, show the multiblock's ghosts, light the display and turn it off.
@@ -43,7 +43,7 @@ public final class MultiblockBuilder {
     /** How the builder is set. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<BuilderState>> STATE =
             CoreItems.CONTENT.component("builder_state", BuilderState.CODEC, BuilderState.STREAM_CODEC);
-    /** The controller the builder is aimed at, in its dimension. */
+    /** The terminal the builder is aimed at, in its dimension. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPos>> AIM =
             CoreItems.CONTENT.component("builder_aim", GlobalPos.CODEC, GlobalPos.STREAM_CODEC);
     /** The Multiblock Builder. */
@@ -96,7 +96,7 @@ public final class MultiblockBuilder {
         return stack.getOrDefault(STATE.get(), BuilderState.DEFAULT);
     }
 
-    /** The controller the builder in {@code stack} is aimed at, when it is aimed at one in {@code player}'s world. */
+    /** The terminal the builder in {@code stack} is aimed at, when it is aimed at one in {@code player}'s world. */
     public static Optional<BlockPos> aim(final ItemStack stack, final Player player) {
         final GlobalPos aim = stack.get(AIM.get());
         return aim == null || aim.dimension() != player.level().dimension() ? Optional.empty()

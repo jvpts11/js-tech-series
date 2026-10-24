@@ -8,19 +8,24 @@
 package dev.jstech.industrial.client;
 
 import dev.jstech.core.api.client.GuideBlockRenderers;
+import dev.jstech.core.client.machine.MachineScreens;
 import dev.jstech.industrial.IndustrialModule;
+import dev.jstech.industrial.client.crc.CrcScreen;
 import dev.jstech.industrial.client.guide.GeologyRenderer;
 import dev.jstech.industrial.client.guide.PidRenderer;
 import dev.jstech.industrial.client.guide.SingleLineRenderer;
+import dev.jstech.industrial.crc.CrcBlockEntity;
+import dev.jstech.industrial.crc.CrcContent;
 import dev.jstech.industrial.guide.PlantDrawing;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 /**
- * Client-only wiring for the Industrial module: the Tank's renderer, which draws the fluid it holds, and the renderers
- * of the Plant Drawings' single-line diagrams, P&amp;IDs and geological sections. Its machines need no screen of their
- * own: they open the one every machine of the Core's has.
+ * Client-only wiring for the Industrial module: the Tank's renderer, which draws the fluid it holds, the renderers
+ * of the Plant Drawings' single-line diagrams, P&amp;IDs and geological sections, and the Computational Research
+ * Centre's screen and formed model. Its other machines need no screen of their own: they open the one every machine of
+ * the Core's has.
  */
 public final class IndustrialClientSetup {
 
@@ -36,9 +41,11 @@ public final class IndustrialClientSetup {
         GuideBlockRenderers.register(ResourceLocation.parse(PlantDrawing.SINGLE_LINE), new SingleLineRenderer());
         GuideBlockRenderers.register(ResourceLocation.parse(PlantDrawing.PID), new PidRenderer());
         GuideBlockRenderers.register(ResourceLocation.parse(PlantDrawing.GEOLOGY), new GeologyRenderer());
+        MachineScreens.register(machine -> machine instanceof CrcBlockEntity, CrcScreen::new);
     }
 
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(IndustrialModule.TANK_BE.get(), TankRenderer::new);
+        event.registerBlockEntityRenderer(CrcContent.TERMINAL_BE.get(), CrcRenderer::create);
     }
 }

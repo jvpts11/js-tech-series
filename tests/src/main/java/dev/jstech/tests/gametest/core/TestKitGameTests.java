@@ -272,7 +272,7 @@ public final class TestKitGameTests {
     @GameTest(template = ARENA)
     public static void multiblockScenes_buildAPatternAndSayWhereItFails(final GameTestHelper helper) {
         final Block part = TestMultiblocks.PART.get();
-        MultiblockScenes.build(helper, TestMultiblocks.FURNACE, AT, Map.of('#', TestMultiblocks.CONTROLLER.get(),
+        MultiblockScenes.build(helper, TestMultiblocks.FURNACE, AT, Map.of('#', TestMultiblocks.TERMINAL.get(),
                 'P', part, 'I', part, 'O', part, 'E', part, 'G', part));
         final IMatchResult.Success formed = MultiblockScenes.expectForms(helper, TestMultiblocks.FURNACE, AT);
         helper.assertTrue(formed.ports().size() == 4, "built, it stands with its four ports");

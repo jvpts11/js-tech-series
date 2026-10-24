@@ -34,10 +34,10 @@ final class ShapePreviews {
                     if (letter == MultiblockPattern.IGNORE_CHAR) {
                         continue;
                     }
-                    final int[] w = orientation.apply(x - grid.controllerX(), y - grid.controllerY(),
-                            z - grid.controllerZ());
-                    final ShapePreview.Ghost ghost = letter == MultiblockPattern.CONTROLLER_CHAR
-                            ? ShapePreview.Ghost.controllerAt(w[0], w[1], w[2])
+                    final int[] w = orientation.apply(x - grid.terminalX(), y - grid.terminalY(),
+                            z - grid.terminalZ());
+                    final ShapePreview.Ghost ghost = letter == MultiblockPattern.TERMINAL_CHAR
+                            ? ShapePreview.Ghost.terminalAt(w[0], w[1], w[2])
                             : ShapePreview.Ghost.of(w[0], w[1], w[2], letter == insideLetter
                                     ? pattern.inside().orElseThrow().rule().allows()
                                     : pattern.places().get(letter).fits());
@@ -48,10 +48,10 @@ final class ShapePreviews {
             }
         }
         final ShapePreview laid = ShapePreview.of(ghosts);
-        return pattern.controllerBlock().map(laid::withController).orElse(laid);
+        return pattern.terminalBlock().map(laid::withTerminal).orElse(laid);
     }
 
-    /** {@code box} at its least sides and height, {@code grow} more each, its controller amid its north face. */
+    /** {@code box} at its least sides and height, {@code grow} more each, its terminal amid its north face. */
     static ShapePreview box(final BoxShape box, final int grow) {
         final int side = clamp(box.sides().least() + grow, box.sides());
         final int high = clamp(box.height().least() + grow, box.height());
@@ -64,7 +64,7 @@ final class ShapePreviews {
                     final int bounds = (x == 0 || x == side - 1 ? 1 : 0) + (y == 0 || y == high - 1 ? 1 : 0)
                             + (z == 0 || z == side - 1 ? 1 : 0);
                     final ShapePreview.Ghost ghost = x == cx && y == cy && z == 0
-                            ? ShapePreview.Ghost.controllerAt(0, 0, 0)
+                            ? ShapePreview.Ghost.terminalAt(0, 0, 0)
                             : ShapePreview.Ghost.of(x - cx, y - cy, z, bounds >= 2 ? box.frame().fits()
                                     : bounds == 1 ? box.face().fits() : box.inside().allows());
                     if (!ghost.empty()) {
@@ -78,7 +78,7 @@ final class ShapePreviews {
 
     /**
      * {@code walls} round a square floor of at least its least area, {@code grow} wider, its walls at their least
-     * height, the corners left out, and its controller amid the north wall's bottom row.
+     * height, the corners left out, and its terminal amid the north wall's bottom row.
      */
     static ShapePreview walls(final WallsShape walls, final int grow) {
         int side = 1;
@@ -111,18 +111,18 @@ final class ShapePreviews {
                 ghosts.add(ShapePreview.Ghost.of(side - cx, y, along + 1, walls.wall().fits()));
             }
         }
-        ghosts.add(ShapePreview.Ghost.controllerAt(0, 0, 0));
+        ghosts.add(ShapePreview.Ghost.terminalAt(0, 0, 0));
         return ShapePreview.of(ghosts);
     }
 
-    /** {@code cuboid} as a cube of its least side, {@code grow} more, its controller at its lowest corner. */
+    /** {@code cuboid} as a cube of its least side, {@code grow} more, its terminal at its lowest corner. */
     static ShapePreview cuboid(final CuboidShape cuboid, final int grow) {
         final int side = clamp(cuboid.sides().least() + grow, cuboid.sides());
         final List<ShapePreview.Ghost> ghosts = new ArrayList<>();
         for (int y = 0; y < side; y++) {
             for (int z = 0; z < side; z++) {
                 for (int x = 0; x < side; x++) {
-                    ghosts.add(x == 0 && y == 0 && z == 0 ? ShapePreview.Ghost.controllerAt(0, 0, 0)
+                    ghosts.add(x == 0 && y == 0 && z == 0 ? ShapePreview.Ghost.terminalAt(0, 0, 0)
                             : ShapePreview.Ghost.of(x, y, z, cuboid.unit().fits()));
                 }
             }

@@ -68,31 +68,31 @@ public final class MainframeClientTests {
         ctx.thenBuild(0, world -> {
             for (int i = 0; i < CABINETS.size(); i++) {
                 final Cabinet cabinet = CABINETS.get(i);
-                final BlockPos at = controller(i);
+                final BlockPos at = origin(i);
                 world.setBlock(at, cabinet.block().get().defaultBlockState()
                         .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
                 final MainframeBlockEntity mainframe = world.blockEntity(at, MainframeBlockEntity.class);
                 cabinet.install(mainframe.getHardware());
                 mainframe.togglePower();
             }
-        }).thenWaitUntil(() -> IntStream.range(0, CABINETS.size()).allMatch(i -> runs(ctx, controller(i))),
+        }).thenWaitUntil(() -> IntStream.range(0, CABINETS.size()).allMatch(i -> runs(ctx, origin(i))),
                 RUNS_WITHIN, "every Mainframe to run, as the player sees it");
         for (int i = 0; i < CABINETS.size(); i++) {
-            ctx.thenTeleport(SETTLE, controller(i).south(AWAY), Direction.NORTH)
+            ctx.thenTeleport(SETTLE, origin(i).south(AWAY), Direction.NORTH)
                     .thenScreenshot(SETTLE, CABINETS.get(i).name() + "-running");
         }
         for (int i = 0; i < CABINETS.size(); i++) {
             if (!OPENED.contains(CABINETS.get(i).name())) {
                 continue;
             }
-            final BlockPos at = controller(i);
+            final BlockPos at = origin(i);
             ctx.thenBuild(0, world -> world.blockEntity(at, MainframeBlockEntity.class).toggleServicePanel())
                     .thenTeleport(SETTLE, at.south(AWAY), Direction.NORTH)
                     .thenScreenshot(SETTLE, CABINETS.get(i).name() + "-open");
         }
     }
 
-    private static BlockPos controller(final int index) {
+    private static BlockPos origin(final int index) {
         return new BlockPos(index * SPACING, 2, ROW_Z);
     }
 

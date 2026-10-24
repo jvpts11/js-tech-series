@@ -27,10 +27,10 @@ import net.minecraft.world.level.block.state.BlockState;
  * block. Worked out on whichever side reads it, from the world that side holds.
  *
  * @param preview    the multiblock laid out as the projector shows it
- * @param controller where its controller stands
+ * @param terminal where its terminal stands
  * @param places     each place, the bottom layer first
  */
-public record ProjectorView(ShapePreview preview, BlockPos controller, List<Place> places) {
+public record ProjectorView(ShapePreview preview, BlockPos terminal, List<Place> places) {
 
     public ProjectorView {
         places = List.copyOf(places);
@@ -38,17 +38,17 @@ public record ProjectorView(ShapePreview preview, BlockPos controller, List<Plac
 
     /** What {@code projector} sees in {@code level}, when it has a multiblock to show. */
     public static Optional<ProjectorView> of(final BlockGetter level, final StructureProjectorBlockEntity projector) {
-        return projector.preview().map(preview -> of(level, preview, projector.controllerOf(preview)));
+        return projector.preview().map(preview -> of(level, preview, projector.terminalOf(preview)));
     }
 
-    /** What is seen in {@code level} of {@code preview} with its controller at {@code controller}. */
-    public static ProjectorView of(final BlockGetter level, final ShapePreview preview, final BlockPos controller) {
+    /** What is seen in {@code level} of {@code preview} with its terminal at {@code terminal}. */
+    public static ProjectorView of(final BlockGetter level, final ShapePreview preview, final BlockPos terminal) {
         final List<Place> places = new ArrayList<>();
         for (final ShapePreview.Ghost ghost : preview.ghosts()) {
-            final BlockPos at = controller.offset(ghost.x(), ghost.y(), ghost.z());
+            final BlockPos at = terminal.offset(ghost.x(), ghost.y(), ghost.z());
             places.add(new Place(at, ghost, stateOf(level.getBlockState(at), ghost)));
         }
-        return new ProjectorView(preview, controller, places);
+        return new ProjectorView(preview, terminal, places);
     }
 
     /** How many places hold the right block. */
@@ -70,7 +70,7 @@ public record ProjectorView(ShapePreview preview, BlockPos controller, List<Plac
     public Map<String, Integer> missingByBlock() {
         final Map<String, Integer> counts = new LinkedHashMap<>();
         for (final Place place : this.places) {
-            if (place.state() == State.MISSING && !place.ghost().controller() && place.ghost().first() != null) {
+            if (place.state() == State.MISSING && !place.ghost().terminal() && place.ghost().first() != null) {
                 counts.merge(place.ghost().first(), 1, Integer::sum);
             }
         }
@@ -92,11 +92,11 @@ public record ProjectorView(ShapePreview preview, BlockPos controller, List<Plac
     }
 
     /*
-     * Whether the block at a place is right: one of its blocks, or of its tags; for the controller's place whose block
+     * Whether the block at a place is right: one of its blocks, or of its tags; for the terminal's place whose block
      * is not known, any block. An empty place, or one a block could be placed in, is missing; anything else is wrong.
      */
     private static State stateOf(final BlockState state, final ShapePreview.Ghost ghost) {
-        if (ghost.controller() && ghost.blocks().isEmpty()) {
+        if (ghost.terminal() && ghost.blocks().isEmpty()) {
             return state.isAir() ? State.MISSING : State.PLACED;
         }
         final String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();

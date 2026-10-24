@@ -6,9 +6,19 @@ says what the shape is, checks the world against it, turns it into one machine, 
 ## What exists today
 
 Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: shapes by
-pattern and by rule, the inside that counts, ports as blocks anywhere on the shell, forming, the Structure Projector
-and the Multiblock Builder, the recipe viewers' pages, multiblocks entirely as data, the studio's recorder of patterns,
-and multiblocks moving. How a mod uses it, with code: [Multiblocks](../MULTIBLOCKS.md).
+pattern and by rule, the inside that counts, ports as blocks anywhere on the shell, the entries a multiblock lets
+stand on the places it chooses, forming, the Structure Projector and the Multiblock Builder, the recipe viewers' pages,
+multiblocks entirely as data, the studio's recorder of patterns, multiblocks moving, and big blocks as a kind of
+their own. How a mod uses it, with code: [Multiblocks](../MULTIBLOCKS.md).
+
+### Words
+
+- **The terminal** is the block of a multiblock the player works it from: it checks the shape, holds the machine's
+  state and is its screen. It was called the controller until October 2026; the kit, the pattern files, the
+  Projector, the Builder and the recipe viewers say terminal now.
+- **A big block** is one block bigger than a block, placed whole, which raises its other cells at once and builds
+  nothing: J's Computers' Mainframe and its racks. It is no multiblock and has a kit of its own, apart; its first
+  cell is its **origin**.
 
 ## The design
 
@@ -37,18 +47,32 @@ Modular Machinery do, in one place, for any mod.
   connection goes where the line arrives. There is a port for each resource (items, liquids, gases, plasmas,
   supercritical fluids, slurries, exotic matter, heat), the energy port with its voltage class, the compressed air port
   and an optional **redstone port** that reads and gives signals.
+- **Entries where the multiblock says**: a multiblock built of blocks of its own has **entries**, blocks of its own
+  through which something comes in or goes out (a power entry, a coolant inlet, a link socket). The multiblock declares
+  the places where its entries may go, and the player puts each where it suits among them; an entry anywhere else is
+  a wrong block. Each entry is counted, so the multiblock says how many of each it takes (exactly one power entry, at
+  most one link socket), makes its place the port of its kind, and two counts may **go together**, so a coolant's
+  inlet never stands without its outlet.
 - **Ports grouped by colour**: ports of one colour are one group, and a recipe takes its inputs from one group at a
   time, so two processes never mix.
 - **Recipes in parallel**: a multiblock runs several recipes at once, by its size or by the parts it has, and shows the
   exact number.
-- **The controller is the machine's screen**, with the same tabs as every machine ([Machines](machines.md)).
+- **The terminal is the machine's screen**, with the same tabs as every machine ([Machines](machines.md)).
+
+### In the series
+
+Every multiblock of the series' mods is built of **blocks of its own and its terminal**: a casing, a gate or a bus of
+that machine, never a block shared with another, so each machine looks like itself. Each declares where its entries
+go, on the faces where a real one has its connections: J's Industrial's Computational Research Centre takes them on
+the six places of the two lower rows of its rear face, and nowhere else. A mod
+outside the series builds its multiblocks as it likes; the kit takes any block.
 
 ### Formed
 
 - **Once formed, a multiblock becomes one detailed, animated model**, drawn by the Core's own models
   ([Low level](low-level.md)): the turbine spins, the flywheel turns, the tower lets out steam. The ports stay visible
   where they were placed. Forming has its effect and its sound: the blocks merge into the model.
-- **Breaking one block undoes the structure**; the controller keeps what it held. Only the owner and the owner's team
+- **Breaking one block undoes the structure**; the terminal keeps what it held. Only the owner and the owner's team
   can break the blocks of a formed multiblock ([The platform](platform.md#teams-and-owners)).
 - **Formed or not** shows in Jade and in the tooltip, with the dimensions when Shift is held.
 - **Checking is incremental**: a structure is checked again only when one of its blocks, or a block beside it, changes,
@@ -70,7 +94,7 @@ Modular Machinery do, in one place, for any mod.
   the **list of materials** and the counts for the size chosen, and whether it turns or mirrors; from there it is
   projected into the world or its manual page opened.
 - **Building it for the player**: a handheld tool of the instruments' family (the Multiblock Builder, a name to be
-  confirmed), in the spirit of GregTech's terminal, aimed at a controller, says what it will place and how much the
+  confirmed), in the spirit of GregTech's terminal, aimed at a terminal, says what it will place and how much the
   player has, asks the player to choose where a place allows several blocks, and builds it block by block from the
   player's inventory; with J's Computers installed, from the network's storage.
 
@@ -86,6 +110,12 @@ projector preview and its page in the recipe viewers, in one step.
 
 Multiblocks can be **sections of a moving structure**, such as a rocket's parts, with known models and collision
 ([Moving structures](moving-structures.md)).
+
+### Big blocks
+
+A big block is placed at its origin and raises its other cells round it at once; it refuses a place where a cell would
+land on something, and shows which with a flame outline; breaking any cell takes the whole of it down and gives back
+what it held, however it goes. Its cells remember the origin, so a cable touching any of them reaches the machine.
 
 ## Still to build
 

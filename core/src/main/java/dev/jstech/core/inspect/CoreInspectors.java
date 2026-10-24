@@ -244,11 +244,11 @@ public final class CoreInspectors {
     }
 
     private static void multiblock(final ServerLevel level, final BlockPos pos, final Inspectors.Inspection report) {
-        final BlockPos controller = LevelStructures.of(level).controllerHolding(pos);
-        if (controller != null) {
-            report.under(InspectTexts.MULTIBLOCK.text(), lines -> lines.line(InspectTexts.CONTROLLER.text(),
-                    controller.toShortString() + SPACE + BuiltInRegistries.BLOCK.getKey(level.getBlockState(
-                            controller).getBlock())));
+        final BlockPos terminal = LevelStructures.of(level).terminalHolding(pos);
+        if (terminal != null) {
+            report.under(InspectTexts.MULTIBLOCK.text(), lines -> lines.line(InspectTexts.TERMINAL.text(),
+                    terminal.toShortString() + SPACE + BuiltInRegistries.BLOCK.getKey(level.getBlockState(
+                            terminal).getBlock())));
         }
     }
 

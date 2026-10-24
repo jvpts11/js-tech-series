@@ -31,7 +31,7 @@ class RotationTest {
 
     @Test
     void east_rotates90Clockwise() {
-        // (1, 0) "east of controller in pattern" → (0, 1) "south in world" when facing east
+        // (1, 0) "east of terminal in pattern" → (0, 1) "south in world" when facing east
         assertArrayEquals(new int[] { 0, 1 }, Rotation.EAST.transform(1, 0));
         // (0, 1) "south in pattern" → (-1, 0) "west in world"
         assertArrayEquals(new int[] { -1, 0 }, Rotation.EAST.transform(0, 1));

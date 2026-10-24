@@ -38,7 +38,7 @@ public final class StructureProjectorGameTests {
     private static final String ARENA = "empty";
     /* The projector faces north as placed: what it shows stands north of it, above the arena's floor. */
     private static final BlockPos PROJECTOR = new BlockPos(2, 2, 5);
-    private static final BlockPos CONTROLLER = new BlockPos(2, 2, 3);
+    private static final BlockPos TERMINAL = new BlockPos(2, 2, 3);
 
     private StructureProjectorGameTests() {
     }
@@ -75,15 +75,15 @@ public final class StructureProjectorGameTests {
         final StructureProjectorBlockEntity projector = projector(helper);
         projector.apply(ProjectorSettings.FRESH.choosing(TestMultiblocks.FURNACE_ID));
         final ShapePreview preview = projector.preview().orElseThrow();
-        helper.assertTrue(projector.controllerOf(preview).equals(helper.absolutePos(CONTROLLER)),
+        helper.assertTrue(projector.terminalOf(preview).equals(helper.absolutePos(TERMINAL)),
                 "the furnace stands in front of the projector, its near side a block away; got "
-                        + projector.controllerOf(preview));
-        helper.setBlock(CONTROLLER.west(), TestMultiblocks.PART.get());
-        helper.setBlock(CONTROLLER.east(), TestMultiblocks.PART.get());
-        helper.setBlock(CONTROLLER.north(), TestMultiblocks.PART.get());
-        helper.setBlock(CONTROLLER.south(), Blocks.DIRT);
+                        + projector.terminalOf(preview));
+        helper.setBlock(TERMINAL.west(), TestMultiblocks.PART.get());
+        helper.setBlock(TERMINAL.east(), TestMultiblocks.PART.get());
+        helper.setBlock(TERMINAL.north(), TestMultiblocks.PART.get());
+        helper.setBlock(TERMINAL.south(), Blocks.DIRT);
         final ProjectorView view = ProjectorView.of(helper.getLevel(), projector).orElseThrow();
-        helper.assertTrue(view.places().size() == 9, "its nine places, the controller's counted; got "
+        helper.assertTrue(view.places().size() == 9, "its nine places, the terminal's counted; got "
                 + view.places().size());
         helper.assertTrue(view.placed() == 3 && view.wrong() == 1 && view.missing() == 5,
                 "three placed, one wrong, five missing; got " + view.placed() + ", " + view.wrong() + ", "
@@ -95,17 +95,17 @@ public final class StructureProjectorGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void projector_holdsAKnownControllerToItsBlock(final GameTestHelper helper) {
+    public static void projector_holdsAKnownTerminalToItsBlock(final GameTestHelper helper) {
         final StructureProjectorBlockEntity projector = projector(helper);
         projector.apply(ProjectorSettings.FRESH.choosing(TestMultiblocks.FURNACE_ID));
-        helper.setBlock(CONTROLLER, Blocks.DIRT);
+        helper.setBlock(TERMINAL, Blocks.DIRT);
         final ProjectorView wrong = ProjectorView.of(helper.getLevel(), projector).orElseThrow();
-        helper.assertTrue(stateAt(wrong, helper.absolutePos(CONTROLLER)) == ProjectorView.State.WRONG,
-                "dirt where the furnace's named controller goes is wrong");
-        helper.setBlock(CONTROLLER, TestMultiblocks.CONTROLLER.get());
+        helper.assertTrue(stateAt(wrong, helper.absolutePos(TERMINAL)) == ProjectorView.State.WRONG,
+                "dirt where the furnace's named terminal goes is wrong");
+        helper.setBlock(TERMINAL, TestMultiblocks.TERMINAL.get());
         final ProjectorView right = ProjectorView.of(helper.getLevel(), projector).orElseThrow();
-        helper.assertTrue(stateAt(right, helper.absolutePos(CONTROLLER)) == ProjectorView.State.PLACED,
-                "the controller itself is placed");
+        helper.assertTrue(stateAt(right, helper.absolutePos(TERMINAL)) == ProjectorView.State.PLACED,
+                "the terminal itself is placed");
         helper.succeed();
     }
 

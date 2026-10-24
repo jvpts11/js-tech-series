@@ -176,8 +176,8 @@ public class ScenarioBuilder {
     }
 
     /**
-     * Clears the volume a multiblock is about to claim. In an empty arena this does nothing; in a world it is the
-     * difference between a structure forming and a bare controller sitting in the rock, because a multiblock refuses
+     * Clears the volume a big block is about to claim. In an empty arena this does nothing; in a world it is the
+     * difference between a big block standing whole and a bare origin sitting in the rock, because a big block refuses
      * to raise its parts into occupied space.
      */
     public void clearFor(final Iterable<BlockPos> relativePositions) {
