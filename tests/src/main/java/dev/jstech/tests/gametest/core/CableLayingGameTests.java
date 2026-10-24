@@ -9,9 +9,10 @@ package dev.jstech.tests.gametest.core;
 
 import com.mojang.authlib.GameProfile;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableItem;
 import dev.jstech.core.cable.CableType;
-import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.tests.JsTests;
 import java.nio.charset.StandardCharsets;
@@ -35,7 +36,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * Laying a cable by hand: on a block that gives way, a snow layer, it is laid in its place and never above it; a new
- * cable joins the one beside it the moment it is laid; and each cable sounds as what it is made of.
+ * cable joins the one beside it the moment it is laid; and a pipe sounds as metal, a cable as wool.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -82,17 +83,18 @@ public final class CableLayingGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void cables_soundAsWhatTheyAreMadeOf(final GameTestHelper helper) {
-        final CableType pipe = SharedPipes.COPPER_PIPE.get();
-        final BlockPos at = new BlockPos(1, 2, 1);
-        CableItem.lay(helper.getLevel(), helper.absolutePos(at), pipe);
-        final SoundType sound = helper.getBlockState(at).getSoundType(helper.getLevel(), helper.absolutePos(at),
-                null);
-        helper.assertTrue(pipe.sound() == SoundType.METAL && sound == SoundType.METAL,
-                "a copper pipe sounds as metal, laid and in its block");
-        final List<String> wool = CoreCables.REGISTRY.stream().filter(type -> type.sound() == SoundType.WOOL)
-                .map(type -> String.valueOf(type.id())).toList();
-        helper.assertTrue(wool.isEmpty(), "no cable sounds as wool: " + wool);
+    public static void pipesSoundAsMetal_cablesAsWool(final GameTestHelper helper) {
+        final BlockPos pipeAt = new BlockPos(1, 2, 1);
+        final BlockPos cableAt = new BlockPos(3, 2, 1);
+        CableItem.lay(helper.getLevel(), helper.absolutePos(pipeAt), SharedPipes.COPPER_PIPE.get());
+        CableItem.lay(helper.getLevel(), helper.absolutePos(cableAt), SharedEnergy.INSULATED_COPPER_CABLE.get());
+        helper.assertTrue(soundAt(helper, pipeAt) == SoundType.METAL, "a copper pipe's block sounds as metal");
+        helper.assertTrue(soundAt(helper, cableAt) == SoundType.WOOL, "a copper cable's block sounds as wool");
+        final List<CableEntry> pipes = List.of(SharedPipes.COPPER_PIPE, SharedPipes.IRON_GAS_PIPE,
+                SharedPipes.VACUUM_JACKETED_PIPE);
+        final List<String> notMetal = pipes.stream().filter(pipe -> pipe.get().sound() != SoundType.METAL)
+                .map(pipe -> String.valueOf(pipe.id())).toList();
+        helper.assertTrue(notMetal.isEmpty(), "every pipe of the series sounds as metal: " + notMetal);
         helper.succeed();
     }
 
@@ -104,6 +106,10 @@ public final class CableLayingGameTests {
         player.moveTo(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5);
         player.setItemInHand(InteractionHand.MAIN_HAND, SharedPipes.COPPER_PIPE.stack(STACK));
         return player;
+    }
+
+    private static SoundType soundAt(final GameTestHelper helper, final BlockPos relative) {
+        return helper.getBlockState(relative).getSoundType(helper.getLevel(), helper.absolutePos(relative), null);
     }
 
     /* A click on the top of the block at {@code relative}, a snow layer's top being two pixels up. */

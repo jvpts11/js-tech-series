@@ -60,7 +60,7 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
 | `windows(glass)` | Its jacket leaves windows clear and `glass` fills them: a pipe shows its liquid or gas moving through them at its level, a line of items its items sliding through ([Seeing what flows](#seeing-what-flows)). |
 | `fitting(texture)` | It turns and branches in a solid fitting of that texture, as a pipe does, rather than in its jacket. |
 | `beyond(rule)` | What befalls it when a fluid it is not made for reaches it ([Beyond a line's limits](#beyond-a-lines-limits)). |
-| `sounds(soundType)` | How it sounds laid, taken out, struck and walked on, as what it is made of; metal unless said (*added 2026-10-24*). |
+| `sounds(soundType)` | How it sounds laid, taken out, struck and walked on, as what it is made of: wool unless said, as a cable in its jacket; the series' pipes say metal (*added 2026-10-24*). |
 
 `register()` registers the cable type and the item that lays it. The lanes the series uses: access `TOP_LEFT`,
 backbone `TOP`, peripheral `LEFT`, high compute `MIDDLE`, crafting `RIGHT`, energy `BOTTOM_LEFT`; the long distance

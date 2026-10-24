@@ -240,7 +240,7 @@ public final class CableType {
         return this.holds;
     }
 
-    /** How it sounds as it is laid, taken out, struck and walked on: as what it is made of, metal unless said. */
+    /** How it sounds as it is laid, taken out, struck and walked on: as what it is made of, wool unless said. */
     public SoundType sound() {
         return this.sound;
     }
@@ -324,7 +324,7 @@ public final class CableType {
         private int span;
         private boolean insulated;
         private long holds = Long.MAX_VALUE;
-        private SoundType sound = SoundType.METAL;
+        private SoundType sound = SoundType.WOOL;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -465,7 +465,10 @@ public final class CableType {
             return this;
         }
 
-        /** It sounds as {@code made} sounds, laid, taken out, struck and walked on; metal unless said. */
+        /**
+         * It sounds as {@code made} sounds, laid, taken out, struck and walked on: wool unless said, as a cable in its
+         * jacket; a pipe says metal.
+         */
         public Builder sounds(final SoundType made) {
             this.sound = Objects.requireNonNull(made, "made");
             return this;

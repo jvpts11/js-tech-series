@@ -212,7 +212,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   component of its own beside the constructor without it; `CoreConfigScreen.buttonCentre` is where a test clicks a
   button of the settings screen.
 - (Core) Cables laid by hand: J's Core's API stays at version 12, all experimental. `CableType.sound()` and
-  `CableType.Builder.sounds(SoundType)` say how a cable sounds, metal unless said; `CableItem.landing` is where a click
+  `CableType.Builder.sounds(SoundType)` say how a cable sounds, wool unless said; `CableItem.landing` is where a click
   with a cable lays it, the same for the player's game and the server; `CableItem.showNow` shows the players cables
   laid or taken out by hand, with their neighbours, at once; `ClientUpdates.sendNow` sends any block and its block
   entity to the players watching it without waiting for the end of the tick.
@@ -1634,8 +1634,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A click on a machine's progress arrow opens the recipes it works in JEI, EMI or REI, as "Show recipes" says
   over it; the bar under the window takes the click when the lanes do not fit.
 - (Core) An element's symbol shows alone at the head of its tooltip, in gold, rather than as "Symbol: Fe".
-- (Core) Every cable sounds as metal, laid, taken out, struck and walked on, rather than as wool; a mod may give its
-  own cable another sound.
+- (Core) Pipes sound as metal, laid, taken out, struck and walked on, rather than as wool; cables still sound as wool,
+  and a mod may give its own cable or pipe another sound.
 - (Core) A cable laid beside another shows joined to it the moment it appears, and a wire taken out lets go of its
   neighbours at once, rather than a tick or two later.
 - (Core, Industrial) With J's Industrial installed, its deposit types take the place of the Core's plain veins of

@@ -56,7 +56,7 @@ public final class CoreCables {
     /** The block every cable is laid in. */
     public static final BlockEntry<CableBlock> BLOCK = CoreItems.CONTENT.block("cable", CableBlock::new)
             .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(0.3F)
-                    .sound(SoundType.METAL).noOcclusion().dynamicShape().lightLevel(PartStates::lightOf))
+                    .sound(SoundType.WOOL).noOcclusion().dynamicShape().lightLevel(PartStates::lightOf))
             .named("Cable")
             .look(IBlockLook.fixed(new IBlockModel.ParticleOnly("cable", "block/cable/housing")))
             .drops(Drops.NONE)

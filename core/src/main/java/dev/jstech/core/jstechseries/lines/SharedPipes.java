@@ -20,6 +20,7 @@ import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.SoundType;
 
 /**
  * The basic pipes the series' mods share, so a mod used alone can carry liquids and gases: the liquid pipe, the gas
@@ -77,6 +78,7 @@ public final class SharedPipes {
                                      final TextKey job) {
         return CoreItems.CONTENT.cable(id, CableType.builder(Connection.of(rl(id))).describe(job, null)
                 .grid(grid).alone().thickness(THICKNESS).carries(flow, 0).withstands(coldest, HOTTEST)
+                .sounds(SoundType.METAL)
                 .beyond(BreachRules.breaksAfter(BURSTS_AFTER,
                         (level, breach) -> BreachRules.spill(level, breach.at(), breach.what())))
                 .jacket(rl("block/cable/" + id)).windows(rl("block/cable/" + id + "_glass"))
