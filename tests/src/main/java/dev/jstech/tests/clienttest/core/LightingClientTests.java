@@ -42,9 +42,10 @@ import org.slf4j.Logger;
  * How light looks to a player: a green lamp tints the floor it lights green, in the corners of the floor's faces as
  * the world's mesh is built; white light through a wall of red glass lights the floor past it red, and the sun through
  * a roof of green glass the floor under it green; a field of sea lanterns' light spread away from the main thread,
- * which only hands it over; the colours under a deferred shader pack, run with Iris; a torch held lights the way on
- * the player's own game, and the way goes dark once it is put away; a floodlight's shaft through the night air,
- * lighting a wall twenty blocks off; and the halos of bright lamps in the dark.
+ * which only hands it over; a lamp placed with a click, lit and tinting its floor within a tick of showing, and a
+ * soul lantern's blue seen and gone with the lantern; the colours under a deferred shader pack, run with Iris; a torch
+ * held lights the way on the player's own game, and the way goes dark once it is put away; a floodlight's shaft
+ * through the night air, lighting a wall twenty blocks off; and the halos of bright lamps in the dark.
  */
 public final class LightingClientTests {
 
@@ -54,6 +55,14 @@ public final class LightingClientTests {
     private static final BlockPos FLOOD = new BlockPos(-8, 2, 6);
     private static final int WALL_X = 12;
     private static final BlockPos FLOOD_STAND = new BlockPos(2, 3, -4);
+    private static final BlockPos PLACE_STAND = new BlockPos(-2, 2, 2);
+    private static final BlockPos PLACED = new BlockPos(-2, 2, 4);
+    private static final BlockPos BESIDE_PLACED = new BlockPos(-1, 1, 4);
+    private static final BlockPos BLUE = new BlockPos(2, 2, 5);
+    private static final BlockPos BESIDE_BLUE = new BlockPos(3, 1, 5);
+    /* The fragile lamp's level, as its kind declares it. */
+    private static final int FRAGILE_LEVEL = 12;
+    private static final int SETTLE = 5;
     private static final long NIGHT = 18_000L;
     private static final long DAY = 6_000L;
     private static final long FULL_DAY = 24_000L;
@@ -242,6 +251,62 @@ public final class LightingClientTests {
     }
 
     @ClientTest(timeoutTicks = 900)
+    public static void lamp_lightsTheTickItIsPlaced(final ClientTestContext ctx) {
+        ctx.afterTest(() -> ctx.serverPlayer().setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY));
+        ctx.thenTeleport(0, PLACE_STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                    floor(ctx, level, Blocks.WHITE_CONCRETE.defaultBlockState());
+                })
+                .thenWaitUntil(() -> night(ctx), WAIT, "night on the player's game")
+                .thenGive(0, new ItemStack(TestLights.FRAGILE_LAMP.item()))
+                .then(SETTLE, () -> ctx.selectHotbar(0))
+                // A click as the player's: the lamp is lit, lights its place and tints the floor beside it green within
+                // a tick of showing on their game, not when its section's turn comes.
+                .thenPlace(1, PLACED)
+                .thenWaitUntil(() -> clientState(ctx, PLACED).getBlock() == TestLights.FRAGILE_LAMP.get(), WAIT,
+                        "the lamp placed on the player's game")
+                .thenWaitUntil(() -> lit(ctx, PLACED) && lightAt(ctx, PLACED) >= FRAGILE_LEVEL, 1,
+                        "the lamp lit and its light laid within a tick of it showing", () -> "lit=" + lit(ctx, PLACED)
+                                + " light=" + lightAt(ctx, PLACED))
+                .thenWaitUntil(() -> greener(top(ctx, BESIDE_PLACED)), 1, "the floor beside it green within a tick "
+                        + "of it lighting", () -> "corner " + Integer.toHexString(top(ctx, BESIDE_PLACED)))
+                .thenServer(0, level -> {
+                    level.setDayTime(DAY);
+                    clear(ctx, level);
+                    floor(ctx, level, Blocks.GRASS_BLOCK.defaultBlockState());
+                });
+    }
+
+    @ClientTest(timeoutTicks = 900)
+    public static void colouredLight_showsTheTickItsBlockDoes(final ClientTestContext ctx) {
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                    floor(ctx, level, Blocks.WHITE_CONCRETE.defaultBlockState());
+                })
+                .thenWaitUntil(() -> night(ctx), WAIT, "night on the player's game")
+                .thenWaitUntil(() -> top(ctx, BESIDE_BLUE) == WHITE_CORNER, WAIT, "the floor white to begin with")
+                .thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(BLUE), Blocks.SOUL_LANTERN
+                        .defaultBlockState()))
+                .thenWaitUntil(() -> clientState(ctx, BLUE).is(Blocks.SOUL_LANTERN), WAIT,
+                        "the soul lantern on the player's game")
+                .thenWaitUntil(() -> bluer(top(ctx, BESIDE_BLUE)), 1, "the floor beside it blue within a tick of it "
+                        + "showing", () -> "corner " + Integer.toHexString(top(ctx, BESIDE_BLUE)))
+                .thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(BLUE), Blocks.AIR.defaultBlockState()))
+                .thenWaitUntil(() -> clientState(ctx, BLUE).isAir(), WAIT, "the lantern gone on the player's game")
+                .thenWaitUntil(() -> top(ctx, BESIDE_BLUE) == WHITE_CORNER, 1, "the blue gone within a tick of it",
+                        () -> "corner " + Integer.toHexString(top(ctx, BESIDE_BLUE)))
+                .thenServer(0, level -> {
+                    level.setDayTime(DAY);
+                    clear(ctx, level);
+                    floor(ctx, level, Blocks.GRASS_BLOCK.defaultBlockState());
+                });
+    }
+
+    @ClientTest(timeoutTicks = 900)
     public static void dynamicLight_aTorchHeldLightsTheWay(final ClientTestContext ctx) {
         ctx.afterTest(() -> ctx.serverPlayer().setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY));
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
@@ -406,6 +471,18 @@ public final class LightingClientTests {
         final int red = corner & CHANNEL;
         return red == CHANNEL && (corner >> GREEN_SHIFT & CHANNEL) < CHANNEL && (corner >> BLUE_SHIFT & CHANNEL)
                 < CHANNEL;
+    }
+
+    /* Whether a corner's colour is blue over red and green. */
+    private static boolean bluer(final int corner) {
+        return (corner >> BLUE_SHIFT & CHANNEL) == CHANNEL && (corner & CHANNEL) < CHANNEL
+                && (corner >> GREEN_SHIFT & CHANNEL) < CHANNEL;
+    }
+
+    /* The block light at {@code at} on the player's game. */
+    private static int lightAt(final ClientTestContext ctx, final BlockPos at) {
+        final ClientLevel level = ctx.mc().level;
+        return level == null ? 0 : level.getBrightness(LightLayer.BLOCK, ctx.abs(at));
     }
 
     /* Whether a corner's colour is green over red and blue. */

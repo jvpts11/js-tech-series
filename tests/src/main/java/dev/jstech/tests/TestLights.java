@@ -23,7 +23,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * Lamps of the test mod, to prove the Core's lighting kit: a red alarm lamp that pulses while redstone powers it, a
  * lamp that shines while it gets the watts it draws, a floodlight whose cone reaches far past the game's fifteen
  * blocks, a narrow beam, and a green lamp that can be broken. Their kinds are declared here and written to the test
- * mod's data by its data run; their block states and models are written by hand.
+ * mod's data by its data run; their block states and models are written by hand. The green lamp has an item, so a
+ * test can place it with a click as a player does.
  */
 public final class TestLights {
 
@@ -68,7 +69,7 @@ public final class TestLights {
             .named("Test beam lamp").look(IBlockLook.cubeAll("test_beam_lamp")).register();
     public static final BlockEntry<LampBlock> FRAGILE_LAMP = TestSounds.CONTENT.block("test_fragile_lamp",
             properties -> new LampBlock(properties, FRAGILE, () -> TestLights.LAMP.get()))
-            .named("Test fragile lamp").look(IBlockLook.cubeAll("test_fragile_lamp")).register();
+            .named("Test fragile lamp").look(IBlockLook.cubeAll("test_fragile_lamp")).item().register();
     /* One block entity for every lamp, which reads its kind from its block. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LampBlockEntity>> LAMP =
             TestSounds.CONTENT.blockEntity("test_lamp", (pos, state) -> new LampBlockEntity(TestLights.LAMP.get(),

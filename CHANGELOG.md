@@ -1783,6 +1783,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   controller, in the Structure Projector, the Multiblock Builder, the recipe viewers, the manuals, the studio and Jade.
 
 ### Fixed
+- (Core) A block that gives light of a colour or a bright glow shows its colour and its halo in the tick it is placed,
+  and loses them in the tick it goes, as does a lamp turned on or off: they waited for the turn of their part of the
+  world, a few ticks later. Stained glass placed or taken away tints the light about it at once too.
 - (Core) The settings screen's Done, Undo, Redo, Defaults, Export and Import buttons and its search field answer the
   mouse: the panel they sit in had no size, so a click never reached them and a change could not be kept.
 - (Core) A click with a cable on a snow layer, or on anything else that gives way, lays one cable in its place: the

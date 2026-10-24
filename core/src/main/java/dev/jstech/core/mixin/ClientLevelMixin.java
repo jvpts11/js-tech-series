@@ -9,21 +9,38 @@ package dev.jstech.core.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import dev.jstech.core.client.light.ColouredLights;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Plays the sounds of a moving structure's blocks where the blocks are: a door, a chest, a block broken or set down,
- * a note block. The game plays a block's sound at its place, out in the yard, too far for anyone to hear; a sound of
- * the yard is played where its block is in the world. Every other sound plays as before.
+ * Two things of the player's game:
+ * <ul>
+ *   <li>plays the sounds of a moving structure's blocks where the blocks are: a door, a chest, a block broken or set
+ *       down, a note block. The game plays a block's sound at its place, out in the yard, too far for anyone to hear;
+ *       a sound of the yard is played where its block is in the world. Every other sound plays as before;</li>
+ *   <li>tells coloured light of each block that changes, so a block that gives light or tints it is seen with its
+ *       colour and its glow in the tick it shows, not when its section's turn comes ({@link ColouredLights}).</li>
+ * </ul>
  */
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin {
+
+    @Inject(method = "sendBlockUpdated", at = @At("HEAD"))
+    private void jscore$tellColouredLight(final BlockPos pos, final BlockState before, final BlockState after,
+                                          final int flags, final CallbackInfo info) {
+        ColouredLights.blockChanged(pos, before, after);
+    }
 
     @WrapMethod(method = "playSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZJ)V")
     private void jscore$soundWhereTheBlockIs(final double x, final double y, final double z, final SoundEvent sound,

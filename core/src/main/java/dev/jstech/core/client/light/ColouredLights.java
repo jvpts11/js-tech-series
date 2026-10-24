@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,7 +60,9 @@ import org.slf4j.Logger;
  * own ({@link LightFlood}), round walls and through stained glass, which tints it; a white source's too where a block
  * that tints stands near; and daylight come down through tinting blocks takes their colour ({@link SkyTints}). The main
  * thread only takes the batch back, and where a section's light changed, the sections it reaches are built again, so
- * the world's colours follow. A whole bright source, coloured or not, is kept too, for its glow.
+ * the world's colours follow. A whole bright source, coloured or not, is kept too, for its glow. A section where a
+ * block that gives light or tints it changed, or a lamp turned on or off, is looked at on the main thread in the tick
+ * it changed, out of its turn, so the light's colour and glow show with the block, as the game's own light does.
  */
 public final class ColouredLights {
 
@@ -71,6 +75,14 @@ public final class ColouredLights {
     private static final Map<Long, Integer> SKY = new ConcurrentHashMap<>();
     private static final Map<Long, long[]> SKY_BY_SECTION = new ConcurrentHashMap<>();
     private static final Set<Long> SKY_SECTIONS = ConcurrentHashMap.newKeySet();
+    /*
+     * The sections to look at in this tick, out of their turn, as a block there that gives light or tints it changed;
+     * and the stamp each was last looked at so, for a batch the worker began before not to be taken for it.
+     */
+    private static final Set<Long> NOW = new LinkedHashSet<>();
+    private static final Map<Long, Long> LOOKED_NOW = new HashMap<>();
+    /* The most sections looked at out of their turn a tick; the rest wait for the next. */
+    private static final int NOW_A_TICK = 16;
     /* The one thread the sections are looked at on, below the game's own, so it never holds a frame up. */
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(work -> {
         final Thread thread = new Thread(work, "jscore-coloured-light");
@@ -95,6 +107,11 @@ public final class ColouredLights {
     private static volatile float sky = 1.0F;
     @Nullable
     private static Future<Batch> pending;
+    /* The stamp the pending batch was begun at; stamps count up as sections are looked at and batches begun. */
+    private static long pendingStamp;
+    private static long stamp;
+    /* The lit lamps' own light last tick, by place, to tell when one turns on, off or to another light. */
+    private static Map<Long, Source> lampsBefore = Map.of();
     private static volatile double lastTickMillis;
     private static boolean warned;
 
@@ -120,7 +137,24 @@ public final class ColouredLights {
         if (level == null) {
             return;
         }
-        apply(look(level, sections, lamps(level), List.of()));
+        lookNow(level, sections);
+    }
+
+    /**
+     * Tells coloured light that the block at {@code pos} changed on the player's game, from {@code before} to
+     * {@code after}. Where either gives light (not the light standing in the air), its section is looked at in this
+     * tick; where either tints light, the sections beside it too, whose sources' light may pass through it.
+     */
+    public static void blockChanged(final BlockPos pos, final BlockState before, final BlockState after) {
+        if (before == after) {
+            return;
+        }
+        final long section = SectionPos.asLong(pos);
+        if (LightColours.tints(before) || LightColours.tints(after)) {
+            NOW.addAll(beside(section));
+        } else if (gives(before) || gives(after)) {
+            NOW.add(section);
+        }
     }
 
     static void listen() {
@@ -306,12 +340,21 @@ public final class ColouredLights {
             });
             SKY_SECTIONS.forEach(ColouredLights::rebuild);
         }
+        lampsChanged(level);
+        if (!NOW.isEmpty()) {
+            final List<Long> now = new ArrayList<>(Math.min(NOW.size(), NOW_A_TICK));
+            for (final Iterator<Long> it = NOW.iterator(); it.hasNext() && now.size() < NOW_A_TICK; ) {
+                now.add(it.next());
+                it.remove();
+            }
+            lookNow(level, now);
+        }
         if (pending != null) {
             if (!pending.isDone()) {
                 lastTickMillis = (System.nanoTime() - started) / NANOS_A_MILLI;
                 return;
             }
-            take(level, pending);
+            take(level, pending, pendingStamp);
             pending = null;
         }
         if (next >= queue.size()) {
@@ -331,16 +374,56 @@ public final class ColouredLights {
             }
         }
         pending = WORKER.submit(() -> look(level, batch, lamps, moving));
+        pendingStamp = ++stamp;
         lastTickMillis = (System.nanoTime() - started) / NANOS_A_MILLI;
     }
 
-    /* Takes a batch back from the worker, if it was for this world. */
-    private static void take(final ClientLevel level, final Future<Batch> done) {
+    /* Looks at {@code sections} on the main thread now; the worker's batch begun before is not taken for them. */
+    private static void lookNow(final ClientLevel level, final List<Long> sections) {
+        apply(look(level, sections, lamps(level), List.of()));
+        final long now = ++stamp;
+        sections.forEach(section -> LOOKED_NOW.put(section, now));
+    }
+
+    /* The lamps turned on, off or to another light since the last tick: their sections are looked at now. */
+    private static void lampsChanged(final ClientLevel level) {
+        final Map<Long, Source> now = new HashMap<>();
+        for (final LampBlockEntity lamp : LampBlockEntity.seen()) {
+            if (lamp.getLevel() == level && lamp.lit()) {
+                final LightKind kind = lamp.kind();
+                final BlockPos at = lamp.getBlockPos();
+                now.put(at.asLong(), new Source(at.getX(), at.getY(), at.getZ(), kind.intensity(), kind.colour(),
+                        false));
+            }
+        }
+        if (now.equals(lampsBefore)) {
+            return;
+        }
+        final Set<Long> places = new HashSet<>(now.keySet());
+        places.addAll(lampsBefore.keySet());
+        for (final long place : places) {
+            if (!Objects.equals(now.get(place), lampsBefore.get(place))) {
+                NOW.add(SectionPos.asLong(BlockPos.of(place)));
+            }
+        }
+        lampsBefore = now;
+    }
+
+    /* Takes a batch back from the worker, if it was for this world, but for the sections looked at since it began. */
+    private static void take(final ClientLevel level, final Future<Batch> done, final long begun) {
         try {
             final Batch batch = done.get();
             if (batch.level() == level) {
-                apply(batch);
+                final List<Looked> sections = new ArrayList<>(batch.sections().size());
+                for (final Looked looked : batch.sections()) {
+                    if (LOOKED_NOW.getOrDefault(looked.section(), Long.MIN_VALUE) < begun) {
+                        sections.add(looked);
+                    }
+                }
+                apply(new Batch(level, sections, batch.moving()));
             }
+            // A later batch is begun after every look so far: none of them can be newer than it.
+            LOOKED_NOW.values().removeIf(at -> at < begun);
         } catch (final ExecutionException failed) {
             if (!warned) {
                 warned = true;
@@ -597,6 +680,11 @@ public final class ColouredLights {
         return out;
     }
 
+    /* A block that gives light; not the light standing in the air, which the lamps' light and dynamic light lay. */
+    private static boolean gives(final BlockState state) {
+        return state.getLightEmission() > 0 && !(state.getBlock() instanceof LightBlock);
+    }
+
     /* A block that gives light of a colour, or bright enough to glow; not the light standing in the air. */
     private static boolean worthKeeping(final BlockState state) {
         final int level = state.getLightEmission();
@@ -682,6 +770,9 @@ public final class ColouredLights {
         next = 0;
         dynamic = List.of();
         pending = null;
+        NOW.clear();
+        LOOKED_NOW.clear();
+        lampsBefore = Map.of();
         LampBeams.clear();
     }
 
