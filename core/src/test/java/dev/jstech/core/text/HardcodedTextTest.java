@@ -428,6 +428,8 @@ class HardcodedTextTest {
                     // A config value's comment is written into the config file above it: a file's words, in English.
                     // So is a section's, declared apart from the values in it.
                     || "comment".equals(this.name) || "sectionComment".equals(this.name)
+                    // J's Industrial's switch of a consequence: its name and its comment, a config value's.
+                    || ("Consequences".equals(this.receiver) && "of".equals(this.name))
                     // A layout's text element is named for its overlap report; the words drawn there come elsewhere.
                     || (("layout".equals(this.receiver) || "l".equals(this.receiver)) && "text".equals(this.name))
                     || ("Text".equals(this.receiver) && "literal".equals(this.name))

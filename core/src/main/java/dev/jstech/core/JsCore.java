@@ -25,6 +25,8 @@ import dev.jstech.core.call.MenuCalls;
 import dev.jstech.core.cable.CableRuns;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
+import dev.jstech.core.cable.LineWear;
+import dev.jstech.core.transit.CapsuleTransit;
 import dev.jstech.core.overhead.OverheadLines;
 import dev.jstech.core.condition.DataConditions;
 import dev.jstech.core.modpack.ModpackDumps;
@@ -79,6 +81,8 @@ import dev.jstech.core.hazard.BlockDensity;
 import dev.jstech.core.hazard.BlockTemperatures;
 import dev.jstech.core.hazard.BodyTemperature;
 import dev.jstech.core.hazard.Clothing;
+import dev.jstech.core.hazard.GasClouds;
+import dev.jstech.core.hazard.GasLimits;
 import dev.jstech.core.hazard.HazardMaps;
 import dev.jstech.core.hazard.Pollution;
 import dev.jstech.core.hazard.Radiation;
@@ -354,6 +358,9 @@ public final class JsCore {
         // Pollution: amounts over the chunks that spread, fade, are taken up by plants and harm bodies and the land.
         Pollution.listen();
         Lungs.listen();
+        // Gas let out into the open: clouds that spread and thin, poisoning, smothering and exploding by their gas.
+        GasClouds.declare();
+        GasClouds.listen();
         // A body's warmth: its core by the place through what it wears, hypothermia and heatstroke past its bands.
         Clothing.listen(modEventBus);
         BlockTemperatures.listen(modEventBus);
@@ -405,6 +412,7 @@ public final class JsCore {
         MaterialProperties.declare();
         Thermal.declare();
         MaterialHazards.declare();
+        GasLimits.declare();
         MineralFamilies.declare();
         HostRocks.declare();
         MaterialNames.declare();
@@ -530,8 +538,12 @@ public final class JsCore {
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();
-        // What the Core keeps with a world: each dimension's data networks, and the ledger of its recordings.
+        // What the Core keeps with a world: each dimension's data networks, the wear of its pipes, the capsules in its
+        // tubes, and the ledger of its recordings.
         CoreStates.register(NetworkRegistry.NETWORKS);
+        LineWear.declare();
+        CapsuleTransit.declare();
+        CapsuleTransit.listen();
         MediaLedgers.register();
         // How far each player has come along each progression axis, the series' two first, and the advancement
         // triggers every mod stands on.

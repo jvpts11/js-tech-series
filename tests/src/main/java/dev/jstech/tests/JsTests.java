@@ -86,6 +86,10 @@ public final class JsTests {
         TestOvenBattery.declare();
         // A transformer and a battery on J's Industrial's energy contract.
         TestIndustrialEnergy.declare();
+        // A tank, a gas vessel, two pumps and J's Core's valves, on J's Industrial's fluid contract.
+        TestFluidMachines.declare();
+        // A press with an air port and a station of the pneumatic post, on J's Industrial's compressed air.
+        TestPneumatics.declare();
         // Robots that walk, fly and swim, a bolt, a slug and two creatures, to prove the Core's entities.
         TestEntities.declare();
         // A helmet that takes modules, two modules and a robots' charging station.

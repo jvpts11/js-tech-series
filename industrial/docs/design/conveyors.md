@@ -9,7 +9,13 @@ mods installed, each keeps its job.
 
 ## What exists today
 
-Nothing: items move only through vanilla hoppers and other mods' pipes.
+- J's Core has the kits: conveyors of any kind, and a **pneumatic post** of stations with an address on a line of
+  tubes, pushing by their routes, each capsule taking its trip's time and kept with the world on its way.
+- J's Industrial's pneumatic post keeps its rules on it: capsule tubes of their own line, a capsule of up to 4 stacks
+  a second from each station, about 20 blocks a second, routing by filter, and each capsule shot by compressed air,
+  without which the stations stop.
+- The belts, their parts, the stations and the tubes themselves, with their looks and recipes, are still to be built:
+  items move today through vanilla hoppers and other mods' pipes.
 
 ## To build
 

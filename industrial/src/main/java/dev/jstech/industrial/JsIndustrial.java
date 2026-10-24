@@ -17,6 +17,8 @@ import dev.jstech.industrial.crc.CrcStructure;
 import dev.jstech.industrial.datagen.JsIndustrialDataGenerators;
 import dev.jstech.industrial.discovery.ElementDiscovery;
 import dev.jstech.industrial.guide.IndustrialGuide;
+import dev.jstech.industrial.line.IndustrialPipeMarks;
+import dev.jstech.industrial.line.PneumaticPost;
 import dev.jstech.industrial.material.IndustrialMaterials;
 import dev.jstech.industrial.research.IndustrialResearch;
 import dev.jstech.industrial.research.ResearchLink;
@@ -58,6 +60,11 @@ public final class JsIndustrial {
         IndustrialResearch.declare();
         // The Research Link Cable, whose runs join research computers into groups.
         ResearchLink.declare();
+        // The marks of what its pipes carry: acids, molten metal and salt, ultra-pure water, the corrosive gases, and
+        // the hydrogen and slurries that wear pipes through.
+        IndustrialPipeMarks.declare();
+        // The capsule tubes of its pneumatic post, whose runs join the stations on them.
+        PneumaticPost.declare();
         // Hot water, the coolant's water warmed; and the Computational Research Centre, its shape and its content.
         IndustrialFluids.declare();
         CrcStructure.declare();

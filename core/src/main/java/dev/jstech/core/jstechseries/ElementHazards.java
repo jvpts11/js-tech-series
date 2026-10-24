@@ -12,6 +12,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -25,6 +26,14 @@ import java.util.Set;
 final class ElementHazards {
 
     private static final Map<Element, Set<HazardClass>> CLASSES = new EnumMap<>(Element.class);
+    /*
+     * The gaseous elements' limits in the air, as the NIOSH pocket guide gives them: hydrogen burns from 4% to 75% of
+     * the air; fluorine is immediately dangerous from 25 ppm, chlorine from 10.
+     */
+    private static final Map<Element, GasData> GASES = new EnumMap<>(Map.of(
+            Element.HYDROGEN, new GasData(0.04, 0.75, Double.NaN),
+            Element.FLUORINE, new GasData(Double.NaN, Double.NaN, 25),
+            Element.CHLORINE, new GasData(Double.NaN, Double.NaN, 10)));
     /* The first element from which none has a stable isotope: polonium. */
     private static final int FIRST_UNSTABLE = 84;
 
@@ -89,7 +98,22 @@ final class ElementHazards {
         return classes == null ? List.of() : List.copyOf(classes);
     }
 
+    /** What a cloud of {@code element}'s gas does at what share of the air, as safety data gives it; none unknown. */
+    static Optional<GasData> gas(final Element element) {
+        return Optional.ofNullable(GASES.get(element));
+    }
+
     private static void put(final Element element, final HazardClass... classes) {
         CLASSES.computeIfAbsent(element, unused -> EnumSet.noneOf(HazardClass.class)).addAll(List.of(classes));
+    }
+
+    /**
+     * The limits of a gas in the air, each unknown as NaN.
+     *
+     * @param lower its lower explosive limit, a share of the air
+     * @param upper its upper explosive limit
+     * @param idlh  the parts per million of it immediately dangerous to life and health
+     */
+    record GasData(double lower, double upper, double idlh) {
     }
 }

@@ -13,6 +13,7 @@ import dev.jstech.core.cable.CableParts;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.LineBreach;
 import dev.jstech.core.cable.LineFlows;
+import dev.jstech.core.cable.LineWear;
 import dev.jstech.core.cable.NarrowestWire;
 import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.grid.CoreGrids;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -137,20 +139,52 @@ public final class LevelFluids implements IGridMover {
         }
         final long[] moved = new long[this.parts.size()];
         final List<FlowTrace> traces = new ArrayList<>(this.parts.size());
+        // Once every span the wear of the pipes is counted, from what each part carried in this tick.
+        final boolean counting = level.getGameTime() % LineWear.EVERY == 0;
+        final Map<LineWear.Pipe, Integer> worn = new HashMap<>();
+        final Map<LineWear.Pipe, String> wornBy = new HashMap<>();
         for (int i = 0; i < moved.length; i++) {
             final Part part = this.parts.get(i);
             part.tally.reset();
+            final Set<Fluid> carried = counting && !part.wearable.isEmpty() ? new HashSet<>() : null;
             moved[i] = part.rate <= 0 ? 0L : EndRouter.route(part.ends, part.rate, this.turn,
-                    part.carries, (from, to, fluid, amount) -> part.tally.moved(from.key(), to.key(),
-                            move(part.trace, from, to, fluid, amount)));
+                    part.carries, (from, to, fluid, amount) -> {
+                        final long done = move(part.trace, from, to, fluid, amount);
+                        if (carried != null && done > 0) {
+                            carried.add(fluid.getFluid());
+                        }
+                        return part.tally.moved(from.key(), to.key(), done);
+                    });
             if (!part.breakable.isEmpty()) {
                 reach(level, part);
             }
+            if (carried != null && !carried.isEmpty()) {
+                wear(part, carried, worn, wornBy);
+            }
             traces.add(part.trace);
+        }
+        for (final LineWear.Pipe through : LineWear.wear(level, worn)) {
+            through.type().breach().exposed(level, new LineBreach(through.at(), through.type(),
+                    LineBreach.Reason.WORN_OUT, wornBy.get(through)), level.getGameTime());
         }
         this.turn++;
         this.lastTick = moved;
         this.flows.tick(level, traces);
+    }
+
+    /* Counts a span of wear on each pipe of {@code part} that something of {@code carried} wears. */
+    private static void wear(final Part part, final Set<Fluid> carried, final Map<LineWear.Pipe, Integer> worn,
+                             final Map<LineWear.Pipe, String> wornBy) {
+        for (final Breakable pipe : part.wearable) {
+            for (final Fluid fluid : carried) {
+                final OptionalInt stands = pipe.type().pipe().wearsIn(fluid);
+                if (stands.isPresent()) {
+                    final LineWear.Pipe key = new LineWear.Pipe(pipe.at(), pipe.type());
+                    worn.merge(key, stands.getAsInt(), Math::min);
+                    wornBy.putIfAbsent(key, BuiltInRegistries.FLUID.getKey(fluid).toString());
+                }
+            }
+        }
     }
 
     /*
@@ -184,6 +218,7 @@ public final class LevelFluids implements IGridMover {
             PipeLimits limits = null;
             double coldest = Double.NaN;
             final List<Breakable> breakable = new ArrayList<>();
+            final List<Breakable> wearable = new ArrayList<>();
             final NarrowestWire narrowest = new NarrowestWire();
             for (final CableParts.WireAt wire : found.wires()) {
                 rate = Math.min(rate, wire.runTooLong() ? 0L : wire.type().throughput());
@@ -193,6 +228,9 @@ public final class LevelFluids implements IGridMover {
                 narrowest.consider(place, wire);
                 if (wire.type().breaks() && place != null) {
                     breakable.add(new Breakable(BlockPos.of(place.pos()), wire.type()));
+                    if (wire.type().pipe().wears()) {
+                        wearable.add(new Breakable(BlockPos.of(place.pos()), wire.type()));
+                    }
                 }
                 if (!wire.type().insulated() && place != null) {
                     final double ambient = HeatClimate.ambient(level, BlockPos.of(place.pos()));
@@ -215,7 +253,7 @@ public final class LevelFluids implements IGridMover {
             final double cold = coldest;
             final Map<Fluid, Boolean> frozen = new IdentityHashMap<>();
             this.parts.add(new Part(rate, fluid -> carried.carries(fluid.getFluid())
-                    && !frozen(frozen, fluid.getFluid(), cold), ends, breakable,
+                    && !frozen(frozen, fluid.getFluid(), cold), ends, breakable, wearable,
                     LineFlows.traceOf(level, grid, found), new PartTally(found.wires().size(), narrowest.found(),
                             ends.stream().map(FluidEnd::key).toList())));
         }
@@ -265,10 +303,13 @@ public final class LevelFluids implements IGridMover {
      * into, its pipes that break when something reaches them they are not made for, and where what it moves goes.
      */
     private record Part(long rate, Predicate<FluidStack> carries, List<FluidEnd> ends, List<Breakable> breakable,
-                        FlowTrace trace, PartTally tally) {
+                        List<Breakable> wearable, FlowTrace trace, PartTally tally) {
     }
 
-    /* A pipe that breaks when something reaches it that it is not made for: where, and of which cable. */
+    /*
+     * A pipe that breaks when something reaches it that it is not made for, or wears through: where, and of which
+     * cable.
+     */
     private record Breakable(BlockPos at, CableType type) {
     }
 

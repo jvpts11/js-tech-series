@@ -471,5 +471,20 @@
   "jsindustrial.joiner.stepping_down": "Abaixando %s",
   "jsindustrial.joiner.rectifying": "Retificando %s",
   "jsindustrial.joiner.inverting": "Invertendo %s",
-  "jsindustrial.joiner.idle": "Não leva nada"
+  "jsindustrial.joiner.idle": "Não leva nada",
+  "jsindustrial.configuration.fluids": "Fluidos",
+  "jsindustrial.configuration.fluids.hydrogen_embrittles": "O hidrogênio fragiliza o aço",
+  "jsindustrial.configuration.fluids.hydrogen_embrittles.tooltip": "O hidrogênio levado em aço comum o trinca depois de um tempo, como nos dutos de verdade.\nDesligado, o hidrogênio corre em qualquer cano que o segure.",
+  "jsindustrial.configuration.fluids.leaks_are_hazardous": "Vazamentos são perigosos",
+  "jsindustrial.configuration.fluids.leaks_are_hazardous.tooltip": "Um cano rompido derrama o seu líquido e solta o seu gás numa nuvem que envenena, sufoca ou explode como o gás faz.\nDesligado, um vazamento só perde o que o cano levava.",
+  "jsindustrial.configuration.fluids.pipes_fail": "Os canos falham",
+  "jsindustrial.configuration.fluids.pipes_fail.tooltip": "Um cano quente demais, frio demais, corroído, gasto ou acima da sua pressão se rompe, como um de verdade.\nDesligado, o que um cano não aguenta só não entra nele, e nada o gasta.",
+  "jsindustrial.configuration.fluids.tooltip": "O que acontece a um cano além do que ele aguenta, e o que vaza dele.",
+  "tag.fluid.jsindustrial.abrasive": "Lamas abrasivas",
+  "tag.fluid.jsindustrial.acids": "Ácidos",
+  "tag.fluid.jsindustrial.corrosive_gases": "Gases corrosivos",
+  "tag.fluid.jsindustrial.hydrogen": "Hidrogênio",
+  "tag.fluid.jsindustrial.molten_metal": "Metal fundido",
+  "tag.fluid.jsindustrial.molten_salt": "Sal fundido",
+  "tag.fluid.jsindustrial.ultra_pure_water": "Água ultrapura"
 }

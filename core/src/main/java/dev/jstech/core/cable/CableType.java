@@ -10,6 +10,7 @@ package dev.jstech.core.cable;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.energy.EnergyLoss;
 import dev.jstech.core.fluid.PipeLimits;
+import dev.jstech.core.fluid.PipeMarks;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridMember;
 import dev.jstech.core.progression.IAxisStep;
@@ -96,7 +97,7 @@ public final class CableType {
         this.throughput = builder.throughput;
         this.range = builder.range;
         this.loss = builder.loss;
-        this.pipe = new PipeLimits(builder.coldest, builder.hottest, builder.takes);
+        this.pipe = new PipeLimits(builder.coldest, builder.hottest, builder.takes, builder.wornBy);
         this.jacket = Objects.requireNonNull(builder.jacket, "a cable has a jacket");
         this.plug = Objects.requireNonNull(builder.plug, "a cable has a plug");
         this.plugs = builder.plugs.isEmpty() ? Map.of() : Map.copyOf(builder.plugs);
@@ -300,6 +301,7 @@ public final class CableType {
         private int coldest = PipeLimits.PLAIN.coldest();
         private int hottest = PipeLimits.PLAIN.hottest();
         private final Set<TagKey<Fluid>> takes = new HashSet<>();
+        private final Map<TagKey<Fluid>, Integer> wornBy = new HashMap<>();
         private @Nullable ResourceLocation jacket;
         private @Nullable ResourceLocation plug;
         private final Map<String, ResourceLocation> plugs = new HashMap<>();
@@ -390,9 +392,22 @@ public final class CableType {
             return this;
         }
 
-        /** As a pipe, it is made for fluids marked {@code mark}: a gas, a corrosive fluid. */
+        /** As a pipe, it is made for what is marked {@code mark} ({@link PipeMarks}): a gas, a corrosive fluid. */
         public Builder takes(final TagKey<Fluid> mark) {
             this.takes.add(Objects.requireNonNull(mark, "mark"));
+            return this;
+        }
+
+        /**
+         * As a pipe, what is marked {@code mark} wears it through once it has carried it {@code ticks} ticks in all,
+         * which reaches it as a breach ({@link LineBreach.Reason#WORN_OUT}): hydrogen embrittles a steel pipe, a slurry
+         * abrades an unlined one.
+         */
+        public Builder wornBy(final TagKey<Fluid> mark, final int ticks) {
+            if (ticks < 1) {
+                throw new IllegalArgumentException("a pipe stands a tick at least of what wears it, not " + ticks);
+            }
+            this.wornBy.put(Objects.requireNonNull(mark, "mark"), ticks);
             return this;
         }
 

@@ -214,6 +214,32 @@ Materials.material(rl("phosgene"), MaterialKind.GAS, PHOSGENE_NAME)
 - **What a cloud of a gas does**, `MaterialHazards.gasHazards(material)`: `FLAMMABLE`, `TOXIC`, `ASPHYXIANT`,
   `OXIDISING`, `CORROSIVE`, `RADIOACTIVE`, read off the classes, for any mod that lets a gas out to act on.
 
+## Gas clouds
+
+*Added 2026-10-24.*
+
+A gas let out into the open (a pipe that breaks, a vent, a tank that bursts) becomes a **cloud** where it came out,
+kept with the world: it spreads half a block a second up to twelve blocks across, the wind takes a fifth of it a
+second at its widest, and below a part per million of the air it is gone. In a sealed room ([Rooms](ROOMS.md)) the gas
+goes into the room's air instead. What the cloud does follows from its material's hazards, by how much of the air it
+is:
+
+| The gas | What it does |
+| --- | --- |
+| toxic or corrosive | poisons: each second adds the air's share of the gas over what is immediately dangerous to life (`GasLimits.IDLH`, 10 ppm for chlorine), a cough from a second of it, poison and harm from thirty; a gas mask stops it |
+| asphyxiant | takes the place of the air: below 16 kPa of oxygen a body cannot breathe |
+| flammable | between its explosive limits (`GasLimits.LOWER_EXPLOSIVE`, `UPPER_EXPLOSIVE`: 4% and 75% for hydrogen), a flame, lava, a fire or a burning creature within six blocks of it sets it off: a blast of the heat of the gas burning |
+
+```java
+GasClouds.release(level, pos, chlorine, 40);   // forty moles let out where a pipe broke
+double ppm = GasClouds.shareAt(level, pos, chlorine) * 1_000_000;
+```
+
+The limits are real safety data, values of the material a data pack changes as any other
+(`.with(GasLimits.IDLH, 50.0)`); a toxic gas with none is taken to be dangerous from 100 ppm, the order of the common
+industrial poisons. A mole is about 22.4 litres of gas at the open air's pressure, so a leak of a line's millibuckets
+is that many moles over 22.4.
+
 ## The lungs
 
 *Added 2026-10-17.*

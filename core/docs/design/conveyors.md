@@ -23,3 +23,8 @@ Everything this page designs is built, as of October 2026. How a mod uses it, wi
 - **Driven by energy or by mechanical power**, through either kit ([Energy](energy.md),
   [Mechanical power](mechanical-power.md)).
 - **They work on moving structures** ([Moving structures](moving-structures.md)).
+- **A pneumatic post, for items sent far**: stations with an address on a line of tubes of their mod's, whose runs
+  join the stations on them. A station sends what it is given to the address its routes give each item, by filter,
+  pushing only; a capsule carries a few stacks and takes time by the distance, kept with the world on its way, and
+  unloads into the station it reaches. Its mod says how much a capsule carries, how often a station sends and how
+  fast a capsule goes, and what a station spends to send.

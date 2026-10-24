@@ -171,6 +171,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         }
         if (this.level instanceof ServerLevel server) {
             leave(server, wire);
+            LineWear.forget(server, this.worldPosition, type);
         }
         this.bundle.remove(type);
         this.links[wire.slot().id()] = 0;
@@ -509,10 +510,11 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         }
     }
 
-    /** Takes every wire out of its grid, as the block goes. */
+    /** Takes every wire out of its grid, as the block goes, and forgets how worn each was. */
     public void leaveGrids(final ServerLevel server) {
         for (final Wire wire : this.bundle.wires()) {
             leave(server, wire);
+            LineWear.forget(server, this.worldPosition, wire.type());
         }
         this.inGrids = false;
     }

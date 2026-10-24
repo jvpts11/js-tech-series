@@ -22,6 +22,9 @@ The machines follow the real history of industry: each tier has the machines of 
 - J's Industrial's multiblocks keep their rules: a material of their time (brick, wood or iron before the T3, steel
   from it), what their size gives, and a terminal that is the whole screen and keeps what it holds. The Computational
   Research Centre is the first ([Science](science.md)).
+- A machine of J's Industrial may have an **air port**: the Compressed Air Line fills it with air, and while it holds a
+  tick's air the machine spends it and works 15% faster, a gain added beside its upgrades'. No machine has one yet:
+  the presses and assemblers that will are still to be built, with the Compressed Air Plant.
 - J's Industrial has the **Electric Furnace**, the **Macerator** and the **Compressor**, and the Coal Generator
   ([Energy](energy.md)), all of the T1 at low voltage.
 

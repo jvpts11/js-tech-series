@@ -187,6 +187,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   upgrades idle. `ProcessingKind.runsOn` names the energy a kind's machines run on, `energy()` reads it, and its
   recipes show the power they draw in it. `ItemEnergyPort` is the energy an item holds of a mod's own energy, in one
   class, and `CoreEnergy.holdsPort` makes items batteries of it.
+- (Core) Pipes that wear, gas clouds, valves and the pneumatic post: J's Core's API stays at version 12, all
+  experimental. The marks of what pipes carry are an open list, `PipeMarks`, each declared once with the materials it
+  covers: `madeFor`, a mark a pipe has to be made for, and `wears`, one that wears a pipe through; `CoreFluidTags.GASES`
+  and `CORROSIVE` are two of it. `PipeLimits` gives up its fixed `MARKS`, carries the marks that wear a pipe
+  (`wornBy`, `wearsIn`, `wears`) and reads materials too (`carries(Material)`, `beyond(Material)`).
+  `CableType.Builder.wornBy(mark, ticks)` says how long a pipe stands carrying a mark, `LineBreach.Reason.WORN_OUT`
+  reaches it worn through, and `LineWear` keeps each pipe's wear with the world. `GasLimits` gives a gas its explosive
+  limits and what of it is immediately dangerous to life, and `GasClouds` lets a gas out into the open as a cloud.
+  `LineValveBlockEntity`, with `IValveRule`, is a valve on a line of liquid or gas, and `ReliefValveBlockEntity` a
+  relief valve against a vessel. The new package `dev.jstech.core.transit`, promised, is the pneumatic post:
+  `CapsuleStationBlockEntity`, `CapsuleRules`, `CapsuleRoute`, `Capsule` and `CapsuleTransit`. What a machine's faces
+  offer of a state of matter is its `matterHandler(state)`, for any machine.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1550,6 +1562,40 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   structure forming again once the terminal is back.
 - (Industrial) Plant Drawings: the Science section opens, with drawings of the Computational Research Centre and its
   parts, of the research data and of research groups; and Fluids and Gases has one of hot water.
+- (Core) Pipes that wear: a mark of what a pipe carries may wear a pipe through instead of keeping it out, after so
+  long carrying it, the wear kept with the world and forgotten when the pipe goes; lines of gas, slurry and plasma keep
+  the marks as pipes of liquid do, so a corrosive gas stays out of a gas line not made for it.
+- (Core) Gas clouds: a gas let out into the open is a cloud that spreads and thins until it is gone, kept with the
+  world, or goes into a sealed room's air. A toxic or corrosive gas poisons by how far it is past what is immediately
+  dangerous to life, which a gas mask stops; an asphyxiant takes the oxygen's place; a flammable gas between its
+  explosive limits goes off from a flame, lava or a fire in it. The limits are real data of each gas: hydrogen
+  explodes between 4% and 75% of the air, chlorine is dangerous from 10 ppm, ammonia from 300.
+- (Core) Valves for any mod's pipes: a check valve lets through one way, others open by hand or by a redstone signal
+  or let one fluid through alone, each counting its flow for a comparator; and a relief valve lets a vessel's excess
+  out above its setting, into a discharge tank or the air.
+- (Core) The pneumatic post for any mod: stations with an address on a line of tubes, sending what they are given to
+  the address their routes give each item, pushing only, each capsule taking its trip's time and kept with the world
+  on its way, unloading into the station it reaches and from it into the block that station faces.
+- (Core) Air, in the shared catalogue: the mixture a compressor draws in, for every mod that compresses or separates
+  it.
+- (Industrial) The marks of what its pipes carry: acids, molten metal, molten salt, ultra-pure water and the corrosive
+  gases ask a pipe made for them; hydrogen wears plain steel through, and a slurry an unlined pipe. Fluid tags, so a
+  data pack marks another mod's fluids.
+- (Industrial) What befalls its pipes: too hot or too cold, a pipe bursts or cracks after five seconds; a corrosive it
+  is not made for eats it through in about a minute; past its pressure it bursts at once; hydrogen wears plain steel
+  through in an hour, a slurry an unlined pipe in ten minutes. A broken pipe falls as its scrap and leaks five seconds
+  of its flow: a liquid spills, a slurry splashes out, a gas comes out as a cloud. Each is a server setting, on as it
+  comes: pipes fail, leaks are hazardous, hydrogen embrittles. Mekanism's hydrogen wears steel as the series' does.
+- (Industrial) The contract of its tanks and pumps: a tank of several blocks holds the room inside its walls, a cubic
+  metre, 1,000 mB, a block; a gas vessel its volume times its pressure; one content at a time, refusing more full and
+  what it is not made for, kept while the tank stands apart; a comparator reads it; a cold liquid boils off by the
+  tank's insulation. A water pump draws water without end from a source beside it, a drainage pump the fluid blocks
+  around it, a bucket a block, and both push what they pump into their pipes.
+- (Industrial) Compressed air: its own line, the Compressed Air Line, which never joins a gas pipe; a machine with an
+  air port spends its air and works 15% faster, added beside its upgrades' gains.
+- (Industrial) The rules of its pneumatic post: capsule tubes of their own line, a capsule of up to four stacks a
+  second from each station, about twenty blocks a second, each shot by compressed air, without which the stations
+  stop.
 
 ### Changed
 - (Industrial) Its machines run on J's Energy at low voltage, all of the T1: the Coal Generator makes up to 5 kW,

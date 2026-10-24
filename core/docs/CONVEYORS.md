@@ -7,7 +7,8 @@ stands at their end; belts that rise and fall a block; chutes items fall down; b
 splitters, joins and diverters that deal them out, gather them in and sort them; and machines that work items as they
 pass under them. The kit is the Core's; each mod declares its own kinds of conveyor, with their speed, how many items a
 block holds and what makes them move, and draws its own blocks. The items on a conveyor are a queue of numbers, never
-entities, so a factory floor of belts weighs little.
+entities, so a factory floor of belts weighs little. For items sent far, there is the
+[pneumatic post](#pneumatic-post): stations with an address and capsules shot through tubes.
 
 The design behind this page is [Conveyors](design/conveyors.md).
 
@@ -202,3 +203,48 @@ helper.succeedWhen(() -> /* the diamonds are in the chest */);
 | A machine above never works | The belt under it is sloped, or the machine's `works` says no to the item. |
 | Building fails with "a chute's kind of conveyor moves on a shaft" | A chute has no shaft: give its kind a free drive or one on energy. |
 | Building fails with "a conveyor moves faster than nothing..." | The speed is not above zero or is over 20 blocks a second. |
+
+## Pneumatic post
+
+*Added 2026-10-24.*
+
+Belts carry a lot over a short way; a **pneumatic post** carries less, far, as the tubes of Paris (1866), of
+department stores and of hospitals did. It is the package `dev.jstech.core.transit`:
+
+- **Stations** (`CapsuleStationBlockEntity`) stand on a line of tubes, each with an **address** (`setAddress`). What
+  is put into a station, by a hopper, a machine or a line of items, it sends in a **capsule** to a station of the
+  address its routes give that item: the first `CapsuleRoute` whose filter lets it through, else the address it sends
+  everything else to (`setOtherwise`). What it has no address for, it does not take. It **pushes only**: a station
+  never asks another for anything.
+- **The tubes** are a line of the mod's on a grid of `GridPolicies.GROUP` ([Lines that group](CABLES.md#lines-that-group)):
+  a run joins the stations on it, and a capsule goes to the nearest station of its address the run joins.
+- **Capsules are physical.** A station sends one as often as its rules let, carrying at most their stacks, and the
+  trip takes time by the distance between the two stations at the rules' speed. A capsule on its way is kept with the
+  world (`CapsuleTransit`), so one sent before the server stopped arrives after it starts.
+- **Arriving**, a capsule unloads into its station, which unloads into the block it faces, keeping what does not fit
+  until it does. A station that cannot take a capsule yet, full or in a chunk not loaded, has it wait a second and try
+  again; one whose station is gone drops its items where the station was.
+
+```java
+public static final GridKind TUBES = GridKind.declare(rl("capsule_tube"), GridPolicies.GROUP);
+public static final CapsuleRules RULES = new CapsuleRules(4, 20, 20.0);   // 4 stacks, one a second, 20 blocks a second
+
+// Its type, made with (pos, state) -> new CapsuleStationBlockEntity(STATION_BE.get(), pos, state, TUBES, RULES),
+// ticked by CapsuleStationBlockEntity::serverTick, and in the mod's RegisterCapabilitiesEvent:
+CapsuleStationBlockEntity.register(event, STATION_BE.get());
+
+station.setAddress(1);
+station.setRoutes(List.of(new CapsuleRoute(ItemFilter.only(new ItemFilter.Fuzzy("minecraft:iron_ingot", 0)), 3)));
+station.setOtherwise(7);   // iron to station 3, the rest to station 7
+```
+
+A mod makes sending cost something by overriding `readyToSend` and `sent` on its station: J's Industrial's stations
+shoot each capsule with compressed air, and stop without it. Every face of a station takes what it has an address
+for and gives what arrived (`items()`), and the tubes find it on every face. The test mod's `IndustrialAirGameTests`
+is a worked set: routes, the trip's time, a capsule kept with the world, and a station without air.
+
+| What you see | Why |
+| --- | --- |
+| A station takes nothing in | It has no route that lets the item through and no address for the rest. |
+| Items wait in a station and never leave | No station of their address is on its run of tubes, or its mod's cost (air) is not there. |
+| A capsule's items lie on the ground | The station it was going to was broken while it was on its way. |

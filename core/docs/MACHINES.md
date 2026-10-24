@@ -144,7 +144,9 @@ Layout.items(1, 1).withMatter(MatterState.GAS, 1, 1, 1_000, 10)   // a gas tank 
 ```
 
 Each state's lines find them through its capability (`MatterCapabilities.GAS`...): they fill the inputs and take
-from the outputs. `matter()` holds them.
+from the outputs. `matter()` holds them. What a machine's faces and its structure's ports offer of a state is what
+its `matterHandler(state)` says, for any machine: one that keeps a tank beside its recipes' (J's Industrial's air
+port) overrides it and adds the state to its `resources()`, so its Sides tab shows it.
 
 ### Heat
 

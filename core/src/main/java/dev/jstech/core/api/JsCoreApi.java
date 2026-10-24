@@ -80,7 +80,7 @@ public final class JsCoreApi {
             "dev.jstech.core.progression", "dev.jstech.core.region", "dev.jstech.core.research",
             "dev.jstech.core.resource",
             "dev.jstech.core.signal", "dev.jstech.core.state", "dev.jstech.core.task", "dev.jstech.core.team",
-            "dev.jstech.core.text", "dev.jstech.core.tool", "dev.jstech.core.uuid",
+            "dev.jstech.core.text", "dev.jstech.core.tool", "dev.jstech.core.transit", "dev.jstech.core.uuid",
             "dev.jstech.core.worldgen.reservoir", "dev.jstech.core.worldgen.vein");
 
     /**

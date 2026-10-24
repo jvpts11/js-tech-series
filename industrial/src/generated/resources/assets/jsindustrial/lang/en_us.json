@@ -71,6 +71,14 @@
   "jsindustrial.circuit.vacuum_tube": "Vacuum tube",
   "jsindustrial.circuit.vacuum_tube.made": "By hand, with the soldering iron.",
   "jsindustrial.circuit.vacuum_tube.what": "Thermionic valves on a printed board: a tungsten filament, glass and a Kovar seal.",
+  "jsindustrial.configuration.fluids": "Fluids",
+  "jsindustrial.configuration.fluids.hydrogen_embrittles": "Hydrogen embrittles steel",
+  "jsindustrial.configuration.fluids.hydrogen_embrittles.tooltip": "Hydrogen carried in plain steel cracks it after a while, as it does in real pipelines.\nOff, hydrogen runs in any pipe that holds it.",
+  "jsindustrial.configuration.fluids.leaks_are_hazardous": "Leaks are hazardous",
+  "jsindustrial.configuration.fluids.leaks_are_hazardous.tooltip": "A broken pipe spills its liquid and lets its gas out as a cloud that poisons, smothers or explodes as the gas does.\nOff, a leak only loses what the pipe carried.",
+  "jsindustrial.configuration.fluids.pipes_fail": "Pipes fail",
+  "jsindustrial.configuration.fluids.pipes_fail.tooltip": "A pipe too hot, too cold, corroded, worn through or past its pressure breaks, as a real one does.\nOff, what a pipe is not made for just does not go in, and nothing wears it.",
+  "jsindustrial.configuration.fluids.tooltip": "What befalls a pipe past what it is made for, and what leaks out of it.",
   "jsindustrial.configuration.research": "Research",
   "jsindustrial.configuration.research.require_research": "Require research",
   "jsindustrial.configuration.research.require_research.tooltip": "Whether a recipe that needs a discovery is locked until the team of the machine's owner has made it.\nOff, nothing is locked and no discovery is granted: research can still be done, for its advancements.",
@@ -471,5 +479,12 @@
   "jsindustrial.manual.set_up_next": "How to set it up follows.",
   "jsindustrial.manual.set_up_plan": "Setting it up (seen from above)",
   "jsindustrial.recipe_kind.compressing": "Compressing",
-  "jsindustrial.recipe_kind.macerating": "Macerating"
+  "jsindustrial.recipe_kind.macerating": "Macerating",
+  "tag.fluid.jsindustrial.abrasive": "Abrasive Slurries",
+  "tag.fluid.jsindustrial.acids": "Acids",
+  "tag.fluid.jsindustrial.corrosive_gases": "Corrosive Gases",
+  "tag.fluid.jsindustrial.hydrogen": "Hydrogen",
+  "tag.fluid.jsindustrial.molten_metal": "Molten Metal",
+  "tag.fluid.jsindustrial.molten_salt": "Molten Salt",
+  "tag.fluid.jsindustrial.ultra_pure_water": "Ultra-Pure Water"
 }

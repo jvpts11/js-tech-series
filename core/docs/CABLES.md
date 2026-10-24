@@ -50,7 +50,8 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
 | `lane(...)` or `alone()` | Its lane in the block, or the block to itself. One line owns one lane, and two lines in one lane are refused. |
 | `carries(throughput, range)` | How much it moves a tick, and how many blocks one run reaches before it carries nothing further. |
 | `loses(millionths)` | What each block of it loses besides its energy class's loss by distance, 0 to 1,000,000. |
-| `withstands(cold, hot)`, `takes(tag)` | For pipes: the temperatures and marks of the fluids it carries. |
+| `withstands(cold, hot)`, `takes(tag)` | For pipes: the temperatures and marks of the fluids it carries ([Marks and wear](ENERGY_AND_RESOURCES.md#marks-and-wear)). |
+| `wornBy(tag, ticks)` | For pipes: a mark that wears it through, and how many ticks of carrying it it stands. |
 | `holds(atmospheres)` | For pipes of a state held under pressure: the most pressure it holds. A store holding a gas at more is carried none of, and the gas reaches the pipe as a breach of `OVERPRESSURE` ([Pressure that bursts](ENERGY_AND_RESOURCES.md#pressure-that-bursts)). Any pressure unless said. |
 | `runsStraight()` | It cannot turn inside a block; something else turns it. |
 | `joinsAtMost(faces)` | The most neighbours it joins, 1 to 6 (2 for a line between two ends). |
@@ -230,7 +231,8 @@ A line on a grid of `GridPolicies.GROUP` carries nothing: each connected run is 
 and its mod says what the group does (research computers pooling their work, the devices of a ground station). A
 machine joins by offering `LineGroups.MEMBER` on the face the line meets, and hears `joined(group)` and `left(kind)`;
 a mod hears every group that is new, changed or dissolved with `LineGroups.listen(kind, listener)`, and reads them
-with `LineGroups.of(level, kind)`. A dyed run is a group of its own beside a run of another colour.
+with `LineGroups.of(level, kind)`. A dyed run is a group of its own beside a run of another colour. The stations of
+a pneumatic post find one another so ([Pneumatic post](CONVEYORS.md#pneumatic-post)).
 
 ## Beyond a line's limits
 
@@ -240,7 +242,9 @@ A pipe is made for some temperatures and marks; when a fluid it is not made for 
 follows, each tick it is so (`CableType.Builder.beyond`). By default it holds and carries none of it.
 `BreachRules.breaksAfter(ticks, then)` breaks the wire once it has been reached that long in a row and lets its mod say
 what follows; `BreachRules.spill` lets a liquid out where the pipe was. `LineBreach` says where, which cable, why (too
-hot, too cold, a mark it is not made for, more pressure than it holds), what reached it and at what pressure.
+hot, too cold, a mark it is not made for, more pressure than it holds, worn through), what reached it and at what
+pressure. A pipe is worn through once it has carried a mark it is declared worn by (`wornBy`) for as long as it
+stands; `LineWear` keeps how long each has, with the world.
 
 A pipe of gas that says the pressure it holds (`holds(atmospheres)`) is reached by a gas from a store holding it at
 more; `PressureBursts.pipe(innerVolume)` is what follows a pipe that bursts: a blast of the energy the gas a block of

@@ -216,11 +216,60 @@ CableType.builder(MY_PIPE_LINE)
 What moves where: what only gives (a pump, a machine's output) feeds what only takes, in proportion to what each
 wants; what is left fills what both takes and gives (tanks), and tanks then feed what still wants. Two tanks alone
 never pour into each other. A pipe carries only what every pipe of its run is made for: a fluid too hot or too cold
-for it, or marked with a tag the pipe does not take, stays where it is. The Core's two marks are `jscore:gases`
-(needs a pipe that holds pressure) and `jscore:corrosive`; they are data tags, so a data pack can mark any mod's
-fluids.
+for it, or marked with a tag the pipe does not take, stays where it is.
 
 Fluids themselves are declared on `ModContent` with `fluid(id)`, with their bucket and their block.
+
+### Marks and wear
+
+*Added 2026-10-24.*
+
+A **mark** is a fluid tag that says something about what a pipe carries, declared once in `PipeMarks` with the
+materials it covers, so a gas or a slurry that is no fluid is marked too. There are two kinds:
+
+- `PipeMarks.madeFor(tag, materials)`: a pipe has to be made for it (`CableType.Builder.takes(tag)`), and one that is
+  not refuses it. The Core declares `jscore:gases` (needs a pipe that holds pressure) and `jscore:corrosive`.
+- `PipeMarks.wears(tag, materials)`: any pipe carries it, but a pipe declared worn by it
+  (`CableType.Builder.wornBy(tag, ticks)`) stands only so many ticks of carrying it, then is reached as a breach of
+  `WORN_OUT` ([Beyond a line's limits](CABLES.md#beyond-a-lines-limits)): hydrogen embrittles plain steel, a slurry
+  abrades an unlined pipe.
+
+```java
+public static final TagKey<Fluid> ACIDS = PipeMarks.madeFor(tag("acids"), material -> false);  // fluids only
+public static final TagKey<Fluid> HYDROGEN = PipeMarks.wears(tag("hydrogen"),
+        material -> material == Elements.of(Element.HYDROGEN));
+public static final TagKey<Fluid> ABRASIVE = PipeMarks.wears(tag("abrasive"),
+        material -> material.takes(MatterState.SLURRY));
+
+CableType.builder(STEEL_GAS_LINE).grid(GridKind.GAS).carries(500, 0)
+        .wornBy(HYDROGEN, 72_000);   // an hour of carrying hydrogen
+```
+
+The tags stay data tags, so a data pack marks any mod's fluids. Each declares once: a second declaration of the same
+tag is refused as the game loads. How long each pipe has carried what wears it is kept with the world (`LineWear`), so
+a server restarted goes on from there; a pipe taken out, or whose block goes, is forgotten.
+
+### Valves
+
+*Added 2026-10-24.*
+
+A valve is a block between two runs of a line of liquid or of gas, a `LineValveBlockEntity`: what reaches its back
+goes out of its front, never the other way, as much as its rate a tick, while its rule opens it. `IValveRule.ALWAYS`
+makes a check valve, `BY_HAND` a valve a player turns (`turn()`), `BY_SIGNAL` one a redstone signal opens. A valve may
+let one fluid or gas through alone (`setFilter`), sending each of a shared run to its machine, and every valve counts
+what has passed it (`passed()`, `flow()`), the flow a comparator and the Core's sensors read of it, as a flow meter
+does. Its block faces whoever placed it.
+
+```java
+// Its type, made with (pos, state) -> new LineValveBlockEntity(CHECK_VALVE_BE.get(), pos, state,
+//         MatterState.LIQUID, 200, IValveRule.ALWAYS), ticked by LineValveBlockEntity::serverTick,
+// and in the mod's RegisterCapabilitiesEvent:
+LineValveBlockEntity.register(event, CHECK_VALVE_BE.get());
+```
+
+A `ReliefValveBlockEntity` stands with its back against a vessel of gas: above the pressure it is set to, it lets
+the excess out of its front, into a store of gas there (a discharge tank) or into the air as a cloud
+([Gas clouds](HAZARDS.md#gas-clouds)), up to its rate a tick, so the vessel never bursts.
 
 ## States of matter
 
@@ -254,7 +303,8 @@ fluid flashes into gas, a slurry spills, plasma flares. Exotic matter is never l
 Each state has its own line: a cable of `GridKind.GAS`, `SUPERCRITICAL`, `SLURRY`, `PLASMA` or `EXOTIC` moves
 only that state, shared as fluids are (outputs feed inputs, then tanks, then tanks feed inputs), each move all or
 nothing. Its throughput is the mB it moves a tick, the pressure it holds. A slurry runs only in slurry lines, so no
-other line is worn by one.
+other line is worn by one. A line of matter keeps the marks as a pipe does ([Marks and wear](#marks-and-wear)): a
+corrosive gas stays out of a gas line not made for it, and hydrogen wears a line declared worn by it.
 
 Other mods' matter comes in through bridges: a gas line also meets a chemical mod's stores (each chemical in the
 state its bridge says) and the tanks of mods that keep gases as fluids marked `jscore:gases`. `MatterBridges` links

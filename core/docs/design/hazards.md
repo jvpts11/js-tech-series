@@ -26,6 +26,11 @@ changes any of them.
 - **What a cloud of a gas does** is read off the same classes, for any mod that lets a gas out: it burns (flammable,
   explosive), it poisons (acutely toxic, harmful), it suffocates (asphyxiant), it feeds a fire (oxidising), it eats metal
   (corrosive), it irradiates (radioactive). Harm over time, a health hazard or to the environment, is no cloud's.
+- **The clouds are the Core's**: a gas let out into the open is a cloud, kept with the world, that spreads and thins
+  until it is gone, or goes into a sealed room's air. Its limits are real data of its material: the share of the air a
+  flammable gas explodes between (4% to 75% for hydrogen), set off by a flame, lava or a fire in it, and what of a
+  toxic gas is immediately dangerous to life (10 ppm for chlorine), which a gas mask stops; an asphyxiant takes the
+  place of the oxygen.
 
 ## The design
 

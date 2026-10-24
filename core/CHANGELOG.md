@@ -184,6 +184,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   upgrades idle. `ProcessingKind.runsOn` names the energy a kind's machines run on, `energy()` reads it, and its
   recipes show the power they draw in it. `ItemEnergyPort` is the energy an item holds of a mod's own energy, in one
   class, and `CoreEnergy.holdsPort` makes items batteries of it.
+- Pipes that wear, gas clouds, valves and the pneumatic post: J's Core's API stays at version 12, all
+  experimental. The marks of what pipes carry are an open list, `PipeMarks`, each declared once with the materials it
+  covers: `madeFor`, a mark a pipe has to be made for, and `wears`, one that wears a pipe through; `CoreFluidTags.GASES`
+  and `CORROSIVE` are two of it. `PipeLimits` gives up its fixed `MARKS`, carries the marks that wear a pipe
+  (`wornBy`, `wearsIn`, `wears`) and reads materials too (`carries(Material)`, `beyond(Material)`).
+  `CableType.Builder.wornBy(mark, ticks)` says how long a pipe stands carrying a mark, `LineBreach.Reason.WORN_OUT`
+  reaches it worn through, and `LineWear` keeps each pipe's wear with the world. `GasLimits` gives a gas its explosive
+  limits and what of it is immediately dangerous to life, and `GasClouds` lets a gas out into the open as a cloud.
+  `LineValveBlockEntity`, with `IValveRule`, is a valve on a line of liquid or gas, and `ReliefValveBlockEntity` a
+  relief valve against a vessel. The new package `dev.jstech.core.transit`, promised, is the pneumatic post:
+  `CapsuleStationBlockEntity`, `CapsuleRules`, `CapsuleRoute`, `Capsule` and `CapsuleTransit`. What a machine's faces
+  offer of a state of matter is its `matterHandler(state)`, for any machine.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1480,6 +1492,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the team knows what it comes after, known in part while its research goes and opening what asks for it once made.
   What each costs can be changed by a data pack, and a mod's setting can turn its research off, opening everything
   its discoveries lock.
+- Pipes that wear: a mark of what a pipe carries may wear a pipe through instead of keeping it out, after so
+  long carrying it, the wear kept with the world and forgotten when the pipe goes; lines of gas, slurry and plasma keep
+  the marks as pipes of liquid do, so a corrosive gas stays out of a gas line not made for it.
+- Gas clouds: a gas let out into the open is a cloud that spreads and thins until it is gone, kept with the
+  world, or goes into a sealed room's air. A toxic or corrosive gas poisons by how far it is past what is immediately
+  dangerous to life, which a gas mask stops; an asphyxiant takes the oxygen's place; a flammable gas between its
+  explosive limits goes off from a flame, lava or a fire in it. The limits are real data of each gas: hydrogen
+  explodes between 4% and 75% of the air, chlorine is dangerous from 10 ppm, ammonia from 300.
+- Valves for any mod's pipes: a check valve lets through one way, others open by hand or by a redstone signal
+  or let one fluid through alone, each counting its flow for a comparator; and a relief valve lets a vessel's excess
+  out above its setting, into a discharge tank or the air.
+- The pneumatic post for any mod: stations with an address on a line of tubes, sending what they are given to
+  the address their routes give each item, pushing only, each capsule taking its trip's time and kept with the world
+  on its way, unloading into the station it reaches and from it into the block that station faces.
+- Air, in the shared catalogue: the mixture a compressor draws in, for every mod that compresses or separates
+  it.
 
 ### Changed
 - The body's screen is declared in a file, so its look can change: a resource pack lays it out again and the

@@ -1018,6 +1018,7 @@ stable 4
 10 dev.jstech.core.cable.CableType.Builder  Builder thickness(int)
 10 dev.jstech.core.cable.CableType.Builder  Builder windows(ResourceLocation)
 10 dev.jstech.core.cable.CableType.Builder  Builder withstands(int, int)
+12 dev.jstech.core.cable.CableType.Builder  Builder wornBy(TagKey<Fluid>, int)
 10 dev.jstech.core.cable.CableType.Builder  CableType build(Supplier<? extends Item>)
 10 dev.jstech.core.cable.Cables  type final class
 10 dev.jstech.core.cable.Cables  static BlockPos blockOf(ServerLevel, long)
@@ -1144,9 +1145,21 @@ stable 4
 10 dev.jstech.core.cable.LineBreach.Reason  String serializedName()
 10 dev.jstech.core.cable.LineBreach.Reason  TOO_COLD
 10 dev.jstech.core.cable.LineBreach.Reason  TOO_HOT
+12 dev.jstech.core.cable.LineBreach.Reason  WORN_OUT
 10 dev.jstech.core.cable.LineFlows  type final class
 10 dev.jstech.core.cable.LineFlows  static FlowTrace traceOf(ServerLevel, Grid, CableParts.Part)
 10 dev.jstech.core.cable.LineFlows  void tick(ServerLevel, List<FlowTrace>)
+12 dev.jstech.core.cable.LineWear  type final class
+12 dev.jstech.core.cable.LineWear  static List<Pipe> wear(ServerLevel, Map<Pipe, Integer>)
+12 dev.jstech.core.cable.LineWear  static final DimensionState<Book> STATE
+12 dev.jstech.core.cable.LineWear  static final int EVERY
+12 dev.jstech.core.cable.LineWear  static int worn(ServerLevel, BlockPos, CableType)
+12 dev.jstech.core.cable.LineWear  static void declare()
+12 dev.jstech.core.cable.LineWear  static void forget(ServerLevel, BlockPos, CableType)
+12 dev.jstech.core.cable.LineWear.Book  type record(Map<String, Integer> ticks)
+12 dev.jstech.core.cable.LineWear.Book  static final Book EMPTY
+12 dev.jstech.core.cable.LineWear.Book  static final Codec<Book> CODEC
+12 dev.jstech.core.cable.LineWear.Pipe  type record(BlockPos at, CableType type)
 10 dev.jstech.core.cable.NarrowestWire  type final class
 10 dev.jstech.core.cable.NarrowestWire  Optional<LineSurvey.Narrowest> found()
 10 dev.jstech.core.cable.NarrowestWire  void consider(GridPlace, CableParts.WireAt)
@@ -3992,6 +4005,11 @@ stable 4
 10 dev.jstech.core.fluid.FluidGrids  type final class
 10 dev.jstech.core.fluid.FluidGrids  static LevelFluids of(ServerLevel)
 10 dev.jstech.core.fluid.FluidGrids  static OptionalLong movedLastTickAt(ServerLevel, GridPlace)
+12 dev.jstech.core.fluid.IValveRule  type interface
+12 dev.jstech.core.fluid.IValveRule  abstract boolean open(ServerLevel, LineValveBlockEntity)
+12 dev.jstech.core.fluid.IValveRule  static final IValveRule ALWAYS
+12 dev.jstech.core.fluid.IValveRule  static final IValveRule BY_HAND
+12 dev.jstech.core.fluid.IValveRule  static final IValveRule BY_SIGNAL
 10 dev.jstech.core.fluid.LevelFluids  type final class implements IGridMover
 10 dev.jstech.core.fluid.LevelFluids  Optional<LineSurvey> survey(long)
 10 dev.jstech.core.fluid.LevelFluids  OptionalLong movedLastTickOf(long)
@@ -4001,12 +4019,52 @@ stable 4
 10 dev.jstech.core.fluid.LevelFluids  static final Section SECTION
 10 dev.jstech.core.fluid.LevelFluids  void tapsChanged()
 10 dev.jstech.core.fluid.LevelFluids  void tick(ServerLevel)
-10 dev.jstech.core.fluid.PipeLimits  type record(int coldest, int hottest, Set<TagKey<Fluid>> takes)
+12 dev.jstech.core.fluid.LineValveBlockEntity  type class extends SyncedBlockEntity implements ISignalOutput
+12 dev.jstech.core.fluid.LineValveBlockEntity  Direction front()
+12 dev.jstech.core.fluid.LineValveBlockEntity  IFluidHandler fluid(Direction)
+12 dev.jstech.core.fluid.LineValveBlockEntity  IMatterHandler matter(Direction)
+12 dev.jstech.core.fluid.LineValveBlockEntity  List<Reading> readings()
+12 dev.jstech.core.fluid.LineValveBlockEntity  Optional<ResourceLocation> filter()
+12 dev.jstech.core.fluid.LineValveBlockEntity  boolean open()
+12 dev.jstech.core.fluid.LineValveBlockEntity  boolean openByHand()
+12 dev.jstech.core.fluid.LineValveBlockEntity  long flow()
+12 dev.jstech.core.fluid.LineValveBlockEntity  long passed()
+12 dev.jstech.core.fluid.LineValveBlockEntity  new(BlockEntityType<?>, BlockPos, BlockState, MatterState, long, IValveRule)
+12 dev.jstech.core.fluid.LineValveBlockEntity  static <T extends LineValveBlockEntity> void register(RegisterCapabilitiesEvent, BlockEntityType<T>)
+12 dev.jstech.core.fluid.LineValveBlockEntity  static final TextKey FLOW
+12 dev.jstech.core.fluid.LineValveBlockEntity  static final TextKey PER_TICK
+12 dev.jstech.core.fluid.LineValveBlockEntity  static void serverTick(Level, BlockPos, BlockState, LineValveBlockEntity)
+12 dev.jstech.core.fluid.LineValveBlockEntity  void setFilter(Optional<ResourceLocation>)
+12 dev.jstech.core.fluid.LineValveBlockEntity  void turn()
+12 dev.jstech.core.fluid.PipeLimits  type record(int coldest, int hottest, Set<TagKey<Fluid>> takes, Map<TagKey<Fluid>, Integer> wornBy)
 10 dev.jstech.core.fluid.PipeLimits  Optional<LineBreach.Reason> beyond(Fluid)
+12 dev.jstech.core.fluid.PipeLimits  Optional<LineBreach.Reason> beyond(Material)
+12 dev.jstech.core.fluid.PipeLimits  OptionalInt wearsIn(Fluid)
+12 dev.jstech.core.fluid.PipeLimits  OptionalInt wearsIn(Material)
 10 dev.jstech.core.fluid.PipeLimits  PipeLimits and(PipeLimits)
 10 dev.jstech.core.fluid.PipeLimits  boolean carries(Fluid)
-10 dev.jstech.core.fluid.PipeLimits  static final List<TagKey<Fluid>> MARKS
+12 dev.jstech.core.fluid.PipeLimits  boolean carries(Material)
+12 dev.jstech.core.fluid.PipeLimits  boolean wears()
+12 dev.jstech.core.fluid.PipeLimits  new(int, int, Set<TagKey<Fluid>>)
 10 dev.jstech.core.fluid.PipeLimits  static final PipeLimits PLAIN
+12 dev.jstech.core.fluid.PipeMarks  type final class
+12 dev.jstech.core.fluid.PipeMarks  static List<Mark> all()
+12 dev.jstech.core.fluid.PipeMarks  static Optional<Mark> of(TagKey<Fluid>)
+12 dev.jstech.core.fluid.PipeMarks  static TagKey<Fluid> madeFor(TagKey<Fluid>, Predicate<Material>)
+12 dev.jstech.core.fluid.PipeMarks  static TagKey<Fluid> wears(TagKey<Fluid>, Predicate<Material>)
+12 dev.jstech.core.fluid.PipeMarks.Kind  type enum
+12 dev.jstech.core.fluid.PipeMarks.Kind  MADE_FOR
+12 dev.jstech.core.fluid.PipeMarks.Kind  WEARS
+12 dev.jstech.core.fluid.PipeMarks.Mark  type record(TagKey<Fluid> tag, Kind kind, Predicate<Material> materials)
+12 dev.jstech.core.fluid.PipeMarks.Mark  boolean on(Fluid)
+12 dev.jstech.core.fluid.PipeMarks.Mark  boolean on(Material)
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  type class extends SyncedBlockEntity
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  long setTo()
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  long vented()
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  new(BlockEntityType<?>, BlockPos, BlockState, long, long)
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  static final double MILLIBUCKETS_A_MOLE
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  static void serverTick(Level, BlockPos, BlockState, ReliefValveBlockEntity)
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  void setTo(long)
 10 dev.jstech.core.font.BdfFormatException  type final class extends IllegalArgumentException
 10 dev.jstech.core.font.BdfFormatException  int line()
 10 dev.jstech.core.font.BdfFormatException  new(int, String)
@@ -12272,6 +12330,48 @@ stable 4
 10 dev.jstech.core.tool.Tools  static void spend(LivingEntity, ItemStack)
 10 dev.jstech.core.tool.Tools  static void startWait(Player, ItemStack)
 10 dev.jstech.core.tool.Tools  static void used(LivingEntity, ItemStack)
+12 dev.jstech.core.transit.Capsule  type record(BlockPos from, BlockPos to, List<ItemStack> items, long arrives)
+12 dev.jstech.core.transit.Capsule  Capsule arrivingAt(long)
+12 dev.jstech.core.transit.Capsule  static final Codec<Capsule> CODEC
+12 dev.jstech.core.transit.CapsuleRoute  type record(ItemFilter filter, int address)
+12 dev.jstech.core.transit.CapsuleRoute  static final Codec<CapsuleRoute> CODEC
+12 dev.jstech.core.transit.CapsuleRules  type record(int stacks, int every, double blocksPerSecond)
+12 dev.jstech.core.transit.CapsuleRules  long ticksFor(int)
+12 dev.jstech.core.transit.CapsuleRules  static final double TICKS_A_SECOND
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  type class extends SyncedBlockEntity implements LineGroups.IGroupMember
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  CapsuleRules rules()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  Direction front()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  FieldItemHandler incoming()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  FieldItemHandler outgoing()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  IItemHandler items()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  List<CapsuleRoute> routes()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  OptionalInt addressOf(ItemStack)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  boolean receive(List<ItemStack>)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  int address()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  int otherwise()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  new(BlockEntityType<?>, BlockPos, BlockState, GridKind, CapsuleRules)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  protected boolean readyToSend(ServerLevel, int)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  protected void sent(ServerLevel, Capsule)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  static <T extends CapsuleStationBlockEntity> void register(RegisterCapabilitiesEvent, BlockEntityType<T>)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  static final int NO_ADDRESS
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  static final int UNLOADS_EVERY
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  static void serverTick(Level, BlockPos, BlockState, CapsuleStationBlockEntity)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  void joined(LineGroup)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  void left(GridKind)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  void setAddress(int)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  void setOtherwise(int)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  void setRoutes(List<CapsuleRoute>)
+12 dev.jstech.core.transit.CapsuleTransit  type final class
+12 dev.jstech.core.transit.CapsuleTransit  static List<Capsule> inFlight(ServerLevel)
+12 dev.jstech.core.transit.CapsuleTransit  static final DimensionState<Book> STATE
+12 dev.jstech.core.transit.CapsuleTransit  static final int WAITS
+12 dev.jstech.core.transit.CapsuleTransit  static void declare()
+12 dev.jstech.core.transit.CapsuleTransit  static void listen()
+12 dev.jstech.core.transit.CapsuleTransit  static void send(ServerLevel, Capsule)
+12 dev.jstech.core.transit.CapsuleTransit.Book  type record(List<Capsule> capsules)
+12 dev.jstech.core.transit.CapsuleTransit.Book  Book with(List<Capsule>)
+12 dev.jstech.core.transit.CapsuleTransit.Book  static final Book EMPTY
+12 dev.jstech.core.transit.CapsuleTransit.Book  static final Codec<Book> CODEC
 10 dev.jstech.core.uuid.NetworkUuid  type record(UUID value)
 10 dev.jstech.core.uuid.NetworkUuid  String asString()
 10 dev.jstech.core.uuid.NetworkUuid  static NetworkUuid fromString(String)

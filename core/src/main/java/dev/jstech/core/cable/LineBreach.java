@@ -13,9 +13,9 @@ import net.minecraft.core.BlockPos;
 
 /**
  * Something a wire is not made for reaching it, for a tick: a fluid too hot or too cold for a pipe, one with a mark the
- * pipe is not made for (a corrosive fluid in a plain pipe), or a gas coming at more pressure than the pipe holds. What
- * befalls the wire is its cable's rule ({@link IBreachRule}): by default nothing, and what it is not made for stays
- * where it is.
+ * pipe is not made for (a corrosive fluid in a plain pipe), a gas coming at more pressure than the pipe holds, or what
+ * it carried having worn it through. What befalls the wire is its cable's rule ({@link IBreachRule}): by default
+ * nothing, and what it is not made for stays where it is.
  *
  * @param at       the cable block the wire is in
  * @param type     the wire's cable
@@ -46,7 +46,12 @@ public record LineBreach(BlockPos at, CableType type, Reason reason, String what
         /** A mark it is not made for: a gas a pipe does not hold the pressure of, a corrosive fluid. */
         NOT_MADE_FOR("not_made_for"),
         /** More pressure than it holds: a pipe forced past what it stands bursts. */
-        OVERPRESSURE("overpressure");
+        OVERPRESSURE("overpressure"),
+        /**
+         * Worn through by what it carried as long as it stands ({@code CableType.Builder.wornBy}): hydrogen
+         * embrittled a steel pipe, a slurry abraded an unlined one.
+         */
+        WORN_OUT("worn_out");
 
         private final String serializedName;
 

@@ -3252,5 +3252,17 @@
   "jscore.material.cuprite": "Cuprita",
   "jscore.material.malachite": "Malaquita",
   "jscore.material.electrum": "Eletro",
-  "jscore.material.cassiterite": "Cassiterita"
+  "jscore.material.cassiterite": "Cassiterita",
+  "jscore.hazard.gas_poisoning": "Gás venenoso",
+  "jscore.hazard.gas_poisoning.irritated": "Tossindo",
+  "jscore.hazard.gas_poisoning.poisoned": "Envenenado",
+  "jscore.hazard.gas_poisoning.unit": "segundos de perigo",
+  "jscore.material.air": "Ar",
+  "jscore.material_property.idlh": "Perigoso a partir de",
+  "jscore.material_property.lower_explosive": "Explode a partir de",
+  "jscore.material_property.ppm": "%s ppm",
+  "jscore.material_property.share_of_air": "%s%% do ar",
+  "jscore.material_property.upper_explosive": "Explode até",
+  "jscore.valve.flow": "Vazão",
+  "jscore.valve.per_tick": "mB por tick"
 }

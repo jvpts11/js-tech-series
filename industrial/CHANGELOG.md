@@ -84,6 +84,24 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   structure forming again once the terminal is back.
 - Plant Drawings: the Science section opens, with drawings of the Computational Research Centre and its
   parts, of the research data and of research groups; and Fluids and Gases has one of hot water.
+- The marks of what its pipes carry: acids, molten metal, molten salt, ultra-pure water and the corrosive
+  gases ask a pipe made for them; hydrogen wears plain steel through, and a slurry an unlined pipe. Fluid tags, so a
+  data pack marks another mod's fluids.
+- What befalls its pipes: too hot or too cold, a pipe bursts or cracks after five seconds; a corrosive it
+  is not made for eats it through in about a minute; past its pressure it bursts at once; hydrogen wears plain steel
+  through in an hour, a slurry an unlined pipe in ten minutes. A broken pipe falls as its scrap and leaks five seconds
+  of its flow: a liquid spills, a slurry splashes out, a gas comes out as a cloud. Each is a server setting, on as it
+  comes: pipes fail, leaks are hazardous, hydrogen embrittles. Mekanism's hydrogen wears steel as the series' does.
+- The contract of its tanks and pumps: a tank of several blocks holds the room inside its walls, a cubic
+  metre, 1,000 mB, a block; a gas vessel its volume times its pressure; one content at a time, refusing more full and
+  what it is not made for, kept while the tank stands apart; a comparator reads it; a cold liquid boils off by the
+  tank's insulation. A water pump draws water without end from a source beside it, a drainage pump the fluid blocks
+  around it, a bucket a block, and both push what they pump into their pipes.
+- Compressed air: its own line, the Compressed Air Line, which never joins a gas pipe; a machine with an
+  air port spends its air and works 15% faster, added beside its upgrades' gains.
+- The rules of its pneumatic post: capsule tubes of their own line, a capsule of up to four stacks a
+  second from each station, about twenty blocks a second, each shot by compressed air, without which the stations
+  stop.
 
 ### Changed
 - Its machines run on J's Energy at low voltage, all of the T1: the Coal Generator makes up to 5 kW,

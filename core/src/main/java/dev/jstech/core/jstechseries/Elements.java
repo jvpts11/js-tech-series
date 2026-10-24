@@ -8,6 +8,7 @@
 package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.hazard.GasLimits;
 import dev.jstech.core.hazard.HazardClass;
 import dev.jstech.core.hazard.MaterialHazards;
 import dev.jstech.core.heat.Thermal;
@@ -119,6 +120,14 @@ public final class Elements {
         if (!hazards.isEmpty()) {
             builder.with(MaterialHazards.HAZARDS, hazards);
         }
+        ElementHazards.gas(element).ifPresent(gas -> {
+            if (!Double.isNaN(gas.lower())) {
+                builder.with(GasLimits.LOWER_EXPLOSIVE, gas.lower()).with(GasLimits.UPPER_EXPLOSIVE, gas.upper());
+            }
+            if (!Double.isNaN(gas.idlh())) {
+                builder.with(GasLimits.IDLH, gas.idlh());
+            }
+        });
         ElementHeat.of(element).ifPresent(heat -> {
             builder.with(Thermal.DENSITY, heat.density()).with(Thermal.SPECIFIC_HEAT, heat.specificHeat())
                     .with(Thermal.CONDUCTIVITY, heat.conductivity()).with(Thermal.EMISSIVITY, heat.emissivity())

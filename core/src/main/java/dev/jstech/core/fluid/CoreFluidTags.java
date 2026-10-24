@@ -16,17 +16,21 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 
 /**
- * The marks a fluid carries that a pipe has to be made for: a gas needs a pipe that holds it in, and a corrosive fluid
- * one that stands it. A pipe that is not made for a mark carries no fluid that has it. They are tags, so a datapack can
- * mark the fluids of any mod.
+ * The Core's marks a fluid carries that a pipe has to be made for ({@link PipeMarks}): a gas needs a pipe that holds it
+ * in, and a corrosive fluid one that stands it. A pipe that is not made for a mark carries nothing that has it. They
+ * are tags, so a datapack can mark the fluids of any mod.
  */
 @TextHolder
 public final class CoreFluidTags {
 
-    /** Fluids that are gases. */
-    public static final TagKey<Fluid> GASES = tag("gases");
-    /** Fluids that eat through what is not made to stand them. */
-    public static final TagKey<Fluid> CORROSIVE = tag("corrosive");
+    /** Fluids that are gases; matter is never marked so, as a line of gas carries only gases. */
+    public static final TagKey<Fluid> GASES = PipeMarks.madeFor(tag("gases"), material -> false);
+    /**
+     * Fluids that eat through what is not made to stand them. Matter is never marked so here: a material corrosive to
+     * the skin, as ammonia is, may still run in plain steel, so which gases eat a pipe is the mark of the mod that
+     * says so.
+     */
+    public static final TagKey<Fluid> CORROSIVE = PipeMarks.madeFor(tag("corrosive"), material -> false);
     /** What {@link #GASES} is called, under the key the recipe viewers read a tag's name from. */
     public static final TextKey GASES_NAME = TextKey.of("tag.fluid.jscore.gases", "Gases");
     /** What {@link #CORROSIVE} is called. */

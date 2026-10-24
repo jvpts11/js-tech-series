@@ -49,6 +49,11 @@ vessel bursts, as a real one does.
   pipe as something it is not made for, as a fluid too hot does: by the pipe's own rule it holds, or it bursts with the
   force of the gas a block of it held.
 - A tank or a pipe that says nothing never bursts; each mod's design says which of its own do, and at what.
+- **Valves on a line are the Core's**, for any mod's pipes: a block between two runs of a liquid or a gas line that
+  lets through one way only, always (a check valve), by hand or by a redstone signal; one may let a single fluid
+  through alone, and every one counts its flow for a comparator, as a flow meter. A **relief valve block** stands
+  against a vessel and lets its excess out above its setting, into a discharge tank or the air, so a heated vessel
+  that has one never bursts.
 
 ### Containment of exotic matter
 

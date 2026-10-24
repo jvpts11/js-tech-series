@@ -57,6 +57,32 @@ The mod's recipes ask for common tags rather than items (`c:ores/iron`, `c:raw_m
 which are in the common tags too (`c:dusts/copper`, `c:plates/tin`, `c:wires/copper`, and `c:scraps/copper` for the
 scraps, a form of the mod's own), so other mods' recipes that ask for those tags take them.
 
+### What pipes carry
+
+*Added 2026-10-24.*
+
+The marks of what J's Industrial's pipes carry are fluid tags, J's Core's marks of pipes
+([Marks and wear](../../core/docs/ENERGY_AND_RESOURCES.md#marks-and-wear)). A data pack puts another mod's fluids in
+them, and its pipes treat those fluids as the mod's own:
+
+| Tag | What it asks of a pipe |
+| --- | --- |
+| `jsindustrial:acids` | a pipe made for acids |
+| `jsindustrial:molten_metal` | a pipe made for molten metal |
+| `jsindustrial:molten_salt` | a pipe made for molten salt |
+| `jsindustrial:ultra_pure_water` | a pipe made for ultra-pure water |
+| `jsindustrial:corrosive_gases` | a gas pipe made for them; chlorine and fluorine are in it as gases |
+| `jsindustrial:hydrogen` | none, but it wears plain steel through; hydrogen, deuterium and tritium are in it as gases |
+| `jsindustrial:abrasive` | none, but it wears an unlined pipe through; every slurry is in it |
+
+A pipe not made for what reaches it refuses it, and under the server's settings breaks: too hot or too cold after
+five seconds, eaten by a corrosive after a minute, past its pressure at once, worn through by hydrogen after an hour or
+by a slurry after ten minutes; it leaks five seconds of its flow, a gas as a cloud that poisons, smothers or explodes
+as the gas does. The settings are in the server's `jsindustrial-server.toml`, section `fluids`: `pipes_fail`,
+`leaks_are_hazardous` and `hydrogen_embrittles`, each on unless a server turns it off. A chemical mod's gases come into
+the series' gas lines through J's Core's bridge and keep the same rules: Mekanism's hydrogen wears plain steel as the
+series' does.
+
 ## Capabilities
 
 *Added 2026-06-05.*

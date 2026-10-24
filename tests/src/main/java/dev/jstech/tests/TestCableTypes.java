@@ -15,7 +15,12 @@ import dev.jstech.core.fluid.CoreFluidTags;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPolicies;
 import dev.jstech.core.matter.PressureBursts;
+import dev.jstech.industrial.line.CompressedAir;
+import dev.jstech.industrial.line.IndustrialPipeMarks;
+import dev.jstech.industrial.line.PipeFailures;
+import dev.jstech.industrial.line.PneumaticPost;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -25,8 +30,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * Cables only the tests lay, registered with the Core as any mod's cables are: a long-distance cable, six pixels thick,
  * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, four pipes, a plain
  * one, the same insulated, one that holds pressure and one of rubber that bursts when something too hot reaches it, a
- * gas line, a thin gas line that bursts past ten atmospheres, a slurry line, a line of items and a line that groups the
- * machines it joins. Each is laid by a vanilla
+ * gas line, a thin gas line that bursts past ten atmospheres, gas lines of steel and stainless steel under J's
+ * Industrial's rules, a Compressed Air Line and a capsule tube of its, a slurry line, a line of items and a line that
+ * groups the machines it joins. Each is laid by a vanilla
  * item and drawn in a jacket and plug the series already has, so the test mod declares no item, texture or model of
  * its own.
  */
@@ -45,6 +51,8 @@ public final class TestCableTypes {
     /** The thin gas line: the pressure it holds, and what a block of it holds inside, in millibuckets. */
     public static final long THIN_GAS_HOLDS = 10L;
     public static final long THIN_GAS_INSIDE = 8L;
+    /** How long the test steel gas line stands hydrogen, in ticks: two spans of the lines' counting. */
+    public static final int STEEL_WEARS_IN = 40;
     public static final DeferredRegister<CableType> CABLES = DeferredRegister.create(CoreCables.KEY, JsTests.MODID);
     /** A grid of the test mod's own, which shares energy by the Core's policy, as a mod's line of a voltage class. */
     public static final GridKind OWN_POWER = GridKind.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
@@ -113,6 +121,41 @@ public final class TestCableTypes {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
                     .build(() -> Items.GLASS_BOTTLE));
+    /**
+     * A plain steel gas line under J's Industrial's rules, which hydrogen wears through in two spans of counting and a
+     * corrosive gas eats, falling as an iron nugget.
+     */
+    public static final DeferredHolder<CableType, CableType> STEEL_GAS_LINE = CABLES.register("steel_gas_line",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "steel_gas_line")))
+                    .grid(GridKind.GAS).alone().carries(GAS_RATE, 0)
+                    .wornBy(IndustrialPipeMarks.HYDROGEN, STEEL_WEARS_IN)
+                    .beyond(PipeFailures.rule(() -> new ItemStack(Items.IRON_NUGGET), THIN_GAS_INSIDE))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
+                    .build(() -> Items.CHAIN));
+    /** A stainless gas line under J's Industrial's rules, made for the corrosive gases. */
+    public static final DeferredHolder<CableType, CableType> STAINLESS_GAS_LINE = CABLES.register(
+            "stainless_gas_line", () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(
+                            JsTests.MODID, "stainless_gas_line")))
+                    .grid(GridKind.GAS).alone().carries(GAS_RATE, 0).takes(IndustrialPipeMarks.CORROSIVE_GASES)
+                    .beyond(PipeFailures.rule(() -> new ItemStack(Items.IRON_NUGGET), THIN_GAS_INSIDE))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
+                    .build(() -> Items.LANTERN));
+    /** A Compressed Air Line of J's Industrial's line, holding ten atmospheres. */
+    public static final DeferredHolder<CableType, CableType> COMPRESSED_AIR_LINE = CABLES.register(
+            "compressed_air_line", () -> CableType.builder(CompressedAir.LINE)
+                    .grid(GridKind.GAS).alone().carries(GAS_RATE, 0).holds(THIN_GAS_HOLDS)
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
+                    .build(() -> Items.FEATHER));
+    /** A capsule tube of J's Industrial's pneumatic post, whose runs join the stations on them. */
+    public static final DeferredHolder<CableType, CableType> CAPSULE_TUBE = CABLES.register("capsule_tube",
+            () -> CableType.builder(PneumaticPost.LINE).grid(PneumaticPost.TUBES).alone()
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/hbw"))
+                    .build(() -> Items.PAPER));
     /** A lined line of slurry: two hundred millibuckets a tick. */
     public static final DeferredHolder<CableType, CableType> SLURRY_LINE = CABLES.register("slurry_line",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,

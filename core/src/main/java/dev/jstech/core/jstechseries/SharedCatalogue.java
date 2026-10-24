@@ -8,6 +8,7 @@
 package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.hazard.GasLimits;
 import dev.jstech.core.hazard.HazardClass;
 import dev.jstech.core.hazard.MaterialHazards;
 import dev.jstech.core.heat.Thermal;
@@ -25,7 +26,8 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * What the series' mods share that is no element: the common fuels, liquids every mod may burn or store, carbon
- * dioxide, which every body and fire breathes out, ammonia, the first product of industrial chemistry (the other gases,
+ * dioxide, which every body and fire breathes out, ammonia, the first product of industrial chemistry, air, which every
+ * compressor draws in (the other gases,
  * hydrogen, oxygen, nitrogen, helium, xenon and the rest, are their elements), and the generic components, items with
  * no game of their own. Each exists only when an installed mod declares it uses it ({@code MaterialLiquids},
  * {@link CatalogueItems}); each mod that makes one gives its own recipe, J's Industrial the whole industrial chain, a
@@ -40,6 +42,7 @@ public final class SharedCatalogue {
     public static final TextKey DIESEL_NAME = TextKey.of("jscore.material.diesel", "Diesel");
     public static final TextKey CARBON_DIOXIDE_NAME = TextKey.of("jscore.material.carbon_dioxide", "Carbon Dioxide");
     public static final TextKey AMMONIA_NAME = TextKey.of("jscore.material.ammonia", "Ammonia");
+    public static final TextKey AIR_NAME = TextKey.of("jscore.material.air", "Air");
 
     public static final TextKey SERVOMOTOR_NAME = TextKey.of("item.jscore.servomotor", "Servomotor");
     public static final TextKey ELECTRIC_MOTOR_NAME = TextKey.of("item.jscore.electric_motor", "Electric Motor");
@@ -74,7 +77,7 @@ public final class SharedCatalogue {
             CARBON_DIOXIDE_NAME).colour(0xD8DCE0).with(MaterialProperties.FORMULA, "CO2")
             .with(Thermal.MOLAR_MASS, 0.044_01).with(Thermal.DENSITY, 1.977).with(Thermal.SPECIFIC_HEAT, 840.0)
             .with(Thermal.CONDUCTIVITY, 0.0146).with(Thermal.MELTING, 194.65).with(Thermal.BOILING, 194.65)
-            .with(MaterialHazards.HAZARDS, List.of(HazardClass.ASPHYXIANT)).declare();
+            .with(MaterialHazards.HAZARDS, List.of(HazardClass.ASPHYXIANT)).with(GasLimits.IDLH, 40_000.0).declare();
     /*
      * Ammonia, the first reaction of industrial chemistry, made from the air's nitrogen and hydrogen over iron: the
      * fertiliser of the fields, the refrigerant of the first cold stores. Corrosive and toxic, though it burns only in
@@ -86,7 +89,17 @@ public final class SharedCatalogue {
             .with(Thermal.MOLAR_MASS, 0.017_031).with(Thermal.DENSITY, 0.769).with(Thermal.SPECIFIC_HEAT, 2_060.0)
             .with(Thermal.CONDUCTIVITY, 0.0246).with(Thermal.MELTING, 195.42).with(Thermal.BOILING, 239.82)
             .with(MaterialHazards.HAZARDS, List.of(HazardClass.CORROSIVE, HazardClass.ACUTELY_TOXIC,
-                    HazardClass.ENVIRONMENTAL)).declare();
+                    HazardClass.ENVIRONMENTAL)).with(GasLimits.LOWER_EXPLOSIVE, 0.15)
+            .with(GasLimits.UPPER_EXPLOSIVE, 0.28).with(GasLimits.IDLH, 300.0).declare();
+    /*
+     * Air, the mixture a compressor draws in: 78% nitrogen, 21% oxygen and nearly 1% argon by volume, which a factory
+     * sends compressed to its machines and an air separation plant splits. It has no one formula, and harms nobody.
+     * Its values are dry air's at 0 °C.
+     */
+    public static final Material AIR = Materials.material(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "air"), MaterialKind.GAS, AIR_NAME)
+            .colour(0xE8EEF2).with(Thermal.MOLAR_MASS, 0.028_965).with(Thermal.DENSITY, 1.293)
+            .with(Thermal.SPECIFIC_HEAT, 1_005.0).with(Thermal.CONDUCTIVITY, 0.0243).declare();
 
     public static final CatalogueItems.Entry SERVOMOTOR = component("servomotor", SERVOMOTOR_NAME);
     public static final CatalogueItems.Entry ELECTRIC_MOTOR = component("electric_motor", ELECTRIC_MOTOR_NAME);

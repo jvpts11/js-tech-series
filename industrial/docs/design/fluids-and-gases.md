@@ -9,13 +9,38 @@ in [Chemistry](chemistry.md); the states of matter themselves in [Materials](mat
 - Pipes are lines of J's Core's cable block. A pipe stands a range of temperatures, in kelvin, and takes some **marks**:
   a gas needs a pipe that holds pressure, and a corrosive fluid a pipe made for it. A run of pipes carries only what
   every pipe of it takes; anything else simply doesn't go in. Fluids of different machines never pour into each other.
+  Gas, slurry and plasma lines keep the marks too.
+- J's Industrial's marks are declared: acids, molten metal, molten salt, ultra-pure water and the corrosive gases
+  (chlorine, fluorine) ask a pipe made for them; hydrogen and the abrasive slurries wear a pipe not made to stand them.
+- **What befalls a pipe** is J's Industrial's rule on J's Core's: too hot or too cold, it bursts or cracks after five
+  seconds; a corrosive it is not made for eats it through in about a minute and it falls as its scrap; past the
+  pressure it holds it bursts at once, a blast of what it held; hydrogen embrittles plain steel through in an hour of
+  carrying, and a slurry abrades an unlined pipe through in ten minutes, the wear kept with the world. A broken pipe
+  leaks five seconds of its flow: a liquid spills, a slurry splashes out, a gas comes out as a cloud. Each is a
+  setting, on as it comes: pipes fail, leaks are hazardous, hydrogen embrittles.
+- **Gas clouds** are J's Core's: a cloud spreads and thins, and does what its gas's hazards say, by real limits as
+  data: hydrogen explodes from a flame between 4% and 75% of the air, chlorine is dangerous from 10 ppm, and an
+  asphyxiant takes the oxygen's place. In a sealed room the gas goes into the room's air.
+- **Tanks** keep the contract: a multiblock tank holds its inner volume, a block a cubic metre, 1,000 mB; a gas vessel
+  its volume times its pressure; one content at a time, refusing more full, kept while the tank stands apart; a
+  comparator reads how full it is; a cold liquid boils off as the heat of the place leaks in through its insulation;
+  a tank or vessel holds only what it is made for.
+- **Pumps** are machines of the contract: a water pump draws water without end from a source beside it, a drainage
+  pump the fluid blocks around it, a bucket a block, and both push what they pump into their pipes.
+- **Valves** are J's Core's: a check valve lets through one way, others open by hand or by a signal or let one fluid
+  through alone, each counting its flow for a comparator; a relief valve lets a vessel's excess out above its setting,
+  into a discharge tank or the air.
+- **Compressed air** has its own line, the Compressed Air Line, on J's Core's gas grid, which never joins a gas pipe;
+  it carries J's Core's air.
 - A machine's tanks are exposed through NeoForge's fluid capability, so pipes and tanks of any mod work with them.
 - Chemicals that are neither items nor fluids (Mekanism's gases, for example) move through a bridge, as an id and an
-  amount.
+  amount: Mekanism's hydrogen in a series gas line is the series' hydrogen, and wears plain steel as it does.
 - **A gas's hazards are data**: what a cloud of it does (it burns, it poisons, it suffocates, it feeds a fire, it eats
   metal, it irradiates) follows from its material's hazard classes ([Materials](materials.md)), for every mod that
   lets a gas out to read. Hydrogen burns; chlorine poisons and feeds a fire; nitrogen, argon, helium and carbon dioxide
-  suffocate. The clouds themselves come with the leaks.
+  suffocate.
+- The pipes, tanks, pumps and valves of the tables below, with their looks and recipes, are still to be built: the
+  rules above stand under them.
 
 ## To build
 

@@ -125,7 +125,7 @@ public final class Machines {
             final Optional<BlockCapability<IMatterHandler, @Nullable Direction>> capability =
                     MatterCapabilities.block(state);
             capability.ifPresent(found -> event.registerBlockEntity(found, any, (entity, side) ->
-                    entity instanceof ProcessingMachineBlockEntity machine ? matterOn(machine, state, side) : null));
+                    entity instanceof MachineBlockEntity machine ? matterOn(machine, state, side) : null));
         }
     }
 
@@ -135,10 +135,13 @@ public final class Machines {
         return side == null || machine.sides().mode(resource, machine.getBlockState(), side) != FaceMode.NONE;
     }
 
-    /* A machine's tanks of {@code state} as its {@code side} gives them out. */
-    private static @Nullable IMatterHandler matterOn(final ProcessingMachineBlockEntity machine,
-                                                     final MatterState state, final @Nullable Direction side) {
-        final IMatterHandler whole = machine.matter().outside(state);
+    /*
+     * A machine's tanks of {@code state} as its {@code side} gives them out: what it says it holds of that state, the
+     * same its structure's ports pass.
+     */
+    private static @Nullable IMatterHandler matterOn(final MachineBlockEntity machine, final MatterState state,
+                                                     final @Nullable Direction side) {
+        final IMatterHandler whole = machine.matterHandler(state);
         final Optional<MachineResource> resource = MachineResource.of(state);
         if (whole == null || side == null || resource.isEmpty()) {
             return whole;

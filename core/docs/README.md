@@ -36,7 +36,7 @@ every build.
 | [Explosions and fire](EXPLOSIONS_AND_FIRE.md) | Blasts decided by their energy: a shock wave at the speed of sound through blocks by their strength, overpressure on bodies, fragments of the casing and debris, the medium (no wave in a vacuum, far under water), chains, craters and scorched ground, claims and each mod's setting, the destruction spread over ticks; fire spreading by the oxygen and the wind, what burned staying burned, the classes of fire and the agents, smoke and heat sensed, extinguishers, the sprinkler and the detectors. |
 | [Sealed rooms](ROOMS.md) | Closed spaces found and their air kept by real gases: leaks and bursting blocks, doors, breathing, fire and oxygen, rooms under water, mobs and plants, the view of a room, the Atmosphere Detector, vents. |
 | [Mechanical power](MECHANICAL_POWER.md) | Shafts, gears and gearboxes in rpm, newton-metres and watts; sources, loads, motors and dynamos. |
-| [Conveyors](CONVEYORS.md) | Belts of your own kinds, slopes, chutes, bucket elevators, splitters, joins, diverters, machines that work items on the belt, what makes them move, players and mobs carried. |
+| [Conveyors](CONVEYORS.md) | Belts of your own kinds, slopes, chutes, bucket elevators, splitters, joins, diverters, machines that work items on the belt, what makes them move, players and mobs carried, and the pneumatic post: stations with an address and capsules shot through tubes. |
 | [Networks](NETWORKS.md) | The data network and its members, machines of any mod on it, their state as tables, and peripheral links. |
 | [Operations](OPERATIONS.md) | Requests a network carries out, and adding a kind of your own. |
 

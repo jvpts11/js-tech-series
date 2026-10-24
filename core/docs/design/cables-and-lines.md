@@ -73,6 +73,14 @@ input just works); the rest is there when a player wants it.
 - **Channels within a line**: one cable carries up to sixteen separate channels, and each end picks its own, so one
   cable does the work of several. Colours still keep whole lines apart.
 
+### What a pipe is made for
+
+- A pipe stands a range of temperatures and takes **marks**, an open list each mod adds to: a mark asks a pipe made
+  for it (a gas, a corrosive), or wears through a pipe declared worn by it, after so long carrying it (hydrogen in
+  plain steel, a slurry in an unlined pipe), how long each pipe has carried it kept with the world. Lines of gas,
+  slurry and plasma keep the marks as pipes of liquid do.
+- What befalls a pipe past what it is made for is its mod's rule; by default it only refuses.
+
 ### Seeing what flows
 
 - **Flow in sight**: items seen moving through transparent tubes, liquids showing their level in glass pipes, and, with
