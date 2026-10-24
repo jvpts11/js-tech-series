@@ -18,10 +18,10 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * The shape of a Computational Research Centre: 3 blocks wide, 3 high and 9 deep, of its own blocks. The terminal is
- * the middle of the front's bottom row; inside, along its body, three gates with a bus between each and at its ends;
- * casing all round. Its entries go on the six places of the two lower rows of the rear face and nowhere else, the top
- * row of the rear being its vent: exactly one Power Entry, at most one Link Socket, at most one Heat Port, and the
- * Coolant Inlet and Outlet together, at most one pair (industrial/docs/design/science.md).
+ * the middle of its front, at a player's eyes; inside, along its body, three gates with a bus between each and at its
+ * ends; casing all round. Its entries go on the six places of the two lower rows of the rear face and nowhere else,
+ * the top row of the rear being its vent: exactly one Power Entry, at most one Link Socket, at most one Heat Port,
+ * and the Coolant Inlet and Outlet together, at most one pair (industrial/docs/design/science.md).
  *
  * <p>It is drawn as it stands facing north, the terminal at the north end, as its formed model is made.
  */
@@ -44,13 +44,14 @@ public final class CrcStructure {
     public static final int REAR_ROWS = 2;
     /* Where the rear face is, from the terminal, along the body. */
     private static final int REAR = 8;
-    /* The terminal's column: the middle one. */
+    /* The terminal's column, the middle one, and its layer, the middle one too. */
     private static final int MIDDLE = 1;
+    private static final int TERMINAL_LAYER = 1;
 
     public static final MultiblockPattern PATTERN = MultiblockPatterns.declare(ID,
             MultiblockPattern.builder("computational_research_centre")
-                    .layer("C#C", "CCC", "CCC", "CCC", "CCC", "CCC", "CCC", "CCC", "RRR")
-                    .layer("CCC", "CBC", "CGC", "CBC", "CGC", "CBC", "CGC", "CBC", "RRR")
+                    .layer("CCC", "CCC", "CCC", "CCC", "CCC", "CCC", "CCC", "CCC", "RRR")
+                    .layer("C#C", "CBC", "CGC", "CBC", "CGC", "CBC", "CGC", "CBC", "RRR")
                     .layer("CCC", "CCC", "CCC", "CCC", "CCC", "CCC", "CCC", "CCC", "CCC")
                     .where('C', BlockMatch.blocks(CASING))
                     .where('G', BlockMatch.blocks(GATE))
@@ -83,7 +84,7 @@ public final class CrcStructure {
      */
     public static BlockPos rearPlace(final BlockPos terminal, final Orientation orientation, final int column,
                                      final int row) {
-        final int[] offset = orientation.apply(column - MIDDLE, row, REAR);
+        final int[] offset = orientation.apply(column - MIDDLE, row - TERMINAL_LAYER, REAR);
         return terminal.offset(offset[0], offset[1], offset[2]);
     }
 

@@ -41,39 +41,59 @@ public record BuildOrder(List<Step> steps, Map<String, Integer> uses, Map<String
      */
     public static BuildOrder plan(final List<Want> wants, final Map<String, String> chosen,
                                   final ToIntFunction<String> has) {
-        final List<Step> steps = new ArrayList<>();
-        final Map<String, Integer> uses = new LinkedHashMap<>();
-        final Map<String, Integer> lacks = new LinkedHashMap<>();
-        final Map<String, Integer> taken = new HashMap<>();
-        for (final Want want : wants) {
-            final List<String> order = new ArrayList<>();
-            final String choice = chosen.get(want.key());
-            if (choice != null && want.fits().contains(choice)) {
-                order.add(choice);
-            }
-            want.fits().stream().filter(block -> !block.equals(choice)).forEach(order::add);
-            String block = null;
-            for (final String candidate : order) {
-                if (has.applyAsInt(candidate) - taken.getOrDefault(candidate, 0) > 0) {
-                    block = candidate;
-                    break;
+        return plan(wants, chosen, has, List.of(), Map.of());
+    }
+
+    /**
+     * The same for a shape that limits counts ({@code quotas}), {@code standing} saying how many of each count already
+     * stand in it, by the count's name: the least of each that is still short goes in first, each block in the first
+     * places that take it, so the structure forms once built (its one power entry, though the player chose casing for
+     * those places); and no place gets a block whose count would pass its most, the next block that fits it going
+     * there instead.
+     */
+    public static BuildOrder plan(final List<Want> wants, final Map<String, String> chosen,
+                                  final ToIntFunction<String> has, final List<Quota> quotas,
+                                  final Map<String, Integer> standing) {
+        final Planner planner = new Planner(has, quotas, standing);
+        final Step[] steps = new Step[wants.size()];
+        for (final Quota quota : quotas) {
+            int missing = quota.limit().least() - planner.counted(quota);
+            for (int i = 0; i < wants.size() && missing > 0; i++) {
+                if (steps[i] != null) {
+                    continue;
+                }
+                final List<String> counted = order(wants.get(i), chosen).stream()
+                        .filter(block -> quota.counts().matches(block)).toList();
+                if (!counted.isEmpty()) {
+                    steps[i] = planner.place(wants.get(i), counted);
+                    missing--;
                 }
             }
-            final boolean lacking = block == null;
-            if (lacking) {
-                block = order.getFirst();
-                lacks.merge(block, 1, Integer::sum);
-            }
-            taken.merge(block, 1, Integer::sum);
-            uses.merge(block, 1, Integer::sum);
-            steps.add(new Step(want.x(), want.y(), want.z(), block, lacking));
         }
-        return new BuildOrder(steps, uses, lacks);
+        for (int i = 0; i < wants.size(); i++) {
+            if (steps[i] == null) {
+                final List<String> order = order(wants.get(i), chosen);
+                final List<String> room = order.stream().filter(planner::hasRoom).toList();
+                steps[i] = planner.place(wants.get(i), room.isEmpty() ? order : room);
+            }
+        }
+        return new BuildOrder(List.of(steps), planner.uses, planner.lacks);
     }
 
     /** Whether the source has every block it takes. */
     public boolean ready() {
         return this.lacks.isEmpty();
+    }
+
+    /* The blocks that fit {@code want}, the one chosen for its places first, then in the shape's order. */
+    private static List<String> order(final Want want, final Map<String, String> chosen) {
+        final List<String> order = new ArrayList<>();
+        final String choice = chosen.get(want.key());
+        if (choice != null && want.fits().contains(choice)) {
+            order.add(choice);
+        }
+        want.fits().stream().filter(block -> !block.equals(choice)).forEach(order::add);
+        return order;
     }
 
     /**
@@ -112,6 +132,62 @@ public record BuildOrder(List<Step> steps, Map<String, Integer> uses, Map<String
 
         public Step {
             Objects.requireNonNull(block, "block");
+        }
+    }
+
+    /* What a plan has given out so far: of each block, of each count, and what the source lacks. */
+    private static final class Planner {
+
+        private final ToIntFunction<String> has;
+        private final List<Quota> quotas;
+        private final Map<String, Integer> counted;
+        private final Map<String, Integer> taken = new HashMap<>();
+        private final Map<String, Integer> uses = new LinkedHashMap<>();
+        private final Map<String, Integer> lacks = new LinkedHashMap<>();
+
+        Planner(final ToIntFunction<String> has, final List<Quota> quotas, final Map<String, Integer> standing) {
+            this.has = has;
+            this.quotas = quotas;
+            this.counted = new HashMap<>(standing);
+        }
+
+        /* How many of {@code quota}'s count stand or are placed so far. */
+        int counted(final Quota quota) {
+            return this.counted.getOrDefault(quota.name(), 0);
+        }
+
+        /* Whether one more {@code block} keeps every count it is counted under within its most. */
+        boolean hasRoom(final String block) {
+            for (final Quota quota : this.quotas) {
+                if (quota.counts().matches(block) && counted(quota) >= quota.limit().most()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /* Places the first of {@code order} the source still has at {@code want}, or the first, lacking. */
+        Step place(final Want want, final List<String> order) {
+            String block = null;
+            for (final String candidate : order) {
+                if (this.has.applyAsInt(candidate) - this.taken.getOrDefault(candidate, 0) > 0) {
+                    block = candidate;
+                    break;
+                }
+            }
+            final boolean lacking = block == null;
+            if (lacking) {
+                block = order.getFirst();
+                this.lacks.merge(block, 1, Integer::sum);
+            }
+            this.taken.merge(block, 1, Integer::sum);
+            this.uses.merge(block, 1, Integer::sum);
+            for (final Quota quota : this.quotas) {
+                if (quota.counts().matches(block)) {
+                    this.counted.merge(quota.name(), 1, Integer::sum);
+                }
+            }
+            return new Step(want.x(), want.y(), want.z(), block, lacking);
         }
     }
 }

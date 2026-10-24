@@ -21,6 +21,8 @@ class BuildOrderTest {
     private static final String BRICK = "test:brick";
     private static final String GLASS = "test:glass";
     private static final String BARS = "test:bars";
+    private static final String POWER = "test:power_entry";
+    private static final String LINK = "test:link_socket";
 
     @Test
     void plan_takesTheChosenBlockFirstAndCountsWhatItUses() {
@@ -56,6 +58,52 @@ class BuildOrderTest {
         assertEquals(Map.of(BRICK, 3), order.uses());
         assertFalse(order.steps().getFirst().lacking());
         assertTrue(order.steps().get(2).lacking());
+    }
+
+    @Test
+    void plan_placesTheLeastOfEachCountFirstInAPlaceThatTakesIt() {
+        // Six rear places taking casing or an entry; the player chose casing for them all, but one power entry is a
+        // must, so the first of them gets it.
+        final List<BuildOrder.Want> wants = List.of(want(0, BRICK), want(1, BRICK, POWER, LINK),
+                want(2, BRICK, POWER, LINK), want(3, BRICK, POWER, LINK));
+        final List<Quota> quotas = List.of(new Quota(POWER, IBlockMatcher.exact(POWER), Limit.exactly(1)),
+                new Quota(LINK, IBlockMatcher.exact(LINK), new Limit(0, 1)));
+
+        final BuildOrder order = BuildOrder.plan(wants, Map.of(BRICK + "," + POWER + "," + LINK, BRICK),
+                Map.of(BRICK, 9, POWER, 1, LINK, 1)::get, quotas, Map.of());
+
+        assertEquals(List.of(BRICK, POWER, BRICK, BRICK), order.steps().stream().map(BuildOrder.Step::block)
+                .toList());
+        assertTrue(order.ready());
+    }
+
+    @Test
+    void plan_neverPassesACountsMostAndCountsWhatAlreadyStands() {
+        final List<BuildOrder.Want> wants = List.of(want(0, POWER, BRICK), want(1, POWER, BRICK));
+        final List<Quota> quotas = List.of(new Quota(POWER, IBlockMatcher.exact(POWER), Limit.exactly(1)));
+
+        final BuildOrder chosen = BuildOrder.plan(wants, Map.of(POWER + "," + BRICK, POWER),
+                Map.of(POWER, 5, BRICK, 5)::get, quotas, Map.of());
+        assertEquals(List.of(POWER, BRICK), chosen.steps().stream().map(BuildOrder.Step::block).toList(),
+                "the chosen entry once, as the most is one");
+
+        final BuildOrder standing = BuildOrder.plan(wants, Map.of(POWER + "," + BRICK, POWER),
+                Map.of(POWER, 5, BRICK, 5)::get, quotas, Map.of(POWER, 1));
+        assertEquals(List.of(BRICK, BRICK), standing.steps().stream().map(BuildOrder.Step::block).toList(),
+                "none at all once one stands");
+    }
+
+    @Test
+    void plan_countsAMissingMustAsLacking() {
+        final List<BuildOrder.Want> wants = List.of(want(0, BRICK, POWER));
+        final List<Quota> quotas = List.of(new Quota(POWER, IBlockMatcher.exact(POWER), Limit.exactly(1)));
+
+        final BuildOrder order = BuildOrder.plan(wants, Map.of(), Map.of(BRICK, 5, POWER, 0)::get, quotas,
+                Map.of());
+
+        assertEquals(POWER, order.steps().getFirst().block());
+        assertTrue(order.steps().getFirst().lacking());
+        assertEquals(Map.of(POWER, 1), order.lacks());
     }
 
     @Test

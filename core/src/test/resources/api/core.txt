@@ -7447,6 +7447,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  protected void madeThings(int, long)
 10 dev.jstech.core.machine.MachineBlockEntity  protected void readSetup(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.machine.MachineBlockEntity  protected void settled(ServerLevel, MachineStatus)
+12 dev.jstech.core.machine.MachineBlockEntity  protected void structureChecked(ServerLevel)
 10 dev.jstech.core.machine.MachineBlockEntity  protected void writeSetup(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.machine.MachineBlockEntity  static final TextKey HEALTH_LINE
 10 dev.jstech.core.machine.MachineBlockEntity  static final TextKey PARAMETER_ENERGY
@@ -10552,6 +10553,7 @@ stable 4
 10 dev.jstech.core.multiblock.BuildOrder  type record(List<Step> steps, Map<String, Integer> uses, Map<String, Integer> lacks)
 10 dev.jstech.core.multiblock.BuildOrder  boolean ready()
 10 dev.jstech.core.multiblock.BuildOrder  static BuildOrder plan(List<Want>, Map<String, String>, ToIntFunction<String>)
+12 dev.jstech.core.multiblock.BuildOrder  static BuildOrder plan(List<Want>, Map<String, String>, ToIntFunction<String>, List<Quota>, Map<String, Integer>)
 10 dev.jstech.core.multiblock.BuildOrder.Step  type record(int x, int y, int z, String block, boolean lacking)
 10 dev.jstech.core.multiblock.BuildOrder.Want  type record(int x, int y, int z, List<String> fits)
 10 dev.jstech.core.multiblock.BuildOrder.Want  String key()
@@ -10613,6 +10615,7 @@ stable 4
 10 dev.jstech.core.multiblock.IStructureShape  abstract Map<String, Limit> limits()
 10 dev.jstech.core.multiblock.IStructureShape  abstract ShapeMatch check(IBlockProvider, long)
 10 dev.jstech.core.multiblock.IStructureShape  abstract int reach()
+12 dev.jstech.core.multiblock.IStructureShape  default List<Quota> quotas()
 10 dev.jstech.core.multiblock.IStructureShape  default Optional<ShapePreview> preview(int)
 10 dev.jstech.core.multiblock.IStructureShape  default boolean liesDown()
 10 dev.jstech.core.multiblock.IStructureShape  default boolean mirrors()
@@ -10668,6 +10671,7 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockPattern  type final class implements IStructureShape
 10 dev.jstech.core.multiblock.MultiblockPattern  IBlockMatcher wanted(String)
 10 dev.jstech.core.multiblock.MultiblockPattern  List<Orientation> orientations()
+12 dev.jstech.core.multiblock.MultiblockPattern  List<Quota> quotas()
 12 dev.jstech.core.multiblock.MultiblockPattern  List<Together> together()
 10 dev.jstech.core.multiblock.MultiblockPattern  Map<Character, IBlockMatcher> mapping()
 10 dev.jstech.core.multiblock.MultiblockPattern  Map<Character, Place> places()
@@ -10909,6 +10913,7 @@ stable 4
 10 dev.jstech.core.multiblock.Projectables  static final String KEY_PREFIX
 10 dev.jstech.core.multiblock.Projectables  static void addSource(Supplier<Map<ResourceLocation, IStructureShape>>)
 12 dev.jstech.core.multiblock.Projectables  static void addTerminals(Function<ResourceLocation, Optional<String>>)
+12 dev.jstech.core.multiblock.Quota  type record(String name, IBlockMatcher counts, Limit limit)
 10 dev.jstech.core.multiblock.RedstonePortBlock  type class extends Block implements EntityBlock
 10 dev.jstech.core.multiblock.RedstonePortBlock  BlockEntity newBlockEntity(BlockPos, BlockState)
 10 dev.jstech.core.multiblock.RedstonePortBlock  new(Properties, Supplier<? extends BlockEntityType<? extends RedstonePortBlockEntity>>)

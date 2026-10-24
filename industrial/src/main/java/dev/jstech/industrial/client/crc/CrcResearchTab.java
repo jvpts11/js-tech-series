@@ -91,6 +91,10 @@ final class CrcResearchTab implements ICrcTab {
 
     private @Nullable ResourceLocation picked;
     private int laneScroll;
+    /* How far along its years the chart is dragged: all the way at first, the most recent years in sight. */
+    private int pan = CrcLayout.PAN_MOST;
+    /* What a drag up or down has moved and not yet turned a lane by. */
+    private double draggedDown;
     /* What the picked discovery opens, worked out once a pick: it reads every recipe. */
     private @Nullable ResourceLocation opensOf;
     private List<ItemStack> opens = List.of();
@@ -165,6 +169,29 @@ final class CrcResearchTab implements ICrcTab {
         return true;
     }
 
+    /*
+     * A drag on the chart moves it as the hand moves: across, along the years; up or down, a lane at a time once it has
+     * gone a lane's height, as the wheel turns them.
+     */
+    @Override
+    public boolean dragged(final CrcView view, final double x, final double y, final double across,
+                           final double down) {
+        if (!CrcLayout.on(x, y, CHART_LEFT, CHART_TOP, CHART_RIGHT, CHART_BOTTOM)) {
+            this.draggedDown = 0.0;
+            return false;
+        }
+        this.pan = Math.clamp(this.pan - (int) Math.round(across), 0, CrcLayout.PAN_MOST);
+        this.draggedDown += down;
+        final int lanes = (int) (this.draggedDown / CrcLayout.LANE_HEIGHT);
+        if (lanes != 0) {
+            final CrcChart chart = chart(view);
+            this.laneScroll = Math.clamp(chart.scroll() - lanes, 0, Math.max(0, chart.laneCount()
+                    - CrcLayout.LANES_SHOWN));
+            this.draggedDown -= lanes * CrcLayout.LANE_HEIGHT;
+        }
+        return true;
+    }
+
     @Override
     public List<Component> tooltip(final CrcView view, final double x, final double y) {
         final Optional<CrcChart.Node> node = chart(view).nodeAt(x, y);
@@ -221,8 +248,9 @@ final class CrcResearchTab implements ICrcTab {
         final Level level = view.crc().getLevel();
         final List<Discovery> discoveries = level == null ? List.of() : Discoveries.existing(level);
         final CrcChart chart = CrcChart.of(discoveries, view.read(), view.crc().chosenDiscovery().orElse(null),
-                this.laneScroll);
+                this.laneScroll, this.pan);
         this.laneScroll = chart.scroll();
+        this.pan = chart.pan();
         return chart;
     }
 

@@ -115,6 +115,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   creative tab away.
 
 ### Changed
+- The Computational Research Centre's terminal stands in the middle of its front, at a player's eyes,
+  one layer up: a CRC built before stands unformed until its terminal is moved there.
+- The CRC's Research chart draws its years twice as wide and is dragged with the mouse: across along the
+  years, up and down through its fields.
 - With J's Industrial installed, its deposit types take the place of the Core's plain veins of
   iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
   Nether's gold stays the Core's.
@@ -144,6 +148,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   that carries 10 kW and loses a tenth over a hundred blocks, and the mod's own Energy Cable is gone. The cable and the Iron Dust,
   Iron Plate and Copper Plate are on the J's Tech tab, with the rest of what the mods of the series share.
 - The Tank is a block of the Core's: a bucket fills and empties it, and its item says what it carries.
+
+### Fixed
+- The CRC's formed model draws each entry where it stands: the rear's columns were the wrong way round,
+  so an entry put in the west place showed in the east one. An entry put in is drawn as soon as the structure sees it,
+  not on the CRC's next second.
+- A cable run to a CRC entry meets it: each entry's gland, socket or pipe stub reaches the edge of its
+  block. And no slit of sky shows along the CRC's foot under an entry or its terminal, which hid the ground's face.
 
 ## [0.5.2a] - 2026-10-14
 

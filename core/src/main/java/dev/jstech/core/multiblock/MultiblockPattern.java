@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -194,6 +195,30 @@ public final class MultiblockPattern implements IStructureShape {
     @Override
     public Optional<ShapePreview> preview(final int grow) {
         return Optional.of(ShapePreviews.pattern(this, Orientation.NORTH, grow));
+    }
+
+    /** Each count it limits, a block counted under it when a place's count or an entry of that name takes it. */
+    @Override
+    public List<Quota> quotas() {
+        final List<Quota> quotas = new ArrayList<>();
+        for (final Map.Entry<String, Limit> limit : new TreeMap<>(this.limits).entrySet()) {
+            final List<IBlockMatcher> counters = new ArrayList<>();
+            for (final Place place : this.places.values()) {
+                if (place.counted() != null && place.counted().name().equals(limit.getKey())) {
+                    counters.add(place.counted().which());
+                }
+                for (final Place.Entry entry : place.entries()) {
+                    if (entry.name().equals(limit.getKey())) {
+                        counters.add(entry.which());
+                    }
+                }
+            }
+            if (!counters.isEmpty()) {
+                quotas.add(new Quota(limit.getKey(), id -> counters.stream().anyMatch(each -> each.matches(id)),
+                        limit.getValue()));
+            }
+        }
+        return quotas;
     }
 
     /** What fits a letter's places: its place's blocks, or what the inside allows for the inside letter. */

@@ -29,6 +29,15 @@ interface ICrcTab {
         return false;
     }
 
+    /**
+     * Answers the mouse dragged with its left button held, {@code across} and {@code down} since the last time, now
+     * at ({@code x}, {@code y}); whether it took it.
+     */
+    default boolean dragged(final CrcView view, final double x, final double y, final double across,
+                            final double down) {
+        return false;
+    }
+
     /** What the mouse at ({@code x}, {@code y}) is told; nothing unless it says. */
     default List<Component> tooltip(final CrcView view, final double x, final double y) {
         return List.of();

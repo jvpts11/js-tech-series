@@ -12,6 +12,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -264,6 +265,26 @@ class MultiblockPatternTest {
         assertEquals(new BlockMatch(List.of("jsc:casing", "jsc:power_entry"), List.of()), place.fits());
         assertEquals("power_entry", place.entries().getFirst().name());
         assertEquals(PortKind.ENERGY_INPUT, place.entries().getFirst().port());
+    }
+
+    @Test
+    void quotas_nameEachLimitedCountWithTheBlocksCountedUnderIt() {
+        var p = MultiblockPattern.builder("counted")
+                .layer("#RH")
+                .where('R', BlockMatch.blocks("jsc:casing"))
+                .where('H', Place.of(BlockMatch.blocks("jsc:hatch")).counting("hatches",
+                        BlockMatch.blocks("jsc:hatch")))
+                .entry('R', "power_entry", BlockMatch.blocks("jsc:power_entry"), PortKind.ENERGY_INPUT)
+                .limit("power_entry", 1, 1)
+                .limit("hatches", 0, 2)
+                .build();
+        var quotas = p.quotas();
+        assertEquals(List.of("hatches", "power_entry"), quotas.stream().map(Quota::name).toList());
+        var power = quotas.get(1);
+        assertEquals(Limit.exactly(1), power.limit());
+        assertTrue(power.counts().matches("jsc:power_entry"));
+        assertFalse(power.counts().matches("jsc:casing"));
+        assertTrue(quotas.getFirst().counts().matches("jsc:hatch"));
     }
 
     @Test

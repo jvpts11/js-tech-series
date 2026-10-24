@@ -8,6 +8,7 @@
 package dev.jstech.industrial.crc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -49,11 +50,23 @@ class CrcLayoutTest {
 
     @Test
     void yearX_runsAcrossTheAxisAndHoldsTheYearsPastItsEnds() {
-        assertEquals(CrcLayout.YEAR_LEFT, CrcLayout.yearX(CrcLayout.FIRST_YEAR));
-        assertEquals(CrcLayout.YEAR_RIGHT, CrcLayout.yearX(CrcLayout.LAST_YEAR));
-        assertEquals(CrcLayout.YEAR_LEFT, CrcLayout.yearX(1800));
-        assertEquals(CrcLayout.YEAR_RIGHT, CrcLayout.yearX(2200));
-        assertTrue(CrcLayout.yearX(1960) > CrcLayout.yearX(1950));
+        assertEquals(CrcLayout.YEAR_LEFT, CrcLayout.yearX(CrcLayout.FIRST_YEAR, 0));
+        assertEquals(CrcLayout.yearX(CrcLayout.FIRST_YEAR, 0), CrcLayout.yearX(1800, 0));
+        assertEquals(CrcLayout.yearX(CrcLayout.LAST_YEAR, 0), CrcLayout.yearX(2200, 0));
+        assertTrue(CrcLayout.yearX(1960, 0) > CrcLayout.yearX(1950, 0));
+        assertTrue(CrcLayout.futureX(0) > CrcLayout.yearX(CrcLayout.LAST_YEAR, 0));
+    }
+
+    @Test
+    void yearX_dragsAlongYearsWiderThanTheAxis() {
+        assertEquals(CrcLayout.YEAR_LEFT + (CrcLayout.YEAR_RIGHT - CrcLayout.YEAR_LEFT) * CrcLayout.CHART_ZOOM,
+                CrcLayout.yearX(CrcLayout.LAST_YEAR, 0), "the years are drawn wider than the axis' room");
+        assertFalse(CrcLayout.inSight(CrcLayout.futureX(0)), "the future is out of sight before a drag");
+        assertEquals(CrcLayout.FUTURE_X, CrcLayout.futureX(CrcLayout.PAN_MOST),
+                "dragged all the way, the future is where an undragged chart had it");
+        assertTrue(CrcLayout.inSight(CrcLayout.yearX(CrcLayout.LAST_YEAR, CrcLayout.PAN_MOST)));
+        assertFalse(CrcLayout.inSight(CrcLayout.yearX(CrcLayout.FIRST_YEAR, CrcLayout.PAN_MOST)));
+        assertEquals(CrcLayout.yearX(1950, 0) - 40, CrcLayout.yearX(1950, 40), "a drag moves every year alike");
     }
 
     @Test

@@ -8,9 +8,12 @@
 package dev.jstech.core.multiblock;
 
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -26,6 +29,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,6 +110,25 @@ public final class FormedPartBlock extends Block implements EntityBlock {
         return List.of();
     }
 
+    /*
+     * A merged block standing on its terminal's front, clicked on that front, is a part of the terminal's face: the
+     * click works the terminal as a click on the terminal itself does, so a multiblock's whole front opens its screen.
+     */
+    @Override
+    protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
+                                               final Player player, final BlockHitResult hit) {
+        if (level.getBlockEntity(pos) instanceof FormedPartBlockEntity part && part.terminal() != null) {
+            final BlockPos terminal = part.terminal();
+            if (level.getBlockEntity(terminal) instanceof IStructureTerminal owner) {
+                final Optional<Direction> front = owner.formedOrientation().map(FormedPartBlock::frontOf);
+                if (front.isPresent() && hit.getDirection() == front.get() && onFace(pos, terminal, front.get())) {
+                    return level.getBlockState(terminal).useWithoutItem(level, player, hit.withPosition(terminal));
+                }
+            }
+        }
+        return super.useWithoutItem(state, level, pos, player, hit);
+    }
+
     @Override
     protected void onPlace(final BlockState state, final Level level, final BlockPos pos, final BlockState old,
                            final boolean movedByPiston) {
@@ -132,5 +155,18 @@ public final class FormedPartBlock extends Block implements EntityBlock {
             return;
         }
         level.scheduleTick(pos, this, LOOKS_EVERY);
+    }
+
+    /* The way a structure standing as {@code orientation} faces: its drawing's north, where its terminal looks. */
+    private static Direction frontOf(final Orientation orientation) {
+        final int[] out = orientation.apply(0, 0, -1);
+        return Direction.getNearest(out[0], out[1], out[2]);
+    }
+
+    /* Whether {@code pos} lies in the plane of the face of the terminal at {@code terminal} looking {@code front}. */
+    private static boolean onFace(final BlockPos pos, final BlockPos terminal, final Direction front) {
+        final BlockPos apart = pos.subtract(terminal);
+        return apart.getX() * front.getStepX() + apart.getY() * front.getStepY() + apart.getZ() * front.getStepZ()
+                == 0;
     }
 }

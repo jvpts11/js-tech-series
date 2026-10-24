@@ -349,7 +349,9 @@ It is checked again only when a block changes in the box it watches (everything 
 formed, its structure and the places beside it once formed), a few ticks after the change, and once a minute besides,
 never every tick. It is never checked while a chunk it reaches is not loaded, and a chunk that unloads never undoes
 it: it stays as it was until it can be read again. `LevelStructures.of(level).terminalHolding(pos)` says which
-formed structure a place belongs to.
+formed structure a place belongs to. A terminal that shows what stands in its places, as an entry drawn where the
+player put it, overrides `structureChecked(level)`, which runs each time the structure was checked again, formed or
+not, so it reads them at once (*added 2026-10-24*).
 
 ### Formed into one model
 
@@ -374,8 +376,11 @@ event.registerBlockEntityRenderer(MyContent.TURBINE_ENTITY.get(), context -> Kit
   sounds and lights as it did, a pick block gives the block, and breaking it drops that block. The terminal, the
   ports and every block with a block entity stay as they are, so pipes and cables still meet them.
 - **Breaking a block of it undoes the structure**, and every formed part turns back into the block it was, with a
-  puff where each stood. A formed part whose terminal is gone, or no longer holds it, turns back by itself within
-  five seconds.
+  puff where each stood. Breaking the terminal gives them all back in the same tick (*changed 2026-10-24*); a formed
+  part whose terminal is gone some other way, or no longer holds it, turns back by itself within five seconds.
+- **Its whole front is the terminal's face** (*added 2026-10-24*): a formed part standing in the plane of the
+  terminal's front, clicked on that front, works the terminal as a click on the terminal does, so a click anywhere
+  on the front of a formed multiblock opens its screen. Its other faces are left to what the multiblock declares.
 - **The model** is the one of the Core's ([Models](MODELS.md)) the terminal's renderer names, made as the structure
   stands facing north, as its pattern is drawn, its origin on the middle of the terminal's floor; it is turned,
   mirrored or laid down as the structure was built. While it is not formed the terminal's own model shows
@@ -531,7 +536,10 @@ display has three pages:
   takes several blocks, the chosen one framed; where the blocks come from; and whether it is ready, or what it lacks,
   or how the building goes.
 - **Choices**: every group of places that take several blocks, its chosen block between arrows; left and right
-  change it.
+  change it. Whatever is chosen, the builder puts in the least of each count the pattern limits, each in the first
+  place that takes it (a structure's one power entry, though casing was chosen for its places), and never more than
+  its most (*added 2026-10-24*): what it builds forms. A shape gives its counts with `IStructureShape.quotas()`, which
+  a pattern works out from its `limit`s.
 - **Source**: where the blocks come from, the player's inventory first.
 
 OK builds: a block at a time, at the pace the settings give, each taken from the source and placed as the player

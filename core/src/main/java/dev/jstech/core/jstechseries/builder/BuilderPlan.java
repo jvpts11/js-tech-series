@@ -11,11 +11,13 @@ import dev.jstech.core.jstechseries.projector.ProjectorView;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.multiblock.BuildOrder;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.IStructureShape;
 import dev.jstech.core.multiblock.MultiblockBlocks;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PatternById;
 import dev.jstech.core.multiblock.Projectables;
+import dev.jstech.core.multiblock.Quota;
 import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -106,10 +108,11 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
         }
         final IBuildSource source = BuildSources.get(state.source());
         final Map<String, Integer> held = new HashMap<>();
+        final List<Quota> quotas = shape.quotas();
         final BuildOrder order = BuildOrder.plan(wants, state.chosen(), block -> held.computeIfAbsent(block, id -> {
             final Block known = MultiblockBlocks.blockOf(id);
             return known == null ? 0 : source.count(player, known.asItem());
-        }));
+        }), quotas, standing(level, view, quotas));
         return Optional.of(new BuilderPlan(nameOf(shape, standing), preview, facing, view, wants,
                 List.copyOf(groups.values()), order));
     }
@@ -124,6 +127,28 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
     public static int has(final Player player, final BuilderState state, final String block) {
         final Block known = MultiblockBlocks.blockOf(block);
         return known == null ? 0 : BuildSources.get(state.source()).count(player, known.asItem());
+    }
+
+    /* How many of each count of {@code quotas} already stand in their places, a merged block as the block it was. */
+    private static Map<String, Integer> standing(final Level level, final ProjectorView view,
+                                                 final List<Quota> quotas) {
+        final Map<String, Integer> standing = new HashMap<>();
+        if (quotas.isEmpty()) {
+            return standing;
+        }
+        for (final ProjectorView.Place place : view.places()) {
+            if (place.state() != ProjectorView.State.PLACED || place.ghost().terminal()) {
+                continue;
+            }
+            final BlockState there = FormedPartBlock.originalAt(level, place.pos(), level.getBlockState(place.pos()));
+            final String id = MultiblockBlocks.idOf(there.getBlock());
+            for (final Quota quota : quotas) {
+                if (quota.counts().matches(id)) {
+                    standing.merge(quota.name(), 1, Integer::sum);
+                }
+            }
+        }
+        return standing;
     }
 
     /* The turn of a shape drawn facing north that stands facing {@code facing}. */

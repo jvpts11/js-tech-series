@@ -8,9 +8,13 @@
 package dev.jstech.tests.gametest.industrial;
 
 import com.mojang.authlib.GameProfile;
+import dev.jstech.core.jstechseries.builder.BuildJobs;
+import dev.jstech.core.jstechseries.builder.BuilderState;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineScreenLayout;
+import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.ShapeMatch;
 import dev.jstech.core.progression.TeamProgress;
 import dev.jstech.core.team.CoreTeams;
@@ -26,9 +30,11 @@ import dev.jstech.industrial.crc.CrcReadings;
 import dev.jstech.industrial.crc.CrcStructure;
 import dev.jstech.industrial.research.IndustrialResearch;
 import dev.jstech.industrial.research.ResearchLink;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.testkit.gametest.ScenarioBuilder;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestCrcResearch;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +44,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -45,6 +52,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -70,11 +78,13 @@ public final class CrcGameTests {
 
     private static final String ARENA = "tall";
     private static final String BATCH = "jsindustrial_crc";
-    /* The terminal, the body running south of it to the rear, as the pattern is drawn. */
-    private static final BlockPos TERMINAL = new BlockPos(4, 2, 1);
-    private static final BlockPos SECOND_TERMINAL = new BlockPos(8, 2, 1);
+    /* The terminal in the middle layer, the body running south of it to the rear, as the pattern is drawn. */
+    private static final BlockPos TERMINAL = new BlockPos(4, 3, 1);
+    private static final BlockPos SECOND_TERMINAL = new BlockPos(8, 3, 1);
     private static final int[] POWER_PLACE = {1, 0};
     private static final int FORMS_WITHIN = 200;
+    /* Ticks a structure takes to check a change once it settles, and a margin, well under the CRC's second. */
+    private static final int SEES_A_CHANGE = 8;
     private static final double CLOSE = 1e-6;
 
     private CrcGameTests() {
@@ -90,10 +100,100 @@ public final class CrcGameTests {
                         + crc.structure().failure()))
                 .thenExecute(() -> helper.assertTrue(helper.getBlockState(TERMINAL).getValue(CrcBlock.FORMED),
                         "its terminal too"))
-                .thenExecute(() -> helper.setBlock(TERMINAL.offset(0, 1, 4), CrcContent.CASING.get()))
+                .thenExecute(() -> helper.setBlock(TERMINAL.offset(0, 0, 4), CrcContent.CASING.get()))
                 .thenWaitUntil(() -> helper.assertTrue(!crc.formed() && !entryFormed(helper, TERMINAL, 1, 0),
                         "a casing where a gate goes undoes it, and its entries draw themselves again"))
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void terminal_standsInTheMiddleOfTheFrontAtAPlayersEyes(final GameTestHelper helper) {
+        final MultiblockPattern pattern = CrcStructure.PATTERN;
+        helper.assertTrue(pattern.terminalX() == 1 && pattern.terminalY() == 1 && pattern.terminalZ() == 0,
+                "the terminal is the middle of the front's middle layer: " + pattern.terminalX() + ", "
+                        + pattern.terminalY() + ", " + pattern.terminalZ());
+        helper.assertTrue(CrcStructure.rearPlace(BlockPos.ZERO, Orientation.NORTH, 0, 0).equals(new BlockPos(-1, -1,
+                8)), "the rear's bottom row is a layer under the terminal");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = FORMS_WITHIN)
+    public static void entries_areDrawnWhereTheyStandAsSoonAsTheStructureSeesThem(final GameTestHelper helper) {
+        final CrcBlockEntity crc = build(helper, TERMINAL, Map.of(cell(1, 0), CrcContent.POWER_ENTRY.get()));
+        final int westUpper = CrcBlockEntity.PLACES + CrcStructure.REAR_COLUMNS;
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(crc.formed(), "it forms"))
+                .thenExecute(() -> helper.setBlock(rear(TERMINAL, 0, 1), facingOut(CrcContent.LINK_SOCKET.get())))
+                .thenExecuteAfter(SEES_A_CHANGE, () -> helper.assertTrue(crc.shown().size() > westUpper
+                        && crc.shown().get(westUpper) == CrcBlockEntity.CELL_LINK
+                        && entryFormed(helper, TERMINAL, 0, 1),
+                        "the link socket put in the west column's upper place is drawn there at once: " + crc.shown()))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = FORMS_WITHIN)
+    public static void breakingTheTerminal_givesEveryMergedBlockBackInTheSameTick(final GameTestHelper helper) {
+        final CrcBlockEntity crc = build(helper, TERMINAL, Map.of(cell(1, 0), CrcContent.POWER_ENTRY.get()));
+        final BlockPos frontCorner = TERMINAL.offset(-1, -1, 0);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(crc.formed() && helper.getBlockState(frontCorner)
+                        .is(FormedParts.BLOCK.get()), "it forms, its casing merged into its model"))
+                .thenExecute(() -> {
+                    helper.destroyBlock(TERMINAL);
+                    helper.assertTrue(helper.getBlockState(frontCorner).is(CrcContent.CASING.get()),
+                            "the casing is back the moment the terminal breaks: " + helper.getBlockState(frontCorner));
+                    helper.assertTrue(!entryFormed(helper, TERMINAL, 1, 0), "and the entry draws itself again");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = FORMS_WITHIN)
+    public static void clickOnTheFront_opensTheTerminalWherever(final GameTestHelper helper) {
+        final CrcBlockEntity crc = build(helper, TERMINAL, Map.of(cell(1, 0), CrcContent.POWER_ENTRY.get()));
+        final BlockPos frontCorner = TERMINAL.offset(1, 1, 0);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(crc.formed() && helper.getBlockState(frontCorner)
+                        .is(FormedParts.BLOCK.get()), "it forms"))
+                .thenExecute(() -> {
+                    final ServerPlayer player = GameTestPlayers.connected(helper, "crc-front");
+                    try {
+                        player.moveTo(Vec3.atCenterOf(helper.absolutePos(TERMINAL.north(2))));
+                        click(helper, player, frontCorner.south(), Direction.NORTH);
+                        helper.assertTrue(!(player.containerMenu instanceof MachineMenu),
+                                "a block behind the front, clicked, opens nothing");
+                        click(helper, player, frontCorner, Direction.EAST);
+                        helper.assertTrue(!(player.containerMenu instanceof MachineMenu),
+                                "nor the front's corner clicked on its side");
+                        click(helper, player, frontCorner, Direction.NORTH);
+                        helper.assertTrue(player.containerMenu instanceof MachineMenu menu && menu.machine() == crc,
+                                "the front's corner clicked on the front opens the CRC's screen");
+                    } finally {
+                        GameTestPlayers.leave(player);
+                    }
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void builder_putsInTheEntryTheCrcMustHaveSoItForms(final GameTestHelper helper) {
+        helper.setBlock(TERMINAL, CrcContent.TERMINAL.get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+        final FakePlayer player = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.nameUUIDFromBytes(
+                "crc-builder".getBytes(StandardCharsets.UTF_8)), "crc-builder"));
+        player.getInventory().clearContent();
+        final BlockPos stand = helper.absolutePos(TERMINAL.north(2));
+        player.setPos(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5);
+        player.getInventory().add(new ItemStack(CrcContent.CASING.get(), 128));
+        player.getInventory().add(new ItemStack(CrcContent.GATE.get(), 3));
+        player.getInventory().add(new ItemStack(CrcContent.BUS.get(), 4));
+        player.getInventory().add(new ItemStack(CrcContent.POWER_ENTRY.get(), 1));
+        BuildJobs.start(player, helper.absolutePos(TERMINAL), BuilderState.DEFAULT);
+        helper.succeedWhen(() -> {
+            final CrcBlockEntity crc = helper.getBlockEntity(TERMINAL);
+            helper.assertTrue(crc.formed(), "it forms once built; " + crc.structure().failure());
+            helper.assertTrue(player.getInventory().countItem(CrcContent.POWER_ENTRY.get().asItem()) == 0,
+                    "having put in the power entry it must have, though casing fits there too");
+        });
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = FORMS_WITHIN)
@@ -348,7 +448,16 @@ public final class CrcGameTests {
 
     /* The rear place of {@code column} (0 west) and {@code row} (0 bottom) of the CRC whose terminal is there. */
     private static BlockPos rear(final BlockPos terminal, final int column, final int row) {
-        return terminal.offset(column - 1, row, CrcStructure.PATTERN.sizeZ() - 1);
+        return CrcStructure.rearPlace(terminal, Orientation.NORTH, column, row);
+    }
+
+    /* {@code player} clicks with an empty hand on {@code face} of the block at {@code relative}. */
+    private static void click(final GameTestHelper helper, final ServerPlayer player, final BlockPos relative,
+                              final Direction face) {
+        final BlockPos at = helper.absolutePos(relative);
+        final Vec3 where = Vec3.atCenterOf(at).add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5));
+        helper.getBlockState(relative).useWithoutItem(helper.getLevel(), player, new BlockHitResult(where, face, at,
+                false));
     }
 
     private static BlockState facingOut(final Block block) {

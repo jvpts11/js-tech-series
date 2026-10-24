@@ -766,6 +766,14 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     protected void settled(final ServerLevel level, final MachineStatus status) {
     }
 
+    /**
+     * Its structure was just checked again, a block of it having changed: formed or not, what stands where is as the
+     * check found it. A terminal that shows what stands in its places (an entry where the player put it) reads them
+     * here, at once, rather than on its own time.
+     */
+    protected void structureChecked(final ServerLevel level) {
+    }
+
     /** Adds the values a machine of a mod lets the outside read and set, after every machine's own. */
     protected void declareParameters(final List<MachineParameter> declared) {
     }
@@ -862,6 +870,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         structure = Objects.requireNonNull(declared, "declared");
         final PartField field = fields().part("Structure", declared).save().toClient();
         declared.on(this, field::changed);
+        // Broken, its terminal gives back the blocks merged into its model at once, not when they next look for it.
+        fields().whenBroken((level, at) -> declared.broken(level));
     }
 
     /**

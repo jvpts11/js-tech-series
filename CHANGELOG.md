@@ -216,6 +216,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   with a cable lays it, the same for the player's game and the server; `CableItem.showNow` shows the players cables
   laid or taken out by hand, with their neighbours, at once; `ClientUpdates.sendNow` sends any block and its block
   entity to the players watching it without waiting for the end of the tick.
+- (Core) Multiblocks built whole and worked from their front: J's Core's API stays at version 12, all experimental.
+  `IStructureShape.quotas()` gives the counts a shape limits as `Quota`s (a name, the blocks counted, a `Limit`), which
+  `MultiblockPattern` works out from its limits; `BuildOrder.plan` takes them and how many of each already stand;
+  `MachineBlockEntity.structureChecked(level)` runs each time a terminal's structure was checked again.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1638,6 +1642,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and a mod may give its own cable or pipe another sound.
 - (Core) A cable laid beside another shows joined to it the moment it appears, and a wire taken out lets go of its
   neighbours at once, rather than a tick or two later.
+- (Core) A click anywhere on the front of a formed multiblock opens its screen, as a click on its terminal does.
+- (Core) The Multiblock Builder puts in what a multiblock must have, each in a place that takes it, and never more
+  than it takes, whatever block was chosen for those places, so what it builds forms.
+- (Industrial) The Computational Research Centre's terminal stands in the middle of its front, at a player's eyes,
+  one layer up: a CRC built before stands unformed until its terminal is moved there.
+- (Industrial) The CRC's Research chart draws its years twice as wide and is dragged with the mouse: across along the
+  years, up and down through its fields.
 - (Core, Industrial) With J's Industrial installed, its deposit types take the place of the Core's plain veins of
   iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
   Nether's gold stays the Core's.
@@ -1770,6 +1781,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   mouse: the panel they sit in had no size, so a click never reached them and a change could not be kept.
 - (Core) A click with a cable on a snow layer, or on anything else that gives way, lays one cable in its place: the
   player's game started the run above it, so letting go of the click laid a second cable on top of the first.
+- (Core) Breaking a formed multiblock's terminal gives its merged blocks back at once, not up to five seconds later.
+- (Industrial) The CRC's formed model draws each entry where it stands: the rear's columns were the wrong way round,
+  so an entry put in the west place showed in the east one. An entry put in is drawn as soon as the structure sees it,
+  not on the CRC's next second.
+- (Industrial) A cable run to a CRC entry meets it: each entry's gland, socket or pipe stub reaches the edge of its
+  block. And no slit of sky shows along the CRC's foot under an entry or its terminal, which hid the ground's face.
 - (Core) The screens of the network probe, the signal probe and the clamp meter no longer show dark stairs outside
   their corners: the dark rim round the instrument follows its rounded corner.
 - (Core) A cable's item is drawn whatever its thickness: only cables four, six or ten pixels thick had a model for

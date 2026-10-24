@@ -447,6 +447,16 @@ public class CrcBlockEntity extends MachineBlockEntity implements IMenuTitle {
         return team == null || discovery.isEmpty() ? 0.0 : Research.share(server, team, discovery.get());
     }
 
+    /* Its structure was checked again: the entries are read, and drawn where the player put them, at once. */
+    @Override
+    protected void structureChecked(final ServerLevel level) {
+        readRear(level);
+        final List<Integer> now = visuals();
+        if (!now.equals(this.shown.get())) {
+            this.shown.set(now);
+        }
+    }
+
     /* What its screen shows, worked out again when a second has passed since the last time a screen asked. */
     private CrcReadings screenReadings() {
         if (this.level instanceof ServerLevel server && server.getGameTime() - this.readAt >= TICKS_A_SECOND) {

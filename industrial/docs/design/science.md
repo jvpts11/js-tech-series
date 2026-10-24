@@ -89,7 +89,7 @@ and the lamps of its registers blinking while it works.
 
 | Block | Where |
 | --- | --- |
-| CRC Terminal | the middle of the bottom row of its front, its console; it opens the CRC's screen |
+| CRC Terminal | the middle of its front, in the middle layer at a player's eyes, its console; it opens the CRC's screen |
 | CRC Casing | the rest of the outside: smooth sheet, a louvred vent along the top of the rear |
 | CRC Gate | three, inside, one for each section, as IBM called the racks of its cards |
 | CRC Bus | four, inside, between and at the ends of the gates |

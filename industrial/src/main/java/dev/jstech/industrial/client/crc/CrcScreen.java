@@ -114,6 +114,17 @@ public final class CrcScreen extends CoreContainerScreen<MachineMenu> {
     }
 
     @Override
+    public boolean mouseDragged(final double mouseX, final double mouseY, final int button, final double dragX,
+                                final double dragY) {
+        final ICrcTab tab = this.own.get(this.menu.tab());
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && tab != null && tab.dragged(view(null, (int) mouseX,
+                (int) mouseY, 0F), mouseX - this.leftPos, mouseY - this.topPos, dragX, dragY)) {
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX,
                                  final double scrollY) {
         if (scrollY != 0) {

@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest.industrial;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineScreenLayout;
 import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.progression.TeamProgress;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.team.Ownership;
@@ -24,6 +25,7 @@ import dev.jstech.industrial.research.IndustrialResearch;
 import dev.jstech.tests.TestCrcResearch;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import dev.jstech.testkit.client.ClientTestHelper;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,8 +43,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class CrcScreenClientTests {
 
-    /* The terminal, the body running south of it; the player north of it, looking at its console. */
-    private static final BlockPos TERMINAL = new BlockPos(0, 2, 2);
+    /* The terminal in the middle layer, the body running south of it; the player north of it, at its console. */
+    private static final BlockPos TERMINAL = new BlockPos(0, 3, 2);
     private static final BlockPos STAND = new BlockPos(0, 2, -1);
     private static final int WAIT = 200;
     private static final int TICKS_A_SECOND = 20;
@@ -52,12 +54,15 @@ public final class CrcScreenClientTests {
     private static final int CRYSTAL = 7;
     private static final int SPECTRAL = 3;
     private static final double MADE = 0.62;
+    /* How far the chart is dragged across, in the GUI's pixels: over a decade of its years. */
+    private static final int CHART_DRAG = 60;
 
     private CrcScreenClientTests() {
     }
 
     @ClientTest(timeoutTicks = 1200)
     public static void screen_showsEachOfItsSixTabs(final ClientTestContext ctx) {
+        final String[] axis = new String[2];
         ctx.afterTest(() -> ctx.mc().setScreen(null));
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
                 .thenServer(0, level -> build(ctx, level))
@@ -79,6 +84,12 @@ public final class CrcScreenClientTests {
                 .thenScreenshot(TICKS_A_SECOND, "crc-processors")
                 .then(0, () -> tab(ctx, 1))
                 .thenScreenshot(5, "crc-research")
+                .then(0, () -> axis[0] = axisRow(ctx))
+                .then(0, () -> dragChart(ctx, CHART_DRAG))
+                .then(2, () -> axis[1] = axisRow(ctx))
+                .thenAssert(0, () -> !axis[0].equals(axis[1]), "a drag across the chart runs it along its years")
+                .thenScreenshot(0, "crc-research-dragged")
+                .then(0, () -> dragChart(ctx, -CHART_DRAG))
                 .then(0, () -> tab(ctx, 2))
                 .thenScreenshot(5, "crc-group")
                 .then(0, () -> tab(ctx, 3))
@@ -111,8 +122,9 @@ public final class CrcScreenClientTests {
                 }
             }
         }
-        level.setBlockAndUpdate(ctx.abs(TERMINAL.offset(0, 0, pattern.sizeZ() - 1)), CrcContent.POWER_ENTRY.get()
-                .defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+        level.setBlockAndUpdate(CrcStructure.rearPlace(ctx.abs(TERMINAL), Orientation.NORTH, 1, 0),
+                CrcContent.POWER_ENTRY.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING,
+                        Direction.SOUTH));
         final CrcBlockEntity crc = crc(ctx, level);
         crc.own(Ownership.of(ctx.player().getUUID()));
         for (int place = 0; place < CrcBlockEntity.PLACES; place++) {
@@ -134,9 +146,9 @@ public final class CrcScreenClientTests {
     /* Takes the CRC away, every block of it. */
     private static void clear(final ClientTestContext ctx, final ServerLevel level) {
         final MultiblockPattern pattern = CrcStructure.PATTERN;
-        for (final BlockPos at : BlockPos.betweenClosed(ctx.abs(TERMINAL.offset(-pattern.terminalX(), 0, 0)),
-                ctx.abs(TERMINAL.offset(pattern.sizeX() - 1 - pattern.terminalX(), pattern.sizeY() - 1,
-                        pattern.sizeZ() - 1)))) {
+        final BlockPos corner = TERMINAL.offset(-pattern.terminalX(), -pattern.terminalY(), -pattern.terminalZ());
+        for (final BlockPos at : BlockPos.betweenClosed(ctx.abs(corner), ctx.abs(corner.offset(pattern.sizeX() - 1,
+                pattern.sizeY() - 1, pattern.sizeZ() - 1)))) {
             level.setBlockAndUpdate(at, Blocks.AIR.defaultBlockState());
         }
     }
@@ -159,5 +171,41 @@ public final class CrcScreenClientTests {
         ctx.click(left + CrcLayout.tabX(place) + MachineScreenLayout.TAB_WIDTH / 2.0,
                 top + MachineScreenLayout.TAB_HEIGHT / 2.0);
         ctx.pointAt(1, 1);
+    }
+
+    /*
+     * Drags the Research tab's chart {@code across} to the right with the left button, from the middle of its paper,
+     * as a hand on the mouse does: pressed, moved a little at a time, let go.
+     */
+    private static void dragChart(final ClientTestContext ctx, final int across) {
+        final CrcScreen screen = (CrcScreen) Objects.requireNonNull(ctx.mc().screen, "no screen");
+        final double x = left(ctx) + (CrcLayout.CHART_LEFT + CrcLayout.CHART_RIGHT) / 2.0;
+        final double y = top(ctx) + CrcLayout.LANE_TOP + CrcLayout.LANE_HEIGHT / 2.0;
+        screen.mouseClicked(x, y, 0);
+        final int step = across > 0 ? 4 : -4;
+        for (int moved = 0; Math.abs(moved) < Math.abs(across); moved += step) {
+            screen.mouseDragged(x + moved + step, y, 0, step, 0);
+        }
+        screen.mouseReleased(x + across, y, 0);
+    }
+
+    /* What the chart's axis row shows now, pixel by pixel, to tell whether it moved. */
+    private static String axisRow(final ClientTestContext ctx) {
+        final StringBuilder row = new StringBuilder();
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            final int y = top(ctx) + CrcLayout.AXIS_Y + 6;
+            for (int x = CrcLayout.CHART_LEFT + 2; x < CrcLayout.CHART_RIGHT - 2; x++) {
+                row.append(Integer.toHexString(frame.pixel(left(ctx) + x, y))).append(',');
+            }
+        }
+        return row.toString();
+    }
+
+    private static int left(final ClientTestContext ctx) {
+        return (ctx.mc().getWindow().getGuiScaledWidth() - CrcLayout.WIDTH) / 2;
+    }
+
+    private static int top(final ClientTestContext ctx) {
+        return (ctx.mc().getWindow().getGuiScaledHeight() - CrcLayout.HEIGHT) / 2;
     }
 }

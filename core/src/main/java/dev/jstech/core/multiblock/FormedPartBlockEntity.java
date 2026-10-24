@@ -28,7 +28,8 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
         super(FormedParts.ENTITY.get(), pos, state);
         this.original = fields().value("Original", BlockState.CODEC, Blocks.AIR.defaultBlockState()).save()
                 .toClient();
-        this.terminal = fields().nullable("Terminal", BlockPos.CODEC).save();
+        // The players' games know whose it is too: a click on it there works its terminal, as the server does.
+        this.terminal = fields().nullable("Terminal", BlockPos.CODEC).save().toClient();
     }
 
     /** The block it was before its structure formed. */

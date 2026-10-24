@@ -48,8 +48,9 @@ final class ResearchPages {
                         + " points, which its processors compute, and the data it asks for.")
                 .howToGetIt(FROM_THE_TAB)
                 .nextColumn()
-                .howToUseIt("Build it of CRC Casing, the CRC Terminal in the middle of the front's bottom row.",
-                        "Along the middle of its middle layer, from the front: Bus, Gate, Bus, Gate, Bus, Gate, Bus.",
+                .howToUseIt("Build it of CRC Casing, the CRC Terminal in the middle of the front, at your eyes.",
+                        "Along the middle of its middle layer, behind the Terminal: Bus, Gate, Bus, Gate, Bus, Gate,"
+                                + " Bus.",
                         "In the six places of the rear's two lower rows: one CRC Power Entry, and if you want"
                                 + " them a Link Socket, a Coolant Inlet with its Outlet and a Heat Port; casing in"
                                 + " the rest.",

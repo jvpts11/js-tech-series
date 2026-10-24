@@ -387,6 +387,21 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
                 PatternMatcher.encodePosition(pos.getX(), pos.getY(), pos.getZ())));
     }
 
+    /*
+     * Its terminal was broken or replaced, as a player or an explosion does, never as its chunk unloads: the structure
+     * is gone with it, so its ports let go and its merged blocks come back in the same tick.
+     */
+    void broken(final ServerLevel level) {
+        if (this.formed) {
+            MultiblockPorts.release(level, this.places);
+        }
+        if (!this.merged.isEmpty()) {
+            FormedParts.restore(level, this.merged);
+            this.merged = List.of();
+        }
+        this.formed = false;
+    }
+
     /* The machine left the level, broken or its chunk unloaded: it watches nothing more. */
     void removed(final ServerLevel level, final BlockPos pos) {
         LevelStructures.of(level).forget(pos);
@@ -515,6 +530,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         }
         if (this.machine != null) {
             this.machine.wake();
+            this.machine.structureChecked(level);
         }
     }
 

@@ -137,6 +137,12 @@ public final class CrcLayout {
     public static final int FUTURE_X = 207;
     public static final int FIRST_YEAR = 1900;
     public static final int LAST_YEAR = 2010;
+    /**
+     * How many times wider than its axis' room the years are drawn, so the chart is dragged along them, and how far
+     * it goes: as far as puts the future where an undragged chart has it, the most recent years then in sight.
+     */
+    public static final int CHART_ZOOM = 2;
+    public static final int PAN_MOST = (FUTURE_X - YEAR_LEFT) * (CHART_ZOOM - 1);
     public static final int LEGEND_Y = CHART_BOTTOM - 7;
     /** The card of the discovery picked on the chart, its buttons at its foot. */
     public static final int CARD_LEFT = 220;
@@ -231,10 +237,24 @@ public final class CrcLayout {
         return MachineScreenLayout.tabX(place);
     }
 
-    /** The x on the chart of {@code year}, the years before and after its axis at its ends. */
-    public static int yearX(final int year) {
+    /**
+     * The x on the chart of {@code year}, dragged {@code pan} along (0 for the first years in sight), the years before
+     * and after its axis at its ends.
+     */
+    public static int yearX(final int year, final int pan) {
         final int clamped = Math.clamp(year, FIRST_YEAR, LAST_YEAR);
-        return YEAR_LEFT + (clamped - FIRST_YEAR) * (YEAR_RIGHT - YEAR_LEFT) / (LAST_YEAR - FIRST_YEAR);
+        return YEAR_LEFT + (clamped - FIRST_YEAR) * (YEAR_RIGHT - YEAR_LEFT) * CHART_ZOOM / (LAST_YEAR - FIRST_YEAR)
+                - pan;
+    }
+
+    /** The x on the chart of the future, past its axis' end, dragged {@code pan} along. */
+    public static int futureX(final int pan) {
+        return YEAR_LEFT + (FUTURE_X - YEAR_LEFT) * CHART_ZOOM - pan;
+    }
+
+    /** Whether the x {@code x} of the chart's paper is in sight, inside its bezel. */
+    public static boolean inSight(final int x) {
+        return x >= CHART_LEFT + 2 && x <= CHART_RIGHT - 3;
     }
 
     /** The y of the middle of lane {@code lane} shown, from the top. */

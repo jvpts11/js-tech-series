@@ -13,14 +13,11 @@ import static dev.jstech.industrial.crc.CrcLayout.CHART_LEFT;
 import static dev.jstech.industrial.crc.CrcLayout.CHART_RIGHT;
 import static dev.jstech.industrial.crc.CrcLayout.CHART_TOP;
 import static dev.jstech.industrial.crc.CrcLayout.FIRST_YEAR;
-import static dev.jstech.industrial.crc.CrcLayout.FUTURE_X;
 import static dev.jstech.industrial.crc.CrcLayout.LANES_SHOWN;
 import static dev.jstech.industrial.crc.CrcLayout.LANE_HEIGHT;
 import static dev.jstech.industrial.crc.CrcLayout.LANE_TOP;
 import static dev.jstech.industrial.crc.CrcLayout.LAST_YEAR;
 import static dev.jstech.industrial.crc.CrcLayout.LEGEND_Y;
-import static dev.jstech.industrial.crc.CrcLayout.YEAR_LEFT;
-import static dev.jstech.industrial.crc.CrcLayout.YEAR_RIGHT;
 
 import dev.jstech.core.client.machine.MachineArt;
 import dev.jstech.core.client.machine.MachineWords;
@@ -45,13 +42,15 @@ import org.jetbrains.annotations.Nullable;
  * made in the real world, one lane for each field of science, the ones not made yet past the axis' end, under a
  * question mark. Each is a pen ring, filled for one its team knows (with a tick), blue for the one its group works
  * now, half filled for one begun, open for one it may start, and a pencil mark for one it may not start yet; a line
- * runs from what each comes after to it, whole once that is known. More fields than its four lanes turn with the wheel.
+ * runs from what each comes after to it, whole once that is known. More fields than its four lanes turn with the wheel
+ * or a drag up and down; the years are drawn twice as wide as the axis' room, and a drag across runs along them.
  */
 final class CrcChart {
 
     private final List<Lane> lanes;
     private final List<Node> nodes;
     private final int scroll;
+    private final int pan;
 
     /* The rows a node moves up and down by, to stand clear of another of its lane at the same year. */
     private static final int CROWD = 6;
@@ -64,18 +63,20 @@ final class CrcChart {
     private static final int LABEL_ABOVE = 10;
     private static final int LABEL_BELOW = 4;
 
-    private CrcChart(final List<Lane> lanes, final List<Node> nodes, final int scroll) {
+    private CrcChart(final List<Lane> lanes, final List<Node> nodes, final int scroll, final int pan) {
         this.lanes = lanes;
         this.nodes = nodes;
         this.scroll = scroll;
+        this.pan = pan;
     }
 
     /**
      * The chart of {@code discoveries} as {@code read} says their team stands on them, {@code now} the one its group
-     * works, its lanes turned on by {@code scroll}.
+     * works, its lanes turned on by {@code scroll} and its years dragged {@code pan} along.
      */
     static CrcChart of(final List<Discovery> discoveries, final CrcReadings read, final @Nullable ResourceLocation now,
-                       final int scroll) {
+                       final int scroll, final int pan) {
+        final int dragged = Math.clamp(pan, 0, CrcLayout.PAN_MOST);
         final List<TextKey> fields = new ArrayList<>();
         boolean fieldless = false;
         for (final Discovery discovery : discoveries) {
@@ -97,14 +98,14 @@ final class CrcChart {
         final Map<Integer, Integer> lastX = new HashMap<>();
         final Map<Integer, Integer> lastLift = new HashMap<>();
         final List<Discovery> byYear = new ArrayList<>(discoveries);
-        byYear.sort((a, b) -> Integer.compare(xOf(a), xOf(b)));
+        byYear.sort((a, b) -> Integer.compare(xOf(a, dragged), xOf(b, dragged)));
         for (final Discovery discovery : byYear) {
             final int lane = discovery.field() == null ? lanes.size() - 1 : fields.indexOf(discovery.field());
             final int shown = lane - turned;
             if (shown < 0 || shown >= LANES_SHOWN) {
                 continue;
             }
-            final int x = xOf(discovery);
+            final int x = xOf(discovery, dragged);
             int lift = 0;
             if (lastX.containsKey(lane) && x - lastX.get(lane) < CROWD) {
                 lift = lastLift.getOrDefault(lane, 0) <= 0 ? LOWER : RAISE;
@@ -114,7 +115,7 @@ final class CrcChart {
             nodes.add(new Node(discovery, x, CrcLayout.laneY(shown) + lift, stateOf(discovery, read, now),
                     read.share(discovery.id())));
         }
-        return new CrcChart(lanes, nodes, turned);
+        return new CrcChart(lanes, nodes, turned, dragged);
     }
 
     /** How many lanes it has, shown or not. */
@@ -127,10 +128,15 @@ final class CrcChart {
         return this.scroll;
     }
 
-    /** The node at ({@code x}, {@code y}), if any. */
+    /** How far along its years it is dragged, from the first years in sight. */
+    int pan() {
+        return this.pan;
+    }
+
+    /** The node in sight at ({@code x}, {@code y}), if any. */
     Optional<Node> nodeAt(final double x, final double y) {
         for (final Node node : this.nodes) {
-            if (Math.abs(x - node.x()) <= HIT && Math.abs(y - node.y()) <= HIT) {
+            if (node.shown() && Math.abs(x - node.x()) <= HIT && Math.abs(y - node.y()) <= HIT) {
                 return Optional.of(node);
             }
         }
@@ -182,11 +188,13 @@ final class CrcChart {
         lines(view);
         labels(view);
         for (final Node node : this.nodes) {
-            drawNode(g, view.x(node.x()), view.y(node.y()), node.state());
+            if (node.shown()) {
+                drawNode(g, view.x(node.x()), view.y(node.y()), node.state());
+            }
         }
         if (picked != null) {
-            node(picked).ifPresent(node -> MachineArt.frame(g, view.x(node.x() - 5), view.y(node.y() - 5),
-                    view.x(node.x() + 6), view.y(node.y() + 6), c.red()));
+            node(picked).filter(Node::shown).ifPresent(node -> MachineArt.frame(g, view.x(node.x() - 5),
+                    view.y(node.y() - 5), view.x(node.x() + 6), view.y(node.y() + 6), c.red()));
         }
         legend(view);
     }
@@ -231,20 +239,36 @@ final class CrcChart {
         }
     }
 
-    /* The years' axis: a tick every ten years, longer every fifty, the years every twenty-five, and the future. */
-    private static void axis(final CrcView view) {
+    /*
+     * The years' axis, as far as it is in sight: a tick every ten years, longer every fifty, the years every
+     * twenty-five, and the future.
+     */
+    private void axis(final CrcView view) {
         final GuiGraphics g = view.g();
         final CrcArt.Colours c = CrcArt.PALETTE.get();
-        MachineArt.hline(g, view.x(YEAR_LEFT), view.x(YEAR_RIGHT + 1), view.y(AXIS_Y), c.ink());
+        final int left = Math.max(CHART_LEFT + 2, CrcLayout.yearX(FIRST_YEAR, this.pan));
+        final int right = Math.min(CHART_RIGHT - 2, CrcLayout.yearX(LAST_YEAR, this.pan) + 1);
+        if (left < right) {
+            MachineArt.hline(g, view.x(left), view.x(right), view.y(AXIS_Y), c.ink());
+        }
         for (int year = FIRST_YEAR; year <= LAST_YEAR; year += YEAR_STEP) {
-            final int x = view.x(CrcLayout.yearX(year));
-            MachineArt.vline(g, x, view.y(AXIS_Y), view.y(AXIS_Y + (year % 50 == 0 ? 3 : 2)), c.ink());
+            final int x = CrcLayout.yearX(year, this.pan);
+            if (CrcLayout.inSight(x)) {
+                MachineArt.vline(g, view.x(x), view.y(AXIS_Y), view.y(AXIS_Y + (year % 50 == 0 ? 3 : 2)), c.ink());
+            }
         }
         for (int year = FIRST_YEAR; year < LAST_YEAR; year += LABELLED_STEP) {
-            MachineArt.textCentred(g, view.font(), String.valueOf(year), view.x(CrcLayout.yearX(year)),
-                    view.y(AXIS_Y + 4), c.ink());
+            final String label = String.valueOf(year);
+            final int x = CrcLayout.yearX(year, this.pan);
+            final int half = MachineArt.width(view.font(), label) / 2 + 1;
+            if (CrcLayout.inSight(x - half) && CrcLayout.inSight(x + half)) {
+                MachineArt.textCentred(g, view.font(), label, view.x(x), view.y(AXIS_Y + 4), c.ink());
+            }
         }
-        MachineArt.text(g, view.font(), "?", view.x(FUTURE_X - 1), view.y(AXIS_Y + 4), c.ink());
+        final int future = CrcLayout.futureX(this.pan);
+        if (CrcLayout.inSight(future - 1) && CrcLayout.inSight(future + 3)) {
+            MachineArt.text(g, view.font(), "?", view.x(future - 1), view.y(AXIS_Y + 4), c.ink());
+        }
     }
 
     /* A line from what each discovery comes after to it: across, then up or down; whole once that is known. */
@@ -261,13 +285,13 @@ final class CrcChart {
                 final int x0 = Math.min(from.get().x(), node.x()) + 3;
                 final int x1 = Math.max(from.get().x(), node.x()) - (y == node.y() ? 3 : 0);
                 for (int x = x0; x < x1; x++) {
-                    if (whole || x % 2 == 0) {
+                    if ((whole || x % 2 == 0) && CrcLayout.inSight(x)) {
                         MachineArt.dot(view.g(), view.x(x), view.y(y), c.ink());
                     }
                 }
                 final int y0 = Math.min(y, node.y() + 3);
                 final int y1 = Math.max(y, node.y() - 3);
-                for (int down = y0; down < y1 && y != node.y(); down++) {
+                for (int down = y0; down < y1 && y != node.y() && node.shown(); down++) {
                     if (whole || down % 2 == 0) {
                         MachineArt.dot(view.g(), view.x(node.x()), view.y(down), c.ink());
                     }
@@ -290,6 +314,9 @@ final class CrcChart {
             taken.add(new int[] {CHART_LEFT + 3, top + 2, CHART_LEFT + 3 + w, top + 2 + CrcLayout.SMALL_TEXT});
         }
         for (final Node node : this.nodes) {
+            if (!node.shown()) {
+                continue;
+            }
             final String name = GameText.resolve(node.discovery().name());
             final String label = node.state() == State.NOW || node.state() == State.STARTED
                     ? GameText.resolve(CrcScreenTexts.NAMED_SHARE.with(name, (int) Math.floor(node.share() * 100)))
@@ -347,9 +374,10 @@ final class CrcChart {
         return false;
     }
 
-    /* Where a discovery stands across: its year, or past the axis' end for one not made yet. */
-    private static int xOf(final Discovery discovery) {
-        return discovery.year().isPresent() ? CrcLayout.yearX(discovery.year().getAsInt()) : FUTURE_X;
+    /* Where a discovery stands across, the chart dragged {@code pan} along: its year, or the future's place. */
+    private static int xOf(final Discovery discovery, final int pan) {
+        return discovery.year().isPresent() ? CrcLayout.yearX(discovery.year().getAsInt(), pan)
+                : CrcLayout.futureX(pan);
     }
 
     /** A discovery's state, as its team stands on it. */
@@ -375,5 +403,10 @@ final class CrcChart {
      * @param share     how much of it its team has made
      */
     record Node(Discovery discovery, int x, int y, State state, double share) {
+
+        /** Whether it is in sight, the chart dragged as it is: one out of sight is neither drawn nor clicked. */
+        boolean shown() {
+            return CrcLayout.inSight(this.x);
+        }
     }
 }

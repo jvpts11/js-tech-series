@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multiblock;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
@@ -53,5 +54,13 @@ public interface IStructureShape {
      */
     default Optional<ShapePreview> preview(final int grow) {
         return Optional.empty();
+    }
+
+    /**
+     * The counts it limits, each with the blocks counted under it: what a tool that builds it must place at least
+     * (its one power entry) and may place at most; none for a shape that limits nothing.
+     */
+    default List<Quota> quotas() {
+        return List.of();
     }
 }
