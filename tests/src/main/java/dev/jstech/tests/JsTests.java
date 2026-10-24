@@ -90,6 +90,10 @@ public final class JsTests {
         TestFluidMachines.declare();
         // A press with an air port and a station of the pneumatic post, on J's Industrial's compressed air.
         TestPneumatics.declare();
+        // A pick that says what J's Industrial's prospecting pick and portable scanner say.
+        TestProspecting.declare();
+        // Suits open and sealed, modules of each rule and a sword, on J's Industrial's modules and tool kinds.
+        TestIndustrialGear.declare();
         // Robots that walk, fly and swim, a bolt, a slug and two creatures, to prove the Core's entities.
         TestEntities.declare();
         // A helmet that takes modules, two modules and a robots' charging station.

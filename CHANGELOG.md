@@ -199,6 +199,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   relief valve against a vessel. The new package `dev.jstech.core.transit`, promised, is the pneumatic post:
   `CapsuleStationBlockEntity`, `CapsuleRules`, `CapsuleRoute`, `Capsule` and `CapsuleTransit`. What a machine's faces
   offer of a state of matter is its `matterHandler(state)`, for any machine.
+- (Core) Zoned veins and modules by trait: J's Core's API stays at version 12, all experimental. A vein's
+  `DepositType.Mineral` says the part of the vein it lies in (`DepositType.Zone`: all, upper, lower) and the biomes it
+  lies in, `DepositType.zoned()` says whether any does, and `Deposits.DepositBuilder` takes them (`mineral(material,
+  weight, zone)`, `mineralIn`, `mineral(Mineral)`); `Deposits.supersede` lays a kind no more, file and all, and
+  `Deposits.superseded` reads them. `ModuleDef` says how many of it one host takes (`most`, `upTo`) and what a host
+  needs to take it (`needs`, `needing`), and `ModuleHostDef` its traits (`traits`, `with`, `has`); `SeriesModules`
+  names the series' sockets, pieces and seal.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1596,8 +1603,27 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Industrial) The rules of its pneumatic post: capsule tubes of their own line, a capsule of up to four stacks a
   second from each station, about twenty blocks a second, each shot by compressed air, without which the stations
   stop.
+- (Core) Zoned veins: a mineral of a vein may lie only in its upper half, as an enriched zone, only in its lower
+  half, or only in some biomes, in code or in the vein's data file.
+- (Core) Modules by trait: a module may say how many of it one item takes and what the item must be, the piece of
+  armour it is or a seal, with names the series' mods share, so one mod's module fits another's suit with neither
+  knowing the other.
+- (Industrial) Its deposit types, real kinds of deposit holding the minerals that form together and the ore of their
+  elements: porphyry copper, banded iron, sedimentary iron, the oxidised zone, epithermal gold, tin greisen, massive
+  sulfide and skarn, each with the minerals that exist so far, its data file a pack can change.
+- (Industrial) Prospecting in words, never coordinates: the direction and strength of the veins near, traces, a vein
+  or a rich vein, and the reservoirs below with about how deep each lies; and the scanner's reading of a vein's ore
+  and a reservoir's size. The rule of a well pump, which drains the reservoir straight below it block by block.
+- (Industrial) The rules of its tools and armour: modules in sockets by tier, two up to the T3, three at the T4,
+  four at the T5 and T6, five from the T7; a module one piece takes at most so many of; pieces that say which they
+  are and suits that say they are sealed, so a space module fits only a sealed suit; nothing of the mod enchanted at
+  the table or the anvil; and a server setting for each kind of tool, which off takes its recipes and its place in the
+  creative tab away.
 
 ### Changed
+- (Core, Industrial) With J's Industrial installed, its deposit types take the place of the Core's plain veins of
+  iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
+  Nether's gold stays the Core's.
 - (Industrial) Its machines run on J's Energy at low voltage, all of the T1: the Coal Generator makes up to 5 kW,
   burning only what is drawn from it, so a coal lasts 80 seconds at its full power and longer when less is drawn; the
   Macerator draws 4 kW, the Compressor and the Electric Furnace 3 kW. A machine holds two seconds of its work and takes

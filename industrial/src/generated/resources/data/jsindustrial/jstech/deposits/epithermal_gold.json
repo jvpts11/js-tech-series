@@ -1,0 +1,24 @@
+{
+  "biomes": "minecraft:is_overworld",
+  "density": 0.4,
+  "frequency": 0.04,
+  "max_y": 96,
+  "min_y": 16,
+  "minerals": [
+    {
+      "material": "jscore:electrum"
+    },
+    {
+      "material": "jscore:gold",
+      "weight": 0.25
+    }
+  ],
+  "radius": 14.0,
+  "rocks": [
+    "minecraft:stone",
+    "minecraft:deepslate",
+    "minecraft:andesite",
+    "minecraft:tuff"
+  ],
+  "thickness": 5.0
+}

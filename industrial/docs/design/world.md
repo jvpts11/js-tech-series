@@ -5,13 +5,22 @@ themselves are in [Minerals](minerals.md); what a mineral and an ore are is in [
 
 ## What exists today
 
-- J's Core's vein kit, and the series' veins of iron, copper, gold and tin, which stand in for the game's scattered
-  ores and hold the "X ore" of their element.
+- J's Core's vein kit, whose veins may be zoned: a mineral only in a vein's upper or lower half, or only in some
+  biomes.
 - The ores of the first minerals ([Minerals](minerals.md)), named by J's Core's rule: the rock, then the mineral,
   "Deepslate Chalcopyrite Ore", `jscore:deepslate_chalcopyrite_ore`, filed under `c:ores/chalcopyrite`, each dropping
   its raw mineral, "Raw Chalcopyrite", under `c:raw_materials/chalcopyrite`. A vein of the game's stone is named for
   the mineral alone, "Chalcopyrite Ore".
-- The veins do not hold the minerals yet: they take them with the deposit types below.
+- The deposit types that hold those minerals: porphyry copper, banded iron, sedimentary iron, the oxidised zone,
+  low-sulfidation epithermal gold, tin greisen, volcanogenic massive sulfide and skarn, each with the minerals of the
+  table below that exist so far, and the "X ore" of their elements at a quarter of their weight. They stand in for J's
+  Core's plain veins of iron, copper, gold and tin; the Nether's gold stays the Core's. Each crosses its setting's
+  rocks and stone and deepslate, where the game's own ores lie.
+- Prospecting, in words: the direction and strength of each vein within 48 blocks (traces, a vein, a rich vein), and
+  the reservoirs within 128 with about how deep each lies, in tens of blocks; the scanner's composition, ore held and
+  reservoir left. The tools themselves are still to be built.
+- The well pump's rule: it drains the reservoir straight below it, block by block. Oil, gas and brine and their pumps
+  are still to be built.
 
 ## To build
 

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.resources.ResourceLocation;
@@ -46,7 +47,8 @@ public final class Deposits {
             .register();
 
     private static final Map<ResourceLocation, DepositType> DECLARED = new ConcurrentHashMap<>();
-    private static volatile Known known = new Known(-1, -1, -1, List.of());
+    private static final Set<ResourceLocation> SUPERSEDED = ConcurrentHashMap.newKeySet();
+    private static volatile Known known = new Known(-1, -1, -1, -1, List.of());
 
     private Deposits() {
     }
@@ -61,6 +63,19 @@ public final class Deposits {
         return new DepositBuilder(id);
     }
 
+    /**
+     * Lays the kind {@code id} no more, neither as declared nor as any file says it, as a mod whose own kinds stand in
+     * for it says: J's Industrial's real deposits in place of the Core's plain veins of the shared metals.
+     */
+    public static void supersede(final ResourceLocation id) {
+        SUPERSEDED.add(Objects.requireNonNull(id, "id"));
+    }
+
+    /** The kinds superseded, by id. */
+    public static Set<ResourceLocation> superseded() {
+        return Set.copyOf(SUPERSEDED);
+    }
+
     /** Every kind declared in code, by id. */
     public static Map<ResourceLocation, DepositType> declared() {
         return Map.copyOf(DECLARED);
@@ -68,21 +83,23 @@ public final class Deposits {
 
     /**
      * Every kind of vein the server lays, by id in order: those the data packs' files say, those declared that no
-     * file writes over, and the veins other mods' moved ores lie in ({@link MovedOres}).
+     * file writes over, and the veins other mods' moved ores lie in ({@link MovedOres}), but none superseded.
      */
     public static List<Entry> all() {
         final Known now = known;
         final long files = FILES.version();
         final long moved = MovedOres.version();
-        if (now.files() == files && now.declared() == DECLARED.size() && now.moved() == moved) {
+        if (now.files() == files && now.declared() == DECLARED.size() && now.moved() == moved
+                && now.superseded() == SUPERSEDED.size()) {
             return now.entries();
         }
         final Map<ResourceLocation, Entry> byId = new TreeMap<>();
         DECLARED.forEach((id, type) -> byId.put(id, new Entry(id, type, List.of())));
         FILES.entries().forEach((id, type) -> byId.put(id, new Entry(id, type, List.of())));
         MovedOres.deposits().forEach(entry -> byId.putIfAbsent(entry.id(), entry));
+        SUPERSEDED.forEach(byId::remove);
         final List<Entry> entries = List.copyOf(byId.values());
-        known = new Known(files, DECLARED.size(), moved, entries);
+        known = new Known(files, DECLARED.size(), moved, SUPERSEDED.size(), entries);
         return entries;
     }
 
@@ -107,7 +124,7 @@ public final class Deposits {
     }
 
     /* The kinds as last worked out, and what they were worked out from. */
-    private record Known(long files, int declared, long moved, List<Entry> entries) {
+    private record Known(long files, int declared, long moved, int superseded, List<Entry> entries) {
     }
 
     /** A kind of vein being declared; it starts as an overworld vein of every rock, as common as copper. */
@@ -132,6 +149,25 @@ public final class Deposits {
         /** Brings {@code material} into it, as much of it as {@code weight} against the others'. */
         public DepositBuilder mineral(final Material material, final double weight) {
             this.minerals.add(new DepositType.Mineral(material.id(), weight));
+            return this;
+        }
+
+        /** Brings {@code material} into it, as much as {@code weight}, only in {@code zone} of it. */
+        public DepositBuilder mineral(final Material material, final double weight, final DepositType.Zone zone) {
+            this.minerals.add(new DepositType.Mineral(material.id(), weight, zone, Optional.empty()));
+            return this;
+        }
+
+        /** Brings {@code material} into it, as much as {@code weight}, only where the biome is one of {@code where}. */
+        public DepositBuilder mineralIn(final Material material, final double weight, final TagKey<Biome> where) {
+            this.minerals.add(new DepositType.Mineral(material.id(), weight, DepositType.Zone.ALL,
+                    Optional.of(where)));
+            return this;
+        }
+
+        /** Brings in {@code mineral}, as it is said. */
+        public DepositBuilder mineral(final DepositType.Mineral mineral) {
+            this.minerals.add(Objects.requireNonNull(mineral, "mineral"));
             return this;
         }
 

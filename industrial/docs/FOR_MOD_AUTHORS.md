@@ -83,6 +83,55 @@ as the gas does. The settings are in the server's `jsindustrial-server.toml`, se
 the series' gas lines through J's Core's bridge and keep the same rules: Mekanism's hydrogen wears plain steel as the
 series' does.
 
+## The world
+
+*Added 2026-10-24.*
+
+J's Industrial's ores lie in **deposit types**, J's Core's veins ([World](../../core/docs/WORLD.md#veins)), each a real
+kind of deposit with the minerals that form together and the ore of each of their elements beside them, at a quarter
+of the weight of the minerals mined for it. They stand in for J's Core's plain veins of iron, copper, gold and tin;
+the Nether's gold stays the Core's. Each is a data file a data pack can change, under
+`data/jsindustrial/jstech/deposits/`:
+
+| File | The deposit | Its minerals today |
+| --- | --- | --- |
+| `porphyry_copper.json` | middle to deep, in granite and andesite, huge and low-grade | chalcopyrite, pyrite, magnetite |
+| `banded_iron.json` | huge and poor, in stone and deepslate | hematite, magnetite |
+| `sedimentary_iron.json` | shallow to middle, in sandstone and calcite | siderite |
+| `oxidised_zone.json` | near the surface, more in dry land | malachite, cuprite |
+| `epithermal_gold.json` | shallow to middle, in andesite and tuff | electrum |
+| `tin_greisen.json` | middle depths, in granite | cassiterite |
+| `massive_sulfide.json` | middle to deep | pyrite, chalcopyrite |
+| `skarn.json` | where granite meets calcite | magnetite, chalcopyrite |
+
+Each also crosses stone and deepslate, where the game's own ores lie. The other minerals of each type join it as they
+are added.
+
+The prospecting tools speak in words, never coordinates: the direction and strength of each vein within 48 blocks
+("A rich vein of Copper to the south-east"), and the reservoirs of oil, gas and brine within 128, with about how deep
+each lies, in tens of blocks; the scanner, standing in a vein, its ore and the share of each material, and over a
+reservoir about how much is left. A well pump drains the reservoir straight below it, a block at a time, each block of
+soaked rock turning back into plain rock once it holds no more.
+
+## Tools and armour
+
+*Added 2026-10-24.*
+
+J's Industrial's tools and armour are improved with **modules** that go in and come out, on J's Core's module kit
+([Entities](../../core/docs/ENTITIES.md#modules-in-worn-things)), never with the enchanting table: whatever is in
+`jsindustrial:not_enchantable`, of this mod or another, the table offers nothing for and the anvil takes no
+enchantment onto, though it is still renamed and repaired there.
+
+- **Sockets by tier:** two up to the T3, three at the T4, four at the T5 and T6, five from the T7, for tools and
+  armour alike, of J's Core's series sockets `armour` and `tool`.
+- **Pieces and seals:** a piece of armour says which it is (`head`, `chest`, `legs`, `feet`), and a closed exo-suit
+  that it is `sealed`. A module of another mod that needs a seal, such as J's Space's space module, fits only the
+  closed suits, never the Hydraulic Exoframe or the Industrial Exo-Suit, which are open frames.
+- **Kinds of tool a server leaves out:** the `tools` section of `jsindustrial-server.toml` has a switch for each kind
+  (`swords`, `pickaxes`, `axes`, `shovels`, `hoes`). Off, the kind's recipes are gone and its tools leave the creative
+  tab; those already made keep working. A tool is of a kind by its tag, `jsindustrial:tool_kinds/swords` and the
+  rest, so a data pack files another mod's tools under one too.
+
 ## Capabilities
 
 *Added 2026-06-05.*

@@ -1,0 +1,29 @@
+{
+  "biomes": "c:is_dry",
+  "elsewhere": 0.5,
+  "frequency": 0.06,
+  "max_y": 96,
+  "min_y": 40,
+  "minerals": [
+    {
+      "material": "jscore:malachite",
+      "weight": 3.0
+    },
+    {
+      "material": "jscore:cuprite",
+      "weight": 2.0
+    },
+    {
+      "material": "jscore:copper",
+      "weight": 1.25
+    }
+  ],
+  "radius": 18.0,
+  "rocks": [
+    "minecraft:stone",
+    "minecraft:deepslate",
+    "minecraft:sandstone",
+    "minecraft:calcite"
+  ],
+  "thickness": 4.0
+}

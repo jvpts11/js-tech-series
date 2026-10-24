@@ -8,21 +8,27 @@
 package dev.jstech.industrial.line;
 
 import dev.jstech.core.util.Loaded;
+import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Where a pump of J's Industrial takes its fluid from the world (industrial/docs/design/fluids-and-gases.md): a water
- * pump draws water without end from a source next to it, as a pump in a river does; a drainage pump sucks up the
- * fluid blocks around it, a flooded mine, lava, a spill, each source block a bucket.
+ * Where a pump of J's Industrial takes its fluid from the world (industrial/docs/design/fluids-and-gases.md,
+ * industrial/docs/design/world.md): a water pump draws water without end from a source next to it, as a pump in a
+ * river does; a drainage pump sucks up the fluid blocks around it, a flooded mine, lava, a spill, each source block a
+ * bucket; and a well pump drains the reservoir of oil, gas or brine below it, block by block, each block of soaked
+ * rock turning back into plain rock once it holds no more.
  */
-public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.Drains {
+public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.Drains, PumpSource.Well {
 
     /** Water without end, {@code perTick} millibuckets a tick, from a water source block next to the pump. */
     static PumpSource endlessWater(final int perTick) {
@@ -34,6 +40,11 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
         return new Drains(radius, every);
     }
 
+    /** The reservoir straight below, {@code perTake} millibuckets every {@code every} ticks. */
+    static PumpSource well(final int perTake, final int every) {
+        return new Well(perTake, every);
+    }
+
     /**
      * How many ticks a take is: the pump counts them itself, since a machine that waits sleeps, and wakes on no beat
      * of the clock.
@@ -41,10 +52,26 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
     int every();
 
     /**
-     * What the pump at {@code pos} takes now, given {@code room} millibuckets of room in its tank: taken from the world
-     * already; empty for nothing.
+     * What the pump at {@code pos} takes now, given {@code room} millibuckets of room in its tank and what it
+     * remembers of where it took from last: taken from the world already; empty for nothing.
      */
-    FluidStack take(ServerLevel level, BlockPos pos, int room);
+    FluidStack take(ServerLevel level, BlockPos pos, int room, Memory memory);
+
+    /** What a pump remembers of where it took from, so it need not look again each time. */
+    final class Memory {
+
+        private @Nullable BlockPos at;
+
+        /** Where it took from last, if anywhere. */
+        public Optional<BlockPos> at() {
+            return Optional.ofNullable(this.at);
+        }
+
+        /** It took from {@code where}, or will look again for none. */
+        public void remember(final @Nullable BlockPos where) {
+            this.at = where;
+        }
+    }
 
     /**
      * Endless water.
@@ -66,7 +93,7 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
         }
 
         @Override
-        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room) {
+        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room, final Memory memory) {
             if (room <= 0) {
                 return FluidStack.EMPTY;
             }
@@ -99,7 +126,7 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
         }
 
         @Override
-        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room) {
+        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room, final Memory memory) {
             if (room < BUCKET) {
                 return FluidStack.EMPTY;
             }
@@ -132,6 +159,56 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
                 }
             }
             return Optional.ofNullable(best);
+        }
+    }
+
+    /**
+     * A well, its shaft going straight down to the reservoir below the pump, as deep as it lies: it drains the
+     * reservoir's soaked rock block by block, the nearest first, keeping to one block until it holds no more.
+     *
+     * @param perTake how much it draws a take, in millibuckets
+     * @param every   how many ticks a take is
+     */
+    record Well(int perTake, int every) implements PumpSource {
+
+        public Well {
+            if (perTake <= 0 || every <= 0) {
+                throw new IllegalArgumentException("a well draws something and takes some time, not " + perTake
+                        + " and " + every);
+            }
+        }
+
+        @Override
+        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room, final Memory memory) {
+            if (room <= 0) {
+                return FluidStack.EMPTY;
+            }
+            Optional<BlockPos> block = memory.at().filter(at -> Reservoirs.at(level, at).isPresent());
+            if (block.isEmpty()) {
+                block = below(level, pos).flatMap(reservoir -> Reservoirs.nearestHolding(level, reservoir, pos));
+                memory.remember(block.orElse(null));
+            }
+            if (block.isEmpty()) {
+                return FluidStack.EMPTY;
+            }
+            final Optional<Reservoirs.Held> held = Reservoirs.at(level, block.get());
+            final Optional<Fluid> fluid = held.flatMap(found -> BuiltInRegistries.FLUID.getOptional(
+                    found.reservoir().kind().type().fluid()));
+            if (fluid.isEmpty()) {
+                return FluidStack.EMPTY;
+            }
+            final int drawn = Reservoirs.drain(level, block.get(), Math.min(room, this.perTake), false);
+            return drawn <= 0 ? FluidStack.EMPTY : new FluidStack(fluid.get(), drawn);
+        }
+
+        /* The reservoir straight below the pump, the nearest if several lie under it. */
+        private static Optional<Reservoirs.Reservoir> below(final ServerLevel level, final BlockPos pos) {
+            for (final Reservoirs.Reservoir reservoir : Reservoirs.near(level, pos, 0)) {
+                if (reservoir.body().y() < pos.getY()) {
+                    return Optional.of(reservoir);
+                }
+            }
+            return Optional.empty();
         }
     }
 }

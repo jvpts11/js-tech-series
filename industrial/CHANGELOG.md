@@ -102,8 +102,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The rules of its pneumatic post: capsule tubes of their own line, a capsule of up to four stacks a
   second from each station, about twenty blocks a second, each shot by compressed air, without which the stations
   stop.
+- Its deposit types, real kinds of deposit holding the minerals that form together and the ore of their
+  elements: porphyry copper, banded iron, sedimentary iron, the oxidised zone, epithermal gold, tin greisen, massive
+  sulfide and skarn, each with the minerals that exist so far, its data file a pack can change.
+- Prospecting in words, never coordinates: the direction and strength of the veins near, traces, a vein
+  or a rich vein, and the reservoirs below with about how deep each lies; and the scanner's reading of a vein's ore
+  and a reservoir's size. The rule of a well pump, which drains the reservoir straight below it block by block.
+- The rules of its tools and armour: modules in sockets by tier, two up to the T3, three at the T4,
+  four at the T5 and T6, five from the T7; a module one piece takes at most so many of; pieces that say which they
+  are and suits that say they are sealed, so a space module fits only a sealed suit; nothing of the mod enchanted at
+  the table or the anvil; and a server setting for each kind of tool, which off takes its recipes and its place in the
+  creative tab away.
 
 ### Changed
+- With J's Industrial installed, its deposit types take the place of the Core's plain veins of
+  iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
+  Nether's gold stays the Core's.
 - Its machines run on J's Energy at low voltage, all of the T1: the Coal Generator makes up to 5 kW,
   burning only what is drawn from it, so a coal lasts 80 seconds at its full power and longer when less is drawn; the
   Macerator draws 4 kW, the Compressor and the Electric Furnace 3 kW. A machine holds two seconds of its work and takes

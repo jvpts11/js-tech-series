@@ -50,6 +50,10 @@ the edges, so a player finds nothing, or hundreds. The vein system is a kit any 
   elements ([Materials](materials.md)), its height range, its frequency, its biome preference and its host rocks.
 - **A vein crosses rocks**: it can lie in any of its host rocks and extend across more than one, and every ore block
   takes the variant of the rock it replaced.
+- **A vein is zoned**, as real deposits are: a mineral may lie only in its upper half (an enriched zone), only in its
+  lower half, or only where the biome is of a kind (cryolite where it is cold).
+- **A mod's deposits may supersede another's**: J's Industrial's real deposit types take the place of the Core's plain
+  veins of the shared metals.
 - **An ore generates only when an installed mod declares it uses it.**
 - With veins on, vanilla's iron, copper and gold only generate in veins: their scattered placement is removed by
   NeoForge's biome modifiers, as data.

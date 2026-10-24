@@ -18,12 +18,14 @@ import net.neoforged.fml.ModContainer;
 
 /**
  * The settings of J's Industrial for a world, {@code jsindustrial-server.toml} beside it: whether its research locks
- * what its discoveries open, and the consequences of its pipes, each on unless a server turns it off.
+ * what its discoveries open, the consequences of its pipes, each on unless a server turns it off, and each kind of
+ * its tools, which a server may leave out.
  */
 public final class IndustrialServerConfig {
 
     private static final String RESEARCH = "research";
     private static final String FLUIDS = "fluids";
+    private static final String TOOLS = "tools";
 
     /** Whether a recipe that needs a discovery waits until the team of the machine's owner has made it. */
     public static final ConfigKey<Boolean> REQUIRE_RESEARCH = ConfigKey.flag(RESEARCH + ".require_research", true)
@@ -44,6 +46,12 @@ public final class IndustrialServerConfig {
     public static final ConfigKey<Boolean> HYDROGEN_EMBRITTLES = Consequences.of(FLUIDS + ".hydrogen_embrittles",
             "Hydrogen embrittles steel", "Hydrogen carried in plain steel cracks it after a while, as it does in "
                     + "real pipelines.", "hydrogen runs in any pipe that holds it.");
+    /** Whether each kind of the mod's tools is made: its swords, pickaxes, axes, shovels and hoes. */
+    public static final ConfigKey<Boolean> SWORDS = toolKind("swords").named("Swords");
+    public static final ConfigKey<Boolean> PICKAXES = toolKind("pickaxes").named("Pickaxes");
+    public static final ConfigKey<Boolean> AXES = toolKind("axes").named("Axes");
+    public static final ConfigKey<Boolean> SHOVELS = toolKind("shovels").named("Shovels");
+    public static final ConfigKey<Boolean> HOES = toolKind("hoes").named("Hoes");
 
     public static final ConfigFile FILE = ConfigFile.builder("jsindustrial-server", ConfigSide.SERVER,
                     ConfigFormats.TOML)
@@ -53,6 +61,9 @@ public final class IndustrialServerConfig {
             .sectionNamed(FLUIDS, "Fluids")
             .sectionComment(FLUIDS, "What befalls a pipe past what it is made for, and what leaks out of it.")
             .key(PIPES_FAIL).key(LEAKS_HAZARDOUS).key(HYDROGEN_EMBRITTLES)
+            .sectionNamed(TOOLS, "Tools")
+            .sectionComment(TOOLS, "Which kinds of J's Industrial's tools are made.")
+            .key(SWORDS).key(PICKAXES).key(AXES).key(SHOVELS).key(HOES)
             .build();
 
     private IndustrialServerConfig() {
@@ -81,5 +92,11 @@ public final class IndustrialServerConfig {
     /** Whether hydrogen wears through plain steel. */
     public static boolean hydrogenEmbrittles() {
         return FILE.get(HYDROGEN_EMBRITTLES);
+    }
+
+    /* The switch of a kind of the mod's tools, named {@code plural} in its setting and its comment, on as it comes. */
+    private static ConfigKey<Boolean> toolKind(final String plural) {
+        return ConfigKey.flag(TOOLS + "." + plural, true).comment("Whether J's Industrial's " + plural + " are made.",
+                "Off, their recipes are gone and they leave the creative tab; those already made keep working.");
     }
 }

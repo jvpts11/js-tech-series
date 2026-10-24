@@ -1,0 +1,30 @@
+{
+  "biomes": "minecraft:is_overworld",
+  "frequency": 0.05,
+  "max_y": 48,
+  "min_y": -16,
+  "minerals": [
+    {
+      "material": "jscore:magnetite",
+      "weight": 3.0
+    },
+    {
+      "material": "jscore:chalcopyrite"
+    },
+    {
+      "material": "jscore:iron",
+      "weight": 0.75
+    },
+    {
+      "material": "jscore:copper",
+      "weight": 0.25
+    }
+  ],
+  "radius": 16.0,
+  "rocks": [
+    "minecraft:stone",
+    "minecraft:deepslate",
+    "minecraft:granite",
+    "minecraft:calcite"
+  ]
+}

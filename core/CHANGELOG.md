@@ -196,6 +196,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   relief valve against a vessel. The new package `dev.jstech.core.transit`, promised, is the pneumatic post:
   `CapsuleStationBlockEntity`, `CapsuleRules`, `CapsuleRoute`, `Capsule` and `CapsuleTransit`. What a machine's faces
   offer of a state of matter is its `matterHandler(state)`, for any machine.
+- Zoned veins and modules by trait: J's Core's API stays at version 12, all experimental. A vein's
+  `DepositType.Mineral` says the part of the vein it lies in (`DepositType.Zone`: all, upper, lower) and the biomes it
+  lies in, `DepositType.zoned()` says whether any does, and `Deposits.DepositBuilder` takes them (`mineral(material,
+  weight, zone)`, `mineralIn`, `mineral(Mineral)`); `Deposits.supersede` lays a kind no more, file and all, and
+  `Deposits.superseded` reads them. `ModuleDef` says how many of it one host takes (`most`, `upTo`) and what a host
+  needs to take it (`needs`, `needing`), and `ModuleHostDef` its traits (`traits`, `with`, `has`); `SeriesModules`
+  names the series' sockets, pieces and seal.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1508,8 +1515,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   on its way, unloading into the station it reaches and from it into the block that station faces.
 - Air, in the shared catalogue: the mixture a compressor draws in, for every mod that compresses or separates
   it.
+- Zoned veins: a mineral of a vein may lie only in its upper half, as an enriched zone, only in its lower
+  half, or only in some biomes, in code or in the vein's data file.
+- Modules by trait: a module may say how many of it one item takes and what the item must be, the piece of
+  armour it is or a seal, with names the series' mods share, so one mod's module fits another's suit with neither
+  knowing the other.
 
 ### Changed
+- With J's Industrial installed, its deposit types take the place of the Core's plain veins of
+  iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
+  Nether's gold stays the Core's.
 - The body's screen is declared in a file, so its look can change: a resource pack lays it out again and the
   style the player picks draws it, in the game's look by default. Beside what is worn and what it stops, it now holds
   how much heat the clothes let out and whether they keep the wind and the water out, and the core's warmth on a scale

@@ -539,6 +539,20 @@ Modules.declare(SPEED_MODULE.getId(), new ModuleDef("core", 100, List.of(       
   spend, at once. A host is worn anywhere things are worn: its armour slot, or a slot of Curios or Accessories.
 - A tool can be a host too, whose modules work while it is held and spend each use ([Tools and
   items](TOOLS.md#modules-in-tools)).
+- **How many, and on what** (*added 2026-10-24*). A module may say how many of it one host takes
+  (`ModuleDef.upTo(count)`, `"most"` in its file), and the traits a host must have to take it
+  (`needing(traits...)`, `"needs"`); a host says its traits (`ModuleHostDef.with(traits...)`, `"traits"`).
+  `Modules.install` refuses a module past its most, or into a host without what it needs. The series' mods share
+  their names in `SeriesModules`: the sockets `armour` and `tool`, the pieces `head`, `chest`, `legs` and `feet`, and
+  `sealed`, so J's Space's space module, needing `sealed`, fits J's Industrial's closed exo-suits and never an open
+  frame, with neither mod knowing the other.
+
+```java
+Modules.declareHost(EXO_CHEST.getId(), ModuleHostDef.worn(List.of(new ModuleHostDef.Socket(SeriesModules.ARMOUR, 4)))
+        .with(SeriesModules.CHEST, SeriesModules.SEALED));
+Modules.declare(SHOCK_ABSORBER.getId(), new ModuleDef(SeriesModules.ARMOUR, 10, effects).upTo(3)
+        .needing(SeriesModules.FEET));
+```
 
 ## What can go wrong
 

@@ -19,16 +19,40 @@ import java.util.List;
  *
  * @param sockets its sockets, in order, as many of each kind as each says
  * @param held    whether its modules work while it is held in the main hand rather than worn
+ * @param traits  what it is, for modules that need it ({@link ModuleDef#needs}): the piece it is, whether it is sealed
  */
-public record ModuleHostDef(List<Socket> sockets, boolean held) {
+public record ModuleHostDef(List<Socket> sockets, boolean held, List<String> traits) {
 
     public static final Codec<ModuleHostDef> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Socket.CODEC.listOf().fieldOf("sockets").forGetter(ModuleHostDef::sockets),
-            Codec.BOOL.optionalFieldOf("held", false).forGetter(ModuleHostDef::held))
+            Codec.BOOL.optionalFieldOf("held", false).forGetter(ModuleHostDef::held),
+            Codec.STRING.listOf().optionalFieldOf("traits", List.of()).forGetter(ModuleHostDef::traits))
             .apply(instance, ModuleHostDef::new));
 
     public ModuleHostDef {
         sockets = List.copyOf(sockets);
+        traits = List.copyOf(traits);
+    }
+
+    /** A host of {@code sockets} with no traits. */
+    public ModuleHostDef(final List<Socket> sockets, final boolean held) {
+        this(sockets, held, List.of());
+    }
+
+    /** The same host, with {@code more} traits. */
+    public ModuleHostDef with(final String... more) {
+        final List<String> all = new ArrayList<>(this.traits);
+        for (final String trait : more) {
+            if (!all.contains(trait)) {
+                all.add(trait);
+            }
+        }
+        return new ModuleHostDef(this.sockets, this.held, all);
+    }
+
+    /** Whether it has every one of {@code needed}. */
+    public boolean has(final List<String> needed) {
+        return this.traits.containsAll(needed);
     }
 
     /** A worn item with {@code sockets}. */

@@ -12445,23 +12445,36 @@ stable 4
 10 dev.jstech.core.worldgen.reservoir.Reservoirs.ReservoirBuilder  ResourceLocation declare()
 10 dev.jstech.core.worldgen.vein.DepositType  type record(List<Mineral> minerals, int minY, int maxY, double frequency, double radius, double thickness, double density, Optional<TagKey<Biome>> biomes, double elsewhere, List<ResourceLocation> rocks)
 10 dev.jstech.core.worldgen.vein.DepositType  VeinField.Kind kind(double, double)
+12 dev.jstech.core.worldgen.vein.DepositType  boolean zoned()
 10 dev.jstech.core.worldgen.vein.DepositType  static final Codec<DepositType> CODEC
-10 dev.jstech.core.worldgen.vein.DepositType.Mineral  type record(ResourceLocation material, double weight)
+12 dev.jstech.core.worldgen.vein.DepositType.Mineral  type record(ResourceLocation material, double weight, Zone zone, Optional<TagKey<Biome>> biomes)
+12 dev.jstech.core.worldgen.vein.DepositType.Mineral  new(ResourceLocation, double)
 10 dev.jstech.core.worldgen.vein.DepositType.Mineral  static final Codec<Mineral> CODEC
+12 dev.jstech.core.worldgen.vein.DepositType.Zone  type enum implements IStableName
+12 dev.jstech.core.worldgen.vein.DepositType.Zone  ALL
+12 dev.jstech.core.worldgen.vein.DepositType.Zone  LOWER
+12 dev.jstech.core.worldgen.vein.DepositType.Zone  String serializedName()
+12 dev.jstech.core.worldgen.vein.DepositType.Zone  UPPER
+12 dev.jstech.core.worldgen.vein.DepositType.Zone  boolean holds(boolean)
 10 dev.jstech.core.worldgen.vein.Deposits  type final class
 10 dev.jstech.core.worldgen.vein.Deposits  static DepositBuilder deposit(ResourceLocation)
 10 dev.jstech.core.worldgen.vein.Deposits  static List<Entry> all()
 10 dev.jstech.core.worldgen.vein.Deposits  static Map<ResourceLocation, DepositType> declared()
 10 dev.jstech.core.worldgen.vein.Deposits  static Optional<Entry> get(ResourceLocation)
+12 dev.jstech.core.worldgen.vein.Deposits  static Set<ResourceLocation> superseded()
 10 dev.jstech.core.worldgen.vein.Deposits  static final DataRegistry<DepositType> FILES
 10 dev.jstech.core.worldgen.vein.Deposits  static void register()
+12 dev.jstech.core.worldgen.vein.Deposits  static void supersede(ResourceLocation)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  type static final class
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder biomes(TagKey<Biome>)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder density(double)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder elsewhere(double)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder frequency(double)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder heights(int, int)
+12 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder mineral(DepositType.Mineral)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder mineral(Material, double)
+12 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder mineral(Material, double, DepositType.Zone)
+12 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder mineralIn(Material, double, TagKey<Biome>)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder rocks(HostRock...)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  DepositBuilder size(double, double)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  ResourceLocation declare()

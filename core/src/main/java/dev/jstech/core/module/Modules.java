@@ -140,7 +140,8 @@ public final class Modules {
 
     /**
      * Puts one of {@code module} into {@code socket} of {@code host}, on, taking it from the stack; whether it went in.
-     * It goes in only into an empty socket of its own kind.
+     * It goes in only into an empty socket of its own kind, of a host with every trait it needs, and only while the
+     * host holds fewer of it than it says one host takes.
      */
     public static boolean install(final Level level, final ItemStack host, final int socket, final ItemStack module) {
         final Optional<ModuleHostDef> def = host(level, host);
@@ -151,8 +152,17 @@ public final class Modules {
         final List<String> kinds = def.get().kinds();
         final InstalledModules now = installed(level, host);
         if (socket < 0 || socket >= kinds.size() || !kinds.get(socket).equals(fits.get().kind())
-                || !now.sockets().get(socket).module().isEmpty()) {
+                || !now.sockets().get(socket).module().isEmpty() || !def.get().has(fits.get().needs())) {
             return false;
+        }
+        if (fits.get().most() > 0) {
+            int already = 0;
+            for (final InstalledModules.Socketed held : now.sockets()) {
+                already += ItemStack.isSameItemSameComponents(held.module(), module) ? 1 : 0;
+            }
+            if (already >= fits.get().most()) {
+                return false;
+            }
         }
         host.set(INSTALLED.get(), now.with(socket, module.copyWithCount(1), true));
         module.shrink(1);

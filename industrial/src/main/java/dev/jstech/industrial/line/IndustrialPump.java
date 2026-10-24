@@ -39,6 +39,7 @@ public abstract class IndustrialPump extends MachineBlockEntity {
     private final MachineRating rating;
     private final PumpSource source;
     private final FieldFluidTank tank;
+    private final PumpSource.Memory memory = new PumpSource.Memory();
     private int since;
 
     /** A pump of {@code rating} taking from {@code source}, holding {@code tankMillibuckets} until it pushes them. */
@@ -90,7 +91,7 @@ public abstract class IndustrialPump extends MachineBlockEntity {
         if (power().stored() < draw) {
             return MachineStatus.NO_ENERGY;
         }
-        final FluidStack taken = this.source.take(level, this.worldPosition, room);
+        final FluidStack taken = this.source.take(level, this.worldPosition, room, this.memory);
         if (taken.isEmpty()) {
             // Nothing to take: it waits, and tries again as soon as it wakes.
             return MachineStatus.WAITING;

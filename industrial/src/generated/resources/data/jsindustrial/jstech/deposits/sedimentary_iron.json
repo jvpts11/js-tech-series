@@ -1,0 +1,23 @@
+{
+  "biomes": "minecraft:is_overworld",
+  "density": 0.45,
+  "frequency": 0.06,
+  "max_y": 80,
+  "min_y": 0,
+  "minerals": [
+    {
+      "material": "jscore:siderite"
+    },
+    {
+      "material": "jscore:iron",
+      "weight": 0.25
+    }
+  ],
+  "rocks": [
+    "minecraft:stone",
+    "minecraft:deepslate",
+    "minecraft:sandstone",
+    "minecraft:calcite"
+  ],
+  "thickness": 5.0
+}

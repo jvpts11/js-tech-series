@@ -89,6 +89,13 @@ data pack can add kinds of its own there:
 
 - **A vein crosses rocks.** Each block of it becomes the ore of one of its materials in the rock it was: a vein through
   stone and deepslate lays iron ore in the stone and deepslate iron ore in the deepslate.
+- **A vein is zoned** (*added 2026-10-24*). A material may lie only in the upper half of the vein, as the enriched
+  copper above a porphyry, or only in its lower half (`mineral(material, weight, DepositType.Zone.UPPER)`, `LOWER`),
+  or only where the biome at the block is one of a tag, as cryolite where it is cold
+  (`mineralIn(material, weight, tag)`); in a file, `"zone": "upper"` and `"biomes": "c:is_cold"` on the mineral.
+- **A mod's deposits may stand in for another's** (*added 2026-10-24*). `Deposits.supersede(id)` lays a kind no more,
+  neither as declared nor as its file says: J's Industrial's real deposits supersede the Core's plain veins of iron,
+  copper, gold and tin, each of its deposits bringing the ore of its minerals' elements with them.
 - **An ore lies only where a mod uses it.** A material's ore in a rock exists only when the game has it (iron in stone)
   or an installed mod declares it (`MaterialUses.ore(...)`, [Materials](CONTENT.md#materials)); a block of a vein
   whose material has no ore in that rock is left as it was. So any mod may declare a kind for materials it does not

@@ -44,7 +44,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * J's Industrial's fluid contract, on blocks of the test mod's own: a tank of liquid and a vessel of gas at twenty
- * atmospheres, each a box of a size the player chooses, its room inside its volume; a water pump and a drainage pump;
+ * atmospheres, each a box of a size the player chooses, its room inside its volume; a water pump, a drainage pump and
+ * a well pump;
  * and J's Core's valves: one that lets through one way always, one opened by hand, one by a signal, one of gas, and a
  * relief valve set to ten atmospheres.
  */
@@ -63,6 +64,9 @@ public final class TestFluidMachines {
     public static final int PUMP_TANK = 4_000;
     public static final int DRAINS_WITHIN = 4;
     public static final int DRAINS_EVERY = 5;
+    /** What the well pump draws a take, and how many ticks a take is. */
+    public static final int WELL_DRAWS = 250;
+    public static final int WELL_EVERY = 5;
     /** What a valve lets through a tick, and the pressure the relief valve opens above. */
     public static final long VALVE_RATE = 100L;
     public static final long RELIEF_AT = 10L;
@@ -81,6 +85,8 @@ public final class TestFluidMachines {
             () -> TestFluidMachines.WATER_PUMP_ENTITY.get());
     public static final BlockEntry<DeviceBlock> DRAINAGE_PUMP = device("test_drainage_pump", "Test drainage pump",
             () -> TestFluidMachines.DRAINAGE_PUMP_ENTITY.get());
+    public static final BlockEntry<DeviceBlock> WELL_PUMP = device("test_well_pump", "Test well pump",
+            () -> TestFluidMachines.WELL_PUMP_ENTITY.get());
     public static final BlockEntry<DeviceBlock> CHECK_VALVE = valve("test_check_valve", "Test check valve");
     public static final BlockEntry<DeviceBlock> HAND_VALVE = valve("test_hand_valve", "Test hand valve");
     public static final BlockEntry<DeviceBlock> SIGNAL_VALVE = valve("test_signal_valve", "Test signal valve");
@@ -100,6 +106,8 @@ public final class TestFluidMachines {
             TestSounds.CONTENT.blockEntity("test_water_pump", WaterPump::new, WATER_PUMP);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DrainagePump>> DRAINAGE_PUMP_ENTITY =
             TestSounds.CONTENT.blockEntity("test_drainage_pump", DrainagePump::new, DRAINAGE_PUMP);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WellPump>> WELL_PUMP_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_well_pump", WellPump::new, WELL_PUMP);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LineValveBlockEntity>> VALVE_ENTITY =
             TestSounds.CONTENT.blockEntity("test_valve", (pos, state) -> new LineValveBlockEntity(
                     TestFluidMachines.VALVE_ENTITY.get(), pos, state, MatterState.LIQUID, VALVE_RATE,
@@ -187,6 +195,15 @@ public final class TestFluidMachines {
         public DrainagePump(final BlockPos pos, final BlockState state) {
             super(DRAINAGE_PUMP_ENTITY.get(), pos, state, PUMP_RATING, PumpSource.drains(DRAINS_WITHIN,
                     DRAINS_EVERY), PUMP_TANK);
+        }
+    }
+
+    /** The test well pump. */
+    public static final class WellPump extends IndustrialPump {
+
+        public WellPump(final BlockPos pos, final BlockState state) {
+            super(WELL_PUMP_ENTITY.get(), pos, state, PUMP_RATING, PumpSource.well(WELL_DRAWS, WELL_EVERY),
+                    PUMP_TANK);
         }
     }
 }

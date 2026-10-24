@@ -9,7 +9,12 @@ that go in and come out. Vanilla tools and armour keep working, with no nerf.
 
 ## What exists today
 
-Nothing.
+- The rules of modules, on J's Core's module kit: sockets by tier (two up to the T3, three at the T4, four at the T5
+  and T6, five from the T7), a module one piece takes at most so many of, a piece of armour saying which it is and a
+  closed exo-suit that it is sealed, so J's Space's space module fits only the closed suits.
+- Nothing of the mod is enchanted at the table or the anvil.
+- Each kind of tool is a setting of the world's: off, its recipes are gone and it leaves the creative tab.
+- The tools, armour, suits and modules themselves are still to be built.
 
 ## To build
 

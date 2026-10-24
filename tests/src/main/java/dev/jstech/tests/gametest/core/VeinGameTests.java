@@ -204,7 +204,9 @@ public final class VeinGameTests {
         final List<Deposits.Entry> all = Deposits.all();
         for (final ResourceLocation id : List.of(SeriesDeposits.IRON, SeriesDeposits.COPPER, SeriesDeposits.GOLD,
                 SeriesDeposits.NETHER_GOLD, SeriesDeposits.TIN, TestWorldGen.IRON_VEINS)) {
-            helper.assertTrue(all.stream().anyMatch(entry -> entry.id().equals(id)), "the vein " + id + " is laid");
+            // A mod whose own deposits stand in for a plain vein supersedes it, its file and all.
+            helper.assertTrue(all.stream().anyMatch(entry -> entry.id().equals(id))
+                    != Deposits.superseded().contains(id), "the vein " + id + " is laid unless it is superseded");
             helper.assertTrue(Deposits.FILES.get(id).isPresent(), "from a file the data generation wrote");
             helper.assertTrue(Deposits.FILES.get(id).get().equals(Deposits.declared().get(id)),
                     "which says what its declaration says");

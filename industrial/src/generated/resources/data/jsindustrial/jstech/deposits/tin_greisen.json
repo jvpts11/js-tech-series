@@ -1,0 +1,21 @@
+{
+  "biomes": "minecraft:is_overworld",
+  "frequency": 0.06,
+  "max_y": 64,
+  "min_y": 0,
+  "minerals": [
+    {
+      "material": "jscore:cassiterite"
+    },
+    {
+      "material": "jscore:tin",
+      "weight": 0.25
+    }
+  ],
+  "radius": 16.0,
+  "rocks": [
+    "minecraft:stone",
+    "minecraft:deepslate",
+    "minecraft:granite"
+  ]
+}

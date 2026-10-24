@@ -61,7 +61,9 @@ their hardness.
 ### What is worn
 
 **A kit of modules in worn items**: an item with module places, each module with its effect and the energy it spends,
-in a screen of its own. J's Industrial's exo-suits and J's Space's suits use the same kit.
+in a screen of its own. J's Industrial's exo-suits and J's Space's suits use the same kit. A module may say how many
+of it one item takes and what the item must be to take it, the piece it is or a seal; the series' mods share those
+names, so J's Space's space module fits J's Industrial's closed exo-suits and never an open frame.
 
 ## Still to build
 

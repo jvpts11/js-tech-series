@@ -19,11 +19,14 @@ import dev.jstech.industrial.discovery.ElementDiscovery;
 import dev.jstech.industrial.guide.IndustrialGuide;
 import dev.jstech.industrial.line.IndustrialPipeMarks;
 import dev.jstech.industrial.line.PneumaticPost;
+import dev.jstech.industrial.world.IndustrialDeposits;
 import dev.jstech.industrial.material.IndustrialMaterials;
 import dev.jstech.industrial.research.IndustrialResearch;
 import dev.jstech.industrial.research.ResearchLink;
 import dev.jstech.industrial.tool.HandScrap;
 import dev.jstech.industrial.tool.HandTools;
+import dev.jstech.industrial.tool.NoEnchanting;
+import dev.jstech.industrial.tool.ToolKinds;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -48,7 +51,13 @@ public final class JsIndustrial {
         // What it uses of the series' catalogue (its metals in their forms, its ores and minerals, their scraps), the
         // hand tools of the start and the scraps drawing by hand leaves, and the elements discovered by being made.
         IndustrialMaterials.declare();
+        // Its deposit types, each bringing together the minerals that form together, in place of the Core's plain
+        // veins of the shared metals.
+        IndustrialDeposits.declare();
         HandTools.declare();
+        // Its tools and armour take modules and never enchanting, and each kind of its tools may be left out.
+        NoEnchanting.listen();
+        ToolKinds.listen(modEventBus);
         HandScrap.register(modEventBus);
         ElementDiscovery.declare();
         // Making a tier's circuit moves a player to that tier.

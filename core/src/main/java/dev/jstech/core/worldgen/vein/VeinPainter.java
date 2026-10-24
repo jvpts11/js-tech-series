@@ -13,9 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
@@ -23,7 +26,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguratio
 /**
  * Lays one vein over a box of columns and nothing outside it: each block within it, more often towards its middle,
  * becomes the ore of one of the vein's materials in the rock it was, picked by their weights among those some mod uses
- * in that rock; a block that is no rock the vein crosses is left as it was. A moved ore's vein replaces what its own
+ * in that rock and that lie in that part of the vein and its biome; a block that is no rock the vein crosses is left
+ * as it was. A moved ore's vein replaces what its own
  * feature replaces instead. The world's generation lays veins a chunk at a time ({@link VeinFeature}); anything else
  * can lay one where it is wanted.
  */
@@ -50,7 +54,8 @@ public final class VeinPainter {
         final int toZ = Math.min(z1, (int) Math.ceil(vein.z() + vein.radius()));
         final int fromY = Math.max(level.getMinBuildHeight(), (int) Math.floor(vein.y() - vein.thickness()));
         final int toY = Math.min(level.getMaxBuildHeight() - 1, (int) Math.ceil(vein.y() + vein.thickness()));
-        final Map<HostRock, Picks> picks = new HashMap<>();
+        final Zoning zoning = Zoning.of(entry.type());
+        final Map<PickKey, Picks> picks = new HashMap<>();
         final RandomSource random = RandomSource.create(vein.seed());
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int laid = 0;
@@ -67,7 +72,8 @@ public final class VeinPainter {
                     }
                     final BlockState there = level.getBlockState(at.set(x, y, z));
                     final BlockState ore = entry.targets().isEmpty()
-                            ? oreFor(entry, there.getBlock(), picks, unit(hash * MIX_Y + vein.seed()))
+                            ? oreFor(entry, there.getBlock(), zoning.key(level, at, y > vein.y()), picks,
+                                    unit(hash * MIX_Y + vein.seed()))
                             : movedOre(entry, there, random);
                     if (ore != null) {
                         level.setBlock(at, ore, UPDATE);
@@ -79,14 +85,18 @@ public final class VeinPainter {
         return laid;
     }
 
-    /* The ore a block of rock becomes, or none when it is no rock the vein crosses or none of its ores is used. */
-    private static BlockState oreFor(final Deposits.Entry entry, final Block block, final Map<HostRock, Picks> picks,
-                                     final double roll) {
+    /*
+     * The ore a block of rock becomes, in the part of the vein and the biomes {@code where} says, or none when it is no
+     * rock the vein crosses or none of the ores that lie there is used.
+     */
+    private static BlockState oreFor(final Deposits.Entry entry, final Block block, final Where where,
+                                     final Map<PickKey, Picks> picks, final double roll) {
         final HostRock rock = OreTable.rockOf(block);
         if (rock == null || !entry.type().rocks().isEmpty() && !entry.type().rocks().contains(rock.id())) {
             return null;
         }
-        final Block ore = picks.computeIfAbsent(rock, crossed -> Picks.of(entry.type(), crossed)).pick(roll);
+        final Block ore = picks.computeIfAbsent(new PickKey(rock, where),
+                key -> Picks.of(entry.type(), key)).pick(roll);
         return ore == null ? null : ore.defaultBlockState();
     }
 
@@ -110,6 +120,62 @@ public final class VeinPainter {
         return (hash >>> 11) * TO_UNIT;
     }
 
+    /*
+     * Where a block of a vein lies, as its zoned materials ask: above the vein's middle or not, and which of the biomes
+     * they ask for it is in, a bit each in the order of the vein's {@link Zoning}.
+     */
+    private record Where(boolean above, long biomes) {
+
+        static final Where ANYWHERE = new Where(false, 0L);
+    }
+
+    /* The ores one rock gives in one place of a vein. */
+    private record PickKey(HostRock rock, Where where) {
+    }
+
+    /* The biomes a vein's materials ask for, in order, and whether any lies only in a part of it. */
+    private record Zoning(boolean parts, List<TagKey<Biome>> biomes) {
+
+        static Zoning of(final DepositType type) {
+            if (!type.zoned()) {
+                return new Zoning(false, List.of());
+            }
+            boolean parts = false;
+            final List<TagKey<Biome>> biomes = new ArrayList<>();
+            for (final DepositType.Mineral mineral : type.minerals()) {
+                parts |= mineral.zone() != DepositType.Zone.ALL;
+                mineral.biomes().filter(tag -> !biomes.contains(tag)).ifPresent(biomes::add);
+            }
+            return new Zoning(parts, List.copyOf(biomes));
+        }
+
+        /* Where the block at {@code at} lies; the biome is asked only of a vein whose materials ask for one. */
+        Where key(final WorldGenLevel level, final BlockPos at, final boolean above) {
+            if (!this.parts && this.biomes.isEmpty()) {
+                return Where.ANYWHERE;
+            }
+            long in = 0L;
+            if (!this.biomes.isEmpty()) {
+                final Holder<Biome> biome = level.getBiome(at);
+                for (int i = 0; i < this.biomes.size() && i < Long.SIZE; i++) {
+                    if (biome.is(this.biomes.get(i))) {
+                        in |= 1L << i;
+                    }
+                }
+            }
+            return new Where(this.parts && above, in);
+        }
+
+        /* Whether {@code mineral} lies at {@code where}. */
+        boolean holds(final DepositType.Mineral mineral, final Where where) {
+            if (!mineral.zone().holds(where.above())) {
+                return false;
+            }
+            final int index = mineral.biomes().map(this.biomes::indexOf).orElse(-1);
+            return index < 0 || index < Long.SIZE && (where.biomes() & 1L << index) != 0;
+        }
+    }
+
     /* The ores of a vein's materials in one rock, by weight, those no mod uses there and those turned off left out. */
     private static final class Picks {
 
@@ -121,13 +187,17 @@ public final class VeinPainter {
             this.reached = reached;
         }
 
-        static Picks of(final DepositType type, final HostRock rock) {
+        static Picks of(final DepositType type, final PickKey key) {
+            final Zoning zoning = Zoning.of(type);
             final List<Block> ores = new ArrayList<>();
             final List<Double> weights = new ArrayList<>();
             double total = 0;
             for (final DepositType.Mineral mineral : type.minerals()) {
+                if (!zoning.holds(mineral, key.where())) {
+                    continue;
+                }
                 final ResourceLocation material = mineral.material();
-                final Block ore = VeinBalance.withoutOre(material) ? null : OreTable.oreOf(material, rock);
+                final Block ore = VeinBalance.withoutOre(material) ? null : OreTable.oreOf(material, key.rock());
                 if (ore != null && mineral.weight() > 0) {
                     ores.add(ore);
                     weights.add(mineral.weight());
