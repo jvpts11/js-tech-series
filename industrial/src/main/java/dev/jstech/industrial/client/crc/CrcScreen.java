@@ -49,7 +49,7 @@ public final class CrcScreen extends CoreContainerScreen<MachineMenu> {
     private final Map<Integer, IMachineFace> kit;
     private int ticks;
 
-    /** Its own tabs' icons: Research's flask, then Group's two cabinets on their cable. */
+    /** Its own tabs' icons: Research's flask, then Group's three cabinets on their cable. */
     public static final ResourceLocation TAB_ICONS = ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID,
             "textures/gui/crc/tabs.png");
     /** Processors' icon: a research processor. */

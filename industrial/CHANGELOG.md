@@ -119,6 +119,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   one layer up: a CRC built before stands unformed until its terminal is moved there.
 - The CRC's Research chart draws its years twice as wide and is dragged with the mouse: across along the
   years, up and down through its fields.
+- The CRC's Research and Group tabs have new icons: a corked flask, and three CRCs on their link cable.
+- The CRC's formed model has an underside: a steel base frame with its rails, cross members, rivets,
+  levelling feet and a cable trough, where it was a plain dark plane seen from below.
 - With J's Industrial installed, its deposit types take the place of the Core's plain veins of
   iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
   Nether's gold stays the Core's.
@@ -153,8 +156,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The CRC's formed model draws each entry where it stands: the rear's columns were the wrong way round,
   so an entry put in the west place showed in the east one. An entry put in is drawn as soon as the structure sees it,
   not on the CRC's next second.
-- A cable run to a CRC entry meets it: each entry's gland, socket or pipe stub reaches the edge of its
-  block. And no slit of sky shows along the CRC's foot under an entry or its terminal, which hid the ground's face.
+- A cable run to a CRC entry meets it square on: each entry is centred on its block's face, where a cable
+  laid behind it runs (the side columns' stood off to the middle, the bottom row's up), and its gland, socket or pipe
+  stub reaches the edge of the block. And no slit of sky shows along the CRC's foot under an entry or its terminal,
+  which hid the ground's face.
 
 ## [0.5.2a] - 2026-10-14
 

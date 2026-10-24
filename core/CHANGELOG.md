@@ -1546,6 +1546,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A click anywhere on the front of a formed multiblock opens its screen, as a click on its terminal does.
 - The Multiblock Builder puts in what a multiblock must have, each in a place that takes it, and never more
   than it takes, whatever block was chosen for those places, so what it builds forms.
+- The tabs of every machine's screen have new icons, drawn as the game's items are: a block with its input and
+  output faces for Sides, the redstone torch on its dust for Redstone, a module card for Upgrades and a brass
+  padlock for Protection.
 - With J's Industrial installed, its deposit types take the place of the Core's plain veins of
   iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
   Nether's gold stays the Core's.

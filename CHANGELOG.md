@@ -1649,6 +1649,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   one layer up: a CRC built before stands unformed until its terminal is moved there.
 - (Industrial) The CRC's Research chart draws its years twice as wide and is dragged with the mouse: across along the
   years, up and down through its fields.
+- (Core) The tabs of every machine's screen have new icons, drawn as the game's items are: a block with its input and
+  output faces for Sides, the redstone torch on its dust for Redstone, a module card for Upgrades and a brass
+  padlock for Protection.
+- (Industrial) The CRC's Research and Group tabs have new icons: a corked flask, and three CRCs on their link cable.
+- (Industrial) The CRC's formed model has an underside: a steel base frame with its rails, cross members, rivets,
+  levelling feet and a cable trough, where it was a plain dark plane seen from below.
 - (Core, Industrial) With J's Industrial installed, its deposit types take the place of the Core's plain veins of
   iron, copper, gold and tin, and the game's ores of those metals lie in its deposits beside their minerals; the
   Nether's gold stays the Core's.
@@ -1785,8 +1791,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Industrial) The CRC's formed model draws each entry where it stands: the rear's columns were the wrong way round,
   so an entry put in the west place showed in the east one. An entry put in is drawn as soon as the structure sees it,
   not on the CRC's next second.
-- (Industrial) A cable run to a CRC entry meets it: each entry's gland, socket or pipe stub reaches the edge of its
-  block. And no slit of sky shows along the CRC's foot under an entry or its terminal, which hid the ground's face.
+- (Industrial) A cable run to a CRC entry meets it square on: each entry is centred on its block's face, where a cable
+  laid behind it runs (the side columns' stood off to the middle, the bottom row's up), and its gland, socket or pipe
+  stub reaches the edge of the block. And no slit of sky shows along the CRC's foot under an entry or its terminal,
+  which hid the ground's face.
 - (Core) The screens of the network probe, the signal probe and the clamp meter no longer show dark stairs outside
   their corners: the dark rim round the instrument follows its rounded corner.
 - (Core) A cable's item is drawn whatever its thickness: only cables four, six or ten pixels thick had a model for
