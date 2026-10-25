@@ -63,7 +63,12 @@ public final class MenuSwapCursorClientTests {
                     put[0] = Math.floor(ctx.mc().getWindow().getScreenWidth() / 4.0);
                     put[1] = Math.floor(ctx.mc().getWindow().getScreenHeight() / 3.0);
                     InputConstants.grabOrReleaseMouse(window, GLFW.GLFW_CURSOR_NORMAL, put[0], put[1]);
-                    focused[0] = ctx.mc().isWindowActive();
+                    /*
+                     * GLFW moves the cursor only for the window the system has brought forward, and says nothing
+                     * when it has not. Someone working in another program keeps this window behind while the game
+                     * still reads it as active, so the cursor is read back: a run where it never moved says nothing.
+                     */
+                    focused[0] = ctx.mc().isWindowActive() && standsAt(window, put);
                 })
                 /*
                  * The window has to hold the focus the whole way, so it is looked at on every tick until the check.
@@ -85,9 +90,16 @@ public final class MenuSwapCursorClientTests {
                     final double[] x = new double[1];
                     final double[] y = new double[1];
                     GLFW.glfwGetCursorPos(ctx.mc().getWindow().getWindow(), x, y);
-                    ctx.assertTrue(Math.abs(x[0] - put[0]) <= SLACK && Math.abs(y[0] - put[1]) <= SLACK,
+                    ctx.assertTrue(standsAt(ctx.mc().getWindow().getWindow(), put),
                             "the desktop opens with the cursor where the player left it, at " + put[0] + ", "
                                     + put[1] + ", but it is at " + x[0] + ", " + y[0]);
                 });
+    }
+
+    private static boolean standsAt(final long window, final double[] put) {
+        final double[] x = new double[1];
+        final double[] y = new double[1];
+        GLFW.glfwGetCursorPos(window, x, y);
+        return Math.abs(x[0] - put[0]) <= SLACK && Math.abs(y[0] - put[1]) <= SLACK;
     }
 }
