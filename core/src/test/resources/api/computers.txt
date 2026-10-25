@@ -314,7 +314,10 @@ stable 7
 8 dev.jstech.computers.hardware.ExpansionBus  PCI
 8 dev.jstech.computers.hardware.ExpansionBus  PCIE
 8 dev.jstech.computers.hardware.ExpansionBus  String label()
-8 dev.jstech.computers.hardware.ExpansionCardKind  type record(String id)
+8 dev.jstech.computers.hardware.ExpansionCardKind  type record(String id, List<HostScope> machines, TextKey refusal)
+8 dev.jstech.computers.hardware.ExpansionCardKind  ExpansionCardKind onlyIn(TextKey, HostScope...)
+8 dev.jstech.computers.hardware.ExpansionCardKind  boolean fitsIn(HostScope)
+8 dev.jstech.computers.hardware.ExpansionCardKind  new(String)
 8 dev.jstech.computers.hardware.ExpansionCardKind  static ExpansionCardKind byId(String)
 8 dev.jstech.computers.hardware.ExpansionCardKind  static ExpansionCardKind declare(ExpansionCardKind)
 8 dev.jstech.computers.hardware.ExpansionCardKind  static List<ExpansionCardKind> all()
@@ -352,6 +355,7 @@ stable 7
 8 dev.jstech.computers.hardware.IExpansionCardSpec  abstract PcieGeneration bus()
 8 dev.jstech.computers.hardware.IExpansionCardSpec  abstract int tdpWatts()
 8 dev.jstech.computers.hardware.IExpansionCardSpec  default boolean fits(PcieGeneration)
+8 dev.jstech.computers.hardware.IExpansionCardSpec  default int controlPorts()
 8 dev.jstech.computers.hardware.IntegratedGraphics  type record(String model, int units, int mhz)
 8 dev.jstech.computers.hardware.IntegratedGraphics  boolean present()
 8 dev.jstech.computers.hardware.IntegratedGraphics  static final IntegratedGraphics NONE

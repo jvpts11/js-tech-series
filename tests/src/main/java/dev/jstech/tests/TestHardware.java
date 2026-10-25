@@ -15,7 +15,9 @@ import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CpuDesign;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
@@ -59,6 +61,13 @@ public final class TestHardware {
     public static final MotherboardSpec QUANTUM_BOARD_SPEC = new MotherboardSpec(FormFactor.ATX,
             TestProgression.QUANTUM, QUANTUM_SOCKET, 1, Set.of(QRAM), 2, PcieGeneration.PCIE_6_0, 2, 1, null);
     public static final RamSpec QUANTUM_RAM_SPEC = new RamSpec(TestProgression.QUANTUM, QRAM, 65_536L, 4);
+    public static final TextKey TEST_BUS_ONLY = TextKey.of("jstests.card.test_bus_only",
+            "Only a Test Quantum Computer seats a test bus card");
+    /** A kind of card made for the Quantum computer alone, as a mod's field bus card is made for its controller. */
+    public static final ExpansionCardKind TEST_BUS = new ExpansionCardKind("jstests:test_bus")
+            .onlyIn(TEST_BUS_ONLY, QUANTUM_LAB);
+    /** How many machines a test bus card lets its computer read on the industrial control cable. */
+    public static final int TEST_BUS_MACHINES = 2;
 
     public static final ItemEntry<Item> QUANTUM_CPU = TestSounds.CONTENT.item("quantum_cpu", Item::new)
             .named("Test Quantum Processor").look(IItemLook.parent("minecraft:item/amethyst_shard"))
@@ -75,6 +84,9 @@ public final class TestHardware {
      */
     public static final ItemEntry<Item> SCRIPTED_RAM = TestSounds.CONTENT.item("scripted_ram", Item::new)
             .named("Test Scripted Memory").look(IItemLook.parent("minecraft:item/quartz")).tab(TestItems.ITEMS)
+            .register();
+    public static final ItemEntry<Item> TEST_BUS_CARD = TestSounds.CONTENT.item("test_bus_card", Item::new)
+            .named("Test Bus Card").look(IItemLook.parent("minecraft:item/comparator")).tab(TestItems.ITEMS)
             .register();
     /** A small computer of the Quantum era, in the cases this mod ships: the Advanced's, its nearest earlier era's. */
     public static final BlockEntry<SmallComputerBlock> QUANTUM_COMPUTER = TestSounds.CONTENT.block(
@@ -100,5 +112,31 @@ public final class TestHardware {
         event.memory(QUANTUM_RAM.get(), QUANTUM_RAM_SPEC);
         event.computer(QUANTUM_COMPUTER.get(), new ComputerDef(TestProgression.QUANTUM, Set.of(FormFactor.ATX),
                 QUANTUM_LAB, QUANTUM_PARTS));
+        event.cardKind(TEST_BUS);
+        event.expansionCard(TEST_BUS_CARD.get(), new TestBusCardSpec(), TestProgression.QUANTUM);
+    }
+
+    /** The test bus card: a card of the Quantum computer alone, which reads two machines on the control cable. */
+    private record TestBusCardSpec() implements IExpansionCardSpec {
+
+        @Override
+        public PcieGeneration bus() {
+            return PcieGeneration.PCIE_6_0;
+        }
+
+        @Override
+        public int tdpWatts() {
+            return 10;
+        }
+
+        @Override
+        public ExpansionCardKind kind() {
+            return TEST_BUS;
+        }
+
+        @Override
+        public int controlPorts() {
+            return TEST_BUS_MACHINES;
+        }
     }
 }

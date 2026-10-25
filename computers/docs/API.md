@@ -103,6 +103,14 @@ event.expansionCard(MyItems.Q_CARD.get(), new PlainCardSpec(MY_KIND, QUANTUM, Pc
   of expansion slot (`slotGeneration`), form factors of board (`formFactor`) and kinds of card (`cardKind`). A card of
   a kind of your own is a `PlainCardSpec`, or a sheet of your own implementing `IExpansionCardSpec`, and your mod
   finds it in a build by its kind (`ComputerBuild.cardsOfKind`).
+- **A kind made for its machine** (added 2026-10-25) says so where it is declared, with what a slot of another machine
+  says of it: `new ExpansionCardKind("myaddon:fieldbus").onlyIn(MyTexts.FIELDBUS_ONLY, MY_CONTROLLER)`. Every
+  computer's slots keep its cards out but that machine's, through the same fitting rule. J's Computers' cluster cards
+  are made this way, for the Cluster Management Computer.
+- **A card that reads machines** (added 2026-10-25) gives its computer ports on the industrial control cable: its sheet
+  answers `controlPorts()`, how many machines it reaches. A computer with such ports keeps its links on that cable by
+  itself, once a second, so the machines its cables reach are its own to read and command (J's Core's
+  `ControlLinks`).
 - `HardwareRegistry` answers what a stack is: `cpu(stack)`, `board(stack)`, `card(stack)` and so on, null for anything
   that is no part. An item without an entry goes in no part slot.
 - What the software of your era ships on (its systems', programs' and services' media) is `event.eraMedia(era,
@@ -137,6 +145,11 @@ event.computer(LAB_COMPUTER.get(), new ComputerDef(QUANTUM, Set.of(FormFactor.AT
   Advanced draws the Advanced's) and assembled on the Personal Computer's screen, so its case counts no more parts than
   a Personal Computer's: one processor, four modules, four cards, two disks, two bays. Its block entity is J's
   Computers' `SmallComputerBlockEntity`, one type every mod's small computers share.
+- **A machine drawn in your own files** (added 2026-10-25): a subclass of `SmallComputerBlock` answers `machineName()`
+  (the last part of its models' names) and `modelsOf()` (your mod's id), and its cases are drawn from your files:
+  `assets/<yourmod>/geo/computer_<case>_<machine>.geo.json` and
+  `assets/<yourmod>/textures/block/computer/computer_<case>_<machine>.png`, one for each case it comes in, on the
+  animations J's Computers' cases share. Without it, it is drawn as a Personal Computer.
 - **A server** of yours is a `ServerItem` and a chassis: `event.server(item, RackChassis.of(look, heightU, drives,
   processors, cards, rackType, era))`, drawn in the rack as one of the faces J's Computers ships.
 

@@ -29,4 +29,13 @@ public interface IExpansionCardSpec {
     default boolean fits(final PcieGeneration slot) {
         return bus().compatibleWith(slot);
     }
+
+    /**
+     * How many machines the card lets its computer read and command on the industrial control cable: a field bus
+     * card's; none for every other card. A computer with control ports keeps links on that cable, and its machines
+     * take one each.
+     */
+    default int controlPorts() {
+        return 0;
+    }
 }

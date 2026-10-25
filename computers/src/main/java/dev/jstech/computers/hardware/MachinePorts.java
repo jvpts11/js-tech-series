@@ -33,9 +33,17 @@ public final class MachinePorts {
             case DEVICE -> devicePorts(build.motherboard().era());
             case VIDEO -> videoOutputs(build);
             case AUDIO -> audioOutputs(build) * SPEAKERS_PER_AUDIO_OUTPUT;
-            // The machines a controller reads come with the cards of its field bus, which none of these hold.
-            case CONTROL -> 0;
+            case CONTROL -> controlPorts(build);
         };
+    }
+
+    /** The machines a computer reads on the industrial control cable: as many as its field bus cards reach. */
+    public static int controlPorts(final ComputerBuild build) {
+        int ports = 0;
+        for (final IExpansionCardSpec card : build.pcieCards()) {
+            ports += card.controlPorts();
+        }
+        return ports;
     }
 
     /** The device ports on a board of {@code era}. */

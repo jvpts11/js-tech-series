@@ -8090,6 +8090,7 @@
   "jsc.files.replace_title": "Substituir ou Pular Arquivos",
   "jsc.part_refusal.board": "Este gabinete só aceita uma placa-mãe do seu tamanho e da sua era",
   "jsc.part_refusal.card_bus": "O barramento desta placa não serve nos slots da placa-mãe",
+  "jsc.part_refusal.cluster_card": "Só um Cluster Management Computer encaixa uma placa de cluster",
   "jsc.part_refusal.cpu": "Este processador precisa de uma placa-mãe do seu soquete e da sua era",
   "jsc.part_refusal.disk_too_new": "Este disco é de uma era posterior à da máquina",
   "jsc.part_refusal.drive_bay": "Uma baia de unidades aceita apenas um disco",

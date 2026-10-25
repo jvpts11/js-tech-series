@@ -267,6 +267,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   endpoints on more than one cable system, and `PortKind.CONTROL` is a controller's port. `INetworkMember.fillRows`
   writes a row of a table for each machine a member reads (`StateRows`, each row where its machine stands), and
   `INetworkMember.refuses` says why a member will not take a request, which the network then gives to one that will.
+- A family's model in another mod's files: J's Core's API stays at version 12. A `GeoLook` model named with
+  its mod (`othermod:computer_vintage_reader`) is read from that mod's `geo/` and its atlas from that mod's textures,
+  so a mod brings a member to another mod's family of machines.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

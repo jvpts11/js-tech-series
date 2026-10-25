@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.core.jstechseries.tier.Era;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,15 @@ public final class PartFitting {
             return false;
         }
         return board.takes(card);
+    }
+
+    /**
+     * Whether {@code card} seats on {@code board} in a computer that is {@code machine}: as {@link #cardFits} says,
+     * and, for a card of a kind made for its machines alone, in one of those.
+     */
+    public static boolean cardFits(final IExpansionCardSpec card, final @Nullable MotherboardSpec board,
+                                   final HostScope machine) {
+        return card.kind().fitsIn(machine) && cardFits(card, board);
     }
 
     /** Whether a sound card is kept off {@code board} for being of another age. */

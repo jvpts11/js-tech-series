@@ -89,7 +89,9 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.peripheral.ControlLinks;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PeripheralPorts;
 import dev.jstech.core.jstechseries.peripheral.PeripheralReconciler;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
@@ -112,6 +114,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -170,6 +173,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final MusicDownloads musicDownloads = new MusicDownloads(this);
     /** What the programs running on it play: their tunes, their beeps and their recordings. */
     private final ProgramSounds programSounds = new ProgramSounds(this);
+    /** Ticks left before it walks its industrial control cables again, while it has machines to read. */
+    private int controlKeepIn;
+    /** Whether it owned links on the industrial control cable at its last look, so a change is told to its cables. */
+    private boolean wasController;
 
     /**
      * The name a player gave this computer: the machine's own, and no part's; the players who see it are sent it.
@@ -318,7 +325,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             // A co-processor adds crafts to a supercomputer's nodes alone, so only a node's server seats one.
             return false;
         }
-        return PartFitting.cardFits(card, seatedBoard());
+        return PartFitting.cardFits(card, seatedBoard(), computer.machine());
     }
 
     /* The board in the board slot, or null when there is none yet. */
@@ -440,6 +447,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         }
         if (card instanceof PhiCoprocessorSpec) {
             return PartRefusals.PHI;
+        }
+        if (!card.kind().fitsIn(computer.machine())) {
+            // A card made for another machine says which one, as its kind declares.
+            return Objects.requireNonNull(card.kind().refusal());
         }
         if (PartFitting.soundCardOfAnotherAge(card, seatedBoard())) {
             return PartRefusals.SOUND_ERA;
@@ -1441,7 +1452,20 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         setChanged();
     }
 
-    /** Its board's device ports, its graphics cards' video outputs and its audio output; none without a build. */
+    /**
+     * Its screens and devices on the peripheral cable, and, while its cards read machines or it still holds some, its
+     * machines on the industrial control cable.
+     */
+    @Override
+    public boolean linksOver(final PeripheralCableType type) {
+        return type == cableType() || type == PeripheralCableType.INDUSTRIAL_CONTROL
+                && (ports(PortKind.CONTROL) > 0 || portsInUse(PortKind.CONTROL) > 0);
+    }
+
+    /**
+     * Its board's device ports, its graphics cards' video outputs, its audio output and its field bus cards' machines;
+     * none without a build.
+     */
     @Override
     public int ports(final PortKind kind) {
         final ComputerBuild build = currentBuild();
@@ -1466,6 +1490,19 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         Acting.asOperatorOf(this, sigmaTick);
         SetupRunner.tick(this, level, worldPosition);
         attachment.tick(level);
+        // A computer whose cards read machines keeps its links on the industrial control cable, once a second.
+        if (--controlKeepIn <= 0) {
+            controlKeepIn = ControlLinks.KEEP_EVERY;
+            final boolean controller = linksOver(PeripheralCableType.INDUSTRIAL_CONTROL);
+            if (controller != wasController) {
+                // A card put in or taken out makes it a controller or not: the control cables beside it look again.
+                wasController = controller;
+                level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+            }
+            if (controller) {
+                ControlLinks.keep(level, worldPosition, this);
+            }
+        }
         final VramLedger video = VideoMemory.of(level, this).ledger();
         vramTotalKb.set(video.totalKb());
         vramMonitorsKb.set(video.usedKb(VramLedger.Kind.MONITOR));
@@ -1483,6 +1520,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     public void onBroken(final ServerLevel level) {
         attachment.leave(level);
+        ControlLinks.release(level, worldPosition, this);
     }
 
     /**

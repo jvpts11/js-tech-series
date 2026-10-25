@@ -52,14 +52,18 @@ public record GeoLook<T>(String modid, String folder, String animation, Function
         return new GeoLook<>(modid, folder, animation, model);
     }
 
-    /** The model file of the model called {@code name}. */
+    /**
+     * The model file of the model called {@code name}: one of the family's mod, or, for a name that says its mod
+     * ({@code othermod:computer_standard_neutral_reader}), one another mod brings to the family in its own files.
+     */
     public ResourceLocation modelFile(final String name) {
-        return ResourceLocation.fromNamespaceAndPath(this.modid, "geo/" + name + ".geo.json");
+        return ResourceLocation.fromNamespaceAndPath(namespaceOf(name), "geo/" + pathOf(name) + ".geo.json");
     }
 
-    /** The atlas of the model called {@code name}. */
+    /** The atlas of the model called {@code name}, in its mod's files as its model is. */
     public ResourceLocation textureFile(final String name) {
-        return ResourceLocation.fromNamespaceAndPath(this.modid, "textures/block/" + this.folder + "/" + name + ".png");
+        return ResourceLocation.fromNamespaceAndPath(namespaceOf(name),
+                "textures/block/" + this.folder + "/" + pathOf(name) + ".png");
     }
 
     /** The animation file the family shares. */
@@ -75,5 +79,17 @@ public record GeoLook<T>(String modid, String folder, String animation, Function
     /** The atlas {@code drawn} is painted with. */
     public ResourceLocation textureOf(final T drawn) {
         return textureFile(this.model.apply(drawn));
+    }
+
+    /* The mod a model's files are in: the one its name says before a colon, or the family's. */
+    private String namespaceOf(final String name) {
+        final int colon = name.indexOf(':');
+        return colon < 0 ? this.modid : name.substring(0, colon);
+    }
+
+    /* A model's name without the mod it says. */
+    private static String pathOf(final String name) {
+        final int colon = name.indexOf(':');
+        return colon < 0 ? name : name.substring(colon + 1);
     }
 }

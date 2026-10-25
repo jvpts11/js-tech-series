@@ -46,6 +46,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   height, its cabinet and its `Look`; `SmallComputerBlock` is the block of a small computer another mod brings. The
   part item classes (`CpuItem` and the rest) are gone: a part is an item and its entry. `IOperatingSpace.era()` gives
   an `Era`.
+- Cards made for their machine: J's Computers' API stays at version 8, all experimental.
+  `ExpansionCardKind` is `(id, machines, refusal)`: `onlyIn(refusal, machines...)` makes a kind for its machines alone
+  and `fitsIn(machine)` asks it, the plain `new ExpansionCardKind(id)` going in any computer.
+  `IExpansionCardSpec.controlPorts()` is how many machines a card reads on the industrial control cable.
 
 ### Added
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
@@ -84,6 +88,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   queues; it stays in the Processes tab, where calling it off stops the machine, and goes into the log under `RUN`,
   with its kind, the machine and what was asked, once the machine says it is done. A machine that leaves the network
   first fails it, saying so.
+- Cards made for their machine: a kind of card says which machines it goes in
+  (`ExpansionCardKind.onlyIn`), and every computer's slots keep its cards out but those, saying which machine the card
+  is made for; the cluster cards now go in the Cluster Management Computer alone. A card that reads machines gives its
+  computer ports on the industrial control cable (`IExpansionCardSpec.controlPorts`), and the computer keeps its links
+  on it by itself. A small computer another mod brings can be drawn from that mod's own files (`modelsOf`), on the
+  cases J's Computers ships.
 - A request to a machine that will not take it: without `ON`, a request goes to a machine that takes it (a
   controller that reads the machine named), and one that names a machine that will not take it is refused with the
   machine's reason.

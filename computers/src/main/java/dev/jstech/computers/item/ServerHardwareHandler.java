@@ -13,6 +13,7 @@ import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PartFitting;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.StorageCardSpec;
@@ -153,7 +154,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
                 final RackChassis chassis = ServerItem.chassisOf(held());
                 return chassis != null && chassis.isSupercomputerNode() && !holdsCoprocessorOutside(slot);
             }
-            return isServerCard(card) && PartFitting.cardFits(card, board);
+            return isServerCard(card) && PartFitting.cardFits(card, board, HostScope.SERVER);
         }
         return false;
     }

@@ -7,8 +7,10 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.SmallComputerBlockEntity;
@@ -17,21 +19,28 @@ import dev.jstech.computers.hardware.CasePorts;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.EraStorage;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.registry.ComputerRegistry;
 import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.jstechseries.peripheral.ControlLinks;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.jstechseries.tier.SeriesAxes;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestCableTypes;
 import dev.jstech.tests.TestHardware;
 import dev.jstech.tests.TestItems;
+import dev.jstech.tests.TestKitMachine;
 import dev.jstech.tests.TestProgression;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -165,6 +174,76 @@ public final class QuantumComputerGameTests {
                 helper.assertFalse(pc.isValidForSlot(slot, stack), stack + " goes in slot " + slot + " of the PC");
             }
         }
+        helper.succeed();
+    }
+
+    /**
+     * A card made for its machine goes in that machine alone, and a slot of another says so: the test bus card in the
+     * Quantum computer and not in a Personal Computer, the cluster card in a Cluster Management Computer alone.
+     */
+    @GameTest(template = ARENA)
+    public static void aCardMadeForItsMachine_goesInItAlone(final GameTestHelper helper) {
+        final SmallComputerBlockEntity quantum = place(helper);
+        final BlockPos pcAt = COMPUTER.east(2);
+        helper.setBlock(pcAt, ComputingModule.PERSONAL_COMPUTER.get());
+        final PersonalComputerBlockEntity pc = (PersonalComputerBlockEntity) helper.getBlockEntity(pcAt);
+        final ItemStack bus = new ItemStack(TestHardware.TEST_BUS_CARD.get());
+        final int quantumCard = quantum.hardwareLayout().pcieStart();
+        final int pcCard = pc.hardwareLayout().pcieStart();
+        helper.assertTrue(quantum.isValidForSlot(quantumCard, bus), "the test bus card goes in its machine");
+        helper.assertFalse(pc.isValidForSlot(pcCard, bus), "and in no other");
+        helper.assertTrue(pc.refusal(pcCard, bus) == TestHardware.TEST_BUS_ONLY,
+                "the slot says which machine it is made for: " + pc.refusal(pcCard, bus));
+        final ItemStack cluster = new ItemStack(ComputingModule.SERIAL_CONSOLE_CARD.get());
+        helper.assertFalse(pc.isValidForSlot(pcCard, cluster), "a cluster card goes in no Personal Computer");
+        helper.assertTrue(pc.refusal(pcCard, cluster) == ExpansionCardKind.CLUSTER_INTERFACE.refusal(),
+                "and the slot says why");
+        helper.succeed();
+    }
+
+    /**
+     * A card that reads machines gives its computer control ports, and the computer keeps its links on the industrial
+     * control cable: the machine its cable reaches is linked to it.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void aFieldBusCard_givesControlPortsTheComputerLinksMachinesOn(final GameTestHelper helper) {
+        final SmallComputerBlockEntity computer = place(helper);
+        final ComputerHardwareLayout layout = computer.hardwareLayout();
+        final ItemStackHandler hardware = computer.getHardware();
+        final BlockPos machine = COMPUTER.north(3);
+        helper.setBlock(machine, TestKitMachine.BLOCK.get());
+        TestCables.lay(helper, COMPUTER.north(), TestCableTypes.CONTROL);
+        TestCables.lay(helper, COMPUTER.north(2), TestCableTypes.CONTROL);
+        helper.assertTrue(computer.ports(PortKind.CONTROL) == 0, "no control port before its card");
+        hardware.setStackInSlot(layout.motherboardSlot(), new ItemStack(TestHardware.QUANTUM_BOARD.get()));
+        hardware.setStackInSlot(layout.cpuStart(), new ItemStack(TestHardware.QUANTUM_CPU.get()));
+        hardware.setStackInSlot(layout.ramStart(), new ItemStack(TestHardware.QUANTUM_RAM.get()));
+        hardware.setStackInSlot(layout.psuSlot(), new ItemStack(ComputingModule.PSU_650G.get()));
+        hardware.setStackInSlot(layout.pcieStart(), new ItemStack(TestHardware.TEST_BUS_CARD.get()));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> helper.assertTrue(computer.ports(PortKind.CONTROL)
+                        == TestHardware.TEST_BUS_MACHINES, "its card's machines: " + computer.ports(PortKind.CONTROL)))
+                .thenWaitUntil(() -> helper.assertTrue(ControlLinks.controllerOf(helper.getLevel(),
+                        helper.absolutePos(machine)).equals(Optional.of(helper.absolutePos(COMPUTER))),
+                        "the machine is linked to the computer"))
+                .thenSucceed();
+    }
+
+    /**
+     * A computer of another mod on this mod's cases is drawn from this mod's models unless it names its own mod's: a
+     * model named with its mod is found in that mod's files, its atlas beside it.
+     */
+    @GameTest(template = ARENA)
+    public static void aComputerOfAnotherMod_isDrawnFromTheFilesItNames(final GameTestHelper helper) {
+        final IComputerCase quantum = (IComputerCase) TestHardware.QUANTUM_COMPUTER.get();
+        helper.assertTrue(quantum.caseModel().equals("computer_advanced_neutral_personal_computer"),
+                "the Quantum computer keeps this mod's Advanced case: " + quantum.caseModel());
+        helper.assertTrue(ComputingLooks.COMPUTER.modelFile("othermod:computer_vintage_reader").toString()
+                .equals("othermod:geo/computer_vintage_reader.geo.json"), "a model named with its mod, in its files");
+        helper.assertTrue(ComputingLooks.COMPUTER.textureFile("othermod:computer_vintage_reader").toString()
+                .equals("othermod:textures/block/computer/computer_vintage_reader.png"), "and its atlas");
+        helper.assertTrue(ComputingLooks.COMPUTER.modelFile("computer_vintage_personal_computer").getNamespace()
+                .equals("jsc"), "a bare name is this mod's own");
         helper.succeed();
     }
 

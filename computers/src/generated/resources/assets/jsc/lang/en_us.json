@@ -23924,6 +23924,7 @@
   "jsc.panel.xp_start": "start",
   "jsc.part_refusal.board": "This case takes only a board of its own size and era",
   "jsc.part_refusal.card_bus": "This card's bus does not fit the board's slots",
+  "jsc.part_refusal.cluster_card": "Only a Cluster Management Computer seats a cluster card",
   "jsc.part_refusal.cpu": "This processor needs a board of its socket and its era",
   "jsc.part_refusal.disk_too_new": "This disk is of a later era than the machine",
   "jsc.part_refusal.drive_bay": "A drive bay takes only a disk",
