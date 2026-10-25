@@ -27,6 +27,8 @@ class FormArtTest {
     private static final int COPPER = 0xD9773F;
     private static final int SILICON = 0x56606F;
     private static final int DARK = 0x353735;
+    /* The light of a template's lit edge, the lightest an outline is drawn in. */
+    private static final double LIT_EDGE = 0.34;
 
     @Test
     void ramp_putsTheMaterialsOwnColourAtTheMiddleLight() {
@@ -41,6 +43,28 @@ class FormArtTest {
         assertEquals(0xFFF0D3A2, texel(FormArt.drawn("bolt", COPPER), 5, 2));
         assertEquals(0xFFE2AF76, texel(FormArt.drawn("bolt", COPPER), 6, 9));
         assertEquals(0xFFAEAFB1, texel(FormArt.drawn("plate", IRON), 8, 7));
+    }
+
+    @Test
+    void drawn_outlinesThePlateTheSheetAndTheFoilAtBothTheirEnds() {
+        final int outline = red(FormArt.ramp(IRON, LIT_EDGE));
+        for (final String form : new String[] {"plate", "sheet", "foil"}) {
+            final int[] drawn = FormArt.drawn(form, IRON);
+            for (int y = 0; y < FormArt.SIZE; y++) {
+                int first = -1;
+                int last = -1;
+                for (int x = 0; x < FormArt.SIZE; x++) {
+                    if (texel(drawn, x, y) != 0) {
+                        first = first < 0 ? x : first;
+                        last = x;
+                    }
+                }
+                if (first >= 0) {
+                    assertTrue(red(texel(drawn, first, y)) <= outline, form + "'s left end is outlined in row " + y);
+                    assertTrue(red(texel(drawn, last, y)) <= outline, form + "'s right end is outlined in row " + y);
+                }
+            }
+        }
     }
 
     @Test
@@ -132,6 +156,10 @@ class FormArtTest {
         final int[] ore = FormArt.ore(diagonal(), FormArt.SIZE, specks, COPPER, OptionalInt.of(second), 0.25, 0.55);
         assertEquals(texel(FormArt.recolour(specks, FormArt.SIZE, second), 2, 2), texel(ore, 2, 2));
         assertEquals(texel(FormArt.recolour(specks, FormArt.SIZE, COPPER), 4, 4), texel(ore, 4, 4));
+    }
+
+    private static int red(final int texel) {
+        return texel >> 16 & 0xFF;
     }
 
     private static int grey(final int value) {

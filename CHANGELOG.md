@@ -356,7 +356,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   veins cross, one block in each, every one dropping the same raw item.
 - (Core) Art made as the game loads: every thing of a material is drawn in its material's colour as the game loads,
   from the game's own texture for the forms the game has, recoloured texel by texel, and from the Core's templates for
-  the rest; an ore is its rock's own texture with the specks of one of the game's ores in the mineral's colour. No
+  the rest, a plate, a sheet and a foil outlined dark at both their ends so the slot's edge never seems to cut one
+  off; an ore is its rock's own texture with the specks of one of the game's ores in the mineral's colour. No
   texture of the game ships in the Core, and a resource pack can replace any of them.
 - (Core) A material's data in its tooltip: each property shows always, only with Shift held, or never, as the property
   says unless the material or a data pack says otherwise, the game's own iron ingot included; a data pack gives values
