@@ -1090,7 +1090,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   forces of every structure near.
 - The physics tool: it grabs a moving structure where it is aimed and holds it before the player, pushes it
   with a blow, or freezes it where it stands and lets it go, as strong as it is set, its mode and strength changed with
-  the wheel; its panel shows both, and while it holds a structure a beam runs to the point it holds. It is made at a
+  the wheel; its panel shows both, and while it holds a structure a beam runs to the point it holds. It is held with
+  its claws ahead and its grip in the hand, in either hand, seen from the eye or from outside. It is made at a
   crafting table while the setting `moving_structures.physics_tool_recipe` says so, by
   `jscore:crafting_shaped_switch`, a shaped recipe a setting turns on and off that any mod can use.
 - Every force a setting: gravity, drag, lift, thrust, buoyancy with the balloons, levitation, magnetism and the
