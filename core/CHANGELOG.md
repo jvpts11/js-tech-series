@@ -220,6 +220,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Bodies pushed out without being thrown: J's Core's API stays at version 12, all experimental.
   `RigidBody.pushOut` moves a body out of what it sank into over its next step, with nothing added to how fast it
   goes or turns, and `RigidBody.pushedOutAt` says how fast a point of it is pushed out so.
+- Contacts read before they start: J's Core's API stays at version 12, all experimental.
+  `ContactSolver.ready` readies a step's contacts and `warm` starts them from their pushes of the step before, so
+  several solvers on the same bodies read them before any pushes them; `begin` does both, as before.
 - Sources spread over their blocks: J's Core's API stays at version 12, all experimental.
   `Radiation.transmission(level, from, to, kind, source)` lets through the blocks `source` names, the source's own,
   so a source read from the middle of its blocks is not shielded by them.
@@ -1643,6 +1646,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   controller, in the Structure Projector, the Multiblock Builder, the recipe viewers, the manuals, the studio and Jade.
 
 ### Fixed
+- A stack of moving structures comes to rest upright however it landed, and a tall one stands still and falls
+  asleep: every point where two meet rests as deep, so none is left leaning on its shallower points, each joint of the
+  stack adding its lean; a face lying square or a hair turned on another rests on its four corners, not on points
+  along its edges that wandered from step to step, and two points known alike start from what they gave once, not
+  twice; and each pass holds the stack up from the lowest structure to the highest and back down, not in the order
+  the stack happened to be gathered in.
+- A stack of moving structures standing still reads how fast its structures come together as they do: each
+  read them after those below had already started from their pushes of the step before, so a stack at rest seemed to
+  close several times faster than it did, as if it were landing.
+- Moving structures falling onto one another never sink into each other as they land: one standing still that
+  works their meeting looked for the one falling where it stood as the tick began, and met it only once it was
+  already inside.
 - A vein of a mineral with uranium or thorium in it reads near the same wherever it lies, and a great vein
   gives off more: its rock is all of it the source, and no longer shields itself. A vein cut by the edges of the
   world's sections of sixteen blocks read less than half as much, the rock between each part's middle and the reader

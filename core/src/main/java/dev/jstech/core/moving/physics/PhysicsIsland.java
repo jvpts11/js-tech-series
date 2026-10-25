@@ -19,6 +19,7 @@ import dev.jstech.core.moving.joint.StructureJoints;
 import dev.jstech.core.region.Box;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -28,6 +29,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
 
 /**
  * The structures moving by their physics that are joined to each other, worked as one in a tick: the same steps for
@@ -171,6 +173,18 @@ final class PhysicsIsland {
         double most = 0;
         for (final StructurePhysics member : live) {
             most = Math.max(most, member.margin(seconds));
+        }
+        return most;
+    }
+
+    /*
+     * The farthest any of its structures has gone since the tick began. The structures near are found where they stood
+     * as it began: one of the island looked for mid-tick may be as much further.
+     */
+    double goneMost() {
+        double most = 0;
+        for (final StructurePhysics member : live) {
+            most = Math.max(most, member.goneThisTick());
         }
         return most;
     }
@@ -321,8 +335,22 @@ final class PhysicsIsland {
             }
             return false;
         }
+        upward(level);
         held = joints.isEmpty() ? joints : leader.joints().winch(level, joints);
         return true;
+    }
+
+    /*
+     * Orders its structures being worked from the lowest to the highest against the pull where the leader stands: a
+     * stack is held up from the ground through each, so its rounds go up it and back down, as one solver of all their
+     * contacts would, not in the order they were gathered in, which leaves a tall stack swaying.
+     */
+    private void upward(final ServerLevel level) {
+        if (live.size() < 2) {
+            return;
+        }
+        final Vector3d pull = PhysicsWorld.gravity(level, leader.body().position(), new Vector3d());
+        live.sort(Comparator.comparingDouble(member -> -member.body().position().dot(pull)));
     }
 
     /*
@@ -433,7 +461,15 @@ final class PhysicsIsland {
         }
         int times = 0;
         for (int i = 0; i < live.size(); i++) {
-            times = Math.max(times, live.get(i).beginContacts(step, settles[i]));
+            times = Math.max(times, live.get(i).readyContacts(step, settles[i]));
+        }
+        /*
+         * Every contact is readied as the bodies come before any starts from its last push: started one structure
+         * after another, each would read the bodies as those before pushed them, and a stack at rest would read itself
+         * closing as fast as every crate's start pushed it, a blow at every step.
+         */
+        for (final StructurePhysics member : live) {
+            member.warmContacts();
         }
         // A push travels one structure a pass: a stack of them needs a pass more for each, to hold its top up.
         if (stacked) {
@@ -444,8 +480,9 @@ final class PhysicsIsland {
         } else {
             work.begin();
             for (int round = 0; round < times; round++) {
-                for (final StructurePhysics member : live) {
-                    member.contactsRound(round);
+                // Up the island and back down by turns, as each structure's own contacts are worked there and back.
+                for (int i = 0; i < live.size(); i++) {
+                    live.get(round % 2 == 0 ? i : live.size() - 1 - i).contactsRound(round);
                 }
                 work.round(round);
             }

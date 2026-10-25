@@ -33,6 +33,8 @@ public final class BoxContacts {
     /* The face being cut, as up to eight corners, and what is left of it after each cut. */
     private final Vector3d[] polygon = corners();
     private final Vector3d[] cut = corners();
+    private final Vector3d along = new Vector3d();
+    private final Vector3d toCorner = new Vector3d();
     private int bestKind;
     private int bestFirst;
     private int bestSecond;
@@ -49,6 +51,8 @@ public final class BoxContacts {
     private static final double FACE_FIRST = 0.02;
     private static final double TIE = 1.0e-3;
     private static final int MOST = 8;
+    /* A corner this near the edge between the corners beside it, in blocks, is on that edge. */
+    private static final double SAME_POINT = 0.01;
 
     /**
      * Where box {@code a} meets box {@code b}, no further apart than {@code margin}: each point to {@code sink}, with
@@ -147,6 +151,7 @@ public final class BoxContacts {
         }
         count = clip(count, reference.axis(u), reference.half(u));
         count = clip(count, reference.axis(v), reference.half(v));
+        count = simplified(count);
         int found = 0;
         for (int i = 0; i < count; i++) {
             final double apart = scratch.set(polygon[i]).sub(middle).dot(out);
@@ -159,6 +164,39 @@ public final class BoxContacts {
             found++;
         }
         return found;
+    }
+
+    /*
+     * The cut face with each corner dropped that lies within a hair of the edge between the corners beside it, three
+     * at least kept: a face turned a hair on another is cut into corners beside one another and corners along its
+     * edges, wandering from step to step, and it rests on the four it would lying square instead. How many are left.
+     */
+    private int simplified(final int count) {
+        int left = count;
+        boolean dropped = true;
+        while (dropped && left > 3) {
+            dropped = false;
+            for (int i = 0; i < left && left > 3; i++) {
+                if (offEdge(polygon[i], polygon[(i + left - 1) % left], polygon[(i + 1) % left]) < SAME_POINT) {
+                    // The corner dropped goes to the end, so the polygon keeps every one of its points to reuse.
+                    final Vector3d gone = polygon[i];
+                    System.arraycopy(polygon, i + 1, polygon, i, left - 1 - i);
+                    polygon[left - 1] = gone;
+                    left--;
+                    dropped = true;
+                }
+            }
+        }
+        return left;
+    }
+
+    /* How far {@code corner} is from the edge from {@code from} to {@code to}. */
+    private double offEdge(final Vector3d corner, final Vector3d from, final Vector3d to) {
+        along.set(to).sub(from);
+        final double length = along.lengthSquared();
+        final double share = length > 0 ? Math.max(0, Math.min(1, toCorner.set(corner).sub(from).dot(along) / length))
+                : 0;
+        return toCorner.set(from).fma(share, along).distance(corner);
     }
 
     /*

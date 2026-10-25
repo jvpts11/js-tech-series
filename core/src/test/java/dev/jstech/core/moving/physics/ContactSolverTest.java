@@ -20,6 +20,8 @@ class ContactSolverTest {
     private static final double MASS = 100;
     private static final Matrix3d CUBE = new Matrix3d().scaling(MASS / 6);
     private static final double GRIP = 0.6;
+    /* How far into each other two bodies rest, as the solver lets them be. */
+    private static final double LETS_BE = 0.005;
 
     @Test
     void solve_stopsABodyFallingOntoTheGround() {
@@ -84,7 +86,8 @@ class ContactSolverTest {
         body.velocity().set(0, -20, 0);
         final Landing landing = new Landing();
         landing.step(body);
-        assertEquals(-0.4 / STEP, body.velocity().y, 1.0e-3, "it closes the gap and no more, not bouncing yet");
+        assertEquals(-(0.4 + LETS_BE) / STEP, body.velocity().y, 1.0e-3,
+                "it closes the gap to the depth a contact lets be and no more, not bouncing yet");
         body.drift(CUBE, STEP);
         landing.step(body);
         assertTrue(body.velocity().y > 0.15 * 20, "touching, it bounces as fast as it came: " + body.velocity());
@@ -174,6 +177,51 @@ class ContactSolverTest {
         stack.assertSquare();
     }
 
+    @Test
+    void solve_startsTwoPointsKnownAlikeFromWhatTheyGaveOnce() {
+        final RigidBody body = new RigidBody();
+        body.position().set(0, 0.5 - LETS_BE, 0);
+        final RigidBody ground = new RigidBody();
+        ground.fixed();
+        final ContactSolver solver = new ContactSolver();
+        final Vector3d up = new Vector3d(0, 1, 0);
+        double started = 0;
+        for (int i = 0; i < 20; i++) {
+            body.prepare(MASS, CUBE);
+            body.accelerate(new Vector3d(0, -9.81 * MASS, 0), new Vector3d(), MASS, CUBE, STEP);
+            solver.clear();
+            // The same point twice, known alike, as two corners of a face turned a hair on another may be.
+            for (int twice = 0; twice < 2; twice++) {
+                solver.add(body, ground, new Vector3d(0, -LETS_BE, 0), up, -LETS_BE, GRIP, 1, 1);
+            }
+            solver.ready(STEP, ContactSolver.ITERATIONS, 1.0);
+            solver.warm();
+            started = body.velocity().y;
+            solver.iterate(ContactSolver.ITERATIONS);
+            solver.end();
+            body.drift(CUBE, STEP);
+        }
+        assertEquals(0, started, 1.0e-6, "started from what both gave, once, it is held as it rests");
+    }
+
+    @Test
+    void solve_rightsAStackLeaningWithinTheDepthItLetsBe() {
+        final Stack stack = new Stack(1);
+        for (int i = 0; i < Stack.SETTLED; i++) {
+            stack.step();
+        }
+        /*
+         * Each cube leaning a quarter of a degree more than the one below, every joint touching at both its edges and
+         * no deeper than a contact lets be: as a stack shaken by its landing comes to rest.
+         */
+        stack.lean(0.25);
+        for (int i = 0; i < Stack.SETTLED; i++) {
+            stack.step();
+        }
+        assertTrue(stack.mostLean() < 0.1, "the stack rights itself: its top leans " + stack.mostLean() + " degrees");
+        stack.assertSquare();
+    }
+
     /* Steps a falling cube against the ground, a wide fixed box whose top is at nought, as the world's is held. */
     private static void run(final RigidBody body, final Vector3d gravity, final double grip, final int steps) {
         final RigidBody ground = new RigidBody();
@@ -221,6 +269,7 @@ class ContactSolverTest {
         private static final int MOST_PASSES = 40;
         private static final int PASSES_PER_CUBE = 4;
         private static final long FLOOR_GROUP = 100;
+        private static final double LEANING_INTO = 0.0025;
 
         private final RigidBody[] cubes = new RigidBody[CUBES];
         private final RigidBody ground = new RigidBody();
@@ -268,6 +317,29 @@ class ContactSolverTest {
             for (int i = 1; i < CUBES; i++) {
                 cubes[i].position().y -= depth * i;
             }
+        }
+
+        /*
+         * Leans each cube, still, {@code degrees} more than the one below, each turned about its own centre and two and
+         * a half millimetres into the one below: both edges of each joint within the depth a contact lets be.
+         */
+        private void lean(final double degrees) {
+            for (int i = 0; i < CUBES; i++) {
+                cubes[i].orientation().identity().rotateZ(Math.toRadians(degrees * (i + 1)));
+                cubes[i].position().set(0, 0.5 - LEANING_INTO + i * (1 - LEANING_INTO), 0);
+                cubes[i].velocity().zero();
+                cubes[i].spin().zero();
+            }
+        }
+
+        /* The most any cube leans from upright, in degrees. */
+        private double mostLean() {
+            double most = 0;
+            for (final RigidBody cube : cubes) {
+                final Vector3d up = cube.orientation().transform(new Vector3d(0, 1, 0));
+                most = Math.max(most, Math.toDegrees(Math.acos(Math.min(1, up.y))));
+            }
+            return most;
         }
 
         private double topUp() {

@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.core;
 import dev.jstech.core.dimension.Wind;
 import dev.jstech.core.dimension.Winds;
 import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructureEvent;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureResult;
@@ -25,6 +26,8 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -34,15 +37,18 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.joml.Vector3d;
 
 /**
  * How steady the solver of moving structures is: a stack of five structures dropped one on another settles, falls
- * asleep and stays still; a great hull let down on the ground comes to rest flat without trembling and sleeps on; a
- * body flying at a wall, fast or very fast, stops at it and never goes through; and a cart on its wheels, set going,
- * rolls on where a sled set going as fast slides to a stop. Each arena's air is still, so no wind moves what rests.
+ * asleep and stays still; a stack of twelve set down at rest stands, sleeps and hears no blow; stacks falling on
+ * themselves never sink into themselves as each lands, whichever of two meeting works their meeting; a great hull
+ * let down on the ground comes to rest flat without trembling and sleeps on; a body flying at a wall, fast or very
+ * fast, stops at it and never goes through; and a cart on its wheels, set going, rolls on where a sled set going as
+ * fast slides to a stop. Each arena's air is still, so no wind moves what rests.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -73,6 +79,19 @@ public final class MovingStructureSolverGameTests {
     private static final int LATELY = 3;
     /* How fast the top going sideways is told, in metres a second. */
     private static final double ASIDE = 0.5;
+    /* How many crates the tall stack set down at rest stands. */
+    private static final int TALL_STACKED = 12;
+    /*
+     * The landing test, in its batch of its own: four stacks of three, far apart, so that in some the one standing
+     * still and not the one falling onto it works their meeting; watched while they fall and settle; how deep one may
+     * sink into the one below, a contact's own few millimetres with room to spare.
+     */
+    private static final String LANDING_BATCH = "jscore_moving_solver_landing";
+    private static final int LANDING_STACKS = 4;
+    private static final int LANDING_STACKED = 3;
+    private static final int LANDING_APART = 11;
+    private static final int LANDING_WATCHED = 200;
+    private static final double SUNK_AT_MOST = 0.02;
     /* The wall the fast bodies fly at: its west face, in the arena's places. */
     private static final int WALL = 40;
     /*
@@ -147,6 +166,81 @@ public final class MovingStructureSolverGameTests {
                 .thenExecute(() -> {
                     stack.forEach(MovingStructures::takeAway);
                     SHELTERED.remove(sheltered);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A tall stack set down touching, at rest from the first, square on its four corners each, held up from the lowest
+     * to the highest and back each pass, its contacts read before any starts from its push of the step before: it
+     * stands as it was set and falls asleep, and none of it reads the stack closing as a blow.
+     */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 300)
+    public static void stack_aTallStackSetDownAtRestSleepsAndHearsNoBlow(final GameTestHelper helper) {
+        final AABB sheltered = shelter(helper);
+        final List<MovingStructure> stack = new ArrayList<>();
+        for (int i = 0; i < TALL_STACKED; i++) {
+            stack.add(made(helper, List.of(new BlockPos(5, FLOOR + i, 5)), Blocks.OAK_PLANKS));
+        }
+        final List<String> heard = new CopyOnWriteArrayList<>();
+        final Consumer<MovingStructureEvent.Collision> ear = event -> {
+            if (stack.contains(event.structure())) {
+                heard.add(String.format(Locale.ROOT, "t%d %.2f m/s at %.1f", helper.getTick(), event.speed(),
+                        event.at().y - y(helper, FLOOR)));
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(MovingStructureEvent.Collision.class, ear);
+        stack.forEach(structure -> structure.move(PhysicsMotion.AT_REST));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(stack.stream().allMatch(MovingStructureSolverGameTests::asleep),
+                        "the stack falls asleep: " + boxes(stack)))
+                .thenExecute(() -> {
+                    NeoForge.EVENT_BUS.unregister(ear);
+                    stack.forEach(MovingStructures::takeAway);
+                    SHELTERED.remove(sheltered);
+                    helper.assertTrue(heard.isEmpty(), "set down at rest, no blow is heard: " + heard);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Each of a stack falling onto the one below, landed just before it: which of two meeting works their meeting goes
+     * by their ids, so in some stacks it is the one standing still, which finds the one falling where it stood as the
+     * tick began. Met however far it came within the tick, it never sinks into the one below.
+     */
+    @GameTest(template = WIDE, batch = LANDING_BATCH, timeoutTicks = 400)
+    public static void landing_aStackFallingOnItselfNeverSinksIntoItself(final GameTestHelper helper) {
+        final AABB sheltered = shelter(helper);
+        final List<List<MovingStructure>> stacks = new ArrayList<>();
+        for (int column = 0; column < LANDING_STACKS; column++) {
+            final List<MovingStructure> stack = new ArrayList<>();
+            for (int i = 0; i < LANDING_STACKED; i++) {
+                stack.add(made(helper, List.of(new BlockPos(5 + column * LANDING_APART, FLOOR + 2 * i, 5)),
+                        Blocks.OAK_PLANKS));
+            }
+            stacks.add(stack);
+        }
+        final double[] deepest = new double[1];
+        final String[] where = {""};
+        helper.startSequence()
+                .thenExecute(() -> stacks.forEach(stack -> stack.forEach(structure -> structure.move(
+                        PhysicsMotion.AT_REST))))
+                .thenExecuteFor(LANDING_WATCHED, () -> {
+                    for (final List<MovingStructure> stack : stacks) {
+                        for (int i = 1; i < stack.size(); i++) {
+                            final double sunk = stack.get(i - 1).worldBox().maxY - stack.get(i).worldBox().minY;
+                            if (sunk > deepest[0]) {
+                                deepest[0] = sunk;
+                                where[0] = "t" + helper.getTick() + " " + boxes(stack);
+                            }
+                        }
+                    }
+                })
+                .thenExecute(() -> {
+                    stacks.forEach(stack -> stack.forEach(MovingStructures::takeAway));
+                    SHELTERED.remove(sheltered);
+                    helper.assertTrue(deepest[0] < SUNK_AT_MOST, "none sinks into the one below as it lands: "
+                            + deepest[0] + " at " + where[0]);
                 })
                 .thenSucceed();
     }
@@ -336,7 +430,9 @@ public final class MovingStructureSolverGameTests {
         final StringBuilder said = new StringBuilder();
         for (final MovingStructure structure : structures) {
             final AABB box = structure.worldBox();
-            said.append(String.format(Locale.ROOT, "[%.3f %.3f %.3f]", box.minX, box.minY, box.minZ));
+            // How tall its box stands tells how far it leans: a block upright is one high.
+            said.append(String.format(Locale.ROOT, "[%.3f %.3f %.3f tall %.3f]", box.minX, box.minY, box.minZ,
+                    box.getYsize()));
         }
         return said.toString();
     }

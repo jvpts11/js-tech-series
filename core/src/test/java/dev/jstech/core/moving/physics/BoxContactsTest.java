@@ -78,6 +78,22 @@ class BoxContactsTest {
     }
 
     @Test
+    void collide_aCubeTurnedAHairOnAnotherOfItsSizeMeetsAtItsFourCorners() {
+        /*
+         * Turned a tenth of a degree and a hair aside: its edges cross the sides of the face below it, at its corners
+         * and along them.
+         */
+        final OrientedBox hair = turned(new Vector3d(0.0005, 1, 0), new Vector3d(0, 1, 0), 0.002);
+        final List<Found> found = new ArrayList<>();
+        new BoxContacts().collide(hair, cube(0, 0, 0), 0.1, sink(found));
+        assertEquals(4, found.size(), "at its four corners, none cut in two or along an edge: " + found);
+        for (final Found each : found) {
+            assertEquals(0.5, Math.abs(each.at.x), 0.01, "at a corner: " + each.at);
+            assertEquals(0.5, Math.abs(each.at.z), 0.01, "at a corner: " + each.at);
+        }
+    }
+
+    @Test
     void collide_aCubeHangingOverTheEdgeMeetsAllOverTheFaceItShares() {
         final List<Found> found = new ArrayList<>();
         new BoxContacts().collide(cube(0.7, 1, 0.6), cube(0, 0, 0), 0.1, sink(found));

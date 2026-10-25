@@ -151,9 +151,17 @@ final class StructureContacts {
         return true;
     }
 
-    /** Readies the contacts found for a step of {@code seconds}: how many times they are to be worked. */
-    int begin(final double seconds, final double settles) {
-        return solver.begin(seconds, ContactSolver.ITERATIONS, settles);
+    /**
+     * Readies the contacts found for a step of {@code seconds}, none started yet from its push of the step before:
+     * how many times they are to be worked.
+     */
+    int ready(final double seconds, final double settles) {
+        return solver.ready(seconds, ContactSolver.ITERATIONS, settles);
+    }
+
+    /** Starts each contact readied from its push of the step before. */
+    void warm() {
+        solver.warm();
     }
 
     /** Works the contacts {@code times} times. */
@@ -353,7 +361,13 @@ final class StructureContacts {
                             final RigidBody body, final AABB box, final double margin, final double seconds,
                             final PhysicsIsland island) {
         final StructurePhysics mine = island.member(structure);
-        for (final IStructureBody near : MovingStructures.near(level, box.inflate(island.widest(seconds)))) {
+        /*
+         * The structures near are found where they stood as the tick began, and those worked with it have gone on
+         * since: looked for as much further, one closing on it a step at a time is met however far it came, not missed
+         * until it is already inside.
+         */
+        final AABB looked = box.inflate(island.widest(seconds) + island.goneMost());
+        for (final IStructureBody near : MovingStructures.near(level, looked)) {
             if (near == structure || !near.ready() || !(near instanceof MovingStructure them)) {
                 continue;
             }

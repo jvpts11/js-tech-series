@@ -194,14 +194,17 @@ the air before it. It rests still on many points, each contact starting from the
 great hull on the ground holds still from the first; it slides as the blocks' slipperiness lets it, ice barely, and
 bounces a little from a hard blow, only as it meets, never while it rests. A structure that sank into another, as one
 landing on a stack may, is moved out of it over a few steps, never given a speed to come out, so a stack pushed apart
-does not throw its top. Another structure moving by its physics is pushed back as hard as it pushes; one moved by a
-motion carries what rests on it, a crate on a lift. A blow harder than a block holds, by its blast strength
-(`jscore:blast_strength`), breaks it, of the world or of the structure: a heavy block falling on glass goes through it.
+does not throw its top. Every point where two of them meet rests as deep, a hair into the other, so a stack shaken by
+its landing settles upright rather than left leaning. Another structure moving by its physics is pushed back as hard
+as it pushes; one moved by a motion carries what rests on it, a crate on a lift. A blow harder than a block holds, by
+its blast strength (`jscore:blast_strength`), breaks it, of the world or of the structure: a heavy block falling on
+glass goes through it.
 
 *Added 2026-10-22.* Structures that may meet in a tick are worked together, as one, as joined ones are: a stack of
-crates is held up from the ground through every crate in it, with more passes the taller it is and its tick cut into
-shorter steps, so it settles still rather than sinking or swaying. They fall asleep together too, once each of them has
-been still a second, and none is left holding the rest up as the ground does.
+crates is held up from the ground through every crate in it, each pass going up it from the lowest and back down, with
+more passes the taller it is and its tick cut into shorter steps, so it settles still rather than sinking or swaying.
+They fall asleep together too, once each of them has been still a second, and none is left holding the rest up as the
+ground does.
 
 A tick is worked in as many steps as keep a structure from going more than half a block in one, and its stiffest
 hold, a liquid's surface, steady. A structure still for a second, its engines and burners idle, falls asleep and

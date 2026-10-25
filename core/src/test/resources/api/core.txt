@@ -10367,6 +10367,7 @@ stable 4
 12 dev.jstech.core.moving.physics.ContactSolver  Contact add(RigidBody, RigidBody, Vector3d, Vector3d, double, double, long, long)
 10 dev.jstech.core.moving.physics.ContactSolver  List<Contact> contacts()
 10 dev.jstech.core.moving.physics.ContactSolver  int begin(double, int, double)
+12 dev.jstech.core.moving.physics.ContactSolver  int ready(double, int, double)
 10 dev.jstech.core.moving.physics.ContactSolver  static final int ITERATIONS
 10 dev.jstech.core.moving.physics.ContactSolver  static long key(long, Vector3d)
 10 dev.jstech.core.moving.physics.ContactSolver  void clear()
@@ -10378,6 +10379,7 @@ stable 4
 10 dev.jstech.core.moving.physics.ContactSolver  void round(int)
 10 dev.jstech.core.moving.physics.ContactSolver  void solve(double, int)
 10 dev.jstech.core.moving.physics.ContactSolver  void solve(double, int, double)
+12 dev.jstech.core.moving.physics.ContactSolver  void warm()
 10 dev.jstech.core.moving.physics.ContactSolver.Contact  type static final class
 10 dev.jstech.core.moving.physics.ContactSolver.Contact  RigidBody a()
 10 dev.jstech.core.moving.physics.ContactSolver.Contact  RigidBody b()

@@ -72,6 +72,7 @@ public final class StructurePhysics {
     private final Vector3d startPosition = new Vector3d();
     private final Quaterniond startTurn = new Quaterniond();
     private final Quaterniond turn = new Quaterniond();
+    private final Quaterniond turnedSince = new Quaterniond();
     /* Where it stood when it last began to be still. */
     private final Vector3d anchor = new Vector3d();
     private final Quaterniond anchorTurn = new Quaterniond();
@@ -594,18 +595,33 @@ public final class StructurePhysics {
         return true;
     }
 
+    /* How far any point of it has gone since its tick began: its centre's way, and its turn at its farthest point. */
+    double goneThisTick() {
+        turnedSince.set(startTurn).conjugate().mul(body.orientation());
+        return body.position().distance(startPosition)
+                + 2 * Math.acos(Math.min(1, Math.abs(turnedSince.w))) * reach();
+    }
+
     /* How far ahead of time it looks for what it meets over a step of {@code seconds}: as far as it may go then. */
     double margin(final double seconds) {
         return (body.velocity().length() + body.spin().length() * reach()) * seconds + MARGIN;
     }
 
-    /* Readies its contacts for a step, giving how many times they are to be worked. */
-    int beginContacts(final double seconds, final double settles) {
-        int times = own.contacts.begin(seconds, settles);
+    /* Readies its contacts for a step, none started yet from its last push, giving how many times they are worked. */
+    int readyContacts(final double seconds, final double settles) {
+        int times = own.contacts.ready(seconds, settles);
         for (final Piece piece : held.values()) {
-            times = Math.max(times, piece.contacts.begin(seconds, settles));
+            times = Math.max(times, piece.contacts.ready(seconds, settles));
         }
         return times;
+    }
+
+    /* Starts its contacts readied from their pushes of the step before. */
+    void warmContacts() {
+        own.contacts.warm();
+        for (final Piece piece : held.values()) {
+            piece.contacts.warm();
+        }
     }
 
     /* Works its contacts {@code times} times. */
