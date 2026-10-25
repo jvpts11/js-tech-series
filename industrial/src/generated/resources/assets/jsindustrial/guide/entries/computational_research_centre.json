@@ -59,6 +59,10 @@
       "text": "jsindustrial.guide.computational_research_centre.text2"
     },
     {
+      "type": "text",
+      "text": "jsindustrial.guide.computational_research_centre.text3"
+    },
+    {
       "type": "break",
       "to": "column"
     },

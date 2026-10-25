@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multiblock;
 
+import dev.jstech.core.multiblock.hands.StructureHands;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 
@@ -25,4 +26,9 @@ public interface IStructureTerminal {
 
     /** Whether its formed structure's blocks have merged into its model. */
     boolean merged();
+
+    /** What of its formed structure's model is worked by hand, and how its doors stand; none unless it says. */
+    default Optional<StructureHands> hands() {
+        return Optional.empty();
+    }
 }

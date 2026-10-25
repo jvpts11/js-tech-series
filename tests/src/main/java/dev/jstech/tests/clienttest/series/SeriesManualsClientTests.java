@@ -16,6 +16,7 @@ import dev.jstech.core.guide.GuideBook;
 import dev.jstech.industrial.guide.IndustrialGuide;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 
 /**
@@ -201,9 +202,15 @@ public final class SeriesManualsClientTests {
             ctx.then(SETTLE, () -> manual().goToPage(Math.min(page, manual().book().pages().size() - 1)))
                     .thenScreenshot(2, "series_drawings_sheet_" + page);
         }
-        ctx.thenAssert(0, () -> manual().book().pages().stream().filter(page -> !page.chapter().isEmpty())
-                        .allMatch(page -> page.sheets() <= MOST_SHEETS_A_DRAWING && !page.pieces().isEmpty()),
-                        "every drawing fits the sheets it was written for, and no sheet is left empty")
+        ctx.then(0, () -> {
+                    final List<String> wrong = manual().book().pages().stream()
+                            .filter(page -> !page.chapter().isEmpty())
+                            .filter(page -> page.sheets() > MOST_SHEETS_A_DRAWING || page.pieces().isEmpty())
+                            .map(page -> page.title() + " (" + page.folio() + ") on " + page.sheets() + " sheets")
+                            .toList();
+                    ctx.assertTrue(wrong.isEmpty(), "every drawing fits the sheets it was written for, and no sheet"
+                            + " is left empty: " + wrong);
+                })
                 .then(0, SeriesManualsClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

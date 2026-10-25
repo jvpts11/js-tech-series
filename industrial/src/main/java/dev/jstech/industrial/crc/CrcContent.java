@@ -21,6 +21,9 @@ import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.multiblock.MultiblockPorts;
+import dev.jstech.core.multiblock.hands.Hinge;
+import dev.jstech.core.multiblock.hands.IHandControl;
+import dev.jstech.core.multiblock.hands.InteractiveModel;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.multiblock.CasingMaterial;
 import dev.jstech.industrial.multiblock.IndustrialMultiblock;
@@ -47,6 +50,14 @@ public final class CrcContent {
     private static final String CASING_TEXTURE = "block/crc/crc_casing";
     /* The formed model's register lamps, which blink while it works. */
     private static final int LAMPS = 12;
+    /*
+     * The hinges of the frames' glazed doors, in the model's pixels: on the door's outer face, at its end toward the
+     * console, the door swinging out of the side a quarter turn; and how many places each frame's gate has.
+     */
+    private static final float HINGE_X = -23;
+    private static final float[] HINGE_Z = {92, 44, -3.5F};
+    private static final float DOOR_TURN = -90;
+    private static final int PLACES_A_FRAME = 9;
 
     public static final BlockEntry<Block> CASING = structural("crc_casing").named("CRC Casing").register();
     public static final BlockEntry<Block> GATE = structural("crc_gate").named("CRC Gate").register();
@@ -98,6 +109,19 @@ public final class CrcContent {
             .texture("textures/model/computational_research_centre.png")
             .glow(IntStream.range(0, LAMPS).mapToObj(k -> "lamp_" + k).toArray(String[]::new))
             .register();
+    /**
+     * What of the formed model a player works by hand: each frame's glazed door, swinging out on its hinge; the nine
+     * places of the gate behind it, each the slot of the terminal's inventory it shows, reached once the door is open;
+     * and the desk's green and red buttons, the screen's switch.
+     */
+    public static final InteractiveModel HANDS = InteractiveModel.of(MODEL)
+            .door("door_0", Hinge.vertical(HINGE_X, HINGE_Z[0]).turns(DOOR_TURN))
+            .door("door_1", Hinge.vertical(HINGE_X, HINGE_Z[1]).turns(DOOR_TURN))
+            .door("door_2", Hinge.vertical(HINGE_X, HINGE_Z[2]).turns(DOOR_TURN))
+            .places(CrcBlockEntity.PLACES, place -> "place_" + place, place -> place,
+                    place -> "door_" + place / PLACES_A_FRAME)
+            .control("button_start", IHandControl.START)
+            .control("button_stop", IHandControl.STOP);
 
     private CrcContent() {
     }

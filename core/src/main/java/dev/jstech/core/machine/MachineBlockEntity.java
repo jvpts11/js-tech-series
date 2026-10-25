@@ -52,6 +52,7 @@ import dev.jstech.core.multiblock.IRedstonePortHost;
 import dev.jstech.core.multiblock.IStructureTerminal;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.multiblock.hands.StructureHands;
 import dev.jstech.core.physics.Physics;
 import dev.jstech.core.physics.PhysicsMath;
 import dev.jstech.core.signal.ISignalOutput;
@@ -556,6 +557,11 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     }
 
     @Override
+    public Optional<StructureHands> hands() {
+        return structure == null ? Optional.empty() : structure.hands();
+    }
+
+    @Override
     public List<MachineParameter> parameters() {
         if (parameters == null) {
             final List<MachineParameter> declared = new ArrayList<>();
@@ -870,6 +876,10 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         structure = Objects.requireNonNull(declared, "declared");
         final PartField field = fields().part("Structure", declared).save().toClient();
         declared.on(this, field::changed);
+        declared.hands().ifPresent(hands -> {
+            final PartField doors = fields().part("Hands", hands).save().toClient();
+            hands.on(doors::changed);
+        });
         // Broken, its terminal gives back the blocks merged into its model at once, not when they next look for it.
         fields().whenBroken((level, at) -> declared.broken(level));
     }

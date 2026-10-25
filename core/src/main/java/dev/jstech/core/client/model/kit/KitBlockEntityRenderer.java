@@ -9,11 +9,14 @@ package dev.jstech.core.client.model.kit;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import dev.jstech.core.client.multiblock.HandsAim;
+import dev.jstech.core.client.multiblock.HandsDriver;
 import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.multiblock.IStructureTerminal;
 import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.hands.StructureHands;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -131,8 +134,8 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         final Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         if (camera.distanceToSqr(Vec3.atCenterOf(pos)) <= this.animateDistance * this.animateDistance) {
             this.driver.drive(entity, instance.animator(), seconds);
-            instance.animate(KitClock.frame(), seconds, driver(), entity, listener(entity, instance, pos, facing,
-                    standing));
+            instance.animate(KitClock.frame(), seconds, driven(entity, standing, partialTick), entity,
+                    listener(entity, instance, pos, facing, standing));
         }
         poses.pushPose();
         if (standing.isPresent()) {
@@ -260,6 +263,23 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
     @SuppressWarnings("unchecked")
     private IKitDriver<T> driver() {
         return (IKitDriver<T>) this.driver;
+    }
+
+    /*
+     * Its own driver, and, for a formed structure whose model is worked by hand, its doors turned on their hinges as
+     * far as they are open this frame; such a structure drawn is one a player may aim at.
+     */
+    private IKitDriver<T> driven(final T entity, final Optional<Orientation> standing, final float partialTick) {
+        if (standing.isEmpty() || !(entity instanceof IStructureTerminal terminal) || entity.getLevel() == null) {
+            return driver();
+        }
+        final Optional<StructureHands> hands = terminal.hands();
+        if (hands.isEmpty()) {
+            return driver();
+        }
+        HandsAim.drawn(entity);
+        return new HandsDriver<>(driver(), hands.get().model().geometry(),
+                hands.get().openness(entity.getLevel().getGameTime() + partialTick));
     }
 
     private IAnimationListener listener(final T entity, final KitInstance instance, final BlockPos pos,

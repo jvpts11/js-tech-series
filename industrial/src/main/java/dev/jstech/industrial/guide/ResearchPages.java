@@ -64,6 +64,8 @@ final class ResearchPages {
                         + " draws becomes heat.")
                 .paragraph("Heat Sink: sheds 5 kW to the air. Liquid Cooler: up to 15 kW into the water flowing from"
                         + " the Coolant Inlet to the Outlet. Heat Pipe Cooler: up to 25 kW out through the Heat Port.")
+                .paragraph("By hand: click a cabinet's glass door open, then a place: a part in hand goes in, an"
+                        + " empty hand takes it out. The desk's green button turns it on, the red one off.")
                 .nextColumn()
                 .whatCanGoWrong("It does not form.",
                         "A block is wrong, or the entries are not as it takes them: one Power Entry, at most one of"

@@ -232,6 +232,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Sources spread over their blocks: J's Core's API stays at version 12, all experimental.
   `Radiation.transmission(level, from, to, kind, source)` lets through the blocks `source` names, the source's own,
   so a source read from the middle of its blocks is not shielded by them.
+- (Core) Formed multiblocks worked by hand: J's Core's API stays at version 12, and `dev.jstech.core.multiblock.hands`
+  joins the promise, experimental. An `InteractiveModel` names the doors, places and controls of a formed model by
+  its bones, `MachineStructure.handsOn` gives it to a structure, and `HandGeometry` says, free of the game, which part
+  a line of sight meets, the box it is outlined by and how the model stands round its terminal.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -735,6 +739,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   controller, the ports and every block with a block entity stay, so pipes and cables still meet them. Forming puffs
   where each block merged and can play a sound and an animation; breaking any block gives every one back, and a part
   whose controller is gone turns back by itself. A damaged machine's cracks show across its whole structure.
+- (Core) Formed multiblocks worked by hand: a formed model's doors, places and buttons are worked in the world,
+  without its screen. What the crosshair is on is outlined by one box in place of the block; a click opens or shuts a
+  door, drawn swinging on its hinge, sets the part in hand in a place behind it, or takes out what the place holds
+  with an empty hand, and presses a button. A place is reached only through its door's doorway once the door is
+  wholly open, never through the walls. The server works a part only for whoever may open the screen and whose own
+  line of sight meets it; whether each door is open is saved with the machine.
 - (Core) Turning parts: shafts, gears and pulleys drawn turning at their real speed by the Core's models, the angle
   following the speed frame by frame, meshed gears half a tooth apart so their teeth meet, every part of one model
   sharing its shape; a belt or chain runs between the pulleys it joins as fast as their rims. A part drawn turning
@@ -1580,6 +1590,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   from, how far the computing is and how long the rest takes, and researches it now or queues it; under the chart
   are what the group works now, its pace and the queue. Group draws the CRCs on their cable and tables what each
   computes, how much its team counts and each team's pace. Sides, Redstone and Protection are every machine's.
+- (Industrial) Computational Research Centre by hand: formed, each cabinet's glass door opens with a click, swinging
+  out a quarter turn, and each of the nine places behind it takes the part in hand or gives back what it holds, as its
+  screen's places do; the green button on its desk turns it on and the red one off.
 - (Industrial) The contract of its machines: each says its tier, the class of J's Energy of its port and its power,
   and has the upgrade slots of its tier, two on a machine of the T1, three on the T2 and T3, four from the T4. What
   its upgrades gain adds up and what they save multiplies, so two upgrades that each make it half again as fast make

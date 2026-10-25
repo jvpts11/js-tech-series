@@ -7395,6 +7395,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  MachineStatus status()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineStructure structure()
 10 dev.jstech.core.machine.MachineBlockEntity  Optional<Orientation> formedOrientation()
+12 dev.jstech.core.machine.MachineBlockEntity  Optional<StructureHands> hands()
 10 dev.jstech.core.machine.MachineBlockEntity  Ownership ownership()
 10 dev.jstech.core.machine.MachineBlockEntity  UpgradeEffect upgrades()
 10 dev.jstech.core.machine.MachineBlockEntity  boolean asleep()
@@ -8021,11 +8022,13 @@ stable 4
 10 dev.jstech.core.machine.MachineStructure  List<PortAt> ports()
 10 dev.jstech.core.machine.MachineStructure  MachineStructure formingAnimation(String)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure formingSound(SoundKey)
+12 dev.jstech.core.machine.MachineStructure  MachineStructure handsOn(InteractiveModel)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure merges()
 10 dev.jstech.core.machine.MachineStructure  MachineStructure parallel(ToIntFunction<ShapeMatch.Formed>)
 10 dev.jstech.core.machine.MachineStructure  Optional<Orientation> orientation()
 10 dev.jstech.core.machine.MachineStructure  Optional<ShapeMatch.Failure> failure()
 10 dev.jstech.core.machine.MachineStructure  Optional<ShapeMatch.Formed> structure()
+12 dev.jstech.core.machine.MachineStructure  Optional<StructureHands> hands()
 10 dev.jstech.core.machine.MachineStructure  boolean formed()
 10 dev.jstech.core.machine.MachineStructure  boolean holds(long)
 10 dev.jstech.core.machine.MachineStructure  boolean holdsPlace(BlockPos)
@@ -10630,6 +10633,7 @@ stable 4
 12 dev.jstech.core.multiblock.IStructureTerminal  abstract Optional<Orientation> formedOrientation()
 12 dev.jstech.core.multiblock.IStructureTerminal  abstract boolean holdsPlace(BlockPos)
 12 dev.jstech.core.multiblock.IStructureTerminal  abstract boolean merged()
+12 dev.jstech.core.multiblock.IStructureTerminal  default Optional<StructureHands> hands()
 10 dev.jstech.core.multiblock.IStructureWatcher  type interface
 10 dev.jstech.core.multiblock.IStructureWatcher  abstract boolean holds(long)
 10 dev.jstech.core.multiblock.IStructureWatcher  abstract void changed()
@@ -11004,6 +11008,67 @@ stable 4
 10 dev.jstech.core.multiblock.WallsShape  WallsShape limit(String, int, int)
 10 dev.jstech.core.multiblock.WallsShape  int reach()
 10 dev.jstech.core.multiblock.WallsShape  static WallsShape of(Place, Place, InsideRule, Limit, Limit)
+12 dev.jstech.core.multiblock.hands.HandGeometry  type final class
+12 dev.jstech.core.multiblock.hands.HandGeometry  Box outline(int, float[])
+12 dev.jstech.core.multiblock.hands.HandGeometry  IHandPart.Door door(int)
+12 dev.jstech.core.multiblock.hands.HandGeometry  List<Box> boxes(int, float[])
+12 dev.jstech.core.multiblock.hands.HandGeometry  List<IHandPart> parts()
+12 dev.jstech.core.multiblock.hands.HandGeometry  Optional<Aim> aim(Vector3fc, Vector3fc, float[])
+12 dev.jstech.core.multiblock.hands.HandGeometry  boolean meets(int, Vector3fc, Vector3fc, float[], float)
+12 dev.jstech.core.multiblock.hands.HandGeometry  boolean reached(int, float[])
+12 dev.jstech.core.multiblock.hands.HandGeometry  int behind(int)
+12 dev.jstech.core.multiblock.hands.HandGeometry  int doorNumber(String)
+12 dev.jstech.core.multiblock.hands.HandGeometry  int doors()
+12 dev.jstech.core.multiblock.hands.HandGeometry  new(ModelData, List<IHandPart>)
+12 dev.jstech.core.multiblock.hands.HandGeometry  static Matrix4f placed(Orientation, float, Matrix4f)
+12 dev.jstech.core.multiblock.hands.HandGeometry  void poseDoors(ModelPose, float[])
+12 dev.jstech.core.multiblock.hands.HandGeometry.Aim  type record(int part, float along)
+12 dev.jstech.core.multiblock.hands.HandGeometry.Box  type record(Matrix4f toModel, Vector3f min, Vector3f max)
+12 dev.jstech.core.multiblock.hands.HandGeometry.Box  List<Vector3f> corners()
+12 dev.jstech.core.multiblock.hands.HandGeometry.Box  float along(Vector3fc, Vector3fc, float)
+12 dev.jstech.core.multiblock.hands.HandUse  type final class
+12 dev.jstech.core.multiblock.hands.HandUse  static boolean use(ServerPlayer, ServerLevel, BlockPos, int)
+12 dev.jstech.core.multiblock.hands.HandUsePayload  type record(BlockPos terminal, int part) implements CustomPacketPayload
+12 dev.jstech.core.multiblock.hands.HandUsePayload  Type<? extends CustomPacketPayload> type()
+12 dev.jstech.core.multiblock.hands.HandUsePayload  static final StreamCodec<RegistryFriendlyByteBuf, HandUsePayload> STREAM_CODEC
+12 dev.jstech.core.multiblock.hands.HandUsePayload  static final Type<HandUsePayload> TYPE
+12 dev.jstech.core.multiblock.hands.Hinge  type record(float x, float z, float degrees, int ticks)
+12 dev.jstech.core.multiblock.hands.Hinge  Hinge inTicks(int)
+12 dev.jstech.core.multiblock.hands.Hinge  Hinge turns(float)
+12 dev.jstech.core.multiblock.hands.Hinge  static Hinge vertical(float, float)
+12 dev.jstech.core.multiblock.hands.Hinge  static final float QUARTER
+12 dev.jstech.core.multiblock.hands.Hinge  static final int TICKS
+12 dev.jstech.core.multiblock.hands.IHandControl  type interface
+12 dev.jstech.core.multiblock.hands.IHandControl  abstract void press(MachineBlockEntity, ServerPlayer)
+12 dev.jstech.core.multiblock.hands.IHandControl  static final IHandControl START
+12 dev.jstech.core.multiblock.hands.IHandControl  static final IHandControl STOP
+12 dev.jstech.core.multiblock.hands.IHandPart  type sealed interface permits IHandPart.Door, IHandPart.Place, IHandPart.Control
+12 dev.jstech.core.multiblock.hands.IHandPart  abstract String bone()
+12 dev.jstech.core.multiblock.hands.IHandPart  default boolean owns(String)
+12 dev.jstech.core.multiblock.hands.IHandPart.Control  type record(String bone, int action) implements IHandPart
+12 dev.jstech.core.multiblock.hands.IHandPart.Door  type record(String bone, Hinge hinge) implements IHandPart
+12 dev.jstech.core.multiblock.hands.IHandPart.Place  type record(String bone, int slot, String door) implements IHandPart
+12 dev.jstech.core.multiblock.hands.InteractiveModel  type final class
+12 dev.jstech.core.multiblock.hands.InteractiveModel  DeclaredModel model()
+12 dev.jstech.core.multiblock.hands.InteractiveModel  HandGeometry geometry()
+12 dev.jstech.core.multiblock.hands.InteractiveModel  IHandControl action(int)
+12 dev.jstech.core.multiblock.hands.InteractiveModel  InteractiveModel control(String, IHandControl)
+12 dev.jstech.core.multiblock.hands.InteractiveModel  InteractiveModel door(String, Hinge)
+12 dev.jstech.core.multiblock.hands.InteractiveModel  InteractiveModel place(String, int, String)
+12 dev.jstech.core.multiblock.hands.InteractiveModel  InteractiveModel places(int, IntFunction<String>, IntUnaryOperator, IntFunction<String>)
+12 dev.jstech.core.multiblock.hands.InteractiveModel  List<IHandPart> parts()
+12 dev.jstech.core.multiblock.hands.InteractiveModel  static InteractiveModel of(DeclaredModel)
+12 dev.jstech.core.multiblock.hands.StructureHands  type final class implements IFieldPart
+12 dev.jstech.core.multiblock.hands.StructureHands  InteractiveModel model()
+12 dev.jstech.core.multiblock.hands.StructureHands  boolean open(int)
+12 dev.jstech.core.multiblock.hands.StructureHands  float[] openness(double)
+12 dev.jstech.core.multiblock.hands.StructureHands  new(InteractiveModel)
+12 dev.jstech.core.multiblock.hands.StructureHands  void load(CompoundTag, HolderLookup.Provider)
+12 dev.jstech.core.multiblock.hands.StructureHands  void on(Runnable)
+12 dev.jstech.core.multiblock.hands.StructureHands  void readClient(CompoundTag, HolderLookup.Provider)
+12 dev.jstech.core.multiblock.hands.StructureHands  void save(CompoundTag, HolderLookup.Provider)
+12 dev.jstech.core.multiblock.hands.StructureHands  void setOpen(int, boolean, long)
+12 dev.jstech.core.multiblock.hands.StructureHands  void writeClient(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.multipart.CoreParts  type final class
 10 dev.jstech.core.multipart.CoreParts  static final Registry<PartType<?>> REGISTRY
 10 dev.jstech.core.multipart.CoreParts  static final ResourceKey<Registry<PartType<?>>> KEY

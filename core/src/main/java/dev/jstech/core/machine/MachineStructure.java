@@ -27,6 +27,8 @@ import dev.jstech.core.multiblock.PatternMatcher;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.multiblock.RedstonePortBlockEntity;
 import dev.jstech.core.multiblock.ShapeMatch;
+import dev.jstech.core.multiblock.hands.InteractiveModel;
+import dev.jstech.core.multiblock.hands.StructureHands;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -75,6 +77,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     private boolean merges;
     private @Nullable SoundKey formingSound;
     private @Nullable String formingAnimation;
+    private @Nullable StructureHands hands;
     private @Nullable MachineBlockEntity machine;
     private @Nullable Runnable synced;
     private boolean formed;
@@ -185,6 +188,21 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     public MachineStructure formingAnimation(final String animation) {
         this.formingAnimation = Objects.requireNonNull(animation, "animation");
         return this;
+    }
+
+    /**
+     * Once formed and merged, its model is worked by hand as {@code model} declares: its doors open and shut, its
+     * places take and give what the terminal holds, its controls are pressed; whether each door is open is saved
+     * with the terminal and shown to the players who see it.
+     */
+    public MachineStructure handsOn(final InteractiveModel model) {
+        this.hands = new StructureHands(Objects.requireNonNull(model, "model"));
+        return this;
+    }
+
+    /** What of its formed model is worked by hand, and how its doors stand; none unless it says. */
+    public Optional<StructureHands> hands() {
+        return Optional.ofNullable(this.hands);
     }
 
     /** Whether its blocks merge into its model once it forms. */

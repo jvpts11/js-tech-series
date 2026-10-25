@@ -388,6 +388,46 @@ event.registerBlockEntityRenderer(MyContent.TURBINE_ENTITY.get(), context -> Kit
   across the whole model.
 - A structure is checked through its formed parts as through the blocks they were.
 
+### Worked by hand
+
+*Added 2026-10-25.*
+
+A formed model can have parts the player works in the world, without opening the screen: a glazed door that swings
+open, the places behind it where a part is set by hand, a green button that starts the machine. They are named by
+the model's bones:
+
+```java
+public static final InteractiveModel HANDS = InteractiveModel.of(MyContent.CABINET_MODEL)
+        .door("door_0", Hinge.vertical(-23, 92).turns(-90))         // swings out a quarter turn on its hinge
+        .places(9, place -> "place_" + place,                       // the bone of each place,
+                place -> place,                                     // the slot of the terminal it shows,
+                place -> "door_0")                                  // and the door it lies behind
+        .control("button_start", IHandControl.START)
+        .control("button_stop", IHandControl.STOP);
+
+// In the terminal's constructor:
+formsWith(MachineStructure.of(MyContent.CABINET_SHAPE).merges().handsOn(HANDS));
+```
+
+- **A part is its bone and every bone whose name starts with the bone's and an underscore**, so `place_0` is
+  `place_0_sink`, `place_0_cooler` and the rest: a place drawn by a bone for each thing it may hold is one part. A
+  part whose bones draw nothing, or a bone the model lacks, is refused when the model is first used.
+- **The player sees what they look at outlined**, by one box round the part, in place of the block's outline, and
+  works it with a use click. The click goes to the server, which works it only for a player who may open the
+  terminal's screen ([Ownership](OWNERSHIP.md)), is no spectator, and whose own line of sight meets the part.
+- **A door** opens or shuts with a click. Its hinge is a vertical line, given in the model's pixels as the model is
+  read (`x`, `z`), with the angle it opens to and how long it takes, a quarter turn in eight ticks unless
+  `turns` and `inTicks` say otherwise. Whether it is open is saved with the terminal and sent to everyone who sees
+  it, and it is drawn swinging.
+- **A place behind a door** is reached only once its door is wholly open, and only through its doorway, never
+  through the structure's walls. A click with something in hand sets one of it in the place's slot, if the slot is
+  empty and takes it; a click with an empty hand takes out what the slot holds. The slot is the terminal's inventory,
+  so the screen shows the same thing. A place behind no door (`place(bone, slot, null)`) is always reached.
+- **A control** does its action when clicked: `IHandControl.START` and `STOP` turn the machine on and off, as its
+  screen's switch does; any other is a lambda given the terminal and the player.
+- The model's places are worked out round the terminal, so they keep their precision however far from the world's
+  origin the structure stands.
+
 ## Ports
 
 *Added 2026-10-05.*
@@ -657,3 +697,8 @@ public final class CabinetBlock extends AbstractBigBlock {
   pattern's own id, or it does not parse (the log says why).
 - **Pipes do not reach the machine.** The part is not a port, its kind does not match (an item pipe on an energy
   port), `stamp` was not called after the match, or `MultiblockPorts.register` was not called for the part type.
+- **A part worked by hand is never outlined.** The structure is not formed and merged, the terminal's renderer is
+  not the Core's (it is what tells the game the structure is drawn), or the part lies deeper than a block and a half
+  behind the block the crosshair is on. A place behind a door is outlined only once the door is wholly open.
+- **The game refuses the model on its first use.** A part names a bone the model has not got, a bone that draws
+  nothing, or a place lies behind a door that is no door of the model: the error names which.

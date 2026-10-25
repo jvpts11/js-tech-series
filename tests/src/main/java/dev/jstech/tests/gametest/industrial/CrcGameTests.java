@@ -16,6 +16,10 @@ import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.ShapeMatch;
+import dev.jstech.core.multiblock.hands.HandGeometry;
+import dev.jstech.core.multiblock.hands.HandUse;
+import dev.jstech.core.multiblock.hands.IHandPart;
+import dev.jstech.core.multiblock.hands.StructureHands;
 import dev.jstech.core.progression.TeamProgress;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.team.Ownership;
@@ -39,15 +43,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -61,6 +68,8 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 /**
  * J's Industrial's Computational Research Centre, built in the world of its own blocks: it forms with exactly one
@@ -86,6 +95,15 @@ public final class CrcGameTests {
     /* Ticks a structure takes to check a change once it settles, and a margin, well under the CRC's second. */
     private static final int SEES_A_CHANGE = 8;
     private static final double CLOSE = 1e-6;
+    /*
+     * How far from a door and from a place a player stands to work it, in blocks, out from the side; how far in
+     * front of the desk and above its buttons; and how long a door takes to open, and a tick more.
+     */
+    private static final double DOOR_STEP = 2;
+    private static final double PLACE_STEP = 2.5;
+    private static final double BUTTON_STEP = 1.2;
+    private static final double BUTTON_RISE = 0.8;
+    private static final int DOOR_TICKS = 10;
 
     private CrcGameTests() {
     }
@@ -171,6 +189,53 @@ public final class CrcGameTests {
                         GameTestPlayers.leave(player);
                     }
                 })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = FORMS_WITHIN)
+    public static void hands_openADoorSetAPartInItsPlaceAndPressTheButtons(final GameTestHelper helper) {
+        final CrcBlockEntity crc = build(helper, TERMINAL, Map.of(cell(1, 0), CrcContent.POWER_ENTRY.get()));
+        final ServerPlayer[] player = new ServerPlayer[1];
+        final ItemStack sink = new ItemStack(CrcContent.HEAT_SINK.get());
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(crc.formed() && crc.merged(), "it forms and merges"))
+                .thenExecute(() -> {
+                    player[0] = GameTestPlayers.connected(helper, "crc-hands");
+                    player[0].setGameMode(GameType.SURVIVAL);
+                    online(player[0], () -> {
+                        final Vec3 door = middleOf(helper, crc, partOf("door_0"));
+                        final Vec3 out = toward(crc, -1, 0, 0);
+                        standLooking(player[0], door, out.scale(DOOR_STEP));
+                        player[0].setXRot(-90);
+                        helper.assertTrue(!HandUse.use(player[0], helper.getLevel(), helper.absolutePos(TERMINAL),
+                                partOf("door_0")), "looking up at the sky, the door is not worked");
+                        standLooking(player[0], door, out.scale(DOOR_STEP));
+                        helper.assertTrue(HandUse.use(player[0], helper.getLevel(), helper.absolutePos(TERMINAL),
+                                partOf("door_0")) && crc.hands().orElseThrow().open(0), "looked at, the door opens");
+                    });
+                })
+                .thenIdle(DOOR_TICKS)
+                .thenExecute(() -> online(player[0], () -> {
+                    final Vec3 place = middleOf(helper, crc, partOf("place_0"));
+                    standLooking(player[0], place, toward(crc, -1, 0, 0).scale(PLACE_STEP));
+                    player[0].setItemInHand(InteractionHand.MAIN_HAND, sink.copy());
+                    helper.assertTrue(HandUse.use(player[0], helper.getLevel(), helper.absolutePos(TERMINAL),
+                            partOf("place_0")) && crc.getInventory().getStackInSlot(0).is(CrcContent.HEAT_SINK.get())
+                            && player[0].getMainHandItem().isEmpty(), "a heat sink in hand is set in the place");
+                    helper.assertTrue(HandUse.use(player[0], helper.getLevel(), helper.absolutePos(TERMINAL),
+                            partOf("place_0")) && crc.getInventory().getStackInSlot(0).isEmpty()
+                            && player[0].getMainHandItem().is(CrcContent.HEAT_SINK.get()),
+                            "and an empty hand takes it out again");
+                    final Vec3 front = toward(crc, 0, 0, -1).scale(BUTTON_STEP).add(0, BUTTON_RISE, 0);
+                    crc.control().setOn(false);
+                    standLooking(player[0], middleOf(helper, crc, partOf("button_start")), front);
+                    helper.assertTrue(HandUse.use(player[0], helper.getLevel(), helper.absolutePos(TERMINAL),
+                            partOf("button_start")) && crc.control().on(), "the green button turns it on");
+                    standLooking(player[0], middleOf(helper, crc, partOf("button_stop")), front);
+                    helper.assertTrue(HandUse.use(player[0], helper.getLevel(), helper.absolutePos(TERMINAL),
+                            partOf("button_stop")) && !crc.control().on(), "and the red one off");
+                    GameTestPlayers.leave(player[0]);
+                }))
                 .thenSucceed();
     }
 
@@ -412,6 +477,62 @@ public final class CrcGameTests {
     /* A player with a name of its own, whom the server never sees join. */
     private static FakePlayer player(final GameTestHelper helper, final String name) {
         return FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.randomUUID(), name));
+    }
+
+    /* The part of the CRC's model of bone {@code bone}, by its place among the parts it is worked by. */
+    private static int partOf(final String bone) {
+        final List<IHandPart> parts = CrcContent.HANDS.parts();
+        for (int i = 0; i < parts.size(); i++) {
+            if (parts.get(i).bone().equals(bone)) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("no part " + bone);
+    }
+
+    /* Where the CRC's model is placed round its terminal, its pixels to blocks from the terminal's lowest corner. */
+    private static Matrix4f placed(final CrcBlockEntity crc) {
+        return HandGeometry.placed(crc.formedOrientation().orElseThrow(),
+                (float) CrcContent.MODEL.definition().detail().scale(), new Matrix4f());
+    }
+
+    /* The middle of part {@code part} in the world, its doors as they stand now. */
+    private static Vec3 middleOf(final GameTestHelper helper, final CrcBlockEntity crc, final int part) {
+        final StructureHands hands = crc.hands().orElseThrow();
+        final Matrix4f placed = placed(crc);
+        final Vector3f sum = new Vector3f();
+        int count = 0;
+        for (final HandGeometry.Box box : hands.model().geometry().boxes(part,
+                hands.openness(helper.getLevel().getGameTime()))) {
+            for (final Vector3f corner : box.corners()) {
+                sum.add(placed.transformPosition(corner));
+                count++;
+            }
+        }
+        return Vec3.atLowerCornerOf(helper.absolutePos(TERMINAL)).add(sum.x / count, sum.y / count, sum.z / count);
+    }
+
+    /* The way the model's way {@code (x, y, z)} runs in the world, of length 1. */
+    private static Vec3 toward(final CrcBlockEntity crc, final float x, final float y, final float z) {
+        final Vector3f way = placed(crc).transformDirection(new Vector3f(x, y, z)).normalize();
+        return new Vec3(way.x, way.y, way.z);
+    }
+
+    /* Stands {@code player} with their eyes {@code away} from {@code target}, looking at it. */
+    private static void standLooking(final ServerPlayer player, final Vec3 target, final Vec3 away) {
+        final Vec3 eye = target.add(away);
+        player.moveTo(eye.x, eye.y - player.getEyeHeight(), eye.z, 0, 0);
+        player.lookAt(EntityAnchorArgument.Anchor.EYES, target);
+    }
+
+    /* Takes a step with {@code player} in the world, taking them out of it when the step fails. */
+    private static void online(final ServerPlayer player, final Runnable step) {
+        try {
+            step.run();
+        } catch (final RuntimeException failed) {
+            GameTestPlayers.leave(player);
+            throw failed;
+        }
     }
 
     /* Builds a CRC facing north with its terminal at {@code terminal}, {@code entries} in its rear places. */

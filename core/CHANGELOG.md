@@ -229,6 +229,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Sources spread over their blocks: J's Core's API stays at version 12, all experimental.
   `Radiation.transmission(level, from, to, kind, source)` lets through the blocks `source` names, the source's own,
   so a source read from the middle of its blocks is not shielded by them.
+- Formed multiblocks worked by hand: J's Core's API stays at version 12, and `dev.jstech.core.multiblock.hands`
+  joins the promise, experimental. An `InteractiveModel` names the doors, places and controls of a formed model by
+  its bones, `MachineStructure.handsOn` gives it to a structure, and `HandGeometry` says, free of the game, which part
+  a line of sight meets, the box it is outlined by and how the model stands round its terminal.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -732,6 +736,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   controller, the ports and every block with a block entity stay, so pipes and cables still meet them. Forming puffs
   where each block merged and can play a sound and an animation; breaking any block gives every one back, and a part
   whose controller is gone turns back by itself. A damaged machine's cracks show across its whole structure.
+- Formed multiblocks worked by hand: a formed model's doors, places and buttons are worked in the world,
+  without its screen. What the crosshair is on is outlined by one box in place of the block; a click opens or shuts a
+  door, drawn swinging on its hinge, sets the part in hand in a place behind it, or takes out what the place holds
+  with an empty hand, and presses a button. A place is reached only through its door's doorway once the door is
+  wholly open, never through the walls. The server works a part only for whoever may open the screen and whose own
+  line of sight meets it; whether each door is open is saved with the machine.
 - Turning parts: shafts, gears and pulleys drawn turning at their real speed by the Core's models, the angle
   following the speed frame by frame, meshed gears half a tooth apart so their teeth meet, every part of one model
   sharing its shape; a belt or chain runs between the pulleys it joins as fast as their rims. A part drawn turning

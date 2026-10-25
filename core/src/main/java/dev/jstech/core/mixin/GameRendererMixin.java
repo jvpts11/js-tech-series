@@ -9,6 +9,7 @@ package dev.jstech.core.mixin;
 
 import dev.jstech.core.client.content.StandingPartsAim;
 import dev.jstech.core.client.moving.StructureAim;
+import dev.jstech.core.client.multiblock.HandsAim;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Final;
@@ -35,5 +36,6 @@ public abstract class GameRendererMixin {
     private void jscore$aimAtStandingParts(final float partialTicks, final CallbackInfo info) {
         StructureAim.afterPick(minecraft);
         StandingPartsAim.afterPick(minecraft, partialTicks);
+        HandsAim.afterPick(minecraft, partialTicks);
     }
 }

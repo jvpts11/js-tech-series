@@ -276,6 +276,7 @@
   "jsindustrial.guide.computational_research_centre.problem3": "A processor is gone.",
   "jsindustrial.guide.computational_research_centre.text1": "Research Processor: 1 point a second for 5 kW. Integrated Research Processor: 4 points for 20 kW. Nanoscale Research Processor: 16 points for 80 kW. All the power a processor draws becomes heat.",
   "jsindustrial.guide.computational_research_centre.text2": "Heat Sink: sheds 5 kW to the air. Liquid Cooler: up to 15 kW into the water flowing from the Coolant Inlet to the Outlet. Heat Pipe Cooler: up to 25 kW out through the Heat Port.",
+  "jsindustrial.guide.computational_research_centre.text3": "By hand: click a cabinet's glass door open, then a place: a part in hand goes in, an empty hand takes it out. The desk's green button turns it on, the red one off.",
   "jsindustrial.guide.computational_research_centre.title": "Computational Research Centre",
   "jsindustrial.guide.computational_research_centre.use1": "Build it of CRC Casing, the CRC Terminal in the middle of the front, at your eyes.",
   "jsindustrial.guide.computational_research_centre.use2": "Along the middle of its middle layer, behind the Terminal: Bus, Gate, Bus, Gate, Bus, Gate, Bus.",

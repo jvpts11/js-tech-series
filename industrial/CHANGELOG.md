@@ -66,6 +66,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   from, how far the computing is and how long the rest takes, and researches it now or queues it; under the chart
   are what the group works now, its pace and the queue. Group draws the CRCs on their cable and tables what each
   computes, how much its team counts and each team's pace. Sides, Redstone and Protection are every machine's.
+- Computational Research Centre by hand: formed, each cabinet's glass door opens with a click, swinging
+  out a quarter turn, and each of the nine places behind it takes the part in hand or gives back what it holds, as its
+  screen's places do; the green button on its desk turns it on and the red one off.
 - The contract of its machines: each says its tier, the class of J's Energy of its port and its power,
   and has the upgrade slots of its tier, two on a machine of the T1, three on the T2 and T3, four from the T4. What
   its upgrades gain adds up and what they save multiplies, so two upgrades that each make it half again as fast make

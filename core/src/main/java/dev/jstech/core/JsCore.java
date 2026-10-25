@@ -212,6 +212,7 @@ import dev.jstech.core.moving.physics.BlockPhysics;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
+import dev.jstech.core.multiblock.hands.HandUse;
 import dev.jstech.core.notification.NotificationSettings;
 import dev.jstech.core.notification.NotificationSounds;
 import dev.jstech.core.notification.Notifications;
@@ -618,6 +619,7 @@ public final class JsCore {
         SignalRadio.listen();
         Machines.listen(modEventBus);
         MachineWrench.listen(modEventBus);
+        HandUse.listen(modEventBus);
         TornSheets.listen(modEventBus);
         ManualLecterns.listen(modEventBus);
         HeatPorts.listen(modEventBus);

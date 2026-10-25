@@ -196,6 +196,7 @@ import dev.jstech.tests.clienttest.core.RenderTargetsClientTests;
 import dev.jstech.tests.clienttest.core.SoundMixerClientTests;
 import dev.jstech.tests.clienttest.core.WorldStabilityClientTests;
 import dev.jstech.tests.clienttest.industrial.DiagnosticsClientTests;
+import dev.jstech.tests.clienttest.industrial.CrcHandsClientTests;
 import dev.jstech.tests.clienttest.industrial.CrcModelClientTests;
 import dev.jstech.tests.clienttest.industrial.CrcScreenClientTests;
 import dev.jstech.tests.clienttest.industrial.IndustrialScreensClientTests;
@@ -313,6 +314,7 @@ public final class ClientTestSuite {
             IndustrialScreensClientTests.class,
             CrcScreenClientTests.class,
             CrcModelClientTests.class,
+            CrcHandsClientTests.class,
             InfoCenterClientTests.class,
             InstallMediaClientTests.class,
             InteracTuiClientTests.class,
