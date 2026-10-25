@@ -15,11 +15,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
@@ -161,6 +163,17 @@ public final class Radiation {
      */
     public static double transmission(final ServerLevel level, final Vec3 from, final Vec3 to,
                                       final RadiationKind kind) {
+        return transmission(level, from, to, kind, state -> false);
+    }
+
+    /**
+     * The share of {@code kind} as {@link #transmission(ServerLevel, Vec3, Vec3, RadiationKind)} gives it, for a source
+     * spread over the blocks {@code source} tells: those it crosses are the source itself, giving off what they hold,
+     * and let it through. So a vein read from the middle of its blocks is read whole, wherever it lies, rather than
+     * shielded by itself.
+     */
+    public static double transmission(final ServerLevel level, final Vec3 from, final Vec3 to,
+                                      final RadiationKind kind, final Predicate<BlockState> source) {
         final double dx = to.x - from.x;
         final double dy = to.y - from.y;
         final double dz = to.z - from.z;
@@ -213,7 +226,11 @@ public final class Radiation {
                 continue;
             }
             pos.set(x, y, z);
-            weakening += kind.attenuation() * BlockDensity.of(level, pos, chunk.getBlockState(pos));
+            final BlockState state = chunk.getBlockState(pos);
+            if (source.test(state)) {
+                continue;
+            }
+            weakening += kind.attenuation() * BlockDensity.of(level, pos, state);
             if (weakening > OPAQUE) {
                 return 0;
             }

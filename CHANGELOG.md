@@ -223,6 +223,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Bodies pushed out without being thrown: J's Core's API stays at version 12, all experimental.
   `RigidBody.pushOut` moves a body out of what it sank into over its next step, with nothing added to how fast it
   goes or turns, and `RigidBody.pushedOutAt` says how fast a point of it is pushed out so.
+- (Core) Sources spread over their blocks: J's Core's API stays at version 12, all experimental.
+  `Radiation.transmission(level, from, to, kind, source)` lets through the blocks `source` names, the source's own,
+  so a source read from the middle of its blocks is not shielded by them.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1786,6 +1789,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   controller, in the Structure Projector, the Multiblock Builder, the recipe viewers, the manuals, the studio and Jade.
 
 ### Fixed
+- (Core) A vein of a mineral with uranium or thorium in it reads near the same wherever it lies, and a great vein
+  gives off more: its rock is all of it the source, and no longer shields itself. A vein cut by the edges of the
+  world's sections of sixteen blocks read less than half as much, the rock between each part's middle and the reader
+  taken for a wall.
 - (Core) A stack of moving structures that sank into itself, as one landing on another can, is pushed apart without
   its top being thrown: a structure into another is moved out of it rather than given a speed to come out, which
   stayed with it once out, so the speeds of each sinking added up the stack and could throw the top off it.

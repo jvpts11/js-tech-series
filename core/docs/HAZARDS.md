@@ -320,8 +320,11 @@ millisievert an hour, the sky's and the rock's, it takes no dose and goes on rec
 Its sources: the sky (`CosmicRadiation`: three ten-thousandths of a millisievert an hour under the overworld's air,
 rising as the air thins to two hundredths where there is none, each solid block above taking seven tenths off; a mod
 sets a dimension's own with `CosmicRadiation.declare`), every mineral with uranium or thorium in it (`NaturalRadiation`:
-two thousandths at a block from each block of it), radioactive carried things by their strength, and any mod's blocks
-through `Radiation.emit`. Where the dose rate passes a hundred millisieverts an hour the land withers.
+two thousandths at a block from each block of it, the rock bearing it never shielding itself, so a great vein gives off
+more and a vein reads near the same wherever it lies), radioactive carried things by their strength, and any mod's blocks
+through `Radiation.emit`. Where the dose rate passes a hundred millisieverts an hour the land withers. A mod reads a
+source spread over its blocks with `Radiation.transmission(level, from, to, kind, source)`, the blocks it names letting
+the radiation through.
 
 ## Dissonance
 

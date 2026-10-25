@@ -72,8 +72,10 @@ public final class NaturalRadiation {
                         continue;
                     }
                     final double distance = counted.centre().distanceTo(at);
+                    // The rock bearing it is all of it the source: read from its middle, it does not shield itself,
+                    // so a vein reads near the same wherever the sections' edges cut it, and a great vein reads more.
                     rate += counted.blocks() * PER_BLOCK / Math.max(1, distance * distance)
-                            * Radiation.transmission(level, counted.centre(), at, kind);
+                            * Radiation.transmission(level, counted.centre(), at, kind, NaturalRadiation::bears);
                 }
             }
         }

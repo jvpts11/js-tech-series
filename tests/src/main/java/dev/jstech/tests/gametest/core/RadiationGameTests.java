@@ -49,7 +49,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * Radiation on a server: weakened by the density of each block it crosses and by the square of the distance from its
  * source; the series' ionizing radiation dosing a body by what reaches it, halved by shielding worn, recovering under
  * the background, and dosing it from the dust on its skin until water washes it off; the minerals with uranium in them
- * and the sky giving off a little, a roof stopping the sky's; the land withering where the dose rate is high; nothing
+ * and the sky giving off a little, a vein reading near the same wherever the sections' edges cut it, a roof stopping
+ * the sky's; the land withering where the dose rate is high; nothing
  * at all while the world has radiation off; and the Geiger counter reading the rate onto its carrier's map.
  */
 @GameTestHolder(JsTests.MODID)
@@ -62,6 +63,11 @@ public final class RadiationGameTests {
     private static final String SETTINGS = "jscore_radiation_settings";
     private static final BlockPos SOURCE = new BlockPos(1, 2, 1);
     private static final double CLOSE = 1.0E-3;
+    /* An arena 48 across, wide enough to lay a vein anywhere the sections' edges fall. */
+    private static final String WIDE = "bench";
+    /* How far a vein's reading may differ, cut by the sections' edges, from the same vein whole in one section. */
+    private static final double CUT_ALIKE = 0.2;
+    private static final int SECTION = 16;
 
     private RadiationGameTests() {
     }
@@ -204,6 +210,20 @@ public final class RadiationGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = WIDE, batch = BATCH)
+    public static void natural_aVeinReadsAlikeWhereverTheSectionsEdgesCutIt(final GameTestHelper helper) {
+        final BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        // Whole in one section, then across the edges of four, as an arena at 14 of 16 lays it.
+        final double whole = veinReading(helper, Math.floorMod(4 - origin.getX(), SECTION) + 1,
+                Math.floorMod(4 - origin.getZ(), SECTION) + 1);
+        final double cut = veinReading(helper, Math.floorMod(15 - origin.getX(), SECTION) + SECTION,
+                Math.floorMod(15 - origin.getZ(), SECTION) + SECTION);
+        helper.assertTrue(whole > 0.001, "the vein whole gives off a little: " + whole);
+        helper.assertTrue(Math.abs(cut / whole - 1) < CUT_ALIKE, "cut by the sections' edges, the vein reads near "
+                + "the same, its rock not shielding itself: " + cut + " against " + whole);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH)
     public static void cosmic_isStoppedByTheBlocksAbove(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
@@ -280,6 +300,28 @@ public final class RadiationGameTests {
         final Vec3 at = Vec3.atBottomCenterOf(helper.absolutePos(feet));
         player.setPos(at.x, at.y, at.z);
         return player;
+    }
+
+    /*
+     * The rate a 3 by 3 vein of testite laid at the arena's {@code (x0, 1, z0)} gives off three blocks over its middle;
+     * the vein taken away again after.
+     */
+    private static double veinReading(final GameTestHelper helper, final int x0, final int z0) {
+        lay(helper, x0, z0, MaterialUses.oreBlock(TestMaterials.TESTITE, HostRocks.GRANITE).get());
+        final double read = NaturalRadiation.at(helper.getLevel(), Vec3.atCenterOf(helper.absolutePos(
+                new BlockPos(x0 + 1, 4, z0 + 1))), IonizingRadiation.RAYS);
+        lay(helper, x0, z0, Blocks.AIR);
+        return read;
+    }
+
+    /* Lays {@code block} over the arena's 3 by 3 from {@code (x0, 1, z0)}, its sections counted again. */
+    private static void lay(final GameTestHelper helper, final int x0, final int z0, final Block block) {
+        for (int x = x0; x < x0 + 3; x++) {
+            for (int z = z0; z < z0 + 3; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), block);
+                NaturalRadiation.forget(helper.getLevel(), helper.absolutePos(new BlockPos(x, 1, z)));
+            }
+        }
     }
 
     /* Within a thousandth of what is expected, however small: a dose a second is a few millionths of a sievert. */
