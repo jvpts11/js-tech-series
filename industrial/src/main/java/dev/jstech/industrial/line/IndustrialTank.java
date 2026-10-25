@@ -10,9 +10,12 @@ package dev.jstech.industrial.line;
 import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.LongField;
+import dev.jstech.core.fluid.ReliefValveBlockEntity;
 import dev.jstech.core.heat.BoilOff;
+import dev.jstech.core.inspect.InspectTexts;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineParameter;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.material.MatterState;
@@ -21,8 +24,10 @@ import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.multiblock.IStructureShape;
 import dev.jstech.core.multiblock.ShapeMatch;
+import dev.jstech.industrial.blockentity.TankBlockEntity;
 import dev.jstech.industrial.multiblock.IndustrialMultiblock;
 import dev.jstech.industrial.multiblock.SizeGives;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -137,14 +142,29 @@ public abstract class IndustrialTank extends MachineBlockEntity {
         if (capacity <= 0) {
             return 0.0;
         }
-        final long held = this.rating.state() == MatterState.LIQUID ? this.liquid.getFluidAmount()
-                : this.gas.held().map(MatterStack::amount).orElse(0L);
-        return Math.min(1.0, held / (double) capacity);
+        return Math.min(1.0, held() / (double) capacity);
     }
 
     @Override
     protected double outputShare() {
         return inputShare();
+    }
+
+    /** What a controller reads of it besides a machine's own: what it holds, and a gas tank's pressure. */
+    @Override
+    protected void declareParameters(final List<MachineParameter> declared) {
+        declared.add(MachineParameter.read("amount", TankBlockEntity.AMOUNT, TankBlockEntity.MILLIBUCKETS, 0,
+                Math.max(1, capacity()), this::held));
+        if (this.rating.state() == MatterState.GAS) {
+            declared.add(MachineParameter.read("pressure", InspectTexts.PRESSURE, ReliefValveBlockEntity.ATMOSPHERES,
+                    0, Math.max(1, this.gas.pressure()), () -> this.gas.pressureNow(0)));
+        }
+    }
+
+    /* What it holds now, in millibuckets, of its liquid or its gas. */
+    private long held() {
+        return this.rating.state() == MatterState.LIQUID ? this.liquid.getFluidAmount()
+                : this.gas.held().map(MatterStack::amount).orElse(0L);
     }
 
     /* Sizes it to the room inside {@code formed}, of {@code outer} blocks along x, y and z, keeping what it holds. */

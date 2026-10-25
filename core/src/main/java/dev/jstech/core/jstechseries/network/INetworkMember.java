@@ -7,10 +7,13 @@
  */
 package dev.jstech.core.jstechseries.network;
 
+import dev.jstech.core.jstechseries.operation.IOperationArgs;
 import dev.jstech.core.jstechseries.operation.OperationType;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A machine of any mod that is a member of the data network it touches, through the Core and never through another
@@ -57,6 +60,25 @@ public interface INetworkMember {
 
     /** Writes its row of {@code table}, one of its {@link #tables()}, as it is now; on the server. */
     default void fill(final StateTable table, final StateRow.Writer row) {
+    }
+
+    /**
+     * Writes its rows of {@code table}, one of its {@link #tables()}, as they are now; on the server. One, of itself,
+     * unless it says otherwise: a member that reads other machines writes one for each, where each stands.
+     */
+    @ApiStatus.Experimental
+    default void fillRows(final StateTable table, final StateRows rows) {
+        fill(table, rows.own());
+    }
+
+    /**
+     * Why it will not take a request of {@code type} carrying {@code args}, though it carries that kind out (a
+     * controller asked to set a machine it does not read); null when it takes it. The network gives such a request
+     * to a member that takes it.
+     */
+    @ApiStatus.Experimental
+    default @Nullable Text refuses(final OperationType<?> type, final IOperationArgs args) {
+        return null;
     }
 
     /**

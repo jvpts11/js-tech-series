@@ -257,6 +257,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `OperationRequest` is that request as whoever gives it holds it: `start()` hands it to the handler, a handler that
   throws failing it, `status()`, `failure()` and `cancel()`. The test kit's `NetworkScenes.request` gives one to a
   member and hands it back to follow.
+- What a controller reads and how it is wired: J's Core's API stays at version 12, all experimental.
+  `IMachineParameters` gives `statusNow()`, `redstoneMode()` and `setRedstoneMode(mode)`, and `powerDrawn()`
+  (`PowerDrawn`: the energy, what was drawn in the last tick and the port's class); a machine on a port of the series'
+  energy declares `fuse` and `battery` (`EnergyProtection.batteryShare()`). The Core's valves offer the capability
+  (`open`, `flow`; a relief valve's `set_pressure`, with `ReliefValveBlockEntity.register`). `ControlLinks` is the
+  industrial control cable's line, grid and links: its wires plug into any block offering its values, and a controller
+  keeps its links (`keep`, `release`, `controllerOf`, `reached`). `IPeripheralOwner.linksOver(type)` lets an owner own
+  endpoints on more than one cable system, and `PortKind.CONTROL` is a controller's port. `INetworkMember.fillRows`
+  writes a row of a table for each machine a member reads (`StateRows`, each row where its machine stands), and
+  `INetworkMember.refuses` says why a member will not take a request, which the network then gives to one that will.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

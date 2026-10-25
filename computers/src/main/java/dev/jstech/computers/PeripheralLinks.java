@@ -170,7 +170,7 @@ public final class PeripheralLinks {
     private static OptionalLong resolveOwnerPos(final ServerLevel level, final long pos,
                                                 final PeripheralCableType type) {
         final BlockEntity be = Loaded.blockEntity(level, BlockPos.of(pos));
-        if (be instanceof IPeripheralOwner owner && owner.cableType() == type) {
+        if (be instanceof IPeripheralOwner owner && owner.linksOver(type)) {
             return OptionalLong.of(pos);
         }
         // A mainframe or a rack cabinet spans several blocks; a cable touching any part links to its origin.
@@ -178,7 +178,7 @@ public final class PeripheralLinks {
                 && be instanceof BigBlockPartBlockEntity part) {
             final BlockPos origin = part.originPos();
             if (origin != null && Loaded.blockEntity(level, origin) instanceof IPeripheralOwner owner
-                    && owner.cableType() == type) {
+                    && owner.linksOver(type)) {
                 return OptionalLong.of(origin.asLong());
             }
         }

@@ -174,6 +174,35 @@ A column is named in lower case; its name is kept in saved queries, so it never 
 a value its column does not hold, and a column the table has not. After the game has loaded, the list of tables is
 closed: a table declared later stops the game, and so does a name declared twice.
 
+*Added 2026-10-25.* A member that reads other machines, as an industrial controller reads the machines on its cable,
+writes a row for each, each where that machine stands, so the table's `at` says where each one is:
+
+```java
+@Override
+public void fillRows(StateTable table, StateRows rows) {
+    for (BlockPos machine : machinesRead) {
+        rows.at(machine).set("temperature", temperatureOf(machine));
+    }
+}
+```
+
+The default writes one row, of the member itself, with `fill`.
+
+### Requests a member will not take
+
+*Added 2026-10-25.*
+
+A member that carries out a kind of Operation can still refuse one request of it, saying why: a controller asked to
+set a machine it does not read. The network then gives the request to a member that takes it, and a request that
+names a member that will not take it is refused with the member's reason.
+
+```java
+@Override
+public @Nullable Text refuses(OperationType<?> type, IOperationArgs args) {
+    return args instanceof SetArgs set && !reads(set.machine()) ? MyTexts.NOT_MINE.with(set.machine()) : null;
+}
+```
+
 ### Instruments of world events
 
 *Added 2026-10-25.*
@@ -227,6 +256,30 @@ several of its own; the range starts over after it.
 
 The peripheral cable's range is 8 blocks in the Vintage, 12 in the Legacy, 14 in the Transition, 16 in the
 Standard and 20 in the Advanced. A device placed right against its owner needs no cable.
+
+An owner may own endpoints on more than one cable system (`linksOver(type)`, its own system unless it says more): a
+controller owns its screens on the peripheral cable and its machines on the industrial control cable.
+
+### The industrial control cable
+
+*Added 2026-10-25.*
+
+The **industrial control cable** runs from a controller to the machines it reads and commands, point to point, over at
+most eight cables. The Core declares its line and its grid (`ControlLinks.LINE`, `ControlLinks.GRID`), so every mod's
+controllers and machines meet on one cable; a mod declares the cable itself on them, in its lane, with its plugs:
+
+```java
+CableType.builder(ControlLinks.LINE).grid(ControlLinks.GRID).lane(Lane.BOTTOM_LEFT).carries(0L, 8)
+        .jacket(...).plug(...)
+```
+
+Its wires plug into any block that offers `IMachineParameters`, whatever ports the block declares: every machine of the
+Core, and a valve or a tank that offers its values. The machines keep nothing: the **controller** keeps its links. It is
+an owner whose `linksOver(INDUSTRIAL_CONTROL)` is true, with ports of `PortKind.CONTROL`, and every
+`ControlLinks.KEEP_EVERY` ticks or so it calls `ControlLinks.keep(level, pos, this)`: that links what its cables reach,
+nearest first, while a port is free, and lets go of what they no longer reach and of what is past its ports. A machine
+has one controller, the first to reach it; `ControlLinks.controllerOf(level, pos)` says which. A controller broken calls
+`ControlLinks.release`.
 
 ## What can go wrong
 

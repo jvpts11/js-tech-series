@@ -255,6 +255,8 @@ public final class MemberRunGameTests {
         helper.startSequence()
                 .thenWaitUntil(() -> able(helper, mainframe, 1))
                 .thenExecute(() -> {
+                    // A storm a run before this one left under way, as the world was saved, is no storm of this test.
+                    WorldEvents.stop(helper.getLevel(), TestNetworkMembers.BEAM_STORM);
                     mainframe.installAutomationEngine();
                     final IqlEngine.Outcome job = run(helper, mainframe, "CREATE JOB beam AS RUN " + KIND
                             + " WITH seconds = 1 WHEN EVENT jstests:test_beam_storm UNDER WAY");
@@ -269,6 +271,8 @@ public final class MemberRunGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(!logged(mainframe).isEmpty()
                         && logged(mainframe).getFirst().status() == OperationRecord.STATUS_COMPLETED,
                         "and the log has it done: " + logged(mainframe)))
+                // The storm is let go of, so a world saved after this test holds none still under way.
+                .thenExecute(() -> WorldEvents.stop(helper.getLevel(), TestNetworkMembers.BEAM_STORM))
                 .thenSucceed();
     }
 

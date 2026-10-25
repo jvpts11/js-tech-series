@@ -13,12 +13,20 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Contract for a BlockEntity that OWNS a set of peripheral endpoints via cables of one peripheral system. It has so
- * many ports of each {@link PortKind}, as its hardware gives them, and each endpoint it links takes one of its kind.
+ * Contract for a BlockEntity that OWNS a set of peripheral endpoints via cables of one peripheral system, or of more
+ * than one: a controller owns its screens on the peripheral cable and its machines on the industrial control cable. It
+ * has so many ports of each {@link PortKind}, as its hardware gives them, and each endpoint it links takes one of its
+ * kind.
  */
 public interface IPeripheralOwner {
 
+    /** The cable system it owns endpoints on first: the one its own peripherals hang from. */
     PeripheralCableType cableType();
+
+    /** Whether it owns endpoints on cables of {@code type}: its own system's, unless it says it owns more. */
+    default boolean linksOver(final PeripheralCableType type) {
+        return cableType() == type;
+    }
 
     List<Long> linkedEndpoints();
 

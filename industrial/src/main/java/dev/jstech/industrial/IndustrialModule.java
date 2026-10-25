@@ -21,6 +21,7 @@ import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SharedUses;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.machine.IMachineParameters;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.ProcessingKind;
@@ -38,6 +39,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
@@ -156,6 +158,9 @@ public final class IndustrialModule {
 
     public static void register(final IEventBus modEventBus) {
         CONTENT.register(modEventBus);
+        // The plain tank offers its values, so a controller on the industrial control cable reads what it holds.
+        modEventBus.addListener(RegisterCapabilitiesEvent.class, event -> event.registerBlockEntity(
+                IMachineParameters.CAPABILITY, TANK_BE.get(), (tank, side) -> tank));
     }
 
     /**

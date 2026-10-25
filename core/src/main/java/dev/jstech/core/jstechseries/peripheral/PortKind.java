@@ -24,7 +24,9 @@ public enum PortKind implements IStableId, IStableName {
 
     DEVICE(0, "device"),
     VIDEO(1, "video"),
-    AUDIO(2, "audio");
+    AUDIO(2, "audio"),
+    /* A machine a controller reads and commands, on the industrial control cable: the controller's field bus cards. */
+    CONTROL(3, "control");
 
     private final int id;
     private final String serializedName;

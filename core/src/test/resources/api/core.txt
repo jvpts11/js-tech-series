@@ -3700,6 +3700,7 @@ stable 4
 10 dev.jstech.core.energy.EnergyProtection  ItemStackHandler slots()
 10 dev.jstech.core.energy.EnergyProtection  WrongClass guard(WrongClass, int)
 10 dev.jstech.core.energy.EnergyProtection  boolean cut()
+12 dev.jstech.core.energy.EnergyProtection  double batteryShare()
 10 dev.jstech.core.energy.EnergyProtection  new(Runnable)
 10 dev.jstech.core.energy.EnergyProtection  static final int BATTERY
 10 dev.jstech.core.energy.EnergyProtection  static final int FUSE
@@ -4033,10 +4034,11 @@ stable 4
 10 dev.jstech.core.fluid.LevelFluids  static final Section SECTION
 10 dev.jstech.core.fluid.LevelFluids  void tapsChanged()
 10 dev.jstech.core.fluid.LevelFluids  void tick(ServerLevel)
-12 dev.jstech.core.fluid.LineValveBlockEntity  type class extends SyncedBlockEntity implements ISignalOutput
+12 dev.jstech.core.fluid.LineValveBlockEntity  type class extends SyncedBlockEntity implements ISignalOutput, IMachineParameters
 12 dev.jstech.core.fluid.LineValveBlockEntity  Direction front()
 12 dev.jstech.core.fluid.LineValveBlockEntity  IFluidHandler fluid(Direction)
 12 dev.jstech.core.fluid.LineValveBlockEntity  IMatterHandler matter(Direction)
+12 dev.jstech.core.fluid.LineValveBlockEntity  List<MachineParameter> parameters()
 12 dev.jstech.core.fluid.LineValveBlockEntity  List<Reading> readings()
 12 dev.jstech.core.fluid.LineValveBlockEntity  Optional<ResourceLocation> filter()
 12 dev.jstech.core.fluid.LineValveBlockEntity  boolean open()
@@ -4046,6 +4048,7 @@ stable 4
 12 dev.jstech.core.fluid.LineValveBlockEntity  new(BlockEntityType<?>, BlockPos, BlockState, MatterState, long, IValveRule)
 12 dev.jstech.core.fluid.LineValveBlockEntity  static <T extends LineValveBlockEntity> void register(RegisterCapabilitiesEvent, BlockEntityType<T>)
 12 dev.jstech.core.fluid.LineValveBlockEntity  static final TextKey FLOW
+12 dev.jstech.core.fluid.LineValveBlockEntity  static final TextKey OPEN
 12 dev.jstech.core.fluid.LineValveBlockEntity  static final TextKey PER_TICK
 12 dev.jstech.core.fluid.LineValveBlockEntity  static void serverTick(Level, BlockPos, BlockState, LineValveBlockEntity)
 12 dev.jstech.core.fluid.LineValveBlockEntity  void setFilter(Optional<ResourceLocation>)
@@ -4072,11 +4075,16 @@ stable 4
 12 dev.jstech.core.fluid.PipeMarks.Mark  type record(TagKey<Fluid> tag, Kind kind, Predicate<Material> materials)
 12 dev.jstech.core.fluid.PipeMarks.Mark  boolean on(Fluid)
 12 dev.jstech.core.fluid.PipeMarks.Mark  boolean on(Material)
-12 dev.jstech.core.fluid.ReliefValveBlockEntity  type class extends SyncedBlockEntity
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  type class extends SyncedBlockEntity implements IMachineParameters
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  List<MachineParameter> parameters()
 12 dev.jstech.core.fluid.ReliefValveBlockEntity  long setTo()
 12 dev.jstech.core.fluid.ReliefValveBlockEntity  long vented()
 12 dev.jstech.core.fluid.ReliefValveBlockEntity  new(BlockEntityType<?>, BlockPos, BlockState, long, long)
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  static <T extends ReliefValveBlockEntity> void register(RegisterCapabilitiesEvent, BlockEntityType<T>)
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  static final TextKey ATMOSPHERES
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  static final TextKey OPENS_ABOVE
 12 dev.jstech.core.fluid.ReliefValveBlockEntity  static final double MILLIBUCKETS_A_MOLE
+12 dev.jstech.core.fluid.ReliefValveBlockEntity  static final long MOST_PRESSURE
 12 dev.jstech.core.fluid.ReliefValveBlockEntity  static void serverTick(Level, BlockPos, BlockState, ReliefValveBlockEntity)
 12 dev.jstech.core.fluid.ReliefValveBlockEntity  void setTo(long)
 10 dev.jstech.core.font.BdfFormatException  type final class extends IllegalArgumentException
@@ -6700,7 +6708,9 @@ stable 4
 12 dev.jstech.core.jstechseries.network.INetworkMember  default List<OperationType<?>> carriesOut()
 12 dev.jstech.core.jstechseries.network.INetworkMember  default List<ResourceLocation> instrumentOf()
 12 dev.jstech.core.jstechseries.network.INetworkMember  default List<StateTable> tables()
+12 dev.jstech.core.jstechseries.network.INetworkMember  default Text refuses(OperationType<?>, IOperationArgs)
 12 dev.jstech.core.jstechseries.network.INetworkMember  default void fill(StateTable, StateRow.Writer)
+12 dev.jstech.core.jstechseries.network.INetworkMember  default void fillRows(StateTable, StateRows)
 12 dev.jstech.core.jstechseries.network.INetworkNode  type sealed interface permits IComputerNode, IServiceNode
 12 dev.jstech.core.jstechseries.network.INetworkNode  abstract NetworkCategory category()
 12 dev.jstech.core.jstechseries.network.INetworkNode  abstract NetworkUuid networkUuid()
@@ -6813,6 +6823,9 @@ stable 4
 12 dev.jstech.core.jstechseries.network.StateRow.Writer  Writer set(String, boolean)
 12 dev.jstech.core.jstechseries.network.StateRow.Writer  Writer set(String, double)
 12 dev.jstech.core.jstechseries.network.StateRow.Writer  new(StateTable)
+12 dev.jstech.core.jstechseries.network.StateRows  type final class
+12 dev.jstech.core.jstechseries.network.StateRows  StateRow.Writer at(BlockPos)
+12 dev.jstech.core.jstechseries.network.StateRows  StateRow.Writer own()
 12 dev.jstech.core.jstechseries.network.StateTable  type final class
 12 dev.jstech.core.jstechseries.network.StateTable  List<StateColumn> columns()
 12 dev.jstech.core.jstechseries.network.StateTable  Optional<StateColumn> column(String)
@@ -7015,6 +7028,15 @@ stable 4
 12 dev.jstech.core.jstechseries.operation.RegisterOperationTypesEvent  OperationTypeRegistry operations()
 12 dev.jstech.core.jstechseries.operation.SelfTestOperationTask  type record(int workUnits) implements IOperationTask
 12 dev.jstech.core.jstechseries.operation.SelfTestOperationTask  IOperationResult run(IOperationContext)
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  type final class
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  static List<Long> reached(ServerLevel, BlockPos, IPeripheralOwner)
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  static Optional<BlockPos> controllerOf(ServerLevel, BlockPos)
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  static final Connection LINE
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  static final GridKind GRID
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  static final int KEEP_EVERY
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  static void declare()
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  static void keep(ServerLevel, BlockPos, IPeripheralOwner)
+12 dev.jstech.core.jstechseries.peripheral.ControlLinks  static void release(ServerLevel, BlockPos, IPeripheralOwner)
 12 dev.jstech.core.jstechseries.peripheral.ILinkResult  type sealed interface permits ILinkResult.Established, ILinkResult.AlreadyLinked, ILinkResult.OwnerAtCapacity, ILinkResult.HubAtCapacity, ILinkResult.NoPathFound, ILinkResult.ExceedsMaxLength, ILinkResult.CableTypeMismatch
 12 dev.jstech.core.jstechseries.peripheral.ILinkResult.AlreadyLinked  type record(long endpointPos, long existingOwnerPos) implements ILinkResult
 12 dev.jstech.core.jstechseries.peripheral.ILinkResult.CableTypeMismatch  type record(PeripheralCableType expected, PeripheralCableType actual) implements ILinkResult
@@ -7049,6 +7071,7 @@ stable 4
 12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default Set<Long> occupiedPositions(long)
 12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default boolean isDisabled(long)
 12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default boolean isLinked(long)
+12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default boolean linksOver(PeripheralCableType)
 12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwner  default boolean setDisabled(long, boolean)
 12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  type interface extends IPeripheralOwner
 12 dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport  abstract PeripheralPorts peripheralPorts()
@@ -7133,6 +7156,7 @@ stable 4
 12 dev.jstech.core.jstechseries.peripheral.PeripheralReconciler  static void reconcile(IPeripheralOwnerSupport, ServerLevel, long)
 12 dev.jstech.core.jstechseries.peripheral.PortKind  type enum implements IStableId, IStableName
 12 dev.jstech.core.jstechseries.peripheral.PortKind  AUDIO
+12 dev.jstech.core.jstechseries.peripheral.PortKind  CONTROL
 12 dev.jstech.core.jstechseries.peripheral.PortKind  DEVICE
 12 dev.jstech.core.jstechseries.peripheral.PortKind  String serializedName()
 12 dev.jstech.core.jstechseries.peripheral.PortKind  VIDEO
@@ -7413,7 +7437,11 @@ stable 4
 10 dev.jstech.core.machine.IMachineParameters  type interface
 10 dev.jstech.core.machine.IMachineParameters  abstract List<MachineParameter> parameters()
 10 dev.jstech.core.machine.IMachineParameters  default Optional<MachineParameter> parameter(String)
+12 dev.jstech.core.machine.IMachineParameters  default Optional<MachineStatus> statusNow()
+12 dev.jstech.core.machine.IMachineParameters  default Optional<PowerDrawn> powerDrawn()
+12 dev.jstech.core.machine.IMachineParameters  default Optional<RedstoneMode> redstoneMode()
 10 dev.jstech.core.machine.IMachineParameters  default OptionalDouble read(String)
+12 dev.jstech.core.machine.IMachineParameters  default boolean setRedstoneMode(RedstoneMode)
 10 dev.jstech.core.machine.IMachineParameters  default boolean write(String, double)
 10 dev.jstech.core.machine.IMachineParameters  static final BlockCapability<IMachineParameters, Direction> CAPABILITY
 10 dev.jstech.core.machine.IRepairKit  type interface
@@ -7449,7 +7477,10 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  MachineSides sides()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineStatus status()
 10 dev.jstech.core.machine.MachineBlockEntity  MachineStructure structure()
+12 dev.jstech.core.machine.MachineBlockEntity  Optional<MachineStatus> statusNow()
 10 dev.jstech.core.machine.MachineBlockEntity  Optional<Orientation> formedOrientation()
+12 dev.jstech.core.machine.MachineBlockEntity  Optional<PowerDrawn> powerDrawn()
+12 dev.jstech.core.machine.MachineBlockEntity  Optional<RedstoneMode> redstoneMode()
 12 dev.jstech.core.machine.MachineBlockEntity  Optional<StructureHands> hands()
 10 dev.jstech.core.machine.MachineBlockEntity  Ownership ownership()
 10 dev.jstech.core.machine.MachineBlockEntity  UpgradeEffect upgrades()
@@ -7459,6 +7490,7 @@ stable 4
 10 dev.jstech.core.machine.MachineBlockEntity  boolean merged()
 10 dev.jstech.core.machine.MachineBlockEntity  boolean pasteSetup(CompoundTag, boolean, HolderLookup.Provider)
 10 dev.jstech.core.machine.MachineBlockEntity  boolean running()
+12 dev.jstech.core.machine.MachineBlockEntity  boolean setRedstoneMode(RedstoneMode)
 10 dev.jstech.core.machine.MachineBlockEntity  boolean takesEnergy()
 10 dev.jstech.core.machine.MachineBlockEntity  double audioX()
 10 dev.jstech.core.machine.MachineBlockEntity  double audioY()
@@ -7509,7 +7541,9 @@ stable 4
 12 dev.jstech.core.machine.MachineBlockEntity  protected void structureChecked(ServerLevel)
 10 dev.jstech.core.machine.MachineBlockEntity  protected void writeSetup(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.machine.MachineBlockEntity  static final TextKey HEALTH_LINE
+12 dev.jstech.core.machine.MachineBlockEntity  static final TextKey PARAMETER_BATTERY
 10 dev.jstech.core.machine.MachineBlockEntity  static final TextKey PARAMETER_ENERGY
+12 dev.jstech.core.machine.MachineBlockEntity  static final TextKey PARAMETER_FUSE
 10 dev.jstech.core.machine.MachineBlockEntity  static final TextKey PARAMETER_HEALTH
 10 dev.jstech.core.machine.MachineBlockEntity  static final TextKey PARAMETER_INPUT
 10 dev.jstech.core.machine.MachineBlockEntity  static final TextKey PARAMETER_ON
@@ -8172,6 +8206,10 @@ stable 4
 10 dev.jstech.core.machine.MatterTanks  boolean any()
 10 dev.jstech.core.machine.MatterTanks  static MatterTanks in(BlockEntityFields, List<MatterSpec>)
 10 dev.jstech.core.machine.MatterTanks.MatterSpec  type record(MatterState state, int inputs, int outputs, long volume, long pressure)
+12 dev.jstech.core.machine.PowerDrawn  type record(Energy energy, long perTick, EnergyClass port)
+12 dev.jstech.core.machine.PowerDrawn  Optional<EnergyClass> portClass()
+12 dev.jstech.core.machine.PowerDrawn  Text text()
+12 dev.jstech.core.machine.PowerDrawn  long perSecond()
 10 dev.jstech.core.machine.ProcessingInput  type record(List<ItemStack> items, List<FluidStack> fluids, List<Optional<MatterStack>> matter, double temperature, double pressure) implements RecipeInput
 10 dev.jstech.core.machine.ProcessingInput  ItemStack getItem(int)
 10 dev.jstech.core.machine.ProcessingInput  boolean isEmpty()

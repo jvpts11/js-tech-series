@@ -8,6 +8,7 @@
 package dev.jstech.core.jstechseries.network;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.jstechseries.peripheral.ControlLinks;
 import java.util.function.Supplier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -26,6 +27,11 @@ public final class NetworkAttachments {
     /** A dimension's data networks. */
     public static final Supplier<AttachmentType<NetworkSystem>> NETWORK_SYSTEM =
             ATTACHMENT_TYPES.register("network_system", () -> AttachmentType.builder(NetworkSystem::new).build());
+    /** Which controller each machine of a dimension is linked to on the industrial control cable. */
+    @ApiStatus.Internal
+    public static final Supplier<AttachmentType<ControlLinks.Claims>> CONTROL_CLAIMS =
+            ATTACHMENT_TYPES.register("control_claims", () -> AttachmentType.builder(ControlLinks.Claims::new)
+                    .build());
 
     private NetworkAttachments() {
     }

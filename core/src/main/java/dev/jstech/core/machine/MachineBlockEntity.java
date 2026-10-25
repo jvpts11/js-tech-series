@@ -154,6 +154,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     public static final TextKey PARAMETER_PROGRESS = TextKey.of("jscore.machine.parameter.progress", "Progress");
     public static final TextKey PARAMETER_ENERGY = TextKey.of("jscore.machine.parameter.energy", "Energy");
     public static final TextKey PARAMETER_HEALTH = TextKey.of("jscore.machine.parameter.health", "Health");
+    public static final TextKey PARAMETER_FUSE = TextKey.of("jscore.machine.parameter.fuse", "Fuse");
+    public static final TextKey PARAMETER_BATTERY = TextKey.of("jscore.machine.parameter.battery", "Battery");
     public static final TextKey PARAMETER_INPUT = TextKey.of("jscore.machine.parameter.input", "Input");
     public static final TextKey PARAMETER_OUTPUT = TextKey.of("jscore.machine.parameter.output", "Output");
     public static final TextKey STATUS_LINE = TextKey.of("jscore.machine.status_line", "State: %s");
@@ -459,6 +461,30 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return Objects.requireNonNull(status.get());
     }
 
+    @Override
+    public Optional<MachineStatus> statusNow() {
+        return Optional.of(status());
+    }
+
+    @Override
+    public Optional<RedstoneMode> redstoneMode() {
+        return Optional.of(control.mode());
+    }
+
+    @Override
+    public boolean setRedstoneMode(final RedstoneMode mode) {
+        control.setMode(Objects.requireNonNull(mode, "mode"));
+        return true;
+    }
+
+    @Override
+    public Optional<PowerDrawn> powerDrawn() {
+        if (!takesEnergy()) {
+            return Optional.empty();
+        }
+        return Optional.of(new PowerDrawn(power.energy(), drawn.get(), power.portClass().orElse(null)));
+    }
+
     /** Whether it rests, asleep, until something it waits on changes. */
     public boolean asleep() {
         return asleep;
@@ -574,6 +600,14 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
                     Math.max(1, power.capacity()), power::stored));
             declared.add(MachineParameter.read("health", PARAMETER_HEALTH, null, 0, MachineHealth.FULL,
                     health::health));
+            final EnergyProtection protection = power.protection();
+            if (protection != null) {
+                // A machine on a port of the series' energy has its UPS: whether its fuse holds, and its battery.
+                declared.add(MachineParameter.read("fuse", PARAMETER_FUSE, null, 0, 1,
+                        () -> power.fuseBlown() ? 0 : 1));
+                declared.add(MachineParameter.read("battery", PARAMETER_BATTERY, null, 0, 1,
+                        protection::batteryShare));
+            }
             final MachineHeat holds = heat;
             if (holds != null) {
                 // Read from freezing up to the hottest it stands, so a full signal says it is about to stop.

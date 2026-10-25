@@ -1269,6 +1269,8 @@
   "jscore.recipe_choice.kept_furnace": "Guardada para %s nesta fornalha",
   "jscore.recipe_choice.kept_grid": "Guardada para esta grade",
   "jscore.recipe_choice.next": "Clique: a próxima",
+  "jscore.relief_valve.atmospheres": "atm",
+  "jscore.relief_valve.opens_above": "Abre acima de",
   "jscore.studio.tests.none": "Nenhum GameTest cita %s, ou os GameTests não estão ligados nesta execução",
   "jscore.studio.tests.passed": "Os GameTests de %s: %s de %s passaram",
   "jscore.studio.tests.running": "Rodando %s GameTests de %s",
@@ -1776,7 +1778,9 @@
   "jscore.machine.installer.grew": "Agora é %s",
   "jscore.machine.installer.makes": "Faz %s da máquina logo abaixo, no lugar dela",
   "jscore.machine.installer.wrong_tier": "Este instalador faz %s, a partir do nível logo abaixo",
+  "jscore.machine.parameter.battery": "Bateria",
   "jscore.machine.parameter.energy": "Energia",
+  "jscore.machine.parameter.fuse": "Fusível",
   "jscore.machine.parameter.health": "Saúde",
   "jscore.machine.parameter.input": "Entrada",
   "jscore.machine.parameter.on": "Ligada",
@@ -3265,6 +3269,7 @@
   "jscore.material_property.share_of_air": "%s%% do ar",
   "jscore.material_property.upper_explosive": "Explode até",
   "jscore.valve.flow": "Vazão",
+  "jscore.valve.open": "Aberta",
   "jscore.valve.per_tick": "mB por tick",
   "jscore.machine.screen.tip.recipes": "Ver receitas"
 }

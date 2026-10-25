@@ -513,6 +513,8 @@
   "jsindustrial.scan.ore_held": "About %s blocks of ore",
   "jsindustrial.scan.reservoir_left": "%s: about %s buckets left",
   "jsindustrial.scan.share": "%s: %s%%",
+  "jsindustrial.tank.parameter.amount": "Held",
+  "jsindustrial.unit.millibuckets": "mB",
   "tag.fluid.jsindustrial.abrasive": "Abrasive Slurries",
   "tag.fluid.jsindustrial.acids": "Acids",
   "tag.fluid.jsindustrial.corrosive_gases": "Corrosive Gases",

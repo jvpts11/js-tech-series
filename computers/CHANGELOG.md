@@ -84,6 +84,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   queues; it stays in the Processes tab, where calling it off stops the machine, and goes into the log under `RUN`,
   with its kind, the machine and what was asked, once the machine says it is done. A machine that leaves the network
   first fails it, saying so.
+- A request to a machine that will not take it: without `ON`, a request goes to a machine that takes it (a
+  controller that reads the machine named), and one that names a machine that will not take it is refused with the
+  machine's reason.
 
 ### Changed
 - Listeners declared: every class of the three mods that answers the game's events is

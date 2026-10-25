@@ -20,8 +20,15 @@ import dev.jstech.core.jstechseries.network.NetworkCategory;
 import dev.jstech.core.jstechseries.network.NetworkMembers;
 import dev.jstech.core.jstechseries.network.NetworkMembership;
 import dev.jstech.core.jstechseries.network.StateRow;
+import dev.jstech.core.jstechseries.network.StateRows;
 import dev.jstech.core.jstechseries.network.StateTable;
 import dev.jstech.core.jstechseries.network.StateTables;
+import dev.jstech.core.jstechseries.peripheral.ControlLinks;
+import dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
+import dev.jstech.core.jstechseries.peripheral.PeripheralPorts;
+import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.machine.IMachineParameters;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -32,16 +39,20 @@ import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.jstechseries.operation.OperationType;
 import dev.jstech.core.jstechseries.operation.RegisterOperationTypesEvent;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import dev.jstech.core.world.event.WorldEvents;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -117,6 +128,28 @@ public final class TestNetworkMembers {
             request.machine().orElse(null) instanceof AcceleratorBlockEntity accelerator
                     ? accelerator.accelerate(request) : OperationStatus.FAILED);
 
+    public static final TextKey CONTROLLED_TITLE = TextKey.of("jstests.table.controlled", "Controlled machines");
+    public static final TextKey CONTROLLED_MACHINE = TextKey.of("jstests.table.controlled.machine", "Machine");
+    public static final TextKey CONTROLLED_ON = TextKey.of("jstests.table.controlled.on", "On");
+    /** The machines a test controller reads, a row for each, where each stands. */
+    public static final StateTable CONTROLLED = StateTables.declare(StateTable.builder(
+                    ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "test_controlled"), CONTROLLED_TITLE)
+            .text("machine", CONTROLLED_MACHINE)
+            .flag("on", CONTROLLED_ON)
+            .build());
+    public static final TextKey SWITCH_OFF_NAME = TextKey.of("jstests.operation.switch_off", "Switch off");
+    public static final TextKey NOT_READ = TextKey.of("jstests.operation.not_read",
+            "the controller reads no machine at %s");
+    /**
+     * A kind of Operation a test controller carries out on a machine it reads: switching it off, the machine named by
+     * where it stands, as {@code RUN jstests:switch_off WITH machine = '1, 2, 3'}.
+     */
+    public static final OperationType<SwitchOffArgs> SWITCH_OFF = new OperationType<>("jstests:switch_off",
+            SWITCH_OFF_NAME, SwitchOffArgs.class, OperationCategory.INDUSTRIAL, IndustrialTier.T1,
+            EnumSet.of(NetworkCategory.C), SwitchOffArgs.TEXT, request ->
+            request.machine().orElse(null) instanceof ControllerBlockEntity controller
+                    ? controller.switchOff(request.args()) : OperationStatus.FAILED);
+
     /** The data cables of every age, on every face: what the test machines join a network through. */
     public static final FacePorts DATA_PORTS = FacePorts.everyFace(DataLines.upTo(HardwareEra.SINGULARITY,
             DataLine.ACCESS, DataLine.BACKBONE));
@@ -128,6 +161,13 @@ public final class TestNetworkMembers {
             Device.of(() -> TestNetworkMembers.ACCELERATOR_ENTITY.get()).ports(DATA_PORTS)
                     .ticks((level, pos, state, accelerator) -> accelerator.tick())::block)
             .named("Test accelerator").look(IBlockLook.cubeAll("test_accelerator")).register();
+    public static final BlockEntry<DeviceBlock> CONTROLLER = TestSounds.CONTENT.block("test_controller",
+            Device.of(() -> TestNetworkMembers.CONTROLLER_ENTITY.get()).ports(DATA_PORTS)
+                    .ticks((level, pos, state, controller) -> controller.tick())::block)
+            .named("Test controller").look(IBlockLook.cubeAll("test_controller")).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ControllerBlockEntity>>
+            CONTROLLER_ENTITY = TestSounds.CONTENT.blockEntity("test_controller", ControllerBlockEntity::new,
+            CONTROLLER);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ReactorBlockEntity>> REACTOR_ENTITY =
             TestSounds.CONTENT.blockEntity("test_reactor",
                     (pos, state) -> new ReactorBlockEntity(TestNetworkMembers.REACTOR_ENTITY.get(), pos, state),
@@ -141,7 +181,22 @@ public final class TestNetworkMembers {
 
     /** Declares the machines, before the test mod's content is registered, and its kind of Operation. */
     public static void declare(final IEventBus modBus) {
-        modBus.addListener(RegisterOperationTypesEvent.class, event -> event.operations().register(ACCELERATE));
+        modBus.addListener(RegisterOperationTypesEvent.class, event -> {
+            event.operations().register(ACCELERATE);
+            event.operations().register(SWITCH_OFF);
+        });
+    }
+
+    /**
+     * What a request to switch a machine off carries: where the machine stands.
+     *
+     * @param machine its position, as {@code 1, 2, 3}
+     */
+    public record SwitchOffArgs(String machine) implements IOperationArgs {
+
+        /** How a request written as text is read: {@code machine = '1, 2, 3'}. */
+        public static final MapCodec<SwitchOffArgs> TEXT = RecordCodecBuilder.mapCodec(args -> args.group(
+                Codec.STRING.fieldOf("machine").forGetter(SwitchOffArgs::machine)).apply(args, SwitchOffArgs::new));
     }
 
     /**
@@ -303,6 +358,133 @@ public final class TestNetworkMembers {
         @Override
         public @Nullable Component getCustomName() {
             return this.customName;
+        }
+    }
+
+    /**
+     * A controller on the industrial control cable, as a mod builds its own: it has as many control ports as a test
+     * gives it, keeps its links every second, writes a row of the controlled machines' table for each machine it reads,
+     * where that machine stands, and switches one off when the network asks, refusing a machine it does not read.
+     */
+    public static final class ControllerBlockEntity extends SyncedBlockEntity implements INetworkMember,
+            IPeripheralOwnerSupport {
+
+        private final PeripheralPorts ports = new PeripheralPorts();
+        private int controlPorts = 2;
+        private int keepIn;
+
+        public ControllerBlockEntity(final BlockPos pos, final BlockState state) {
+            super(CONTROLLER_ENTITY.get(), pos, state);
+            NetworkMembers.keep(this);
+            fields().whenBroken((level, at) -> ControlLinks.release(level, at, this));
+        }
+
+        /** Gives it {@code count} control ports, as a test wants it. */
+        public void controlPorts(final int count) {
+            this.controlPorts = count;
+        }
+
+        /** Keeps its links at once, as a test wants it, rather than at its next second. */
+        public void keepNow() {
+            if (this.level instanceof ServerLevel server) {
+                ControlLinks.keep(server, this.worldPosition, this);
+            }
+        }
+
+        /** Its server tick: its links kept once a second. */
+        public void tick() {
+            if (--this.keepIn <= 0) {
+                this.keepIn = ControlLinks.KEEP_EVERY;
+                keepNow();
+            }
+        }
+
+        /** The machines it reads, where each stands. */
+        public List<Long> machines() {
+            final List<Long> read = new ArrayList<>();
+            for (final long linked : linkedEndpoints()) {
+                if (kindOf(linked) == PortKind.CONTROL) {
+                    read.add(linked);
+                }
+            }
+            return read;
+        }
+
+        /** Switches off the machine {@code args} names, through the values it offers. */
+        public OperationStatus switchOff(final SwitchOffArgs args) {
+            final BlockPos at = read(args.machine());
+            final IMachineParameters values = at == null || this.level == null ? null
+                    : this.level.getCapability(IMachineParameters.CAPABILITY, at, null);
+            return values != null && values.write("on", 0) ? OperationStatus.COMPLETED : OperationStatus.FAILED;
+        }
+
+        @Override
+        public @Nullable Text refuses(final OperationType<?> type, final IOperationArgs args) {
+            return args instanceof SwitchOffArgs off && read(off.machine()) == null ? NOT_READ.with(off.machine())
+                    : null;
+        }
+
+        @Override
+        public NetworkCategory category() {
+            return NetworkCategory.C;
+        }
+
+        @Override
+        public List<OperationType<?>> carriesOut() {
+            return List.of(SWITCH_OFF);
+        }
+
+        @Override
+        public List<StateTable> tables() {
+            return List.of(CONTROLLED);
+        }
+
+        @Override
+        public void fillRows(final StateTable table, final StateRows rows) {
+            if (this.level == null) {
+                return;
+            }
+            for (final long machine : machines()) {
+                final BlockPos at = BlockPos.of(machine);
+                final IMachineParameters values = this.level.getCapability(IMachineParameters.CAPABILITY, at, null);
+                rows.at(at).set("machine", GameText.of(this.level.getBlockState(at).getBlock().getName()).english())
+                        .set("on", values != null && values.read("on").orElse(0) >= 0.5);
+            }
+        }
+
+        @Override
+        public PeripheralPorts peripheralPorts() {
+            return this.ports;
+        }
+
+        @Override
+        public void markPeripheralChange() {
+            setChanged();
+        }
+
+        @Override
+        public PeripheralCableType cableType() {
+            return PeripheralCableType.INDUSTRIAL_CONTROL;
+        }
+
+        @Override
+        public int ports(final PortKind kind) {
+            return kind == PortKind.CONTROL ? this.controlPorts : 0;
+        }
+
+        /* The machine standing where {@code written} says, "x, y, z", when it is one it reads; null otherwise. */
+        private @Nullable BlockPos read(final String written) {
+            final String[] parts = written.split(",");
+            if (parts.length != 3) {
+                return null;
+            }
+            try {
+                final BlockPos at = new BlockPos(Integer.parseInt(parts[0].strip()), Integer.parseInt(parts[1].strip()),
+                        Integer.parseInt(parts[2].strip()));
+                return isLinked(at.asLong()) ? at : null;
+            } catch (final NumberFormatException notAPlace) {
+                return null;
+            }
         }
     }
 }

@@ -111,7 +111,7 @@ public final class PeripheralLinkValidator {
         final IPeripheralOwner owner = ownerOpt.get();
         final IPeripheralEndpoint endpoint = endpointOpt.get();
 
-        if (owner.cableType() != endpoint.cableType()) {
+        if (!owner.linksOver(endpoint.cableType())) {
             return new ILinkResult.CableTypeMismatch(
                     owner.cableType(), endpoint.cableType());
         }
@@ -128,7 +128,8 @@ public final class PeripheralLinkValidator {
          * ways with room, the one with the fewest cables wins.
          */
         final PortKind kind = endpoint.portKind();
-        final IPathSearchResult pathResult = findPath(ownerPos, endpointPos, owner.cableType(), kind,
+        // The way runs along the endpoint's cable, which is one of those the owner owns endpoints on.
+        final IPathSearchResult pathResult = findPath(ownerPos, endpointPos, endpoint.cableType(), kind,
                 hub -> hasRoom(owner, endpointPos, kind, hub));
 
         return switch (pathResult) {

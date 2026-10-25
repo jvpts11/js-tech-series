@@ -33,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -170,9 +171,20 @@ public final class MemberRuns {
         final NetworkSystem system = NetworkSystem.get(level);
         final NetworkSystem.MemberNode chosen;
         if (machine.isBlank()) {
-            chosen = leastBusy(mainframe, system.membersCarryingOut(network, type.id()));
-            if (chosen == null) {
+            final List<NetworkSystem.MemberNode> able = system.membersCarryingOut(network, type.id());
+            if (able.isEmpty()) {
                 return refused(NO_MACHINE.with(type.name()));
+            }
+            // Of the machines that carry the kind out, those that take this request; why the first would not, if none.
+            final List<NetworkSystem.MemberNode> taking = new ArrayList<>();
+            for (final NetworkSystem.MemberNode member : able) {
+                if (refusal(level, member, type, args) == null) {
+                    taking.add(member);
+                }
+            }
+            chosen = leastBusy(mainframe, taking);
+            if (chosen == null) {
+                return refused(Objects.requireNonNull(refusal(level, able.getFirst(), type, args)));
             }
         } else {
             chosen = named(level, system.membersOf(network), machine);
@@ -181,6 +193,10 @@ public final class MemberRuns {
             }
             if (!chosen.carriesOut(type.id())) {
                 return refused(CANNOT.with(nameOf(level, chosen), type.name()));
+            }
+            final Text why = refusal(level, chosen, type, args);
+            if (why != null) {
+                return refused(why);
             }
         }
         final Optional<INetworkMember> member = NetworkMembers.at(level, BlockPos.of(chosen.pos()))
@@ -195,6 +211,15 @@ public final class MemberRuns {
             return refused(NOT_RUNNING.text());
         }
         return new Outcome(operation, QUEUED.with(type.name(), name));
+    }
+
+    /* Why the loaded member {@code member} will not take the request; null when it takes it, or is not loaded. */
+    @Nullable
+    private static <T extends IOperationArgs> Text refusal(final ServerLevel level,
+                                                          final NetworkSystem.MemberNode member,
+                                                          final OperationType<T> type, final T args) {
+        return NetworkMembers.at(level, BlockPos.of(member.pos())).map(NetworkMembership::member)
+                .map(found -> found.refuses(type, args)).orElse(null);
     }
 
     /* The able machine with the fewest of these requests in flight on {@code mainframe}; the first joined of a tie. */

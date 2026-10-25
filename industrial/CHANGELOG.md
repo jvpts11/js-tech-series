@@ -117,6 +117,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   are and suits that say they are sealed, so a space module fits only a sealed suit; nothing of the mod enchanted at
   the table or the anvil; and a server setting for each kind of tool, which off takes its recipes and its place in the
   creative tab away.
+- Tanks read from outside: the tank and the tanks of a size the player chooses say what they hold, and a
+  gas tank its pressure, to a controller on the industrial control cable.
 
 ### Changed
 - The Forge Hammer, the Draw Plate and the Mortar are drawn in three dimensions in the hand and on the

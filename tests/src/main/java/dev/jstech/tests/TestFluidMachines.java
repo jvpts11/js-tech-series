@@ -143,6 +143,7 @@ public final class TestFluidMachines {
     public static void onRegisterCapabilities(final RegisterCapabilitiesEvent event) {
         LineValveBlockEntity.register(event, VALVE_ENTITY.get());
         LineValveBlockEntity.register(event, GAS_VALVE_ENTITY.get());
+        ReliefValveBlockEntity.register(event, RELIEF_VALVE_ENTITY.get());
     }
 
     private static <E extends MachineBlockEntity> BlockEntry<DeviceBlock> device(final String id,

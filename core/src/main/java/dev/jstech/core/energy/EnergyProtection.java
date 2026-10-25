@@ -117,6 +117,21 @@ public final class EnergyProtection implements IFieldPart {
         }
     }
 
+    /** How charged its battery is, from empty to full; with none held, empty. */
+    public double batteryShare() {
+        final ItemStack held = this.slots.getStackInSlot(BATTERY);
+        if (held.isEmpty()) {
+            return 0.0;
+        }
+        final IEnergyPort own = held.getCapability(EnergyPorts.ITEM);
+        if (own != null) {
+            return own.capacity() <= 0 ? 0.0 : (double) own.stored() / own.capacity();
+        }
+        final IEnergyStorage fe = held.getCapability(Capabilities.EnergyStorage.ITEM);
+        return fe == null || fe.getMaxEnergyStored() <= 0 ? 0.0
+                : (double) fe.getEnergyStored() / fe.getMaxEnergyStored();
+    }
+
     @Override
     public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
         tag.put(SLOTS, this.slots.serializeNBT(registries));

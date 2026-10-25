@@ -33,6 +33,8 @@ public final class MachinePorts {
             case DEVICE -> devicePorts(build.motherboard().era());
             case VIDEO -> videoOutputs(build);
             case AUDIO -> audioOutputs(build) * SPEAKERS_PER_AUDIO_OUTPUT;
+            // The machines a controller reads come with the cards of its field bus, which none of these hold.
+            case CONTROL -> 0;
         };
     }
 

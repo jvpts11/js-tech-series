@@ -14,6 +14,7 @@ import dev.jstech.core.connect.Connection;
 import dev.jstech.core.fluid.CoreFluidTags;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPolicies;
+import dev.jstech.core.jstechseries.peripheral.ControlLinks;
 import dev.jstech.core.matter.PressureBursts;
 import dev.jstech.industrial.line.CompressedAir;
 import dev.jstech.industrial.line.IndustrialPipeMarks;
@@ -31,8 +32,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, four pipes, a plain
  * one, the same insulated, one that holds pressure and one of rubber that bursts when something too hot reaches it, a
  * gas line, a thin gas line that bursts past ten atmospheres, gas lines of steel and stainless steel under J's
- * Industrial's rules, a Compressed Air Line and a capsule tube of its, a slurry line, a line of items and a line that
- * groups the machines it joins. Each is laid by a vanilla
+ * Industrial's rules, a Compressed Air Line and a capsule tube of its, a slurry line, a line of items, a line that
+ * groups the machines it joins and a cable of the industrial control line. Each is laid by a vanilla
  * item and drawn in a jacket and plug the series already has, so the test mod declares no item, texture or model of
  * its own.
  */
@@ -202,6 +203,15 @@ public final class TestCableTypes {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
                     .build(() -> Items.KELP));
+    /** How many cables the test control cable reaches across, as the industrial control cable's eight. */
+    public static final int CONTROL_REACH = 8;
+    /** A cable of the Core's industrial control line, as a mod declares its own: a controller to its machines. */
+    public static final DeferredHolder<CableType, CableType> CONTROL = CABLES.register("control",
+            () -> CableType.builder(ControlLinks.LINE)
+                    .grid(ControlLinks.GRID).alone().carries(0L, CONTROL_REACH)
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/hbw"))
+                    .build(() -> Items.TRIPWIRE_HOOK));
 
     private TestCableTypes() {
     }

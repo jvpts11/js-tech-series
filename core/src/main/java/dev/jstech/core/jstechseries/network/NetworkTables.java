@@ -29,7 +29,10 @@ public final class NetworkTables {
     private NetworkTables() {
     }
 
-    /** The rows of {@code table} on {@code network}, one for each loaded member with one, in the order they joined. */
+    /**
+     * The rows of {@code table} on {@code network}: those of each loaded member with any, in the order they joined, one
+     * for most members and one for each machine a member reads ({@link INetworkMember#fillRows}).
+     */
     public static List<StateRow> rows(final ServerLevel level, final NetworkUuid network, final StateTable table) {
         final List<StateRow> rows = new ArrayList<>();
         for (final NetworkSystem.MemberNode node : NetworkSystem.get(level).membersOf(network)) {
@@ -40,9 +43,9 @@ public final class NetworkTables {
             if (!(Loaded.blockEntity(level, BlockPos.of(node.pos())) instanceof INetworkMember member)) {
                 continue;
             }
-            final StateRow.Writer row = new StateRow.Writer(table);
-            member.fill(table, row);
-            rows.add(row.done(node.nodeUuid(), node.pos()));
+            final StateRows written = new StateRows(table, node.nodeUuid(), node.pos());
+            member.fillRows(table, written);
+            rows.addAll(written.done());
         }
         return rows;
     }

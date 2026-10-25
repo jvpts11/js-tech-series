@@ -10,11 +10,16 @@ package dev.jstech.core.fluid;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.hazard.GasClouds;
+import dev.jstech.core.machine.IMachineParameters;
+import dev.jstech.core.machine.MachineParameter;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
 import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -23,6 +28,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,14 +37,20 @@ import org.jetbrains.annotations.Nullable;
  * ({@link GasClouds}), as much as its rate a tick, so the vessel never bursts; at or below it, it stays shut. A boiler
  * or any heated vessel that has one does not explode.
  */
-public class ReliefValveBlockEntity extends SyncedBlockEntity {
+@TextHolder
+public class ReliefValveBlockEntity extends SyncedBlockEntity implements IMachineParameters {
 
     private final long rate;
     private final LongField setTo;
     private final LongField vented;
+    private @Nullable List<MachineParameter> parameters;
 
     /** The millibuckets of a gas at the open air's pressure a mole is, as it goes out into the air. */
     public static final double MILLIBUCKETS_A_MOLE = 22.4;
+    /** The highest pressure a controller may set it to, in atmospheres. */
+    public static final long MOST_PRESSURE = 1_000L;
+    public static final TextKey OPENS_ABOVE = TextKey.of("jscore.relief_valve.opens_above", "Opens above");
+    public static final TextKey ATMOSPHERES = TextKey.of("jscore.relief_valve.atmospheres", "atm");
 
     /** A relief valve letting out at most {@code rate} millibuckets a tick, set to {@code pressure} atmospheres. */
     public ReliefValveBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
@@ -51,6 +63,12 @@ public class ReliefValveBlockEntity extends SyncedBlockEntity {
         this.rate = rate;
         this.setTo = fields().longInteger("SetTo", pressure).save().toClient();
         this.vented = fields().longInteger("Vented", 0L).save();
+    }
+
+    /** Gives relief valves of {@code type} their values, which a controller reads and sets. */
+    public static <T extends ReliefValveBlockEntity> void register(final RegisterCapabilitiesEvent event,
+                                                                   final BlockEntityType<T> type) {
+        event.registerBlockEntity(IMachineParameters.CAPABILITY, type, (valve, side) -> valve);
     }
 
     /** One server tick of {@code valve}: above its pressure, the vessel's excess let out. */
@@ -74,6 +92,16 @@ public class ReliefValveBlockEntity extends SyncedBlockEntity {
     /** What it has let out in all, in millibuckets. */
     public long vented() {
         return this.vented.get();
+    }
+
+    /** What a controller reads and sets of it: the pressure it opens above. */
+    @Override
+    public List<MachineParameter> parameters() {
+        if (this.parameters == null) {
+            this.parameters = List.of(MachineParameter.set("set_pressure", OPENS_ABOVE, ATMOSPHERES, 1,
+                    MOST_PRESSURE, this.setTo::get, value -> setTo(Math.round(value))));
+        }
+        return this.parameters;
     }
 
     /* Lets out of the vessel behind it what its pressure is above the set one, up to its rate. */

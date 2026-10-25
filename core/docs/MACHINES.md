@@ -263,6 +263,14 @@ protected void declareParameters(final List<MachineParameter> declared) {
 
 A value set from outside is held to its span, and a value only read is never set.
 
+*Added 2026-10-25.* A machine on a port of the series' energy also declares `fuse` (1 while its fuse holds, 0 once it
+blew) and `battery` (how charged the battery in its UPS is, from 0 to 1). Beside its values, `IMachineParameters`
+gives what a controller reads of any machine: `statusNow()`, the state its lamp shows; `redstoneMode()` and
+`setRedstoneMode(mode)`, what it does with a signal; and `powerDrawn()`, what it drew in the last tick, its energy and
+its port's class (`PowerDrawn`, with `perSecond()` and `text()`, "182 kW"). A block that is no machine can offer the
+same capability: the Core's valves do (`open`, which a valve opened by hand lets the outside set, and `flow`; a relief
+valve's `set_pressure`), and so do J's Industrial's tanks (`amount`, and a gas tank's `pressure`).
+
 ### Sides
 
 *Added 2026-10-15.*

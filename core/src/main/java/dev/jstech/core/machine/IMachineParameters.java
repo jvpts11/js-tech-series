@@ -44,4 +44,24 @@ public interface IMachineParameters {
     default boolean write(final String id, final double to) {
         return parameter(id).map(parameter -> parameter.setTo(to)).orElse(false);
     }
+
+    /** The state it is in now, as its lamp shows it; none for a block that is no machine, a valve or a tank. */
+    default Optional<MachineStatus> statusNow() {
+        return Optional.empty();
+    }
+
+    /** What it does with a redstone signal; none for a block that does nothing with one. */
+    default Optional<RedstoneMode> redstoneMode() {
+        return Optional.empty();
+    }
+
+    /** Sets what it does with a redstone signal; whether it could. */
+    default boolean setRedstoneMode(final RedstoneMode mode) {
+        return false;
+    }
+
+    /** What it draws of its energy now, and through what port; none for a block that draws none. */
+    default Optional<PowerDrawn> powerDrawn() {
+        return Optional.empty();
+    }
 }

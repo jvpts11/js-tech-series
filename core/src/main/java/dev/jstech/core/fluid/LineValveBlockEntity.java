@@ -13,6 +13,8 @@ import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.machine.IMachineParameters;
+import dev.jstech.core.machine.MachineParameter;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.IMatterHandler;
@@ -59,7 +61,7 @@ import org.jetbrains.annotations.Nullable;
  * }</pre>
  */
 @TextHolder
-public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOutput {
+public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOutput, IMachineParameters {
 
     private final MatterState state;
     private final long rate;
@@ -72,9 +74,11 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
     private boolean openNow;
     private long passing;
     private long lastTick;
+    private @Nullable List<MachineParameter> parameters;
 
     public static final TextKey FLOW = TextKey.of("jscore.valve.flow", "Flow");
     public static final TextKey PER_TICK = TextKey.of("jscore.valve.per_tick", "mB a tick");
+    public static final TextKey OPEN = TextKey.of("jscore.valve.open", "Open");
 
     /**
      * A valve of a line of {@code state}, a liquid or a gas, letting through at most {@code rate} millibuckets a tick
@@ -109,6 +113,7 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
         MatterCapabilities.block(MatterState.GAS).ifPresent(capability -> event.registerBlockEntity(capability, type,
                 LineValveBlockEntity::matter));
         event.registerBlockEntity(Signals.OUTPUT, type, (valve, side) -> valve);
+        event.registerBlockEntity(IMachineParameters.CAPABILITY, type, (valve, side) -> valve);
     }
 
     /** One server tick of {@code valve}, the ticker its block is ticked by: whether it is open now, and its flow. */
@@ -187,6 +192,23 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
     @Override
     public List<Reading> readings() {
         return List.of(new Reading(FLOW, this.lastTick, 0, this.rate, PER_TICK));
+    }
+
+    /**
+     * What a controller reads of it: whether it lets through, and its flow. A valve opened by hand is opened and shut
+     * from outside as by its wheel; one that follows a signal, or is always open, is only read.
+     */
+    @Override
+    public List<MachineParameter> parameters() {
+        if (this.parameters == null) {
+            final MachineParameter open = this.rule == IValveRule.BY_HAND
+                    ? MachineParameter.set("open", OPEN, null, 0, 1, () -> this.openNow ? 1 : 0,
+                    value -> this.byHand.set(value >= 0.5))
+                    : MachineParameter.read("open", OPEN, null, 0, 1, () -> this.openNow ? 1 : 0);
+            this.parameters = List.of(open, MachineParameter.read("flow", FLOW, PER_TICK, 0, this.rate,
+                    () -> this.lastTick));
+        }
+        return this.parameters;
     }
 
     private boolean passes(final ResourceLocation id) {

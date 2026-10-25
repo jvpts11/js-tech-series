@@ -111,6 +111,7 @@ import dev.jstech.core.jstechseries.network.DataGrids;
 import dev.jstech.core.jstechseries.network.NetworkAttachments;
 import dev.jstech.core.jstechseries.network.NetworkInspection;
 import dev.jstech.core.jstechseries.network.NetworkMembers;
+import dev.jstech.core.jstechseries.peripheral.ControlLinks;
 import dev.jstech.core.jstechseries.peripheral.PeripheralReconciler;
 import dev.jstech.core.jstechseries.network.StateTables;
 import dev.jstech.core.network.payload.ClientPayloads;
@@ -436,6 +437,8 @@ public final class JsCore {
         // The clamp meter, the series' instrument that reads the energy through a line or a block, and its page.
         ClampMeter.declare();
         SharedEnergy.declare();
+        // The industrial control cable's line and grid, which a controller's machines meet it on in every mod.
+        ControlLinks.declare();
         EnergyConverters.declare();
         SharedContainment.declare();
         StructureProjector.declare();

@@ -270,6 +270,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `OperationRequest` is that request as whoever gives it holds it: `start()` hands it to the handler, a handler that
   throws failing it, `status()`, `failure()` and `cancel()`. The test kit's `NetworkScenes.request` gives one to a
   member and hands it back to follow.
+- (Core) What a controller reads and how it is wired: J's Core's API stays at version 12, all experimental.
+  `IMachineParameters` gives `statusNow()`, `redstoneMode()` and `setRedstoneMode(mode)`, and `powerDrawn()`
+  (`PowerDrawn`: the energy, what was drawn in the last tick and the port's class); a machine on a port of the series'
+  energy declares `fuse` and `battery` (`EnergyProtection.batteryShare()`). The Core's valves offer the capability
+  (`open`, `flow`; a relief valve's `set_pressure`, with `ReliefValveBlockEntity.register`). `ControlLinks` is the
+  industrial control cable's line, grid and links: its wires plug into any block offering its values, and a controller
+  keeps its links (`keep`, `release`, `controllerOf`, `reached`). `IPeripheralOwner.linksOver(type)` lets an owner own
+  endpoints on more than one cable system, and `PortKind.CONTROL` is a controller's port. `INetworkMember.fillRows`
+  writes a row of a table for each machine a member reads (`StateRows`, each row where its machine stands), and
+  `INetworkMember.refuses` says why a member will not take a request, which the network then gives to one that will.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1732,6 +1742,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   queues; it stays in the Processes tab, where calling it off stops the machine, and goes into the log under `RUN`,
   with its kind, the machine and what was asked, once the machine says it is done. A machine that leaves the network
   first fails it, saying so.
+- (Computers) A request to a machine that will not take it: without `ON`, a request goes to a machine that takes it (a
+  controller that reads the machine named), and one that names a machine that will not take it is refused with the
+  machine's reason.
+- (Industrial) Tanks read from outside: the tank and the tanks of a size the player chooses say what they hold, and a
+  gas tank its pressure, to a controller on the industrial control cable.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
