@@ -220,6 +220,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `IStructureShape.quotas()` gives the counts a shape limits as `Quota`s (a name, the blocks counted, a `Limit`), which
   `MultiblockPattern` works out from its limits; `BuildOrder.plan` takes them and how many of each already stand;
   `MachineBlockEntity.structureChecked(level)` runs each time a terminal's structure was checked again.
+- (Core) Bodies pushed out without being thrown: J's Core's API stays at version 12, all experimental.
+  `RigidBody.pushOut` moves a body out of what it sank into over its next step, with nothing added to how fast it
+  goes or turns, and `RigidBody.pushedOutAt` says how fast a point of it is pushed out so.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1783,6 +1786,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   controller, in the Structure Projector, the Multiblock Builder, the recipe viewers, the manuals, the studio and Jade.
 
 ### Fixed
+- (Core) A stack of moving structures that sank into itself, as one landing on another can, is pushed apart without
+  its top being thrown: a structure into another is moved out of it rather than given a speed to come out, which
+  stayed with it once out, so the speeds of each sinking added up the stack and could throw the top off it.
 - (Core) A block that gives light of a colour or a bright glow shows its colour and its halo in the tick it is placed,
   and loses them in the tick it goes, as does a lamp turned on or off: they waited for the turn of their part of the
   world, a few ticks later. Stained glass placed or taken away tints the light about it at once too.

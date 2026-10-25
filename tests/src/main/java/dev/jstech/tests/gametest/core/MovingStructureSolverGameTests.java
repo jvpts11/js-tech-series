@@ -69,6 +69,10 @@ public final class MovingStructureSolverGameTests {
     private static final int STACKED = 5;
     /* How long what came to rest is watched staying still, in ticks: past several of its looks about. */
     private static final int WATCHED = 60;
+    /* How many of the last ticks watched a failure tells. */
+    private static final int LATELY = 3;
+    /* How fast the top going sideways is told, in metres a second. */
+    private static final double ASIDE = 0.5;
     /* The wall the fast bodies fly at: its west face, in the arena's places. */
     private static final int WALL = 40;
     /*
@@ -95,9 +99,21 @@ public final class MovingStructureSolverGameTests {
         }
         stack.forEach(structure -> structure.move(PhysicsMotion.AT_REST));
         final double[] rested = new double[STACKED];
+        // A failure is told by the first check that fails: one failing in the same tick as another takes its place.
+        final boolean[] settled = new boolean[1];
+        // The ticks the top went aside as they settled, and the last few ticks watched, for a failure to tell.
+        final List<String> aside = new ArrayList<>();
+        final List<String> lately = new ArrayList<>();
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(stack.stream().allMatch(
-                        MovingStructureSolverGameTests::asleep), "all five come to rest: " + boxes(stack)))
+                .thenWaitUntil(() -> {
+                    final StructurePhysics top = stack.getLast().physics();
+                    if (top != null && aside.size() < LATELY && Math.hypot(top.body().velocity().x(),
+                            top.body().velocity().z()) > ASIDE) {
+                        aside.add(watched(helper, stack));
+                    }
+                    helper.assertTrue(stack.stream().allMatch(MovingStructureSolverGameTests::asleep),
+                            "all five come to rest: " + boxes(stack));
+                })
                 .thenExecute(() -> {
                     helper.assertTrue(Math.abs(stack.get(0).worldBox().minY - y(helper, FLOOR)) < RESTS,
                             "the lowest rests on the floor: " + boxes(stack));
@@ -107,15 +123,25 @@ public final class MovingStructureSolverGameTests {
                         final AABB below = stack.get(i - 1).worldBox();
                         helper.assertTrue(Math.abs(box.minY - below.maxY) < RESTS
                                 && Math.abs(box.minX - below.minX) < DRIFTS && Math.abs(box.minZ - below.minZ)
-                                < DRIFTS, "each rests squarely on the one below: " + boxes(stack));
+                                < DRIFTS, "each rests squarely on the one below: " + boxes(stack)
+                                + "; the top went aside at: " + String.join(" | ", aside));
                         rested[i] = box.minY;
                     }
+                    settled[0] = true;
                 })
                 .thenExecuteFor(WATCHED, () -> {
+                    if (!settled[0]) {
+                        return;
+                    }
+                    lately.add(watched(helper, stack));
+                    if (lately.size() > LATELY) {
+                        lately.removeFirst();
+                    }
                     for (int i = 0; i < STACKED; i++) {
                         helper.assertTrue(asleep(stack.get(i))
                                 && Math.abs(stack.get(i).worldBox().minY - rested[i]) < STILL,
-                                "the stack sleeps on, still: " + boxes(stack));
+                                "the stack sleeps on, still: " + boxes(stack) + "; the last ticks: "
+                                        + String.join(" | ", lately));
                     }
                 })
                 .thenExecute(() -> {
@@ -311,6 +337,27 @@ public final class MovingStructureSolverGameTests {
         for (final MovingStructure structure : structures) {
             final AABB box = structure.worldBox();
             said.append(String.format(Locale.ROOT, "[%.3f %.3f %.3f]", box.minX, box.minY, box.minZ));
+        }
+        return said.toString();
+    }
+
+    /*
+     * A tick of the stack, for a failure to tell: the test's tick, and each structure's sleep (z asleep, w awake, - no
+     * physics), whether its entity is gone, its box's lowest corner in the arena, and how fast it goes east, up and
+     * south, in metres a second.
+     */
+    private static String watched(final GameTestHelper helper, final List<MovingStructure> structures) {
+        final StringBuilder said = new StringBuilder("t" + helper.getTick());
+        final BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        for (final MovingStructure structure : structures) {
+            final StructurePhysics physics = structure.physics();
+            final AABB box = structure.worldBox();
+            said.append(String.format(Locale.ROOT, " %s%s(%.3f %.3f %.3f v %.2f %.2f %.2f)",
+                    physics == null ? "-" : physics.asleep() ? "z" : "w", structure.entity().isRemoved() ? "!" : "",
+                    box.minX - origin.getX(), box.minY - origin.getY(), box.minZ - origin.getZ(),
+                    physics == null ? 0 : physics.body().velocity().x(),
+                    physics == null ? 0 : physics.body().velocity().y(),
+                    physics == null ? 0 : physics.body().velocity().z()));
         }
         return said.toString();
     }

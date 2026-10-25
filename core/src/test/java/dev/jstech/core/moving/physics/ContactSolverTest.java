@@ -144,6 +144,36 @@ class ContactSolverTest {
         assertEquals(0, body.velocity().x, 0.01, "and holds it against the push");
     }
 
+    @Test
+    void solve_settlesAStackDroppedOnItselfSquarely() {
+        final Stack stack = new Stack(2);
+        double thrown = 0;
+        for (int i = 0; i < Stack.SETTLED; i++) {
+            stack.step();
+            thrown = Math.max(thrown, stack.topSideways());
+        }
+        // Each lands on the one below just landed and bounces a little, as fast as it came: never thrown aside.
+        assertTrue(thrown < 0.3, "the top is never thrown aside: " + thrown);
+        stack.assertSquare();
+    }
+
+    @Test
+    void solve_pushesAStackSunkIntoItselfApartWithoutThrowingItsTop() {
+        final Stack stack = new Stack(1);
+        for (int i = 0; i < Stack.SETTLED; i++) {
+            stack.step();
+        }
+        // Each sunk five centimetres into the one below, as a step of them closing with nothing holding them would.
+        stack.sink(0.05);
+        double thrown = 0;
+        for (int i = 0; i < Stack.SETTLED; i++) {
+            stack.step();
+            thrown = Math.max(thrown, stack.topUp());
+        }
+        assertTrue(thrown < 0.5, "pushed out of one another, the top is not thrown up: " + thrown + " m/s");
+        stack.assertSquare();
+    }
+
     /* Steps a falling cube against the ground, a wide fixed box whose top is at nought, as the world's is held. */
     private static void run(final RigidBody body, final Vector3d gravity, final double grip, final int steps) {
         final RigidBody ground = new RigidBody();
@@ -175,6 +205,96 @@ class ContactSolverTest {
         final Vector3d y = body.orientation().transform(new Vector3d(0, 1, 0));
         final Vector3d z = body.orientation().transform(new Vector3d(0, 0, 1));
         return new OrientedBox().set(body.position(), x, y, z, 0.5, 0.5, 0.5);
+    }
+
+    /*
+     * Five cubes one on another on the ground, {@code gap} apart to begin with, worked as an island of structures
+     * resting on one another is: a step a quarter of a tick, each pair's points one group, passes more for each cube
+     * above.
+     */
+    private static final class Stack {
+
+        /* Long enough for a stack dropped or pushed to come to rest: three seconds of quarter-tick steps. */
+        private static final int SETTLED = 240;
+        private static final int CUBES = 5;
+        private static final double STEP = 0.0125;
+        private static final int MOST_PASSES = 40;
+        private static final int PASSES_PER_CUBE = 4;
+        private static final long FLOOR_GROUP = 100;
+
+        private final RigidBody[] cubes = new RigidBody[CUBES];
+        private final RigidBody ground = new RigidBody();
+        private final OrientedBox floor = new OrientedBox().square(-50, -1, -50, 50, 0, 50);
+        private final ContactSolver solver = new ContactSolver();
+        private final BoxContacts contacts = new BoxContacts();
+
+        private Stack(final double gap) {
+            ground.fixed();
+            for (int i = 0; i < CUBES; i++) {
+                cubes[i] = new RigidBody();
+                // A hair aside of one another, as structures landing never quite square do.
+                cubes[i].position().set(i % 2 == 0 ? 0.01 : -0.01, 0.5 + gap * i, i % 3 == 0 ? 0.01 : 0);
+            }
+        }
+
+        private void step() {
+            for (final RigidBody cube : cubes) {
+                cube.prepare(MASS, CUBE);
+                cube.accelerate(new Vector3d(0, -9.81 * MASS, 0), new Vector3d(), MASS, CUBE, STEP);
+            }
+            solver.clear();
+            final RigidBody lowest = cubes[0];
+            contacts.collide(box(lowest), floor, lowest.velocity().length() * STEP + 0.05, (at, way, apart,
+                    feature) -> solver.add(lowest, ground, at, way, apart, GRIP, key(FLOOR_GROUP, lowest, at, way,
+                    apart), FLOOR_GROUP));
+            for (int i = 0; i < CUBES - 1; i++) {
+                final RigidBody under = cubes[i];
+                final RigidBody over = cubes[i + 1];
+                final long pair = i;
+                contacts.collide(box(over), box(under), (over.velocity().length() + under.velocity().length())
+                        * STEP + 0.05, (at, way, apart, feature) -> solver.add(over, under, at, way, apart, GRIP,
+                        key(pair, over, at, way, apart), pair));
+            }
+            final int times = solver.begin(STEP, ContactSolver.ITERATIONS, 1.0);
+            solver.iterate(Math.max(times, Math.min(MOST_PASSES, times + PASSES_PER_CUBE * (CUBES - 1))));
+            solver.end();
+            for (final RigidBody cube : cubes) {
+                cube.drift(CUBE, STEP);
+            }
+        }
+
+        /* Sinks each cube {@code depth} into the one below. */
+        private void sink(final double depth) {
+            for (int i = 1; i < CUBES; i++) {
+                cubes[i].position().y -= depth * i;
+            }
+        }
+
+        private double topUp() {
+            return cubes[CUBES - 1].velocity().y;
+        }
+
+        private double topSideways() {
+            return Math.hypot(cubes[CUBES - 1].velocity().x, cubes[CUBES - 1].velocity().z);
+        }
+
+        /* Each cube rests on the one below, as deep into it as a contact lets be and a hair aside of it at most. */
+        private void assertSquare() {
+            for (int i = 0; i < CUBES; i++) {
+                final Vector3d at = cubes[i].position();
+                final double below = i == 0 ? -0.5 : cubes[i - 1].position().y;
+                assertEquals(below + 1, at.y, 0.01, "cube " + i + " rests on the one below: " + at);
+                assertTrue(Math.abs(at.x) < 0.1 && Math.abs(at.z) < 0.1, "cube " + i + " squarely: " + at);
+            }
+        }
+
+        /* A point known by where it is on {@code body}'s own face, as the structures' contacts are. */
+        private static long key(final long pair, final RigidBody body, final Vector3d at, final Vector3d way,
+                                final double apart) {
+            final Vector3d local = new Vector3d(way).mul(apart / 2).add(at).sub(body.position());
+            body.orientation().transformInverse(local);
+            return ContactSolver.key(pair, local);
+        }
     }
 
     /* A cube's meetings with the ground, a wide fixed box whose top is at nought, worked step after step. */

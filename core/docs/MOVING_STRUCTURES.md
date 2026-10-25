@@ -192,10 +192,11 @@ What it meets: the world's blocks and the other structures' blocks, each by its 
 ahead of time so a fast structure stops where it touches, never through, and bounces off the wall it meets, never off
 the air before it. It rests still on many points, each contact starting from the push it gave the tick before, so a
 great hull on the ground holds still from the first; it slides as the blocks' slipperiness lets it, ice barely, and
-bounces a little from a hard blow, only as it meets, never while it rests. Another structure moving by its physics is
-pushed back as hard as it pushes; one moved by a motion carries what rests on it, a crate on a lift. A blow harder than
-a block holds, by its blast strength (`jscore:blast_strength`), breaks it, of the world or of the structure: a heavy
-block falling on glass goes through it.
+bounces a little from a hard blow, only as it meets, never while it rests. A structure that sank into another, as one
+landing on a stack may, is moved out of it over a few steps, never given a speed to come out, so a stack pushed apart
+does not throw its top. Another structure moving by its physics is pushed back as hard as it pushes; one moved by a
+motion carries what rests on it, a crate on a lift. A blow harder than a block holds, by its blast strength
+(`jscore:blast_strength`), breaks it, of the world or of the structure: a heavy block falling on glass goes through it.
 
 *Added 2026-10-22.* Structures that may meet in a tick are worked together, as one, as joined ones are: a stack of
 crates is held up from the ground through every crate in it, with more passes the taller it is and its tick cut into

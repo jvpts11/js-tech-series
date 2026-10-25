@@ -10472,6 +10472,7 @@ stable 4
 10 dev.jstech.core.moving.physics.RigidBody  Matrix3d worldInertia(Matrix3d, Matrix3d)
 10 dev.jstech.core.moving.physics.RigidBody  Quaterniond orientation()
 10 dev.jstech.core.moving.physics.RigidBody  Vector3d position()
+12 dev.jstech.core.moving.physics.RigidBody  Vector3d pushedOutAt(Vector3d, Vector3d)
 10 dev.jstech.core.moving.physics.RigidBody  Vector3d spin()
 10 dev.jstech.core.moving.physics.RigidBody  Vector3d velocity()
 10 dev.jstech.core.moving.physics.RigidBody  Vector3d velocityAt(Vector3d, Vector3d)
@@ -10489,6 +10490,7 @@ stable 4
 10 dev.jstech.core.moving.physics.RigidBody  void prepare(double, Matrix3d)
 10 dev.jstech.core.moving.physics.RigidBody  void push(Vector3d, Vector3d, double, Matrix3d)
 10 dev.jstech.core.moving.physics.RigidBody  void pushAlongRow(Vector3d, Vector3d, double)
+12 dev.jstech.core.moving.physics.RigidBody  void pushOut(Vector3d, double, Vector3d)
 10 dev.jstech.core.moving.physics.RigidBody  void shiftAlongRow(Vector3d, Vector3d, double)
 10 dev.jstech.core.moving.physics.RigidBody  void startShift()
 10 dev.jstech.core.moving.physics.StructureParts  type final class

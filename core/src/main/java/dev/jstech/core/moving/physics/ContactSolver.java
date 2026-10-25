@@ -19,7 +19,9 @@ import org.joml.Vector3d;
  * grip lets; all the contacts in turn, again and again, until they agree. A contact a little into the other body pushes
  * it out a little a step; one still apart lets the bodies close up to touching, and no further, so a fast body stops
  * where it meets, never through; a blow bounces a little as the bodies touch, as fast as they came. Each contact
- * starts from the whole push it gave the step before, so a body resting on many points rests still.
+ * starts from the whole push it gave the step before, so a body resting on many points rests still. A body into
+ * another is moved out of it, never sped out: what pushes it out moves it over the step and is forgotten, so however a
+ * stack came to sink into itself, it is pushed apart without its top being thrown.
  */
 public final class ContactSolver {
 
@@ -36,10 +38,10 @@ public final class ContactSolver {
 
     /** How many times every contact is worked in a step. */
     public static final int ITERATIONS = 10;
-    /* How much of its depth a contact into the other body pushes out a second, and the depth it lets be. */
+    /* How much of its depth a contact into the other body moves it out a step, and the depth it lets be. */
     private static final double BAUMGARTE = 0.2;
     private static final double SLOP = 0.005;
-    /* The fastest a contact pushes a body out of another, in metres a second, so a deep one does not throw it. */
+    /* The fastest a contact moves a body out of another, in metres a second, so a deep one comes out over steps. */
     private static final double MOST_PUSH = 3.0;
     /*
      * How much of last step's push a contact starts from: all of it, so a body resting on many points, a great hull on
@@ -252,12 +254,12 @@ public final class ContactSolver {
         // bodies resting, and bouncing it, as they shake by a hair, would set a stack jumping with the blows of those
         // landing on it.
         final boolean meeting = last == null || last[COMING] > 0 || last[WAS_APART] > 0;
-        double bias;
-        if (contact.apart > 0) {
-            bias = -contact.apart / seconds;
-        } else {
-            bias = Math.min(MOST_PUSH, BAUMGARTE * Math.max(0, -contact.apart - SLOP) / seconds);
-        }
+        double bias = contact.apart > 0 ? -contact.apart / seconds : 0;
+        // Into the other, it is moved out a little a step, never sped out: a speed given to push it out would stay
+        // with it once out, and a stack sunk into itself would throw its top as high as each of its sinkings sped it.
+        contact.pushOut = contact.apart > 0 ? 0
+                : Math.min(MOST_PUSH, BAUMGARTE * Math.max(0, -contact.apart - SLOP) / seconds);
+        contact.pushedOut = 0;
         contact.coming = 0;
         if (contact.groupApart > SLOP) {
             // Reached within this step, they close up to touching and no further; the blow comes as they touch, so
@@ -308,6 +310,16 @@ public final class ContactSolver {
         final double normalNow = Math.max(0, contact.normalImpulse + (contact.bias - along) * contact.normalMass);
         apply(contact, contact.normal, normalNow - contact.normalImpulse);
         contact.normalImpulse = normalNow;
+        // Into the other, as fast out as its depth asks, on the way the bodies are pushed out alone.
+        if (contact.pushOut > 0) {
+            contact.a.pushedOutAt(contact.point, relative);
+            contact.b.pushedOutAt(contact.point, scratch);
+            final double out = Math.max(0, contact.pushedOut + (contact.pushOut - relative.sub(scratch)
+                    .dot(contact.normal)) * contact.normalMass);
+            contact.a.pushOut(contact.normal, out - contact.pushedOut, contact.point);
+            contact.b.pushOut(contact.normal, contact.pushedOut - out, contact.point);
+            contact.pushedOut = out;
+        }
     }
 
     /* How fast a goes past b at the contact's point, into {@link #relative}. */
@@ -364,6 +376,9 @@ public final class ContactSolver {
         private double secondMass;
         private double bias;
         private double closing;
+        /* How fast it moves the bodies out of one another this step, as deep as they are, and the push it gave so. */
+        private double pushOut;
+        private double pushedOut;
         /* How fast the bodies came at it while it was apart and reached this step, to bounce as fast when they meet. */
         private double coming;
         /* The shapes whose meeting it is one point of, and how near the nearest point of them is. */

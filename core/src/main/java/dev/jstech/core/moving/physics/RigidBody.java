@@ -32,6 +32,12 @@ public final class RigidBody {
     /* How far its joints moved it since they began to be drawn together this step. */
     private final Vector3d shiftedLinear = new Vector3d();
     private final Vector3d shiftedAngular = new Vector3d();
+    /*
+     * How fast its contacts push it out of what it sank into this step, going and turning: it moves by it as it drifts
+     * and then forgets it, nothing of it added to how fast it goes, so a body pushed out of another is not thrown.
+     */
+    private final Vector3d pushedOut = new Vector3d();
+    private final Vector3d turnedOut = new Vector3d();
     /* What a push does to it, as {@link #prepare prepared} for a step: none for a body that does not give. */
     private final Matrix3d inverseInertia = new Matrix3d().zero();
     private double inverseMass;
@@ -90,9 +96,16 @@ public final class RigidBody {
 
     /**
      * The second half of a step: it goes and turns over {@code seconds} as fast as it now goes and turns, its spin
-     * kept as momentum against its inertia turned as it turns, as a free body's is.
+     * kept as momentum against its inertia turned as it turns, as a free body's is; and it is moved out of what it sank
+     * into as fast as its contacts pushed it out, which it then forgets.
      */
     public void drift(final Matrix3d inertia, final double seconds) {
+        if (pushedOut.lengthSquared() > 0 || turnedOut.lengthSquared() > 0) {
+            position.fma(seconds, pushedOut);
+            turnByAngle(turnedOut.mul(seconds));
+            pushedOut.zero();
+            turnedOut.zero();
+        }
         position.fma(seconds, velocity);
         worldInertia(inertia, worldInertia);
         worldInertia.transform(spin, momentum);
@@ -109,9 +122,12 @@ public final class RigidBody {
 
     /**
      * Readies it for the pushes of a step, as it is turned now: a body of {@code kilograms} with {@code inertia} about
-     * its centre in its own frame. A body of no mass is readied as one that does not give.
+     * its centre in its own frame. A body of no mass is readied as one that does not give. A push out left from a step
+     * it did not drift in, pushed by another's contacts, is forgotten.
      */
     public void prepare(final double kilograms, final Matrix3d inertia) {
+        pushedOut.zero();
+        turnedOut.zero();
         if (kilograms <= 0) {
             fixed();
             return;
@@ -124,6 +140,8 @@ public final class RigidBody {
     public void fixed() {
         inverseMass = 0;
         inverseInertia.zero();
+        pushedOut.zero();
+        turnedOut.zero();
     }
 
     /** One over its mass, as readied: 0 for a body that does not give. */
@@ -159,6 +177,26 @@ public final class RigidBody {
         arm.set(at).sub(position).cross(way).mul(size);
         inverseInertia.transform(arm);
         spin.add(arm);
+    }
+
+    /**
+     * Pushes it out of what it sank into by {@code size} along {@code way} at the world's point {@code at}, as readied:
+     * it is moved by it as it next drifts, with nothing added to how fast it goes or turns.
+     */
+    public void pushOut(final Vector3d way, final double size, final Vector3d at) {
+        if (inverseMass <= 0) {
+            return;
+        }
+        pushedOut.fma(inverseMass * size, way);
+        arm.set(at).sub(position).cross(way).mul(size);
+        inverseInertia.transform(arm);
+        turnedOut.add(arm);
+    }
+
+    /** How fast its point at {@code at} in the world is pushed out this step, into {@code into}. */
+    public Vector3d pushedOutAt(final Vector3d at, final Vector3d into) {
+        into.set(at).sub(position);
+        return turnedOut.cross(into, into).add(pushedOut);
     }
 
     /**
@@ -232,7 +270,12 @@ public final class RigidBody {
         shiftedLinear.fma(inverseMass * size, linear);
         inverseInertia.transform(angular, arm).mul(size);
         shiftedAngular.add(arm);
-        final Quaterniond rate = new Quaterniond(arm.x * HALF, arm.y * HALF, arm.z * HALF, 0).mul(orientation);
+        turnByAngle(arm);
+    }
+
+    /* Turns it by a small {@code angle}: an axis of the world, of a length the angle in radians. */
+    private void turnByAngle(final Vector3d angle) {
+        final Quaterniond rate = new Quaterniond(angle.x * HALF, angle.y * HALF, angle.z * HALF, 0).mul(orientation);
         orientation.set(orientation.x + rate.x, orientation.y + rate.y, orientation.z + rate.z,
                 orientation.w + rate.w).normalize();
     }
