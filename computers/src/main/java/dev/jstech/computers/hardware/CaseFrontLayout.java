@@ -9,7 +9,8 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.os.media.EjectButton;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,11 @@ public record CaseFrontLayout(FrontArea power, List<FrontArea> bays, List<FrontA
             new int[][] {{3, 2}, {3, 6}});
     private static final CaseFrontLayout ADVANCED_AESTHETIC = front(texels(13, 2, 4, 4), 4, 26, new int[0],
             new int[][] {{4, 2}, {4, 6}});
+    /* Each era's front, and the Aesthetic case's where it differs; an era after the Advanced has the Advanced's. */
+    private static final EraTable<CaseFrontLayout> FRONTS = EraTable.ofFive(VINTAGE, LEGACY, TRANSITION, STANDARD,
+            ADVANCED);
+    private static final EraTable<CaseFrontLayout> AESTHETIC_FRONTS = EraTable.ofFive(VINTAGE, LEGACY, TRANSITION,
+            STANDARD_AESTHETIC, ADVANCED_AESTHETIC);
 
     public CaseFrontLayout {
         bays = List.copyOf(bays);
@@ -67,15 +73,8 @@ public record CaseFrontLayout(FrontArea power, List<FrontArea> bays, List<FrontA
     }
 
     /** The front of the case of {@code era} in {@code style}. */
-    public static CaseFrontLayout of(final HardwareEra era, final CaseStyle style) {
-        final boolean aesthetic = style == CaseStyle.AESTHETIC;
-        return switch (era) {
-            case VINTAGE -> VINTAGE;
-            case LEGACY -> LEGACY;
-            case TRANSITION -> TRANSITION;
-            case STANDARD -> aesthetic ? STANDARD_AESTHETIC : STANDARD;
-            case ADVANCED, EXA, SINGULARITY -> aesthetic ? ADVANCED_AESTHETIC : ADVANCED;
-        };
+    public static CaseFrontLayout of(final Era era, final CaseStyle style) {
+        return (style == CaseStyle.AESTHETIC ? AESTHETIC_FRONTS : FRONTS).get(era);
     }
 
     /** The part at texel {@code x}, {@code y} of a case's front, {@code width} by {@code height} texels. */

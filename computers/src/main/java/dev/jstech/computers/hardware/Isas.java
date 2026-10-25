@@ -9,6 +9,8 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.vm.listing.Opcode;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.DeclarationError;
 
@@ -56,6 +58,13 @@ public final class Isas {
      * oldest of the two lacks.
      */
     private static final Map<Opcode, String> ADDED_IN = Map.of();
+    /*
+     * The ISA this mod's own processors of each era are built on: x86-64 from the Transition on, and for every era
+     * after the Advanced until one brings an ISA of its own. An add-on's processor names its own.
+     */
+    private static final EraTable<IsaSpec> OWN = EraTable.of(IA_16)
+            .from(HardwareEra.LEGACY, X86)
+            .from(HardwareEra.TRANSITION, X86_64);
 
     private static final Map<String, IsaSpec> KNOWN = new LinkedHashMap<>();
 
@@ -157,18 +166,9 @@ public final class Isas {
         return true;
     }
 
-    /**
-     * The ISA this mod's own processors of that era are built on.
-     *
-     * <p>The eras from the Transition on are all x86-64 until an era brings an ISA of its own; every era is named
-     * here rather than left to a default, so that a new one cannot be added without this question being answered.
-     */
-    public static IsaSpec of(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> IA_16;
-            case LEGACY -> X86;
-            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> X86_64;
-        };
+    /** The ISA this mod's own processors of that era are built on; x86-64 from the Transition on. */
+    public static IsaSpec of(final Era era) {
+        return OWN.get(era);
     }
 
     /**

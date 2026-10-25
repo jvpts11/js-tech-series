@@ -87,7 +87,7 @@ public final class GridGameTests {
             helper.assertTrue(data.connected(a, b), "two Ethernet cables join");
             helper.assertTrue(!data.connected(b, c), "Ethernet and HBW stay apart");
             helper.assertTrue(Objects.equals(DataLine.ACCESS.lineId(), data.memberOf(a).line())
-                            && data.memberOf(a).generation() == HardwareEra.LEGACY.id(),
+                            && data.memberOf(a).generation() == HardwareEra.seriesIndex(HardwareEra.LEGACY),
                     "a cable stands as its line, in its era's generation");
             helper.assertTrue(data.runLength(a) == 2, "the two Ethernet cables are one run");
         });

@@ -34,6 +34,7 @@ import dev.jstech.industrial.multiblock.IndustrialMultiblock;
 import dev.jstech.industrial.multiblock.SizeGives;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -73,10 +74,11 @@ public final class TestFluidMachines {
 
     /* Their block states and models are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<Block> TANK_CASING = TANK.built(TestSounds.CONTENT.block("test_tank_casing",
-            Block::new)).named("Test tank casing").look(IBlockLook.cubeAll("test_tank_casing")).register();
+            Block::new)).named("Test tank casing").look(IBlockLook.cubeAll("test_tank_casing"))
+            .tag(BlockTags.MINEABLE_WITH_PICKAXE).register();
     public static final BlockEntry<Block> VESSEL_CASING = VESSEL.built(TestSounds.CONTENT.block(
             "test_vessel_casing", Block::new)).named("Test vessel casing")
-            .look(IBlockLook.cubeAll("test_vessel_casing")).register();
+            .look(IBlockLook.cubeAll("test_vessel_casing")).tag(BlockTags.MINEABLE_WITH_PICKAXE).register();
     public static final BlockEntry<DeviceBlock> LIQUID_TANK = device("test_liquid_tank", "Test liquid tank",
             () -> TestFluidMachines.LIQUID_TANK_ENTITY.get());
     public static final BlockEntry<DeviceBlock> GAS_VESSEL = device("test_gas_vessel", "Test gas vessel",

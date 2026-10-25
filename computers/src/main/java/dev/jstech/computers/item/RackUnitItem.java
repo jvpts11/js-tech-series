@@ -10,10 +10,10 @@ package dev.jstech.computers.item;
 import dev.jstech.computers.block.FibreReach;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackThermals;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -63,7 +63,7 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
 
     private final Kind kind;
     /** The era of the unit: a rack seats the units of its own era and of the earlier ones. */
-    private final HardwareEra era;
+    private final Era era;
 
     private static final TextKey KVM_TOOLTIP = TextKey.of("item.jsc.kvm_switch.tooltip",
             "Lets one monitor address every machine in the rack");
@@ -82,7 +82,7 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
     private static final TextKey EQUIPMENT = TextKey.of("item.jsc.rack_unit.equipment",
             "%sU - rack equipment, not a computer");
 
-    public RackUnitItem(final Properties properties, final Kind kind, final HardwareEra era) {
+    public RackUnitItem(final Properties properties, final Kind kind, final Era era) {
         super(properties.stacksTo(1));
         this.kind = kind;
         this.era = era;
@@ -92,12 +92,12 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
         return kind;
     }
 
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
     /** Whether a rack of {@code rackEra} seats the unit: one of its own era or an earlier one. */
-    public boolean fitsRackOf(final HardwareEra rackEra) {
+    public boolean fitsRackOf(final Era rackEra) {
         return era.isAtMost(rackEra);
     }
 

@@ -13,14 +13,16 @@ import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.hardware.ComputerBuild;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.audio.Audio;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -103,9 +105,9 @@ public final class BootRunner {
             return 0;
         }
         final ItemStack disk = machine.systemDisk();
-        final int diskSpeed = disk.getItem() instanceof DiskItem drive
-                ? drive.spec().tier().speedMultiplier() : 1;
-        final HardwareEra era = machine.installedEra();
+        final int diskSpeed = HardwareRegistry.disk(disk) instanceof DiskSpec drive
+                ? drive.tier().speedMultiplier() : 1;
+        final Era era = machine.installedEra();
         return BootTiming.bootTicks(system.footprintMb(), diskSpeed, era,
                 BootTiming.tightRam(machine.ramTotalMb(), system.ramMb()));
     }
@@ -431,7 +433,7 @@ public final class BootRunner {
      * when it fails, on the machines of the ages whose firmware was a BIOS, up to the Transition; a machine of the
      * Standard on, whose firmware is a UEFI, comes up without it.
      */
-    public static boolean beepsAfterSelfTest(@Nullable final HardwareEra era) {
+    public static boolean beepsAfterSelfTest(@Nullable final Era era) {
         return era != null && era.isAtMost(HardwareEra.TRANSITION);
     }
 }

@@ -8,25 +8,20 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.audio.SoundHardwareTexts;
-import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-/**
- * A motherboard item, the chassis that bounds a build (socket and counts of CPU/RAM/PCIe slots).
- */
+/** What a motherboard's tooltip says: its form, what its slots take, its video and audio, and its era. */
 @TextHolder
-public class MotherboardItem extends SpecItem<MotherboardSpec> {
+final class MotherboardTooltip {
 
     private static final TextKey FORM_FACTOR = TextKey.of("jsc.item.motherboard.form_factor", "%s form factor");
     /* CPU slots and socket, memory slots and generations, card slots and bus. */
@@ -42,22 +37,15 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
     private static final TextKey NO_VIDEO = TextKey.of("jsc.item.motherboard.no_video",
             "No screen output of its own: a screen needs a graphics card, or a processor with graphics");
 
-    public MotherboardItem(final Properties properties, final MotherboardSpec spec) {
-        super(properties, spec);
+    private MotherboardTooltip() {
     }
 
-    public static boolean fits(final ItemStack stack, final Set<FormFactor> acceptedFormFactors) {
-        return stack.getItem() instanceof MotherboardItem board
-                && acceptedFormFactors.contains(board.spec().formFactor());
-    }
-
-    @Override
-    public void appendHoverText(final ItemStack stack, final TooltipContext context,
-                                final List<Component> tooltip, final TooltipFlag flag) {
-        final MotherboardSpec spec = spec();
+    static void append(final MotherboardSpec spec, final List<Component> tooltip) {
         tooltip.add(GameText.component(FORM_FACTOR.with(spec.formFactor().label())).withStyle(ChatFormatting.AQUA));
+        // The generations in the order they came, the way the declared ones are kept.
+        final List<RamGeneration> order = RamGeneration.all();
         final String ramTypes = spec.acceptedRam().stream()
-                .sorted()
+                .sorted(Comparator.comparingInt(order::indexOf))
                 .map(generation -> generation.label().english())
                 .collect(Collectors.joining(" / "));
         /*

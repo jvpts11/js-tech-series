@@ -9,13 +9,10 @@ package dev.jstech.computers.program;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.machine.FileService;
 import dev.jstech.computers.machine.InstallService;
 import dev.jstech.computers.machine.IqlService;
@@ -46,11 +43,13 @@ import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.os.devices.DeviceMaps;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -231,22 +230,15 @@ abstract class ServerCliShell implements ICliComputer {
     }
 
     @Override
-    public HardwareEra era() {
-        final HardwareEra installed = hostBlock instanceof IOsHost computer ? computer.installedEra() : null;
+    public Era era() {
+        final Era installed = hostBlock instanceof IOsHost computer ? computer.installedEra() : null;
         return installed == null ? HardwareEra.STANDARD : installed;
     }
 
     @Override
     public boolean hostIs(final HostScope scope) {
-        return switch (scope) {
-            case ANY -> true;
-            case MAINFRAME -> hostBlock instanceof MainframeBlockEntity;
-            case CRAFTING_COMPUTER -> hostBlock instanceof CraftingComputerBlockEntity;
-            /* A rack answers as the server mounted in it, which is what a server-only command belongs to. */
-            case SERVER -> hostBlock instanceof ServerRackBlockEntity;
-            case CLUSTER_MANAGEMENT_COMPUTER -> hostBlock instanceof ClusterManagementComputerBlockEntity;
-            case PERSONAL_COMPUTER -> hostBlock instanceof PersonalComputerBlockEntity;
-        };
+        /* A rack answers as the server mounted in it, which is what a server-only command belongs to. */
+        return scope.admits(hostBlock instanceof IOsHost machine ? machine.machine() : HostScope.ANY);
     }
 
     @Override
@@ -328,8 +320,8 @@ abstract class ServerCliShell implements ICliComputer {
         final ResourceLocation desktopId = computer.installedDesktopId();
         final DesktopEnvironmentDef chrome = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
         final ItemStack systemDisk = computer.systemDisk();
-        final long totalMb = systemDisk.getItem() instanceof DiskItem disk
-                ? disk.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM : 0L;
+        final long totalMb = HardwareRegistry.disk(systemDisk) instanceof DiskSpec disk
+                ? disk.capacityItems() * StorageKey.MB_EQ_PER_ITEM : 0L;
         final long freeMb = computer.systemDiskFreeMb();
         final ComputerConsoleState console = host.console();
         return new SystemInfo(

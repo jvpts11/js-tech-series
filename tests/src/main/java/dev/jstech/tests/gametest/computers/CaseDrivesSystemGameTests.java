@@ -14,7 +14,6 @@ import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
-import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.PatternStudioPayloads;
@@ -26,6 +25,7 @@ import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MachineMedia;
@@ -308,7 +308,7 @@ public final class CaseDrivesSystemGameTests {
         final PersonalComputerBlockEntity pc = place(helper, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
         int boards = 0;
         for (final Item item : BuiltInRegistries.ITEM) {
-            if (!(item instanceof MotherboardItem)) {
+            if (HardwareRegistry.board(new ItemStack(item)) == null) {
                 continue;
             }
             boards++;

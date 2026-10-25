@@ -18,7 +18,9 @@ import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.registry.ComputerRegistry;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -45,12 +47,13 @@ import java.util.UUID;
  * A Server: a complete computer in item form. Since the racks rework the item carries no drives, and a
  * server's disks live in the rack's front-panel hotswap slots (its chassis decides how many it cables),
  * so storage moves with the bay, never with this item.
+ *
+ * <p>What chassis a server is built in is its entry's in the computers registry, so a mod bringing a server of its
+ * own registers this item and declares the chassis beside it.
  */
 @TextHolder
 public class ServerItem extends Item
         implements IMountableRackUnit {
-
-    private final RackChassis chassis;
 
     private static final TextKey TOOLTIP = TextKey.of("item.jsc.server.tooltip", "Operates only inside a Server Rack");
     private static final TextKey NODE_TOOLTIP = TextKey.of("item.jsc.supercomputer_node.tooltip",
@@ -60,35 +63,33 @@ public class ServerItem extends Item
             TextKey.of("item.jsc.server.bays", "%sU - %s drive bays in the rack");
     private static final TextKey NODE = TextKey.of("item.jsc.server.node", "Node %s");
 
+    public ServerItem(final Properties properties) {
+        super(properties.stacksTo(1));
+    }
+
+    /** The rack units its chassis spends: one for a server never declared, which a rack still seats. */
     @Override
     public int heightU() {
-        return chassis.heightU();
+        final RackChassis chassis = chassis();
+        return chassis == null ? 1 : chassis.heightU();
     }
 
     @Override
     public int driveSlots() {
-        return chassis.driveSlots();
+        final RackChassis chassis = chassis();
+        return chassis == null ? 0 : chassis.driveSlots();
     }
 
-    public ServerItem(final Properties properties) {
-        this(properties, RackChassis.SERVER);
-    }
-
-    public ServerItem(final Properties properties,
-                      final RackChassis chassis) {
-        super(properties.stacksTo(1));
-        this.chassis = chassis;
-    }
-
-    /** The physical chassis of this server type: its rack-unit height and front-slot budgets. */
+    /** The physical chassis of this server type, its rack-unit height and front-slot budgets; null if undeclared. */
+    @Nullable
     public RackChassis chassis() {
-        return chassis;
+        return ComputerRegistry.chassis(this);
     }
 
     /** The chassis of a stack, or null when the stack is not a server. */
     @Nullable
     public static RackChassis chassisOf(final ItemStack stack) {
-        return stack.getItem() instanceof ServerItem server ? server.chassis() : null;
+        return stack.getItem() instanceof ServerItem ? ComputerRegistry.chassis(stack.getItem()) : null;
     }
 
     @Override
@@ -113,7 +114,7 @@ public class ServerItem extends Item
     /** A copy of the first card of {@code kind} seated in the server in {@code stack}, or an empty stack. */
     public static ItemStack card(final ItemStack stack, final ExpansionCardKind kind) {
         for (final ItemStack part : hardware(stack).nonEmptyItems()) {
-            if (part.getItem() instanceof IExpansionCardItem item && item.cardSpec().kind() == kind) {
+            if (isCardOf(part, kind)) {
                 return part.copy();
             }
         }
@@ -131,7 +132,7 @@ public class ServerItem extends Item
         for (int slot = 0; slot < ServerHardwareHandler.SLOTS && slot < current.getSlots(); slot++) {
             final ItemStack part = current.getStackInSlot(slot).copy();
             parts.set(slot, part);
-            if (found < 0 && part.getItem() instanceof IExpansionCardItem item && item.cardSpec().kind() == kind) {
+            if (found < 0 && isCardOf(part, kind)) {
                 found = slot;
             }
         }
@@ -175,18 +176,17 @@ public class ServerItem extends Item
         final List<IExpansionCardSpec> pcieCards = new ArrayList<>();
         final List<DiskSpec> disks = new ArrayList<>();
         for (final ItemStack part : parts) {
-            if (part.getItem() instanceof MotherboardItem m) {
-                board = m.spec();
-            } else if (part.getItem() instanceof PsuItem p) {
-                psu = p.spec();
-            } else if (part.getItem() instanceof CpuItem c) {
-                cpus.add(c.spec());
-            } else if (part.getItem() instanceof RamItem r) {
-                rams.add(r.spec());
-            } else if (part.getItem() instanceof IExpansionCardItem card) {
-                pcieCards.add(card.cardSpec());
-            } else if (part.getItem() instanceof DiskItem d) {
-                disks.add(d.spec());
+            final HardwareRegistry.Part found = HardwareRegistry.part(part.getItem());
+            switch (found == null ? null : found.spec()) {
+                case MotherboardSpec spec -> board = spec;
+                case PsuSpec spec -> psu = spec;
+                case CpuSpec spec -> cpus.add(spec);
+                case RamSpec spec -> rams.add(spec);
+                case IExpansionCardSpec spec -> pcieCards.add(spec);
+                case DiskSpec spec -> disks.add(spec);
+                case null, default -> {
+                    // Anything that is no part takes no place in the build.
+                }
             }
         }
         if (board == null || psu == null) {
@@ -195,9 +195,19 @@ public class ServerItem extends Item
         return new ComputerBuild(board, cpus, pcieCards, rams, psu, disks);
     }
 
+    /* Whether {@code part} is a card of {@code kind}. */
+    private static boolean isCardOf(final ItemStack part, final ExpansionCardKind kind) {
+        final IExpansionCardSpec card = HardwareRegistry.card(part);
+        return card != null && card.kind() == kind;
+    }
+
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
+        final RackChassis chassis = chassis();
+        if (chassis == null) {
+            return;
+        }
         tooltip.add(GameText.component(chassis.isSupercomputerNode() ? NODE_TOOLTIP : TOOLTIP)
                 .withStyle(ChatFormatting.GRAY));
         HardwareTooltip.appendEra(tooltip, chassis.era());

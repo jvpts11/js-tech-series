@@ -9,12 +9,12 @@ package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.hardware.ComputerBuild;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.resources.ResourceLocation;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.os.Branding;
@@ -23,6 +23,9 @@ import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -169,7 +172,7 @@ public final class BootLines {
         if (system == null) {
             return BootSequence.NONE;
         }
-        final HardwareEra era = machine.installedEra();
+        final Era era = machine.installedEra();
         final String copyright = Branding.systemCopyright(system.displayName(),
                 era != null ? era : HardwareEra.STANDARD);
         return switch (system.platform()) {
@@ -241,7 +244,7 @@ public final class BootLines {
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
-            if (!(disk.getItem() instanceof DiskItem)) {
+            if (!DriveVolumes.isDisk(disk)) {
                 continue;
             }
             final String device = "/dev/sd" + (char) ('a' + drive++) + "1";
@@ -319,7 +322,7 @@ public final class BootLines {
             return preferred;
         }
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
-            if (machine.diskInSlot(slot).getItem() instanceof DiskItem
+            if (DriveVolumes.isDisk(machine.diskInSlot(slot))
                     && OsDisks.systemsOn(machine.diskInSlot(slot)).ids().contains(system)) {
                 return slot;
             }
@@ -468,7 +471,7 @@ public final class BootLines {
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
-            if (disk.getItem() instanceof DiskItem) {
+            if (DriveVolumes.isDisk(disk)) {
                 out.add("sd" + (char) ('a' + drive++) + ": " + disk.getHoverName().getString());
             }
         }
@@ -542,7 +545,7 @@ public final class BootLines {
         char letter = 'C';
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
-            if (!(disk.getItem() instanceof DiskItem)) {
+            if (!DriveVolumes.isDisk(disk)) {
                 continue;
             }
             out.marked("Drive " + letter + ":", Text.literal(disk.getHoverName().getString()),
@@ -623,11 +626,12 @@ public final class BootLines {
 
     /** How much room a drive still has, in the words the system of that age printed beside its letter. */
     private static String freeOn(final ItemStack disk) {
-        if (!(disk.getItem() instanceof DiskItem drive)) {
+        final DiskSpec drive = HardwareRegistry.disk(disk);
+        if (drive == null) {
             return "";
         }
-        final HardwareEra era = drive.spec().era();
-        final long freeMb = OsDisks.systemDiskFreeWeight(disk) * era.mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
+        final Era era = drive.era();
+        final long freeMb = OsDisks.systemDiskFreeWeight(disk) * EraStorage.mbPerItem(era) / StorageKey.MB_EQ_PER_ITEM;
         return DiskSpec.sizeLabel(freeMb) + " free";
     }
 

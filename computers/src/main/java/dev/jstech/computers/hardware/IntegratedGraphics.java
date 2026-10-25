@@ -8,6 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The graphics a processor carries on its own die, as the desktop chips of the Haswell generation did: enough to drive
@@ -17,6 +18,7 @@ import java.util.Objects;
  * @param units how many execution units it has: few, beside a graphics card's cores
  * @param mhz   the clock it runs at, at most
  */
+@ApiStatus.Experimental
 public record IntegratedGraphics(String model, int units, int mhz) {
 
     /** A processor with no graphics of its own. */

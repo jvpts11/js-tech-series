@@ -10,7 +10,7 @@ package dev.jstech.computers.gui.layout;
 import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.computers.bus.BusFeature;
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -258,7 +258,7 @@ public final class BusLayout {
     }
 
     /** What a bus of {@code era} in a window of that kind can be set to. */
-    public static BusAbilities abilities(final HardwareEra era, final Window window) {
+    public static BusAbilities abilities(final Era era, final Window window) {
         return window == Window.EXTERNAL ? BusAbilities.external(era) : BusAbilities.of(era);
     }
 

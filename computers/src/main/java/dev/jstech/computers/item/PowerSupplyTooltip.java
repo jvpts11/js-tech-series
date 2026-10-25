@@ -11,29 +11,20 @@ import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 
-import java.util.List;
-
-/**
- * A PSU item.
- */
+/** What a power supply's tooltip says: its rating and how efficient it is. */
 @TextHolder
-public class PsuItem extends SpecItem<PsuSpec> {
+final class PowerSupplyTooltip {
 
     private static final TextKey RATING = TextKey.of("jsc.item.psu.rating", "%s W  -  %s%% efficient");
 
-    public PsuItem(final Properties properties, final PsuSpec spec) {
-        super(properties, spec);
+    private PowerSupplyTooltip() {
     }
 
-    @Override
-    public void appendHoverText(final ItemStack stack, final TooltipContext context,
-                                final List<Component> tooltip, final TooltipFlag flag) {
-        final PsuSpec spec = spec();
+    static void append(final PsuSpec spec, final List<Component> tooltip) {
         tooltip.add(GameText.component(RATING.with(spec.wattage(), spec.efficiencyPercent()))
                 .withStyle(ChatFormatting.GRAY));
     }

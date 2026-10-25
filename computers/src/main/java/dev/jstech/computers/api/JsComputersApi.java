@@ -17,10 +17,23 @@ import dev.jstech.computers.engine.EngineDef;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.engine.nextgre.NextgreExtensions;
 import dev.jstech.computers.hardware.ArchitectureSpec;
+import dev.jstech.computers.hardware.ComputerDef;
+import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.ExpansionCardKind;
+import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
+import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.PcieGeneration;
+import dev.jstech.computers.hardware.PsuSpec;
+import dev.jstech.computers.hardware.RamGeneration;
+import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.GraphicsPrograms;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OperatingSpaceDef;
 import dev.jstech.computers.os.OsDef;
@@ -28,8 +41,17 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.ComponentKinds;
+import dev.jstech.computers.os.media.EraMedia;
+import dev.jstech.computers.os.media.InstallMedia;
+import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.registry.ComputerRegistry;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What J's Computers promises to anything built on it.
@@ -200,5 +222,96 @@ public final class JsComputersApi {
      */
     public static void registerComponentKind(final ComponentKind kind) {
         ComponentKinds.register(kind);
+    }
+
+    /** Makes {@code item} a processor of that sheet. */
+    @ApiStatus.Experimental
+    public static void registerProcessor(final ItemLike item, final CpuSpec spec) {
+        HardwareRegistry.processor(item, spec);
+    }
+
+    /** Makes {@code item} a graphics card of that sheet. */
+    @ApiStatus.Experimental
+    public static void registerGraphicsCard(final ItemLike item, final GpuSpec spec) {
+        HardwareRegistry.graphicsCard(item, spec);
+    }
+
+    /** Makes {@code item} a memory module of that sheet. */
+    @ApiStatus.Experimental
+    public static void registerMemory(final ItemLike item, final RamSpec spec) {
+        HardwareRegistry.memory(item, spec);
+    }
+
+    /** Makes {@code item} a disk of that sheet. */
+    @ApiStatus.Experimental
+    public static void registerDisk(final ItemLike item, final DiskSpec spec) {
+        HardwareRegistry.disk(item, spec);
+    }
+
+    /** Makes {@code item} a motherboard of that sheet. */
+    @ApiStatus.Experimental
+    public static void registerMotherboard(final ItemLike item, final MotherboardSpec spec) {
+        HardwareRegistry.motherboard(item, spec);
+    }
+
+    /** Makes {@code item} a power supply of that sheet, shown with the machines of {@code soldIn}. */
+    @ApiStatus.Experimental
+    public static void registerPowerSupply(final ItemLike item, final PsuSpec spec, final Era soldIn) {
+        HardwareRegistry.powerSupply(item, spec, soldIn);
+    }
+
+    /** Makes {@code item} an expansion card of that sheet, shown with {@code era}, or with every era for null. */
+    @ApiStatus.Experimental
+    public static void registerExpansionCard(final ItemLike item, final IExpansionCardSpec spec,
+                                             final @Nullable Era era) {
+        HardwareRegistry.expansionCard(item, spec, era);
+    }
+
+    /** Adds a generation of memory, which modules are made in and boards take. */
+    @ApiStatus.Experimental
+    public static void registerMemoryGeneration(final RamGeneration generation) {
+        RamGeneration.declare(generation);
+    }
+
+    /** Adds a generation of expansion slot, which cards are made for and boards offer. */
+    @ApiStatus.Experimental
+    public static void registerSlotGeneration(final PcieGeneration generation) {
+        PcieGeneration.declare(generation);
+    }
+
+    /** Adds a form factor of motherboard, which a computer's case takes. */
+    @ApiStatus.Experimental
+    public static void registerFormFactor(final FormFactor formFactor) {
+        FormFactor.declare(formFactor);
+    }
+
+    /** Adds a kind of expansion card, which a build finds its cards by. */
+    @ApiStatus.Experimental
+    public static void registerCardKind(final ExpansionCardKind kind) {
+        ExpansionCardKind.declare(kind);
+    }
+
+    /** Says what the software of {@code era} ships on; an era that says nothing ships on the era before it's. */
+    @ApiStatus.Experimental
+    public static void registerEraMedia(final Era era, final EraMedia media) {
+        InstallMedia.declare(era, media);
+    }
+
+    /** Makes {@code block} a computer of that entry, while the game loads. */
+    @ApiStatus.Experimental
+    public static void registerComputer(final Block block, final ComputerDef computer) {
+        ComputerRegistry.computer(block, computer);
+    }
+
+    /** Makes {@code item} a server built in that chassis, while the game loads. */
+    @ApiStatus.Experimental
+    public static void registerServer(final ItemLike item, final RackChassis chassis) {
+        ComputerRegistry.server(item, chassis);
+    }
+
+    /** Adds a machine, which computers are and programs are made for. */
+    @ApiStatus.Experimental
+    public static void registerMachine(final HostScope machine) {
+        HostScope.declare(machine);
     }
 }

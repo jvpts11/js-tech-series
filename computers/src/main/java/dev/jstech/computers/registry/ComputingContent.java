@@ -19,8 +19,10 @@ import dev.jstech.computers.scripting.JsComputersScripts;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.content.ScriptBinding;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
@@ -48,10 +50,10 @@ public final class ComputingContent {
      */
     private static final ContentTab SHARED_TAB =
             CONTENT.tab("computing", "J's Computers", () -> ComputingModule.MAINFRAME);
-    private static final Map<HardwareEra, ContentTab> ERA_TABS = eraTabs();
+    private static final Map<Era, ContentTab> ERA_TABS = eraTabs();
 
     private static final Map<Shelf, ContentTab.Section> SHARED = shelves(SHARED_TAB, null);
-    private static final Map<HardwareEra, Map<Shelf, ContentTab.Section>> BY_ERA = eraShelves();
+    private static final Map<Era, Map<Shelf, ContentTab.Section>> BY_ERA = eraShelves();
 
     /** What a modpack's scripts reach as {@code JsComputers}: installers, ready disks and the lists of each era. */
     public static final ScriptBinding SCRIPTS = CONTENT.scriptBinding("JsComputers", JsComputersScripts.class);
@@ -102,8 +104,8 @@ public final class ComputingContent {
     }
 
     /** The path of the item tag holding everything of {@code era}, in the mod's namespace. */
-    public static String eraTag(final HardwareEra era) {
-        return "era/" + era.serializedName();
+    public static String eraTag(final Era era) {
+        return "era/" + era.path();
     }
 
     /**
@@ -111,7 +113,7 @@ public final class ComputingContent {
      *
      * @throws IllegalArgumentException for an era with no tab, which has nothing declared in it yet
      */
-    public static ContentTab.Section shelf(final Shelf shelf, @Nullable final HardwareEra era) {
+    public static ContentTab.Section shelf(final Shelf shelf, @Nullable final Era era) {
         if (era == null) {
             return SHARED.get(shelf);
         }
@@ -123,12 +125,13 @@ public final class ComputingContent {
     }
 
     /** The tab of {@code era}, or the shared tab for null. */
-    public static ContentTab tab(@Nullable final HardwareEra era) {
+    public static ContentTab tab(@Nullable final Era era) {
         return era == null ? SHARED_TAB : ERA_TABS.get(era);
     }
 
-    private static Map<HardwareEra, ContentTab> eraTabs() {
-        final Map<HardwareEra, ContentTab> tabs = new EnumMap<>(HardwareEra.class);
+    private static Map<Era, ContentTab> eraTabs() {
+        // Only the five eras with parts have a tab; an add-on's era shows its parts in the add-on's own tab.
+        final Map<Era, ContentTab> tabs = new LinkedHashMap<>();
         tabs.put(HardwareEra.VINTAGE, CONTENT.tab("computing_vintage", "J's Computers - Vintage",
                 () -> ComputingModule.FLOPPY_DISK));
         tabs.put(HardwareEra.LEGACY, CONTENT.tab("computing_legacy", "J's Computers - Legacy",
@@ -143,10 +146,10 @@ public final class ComputingContent {
         return tabs;
     }
 
-    private static Map<HardwareEra, Map<Shelf, ContentTab.Section>> eraShelves() {
-        final Map<HardwareEra, Map<Shelf, ContentTab.Section>> byEra = new EnumMap<>(HardwareEra.class);
+    private static Map<Era, Map<Shelf, ContentTab.Section>> eraShelves() {
+        final Map<Era, Map<Shelf, ContentTab.Section>> byEra = new LinkedHashMap<>();
         // The eras that have a tab are exactly the keys of ERA_TABS, so a tab can never lack its shelves.
-        for (final Map.Entry<HardwareEra, ContentTab> entry : ERA_TABS.entrySet()) {
+        for (final Map.Entry<Era, ContentTab> entry : ERA_TABS.entrySet()) {
             byEra.put(entry.getKey(), shelves(entry.getValue(), entry.getKey()));
         }
         return byEra;
@@ -157,7 +160,7 @@ public final class ComputingContent {
      * catalogue lists them; the order is asked for only when the tab is filled, since reading it now would load the
      * catalogue, which declares onto these shelves before they exist.
      */
-    private static Map<Shelf, ContentTab.Section> shelves(final ContentTab tab, @Nullable final HardwareEra era) {
+    private static Map<Shelf, ContentTab.Section> shelves(final ContentTab tab, @Nullable final Era era) {
         final Map<Shelf, ContentTab.Section> shelves = new EnumMap<>(Shelf.class);
         for (final Shelf shelf : Shelf.values()) {
             final ContentTab.Section section = tab.section().tagging(shelf.tag());
@@ -178,7 +181,7 @@ public final class ComputingContent {
      * Standard system on a bootable flash drive, a Standard application on a DVD. Size never decides, so a small
      * server daemon is not a floppy.
      */
-    private static void installers(final CreativeModeTab.Output output, final HardwareEra era) {
+    private static void installers(final CreativeModeTab.Output output, final Era era) {
         for (final OsDef os : OsBootstrap.builtinOses()) {
             if (os.minEra() == era) {
                 output.accept(InstallerStacks.forSystem(os));

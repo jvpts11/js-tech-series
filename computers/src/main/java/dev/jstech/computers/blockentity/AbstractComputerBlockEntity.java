@@ -22,19 +22,18 @@ import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CpuSpec;
-import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MachinePorts;
+import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.PartFitting;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
+import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.BayDriveItem;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.IExpansionCardItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.PsuItem;
-import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
@@ -43,6 +42,7 @@ import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
@@ -73,6 +73,8 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.computers.registry.ComputerRegistry;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.LoopRequest;
@@ -81,6 +83,7 @@ import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.network.DataLink;
@@ -99,7 +102,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -128,6 +130,8 @@ import java.util.Set;
 public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         implements IPeripheralOwnerSupport, IOsHost, IKernelHost, IWatchedConsole {
 
+    /** What this computer is, read from the computers registry by its block, which never changes under it. */
+    private final ComputerDef computer;
     /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
     private final ComputerHardware hardware;
     /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
@@ -197,12 +201,14 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     /*
      * Each part is saved in turn, in the order declared here: the hardware first, because the console rides on the
-     * system disk and has to be pushed onto it before the disk stacks are written.
+     * system disk and has to be pushed onto it before the disk stacks are written. Where each part sits follows from
+     * the parts the computer's case counts.
      */
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
-                                          final BlockState state, final ComputerHardwareLayout layout) {
+                                          final BlockState state) {
         super(type, pos, state);
-        this.hardware = new ComputerHardware(this, layout);
+        this.computer = ComputerRegistry.require(state.getBlock());
+        this.hardware = new ComputerHardware(this, ComputerHardwareLayout.of(computer.parts()));
         fields().part("Hardware", IFieldPart.of((tag, registries) -> {
             diskConsole.flush();
             hardware.save(tag, registries, hardwareNbtKey());
@@ -270,95 +276,59 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     // Hardware assembly
 
-    protected abstract Set<FormFactor> acceptedFormFactors();
+    /** What this computer is, as its entry in the computers registry says: its case's era, boards, machine, parts. */
+    public ComputerDef computer() {
+        return computer;
+    }
 
-    /**
-     * The hardware era a board must belong to for this computer to accept it, or {@code null} when the
-     * computer takes a board of any era (the default). A non-null value gates both slot insertion and the
-     * computed build: a board whose era differs is neither installable nor counted. Used by the era-specific
-     * Personal Computers to keep, for example, a Legacy board out of a Standard machine even though both are
-     * ATX.
-     */
-    @Nullable
-    protected HardwareEra requiredBoardEra() {
-        return null;
+    @Override
+    public HostScope machine() {
+        return computer.machine();
     }
 
     /**
-     * Whether {@code stack} is a motherboard this computer accepts: it must match an accepted form factor
-     * and, when {@link #requiredBoardEra()} is set, also match that era.
+     * Whether {@code stack} is a motherboard this computer accepts: of a form factor its case takes, and of the case's
+     * own era, so a Legacy and a Standard ATX board are not interchangeable. It gates both slot insertion and the
+     * computed build: a board of another era is neither installable nor counted.
      */
     protected boolean isAcceptedBoard(final ItemStack stack) {
-        if (!MotherboardItem.fits(stack, acceptedFormFactors())) {
-            return false;
-        }
-        final HardwareEra required = requiredBoardEra();
-        return required == null
-                || (stack.getItem() instanceof MotherboardItem board && board.spec().era() == required);
+        final MotherboardSpec board = HardwareRegistry.board(stack);
+        return board != null && computer.takesBoard(board);
     }
 
-    /**
-     * Whether {@code stack} is a processor this machine's board can seat: the socket has to match, and
-     * so does the hardware generation. A chip that physically cannot go in the socket should not go in
-     * the slot either, since letting it in only to refuse to boot tells the player nothing about why.
-     */
+    /** Whether {@code stack} is a processor this machine's board can seat ({@link PartFitting#cpuFits}). */
     protected boolean isValidCpu(final ItemStack stack) {
-        if (!(stack.getItem() instanceof CpuItem cpu)) {
-            return false;
-        }
-        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
-        if (!(boardStack.getItem() instanceof MotherboardItem board)) {
-            return true; // no board yet: allow pre-staging, as the expansion slots do
-        }
-        return cpu.spec().socket().equals(board.spec().socket())
-                && cpu.spec().era() == board.spec().era();
+        final CpuSpec cpu = HardwareRegistry.cpu(stack);
+        return cpu != null && PartFitting.cpuFits(cpu, seatedBoard());
     }
 
-    /**
-     * Whether {@code stack} is memory this machine's board takes: the board lists the RAM generations
-     * its slots are keyed for, and the module must belong to the same hardware generation.
-     */
+    /** Whether {@code stack} is memory this machine's board takes ({@link PartFitting#ramFits}). */
     protected boolean isValidRam(final ItemStack stack) {
-        if (!(stack.getItem() instanceof RamItem ram)) {
-            return false;
-        }
-        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
-        if (!(boardStack.getItem() instanceof MotherboardItem board)) {
-            return true; // no board yet: allow pre-staging
-        }
-        return board.spec().acceptedRam().contains(ram.spec().generation())
-                && ram.spec().era() == board.spec().era();
+        final RamSpec ram = HardwareRegistry.ram(stack);
+        return ram != null && PartFitting.ramFits(ram, seatedBoard());
     }
 
     protected boolean isValidPcieCard(final ItemStack stack) {
-        if (!(stack.getItem() instanceof IExpansionCardItem card)) {
+        final IExpansionCardSpec card = HardwareRegistry.card(stack);
+        if (card == null || card instanceof WorkshopCardSpec && !takesWorkshopCards()) {
             return false;
         }
-        if (card.cardSpec() instanceof WorkshopCardSpec && !takesWorkshopCards()) {
-            return false;
-        }
-        if (card.cardSpec() instanceof PhiCoprocessorSpec) {
+        if (card instanceof PhiCoprocessorSpec) {
             // A co-processor adds crafts to a supercomputer's nodes alone, so only a node's server seats one.
             return false;
         }
-        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
-        if (!(boardStack.getItem() instanceof MotherboardItem motherboard)) {
-            /*
-             * No board yet, so accept the card so it can be pre-staged; the slot stays inoperative
-             * until a board arrives.
-             */
-            return true;
-        }
-        if (card.cardSpec() instanceof SoundCardSpec sound && sound.era() != motherboard.spec().era()) {
-            // A sound card sits only on a board of its own age; no Standard card exists, the boards have it built in.
-            return false;
-        }
-        return motherboard.spec().takes(card.cardSpec());
+        return PartFitting.cardFits(card, seatedBoard());
+    }
+
+    /* The board in the board slot, or null when there is none yet. */
+    @Nullable
+    private MotherboardSpec seatedBoard() {
+        return HardwareRegistry.board(getHardware().getStackInSlot(layout().motherboardSlot()));
     }
 
     /** Whether this computer seats the personal-use cards, which only a Personal Computer has a program for. */
     protected boolean takesWorkshopCards() {
-        return false;
+        return computer.machine() == HostScope.PERSONAL_COMPUTER;
     }
 
     public boolean isValidForSlot(final int slot, final ItemStack stack) {
@@ -366,7 +336,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             return isAcceptedBoard(stack);
         }
         if (slot == layout().psuSlot()) {
-            return stack.getItem() instanceof PsuItem;
+            return HardwareRegistry.psu(stack) != null;
         }
         if (layout().isCpu(slot)) {
             return isValidCpu(stack);
@@ -396,40 +366,35 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (stack.isEmpty() || isValidForSlot(slot, stack)) {
             return null;
         }
-        final Item item = stack.getItem();
         if (slot == layout().motherboardSlot()) {
-            return item instanceof MotherboardItem ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
+            return HardwareRegistry.board(stack) != null ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
         }
         if (layout().isCpu(slot)) {
-            return item instanceof CpuItem ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
+            return HardwareRegistry.cpu(stack) != null ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
         }
         if (layout().isRam(slot)) {
-            return item instanceof RamItem ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
+            return HardwareRegistry.ram(stack) != null ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
         }
         if (layout().isPcie(slot)) {
             return cardRefusal(stack, slot);
         }
         if (layout().isDisk(slot)) {
-            return item instanceof DiskItem ? PartRefusals.DISK_TOO_NEW : PartRefusals.NOT_THIS_SLOT;
+            return HardwareRegistry.disk(stack) != null ? PartRefusals.DISK_TOO_NEW : PartRefusals.NOT_THIS_SLOT;
         }
         if (layout().isBay(slot)) {
-            return item instanceof BayDriveItem ? PartRefusals.NO_BAY : PartRefusals.NOT_THIS_SLOT;
+            return stack.getItem() instanceof BayDriveItem ? PartRefusals.NO_BAY : PartRefusals.NOT_THIS_SLOT;
         }
         return PartRefusals.NOT_THIS_SLOT;
     }
 
     /**
      * Whether a disk fits this computer, in one of its disk slots or in a hot-swap bay on its front: a disk of the
-     * computer's era or of an older one. A disk made for a later machine has no way into an earlier one (an NVMe made
-     * for the Standard age has nothing to plug into in an AT tower), while an old disk still goes into a newer machine,
-     * as old disks did. A disk put in before this rule stays where it is.
+     * computer's era or of an older one ({@link PartFitting#diskFits}). A disk put in before this rule stays where it
+     * is.
      */
     public boolean acceptsDisk(final ItemStack stack) {
-        if (!(stack.getItem() instanceof DiskItem disk)) {
-            return false;
-        }
-        final HardwareEra era = displayEra();
-        return era == null || disk.spec().era().isAtMost(era);
+        final DiskSpec disk = HardwareRegistry.disk(stack);
+        return disk != null && PartFitting.diskFits(disk, displayEra());
     }
 
     public ItemStackHandler getHardware() {
@@ -449,7 +414,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     static boolean isSoundCard(final ItemStack stack) {
-        return stack.getItem() instanceof IExpansionCardItem card && card.cardSpec() instanceof SoundCardSpec;
+        return HardwareRegistry.card(stack) instanceof SoundCardSpec;
     }
 
     /* A machine plays its sound through one card: a second one would take a slot and power and play nothing. */
@@ -465,18 +430,17 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     /* Which rule keeps a card out of an expansion slot, read in the order isValidPcieCard and the sound rule read. */
     private TextKey cardRefusal(final ItemStack stack, final int slot) {
-        if (!(stack.getItem() instanceof IExpansionCardItem card)) {
+        final IExpansionCardSpec card = HardwareRegistry.card(stack);
+        if (card == null) {
             return PartRefusals.NOT_THIS_SLOT;
         }
-        if (card.cardSpec() instanceof WorkshopCardSpec && !takesWorkshopCards()) {
+        if (card instanceof WorkshopCardSpec && !takesWorkshopCards()) {
             return PartRefusals.WORKSHOP_CARD;
         }
-        if (card.cardSpec() instanceof PhiCoprocessorSpec) {
+        if (card instanceof PhiCoprocessorSpec) {
             return PartRefusals.PHI;
         }
-        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
-        if (card.cardSpec() instanceof SoundCardSpec sound && boardStack.getItem() instanceof MotherboardItem board
-                && sound.era() != board.spec().era()) {
+        if (PartFitting.soundCardOfAnotherAge(card, seatedBoard())) {
             return PartRefusals.SOUND_ERA;
         }
         if (isValidPcieCard(stack) && isSoundCard(stack) && anotherSoundCardSeated(slot)) {
@@ -1061,7 +1025,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     /** The hardware era of the installed motherboard, or {@code null} when no board is present. */
     @Nullable
-    public HardwareEra installedEra() {
+    public Era installedEra() {
         return hardware.installedEra();
     }
 
@@ -1071,7 +1035,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * computer takes its look from the installed board, falling back to {@code null} (the STANDARD skin) when bare.
      */
     @Nullable
-    public HardwareEra displayEra() {
+    public Era displayEra() {
         return getBlockState().getBlock() instanceof IEraChassisBlock chassis
                 ? chassis.chassisEra()
                 : installedEra();
@@ -1239,7 +1203,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * registered OS, or {@link ItemStack#EMPTY} when no bootable disk is present.
      *
      * <p>The system disk is defined as the first disk slot (lowest index) holding a
-     * {@link DiskItem} with a {@code SYSTEM_OS} component that maps to a known {@link OsDef}.
+     * disk with a {@code SYSTEM_OS} component that maps to a known {@link OsDef}.
      */
     public ItemStack systemDisk() {
         return session.systemDisk();
@@ -1333,7 +1297,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /**
      * Installs the OS identified by {@code osId} onto a disk in this computer's hardware inventory.
      *
-     * <p>The method scans disk slots in order and picks the first {@link DiskItem} slot (preferring
+     * <p>The method scans disk slots in order and picks the first slot holding a disk (preferring
      * one that already carries a {@code SYSTEM_OS} over a plain data disk, so re-installing the
      * same OS is idempotent). The OS footprint in mB-equivalents must fit within the chosen disk's
      * free weight ({@code capacity − stored items' weight − FILESYSTEM.usedWeight}).

@@ -21,7 +21,6 @@ import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.UNKN
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.os.OsDisks;
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.IBootMenuScreenOpener;
 import dev.jstech.computers.block.IInstallDoneScreenOpener;
 import dev.jstech.computers.block.IInstallProgressScreenOpener;
@@ -34,11 +33,6 @@ import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.client.InstallerScreen;
 import dev.jstech.computers.menu.MonitorSessionMenu;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
@@ -54,9 +48,6 @@ import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
-import dev.jstech.computers.operation.payload.ScreenSessions;
-import dev.jstech.computers.os.boot.BootLines;
-import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.InstallMode;
@@ -73,9 +64,12 @@ import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaVolume;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -199,22 +193,22 @@ public final class FirmwarePayloads {
      */
     public static FirmwareStatePayload buildFirmwareState(final ServerLevel level,
                                                   final IOsHost computer, final BlockPos pos) {
-        final HardwareEra era = computer.displayEra() != null ? computer.displayEra() : HardwareEra.STANDARD;
+        final Era era = computer.displayEra() != null ? computer.displayEra() : HardwareEra.STANDARD;
         final List<FirmwareStatePayload.Entry> entries = new ArrayList<>();
         for (int i = 0; i < computer.diskSlots(); i++) {
             final ItemStack disk = computer.diskInSlot(i);
-            if (!(disk.getItem() instanceof DiskItem)) {
+            final DiskSpec spec = HardwareRegistry.disk(disk);
+            if (spec == null) {
                 continue;
             }
             final ResourceLocation osId =
                     OsDisks.systemOn(disk);
             final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
-            final DiskSpec spec = ((DiskItem) disk.getItem()).spec();
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
                     os == null ? "" : os.id().toString(),
                     os == null ? NO_SYSTEM.text() : Text.literal(os.displayName()),
                     GameText.of(disk.getHoverName()),
-                    spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb()),
+                    DiskSpec.sizeLabel(spec.capacityMb()),
                     Text.EMPTY, os != null, -1));
         }
         /*
@@ -247,7 +241,8 @@ public final class FirmwarePayloads {
                     drive, "", eraOk ? Text.EMPTY : ERA_OR_NEWER.with(os.minEra().text()), eraOk,
                     os.installMode().id(), bay));
         }
-        return new FirmwareStatePayload(pos, era.id(), machineOf(level, computer, pos), computer.bootDiskSlot(),
+        return new FirmwareStatePayload(pos, EraCodecs.placeOf(era), machineOf(level, computer, pos),
+                computer.bootDiskSlot(),
                 computer.defaultInstallSlot(), entries, raidInfoOf(level, computer));
     }
 
@@ -263,7 +258,7 @@ public final class FirmwarePayloads {
         if (!(computer instanceof AbstractComputerBlockEntity machine)) {
             return FirmwareStatePayload.Machine.NONE;
         }
-        final HardwareEra era = computer.displayEra();
+        final Era era = computer.displayEra();
         final ComputerBuild build = machine.currentBuild();
         final CpuSpec cpu = build == null || build.cpus().isEmpty() ? null : build.cpus().getFirst();
         Text cpuName = Text.EMPTY;
@@ -277,13 +272,13 @@ public final class FirmwarePayloads {
                 continue;
             }
             // A part is named by its item, which each player reads in their own language.
-            if (part.getItem() instanceof CpuItem && cpuName.isEmpty()) {
+            if (HardwareRegistry.cpu(part) != null && cpuName.isEmpty()) {
                 cpuName = GameText.of(part.getHoverName());
-            } else if (part.getItem() instanceof MotherboardItem) {
+            } else if (HardwareRegistry.board(part) != null) {
                 boardName = GameText.of(part.getHoverName());
-            } else if (part.getItem() instanceof GpuItem && gpuName.isEmpty()) {
+            } else if (HardwareRegistry.gpu(part) != null && gpuName.isEmpty()) {
                 gpuName = GameText.of(part.getHoverName());
-            } else if (part.getItem() instanceof RamItem && ramName.isEmpty()) {
+            } else if (HardwareRegistry.ram(part) != null && ramName.isEmpty()) {
                 ramName = GameText.of(part.getHoverName());
             }
         }
@@ -316,8 +311,9 @@ public final class FirmwarePayloads {
         }
         final List<Long> sizes = new ArrayList<>();
         for (final ItemStack drive : rack.claimedDriveStacks(slot)) {
-            if (drive.getItem() instanceof DiskItem disk) {
-                sizes.add(disk.spec().capacityItems());
+            final DiskSpec disk = HardwareRegistry.disk(drive);
+            if (disk != null) {
+                sizes.add(disk.capacityItems());
             }
         }
         final List<Long> capacities = new ArrayList<>(RaidMode.values().length);
@@ -436,7 +432,7 @@ public final class FirmwarePayloads {
                 final Text failure = beginInstall(level, computer, payload.ref(), payload.bay(), payload.target());
                 if (failure != null) {
                     // Refused before a minute of copying: say so instead of restarting into nothing.
-                    final HardwareEra era = computer.displayEra();
+                    final Era era = computer.displayEra();
                     final int kind = FirmwareKind
                             .forEra(era != null ? era : HardwareEra.STANDARD).id();
                     final int slot = payload.target();
@@ -463,7 +459,7 @@ public final class FirmwarePayloads {
                      */
                     final LiveInstallState.Distro distro =
                             LiveMedium.distroOf(os == null ? null : os.id());
-                    final HardwareEra hostEra =
+                    final Era hostEra =
                             computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
                     if (os != null && distro != null && os.installMode() != InstallMode.GUIDED
                             && OsGating.canInstall(os.minEra(), hostEra)) {
@@ -537,7 +533,7 @@ public final class FirmwarePayloads {
     @Nullable
     public static Text beginInstall(final ServerLevel level, final IOsHost computer,
                                     final long readerPos, final int bay, final int targetSlot) {
-        final HardwareEra hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
+        final Era hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
         Text failure = null;
         for (final IMediaDrive reader : MachineMedia.of(computer, level).drives()) {
             final MediaVolume volume = reader.volume();

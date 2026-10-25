@@ -27,6 +27,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What each team has reached, beside what each player has ({@link PlayerProgress}): its furthest step along each axis,
@@ -73,7 +74,7 @@ public final class TeamProgress {
     /** The furthest step {@code team} has reached along {@code axis}. */
     public static <S extends IAxisStep> S reached(final MinecraftServer server, final String team,
                                                   final ProgressionAxis<S> axis) {
-        return axis.at(of(server, team).step(axis.id()));
+        return axis.savedAs(of(server, team).step(axis.id()));
     }
 
     /**
@@ -88,7 +89,7 @@ public final class TeamProgress {
         if (step.level() <= before.level()) {
             return false;
         }
-        STATE.update(server, team, held -> held.withStep(axis.id(), step.level()));
+        STATE.update(server, team, held -> held.withStep(axis.id(), step.serializedName()));
         NeoForge.EVENT_BUS.post(new TeamProgressEvent.StepReached(server, team, axis, before, step));
         return true;
     }
@@ -167,26 +168,29 @@ public final class TeamProgress {
     }
 
     /**
-     * What a team has reached: its furthest level along each axis, by the axis's id; the ids of the milestones it
+     * What a team has reached: its furthest step along each axis, by the axis's id; the ids of the milestones it
      * passed; and how much it knows of each piece of knowledge, by its id, from 0 to 1.
      *
-     * @param axes       the furthest level along each axis; an axis not there is at its first step
+     * @param axes       the name of the furthest step along each axis, so a step a mod puts between two others moves
+     *                   no team; an axis not there is at its first step
      * @param milestones the milestones passed
      * @param knowledge  how much of each piece of knowledge it knows; one not there it knows none of
      */
-    public record Held(Map<String, Integer> axes, Set<String> milestones, Map<String, Double> knowledge) {
+    public record Held(Map<String, String> axes, Set<String> milestones, Map<String, Double> knowledge) {
 
         /** Nothing reached. */
         public static final Held NONE = new Held(Map.of(), Set.of(), Map.of());
         public static final Codec<Held> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("axes", Map.of()).forGetter(Held::axes),
+                Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("axes", Map.of())
+                        .forGetter(Held::axes),
                 Codec.STRING.listOf().<Set<String>>xmap(Set::copyOf, set -> set.stream().sorted().toList())
                         .optionalFieldOf("milestones", Set.of()).forGetter(Held::milestones),
                 Codec.unboundedMap(Codec.STRING, Codec.doubleRange(0.0, WHOLE)).optionalFieldOf("knowledge", Map.of())
                         .forGetter(Held::knowledge)
         ).apply(instance, Held::new));
         public static final StreamCodec<RegistryFriendlyByteBuf, Held> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.VAR_INT, MOST), Held::axes,
+                ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.STRING_UTF8, MOST),
+                Held::axes,
                 ByteBufCodecs.collection(HashSet::new, ByteBufCodecs.STRING_UTF8, MOST), Held::milestones,
                 ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.DOUBLE, MOST),
                 Held::knowledge,
@@ -198,9 +202,9 @@ public final class TeamProgress {
             knowledge = Map.copyOf(knowledge);
         }
 
-        /** Its furthest level along the axis {@code axis}. */
-        public int step(final ResourceLocation axis) {
-            return this.axes.getOrDefault(axis.toString(), 0);
+        /** The name of its furthest step along the axis {@code axis}, or null when it is at the first. */
+        public @Nullable String step(final ResourceLocation axis) {
+            return this.axes.get(axis.toString());
         }
 
         /** How much it knows of the knowledge {@code id}, from 0 to 1. */
@@ -213,9 +217,9 @@ public final class TeamProgress {
             return share(id) >= WHOLE;
         }
 
-        Held withStep(final ResourceLocation axis, final int level) {
-            final Map<String, Integer> next = new HashMap<>(this.axes);
-            next.put(axis.toString(), level);
+        Held withStep(final ResourceLocation axis, final String step) {
+            final Map<String, String> next = new HashMap<>(this.axes);
+            next.put(axis.toString(), step);
             return new Held(next, this.milestones, this.knowledge);
         }
 
@@ -238,8 +242,9 @@ public final class TeamProgress {
         }
 
         Held merged(final Held other) {
-            final Map<String, Integer> axesNext = new HashMap<>(this.axes);
-            other.axes.forEach((axis, level) -> axesNext.merge(axis, level, Math::max));
+            final Map<String, String> axesNext = new HashMap<>(this.axes);
+            other.axes.forEach((axis, step) -> axesNext.merge(axis, step, (ours, theirs) -> further(axis, ours,
+                    theirs)));
             final Set<String> milestonesNext = new HashSet<>(this.milestones);
             milestonesNext.addAll(other.milestones);
             final Map<String, Double> knowledgeNext = new HashMap<>(this.knowledge);
@@ -251,6 +256,16 @@ public final class TeamProgress {
         public List<String> known() {
             return this.knowledge.entrySet().stream().filter(entry -> entry.getValue() >= WHOLE)
                     .map(Map.Entry::getKey).sorted().toList();
+        }
+
+        /* The further of two steps along the axis {@code axis}; this team's when the axis is no longer registered. */
+        private static String further(final String axis, final String ours, final String theirs) {
+            final ResourceLocation id = ResourceLocation.tryParse(axis);
+            final ProgressionAxis<?> found = id == null ? null : ProgressionAxes.byId(id);
+            if (found == null) {
+                return ours;
+            }
+            return found.savedAs(theirs).level() > found.savedAs(ours).level() ? theirs : ours;
         }
     }
 }

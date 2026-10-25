@@ -19,8 +19,9 @@ import dev.jstech.computers.operation.payload.crash.OpenCrashPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.text.TextBounds;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -84,7 +85,7 @@ public sealed interface IMonitorPicture
      * system, whose console blinks its cursor to its own beat (null where there is no system yet), and the machine's
      * display scale in percent (0 for the default), which its text is drawn at as on the open prompt.
      */
-    record Console(HardwareEra era, List<WireLine> lines, String prompt, @Nullable Platform platform,
+    record Console(Era era, List<WireLine> lines, String prompt, @Nullable Platform platform,
                    int scalePercent) implements IMonitorPicture {
 
         public Console {
@@ -121,7 +122,7 @@ public sealed interface IMonitorPicture
      * @param state   the machine's parts as its firmware reads them, for the screens that list them; null otherwise
      * @param endsAt  the game time the opening's counter runs out at, 0 where it has none or a key stopped it
      */
-    record Session(@Nullable HardwareEra era, CustomPacketPayload opening, @Nullable FirmwareStatePayload state,
+    record Session(@Nullable Era era, CustomPacketPayload opening, @Nullable FirmwareStatePayload state,
                    long endsAt) implements IMonitorPicture {
 
         /** What is left of the opening's counter at the game time {@code now}, at least one tick while it runs. */
@@ -135,7 +136,7 @@ public sealed interface IMonitorPicture
             case Dark dark -> buf.writeByte(PICTURE_DARK);
             case Console console -> {
                 buf.writeByte(PICTURE_CONSOLE);
-                buf.writeEnum(console.era());
+                EraCodecs.STREAM_CODEC.encode(buf, console.era());
                 WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).encode(buf, console.lines());
                 buf.writeUtf(clip(console.prompt()), PROMPT_MAX);
                 buf.writeUtf(console.platform() == null ? "" : console.platform().serializedName());
@@ -155,7 +156,7 @@ public sealed interface IMonitorPicture
             }
             case Session session -> {
                 buf.writeByte(PICTURE_SESSION);
-                buf.writeVarInt(session.era() == null ? -1 : session.era().id());
+                buf.writeVarInt(EraCodecs.placeOf(session.era()));
                 writeOpening(buf, session.opening());
                 buf.writeBoolean(session.state() != null);
                 if (session.state() != null) {
@@ -222,14 +223,14 @@ public sealed interface IMonitorPicture
     private static IMonitorPicture read(final RegistryFriendlyByteBuf buf) {
         return switch (buf.readByte()) {
             case PICTURE_DARK -> DARK;
-            case PICTURE_CONSOLE -> new Console(buf.readEnum(HardwareEra.class),
+            case PICTURE_CONSOLE -> new Console(EraCodecs.STREAM_CODEC.decode(buf),
                     WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).decode(buf), buf.readUtf(PROMPT_MAX),
                     Platform.byName(buf.readUtf()), buf.readVarInt());
             case PICTURE_DESKTOP -> new Desktop(BlockPos.STREAM_CODEC.decode(buf), buf.readResourceLocation(),
                     buf.readResourceLocation(), buf.readVarInt(), buf.readVarInt(),
                     new ArrayList<>(DesktopWindowsPayload.WireWindow.STREAM_CODEC
                             .apply(ByteBufCodecs.list(WINDOWS_MAX)).decode(buf)), buf.readVarInt());
-            case PICTURE_SESSION -> new Session(HardwareEra.find(buf.readVarInt()), readOpening(buf),
+            case PICTURE_SESSION -> new Session(EraCodecs.orNone(buf.readVarInt()), readOpening(buf),
                     buf.readBoolean() ? FirmwareStatePayload.STREAM_CODEC.decode(buf) : null, buf.readVarLong());
             default -> throw new IllegalArgumentException("unknown monitor picture");
         };

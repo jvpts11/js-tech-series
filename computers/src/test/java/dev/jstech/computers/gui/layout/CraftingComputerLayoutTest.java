@@ -14,6 +14,7 @@ import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.hardware.CaseBays;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ class CraftingComputerLayoutTest {
 
     @Test
     void layout_isCleanInEveryEra() {
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             final GuiLayout l = CraftingComputerLayout.layout(era);
             assertTrue(l.isClean(), () -> era + ": overlaps " + l.overlaps() + ", out of bounds " + l.outOfBounds());
             assertTrue(l.zeroSizedSolids().isEmpty(), () -> era + ": zero-sized " + l.zeroSizedSolids());
@@ -30,7 +31,7 @@ class CraftingComputerLayoutTest {
 
     @Test
     void layout_seatsEachSlotWhereItsPartIsDrawn() {
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             final AssemblyGeometry geo = CraftingComputerLayout.geometry(era);
             final GuiLayout l = CraftingComputerLayout.layout(era);
             assertEquals(at(geo.seat(SeatKind.BOARD)), l.slotAt("mobo"), era + " board");
@@ -46,7 +47,7 @@ class CraftingComputerLayoutTest {
 
     @Test
     void layout_hasTheBaysOfItsEraCase() {
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             final long bays = CraftingComputerLayout.layout(era).elements().stream()
                     .filter(e -> e.name().startsWith("bay_")).count();
             assertEquals(CaseBays.of(era), bays, era + " bays");

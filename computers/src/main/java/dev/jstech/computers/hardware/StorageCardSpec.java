@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import java.util.Objects;
 
 /**
@@ -22,7 +22,7 @@ import java.util.Objects;
  * @param tdpWatts       what it draws
  * @param readCutPercent how much of its drives' read latency a cache takes away; 0 on a RAID controller
  */
-public record StorageCardSpec(ExpansionCardKind kind, HardwareEra era, PcieGeneration bus, int tdpWatts,
+public record StorageCardSpec(ExpansionCardKind kind, Era era, PcieGeneration bus, int tdpWatts,
                               int readCutPercent) implements IExpansionCardSpec {
 
     public StorageCardSpec {
@@ -44,12 +44,12 @@ public record StorageCardSpec(ExpansionCardKind kind, HardwareEra era, PcieGener
     }
 
     /** A RAID controller of {@code era}, on its {@code bus}. */
-    public static StorageCardSpec array(final HardwareEra era, final PcieGeneration bus, final int tdpWatts) {
+    public static StorageCardSpec array(final Era era, final PcieGeneration bus, final int tdpWatts) {
         return new StorageCardSpec(ExpansionCardKind.RAID_CONTROLLER, era, bus, tdpWatts, 0);
     }
 
     /** A read cache of {@code era}, on its {@code bus}, taking {@code readCutPercent} of its drives' read latency. */
-    public static StorageCardSpec cache(final HardwareEra era, final PcieGeneration bus, final int tdpWatts,
+    public static StorageCardSpec cache(final Era era, final PcieGeneration bus, final int tdpWatts,
                                         final int readCutPercent) {
         return new StorageCardSpec(ExpansionCardKind.READ_CACHE, era, bus, tdpWatts, readCutPercent);
     }

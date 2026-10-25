@@ -11,22 +11,21 @@ import dev.jstech.computers.block.DataLinkNames;
 import dev.jstech.computers.blockentity.INamedDevice;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MachinePorts;
-import dev.jstech.computers.item.ClusterInterfaceCardItem;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.CraftingCardItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.NetworkCardItem;
-import dev.jstech.computers.item.PhiCoprocessorItem;
-import dev.jstech.computers.item.RamItem;
-import dev.jstech.computers.item.SoundCardItem;
-import dev.jstech.computers.item.WorkshopCardItem;
+import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.NetworkCardSpec;
+import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.computers.hardware.SoundCardSpec;
+import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralHub;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -55,7 +54,7 @@ public final class DeviceMaps {
     /** The map of {@code computer}, read in {@code level}; an empty one for a machine not built from parts. */
     public static DeviceMap of(final ServerLevel level, final IOsHost computer) {
         final ComputerBuild build = computer.currentBuild();
-        final HardwareEra era = build == null ? HardwareEra.STANDARD : build.motherboard().era();
+        final Era era = build == null ? HardwareEra.STANDARD : build.motherboard().era();
         Text board = Text.EMPTY;
         final List<Text> processors = new ArrayList<>();
         final List<Text> memory = new ArrayList<>();
@@ -68,20 +67,20 @@ public final class DeviceMaps {
         network.add(DeviceMap.boardNetwork(DataLinkNames.access(era).text()));
         for (final ItemStack part : computer.hardwareStacks()) {
             final Text name = GameText.of(part.getHoverName());
-            switch (part.getItem()) {
-                case MotherboardItem ignored -> board = name;
-                case CpuItem ignored -> processors.add(name);
-                case RamItem ignored -> memory.add(name);
-                case DiskItem ignored -> disks.add(name);
-                case GpuItem gpu -> gpus.add(new GpuCard(name, MachinePorts.videoOutputs(gpu.spec().era())));
-                case SoundCardItem ignored -> soundCards.add(name);
-                case NetworkCardItem ignored -> network.add(name);
-                case CraftingCardItem ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
-                case ClusterInterfaceCardItem ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
-                case PhiCoprocessorItem ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
+            final HardwareRegistry.Part seated = HardwareRegistry.part(part.getItem());
+            switch (seated == null ? null : seated.spec()) {
+                case MotherboardSpec ignored -> board = name;
+                case CpuSpec ignored -> processors.add(name);
+                case RamSpec ignored -> memory.add(name);
+                case DiskSpec ignored -> disks.add(name);
+                case GpuSpec gpu -> gpus.add(new GpuCard(name, MachinePorts.videoOutputs(gpu.era())));
+                case SoundCardSpec ignored -> soundCards.add(name);
+                case NetworkCardSpec ignored -> network.add(name);
                 // A personal-use card wears its own picture, under the id of its item.
-                case WorkshopCardItem card -> addCard(cards, cardIcons, name, card.spec().card().id());
-                default -> {
+                case WorkshopCardSpec card -> addCard(cards, cardIcons, name, card.card().id());
+                // Any other card, an add-on's among them, is listed as a card.
+                case IExpansionCardSpec ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
+                case null, default -> {
                 }
             }
         }
@@ -100,7 +99,7 @@ public final class DeviceMaps {
     }
 
     /** The kind of device port a board of {@code era} has. */
-    public static DeviceMap.PortFamily family(final HardwareEra era) {
+    public static DeviceMap.PortFamily family(final Era era) {
         if (era == HardwareEra.VINTAGE) {
             return DeviceMap.PortFamily.SERIAL_PARALLEL;
         }
@@ -167,7 +166,7 @@ public final class DeviceMaps {
     }
 
     /* The board's device ports, each with the device linked to it, and on a hub the hub's own ports in turn. */
-    private static List<DeviceMap.Port> devicePorts(final HardwareEra era, final Linked linked) {
+    private static List<DeviceMap.Port> devicePorts(final Era era, final Linked linked) {
         final DeviceMap.PortFamily family = family(era);
         final Deque<Long> onBoard = linked.onPortsOf(null);
         final int count = MachinePorts.devicePorts(era);

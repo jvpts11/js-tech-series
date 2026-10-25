@@ -11,6 +11,7 @@ import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.program.iql.IqlColouring;
 import dev.jstech.computers.registry.ComputingContent;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ItemEntry;
@@ -170,6 +171,18 @@ public final class ComputersGuide {
     static Supplier<List<ItemLike>> itemsOf(final Class<?>... kinds) {
         return () -> ComputingContent.CONTENT.declaredItems().stream().map(entry -> (ItemLike) entry.get())
                 .filter(item -> isOf(item, kinds)).toList();
+    }
+
+    /**
+     * Every item the mod registers as a part whose sheet is of one of those kinds, read when the files are written:
+     * a part is known by its entry in the hardware registry, never by the class of its item.
+     */
+    static Supplier<List<ItemLike>> hardwareOf(final Class<?>... sheets) {
+        return () -> ComputingContent.CONTENT.declaredItems().stream().map(entry -> (ItemLike) entry.get())
+                .filter(item -> {
+                    final HardwareRegistry.Part part = HardwareRegistry.part(item.asItem());
+                    return part != null && isOf(part.spec(), sheets);
+                }).toList();
     }
 
     /** The items of every block the mod registers that is of one of those kinds. */

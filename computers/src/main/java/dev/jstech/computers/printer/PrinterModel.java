@@ -9,6 +9,7 @@ package dev.jstech.computers.printer;
 
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -42,7 +43,7 @@ public enum PrinterModel implements IStableName {
             "printer_inktank");
 
     private final String serializedName;
-    private final HardwareEra era;
+    private final Era era;
     private final Sheet sheet;
     private final Ink ink;
     private final int pageTicks;
@@ -67,7 +68,7 @@ public enum PrinterModel implements IStableName {
     private static final TextKey PRINTS_MONO = TextKey.of("jsc.printer.prints_mono", "Prints in black and white");
     private static final TextKey PRINTS_COLOR = TextKey.of("jsc.printer.prints_color", "Prints in color");
 
-    PrinterModel(final String serializedName, final HardwareEra era, final Sheet sheet, final Ink ink,
+    PrinterModel(final String serializedName, final Era era, final Sheet sheet, final Ink ink,
                  final int pageTicks, final String queueName, final String icon) {
         this.serializedName = serializedName;
         this.era = era;
@@ -79,7 +80,7 @@ public enum PrinterModel implements IStableName {
     }
 
     /** The printer of {@code era}; an era after the Advanced has the Advanced's until it has its own. */
-    public static PrinterModel of(final HardwareEra era) {
+    public static PrinterModel of(final Era era) {
         for (final PrinterModel model : values()) {
             if (model.era == era) {
                 return model;
@@ -99,7 +100,7 @@ public enum PrinterModel implements IStableName {
         return serializedName;
     }
 
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

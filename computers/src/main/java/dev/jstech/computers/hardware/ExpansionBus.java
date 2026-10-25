@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Physical bus families for expansion cards. Cards are keyed to their family and can only be
  * installed in a slot of the same family, regardless of generation within the family.
@@ -14,6 +16,7 @@ package dev.jstech.computers.hardware;
  * <p>ISA, PCI, and AGP are distinct buses with no cross-family compatibility. PCIe is one family
  * across all generations (1.0 through 6.0), so any PCIe card fits any PCIe slot electrically.
  */
+@ApiStatus.Experimental
 public enum ExpansionBus {
     ISA("ISA"),
     PCI("PCI"),

@@ -239,6 +239,24 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Items drawn in three dimensions: J's Core's API stays at version 12, all experimental. `IItemLook.HELD`
   shows an item's flat texture in a slot and an item frame and its model `held/<id>` in the hand, on the ground and on
   the head, as the game's spyglass and trident are.
+- (Core) One type of era: J's Core's API stays at version 12, all experimental. `Era` is the one type of era in every
+  mod, a record of its id, its name, its colour and the year its machines are made in, compared by its place in the
+  order (`isAtLeast`, `isAtMost`, `next`, `prev`). `HardwareEra` is no longer an enum but the class holding the
+  series' seven as `Era` constants, with `SERIES`, `WITH_PARTS` and `withParts`; `Eras` declares an era at the end or
+  after another and finds one by its id or a bare name; `EraTable` gives values era by era, an era without its own
+  taking the nearest earlier era's; `EraCodecs` saves an era by its id and sends it by its place. An axis whose steps
+  grow while the game loads is `ProgressionAxis.following`, and `PlayerProgress` and `TeamProgress` keep every axis's
+  step by its name.
+- (Computers) Hardware and computers as registries: J's Computers' API stays at version 8, all experimental.
+  `ComputersRegisterEvent` declares parts (`processor`, `graphicsCard`, `memory`, `disk`, `motherboard`,
+  `powerSupply`, `expansionCard`), the kinds they are made of (`memoryGeneration`, `slotGeneration`, `formFactor`,
+  `cardKind`), what an era's software ships on (`eraMedia`), computers (`computer`), servers (`server`) and machines
+  (`machine`), and `JsComputersApi` the same. `RamGeneration`, `PcieGeneration`, `FormFactor`, `ExpansionCardKind` and
+  `HostScope` are records open as ids where they were enums; `PlainCardSpec` is a card of a kind of a mod's own;
+  `ComputerDef` and `CaseParts` say what a computer is; `RackChassis` is a record of a server's `ComputerDef`, its
+  height, its cabinet and its `Look`; `SmallComputerBlock` is the block of a small computer another mod brings. The
+  part item classes (`CpuItem` and the rest) are gone: a part is an item and its entry. `IOperatingSpace.era()` gives
+  an `Era`.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1665,6 +1683,19 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   are and suits that say they are sealed, so a space module fits only a sealed suit; nothing of the mod enchanted at
   the table or the anvil; and a server setting for each kind of tool, which off takes its recipes and its place in the
   creative tab away.
+- (Core, Computers) Eras of other mods: an era another mod declares between the series' own is an era of hardware
+  everywhere, its machines, its tables and its progress. Whatever a rule of the series says era by era, an era that
+  says nothing takes the nearest earlier era's, as the Exa and the Singularity take the Advanced's.
+- (Computers) Hardware of other mods: any mod's item is a processor, a graphics card, memory, a disk, a board, a supply
+  or a card because it is declared one with its sheet, and J's Computers' own four hundred parts are declared the same
+  way. Its tooltip is written from the sheet, and it fits by the same rules as every other part. The generations of
+  memory and of slot, the form factors and the kinds of card are open too.
+- (Computers) Computers of other mods: every computer is an entry saying its era, the boards its case takes, the
+  machine it is and how many parts its case counts, the Personal, Crafting and Cluster Management Computers, the
+  Mainframes and the servers among them. Another mod brings a small computer in the cases J's Computers ships, and a
+  machine of its own, which only the programs made for it install on.
+- (Computers) Hardware from a modpack: KubeJS's startup scripts declare parts and their kinds, each as an object of
+  its sheet's fields (`JsComputers.processor`, `memory`, `motherboard` and the rest).
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -1824,6 +1855,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The packets counted tick by tick keep the biggest one of each kind too.
 - (Core) A multiblock's terminal: the block a multiblock is worked from is called its terminal, where it was its
   controller, in the Structure Projector, the Multiblock Builder, the recipe viewers, the manuals, the studio and Jade.
+- (Core, Computers) Eras in saves: an era is saved by its id (`jscore:legacy`), and progress along every axis by the
+  step's name, so an era another mod inserts moves nothing a world saved. A world saved before starts its progress
+  over, and the era advancements wait for the era by its id.
+- (Computers) Tooltips of the slots a card fits are one sentence for every card ("Fits a PCI-e slot").
 
 ### Fixed
 - (Core) A tall stack of moving structures set down touching stands still and is heard striking nothing, its
@@ -1898,6 +1933,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   longer holds the server: the game's unloading of it went round and round for all the server's spare time, so the
   generation never went on, new land never came and the server could not stop. The Core drops that unloading, as
   the chunk is kept; this was the game's own, made likelier by anything that loads chunks a while and lets them go.
+- (Computers) The Exa and the Singularity draw what the Advanced draws: the supercomputer rack, the server rack, the
+  speaker and the Pattern Encoder's USB-C took the Standard's look in those eras.
 
 ## [0.5.2a] - 2026-10-14
 

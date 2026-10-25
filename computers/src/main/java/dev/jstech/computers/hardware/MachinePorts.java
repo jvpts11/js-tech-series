@@ -8,6 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
@@ -36,12 +37,12 @@ public final class MachinePorts {
     }
 
     /** The device ports on a board of {@code era}. */
-    public static int devicePorts(final HardwareEra era) {
+    public static int devicePorts(final Era era) {
         return byEra(era, 2, 4, 6, 8, 10);
     }
 
     /** The video outputs on one graphics card of {@code era}. */
-    public static int videoOutputs(final HardwareEra era) {
+    public static int videoOutputs(final Era era) {
         return byEra(era, 1, 2, 2, 4, 4);
     }
 
@@ -76,14 +77,8 @@ public final class MachinePorts {
         return outputs;
     }
 
-    private static int byEra(final HardwareEra era, final int vintage, final int legacy, final int transition,
+    private static int byEra(final Era era, final int vintage, final int legacy, final int transition,
                              final int standard, final int advanced) {
-        return switch (era) {
-            case VINTAGE -> vintage;
-            case LEGACY -> legacy;
-            case TRANSITION -> transition;
-            case STANDARD -> standard;
-            case ADVANCED, EXA, SINGULARITY -> advanced;
-        };
+        return HardwareEra.pick(era, vintage, legacy, transition, standard, advanced);
     }
 }

@@ -8,7 +8,8 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
@@ -16,11 +17,12 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
@@ -62,16 +64,17 @@ public final class Installers {
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack stack = machine.diskInSlot(slot);
-            if (!(stack.getItem() instanceof DiskItem disk)) {
+            if (!(HardwareRegistry.disk(stack) instanceof DiskSpec disk)) {
                 continue;
             }
-            final HardwareEra era = disk.spec().era();
-            final long sizeMb = disk.spec().capacityItems() * era.mbPerItem();
-            final long freeMb = OsDisks.systemDiskFreeWeight(stack) * era.mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
+            final Era era = disk.era();
+            final long sizeMb = disk.capacityItems() * EraStorage.mbPerItem(era);
+            final long freeMb = OsDisks.systemDiskFreeWeight(stack) * EraStorage.mbPerItem(era)
+                    / StorageKey.MB_EQ_PER_ITEM;
             final String label = adaNames ? adaLabel(drive) : stack.getHoverName().getString();
             disks.add(new InstallerFlow.Disk(slot, label,
                     (int) Math.min(Integer.MAX_VALUE, sizeMb), (int) Math.min(Integer.MAX_VALUE, freeMb),
-                    holderOf(stack), disk.spec().tier().speedMultiplier()));
+                    holderOf(stack), disk.tier().speedMultiplier()));
             drive++;
         }
         return disks;
@@ -92,7 +95,7 @@ public final class Installers {
      * <p>A desktop cannot predate the hardware it was written for, and it has to be a desktop the system's own
      * platform runs, which is why a machine of the first age is offered none at all.
      */
-    public static List<InstallerFlow.Desktop> desktopsFor(final OsDef system, final HardwareEra era,
+    public static List<InstallerFlow.Desktop> desktopsFor(final OsDef system, final Era era,
                                                           final int eraFactor) {
         final List<InstallerFlow.Desktop> desktops = new ArrayList<>();
         for (final ProgramSpec spec : OsRegistry.programs()) {
@@ -173,7 +176,7 @@ public final class Installers {
      */
     public static InstallerFlow beginning(final IOsHost machine, final ServerLevel level, final OsDef system,
                                           final double baseRate) {
-        final HardwareEra era = machine.installedEra();
+        final Era era = machine.installedEra();
         final String mirror = system.installerStyle().offersDesktop() ? mirrorHost(machine, level) : "";
         final List<InstallerFlow.Desktop> desktops = mirror.isEmpty()
                 ? List.of() : desktopsFor(system, era, SetupTiming.eraFactor(era));
@@ -194,7 +197,7 @@ public final class Installers {
                                          final String computerName, final String desktopId, final int eraseSlot,
                                          final boolean portsSelected, final boolean useMirror,
                                          final boolean cronEnabled, final boolean sshdEnabled) {
-        final HardwareEra era = machine.installedEra();
+        final Era era = machine.installedEra();
         final String mirror = system.installerStyle().offersDesktop() ? mirrorHost(machine, level) : "";
         final List<InstallerFlow.Desktop> desktops = mirror.isEmpty()
                 ? List.of() : desktopsFor(system, era, SetupTiming.eraFactor(era));

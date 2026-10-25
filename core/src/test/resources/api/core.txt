@@ -6655,20 +6655,20 @@ stable 4
 12 dev.jstech.core.jstechseries.network.DataLine  String lineId()
 12 dev.jstech.core.jstechseries.network.DataLine  String serializedName()
 12 dev.jstech.core.jstechseries.network.DataLine  TextKey job()
-12 dev.jstech.core.jstechseries.network.DataLine  int generation(HardwareEra)
+12 dev.jstech.core.jstechseries.network.DataLine  int generation(Era)
 12 dev.jstech.core.jstechseries.network.DataLine  int id()
 12 dev.jstech.core.jstechseries.network.DataLine  static DataLine byId(int)
 12 dev.jstech.core.jstechseries.network.DataLine  static DataLine byName(String)
 12 dev.jstech.core.jstechseries.network.DataLine  static DataLine ofLineId(String)
 12 dev.jstech.core.jstechseries.network.DataLines  type final class
 12 dev.jstech.core.jstechseries.network.DataLines  static Connection of(DataLink)
-12 dev.jstech.core.jstechseries.network.DataLines  static Connection upTo(HardwareEra, DataLine)
-12 dev.jstech.core.jstechseries.network.DataLines  static Connection[] upTo(HardwareEra, DataLine...)
+12 dev.jstech.core.jstechseries.network.DataLines  static Connection upTo(Era, DataLine)
+12 dev.jstech.core.jstechseries.network.DataLines  static Connection[] upTo(Era, DataLine...)
 12 dev.jstech.core.jstechseries.network.DataLines  static DataLine of(ResourceLocation)
 12 dev.jstech.core.jstechseries.network.DataLines  static DataLink linkOf(Connection)
 12 dev.jstech.core.jstechseries.network.DataLines  static ResourceLocation id(DataLine)
 12 dev.jstech.core.jstechseries.network.DataLines  static boolean isData(ResourceLocation)
-12 dev.jstech.core.jstechseries.network.DataLink  type record(DataLine line, HardwareEra era)
+12 dev.jstech.core.jstechseries.network.DataLink  type record(DataLine line, Era era)
 12 dev.jstech.core.jstechseries.network.DataLink  String serializedName()
 12 dev.jstech.core.jstechseries.network.DataLink  boolean betweenTwoEnds()
 12 dev.jstech.core.jstechseries.network.DataLink  boolean exists()
@@ -7045,11 +7045,11 @@ stable 4
 12 dev.jstech.core.jstechseries.peripheral.PeripheralCableType  String translationKey()
 12 dev.jstech.core.jstechseries.peripheral.PeripheralCableType  int maxLength()
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  type final class
-12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static Connection of(HardwareEra)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static Connection of(Era)
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static ResourceLocation id()
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static boolean is(ResourceLocation)
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static final TextKey JOB
-12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static int range(HardwareEra)
+12 dev.jstech.core.jstechseries.peripheral.PeripheralLine  static int range(Era)
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  type final class
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  BlockPos ownerPos()
 12 dev.jstech.core.jstechseries.peripheral.PeripheralLink  Optional<Long> linkedOwner()
@@ -7111,8 +7111,8 @@ stable 4
 12 dev.jstech.core.jstechseries.peripheral.PortKind  static PortKind byId(int)
 12 dev.jstech.core.jstechseries.peripheral.PortKind  static PortKind byName(String)
 12 dev.jstech.core.jstechseries.theme.client.EraThemes  type final class
-12 dev.jstech.core.jstechseries.theme.client.EraThemes  static EraTheme of(HardwareEra)
-12 dev.jstech.core.jstechseries.theme.client.EraThemes  static EraTheme ofNullable(HardwareEra)
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static EraTheme of(Era)
+12 dev.jstech.core.jstechseries.theme.client.EraThemes  static EraTheme ofNullable(Era)
 12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final EraTheme ADVANCED
 12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final EraTheme LEGACY
 12 dev.jstech.core.jstechseries.theme.client.EraThemes  static final EraTheme STANDARD
@@ -7165,42 +7165,66 @@ stable 4
 12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void unbind()
 12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void vLine(GuiGraphics, int, int, int)
 12 dev.jstech.core.jstechseries.theme.client.JsTechTheme  static void window(GuiGraphics, int, int, int, int)
-12 dev.jstech.core.jstechseries.tier.Era  type record(ResourceLocation id, Text name, int colour)
+12 dev.jstech.core.jstechseries.tier.Era  type record(String id, Text name, int colour, int year) implements IAxisStep
+12 dev.jstech.core.jstechseries.tier.Era  Era next()
+12 dev.jstech.core.jstechseries.tier.Era  Era prev()
+12 dev.jstech.core.jstechseries.tier.Era  String namespace()
+12 dev.jstech.core.jstechseries.tier.Era  String path()
+12 dev.jstech.core.jstechseries.tier.Era  String serializedName()
+12 dev.jstech.core.jstechseries.tier.Era  String toString()
+12 dev.jstech.core.jstechseries.tier.Era  Text named()
+12 dev.jstech.core.jstechseries.tier.Era  Text text()
+12 dev.jstech.core.jstechseries.tier.Era  boolean answersTo(String)
+12 dev.jstech.core.jstechseries.tier.Era  boolean equals(Object)
+12 dev.jstech.core.jstechseries.tier.Era  boolean isAtLeast(Era)
+12 dev.jstech.core.jstechseries.tier.Era  boolean isAtMost(Era)
+12 dev.jstech.core.jstechseries.tier.Era  int colour()
+12 dev.jstech.core.jstechseries.tier.Era  int hashCode()
+12 dev.jstech.core.jstechseries.tier.Era  int level()
+12 dev.jstech.core.jstechseries.tier.EraCodecs  type final class
+12 dev.jstech.core.jstechseries.tier.EraCodecs  static Era find(String)
+12 dev.jstech.core.jstechseries.tier.EraCodecs  static Era orNone(int)
+12 dev.jstech.core.jstechseries.tier.EraCodecs  static final Codec<Era> CODEC
+12 dev.jstech.core.jstechseries.tier.EraCodecs  static final StreamCodec<ByteBuf, Era> OPTIONAL_STREAM_CODEC
+12 dev.jstech.core.jstechseries.tier.EraCodecs  static final StreamCodec<ByteBuf, Era> STREAM_CODEC
+12 dev.jstech.core.jstechseries.tier.EraCodecs  static int placeOf(Era)
+12 dev.jstech.core.jstechseries.tier.EraTable  type final class<T>
+12 dev.jstech.core.jstechseries.tier.EraTable  EraTable<T> from(Era, T)
+12 dev.jstech.core.jstechseries.tier.EraTable  T get(Era)
+12 dev.jstech.core.jstechseries.tier.EraTable  boolean hasOwn(Era)
+12 dev.jstech.core.jstechseries.tier.EraTable  static <T> EraTable<T> of(T)
+12 dev.jstech.core.jstechseries.tier.EraTable  static <T> EraTable<T> ofFive(T, T, T, T, T)
 12 dev.jstech.core.jstechseries.tier.Eras  type final class
+12 dev.jstech.core.jstechseries.tier.Eras  static Era at(int)
 12 dev.jstech.core.jstechseries.tier.Eras  static Era declare(Era)
-12 dev.jstech.core.jstechseries.tier.Eras  static Era declareAfter(Era, ResourceLocation)
-12 dev.jstech.core.jstechseries.tier.Eras  static Era of(HardwareEra)
+12 dev.jstech.core.jstechseries.tier.Eras  static Era declareAfter(Era, Era)
+12 dev.jstech.core.jstechseries.tier.Eras  static Era first()
+12 dev.jstech.core.jstechseries.tier.Eras  static Era last()
 12 dev.jstech.core.jstechseries.tier.Eras  static List<Era> ordered()
-12 dev.jstech.core.jstechseries.tier.Eras  static Optional<Era> byId(ResourceLocation)
-12 dev.jstech.core.jstechseries.tier.Eras  static ResourceLocation idOf(HardwareEra)
-12 dev.jstech.core.jstechseries.tier.Eras  static boolean atLeast(Era, Era)
-12 dev.jstech.core.jstechseries.tier.Eras  static final Codec<Era> CODEC
+12 dev.jstech.core.jstechseries.tier.Eras  static Optional<Era> byId(String)
+12 dev.jstech.core.jstechseries.tier.Eras  static Optional<Era> byName(String)
+12 dev.jstech.core.jstechseries.tier.Eras  static boolean settled()
+12 dev.jstech.core.jstechseries.tier.Eras  static final String SERIES_NAMESPACE
 12 dev.jstech.core.jstechseries.tier.Eras  static int position(Era)
-12 dev.jstech.core.jstechseries.tier.HardwareEra  type enum implements IStableId, IStableName, IAxisStep
-12 dev.jstech.core.jstechseries.tier.HardwareEra  ADVANCED
-12 dev.jstech.core.jstechseries.tier.HardwareEra  EXA
-12 dev.jstech.core.jstechseries.tier.HardwareEra  HardwareEra next()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  HardwareEra prev()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  LEGACY
-12 dev.jstech.core.jstechseries.tier.HardwareEra  SINGULARITY
-12 dev.jstech.core.jstechseries.tier.HardwareEra  STANDARD
-12 dev.jstech.core.jstechseries.tier.HardwareEra  String serializedName()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  TRANSITION
-12 dev.jstech.core.jstechseries.tier.HardwareEra  Text named()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  Text text()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  VINTAGE
-12 dev.jstech.core.jstechseries.tier.HardwareEra  boolean isAtLeast(HardwareEra)
-12 dev.jstech.core.jstechseries.tier.HardwareEra  boolean isAtMost(HardwareEra)
-12 dev.jstech.core.jstechseries.tier.HardwareEra  int bits()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  int colour()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  int id()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  int level()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  int screenColor()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  long bytesPerMbEq()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  long itemsFor(long)
-12 dev.jstech.core.jstechseries.tier.HardwareEra  long mbPerItem()
-12 dev.jstech.core.jstechseries.tier.HardwareEra  static HardwareEra find(int)
-12 dev.jstech.core.jstechseries.tier.HardwareEra  static HardwareEra fromLevel(int)
+12 dev.jstech.core.jstechseries.tier.Eras  static void requireId(String)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  type final class
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static Era ofSeriesIndex(int)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static Era seriesAt(int)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static Era seriesNamed(String)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static Era withParts(Era)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final Era ADVANCED
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final Era EXA
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final Era LEGACY
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final Era SINGULARITY
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final Era STANDARD
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final Era TRANSITION
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final Era VINTAGE
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final List<Era> SERIES
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static final List<Era> WITH_PARTS
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static int partsIndex(Era)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static int pick(Era, int, int, int, int, int)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static int seriesIndex(Era)
+12 dev.jstech.core.jstechseries.tier.HardwareEra  static int seriesLevel(Era)
 12 dev.jstech.core.jstechseries.tier.IndustrialTier  type enum implements IStableId, IAxisStep
 12 dev.jstech.core.jstechseries.tier.IndustrialTier  IndustrialTier next()
 12 dev.jstech.core.jstechseries.tier.IndustrialTier  IndustrialTier prev()
@@ -7221,7 +7245,7 @@ stable 4
 12 dev.jstech.core.jstechseries.tier.IndustrialTier  int id()
 12 dev.jstech.core.jstechseries.tier.IndustrialTier  int level()
 12 dev.jstech.core.jstechseries.tier.SeriesAxes  type final class
-12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final ProgressionAxis<HardwareEra> HARDWARE_ERA
+12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final ProgressionAxis<Era> HARDWARE_ERA
 12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final ProgressionAxis<IndustrialTier> INDUSTRIAL_TIER
 12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final TextKey HARDWARE_ERA_NAME
 12 dev.jstech.core.jstechseries.tier.SeriesAxes  static final TextKey INDUSTRIAL_TIER_NAME
@@ -11658,6 +11682,7 @@ stable 4
 10 dev.jstech.core.progression.IAxisStep  abstract Text text()
 10 dev.jstech.core.progression.IAxisStep  abstract int level()
 12 dev.jstech.core.progression.IAxisStep  default Text named()
+12 dev.jstech.core.progression.IAxisStep  default boolean answersTo(String)
 12 dev.jstech.core.progression.IAxisStep  default int colour()
 12 dev.jstech.core.progression.IAxisStep  static final int PLAIN_COLOUR
 10 dev.jstech.core.progression.IKnowledgeGated  type interface
@@ -11722,9 +11747,11 @@ stable 4
 10 dev.jstech.core.progression.ProgressionAxis  S at(int)
 10 dev.jstech.core.progression.ProgressionAxis  S byName(String)
 10 dev.jstech.core.progression.ProgressionAxis  S first()
+12 dev.jstech.core.progression.ProgressionAxis  S savedAs(String)
 10 dev.jstech.core.progression.ProgressionAxis  String toString()
 10 dev.jstech.core.progression.ProgressionAxis  Text text()
 10 dev.jstech.core.progression.ProgressionAxis  TextKey name()
+12 dev.jstech.core.progression.ProgressionAxis  static <S extends IAxisStep> ProgressionAxis<S> following(ResourceLocation, TextKey, Supplier<List<S>>)
 10 dev.jstech.core.progression.ProgressionAxis  static <S extends IAxisStep> ProgressionAxis<S> of(ResourceLocation, TextKey, List<S>)
 10 dev.jstech.core.progression.ProgressionGate  type record(ResourceLocation axis, String step)
 10 dev.jstech.core.progression.ProgressionGate  boolean passes(MinecraftServer, UUID)
@@ -11757,11 +11784,11 @@ stable 4
 10 dev.jstech.core.progression.TeamProgress  static void forget(MinecraftServer, String, ResourceLocation)
 10 dev.jstech.core.progression.TeamProgress  static void merge(MinecraftServer, String, String)
 10 dev.jstech.core.progression.TeamProgress  static void register()
-10 dev.jstech.core.progression.TeamProgress.Held  type record(Map<String, Integer> axes, Set<String> milestones, Map<String, Double> knowledge)
+12 dev.jstech.core.progression.TeamProgress.Held  type record(Map<String, String> axes, Set<String> milestones, Map<String, Double> knowledge)
 10 dev.jstech.core.progression.TeamProgress.Held  List<String> known()
+12 dev.jstech.core.progression.TeamProgress.Held  String step(ResourceLocation)
 10 dev.jstech.core.progression.TeamProgress.Held  boolean knows(ResourceLocation)
 10 dev.jstech.core.progression.TeamProgress.Held  double share(ResourceLocation)
-10 dev.jstech.core.progression.TeamProgress.Held  int step(ResourceLocation)
 10 dev.jstech.core.progression.TeamProgress.Held  static final Codec<Held> CODEC
 10 dev.jstech.core.progression.TeamProgress.Held  static final Held NONE
 10 dev.jstech.core.progression.TeamProgress.Held  static final StreamCodec<RegistryFriendlyByteBuf, Held> STREAM_CODEC

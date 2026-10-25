@@ -8,11 +8,12 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.PcieGeneration;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
@@ -44,7 +45,24 @@ public final class HardwareTooltip {
     /** The design a chip is built on, with its codename: "Architecture: Centro Conroe". */
     private static final TextKey DESIGN = TextKey.of("jsc.item.hardware_tooltip.design", "Architecture: %s");
 
+    /* The slot a card fits, by the family of its bus. */
+    private static final TextKey FITS_ISA = TextKey.of("jsc.item.hardware_tooltip.fits_isa", "Fits an ISA slot");
+    private static final TextKey FITS_PCI = TextKey.of("jsc.item.hardware_tooltip.fits_pci", "Fits a PCI slot");
+    private static final TextKey FITS_AGP = TextKey.of("jsc.item.hardware_tooltip.fits_agp", "Fits an AGP slot");
+    private static final TextKey FITS_PCIE = TextKey.of("jsc.item.hardware_tooltip.fits_pcie", "Fits a PCI-e slot");
+
     private HardwareTooltip() {
+    }
+
+    /** Appends the slot a card fits, by the family of its bus: "Fits a PCI slot". */
+    public static void appendSlot(final List<Component> tooltip, final PcieGeneration bus) {
+        final TextKey fits = switch (bus.busFamily()) {
+            case ISA -> FITS_ISA;
+            case PCI -> FITS_PCI;
+            case AGP -> FITS_AGP;
+            case PCIE -> FITS_PCIE;
+        };
+        tooltip.add(GameText.component(fits).withStyle(ChatFormatting.DARK_GRAY));
     }
 
     /**
@@ -63,7 +81,7 @@ public final class HardwareTooltip {
      * Appends the component's hardware generation, the axis that decides what fits with what, in the
      * colour of that generation's screens so the era reads before the word does.
      */
-    public static void appendEra(final List<Component> tooltip, final HardwareEra era) {
+    public static void appendEra(final List<Component> tooltip, final Era era) {
         if (era == null) {
             return;
         }
@@ -71,8 +89,8 @@ public final class HardwareTooltip {
     }
 
     /** {@code text} in the colour of {@code era}'s screens: the one styling every era mention shares. */
-    public static Component eraName(final HardwareEra era, final Text text) {
-        return GameText.component(text).withStyle(style -> style.withColor(era.screenColor()));
+    public static Component eraName(final Era era, final Text text) {
+        return GameText.component(text).withStyle(style -> style.withColor(era.colour()));
     }
 
     /**

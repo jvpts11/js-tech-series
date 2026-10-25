@@ -8,6 +8,8 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
@@ -50,6 +52,14 @@ public final class SetupTiming {
      * anything on them would be nothing but waiting; a floppy is already slow enough to say what era it is.
      */
     public static final double CPU_MIN_FACTOR = 0.5;
+
+    private static final EraTable<Integer> ERA_FACTORS = EraTable.of(1)
+            .from(HardwareEra.LEGACY, 2)
+            .from(HardwareEra.TRANSITION, 3)
+            .from(HardwareEra.STANDARD, 4)
+            .from(HardwareEra.ADVANCED, 8)
+            .from(HardwareEra.EXA, 16)
+            .from(HardwareEra.SINGULARITY, 32);
 
     private SetupTiming() {
     }
@@ -135,21 +145,10 @@ public final class SetupTiming {
      * generation does that twice as fast as the one before: Vintage 1, Legacy 2, Standard 4, and so on. The
      * Transition, a short generation between Legacy and Standard, sits between them at 3. Written out per era
      * rather than worked out from the era's level, so an era placed between two others never moves the ones
-     * around it. A machine with no generation to speak of counts as Vintage.
+     * around it, and works as fast as the era before it. A machine with no generation to speak of counts as Vintage.
      */
-    public static int eraFactor(final HardwareEra era) {
-        if (era == null) {
-            return 1;
-        }
-        return switch (era) {
-            case VINTAGE -> 1;
-            case LEGACY -> 2;
-            case TRANSITION -> 3;
-            case STANDARD -> 4;
-            case ADVANCED -> 8;
-            case EXA -> 16;
-            case SINGULARITY -> 32;
-        };
+    public static int eraFactor(final Era era) {
+        return era == null ? 1 : ERA_FACTORS.get(era);
     }
 
     /** A disc's time on a machine that works {@code factor} times as fast as a Vintage one. */

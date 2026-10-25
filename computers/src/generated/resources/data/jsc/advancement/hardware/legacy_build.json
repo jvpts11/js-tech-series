@@ -3,7 +3,7 @@
   "criteria": {
     "done": {
       "conditions": {
-        "detail": "legacy",
+        "detail": "jscore:legacy",
         "event": "jsc:era_built"
       },
       "trigger": "jscore:event"

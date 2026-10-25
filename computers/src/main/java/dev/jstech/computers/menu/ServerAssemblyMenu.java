@@ -10,17 +10,17 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.gui.layout.ServerAssemblyLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.MotherboardSpec;
-import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.menu.SlotGroup;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -81,8 +81,7 @@ public class ServerAssemblyMenu extends CoreMenu {
     }
 
     private MotherboardSpec boardSpec() {
-        return hw.getStackInSlot(ServerHardwareHandler.MOBO).getItem() instanceof MotherboardItem board
-                ? board.spec() : null;
+        return HardwareRegistry.board(hw.getStackInSlot(ServerHardwareHandler.MOBO));
     }
 
     /** Why {@code stack} stays out of {@code slot}, when it is one of the server's part slots; null otherwise. */
@@ -106,7 +105,8 @@ public class ServerAssemblyMenu extends CoreMenu {
 
     public int boardRamSlots() {
         final MotherboardSpec spec = boardSpec();
-        return spec == null ? 0 : Math.min(ServerHardwareHandler.RAM, spec.ramSlots());
+        return spec == null ? 0
+                : Math.min(Math.min(ServerHardwareHandler.RAM, spec.ramSlots()), chassis().computer().parts().memory());
     }
 
     public int boardGpuSlots() {
@@ -134,7 +134,7 @@ public class ServerAssemblyMenu extends CoreMenu {
      * Advanced server reads as Advanced before a board goes in, whatever board it holds.
      */
     @Nullable
-    public HardwareEra hardwareEra() {
+    public Era hardwareEra() {
         return chassis().era();
     }
 

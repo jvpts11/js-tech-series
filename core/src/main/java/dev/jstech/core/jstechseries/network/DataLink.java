@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.jstechseries.network;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @param line the line
  * @param era  the era of the cable; the first era for the crafting line, whatever era was asked for
  */
-public record DataLink(DataLine line, HardwareEra era) {
+public record DataLink(DataLine line, Era era) {
 
     /** How many ends a run of a line that runs between two places has, and so how many cables a block of it joins. */
     public static final int ENDS = 2;
@@ -67,7 +68,7 @@ public record DataLink(DataLine line, HardwareEra era) {
     /** The link a cable of {@code lineId} in its {@code generation} is, or null when that is no data cable. */
     public static @Nullable DataLink of(final @Nullable String lineId, final int generation) {
         final DataLine line = DataLine.ofLineId(lineId);
-        final HardwareEra era = HardwareEra.find(generation);
+        final Era era = HardwareEra.seriesAt(generation);
         return line == null || era == null ? null : new DataLink(line, era);
     }
 
@@ -84,14 +85,14 @@ public record DataLink(DataLine line, HardwareEra era) {
             return null;
         }
         final DataLine line = DataLine.byName(name.substring(0, cut));
-        final HardwareEra era = eraNamed(name.substring(cut + 1));
+        final Era era = HardwareEra.seriesNamed(name.substring(cut + 1));
         return line == null || era == null ? null : new DataLink(line, era);
     }
 
     /** The link's name: the line and the era, {@code access_legacy}; the crafting line's is its own. */
     public String serializedName() {
         return this.line == DataLine.CRAFTING ? this.line.serializedName()
-                : this.line.serializedName() + "_" + this.era.serializedName();
+                : this.line.serializedName() + "_" + this.era.path();
     }
 
     /** The generation of the line the cable is. */
@@ -99,37 +100,32 @@ public record DataLink(DataLine line, HardwareEra era) {
         return this.line.generation(this.era);
     }
 
-    /** Whether the line has a cable in this era: HPC begins at the Transition, and no line goes past the Advanced. */
+    /**
+     * Whether the line has a cable in this era: HPC begins at the Transition, and no line goes past the Advanced. The
+     * data cables are the series' own, so only the series' eras have them.
+     */
     public boolean exists() {
-        return this.era.id() < THROUGHPUT[this.line.id()].length && THROUGHPUT[this.line.id()][this.era.id()] > 0;
+        final int index = HardwareEra.seriesIndex(this.era);
+        return index >= 0 && index < THROUGHPUT[this.line.id()].length && THROUGHPUT[this.line.id()][index] > 0;
     }
 
     /** Items a tick the cable carries; none for a cable that does not exist. */
     public long throughput() {
-        return exists() ? THROUGHPUT[this.line.id()][this.era.id()] : 0L;
+        return exists() ? THROUGHPUT[this.line.id()][HardwareEra.seriesIndex(this.era)] : 0L;
     }
 
     /** Cables a run of it reaches before it has to be renewed; none for a cable that does not exist. */
     public int range() {
-        return exists() ? RANGE[this.line.id()][this.era.id()] : 0;
+        return exists() ? RANGE[this.line.id()][HardwareEra.seriesIndex(this.era)] : 0;
     }
 
     /** Whether it runs only straight, as the backbone's fibre does: an optical router is what turns it. */
     public boolean straight() {
-        return this.line == DataLine.BACKBONE && this.era.id() >= HardwareEra.STANDARD.id();
+        return this.line == DataLine.BACKBONE && this.era.isAtLeast(HardwareEra.STANDARD);
     }
 
     /** Whether a run of it goes between exactly two ends and a block of it holds nothing else: the long distance. */
     public boolean betweenTwoEnds() {
         return this.line == DataLine.LONG_DISTANCE;
-    }
-
-    private static @Nullable HardwareEra eraNamed(final String name) {
-        for (final HardwareEra era : HardwareEra.values()) {
-            if (era.serializedName().equals(name)) {
-                return era;
-            }
-        }
-        return null;
     }
 }

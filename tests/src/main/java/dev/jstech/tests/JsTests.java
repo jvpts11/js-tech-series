@@ -168,6 +168,8 @@ public final class JsTests {
         TestScreens.register(modEventBus);
         // A player's settings with every kind of control, which the settings screen's tests open.
         TestShowcaseSettings.register(modEventBus, modContainer);
+        // Parts and a small computer of the test era, declared the way another mod declares its hardware.
+        TestHardware.register(modEventBus);
         if (GameTestHooks.isGametestServer()) {
             /*
              * The language API's tests need a language that is not the series' own, and languages are only taken

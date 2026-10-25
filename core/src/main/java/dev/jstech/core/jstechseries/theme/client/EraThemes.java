@@ -11,14 +11,15 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.theme.EraPalette;
 import dev.jstech.core.client.gui.theme.EraStyle;
 import dev.jstech.core.client.gui.theme.EraTheme;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The registry of concrete per-era GUI skins, plus the {@link HardwareEra} to {@link EraTheme} mapping a screen uses
+ * The registry of concrete per-era GUI skins, plus the {@link Era} to {@link EraTheme} mapping a screen uses
  * to pick its skin. STANDARD is frozen: its palette is the exact set of values the original flat-dark theme shipped
  * with, and its style is flat, so a STANDARD-era (or no-board / unknown-era) screen renders pixel-for-pixel as before.
  *
@@ -115,28 +116,27 @@ public final class EraThemes {
     /** Light and flat, with a thin accent line under each header. */
     public static final EraTheme ADVANCED = new EraTheme(ADVANCED_COLOURS, EraStyle.flat(SMALL).withAccentRule());
 
+    /* Each era's skin; the Exa, the Singularity and an add-on's eras wear that of the series' era before them. */
+    private static final EraTable<EraTheme> BY_ERA = EraTable.ofFive(VINTAGE, LEGACY, TRANSITION, STANDARD,
+            ADVANCED);
+
     private EraThemes() {
     }
 
     /**
-     * The skin for a given hardware era. The enum is closed, so the switch is exhaustive. The Exa and Singularity
-     * eras have no content yet, so they wear the skin of the Advanced era, the nearest to them, until they do.
+     * The skin for a given hardware era. The Exa and Singularity eras have no content yet, so they wear the skin of
+     * the Advanced era, the nearest before them, until they do; an era an add-on brings wears that of the era before
+     * it.
      */
-    public static EraTheme of(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> VINTAGE;
-            case LEGACY -> LEGACY;
-            case TRANSITION -> TRANSITION;
-            case STANDARD -> STANDARD;
-            case ADVANCED, EXA, SINGULARITY -> ADVANCED;
-        };
+    public static EraTheme of(final Era era) {
+        return BY_ERA.get(era);
     }
 
     /**
      * The skin for a possibly-absent era. A screen with no valid build (no board installed) or no era available falls
      * back to STANDARD, so the GUI always has a defined skin and the default look never changes.
      */
-    public static EraTheme ofNullable(@Nullable final HardwareEra era) {
+    public static EraTheme ofNullable(@Nullable final Era era) {
         return era == null ? STANDARD : of(era);
     }
 }

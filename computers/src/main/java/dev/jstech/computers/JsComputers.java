@@ -14,13 +14,16 @@ import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.audio.MusicImports;
+import dev.jstech.computers.block.SmallComputerBlock;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
 import dev.jstech.computers.audio.catalog.SoundfoundryCommand;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.datagen.JscDataGenerators;
 import dev.jstech.computers.guide.ComputersGuide;
+import dev.jstech.computers.hardware.HardwareKinds;
 import dev.jstech.computers.integration.jei.payload.JeiPayloads;
+import dev.jstech.computers.item.PartTooltips;
 import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SigmaLanguage;
@@ -35,17 +38,28 @@ import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ComponentKinds;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
+import dev.jstech.computers.registry.ComputerRegistry;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.registry.OwnComputers;
+import dev.jstech.computers.registry.OwnHardware;
+import dev.jstech.computers.scripting.ScriptedHardware;
 import dev.jstech.computers.trace.IsmsTraces;
 import dev.jstech.core.audio.media.MediaKeepers;
 import dev.jstech.core.jstechseries.operation.RegisterOperationTypesEvent;
 import dev.jstech.core.state.CoreStates;
+import java.util.concurrent.atomic.AtomicBoolean;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoader;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.neoforged.neoforge.event.BlockEntityTypeAddBlocksEvent;
 import org.slf4j.Logger;
 
 /**
@@ -57,6 +71,9 @@ public class JsComputers {
     public static final String MODID = "jsc";
 
     public static final Logger LOGGER = LogUtils.getLogger();
+
+    /* Whether the register event went out: a data run would otherwise post it at setup and at gathering. */
+    private static final AtomicBoolean REGISTRIES_OPENED = new AtomicBoolean();
 
     public JsComputers(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("J's Computers {} loaded.", modContainer.getModInfo().getVersion());
@@ -80,14 +97,30 @@ public class JsComputers {
          * somebody playing it. Its own languages go in through the same event an addon's do.
          */
         modEventBus.addListener(ComputersRegisterEvent.class, JsComputers::addLanguages);
-        modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(
-                () -> ModLoader.postEvent(new ComputersRegisterEvent())));
+        // Its own parts too: an item it makes is a part because the event says so, as an addon's is.
+        modEventBus.addListener(ComputersRegisterEvent.class, OwnHardware::declare);
+        // And its own computers and servers, which a block or an item of it is because the event says so.
+        modEventBus.addListener(ComputersRegisterEvent.class, OwnComputers::declare);
+        // Then what a modpack's startup scripts declared, kept since they ran.
+        modEventBus.addListener(ComputersRegisterEvent.class, ScriptedHardware::declare);
+        // The small computers of every mod share one block entity, joined to it once every block is in.
+        modEventBus.addListener(BlockEntityTypeAddBlocksEvent.class, SmallComputerBlock::joinTheirEntity);
+        modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(JsComputers::openRegistries));
+        /*
+         * A data run builds the mod without setting it up, and what it writes (the manuals' pages of parts, the
+         * advancements of each era) reads the registries; they open there before anything is written.
+         */
+        modEventBus.addListener(EventPriority.HIGHEST, GatherDataEvent.class, event -> openRegistries());
         // The programs' runtime finds the mods' kinds of component through the list kept outside it.
         ComponentKinds.install();
         modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(() -> {
             OsRegistry.freeze();
             ComponentKinds.freeze();
             JsComputersApi.languages().freeze();
+            HardwareKinds.close();
+            HostScope.close();
+            HardwareRegistry.freeze();
+            ComputerRegistry.freeze();
             // Every system and every mod's commands are known now, so each command's page in the manuals is too.
             CommandGuidePages.register();
         }));
@@ -125,6 +158,8 @@ public class JsComputers {
         CraftingPayloads.listen();
         ScreenSessions.listen();
         IsmsTraces.listen();
+        // A part's tooltip, whichever mod's item it is, on both sides: a server's own checks read it too.
+        NeoForge.EVENT_BUS.addListener(PartTooltips::onTooltip);
     }
 
     /**
@@ -139,5 +174,12 @@ public class JsComputers {
         event.languages().reserve(MachineListing.EXTENSION);
         event.languages().register(SigmaLanguage.SIGMA_SHARP);
         event.languages().register(SigmaLanguage.SIGMA);
+    }
+
+    /* Opens the registries for every mod, once: the register event, on the main thread. */
+    private static void openRegistries() {
+        if (REGISTRIES_OPENED.compareAndSet(false, true)) {
+            ModLoader.postEvent(new ComputersRegisterEvent());
+        }
     }
 }

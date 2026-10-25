@@ -56,6 +56,7 @@ import dev.jstech.computers.blockentity.RouterBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
+import dev.jstech.computers.blockentity.SmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
@@ -77,23 +78,11 @@ import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
-import dev.jstech.computers.item.ClusterInterfaceCardItem;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.CraftingCardItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.MainframeBlockItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.NetworkCardItem;
-import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.PrintedPaperItem;
-import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RackUnitItem;
-import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.item.StorageCardItem;
-import dev.jstech.computers.item.WorkshopCardItem;
 import dev.jstech.computers.os.media.DockStationBlock;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
@@ -108,6 +97,7 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.computers.registry.OwnComputers;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Lane;
@@ -125,6 +115,7 @@ import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
@@ -197,6 +188,8 @@ public final class ComputingModule {
     private static final int LONG_DISTANCE_PIXELS = 6;
     /** What a personal-use card draws, in watts. */
     private static final int WORKSHOP_CARD_WATTS = 15;
+    /* How many cluster interface cards and co-processors stack together. */
+    private static final int CARD_STACK = 16;
     /** A small computer's lamps, dark on its item, and the parts of its bays, which the case as it comes has none of. */
     private static final List<String> COMPUTER_LAMPS = List.of(ComputingLooks.COMPUTER_POWER_LAMP,
             ComputingLooks.COMPUTER_DISK_LAMP, ComputingLooks.COMPUTER_BAY_PARTS);
@@ -426,6 +419,9 @@ public final class ComputingModule {
                     VINTAGE_PERSONAL_COMPUTER, LEGACY_PERSONAL_COMPUTER, TRANSITION_PERSONAL_COMPUTER,
                     ADVANCED_PERSONAL_COMPUTER, ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER,
                     ADVANCED_AESTHETIC_PERSONAL_COMPUTER);
+    /* The small computers other mods bring, which no block of this mod makes: each joins once blocks are in. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SmallComputerBlockEntity>>
+            SMALL_COMPUTER_BE = CONTENT.blockEntity("small_computer", SmallComputerBlockEntity::new);
 
     // Crafting Computer: an ATX computer that executes recipes once a Crafting Card is installed.
     public static final BlockEntry<CraftingComputerBlock> CRAFTING_COMPUTER =
@@ -916,35 +912,33 @@ public final class ComputingModule {
      * boards of their kind before them; a machine counts only as many as its own case holds.
      */
 
-    public static final ItemEntry<MotherboardItem> MOTHERBOARD_MTX_S_2011 = part("motherboard_mtx_s_2011",
-            HardwareEra.STANDARD, properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.MTX,
-                    HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4, Set.of(RamGeneration.DDR3), 48,
-                    PcieGeneration.PCIE_3_0, 8, 6)))
+    public static final ItemEntry<Item> MOTHERBOARD_MTX_S_2011 = PartItems.board("motherboard_mtx_s_2011",
+                    new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4,
+                            Set.of(RamGeneration.DDR3), 48, PcieGeneration.PCIE_3_0, 8, 6))
             .named("MF MTX-S Motherboard (4x LGA 2011)").register();
-    public static final ItemEntry<MotherboardItem> MOTHERBOARD_EEB_S_2011 = part("motherboard_eeb_s_2011",
-            HardwareEra.STANDARD, properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.EEB,
-                    HardwareEra.STANDARD, CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 16,
-                    PcieGeneration.PCIE_3_0, 6, 6)))
+    public static final ItemEntry<Item> MOTHERBOARD_EEB_S_2011 = PartItems.board("motherboard_eeb_s_2011",
+                    new MotherboardSpec(FormFactor.EEB, HardwareEra.STANDARD, CpuSocketId.LGA_2011, 2,
+                            Set.of(RamGeneration.DDR3), 16, PcieGeneration.PCIE_3_0, 6, 6))
             .named("MF EEB-S Server Board (2x LGA 2011)").register();
-    public static final ItemEntry<CpuItem> CPU_SERVO_2620 = part("cpu_integra_servo_2620", HardwareEra.STANDARD,
-            properties -> new CpuItem(properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95,
-                    false).on(Microarchitectures.SANDY_BRIDGE, "").withSmt()))
+    public static final ItemEntry<Item> CPU_SERVO_2620 = PartItems.cpu("cpu_integra_servo_2620",
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95, false)
+                            .on(Microarchitectures.SANDY_BRIDGE, "").withSmt())
             .named("Integra Servo 2620").register();
-    public static final ItemEntry<CpuItem> CPU_SERVO_2690 = part("cpu_integra_servo_2690", HardwareEra.STANDARD,
-            properties -> new CpuItem(properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900,
-                    135, false).on(Microarchitectures.SANDY_BRIDGE, "").withSmt()))
+    public static final ItemEntry<Item> CPU_SERVO_2690 = PartItems.cpu("cpu_integra_servo_2690",
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900, 135, false)
+                            .on(Microarchitectures.SANDY_BRIDGE, "").withSmt())
             .named("Integra Servo 2690").register();
     /* The top of the LGA 2011 Servos on DDR3; the eighteen-core chips came with the next socket and DDR4. */
-    public static final ItemEntry<CpuItem> CPU_SERVO_2697_V2 = part("cpu_integra_servo_2697_v2", HardwareEra.STANDARD,
-            properties -> new CpuItem(properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 12, 2700,
-                    130, false).on(Microarchitectures.IVY_BRIDGE, "").withSmt()))
+    public static final ItemEntry<Item> CPU_SERVO_2697_V2 = PartItems.cpu("cpu_integra_servo_2697_v2",
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 12, 2700, 130, false)
+                            .on(Microarchitectures.IVY_BRIDGE, "").withSmt())
             .named("Integra Servo 2697 v2").register();
-    public static final ItemEntry<RamItem> RAM_DDR3_8192 = part("ram_ddr3_8192", HardwareEra.STANDARD,
-            properties -> new RamItem(properties, new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 2048, 15)))
+    public static final ItemEntry<Item> RAM_DDR3_8192 = PartItems.ram("ram_ddr3_8192",
+                    new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 2048, 15))
             .named("Stratix Layer DDR3-8192").register();
-    public static final ItemEntry<GpuItem> GPU_HD_7970 = part("gpu_radiance_hd_7970", HardwareEra.STANDARD,
-            properties -> new GpuItem(properties, new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2048,
-                    3072, 250).on(Microarchitectures.GCN, "Tahiti", 925)))
+    public static final ItemEntry<Item> GPU_HD_7970 = PartItems.gpu("gpu_radiance_hd_7970",
+                    new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2048, 3072, 250)
+                            .on(Microarchitectures.GCN, "Tahiti", 925))
             .named("Velocion Radiance HD 7970").register();
     /*
      * The Crafting Cards, one or two for each era on that era's slot: the ISA card of the Vintage boards, the PCI card
@@ -952,119 +946,108 @@ public final class ComputingModule {
      * The newer cards are faster and run more pipelines; their era says how many interfaces each drives and how many
      * bench recipes its ROM keeps. The numbers are estimates.
      */
-    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_ISA = part("crafting_card_isa", HardwareEra.VINTAGE,
-            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.VINTAGE,
-                    IndustrialTier.T1, PcieGeneration.ISA, 0.02, 1, 10)))
+    public static final ItemEntry<Item> CRAFTING_CARD_ISA = craftingCard("crafting_card_isa",
+            new CraftingCardSpec(HardwareEra.VINTAGE, IndustrialTier.T1, PcieGeneration.ISA, 0.02, 1, 10))
             .named("Forge Logic Crafting Card ISA").register();
-    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_PCI = part("crafting_card_pci", HardwareEra.LEGACY,
-            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.LEGACY,
-                    IndustrialTier.T2, PcieGeneration.PCI, 0.03, 2, 25)))
+    public static final ItemEntry<Item> CRAFTING_CARD_PCI = craftingCard("crafting_card_pci",
+            new CraftingCardSpec(HardwareEra.LEGACY, IndustrialTier.T2, PcieGeneration.PCI, 0.03, 2, 25))
             .named("Forge Logic Crafting Card PCI").register();
-    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T2 = part("crafting_card_t2", HardwareEra.TRANSITION,
-            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.TRANSITION,
-                    IndustrialTier.T2, PcieGeneration.PCIE_1_0, 0.05, 2, 75)))
+    public static final ItemEntry<Item> CRAFTING_CARD_T2 = craftingCard("crafting_card_t2",
+            new CraftingCardSpec(HardwareEra.TRANSITION, IndustrialTier.T2, PcieGeneration.PCIE_1_0, 0.05, 2, 75))
             .named("Forge Logic Crafting Card").register();
-    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T3 = part("crafting_card_t3", HardwareEra.TRANSITION,
-            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.TRANSITION,
-                    IndustrialTier.T3, PcieGeneration.PCIE_2_0, 0.1, 4, 100)))
+    public static final ItemEntry<Item> CRAFTING_CARD_T3 = craftingCard("crafting_card_t3",
+            new CraftingCardSpec(HardwareEra.TRANSITION, IndustrialTier.T3, PcieGeneration.PCIE_2_0, 0.1, 4, 100))
             .named("Forge Logic Crafting Card T3").register();
-    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_PCIE3 = part("crafting_card_pcie3",
-            HardwareEra.STANDARD, properties -> new CraftingCardItem(properties, new CraftingCardSpec(
-                    HardwareEra.STANDARD, IndustrialTier.T3, PcieGeneration.PCIE_3_0, 0.15, 6, 110)))
+    public static final ItemEntry<Item> CRAFTING_CARD_PCIE3 = craftingCard("crafting_card_pcie3",
+            new CraftingCardSpec(HardwareEra.STANDARD, IndustrialTier.T3, PcieGeneration.PCIE_3_0, 0.15, 6, 110))
             .named("Forge Logic Crafting Card PCI-e 3.0").register();
     // The card of the Advanced boards, twice the tier before it again.
-    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T4 = part("crafting_card_t4", HardwareEra.ADVANCED,
-            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.ADVANCED,
-                    IndustrialTier.T4, PcieGeneration.PCIE_4_0, 0.2, 8, 125)))
+    public static final ItemEntry<Item> CRAFTING_CARD_T4 = craftingCard("crafting_card_t4",
+            new CraftingCardSpec(HardwareEra.ADVANCED, IndustrialTier.T4, PcieGeneration.PCIE_4_0, 0.2, 8, 125))
             .named("Forge Logic Crafting Card T4").register();
     /*
      * The personal-use cards, one of each kind for every era from the Legacy on, worked by the Workshop program of a
      * Personal Computer. Their draw is an estimate.
      */
-    public static final ItemEntry<WorkshopCardItem> CRAFTING_TABLE_CARD = workshopCard(WorkshopCard.CRAFTING_TABLE)
+    public static final ItemEntry<Item> CRAFTING_TABLE_CARD = workshopCard(WorkshopCard.CRAFTING_TABLE)
             .named("Crafting Table Card").register();
-    public static final ItemEntry<WorkshopCardItem> FURNACE_CARD = workshopCard(WorkshopCard.FURNACE)
+    public static final ItemEntry<Item> FURNACE_CARD = workshopCard(WorkshopCard.FURNACE)
             .named("Furnace Card").register();
-    public static final ItemEntry<WorkshopCardItem> ENCHANTING_CARD = workshopCard(WorkshopCard.ENCHANTING)
+    public static final ItemEntry<Item> ENCHANTING_CARD = workshopCard(WorkshopCard.ENCHANTING)
             .named("Enchanting Card").register();
-    public static final ItemEntry<WorkshopCardItem> ANVIL_CARD = workshopCard(WorkshopCard.ANVIL)
+    public static final ItemEntry<Item> ANVIL_CARD = workshopCard(WorkshopCard.ANVIL)
             .named("Anvil Card").register();
     /*
      * The Cluster Interface Cards: exclusive to the Cluster Management Computer, one per era. Each era
      * reaches further and writes more nodes at once. Numbers are estimates.
      */
-    public static final ItemEntry<ClusterInterfaceCardItem> SERIAL_CONSOLE_CARD = part("serial_console_card",
-            HardwareEra.VINTAGE, properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(
-                    HardwareEra.VINTAGE, IndustrialTier.T2, PcieGeneration.PCI,
-                    ClusterInterfaceCardSpec.Reach.DATACENTERS, 1, 10)))
+    public static final ItemEntry<Item> SERIAL_CONSOLE_CARD = clusterCard("serial_console_card",
+            new ClusterInterfaceCardSpec(HardwareEra.VINTAGE, IndustrialTier.T2, PcieGeneration.PCI,
+                    ClusterInterfaceCardSpec.Reach.DATACENTERS, 1, 10))
             .named("Serial Console Card").register();
-    public static final ItemEntry<ClusterInterfaceCardItem> MANAGEMENT_NIC = part("management_nic",
-            HardwareEra.LEGACY, properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(
-                    HardwareEra.LEGACY, IndustrialTier.T3, PcieGeneration.PCIE_1_0,
-                    ClusterInterfaceCardSpec.Reach.SUPERCOMPUTERS, 2, 20)))
+    public static final ItemEntry<Item> MANAGEMENT_NIC = clusterCard("management_nic",
+            new ClusterInterfaceCardSpec(HardwareEra.LEGACY, IndustrialTier.T3, PcieGeneration.PCIE_1_0,
+                    ClusterInterfaceCardSpec.Reach.SUPERCOMPUTERS, 2, 20))
             .named("Management NIC").register();
-    public static final ItemEntry<ClusterInterfaceCardItem> FABRIC_HOST_ADAPTER = part("fabric_host_adapter",
-            HardwareEra.STANDARD, properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(
-                    HardwareEra.STANDARD, IndustrialTier.T4, PcieGeneration.PCIE_3_0,
-                    ClusterInterfaceCardSpec.Reach.ALL, 4, 35)))
+    public static final ItemEntry<Item> FABRIC_HOST_ADAPTER = clusterCard("fabric_host_adapter",
+            new ClusterInterfaceCardSpec(HardwareEra.STANDARD, IndustrialTier.T4, PcieGeneration.PCIE_3_0,
+                    ClusterInterfaceCardSpec.Reach.ALL, 4, 35))
             .named("Fabric Host Adapter").register();
-    public static final ItemEntry<ClusterInterfaceCardItem> FABRIC_DPU = part("fabric_dpu",
-            HardwareEra.ADVANCED, properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(
-                    HardwareEra.ADVANCED, IndustrialTier.T5, PcieGeneration.PCIE_4_0,
-                    ClusterInterfaceCardSpec.Reach.ALL, 8, 75)))
+    public static final ItemEntry<Item> FABRIC_DPU = clusterCard("fabric_dpu",
+            new ClusterInterfaceCardSpec(HardwareEra.ADVANCED, IndustrialTier.T5, PcieGeneration.PCIE_4_0,
+                    ClusterInterfaceCardSpec.Reach.ALL, 8, 75))
             .named("Fabric DPU").register();
     /*
      * Vaultis's storage cards, a RAID controller and a read cache for each era's slot: in a server, the Array joins
      * its drives into one volume and the Cache answers their reads faster. Draws and the cache's cut are estimates.
      */
-    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_ISA = storageCard("vaultis_array_isa",
+    public static final ItemEntry<Item> VAULTIS_ARRAY_ISA = storageCard("vaultis_array_isa",
             StorageCardSpec.array(HardwareEra.VINTAGE, PcieGeneration.ISA, 8)).named("Vaultis Array ISA").register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCI = storageCard("vaultis_array_pci",
+    public static final ItemEntry<Item> VAULTIS_ARRAY_PCI = storageCard("vaultis_array_pci",
             StorageCardSpec.array(HardwareEra.LEGACY, PcieGeneration.PCI, 10)).named("Vaultis Array PCI").register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE2 = storageCard("vaultis_array_pcie2",
+    public static final ItemEntry<Item> VAULTIS_ARRAY_PCIE2 = storageCard("vaultis_array_pcie2",
             StorageCardSpec.array(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 15))
             .named("Vaultis Array PCI-e 2.0").register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE3 = storageCard("vaultis_array_pcie3",
+    public static final ItemEntry<Item> VAULTIS_ARRAY_PCIE3 = storageCard("vaultis_array_pcie3",
             StorageCardSpec.array(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 13))
             .named("Vaultis Array PCI-e 3.0").register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE4 = storageCard("vaultis_array_pcie4",
+    public static final ItemEntry<Item> VAULTIS_ARRAY_PCIE4 = storageCard("vaultis_array_pcie4",
             StorageCardSpec.array(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 18))
             .named("Vaultis Array PCI-e 4.0").register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_ISA = storageCard("vaultis_cache_isa",
+    public static final ItemEntry<Item> VAULTIS_CACHE_ISA = storageCard("vaultis_cache_isa",
             StorageCardSpec.cache(HardwareEra.VINTAGE, PcieGeneration.ISA, 6, 10)).named("Vaultis Cache ISA")
             .register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCI = storageCard("vaultis_cache_pci",
+    public static final ItemEntry<Item> VAULTIS_CACHE_PCI = storageCard("vaultis_cache_pci",
             StorageCardSpec.cache(HardwareEra.LEGACY, PcieGeneration.PCI, 12, 15)).named("Vaultis Cache PCI")
             .register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE2 = storageCard("vaultis_cache_pcie2",
+    public static final ItemEntry<Item> VAULTIS_CACHE_PCIE2 = storageCard("vaultis_cache_pcie2",
             StorageCardSpec.cache(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 25, 20))
             .named("Vaultis Cache PCI-e 2.0").register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE3 = storageCard("vaultis_cache_pcie3",
+    public static final ItemEntry<Item> VAULTIS_CACHE_PCIE3 = storageCard("vaultis_cache_pcie3",
             StorageCardSpec.cache(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 25, 25))
             .named("Vaultis Cache PCI-e 3.0").register();
-    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE4 = storageCard("vaultis_cache_pcie4",
+    public static final ItemEntry<Item> VAULTIS_CACHE_PCIE4 = storageCard("vaultis_cache_pcie4",
             StorageCardSpec.cache(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 20, 30))
             .named("Vaultis Cache PCI-e 4.0").register();
     /* The fibre backbone's adapter: a Mainframe, a rack (in any of its servers) or a CMC takes the fibre with one. */
-    public static final ItemEntry<NetworkCardItem> OPTICAL_NETWORK_CARD = part("optical_network_card",
-            HardwareEra.STANDARD, properties -> new NetworkCardItem(properties, new NetworkCardSpec(
-                    HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 15)))
+    public static final ItemEntry<Item> OPTICAL_NETWORK_CARD = PartItems.card("optical_network_card",
+                    new NetworkCardSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 15), HardwareEra.STANDARD)
             .named("Optical Network Card").register();
     // The Supercomputer's co-processors, all on the PCIe 3.0 slot of the Standard's boards.
-    public static final ItemEntry<PhiCoprocessorItem> PHI_5100 = phi("phi_5100", HardwareEra.STANDARD,
-            new PhiCoprocessorSpec(IndustrialTier.T3, 2, 60, 1050, 225)).named("Integra Phi 5100 Co-processor")
-            .register();
-    public static final ItemEntry<PhiCoprocessorItem> PHI_7120 = phi("phi_7120", HardwareEra.STANDARD,
-            new PhiCoprocessorSpec(IndustrialTier.T4, 3, 61, 1240, 250)).named("Integra Phi 7120 Co-processor")
-            .register();
-    public static final ItemEntry<PhiCoprocessorItem> PHI_7290 = phi("phi_7290", HardwareEra.STANDARD,
-            new PhiCoprocessorSpec(IndustrialTier.T4, 4, 72, 1500, 270)).named("Integra Phi 7290 Co-processor")
-            .register();
-    public static final ItemEntry<PhiCoprocessorItem> PHI_9000 = phi("phi_9000", HardwareEra.STANDARD,
-            new PhiCoprocessorSpec(IndustrialTier.T5, 6, 96, 1800, 300)).named("Integra Phi 9000 Co-processor")
-            .register();
-    public static final ItemEntry<PsuItem> PSU_650G = part("psu_650g", HardwareEra.STANDARD,
-            properties -> new PsuItem(properties, new PsuSpec(650, 90))).named("MF PowerGold 650G").register();
+    public static final ItemEntry<Item> PHI_5100 = PartItems.card("phi_5100",
+            new PhiCoprocessorSpec(IndustrialTier.T3, 2, 60, 1050, 225), HardwareEra.STANDARD, CARD_STACK)
+            .named("Integra Phi 5100 Co-processor").register();
+    public static final ItemEntry<Item> PHI_7120 = PartItems.card("phi_7120",
+            new PhiCoprocessorSpec(IndustrialTier.T4, 3, 61, 1240, 250), HardwareEra.STANDARD, CARD_STACK)
+            .named("Integra Phi 7120 Co-processor").register();
+    public static final ItemEntry<Item> PHI_7290 = PartItems.card("phi_7290",
+            new PhiCoprocessorSpec(IndustrialTier.T4, 4, 72, 1500, 270), HardwareEra.STANDARD, CARD_STACK)
+            .named("Integra Phi 7290 Co-processor").register();
+    public static final ItemEntry<Item> PHI_9000 = PartItems.card("phi_9000",
+            new PhiCoprocessorSpec(IndustrialTier.T5, 6, 96, 1800, 300), HardwareEra.STANDARD, CARD_STACK)
+            .named("Integra Phi 9000 Co-processor").register();
+    public static final ItemEntry<Item> PSU_650G = PartItems.psu("psu_650g", HardwareEra.STANDARD,
+            new PsuSpec(650, 90)).named("MF PowerGold 650G").register();
 
     /** Every disk of every tier and size, in that order. */
     public static final List<DiskEntry> DISKS_BY_SIZE = registerDisks();
@@ -1073,7 +1056,7 @@ public final class ComputingModule {
     }
 
     /** The registered disk of that tier and size. */
-    public static DiskItem disk(final StorageTier tier, final DiskSize size) {
+    public static Item disk(final StorageTier tier, final DiskSize size) {
         for (final DiskEntry entry : DISKS_BY_SIZE) {
             if (entry.tier() == tier && entry.size() == size) {
                 return entry.item().get();
@@ -1097,7 +1080,7 @@ public final class ComputingModule {
     }
 
     /** A registered disk with its tier and size. */
-    public record DiskEntry(StorageTier tier, DiskSize size, DeferredItem<DiskItem> item) {
+    public record DiskEntry(StorageTier tier, DiskSize size, DeferredItem<Item> item) {
     }
 
     private static List<DiskEntry> registerDisks() {
@@ -1108,11 +1091,10 @@ public final class ComputingModule {
                     continue;
                 }
                 final String id = "disk_" + tier.name().toLowerCase(Locale.ROOT) + "_" + size.id();
-                final HardwareEra era = diskEra(tier, size);
-                disks.add(new DiskEntry(tier, size, CONTENT.item(id, properties -> new DiskItem(properties,
-                                new DiskSpec(tier, era, size.capacityItems(), tier.tdpWatts())))
-                        .named(tier.productName() + " " + size.displayName())
-                        .tab(shelf(Shelf.COMPONENTS, era)).register()));
+                final Era era = diskEra(tier, size);
+                disks.add(new DiskEntry(tier, size, PartItems.disk(id,
+                                new DiskSpec(tier, era, size.capacityItems(), tier.tdpWatts()))
+                        .named(tier.productName() + " " + size.displayName()).register()));
             }
         }
         return List.copyOf(disks);
@@ -1123,7 +1105,7 @@ public final class ComputingModule {
      * 8 TB to the Advanced, the SATA SSD of 8 TB and the NVMe drives from 4 TB to the Advanced as well, and the rest of
      * the grid to the Standard.
      */
-    private static HardwareEra diskEra(final StorageTier tier, final DiskSize size) {
+    private static Era diskEra(final StorageTier tier, final DiskSize size) {
         final long items = size.capacityItems();
         final long lastStandard = switch (tier) {
             case HDD -> DiskSize.TB_8.capacityItems();
@@ -1155,7 +1137,7 @@ public final class ComputingModule {
      * of the same names. Each line has a lane of its own, the same in every era; the long distance line has none and
      * is thicker, since a block that holds it holds nothing else.
      */
-    private static CableBuilder dataCable(final String id, final DataLine line, final HardwareEra era,
+    private static CableBuilder dataCable(final String id, final DataLine line, final Era era,
                                           final String jacket, final String plug) {
         final DataLink link = new DataLink(line, era);
         // The crafting line has one cable for every era, so its cable names none.
@@ -1183,7 +1165,7 @@ public final class ComputingModule {
      * The peripheral cable of {@code era}: no network on it, it reaches its era's run, and it ends in {@code
      * devicePlug} at a device or a computer and in {@code videoPlug} at a screen.
      */
-    private static CableBuilder peripheralCable(final String id, final HardwareEra era, final String jacket,
+    private static CableBuilder peripheralCable(final String id, final Era era, final String jacket,
                                                 final String devicePlug, final String videoPlug) {
         final CableType.Builder builder = CableType.builder(PeripheralLine.of(era))
                 .describe(PeripheralLine.JOB, era)
@@ -1199,22 +1181,22 @@ public final class ComputingModule {
     }
 
     /* A router of {@code era}, or its optical router, wearing the network device model of the same name. */
-    private static BlockBuilder<RouterBlock> router(final String id, final HardwareEra era, final boolean optical,
+    private static BlockBuilder<RouterBlock> router(final String id, final Era era, final boolean optical,
                                                     final String model) {
         return networkDevice(CONTENT.block(id, properties -> new RouterBlock(properties, era, optical)), model,
                 shelf(Shelf.NETWORK, era));
     }
 
     /* The repeater of {@code era}. */
-    private static BlockBuilder<RepeaterBlock> repeater(final String id, final HardwareEra era) {
+    private static BlockBuilder<RepeaterBlock> repeater(final String id, final Era era) {
         return networkDevice(CONTENT.block(id, properties -> new RepeaterBlock(properties, era)),
-                "repeater_" + era.serializedName(), shelf(Shelf.NETWORK, era));
+                "repeater_" + era.path(), shelf(Shelf.NETWORK, era));
     }
 
     /* The hub of {@code era}, which belongs to the peripheral line rather than to the network. */
-    private static BlockBuilder<HubBlock> hub(final String id, final HardwareEra era) {
+    private static BlockBuilder<HubBlock> hub(final String id, final Era era) {
         return networkDevice(CONTENT.block(id, properties -> new HubBlock(properties, era)),
-                "hub_" + era.serializedName(), shelf(Shelf.PERIPHERALS, era));
+                "hub_" + era.path(), shelf(Shelf.PERIPHERALS, era));
     }
 
     /* A network device: a metal block with six equal faces, the model shipped with its lamps, on that shelf. */
@@ -1226,7 +1208,8 @@ public final class ComputingModule {
                 .item().itemLook(IItemLook.parent("block/network/" + model)).tab(shelf);
     }
 
-    private static BlockBuilder<MainframeBlock> mainframe(final String id, final HardwareEra era) {
+    private static BlockBuilder<MainframeBlock> mainframe(final String id, final Era era) {
+        OwnComputers.computer(id, MainframeBlockEntity.computer(era));
         return CONTENT.block(id, properties -> new MainframeBlock(properties, era))
                 .properties(ComputingModule::mainframeProperties).look(MAINFRAME_BODY)
                 .geo(ComputingLooks.MAINFRAME)
@@ -1254,20 +1237,23 @@ public final class ComputingModule {
                 .item().itemLook(IItemLook.parent("block/" + model)).tab(shelf(Shelf.PERIPHERALS, kind.era()));
     }
 
-    private static BlockBuilder<PersonalComputerBlock> personalComputer(final String id, final HardwareEra era,
+    private static BlockBuilder<PersonalComputerBlock> personalComputer(final String id, final Era era,
                                                                         final CaseStyle style) {
+        OwnComputers.computer(id, PersonalComputerBlockEntity.computer(era));
         return computer(id, era, style, Shelf.PERSONAL_COMPUTERS,
                 properties -> new PersonalComputerBlock(properties, era, style));
     }
 
-    private static BlockBuilder<CraftingComputerBlock> craftingComputer(final String id, final HardwareEra era,
+    private static BlockBuilder<CraftingComputerBlock> craftingComputer(final String id, final Era era,
                                                                         final CaseStyle style) {
+        OwnComputers.computer(id, CraftingComputerBlockEntity.computer(era));
         return computer(id, era, style, Shelf.CRAFTING_COMPUTERS,
                 properties -> new CraftingComputerBlock(properties, era, style));
     }
 
     private static BlockBuilder<ClusterManagementComputerBlock> clusterManagementComputer(
-            final String id, final HardwareEra era, final CaseStyle style) {
+            final String id, final Era era, final CaseStyle style) {
+        OwnComputers.computer(id, ClusterManagementComputerBlockEntity.computer(era));
         return computer(id, era, style, Shelf.CLUSTER_MANAGEMENT_COMPUTERS,
                 properties -> new ClusterManagementComputerBlock(properties, era, style));
     }
@@ -1278,7 +1264,7 @@ public final class ComputingModule {
      * shows the same case, switched off.
      */
     private static <B extends Block & IComputerCase> BlockBuilder<B> computer(
-            final String id, final HardwareEra era, final CaseStyle style, final Shelf shelf,
+            final String id, final Era era, final CaseStyle style, final Shelf shelf,
             final Function<BlockBehaviour.Properties, B> factory) {
         return CONTENT.block(id, factory)
                 .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(2.0F).noOcclusion())
@@ -1291,7 +1277,7 @@ public final class ComputingModule {
     }
 
     private static BlockBuilder<PatternEncoderBlock> encoder(final String id, final MapColor color,
-                                                             final HardwareEra era) {
+                                                             final Era era) {
         /*
          * The body is drawn by the block entity: without noOcclusion a full cube would block its own light and cull
          * the faces of its neighbours.
@@ -1310,7 +1296,7 @@ public final class ComputingModule {
      * without noOcclusion the full cube would block its own light and cull the faces of its neighbours. Its item
      * shows the printer at rest, its lamps dark and no page coming out.
      */
-    private static BlockBuilder<PrinterBlock> printer(final String id, final MapColor color, final HardwareEra era) {
+    private static BlockBuilder<PrinterBlock> printer(final String id, final MapColor color, final Era era) {
         return CONTENT.block(id, properties -> new PrinterBlock(properties, era))
                 .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)
                         .noOcclusion())
@@ -1342,7 +1328,7 @@ public final class ComputingModule {
      * scatters, taken from its atlas. Like an observer it carries no signal through itself, or the wire it powers
      * would power it back and light whatever stands beside it.
      */
-    private static BlockBuilder<RedstoneInterfaceBlock> redstoneInterface(final String id, final HardwareEra era) {
+    private static BlockBuilder<RedstoneInterfaceBlock> redstoneInterface(final String id, final Era era) {
         final String model = ComputingLooks.redstoneInterface(era);
         return CONTENT.block(id, properties -> new RedstoneInterfaceBlock(properties, era))
                 .properties(properties -> properties.mapColor(MapColor.COLOR_RED).strength(1.0F)
@@ -1359,7 +1345,7 @@ public final class ComputingModule {
      * hand as {@code block/speaker/<id>}, carries its power light, lit in the {@code _on} model while its computer
      * runs.
      */
-    private static BlockBuilder<SpeakerBlock> speaker(final String id, final HardwareEra era, final MapColor color) {
+    private static BlockBuilder<SpeakerBlock> speaker(final String id, final Era era, final MapColor color) {
         return CONTENT.block(id, properties -> new SpeakerBlock(properties, era))
                 .properties(properties -> properties.mapColor(color).strength(1.0F).sound(SoundType.METAL))
                 .look(IBlockLook.facingByState(state -> new IBlockModel.Handmade(
@@ -1368,7 +1354,7 @@ public final class ComputingModule {
     }
 
     /** A subwoofer: its bass port in front, its driver on the sides, set down facing whoever places it. */
-    private static BlockBuilder<SubwooferBlock> subwoofer(final String id, final HardwareEra era,
+    private static BlockBuilder<SubwooferBlock> subwoofer(final String id, final Era era,
                                                           final String textures) {
         return CONTENT.block(id, SubwooferBlock::new)
                 .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.0F)
@@ -1391,15 +1377,15 @@ public final class ComputingModule {
                 "block/network_gateway_side");
     }
 
-    private static BlockBuilder<ServerRackBlock> serverRack(final String id, final HardwareEra era) {
+    private static BlockBuilder<ServerRackBlock> serverRack(final String id, final Era era) {
         return rack(id, era, properties -> new ServerRackBlock(properties, era));
     }
 
-    private static BlockBuilder<SupercomputerRackBlock> supercomputerRack(final String id, final HardwareEra era) {
+    private static BlockBuilder<SupercomputerRackBlock> supercomputerRack(final String id, final Era era) {
         return rack(id, era, properties -> new SupercomputerRackBlock(properties, era));
     }
 
-    private static <B extends Block> BlockBuilder<B> rack(final String id, final HardwareEra era,
+    private static <B extends Block> BlockBuilder<B> rack(final String id, final Era era,
                                                          final Function<BlockBehaviour.Properties, B> factory) {
         return CONTENT.block(id, factory).properties(ComputingModule::rackProperties).look(RACK_BODY)
                 .geo(ComputingLooks.RACK)
@@ -1419,7 +1405,7 @@ public final class ComputingModule {
      * A bus's item, wearing the bus's own model, idle, as it sits on a cable; {@code era} is null for the parts of the
      * crafting cable that every era shares.
      */
-    private static ItemBuilder<CablePartItem> bus(final String id, @Nullable final HardwareEra era,
+    private static ItemBuilder<CablePartItem> bus(final String id, @Nullable final Era era,
                                                   final Supplier<? extends PartType<?>> type) {
         return CONTENT.item(id, properties -> new CablePartItem(properties, type))
                 .look(IItemLook.parent(ComputingParts.MODELS + id)).tab(shelf(Shelf.NETWORK, era));
@@ -1431,33 +1417,30 @@ public final class ComputingModule {
     }
 
     private static ItemBuilder<ServerItem> server(final String id, final RackChassis chassis) {
-        return CONTENT.item(id, properties -> new ServerItem(properties, chassis))
-                .tab(shelf(Shelf.SERVER_RACK, chassis.era()));
+        OwnComputers.server(id, chassis);
+        return CONTENT.item(id, ServerItem::new).tab(shelf(Shelf.SERVER_RACK, chassis.era()));
     }
 
-    private static ItemBuilder<StorageCardItem> storageCard(final String id, final StorageCardSpec spec) {
-        return part(id, spec.era(), properties -> new StorageCardItem(properties, spec));
+    /* A storage card, one to a stack: a controller carries its array's settings. */
+    private static ItemBuilder<Item> storageCard(final String id, final StorageCardSpec spec) {
+        return PartItems.card(id, spec, spec.era(), 1);
+    }
+
+    private static ItemBuilder<Item> craftingCard(final String id, final CraftingCardSpec spec) {
+        return PartItems.card(id, spec, spec.era());
+    }
+
+    private static ItemBuilder<Item> clusterCard(final String id, final ClusterInterfaceCardSpec spec) {
+        return PartItems.card(id, spec, spec.era(), CARD_STACK);
     }
 
     private static ItemBuilder<RackUnitItem> rackUnit(final String id, final RackUnitItem.Kind kind,
-                                                      final HardwareEra era) {
+                                                      final Era era) {
         return CONTENT.item(id, properties -> new RackUnitItem(properties, kind, era)).tab(shelf(Shelf.RACK_BAYS, era));
     }
 
-    /* A part of {@code era}, or of every era for null, on the components shelf. */
-    private static <I extends Item> ItemBuilder<I> part(final String id, @Nullable final HardwareEra era,
-                                                        final Function<Item.Properties, I> factory) {
-        return CONTENT.item(id, factory).tab(shelf(Shelf.COMPONENTS, era));
-    }
-
-    private static ItemBuilder<PhiCoprocessorItem> phi(final String id, final HardwareEra era,
-                                                       final PhiCoprocessorSpec spec) {
-        return part(id, era, properties -> new PhiCoprocessorItem(properties, spec));
-    }
-
     /* A personal-use card, one for every era from the Legacy on, so shown with what every era shares. */
-    private static ItemBuilder<WorkshopCardItem> workshopCard(final WorkshopCard card) {
-        return part(card.id(), null, properties -> new WorkshopCardItem(properties, new WorkshopCardSpec(card,
-                WORKSHOP_CARD_WATTS)));
+    private static ItemBuilder<Item> workshopCard(final WorkshopCard card) {
+        return PartItems.card(card.id(), new WorkshopCardSpec(card, WORKSHOP_CARD_WATTS), null);
     }
 }

@@ -10,9 +10,9 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -89,7 +89,7 @@ public class SpeakerMenu extends CoreMenu {
      * @param computerKind the translation key of its computer's block, empty when it is not linked to one
      * @param era          the era of its model
      */
-    public record Opening(BlockPos pos, String name, String computerName, String computerKind, HardwareEra era) {
+    public record Opening(BlockPos pos, String name, String computerName, String computerKind, Era era) {
 
         public void write(final RegistryFriendlyByteBuf buf) {
             new NamedDeviceOpening(pos, name, computerName, computerKind, era).write(buf, SpeakerBlockEntity.MAX_NAME);

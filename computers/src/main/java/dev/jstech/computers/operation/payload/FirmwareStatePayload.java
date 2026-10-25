@@ -31,7 +31,7 @@ import java.util.List;
  */
 public record FirmwareStatePayload(
         BlockPos hostPos,
-        int eraId,
+        int eraPlace,
         Machine machine,
         int bootSlot,
         int installTargetSlot,
@@ -167,7 +167,7 @@ public record FirmwareStatePayload(
 
     private static void encode(final RegistryFriendlyByteBuf buf, final FirmwareStatePayload p) {
         buf.writeBlockPos(p.hostPos);
-        buf.writeVarInt(p.eraId);
+        buf.writeVarInt(p.eraPlace);
         writeMachine(buf, p.machine);
         buf.writeVarInt(p.bootSlot);
         buf.writeVarInt(p.installTargetSlot);

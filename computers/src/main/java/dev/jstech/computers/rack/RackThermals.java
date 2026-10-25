@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.rack;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
@@ -42,8 +43,8 @@ public final class RackThermals {
     }
 
     /** What a Cooling Unit of {@code era} sheds; an era past the Advanced, the Advanced one's. */
-    public static int coolingUnitWatts(final HardwareEra era) {
-        return COOLING_UNIT_W[Math.min(era.level(), COOLING_UNIT_W.length - 1)];
+    public static int coolingUnitWatts(final Era era) {
+        return COOLING_UNIT_W[HardwareEra.partsIndex(era)];
     }
 
     /** The heat a cabinet can shed with Cooling Units mounted in it that shed {@code coolingWatts} in all. */

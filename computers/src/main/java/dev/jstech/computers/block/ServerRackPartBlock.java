@@ -20,9 +20,10 @@ import dev.jstech.core.bigblock.AbstractBigBlock;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -70,12 +71,8 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     public static final DirectionProperty FACING =
             BlockStateProperties.HORIZONTAL_FACING;
 
-    /*
-     * The era of the cabinet the part belongs to, as the era's level(), stamped by the origin as it raises the
-     * part: the parts are one shared block, and the cabinet's age is what sets the cables they take.
-     */
-    public static final IntegerProperty ERA = IntegerProperty.create(
-            "era", HardwareEra.VINTAGE.level(), HardwareEra.ADVANCED.level());
+    /** The era of the cabinet the part belongs to, which sets the cables it takes ({@link PartEras}). */
+    public static final IntegerProperty ERA = PartEras.property();
 
     /*
      * The backbone and the compute fabric on the back, and the peripheral line on every face, every era's: what any
@@ -87,8 +84,8 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
             .port(FaceRule.EVERY, PeripheralLine.of(HardwareEra.ADVANCED))
             .build();
     /* What a part takes, as its cabinet does: a server cabinet's of each era, and a compute cabinet's. */
-    private static final Map<HardwareEra, FacePorts> SERVER_PORTS = byEra(false);
-    private static final Map<HardwareEra, FacePorts> COMPUTE_PORTS = byEra(true);
+    private static final List<FacePorts> SERVER_PORTS = byEra(false);
+    private static final List<FacePorts> COMPUTE_PORTS = byEra(true);
 
     public ServerRackPartBlock(final Properties properties) {
         super(properties);
@@ -97,7 +94,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
                 .setValue(FRONT, false)
                 .setValue(COMPUTE, false)
                 .setValue(FACING, Direction.NORTH)
-                .setValue(ERA, HardwareEra.STANDARD.level())
+                .setValue(ERA, PartEras.valueFor(HardwareEra.STANDARD))
                 .setValue(ServerRackBlock.BAYS, 0)
                 .setValue(OpticalPort.FIBRE, FibreReach.NONE));
     }
@@ -127,9 +124,8 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
      */
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
-        final HardwareEra era = HardwareEra.fromLevel(state.getValue(ERA));
-        return (state.getValue(COMPUTE) ? COMPUTE_PORTS : SERVER_PORTS).get(era).accepts(state, face, offered)
-                && OpticalPort.admits(state, offered);
+        return (state.getValue(COMPUTE) ? COMPUTE_PORTS : SERVER_PORTS).get(state.getValue(ERA))
+                .accepts(state, face, offered) && OpticalPort.admits(state, offered);
     }
 
     @Override
@@ -228,17 +224,18 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
         return new ServerRackPartBlockEntity(pos, state);
     }
 
-    private static Map<HardwareEra, FacePorts> byEra(final boolean compute) {
-        final Map<HardwareEra, FacePorts> ports = new EnumMap<>(HardwareEra.class);
-        for (int level = HardwareEra.VINTAGE.level(); level <= HardwareEra.ADVANCED.level(); level++) {
-            final HardwareEra era = HardwareEra.fromLevel(level);
-            ports.put(era, compute
+    /* By the value a part keeps for its cabinet's era. */
+    private static List<FacePorts> byEra(final boolean compute) {
+        final List<FacePorts> ports = new ArrayList<>();
+        for (int value = 0; value <= PartEras.LAST; value++) {
+            final Era era = PartEras.eraOf(value);
+            ports.add(compute
                     ? FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.HPC)).build()
                     : FacePorts.builder()
                             .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
                             .port(FaceRule.EVERY, PeripheralLine.of(era))
                             .build());
         }
-        return Map.copyOf(ports);
+        return List.copyOf(ports);
     }
 }

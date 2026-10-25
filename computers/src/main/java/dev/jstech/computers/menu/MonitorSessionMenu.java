@@ -12,9 +12,10 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -45,14 +46,14 @@ public class MonitorSessionMenu extends CoreMenu implements IMonitorMenu {
     private final BlockPos monitorPos;
     private final BlockPos hostPos;
     @Nullable
-    private final HardwareEra era;
+    private final Era era;
     private final Phase phase;
 
     /** How far from the glass a session survives, the vanilla reach a container is closed past. */
     private static final double REACH = 8.0;
 
     public MonitorSessionMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
-                              final BlockPos hostPos, @Nullable final HardwareEra era, final Phase phase) {
+                              final BlockPos hostPos, @Nullable final Era era, final Phase phase) {
         super(ComputingMenus.MONITOR_SESSION_MENU.get(), containerId, playerInventory,
                 validity(playerInventory.player.level(), monitorPos, hostPos));
         this.monitorPos = monitorPos;
@@ -65,18 +66,18 @@ public class MonitorSessionMenu extends CoreMenu implements IMonitorMenu {
                                                  final RegistryFriendlyByteBuf buf) {
         final BlockPos monitor = buf.readBlockPos();
         final BlockPos host = buf.readBlockPos();
-        final HardwareEra era = HardwareEra.find(buf.readVarInt());
+        final Era era = EraCodecs.orNone(buf.readVarInt());
         final Phase phase = Phase.byId(buf.readVarInt());
         return new MonitorSessionMenu(containerId, playerInventory, monitor, host, era, phase);
     }
 
     /** Writes what the client rebuilds this from: the two positions, the machine's era, and which session. */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
-                                       final BlockPos hostPos, @Nullable final HardwareEra era,
+                                       final BlockPos hostPos, @Nullable final Era era,
                                        final Phase phase) {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
-        buf.writeVarInt(era == null ? -1 : era.id());
+        buf.writeVarInt(EraCodecs.placeOf(era));
         buf.writeVarInt(phase.id());
     }
 
@@ -91,7 +92,7 @@ public class MonitorSessionMenu extends CoreMenu implements IMonitorMenu {
 
     /** The machine's generation, which is the monitor its screen wears and the skin its setup is drawn in. */
     @Nullable
-    public HardwareEra hardwareEra() {
+    public Era hardwareEra() {
         return this.era;
     }
 

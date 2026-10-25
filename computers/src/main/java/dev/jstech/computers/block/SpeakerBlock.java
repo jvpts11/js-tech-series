@@ -17,7 +17,8 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
-import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -42,12 +43,12 @@ import net.minecraft.world.phys.BlockHitResult;
  */
 public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
-    private final HardwareEra era;
+    private final Era era;
     private final FacePorts ports;
 
     public static final MapCodec<SpeakerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(b -> b.era)
     ).apply(i, SpeakerBlock::new));
 
     /** Whether its power light is on, which its computer running decides. */
@@ -62,7 +63,7 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
     private static final Device<SpeakerBlockEntity> DEVICE =
             Device.of(() -> ComputingModule.SPEAKER_BE.get()).ticks(SpeakerBlockEntity::serverTick);
 
-    public SpeakerBlock(final Properties properties, final HardwareEra era) {
+    public SpeakerBlock(final Properties properties, final Era era) {
         super(properties, DEVICE);
         this.era = era;
         this.ports = PeripheralSockets.back(era);
@@ -76,7 +77,7 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
     }
 
     /** The era of this speaker, which decides how well it plays. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
@@ -95,7 +96,7 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
     }
 
     @Override
-    public HardwareEra chassisEra() {
+    public Era chassisEra() {
         return era;
     }
 

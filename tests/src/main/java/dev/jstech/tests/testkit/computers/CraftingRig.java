@@ -20,6 +20,7 @@ import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.TestMachineBlockEntity;
@@ -83,7 +84,7 @@ public final class CraftingRig {
 
     /** An interface of {@code era} against {@code machineBlock}, and the bus beside it. */
     public static CraftingRig direct(final TestWorldBuilder world, final CraftingComputerBlockEntity computer,
-                                     final Block machineBlock, final HardwareEra era) {
+                                     final Block machineBlock, final Era era) {
         lay(world, new BlockPos(5, 2, 3), new BlockPos(5, 2, 4), new BlockPos(6, 2, 4), new BlockPos(6, 2, 5));
         world.setBlock(DIRECT_MACHINE, machineBlock);
         final CraftingFloor.Site face = new CraftingFloor.Site(new BlockPos(5, 2, 4), Direction.SOUTH);

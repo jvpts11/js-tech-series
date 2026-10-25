@@ -8,10 +8,11 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.ExpansionCardKind;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.item.StorageCardItem;
+import dev.jstech.computers.item.StorageCards;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
@@ -77,13 +78,13 @@ final class RackArrays {
 
     /** How much of its drives' read latency the unit's read cache takes away, 0 when it has none. */
     int cacheCutPercent(final int serverSlot) {
-        return StorageCardItem.readCutPercent(ServerItem.card(rack.serverSlot(serverSlot),
+        return StorageCards.readCutPercent(ServerItem.card(rack.serverSlot(serverSlot),
                 ExpansionCardKind.READ_CACHE));
     }
 
     /** The RAID mode the unit at {@code serverSlot} runs, or {@link RaidMode#NONE}. */
     RaidMode modeOf(final int serverSlot) {
-        return StorageCardItem.raidMode(controller(serverSlot));
+        return StorageCards.raidMode(controller(serverSlot));
     }
 
     /**
@@ -101,7 +102,7 @@ final class RackArrays {
         if (mode != RaidMode.NONE && drives < mode.minDrives()) {
             return false; // not enough drives in the bay to form this array
         }
-        StorageCardItem.setRaidMode(controller, mode);
+        StorageCards.setRaidMode(controller, mode);
         controller.set(ComputingComponents.RAID_MEMBERS.get(), mode == RaidMode.NONE ? 0 : drives);
         controller.set(ComputingComponents.RAID_VOLUME.get(),
                 mode == RaidMode.NONE ? 0L : mode.usableCapacity(driveSizes(serverSlot), drives));
@@ -128,8 +129,9 @@ final class RackArrays {
     List<Long> driveSizes(final int serverSlot) {
         final List<Long> sizes = new ArrayList<>();
         for (final ItemStack drive : rack.claimedDriveStacks(serverSlot)) {
-            if (drive.getItem() instanceof DiskItem disk) {
-                sizes.add(disk.spec().capacityItems());
+            final DiskSpec disk = HardwareRegistry.disk(drive);
+            if (disk != null) {
+                sizes.add(disk.capacityItems());
             }
         }
         return sizes;

@@ -13,9 +13,9 @@ import dev.jstech.computers.menu.PrinterMenu;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
@@ -97,7 +97,7 @@ public class PrinterScreen extends AbstractComputerScreen<PrinterMenu> {
     /** The printer's own era, whose skin its window wears. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return menu.printer().model().era();
     }
 

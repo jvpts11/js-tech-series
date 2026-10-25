@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.menu;
 
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -22,14 +24,14 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
  * @param era          the era of its housing, whose skin the screen wears
  */
 public record NamedDeviceOpening(BlockPos pos, String name, String computerName, String computerKind,
-                                 HardwareEra era) {
+                                 Era era) {
 
     public void write(final RegistryFriendlyByteBuf buf, final int maxName) {
         buf.writeBlockPos(pos);
         buf.writeUtf(name, maxName);
         buf.writeUtf(computerName, maxName);
         buf.writeUtf(computerKind);
-        buf.writeVarInt(era.id());
+        buf.writeVarInt(EraCodecs.placeOf(era));
     }
 
     public static NamedDeviceOpening read(final RegistryFriendlyByteBuf buf, final int maxName) {
@@ -37,7 +39,7 @@ public record NamedDeviceOpening(BlockPos pos, String name, String computerName,
         final String name = buf.readUtf(maxName);
         final String computerName = buf.readUtf(maxName);
         final String computerKind = buf.readUtf();
-        final HardwareEra era = HardwareEra.find(buf.readVarInt());
+        final Era era = EraCodecs.orNone(buf.readVarInt());
         return new NamedDeviceOpening(pos, name, computerName, computerKind, era == null ? HardwareEra.STANDARD : era);
     }
 }

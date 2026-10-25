@@ -9,6 +9,7 @@ package dev.jstech.computers.hardware;
 
 import java.util.Locale;
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The socket a processor sits in, and the one a board offers it: a CPU fits a board when the two are the same.
@@ -20,6 +21,7 @@ import java.util.Objects;
  * what a socket is has nothing to do with the game: whether a CPU fits a board is worked out here, in hardware
  * that is tested without Minecraft loaded at all. The game's own form is made at the edges that need it.
  */
+@ApiStatus.Experimental
 public record CpuSocketId(String id) {
 
     public static final CpuSocketId SOCKET_3 = own("socket_3");

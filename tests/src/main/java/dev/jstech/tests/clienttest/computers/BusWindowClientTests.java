@@ -17,6 +17,7 @@ import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.client.bus.AbstractBusScreen;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -196,12 +197,12 @@ public final class BusWindowClientTests {
     }
 
     @Nullable
-    private static BusLayout.Row row(final HardwareEra era, final BusLayout.Kind kind, final int index) {
+    private static BusLayout.Row row(final Era era, final BusLayout.Kind kind, final int index) {
         return BusLayout.rows(shape(era, 1, false)).stream().filter(r -> r.kind() == kind && r.index() == index)
                 .findFirst().orElse(null);
     }
 
-    private static BusLayout.Shape shape(final HardwareEra era, final int conditions, final boolean editing) {
+    private static BusLayout.Shape shape(final Era era, final int conditions, final boolean editing) {
         return new BusLayout.Shape(BusAbilities.of(era), BusLayout.Window.MOVER, 2, 2, 1, false, 1, conditions,
                 editing, 1);
     }

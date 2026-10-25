@@ -14,13 +14,14 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.install.LiveTurn;
 import dev.jstech.computers.program.install.MakeOpts;
@@ -34,7 +35,10 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliInstallation;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -210,11 +214,11 @@ public final class InstallService {
         final List<LiveInstallState.Device> devices = new ArrayList<>();
         for (int i = 0; i < computer.diskSlots(); i++) {
             final ItemStack stack = computer.diskInSlot(i);
-            if (stack.getItem() instanceof DiskItem disk) {
-                final long sizeMb = disk.spec().capacityItems() * disk.spec().era().mbPerItem();
+            if (HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
+                final long sizeMb = disk.capacityItems() * EraStorage.mbPerItem(disk.era());
                 /* How fast the disk is goes with it, since making a filesystem and unpacking onto it are its work. */
                 devices.add(new LiveInstallState.Device("sd" + (char) ('a' + i),
-                        (int) Math.min(Integer.MAX_VALUE, sizeMb), disk.spec().tier().speedMultiplier()));
+                        (int) Math.min(Integer.MAX_VALUE, sizeMb), disk.tier().speedMultiplier()));
             }
         }
         /*
@@ -226,7 +230,7 @@ public final class InstallService {
                 computer.installedEra() != null ? computer.installedEra()
                         : HardwareEra.STANDARD)
                 == FirmwareKind.UEFI;
-        final HardwareEra era = computer.installedEra() != null ? computer.installedEra()
+        final Era era = computer.installedEra() != null ? computer.installedEra()
                 : HardwareEra.STANDARD;
         final boolean everyStep = state.distro() == LiveInstallState.Distro.ARCH
                 ? ComputersServerConfig.archEveryStep() : ComputersServerConfig.gentooEveryStep();
@@ -318,7 +322,7 @@ public final class InstallService {
             return;
         }
         final ItemStack disk = computer.diskInSlot(slot);
-        if (!(disk.getItem() instanceof DiskItem)) {
+        if (!DriveVolumes.isDisk(disk)) {
             return;
         }
         final FilesystemContents was =

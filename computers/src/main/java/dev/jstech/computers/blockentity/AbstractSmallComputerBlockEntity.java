@@ -56,8 +56,8 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
     private static final int DISK_LAMP = 2;
 
     protected AbstractSmallComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
-                                               final BlockState state, final ComputerHardwareLayout layout) {
-        super(type, pos, state, layout);
+                                               final BlockState state) {
+        super(type, pos, state);
     }
 
     /** The front of the case: its bays, its USB ports and what they hold. */

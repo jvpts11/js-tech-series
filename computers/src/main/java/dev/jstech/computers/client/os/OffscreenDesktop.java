@@ -14,7 +14,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.client.gui.component.Grounds;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -165,7 +165,7 @@ public final class OffscreenDesktop implements DesktopSurface {
 
     /* The era of the machine at {@code host}, as this game has it, which says what each window it shows holds. */
     @Nullable
-    private static HardwareEra eraOf(final BlockPos host) {
+    private static Era eraOf(final BlockPos host) {
         final Minecraft minecraft = Minecraft.getInstance();
         return minecraft.level != null && minecraft.level.getBlockEntity(host) instanceof IOsHost machine
                 ? machine.displayEra() : null;

@@ -36,6 +36,31 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   (`AbstractBigBlock`, `IBigBlock`, `IBigBlockGeometry`, `BigBlockFootprint`, and `BigBlockPartBlockEntity` with its
   `originPos`), which takes the place of `AbstractMultiblockControllerBlock`, `IMultiblockBlock`,
   `IMultiblockGeometry` and `MultiblockPatternGeometry`; J's Computers' Mainframe and racks stand on it.
+- Hardware and computers as registries: J's Computers' API stays at version 8, all experimental.
+  `ComputersRegisterEvent` declares parts (`processor`, `graphicsCard`, `memory`, `disk`, `motherboard`,
+  `powerSupply`, `expansionCard`), the kinds they are made of (`memoryGeneration`, `slotGeneration`, `formFactor`,
+  `cardKind`), what an era's software ships on (`eraMedia`), computers (`computer`), servers (`server`) and machines
+  (`machine`), and `JsComputersApi` the same. `RamGeneration`, `PcieGeneration`, `FormFactor`, `ExpansionCardKind` and
+  `HostScope` are records open as ids where they were enums; `PlainCardSpec` is a card of a kind of a mod's own;
+  `ComputerDef` and `CaseParts` say what a computer is; `RackChassis` is a record of a server's `ComputerDef`, its
+  height, its cabinet and its `Look`; `SmallComputerBlock` is the block of a small computer another mod brings. The
+  part item classes (`CpuItem` and the rest) are gone: a part is an item and its entry. `IOperatingSpace.era()` gives
+  an `Era`.
+
+### Added
+- Eras of other mods: an era another mod declares between the series' own is an era of hardware
+  everywhere, its machines, its tables and its progress. Whatever a rule of the series says era by era, an era that
+  says nothing takes the nearest earlier era's, as the Exa and the Singularity take the Advanced's.
+- Hardware of other mods: any mod's item is a processor, a graphics card, memory, a disk, a board, a supply
+  or a card because it is declared one with its sheet, and J's Computers' own four hundred parts are declared the same
+  way. Its tooltip is written from the sheet, and it fits by the same rules as every other part. The generations of
+  memory and of slot, the form factors and the kinds of card are open too.
+- Computers of other mods: every computer is an entry saying its era, the boards its case takes, the
+  machine it is and how many parts its case counts, the Personal, Crafting and Cluster Management Computers, the
+  Mainframes and the servers among them. Another mod brings a small computer in the cases J's Computers ships, and a
+  machine of its own, which only the programs made for it install on.
+- Hardware from a modpack: KubeJS's startup scripts declare parts and their kinds, each as an object of
+  its sheet's fields (`JsComputers.processor`, `memory`, `motherboard` and the rest).
 
 ### Changed
 - Listeners declared: every class of the three mods that answers the game's events is
@@ -60,6 +85,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Permissions: reading Soundfoundry's music catalogue again and acting on a Network Gateway from a
   computer are permission nodes of their own, which a server's permission mod grants by player, dimension and claim;
   without one, reloading the catalogue takes an operator and every player may act on a Gateway, as before.
+- Eras in saves: an era is saved by its id (`jscore:legacy`), and progress along every axis by the
+  step's name, so an era another mod inserts moves nothing a world saved. A world saved before starts its progress
+  over, and the era advancements wait for the era by its id.
+- Tooltips of the slots a card fits are one sentence for every card ("Fits a PCI-e slot").
+
+### Fixed
+- The Exa and the Singularity draw what the Advanced draws: the supercomputer rack, the server rack, the
+  speaker and the Pattern Encoder's USB-C took the Standard's look in those eras.
 
 ## [0.5.2a] - 2026-10-14
 

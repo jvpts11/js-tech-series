@@ -17,9 +17,9 @@ import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -61,7 +61,7 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
     /* What the buses taking turns for the network's room want. */
     private static final String ROOM = "room";
 
-    public ImportBusPart(final HardwareEra era) {
+    public ImportBusPart(final Era era) {
         super(era);
     }
 

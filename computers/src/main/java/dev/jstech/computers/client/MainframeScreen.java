@@ -16,6 +16,7 @@ import dev.jstech.computers.gui.layout.MainframeLayout;
 import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.network.FailoverRole;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
@@ -49,8 +50,8 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
     }
 
     @Override
-    protected HardwareEra caseEra() {
-        final HardwareEra era = menu.hardwareEra();
+    protected Era caseEra() {
+        final Era era = menu.hardwareEra();
         return era == null ? HardwareEra.STANDARD : era;
     }
 

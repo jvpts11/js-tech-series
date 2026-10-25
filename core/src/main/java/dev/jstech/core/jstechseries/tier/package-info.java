@@ -11,7 +11,7 @@
  * computers a player builds; and the industrial tiers, T0 to T9, how far a player's industry has come. They are two
  * ladders on purpose, and nothing derives one from the other: a player can run an Advanced computer on a T2 industry.
  *
- * <p>Each is an enum of steps: {@link HardwareEra} and {@link IndustrialTier}. A step has a level counted from 0
+ * <p>Each is an enum of steps: {@link Era} and {@link IndustrialTier}. A step has a level counted from 0
  * without gaps, which is also its stable id, so saves, packets and menu data carry it; a name data files write it by
  * ({@code legacy}, {@code t3}); and the name a player reads ("Legacy era", "T3"). Both are steps of an axis
  * ({@link IAxisStep}), so a player moves along them as along any other axis of the progression kit. An era also says

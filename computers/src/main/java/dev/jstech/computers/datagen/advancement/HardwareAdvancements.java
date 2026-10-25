@@ -12,6 +12,7 @@ import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MainframeBlock;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
@@ -56,7 +57,7 @@ public final class HardwareAdvancements extends JscAdvancementTab {
         this.task("standard_build", "legacy_build", ComputingModule.PERSONAL_COMPUTER.item(),
                 "Moore's Law Isn't Dead", "Build a working Standard computer", built(HardwareEra.STANDARD));
         final Map<String, Supplier<Criterion<?>>> everyEra = new LinkedHashMap<>();
-        for (final HardwareEra era : new HardwareEra[] {HardwareEra.VINTAGE, HardwareEra.LEGACY,
+        for (final Era era : new Era[] {HardwareEra.VINTAGE, HardwareEra.LEGACY,
                 HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED}) {
             everyEra.put(HardwareMilestones.eraDetail(era), built(era));
         }
@@ -76,7 +77,7 @@ public final class HardwareAdvancements extends JscAdvancementTab {
                 on(JscEvents.SUPERCOMPUTER_ONLINE));
     }
 
-    private Supplier<Criterion<?>> built(final HardwareEra era) {
+    private Supplier<Criterion<?>> built(final Era era) {
         return on(JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(era));
     }
 

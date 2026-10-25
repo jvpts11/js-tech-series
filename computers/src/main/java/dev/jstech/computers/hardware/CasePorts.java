@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
@@ -16,14 +18,13 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
  */
 public final class CasePorts {
 
+    private static final EraTable<Integer> PORTS = EraTable.of(0).from(HardwareEra.TRANSITION, 2);
+
     private CasePorts() {
     }
 
     /** The USB ports on the front of that era's case. */
-    public static int of(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE, LEGACY -> 0;
-            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> 2;
-        };
+    public static int of(final Era era) {
+        return PORTS.get(era);
     }
 }

@@ -14,6 +14,7 @@ import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -123,7 +124,7 @@ public interface ICliMachine {
      * never holds the Sigma Runtime, apart from every later one. {@link HardwareEra#STANDARD} on a machine with
      * no board of its own to read one from (a network appliance, a computer made for a test).
      */
-    default HardwareEra era() {
+    default Era era() {
         return HardwareEra.STANDARD;
     }
 

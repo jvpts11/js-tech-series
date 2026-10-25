@@ -12,10 +12,10 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
-import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 
 /**
  * The Supercomputer Rack: the same 8U cabinet as the Server Rack (units, front slots, KVM, the
@@ -28,14 +28,14 @@ public class SupercomputerRackBlock extends ServerRackBlock {
 
     public static final MapCodec<SupercomputerRackBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(SupercomputerRackBlock::era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(SupercomputerRackBlock::era)
     ).apply(i, SupercomputerRackBlock::new));
 
     /*
      * Only the compute fabric reaches a supercomputer cabinet, its era's and every earlier one's. A data cable on this
      * port would put the nodes on the data network directly, which is exactly what the HBW Interface exists to prevent.
      */
-    public SupercomputerRackBlock(final Properties properties, final HardwareEra era) {
+    public SupercomputerRackBlock(final Properties properties, final Era era) {
         super(properties, era,
                 FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.HPC)).build());
     }

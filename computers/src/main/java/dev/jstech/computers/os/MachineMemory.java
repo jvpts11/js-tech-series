@@ -10,7 +10,7 @@ package dev.jstech.computers.os;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.program.ComputerConsoleState;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;
@@ -42,7 +42,7 @@ public final class MachineMemory {
         }
         ledger.add(os.displayName(), os.ramMb(), RamLedger.Kind.SYSTEM);
         // Every program holds what it holds on a machine of this one's era.
-        final HardwareEra era = host.displayEra();
+        final Era era = host.displayEra();
         final ComputerConsoleState console = host.console();
         final ResourceLocation desktopId = host.bootedDesktopId();
         final DesktopEnvironmentDef desktop = desktopId != null ? OsRegistry.getDesktop(desktopId) : null;
@@ -104,7 +104,7 @@ public final class MachineMemory {
         if (host.installedOs() == null) {
             return windows;
         }
-        final HardwareEra era = host.displayEra();
+        final Era era = host.displayEra();
         final ComputerConsoleState console = host.console();
         return RamLedger.withinBudget(windows,
                 window -> windowRamMb(window.key(), era, spec -> builtHere(console, spec)),
@@ -118,7 +118,7 @@ public final class MachineMemory {
      *
      * @param builtHere which programs the machine built from source, which hold a little less
      */
-    public static int windowRamMb(final String key, @Nullable final HardwareEra era,
+    public static int windowRamMb(final String key, @Nullable final Era era,
                                   final Predicate<ProgramSpec> builtHere) {
         final ProgramSpec spec = WindowKeys.program(key);
         return spec != null ? spec.ramMbOn(era, builtHere.test(spec)) : EraMemory.scaled(OWNERLESS_WINDOW_MB, era);

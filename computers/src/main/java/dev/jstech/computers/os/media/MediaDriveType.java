@@ -10,6 +10,7 @@ package dev.jstech.computers.os.media;
 import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -126,7 +127,7 @@ public enum MediaDriveType implements IStableName {
      * drive the Vintage's parallel port, the CD drive the Legacy's USB, the DVD drive and the Dock the Standard's
      * USB 3, the Blu-ray drive the Advanced's USB-C. A case's front port came with the Transition's case.
      */
-    public HardwareEra era() {
+    public Era era() {
         return switch (this) {
             case FLOPPY_DRIVE -> HardwareEra.VINTAGE;
             case CD_DRIVE -> HardwareEra.LEGACY;
@@ -141,7 +142,7 @@ public enum MediaDriveType implements IStableName {
      * one. The Dock serves the disks of every era, so it takes every era's cable: an Advanced computer reaches it with
      * its own cable, not only with an older one.
      */
-    public HardwareEra portEra() {
+    public Era portEra() {
         return this == DOCK_STATION ? HardwareEra.ADVANCED : era();
     }
 

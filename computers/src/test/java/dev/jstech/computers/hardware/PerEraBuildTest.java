@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.jstechseries.tier.IndustrialTier;
 import org.junit.jupiter.api.Test;
@@ -464,7 +465,7 @@ class PerEraBuildTest {
 
     // Sound cards
 
-    private static SoundCardSpec soundCard(final HardwareEra era, final PcieGeneration bus) {
+    private static SoundCardSpec soundCard(final Era era, final PcieGeneration bus) {
         return new SoundCardSpec(era, bus, 5, SoundCardSpec.Synthesis.FM, 9, 8, false,
                 SoundCardSpec.SampleRate.KHZ_22);
     }

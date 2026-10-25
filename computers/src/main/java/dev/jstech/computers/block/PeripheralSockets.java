@@ -10,7 +10,7 @@ package dev.jstech.computers.block;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 /**
  * Where a peripheral takes its cable: the port of its era in the middle of its back, where its model has it. The port
@@ -23,7 +23,7 @@ public final class PeripheralSockets {
     }
 
     /** The port of a peripheral of {@code era}, on its back. */
-    public static FacePorts back(final HardwareEra era) {
+    public static FacePorts back(final Era era) {
         return FacePorts.builder().port(FaceRule.BACK, PeripheralLine.of(era)).build();
     }
 
@@ -31,7 +31,7 @@ public final class PeripheralSockets {
      * The port of a screen of {@code era}, on its back. A screen faces the way its player looked when placing it, so
      * its glass turns to that player and its facing points out of its back: the port is on the face it faces.
      */
-    public static FacePorts behindScreen(final HardwareEra era) {
+    public static FacePorts behindScreen(final Era era) {
         return FacePorts.builder().port(FaceRule.FRONT, PeripheralLine.of(era)).build();
     }
 }

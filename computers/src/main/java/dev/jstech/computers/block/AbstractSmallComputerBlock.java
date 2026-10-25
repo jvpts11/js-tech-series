@@ -14,7 +14,7 @@ import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.IStandingParts;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.ArrayList;
@@ -63,7 +63,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputerBlockEntity>
         extends HorizontalDirectionalBlock implements EntityBlock, IFaceConnector, IComputerCase, IStandingParts {
 
-    private final HardwareEra era;
+    private final Era era;
     private final CaseStyle caseStyle;
     private final FacePorts ports;
     /** Where the case's front carries its power button, its bays and its USB ports. */
@@ -78,7 +78,7 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
      */
     private final Set<BlockPos> settled = ConcurrentHashMap.newKeySet();
 
-    protected AbstractSmallComputerBlock(final Properties properties, final HardwareEra era,
+    protected AbstractSmallComputerBlock(final Properties properties, final Era era,
                                          final CaseStyle caseStyle, final FacePorts ports,
                                          final Class<E> entityClass, final Supplier<BlockEntityType<E>> entityType,
                                          final BlockEntityTicker<E> serverTicker) {
@@ -97,12 +97,12 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
      * The hardware era this computer belongs to. It selects the block's skin and gates which board the machine
      * accepts: only a board of this era (and of the era's form factor) installs.
      */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
     @Override
-    public HardwareEra chassisEra() {
+    public Era chassisEra() {
         return era();
     }
 

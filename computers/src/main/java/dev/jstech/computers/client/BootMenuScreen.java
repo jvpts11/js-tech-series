@@ -13,11 +13,11 @@ import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -98,7 +98,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return this.getMenu().hardwareEra();
     }
 

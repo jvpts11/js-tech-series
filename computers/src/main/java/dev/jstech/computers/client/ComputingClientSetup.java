@@ -215,6 +215,7 @@ public final class ComputingClientSetup {
                 RedstoneInterfaceRenderer::create);
         // The small computers: each machine's case, by its age and the case it comes in.
         event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::create);
+        event.registerBlockEntityRenderer(ComputingModule.SMALL_COMPUTER_BE.get(), ComputerRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.CRAFTING_COMPUTER_BE.get(), ComputerRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(),
                 ComputerRenderer::create);

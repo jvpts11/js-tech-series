@@ -32,6 +32,7 @@ import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.TextScreen;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -677,7 +678,7 @@ public final class ShellView extends Panel implements ShellViews.IListener {
      * <p>Read off the machine on the client, the way the other screens here do it, and the middle generation when
      * the computer is not loaded, which only decides a year for a system nobody has heard of.
      */
-    private HardwareEra era() {
+    private Era era() {
         final Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getBlockEntity(this.host)
                 instanceof AbstractComputerBlockEntity computer

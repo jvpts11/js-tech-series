@@ -8,18 +8,19 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.datacenter.DatacenterSection;
+import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
-import dev.jstech.computers.item.ClusterInterfaceCardItem;
-import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
@@ -31,6 +32,7 @@ import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
@@ -39,6 +41,7 @@ import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.network.ServerRouterElement;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -87,11 +90,9 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     public static final int BAY_SLOTS = 2;
     public static final int HARDWARE_SLOTS = 15;
     public static final int STORAGE_SLOTS = 18;
-
-    private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
-            MOTHERBOARD_SLOT, CPU_SLOT, 1, RAM_SLOTS_START, RAM_SLOTS,
-            PCIE_SLOTS_START, PCIE_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, BAY_SLOTS_START, BAY_SLOTS,
-            HARDWARE_SLOTS);
+    /** What a Cluster Management Computer's case counts, whatever its era: the slots above are where they sit. */
+    public static final CaseParts PARTS =
+            new CaseParts(1, RAM_SLOTS, PCIE_SLOTS, DISK_SLOTS, BAY_SLOTS, STORAGE_SLOTS);
 
     /** How long writing a system to a node takes on a 2 GHz node; scaled by the node's own CPU. */
     private static final int INSTALL_TICKS_AT_2GHZ = 280;
@@ -99,35 +100,25 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     private static final int INSTALL_TICKS_MAX = 1200;
 
     public ClusterManagementComputerBlockEntity(final BlockPos pos, final BlockState state) {
-        super(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(), pos, state, LAYOUT);
+        super(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(), pos, state);
     }
 
-    private HardwareEra blockEra() {
-        return getBlockState().getBlock() instanceof ClusterManagementComputerBlock block
-                ? block.era() : HardwareEra.STANDARD;
-    }
-
-    @Override
-    protected Set<FormFactor> acceptedFormFactors() {
-        // A workstation-class machine: Vintage on Baby-AT/AT, Legacy and Standard on ATX or EATX.
-        return switch (blockEra()) {
-            case VINTAGE -> Set.of(FormFactor.BABY_AT, FormFactor.AT);
-            default -> Set.of(FormFactor.ATX, FormFactor.EATX);
-        };
-    }
-
-    @Override
-    protected HardwareEra requiredBoardEra() {
-        return blockEra();
+    /**
+     * What a Cluster Management Computer of {@code era} is: a workstation-class machine, Vintage on Baby-AT/AT and
+     * the later eras on ATX or EATX.
+     */
+    public static ComputerDef computer(final Era era) {
+        final Set<FormFactor> boards = era == HardwareEra.VINTAGE ? Set.of(FormFactor.BABY_AT, FormFactor.AT)
+                : Set.of(FormFactor.ATX, FormFactor.EATX);
+        return new ComputerDef(era, boards, HostScope.CLUSTER_MANAGEMENT_COMPUTER, PARTS);
     }
 
     @Override
     public boolean isValidForSlot(final int slot, final ItemStack stack) {
         // One cluster card per machine: a second would add nothing, so the slot refuses it outright.
-        if (stack.getItem() instanceof ClusterInterfaceCardItem
-                && slot >= PCIE_SLOTS_START && slot < PCIE_SLOTS_START + PCIE_SLOTS) {
+        if (isClusterCard(stack) && slot >= PCIE_SLOTS_START && slot < PCIE_SLOTS_START + PCIE_SLOTS) {
             for (int i = PCIE_SLOTS_START; i < PCIE_SLOTS_START + PCIE_SLOTS; i++) {
-                if (i != slot && getHardware().getStackInSlot(i).getItem() instanceof ClusterInterfaceCardItem) {
+                if (i != slot && isClusterCard(getHardware().getStackInSlot(i))) {
                     return false;
                 }
             }
@@ -140,8 +131,13 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     public TextKey refusal(final int slot, final ItemStack stack) {
         final TextKey why = super.refusal(slot, stack);
         // The card itself fits; what keeps it out is the one already seated.
-        return why == PartRefusals.CARD_BUS && stack.getItem() instanceof ClusterInterfaceCardItem
+        return why == PartRefusals.CARD_BUS && isClusterCard(stack)
                 && isValidPcieCard(stack) ? PartRefusals.ONE_CLUSTER_CARD : why;
+    }
+
+    /* Whether {@code stack} is a cluster interface card, of this mod's or of any mod that declares one. */
+    private static boolean isClusterCard(final ItemStack stack) {
+        return HardwareRegistry.card(stack) instanceof ClusterInterfaceCardSpec;
     }
 
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
@@ -211,8 +207,9 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
             return 0;
         }
         double factor = 1.0;
-        if (getHardware().getStackInSlot(MOTHERBOARD_SLOT).getItem() instanceof MotherboardItem board) {
-            final PcieGeneration slot = board.spec().slotFor(card.bus());
+        final MotherboardSpec board = HardwareRegistry.board(getHardware().getStackInSlot(MOTHERBOARD_SLOT));
+        if (board != null) {
+            final PcieGeneration slot = board.slotFor(card.bus());
             factor = card.bus().bandwidthFactorIn(slot);
         }
         return Math.max(1, (int) Math.floor(card.parallelNodes() * factor));
@@ -643,7 +640,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
                 host.totalVramMb(), host.systemDiskFreeMb())) {
             return ClusterJobTexts.REQUIREMENTS;
         }
-        final HardwareEra era = host.displayEra();
+        final Era era = host.displayEra();
         if (program.minEra() != HardwareEra.VINTAGE && (era == null || !OsGating.canInstall(program.minEra(), era))) {
             return ClusterJobTexts.TOO_OLD;
         }
@@ -703,7 +700,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     @Override
     public int usableStorageSlots() {
         final long capacity = netStorageItems();
-        return capacity <= 0 ? 0 : (int) Math.min(STORAGE_SLOTS, (capacity + 63) / 64);
+        return capacity <= 0 ? 0 : (int) Math.min(computer().parts().storage(), (capacity + 63) / 64);
     }
 
     @Override

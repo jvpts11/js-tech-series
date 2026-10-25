@@ -18,7 +18,6 @@ import dev.jstech.computers.program.cli.ICliFiles;
 import dev.jstech.computers.storage.StorageKey;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
@@ -75,7 +74,7 @@ public final class ComputerInfoService {
                 cores += one.cores();
                 mhz = Math.max(mhz, one.freqMhz());
             }
-            era = build.cpus().getFirst().era().name().toLowerCase(Locale.ROOT);
+            era = build.cpus().getFirst().era().path();
             // The id rather than the name, so a program comparing it against a listing's .arch compares like to like.
             isa = build.cpus().getFirst().isa().id();
         }

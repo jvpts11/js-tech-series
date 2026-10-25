@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -194,7 +195,7 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     /** The machine's own generation, so this wears the skin that machine's screens wear. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return this.getMenu().hardwareEra();
     }
 

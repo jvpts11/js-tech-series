@@ -11,29 +11,20 @@ import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 
-import java.util.List;
-
-/**
- * A RAM module item.
- */
+/** What a memory module's tooltip says: the items it buffers, its generation and what it draws. */
 @TextHolder
-public class RamItem extends SpecItem<RamSpec> {
+final class MemoryTooltip {
 
     private static final TextKey BUFFER = TextKey.of("jsc.item.ram.buffer", "%s items buffer  -  %s");
 
-    public RamItem(final Properties properties, final RamSpec spec) {
-        super(properties, spec);
+    private MemoryTooltip() {
     }
 
-    @Override
-    public void appendHoverText(final ItemStack stack, final TooltipContext context,
-                                final List<Component> tooltip, final TooltipFlag flag) {
-        final RamSpec spec = spec();
+    static void append(final RamSpec spec, final List<Component> tooltip) {
         tooltip.add(GameText.component(BUFFER.with(spec.bufferItems(), spec.generation().label()))
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(GameText.component(HardwareTooltip.WATTS.with(spec.tdpWatts()))

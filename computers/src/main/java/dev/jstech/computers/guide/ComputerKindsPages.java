@@ -15,10 +15,10 @@ import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
+import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.item.StorageCardItem;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
@@ -415,7 +415,7 @@ final class ComputerKindsPages {
 
     private static void raidArrays(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("raid_arrays", section).titled("RAID modes").icon(ComputingModule.VAULTIS_ARRAY_PCIE3)
-                .coversAll(ComputersGuide.itemsOf(StorageCardItem.class))
+                .coversAll(ComputersGuide.hardwareOf(StorageCardSpec.class))
                 .paragraph("A RAID controller is an expansion card: the Vaultis Array of each era, in a server's"
                         + " expansion slot. It joins the server's drives into one array, and until a mode is set, the"
                         + " drives stay separate. You set the array mode in the server's firmware, on the storage page"

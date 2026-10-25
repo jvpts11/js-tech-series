@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.block;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.Nullable;
@@ -24,15 +25,15 @@ public enum FibreReach implements StringRepresentable {
 
     private final String name;
     @Nullable
-    private final HardwareEra newest;
+    private final Era newest;
 
-    FibreReach(final String name, @Nullable final HardwareEra newest) {
+    FibreReach(final String name, @Nullable final Era newest) {
         this.name = name;
         this.newest = newest;
     }
 
     /** The reach of an interface of {@code era}: the fibre of that era and of every era before it; none for null. */
-    public static FibreReach upTo(@Nullable final HardwareEra era) {
+    public static FibreReach upTo(@Nullable final Era era) {
         FibreReach reach = NONE;
         for (final FibreReach candidate : values()) {
             if (era != null && candidate.newest != null && candidate.newest.isAtMost(era)) {
@@ -43,7 +44,7 @@ public enum FibreReach implements StringRepresentable {
     }
 
     /** Whether a fibre cable of {@code era} goes in. */
-    public boolean admits(final HardwareEra era) {
+    public boolean admits(final Era era) {
         return newest != null && era.isAtMost(newest);
     }
 

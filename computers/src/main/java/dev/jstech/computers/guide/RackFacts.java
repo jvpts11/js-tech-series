@@ -11,9 +11,9 @@ import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.item.StorageCardItem;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackThermals;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.text.TextHolder;
@@ -56,10 +56,10 @@ public final class RackFacts {
     private static List<GuideBlock.TableRow> serverRows() {
         final List<GuideBlock.TableRow> rows = new ArrayList<>();
         for (final Item item : BuiltInRegistries.ITEM) {
-            if (!(item instanceof ServerItem server)) {
+            final RackChassis chassis = item instanceof ServerItem server ? server.chassis() : null;
+            if (chassis == null) {
                 continue;
             }
-            final RackChassis chassis = server.chassis();
             rows.add(new GuideBlock.TableRow(List.of(
                     new GuideBlock.GuideValue.Words(item.getDescriptionId()),
                     new GuideBlock.GuideValue.Amount(chassis.heightU(), "U"),
@@ -76,10 +76,10 @@ public final class RackFacts {
     private static List<GuideBlock.TableRow> storageCardRows() {
         final List<GuideBlock.TableRow> rows = new ArrayList<>();
         for (final Item item : BuiltInRegistries.ITEM) {
-            if (!(item instanceof StorageCardItem card)) {
+            final HardwareRegistry.Part part = HardwareRegistry.part(item);
+            if (part == null || !(part.spec() instanceof StorageCardSpec spec)) {
                 continue;
             }
-            final StorageCardSpec spec = card.spec();
             final boolean array = spec.kind() == ExpansionCardKind.RAID_CONTROLLER;
             rows.add(new GuideBlock.TableRow(List.of(
                     new GuideBlock.GuideValue.Words(item.getDescriptionId()),

@@ -12,6 +12,7 @@ import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.multipart.PlacedModel;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public final class BusModelClientTests {
 
     private static final BlockPos STAND = new BlockPos(0, 2, 0);
-    private static final List<HardwareEra> ERAS = List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY,
+    private static final List<Era> ERAS = List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY,
             HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED);
     /* Each row's height: the Import Buses below, the Export Buses above them, the External Storage Buses on top. */
     private static final int IMPORT_Y = 2;
@@ -66,7 +67,7 @@ public final class BusModelClientTests {
                 })
                 .thenServer(2, level -> {
                     for (int i = 0; i < ERAS.size(); i++) {
-                        final HardwareEra era = ERAS.get(i);
+                        final Era era = ERAS.get(i);
                         mount(ctx, level, row(i, IMPORT_Y), ComputingParts.importBus(era));
                         mount(ctx, level, row(i, EXPORT_Y), ComputingParts.exportBus(era));
                         mount(ctx, level, row(i, EXTERNAL_Y), ComputingParts.externalBus(era));
@@ -77,7 +78,7 @@ public final class BusModelClientTests {
                         "the player's game to draw the last bus")
                 .thenAssert(2, () -> {
                     for (int i = 0; i < ERAS.size(); i++) {
-                        final HardwareEra era = ERAS.get(i);
+                        final Era era = ERAS.get(i);
                         if (!model(ctx, row(i, IMPORT_Y), ComputingParts.importBus(era))
                                 || !model(ctx, row(i, EXPORT_Y), ComputingParts.exportBus(era))
                                 || !model(ctx, row(i, EXTERNAL_Y), ComputingParts.externalBus(era))) {

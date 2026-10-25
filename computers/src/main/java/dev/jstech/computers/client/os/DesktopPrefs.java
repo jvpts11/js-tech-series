@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.time.GameCalendar;
@@ -173,10 +174,10 @@ final class DesktopPrefs {
      * chassis. Never null: a host that cannot name an era yet (a rack whose unit the client has not received) gets
      * the Standard one, since the frame's geometry is asked for every frame by the recipe viewer as well.
      */
-    HardwareEra era() {
+    Era era() {
         final Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getBlockEntity(desktop.hostPos()) instanceof IOsHost be) {
-            final HardwareEra era = be.displayEra();
+            final Era era = be.displayEra();
             if (era != null) {
                 return era;
             }

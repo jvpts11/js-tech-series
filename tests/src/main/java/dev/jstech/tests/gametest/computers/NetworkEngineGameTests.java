@@ -30,8 +30,8 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.network.SubframeNode;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
@@ -86,7 +86,7 @@ public final class NetworkEngineGameTests {
             if (!(helper.getBlockEntity(at) instanceof MainframeBlockEntity mainframe)) {
                 throw new IllegalStateException("no Mainframe at " + at);
             }
-            final HardwareEra era = mainframe.mainframeEra();
+            final Era era = mainframe.mainframeEra();
             helper.assertValueEqual(mainframe.installedEngines(), Map.of(MIDSOFT, shipped.version()),
                     "a new " + era + " Mainframe ships with the Midsoft IQL Server of its age");
             helper.assertTrue(MIDSOFT.equals(mainframe.activeEngine()) && mainframe.engineRunning(),

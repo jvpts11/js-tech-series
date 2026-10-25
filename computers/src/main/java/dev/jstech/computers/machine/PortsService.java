@@ -9,6 +9,7 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.Platform;
@@ -30,10 +31,10 @@ import dev.jstech.computers.program.tty.TtyScript;
 import dev.jstech.computers.program.tty.TtyScriptProcess;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -342,7 +343,7 @@ public final class PortsService {
 
     /** How long this machine's connection takes over that many megabytes from the Mirror. */
     private int fetchTicks(final double megabytes) {
-        final HardwareEra era = this.terminal instanceof IOsHost host ? host.installedEra() : null;
+        final Era era = this.terminal instanceof IOsHost host ? host.installedEra() : null;
         return SetupTiming.networkTicks((int) Math.ceil(megabytes), false, SetupTiming.eraFactor(era));
     }
 
@@ -417,7 +418,8 @@ public final class PortsService {
             taken += cost;
         }
         system.commit().run();
-        final double megabytes = taken * (double) DiskFilesystem.eraOf(disk).mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
+        final double megabytes = taken * (double) EraStorage.mbPerItem(DiskFilesystem.eraOf(disk))
+                / StorageKey.MB_EQ_PER_ITEM;
         return PortsVoices.indexed(ports.size(), onDisk(megabytes));
     }
 

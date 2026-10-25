@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.bus;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -23,10 +23,26 @@ import java.util.Set;
  * @param itemsPerTick how many items it moves a tick at most, before the cable's cap
  * @param features     what it can be set to do
  */
-public record BusAbilities(HardwareEra era, int itemsPerTick, Set<BusFeature> features) {
+public record BusAbilities(Era era, int itemsPerTick, Set<BusFeature> features) {
 
     /** How many items a filter lists. */
     public static final int FILTER_SLOTS = 5;
+    /* A moving bus's speed and features, era by era; the speeds are first estimates. */
+    private static final EraTable<Integer> SPEEDS = EraTable.ofFive(1, 8, 16, 32, 64);
+    private static final EraTable<Set<BusFeature>> FEATURES = EraTable.ofFive(
+            Set.of(),
+            Set.of(BusFeature.FILTER, BusFeature.QUANTITIES),
+            Set.of(BusFeature.FILTER, BusFeature.ITEM_QUANTITIES),
+            Set.of(BusFeature.FILTER, BusFeature.QUANTITIES, BusFeature.PRIORITY, BusFeature.CONDITIONS),
+            Set.of(BusFeature.FILTER, BusFeature.QUANTITIES, BusFeature.PRIORITY, BusFeature.CONDITIONS,
+                    BusFeature.TAGS, BusFeature.FUZZY));
+    /* An External Storage Bus's features, era by era. */
+    private static final EraTable<Set<BusFeature>> EXTERNAL_FEATURES = EraTable.ofFive(
+            Set.of(),
+            Set.of(BusFeature.FILTER, BusFeature.ACCESS),
+            Set.of(BusFeature.FILTER, BusFeature.ACCESS),
+            Set.of(BusFeature.FILTER, BusFeature.ACCESS, BusFeature.PRIORITY),
+            Set.of(BusFeature.FILTER, BusFeature.ACCESS, BusFeature.PRIORITY, BusFeature.TAGS, BusFeature.FUZZY));
 
     public BusAbilities {
         features = Set.copyOf(features);
@@ -36,17 +52,8 @@ public record BusAbilities(HardwareEra era, int itemsPerTick, Set<BusFeature> fe
      * The abilities of a bus of {@code era}; the speeds are first estimates. The buses end at the Advanced, so a later
      * era is given what the Advanced bus can do.
      */
-    public static BusAbilities of(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> new BusAbilities(era, 1, EnumSet.noneOf(BusFeature.class));
-            case LEGACY -> new BusAbilities(era, 8, EnumSet.of(BusFeature.FILTER, BusFeature.QUANTITIES));
-            case TRANSITION -> new BusAbilities(era, 16, EnumSet.of(BusFeature.FILTER, BusFeature.ITEM_QUANTITIES));
-            case STANDARD -> new BusAbilities(era, 32, EnumSet.of(BusFeature.FILTER, BusFeature.QUANTITIES,
-                    BusFeature.PRIORITY, BusFeature.CONDITIONS));
-            case ADVANCED, EXA, SINGULARITY -> new BusAbilities(era, 64, EnumSet.of(BusFeature.FILTER,
-                    BusFeature.QUANTITIES, BusFeature.PRIORITY, BusFeature.CONDITIONS, BusFeature.TAGS,
-                    BusFeature.FUZZY));
-        };
+    public static BusAbilities of(final Era era) {
+        return new BusAbilities(era, SPEEDS.get(era), FEATURES.get(era));
     }
 
     /**
@@ -55,15 +62,8 @@ public record BusAbilities(HardwareEra era, int itemsPerTick, Set<BusFeature> fe
      * what their filter lets through, read and written or only one of the two; the Standard one adds which storage
      * the network fills first; the Advanced one tags and the loose match.
      */
-    public static BusAbilities external(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> new BusAbilities(era, 0, EnumSet.noneOf(BusFeature.class));
-            case LEGACY, TRANSITION -> new BusAbilities(era, 0, EnumSet.of(BusFeature.FILTER, BusFeature.ACCESS));
-            case STANDARD -> new BusAbilities(era, 0, EnumSet.of(BusFeature.FILTER, BusFeature.ACCESS,
-                    BusFeature.PRIORITY));
-            case ADVANCED, EXA, SINGULARITY -> new BusAbilities(era, 0, EnumSet.of(BusFeature.FILTER,
-                    BusFeature.ACCESS, BusFeature.PRIORITY, BusFeature.TAGS, BusFeature.FUZZY));
-        };
+    public static BusAbilities external(final Era era) {
+        return new BusAbilities(era, 0, EXTERNAL_FEATURES.get(era));
     }
 
     /** Whether the bus can be set to do {@code feature}. */

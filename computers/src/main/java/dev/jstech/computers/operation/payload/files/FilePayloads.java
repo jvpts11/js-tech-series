@@ -11,7 +11,6 @@ import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.CodeFileReplies;
 import dev.jstech.computers.client.os.FilesApps;
 import dev.jstech.computers.gui.help.HelpViews;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.files.FileAccess.DatIndex;
@@ -40,6 +39,7 @@ import dev.jstech.computers.program.cli.menushell.MenuShellListing;
 import dev.jstech.computers.program.cli.menushell.MenuShellView;
 import dev.jstech.computers.program.cli.msd.MsdState;
 import dev.jstech.computers.program.cli.msd.MsdView;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.GameText;
@@ -236,7 +236,7 @@ public final class FilePayloads {
         for (final DiskFilesystem.FileEntry e : entries) {
             String itemId = "";
             long count = 0L;
-            if (e.type() == FileType.DAT && volume.getItem() instanceof DiskItem) {
+            if (e.type() == FileType.DAT && DriveVolumes.isDisk(volume)) {
                 if (datIndex == null) {
                     datIndex = datIndexOf(volume);
                 }

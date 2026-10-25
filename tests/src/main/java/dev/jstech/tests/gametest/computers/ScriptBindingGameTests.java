@@ -9,13 +9,24 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.hardware.CpuSocketId;
+import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.HardwareCodecs;
+import dev.jstech.computers.hardware.Isas;
+import dev.jstech.computers.hardware.RamGeneration;
+import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.registry.ComputingContent;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.scripting.JsComputersScripts;
+import dev.jstech.computers.scripting.ScriptedHardware;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.content.ScriptBinding;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestHardware;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -162,6 +173,42 @@ public final class ScriptBindingGameTests {
                 "a floppy disk, a Vintage medium, is taken");
         helper.assertFalse(ingredients.getFirst().test(new ItemStack(ComputingModule.CD_ROM.get())),
                 "a CD, a Legacy one, is not");
+        helper.succeed();
+    }
+
+    /**
+     * A part's sheet read as a startup script writes it, an object of plain fields whose numbers come as doubles, with
+     * the codec the script's declaration is read with; a field written wrong is refused, naming what it was of.
+     */
+    @GameTest(template = ARENA)
+    public static void partSheet_readsFromAnObjectAsAScriptWritesIt(final GameTestHelper helper) {
+        final CpuSpec cpu = ScriptedHardware.read(HardwareCodecs.PROCESSOR, Map.of("era", "legacy", "isa", "x86",
+                "socket", "jsc:socket_a", "cores", 1.0, "freq_mhz", 1300.0, "tdp_watts", 60.0), "a test processor");
+        helper.assertTrue(cpu.era() == HardwareEra.LEGACY && cpu.isa() == Isas.X86 && cpu.cores() == 1
+                        && cpu.freqMhz() == 1300 && cpu.socket().equals(CpuSocketId.SOCKET_A),
+                "read field by field; got " + cpu);
+        boolean refused = false;
+        try {
+            ScriptedHardware.read(HardwareCodecs.MEMORY, Map.of("era", "legacy", "generation", "ddr9",
+                    "buffer_items", 1.0, "tdp_watts", 1.0), "a test module");
+        } catch (final IllegalArgumentException expected) {
+            refused = expected.getMessage().contains("a test module") && expected.getMessage().contains("ddr9");
+        }
+        helper.assertTrue(refused, "a generation no one declared is refused, saying what and of what");
+        helper.succeed();
+    }
+
+    /** The test startup script declares the test mod's memory module, in a run with KubeJS, and nothing without it. */
+    @GameTest(template = ARENA)
+    public static void startupScript_declaresAPartAsAnObject(final GameTestHelper helper) {
+        final RamSpec ram = HardwareRegistry.ram(new ItemStack(TestHardware.SCRIPTED_RAM.get()));
+        if (!kubeJsAsked()) {
+            helper.assertTrue(ram == null, "without KubeJS no script declared the module");
+            helper.succeed();
+            return;
+        }
+        helper.assertTrue(ram != null && ram.era() == HardwareEra.ADVANCED && ram.generation() == RamGeneration.DDR5
+                && ram.bufferItems() == 4096, "the script's module is an Advanced DDR5 module of 4096; got " + ram);
         helper.succeed();
     }
 

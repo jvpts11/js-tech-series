@@ -16,9 +16,9 @@ import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -153,7 +153,7 @@ public final class RedstoneInterfaceScreen extends AbstractComputerScreen<Redsto
 
     /** The interface's era, which this screen wears as its skin. */
     @Override
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return menu.opening().era();
     }
 

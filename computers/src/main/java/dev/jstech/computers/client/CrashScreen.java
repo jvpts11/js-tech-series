@@ -18,6 +18,7 @@ import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.computers.os.crash.QrCode;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -187,7 +188,7 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
-        final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
+        final Era era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
         MonitorFrame.renderBody(g, x, y, W, H, era, font);
         final Colours c = PALETTE.get();
         g.fill(x, y, x + W, y + H, ground(c));
@@ -205,7 +206,7 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return this.getMenu().hardwareEra();
     }
 

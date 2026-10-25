@@ -9,7 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
@@ -20,6 +20,7 @@ import dev.jstech.computers.os.ReadyDisks;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.media.InstallMedia;
 import dev.jstech.computers.os.media.InstallerProjection;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaItem;
@@ -28,6 +29,7 @@ import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -203,9 +205,9 @@ public final class InstallMediaGameTests {
      */
     @GameTest(template = ARENA)
     public static void framesEditions_installFromTheirOwnEras(final GameTestHelper helper) {
-        final HardwareEra seven = OsRegistry.getOs(rl("frames_7")).minEra();
-        final HardwareEra ten = OsRegistry.getOs(rl("frames_10")).minEra();
-        final HardwareEra eleven = OsRegistry.getOs(rl("frames_11")).minEra();
+        final Era seven = OsRegistry.getOs(rl("frames_7")).minEra();
+        final Era ten = OsRegistry.getOs(rl("frames_10")).minEra();
+        final Era eleven = OsRegistry.getOs(rl("frames_11")).minEra();
         helper.assertTrue(seven == HardwareEra.TRANSITION && ten == HardwareEra.STANDARD
                 && eleven == HardwareEra.ADVANCED, "the editions start at " + seven + ", " + ten + " and " + eleven);
         helper.assertTrue(InstallMedia.forSystem(seven) == MediaFormat.DVD, "Frames 7 comes on a DVD");
@@ -256,7 +258,7 @@ public final class InstallMediaGameTests {
     public static void readyDisks_carryEverySystemOnADiskOfItsEraNamedMyComputer(final GameTestHelper helper) {
         for (final OsDef os : OsBootstrap.builtinOses()) {
             final ItemStack disk = ReadyDisks.withSystem(os.id(), os.minEra());
-            helper.assertTrue(disk.getItem() instanceof DiskItem item && item.spec().era() == os.minEra(),
+            helper.assertTrue(HardwareRegistry.disk(disk) instanceof DiskSpec spec && spec.era() == os.minEra(),
                     os.id() + " comes on a disk of its own era; got " + disk);
             helper.assertTrue(OsDisks.systemsOn(disk).has(os.id()), os.id() + " is on its disk");
             final ComputerConsoleState console = new ComputerConsoleState();

@@ -31,12 +31,16 @@ public final class PlayerProgress {
     /** The most axes a player's progress is sent with; a world never holds more than a handful. */
     private static final int MOST_AXES = 64;
 
-    /** Each player's furthest level along each axis, by the axis's id; an axis not there is at its first step. */
-    private static final PlayerState<Map<String, Integer>> PROGRESS = CoreState.builder(
+    /*
+     * Each player's furthest step along each axis, by the axis's id, kept by the step's name so a step a mod puts
+     * between two others moves nobody; an axis not there is at its first step.
+     */
+    private static final PlayerState<Map<String, String>> PROGRESS = CoreState.builder(
                     ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "progression"),
-                    Codec.unboundedMap(Codec.STRING, Codec.INT), Map.<String, Integer>of())
+                    Codec.unboundedMap(Codec.STRING, Codec.STRING), Map.<String, String>of())
             .fileName("jstech_progression")
-            .synced(ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.VAR_INT, MOST_AXES))
+            .synced(ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.STRING_UTF8,
+                    MOST_AXES))
             .player();
 
     private PlayerProgress() {
@@ -50,12 +54,12 @@ public final class PlayerProgress {
     /** The furthest step {@code player} has reached along {@code axis}. */
     public static <S extends IAxisStep> S reached(final MinecraftServer server, final UUID player,
                                                   final ProgressionAxis<S> axis) {
-        return axis.at(PROGRESS.get(server, player).getOrDefault(axis.id().toString(), 0));
+        return axis.savedAs(PROGRESS.get(server, player).get(axis.id().toString()));
     }
 
     /** The furthest step this client's player has reached along {@code axis}, as the server last said. */
     public static <S extends IAxisStep> S reachedHere(final ProgressionAxis<S> axis) {
-        return axis.at(PROGRESS.client().getOrDefault(axis.id().toString(), 0));
+        return axis.savedAs(PROGRESS.client().get(axis.id().toString()));
     }
 
     /**
@@ -73,8 +77,8 @@ public final class PlayerProgress {
             return false;
         }
         PROGRESS.update(server, player, kept -> {
-            final Map<String, Integer> next = new HashMap<>(kept);
-            next.put(axis.id().toString(), step.level());
+            final Map<String, String> next = new HashMap<>(kept);
+            next.put(axis.id().toString(), step.serializedName());
             return Map.copyOf(next);
         });
         NeoForge.EVENT_BUS.post(new AxisStepReachedEvent(server, player, axis, before, step));
@@ -89,11 +93,11 @@ public final class PlayerProgress {
                                                  final ProgressionAxis<S> axis, final S step) {
         final S before = reached(server, player, axis);
         PROGRESS.update(server, player, kept -> {
-            final Map<String, Integer> next = new HashMap<>(kept);
+            final Map<String, String> next = new HashMap<>(kept);
             if (step.level() == 0) {
                 next.remove(axis.id().toString());
             } else {
-                next.put(axis.id().toString(), step.level());
+                next.put(axis.id().toString(), step.serializedName());
             }
             return Map.copyOf(next);
         });

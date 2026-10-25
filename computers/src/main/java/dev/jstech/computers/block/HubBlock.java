@@ -15,8 +15,10 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
@@ -41,31 +43,31 @@ import org.jetbrains.annotations.Nullable;
  */
 public class HubBlock extends Block implements EntityBlock, IFaceConnector {
 
-    private final HardwareEra era;
+    private final Era era;
     private final FacePorts ports;
 
     public static final MapCodec<HubBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(HubBlock::era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(HubBlock::era)
     ).apply(i, HubBlock::new));
+    /* How many devices a hub of each era offers ports to. The numbers are first estimates. */
+    private static final EraTable<Integer> PORTS = EraTable.of(2)
+            .from(HardwareEra.LEGACY, 4)
+            .from(HardwareEra.STANDARD, 7);
 
-    public HubBlock(final Properties properties, final HardwareEra era) {
+    public HubBlock(final Properties properties, final Era era) {
         super(properties);
         this.era = era;
         this.ports = FacePorts.builder().port(FaceRule.EVERY, PeripheralLine.of(era)).build();
     }
 
     /** How many devices a hub of {@code era} offers ports to. The numbers are first estimates. */
-    public static int hubPorts(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> 2;
-            case LEGACY, TRANSITION -> 4;
-            case STANDARD, ADVANCED, EXA, SINGULARITY -> 7;
-        };
+    public static int hubPorts(final Era era) {
+        return PORTS.get(era);
     }
 
     /** The era the hub belongs to: the newest peripheral cable it takes. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

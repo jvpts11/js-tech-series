@@ -15,10 +15,11 @@ import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellKind;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.text.TextBounds;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -40,7 +41,7 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
     private final BlockPos monitorPos;
     private final BlockPos hostPos;
     @Nullable
-    private final HardwareEra era;
+    private final Era era;
     /*
      * Who the console says it is: the shell, the host name, the system and what it runs on, so the client can
      * draw the login banner and the initial prompt before the first server round-trip.
@@ -65,7 +66,7 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
 
     public CommandPromptMenu(final int containerId, final Inventory playerInventory,
                              final BlockPos monitorPos, final BlockPos hostPos,
-                             @Nullable final HardwareEra era, final ConsoleIdentity console, final long session,
+                             @Nullable final Era era, final ConsoleIdentity console, final long session,
                              final int scalePercent) {
         this(ComputingMenus.COMMAND_PROMPT_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
                 era, console, session, scalePercent);
@@ -77,7 +78,7 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
      */
     protected CommandPromptMenu(final MenuType<?> type, final int containerId,
                                 final Inventory playerInventory, final BlockPos monitorPos, final BlockPos hostPos,
-                                @Nullable final HardwareEra era, final ConsoleIdentity console,
+                                @Nullable final Era era, final ConsoleIdentity console,
                                 final long session, final int scalePercent) {
         super(type, containerId, playerInventory, validity(playerInventory.player.level(), monitorPos, hostPos));
         this.monitorPos = monitorPos;
@@ -103,14 +104,14 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
     }
 
     /** The shared open-buffer contents, so each terminal menu's {@code fromNetwork} reads them the same way. */
-    protected record OpenData(BlockPos monitor, BlockPos host, @Nullable HardwareEra era, ConsoleIdentity console,
+    protected record OpenData(BlockPos monitor, BlockPos host, @Nullable Era era, ConsoleIdentity console,
                               long session, int scalePercent) {
     }
 
     protected static OpenData readOpenBuffer(final RegistryFriendlyByteBuf buf) {
         final BlockPos monitor = buf.readBlockPos();
         final BlockPos host = buf.readBlockPos();
-        final HardwareEra era = HardwareEra.find(buf.readVarInt());
+        final Era era = EraCodecs.orNone(buf.readVarInt());
         final String shell = buf.readUtf(SHORT_NAME);
         final boolean live = buf.readBoolean();
         final String hostname = buf.readUtf(LONG_NAME);
@@ -127,11 +128,11 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
      * the console says it is (nothing at all for a DOS-family OS), its run, and the display scale its text is drawn at.
      */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
-                                       final BlockPos hostPos, @Nullable final HardwareEra era,
+                                       final BlockPos hostPos, @Nullable final Era era,
                                        final ConsoleIdentity console, final long session, final int scalePercent) {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
-        buf.writeVarInt(era == null ? -1 : era.id());
+        buf.writeVarInt(EraCodecs.placeOf(era));
         // Cut to what the wire takes rather than refused by it: a machine may be named at any length.
         buf.writeUtf(console.shellName(), SHORT_NAME);
         buf.writeBoolean(console.live());
@@ -196,7 +197,7 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
 
     /** The host computer's board-derived hardware era, captured when the prompt was opened; {@code null} for none. */
     @Nullable
-    public HardwareEra hardwareEra() {
+    public Era hardwareEra() {
         return era;
     }
 

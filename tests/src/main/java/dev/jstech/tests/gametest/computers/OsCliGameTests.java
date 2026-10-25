@@ -26,6 +26,7 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -706,8 +707,7 @@ public final class OsCliGameTests {
                             "brightness must clamp to 100");
                     // Netshare routes to the system disk's public-share component.
                     helper.assertTrue(cli.setConfig("netshare", "600").ok(), "config netshare must succeed");
-                    helper.assertTrue(dev.jstech.computers.item.DiskItem
-                                    .publicPermille(mainframe.systemDisk()) == 600,
+                    helper.assertTrue(DriveVolumes.publicPermille(mainframe.systemDisk()) == 600,
                             "netshare must set the disk public permille");
                     helper.assertFalse(cli.setConfig("frobnicate", "1").ok(), "an unknown key must fail");
                     final String summary = String.join("\n", cli.configSummary());

@@ -30,6 +30,8 @@ import dev.jstech.computers.gui.layout.PatternEncoderLayout;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -53,6 +55,9 @@ import org.jetbrains.annotations.Nullable;
 public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderMenu> {
 
     private static final int LINES = 4;
+    /* What each era's encoder writes, for the era line. */
+    private static final EraTable<TextKey> ERA_LINES = EraTable.ofFive(VINTAGE_WRITES, LEGACY_WRITES,
+            TRANSITION_WRITES, STANDARD_WRITES, ADVANCED_WRITES);
 
     private Button ejectBtn;
     private Button cancelBtn;
@@ -69,7 +74,7 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
 
     /** The encoder's own era, which decides the media it writes and the skin its panel wears. */
     @Override
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return era();
     }
 
@@ -93,7 +98,7 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
                 ? be : null;
     }
 
-    private HardwareEra era() {
+    private Era era() {
         final PatternEncoderBlockEntity be = encoder();
         return be == null ? HardwareEra.STANDARD : be.era();
     }
@@ -133,8 +138,8 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
         final boolean linked = be != null && be.ownerPos() != null;
         line(g, 0, of(linked ? LINKED_TO.with(pos(be.ownerPos())) : NOT_LINKED.text()), ix, iy,
                 linked ? theme.green() : theme.amber());
-        final HardwareEra era = era();
-        line(g, 1, of(eraLine(era)), ix, iy + lh, 0xFF << 24 | era.screenColor());
+        final Era era = era();
+        line(g, 1, of(eraLine(era)), ix, iy + lh, 0xFF << 24 | era.colour());
         final ItemStack media = menu.mediaStack();
         line(g, 2, of(media.isEmpty() ? BAY_EMPTY.text()
                         : BAY.with(VolumeLabel.of(media, of(REMOVABLE_MEDIUM)))),
@@ -166,14 +171,8 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
     }
 
     /** What this era's encoder writes, for the era line. */
-    private static TextKey eraLine(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> VINTAGE_WRITES;
-            case LEGACY -> LEGACY_WRITES;
-            case TRANSITION -> TRANSITION_WRITES;
-            case STANDARD -> STANDARD_WRITES;
-            case ADVANCED, EXA, SINGULARITY -> ADVANCED_WRITES;
-        };
+    private static TextKey eraLine(final Era era) {
+        return ERA_LINES.get(era);
     }
 
     /**

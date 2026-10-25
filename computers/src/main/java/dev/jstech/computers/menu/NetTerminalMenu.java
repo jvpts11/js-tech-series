@@ -9,7 +9,7 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.os.ConsoleIdentity;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class NetTerminalMenu extends CommandPromptMenu {
 
     public NetTerminalMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
-                           final BlockPos hostPos, @Nullable final HardwareEra era,
+                           final BlockPos hostPos, @Nullable final Era era,
                            final ConsoleIdentity console, final long session, final int scalePercent) {
         super(ComputingMenus.NET_TERMINAL_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
                 era, console, session, scalePercent);

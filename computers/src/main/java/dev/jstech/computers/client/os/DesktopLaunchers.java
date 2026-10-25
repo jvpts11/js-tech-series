@@ -8,14 +8,10 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
@@ -211,23 +207,14 @@ final class DesktopLaunchers {
         return GameText.resolve(chrome != null ? chrome.launcherLabel(spec) : spec.name());
     }
 
-    /** Whether the machine this desktop runs on is (an instance of) {@code type}. */
-    private boolean hostIs(final Class<?> type) {
-        return Minecraft.getInstance().level != null
-                && type.isInstance(Minecraft.getInstance().level.getBlockEntity(host));
-    }
-
-    /** Whether a program's host scope allows it on this machine. */
+    /**
+     * Whether a program's host scope allows it on this machine, as the machine's entry names it; a rack shows the
+     * desktop of the server mounted in it, so a rack host is a server session.
+     */
     private boolean hostScopeAllows(final HostScope scope) {
-        return switch (scope) {
-            case ANY -> true;
-            case MAINFRAME -> hostIs(MainframeBlockEntity.class);
-            case CRAFTING_COMPUTER -> hostIs(CraftingComputerBlockEntity.class);
-            // A rack shows the desktop of the server mounted in it, so a rack host is a server session.
-            case SERVER -> hostIs(ServerRackBlockEntity.class);
-            case CLUSTER_MANAGEMENT_COMPUTER -> hostIs(ClusterManagementComputerBlockEntity.class);
-            case PERSONAL_COMPUTER -> hostIs(PersonalComputerBlockEntity.class);
-        };
+        return scope == HostScope.ANY || Minecraft.getInstance().level != null
+                && Minecraft.getInstance().level.getBlockEntity(host) instanceof IOsHost machine
+                && scope.admits(machine.machine());
     }
 
     /** A player's own program on this desktop: what to call it, what to draw, and what to run. */

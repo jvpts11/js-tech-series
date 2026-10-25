@@ -24,6 +24,7 @@ import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -163,7 +164,7 @@ public final class DockStationGameTests {
         final BlockState state = helper.getBlockState(DOCK);
         final DockStationBlock dock = (DockStationBlock) state.getBlock();
         final Direction back = state.getValue(HorizontalDirectionalBlock.FACING).getOpposite();
-        for (final HardwareEra era : List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY, HardwareEra.TRANSITION,
+        for (final Era era : List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY, HardwareEra.TRANSITION,
                 HardwareEra.STANDARD, HardwareEra.ADVANCED)) {
             helper.assertTrue(dock.accepts(state, back, PeripheralLine.of(era)),
                     "the Dock's back takes the " + era.serializedName() + " cable");

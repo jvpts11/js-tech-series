@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.core.id.IStableName;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
@@ -41,8 +42,12 @@ public enum CaseStyle implements IStableName {
         return this.serializedName;
     }
 
-    /** How the models name a case of this style in {@code era}: the age alone, or the age and then the style. */
-    public String caseName(final HardwareEra era) {
-        return this == SOLE ? era.serializedName() : era.serializedName() + "_" + this.serializedName;
+    /**
+     * How the models name a case of this style in {@code era}: the age alone, or the age and then the style; an era
+     * after the Advanced has the Advanced's case.
+     */
+    public String caseName(final Era era) {
+        final String age = HardwareEra.withParts(era).path();
+        return this == SOLE ? age : age + "_" + this.serializedName;
     }
 }

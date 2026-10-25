@@ -9,15 +9,17 @@ package dev.jstech.computers.blockentity;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.PersonalComputerBlock;
+import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
@@ -32,6 +34,7 @@ import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -41,6 +44,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -71,11 +75,8 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     public static final int HARDWARE_SLOTS = 15;
 
     public static final int STORAGE_SLOTS = 18;
-
-    private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
-            MOTHERBOARD_SLOT, CPU_SLOT, 1, RAM_SLOTS_START, RAM_SLOTS,
-            GPU_SLOTS_START, GPU_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, BAY_SLOTS_START, BAY_SLOTS,
-            HARDWARE_SLOTS);
+    /** What a Personal Computer's case counts, whatever its era: the slots above are where they sit. */
+    public static final CaseParts PARTS = new CaseParts(1, RAM_SLOTS, GPU_SLOTS, DISK_SLOTS, BAY_SLOTS, STORAGE_SLOTS);
 
     /*
      * Bumped on any change to the disk contents (insert/extract/disk swap) AND on a privacy-slider
@@ -101,7 +102,22 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     private final UpdateDrawer updateDrawer = new UpdateDrawer(updateSlots, updateProgress, updateCard);
 
     public PersonalComputerBlockEntity(final BlockPos pos, final BlockState state) {
-        super(ComputingModule.PERSONAL_COMPUTER_BE.get(), pos, state, LAYOUT);
+        this(ComputingModule.PERSONAL_COMPUTER_BE.get(), pos, state);
+    }
+
+    /** A Personal Computer of another block entity type: a small computer another mod brings. */
+    protected PersonalComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
+        super(type, pos, state);
+    }
+
+    /**
+     * What a Personal Computer of {@code era} is. Each era takes its own consumer form factor: Vintage on Baby-AT/AT,
+     * Legacy on ATX, and from the Transition on ATX or the workstation's EATX, as the tower cases of the time did.
+     */
+    public static ComputerDef computer(final Era era) {
+        final Set<FormFactor> boards = era == HardwareEra.VINTAGE ? Set.of(FormFactor.BABY_AT, FormFactor.AT)
+                : era == HardwareEra.LEGACY ? Set.of(FormFactor.ATX) : Set.of(FormFactor.ATX, FormFactor.EATX);
+        return new ComputerDef(era, boards, HostScope.PERSONAL_COMPUTER, PARTS);
     }
 
     /** What the personal-use cards hold and do on this computer. */
@@ -175,43 +191,6 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
          */
         storageModCount++;
         super.setChanged();
-    }
-
-    /**
-     * The era this PC belongs to, read from its block. Defaults to Standard for any block that is not a
-     * {@link PersonalComputerBlock} (which never happens in practice, but keeps the read total).
-     */
-    private HardwareEra blockEra() {
-        return getBlockState().getBlock() instanceof PersonalComputerBlock pc
-                ? pc.era()
-                : HardwareEra.STANDARD;
-    }
-
-    @Override
-    protected Set<FormFactor> acceptedFormFactors() {
-        /*
-         * Each era takes its own consumer form factor: Vintage on Baby-AT/AT, Legacy on ATX, and from the Transition
-         * on ATX or the workstation's EATX, as the tower cases of the time did.
-         */
-        return switch (blockEra()) {
-            case VINTAGE -> Set.of(FormFactor.BABY_AT, FormFactor.AT);
-            case LEGACY -> Set.of(FormFactor.ATX);
-            default -> Set.of(FormFactor.ATX, FormFactor.EATX);
-        };
-    }
-
-    @Override
-    protected HardwareEra requiredBoardEra() {
-        /*
-         * A PC accepts only a board of its own era, so a Legacy and a Standard ATX board are not
-         * interchangeable: each installs in its matching machine alone.
-         */
-        return blockEra();
-    }
-
-    @Override
-    protected boolean takesWorkshopCards() {
-        return true;
     }
 
     // Network node, a passive Category-C node read from the adjacent cable
@@ -304,7 +283,7 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     @Override
     public int usableStorageSlots() {
         final long capacity = netStorageItems(); // already net of OS footprint
-        return capacity <= 0 ? 0 : (int) Math.min(STORAGE_SLOTS, (capacity + 63) / 64);
+        return capacity <= 0 ? 0 : (int) Math.min(computer().parts().storage(), (capacity + 63) / 64);
     }
 
     @Override
@@ -378,7 +357,7 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
         if (diskIndex < 0 || diskIndex >= disks.size()) {
             return 0;
         }
-        return DiskItem.publicPermille(disks.get(diskIndex));
+        return DriveVolumes.publicPermille(disks.get(diskIndex));
     }
 
     @Override
@@ -400,10 +379,10 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
             return;
         }
         final ItemStack disk = disks.get(diskIndex);
-        if (!(disk.getItem() instanceof DiskItem)) {
+        if (!DriveVolumes.isDisk(disk)) {
             return;
         }
-        DiskItem.setPublicPermille(disk, permille);
+        DriveVolumes.setPublicPermille(disk, permille);
         bumpStorageModCount();
     }
 

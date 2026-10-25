@@ -8,7 +8,7 @@
 package dev.jstech.computers.storage;
 
 import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.registry.HardwareRegistry;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Map;
@@ -21,7 +21,37 @@ import java.util.UUID;
  */
 public final class DriveVolumes {
 
+    /*
+     * A fresh disk exposes nothing to the network until the owner publishes part of it; this keeps a
+     * newly placed computer's storage private by default. Tunable.
+     */
+    public static final int DEFAULT_PUBLIC_PERMILLE = 0;
+
     private DriveVolumes() {
+    }
+
+    /** Whether {@code stack} is a disk, of this mod's or of any mod that declares one. */
+    public static boolean isDisk(final ItemStack stack) {
+        return HardwareRegistry.disk(stack) != null;
+    }
+
+    /**
+     * The public-share permille stored on a disk stack, or the private default if the component is absent or the
+     * stack is not a disk.
+     */
+    public static int publicPermille(final ItemStack stack) {
+        if (!isDisk(stack)) {
+            return DEFAULT_PUBLIC_PERMILLE;
+        }
+        final Integer stored = stack.get(ComputingComponents.DISK_PUBLIC_PERMILLE.get());
+        return stored == null ? DEFAULT_PUBLIC_PERMILLE : DiskPrivacy.clampPermille(stored);
+    }
+
+    /** Writes a clamped public-share permille onto a disk stack (a no-op for a non-disk stack). */
+    public static void setPublicPermille(final ItemStack stack, final int permille) {
+        if (isDisk(stack)) {
+            stack.set(ComputingComponents.DISK_PUBLIC_PERMILLE.get(), DiskPrivacy.clampPermille(permille));
+        }
     }
 
     /**
@@ -29,7 +59,7 @@ public final class DriveVolumes {
      * volume off the server thread, or for a stack that is not a drive.
      */
     public static StorageVolume of(final ItemStack drive) {
-        if (!(drive.getItem() instanceof DiskItem)) {
+        if (!isDisk(drive)) {
             return StorageVolume.EMPTY;
         }
         final StorageVolumes store = StorageVolumes.current();

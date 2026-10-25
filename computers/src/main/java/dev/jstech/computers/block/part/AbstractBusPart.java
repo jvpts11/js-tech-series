@@ -23,6 +23,7 @@ import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.jstechseries.network.DataLink;
@@ -72,7 +73,7 @@ public abstract sealed class AbstractBusPart implements IFacePart
 
     protected CableBlockEntity host;
     protected Direction face = Direction.NORTH;
-    private final HardwareEra era;
+    private final Era era;
     private final BusAbilities abilities;
     protected final ItemStackHandler filter = new ItemStackHandler(BusAbilities.FILTER_SLOTS) {
         @Override
@@ -127,12 +128,12 @@ public abstract sealed class AbstractBusPart implements IFacePart
     /* Each level's wants of its buses, which say which bus goes first. */
     private static final Map<ServerLevel, BusClaims> CLAIMS = new WeakHashMap<>();
 
-    protected AbstractBusPart(final HardwareEra era) {
+    protected AbstractBusPart(final Era era) {
         this(era, BusAbilities.of(era));
     }
 
     /** A bus of {@code era} that can be set to what {@code abilities} say, which its kind decides. */
-    protected AbstractBusPart(final HardwareEra era, final BusAbilities abilities) {
+    protected AbstractBusPart(final Era era, final BusAbilities abilities) {
         this.era = era;
         this.abilities = abilities;
     }
@@ -168,7 +169,7 @@ public abstract sealed class AbstractBusPart implements IFacePart
                                                      CableBlockEntity cable, Direction mountedFace);
 
     /** The era the bus belongs to. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
@@ -325,7 +326,7 @@ public abstract sealed class AbstractBusPart implements IFacePart
      * The era whose skin the bus's window wears: its own; a crafting bus, which is one design for every era, wears
      * the skin of the Mainframe that commands it, the Standard's when it reaches none.
      */
-    public HardwareEra skin() {
+    public Era skin() {
         if (!ComputingParts.isCrafting(type())) {
             return era;
         }

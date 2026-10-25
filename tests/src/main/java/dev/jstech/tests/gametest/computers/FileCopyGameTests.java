@@ -10,7 +10,7 @@ package dev.jstech.tests.gametest.computers;
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.operation.payload.CopyProgressPayload;
 import dev.jstech.computers.operation.payload.files.FileTransferPayloads;
@@ -21,6 +21,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -307,7 +308,7 @@ public final class FileCopyGameTests {
 
     /* The ticks the big file takes from the disk to the floppy: its weight at the slower of the two paces. */
     private static int expectedTicks(final ItemStack disk) {
-        final int tier = disk.getItem() instanceof DiskItem item ? item.spec().tier().speedMultiplier() : 1;
+        final int tier = HardwareRegistry.disk(disk) instanceof DiskSpec spec ? spec.tier().speedMultiplier() : 1;
         return CopyTiming.ticks(DiskFilesystem.weightOf(disk, SOURCE),
                 CopyTiming.slowest(CopyTiming.diskRate(tier), CopyTiming.mediaRate(MediaFormat.FLOPPY)));
     }

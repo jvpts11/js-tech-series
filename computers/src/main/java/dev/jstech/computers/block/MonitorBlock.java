@@ -50,10 +50,10 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,12 +129,12 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     }
 
     /** The hardware era this monitor belongs to. */
-    public HardwareEra era() {
+    public Era era() {
         return kind.era();
     }
 
     @Override
-    public HardwareEra chassisEra() {
+    public Era chassisEra() {
         return era();
     }
 
@@ -475,7 +475,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         if (MonitorSessionMenu.isShowing(player, owner, phase)) {
             return;
         }
-        final HardwareEra era = computer.displayEra();
+        final Era era = computer.displayEra();
         // The machine's own name: these screens write their own headings, so nothing draws this one.
         final Component title = level.getBlockState(owner).getBlock().getName();
         player.openMenu(new SimpleMenuProvider(
@@ -633,7 +633,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             final ResourceLocation desktopId =
                     c.bootedDesktopId() != null ? c.bootedDesktopId() : osId;
             // The machine's era, which says what each window it opens holds.
-            final HardwareEra era = c.displayEra();
+            final Era era = c.displayEra();
             player.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> new DesktopMenu(
                             id, inv, monitorPos, owner, osId, desktopId, name, ramTotalMb, ramReservedMb, era),
@@ -647,7 +647,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     private static void openCommandPrompt(final ServerPlayer player, final Level level,
                                           final BlockPos monitorPos, final BlockPos owner) {
         if (level.getBlockEntity(owner) instanceof IOsHost host) {
-            final HardwareEra era = host.displayEra();
+            final Era era = host.displayEra();
             final Component title = level.getBlockState(owner).getBlock().getName();
             /*
              * A system met at a Unix prompt gets a login banner and a prompt in its shell's shape: tell the

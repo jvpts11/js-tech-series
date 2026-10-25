@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 import java.util.Map;
@@ -47,6 +49,14 @@ public final class Branding {
     private static final Map<String, String> BUILDS = Map.of(
             "Frames 7", "7.0.7600",
             "Frames 10", "10.0.10240");
+    /*
+     * The firmware version an era's machines carry: the Transition has the same blue BIOS as the Legacy boards, a
+     * later version of it, and the boards from the Standard on carry the last.
+     */
+    private static final EraTable<String> BIOS_VERSIONS = EraTable.of("1.02")
+            .from(HardwareEra.LEGACY, "2.41")
+            .from(HardwareEra.TRANSITION, "3.10")
+            .from(HardwareEra.STANDARD, "4.06");
 
     private Branding() {
     }
@@ -66,49 +76,29 @@ public final class Branding {
         return houseOf(name).name() + " " + (space > 0 ? name.substring(0, space) : name);
     }
 
-    /** The year the machines of an era were built, for a firmware banner. */
-    public static int year(final HardwareEra era) {
-        if (era == null) {
-            return 2026;
-        }
-        return switch (era) {
-            case VINTAGE -> 1987;
-            case LEGACY -> 1998;
-            case TRANSITION -> 2008;
-            case STANDARD -> 2026;
-            case ADVANCED -> 2044;
-            case EXA -> 2071;
-            case SINGULARITY -> 2099;
-        };
+    /** The year the machines of an era were built, for a firmware banner; the Standard's for no era. */
+    public static int year(final Era era) {
+        return (era == null ? HardwareEra.STANDARD : era).year();
     }
 
     /** The year a system shipped: its own, where its name says so, else its era's. */
-    public static int osYear(final String osName, final HardwareEra era) {
+    public static int osYear(final String osName, final Era era) {
         final Integer own = RELEASE_YEARS.get(osName == null ? "" : osName.trim());
         return own != null ? own : year(era);
     }
 
     /** The firmware version an era's machines carry, so a 1987 board does not claim a modern BIOS. */
-    public static String biosVersion(final HardwareEra era) {
-        if (era == null) {
-            return "4.06";
-        }
-        return switch (era) {
-            case VINTAGE -> "1.02";
-            case LEGACY -> "2.41";
-            // The same blue BIOS as the Legacy boards, a later version of it.
-            case TRANSITION -> "3.10";
-            default -> "4.06";
-        };
+    public static String biosVersion(final Era era) {
+        return era == null ? BIOS_VERSIONS.get(HardwareEra.STANDARD) : BIOS_VERSIONS.get(era);
     }
 
     /** The firmware banner's first line: who built the board and which firmware it runs. */
-    public static String biosBanner(final HardwareEra era) {
+    public static String biosBanner(final Era era) {
         return HARDWARE_HOUSE + " BIOS v" + biosVersion(era);
     }
 
     /** The copyright line under a firmware banner. */
-    public static String firmwareCopyright(final HardwareEra era) {
+    public static String firmwareCopyright(final Era era) {
         return "Copyright (C) " + year(era) + " " + HARDWARE_HOUSE;
     }
 
@@ -128,7 +118,7 @@ public final class Branding {
     }
 
     /** The copyright line a system prints under its own name. */
-    public static String systemCopyright(final String osName, final HardwareEra era) {
+    public static String systemCopyright(final String osName, final Era era) {
         return "(C) " + osYear(osName, era) + " " + houseOf(osName).legalName();
     }
 }

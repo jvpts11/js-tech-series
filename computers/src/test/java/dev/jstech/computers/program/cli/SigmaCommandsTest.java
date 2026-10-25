@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -478,7 +479,7 @@ class SigmaCommandsTest {
         private int startedHeap = -1;
         private int stopped = -1;
         private Platform platform = Platform.LINUX;
-        private HardwareEra era = HardwareEra.STANDARD;
+        private Era era = HardwareEra.STANDARD;
 
         void add(final String id) {
             this.installed.add(new ProgramInfo(id.substring(id.indexOf(':') + 1), id));
@@ -492,7 +493,7 @@ class SigmaCommandsTest {
             return this.platform;
         }
 
-        @Override public HardwareEra era() {
+        @Override public Era era() {
             return this.era;
         }
 

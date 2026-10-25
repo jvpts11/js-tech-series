@@ -10,13 +10,9 @@ package dev.jstech.tests.gametest.computers;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.IExpansionCardItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.PsuItem;
-import dev.jstech.computers.item.RamItem;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.core.content.BlockEntry;
@@ -38,7 +34,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -77,7 +72,7 @@ public final class ContentGameTests {
 
     private static final String ARENA = "empty";
     /** The board forms the small computers' cases hold. */
-    private static final Set<FormFactor> SMALL_BOARDS = EnumSet.of(FormFactor.BABY_AT, FormFactor.AT, FormFactor.ATX,
+    private static final Set<FormFactor> SMALL_BOARDS = Set.of(FormFactor.BABY_AT, FormFactor.AT, FormFactor.ATX,
             FormFactor.EATX);
 
     private ContentGameTests() {
@@ -406,11 +401,11 @@ public final class ContentGameTests {
      * board for two processors is a server's, drawn on its own, and has no place in a small case yet.
      */
     private static boolean installable(final Item item) {
-        if (item instanceof MotherboardItem board) {
-            return SMALL_BOARDS.contains(board.spec().formFactor()) && board.spec().cpuSlots() == 1;
+        final HardwareRegistry.Part part = HardwareRegistry.part(item);
+        if (part != null && part.spec() instanceof MotherboardSpec board) {
+            return SMALL_BOARDS.contains(board.formFactor()) && board.cpuSlots() == 1;
         }
-        return item instanceof CpuItem || item instanceof RamItem || item instanceof IExpansionCardItem
-                || item instanceof PsuItem || item instanceof DiskItem;
+        return part != null;
     }
 
     /** The model a part is drawn by inside a computer, and its atlas. */

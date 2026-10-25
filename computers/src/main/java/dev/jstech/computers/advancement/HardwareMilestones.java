@@ -8,7 +8,7 @@
 package dev.jstech.computers.advancement;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 /**
  * What a computer's parts can earn once they are in: a board with every RAM slot taken, and a working build of
@@ -28,14 +28,14 @@ public final class HardwareMilestones {
         if (slots > 0 && machine.installedRam() >= slots) {
             JscEvents.awardOperator(machine, JscEvents.RAM_FILLED);
         }
-        final HardwareEra era = machine.installedEra();
+        final Era era = machine.installedEra();
         if (era != null && machine.buildValid()) {
             JscEvents.awardOperator(machine, JscEvents.ERA_BUILT, eraDetail(era));
         }
     }
 
-    /** The detail {@link JscEvents#ERA_BUILT} carries for an era. */
-    public static String eraDetail(final HardwareEra era) {
-        return era.serializedName();
+    /** The detail {@link JscEvents#ERA_BUILT} carries for an era: its id. */
+    public static String eraDetail(final Era era) {
+        return era.id();
     }
 }

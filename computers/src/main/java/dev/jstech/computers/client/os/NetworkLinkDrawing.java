@@ -15,13 +15,13 @@ import dev.jstech.computers.operation.payload.NodeLink;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -96,7 +96,7 @@ final class NetworkLinkDrawing {
     }
 
     /** How a link is drawn on a network whose Mainframe is of {@code era}: an earlier era's cable in dashes. */
-    static Style style(final NodeLink link, @Nullable final HardwareEra era) {
+    static Style style(final NodeLink link, @Nullable final Era era) {
         final DataLink cable = link.dataLink();
         if (!link.up()) {
             return new Style(colours().down(), 1, true);
@@ -201,7 +201,7 @@ final class NetworkLinkDrawing {
      * What the Map's legend explains for {@code nodes}: a line for each cable they are linked by, fastest first, then a
      * link down, the card's square and the optical router, each only where the Map shows it; and its size.
      */
-    static Legend legend(final Font font, final List<NetworkNodeInfo> nodes, @Nullable final HardwareEra era) {
+    static Legend legend(final Font font, final List<NetworkNodeInfo> nodes, @Nullable final Era era) {
         final Map<String, Style> lines = new LinkedHashMap<>();
         final List<NodeLink> up = new ArrayList<>();
         boolean down = false;

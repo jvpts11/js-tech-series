@@ -15,7 +15,7 @@ import net.minecraft.client.gui.GuiGraphics;
 /**
  * One GUI skin: the {@link EraPalette} it is coloured with plus the {@link EraStyle} it is drawn in, with the
  * palette-coupled drawing helpers that used to be the {@code static} methods on {@code JsTechTheme}. A computing screen
- * resolves the theme of its host computer's {@code HardwareEra} and paints through it, so the same screen code renders
+ * resolves the theme of its host computer's {@code Era} and paints through it, so the same screen code renders
  * in the skin of whatever era it is running on.
  *
  * <p>The colours are asked for each time something is painted, never kept: a skin is usually coloured by a declared

@@ -103,6 +103,8 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -517,7 +519,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return this.getMenu().hardwareEra();
     }
 
@@ -525,8 +527,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      * The same, never null: a firmware whose machine cannot say its age is read back off the look it wears,
      * which is the one thing about it that always came from that age.
      */
-    private HardwareEra era() {
-        final HardwareEra said = this.screenEra();
+    private Era era() {
+        final Era said = this.screenEra();
         if (said != null) {
             return said;
         }
@@ -542,7 +544,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     }
 
     private String eraLabel() {
-        final HardwareEra era = state == null ? null : HardwareEra.find(state.eraId());
+        final Era era = state == null ? null : EraCodecs.orNone(state.eraPlace());
         return era == null ? "-" : of(era.text());
     }
 

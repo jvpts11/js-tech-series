@@ -12,11 +12,11 @@ import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.computers.hardware.FrontArea;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaReaderBlock;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -183,7 +183,7 @@ final class CaseFrontClicks {
             }
             return true;
         }
-        if (!(held.getItem() instanceof DiskItem)) {
+        if (!DriveVolumes.isDisk(held)) {
             return false;
         }
         if (!front.held(bay).isEmpty()) {

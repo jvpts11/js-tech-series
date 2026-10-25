@@ -18,8 +18,8 @@ import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.PartType;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +55,7 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
     private static final int SECOND = 20;
     private static final long CANDIDATES_EVERY = 20L;
 
-    public ExportBusPart(final HardwareEra era) {
+    public ExportBusPart(final Era era) {
         super(era);
     }
 

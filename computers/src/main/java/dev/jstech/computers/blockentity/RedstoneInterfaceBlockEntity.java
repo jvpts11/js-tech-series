@@ -20,6 +20,7 @@ import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.signal.ISignalOutput;
 import dev.jstech.core.signal.Reading;
 import dev.jstech.core.signal.Signals;
@@ -278,7 +279,7 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
     }
 
     /** The era of its housing. */
-    public HardwareEra era() {
+    public Era era() {
         return getBlockState().getBlock() instanceof RedstoneInterfaceBlock sensor ? sensor.era()
                 : HardwareEra.STANDARD;
     }

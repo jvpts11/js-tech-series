@@ -37,11 +37,11 @@ import dev.jstech.computers.gui.layout.BootSequenceLayout;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +137,7 @@ public final class PostWall {
      * @param finished whether the self-test has run its course, which is when the last line can be said
      */
     public static void draw(final GuiGraphics g, final Font font, final FirmwareKind kind,
-                            final HardwareEra era, @Nullable final FirmwareStatePayload state,
+                            final Era era, @Nullable final FirmwareStatePayload state,
                             final String machineName, final String booting, final List<String> noBoot,
                             final int x, final int y, final int w, final int ticks, final boolean finished,
                             final int text, final int dim, final int accent) {
@@ -239,7 +239,7 @@ public final class PostWall {
     }
 
     /** What this machine's firmware prints while it tests itself. */
-    private static Built lines(final FirmwareKind kind, final HardwareEra era,
+    private static Built lines(final FirmwareKind kind, final Era era,
                                @Nullable final FirmwareStatePayload state, final String machineName,
                                final String booting, final List<String> noBoot, final boolean finished) {
         final boolean legacy = kind == FirmwareKind.BLUE_BIOS;
@@ -345,7 +345,7 @@ public final class PostWall {
     }
 
     /** What a built wall depends on: everything its lines are made of but the memory count. */
-    private record Key(FirmwareKind kind, HardwareEra era, @Nullable FirmwareStatePayload state,
+    private record Key(FirmwareKind kind, Era era, @Nullable FirmwareStatePayload state,
                        String machineName, String booting, List<String> noBoot, boolean finished) {
     }
 

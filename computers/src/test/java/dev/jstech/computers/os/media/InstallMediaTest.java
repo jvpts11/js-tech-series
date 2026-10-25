@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.media;
 
 import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
@@ -26,9 +27,9 @@ public final class InstallMediaTest {
 
     @Test
     public void forSystem_laterErasStayOnTheStick() {
-        for (final HardwareEra era : HardwareEra.values()) {
-            if (era.compareTo(HardwareEra.STANDARD) >= 0) {
-                assertEquals(MediaFormat.USB, InstallMedia.forSystem(era), era.name());
+        for (final Era era : HardwareEra.SERIES) {
+            if (era.isAtLeast(HardwareEra.STANDARD)) {
+                assertEquals(MediaFormat.USB, InstallMedia.forSystem(era), era.id());
             }
         }
     }

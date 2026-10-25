@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -45,7 +46,6 @@ import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import net.minecraft.client.gui.Font;
@@ -541,7 +541,7 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     /* The Mainframe's era, which a link of an earlier era's cable is drawn against in dashes; none before it is known. */
     @Nullable
-    private HardwareEra networkEra() {
+    private Era networkEra() {
         for (final NetworkNodeInfo node : nodes()) {
             if (node.kind() == NetworkNodeInfo.KIND_MAINFRAME && node.link().dataLink() != null) {
                 return node.link().dataLink().era();
@@ -918,7 +918,7 @@ public final class NetworkManagerApp implements IDesktopApp {
              * scales with the zoom, and pan plus per-node drag offsets (both in screen pixels) let the player explore
              * and arrange a large network.
              */
-            final HardwareEra era = networkEra();
+            final Era era = networkEra();
             final NetworkLinkDrawing.Legend legend = NetworkLinkDrawing.legend(font, nodes, era);
             final int room = w - (legend.width() > 0 ? legend.width() + 4 : 0);
             final int vcx = x + room / 2;
@@ -1005,7 +1005,7 @@ public final class NetworkManagerApp implements IDesktopApp {
          */
         private void linkTo(final GuiGraphics g, final Font font, final UiContext ctx, final int mcx, final int mcy,
                             final int nx, final int ny, final NodeLink link, final Map<Long, int[]> routers,
-                            @Nullable final HardwareEra era) {
+                            @Nullable final Era era) {
             final NetworkLinkDrawing.Style style = link.up() && link.dataLink() == null
                     ? new NetworkLinkDrawing.Style(colours().link(), 1, false) : NetworkLinkDrawing.style(link, era);
             final int[] router = routers.get(link.router());

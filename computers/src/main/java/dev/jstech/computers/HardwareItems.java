@@ -7,6 +7,15 @@
  */
 package dev.jstech.computers;
 
+import static dev.jstech.computers.PartItems.board;
+import static dev.jstech.computers.PartItems.card;
+import static dev.jstech.computers.PartItems.cpu;
+import static dev.jstech.computers.PartItems.disk;
+import static dev.jstech.computers.PartItems.gpu;
+import static dev.jstech.computers.PartItems.onShelf;
+import static dev.jstech.computers.PartItems.psu;
+import static dev.jstech.computers.PartItems.ram;
+
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -23,23 +32,15 @@ import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.BayDriveItem;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.PsuItem;
-import dev.jstech.computers.item.RamItem;
-import dev.jstech.computers.item.SoundCardItem;
-import dev.jstech.computers.registry.ComputingContent;
-import dev.jstech.computers.registry.ComputingContent.Shelf;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.content.ItemBuilder;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 
 import java.util.Comparator;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * The per-era hardware item catalog: every CPU, RAM module, PSU, GPU and motherboard a player can
@@ -65,7 +66,7 @@ public final class HardwareItems {
      * disks, which follow every era. Parts the order ranks alike keep the order they are declared in.
      */
     public static final Comparator<Item> CREATIVE_ORDER = Comparator.comparingInt(HardwareItems::shelf)
-            .thenComparing(HardwareItems::era)
+            .thenComparingInt(item -> era(item).level())
             .thenComparingInt(HardwareItems::kind);
 
     /* The graphics the Haswell desktop chips carry on the die, by the name their makers gave them. */
@@ -74,64 +75,64 @@ public final class HardwareItems {
     //  VINTAGE: ISA/PCI/AGP 2x buses, SIMM/EDO/SDRAM RAM, single-core CPUs
 
     // Socket 3: the 486, and the chip that took the socket to 133 MHz.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_486SX = cpu("cpu_integra_486sx",
+    public static final DeferredItem<Item> CPU_INTEGRA_486SX = cpu("cpu_integra_486sx",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false)
                     .on(Microarchitectures.I486, "")).named("Integra 486SX").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_486DX2 = cpu("cpu_integra_486dx2",
+    public static final DeferredItem<Item> CPU_INTEGRA_486DX2 = cpu("cpu_integra_486dx2",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 66, 5, false)
                     .on(Microarchitectures.I486, "")).named("Integra 486DX2").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_486DX4 = cpu("cpu_integra_486dx4",
+    public static final DeferredItem<Item> CPU_INTEGRA_486DX4 = cpu("cpu_integra_486dx4",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 100, 5, false)
                     .on(Microarchitectures.I486, "")).named("Integra 486DX4").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_5X86_133 = cpu("cpu_velocion_5x86_133",
+    public static final DeferredItem<Item> CPU_VELOCION_5X86_133 = cpu("cpu_velocion_5x86_133",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 133, 4, false)
                     .on(Microarchitectures.I486, "X5")).named("Velocion 5x86-133").register();
 
     // Socket 7: the Pentium and the chips that raced it, up to the K6-III+.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_75 = cpu("cpu_integra_pentix_75",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_75 = cpu("cpu_integra_pentix_75",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 75, 8, false)
                     .on(Microarchitectures.P5, "P54C")).named("Integra Pentix 75").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_K5_PR133 = cpu("cpu_velocion_k5_pr133",
+    public static final DeferredItem<Item> CPU_VELOCION_K5_PR133 = cpu("cpu_velocion_k5_pr133",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 100, 11, false)
                     .on(Microarchitectures.K5, "5k86")).named("Velocion K5 PR133").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_133 = cpu("cpu_integra_pentix_133",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_133 = cpu("cpu_integra_pentix_133",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 133, 11, false)
                     .on(Microarchitectures.P5, "P54CS")).named("Integra Pentix 133").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_MMX_233 = cpu("cpu_integra_pentix_mmx_233",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_MMX_233 = cpu("cpu_integra_pentix_mmx_233",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 233, 17, false)
                     .on(Microarchitectures.P5, "P55C")).named("Integra Pentix MMX 233").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_K6_II = cpu("cpu_velocion_k6_ii",
+    public static final DeferredItem<Item> CPU_VELOCION_K6_II = cpu("cpu_velocion_k6_ii",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 350, 15, false)
                     .on(Microarchitectures.K6, "Chomper")).named("Velocion K6-II").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_K6_III = cpu("cpu_velocion_k6_iii",
+    public static final DeferredItem<Item> CPU_VELOCION_K6_III = cpu("cpu_velocion_k6_iii",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 400, 20, false)
                     .on(Microarchitectures.K6, "Sharptooth")).named("Velocion K6-III").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_K6_III_PLUS = cpu("cpu_velocion_k6_iii_plus",
+    public static final DeferredItem<Item> CPU_VELOCION_K6_III_PLUS = cpu("cpu_velocion_k6_iii_plus",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 450, 22, false)
                     .on(Microarchitectures.K6, "Sharptooth")).named("Velocion K6-III+").register();
 
     // Socket 8: the Pentium Pro, the processor of the Vintage server and Mainframe boards.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_PRO_150 = cpu("cpu_integra_pentix_pro_150",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_PRO_150 = cpu("cpu_integra_pentix_pro_150",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 1, 150, 29, false)
                     .on(Microarchitectures.P6, "")).named("Integra Pentix Pro 150").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_PRO_180 = cpu("cpu_integra_pentix_pro_180",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_PRO_180 = cpu("cpu_integra_pentix_pro_180",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 1, 180, 32, false)
                     .on(Microarchitectures.P6, "")).named("Integra Pentix Pro 180").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_PRO_200 = cpu("cpu_integra_pentix_pro_200",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_PRO_200 = cpu("cpu_integra_pentix_pro_200",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 1, 200, 35, false)
                     .on(Microarchitectures.P6, "")).named("Integra Pentix Pro 200").register();
 
     // Slot 1: the cartridges of the last Vintage board, the top of the era.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CELER_300A = cpu("cpu_integra_celer_300a",
+    public static final DeferredItem<Item> CPU_INTEGRA_CELER_300A = cpu("cpu_integra_celer_300a",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 300, 19, false)
                     .on(Microarchitectures.P6, "Mendocino")).named("Integra Celer 300A").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_II_300 = cpu("cpu_integra_pentix_ii_300",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_II_300 = cpu("cpu_integra_pentix_ii_300",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 300, 43, false)
                     .on(Microarchitectures.P6, "Klamath")).named("Integra Pentix II 300").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_II_450 = cpu("cpu_integra_pentix_ii_450",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_II_450 = cpu("cpu_integra_pentix_ii_450",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 450, 27, false)
                     .on(Microarchitectures.P6, "Deschutes")).named("Integra Pentix II 450").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_III_600 = cpu("cpu_integra_pentix_iii_600",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_III_600 = cpu("cpu_integra_pentix_iii_600",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 600, 35, false)
                     .on(Microarchitectures.P6, "Katmai")).named("Integra Pentix III 600").register();
 
@@ -139,19 +140,19 @@ public final class HardwareItems {
      * Vintage memory: the 30- and 72-pin SIMMs, EDO, and the first SDRAM DIMMs, which only the Slot 1 board takes.
      * A module holds an item for every 4 MB; the watts climb gently with the size.
      */
-    public static final DeferredItem<RamItem> RAM_SIMM_4 = ram("ram_simm_4",
+    public static final DeferredItem<Item> RAM_SIMM_4 = ram("ram_simm_4",
             new RamSpec(HardwareEra.VINTAGE, RamGeneration.SIMM, 1, 1)).named("Stratix Layer SIMM-4").register();
-    public static final DeferredItem<RamItem> RAM_SIMM_16 = ram("ram_simm_16",
+    public static final DeferredItem<Item> RAM_SIMM_16 = ram("ram_simm_16",
             new RamSpec(HardwareEra.VINTAGE, RamGeneration.SIMM, 4, 2)).named("Stratix Layer SIMM-16").register();
-    public static final DeferredItem<RamItem> RAM_EDO_16 = ram("ram_edo_16",
+    public static final DeferredItem<Item> RAM_EDO_16 = ram("ram_edo_16",
             new RamSpec(HardwareEra.VINTAGE, RamGeneration.EDO, 4, 2)).named("Stratix Layer EDO-16").register();
-    public static final DeferredItem<RamItem> RAM_EDO_32 = ram("ram_edo_32",
+    public static final DeferredItem<Item> RAM_EDO_32 = ram("ram_edo_32",
             new RamSpec(HardwareEra.VINTAGE, RamGeneration.EDO, 8, 3)).named("Stratix Layer EDO-32").register();
-    public static final DeferredItem<RamItem> RAM_EDO_64 = ram("ram_edo_64",
+    public static final DeferredItem<Item> RAM_EDO_64 = ram("ram_edo_64",
             new RamSpec(HardwareEra.VINTAGE, RamGeneration.EDO, 16, 4)).named("Stratix Layer EDO-64").register();
-    public static final DeferredItem<RamItem> RAM_SDRAM_32 = ram("ram_sdram_32",
+    public static final DeferredItem<Item> RAM_SDRAM_32 = ram("ram_sdram_32",
             new RamSpec(HardwareEra.VINTAGE, RamGeneration.SDRAM, 8, 3)).named("Stratix Layer SDRAM-32").register();
-    public static final DeferredItem<RamItem> RAM_SDRAM_64 = ram("ram_sdram_64",
+    public static final DeferredItem<Item> RAM_SDRAM_64 = ram("ram_sdram_64",
             new RamSpec(HardwareEra.VINTAGE, RamGeneration.SDRAM, 16, 4)).named("Stratix Layer SDRAM-64").register();
 
     /*
@@ -160,39 +161,39 @@ public final class HardwareItems {
      * a few MB of VRAM is era-appropriate for fixed-function 2D and early 3D chips. The VGA-256 is IBM's own
      * adapter, from before the card makers the mod parodies existed, so it carries no maker's name.
      */
-    public static final DeferredItem<GpuItem> GPU_VGA_256 = gpu("gpu_vga_256",
+    public static final DeferredItem<Item> GPU_VGA_256 = gpu("gpu_vga_256",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 1, 1, 5).on(Microarchitectures.VGA, "", 25))
             .named("VGA-256").register();
-    public static final DeferredItem<GpuItem> GPU_WONDER_VGA = gpu("gpu_wonder_vga",
+    public static final DeferredItem<Item> GPU_WONDER_VGA = gpu("gpu_wonder_vga",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 1, 1, 5).on(Microarchitectures.VGA, "18800", 28))
             .named("Atrion Wonder VGA").register();
-    public static final DeferredItem<GpuItem> GPU_3D_BLASTER = gpu("gpu_3d_blaster",
+    public static final DeferredItem<Item> GPU_3D_BLASTER = gpu("gpu_3d_blaster",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 1, 2, 5).on(Microarchitectures.RENDITION, "V1000", 25))
             .named("Artisan 3D Blaster").register();
-    public static final DeferredItem<GpuItem> GPU_RAVE_PRO = gpu("gpu_rave_pro",
+    public static final DeferredItem<Item> GPU_RAVE_PRO = gpu("gpu_rave_pro",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 1, 4, 8).on(Microarchitectures.RAGE, "", 75))
             .named("Atrion Rave Pro").register();
-    public static final DeferredItem<GpuItem> GPU_PRISM_4 = gpu("gpu_prism_4",
+    public static final DeferredItem<Item> GPU_PRISM_4 = gpu("gpu_prism_4",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 2, 4, 12).on(Microarchitectures.NV3, "", 100))
             .named("Envya Prism 4").register();
-    public static final DeferredItem<GpuItem> GPU_VOODOO_GFX = gpu("gpu_voodoo_gfx",
+    public static final DeferredItem<Item> GPU_VOODOO_GFX = gpu("gpu_voodoo_gfx",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 3, 8, 18).on(Microarchitectures.THREEDFX, "", 90))
             .named("Tridex Voodoo GFX").register();
-    public static final DeferredItem<GpuItem> GPU_PRISM_TNT = gpu("gpu_prism_tnt",
+    public static final DeferredItem<Item> GPU_PRISM_TNT = gpu("gpu_prism_tnt",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.AGP_2X, 2, 16, 15)
                     .on(Microarchitectures.FAHRENHEIT, "NV4", 90))
             .named("Envya Prism TNT").register();
 
-    public static final DeferredItem<PsuItem> PSU_200 =
+    public static final DeferredItem<Item> PSU_200 =
             psu("psu_200", HardwareEra.VINTAGE, new PsuSpec(200, 80)).named("MF PowerBasic 200").register();
-    public static final DeferredItem<PsuItem> PSU_300 =
+    public static final DeferredItem<Item> PSU_300 =
             psu("psu_300", HardwareEra.VINTAGE, new PsuSpec(300, 80)).named("MF PowerBasic 300").register();
 
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_BABYAT_VINTAGE = board("motherboard_babyat_vintage",
+    public static final DeferredItem<Item> MOTHERBOARD_BABYAT_VINTAGE = board("motherboard_babyat_vintage",
             new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_3, 1, Set.of(RamGeneration.SIMM), 4, PcieGeneration.ISA, 4, 2))
             .named("MF Baby-AT I Motherboard").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_AT_VINTAGE = board("motherboard_at_vintage",
+    public static final DeferredItem<Item> MOTHERBOARD_AT_VINTAGE = board("motherboard_at_vintage",
             new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_7, 1, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 8,
                     PcieGeneration.PCI, 7, 4))
@@ -201,12 +202,12 @@ public final class HardwareItems {
      * The top of the Vintage: a 440BX board for the Slot 1 cartridges, with SDRAM and the first AGP. A board has one
      * bus, and this one's is the AGP its graphics card needs.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_AT_VINTAGE_SLOT1 =
+    public static final DeferredItem<Item> MOTHERBOARD_AT_VINTAGE_SLOT1 =
             board("motherboard_at_vintage_slot1", new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE,
                     CpuSocketId.SLOT_1, 1, Set.of(RamGeneration.SDRAM), 8, PcieGeneration.AGP_2X, 7, 4))
                     .named("MF AT Slot 1 Motherboard").register();
     // The Mainframe's board: four Pentium Pros, as the 450GX boards of the time held.
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_VINTAGE = board("motherboard_mtx_vintage",
+    public static final DeferredItem<Item> MOTHERBOARD_MTX_VINTAGE = board("motherboard_mtx_vintage",
             new MotherboardSpec(FormFactor.MTX, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_8, 4, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
                     PcieGeneration.PCI, 8, 4))
@@ -217,7 +218,7 @@ public final class HardwareItems {
      * and, as on the boards of the time, ISA beside them, which the era's own cards (its RAID controller among them)
      * are made for.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_VINTAGE = board("motherboard_eeb_vintage",
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_VINTAGE = board("motherboard_eeb_vintage",
             new MotherboardSpec(FormFactor.EEB, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_8, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
                     PcieGeneration.PCI, 10, 8, PcieGeneration.ISA))
@@ -227,135 +228,135 @@ public final class HardwareItems {
      * Vintage spinning disks: MFM and IDE platters of 20, 100 and 200 MB. Tiny by design (the floor of the storage
      * ladder) and honest: at 16 bits an item costs 1 MB, so they hold 20, 100 and 200 items.
      */
-    public static final DeferredItem<DiskItem> DISK_TRENCH_20M = disk("disk_vaultis_trench_20m",
+    public static final DeferredItem<Item> DISK_TRENCH_20M = disk("disk_vaultis_trench_20m",
             new DiskSpec(StorageTier.HDD, HardwareEra.VINTAGE, 20L, 5)).named("Vaultis Trench HDD 20M").register();
-    public static final DeferredItem<DiskItem> DISK_TRENCH_100M = disk("disk_vaultis_trench_100m",
+    public static final DeferredItem<Item> DISK_TRENCH_100M = disk("disk_vaultis_trench_100m",
             new DiskSpec(StorageTier.HDD, HardwareEra.VINTAGE, 100L, 6)).named("Vaultis Trench HDD 100M").register();
-    public static final DeferredItem<DiskItem> DISK_TRENCH_200M = disk("disk_vaultis_trench_200m",
+    public static final DeferredItem<Item> DISK_TRENCH_200M = disk("disk_vaultis_trench_200m",
             new DiskSpec(StorageTier.HDD, HardwareEra.VINTAGE, 200L, 7)).named("Vaultis Trench HDD 200M").register();
 
     //  LEGACY: AGP/PCIe 1.0 buses, SDRAM/DDR/DDR2 RAM, the last single-core CPUs
 
     // Socket 370: the Pentix III, from Coppermine to Tualatin.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_700 = cpu("cpu_integra_pentix_700",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_700 = cpu("cpu_integra_pentix_700",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 700, 28, false)
                     .on(Microarchitectures.P6, "Coppermine"))
             .named("Integra Pentix 700").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_III_S_1000 = cpu("cpu_integra_pentix_iii_s_1000",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_III_S_1000 = cpu("cpu_integra_pentix_iii_s_1000",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 1000, 30, false)
                     .on(Microarchitectures.P6, "Tualatin"))
             .named("Integra Pentix III-S 1000").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_III_S_1400 = cpu("cpu_integra_pentix_iii_s_1400",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_III_S_1400 = cpu("cpu_integra_pentix_iii_s_1400",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 1400, 32, false)
                     .on(Microarchitectures.P6, "Tualatin"))
             .named("Integra Pentix III-S 1400").register();
 
     // Socket A: the Duro, and the Sprint XP up to the last Barton.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_DURO_1300 = cpu("cpu_velocion_duro_1300",
+    public static final DeferredItem<Item> CPU_VELOCION_DURO_1300 = cpu("cpu_velocion_duro_1300",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 1300, 57, false)
                     .on(Microarchitectures.K7, "Applebred"))
             .named("Velocion Duro 1300").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_2400 = cpu("cpu_velocion_sprint_xp_2400",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_XP_2400 = cpu("cpu_velocion_sprint_xp_2400",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2000, 65, false)
                     .on(Microarchitectures.K7, "Thoroughbred"))
             .named("Velocion Sprint XP 2400+").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_2800 = cpu("cpu_velocion_sprint_xp_2800",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_XP_2800 = cpu("cpu_velocion_sprint_xp_2800",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2083, 68, false)
                     .on(Microarchitectures.K7, "Barton"))
             .named("Velocion Sprint XP 2800+").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_3200 = cpu("cpu_velocion_sprint_xp_3200",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_XP_3200 = cpu("cpu_velocion_sprint_xp_3200",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2200, 76, false)
                     .on(Microarchitectures.K7, "Barton"))
             .named("Velocion Sprint XP 3200+").register();
 
     // Socket 478: the Pentix 4 of 2002 and 2003, the first chips with two threads a core.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CELER_2_0 = cpu("cpu_integra_celer_2_0",
+    public static final DeferredItem<Item> CPU_INTEGRA_CELER_2_0 = cpu("cpu_integra_celer_2_0",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_478, 1, 2000, 52, false)
                     .on(Microarchitectures.NETBURST, "Northwood"))
             .named("Integra Celer 2.0").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_4_2_4C = cpu("cpu_integra_pentix_4_2_4c",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_4_2_4C = cpu("cpu_integra_pentix_4_2_4c",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_478, 1, 2400, 66, false)
                     .on(Microarchitectures.NETBURST, "Northwood").withSmt())
             .named("Integra Pentix 4 2.4C").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_4_3_2C = cpu("cpu_integra_pentix_4_3_2c",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_4_3_2C = cpu("cpu_integra_pentix_4_3_2c",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_478, 1, 3200, 82, false)
                     .on(Microarchitectures.NETBURST, "Northwood").withSmt())
             .named("Integra Pentix 4 3.2C").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_4_EE_3_4 = cpu("cpu_integra_pentix_4_ee_3_4",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_4_EE_3_4 = cpu("cpu_integra_pentix_4_ee_3_4",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_478, 1, 3400, 110, false)
                     .on(Microarchitectures.NETBURST, "Gallatin").withSmt())
             .named("Integra Pentix 4 EE 3.4").register();
 
     // LGA 775: the Prescott Pentix 4 of 2004.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CELER_D_325J = cpu("cpu_integra_celer_d_325j",
+    public static final DeferredItem<Item> CPU_INTEGRA_CELER_D_325J = cpu("cpu_integra_celer_d_325j",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 1, 2530, 84, false)
                     .on(Microarchitectures.NETBURST, "Prescott"))
             .named("Integra Celer D 325J").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_4_520 = cpu("cpu_integra_pentix_4_520",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_4_520 = cpu("cpu_integra_pentix_4_520",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 1, 2800, 84, false)
                     .on(Microarchitectures.NETBURST, "Prescott").withSmt())
             .named("Integra Pentix 4 520").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_4_540 = cpu("cpu_integra_pentix_4_540",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_4_540 = cpu("cpu_integra_pentix_4_540",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 1, 3200, 84, false)
                     .on(Microarchitectures.NETBURST, "Prescott").withSmt())
             .named("Integra Pentix 4 540").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_4_560 = cpu("cpu_integra_pentix_4_560",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_4_560 = cpu("cpu_integra_pentix_4_560",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 1, 3600, 115, false)
                     .on(Microarchitectures.NETBURST, "Prescott").withSmt())
             .named("Integra Pentix 4 560").register();
 
     // Socket 754: the first 64-bit chips, still on AGP boards.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SEMPER_3100 = cpu("cpu_velocion_semper_3100",
+    public static final DeferredItem<Item> CPU_VELOCION_SEMPER_3100 = cpu("cpu_velocion_semper_3100",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_754, 1, 1800, 62, false)
                     .on(Microarchitectures.K8, "Paris"))
             .named("Velocion Semper 3100+").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_64_3200 = cpu("cpu_velocion_sprint_64_3200",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_64_3200 = cpu("cpu_velocion_sprint_64_3200",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_754, 1, 2000, 89, false)
                     .on(Microarchitectures.K8, "ClawHammer"))
             .named("Velocion Sprint 64 3200+").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_64_3700 = cpu("cpu_velocion_sprint_64_3700",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_64_3700 = cpu("cpu_velocion_sprint_64_3700",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_754, 1, 2400, 89, false)
                     .on(Microarchitectures.K8, "ClawHammer"))
             .named("Velocion Sprint 64 3700+").register();
 
     // Socket 939: two memory channels and PCIe, up to the FX-55, the fastest chip of the era.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_64_3500 = cpu("cpu_velocion_sprint_64_3500",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_64_3500 = cpu("cpu_velocion_sprint_64_3500",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_939, 1, 2200, 89, false)
                     .on(Microarchitectures.K8, "Newcastle"))
             .named("Velocion Sprint 64 3500+").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_64_4000 = cpu("cpu_velocion_sprint_64_4000",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_64_4000 = cpu("cpu_velocion_sprint_64_4000",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_939, 1, 2400, 89, false)
                     .on(Microarchitectures.K8, "ClawHammer"))
             .named("Velocion Sprint 64 4000+").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_64_FX_55 = cpu("cpu_velocion_sprint_64_fx_55",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_64_FX_55 = cpu("cpu_velocion_sprint_64_fx_55",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_939, 1, 2600, 104, false)
                     .on(Microarchitectures.K8, "ClawHammer"))
             .named("Velocion Sprint 64 FX-55").register();
 
     // Socket 604: the server NetBurst, two to a board.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_2800 = cpu("cpu_integra_servo_2800",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_2800 = cpu("cpu_integra_servo_2800",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_604, 1, 2800, 74, false)
                     .on(Microarchitectures.NETBURST, "Prestonia").withSmt())
             .named("Integra Servo 2800").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_3060 = cpu("cpu_integra_servo_3060",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_3060 = cpu("cpu_integra_servo_3060",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_604, 1, 3060, 87, false)
                     .on(Microarchitectures.NETBURST, "Prestonia").withSmt())
             .named("Integra Servo 3060").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_3200 = cpu("cpu_integra_servo_3200",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_3200 = cpu("cpu_integra_servo_3200",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_604, 1, 3200, 92, false)
                     .on(Microarchitectures.NETBURST, "Gallatin").withSmt())
             .named("Integra Servo 3200").register();
 
     // Socket 940: the Optera, two to a server board and four to the Mainframe's.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_244 = cpu("cpu_velocion_optera_244",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_244 = cpu("cpu_velocion_optera_244",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 1, 1800, 89, false)
                     .on(Microarchitectures.K8, "SledgeHammer"))
             .named("Velocion Optera 244").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_248 = cpu("cpu_velocion_optera_248",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_248 = cpu("cpu_velocion_optera_248",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 1, 2200, 89, false)
                     .on(Microarchitectures.K8, "SledgeHammer"))
             .named("Velocion Optera 248").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_250 = cpu("cpu_velocion_optera_250",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_250 = cpu("cpu_velocion_optera_250",
             new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 1, 2400, 89, false)
                     .on(Microarchitectures.K8, "SledgeHammer"))
             .named("Velocion Optera 250").register();
@@ -364,17 +365,17 @@ public final class HardwareItems {
      * Legacy memory: SDRAM for the Socket 370 and Socket A boards, DDR for every board from Socket A on, and the DDR2
      * the LGA 775 board also takes.
      */
-    public static final DeferredItem<RamItem> RAM_SDRAM_128 = ram("ram_sdram_128",
+    public static final DeferredItem<Item> RAM_SDRAM_128 = ram("ram_sdram_128",
             new RamSpec(HardwareEra.LEGACY, RamGeneration.SDRAM, 32, 5)).named("Stratix Layer SDRAM-128").register();
-    public static final DeferredItem<RamItem> RAM_SDRAM_256 = ram("ram_sdram_256",
+    public static final DeferredItem<Item> RAM_SDRAM_256 = ram("ram_sdram_256",
             new RamSpec(HardwareEra.LEGACY, RamGeneration.SDRAM, 64, 6)).named("Stratix Layer SDRAM-256").register();
-    public static final DeferredItem<RamItem> RAM_DDR_256 = ram("ram_ddr_256",
+    public static final DeferredItem<Item> RAM_DDR_256 = ram("ram_ddr_256",
             new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR, 64, 7)).named("Stratix Layer DDR-256").register();
-    public static final DeferredItem<RamItem> RAM_DDR_512 = ram("ram_ddr_512",
+    public static final DeferredItem<Item> RAM_DDR_512 = ram("ram_ddr_512",
             new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR, 128, 10)).named("Stratix Layer DDR-512").register();
-    public static final DeferredItem<RamItem> RAM_DDR_1024 = ram("ram_ddr_1024",
+    public static final DeferredItem<Item> RAM_DDR_1024 = ram("ram_ddr_1024",
             new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR, 256, 12)).named("Stratix Layer DDR-1024").register();
-    public static final DeferredItem<RamItem> RAM_DDR2_512 = ram("ram_ddr2_512",
+    public static final DeferredItem<Item> RAM_DDR2_512 = ram("ram_ddr2_512",
             new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR2, 128, 9)).named("Stratix Layer DDR2-512").register();
 
     /*
@@ -382,74 +383,74 @@ public final class HardwareItems {
      * its AGP cards to the Vertex 6800 Ultra and the Radiance 9800 XT, and the first PCIe cards run from the Vertex
      * 6200 and the Radiance X300 to the X800 XT, the top of the era. Pipelines are the cores these cards count.
      */
-    public static final DeferredItem<GpuItem> GPU_PRISM_TNT2_M64 = gpu("gpu_prism_tnt2_m64",
+    public static final DeferredItem<Item> GPU_PRISM_TNT2_M64 = gpu("gpu_prism_tnt2_m64",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 2, 32, 10)
                     .on(Microarchitectures.FAHRENHEIT, "NV6", 125))
             .named("Envya Prism TNT2 M64").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_256 = gpu("gpu_vertex_256",
+    public static final DeferredItem<Item> GPU_VERTEX_256 = gpu("gpu_vertex_256",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 4, 32, 50)
                     .on(Microarchitectures.CELSIUS, "NV10", 120))
             .named("Envya Vertex 256").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_7000 = gpu("gpu_radiance_7000",
+    public static final DeferredItem<Item> GPU_RADIANCE_7000 = gpu("gpu_radiance_7000",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 1, 32, 8)
                     .on(Microarchitectures.R100, "RV100", 183))
             .named("Atrion Radiance 7000").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_2_MX_400 = gpu("gpu_vertex_2_mx_400",
+    public static final DeferredItem<Item> GPU_VERTEX_2_MX_400 = gpu("gpu_vertex_2_mx_400",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 2, 64, 10)
                     .on(Microarchitectures.CELSIUS, "NV11", 200))
             .named("Envya Vertex 2 MX 400").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_8500 = gpu("gpu_radiance_8500",
+    public static final DeferredItem<Item> GPU_RADIANCE_8500 = gpu("gpu_radiance_8500",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 4, 64, 25)
                     .on(Microarchitectures.R200, "R200", 275))
             .named("Atrion Radiance 8500").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_4_TI_4200 = gpu("gpu_vertex_4_ti_4200",
+    public static final DeferredItem<Item> GPU_VERTEX_4_TI_4200 = gpu("gpu_vertex_4_ti_4200",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 4, 128, 30)
                     .on(Microarchitectures.KELVIN, "NV25", 250))
             .named("Envya Vertex 4 Ti 4200").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_9200_SE = gpu("gpu_radiance_9200_se",
+    public static final DeferredItem<Item> GPU_RADIANCE_9200_SE = gpu("gpu_radiance_9200_se",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 4, 128, 30)
                     .on(Microarchitectures.R200, "RV280", 200))
             .named("Atrion Radiance 9200 SE").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_FX_5200 = gpu("gpu_vertex_fx_5200",
+    public static final DeferredItem<Item> GPU_VERTEX_FX_5200 = gpu("gpu_vertex_fx_5200",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 4, 128, 20)
                     .on(Microarchitectures.RANKINE, "NV34", 250))
             .named("Envya Vertex FX 5200").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_9600_XT = gpu("gpu_radiance_9600_xt",
+    public static final DeferredItem<Item> GPU_RADIANCE_9600_XT = gpu("gpu_radiance_9600_xt",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 4, 128, 30)
                     .on(Microarchitectures.R300, "RV360", 500))
             .named("Atrion Radiance 9600 XT").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_9800_PRO = gpu("gpu_radiance_9800_pro",
+    public static final DeferredItem<Item> GPU_RADIANCE_9800_PRO = gpu("gpu_radiance_9800_pro",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 8, 128, 70)
                     .on(Microarchitectures.R300, "R350", 380))
             .named("Atrion Radiance 9800 Pro").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_9800_XT = gpu("gpu_radiance_9800_xt",
+    public static final DeferredItem<Item> GPU_RADIANCE_9800_XT = gpu("gpu_radiance_9800_xt",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 8, 256, 75)
                     .on(Microarchitectures.R300, "R360", 412))
             .named("Atrion Radiance 9800 XT").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_6800_ULTRA = gpu("gpu_vertex_6800_ultra",
+    public static final DeferredItem<Item> GPU_VERTEX_6800_ULTRA = gpu("gpu_vertex_6800_ultra",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 16, 256, 81)
                     .on(Microarchitectures.CURIE, "NV40", 400))
             .named("Envya Vertex 6800 Ultra").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_6200 = gpu("gpu_vertex_6200",
+    public static final DeferredItem<Item> GPU_VERTEX_6200 = gpu("gpu_vertex_6200",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 4, 128, 25)
                     .on(Microarchitectures.CURIE, "NV44", 300))
             .named("Envya Vertex 6200").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_X300 = gpu("gpu_radiance_x300",
+    public static final DeferredItem<Item> GPU_RADIANCE_X300 = gpu("gpu_radiance_x300",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 4, 128, 20)
                     .on(Microarchitectures.R300, "RV370", 325))
             .named("Atrion Radiance X300").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_6600_GT = gpu("gpu_vertex_6600_gt",
+    public static final DeferredItem<Item> GPU_VERTEX_6600_GT = gpu("gpu_vertex_6600_gt",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 8, 128, 48)
                     .on(Microarchitectures.CURIE, "NV43", 500))
             .named("Envya Vertex 6600 GT").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_X800_XT = gpu("gpu_radiance_x800_xt",
+    public static final DeferredItem<Item> GPU_RADIANCE_X800_XT = gpu("gpu_radiance_x800_xt",
             new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 16, 256, 70)
                     .on(Microarchitectures.R400, "R423", 500))
             .named("Atrion Radiance X800 XT").register();
 
-    public static final DeferredItem<PsuItem> PSU_350 =
+    public static final DeferredItem<Item> PSU_350 =
             psu("psu_350", HardwareEra.LEGACY, new PsuSpec(350, 80)).named("MF PowerBasic 350").register();
-    public static final DeferredItem<PsuItem> PSU_500B =
+    public static final DeferredItem<Item> PSU_500B =
             psu("psu_500b", HardwareEra.LEGACY, new PsuSpec(500, 80)).named("MF PowerBasic 500B").register();
 
     /*
@@ -457,29 +458,29 @@ public final class HardwareItems {
      * the memory and the graphics bus its chipset had. The Socket 370, Socket A, Socket 478 and Socket 754 boards
      * pre-date PCIe and seat their graphics card on AGP.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_S370 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_LEGACY_S370 =
             board("motherboard_atx_legacy_s370", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_370, 1, Set.of(RamGeneration.SDRAM), 4, PcieGeneration.AGP_4X, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 370)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_SKA = board("motherboard_atx_legacy_ska",
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_LEGACY_SKA = board("motherboard_atx_legacy_ska",
             new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_A, 1, Set.of(RamGeneration.SDRAM, RamGeneration.DDR), 4,
                     PcieGeneration.AGP_8X, 4, 4))
             .named("MF ATX Legacy Motherboard (Socket A)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_478 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_LEGACY_478 =
             board("motherboard_atx_legacy_478", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_478, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.AGP_8X, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 478)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_754 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_LEGACY_754 =
             board("motherboard_atx_legacy_754", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_754, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.AGP_8X, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 754)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_LGA775 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_LEGACY_LGA775 =
             board("motherboard_atx_legacy_lga775", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.LGA_775, 1, Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4,
                     PcieGeneration.PCIE_1_0, 4, 4))
                     .named("MF ATX Legacy Motherboard (LGA 775)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_939 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_LEGACY_939 =
             board("motherboard_atx_legacy_939", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_939, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.PCIE_1_0, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 939)").register();
@@ -488,17 +489,17 @@ public final class HardwareItems {
      * two-socket ones have PCI slots beside their PCI Express, as a server board of the mid-2000s kept for its older
      * cards.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_LEGACY_604 =
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_LEGACY_604 =
             board("motherboard_eatx_legacy_604", new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_604, 2, Set.of(RamGeneration.DDR), 8, PcieGeneration.PCIE_1_0, 6, 6,
                     PcieGeneration.PCI))
                     .named("MF EATX Legacy Motherboard (2x Socket 604)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_LEGACY_S940 =
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_LEGACY_S940 =
             board("motherboard_eatx_legacy_s940", new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_940, 2, Set.of(RamGeneration.DDR), 8,
                     PcieGeneration.PCIE_1_0, 6, 6, PcieGeneration.PCI))
                     .named("MF EATX Legacy Motherboard (2x Socket 940)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_LEGACY = board("motherboard_mtx_legacy",
+    public static final DeferredItem<Item> MOTHERBOARD_MTX_LEGACY = board("motherboard_mtx_legacy",
             new MotherboardSpec(FormFactor.MTX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_940, 4, Set.of(RamGeneration.DDR), 24,
                     PcieGeneration.PCIE_1_0, 8, 6))
@@ -508,165 +509,165 @@ public final class HardwareItems {
      * Legacy rotating disks: IDE HDDs of 4, 20 and 40 GB. At 32 bits an item costs 16 MB, so they hold 256, 1 280 and
      * 2 560 items, between the Vintage platters and the Transition's 500 GB floor.
      */
-    public static final DeferredItem<DiskItem> DISK_LINK_IDE_4G = disk("disk_vaultis_link_ide_4g",
+    public static final DeferredItem<Item> DISK_LINK_IDE_4G = disk("disk_vaultis_link_ide_4g",
             new DiskSpec(StorageTier.HDD, HardwareEra.LEGACY, 256L, 7)).named("Vaultis Link IDE-HDD 4G").register();
-    public static final DeferredItem<DiskItem> DISK_LINK_IDE_20G = disk("disk_vaultis_link_ide_20g",
+    public static final DeferredItem<Item> DISK_LINK_IDE_20G = disk("disk_vaultis_link_ide_20g",
             new DiskSpec(StorageTier.HDD, HardwareEra.LEGACY, 1280L, 8)).named("Vaultis Link IDE-HDD 20G").register();
-    public static final DeferredItem<DiskItem> DISK_LINK_IDE_40G = disk("disk_vaultis_link_ide_40g",
+    public static final DeferredItem<Item> DISK_LINK_IDE_40G = disk("disk_vaultis_link_ide_40g",
             new DiskSpec(StorageTier.HDD, HardwareEra.LEGACY, 2560L, 9)).named("Vaultis Link IDE-HDD 40G").register();
 
     //  TRANSITION: PCIe 1.0 and 2.0, DDR2 and DDR3, the first multi-core CPUs
 
     // LGA 775: the Centro 2 line, from the Celer E1200 to the Extreme QX9650, and the last NetBurst, the Pentix D.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_D_805 = cpu("cpu_integra_pentix_d_805",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_D_805 = cpu("cpu_integra_pentix_d_805",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_775, 2, 2660, 95, false)
                     .on(Microarchitectures.NETBURST, "Smithfield"))
             .named("Integra Pentix D 805").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CELER_E1200 = cpu("cpu_integra_celer_e1200",
+    public static final DeferredItem<Item> CPU_INTEGRA_CELER_E1200 = cpu("cpu_integra_celer_e1200",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_775, 2, 1600, 65, false)
                     .on(Microarchitectures.CENTRO, "Allendale"))
             .named("Integra Celer E1200").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_2_DUO_E4300 = cpu("cpu_integra_centro_2_duo_e4300",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_2_DUO_E4300 = cpu("cpu_integra_centro_2_duo_e4300",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_775, 2, 1800, 65, false)
                     .on(Microarchitectures.CENTRO, "Allendale"))
             .named("Integra Centro 2 Duo E4300").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_2_DUO_E6600 = cpu("cpu_integra_centro_2_duo_e6600",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_2_DUO_E6600 = cpu("cpu_integra_centro_2_duo_e6600",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_775, 2, 2400, 65, false)
                     .on(Microarchitectures.CENTRO, "Conroe"))
             .named("Integra Centro 2 Duo E6600").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_2_DUO_E8500 = cpu("cpu_integra_centro_2_duo_e8500",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_2_DUO_E8500 = cpu("cpu_integra_centro_2_duo_e8500",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_775, 2, 3160, 65, false)
                     .on(Microarchitectures.CENTRO, "Wolfdale"))
             .named("Integra Centro 2 Duo E8500").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_2_QUAD_Q6600 =
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_2_QUAD_Q6600 =
             cpu("cpu_integra_centro_2_quad_q6600", new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_775, 4, 2400,
                     105, false).on(Microarchitectures.CENTRO, "Kentsfield"))
                     .named("Integra Centro 2 Quad Q6600").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_2_EXTREME_QX9650 =
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_2_EXTREME_QX9650 =
             cpu("cpu_integra_centro_2_extreme_qx9650", new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_775, 4,
                     3000, 130, false).on(Microarchitectures.CENTRO, "Yorkfield"))
                     .named("Integra Centro 2 Extreme QX9650").register();
 
     // AM2 and AM2+: the dual-core Sprint 64 X2 and the first Ascent quad.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_64_X2_3800 = cpu("cpu_velocion_sprint_64_x2_3800",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_64_X2_3800 = cpu("cpu_velocion_sprint_64_x2_3800",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM2, 2, 2000, 89, false)
                     .on(Microarchitectures.K8, "Windsor"))
             .named("Velocion Sprint 64 X2 3800+").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_64_X2_6000 = cpu("cpu_velocion_sprint_64_x2_6000",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_64_X2_6000 = cpu("cpu_velocion_sprint_64_x2_6000",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM2, 2, 3000, 125, false)
                     .on(Microarchitectures.K8, "Windsor"))
             .named("Velocion Sprint 64 X2 6000+").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_ASCENT_X4_9850 = cpu("cpu_velocion_ascent_x4_9850",
+    public static final DeferredItem<Item> CPU_VELOCION_ASCENT_X4_9850 = cpu("cpu_velocion_ascent_x4_9850",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM2, 4, 2500, 125, false)
                     .on(Microarchitectures.K10, "Agena"))
             .named("Velocion Ascent X4 9850").register();
 
     // AM3: the Sprint II and the Ascent II line, up to the six-core X6 1100T.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_II_X2_250 = cpu("cpu_velocion_sprint_ii_x2_250",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_II_X2_250 = cpu("cpu_velocion_sprint_ii_x2_250",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM3, 2, 3000, 65, false)
                     .on(Microarchitectures.K10, "Regor"))
             .named("Velocion Sprint II X2 250").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_II_X4_630 = cpu("cpu_velocion_sprint_ii_x4_630",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_II_X4_630 = cpu("cpu_velocion_sprint_ii_x4_630",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM3, 4, 2800, 95, false)
                     .on(Microarchitectures.K10, "Propus"))
             .named("Velocion Sprint II X4 630").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_ASCENT_X4_955 = cpu("cpu_velocion_ascent_x4_955",
+    public static final DeferredItem<Item> CPU_VELOCION_ASCENT_X4_955 = cpu("cpu_velocion_ascent_x4_955",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM3, 4, 3200, 125, false)
                     .on(Microarchitectures.K10, "Deneb"))
             .named("Velocion Ascent X4 955").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_ASCENT_X4_965 = cpu("cpu_velocion_ascent_x4_965",
+    public static final DeferredItem<Item> CPU_VELOCION_ASCENT_X4_965 = cpu("cpu_velocion_ascent_x4_965",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM3, 4, 3400, 125, false)
                     .on(Microarchitectures.K10, "Deneb"))
             .named("Velocion Ascent X4 965").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_ASCENT_X6_1090T = cpu("cpu_velocion_ascent_x6_1090t",
+    public static final DeferredItem<Item> CPU_VELOCION_ASCENT_X6_1090T = cpu("cpu_velocion_ascent_x6_1090t",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM3, 6, 3200, 125, false)
                     .on(Microarchitectures.K10, "Thuban"))
             .named("Velocion Ascent X6 1090T").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_ASCENT_X6_1100T = cpu("cpu_velocion_ascent_x6_1100t",
+    public static final DeferredItem<Item> CPU_VELOCION_ASCENT_X6_1100T = cpu("cpu_velocion_ascent_x6_1100t",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM3, 6, 3300, 125, false)
                     .on(Microarchitectures.K10, "Thuban"))
             .named("Velocion Ascent X6 1100T").register();
 
     // LGA 1156: the first Centro c3, c5 and c7.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_G6950 = cpu("cpu_integra_pentix_g6950",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_G6950 = cpu("cpu_integra_pentix_g6950",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1156, 2, 2800, 73, false)
                     .on(Microarchitectures.WESTMERE, "Clarkdale"))
             .named("Integra Pentix G6950").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_530 = cpu("cpu_integra_centro_c3_530",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C3_530 = cpu("cpu_integra_centro_c3_530",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1156, 2, 2930, 73, false)
                     .on(Microarchitectures.WESTMERE, "Clarkdale").withSmt())
             .named("Integra Centro c3 530").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_750 = cpu("cpu_integra_centro_c5_750",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C5_750 = cpu("cpu_integra_centro_c5_750",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1156, 4, 2660, 95, false)
                     .on(Microarchitectures.NEHALEM, "Lynnfield"))
             .named("Integra Centro c5 750").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_860 = cpu("cpu_integra_centro_c7_860",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_860 = cpu("cpu_integra_centro_c7_860",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1156, 4, 2800, 95, false)
                     .on(Microarchitectures.NEHALEM, "Lynnfield").withSmt())
             .named("Integra Centro c7 860").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_880 = cpu("cpu_integra_centro_c7_880",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_880 = cpu("cpu_integra_centro_c7_880",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1156, 4, 3060, 95, false)
                     .on(Microarchitectures.NEHALEM, "Lynnfield").withSmt())
             .named("Integra Centro c7 880").register();
 
     // LGA 1366: the workstation Centro c7, up to the six-core 980X, and the Servo of the two-way server boards.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_920 = cpu("cpu_integra_centro_c7_920",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_920 = cpu("cpu_integra_centro_c7_920",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 4, 2660, 130, false)
                     .on(Microarchitectures.NEHALEM, "Bloomfield").withSmt())
             .named("Integra Centro c7 920").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_960 = cpu("cpu_integra_centro_c7_960",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_960 = cpu("cpu_integra_centro_c7_960",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 4, 3200, 130, false)
                     .on(Microarchitectures.NEHALEM, "Bloomfield").withSmt())
             .named("Integra Centro c7 960").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_980X = cpu("cpu_integra_centro_c7_980x",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_980X = cpu("cpu_integra_centro_c7_980x",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 6, 3330, 130, false)
                     .on(Microarchitectures.WESTMERE, "Gulftown").withSmt())
             .named("Integra Centro c7 980X").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5520 = cpu("cpu_integra_servo_5520",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_5520 = cpu("cpu_integra_servo_5520",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 4, 2260, 80, false)
                     .on(Microarchitectures.NEHALEM, "Gainestown").withSmt())
             .named("Integra Servo 5520").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5570 = cpu("cpu_integra_servo_5570",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_5570 = cpu("cpu_integra_servo_5570",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 4, 2930, 95, false)
                     .on(Microarchitectures.NEHALEM, "Gainestown").withSmt())
             .named("Integra Servo 5570").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5680 = cpu("cpu_integra_servo_5680",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_5680 = cpu("cpu_integra_servo_5680",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 6, 3330, 130, false)
                     .on(Microarchitectures.WESTMERE, "Westmere-EP").withSmt())
             .named("Integra Servo 5680").register();
 
     // LGA 771: the Servo of the first Centro servers, two to a board.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5100 = cpu("cpu_integra_servo_5100",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_5100 = cpu("cpu_integra_servo_5100",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_771, 2, 2000, 65, false)
                     .on(Microarchitectures.CENTRO, "Woodcrest"))
             .named("Integra Servo 5100").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5160 = cpu("cpu_integra_servo_5160",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_5160 = cpu("cpu_integra_servo_5160",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_771, 2, 3000, 80, false)
                     .on(Microarchitectures.CENTRO, "Woodcrest"))
             .named("Integra Servo 5160").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5335 = cpu("cpu_integra_servo_5335",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_5335 = cpu("cpu_integra_servo_5335",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_771, 4, 2000, 80, false)
                     .on(Microarchitectures.CENTRO, "Clovertown"))
             .named("Integra Servo 5335").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5450 = cpu("cpu_integra_servo_5450",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_5450 = cpu("cpu_integra_servo_5450",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_771, 4, 3000, 80, false)
                     .on(Microarchitectures.CENTRO, "Harpertown"))
             .named("Integra Servo 5450").register();
 
     // Socket F: the Optera, two to a server board and four to the Mainframe's.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_2218 = cpu("cpu_velocion_optera_2218",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_2218 = cpu("cpu_velocion_optera_2218",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.SOCKET_F, 2, 2600, 95, false)
                     .on(Microarchitectures.K8, "Santa Rosa"))
             .named("Velocion Optera 2218").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_8356 = cpu("cpu_velocion_optera_8356",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_8356 = cpu("cpu_velocion_optera_8356",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.SOCKET_F, 4, 2300, 95, false)
                     .on(Microarchitectures.K10, "Barcelona"))
             .named("Velocion Optera 8356").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_8384 = cpu("cpu_velocion_optera_8384",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_8384 = cpu("cpu_velocion_optera_8384",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.SOCKET_F, 4, 2700, 75, false)
                     .on(Microarchitectures.K10, "Shanghai"))
             .named("Velocion Optera 8384").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_8435 = cpu("cpu_velocion_optera_8435",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_8435 = cpu("cpu_velocion_optera_8435",
             new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.SOCKET_F, 6, 2600, 75, false)
                     .on(Microarchitectures.K10, "Istanbul"))
             .named("Velocion Optera 8435").register();
@@ -675,22 +676,22 @@ public final class HardwareItems {
      * Transition memory: DDR2 for the LGA 775, AM2, LGA 771 and Socket F boards, with the registered module of the
      * servers, and DDR3 for the LGA 775 board after it, the AM3, LGA 1156 and LGA 1366 boards.
      */
-    public static final DeferredItem<RamItem> RAM_DDR2_1024 = ram("ram_ddr2_1024",
+    public static final DeferredItem<Item> RAM_DDR2_1024 = ram("ram_ddr2_1024",
             new RamSpec(HardwareEra.TRANSITION, RamGeneration.DDR2, 256, 10))
             .named("Stratix Layer DDR2-1024").register();
-    public static final DeferredItem<RamItem> RAM_DDR2_2048 = ram("ram_ddr2_2048",
+    public static final DeferredItem<Item> RAM_DDR2_2048 = ram("ram_ddr2_2048",
             new RamSpec(HardwareEra.TRANSITION, RamGeneration.DDR2, 512, 12))
             .named("Stratix Layer DDR2-2048").register();
-    public static final DeferredItem<RamItem> RAM_DDR2_4096_RDIMM = ram("ram_ddr2_4096_rdimm",
+    public static final DeferredItem<Item> RAM_DDR2_4096_RDIMM = ram("ram_ddr2_4096_rdimm",
             new RamSpec(HardwareEra.TRANSITION, RamGeneration.DDR2, 1024, 15))
             .named("Stratix Layer DDR2-4096 RDIMM").register();
-    public static final DeferredItem<RamItem> RAM_DDR3_1024 = ram("ram_ddr3_1024",
+    public static final DeferredItem<Item> RAM_DDR3_1024 = ram("ram_ddr3_1024",
             new RamSpec(HardwareEra.TRANSITION, RamGeneration.DDR3, 256, 8))
             .named("Stratix Layer DDR3-1024").register();
-    public static final DeferredItem<RamItem> RAM_DDR3_2048 = ram("ram_ddr3_2048",
+    public static final DeferredItem<Item> RAM_DDR3_2048 = ram("ram_ddr3_2048",
             new RamSpec(HardwareEra.TRANSITION, RamGeneration.DDR3, 512, 10))
             .named("Stratix Layer DDR3-2048").register();
-    public static final DeferredItem<RamItem> RAM_DDR3_4096 = ram("ram_ddr3_4096",
+    public static final DeferredItem<Item> RAM_DDR3_4096 = ram("ram_ddr3_4096",
             new RamSpec(HardwareEra.TRANSITION, RamGeneration.DDR3, 1024, 12))
             .named("Stratix Layer DDR3-4096").register();
 
@@ -699,101 +700,101 @@ public final class HardwareItems {
      * unified-shader cards take over from the 8600 GT and the HD 3850, and the Vertex GTX 480 and the Radiance HD
      * 5870 top the era. Shaders are the cores from the 8600 GT on, and the Radiance ones count in groups of five.
      */
-    public static final DeferredItem<GpuItem> GPU_VERTEX_7300_GS = gpu("gpu_vertex_7300_gs",
+    public static final DeferredItem<Item> GPU_VERTEX_7300_GS = gpu("gpu_vertex_7300_gs",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_1_0, 4, 128, 19)
                     .on(Microarchitectures.CURIE, "G72", 550))
             .named("Envya Vertex 7300 GS").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_X1300 = gpu("gpu_radiance_x1300",
+    public static final DeferredItem<Item> GPU_RADIANCE_X1300 = gpu("gpu_radiance_x1300",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_1_0, 4, 128, 15)
                     .on(Microarchitectures.R500, "RV515", 450))
             .named("Atrion Radiance X1300").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_7600_GT = gpu("gpu_vertex_7600_gt",
+    public static final DeferredItem<Item> GPU_VERTEX_7600_GT = gpu("gpu_vertex_7600_gt",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_1_0, 12, 256, 36)
                     .on(Microarchitectures.CURIE, "G73", 560))
             .named("Envya Vertex 7600 GT").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_7800_GTX = gpu("gpu_vertex_7800_gtx",
+    public static final DeferredItem<Item> GPU_VERTEX_7800_GTX = gpu("gpu_vertex_7800_gtx",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_1_0, 24, 256, 86)
                     .on(Microarchitectures.CURIE, "G70", 430))
             .named("Envya Vertex 7800 GTX").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_X1950_XTX = gpu("gpu_radiance_x1950_xtx",
+    public static final DeferredItem<Item> GPU_RADIANCE_X1950_XTX = gpu("gpu_radiance_x1950_xtx",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_1_0, 16, 512, 125)
                     .on(Microarchitectures.R500, "R580", 650))
             .named("Atrion Radiance X1950 XTX").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_8600_GT = gpu("gpu_vertex_8600_gt",
+    public static final DeferredItem<Item> GPU_VERTEX_8600_GT = gpu("gpu_vertex_8600_gt",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_1_0, 32, 256, 47)
                     .on(Microarchitectures.TESLA, "G84", 1190))
             .named("Envya Vertex 8600 GT").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_8800_GT = gpu("gpu_vertex_8800_gt",
+    public static final DeferredItem<Item> GPU_VERTEX_8800_GT = gpu("gpu_vertex_8800_gt",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 112, 512, 110)
                     .on(Microarchitectures.TESLA, "G92", 1500))
             .named("Envya Vertex 8800 GT").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_3850 = gpu("gpu_radiance_hd_3850",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_3850 = gpu("gpu_radiance_hd_3850",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 320, 256, 95)
                     .on(Microarchitectures.TERASCALE, "RV670", 670))
             .named("Atrion Radiance HD 3850").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_9600_GT = gpu("gpu_vertex_9600_gt",
+    public static final DeferredItem<Item> GPU_VERTEX_9600_GT = gpu("gpu_vertex_9600_gt",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 64, 512, 95)
                     .on(Microarchitectures.TESLA, "G94", 1625))
             .named("Envya Vertex 9600 GT").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_4670 = gpu("gpu_radiance_hd_4670",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_4670 = gpu("gpu_radiance_hd_4670",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 320, 512, 59)
                     .on(Microarchitectures.TERASCALE, "RV730", 750))
             .named("Atrion Radiance HD 4670").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_280 = gpu("gpu_vertex_gtx_280",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_280 = gpu("gpu_vertex_gtx_280",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 240, 1024, 236)
                     .on(Microarchitectures.TESLA, "GT200", 1296))
             .named("Envya Vertex GTX 280").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_4870 = gpu("gpu_radiance_hd_4870",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_4870 = gpu("gpu_radiance_hd_4870",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 800, 512, 150)
                     .on(Microarchitectures.TERASCALE, "RV770", 750))
             .named("Atrion Radiance HD 4870").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_5770 = gpu("gpu_radiance_hd_5770",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_5770 = gpu("gpu_radiance_hd_5770",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 800, 1024, 108)
                     .on(Microarchitectures.TERASCALE_2, "Juniper", 850))
             .named("Atrion Radiance HD 5770").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GT_240 = gpu("gpu_vertex_gt_240",
+    public static final DeferredItem<Item> GPU_VERTEX_GT_240 = gpu("gpu_vertex_gt_240",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 96, 512, 69)
                     .on(Microarchitectures.TESLA, "GT215", 1340))
             .named("Envya Vertex GT 240").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_6850 = gpu("gpu_radiance_hd_6850",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_6850 = gpu("gpu_radiance_hd_6850",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 960, 1024, 127)
                     .on(Microarchitectures.TERASCALE_2, "Barts", 775))
             .named("Velocion Radiance HD 6850").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_480 = gpu("gpu_vertex_gtx_480",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_480 = gpu("gpu_vertex_gtx_480",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 480, 1536, 250)
                     .on(Microarchitectures.FERMI, "GF100", 1401))
             .named("Envya Vertex GTX 480").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_5870 = gpu("gpu_radiance_hd_5870",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_5870 = gpu("gpu_radiance_hd_5870",
             new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 1600, 1024, 188)
                     .on(Microarchitectures.TERASCALE_2, "Cypress", 850))
             .named("Atrion Radiance HD 5870").register();
 
-    public static final DeferredItem<PsuItem> PSU_450B =
+    public static final DeferredItem<Item> PSU_450B =
             psu("psu_450b", HardwareEra.TRANSITION, new PsuSpec(450, 85)).named("MF PowerBasic 450B").register();
 
     /*
      * The Transition ATX boards, one per socket, all on PCIe 2.0: the LGA 775 board of the Centro 2 with DDR2 and
      * DDR3, the AM2 board with DDR2, and the AM3 and LGA 1156 boards with DDR3.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_TRANSITION_775 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_TRANSITION_775 =
             board("motherboard_atx_transition_775", new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION,
                     CpuSocketId.LGA_775, 1, Set.of(RamGeneration.DDR2, RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0,
                     4, 4))
                     .named("MF ATX Transition Motherboard (LGA 775)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_TRANSITION_AM2 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_TRANSITION_AM2 =
             board("motherboard_atx_transition_am2", new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION,
                     CpuSocketId.AM2, 1, Set.of(RamGeneration.DDR2), 4, PcieGeneration.PCIE_2_0, 4, 4))
                     .named("MF ATX Transition Motherboard (AM2)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_TRANSITION_AM3 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_TRANSITION_AM3 =
             board("motherboard_atx_transition_am3", new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION,
                     CpuSocketId.AM3, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 2))
                     .named("MF ATX Transition Motherboard (AM3)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_TRANSITION_1156 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_TRANSITION_1156 =
             board("motherboard_atx_transition_1156", new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION,
                     CpuSocketId.LGA_1156, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 4))
                     .named("MF ATX Transition Motherboard (LGA 1156)").register();
     // The workstation board of the LGA 1366 Centro c7.
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_TRANSITION_1366 =
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_TRANSITION_1366 =
             board("motherboard_eatx_transition_1366", new MotherboardSpec(FormFactor.EATX, HardwareEra.TRANSITION,
                     CpuSocketId.LGA_1366, 1, Set.of(RamGeneration.DDR3), 6, PcieGeneration.PCIE_2_0, 7, 6))
                     .named("MF EATX Transition Motherboard (LGA 1366)").register();
@@ -801,19 +802,19 @@ public final class HardwareItems {
      * The server boards: two Servos on LGA 771 or LGA 1366, two Opteras on Socket F, four on the Mainframe's. The
      * LGA 771 and Socket F boards are of 2006 and 2007, still on DDR2 and PCIe 1.0.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_TRANSITION_771 =
+    public static final DeferredItem<Item> MOTHERBOARD_TRANSITION_771 =
             board("motherboard_transition_771", new MotherboardSpec(FormFactor.EATX, HardwareEra.TRANSITION,
                     CpuSocketId.LGA_771, 2, Set.of(RamGeneration.DDR2), 8, PcieGeneration.PCIE_1_0, 6, 6))
                     .named("MF EATX Transition Motherboard (2x LGA 771)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_T_1366 =
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_T_1366 =
             board("motherboard_eeb_t_1366", new MotherboardSpec(FormFactor.EEB, HardwareEra.TRANSITION,
                     CpuSocketId.LGA_1366, 2, Set.of(RamGeneration.DDR3), 12, PcieGeneration.PCIE_2_0, 6, 6))
                     .named("MF EEB-T Server Board (2x LGA 1366)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_T_F =
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_T_F =
             board("motherboard_eeb_t_f", new MotherboardSpec(FormFactor.EEB, HardwareEra.TRANSITION,
                     CpuSocketId.SOCKET_F, 2, Set.of(RamGeneration.DDR2), 16, PcieGeneration.PCIE_1_0, 6, 6))
                     .named("MF EEB-T Server Board (2x Socket F)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_T =
+    public static final DeferredItem<Item> MOTHERBOARD_MTX_T =
             board("motherboard_mtx_t", new MotherboardSpec(FormFactor.MTX, HardwareEra.TRANSITION,
                     CpuSocketId.SOCKET_F, 4, Set.of(RamGeneration.DDR2), 32, PcieGeneration.PCIE_1_0, 8, 6))
                     .named("MF MTX-T Motherboard (4x Socket F)").register();
@@ -823,7 +824,7 @@ public final class HardwareItems {
      * sixteen times fewer than it held as a Legacy part; the Transition's hard disks start at the 500 GB of the disk
      * grid.
      */
-    public static final DeferredItem<DiskItem> DISK_LINK_SATA_SSD_64G = disk("disk_vaultis_link_sata_ssd_64g",
+    public static final DeferredItem<Item> DISK_LINK_SATA_SSD_64G = disk("disk_vaultis_link_sata_ssd_64g",
             new DiskSpec(StorageTier.SSD, HardwareEra.TRANSITION, 256L, 3)).named("Vaultis Link SATA-SSD 64G")
             .register();
 
@@ -834,33 +835,33 @@ public final class HardwareItems {
      */
 
     // LGA 1155: Sandy Bridge and Ivy Bridge.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CELER_G530 = cpu("cpu_integra_celer_g530",
+    public static final DeferredItem<Item> CPU_INTEGRA_CELER_G530 = cpu("cpu_integra_celer_g530",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1155, 2, 2400, 65, false)
                     .on(Microarchitectures.SANDY_BRIDGE, ""))
             .named("Integra Celer G530").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_2120 = cpu("cpu_integra_centro_c3_2120",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C3_2120 = cpu("cpu_integra_centro_c3_2120",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1155, 2, 3300, 65, false)
                     .on(Microarchitectures.SANDY_BRIDGE, "").withSmt())
             .named("Integra Centro c3 2120").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_2500K = cpu("cpu_integra_centro_c5_2500k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C5_2500K = cpu("cpu_integra_centro_c5_2500k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1155, 4, 3300, 95, false)
                     .on(Microarchitectures.SANDY_BRIDGE, ""))
             .named("Integra Centro c5 2500K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_2600K = cpu("cpu_integra_centro_c7_2600k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_2600K = cpu("cpu_integra_centro_c7_2600k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1155, 4, 3400, 95, false)
                     .on(Microarchitectures.SANDY_BRIDGE, "").withSmt())
             .named("Integra Centro c7 2600K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_3770K = cpu("cpu_integra_centro_c7_3770k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_3770K = cpu("cpu_integra_centro_c7_3770k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1155, 4, 3500, 77, false)
                     .on(Microarchitectures.IVY_BRIDGE, "").withSmt())
             .named("Integra Centro c7 3770K").register();
 
     // LGA 1150: Haswell, with the Servo of the one-socket workstations.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_G3258 = cpu("cpu_integra_pentix_g3258",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_G3258 = cpu("cpu_integra_pentix_g3258",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 2, 3200, 53, false)
                     .on(Microarchitectures.HASWELL, ""))
             .named("Integra Pentix G3258").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_4160 = cpu("cpu_integra_centro_c3_4160",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C3_4160 = cpu("cpu_integra_centro_c3_4160",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 2, 3600, 54, false)
                     .on(Microarchitectures.HASWELL, "").withSmt())
             .named("Integra Centro c3 4160").register();
@@ -869,107 +870,107 @@ public final class HardwareItems {
      * as their real counterparts do (twenty execution units, each chip at its own top clock): the board takes a
      * screen without a graphics card.
      */
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_4590 = cpu("cpu_integra_centro_c5_4590",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C5_4590 = cpu("cpu_integra_centro_c5_4590",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3300, 84, false)
                     .on(Microarchitectures.HASWELL, "")
                     .withGraphics(new IntegratedGraphics(HASWELL_GRAPHICS, 20, 1150)))
             .named("Integra Centro c5 4590").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_4690K = cpu("cpu_integra_centro_c5_4690k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C5_4690K = cpu("cpu_integra_centro_c5_4690k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3500, 88, false)
                     .on(Microarchitectures.HASWELL, "Devil's Canyon")
                     .withGraphics(new IntegratedGraphics(HASWELL_GRAPHICS, 20, 1200)))
             .named("Integra Centro c5 4690K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_1231_V3 = cpu("cpu_integra_servo_1231_v3",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_1231_V3 = cpu("cpu_integra_servo_1231_v3",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3400, 80, false)
                     .on(Microarchitectures.HASWELL, "").withSmt())
             .named("Integra Servo 1231 v3").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_4790K = cpu("cpu_integra_centro_c7_4790k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_4790K = cpu("cpu_integra_centro_c7_4790k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 4000, 88, false)
                     .on(Microarchitectures.HASWELL, "Devil's Canyon").withSmt()
                     .withGraphics(new IntegratedGraphics(HASWELL_GRAPHICS, 20, 1250)))
             .named("Integra Centro c7 4790K").register();
 
     // LGA 2011: the workstation Centro c7, and the Servo of the entry server and of the four-way boards.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_3820 = cpu("cpu_integra_centro_c7_3820",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_3820 = cpu("cpu_integra_centro_c7_3820",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4, 3600, 130, false)
                     .on(Microarchitectures.SANDY_BRIDGE, "").withSmt())
             .named("Integra Centro c7 3820").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_3930K = cpu("cpu_integra_centro_c7_3930k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_3930K = cpu("cpu_integra_centro_c7_3930k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 3200, 130, false)
                     .on(Microarchitectures.SANDY_BRIDGE, "").withSmt())
             .named("Integra Centro c7 3930K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_4930K = cpu("cpu_integra_centro_c7_4930k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_4930K = cpu("cpu_integra_centro_c7_4930k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 3400, 130, false)
                     .on(Microarchitectures.IVY_BRIDGE, "").withSmt())
             .named("Integra Centro c7 4930K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_4960X = cpu("cpu_integra_centro_c7_4960x",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_4960X = cpu("cpu_integra_centro_c7_4960x",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 3600, 130, false)
                     .on(Microarchitectures.IVY_BRIDGE, "").withSmt())
             .named("Integra Centro c7 4960X").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_2609 = cpu("cpu_integra_servo_2609",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_2609 = cpu("cpu_integra_servo_2609",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4, 2400, 80, false)
                     .on(Microarchitectures.SANDY_BRIDGE, ""))
             .named("Integra Servo 2609").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_4650 = cpu("cpu_integra_servo_4650",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_4650 = cpu("cpu_integra_servo_4650",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2700, 130, false)
                     .on(Microarchitectures.SANDY_BRIDGE, "").withSmt())
             .named("Integra Servo 4650").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_4657L_V2 = cpu("cpu_integra_servo_4657l_v2",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_4657L_V2 = cpu("cpu_integra_servo_4657l_v2",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 12, 2400, 115, false)
                     .on(Microarchitectures.IVY_BRIDGE, "").withSmt())
             .named("Integra Servo 4657L v2").register();
 
     // AM3+: the Velocion FX, four to eight cores.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_FX_4300 = cpu("cpu_velocion_fx_4300",
+    public static final DeferredItem<Item> CPU_VELOCION_FX_4300 = cpu("cpu_velocion_fx_4300",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3_PLUS, 4, 3800, 95, false)
                     .on(Microarchitectures.PILEDRIVER, "Vishera"))
             .named("Velocion FX-4300").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_FX_6300 = cpu("cpu_velocion_fx_6300",
+    public static final DeferredItem<Item> CPU_VELOCION_FX_6300 = cpu("cpu_velocion_fx_6300",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3_PLUS, 6, 3500, 95, false)
                     .on(Microarchitectures.PILEDRIVER, "Vishera"))
             .named("Velocion FX-6300").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_FX_8350 = cpu("cpu_velocion_fx_8350",
+    public static final DeferredItem<Item> CPU_VELOCION_FX_8350 = cpu("cpu_velocion_fx_8350",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3_PLUS, 8, 4000, 125, false)
                     .on(Microarchitectures.PILEDRIVER, "Vishera"))
             .named("Velocion FX-8350").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_FX_9590 = cpu("cpu_velocion_fx_9590",
+    public static final DeferredItem<Item> CPU_VELOCION_FX_9590 = cpu("cpu_velocion_fx_9590",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3_PLUS, 8, 4700, 220, false)
                     .on(Microarchitectures.PILEDRIVER, "Vishera"))
             .named("Velocion FX-9590").register();
 
     // FM2+: the Fuse, a processor and its graphics on one chip.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_FUSE_A4_6300 = cpu("cpu_velocion_fuse_a4_6300",
+    public static final DeferredItem<Item> CPU_VELOCION_FUSE_A4_6300 = cpu("cpu_velocion_fuse_a4_6300",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.FM2_PLUS, 2, 3700, 65, false)
                     .on(Microarchitectures.PILEDRIVER, "Richland"))
             .named("Velocion Fuse A4-6300").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_FUSE_A8_6600K = cpu("cpu_velocion_fuse_a8_6600k",
+    public static final DeferredItem<Item> CPU_VELOCION_FUSE_A8_6600K = cpu("cpu_velocion_fuse_a8_6600k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.FM2_PLUS, 4, 3900, 100, false)
                     .on(Microarchitectures.PILEDRIVER, "Richland"))
             .named("Velocion Fuse A8-6600K").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_FUSE_A10_6800K = cpu("cpu_velocion_fuse_a10_6800k",
+    public static final DeferredItem<Item> CPU_VELOCION_FUSE_A10_6800K = cpu("cpu_velocion_fuse_a10_6800k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.FM2_PLUS, 4, 4100, 100, false)
                     .on(Microarchitectures.PILEDRIVER, "Richland"))
             .named("Velocion Fuse A10-6800K").register();
 
     // G34: the Optera, two to a server board and four to the Mainframe's.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_6212 = cpu("cpu_velocion_optera_6212",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_6212 = cpu("cpu_velocion_optera_6212",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.G34, 8, 2600, 115, false)
                     .on(Microarchitectures.BULLDOZER, "Interlagos"))
             .named("Velocion Optera 6212").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_6272 = cpu("cpu_velocion_optera_6272",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_6272 = cpu("cpu_velocion_optera_6272",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.G34, 16, 2100, 115, false)
                     .on(Microarchitectures.BULLDOZER, "Interlagos"))
             .named("Velocion Optera 6272").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_OPTERA_6380 = cpu("cpu_velocion_optera_6380",
+    public static final DeferredItem<Item> CPU_VELOCION_OPTERA_6380 = cpu("cpu_velocion_optera_6380",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.G34, 16, 2500, 115, false)
                     .on(Microarchitectures.PILEDRIVER, "Abu Dhabi"))
             .named("Velocion Optera 6380").register();
 
     // Standard memory, all DDR3: the low-voltage module beside the DDR3-8192, and the registered one of the servers.
-    public static final DeferredItem<RamItem> RAM_DDR3L_4096 = ram("ram_ddr3l_4096",
+    public static final DeferredItem<Item> RAM_DDR3L_4096 = ram("ram_ddr3l_4096",
             new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 1024, 10))
             .named("Stratix Layer DDR3L-4096").register();
-    public static final DeferredItem<RamItem> RAM_DDR3_16384_RDIMM = ram("ram_ddr3_16384_rdimm",
+    public static final DeferredItem<Item> RAM_DDR3_16384_RDIMM = ram("ram_ddr3_16384_rdimm",
             new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 4096, 18))
             .named("Stratix Layer DDR3-16384 RDIMM").register();
 
@@ -979,101 +980,101 @@ public final class HardwareItems {
      * GTX 1080 and the Radiance R9 Fury X top the era. The Tessera K40 is the compute card of the servers, with no
      * fan of its own and twelve gigabytes, counted like every compute card at the clock it is rated at.
      */
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GT_730 = gpu("gpu_vertex_gt_730",
+    public static final DeferredItem<Item> GPU_VERTEX_GT_730 = gpu("gpu_vertex_gt_730",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 384, 2048, 38)
                     .on(Microarchitectures.KEPLER, "GK208", 902))
             .named("Envya Vertex GT 730").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_7750 = gpu("gpu_radiance_hd_7750",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_7750 = gpu("gpu_radiance_hd_7750",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 512, 1024, 55)
                     .on(Microarchitectures.GCN, "Cape Verde", 800))
             .named("Velocion Radiance HD 7750").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_550_TI = gpu("gpu_vertex_gtx_550_ti",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_550_TI = gpu("gpu_vertex_gtx_550_ti",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 192, 1024, 116)
                     .on(Microarchitectures.FERMI, "GF116", 1800))
             .named("Envya Vertex GTX 550 Ti").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_750_TI = gpu("gpu_vertex_gtx_750_ti",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_750_TI = gpu("gpu_vertex_gtx_750_ti",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 640, 2048, 60)
                     .on(Microarchitectures.MAXWELL, "GM107", 1020))
             .named("Envya Vertex GTX 750 Ti").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_7850 = gpu("gpu_radiance_hd_7850",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_7850 = gpu("gpu_radiance_hd_7850",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 1024, 2048, 130)
                     .on(Microarchitectures.GCN, "Pitcairn", 860))
             .named("Velocion Radiance HD 7850").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_660 = gpu("gpu_vertex_gtx_660",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_660 = gpu("gpu_vertex_gtx_660",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 960, 2048, 140)
                     .on(Microarchitectures.KEPLER, "GK106", 980))
             .named("Envya Vertex GTX 660").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_1060 = gpu("gpu_vertex_gtx_1060",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_1060 = gpu("gpu_vertex_gtx_1060",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 1280, 6144, 120)
                     .on(Microarchitectures.PASCAL, "GP106", 1506))
             .named("Envya Vertex GTX 1060").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_480 = gpu("gpu_radiance_rx_480",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_480 = gpu("gpu_radiance_rx_480",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2304, 8192, 150)
                     .on(Microarchitectures.GCN, "Polaris 10", 1120))
             .named("Velocion Radiance RX 480").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_970 = gpu("gpu_vertex_gtx_970",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_970 = gpu("gpu_vertex_gtx_970",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 1664, 4096, 145)
                     .on(Microarchitectures.MAXWELL, "GM204", 1050))
             .named("Envya Vertex GTX 970").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_7970 = ComputingModule.GPU_HD_7970;
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_780_TI = gpu("gpu_vertex_gtx_780_ti",
+    public static final DeferredItem<Item> GPU_RADIANCE_HD_7970 = ComputingModule.GPU_HD_7970;
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_780_TI = gpu("gpu_vertex_gtx_780_ti",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2880, 3072, 250)
                     .on(Microarchitectures.KEPLER, "GK110", 875))
             .named("Envya Vertex GTX 780 Ti").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_R9_290X = gpu("gpu_radiance_r9_290x",
+    public static final DeferredItem<Item> GPU_RADIANCE_R9_290X = gpu("gpu_radiance_r9_290x",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2816, 4096, 290)
                     .on(Microarchitectures.GCN, "Hawaii", 1000))
             .named("Velocion Radiance R9 290X").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_R9_FURY_X = gpu("gpu_radiance_r9_fury_x",
+    public static final DeferredItem<Item> GPU_RADIANCE_R9_FURY_X = gpu("gpu_radiance_r9_fury_x",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 4096, 4096, 275)
                     .on(Microarchitectures.GCN, "Fiji", 1050))
             .named("Velocion Radiance R9 Fury X").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_980_TI = gpu("gpu_vertex_gtx_980_ti",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_980_TI = gpu("gpu_vertex_gtx_980_ti",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2816, 6144, 250)
                     .on(Microarchitectures.MAXWELL, "GM200", 1000))
             .named("Envya Vertex GTX 980 Ti").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_1080 = gpu("gpu_vertex_gtx_1080",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_1080 = gpu("gpu_vertex_gtx_1080",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2560, 8192, 180)
                     .on(Microarchitectures.PASCAL, "GP104", 1607))
             .named("Envya Vertex GTX 1080").register();
-    public static final DeferredItem<GpuItem> GPU_TESSERA_K40 = gpu("gpu_tessera_k40",
+    public static final DeferredItem<Item> GPU_TESSERA_K40 = gpu("gpu_tessera_k40",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2880, 12288, 235)
                     .on(Microarchitectures.KEPLER, "GK110B", 875))
             .named("Envya Tessera K40").register();
 
-    public static final DeferredItem<PsuItem> PSU_850G =
+    public static final DeferredItem<Item> PSU_850G =
             psu("psu_850g", HardwareEra.STANDARD, new PsuSpec(850, 90)).named("MF PowerGold 850G").register();
 
     /*
      * The Standard ATX boards, one per socket: LGA 1155 and LGA 1150 on PCIe 3.0, the AM3+ board on the PCIe 2.0 its
      * chipset had, and the FM2+ board; and the LGA 2011 workstation board.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_1155 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_STANDARD_1155 =
             board("motherboard_atx_standard_1155", new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
                     CpuSocketId.LGA_1155, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Standard Motherboard (LGA 1155)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_LGA1150 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_STANDARD_LGA1150 =
             board("motherboard_atx_standard_lga1150", new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
                     CpuSocketId.LGA_1150, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Standard Motherboard (LGA 1150)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_AM3P =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_STANDARD_AM3P =
             board("motherboard_atx_standard_am3p", new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
                     CpuSocketId.AM3_PLUS, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 2))
                     .named("MF ATX Standard Motherboard (AM3+)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_FM2P =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_STANDARD_FM2P =
             board("motherboard_atx_standard_fm2p", new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
                     CpuSocketId.FM2_PLUS, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Standard Motherboard (FM2+)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_STANDARD_2011 =
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_STANDARD_2011 =
             board("motherboard_eatx_standard_2011", new MotherboardSpec(FormFactor.EATX, HardwareEra.STANDARD,
                     CpuSocketId.LGA_2011, 1, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 7, 4))
                     .named("MF EATX Standard Motherboard (LGA 2011)").register();
     // The G34 server boards, two Opteras or four, on the PCIe 2.0 of their chipset.
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_S_G34 =
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_S_G34 =
             board("motherboard_eeb_s_g34", new MotherboardSpec(FormFactor.EEB, HardwareEra.STANDARD,
                     CpuSocketId.G34, 2, Set.of(RamGeneration.DDR3), 16, PcieGeneration.PCIE_2_0, 6, 6))
                     .named("MF EEB-S Server Board (2x G34)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_S_G34 =
+    public static final DeferredItem<Item> MOTHERBOARD_MTX_S_G34 =
             board("motherboard_mtx_s_g34", new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD,
                     CpuSocketId.G34, 4, Set.of(RamGeneration.DDR3), 32, PcieGeneration.PCIE_2_0, 8, 6))
                     .named("MF MTX-S Motherboard (4x G34)").register();
@@ -1081,281 +1082,281 @@ public final class HardwareItems {
     //  ADVANCED: PCIe 4.0 and 5.0, DDR4 and DDR5, the Way and hybrid Centro processors, the Epic and Servo servers
 
     // AM4: the Awayken on the first three Way designs, and the Sprint below them.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_200GE = cpu("cpu_velocion_sprint_200ge",
+    public static final DeferredItem<Item> CPU_VELOCION_SPRINT_200GE = cpu("cpu_velocion_sprint_200ge",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 2, 3200, 35, false)
                     .on(Microarchitectures.WAY_1, "Raven Ridge").withSmt())
             .named("Velocion Sprint 200GE").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_3_3200G = cpu("cpu_velocion_awayken_3_3200g",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_3_3200G = cpu("cpu_velocion_awayken_3_3200g",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 4, 3600, 65, false)
                     .on(Microarchitectures.WAY_1_PLUS, "Picasso"))
             .named("Velocion Awayken 3 3200G").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_5_1600 = cpu("cpu_velocion_awayken_5_1600",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_5_1600 = cpu("cpu_velocion_awayken_5_1600",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 6, 3200, 65, false)
                     .on(Microarchitectures.WAY_1, "Summit Ridge").withSmt())
             .named("Velocion Awayken 5 1600").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_5_3600 = cpu("cpu_velocion_awayken_5_3600",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_5_3600 = cpu("cpu_velocion_awayken_5_3600",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 6, 3600, 65, false)
                     .on(Microarchitectures.WAY_2, "Matisse").withSmt())
             .named("Velocion Awayken 5 3600").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_7_1800X = cpu("cpu_velocion_awayken_7_1800x",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_7_1800X = cpu("cpu_velocion_awayken_7_1800x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 8, 3600, 95, false)
                     .on(Microarchitectures.WAY_1, "Summit Ridge").withSmt())
             .named("Velocion Awayken 7 1800X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_7_5800X3D = cpu("cpu_velocion_awayken_7_5800x3d",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_7_5800X3D = cpu("cpu_velocion_awayken_7_5800x3d",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 8, 3400, 105, false)
                     .on(Microarchitectures.WAY_3, "Vermeer").withSmt())
             .named("Velocion Awayken 7 5800X3D").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_3900X = cpu("cpu_velocion_awayken_9_3900x",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_9_3900X = cpu("cpu_velocion_awayken_9_3900x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 12, 3800, 105, false)
                     .on(Microarchitectures.WAY_2, "Matisse").withSmt())
             .named("Velocion Awayken 9 3900X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_5900X = cpu("cpu_velocion_awayken_9_5900x",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_9_5900X = cpu("cpu_velocion_awayken_9_5900x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 12, 3700, 105, false)
                     .on(Microarchitectures.WAY_3, "Vermeer").withSmt())
             .named("Velocion Awayken 9 5900X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_5950X = cpu("cpu_velocion_awayken_9_5950x",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_9_5950X = cpu("cpu_velocion_awayken_9_5950x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 16, 3400, 105, false)
                     .on(Microarchitectures.WAY_3, "Vermeer").withSmt())
             .named("Velocion Awayken 9 5950X").register();
 
     // AM5: Way 4 and Way 5.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_5_7600 = cpu("cpu_velocion_awayken_5_7600",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_5_7600 = cpu("cpu_velocion_awayken_5_7600",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 6, 3800, 65, false)
                     .on(Microarchitectures.WAY_4, "Raphael").withSmt())
             .named("Velocion Awayken 5 7600").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_7_7700X = cpu("cpu_velocion_awayken_7_7700x",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_7_7700X = cpu("cpu_velocion_awayken_7_7700x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 8, 4500, 105, false)
                     .on(Microarchitectures.WAY_4, "Raphael").withSmt())
             .named("Velocion Awayken 7 7700X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_7_9800X3D = cpu("cpu_velocion_awayken_7_9800x3d",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_7_9800X3D = cpu("cpu_velocion_awayken_7_9800x3d",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 8, 4700, 120, false)
                     .on(Microarchitectures.WAY_5, "Granite Ridge").withSmt())
             .named("Velocion Awayken 7 9800X3D").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_7950X = cpu("cpu_velocion_awayken_9_7950x",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_9_7950X = cpu("cpu_velocion_awayken_9_7950x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 16, 4500, 170, false)
                     .on(Microarchitectures.WAY_4, "Raphael").withSmt())
             .named("Velocion Awayken 9 7950X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_9950X = cpu("cpu_velocion_awayken_9_9950x",
+    public static final DeferredItem<Item> CPU_VELOCION_AWAYKEN_9_9950X = cpu("cpu_velocion_awayken_9_9950x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 16, 4300, 170, false)
                     .on(Microarchitectures.WAY_5, "Granite Ridge").withSmt())
             .named("Velocion Awayken 9 9950X").register();
 
     // LGA 1151: Kaby Lake and Coffee Lake.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_G4560 = cpu("cpu_integra_pentix_g4560",
+    public static final DeferredItem<Item> CPU_INTEGRA_PENTIX_G4560 = cpu("cpu_integra_pentix_g4560",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 2, 3500, 54, false)
                     .on(Microarchitectures.KABY_LAKE, "").withSmt())
             .named("Integra Pentix G4560").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_8100 = cpu("cpu_integra_centro_c3_8100",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C3_8100 = cpu("cpu_integra_centro_c3_8100",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 4, 3600, 65, false)
                     .on(Microarchitectures.COFFEE_LAKE, ""))
             .named("Integra Centro c3 8100").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_8400 = cpu("cpu_integra_centro_c5_8400",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C5_8400 = cpu("cpu_integra_centro_c5_8400",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 6, 2800, 65, false)
                     .on(Microarchitectures.COFFEE_LAKE, ""))
             .named("Integra Centro c5 8400").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_8700K = cpu("cpu_integra_centro_c7_8700k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C7_8700K = cpu("cpu_integra_centro_c7_8700k",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 6, 3700, 95, false)
                     .on(Microarchitectures.COFFEE_LAKE, "").withSmt())
             .named("Integra Centro c7 8700K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_9900K = cpu("cpu_integra_centro_c9_9900k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C9_9900K = cpu("cpu_integra_centro_c9_9900k",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 8, 3600, 95, false)
                     .on(Microarchitectures.COFFEE_LAKE, "").withSmt())
             .named("Integra Centro c9 9900K").register();
 
     // LGA 1200: Comet Lake.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_10100 = cpu("cpu_integra_centro_c3_10100",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C3_10100 = cpu("cpu_integra_centro_c3_10100",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1200, 4, 3600, 65, false)
                     .on(Microarchitectures.COMET_LAKE, "").withSmt())
             .named("Integra Centro c3 10100").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_10400 = cpu("cpu_integra_centro_c5_10400",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C5_10400 = cpu("cpu_integra_centro_c5_10400",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1200, 6, 2900, 65, false)
                     .on(Microarchitectures.COMET_LAKE, "").withSmt())
             .named("Integra Centro c5 10400").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_10900K = cpu("cpu_integra_centro_c9_10900k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C9_10900K = cpu("cpu_integra_centro_c9_10900k",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1200, 10, 3700, 125, false)
                     .on(Microarchitectures.COMET_LAKE, "").withSmt())
             .named("Integra Centro c9 10900K").register();
 
     // LGA 1700: the first hybrid Centro, performance cores with the Gracemont efficiency cores beside them.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_12100 = cpu("cpu_integra_centro_c3_12100",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C3_12100 = cpu("cpu_integra_centro_c3_12100",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 4, 3300, 60, false)
                     .on(Microarchitectures.ALDER_LAKE, "").withSmt())
             .named("Integra Centro c3 12100").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_12400 = cpu("cpu_integra_centro_c5_12400",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C5_12400 = cpu("cpu_integra_centro_c5_12400",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 6, 2500, 65, false)
                     .on(Microarchitectures.ALDER_LAKE, "").withSmt())
             .named("Integra Centro c5 12400").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_13600K = cpu("cpu_integra_centro_c5_13600k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C5_13600K = cpu("cpu_integra_centro_c5_13600k",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 6, 3500, 125, false)
                     .on(Microarchitectures.RAPTOR_LAKE, "").withSmt()
                     .withEfficiencyCores(8, 2600, Microarchitectures.GRACEMONT))
             .named("Integra Centro c5 13600K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_12900K = cpu("cpu_integra_centro_c9_12900k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C9_12900K = cpu("cpu_integra_centro_c9_12900k",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 8, 3200, 125, false)
                     .on(Microarchitectures.ALDER_LAKE, "").withSmt()
                     .withEfficiencyCores(8, 2400, Microarchitectures.GRACEMONT))
             .named("Integra Centro c9 12900K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_13900K = cpu("cpu_integra_centro_c9_13900k",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C9_13900K = cpu("cpu_integra_centro_c9_13900k",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 8, 3000, 125, false)
                     .on(Microarchitectures.RAPTOR_LAKE, "").withSmt()
                     .withEfficiencyCores(16, 2200, Microarchitectures.GRACEMONT))
             .named("Integra Centro c9 13900K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_13900KS = cpu("cpu_integra_centro_c9_13900ks",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C9_13900KS = cpu("cpu_integra_centro_c9_13900ks",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 8, 3200, 150, false)
                     .on(Microarchitectures.RAPTOR_LAKE, "").withSmt()
                     .withEfficiencyCores(16, 2400, Microarchitectures.GRACEMONT))
             .named("Integra Centro c9 13900KS").register();
 
     // LGA 1851: the Centro Ultra, one thread a core, with the Skymont efficiency cores.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_ULTRA_C5_225 = cpu("cpu_integra_centro_ultra_c5_225",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_ULTRA_C5_225 = cpu("cpu_integra_centro_ultra_c5_225",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1851, 6, 3300, 65, false)
                     .on(Microarchitectures.ARROW_LAKE, "")
                     .withEfficiencyCores(4, 2700, Microarchitectures.SKYMONT))
             .named("Integra Centro Ultra c5 225").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_ULTRA_C5_245K =
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_ULTRA_C5_245K =
             cpu("cpu_integra_centro_ultra_c5_245k", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1851, 6, 4200,
                     125, false).on(Microarchitectures.ARROW_LAKE, "")
                     .withEfficiencyCores(8, 3600, Microarchitectures.SKYMONT))
             .named("Integra Centro Ultra c5 245K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_ULTRA_C7_265K =
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_ULTRA_C7_265K =
             cpu("cpu_integra_centro_ultra_c7_265k", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1851, 8, 3900,
                     125, false).on(Microarchitectures.ARROW_LAKE, "")
                     .withEfficiencyCores(12, 3300, Microarchitectures.SKYMONT))
             .named("Integra Centro Ultra c7 265K").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_ULTRA_C9_285K =
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_ULTRA_C9_285K =
             cpu("cpu_integra_centro_ultra_c9_285k", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1851, 8, 3700,
                     125, false).on(Microarchitectures.ARROW_LAKE, "")
                     .withEfficiencyCores(16, 3200, Microarchitectures.SKYMONT))
             .named("Integra Centro Ultra c9 285K").register();
 
     // LGA 2066: the workstation Centro c9, on the server design of their years.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_7900X = cpu("cpu_integra_centro_c9_7900x",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C9_7900X = cpu("cpu_integra_centro_c9_7900x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_2066, 10, 3300, 140, false)
                     .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
             .named("Integra Centro c9 7900X").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_7980XE = cpu("cpu_integra_centro_c9_7980xe",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C9_7980XE = cpu("cpu_integra_centro_c9_7980xe",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_2066, 18, 2600, 165, false)
                     .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
             .named("Integra Centro c9 7980XE").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_10980XE = cpu("cpu_integra_centro_c9_10980xe",
+    public static final DeferredItem<Item> CPU_INTEGRA_CENTRO_C9_10980XE = cpu("cpu_integra_centro_c9_10980xe",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_2066, 18, 3000, 165, false)
                     .on(Microarchitectures.CASCADE_LAKE, "").withSmt())
             .named("Integra Centro c9 10980XE").register();
 
     // sTR4 and sTR5: the Threadkiller of the workstations, up to ninety-six cores.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_1920X =
+    public static final DeferredItem<Item> CPU_VELOCION_THREADKILLER_1920X =
             cpu("cpu_velocion_threadkiller_1920x", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR4, 12, 3500, 180,
                     false).on(Microarchitectures.WAY_1, "Whitehaven").withSmt())
             .named("Velocion Threadkiller 1920X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_1950X =
+    public static final DeferredItem<Item> CPU_VELOCION_THREADKILLER_1950X =
             cpu("cpu_velocion_threadkiller_1950x", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR4, 16, 3400, 180,
                     false).on(Microarchitectures.WAY_1, "Whitehaven").withSmt())
             .named("Velocion Threadkiller 1950X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_2990WX =
+    public static final DeferredItem<Item> CPU_VELOCION_THREADKILLER_2990WX =
             cpu("cpu_velocion_threadkiller_2990wx", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR4, 32, 3000, 250,
                     false).on(Microarchitectures.WAY_1_PLUS, "Colfax").withSmt())
             .named("Velocion Threadkiller 2990WX").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_7960X =
+    public static final DeferredItem<Item> CPU_VELOCION_THREADKILLER_7960X =
             cpu("cpu_velocion_threadkiller_7960x", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR5, 24, 4200, 350,
                     false).on(Microarchitectures.WAY_4, "Storm Peak").withSmt())
             .named("Velocion Threadkiller 7960X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_7980X =
+    public static final DeferredItem<Item> CPU_VELOCION_THREADKILLER_7980X =
             cpu("cpu_velocion_threadkiller_7980x", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR5, 64, 3200, 350,
                     false).on(Microarchitectures.WAY_4, "Storm Peak").withSmt())
             .named("Velocion Threadkiller 7980X").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_7995WX =
+    public static final DeferredItem<Item> CPU_VELOCION_THREADKILLER_7995WX =
             cpu("cpu_velocion_threadkiller_7995wx", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR5, 96, 2500, 350,
                     false).on(Microarchitectures.WAY_4, "Storm Peak").withSmt())
             .named("Velocion Threadkiller 7995WX").register();
 
     // SP3 and SP5: the Epic, two to a server board and four to the Mainframe's.
-    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_7251 = cpu("cpu_velocion_epic_7251",
+    public static final DeferredItem<Item> CPU_VELOCION_EPIC_7251 = cpu("cpu_velocion_epic_7251",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP3, 8, 2100, 120, false)
                     .on(Microarchitectures.WAY_1, "Naples").withSmt())
             .named("Velocion Epic 7251").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_7302 = cpu("cpu_velocion_epic_7302",
+    public static final DeferredItem<Item> CPU_VELOCION_EPIC_7302 = cpu("cpu_velocion_epic_7302",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP3, 16, 3000, 155, false)
                     .on(Microarchitectures.WAY_2, "Rome").withSmt())
             .named("Velocion Epic 7302").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_7452 = cpu("cpu_velocion_epic_7452",
+    public static final DeferredItem<Item> CPU_VELOCION_EPIC_7452 = cpu("cpu_velocion_epic_7452",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP3, 32, 2350, 155, false)
                     .on(Microarchitectures.WAY_2, "Rome").withSmt())
             .named("Velocion Epic 7452").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_7763 = cpu("cpu_velocion_epic_7763",
+    public static final DeferredItem<Item> CPU_VELOCION_EPIC_7763 = cpu("cpu_velocion_epic_7763",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP3, 64, 2450, 280, false)
                     .on(Microarchitectures.WAY_3, "Milan").withSmt())
             .named("Velocion Epic 7763").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_9124 = cpu("cpu_velocion_epic_9124",
+    public static final DeferredItem<Item> CPU_VELOCION_EPIC_9124 = cpu("cpu_velocion_epic_9124",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP5, 16, 3000, 200, false)
                     .on(Microarchitectures.WAY_4, "Genoa").withSmt())
             .named("Velocion Epic 9124").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_9374F = cpu("cpu_velocion_epic_9374f",
+    public static final DeferredItem<Item> CPU_VELOCION_EPIC_9374F = cpu("cpu_velocion_epic_9374f",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP5, 32, 3850, 320, false)
                     .on(Microarchitectures.WAY_4, "Genoa").withSmt())
             .named("Velocion Epic 9374F").register();
-    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_9654 = cpu("cpu_velocion_epic_9654",
+    public static final DeferredItem<Item> CPU_VELOCION_EPIC_9654 = cpu("cpu_velocion_epic_9654",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP5, 96, 2400, 360, false)
                     .on(Microarchitectures.WAY_4, "Genoa").withSmt())
             .named("Velocion Epic 9654").register();
 
     // LGA 3647: the Servo Bronzo, Plata, Oro and Platina of the first scalable servers, and the W-3175X.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_BRONZO_3106 = cpu("cpu_integra_servo_bronzo_3106",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_BRONZO_3106 = cpu("cpu_integra_servo_bronzo_3106",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 8, 1700, 85, false)
                     .on(Microarchitectures.SKYLAKE_SP, ""))
             .named("Integra Servo Bronzo 3106").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATA_4114 = cpu("cpu_integra_servo_plata_4114",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATA_4114 = cpu("cpu_integra_servo_plata_4114",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 10, 2200, 85, false)
                     .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
             .named("Integra Servo Plata 4114").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_ORO_6148 = cpu("cpu_integra_servo_oro_6148",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_ORO_6148 = cpu("cpu_integra_servo_oro_6148",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 20, 2400, 150, false)
                     .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
             .named("Integra Servo Oro 6148").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8180 = cpu("cpu_integra_servo_platina_8180",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATINA_8180 = cpu("cpu_integra_servo_platina_8180",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 28, 2500, 205, false)
                     .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
             .named("Integra Servo Platina 8180").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_W_3175X = cpu("cpu_integra_servo_w_3175x",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_W_3175X = cpu("cpu_integra_servo_w_3175x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 28, 3100, 255, false)
                     .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
             .named("Integra Servo W-3175X").register();
 
     // LGA 4189: Ice Lake-SP, and the Cooper Lake Platina 8380H of the four-way boards.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATA_4314 = cpu("cpu_integra_servo_plata_4314",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATA_4314 = cpu("cpu_integra_servo_plata_4314",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4189, 16, 2400, 135, false)
                     .on(Microarchitectures.ICE_LAKE_SP, "").withSmt())
             .named("Integra Servo Plata 4314").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8352Y =
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATINA_8352Y =
             cpu("cpu_integra_servo_platina_8352y", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4189, 32, 2200,
                     205, false).on(Microarchitectures.ICE_LAKE_SP, "").withSmt())
             .named("Integra Servo Platina 8352Y").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8380H =
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATINA_8380H =
             cpu("cpu_integra_servo_platina_8380h", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4189, 28, 2900,
                     250, false).on(Microarchitectures.COOPER_LAKE, "").withSmt())
             .named("Integra Servo Platina 8380H").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8380 = cpu("cpu_integra_servo_platina_8380",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATINA_8380 = cpu("cpu_integra_servo_platina_8380",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4189, 40, 2300, 270, false)
                     .on(Microarchitectures.ICE_LAKE_SP, "").withSmt())
             .named("Integra Servo Platina 8380").register();
 
     // LGA 4677: Sapphire and Emerald Rapids, and the w9-3495X of the W790 workstation.
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATA_4410Y = cpu("cpu_integra_servo_plata_4410y",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATA_4410Y = cpu("cpu_integra_servo_plata_4410y",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 12, 2000, 150, false)
                     .on(Microarchitectures.SAPPHIRE_RAPIDS, "").withSmt())
             .named("Integra Servo Plata 4410Y").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_ORO_6442Y = cpu("cpu_integra_servo_oro_6442y",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_ORO_6442Y = cpu("cpu_integra_servo_oro_6442y",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 24, 2600, 225, false)
                     .on(Microarchitectures.SAPPHIRE_RAPIDS, "").withSmt())
             .named("Integra Servo Oro 6442Y").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_W9_3495X = cpu("cpu_integra_servo_w9_3495x",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_W9_3495X = cpu("cpu_integra_servo_w9_3495x",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 56, 1900, 350, false)
                     .on(Microarchitectures.SAPPHIRE_RAPIDS, "").withSmt())
             .named("Integra Servo w9-3495X").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8490H =
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATINA_8490H =
             cpu("cpu_integra_servo_platina_8490h", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 60, 1900,
                     350, false).on(Microarchitectures.SAPPHIRE_RAPIDS, "").withSmt())
             .named("Integra Servo Platina 8490H").register();
-    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8592 = cpu("cpu_integra_servo_platina_8592",
+    public static final DeferredItem<Item> CPU_INTEGRA_SERVO_PLATINA_8592 = cpu("cpu_integra_servo_platina_8592",
             new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 64, 1900, 350, false)
                     .on(Microarchitectures.EMERALD_RAPIDS, "").withSmt())
             .named("Integra Servo Platina 8592+").register();
@@ -1364,28 +1365,28 @@ public final class HardwareItems {
      * Advanced memory: DDR4 for the AM4, LGA 1151, 1200, 2066, sTR4, SP3, 3647 and 4189 boards, DDR5 for the AM5,
      * LGA 1851, sTR5, SP5 and 4677 ones, and either on the LGA 1700 board; the registered modules are the servers'.
      */
-    public static final DeferredItem<RamItem> RAM_DDR4_8192 = ram("ram_ddr4_8192",
+    public static final DeferredItem<Item> RAM_DDR4_8192 = ram("ram_ddr4_8192",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 2048, 12))
             .named("Stratix Layer DDR4-8192").register();
-    public static final DeferredItem<RamItem> RAM_DDR4_16384 = ram("ram_ddr4_16384",
+    public static final DeferredItem<Item> RAM_DDR4_16384 = ram("ram_ddr4_16384",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 4096, 13))
             .named("Stratix Layer DDR4-16384").register();
-    public static final DeferredItem<RamItem> RAM_DDR4_32768 = ram("ram_ddr4_32768",
+    public static final DeferredItem<Item> RAM_DDR4_32768 = ram("ram_ddr4_32768",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 8192, 15))
             .named("Stratix Layer DDR4-32768").register();
-    public static final DeferredItem<RamItem> RAM_DDR4_65536_RDIMM = ram("ram_ddr4_65536_rdimm",
+    public static final DeferredItem<Item> RAM_DDR4_65536_RDIMM = ram("ram_ddr4_65536_rdimm",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 16384, 18))
             .named("Stratix Layer DDR4-65536 RDIMM").register();
-    public static final DeferredItem<RamItem> RAM_DDR5_16384 = ram("ram_ddr5_16384",
+    public static final DeferredItem<Item> RAM_DDR5_16384 = ram("ram_ddr5_16384",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 4096, 12))
             .named("Stratix Layer DDR5-16384").register();
-    public static final DeferredItem<RamItem> RAM_DDR5_32768 = ram("ram_ddr5_32768",
+    public static final DeferredItem<Item> RAM_DDR5_32768 = ram("ram_ddr5_32768",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 8192, 14))
             .named("Stratix Layer DDR5-32768").register();
-    public static final DeferredItem<RamItem> RAM_DDR5_65536_RDIMM = ram("ram_ddr5_65536_rdimm",
+    public static final DeferredItem<Item> RAM_DDR5_65536_RDIMM = ram("ram_ddr5_65536_rdimm",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 16384, 18))
             .named("Stratix Layer DDR5-65536 RDIMM").register();
-    public static final DeferredItem<RamItem> RAM_DDR5_131072_RDIMM = ram("ram_ddr5_131072_rdimm",
+    public static final DeferredItem<Item> RAM_DDR5_131072_RDIMM = ram("ram_ddr5_131072_rdimm",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 32768, 22))
             .named("Stratix Layer DDR5-131072 RDIMM").register();
 
@@ -1394,71 +1395,71 @@ public final class HardwareItems {
      * Vertex GTX 1650 are the floor; the Vertex RTX 5090 and the Radiance RX 7900 XTX top the era. The Tessera V100,
      * A100 and H100 are the compute cards of the servers.
      */
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_550 = gpu("gpu_radiance_rx_550",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_550 = gpu("gpu_radiance_rx_550",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 512, 4096, 50)
                     .on(Microarchitectures.GCN, "Polaris 12", 1100))
             .named("Velocion Radiance RX 550").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_1650 = gpu("gpu_vertex_gtx_1650",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_1650 = gpu("gpu_vertex_gtx_1650",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 896, 4096, 75)
                     .on(Microarchitectures.TURING, "TU117", 1485))
             .named("Envya Vertex GTX 1650").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_580 = gpu("gpu_radiance_rx_580",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_580 = gpu("gpu_radiance_rx_580",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 2304, 8192, 185)
                     .on(Microarchitectures.GCN, "Polaris 20", 1257))
             .named("Velocion Radiance RX 580").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_2060 = gpu("gpu_vertex_rtx_2060",
+    public static final DeferredItem<Item> GPU_VERTEX_RTX_2060 = gpu("gpu_vertex_rtx_2060",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 1920, 6144, 160)
                     .on(Microarchitectures.TURING, "TU106", 1365))
             .named("Envya Vertex RTX 2060").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_1080_TI = gpu("gpu_vertex_gtx_1080_ti",
+    public static final DeferredItem<Item> GPU_VERTEX_GTX_1080_TI = gpu("gpu_vertex_gtx_1080_ti",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 3584, 11264, 250)
                     .on(Microarchitectures.PASCAL, "GP102", 1480))
             .named("Envya Vertex GTX 1080 Ti").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_VEGA_64 = gpu("gpu_radiance_rx_vega_64",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_VEGA_64 = gpu("gpu_radiance_rx_vega_64",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 4096, 8192, 295)
                     .on(Microarchitectures.GCN, "Vega 10", 1247))
             .named("Velocion Radiance RX Vega 64").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_5700_XT = gpu("gpu_radiance_rx_5700_xt",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_5700_XT = gpu("gpu_radiance_rx_5700_xt",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 2560, 8192, 225)
                     .on(Microarchitectures.RDNA, "Navi 10", 1605))
             .named("Velocion Radiance RX 5700 XT").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_3060 = gpu("gpu_vertex_rtx_3060",
+    public static final DeferredItem<Item> GPU_VERTEX_RTX_3060 = gpu("gpu_vertex_rtx_3060",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 3584, 12288, 170)
                     .on(Microarchitectures.AMPERE, "GA106", 1320))
             .named("Envya Vertex RTX 3060").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_6600 = gpu("gpu_radiance_rx_6600",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_6600 = gpu("gpu_radiance_rx_6600",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 1792, 8192, 132)
                     .on(Microarchitectures.RDNA_2, "Navi 23", 1626))
             .named("Velocion Radiance RX 6600").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_3080 = gpu("gpu_vertex_rtx_3080",
+    public static final DeferredItem<Item> GPU_VERTEX_RTX_3080 = gpu("gpu_vertex_rtx_3080",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 8704, 10240, 320)
                     .on(Microarchitectures.AMPERE, "GA102", 1440))
             .named("Envya Vertex RTX 3080").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_6900_XT = gpu("gpu_radiance_rx_6900_xt",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_6900_XT = gpu("gpu_radiance_rx_6900_xt",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 5120, 16384, 300)
                     .on(Microarchitectures.RDNA_2, "Navi 21", 1825))
             .named("Velocion Radiance RX 6900 XT").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_4060 = gpu("gpu_vertex_rtx_4060",
+    public static final DeferredItem<Item> GPU_VERTEX_RTX_4060 = gpu("gpu_vertex_rtx_4060",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 3072, 8192, 115)
                     .on(Microarchitectures.ADA, "AD107", 1830))
             .named("Envya Vertex RTX 4060").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_7900_XTX = gpu("gpu_radiance_rx_7900_xtx",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_7900_XTX = gpu("gpu_radiance_rx_7900_xtx",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 6144, 24576, 355)
                     .on(Microarchitectures.RDNA_3, "Navi 31", 1855))
             .named("Velocion Radiance RX 7900 XTX").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_4090 = gpu("gpu_vertex_rtx_4090",
+    public static final DeferredItem<Item> GPU_VERTEX_RTX_4090 = gpu("gpu_vertex_rtx_4090",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 16384, 24576, 450)
                     .on(Microarchitectures.ADA, "AD102", 2235))
             .named("Envya Vertex RTX 4090").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_5060 = gpu("gpu_vertex_rtx_5060",
+    public static final DeferredItem<Item> GPU_VERTEX_RTX_5060 = gpu("gpu_vertex_rtx_5060",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_5_0, 3840, 8192, 145)
                     .on(Microarchitectures.BLACKWELL, "GB206", 2280))
             .named("Envya Vertex RTX 5060").register();
-    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_9070_XT = gpu("gpu_radiance_rx_9070_xt",
+    public static final DeferredItem<Item> GPU_RADIANCE_RX_9070_XT = gpu("gpu_radiance_rx_9070_xt",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_5_0, 4096, 16384, 304)
                     .on(Microarchitectures.RDNA_4, "Navi 48", 2400))
             .named("Velocion Radiance RX 9070 XT").register();
-    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_5090 = gpu("gpu_vertex_rtx_5090",
+    public static final DeferredItem<Item> GPU_VERTEX_RTX_5090 = gpu("gpu_vertex_rtx_5090",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_5_0, 21760, 32768, 575)
                     .on(Microarchitectures.BLACKWELL, "GB202", 2010))
             .named("Envya Vertex RTX 5090").register();
@@ -1466,95 +1467,95 @@ public final class HardwareItems {
      * The compute cards, counted at the clock they are rated at: a card with no fan of its own holds it in a server
      * built around it, and the clock they are sold by is that one.
      */
-    public static final DeferredItem<GpuItem> GPU_TESSERA_V100 = gpu("gpu_tessera_v100",
+    public static final DeferredItem<Item> GPU_TESSERA_V100 = gpu("gpu_tessera_v100",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 5120, 16384, 250)
                     .on(Microarchitectures.VOLTA, "GV100", 1380))
             .named("Envya Tessera V100").register();
-    public static final DeferredItem<GpuItem> GPU_TESSERA_A100 = gpu("gpu_tessera_a100",
+    public static final DeferredItem<Item> GPU_TESSERA_A100 = gpu("gpu_tessera_a100",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 6912, 40960, 250)
                     .on(Microarchitectures.AMPERE, "GA100", 1410))
             .named("Envya Tessera A100").register();
-    public static final DeferredItem<GpuItem> GPU_TESSERA_H100 = gpu("gpu_tessera_h100",
+    public static final DeferredItem<Item> GPU_TESSERA_H100 = gpu("gpu_tessera_h100",
             new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_5_0, 14592, 81920, 350)
                     .on(Microarchitectures.HOPPER, "GH100", 1755))
             .named("Envya Tessera H100").register();
 
     // The Advanced power supplies: the desktop PowerGold and PowerPlat, and the hot-swap server modules.
-    public static final DeferredItem<PsuItem> PSU_1000G =
+    public static final DeferredItem<Item> PSU_1000G =
             psu("psu_1000g", HardwareEra.ADVANCED, new PsuSpec(1000, 90)).named("MF PowerGold 1000G").register();
-    public static final DeferredItem<PsuItem> PSU_1200P =
+    public static final DeferredItem<Item> PSU_1200P =
             psu("psu_1200p", HardwareEra.ADVANCED, new PsuSpec(1200, 92)).named("MF PowerPlat 1200P").register();
-    public static final DeferredItem<PsuItem> PSU_1600P =
+    public static final DeferredItem<Item> PSU_1600P =
             psu("psu_1600p", HardwareEra.ADVANCED, new PsuSpec(1600, 92)).named("MF PowerPlat 1600P").register();
-    public static final DeferredItem<PsuItem> PSU_2000P =
+    public static final DeferredItem<Item> PSU_2000P =
             psu("psu_2000p", HardwareEra.ADVANCED, new PsuSpec(2000, 94)).named("MF ServerPSU 2000P").register();
-    public static final DeferredItem<PsuItem> PSU_3000P = psu("psu_3000p", HardwareEra.ADVANCED,
+    public static final DeferredItem<Item> PSU_3000P = psu("psu_3000p", HardwareEra.ADVANCED,
             new PsuSpec(3000, 94)).named("MF ServerPSU 3000P (Redundant)").register();
 
     /*
      * The Advanced ATX boards, one per socket, on the bus of their chipsets: PCIe 3.0 on LGA 1151 and 1200, 4.0 on
      * AM4, 5.0 on AM5, LGA 1700 and 1851. The LGA 1700 board takes DDR4 or DDR5, as the boards of its socket did.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_AM4 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_ADVANCED_AM4 =
             board("motherboard_atx_advanced_am4", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
                     CpuSocketId.AM4, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_4_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (AM4)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_AM5 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_ADVANCED_AM5 =
             board("motherboard_atx_advanced_am5", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
                     CpuSocketId.AM5, 1, Set.of(RamGeneration.DDR5), 4, PcieGeneration.PCIE_5_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (AM5)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1151 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_ADVANCED_1151 =
             board("motherboard_atx_advanced_1151", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_1151, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (LGA 1151)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1200 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_ADVANCED_1200 =
             board("motherboard_atx_advanced_1200", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_1200, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (LGA 1200)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1700 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_ADVANCED_1700 =
             board("motherboard_atx_advanced_1700", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_1700, 1, Set.of(RamGeneration.DDR4, RamGeneration.DDR5), 4,
                     PcieGeneration.PCIE_5_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (LGA 1700)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1851 =
+    public static final DeferredItem<Item> MOTHERBOARD_ATX_ADVANCED_1851 =
             board("motherboard_atx_advanced_1851", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_1851, 1, Set.of(RamGeneration.DDR5), 4, PcieGeneration.PCIE_5_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (LGA 1851)").register();
     // The workstation boards.
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_2066 =
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_ADVANCED_2066 =
             board("motherboard_eatx_advanced_2066", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_2066, 1, Set.of(RamGeneration.DDR4), 8, PcieGeneration.PCIE_3_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (LGA 2066)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_STR4 =
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_ADVANCED_STR4 =
             board("motherboard_eatx_advanced_str4", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
                     CpuSocketId.STR4, 1, Set.of(RamGeneration.DDR4), 8, PcieGeneration.PCIE_3_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (sTR4)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_STR5 =
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_ADVANCED_STR5 =
             board("motherboard_eatx_advanced_str5", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
                     CpuSocketId.STR5, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (sTR5)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_4677 =
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_ADVANCED_4677 =
             board("motherboard_eatx_advanced_4677", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_4677, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (LGA 4677)").register();
     // The two-way server boards.
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_SP3 =
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_A_SP3 =
             board("motherboard_eeb_a_sp3", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
                     CpuSocketId.SP3, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_4_0, 6, 6))
                     .named("MF EEB-A Server Board (2x SP3)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_SP5 =
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_A_SP5 =
             board("motherboard_eeb_a_sp5", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
                     CpuSocketId.SP5, 2, Set.of(RamGeneration.DDR5), 24, PcieGeneration.PCIE_5_0, 6, 6))
                     .named("MF EEB-A Server Board (2x SP5)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_3647 =
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_A_3647 =
             board("motherboard_eeb_a_3647", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_3647, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_3_0, 6, 6))
                     .named("MF EEB-A Server Board (2x LGA 3647)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_4189 =
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_A_4189 =
             board("motherboard_eeb_a_4189", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_4189, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_4_0, 6, 6))
                     .named("MF EEB-A Server Board (2x LGA 4189)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_4677 =
+    public static final DeferredItem<Item> MOTHERBOARD_EEB_A_4677 =
             board("motherboard_eeb_a_4677", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_4677, 2, Set.of(RamGeneration.DDR5), 16, PcieGeneration.PCIE_5_0, 6, 6))
                     .named("MF EEB-A Server Board (2x LGA 4677)").register();
@@ -1562,19 +1563,19 @@ public final class HardwareItems {
      * The Mainframe's four-way boards: real four-socket Xeon boards on LGA 3647 and 4189, and four Epics on SP3 and
      * SP5, which no board of the time held; the Mainframe is the machine's own design.
      */
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_SP3 =
+    public static final DeferredItem<Item> MOTHERBOARD_MTX_A_SP3 =
             board("motherboard_mtx_a_sp3", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
                     CpuSocketId.SP3, 4, Set.of(RamGeneration.DDR4), 64, PcieGeneration.PCIE_4_0, 8, 6))
                     .named("MF MTX-A Motherboard (4x SP3)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_SP5 =
+    public static final DeferredItem<Item> MOTHERBOARD_MTX_A_SP5 =
             board("motherboard_mtx_a_sp5", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
                     CpuSocketId.SP5, 4, Set.of(RamGeneration.DDR5), 64, PcieGeneration.PCIE_5_0, 8, 6))
                     .named("MF MTX-A Motherboard (4x SP5)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_3647 =
+    public static final DeferredItem<Item> MOTHERBOARD_MTX_A_3647 =
             board("motherboard_mtx_a_3647", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_3647, 4, Set.of(RamGeneration.DDR4), 48, PcieGeneration.PCIE_3_0, 8, 6))
                     .named("MF MTX-A Motherboard (4x LGA 3647)").register();
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_4189 =
+    public static final DeferredItem<Item> MOTHERBOARD_MTX_A_4189 =
             board("motherboard_mtx_a_4189", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_4189, 4, Set.of(RamGeneration.DDR4), 48, PcieGeneration.PCIE_3_0, 8, 6))
                     .named("MF MTX-A Motherboard (4x LGA 4189)").register();
@@ -1586,22 +1587,22 @@ public final class HardwareItems {
      * boards have their sound built in from the Transition on, where the Hi-Fi is the one card, and there is no
      * Standard card.
      */
-    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER = soundCard("sound_card_tone_blaster",
+    public static final DeferredItem<Item> SOUND_CARD_TONE_BLASTER = soundCard("sound_card_tone_blaster",
             new SoundCardSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 5, SoundCardSpec.Synthesis.FM, 9, 8, false,
                     SoundCardSpec.SampleRate.KHZ_22)).named("Artisan Tone Blaster").register();
-    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER_128 =
+    public static final DeferredItem<Item> SOUND_CARD_TONE_BLASTER_128 =
             soundCard("sound_card_tone_blaster_128", new SoundCardSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 5,
                     SoundCardSpec.Synthesis.FM, 9, 8, false, SoundCardSpec.SampleRate.KHZ_22))
                     .named("Artisan Tone Blaster 128").register();
-    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER_LIVE =
+    public static final DeferredItem<Item> SOUND_CARD_TONE_BLASTER_LIVE =
             soundCard("sound_card_tone_blaster_live", new SoundCardSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 8,
                     SoundCardSpec.Synthesis.WAVETABLE, 32, 16, true, SoundCardSpec.SampleRate.KHZ_44))
                     .named("Artisan Tone Blaster Live").register();
-    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER_AUDIGY =
+    public static final DeferredItem<Item> SOUND_CARD_TONE_BLASTER_AUDIGY =
             soundCard("sound_card_tone_blaster_audigy", new SoundCardSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0,
                     8, SoundCardSpec.Synthesis.WAVETABLE, 32, 16, true, SoundCardSpec.SampleRate.KHZ_44))
                     .named("Artisan Tone Blaster Audigy").register();
-    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER_HI_FI =
+    public static final DeferredItem<Item> SOUND_CARD_TONE_BLASTER_HI_FI =
             soundCard("sound_card_tone_blaster_hi_fi", new SoundCardSpec(HardwareEra.TRANSITION,
                     PcieGeneration.PCIE_1_0, 10, SoundCardSpec.Synthesis.WAVETABLE, 32, 16, true,
                     SoundCardSpec.SampleRate.KHZ_44))
@@ -1636,71 +1637,49 @@ public final class HardwareItems {
          */
     }
 
-    /* A part of {@code era}, on the components shelf of that era's tab. */
-    private static <T extends Item> ItemBuilder<T> declare(final String id, final HardwareEra era,
-                                                          final Function<Item.Properties, T> factory) {
-        return ComputingContent.CONTENT.item(id, factory)
-                .tab(ComputingContent.shelf(Shelf.COMPONENTS, era));
-    }
-
-    private static ItemBuilder<CpuItem> cpu(final String id, final CpuSpec spec) {
-        return declare(id, spec.era(), properties -> new CpuItem(properties, spec));
-    }
-
-    private static ItemBuilder<RamItem> ram(final String id, final RamSpec spec) {
-        return declare(id, spec.era(), properties -> new RamItem(properties, spec));
-    }
-
-    private static ItemBuilder<GpuItem> gpu(final String id, final GpuSpec spec) {
-        return declare(id, spec.era(), properties -> new GpuItem(properties, spec));
-    }
-
-    private static ItemBuilder<SoundCardItem> soundCard(final String id, final SoundCardSpec spec) {
-        return declare(id, spec.era(), properties -> new SoundCardItem(properties, spec));
+    private static ItemBuilder<Item> soundCard(final String id, final SoundCardSpec spec) {
+        return card(id, spec, spec.era());
     }
 
     private static ItemBuilder<BayDriveItem> bayDrive(final String id, final BayDriveSpec spec) {
-        return declare(id, spec.era(), properties -> new BayDriveItem(properties, spec));
-    }
-
-    /* A supply, which carries no era of its own: it is shown with the machines of the age it sold in. */
-    private static ItemBuilder<PsuItem> psu(final String id, final HardwareEra era, final PsuSpec spec) {
-        return declare(id, era, properties -> new PsuItem(properties, spec));
-    }
-
-    private static ItemBuilder<MotherboardItem> board(final String id, final MotherboardSpec spec) {
-        return declare(id, spec.era(), properties -> new MotherboardItem(properties, spec));
-    }
-
-    private static ItemBuilder<DiskItem> disk(final String id, final DiskSpec spec) {
-        return declare(id, spec.era(), properties -> new DiskItem(properties, spec));
+        return onShelf(id, spec.era(), properties -> new BayDriveItem(properties, spec));
     }
 
     /** The eras' parts first, then the supplies, then the disks: the last two carry no era worth sorting by. */
     private static int shelf(final Item item) {
-        return item instanceof PsuItem ? 1 : item instanceof DiskItem ? 2 : 0;
-    }
-
-    private static HardwareEra era(final Item item) {
-        return switch (item) {
-            case MotherboardItem board -> board.spec().era();
-            case CpuItem cpu -> cpu.spec().era();
-            case RamItem ram -> ram.spec().era();
-            case GpuItem gpu -> gpu.spec().era();
-            case SoundCardItem sound -> sound.spec().era();
-            case BayDriveItem drive -> drive.spec().era();
-            default -> HardwareEra.VINTAGE;
+        final HardwareRegistry.Part part = HardwareRegistry.part(item);
+        if (part == null) {
+            return 0;
+        }
+        return switch (part.kind()) {
+            case POWER_SUPPLY -> 1;
+            case DISK -> 2;
+            default -> 0;
         };
     }
 
+    private static Era era(final Item item) {
+        if (item instanceof BayDriveItem drive) {
+            return drive.spec().era();
+        }
+        final HardwareRegistry.Part part = HardwareRegistry.part(item);
+        return part == null || part.era() == null ? HardwareEra.VINTAGE : part.era();
+    }
+
     private static int kind(final Item item) {
-        return switch (item) {
-            case MotherboardItem board -> 0;
-            case CpuItem cpu -> 1;
-            case RamItem ram -> 2;
-            case GpuItem gpu -> 3;
-            case SoundCardItem sound -> 4;
-            case BayDriveItem drive -> 5;
+        if (item instanceof BayDriveItem) {
+            return 5;
+        }
+        final HardwareRegistry.Part part = HardwareRegistry.part(item);
+        if (part == null) {
+            return 6;
+        }
+        return switch (part.kind()) {
+            case MOTHERBOARD -> 0;
+            case PROCESSOR -> 1;
+            case MEMORY -> 2;
+            case GRAPHICS_CARD -> 3;
+            case EXPANSION_CARD -> part.spec() instanceof SoundCardSpec ? 4 : 6;
             default -> 6;
         };
     }

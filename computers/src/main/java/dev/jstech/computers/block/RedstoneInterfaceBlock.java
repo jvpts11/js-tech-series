@@ -15,8 +15,8 @@ import dev.jstech.computers.menu.RedstoneInterfaceMenu;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,15 +50,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RedstoneInterfaceBlock extends DirectionalBlock implements EntityBlock, IFaceConnector {
 
-    private final HardwareEra era;
+    private final Era era;
     private final FacePorts ports;
 
     public static final MapCodec<RedstoneInterfaceBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(RedstoneInterfaceBlock::era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(RedstoneInterfaceBlock::era)
     ).apply(i, RedstoneInterfaceBlock::new));
 
-    public RedstoneInterfaceBlock(final Properties properties, final HardwareEra era) {
+    public RedstoneInterfaceBlock(final Properties properties, final Era era) {
         super(properties);
         this.era = era;
         this.ports = PeripheralSockets.back(era);
@@ -66,7 +66,7 @@ public class RedstoneInterfaceBlock extends DirectionalBlock implements EntityBl
     }
 
     /** The era of its housing, which decides the port on its back. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

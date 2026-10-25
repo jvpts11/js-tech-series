@@ -368,11 +368,11 @@ public final class ComputingSounds {
 
     /* What the context says for that desktop on a Legacy machine. */
     private static Map<String, String> legacy(final String desktop) {
-        return Map.of(DESKTOP, desktop, SoundContext.ERA, HardwareEra.LEGACY.serializedName());
+        return Map.of(DESKTOP, desktop, SoundContext.ERA, HardwareEra.LEGACY.path());
     }
 
     /* What the context says for that desktop on a Standard machine. */
     private static Map<String, String> current(final String desktop) {
-        return Map.of(DESKTOP, desktop, SoundContext.ERA, HardwareEra.STANDARD.serializedName());
+        return Map.of(DESKTOP, desktop, SoundContext.ERA, HardwareEra.STANDARD.path());
     }
 }

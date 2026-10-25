@@ -7,10 +7,12 @@
  */
 package dev.jstech.computers.os.media;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The physical format of a medium, independent of the {@link MediaKind content} it carries.
@@ -23,6 +25,7 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
  * Capacities are in item-equivalents (1 item = 4 MB) and are tunable balance numbers, not final.
  */
 @TextHolder
+@ApiStatus.Experimental
 public enum MediaFormat {
 
     /** 3.5" floppy disk, the smallest, earliest medium. Read/write. */
@@ -63,7 +66,7 @@ public enum MediaFormat {
     }
 
     /** The hardware era the format belongs to, which decides what a file's bytes weigh on it. */
-    public HardwareEra era() {
+    public Era era() {
         return switch (this) {
             case FLOPPY -> HardwareEra.VINTAGE;
             case CD -> HardwareEra.LEGACY;

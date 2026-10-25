@@ -11,7 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.ProgramSpec;
@@ -295,7 +295,7 @@ public final class PortsMatrixGameTests {
         parts.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(EraParts.ramFor(board)));
         parts.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(EraParts.psuFor(kit.era())));
         parts.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
-                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+                new ItemStack(EraParts.cardFor(board, GpuSpec.class)));
         parts.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, new ItemStack(EraParts.diskFor(kit.era())));
         mainframe.togglePower();
         if (!mainframe.installOs(FREEBSD)) {

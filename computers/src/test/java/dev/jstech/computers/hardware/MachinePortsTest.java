@@ -10,6 +10,7 @@ package dev.jstech.computers.hardware;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Set;
@@ -87,16 +88,16 @@ class MachinePortsTest {
                 cards, List.of(new RamSpec(board.era(), RamGeneration.DDR3, 2048, 15)), new PsuSpec(650, 90));
     }
 
-    private static MotherboardSpec board(final FormFactor formFactor, final HardwareEra era) {
+    private static MotherboardSpec board(final FormFactor formFactor, final Era era) {
         return new MotherboardSpec(formFactor, era, CpuSocketId.LGA_1150, 1, Set.of(RamGeneration.DDR3), 4,
                 PcieGeneration.PCIE_3_0, 4, 2);
     }
 
-    private static GpuSpec gpu(final HardwareEra era) {
+    private static GpuSpec gpu(final Era era) {
         return new GpuSpec(era, PcieGeneration.PCIE_3_0, 2048, 3072, 250);
     }
 
-    private static SoundCardSpec soundCard(final HardwareEra era) {
+    private static SoundCardSpec soundCard(final Era era) {
         return new SoundCardSpec(era, PcieGeneration.PCI, 5, SoundCardSpec.Synthesis.FM, 9, 8, false,
                 SoundCardSpec.SampleRate.KHZ_22);
     }

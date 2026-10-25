@@ -15,6 +15,7 @@ import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.jstechseries.theme.client.EraThemes;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import java.util.List;
@@ -191,7 +192,7 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
      * the GUI in the new era live.
      */
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return null;
     }
 
@@ -201,7 +202,7 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
      * bezel rather than over it.
      */
     public MonitorFrameStyle.Geometry frameBounds() {
-        final HardwareEra era = screenEra();
+        final Era era = screenEra();
         return MonitorFrameStyle
                 .forEra(era == null ? HardwareEra.STANDARD : era)
                 .geometry(leftPos, topPos, imageWidth, imageHeight);

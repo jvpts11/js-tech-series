@@ -7,9 +7,13 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestProgression;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
@@ -57,8 +61,9 @@ public final class SizeOverflowGameTests {
 
     @GameTest(template = ARENA)
     public static void itemsFor_theLargestSizeThereIsStillCostsSomething(final GameTestHelper helper) {
-        for (final HardwareEra era : HardwareEra.values()) {
-            helper.assertTrue(era.itemsFor(Long.MAX_VALUE) > 0L,
+        // Every era of the world, an add-on's among them.
+        for (final Era era : Eras.ordered()) {
+            helper.assertTrue(EraStorage.itemsFor(era, Long.MAX_VALUE) > 0L,
                     "on a " + era + " disk the largest size there is cost nothing at all");
         }
         helper.succeed();
@@ -66,9 +71,12 @@ public final class SizeOverflowGameTests {
 
     @GameTest(template = ARENA)
     public static void itemsFor_anOrdinarySizeIsUnchanged(final GameTestHelper helper) {
-        helper.assertTrue(HardwareEra.VINTAGE.itemsFor(4L) == 4L, "four megabytes on a vintage disk");
-        helper.assertTrue(HardwareEra.LEGACY.itemsFor(17L) == 2L, "seventeen on a legacy disk rounds up to two");
-        helper.assertTrue(HardwareEra.STANDARD.itemsFor(0L) == 0L, "nothing costs nothing");
+        helper.assertTrue(EraStorage.itemsFor(HardwareEra.VINTAGE, 4L) == 4L, "four megabytes on a vintage disk");
+        helper.assertTrue(EraStorage.itemsFor(HardwareEra.LEGACY, 17L) == 2L,
+                "seventeen on a legacy disk rounds up to two");
+        helper.assertTrue(EraStorage.itemsFor(HardwareEra.STANDARD, 0L) == 0L, "nothing costs nothing");
+        helper.assertTrue(EraStorage.mbPerItem(TestProgression.QUANTUM) == EraStorage.mbPerItem(HardwareEra.ADVANCED),
+                "an add-on's era costs what the era before it does");
         helper.succeed();
     }
 }

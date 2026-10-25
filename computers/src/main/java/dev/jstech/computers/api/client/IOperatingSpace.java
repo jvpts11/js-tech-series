@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers.api.client;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * One opening of a machine's operating space, as the screen that draws it is handed it: which machine and monitor it
@@ -33,6 +35,7 @@ public interface IOperatingSpace {
     /** Which space the machine runs. */
     ResourceLocation spaceId();
 
-    /** The era of the machine's hardware by its name, {@code vintage}, {@code legacy} and so on, for the look. */
-    String era();
+    /** The era of the machine's hardware, for the look; any mod's era, the series' own among them. */
+    @ApiStatus.Experimental
+    Era era();
 }

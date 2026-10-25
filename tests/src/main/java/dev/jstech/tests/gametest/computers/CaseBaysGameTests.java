@@ -17,7 +17,7 @@ import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.BayDriveItem;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import java.util.List;
@@ -48,10 +48,13 @@ public final class CaseBaysGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos WHERE = new BlockPos(2, 2, 2);
     /** The bays of each era's case: one on the AT tower, two on the ATX towers, one on a Standard case, none after. */
-    private static final Map<HardwareEra, Integer> BAYS = Map.of(HardwareEra.VINTAGE, 1, HardwareEra.LEGACY, 2,
+    private static final Map<Era, Integer> BAYS = Map.of(HardwareEra.VINTAGE, 1, HardwareEra.LEGACY, 2,
             HardwareEra.TRANSITION, 2, HardwareEra.STANDARD, 1, HardwareEra.ADVANCED, 0);
-    /** The cases there are: nine for each of the Personal, Crafting and Cluster Management Computers. */
-    private static final int CASES = 27;
+    /**
+     * The cases there are: nine for each of the Personal, Crafting and Cluster Management Computers, and the test
+     * mod's Quantum computer, whose era has the Advanced's case.
+     */
+    private static final int CASES = 28;
     /** How many parts a small computer held before its case had bays. */
     private static final int SLOTS_BEFORE_BAYS = 13;
 
@@ -67,7 +70,7 @@ public final class CaseBaysGameTests {
             }
             helper.setBlock(WHERE, block);
             final AbstractComputerBlockEntity machine = helper.getBlockEntity(WHERE);
-            helper.assertValueEqual(machine.caseBays(), BAYS.get(computerCase.chassisEra()),
+            helper.assertValueEqual(machine.caseBays(), BAYS.get(HardwareEra.withParts(computerCase.chassisEra())),
                     "the 5.25-inch bays of " + BuiltInRegistries.BLOCK.getKey(block));
             cases++;
         }
@@ -171,7 +174,7 @@ public final class CaseBaysGameTests {
 
     /** Fails unless the part is registered under that id and name, and is that kind of bay part of that era. */
     private static void assertPart(final GameTestHelper helper, final BayDriveItem item, final String id,
-                                   final String name, final BayDriveSpec.Kind kind, final HardwareEra era) {
+                                   final String name, final BayDriveSpec.Kind kind, final Era era) {
         helper.assertValueEqual(BuiltInRegistries.ITEM.getKey(item),
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, id), "the id of " + name);
         helper.assertValueEqual(item.getDescription().getString(), name, "the name of " + id);
@@ -180,7 +183,7 @@ public final class CaseBaysGameTests {
     }
 
     /** The smallest NVMe disk there is. */
-    private static DiskItem firstNvme() {
+    private static Item firstNvme() {
         for (final DiskSize size : DiskSize.values()) {
             if (size.comesAs(StorageTier.NVME)) {
                 return ComputingModule.disk(StorageTier.NVME, size);

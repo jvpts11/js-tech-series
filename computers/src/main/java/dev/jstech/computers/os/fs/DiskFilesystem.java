@@ -7,14 +7,16 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.audio.media.MediaStore;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.world.item.ItemStack;
 
@@ -27,7 +29,7 @@ import java.util.Set;
 
 /**
  * Server-side filesystem API that operates on the {@code FILESYSTEM} data component carried by a
- * {@code DiskItem} {@link ItemStack}.
+ * disk's {@link ItemStack}.
  *
  * <p>All operations are pure: they read from and write to the component on the stack in-place; the
  * caller is responsible for propagating the mutated stack back to the inventory if needed.
@@ -43,9 +45,9 @@ public final class DiskFilesystem {
      * The hardware era a volume was made for, which decides what its files' bytes weigh: a drive's own era,
      * a medium's format era, and the standard era for anything else.
      */
-    public static HardwareEra eraOf(final ItemStack volume) {
-        if (volume.getItem() instanceof DiskItem disk) {
-            return disk.spec().era();
+    public static Era eraOf(final ItemStack volume) {
+        if (HardwareRegistry.disk(volume) instanceof DiskSpec disk) {
+            return disk.era();
         }
         if (volume.getItem() instanceof FormattedMediaItem medium) {
             return medium.format().era();
@@ -153,7 +155,7 @@ public final class DiskFilesystem {
 
         final FilesystemContents fs = disk.getOrDefault(
                 ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
-        final HardwareEra era = eraOf(disk);
+        final Era era = eraOf(disk);
 
         final List<FileEntry> result = new ArrayList<>();
 
@@ -787,7 +789,7 @@ public final class DiskFilesystem {
             return false;
         }
         long added = 0;
-        final HardwareEra era = eraOf(disk);
+        final Era era = eraOf(disk);
         for (final String f : fs.files().keySet()) {
             if (FsPaths.isUnder(src, f)) {
                 added += fs.files().get(f).weight(era);

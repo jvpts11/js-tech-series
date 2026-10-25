@@ -9,10 +9,10 @@ package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.crafting.CraftingCards;
 import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
-import dev.jstech.computers.item.CraftingCardItem;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
@@ -125,17 +125,17 @@ public final class CraftPlaces {
             if (part != null) {
                 part.patterns().forEach(held -> out.add(held.recipe()));
             } else {
-                CraftingCardItem.rom(card()).forEach(pattern -> out.add(NetworkRecipe.ofBench(pattern)));
+                CraftingCards.rom(card()).forEach(pattern -> out.add(NetworkRecipe.ofBench(pattern)));
             }
             return out;
         }
 
         public int used() {
-            return part != null ? part.patterns().size() : CraftingCardItem.rom(card()).size();
+            return part != null ? part.patterns().size() : CraftingCards.rom(card()).size();
         }
 
         public int capacity() {
-            return part != null ? part.capacity() : CraftingCardItem.romSize(card());
+            return part != null ? part.capacity() : CraftingCards.romSize(card());
         }
 
         /** Puts {@code recipe} here: a bench recipe in a card, a processing or pipeline recipe in an interface. */
@@ -152,12 +152,12 @@ public final class CraftPlaces {
             if (part != null) {
                 return part.take(entry);
             }
-            final List<CraftingPattern> rom = CraftingCardItem.rom(card());
+            final List<CraftingPattern> rom = CraftingCards.rom(card());
             if (entry < 0 || entry >= rom.size()) {
                 return null;
             }
             final CraftingPattern taken = rom.get(entry);
-            if (CraftingCardItem.remove(card(), entry)) {
+            if (CraftingCards.remove(card(), entry)) {
                 computer.setChanged();
                 return NetworkRecipe.ofBench(taken);
             }

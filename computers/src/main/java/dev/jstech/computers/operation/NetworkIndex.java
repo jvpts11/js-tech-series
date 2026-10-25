@@ -11,14 +11,15 @@ import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.index.Allocation;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.index.ItemLocation;
 import dev.jstech.computers.operation.index.StorageAllocator;
 import dev.jstech.computers.operation.index.StorageLockTable;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.network.ConnectivityIndex;
@@ -492,8 +493,8 @@ public final class NetworkIndex {
          */
         StorageTier fastest = StorageTier.HDD;
         for (final ItemStack drive : rack.claimedDriveStacks(slot)) {
-            if (drive.getItem() instanceof DiskItem disk) {
-                fastest = fastest.faster(disk.spec().tier());
+            if (HardwareRegistry.disk(drive) instanceof DiskSpec disk) {
+                fastest = fastest.faster(disk.tier());
             }
         }
         return fastest;

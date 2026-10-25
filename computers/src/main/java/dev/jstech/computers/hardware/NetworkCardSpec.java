@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.Objects;
 
@@ -20,7 +20,7 @@ import java.util.Objects;
  * @param bus      the slot it takes
  * @param tdpWatts what it draws
  */
-public record NetworkCardSpec(HardwareEra era, PcieGeneration bus, int tdpWatts) implements IExpansionCardSpec {
+public record NetworkCardSpec(Era era, PcieGeneration bus, int tdpWatts) implements IExpansionCardSpec {
 
     public NetworkCardSpec {
         Objects.requireNonNull(era, "era must not be null");

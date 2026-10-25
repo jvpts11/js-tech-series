@@ -19,9 +19,10 @@ import dev.jstech.core.bigblock.AbstractBigBlock;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -59,25 +60,19 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
             FacePorts.everyFace(DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE),
                     PeripheralLine.of(HardwareEra.ADVANCED));
     /* What a part of each era's Mainframe takes: that era's backbone and peripheral cables, and the earlier ones. */
-    private static final Map<HardwareEra, FacePorts> BY_ERA = byEra();
+    private static final List<FacePorts> BY_ERA = byEra();
 
     public static final BooleanProperty CORE = BooleanProperty.create("core");
 
-    /*
-     * The part inherits its origin's hardware era so the whole footprint wears one skin. The value
-     * is the era's level() (0=Vintage, 1=Legacy, 2=Transition, 3=Standard, 4=Advanced), from the first era with a
-     * Mainframe to the last. Storing the level keeps the Minecraft-aware property type out of the pure HardwareEra
-     * enum; consumers map it back with HardwareEra.fromLevel(int).
-     */
-    public static final IntegerProperty ERA = IntegerProperty.create(
-            "era", HardwareEra.VINTAGE.level(), HardwareEra.ADVANCED.level());
+    /** The era the part inherits from its origin, so the whole footprint wears one skin ({@link PartEras}). */
+    public static final IntegerProperty ERA = PartEras.property();
 
     public MainframePartBlock(final Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(CORE, false)
-                .setValue(ERA, HardwareEra.STANDARD.level())
+                .setValue(ERA, PartEras.valueFor(HardwareEra.STANDARD))
                 .setValue(OpticalPort.OPTICAL, false));
     }
 
@@ -98,7 +93,7 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
      */
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
-        return BY_ERA.get(HardwareEra.fromLevel(state.getValue(ERA))).accepts(state, face, offered)
+        return BY_ERA.get(state.getValue(ERA)).accepts(state, face, offered)
                 && OpticalPort.admits(state, offered);
     }
 
@@ -185,12 +180,13 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
         return new MainframePartBlockEntity(pos, state);
     }
 
-    private static Map<HardwareEra, FacePorts> byEra() {
-        final Map<HardwareEra, FacePorts> ports = new EnumMap<>(HardwareEra.class);
-        for (int level = HardwareEra.VINTAGE.level(); level <= HardwareEra.ADVANCED.level(); level++) {
-            final HardwareEra era = HardwareEra.fromLevel(level);
-            ports.put(era, FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE), PeripheralLine.of(era)));
+    /* By the era's place among the series' seven, as the part's state keeps it. */
+    private static List<FacePorts> byEra() {
+        final List<FacePorts> ports = new ArrayList<>();
+        for (int value = 0; value <= PartEras.LAST; value++) {
+            final Era era = PartEras.eraOf(value);
+            ports.add(FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE), PeripheralLine.of(era)));
         }
-        return Map.copyOf(ports);
+        return List.copyOf(ports);
     }
 }

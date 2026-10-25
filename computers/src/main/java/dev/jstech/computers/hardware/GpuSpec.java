@@ -7,9 +7,10 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Immutable specification of a GPU.
@@ -23,7 +24,8 @@ import java.util.Objects;
  * @param arch     the design the card is built on
  * @param chip     the chip's codename, or empty
  */
-public record GpuSpec(HardwareEra era,
+@ApiStatus.Experimental
+public record GpuSpec(Era era,
                       PcieGeneration bus,
                       int cores,
                       int vramMb,
@@ -58,7 +60,7 @@ public record GpuSpec(HardwareEra era,
     }
 
     /** A card that says nothing of its design or its clock: a gigahertz, counted as the P6 is. */
-    public GpuSpec(final HardwareEra era, final PcieGeneration bus, final int cores, final int vramMb,
+    public GpuSpec(final Era era, final PcieGeneration bus, final int cores, final int vramMb,
                    final int tdpWatts) {
         this(era, bus, cores, vramMb, tdpWatts, UNSPECIFIED_MHZ, Microarchitectures.UNSPECIFIED, "");
     }

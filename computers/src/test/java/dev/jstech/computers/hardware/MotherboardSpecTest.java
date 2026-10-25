@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +38,7 @@ class MotherboardSpecTest {
                 HardwareEra.TRANSITION, CpuSocketId.LGA_775, 1, Set.of(), 4, PcieGeneration.PCIE_1_0, 2, 4));
     }
 
-    private static MotherboardSpec board(final HardwareEra era) {
+    private static MotherboardSpec board(final Era era) {
         return new MotherboardSpec(FormFactor.ATX, era, CpuSocketId.LGA_775, 1, Set.of(RamGeneration.DDR2), 4,
                 PcieGeneration.PCIE_1_0, 2, 4);
     }

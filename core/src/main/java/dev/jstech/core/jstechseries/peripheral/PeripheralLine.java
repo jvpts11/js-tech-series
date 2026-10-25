@@ -8,9 +8,11 @@
 package dev.jstech.core.jstechseries.peripheral;
 
 import dev.jstech.core.connect.Connection;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -28,6 +30,8 @@ public final class PeripheralLine {
     /** What the line is for, in the sentence a cable of it says on its tooltip. */
     public static final TextKey JOB = TextKey.of("jscore.cable.line.peripheral",
             "Peripheral line: joins a computer to its own screens, speakers and devices");
+    /* How many cables a run of each era's cable reaches. */
+    private static final EraTable<Integer> RANGE = EraTable.ofFive(8, 12, 14, 16, 20);
 
     private PeripheralLine() {
     }
@@ -37,9 +41,12 @@ public final class PeripheralLine {
         return Ids.LINE;
     }
 
-    /** What the peripheral cable of {@code era} offers the face it touches, and what a port of that era takes. */
-    public static Connection of(final HardwareEra era) {
-        return new Connection(id(), era.id());
+    /**
+     * What the peripheral cable of {@code era} offers the face it touches, and what a port of that era takes: its
+     * generation is its era's place among the series' seven, or that of the series' era an add-on's era comes after.
+     */
+    public static Connection of(final Era era) {
+        return new Connection(id(), HardwareEra.seriesLevel(era));
     }
 
     /** Whether {@code line} is the peripheral line. */
@@ -48,18 +55,11 @@ public final class PeripheralLine {
     }
 
     /** How many cables a run of the peripheral cable of {@code era} reaches. */
-    public static int range(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> 8;
-            case LEGACY -> 12;
-            case TRANSITION -> 14;
-            case STANDARD -> 16;
-            case ADVANCED, EXA, SINGULARITY -> 20;
-        };
+    public static int range(final Era era) {
+        return RANGE.get(era);
     }
 
     /* The id, made the first time it is asked for: the line's reaches are read where the game's types are not. */
     private static final class Ids {
         private static final ResourceLocation LINE = ResourceLocation.fromNamespaceAndPath("jscore", "peripheral");
-    }
-}
+    }}

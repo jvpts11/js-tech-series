@@ -26,10 +26,9 @@ public final class SeriesAxes {
     /** The names of the two axes. */
     public static final TextKey HARDWARE_ERA_NAME = TextKey.of("jscore.axis.hardware_era", "Hardware era");
     public static final TextKey INDUSTRIAL_TIER_NAME = TextKey.of("jscore.axis.industrial_tier", "Industrial tier");
-    /** The eras of hardware, from the Vintage to the Singularity. */
-    public static final ProgressionAxis<HardwareEra> HARDWARE_ERA = ProgressionAxis.of(
-            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "hardware_era"), HARDWARE_ERA_NAME,
-            List.of(HardwareEra.values()));
+    /** The eras of hardware, from the Vintage to the Singularity and any an add-on brings, read from their registry. */
+    public static final ProgressionAxis<Era> HARDWARE_ERA = ProgressionAxis.following(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "hardware_era"), HARDWARE_ERA_NAME, Eras::ordered);
     /** The tiers of industry, from T0 to T9. */
     public static final ProgressionAxis<IndustrialTier> INDUSTRIAL_TIER = ProgressionAxis.of(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "industrial_tier"), INDUSTRIAL_TIER_NAME,

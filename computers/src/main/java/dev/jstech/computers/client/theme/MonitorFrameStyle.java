@@ -8,10 +8,12 @@
 package dev.jstech.computers.client.theme;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * The look of the physical monitor frame a software screen is shown inside, chosen by the host computer's
@@ -52,18 +54,18 @@ public record MonitorFrameStyle(
     public static final MonitorFrameStyle FLAT = new MonitorFrameStyle(5, 0, 12, "JSC",
             Palettes.declare(JsComputers.MODID, "monitor/flat", new Colours(
                     0xFF161618, 0xFF2A2A2E, 0xFF050506, 0, 0xFF5A5A60, 0xFF7FB8FF, 0)));
+    /* Each era's frame. */
+    private static final EraTable<MonitorFrameStyle> BY_ERA = EraTable.of(CRT)
+            .from(HardwareEra.LEGACY, LCD)
+            .from(HardwareEra.STANDARD, FLAT);
 
     /**
      * The frame for a hardware era. Vintage is a cream CRT, Legacy and Transition a grey LCD, Standard a thin flat
-     * bezel. The future eras (Advanced, Exa, Singularity) reuse the flat bezel until they get their own look.
-     * The bezel is a look of its own, chosen apart from the skin of the operating system's windows.
+     * bezel. The later eras (Advanced, Exa, Singularity, and any an add-on brings) reuse the flat bezel until they get
+     * their own look. The bezel is a look of its own, chosen apart from the skin of the operating system's windows.
      */
-    public static MonitorFrameStyle forEra(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> CRT;
-            case LEGACY, TRANSITION -> LCD;
-            case STANDARD, ADVANCED, EXA, SINGULARITY -> FLAT;
-        };
+    public static MonitorFrameStyle forEra(final Era era) {
+        return BY_ERA.get(era);
     }
 
     /** Total border between the glass and the outer shell edge (shell plus dark inner frame). */

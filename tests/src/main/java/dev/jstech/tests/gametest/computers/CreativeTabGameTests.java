@@ -9,17 +9,9 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.IEraChassisBlock;
-import dev.jstech.computers.item.ClusterInterfaceCardItem;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.CraftingCardItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.NetworkCardItem;
-import dev.jstech.computers.item.RamItem;
-import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.os.media.MediaItem;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,12 +89,12 @@ public final class CreativeTabGameTests {
         int checked = 0;
         for (final Map.Entry<String, List<ItemStack>> tab : contents(helper.getLevel()).entrySet()) {
             for (final ItemStack stack : tab.getValue()) {
-                final HardwareEra era = eraOf(stack.getItem());
+                final Era era = eraOf(stack.getItem());
                 if (era == null) {
                     continue;
                 }
                 checked++;
-                if (!tab.getKey().equals("computing_" + era.serializedName())) {
+                if (!tab.getKey().equals("computing_" + era.path())) {
                     wrong.add(stack.getItem() + " of the " + era.serializedName() + " era in " + tab.getKey());
                 }
             }
@@ -149,22 +141,15 @@ public final class CreativeTabGameTests {
         return null;
     }
 
-    /* The era a thing carries: a part's by its specification, a machine's by its chassis; null for the rest. */
+    /* The era a thing carries: a part's by its entry, a machine's by its chassis; null for the rest. */
     @Nullable
-    private static HardwareEra eraOf(final Item item) {
-        return switch (item) {
-            case CpuItem cpu -> cpu.spec().era();
-            case RamItem ram -> ram.spec().era();
-            case GpuItem gpu -> gpu.spec().era();
-            case MotherboardItem board -> board.spec().era();
-            case DiskItem disk -> disk.spec().era();
-            case SoundCardItem sound -> sound.spec().era();
-            case CraftingCardItem card -> card.spec().era();
-            case ClusterInterfaceCardItem card -> card.spec().era();
-            case NetworkCardItem card -> card.spec().era();
-            case BlockItem block when block.getBlock() instanceof IEraChassisBlock chassis -> chassis.chassisEra();
-            default -> null;
-        };
+    private static Era eraOf(final Item item) {
+        final HardwareRegistry.Part part = HardwareRegistry.part(item);
+        if (part != null) {
+            return part.era();
+        }
+        return item instanceof BlockItem block && block.getBlock() instanceof IEraChassisBlock chassis
+                ? chassis.chassisEra() : null;
     }
 
     /** A stack and the tab it shows in. */

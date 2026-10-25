@@ -1,37 +1,37 @@
 {
   "parent": "jsc:hardware/standard_build",
   "criteria": {
-    "advanced": {
+    "jscore:advanced": {
       "conditions": {
-        "detail": "advanced",
+        "detail": "jscore:advanced",
         "event": "jsc:era_built"
       },
       "trigger": "jscore:event"
     },
-    "legacy": {
+    "jscore:legacy": {
       "conditions": {
-        "detail": "legacy",
+        "detail": "jscore:legacy",
         "event": "jsc:era_built"
       },
       "trigger": "jscore:event"
     },
-    "standard": {
+    "jscore:standard": {
       "conditions": {
-        "detail": "standard",
+        "detail": "jscore:standard",
         "event": "jsc:era_built"
       },
       "trigger": "jscore:event"
     },
-    "transition": {
+    "jscore:transition": {
       "conditions": {
-        "detail": "transition",
+        "detail": "jscore:transition",
         "event": "jsc:era_built"
       },
       "trigger": "jscore:event"
     },
-    "vintage": {
+    "jscore:vintage": {
       "conditions": {
-        "detail": "vintage",
+        "detail": "jscore:vintage",
         "event": "jsc:era_built"
       },
       "trigger": "jscore:event"
@@ -52,19 +52,19 @@
   },
   "requirements": [
     [
-      "vintage"
+      "jscore:vintage"
     ],
     [
-      "legacy"
+      "jscore:legacy"
     ],
     [
-      "transition"
+      "jscore:transition"
     ],
     [
-      "standard"
+      "jscore:standard"
     ],
     [
-      "advanced"
+      "jscore:advanced"
     ]
   ],
   "sends_telemetry_event": true

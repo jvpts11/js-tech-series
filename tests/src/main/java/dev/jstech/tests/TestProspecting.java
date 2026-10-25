@@ -28,7 +28,7 @@ import net.minecraft.world.level.Level;
 public final class TestProspecting {
 
     public static final ItemEntry<Pick> PICK = TestSounds.CONTENT.item("test_prospecting_pick", Pick::new)
-            .named("Test prospecting pick").look(IItemLook.HANDMADE).register();
+            .named("Test prospecting pick").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
 
     private TestProspecting() {
     }

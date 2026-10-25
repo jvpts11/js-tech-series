@@ -10,7 +10,7 @@ package dev.jstech.tests.gametest.computers;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.ProgramLauncher;
 import dev.jstech.computers.os.OpenWindow;
@@ -305,7 +305,7 @@ public final class CrashGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(EraParts.psuFor(HardwareEra.LEGACY)));
         hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
-                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+                new ItemStack(EraParts.cardFor(board, GpuSpec.class)));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(EraParts.diskFor(HardwareEra.LEGACY)));
         if (!pc.installOs(ResourceLocation.fromNamespaceAndPath("jsc", "frames_95"))) {

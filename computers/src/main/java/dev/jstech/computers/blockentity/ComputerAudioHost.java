@@ -28,6 +28,7 @@ import dev.jstech.core.audio.AudioOutput;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -120,9 +121,10 @@ final class ComputerAudioHost implements IAudioHost {
     @Override
     public SoundContext soundContext() {
         SoundContext context = SoundContext.EMPTY;
-        final HardwareEra era = machine.installedEra();
+        final Era era = machine.installedEra();
         if (era != null) {
-            context = context.with(SoundContext.ERA, era.serializedName());
+            // The sounds are the five eras with parts'; a later era sounds as the one it is drawn as.
+            context = context.with(SoundContext.ERA, HardwareEra.withParts(era).path());
         }
         final ResourceLocation system = machine.installedOsId();
         if (system != null) {

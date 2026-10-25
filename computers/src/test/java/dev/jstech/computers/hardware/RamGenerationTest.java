@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,10 +17,10 @@ class RamGenerationTest {
 
     @Test
     void latencyTicks_decreasesOrHoldsAcrossGenerations() {
-        final RamGeneration[] gens = RamGeneration.values();
-        for (int i = 0; i < gens.length - 1; i++) {
-            assertTrue(gens[i].latencyTicks() >= gens[i + 1].latencyTicks(),
-                    gens[i] + " latency should be >= " + gens[i + 1] + " latency");
+        final List<RamGeneration> gens = RamGeneration.all();
+        for (int i = 0; i < gens.size() - 1; i++) {
+            assertTrue(gens.get(i).latencyTicks() >= gens.get(i + 1).latencyTicks(),
+                    gens.get(i) + " latency should be >= " + gens.get(i + 1) + " latency");
         }
     }
 
@@ -47,7 +48,7 @@ class RamGenerationTest {
 
     @Test
     void latencyTicks_neverNegative() {
-        for (final RamGeneration gen : RamGeneration.values()) {
+        for (final RamGeneration gen : RamGeneration.all()) {
             assertTrue(gen.latencyTicks() >= 0,
                     gen + " latency must not be negative");
         }

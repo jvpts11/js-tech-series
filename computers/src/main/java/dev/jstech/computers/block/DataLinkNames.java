@@ -8,9 +8,10 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * The short names the data cables go by where a screen says which cable a way runs over: a download's slowest cable, a
@@ -49,13 +50,13 @@ public final class DataLinkNames {
     }
 
     /** The short name of the access cable of {@code era}, which is the cable a board of that era takes. */
-    public static TextKey access(final HardwareEra era) {
-        return ACCESS[Math.min(era.id(), ACCESS.length - 1)];
+    public static TextKey access(final Era era) {
+        return ACCESS[HardwareEra.partsIndex(era)];
     }
 
     /** The short name of the cable {@code link} is. */
     public static TextKey of(final DataLink link) {
-        final int era = Math.min(link.era().id(), ACCESS.length - 1);
+        final int era = HardwareEra.partsIndex(link.era());
         return switch (link.line()) {
             case ACCESS -> ACCESS[era];
             case BACKBONE -> BACKBONE[era];

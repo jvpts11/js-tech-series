@@ -10,20 +10,35 @@ stable 7
 1 dev.jstech.computers.api.ComputersRegisterEvent  type final class extends Event implements IModBusEvent
 8 dev.jstech.computers.api.ComputersRegisterEvent  LanguageRegistry languages()
 1 dev.jstech.computers.api.ComputersRegisterEvent  deprecated void architecture(ArchitectureSpec)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void cardKind(ExpansionCardKind)
 5 dev.jstech.computers.api.ComputersRegisterEvent  void componentKind(ComponentKind)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void computer(Block, ComputerDef)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void desktop(DesktopEnvironmentDef)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void disk(ItemLike, DiskSpec)
 3 dev.jstech.computers.api.ComputersRegisterEvent  void engine(EngineDef)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void eraMedia(Era, EraMedia)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void expansionCard(ItemLike, IExpansionCardSpec, Era)
 4 dev.jstech.computers.api.ComputersRegisterEvent  void explainNode(IExplainNode)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void fileOpener(String)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void formFactor(FormFactor)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void graphicsCard(ItemLike, GpuSpec)
 6 dev.jstech.computers.api.ComputersRegisterEvent  void graphicsProgram(ResourceLocation)
 2 dev.jstech.computers.api.ComputersRegisterEvent  void isa(IsaSpec)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void kernel(KernelDef)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void machine(HostScope)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void memory(ItemLike, RamSpec)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void memoryGeneration(RamGeneration)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void motherboard(ItemLike, MotherboardSpec)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void operatingSpace(OperatingSpaceDef)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void operatingSystem(OsDef)
 4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerOperator(IPlannerOperator)
 4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerRule(IPlannerRule)
 4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerStatistic(IPlannerStatistic)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void powerSupply(ItemLike, PsuSpec, Era)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void processor(ItemLike, CpuSpec)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void program(ProgramSpec)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void server(ItemLike, RackChassis)
+8 dev.jstech.computers.api.ComputersRegisterEvent  void slotGeneration(PcieGeneration)
 5 dev.jstech.computers.api.IComponentValidator  type interface
 5 dev.jstech.computers.api.IComponentValidator  default boolean action(String, Object)
 5 dev.jstech.computers.api.IComponentValidator  default boolean data(Object)
@@ -32,19 +47,34 @@ stable 7
 1 dev.jstech.computers.api.JsComputersApi  deprecated static void registerArchitecture(ArchitectureSpec)
 8 dev.jstech.computers.api.JsComputersApi  static LanguageRegistry languages()
 1 dev.jstech.computers.api.JsComputersApi  static final int VERSION
+8 dev.jstech.computers.api.JsComputersApi  static void registerCardKind(ExpansionCardKind)
 5 dev.jstech.computers.api.JsComputersApi  static void registerComponentKind(ComponentKind)
+8 dev.jstech.computers.api.JsComputersApi  static void registerComputer(Block, ComputerDef)
 1 dev.jstech.computers.api.JsComputersApi  static void registerDesktop(DesktopEnvironmentDef)
+8 dev.jstech.computers.api.JsComputersApi  static void registerDisk(ItemLike, DiskSpec)
 3 dev.jstech.computers.api.JsComputersApi  static void registerEngine(EngineDef)
+8 dev.jstech.computers.api.JsComputersApi  static void registerEraMedia(Era, EraMedia)
+8 dev.jstech.computers.api.JsComputersApi  static void registerExpansionCard(ItemLike, IExpansionCardSpec, Era)
 4 dev.jstech.computers.api.JsComputersApi  static void registerExplainNode(IExplainNode)
 1 dev.jstech.computers.api.JsComputersApi  static void registerFileOpener(String)
+8 dev.jstech.computers.api.JsComputersApi  static void registerFormFactor(FormFactor)
+8 dev.jstech.computers.api.JsComputersApi  static void registerGraphicsCard(ItemLike, GpuSpec)
 6 dev.jstech.computers.api.JsComputersApi  static void registerGraphicsProgram(ResourceLocation)
 2 dev.jstech.computers.api.JsComputersApi  static void registerIsa(IsaSpec)
 1 dev.jstech.computers.api.JsComputersApi  static void registerKernel(KernelDef)
+8 dev.jstech.computers.api.JsComputersApi  static void registerMachine(HostScope)
+8 dev.jstech.computers.api.JsComputersApi  static void registerMemory(ItemLike, RamSpec)
+8 dev.jstech.computers.api.JsComputersApi  static void registerMemoryGeneration(RamGeneration)
+8 dev.jstech.computers.api.JsComputersApi  static void registerMotherboard(ItemLike, MotherboardSpec)
 1 dev.jstech.computers.api.JsComputersApi  static void registerOperatingSystem(OsDef)
 4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerOperator(IPlannerOperator)
 4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerRule(IPlannerRule)
 4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerStatistic(IPlannerStatistic)
+8 dev.jstech.computers.api.JsComputersApi  static void registerPowerSupply(ItemLike, PsuSpec, Era)
+8 dev.jstech.computers.api.JsComputersApi  static void registerProcessor(ItemLike, CpuSpec)
 1 dev.jstech.computers.api.JsComputersApi  static void registerProgram(ProgramSpec)
+8 dev.jstech.computers.api.JsComputersApi  static void registerServer(ItemLike, RackChassis)
+8 dev.jstech.computers.api.JsComputersApi  static void registerSlotGeneration(PcieGeneration)
 1 dev.jstech.computers.api.JsComputersApi  static void registerSpace(OperatingSpaceDef)
 5 dev.jstech.computers.api.client.ComponentRenderers  type final class
 5 dev.jstech.computers.api.client.ComponentRenderers  static IComponentRenderer get(String)
@@ -80,8 +110,8 @@ stable 7
 5 dev.jstech.computers.api.client.IOperatingSpace  abstract AbstractContainerMenu menu()
 5 dev.jstech.computers.api.client.IOperatingSpace  abstract BlockPos hostPos()
 5 dev.jstech.computers.api.client.IOperatingSpace  abstract BlockPos monitorPos()
+8 dev.jstech.computers.api.client.IOperatingSpace  abstract Era era()
 5 dev.jstech.computers.api.client.IOperatingSpace  abstract ResourceLocation spaceId()
-5 dev.jstech.computers.api.client.IOperatingSpace  abstract String era()
 1 dev.jstech.computers.api.client.IOperatingSpaceScreen  type interface
 5 dev.jstech.computers.api.client.IOperatingSpaceScreen  abstract AbstractContainerScreen<?> open(IOperatingSpace, Inventory, Component)
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  type final class
@@ -207,40 +237,218 @@ stable 7
 3 dev.jstech.computers.engine.EngineCapability  PROCEDURES_AND_VIEWS
 3 dev.jstech.computers.engine.EngineCapability  SUBSCRIPTIONS
 3 dev.jstech.computers.engine.EngineCapability  String serializedName()
-3 dev.jstech.computers.engine.EngineDef  type record(ResourceLocation program, String dialect, Map<HardwareEra, String> versions, Set<EngineCapability> extras)
-3 dev.jstech.computers.engine.EngineDef  String versionFor(HardwareEra)
-3 dev.jstech.computers.engine.EngineDef  boolean madeFor(HardwareEra)
+8 dev.jstech.computers.engine.EngineDef  type record(ResourceLocation program, String dialect, Map<Era, String> versions, Set<EngineCapability> extras)
+8 dev.jstech.computers.engine.EngineDef  String versionFor(Era)
+8 dev.jstech.computers.engine.EngineDef  boolean madeFor(Era)
 3 dev.jstech.computers.engine.EngineDef  boolean offers(EngineCapability)
 1 dev.jstech.computers.hardware.ArchitectureSpec  type deprecated record(String id, String name, int bits, Set<String> runs)
 2 dev.jstech.computers.hardware.ArchitectureSpec  IsaSpec toIsa()
+8 dev.jstech.computers.hardware.CaseParts  type record(int processors, int memory, int cards, int disks, int bays, int storage)
+8 dev.jstech.computers.hardware.CaseParts  static final int AS_THE_BOARD
+8 dev.jstech.computers.hardware.ComputerDef  type record(Era era, Set<FormFactor> formFactors, HostScope machine, CaseParts parts)
+8 dev.jstech.computers.hardware.ComputerDef  boolean takesBoard(MotherboardSpec)
+8 dev.jstech.computers.hardware.CpuDesign  type record(Microarchitecture arch, String codename, boolean smt, int efficiencyCores, int efficiencyMhz, Microarchitecture efficiencyArch, IntegratedGraphics graphics)
+8 dev.jstech.computers.hardware.CpuDesign  CpuDesign withEfficiencyCores(int, int, Microarchitecture)
+8 dev.jstech.computers.hardware.CpuDesign  CpuDesign withGraphics(IntegratedGraphics)
+8 dev.jstech.computers.hardware.CpuDesign  CpuDesign withSmt()
+8 dev.jstech.computers.hardware.CpuDesign  String label()
+8 dev.jstech.computers.hardware.CpuDesign  static CpuDesign of(Microarchitecture, String)
+8 dev.jstech.computers.hardware.CpuDesign  static final CpuDesign UNSPECIFIED
+8 dev.jstech.computers.hardware.CpuSocketId  type record(String id)
+8 dev.jstech.computers.hardware.CpuSocketId  String display()
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId AM2
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId AM3
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId AM3_PLUS
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId AM4
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId AM5
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId FM2_PLUS
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId G34
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1150
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1151
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1155
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1156
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1200
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1366
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1700
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1851
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_2011
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_2066
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_3647
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_4189
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_4677
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_771
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_775
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SLOT_1
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_3
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_370
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_478
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_604
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_7
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_754
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_8
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_939
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_940
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_A
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_EM
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_F
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_Q
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SP3
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SP5
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId STR4
+8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId STR5
+8 dev.jstech.computers.hardware.CpuSpec  type record(Era era, IsaSpec isa, CpuSocketId socket, int cores, int freqMhz, int tdpWatts, boolean alien, CpuDesign design)
+8 dev.jstech.computers.hardware.CpuSpec  CpuSpec on(Microarchitecture, String)
+8 dev.jstech.computers.hardware.CpuSpec  CpuSpec withEfficiencyCores(int, int, Microarchitecture)
+8 dev.jstech.computers.hardware.CpuSpec  CpuSpec withGraphics(IntegratedGraphics)
+8 dev.jstech.computers.hardware.CpuSpec  CpuSpec withSmt()
+8 dev.jstech.computers.hardware.CpuSpec  boolean hasIntegratedGraphics()
+8 dev.jstech.computers.hardware.CpuSpec  long orchestrationCapacity()
+8 dev.jstech.computers.hardware.CpuSpec  new(Era, CpuSocketId, int, int, int, boolean)
+8 dev.jstech.computers.hardware.CpuSpec  new(Era, IsaSpec, CpuSocketId, int, int, int, boolean)
+8 dev.jstech.computers.hardware.DiskSpec  type record(StorageTier tier, Era era, long capacityItems, int tdpWatts)
+8 dev.jstech.computers.hardware.DiskSpec  long capacityMb()
+8 dev.jstech.computers.hardware.DiskSpec  static String sizeLabel(long)
+8 dev.jstech.computers.hardware.ExpansionBus  type enum
+8 dev.jstech.computers.hardware.ExpansionBus  AGP
+8 dev.jstech.computers.hardware.ExpansionBus  ISA
+8 dev.jstech.computers.hardware.ExpansionBus  PCI
+8 dev.jstech.computers.hardware.ExpansionBus  PCIE
+8 dev.jstech.computers.hardware.ExpansionBus  String label()
+8 dev.jstech.computers.hardware.ExpansionCardKind  type record(String id)
+8 dev.jstech.computers.hardware.ExpansionCardKind  static ExpansionCardKind byId(String)
+8 dev.jstech.computers.hardware.ExpansionCardKind  static ExpansionCardKind declare(ExpansionCardKind)
+8 dev.jstech.computers.hardware.ExpansionCardKind  static List<ExpansionCardKind> all()
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind CLUSTER_INTERFACE
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind CRAFTING
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind GPU
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind NETWORK
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind PHI
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind RAID_CONTROLLER
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind READ_CACHE
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind SOUND
+8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind WORKSHOP
+8 dev.jstech.computers.hardware.FormFactor  type record(String id, String label)
+8 dev.jstech.computers.hardware.FormFactor  static FormFactor byId(String)
+8 dev.jstech.computers.hardware.FormFactor  static FormFactor declare(FormFactor)
+8 dev.jstech.computers.hardware.FormFactor  static List<FormFactor> all()
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor AT
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor ATX
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor BABY_AT
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor EATX
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor EEB
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor MNG
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor MTX
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor SIM
+8 dev.jstech.computers.hardware.FormFactor  static final FormFactor SOCKET_Q
+8 dev.jstech.computers.hardware.GpuSpec  type record(Era era, PcieGeneration bus, int cores, int vramMb, int tdpWatts, int clockMhz, Microarchitecture arch, String chip) implements IExpansionCardSpec
+8 dev.jstech.computers.hardware.GpuSpec  ExpansionCardKind kind()
+8 dev.jstech.computers.hardware.GpuSpec  GpuSpec on(Microarchitecture, String, int)
+8 dev.jstech.computers.hardware.GpuSpec  String designLabel()
+8 dev.jstech.computers.hardware.GpuSpec  long power()
+8 dev.jstech.computers.hardware.GpuSpec  long threads()
+8 dev.jstech.computers.hardware.GpuSpec  new(Era, PcieGeneration, int, int, int)
+8 dev.jstech.computers.hardware.IExpansionCardSpec  type interface
+8 dev.jstech.computers.hardware.IExpansionCardSpec  abstract ExpansionCardKind kind()
+8 dev.jstech.computers.hardware.IExpansionCardSpec  abstract PcieGeneration bus()
+8 dev.jstech.computers.hardware.IExpansionCardSpec  abstract int tdpWatts()
+8 dev.jstech.computers.hardware.IExpansionCardSpec  default boolean fits(PcieGeneration)
+8 dev.jstech.computers.hardware.IntegratedGraphics  type record(String model, int units, int mhz)
+8 dev.jstech.computers.hardware.IntegratedGraphics  boolean present()
+8 dev.jstech.computers.hardware.IntegratedGraphics  static final IntegratedGraphics NONE
 2 dev.jstech.computers.hardware.IsaSpec  type record(String id, String name, int bits, Set<String> runs)
 2 dev.jstech.computers.hardware.IsaSpec  boolean runs(IsaSpec)
 2 dev.jstech.computers.hardware.IsaSpec  boolean runs(String)
+8 dev.jstech.computers.hardware.Microarchitecture  type record(String id, String name, int efficiencyMilli, int coresPerUnit)
+8 dev.jstech.computers.hardware.Microarchitecture  int unitsOf(int)
+8 dev.jstech.computers.hardware.Microarchitecture  new(String, String, int)
+8 dev.jstech.computers.hardware.MotherboardSpec  type record(FormFactor formFactor, Era era, CpuSocketId socket, int cpuSlots, Set<RamGeneration> acceptedRam, int ramSlots, PcieGeneration pcieGeneration, int pcieSlots, int diskSlots, PcieGeneration olderBus)
+8 dev.jstech.computers.hardware.MotherboardSpec  PcieGeneration slotFor(PcieGeneration)
+8 dev.jstech.computers.hardware.MotherboardSpec  boolean hasOnBoardAudio()
+8 dev.jstech.computers.hardware.MotherboardSpec  boolean hasOwnVideo()
+8 dev.jstech.computers.hardware.MotherboardSpec  boolean takes(IExpansionCardSpec)
+8 dev.jstech.computers.hardware.MotherboardSpec  new(FormFactor, Era, CpuSocketId, int, Set<RamGeneration>, int, PcieGeneration, int, int)
+8 dev.jstech.computers.hardware.PcieGeneration  type record(String id, int generation, Text label, Text slotName, ExpansionBus family)
+8 dev.jstech.computers.hardware.PcieGeneration  ExpansionBus busFamily()
+8 dev.jstech.computers.hardware.PcieGeneration  boolean compatibleWith(PcieGeneration)
+8 dev.jstech.computers.hardware.PcieGeneration  double bandwidthFactorIn(PcieGeneration)
+8 dev.jstech.computers.hardware.PcieGeneration  static List<PcieGeneration> all()
+8 dev.jstech.computers.hardware.PcieGeneration  static PcieGeneration byId(String)
+8 dev.jstech.computers.hardware.PcieGeneration  static PcieGeneration declare(PcieGeneration)
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration AGP_2X
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration AGP_4X
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration AGP_8X
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration ISA
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCI
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCIE_1_0
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCIE_2_0
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCIE_3_0
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCIE_4_0
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCIE_5_0
+8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCIE_6_0
+8 dev.jstech.computers.hardware.PlainCardSpec  type record(ExpansionCardKind kind, Era era, PcieGeneration bus, int tdpWatts) implements IExpansionCardSpec
+8 dev.jstech.computers.hardware.PsuSpec  type record(int wattage, int efficiencyPercent, boolean autoScaling)
+8 dev.jstech.computers.hardware.PsuSpec  new(int, int)
+8 dev.jstech.computers.hardware.RamGeneration  type record(String id, Text label, int latencyTicks)
+8 dev.jstech.computers.hardware.RamGeneration  static List<RamGeneration> all()
+8 dev.jstech.computers.hardware.RamGeneration  static RamGeneration byId(String)
+8 dev.jstech.computers.hardware.RamGeneration  static RamGeneration declare(RamGeneration)
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration DDR
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration DDR2
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration DDR3
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration DDR4
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration DDR5
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration DDR6
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration EDO
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration HBM
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration SDRAM
+8 dev.jstech.computers.hardware.RamGeneration  static final RamGeneration SIMM
+8 dev.jstech.computers.hardware.RamSpec  type record(Era era, RamGeneration generation, long bufferItems, int tdpWatts)
+8 dev.jstech.computers.hardware.RamSpec  int latencyTicks()
+8 dev.jstech.computers.hardware.StorageTier  type enum
+8 dev.jstech.computers.hardware.StorageTier  HDD
+8 dev.jstech.computers.hardware.StorageTier  NVME
+8 dev.jstech.computers.hardware.StorageTier  SSD
+8 dev.jstech.computers.hardware.StorageTier  StorageTier faster(StorageTier)
+8 dev.jstech.computers.hardware.StorageTier  String productName()
+8 dev.jstech.computers.hardware.StorageTier  int latencyTicks()
+8 dev.jstech.computers.hardware.StorageTier  int speedMultiplier()
+8 dev.jstech.computers.hardware.StorageTier  int tdpWatts()
 2 dev.jstech.computers.os.DesktopEnvironmentDef  type record(ResourceLocation id, String displayName, PanelStyle panelStyle, List<ResourceLocation> bundledPrograms, Map<ResourceLocation, TextKey> nativeNames, SoftwareHouse house)
 1 dev.jstech.computers.os.DesktopEnvironmentDef  SoftwareHouse houseOf(ProgramSpec)
 2 dev.jstech.computers.os.DesktopEnvironmentDef  TextKey launcherLabel(ProgramSpec)
 2 dev.jstech.computers.os.DesktopEnvironmentDef  TextKey nameOf(ProgramSpec)
 1 dev.jstech.computers.os.DesktopEnvironmentDef  boolean bundles(ResourceLocation)
+8 dev.jstech.computers.os.HostScope  type record(String id, TextKey name, TextKey refusal)
+8 dev.jstech.computers.os.HostScope  boolean admits(HostScope)
+8 dev.jstech.computers.os.HostScope  static HostScope byId(String)
+8 dev.jstech.computers.os.HostScope  static HostScope declare(HostScope)
+8 dev.jstech.computers.os.HostScope  static List<HostScope> all()
+8 dev.jstech.computers.os.HostScope  static final HostScope ANY
+8 dev.jstech.computers.os.HostScope  static final HostScope CLUSTER_MANAGEMENT_COMPUTER
+8 dev.jstech.computers.os.HostScope  static final HostScope CRAFTING_COMPUTER
+8 dev.jstech.computers.os.HostScope  static final HostScope MAINFRAME
+8 dev.jstech.computers.os.HostScope  static final HostScope PERSONAL_COMPUTER
+8 dev.jstech.computers.os.HostScope  static final HostScope SERVER
 1 dev.jstech.computers.os.KernelDef  type record(ResourceLocation id, SchedulerKind scheduler, FilesystemKind filesystem, ShellFamily shellFamily)
 1 dev.jstech.computers.os.KernelDef  static final Codec<KernelDef> CODEC
 1 dev.jstech.computers.os.OperatingSpaceDef  type record(ResourceLocation id, String displayName, SoftwareHouse house)
-2 dev.jstech.computers.os.OsDef  type record(ResourceLocation id, OsCapability capability, HardwareEra minEra, ResourceLocation kernelId, int footprintMb, Optional<ResourceLocation> installMediaId, Platform platform, String displayName, ShellKind shell, PackageManagerKind packageManager, InstallMode installMode, Optional<ResourceLocation> bundledDesktop, SoftwareHouse house, int ramMb, InstallerStyle installerStyle, int familyRank)
+8 dev.jstech.computers.os.OsDef  type record(ResourceLocation id, OsCapability capability, Era minEra, ResourceLocation kernelId, int footprintMb, Optional<ResourceLocation> installMediaId, Platform platform, String displayName, ShellKind shell, PackageManagerKind packageManager, InstallMode installMode, Optional<ResourceLocation> bundledDesktop, SoftwareHouse house, int ramMb, InstallerStyle installerStyle, int familyRank)
 1 dev.jstech.computers.os.OsDef  OsDef withInstaller(InstallerStyle)
 1 dev.jstech.computers.os.OsDef  OsDef withRam(int)
 1 dev.jstech.computers.os.OsDef  OsDef withRank(int)
 1 dev.jstech.computers.os.OsDef  String titleKey()
-1 dev.jstech.computers.os.OsDef  long footprintItemsOn(HardwareEra)
+8 dev.jstech.computers.os.OsDef  long footprintItemsOn(Era)
 2 dev.jstech.computers.os.OsDef  static OsDef linuxDistro(ResourceLocation, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)
-1 dev.jstech.computers.os.OsDef  static OsDef mediaInstalled(ResourceLocation, OsCapability, HardwareEra, ResourceLocation, int, Platform, String, Optional<ResourceLocation>, SoftwareHouse)
-2 dev.jstech.computers.os.OsDef  static OsDef terminalSystem(ResourceLocation, ResourceLocation, Platform, HardwareEra, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)
+8 dev.jstech.computers.os.OsDef  static OsDef mediaInstalled(ResourceLocation, OsCapability, Era, ResourceLocation, int, Platform, String, Optional<ResourceLocation>, SoftwareHouse)
+8 dev.jstech.computers.os.OsDef  static OsDef terminalSystem(ResourceLocation, ResourceLocation, Platform, Era, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)
 1 dev.jstech.computers.os.OsDef  static final Codec<OsDef> CODEC
-3 dev.jstech.computers.os.ProgramSpec  type record(ResourceLocation id, String commandName, String displayName, String description, boolean preinstalled, Set<Platform> platforms, int minCpuMhz, int minVramMb, int minDiskMb, ProgramKind kind, int minOsRank, HostScope hostScope, ResourceLocation iconId, HardwareEra minEra, HardwareEra era, SoftwareHouse house, int ramMb, ProgramRequirement requires)
+8 dev.jstech.computers.os.ProgramSpec  type record(ResourceLocation id, String commandName, String displayName, String description, boolean preinstalled, Set<Platform> platforms, int minCpuMhz, int minVramMb, int minDiskMb, ProgramKind kind, int minOsRank, HostScope hostScope, ResourceLocation iconId, Era minEra, Era era, SoftwareHouse house, int ramMb, ProgramRequirement requires)
 2 dev.jstech.computers.os.ProgramSpec  ProgramSpec described(String)
 2 dev.jstech.computers.os.ProgramSpec  ProgramSpec named(String)
 3 dev.jstech.computers.os.ProgramSpec  ProgramSpec requiring(ProgramRequirement)
-1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withEra(HardwareEra)
+8 dev.jstech.computers.os.ProgramSpec  ProgramSpec withEra(Era)
 1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withHouse(SoftwareHouse)
-1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withMinEra(HardwareEra)
+8 dev.jstech.computers.os.ProgramSpec  ProgramSpec withMinEra(Era)
 1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withRam(int)
 1 dev.jstech.computers.os.ProgramSpec  SoftwareHouse houseOr(SoftwareHouse)
 2 dev.jstech.computers.os.ProgramSpec  String descriptionKey()
@@ -248,7 +456,53 @@ stable 7
 2 dev.jstech.computers.os.ProgramSpec  TextKey name()
 1 dev.jstech.computers.os.ProgramSpec  boolean installable()
 7 dev.jstech.computers.os.ProgramSpec  int legacyMb()
-7 dev.jstech.computers.os.ProgramSpec  int ramMbOn(HardwareEra)
-7 dev.jstech.computers.os.ProgramSpec  int ramMbOn(HardwareEra, boolean)
+8 dev.jstech.computers.os.ProgramSpec  int ramMbOn(Era)
+8 dev.jstech.computers.os.ProgramSpec  int ramMbOn(Era, boolean)
 2 dev.jstech.computers.os.ProgramSpec  static ProgramSpec of(ResourceLocation, String, boolean, Set<Platform>, int, ProgramKind, int, HostScope)
 1 dev.jstech.computers.os.ProgramSpec  static final Codec<ProgramSpec> CODEC
+8 dev.jstech.computers.os.media.EraMedia  type record(MediaFormat systems, MediaFormat programs, MediaFormat services)
+8 dev.jstech.computers.os.media.EraMedia  static EraMedia all(MediaFormat)
+8 dev.jstech.computers.os.media.MediaFormat  type enum
+8 dev.jstech.computers.os.media.MediaFormat  BLU_RAY
+8 dev.jstech.computers.os.media.MediaFormat  CD
+8 dev.jstech.computers.os.media.MediaFormat  DVD
+8 dev.jstech.computers.os.media.MediaFormat  Era era()
+8 dev.jstech.computers.os.media.MediaFormat  FLOPPY
+8 dev.jstech.computers.os.media.MediaFormat  Text text()
+8 dev.jstech.computers.os.media.MediaFormat  USB
+8 dev.jstech.computers.os.media.MediaFormat  boolean onTray()
+8 dev.jstech.computers.os.media.MediaFormat  int capacityItems()
+8 dev.jstech.computers.rack.RackChassis  type record(ComputerDef computer, int heightU, RackType rackType, Look look)
+8 dev.jstech.computers.rack.RackChassis  Era era()
+8 dev.jstech.computers.rack.RackChassis  boolean isSupercomputerNode()
+8 dev.jstech.computers.rack.RackChassis  int driveSlots()
+8 dev.jstech.computers.rack.RackChassis  int maxCpus()
+8 dev.jstech.computers.rack.RackChassis  int maxPcie()
+8 dev.jstech.computers.rack.RackChassis  static RackChassis of(Look, int, int, int, int, RackType, Era)
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis ADVANCED_COMPUTE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis ADVANCED_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis ADVANCED_STORAGE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis ADVANCED_SUPERCOMPUTER_NODE
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis COMPUTE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis LEGACY_COMPUTE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis LEGACY_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis LEGACY_STORAGE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis STORAGE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis SUPERCOMPUTER_NODE
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis TRANSITION_COMPUTE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis TRANSITION_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis TRANSITION_STORAGE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis VINTAGE_COMPUTE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis VINTAGE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final RackChassis VINTAGE_STORAGE_SERVER
+8 dev.jstech.computers.rack.RackChassis  static final int MEMORY
+8 dev.jstech.computers.rack.RackChassis.Look  type enum
+8 dev.jstech.computers.rack.RackChassis.Look  COMPUTE
+8 dev.jstech.computers.rack.RackChassis.Look  NODE
+8 dev.jstech.computers.rack.RackChassis.Look  SERVER
+8 dev.jstech.computers.rack.RackChassis.Look  STORAGE
+8 dev.jstech.computers.rack.RackChassis.RackType  type enum
+8 dev.jstech.computers.rack.RackChassis.RackType  AI
+8 dev.jstech.computers.rack.RackChassis.RackType  SERVER
+8 dev.jstech.computers.rack.RackChassis.RackType  SUPERCOMPUTER

@@ -15,7 +15,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SourceAdvantage;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.program.ComputerConsoleState;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TerminalAt;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -191,7 +191,7 @@ public final class PortsGameTests {
     @GameTest(template = ARENA)
     public static void builtHere_holdsLessMemoryThanThePackage(final GameTestHelper helper) {
         final MainframeBlockEntity machine = freebsd(helper, WHERE);
-        final HardwareEra era = machine.displayEra();
+        final Era era = machine.displayEra();
         final ProgramSpec kde = OsRegistry.getProgram(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                 "kde_plasma"));
         helper.assertTrue(era != null && kde != null, "the test machine has an era and KDE is registered");

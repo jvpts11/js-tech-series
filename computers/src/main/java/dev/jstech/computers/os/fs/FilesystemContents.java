@@ -9,9 +9,9 @@ package dev.jstech.computers.os.fs;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.TextBounds;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -140,7 +140,7 @@ public record FilesystemContents(Map<String, StoredFile> files, Set<String> dire
      * Returns the total disk weight consumed by all stored files, in mB-equivalents on a disk of
      * {@code era}. Directories are free, so they do not contribute.
      */
-    public long usedWeight(final HardwareEra era) {
+    public long usedWeight(final Era era) {
         long sum = 0L;
         for (final StoredFile file : files.values()) {
             sum += file.weight(era);

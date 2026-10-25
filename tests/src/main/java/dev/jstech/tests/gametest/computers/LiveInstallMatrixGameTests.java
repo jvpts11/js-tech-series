@@ -13,8 +13,8 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.InstallerStacks;
@@ -22,6 +22,7 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.install.MakeOpts;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.EraKit;
 import dev.jstech.tests.testkit.computers.EraNetwork;
@@ -495,7 +496,7 @@ public final class LiveInstallMatrixGameTests {
         parts.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(EraParts.ramFor(board)));
         parts.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(EraParts.psuFor(kit.era())));
         parts.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
-                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+                new ItemStack(EraParts.cardFor(board, GpuSpec.class)));
         parts.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, new ItemStack(EraParts.diskFor(kit.era())));
         mainframe.togglePower();
         if (!mainframe.installOs(UBUNTU)) {
@@ -533,8 +534,8 @@ public final class LiveInstallMatrixGameTests {
     }
 
     private static int coresOf(final PersonalComputerBlockEntity computer) {
-        return computer.getHardware().getStackInSlot(PersonalComputerBlockEntity.CPU_SLOT).getItem()
-                instanceof CpuItem cpu ? cpu.spec().cores() : 1;
+        return HardwareRegistry.cpu(computer.getHardware().getStackInSlot(PersonalComputerBlockEntity.CPU_SLOT))
+                instanceof CpuSpec cpu ? cpu.cores() : 1;
     }
 
     /** How many disks the network's computer is given, or a disk too small. */

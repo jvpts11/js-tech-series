@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.os.media.EjectButton;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,12 +23,12 @@ import org.junit.jupiter.api.Test;
 
 class CaseFrontLayoutTest {
 
-    private static final List<HardwareEra> CASE_ERAS = List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY,
+    private static final List<Era> CASE_ERAS = List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY,
             HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED);
 
     @Test
     void of_givesEachCaseTheBaysAndPortsOfItsEra() {
-        for (final HardwareEra era : CASE_ERAS) {
+        for (final Era era : CASE_ERAS) {
             for (final CaseStyle style : CaseStyle.values()) {
                 final CaseFrontLayout front = CaseFrontLayout.of(era, style);
                 assertEquals(CaseBays.of(era), front.bays().size(), era + " " + style);
@@ -38,7 +39,7 @@ class CaseFrontLayoutTest {
 
     @Test
     void parts_lieOnTheFrontAndApart() {
-        for (final HardwareEra era : CASE_ERAS) {
+        for (final Era era : CASE_ERAS) {
             for (final CaseStyle style : CaseStyle.values()) {
                 final List<FrontArea> parts = parts(CaseFrontLayout.of(era, style));
                 for (int i = 0; i < parts.size(); i++) {

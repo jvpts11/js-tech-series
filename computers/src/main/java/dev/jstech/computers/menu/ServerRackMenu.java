@@ -13,9 +13,8 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ExpansionCardKind;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.item.StorageCardItem;
+import dev.jstech.computers.item.StorageCards;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
@@ -23,7 +22,9 @@ import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
@@ -33,7 +34,6 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -113,7 +113,7 @@ public class ServerRackMenu extends CoreMenu {
     }
 
     /** The cabinet's era, so its screen wears that decade's materials rather than one look for all three. */
-    public HardwareEra rackEra() {
+    public Era rackEra() {
         return rack.rackEra();
     }
 
@@ -248,7 +248,7 @@ public class ServerRackMenu extends CoreMenu {
 
     /** The RAID mode the unit topped at {@code topRow} runs, as its RAID controller card keeps it. */
     public RaidMode raidModeAt(final int topRow) {
-        return StorageCardItem.raidMode(controllerAt(topRow));
+        return StorageCards.raidMode(controllerAt(topRow));
     }
 
     /* A copy of the RAID controller card in the server topped at {@code topRow}, or an empty stack. */
@@ -282,8 +282,7 @@ public class ServerRackMenu extends CoreMenu {
         final int members = stored == null ? 0 : stored;
         int present = 0;
         for (final int index : claimedSlots(topRow, RackLayout.SlotRole.DRIVE)) {
-            if (frontSlotStack(index).getItem()
-                    instanceof DiskItem) {
+            if (DriveVolumes.isDisk(frontSlotStack(index))) {
                 present++;
             }
         }

@@ -38,6 +38,7 @@ import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -176,13 +177,13 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return this.getMenu().hardwareEra();
     }
 
     /** The same, never null, for the wording a firmware of that age would really have put up. */
-    private HardwareEra bezelEra() {
-        final HardwareEra era = this.screenEra();
+    private Era bezelEra() {
+        final Era era = this.screenEra();
         return era == null ? HardwareEra.STANDARD : era;
     }
 

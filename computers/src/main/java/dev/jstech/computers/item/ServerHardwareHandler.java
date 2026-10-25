@@ -8,16 +8,21 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.blockentity.PartRefusals;
-import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.PartFitting;
+import dev.jstech.computers.hardware.PhiCoprocessorSpec;
+import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.text.TextKey;
-import java.util.Set;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
@@ -108,43 +113,33 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         return 1; // one component per slot
     }
 
-    /** Whether a board belongs to the era of the case it is going into (no case known: anything goes). */
-    private boolean boardMatchesCaseEra(final ItemStack board) {
-        final RackChassis chassis = ServerItem.chassisOf(held());
-        return chassis == null || !(board.getItem() instanceof MotherboardItem item)
-                || item.spec().era() == chassis.era();
-    }
-
     @Override
     public boolean isItemValid(final int slot, final ItemStack stack) {
         if (slot == MOBO) {
             /*
-             * A Server takes a server-class board: EEB across the eras, or the EATX workstation board
-             * where the era offers one. It does not accept consumer or Mainframe-only boards, and the
-             * case takes only a board of its own era, like every other computer's chassis.
+             * A server takes the boards its chassis' entry names, of the case's own era, like every other
+             * computer's chassis: a server-class board for this mod's own. A server never declared takes none.
              */
-            return MotherboardItem.fits(stack,
-                    Set.of(FormFactor.EEB,
-                            FormFactor.EATX))
-                    && boardMatchesCaseEra(stack);
+            final MotherboardSpec board = HardwareRegistry.board(stack);
+            final RackChassis chassis = ServerItem.chassisOf(held());
+            return board != null && chassis != null && chassis.computer().takesBoard(board);
         }
         if (slot == PSU) {
-            return stack.getItem() instanceof PsuItem;
+            return HardwareRegistry.psu(stack) != null;
         }
         /*
          * A processor, memory or a card takes the board's socket, memory and bus, as in every other computer: a part
          * that cannot go in the board stays out of its slot rather than going in only to keep the server from
          * starting. With no board yet, anything of the kind is staged.
          */
-        final MotherboardSpec board = getStackInSlot(MOBO).getItem() instanceof MotherboardItem seated
-                ? seated.spec() : null;
+        final MotherboardSpec board = HardwareRegistry.board(getStackInSlot(MOBO));
         if (slot >= CPU_START && slot < CPU_START + CPU) {
-            return stack.getItem() instanceof CpuItem cpu && (board == null
-                    || cpu.spec().socket().equals(board.socket()) && cpu.spec().era() == board.era());
+            final CpuSpec cpu = HardwareRegistry.cpu(stack);
+            return cpu != null && PartFitting.cpuFits(cpu, board);
         }
         if (slot >= RAM_START && slot < RAM_START + RAM) {
-            return stack.getItem() instanceof RamItem ram && (board == null
-                    || board.acceptedRam().contains(ram.spec().generation()) && ram.spec().era() == board.era());
+            final RamSpec ram = HardwareRegistry.ram(stack);
+            return ram != null && PartFitting.ramFits(ram, board);
         }
         if (slot >= GPU_START && slot < GPU_START + GPU) {
             /*
@@ -153,12 +148,12 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
              * reserved to a chassis: it goes only in a Supercomputer Node, whose single expansion slot
              * exists for it, and accepting GPUs alone here left that slot unable to seat anything.
              */
-            if (stack.getItem() instanceof PhiCoprocessorItem) {
+            final IExpansionCardSpec card = HardwareRegistry.card(stack);
+            if (card instanceof PhiCoprocessorSpec) {
                 final RackChassis chassis = ServerItem.chassisOf(held());
                 return chassis != null && chassis.isSupercomputerNode() && !holdsCoprocessorOutside(slot);
             }
-            return isServerCard(stack.getItem()) && stack.getItem() instanceof IExpansionCardItem card
-                    && (board == null || board.takes(card.cardSpec()));
+            return isServerCard(card) && PartFitting.cardFits(card, board);
         }
         return false;
     }
@@ -172,29 +167,29 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         if (stack.isEmpty() || isItemValid(slot, stack)) {
             return null;
         }
-        final Item item = stack.getItem();
         if (slot == MOBO) {
-            return item instanceof MotherboardItem ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
+            return HardwareRegistry.board(stack) != null ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
         }
         if (slot >= CPU_START && slot < CPU_START + CPU) {
-            return item instanceof CpuItem ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
+            return HardwareRegistry.cpu(stack) != null ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
         }
         if (slot >= RAM_START && slot < RAM_START + RAM) {
-            return item instanceof RamItem ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
+            return HardwareRegistry.ram(stack) != null ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
         }
         if (slot >= GPU_START && slot < GPU_START + GPU) {
-            if (item instanceof PhiCoprocessorItem) {
+            final IExpansionCardSpec card = HardwareRegistry.card(stack);
+            if (card instanceof PhiCoprocessorSpec) {
                 final RackChassis chassis = ServerItem.chassisOf(held());
                 return chassis != null && chassis.isSupercomputerNode() ? PartRefusals.ONE_PHI : PartRefusals.PHI;
             }
-            return isServerCard(item) ? PartRefusals.CARD_BUS : PartRefusals.SERVER_CARD;
+            return isServerCard(card) ? PartRefusals.CARD_BUS : PartRefusals.SERVER_CARD;
         }
         return PartRefusals.NOT_THIS_SLOT;
     }
 
     /* The kinds of card a server's expansion slots take, a bus that fits the board aside. */
-    private static boolean isServerCard(final Item item) {
-        return item instanceof GpuItem || item instanceof StorageCardItem;
+    private static boolean isServerCard(final @Nullable IExpansionCardSpec card) {
+        return card instanceof GpuSpec || card instanceof StorageCardSpec;
     }
 
     /**
@@ -205,7 +200,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         final ItemContainerContents current = contents();
         final int end = Math.min(current.getSlots(), GPU_START + GPU);
         for (int i = GPU_START; i < end; i++) {
-            if (i != slot && current.getStackInSlot(i).getItem() instanceof PhiCoprocessorItem) {
+            if (i != slot && HardwareRegistry.card(current.getStackInSlot(i)) instanceof PhiCoprocessorSpec) {
                 return true;
             }
         }

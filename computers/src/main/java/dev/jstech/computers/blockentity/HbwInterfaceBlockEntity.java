@@ -12,10 +12,10 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
-import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.cable.CableBlockEntity;
@@ -200,15 +200,15 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
             long crafts = 0;
             if (Loaded.blockEntity(serverLevel, node.rack()) instanceof ServerRackBlockEntity rack) {
                 final ItemStack server = rack.getServers().getStackInSlot(node.row());
-                final PhiCoprocessorItem phi = installedPhi(server);
+                final PhiCoprocessorSpec phi = installedPhi(server);
                 if (phi == null) {
                     code = SLOT_EMPTY;
-                } else if (!phi.spec().fitsSlot(i)) {
+                } else if (!phi.fitsSlot(i)) {
                     code = SLOT_UNDER_RATED;
                 } else if (!rack.bayPowerOn(node.row()) || ServerItem.build(server) == null) {
                     code = SLOT_OFFLINE; // a node is a real computer: assembled + its bay switched on, or inert
                 } else {
-                    code = SLOT_OK_BASE + modelIndex(phi.spec());
+                    code = SLOT_OK_BASE + modelIndex(phi);
                     crafts = PhiCoprocessorSpec.craftsForSlot(i);
                     budget += crafts;
                 }
@@ -273,16 +273,16 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
     }
 
     /**
-     * The crafting co-processor seated in a node's expansion slot, or null. A node's hardware is a data
-     * component whose container is only as long as what was written to it, so the slot range is
+     * The sheet of the crafting co-processor seated in a node's expansion slot, or null. A node's hardware is a
+     * data component whose container is only as long as what was written to it, so the slot range is
      * checked against the container's real size rather than indexed blindly.
      */
     @Nullable
-    public static PhiCoprocessorItem installedPhi(final ItemStack server) {
+    public static PhiCoprocessorSpec installedPhi(final ItemStack server) {
         final ItemContainerContents parts = ServerItem.hardware(server);
         final int end = Math.min(parts.getSlots(), ServerHardwareHandler.GPU_START + ServerHardwareHandler.GPU);
         for (int slot = ServerHardwareHandler.GPU_START; slot < end; slot++) {
-            if (parts.getStackInSlot(slot).getItem() instanceof PhiCoprocessorItem phi) {
+            if (HardwareRegistry.card(parts.getStackInSlot(slot)) instanceof PhiCoprocessorSpec phi) {
                 return phi;
             }
         }

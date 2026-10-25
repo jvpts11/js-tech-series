@@ -17,6 +17,7 @@ import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -168,7 +169,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
 
     /** The colour the glass was mostly drawn in on the last frame: the desktop's picture, the system's, or plain. */
     private int lastGround() {
-        final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
+        final Era era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
         if (desktopSplashUp()) {
             return DesktopSplashArt.ground(this.who, era);
         }
@@ -180,7 +181,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
-        final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
+        final Era era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
         MonitorFrame.renderBody(g, x, y, W, H, era, font);
         final Colours c = PALETTE.get();
         g.fill(x, y, x + W, y + H, c.ground());
@@ -328,7 +329,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return this.getMenu().hardwareEra();
     }
 

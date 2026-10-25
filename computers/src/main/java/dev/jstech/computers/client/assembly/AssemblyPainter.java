@@ -18,12 +18,13 @@ import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
-import dev.jstech.computers.item.IExpansionCardItem;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -67,14 +68,15 @@ public final class AssemblyPainter {
 
     /** The case, from its picture: bare, with the tray's standoffs showing, or with the board over its tray. */
     public static void drawCase(final GuiGraphics g, final int left, final int top, final AssemblyGeometry geometry,
-                                final HardwareEra era, final boolean boardIn) {
+                                final Era era, final boolean boardIn) {
         final Box box = geometry.caseBox();
         final String kind = geometry.kind().name().toLowerCase(Locale.ROOT);
-        final String name = "case_" + caseName(kind) + "_" + era.serializedName() + (boardIn ? "" : "_bare");
+        // The pictures are the five eras with parts'; a later era is drawn as the one it wears.
+        final String age = HardwareEra.withParts(era).path();
+        final String name = "case_" + caseName(kind) + "_" + age + (boardIn ? "" : "_bare");
         blit(g, tex(name), left + box.x(), top + box.y(), box.w(), box.h());
         if (boardIn) {
-            blit(g, tex("board_" + caseName(kind) + "_" + era.serializedName()), left + box.x(), top + box.y(),
-                    box.w(), box.h());
+            blit(g, tex("board_" + caseName(kind) + "_" + age), left + box.x(), top + box.y(), box.w(), box.h());
         }
     }
 
@@ -93,9 +95,9 @@ public final class AssemblyPainter {
 
     /** The bracket a card shows on the back panel, by what the card is: its connectors in the era's case metal. */
     public static void drawBracket(final GuiGraphics g, final int left, final int top, final Seat seat,
-                                   final ItemStack card, final HardwareEra era) {
+                                   final ItemStack card, final Era era) {
         final int index = bracketOf(card);
-        g.blit(tex("brackets_" + era.serializedName()), left + AssemblyGeometry.BRACKET_X,
+        g.blit(tex("brackets_" + HardwareEra.withParts(era).path()), left + AssemblyGeometry.BRACKET_X,
                 top + seat.y() + 2, index * AssemblyGeometry.BRACKET_W, 0, AssemblyGeometry.BRACKET_W,
                 AssemblyGeometry.BRACKET_H, AssemblyGeometry.BRACKET_W * BRACKETS, AssemblyGeometry.BRACKET_H);
     }
@@ -215,10 +217,7 @@ public final class AssemblyPainter {
     }
 
     private static int bracketOf(final ItemStack card) {
-        if (!(card.getItem() instanceof IExpansionCardItem item)) {
-            return BRACKET_PLAIN;
-        }
-        final IExpansionCardSpec spec = item.cardSpec();
+        final IExpansionCardSpec spec = HardwareRegistry.card(card);
         if (spec instanceof GpuSpec) {
             return BRACKET_GPU;
         }

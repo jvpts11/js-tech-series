@@ -12,9 +12,9 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.hardware.GpuSpec;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
@@ -27,6 +27,8 @@ import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Loaded;
@@ -50,7 +52,7 @@ final class SettingsSnapshots {
         final ComputerConsoleState console = computer.console();
         final ComputerSettings st = console.settings();
         final ItemStack sysDisk = computer.systemDisk();
-        final int netshare = DiskItem.publicPermille(sysDisk);
+        final int netshare = DriveVolumes.publicPermille(sysDisk);
         final int cpuCount = computer.installedCpus();
         final Text cpuLabel = (cpuCount == 1 ? SettingsSnapshotPayload.ONE_CPU : SettingsSnapshotPayload.CPUS)
                 .with(cpuCount);
@@ -60,9 +62,10 @@ final class SettingsSnapshots {
         final List<String> installed = new ArrayList<>(console.installed());
         final List<SettingsSnapshotPayload.DiskUse> disks = new ArrayList<>();
         for (final ItemStack stack : computer.diskStacks()) {
-            if (stack.getItem() instanceof DiskItem diskItem) {
+            final DiskSpec disk = HardwareRegistry.disk(stack);
+            if (disk != null) {
                 disks.add(new SettingsSnapshotPayload.DiskUse(GameText.of(stack.getHoverName()),
-                        diskItem.spec().capacityMb(), usedMb(stack), stack == sysDisk));
+                        disk.capacityMb(), usedMb(stack), stack == sysDisk));
             }
         }
         // The memory ledger: what the system, its desktop, its services and its windows hold right now.
@@ -110,7 +113,7 @@ final class SettingsSnapshots {
             mhz = gpu.clockMhz();
             slot = build.motherboard().pcieGeneration().slotName().english();
             for (final ItemStack stack : computer.hardwareStacks()) {
-                if (stack.getItem() instanceof GpuItem) {
+                if (HardwareRegistry.gpu(stack) != null) {
                     card = GameText.of(stack.getHoverName());
                     break;
                 }
@@ -178,10 +181,11 @@ final class SettingsSnapshots {
      * for itself. Megabytes follow the disk's own era, since what an item costs there is what its usage is worth.
      */
     static long usedMb(final ItemStack stack) {
-        if (!(stack.getItem() instanceof DiskItem diskItem)) {
+        final DiskSpec disk = HardwareRegistry.disk(stack);
+        if (disk == null) {
             return 0L;
         }
-        return DiskShares.of(stack).usedMb(diskItem.spec().era().mbPerItem());
+        return DiskShares.of(stack).usedMb(EraStorage.mbPerItem(disk.era()));
     }
 
     /** How the machine's instruction set reads on a screen, or empty when it has no processor to read it from. */

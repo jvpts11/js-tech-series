@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.api.client.IOperatingSpace;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -42,7 +43,7 @@ record TerminalSpaceOpening(ComputerTerminalMenu terminal) implements IOperating
     }
 
     @Override
-    public String era() {
-        return this.terminal.hardwareEra().serializedName();
+    public Era era() {
+        return this.terminal.hardwareEra();
     }
 }

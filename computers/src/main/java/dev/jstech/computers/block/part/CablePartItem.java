@@ -13,6 +13,7 @@ import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.cable.Wire;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.jstechseries.network.DataLine;
@@ -168,7 +169,7 @@ public class CablePartItem extends Item {
          */
         final boolean craftingPart = ComputingParts.isCrafting(type.get());
         final IFacePart made = type.get().create();
-        final HardwareEra era = made instanceof AbstractBusPart bus ? bus.era() : HardwareEra.STANDARD;
+        final Era era = made instanceof AbstractBusPart bus ? bus.era() : HardwareEra.STANDARD;
         final boolean fits = craftingPart ? DataWires.holds(cable, DataWires::isCrafting)
                 : DataWires.holds(cable, wire -> takes(era, wire));
         if (!fits) {
@@ -248,7 +249,7 @@ public class CablePartItem extends Item {
     }
 
     /* Whether a storage bus of {@code era} mounts on {@code wire}: an access or backbone cable of its era or before. */
-    private static boolean takes(final HardwareEra era, final Wire wire) {
+    private static boolean takes(final Era era, final Wire wire) {
         final DataLink link = DataWires.linkOf(wire);
         return link != null && (link.line() == DataLine.ACCESS || link.line() == DataLine.BACKBONE)
                 && link.era().level() <= era.level();

@@ -9,15 +9,19 @@ package dev.jstech.computers.os;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.text.TextKey;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -58,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
  *                     ({@link EraMemory}); 0 means what a program of its kind holds ({@link #legacyMb()})
  * @param requires     what it needs of the network's engine, checked when it is opened
  */
+@ApiStatus.Experimental
 public record ProgramSpec(
         ResourceLocation id,
         String commandName,
@@ -72,13 +77,18 @@ public record ProgramSpec(
         int minOsRank,
         HostScope hostScope,
         ResourceLocation iconId,
-        HardwareEra minEra,
-        HardwareEra era,
+        Era minEra,
+        Era era,
         SoftwareHouse house,
         int ramMb,
         ProgramRequirement requires
 ) {
 
+    /* A machine by its id; a bare name is one of this mod's own, as the data files write it. */
+    private static final Codec<HostScope> HOST_SCOPE = Codec.STRING.comapFlatMap(id -> {
+        final HostScope scope = HostScope.byId(id);
+        return scope != null ? DataResult.success(scope) : DataResult.error(() -> "no machine is declared as " + id);
+    }, HostScope::id);
     /*
      * A codec takes sixteen fields at most, so the name and the description travel as one pair of fields, and the
      * memory and what the program requires as another, written side by side in the same object as the rest.
@@ -97,14 +107,14 @@ public record ProgramSpec(
             Codec.INT.optionalFieldOf("min_disk_mb", 0).forGetter(ProgramSpec::minDiskMb),
             StableCodecs.byName(ProgramKind.class).optionalFieldOf("kind", ProgramKind.APP).forGetter(ProgramSpec::kind),
             Codec.INT.optionalFieldOf("min_os_rank", 0).forGetter(ProgramSpec::minOsRank),
-            StableCodecs.byName(HostScope.class).optionalFieldOf("host_scope", HostScope.ANY).forGetter(ProgramSpec::hostScope),
+            HOST_SCOPE.optionalFieldOf("host_scope", HostScope.ANY).forGetter(ProgramSpec::hostScope),
             ResourceLocation.CODEC.optionalFieldOf("icon_id", ResourceLocation.fromNamespaceAndPath("jsc", "generic"))
                     .forGetter(ProgramSpec::iconId),
-            StableCodecs.byName(HardwareEra.class)
+            EraCodecs.CODEC
                     .optionalFieldOf("min_era", HardwareEra.VINTAGE)
                     .forGetter(ProgramSpec::minEra),
             // Absent means "derive it from the OS rank", which the compact constructor does.
-            StableCodecs.byName(HardwareEra.class)
+            EraCodecs.CODEC
                     .optionalFieldOf("era", null)
                     .forGetter(ProgramSpec::era),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.BUNDLED).forGetter(ProgramSpec::house),
@@ -176,7 +186,7 @@ public record ProgramSpec(
      * else Vintage. The built-in registrations override this per program; the rule is only the default for a
      * program that never said.
      */
-    private static HardwareEra eraFromRank(final int minOsRank) {
+    private static Era eraFromRank(final int minOsRank) {
         if (minOsRank >= 5) {
             return HardwareEra.ADVANCED;
         }
@@ -222,7 +232,7 @@ public record ProgramSpec(
      * hardware generation it was written for: a desktop environment of the 2010s has no business
      * running on a machine of the 1990s.
      */
-    public ProgramSpec withMinEra(final HardwareEra oldest) {
+    public ProgramSpec withMinEra(final Era oldest) {
         return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
                 minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb, requires);
     }
@@ -231,7 +241,7 @@ public record ProgramSpec(
      * The same program, stamped as written in {@code generation}. This decides the medium it ships on and
      * the year on its banner; it never gates where it installs, which stays {@link #minEra()}'s job.
      */
-    public ProgramSpec withEra(final HardwareEra generation) {
+    public ProgramSpec withEra(final Era generation) {
         return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
                 minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb,
                 requires);
@@ -282,12 +292,12 @@ public record ProgramSpec(
      * grown or shrunk by how much more memory that era's machines have. The same Files is a few megabytes on a
      * Vintage machine and gigabytes on an Advanced one, whichever system it ships with.
      */
-    public int ramMbOn(@Nullable final HardwareEra era) {
+    public int ramMbOn(@Nullable final Era era) {
         return EraMemory.scaled(legacyMb(), era);
     }
 
     /** The same, for a copy the machine may have built from source, which holds a little less (SourceAdvantage). */
-    public int ramMbOn(@Nullable final HardwareEra era, final boolean builtHere) {
+    public int ramMbOn(@Nullable final Era era, final boolean builtHere) {
         return SourceAdvantage.of(this.ramMbOn(era), builtHere);
     }
 

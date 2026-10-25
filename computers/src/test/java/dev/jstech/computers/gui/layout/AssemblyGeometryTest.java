@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ class AssemblyGeometryTest {
 
     @Test
     void tower_keepsItsSupplyAtTheTopUpToTheTransitionAndAtTheFootAfter() {
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             final AssemblyGeometry geo = AssemblyGeometry.tower(era, 3);
             final boolean atTop = geo.seat(SeatKind.PSU).y() == AssemblyGeometry.TOP;
             assertEquals(era.isAtMost(HardwareEra.TRANSITION), atTop, era + " supply");
@@ -67,7 +68,7 @@ class AssemblyGeometryTest {
 
     private static List<AssemblyGeometry> everyGeometry() {
         final List<AssemblyGeometry> out = new ArrayList<>();
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             out.add(AssemblyGeometry.tower(era, 4));
         }
         out.add(AssemblyGeometry.mainframe(4));

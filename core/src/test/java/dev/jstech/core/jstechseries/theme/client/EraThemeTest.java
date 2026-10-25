@@ -12,6 +12,7 @@ import dev.jstech.core.client.gui.theme.EraStyle;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.gui.ColorContrast;
 import dev.jstech.core.gui.TextShadow;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -206,7 +207,7 @@ class EraThemeTest {
          * tabLabelOn must contrast with tabOn: if they were the same, labels drawn on a selected tab
          * would be invisible. Verified as a structural invariant: tabLabelOn != tabOn for every era.
          */
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             final EraTheme t = EraThemes.of(era);
             assertNotEquals(t.tabOn(), t.tabLabelOn(),
                     "Era " + era + ": tabLabelOn must differ from tabOn");
@@ -215,7 +216,7 @@ class EraThemeTest {
 
     @Test
     void everyEra_resolvesToANonNullTheme() {
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             assertNotEquals(null, EraThemes.of(era));
         }
     }
@@ -234,7 +235,7 @@ class EraThemeTest {
 
     @Test
     void ofNullable_presentEra_matchesOf() {
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             assertSame(EraThemes.of(era), EraThemes.ofNullable(era));
         }
     }

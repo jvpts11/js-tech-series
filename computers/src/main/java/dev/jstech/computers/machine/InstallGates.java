@@ -7,11 +7,6 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsGating;
@@ -19,10 +14,10 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
-import java.util.Locale;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,16 +32,6 @@ final class InstallGates {
     private final IComputerTerminalHost terminal;
 
     private static final TextKey NEEDS_ERA = TextKey.of("jsc.service.gates.needs_era", "%s needs %s hardware or later");
-    private static final TextKey MAINFRAME_ONLY =
-            TextKey.of("jsc.service.gates.mainframe_only", "%s only installs on the Mainframe");
-    private static final TextKey SERVER_ONLY =
-            TextKey.of("jsc.service.gates.server_only", "%s only installs on a server in a rack");
-    private static final TextKey CLUSTER_ONLY =
-            TextKey.of("jsc.service.gates.cluster_only", "%s only installs on a Cluster Management Computer");
-    private static final TextKey PERSONAL_ONLY =
-            TextKey.of("jsc.service.gates.personal_only", "%s only installs on a Personal Computer");
-    private static final TextKey CRAFTING_ONLY =
-            TextKey.of("jsc.service.gates.crafting_only", "%s only installs on a Crafting Computer");
 
     InstallGates(final IComputerTerminalHost terminal) {
         this.terminal = terminal;
@@ -71,36 +56,22 @@ final class InstallGates {
          * sits in it, and that chassis is the only way a machine of an older era exists right now.
          */
         final BlockEntity machine = (BlockEntity) this.terminal;
-        final HardwareEra era = machine instanceof IOsHost computer ? computer.displayEra() : null;
+        final Era era = machine instanceof IOsHost computer ? computer.displayEra() : null;
         if (era != null && OsGating.canInstall(spec.minEra(), era)) {
             return null;
         }
-        final String needed = spec.minEra().name();
-        return ICliComputer.OpResult.fail(NEEDS_ERA.with(spec.commandName(),
-                needed.charAt(0) + needed.substring(1).toLowerCase(Locale.ROOT)));
+        return ICliComputer.OpResult.fail(NEEDS_ERA.with(spec.commandName(), spec.minEra().text()));
     }
 
     /** Why a program made for another kind of machine does not install on this one, or null when it does. */
     @Nullable
     ICliComputer.OpResult machine(final ProgramSpec spec) {
-        final BlockEntity machine = (BlockEntity) this.terminal;
-        if (spec.hostScope() == HostScope.MAINFRAME && !(machine instanceof MainframeBlockEntity)) {
-            return ICliComputer.OpResult.fail(MAINFRAME_ONLY.with(spec.commandName()));
+        final HostScope scope = spec.hostScope();
+        final HostScope machine = this.terminal instanceof IOsHost host ? host.machine() : HostScope.ANY;
+        if (scope.admits(machine) || scope.refusal() == null) {
+            return null;
         }
-        if (spec.hostScope() == HostScope.SERVER && !(machine instanceof ServerRackBlockEntity)) {
-            return ICliComputer.OpResult.fail(SERVER_ONLY.with(spec.commandName()));
-        }
-        if (spec.hostScope() == HostScope.CLUSTER_MANAGEMENT_COMPUTER
-                && !(machine instanceof ClusterManagementComputerBlockEntity)) {
-            return ICliComputer.OpResult.fail(CLUSTER_ONLY.with(spec.commandName()));
-        }
-        if (spec.hostScope() == HostScope.PERSONAL_COMPUTER && !(machine instanceof PersonalComputerBlockEntity)) {
-            return ICliComputer.OpResult.fail(PERSONAL_ONLY.with(spec.commandName()));
-        }
-        if (spec.hostScope() == HostScope.CRAFTING_COMPUTER && !(machine instanceof CraftingComputerBlockEntity)) {
-            return ICliComputer.OpResult.fail(CRAFTING_ONLY.with(spec.commandName()));
-        }
-        return null;
+        return ICliComputer.OpResult.fail(scope.refusal().with(spec.commandName()));
     }
 
     /**

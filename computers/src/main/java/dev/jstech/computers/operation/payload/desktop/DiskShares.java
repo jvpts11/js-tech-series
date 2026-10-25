@@ -7,11 +7,12 @@
  */
 package dev.jstech.computers.operation.payload.desktop;
 
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.resources.ResourceLocation;
@@ -32,19 +33,21 @@ record DiskShares(long storageWeight, long fileWeight, long systemWeight) {
 
     /** The shares of a disk, or none for a stack that is not a disk. */
     static DiskShares of(final ItemStack stack) {
-        if (!(stack.getItem() instanceof DiskItem diskItem)) {
+        final DiskSpec disk = HardwareRegistry.disk(stack);
+        if (disk == null) {
             return NONE;
         }
         final ResourceLocation systemId = OsDisks.systemOn(stack);
         final OsDef system = systemId != null ? OsRegistry.getOs(systemId) : null;
         final long reserved = system != null
-                ? system.footprintItemsOn(diskItem.spec().era()) * StorageKey.MB_EQ_PER_ITEM : 0L;
+                ? system.footprintItemsOn(disk.era()) * StorageKey.MB_EQ_PER_ITEM : 0L;
         return new DiskShares(DriveVolumes.usedWeight(stack), DiskFilesystem.filesWeight(stack), reserved);
     }
 
     /** The capacity of a disk in megabytes, zero for a stack that is not a disk. */
     static long capacityMbOf(final ItemStack stack) {
-        return stack.getItem() instanceof DiskItem item ? item.spec().capacityMb() : 0L;
+        final DiskSpec disk = HardwareRegistry.disk(stack);
+        return disk != null ? disk.capacityMb() : 0L;
     }
 
     /** What is stored on the disk, in whole items. */

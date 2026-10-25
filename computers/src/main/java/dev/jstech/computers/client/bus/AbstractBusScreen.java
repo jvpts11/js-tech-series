@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -132,7 +133,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
 
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         final BusStatePayload state = menu.state();
         if (state != null) {
             return state.skin();

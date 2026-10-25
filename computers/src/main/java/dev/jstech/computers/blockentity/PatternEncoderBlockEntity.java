@@ -39,6 +39,8 @@ import dev.jstech.core.id.StableIds;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -63,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * The Pattern Encoder: the burner that puts recipe files onto removable media. It is a peripheral of a computer,
@@ -141,6 +144,17 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
     private static final TextKey MEDIUM_FULL = TextKey.of("jsc.pattern_encoder.medium_full", "medium full");
     private static final TextKey NO_MEDIUM = TextKey.of("jsc.pattern_encoder.no_medium", "no medium");
     private static final TextKey VERIFY_FAILED = TextKey.of("jsc.pattern_encoder.verify_failed", "Verify failed: %s");
+    /*
+     * What each era's encoder writes. The Transition's is a DVD burner, which writes CDs too; the stick comes with the
+     * Standard's; the Advanced's is a Blu-ray writer with a port for the sticks, the older discs left to the older
+     * encoders.
+     */
+    private static final EraTable<Set<MediaFormat>> WRITES = EraTable.ofFive(
+            Set.of(MediaFormat.FLOPPY),
+            Set.of(MediaFormat.CD),
+            Set.of(MediaFormat.DVD, MediaFormat.CD),
+            Set.of(MediaFormat.DVD, MediaFormat.CD, MediaFormat.USB),
+            Set.of(MediaFormat.BLU_RAY, MediaFormat.USB));
 
     public PatternEncoderBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.PATTERN_ENCODER_BE.get(), pos, state);
@@ -148,16 +162,8 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
     }
 
     /** Whether an encoder of {@code era} writes media of {@code format}. */
-    public static boolean eraAccepts(final HardwareEra era, final MediaFormat format) {
-        return switch (era) {
-            case VINTAGE -> format == MediaFormat.FLOPPY;
-            case LEGACY -> format == MediaFormat.CD;
-            // A DVD burner, which writes CDs too; the stick comes with the Standard era's encoder.
-            case TRANSITION -> format == MediaFormat.DVD || format == MediaFormat.CD;
-            case STANDARD -> format == MediaFormat.DVD || format == MediaFormat.CD || format == MediaFormat.USB;
-            // A Blu-ray writer with a port for the sticks; the older discs are left to the older encoders.
-            case ADVANCED, EXA, SINGULARITY -> format == MediaFormat.BLU_RAY || format == MediaFormat.USB;
-        };
+    public static boolean eraAccepts(final Era era, final MediaFormat format) {
+        return WRITES.get(era).contains(format);
     }
 
     /**
@@ -217,7 +223,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
     }
 
     /** The era of this encoder's chassis, which decides the media it writes. */
-    public HardwareEra era() {
+    public Era era() {
         return getBlockState().getBlock() instanceof PatternEncoderBlock block ? block.era() : HardwareEra.STANDARD;
     }
 

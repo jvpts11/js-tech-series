@@ -39,7 +39,7 @@ public final class TestIndustrialGear {
     public static final ItemEntry<Item> SPACE = item("test_space_module", "Test space module");
     public static final ItemEntry<Item> SWORD = TestSounds.CONTENT.item("test_industrial_sword", Item::new)
             .named("Test industrial sword").look(IItemLook.HANDMADE).tag(ToolKinds.SWORDS.items())
-            .tag(NoEnchanting.TAG).register();
+            .tag(NoEnchanting.TAG).tab(TestItems.ITEMS).register();
 
     public static final ModuleHostDef OPEN_CHEST_DEF = IndustrialModules.armour(OPEN_CHEST.getId(), IndustrialTier.T3,
             SeriesModules.CHEST, false);
@@ -64,6 +64,7 @@ public final class TestIndustrialGear {
     }
 
     private static ItemEntry<Item> item(final String id, final String english) {
-        return TestSounds.CONTENT.item(id, Item::new).named(english).look(IItemLook.HANDMADE).register();
+        return TestSounds.CONTENT.item(id, Item::new).named(english).look(IItemLook.HANDMADE).tab(TestItems.ITEMS)
+                .register();
     }
 }

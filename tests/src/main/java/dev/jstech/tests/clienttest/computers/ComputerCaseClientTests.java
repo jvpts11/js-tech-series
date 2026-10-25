@@ -18,13 +18,13 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.computers.hardware.FrontArea;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.os.media.MediaVolume;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.model.kit.KitAnimations;
@@ -485,7 +485,7 @@ public final class ComputerCaseClientTests {
                 .thenAssert(SETTLE, () -> ctx.mc().screen == null, "an empty hand on the empty bay opens nothing")
                 .thenGive(0, Build.stack("disk_vaultis_link_ide_20g"))
                 .then(0, () -> ctx.selectHotbar(0))
-                .thenWaitUntil(() -> ctx.player().getMainHandItem().getItem() instanceof DiskItem, SETTLE * 4,
+                .thenWaitUntil(() -> DriveVolumes.isDisk(ctx.player().getMainHandItem()), SETTLE * 4,
                         "the disk to reach the player's hand")
                 .thenRightClickFront(1, HOT_SWAP_AT, bay.middleX(), bay.middleY())
                 .thenWaitUntilServer(level -> {
@@ -508,7 +508,7 @@ public final class ComputerCaseClientTests {
                 .thenServer(0, level -> {
                     final PersonalComputerBlockEntity computer = hotSwapMachine(ctx, level);
                     final ItemStack out = ctx.serverPlayer().getInventory().getItem(0);
-                    ctx.assertTrue(out.getItem() instanceof DiskItem, "the disk is back in the hand; got " + out);
+                    ctx.assertTrue(DriveVolumes.isDisk(out), "the disk is back in the hand; got " + out);
                     ctx.assertEquals(KEPT, (int) new LocalStore(List.of(out), () -> { }).count(cobblestone),
                             "with the machine's items on it");
                     ctx.assertEquals(0, (int) computer.localStore().count(cobblestone), "and the machine has none left");

@@ -11,11 +11,12 @@ import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.audio.SystemSound;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.printer.Printers;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.ValueField;
@@ -78,10 +79,10 @@ public class DockStationBlockEntity extends MediaReaderBlockEntity {
 
     /** The tray a disk goes in by its size, or -1 for what is not a disk. */
     public static int bayOf(final ItemStack stack) {
-        if (!(stack.getItem() instanceof DiskItem disk)) {
+        if (!(HardwareRegistry.disk(stack) instanceof DiskSpec disk)) {
             return -1;
         }
-        return bayOf(disk.spec().tier());
+        return bayOf(disk.tier());
     }
 
     /** The tray a size of disk goes in. */

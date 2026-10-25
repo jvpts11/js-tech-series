@@ -28,10 +28,11 @@ import dev.jstech.computers.operation.payload.terminal.TerminalLocalPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
@@ -566,8 +567,8 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
 
     /** The host computer's board-derived hardware era for the GUI skin, or {@code null} (STANDARD) when none. */
     @Nullable
-    public HardwareEra hardwareEra() {
-        return HardwareEra.find(readings.era());
+    public Era hardwareEra() {
+        return EraCodecs.orNone(readings.era());
     }
 
     /** Valid while the monitor shows this host, the player is within reach of it and the session lives. */

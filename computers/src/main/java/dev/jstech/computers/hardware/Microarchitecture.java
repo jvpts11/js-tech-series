@@ -8,6 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The design of a chip: how its cores carry out instructions, and so how much each core does in a clock.
@@ -26,6 +27,7 @@ import java.util.Objects;
  * @param coresPerUnit    how many of the cores a part lists make one core of this design's count; 1, except for the
  *                        graphics designs that grouped their shaders in fives and are counted a group at a time
  */
+@ApiStatus.Experimental
 public record Microarchitecture(String id, String name, int efficiencyMilli, int coresPerUnit) {
 
     public Microarchitecture {

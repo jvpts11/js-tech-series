@@ -29,6 +29,7 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
@@ -52,7 +53,7 @@ public final class SessionOpenings {
     public static OpenPostPayload post(final Level level, final BlockPos monitorPos, final BlockPos owner,
                                        @Nullable final IOsHost machine) {
         final String name = level.getBlockState(owner).getBlock().getName().getString();
-        final HardwareEra era = machine == null ? null : machine.displayEra();
+        final Era era = machine == null ? null : machine.displayEra();
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
         final int remaining = machine == null ? 0 : machine.postRemaining();
         // A machine standing at a failed self-test opens at the end of it, not at the start of another one.
@@ -136,7 +137,7 @@ public final class SessionOpenings {
     public static OpenComputerUiPayload firmware(final Level level, final BlockPos monitorPos, final BlockPos owner,
                                                  @Nullable final IOsHost computer) {
         final String name = level.getBlockState(owner).getBlock().getName().getString();
-        final HardwareEra era = computer == null ? null : computer.displayEra();
+        final Era era = computer == null ? null : computer.displayEra();
         return new OpenComputerUiPayload(owner, monitorPos,
                 FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD).id(), name);
     }
@@ -163,7 +164,7 @@ public final class SessionOpenings {
     }
 
     private static FirmwareKind firmwareOf(final IOsHost computer) {
-        final HardwareEra era = computer.displayEra();
+        final Era era = computer.displayEra();
         return FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
     }
 }

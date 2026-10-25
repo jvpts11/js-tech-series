@@ -23,6 +23,8 @@ import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.computers.operation.payload.CraftingView;
 import dev.jstech.computers.operation.payload.crafting.CraftingViews;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
@@ -63,7 +65,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
     private final Player owner;
     private final BlockPos cablePos;
     private final Direction face;
-    private final HardwareEra era;
+    private final Era era;
     private final BusLayout.Window window;
     private String busName;
     /* Whether the inventory is shown: the client's Configure tab is open. The server's copy always has it. */
@@ -97,7 +99,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
     }
 
     /** What a bus's window is opened with, written by the server and read by the client before the menu is made. */
-    public record Opening(BlockPos pos, Direction face, String name, HardwareEra era) {
+    public record Opening(BlockPos pos, Direction face, String name, Era era) {
 
         public void write(final FriendlyByteBuf buf) {
             write(buf, AbstractBusPart.MAX_NAME_LENGTH);
@@ -118,7 +120,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
         /** Reads an opening written with {@code maxName} as the longest name. */
         public static Opening read(final FriendlyByteBuf buf, final int maxName) {
             return new Opening(buf.readBlockPos(), Direction.from3DDataValue(buf.readByte()),
-                    buf.readUtf(maxName), HardwareEra.fromLevel(buf.readVarInt()));
+                    buf.readUtf(maxName), Eras.at(buf.readVarInt()));
         }
 
         /** The opening of the window on {@code part}, on {@code cable}'s face {@code face}. */
@@ -140,7 +142,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
      */
     static <P extends AbstractBusPart, M extends AbstractBusMenu> M open(
             final int containerId, final Inventory playerInventory, final CableBlockEntity cable,
-            final Direction face, final Class<P> kind, final Function<HardwareEra, P> standIn,
+            final Direction face, final Class<P> kind, final Function<Era, P> standIn,
             final MenuMaker<P, M> maker) {
         final P part = kind.isInstance(cable.getPart(face)) ? kind.cast(cable.getPart(face))
                 : standIn.apply(HardwareEra.STANDARD);
@@ -150,7 +152,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
     /* The menu on the player's game, made from what the server wrote when it opened. */
     static <P extends AbstractBusPart, M extends AbstractBusMenu> M openFromNetwork(
             final int containerId, final Inventory playerInventory, final FriendlyByteBuf buf, final Class<P> kind,
-            final Function<HardwareEra, P> standIn, final MenuMaker<P, M> maker) {
+            final Function<Era, P> standIn, final MenuMaker<P, M> maker) {
         final Opening opening = Opening.read(buf);
         final Level level = playerInventory.player.level();
         final P part = level.getBlockEntity(opening.pos()) instanceof CableBlockEntity cable
@@ -160,7 +162,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
     }
 
     /** The era of the bus, which decides its rows; its window's skin comes with its state. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
@@ -270,7 +272,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
         final boolean linked = part instanceof CraftingRouterPart ? CraftingViews.routerLinked(level, cablePos, face)
                 : part instanceof ReceivingBusPart ? CraftingViews.reachesComputer(level, cablePos)
                 : part.reachesNetwork();
-        final HardwareEra skin = crafting() ? CraftingViews.skinOf(level, cablePos) : part.skin();
+        final Era skin = crafting() ? CraftingViews.skinOf(level, cablePos) : part.skin();
         final BusStatePayload now = new BusStatePayload(containerId, part.settings(), part.filterStacks(),
                 linked, part.speed(), part.cableCarries(), skin, part.activity().entries(),
                 external == null ? 0 : external.places(), external == null ? 0 : external.placesUsed(),

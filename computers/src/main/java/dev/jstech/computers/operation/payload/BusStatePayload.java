@@ -11,8 +11,9 @@ import dev.jstech.computers.bus.BusActivity;
 import dev.jstech.computers.bus.BusCondition;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.text.TextBounds;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -43,7 +44,7 @@ import java.util.Map;
  * @param crafting    for a crafting part, what it is part of, its warnings and what it credited
  */
 public record BusStatePayload(int containerId, BusSettings settings, List<ItemStack> filter, boolean linked,
-                              long speed, long carries, HardwareEra skin, List<BusActivity.Entry> activity,
+                              long speed, long carries, Era skin, List<BusActivity.Entry> activity,
                               int places, int placesUsed, CraftingView crafting)
         implements CustomPacketPayload {
 
@@ -122,7 +123,7 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
     private static BusStatePayload read(final RegistryFriendlyByteBuf buf) {
         final int containerId = buf.readVarInt();
         final String name = buf.readUtf(MAX_TEXT);
-        final HardwareEra era = HardwareEra.fromLevel(buf.readVarInt());
+        final Era era = Eras.at(buf.readVarInt());
         final List<String> filter = readStrings(buf);
         final boolean exclude = buf.readBoolean();
         final int keep = buf.readVarInt();
@@ -159,7 +160,7 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
         final boolean linked = buf.readBoolean();
         final long speed = buf.readVarLong();
         final long carries = buf.readVarLong();
-        final HardwareEra skin = HardwareEra.fromLevel(buf.readVarInt());
+        final Era skin = Eras.at(buf.readVarInt());
         final int entries = Math.min(MOST_ENTRIES, buf.readVarInt());
         final List<BusActivity.Entry> activity = new ArrayList<>();
         for (int i = 0; i < entries; i++) {

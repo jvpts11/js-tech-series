@@ -8,9 +8,10 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.menu.MenuValue;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
@@ -260,8 +261,8 @@ final class ComputerReadings {
         if (host == null) {
             return 0;
         }
-        final HardwareEra hostEra = host.displayEra();
-        return hostEra == null ? -1 : hostEra.id();
+        final Era hostEra = host.displayEra();
+        return EraCodecs.placeOf(hostEra);
     }
 
     private int hostInt(final ToIntFunction<IComputerTerminalHost> getter) {

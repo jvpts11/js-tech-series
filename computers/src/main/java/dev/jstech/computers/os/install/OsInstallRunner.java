@@ -21,6 +21,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -236,7 +237,7 @@ public final class OsInstallRunner {
         if (!machine.onScreen()) {
             return;
         }
-        final HardwareEra era = machine.displayEra();
+        final Era era = machine.displayEra();
         final int kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD).id();
         final String name = system != null ? system.displayName() : job.osId();
         final Text target = targetLabel(job.targetSlot());

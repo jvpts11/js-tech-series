@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.item;
 
-import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
@@ -15,15 +14,13 @@ import dev.jstech.core.text.TextKey;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 
 /**
- * A personal-use card: the crafting table, furnace, enchanting table or anvil on an expansion card, which a Personal
- * Computer's Workshop program works with the player's own items.
+ * What a personal-use card's tooltip says: the crafting table, furnace, enchanting table or anvil on it, which a
+ * Personal Computer's Workshop program works with the player's own items.
  */
 @TextHolder
-public class WorkshopCardItem extends SpecItem<WorkshopCardSpec> implements IExpansionCardItem {
+final class WorkshopCardTooltip {
 
     private static final TextKey CRAFTING_TABLE = TextKey.of("jsc.item.workshop_card.crafting_table",
             "A crafting table, on a card");
@@ -37,19 +34,11 @@ public class WorkshopCardItem extends SpecItem<WorkshopCardSpec> implements IExp
             "Used by the Workshop on a Personal Computer, from the Legacy on");
     private static final TextKey SLOTS = TextKey.of("jsc.item.workshop_card.slots", "PCI, AGP or PCI Express  -  %s W");
 
-    public WorkshopCardItem(final Properties properties, final WorkshopCardSpec spec) {
-        super(properties, spec);
+    private WorkshopCardTooltip() {
     }
 
-    @Override
-    public IExpansionCardSpec cardSpec() {
-        return spec();
-    }
-
-    @Override
-    public void appendHoverText(final ItemStack stack, final TooltipContext context,
-                                final List<Component> tooltip, final TooltipFlag flag) {
-        final TextKey purpose = switch (spec().card()) {
+    static void append(final WorkshopCardSpec spec, final List<Component> tooltip) {
+        final TextKey purpose = switch (spec.card()) {
             case CRAFTING_TABLE -> CRAFTING_TABLE;
             case FURNACE -> FURNACE;
             case ENCHANTING -> ENCHANTING;
@@ -57,6 +46,6 @@ public class WorkshopCardItem extends SpecItem<WorkshopCardSpec> implements IExp
         };
         tooltip.add(GameText.component(purpose).withStyle(ChatFormatting.GRAY));
         tooltip.add(GameText.component(WORKS_IN).withStyle(ChatFormatting.GRAY));
-        tooltip.add(GameText.component(SLOTS.with(spec().tdpWatts())).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(GameText.component(SLOTS.with(spec.tdpWatts())).withStyle(ChatFormatting.DARK_GRAY));
     }
 }

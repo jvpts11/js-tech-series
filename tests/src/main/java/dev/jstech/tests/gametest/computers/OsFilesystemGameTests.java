@@ -46,7 +46,7 @@ import java.util.Optional;
 
 /**
  * In-world integration tests for the disk filesystem data model:
- * the FILESYSTEM and DISK_SYSTEMS data components on a DiskItem stack.
+ * the FILESYSTEM and DISK_SYSTEMS data components on a disk's stack.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -60,7 +60,7 @@ public final class OsFilesystemGameTests {
 
     @GameTest(template = ARENA)
     public static void fs_componentsRoundTripOnDisk(final GameTestHelper helper) {
-        // Build a DiskItem stack (NVMe 1 TB, since any registered disk works).
+        // Build a disk's stack (NVMe 1 TB, since any registered disk works).
         final ItemStack stack = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
 
         // Stamp it with a FILESYSTEM containing one IQL file.

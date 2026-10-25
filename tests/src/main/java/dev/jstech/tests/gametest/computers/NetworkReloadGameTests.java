@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -98,13 +99,11 @@ public final class NetworkReloadGameTests {
                     helper.assertTrue(reloaded instanceof MainframeBlockEntity, "reloaded BE should be a Mainframe");
                     final MainframeBlockEntity loaded = (MainframeBlockEntity) reloaded;
 
-                    helper.assertTrue(loaded.getInventory()
-                                    .getStackInSlot(MainframeBlockEntity.DISK_SLOTS_START).getItem()
-                                    instanceof dev.jstech.computers.item.DiskItem,
+                    helper.assertTrue(HardwareRegistry.disk(loaded.getInventory()
+                                    .getStackInSlot(MainframeBlockEntity.DISK_SLOTS_START)) != null,
                             "the installed disk must survive reload under the preserved NBT key");
-                    helper.assertTrue(loaded.getInventory()
-                                    .getStackInSlot(MainframeBlockEntity.CPU_SLOTS_START + 1).getItem()
-                                    instanceof dev.jstech.computers.item.CpuItem,
+                    helper.assertTrue(HardwareRegistry.cpu(loaded.getInventory()
+                                    .getStackInSlot(MainframeBlockEntity.CPU_SLOTS_START + 1)) != null,
                             "the second CPU must survive reload under the preserved NBT key");
                     helper.assertTrue(loaded.storageItems() == storageBefore,
                             "reloaded build must report the same storage capacity; got " + loaded.storageItems()

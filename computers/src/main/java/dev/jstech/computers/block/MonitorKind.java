@@ -9,6 +9,7 @@ package dev.jstech.computers.block;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.core.gui.Tube;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.util.StringRepresentable;
 
@@ -38,7 +39,7 @@ public enum MonitorKind implements StringRepresentable {
             new int[] {29, 57, 35, 62});
 
     private final String id;
-    private final HardwareEra era;
+    private final Era era;
     private final Tube tube;
     private final boolean flat;
     private final int[] glass;
@@ -48,7 +49,7 @@ public enum MonitorKind implements StringRepresentable {
     /** The front is drawn this many units across. */
     public static final int FRONT = 64;
 
-    MonitorKind(final String id, final HardwareEra era, final Tube tube, final boolean flat, final int[] glass,
+    MonitorKind(final String id, final Era era, final Tube tube, final boolean flat, final int[] glass,
                 final int[] button) {
         this.id = id;
         this.era = era;
@@ -64,7 +65,7 @@ public enum MonitorKind implements StringRepresentable {
         return id;
     }
 
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

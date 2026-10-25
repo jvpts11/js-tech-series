@@ -1,5 +1,9 @@
 {
   "values": [
-    "jstests:test_marble"
+    "jstests:test_marble",
+    "jstests:test_oven_bricks",
+    "jstests:test_oven_battery_terminal",
+    "jstests:test_tank_casing",
+    "jstests:test_vessel_casing"
   ]
 }

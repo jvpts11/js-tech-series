@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.menu.AbstractAssemblyComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -34,8 +35,8 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
     }
 
     @Override
-    protected HardwareEra caseEra() {
-        final HardwareEra era = menu.hardwareEra();
+    protected Era caseEra() {
+        final Era era = menu.hardwareEra();
         return era == null ? HardwareEra.STANDARD : era;
     }
 

@@ -7,7 +7,8 @@
  */
 package dev.jstech.computers.os.fs;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.computers.hardware.EraStorage;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.nio.charset.StandardCharsets;
 
@@ -59,9 +60,9 @@ public record StoredFile(String path, FileType type, String content, long modifi
 
     /**
      * Returns the disk-space cost in mB-equivalents on a disk of {@code era}, rounded up to the nearest
-     * block ({@link HardwareEra#bytesPerMbEq()} bytes there).
+     * block ({@link EraStorage#bytesPerMbEq} bytes there).
      */
-    public long weight(final HardwareEra era) {
+    public long weight(final Era era) {
         return FsPaths.sizeMbEq(byteSize(), era);
     }
 }

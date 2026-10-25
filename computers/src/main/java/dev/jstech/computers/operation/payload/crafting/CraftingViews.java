@@ -27,6 +27,7 @@ import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -381,7 +382,7 @@ public final class CraftingViews {
      * The era whose skin a crafting part's window wears: the Crafting Computer's that commands its network, the
      * Standard's when it reaches none.
      */
-    public static HardwareEra skinOf(final ServerLevel level, final BlockPos cable) {
+    public static Era skinOf(final ServerLevel level, final BlockPos cable) {
         for (final BlockPos pos : CraftingFloor.through(level, cable).computers()) {
             if (level.getBlockState(pos).getBlock() instanceof CraftingComputerBlock computer) {
                 return computer.era();

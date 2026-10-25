@@ -13,6 +13,7 @@ import dev.jstech.computers.menu.SpeakerMenu;
 import dev.jstech.computers.operation.payload.RenameSpeakerPayload;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -53,7 +54,7 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
 
     /** The speaker's model era, which this screen wears as its skin. */
     @Override
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return menu.opening().era();
     }
 
@@ -118,7 +119,7 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        final HardwareEra era = menu.opening().era();
+        final Era era = menu.opening().era();
         JsTechTheme.text(g, font, GameText.resolve(SpeakerTexts.TITLE), 12, 10, JsTechTheme.text());
         JsTechTheme.textRight(g, font, GameText.resolve(model(era)), WIDTH - 12, 10, JsTechTheme.accent());
         JsTechTheme.textS(g, font, GameText.resolve(SpeakerTexts.NAME), 10, NAME_LABEL_Y, JsTechTheme.dim());
@@ -139,7 +140,7 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
     }
 
     /* The model of its era's speaker, as the header names it. */
-    private static TextKey model(final HardwareEra era) {
+    private static TextKey model(final Era era) {
         if (era == HardwareEra.LEGACY) {
             return SpeakerTexts.MODEL_LEGACY;
         }
@@ -150,7 +151,7 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
     }
 
     /* How well it plays: a Transition satellite as its set stands, with a subwoofer beside it or not. */
-    private static TextKey plays(final HardwareEra era, final boolean subwoofer) {
+    private static TextKey plays(final Era era, final boolean subwoofer) {
         if (era == HardwareEra.LEGACY) {
             return SpeakerTexts.PLAYS_LEGACY;
         }

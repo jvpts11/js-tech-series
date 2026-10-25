@@ -13,10 +13,10 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -45,26 +45,26 @@ import org.jetbrains.annotations.Nullable;
 @TextHolder
 public class HbwInterfaceBlock extends Block implements EntityBlock, IFaceConnector {
 
-    private final HardwareEra era;
+    private final Era era;
     /* The backbone on one side, the cluster fabric on the other, each up to the cable of the interface's era. */
     private final FacePorts ports;
 
     public static final MapCodec<HbwInterfaceBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(HbwInterfaceBlock::era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(HbwInterfaceBlock::era)
     ).apply(i, HbwInterfaceBlock::new));
 
     private static final TextKey TOOLTIP =
             TextKey.of("item.jsc.hbw_interface.tooltip", "Uplinks a node cluster to the HBW backbone");
 
-    public HbwInterfaceBlock(final Properties properties, final HardwareEra era) {
+    public HbwInterfaceBlock(final Properties properties, final Era era) {
         super(properties);
         this.era = era;
         this.ports = FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE, DataLine.HPC));
     }
 
     /** The era the interface belongs to: the newest backbone and fabric cables it takes. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

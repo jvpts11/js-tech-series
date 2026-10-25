@@ -181,7 +181,7 @@ ServerEvents.recipes(event => {
 })
 ```
 
-`JsComputers` is there in server and client scripts:
+`JsComputers` is there in startup, server and client scripts:
 
 | Call | Gives |
 | --- | --- |
@@ -206,3 +206,34 @@ ServerEvents.recipes(event => {
 
 KubeJS has no loot event of its own. The datapack files above work from KubeJS's own `kubejs/data/` folder, which it
 loads as a datapack, and the LootJS addon writes loot in scripts.
+
+### Hardware of the modpack's own
+
+*Added 2026-10-25.*
+
+An item becomes a part from a script in `kubejs/startup_scripts/`, which runs while the game loads: the item first,
+then its sheet as an object. The item is one KubeJS or another mod registers; J's Computers reads the sheet once the
+game sets up, so a field written wrong stops the loading with what is wrong and of which part.
+
+```js
+JsComputers.memory('mypack:scripted_ram', { era: 'advanced', generation: 'ddr5', buffer_items: 4096, tdp_watts: 3 })
+```
+
+| Call | Declares | Its sheet's fields |
+| --- | --- | --- |
+| `JsComputers.processor(item, sheet)` | A processor | `era`, `isa`, `socket`, `cores`, `freq_mhz`, `tdp_watts`, and `alien`, `design` |
+| `JsComputers.graphicsCard(item, sheet)` | A graphics card | `era`, `bus`, `cores`, `vram_mb`, `tdp_watts`, `clock_mhz`, `arch`, and `chip` |
+| `JsComputers.memory(item, sheet)` | A memory module | `era`, `generation`, `buffer_items`, `tdp_watts` |
+| `JsComputers.disk(item, sheet)` | A disk | `tier` (`hdd`, `ssd`, `nvme`), `era`, `capacity_items`, `tdp_watts` |
+| `JsComputers.motherboard(item, sheet)` | A board | `form_factor`, `era`, `socket`, `cpu_slots`, `memory`, `ram_slots`, `bus`, `slots`, `disk_slots` |
+| `JsComputers.powerSupply(item, sheet, era)` | A supply, shown with `era` | `wattage`, `efficiency_percent`, and `auto_scaling` |
+| `JsComputers.expansionCard(item, sheet)` | A card | `kind`, `era`, `bus`, `tdp_watts` |
+| `JsComputers.memoryGeneration(sheet)` | A generation of memory | `id`, `label`, `latency_ticks` |
+| `JsComputers.slotGeneration(sheet)` | A generation of slot | `id`, `generation`, `label`, `slot_name`, `family` |
+| `JsComputers.formFactor(sheet)` | A form factor | `id`, `label` |
+| `JsComputers.cardKind(sheet)` | A kind of card | `id` |
+
+A kind already declared is named by its id, a bare name being J's Computers' own: `era: 'legacy'`, `generation:
+'ddr4'`, `bus: 'pcie_4_0'`, `form_factor: 'atx'`, `socket: 'lga_1150'`, and an instruction set by its id or its
+name (`'x86-64'`). The kinds a script declares come before the parts that use them, whatever order the script writes
+them in.

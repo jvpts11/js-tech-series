@@ -9,6 +9,7 @@ package dev.jstech.computers.gui.layout;
 
 import dev.jstech.computers.hardware.CaseBays;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -192,7 +193,7 @@ public final class AssemblyGeometry {
      * A tower's geometry for its era's case: its bays, and its supply at the top of the back panel in the towers up to
      * the Transition's, at the foot in the newer ones.
      */
-    public static AssemblyGeometry tower(final HardwareEra era, final int readouts) {
+    public static AssemblyGeometry tower(final Era era, final int readouts) {
         return new AssemblyGeometry(Kind.TOWER, CaseBays.of(era), era.isAtMost(HardwareEra.TRANSITION), readouts);
     }
 

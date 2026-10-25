@@ -31,9 +31,9 @@ import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.FrontArea;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.item.SoundCardItem;
+import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.workshop.UpdateDoor;
@@ -256,7 +256,7 @@ public final class EraBuildClientTests {
     private static void mainframe(final ClientTestContext ctx, final EraKit kit) {
         final Item board = kit.mainframeBoard();
         final List<Item> parts = new ArrayList<>(List.of(board, EraParts.cpuFor(board), EraParts.ramFor(board),
-                EraParts.psuFor(kit.era()), EraParts.diskFor(kit.era()), EraParts.cardFor(board, GpuItem.class)));
+                EraParts.psuFor(kit.era()), EraParts.diskFor(kit.era()), EraParts.cardFor(board, GpuSpec.class)));
         final List<SeatKind> seats = new ArrayList<>(List.of(SeatKind.BOARD, SeatKind.CPU, SeatKind.RAM, SeatKind.PSU,
                 SeatKind.DISK, SeatKind.CARD));
         if (kit.fibre()) {
@@ -294,11 +294,11 @@ public final class EraBuildClientTests {
     private static void computer(final ClientTestContext ctx, final EraKit kit) {
         final Item board = kit.computerBoard();
         final List<Item> parts = new ArrayList<>(List.of(board, EraParts.cpuFor(board), EraParts.ramFor(board),
-                EraParts.psuFor(kit.era()), EraParts.diskFor(kit.era()), EraParts.cardFor(board, GpuItem.class)));
+                EraParts.psuFor(kit.era()), EraParts.diskFor(kit.era()), EraParts.cardFor(board, GpuSpec.class)));
         final List<SeatKind> seats = new ArrayList<>(List.of(SeatKind.BOARD, SeatKind.CPU, SeatKind.RAM, SeatKind.PSU,
                 SeatKind.DISK, SeatKind.CARD));
         if (!EraParts.board(board).hasOnBoardAudio()) {
-            parts.add(EraParts.cardFor(board, SoundCardItem.class));
+            parts.add(EraParts.cardFor(board, SoundCardSpec.class));
             seats.add(SeatKind.CARD);
         }
         // The Furnace Card wants a slot of the PCI family, which no Vintage board has.
@@ -440,9 +440,9 @@ public final class EraBuildClientTests {
         final Item board = kit.serverBoard();
         final boolean ownVideo = EraParts.board(board).formFactor() == FormFactor.EEB;
         final ItemStack storage = ownVideo ? EraNetwork.built(kit.storageServer(), board)
-                : EraNetwork.built(kit.storageServer(), board, EraParts.cardFor(board, GpuItem.class));
+                : EraNetwork.built(kit.storageServer(), board, EraParts.cardFor(board, GpuSpec.class));
         final ItemStack compute = ownVideo ? EraNetwork.built(kit.computeServer(), board)
-                : EraNetwork.built(kit.computeServer(), board, EraParts.cardFor(board, GpuItem.class));
+                : EraNetwork.built(kit.computeServer(), board, EraParts.cardFor(board, GpuSpec.class));
         final Item second = kit.fibre() ? kit.fibreInterface() : kit.coolingUnit();
         final Item disk = EraParts.smallestDiskFor(kit.era());
         ctx.thenGive(0, new ItemStack(kit.rack()), new ItemStack(kit.monitor()))

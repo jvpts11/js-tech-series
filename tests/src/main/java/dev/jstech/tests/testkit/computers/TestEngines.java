@@ -13,10 +13,11 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
-import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
@@ -41,8 +42,8 @@ public final class TestEngines {
                             ProgramKind.NETWORK_ENGINE, 0, HostScope.MAINFRAME)
                     .named("Plain Engine")
                     .described("An engine with nothing past what every engine answers."));
-            final Map<HardwareEra, String> versions = new EnumMap<>(HardwareEra.class);
-            for (final HardwareEra era : HardwareEra.values()) {
+            final Map<Era, String> versions = new HashMap<>();
+            for (final Era era : HardwareEra.SERIES) {
                 versions.put(era, "1.0");
             }
             event.engine(new EngineDef(PLAIN, "Plain", versions, Set.of()));

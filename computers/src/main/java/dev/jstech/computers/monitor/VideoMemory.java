@@ -17,6 +17,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.gui.Tube;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
@@ -127,7 +128,7 @@ public final class VideoMemory {
             return new State(new VramLedger(0L), List.of(), false);
         }
         final VramLedger ledger = new VramLedger(totalKb(build, host.ramTotalMb()));
-        final HardwareEra era = host.displayEra() == null ? HardwareEra.STANDARD : host.displayEra();
+        final Era era = host.displayEra() == null ? HardwareEra.STANDARD : host.displayEra();
         for (final OpenWindow window : host.openWindows()) {
             if (GraphicsPrograms.isGraphical(window.key()) && !window.minimized()) {
                 ledger.add(window.key(), VramLedger.windowKb(era, window.maximized()), VramLedger.Kind.WINDOW);

@@ -9,7 +9,7 @@ package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.id.IStableId;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.IndustrialTier;
 
 import java.util.Objects;
@@ -29,7 +29,7 @@ import java.util.Objects;
  * @param parallelNodes how many nodes a bulk install writes at the same time
  * @param tdpWatts      the card's power draw
  */
-public record ClusterInterfaceCardSpec(HardwareEra era, IndustrialTier tier, PcieGeneration bus, Reach reach,
+public record ClusterInterfaceCardSpec(Era era, IndustrialTier tier, PcieGeneration bus, Reach reach,
                                        int parallelNodes, int tdpWatts) implements IExpansionCardSpec {
 
     /** How far a card reaches, in cabinet kinds. Each level includes the ones before it. */

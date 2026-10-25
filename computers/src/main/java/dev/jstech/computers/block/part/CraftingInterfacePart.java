@@ -17,11 +17,11 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.menu.CraftingInterfaceMenu;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Utf8Text;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -60,7 +60,7 @@ public final class CraftingInterfacePart implements IFacePart {
 
     private CableBlockEntity host;
     private Direction face = Direction.NORTH;
-    private final HardwareEra era;
+    private final Era era;
     private UUID id = UUID.randomUUID();
     private String name = "";
     /* Exclusive or not as set by hand or by a program; null while it follows what it feeds. */
@@ -88,7 +88,7 @@ public final class CraftingInterfacePart implements IFacePart {
     public static final String ROUTES = "ROUTES";
     private static final long BUSY_FOR = 60L;
 
-    public CraftingInterfacePart(final HardwareEra era) {
+    public CraftingInterfacePart(final Era era) {
         this.era = era;
     }
 
@@ -153,7 +153,7 @@ public final class CraftingInterfacePart implements IFacePart {
         return face;
     }
 
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

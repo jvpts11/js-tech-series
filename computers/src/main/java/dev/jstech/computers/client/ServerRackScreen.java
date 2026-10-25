@@ -23,13 +23,14 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -119,7 +120,7 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
 
     /** The cabinet's own era, so its screen (labels included) wears that decade's skin. */
     @Override
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return menu.rackEra();
     }
 
@@ -127,7 +128,7 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = leftPos;
         final int y = topPos;
-        final HardwareEra era = menu.rackEra();
+        final Era era = menu.rackEra();
         final int metal = CABINET.get().metal(era);
         final int face = CABINET.get().face(era);
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
@@ -553,24 +554,12 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                            int vintageFace, int legacyFace, int transitionFace, int standardFace, int advancedFace,
                            int sheen) {
 
-        int metal(final HardwareEra era) {
-            return switch (era) {
-                case VINTAGE -> vintageMetal;
-                case LEGACY -> legacyMetal;
-                case TRANSITION -> transitionMetal;
-                case ADVANCED, EXA, SINGULARITY -> advancedMetal;
-                default -> standardMetal;
-            };
+        int metal(final Era era) {
+            return HardwareEra.pick(era, vintageMetal, legacyMetal, transitionMetal, standardMetal, advancedMetal);
         }
 
-        int face(final HardwareEra era) {
-            return switch (era) {
-                case VINTAGE -> vintageFace;
-                case LEGACY -> legacyFace;
-                case TRANSITION -> transitionFace;
-                case ADVANCED, EXA, SINGULARITY -> advancedFace;
-                default -> standardFace;
-            };
+        int face(final Era era) {
+            return HardwareEra.pick(era, vintageFace, legacyFace, transitionFace, standardFace, advancedFace);
         }
     }
 

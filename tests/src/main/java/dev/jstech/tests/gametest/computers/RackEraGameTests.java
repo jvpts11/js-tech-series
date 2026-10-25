@@ -13,7 +13,7 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
@@ -305,7 +305,7 @@ public final class RackEraGameTests {
         helper.assertTrue(fits(legacy, ServerHardwareHandler.GPU_START, ComputingModule.VAULTIS_ARRAY_PCI.get()),
                 "its PCI RAID controller in a slot of the older bus");
         helper.assertTrue(fits(legacy, ServerHardwareHandler.GPU_START + 1,
-                        EraParts.cardFor(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get(), GpuItem.class)),
+                        EraParts.cardFor(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get(), GpuSpec.class)),
                 "and a graphics card of the board's own bus in its second slot, for its monitor");
         helper.assertTrue(RackChassis.LEGACY_STORAGE_SERVER.maxPcie() == 2,
                 "the Legacy storage server has the two slots, its board having no video of its own");
@@ -317,7 +317,7 @@ public final class RackEraGameTests {
         helper.assertTrue(fits(legacyServer, ServerHardwareHandler.GPU_START, ComputingModule.VAULTIS_CACHE_PCI.get()),
                 "its PCI read cache in a slot of the older bus");
         helper.assertTrue(fits(legacyServer, ServerHardwareHandler.GPU_START + 1,
-                        EraParts.cardFor(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get(), GpuItem.class)),
+                        EraParts.cardFor(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get(), GpuSpec.class)),
                 "and a graphics card beside it, the 1U server having two slots for the same reason");
         helper.succeed();
     }

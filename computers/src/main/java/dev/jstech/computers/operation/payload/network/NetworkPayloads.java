@@ -19,7 +19,6 @@ import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.client.os.NetworkManagerApp;
 import dev.jstech.computers.client.os.StorageInsightsApp;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -43,6 +42,7 @@ import dev.jstech.computers.operation.payload.RequestStorageInsightsPayload;
 import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.StorageInsightsPayload;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
@@ -373,7 +373,7 @@ public final class NetworkPayloads {
     private static NetworkNodeInfo computerNodeInfo(final int kind,
             final IOsHost c,
             final String uuid, final String detail, final NodeLink link) {
-        final int share = DiskItem.publicPermille(c.systemDisk());
+        final int share = DriveVolumes.publicPermille(c.systemDisk());
         /*
          * Total capacity is only summed for the Mainframe; a generic computer reports its free space, which is
          * the "available storage" the tooltip shows, with total left as 0 (unknown).

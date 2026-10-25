@@ -8,7 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.os.media.MediaDriveType;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @param kind what it is
  * @param era  the era it came out in, which is where it is found
  */
-public record BayDriveSpec(Kind kind, HardwareEra era) {
+public record BayDriveSpec(Kind kind, Era era) {
 
     /** The parts a bay takes. */
     public enum Kind {

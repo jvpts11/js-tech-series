@@ -67,7 +67,7 @@ class StableIdSnapshotTest {
     void everyOneOfThemIsRead() {
         final List<String> tables = tables();
 
-        assertTrue(tables.stream().anyMatch(line -> line.startsWith("HardwareEra.HardwareEra ")),
+        assertTrue(tables.stream().anyMatch(line -> line.startsWith("DataLine.DataLine ")),
                 () -> "read " + tables.size() + " constants");
         assertTrue(tables.stream().anyMatch(line -> line.startsWith("IndustrialTier.IndustrialTier ")));
         // One declared inside the class it belongs to, so that the reading of those is covered as well.

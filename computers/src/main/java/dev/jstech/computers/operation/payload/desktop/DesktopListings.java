@@ -7,12 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.desktop;
 
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.files.TrashPayloads;
@@ -31,6 +26,7 @@ import dev.jstech.computers.os.fs.TrashFolder;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.DesktopLayout;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -88,7 +84,7 @@ final class DesktopListings {
 
     /* How fast the machine loads a program: the disk it starts from, at its processor's pace. */
     private static double loadRate(final IOsHost computer, final ItemStack disk) {
-        final int tier = disk.getItem() instanceof DiskItem item ? item.spec().tier().speedMultiplier() : 1;
+        final int tier = HardwareRegistry.disk(disk) instanceof DiskSpec spec ? spec.tier().speedMultiplier() : 1;
         return ProgramLoading.loadRate(tier, computer.cpuCores(), computer.maxCpuMhz());
     }
 
@@ -220,18 +216,11 @@ final class DesktopListings {
 
     /** Whether a program's host scope permits it on this computer. */
     private static boolean hostScopeAllows(final ProgramSpec spec, final IOsHost computer) {
-        return switch (spec.hostScope()) {
-            case ANY -> true;
-            case MAINFRAME -> computer instanceof MainframeBlockEntity;
-            case CRAFTING_COMPUTER -> computer instanceof CraftingComputerBlockEntity;
-            /*
-             * A rack answers as the machine it is showing, so scoping to SERVER means "this session is a rack
-             * server", which is exactly where the headless server services belong.
-             */
-            case SERVER -> computer instanceof ServerRackBlockEntity;
-            case CLUSTER_MANAGEMENT_COMPUTER -> computer instanceof ClusterManagementComputerBlockEntity;
-            case PERSONAL_COMPUTER -> computer instanceof PersonalComputerBlockEntity;
-        };
+        /*
+         * A rack answers as the machine it is showing, so scoping to a server means "this session is a rack
+         * server", which is exactly where the headless server services belong.
+         */
+        return spec.hostScope().admits(computer.machine());
     }
 
     /** The last path segment (after the final {@code /}), or the whole path when it has no slash. */

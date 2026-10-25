@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.storage;
 
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
+import dev.jstech.computers.registry.HardwareRegistry;
 import java.util.ArrayList;
 import java.util.Comparator;
 import net.minecraft.world.item.ItemStack;
@@ -64,12 +66,14 @@ public final class LocalStore implements IWeightedStore {
     }
 
     private static long diskCapacity(final ItemStack disk) {
-        return disk.getItem() instanceof DiskItem item ? item.spec().capacityItems() : 0L;
+        final DiskSpec spec = HardwareRegistry.disk(disk);
+        return spec != null ? spec.capacityItems() : 0L;
     }
 
     /** What one item costs on that drive, in megabytes: its era's word size decides. */
     private static long megabytesPerItem(final ItemStack disk) {
-        return disk.getItem() instanceof DiskItem item ? item.spec().era().mbPerItem() : 0L;
+        final DiskSpec spec = HardwareRegistry.disk(disk);
+        return spec != null ? EraStorage.mbPerItem(spec.era()) : 0L;
     }
 
     public long capacity() {
@@ -165,7 +169,7 @@ public final class LocalStore implements IWeightedStore {
 
     /** The public-share permille of one disk (the private default when out of range or not a disk). */
     public int diskPublicPermille(final int index) {
-        return index >= 0 && index < disks.size() ? DiskItem.publicPermille(disks.get(index)) : 0;
+        return index >= 0 && index < disks.size() ? DriveVolumes.publicPermille(disks.get(index)) : 0;
     }
 
     /** The used data weight stored on one disk. */
@@ -198,7 +202,8 @@ public final class LocalStore implements IWeightedStore {
         final Map<StorageKey, Long> merged = new LinkedHashMap<>();
         for (final ItemStack disk : disks) {
             final long capacityWeight = diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM;
-            DiskStorageView.publicView(DriveVolumes.peek(disk).items(), capacityWeight, DiskItem.publicPermille(disk))
+            DiskStorageView.publicView(DriveVolumes.peek(disk).items(), capacityWeight,
+                            DriveVolumes.publicPermille(disk))
                     .forEach((key, count) -> merged.merge(key, count, Long::sum));
         }
         return merged;
@@ -210,7 +215,7 @@ public final class LocalStore implements IWeightedStore {
         for (final ItemStack disk : disks) {
             final long capacityWeight = diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM;
             total += DiskStorageView.publicWeight(DriveVolumes.peek(disk).items(), capacityWeight,
-                    DiskItem.publicPermille(disk));
+                    DriveVolumes.publicPermille(disk));
         }
         return total;
     }
@@ -220,7 +225,8 @@ public final class LocalStore implements IWeightedStore {
         final Map<StorageKey, Long> merged = new LinkedHashMap<>();
         for (final ItemStack disk : disks) {
             final long capacityWeight = diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM;
-            DiskStorageView.privateView(DriveVolumes.peek(disk).items(), capacityWeight, DiskItem.publicPermille(disk))
+            DiskStorageView.privateView(DriveVolumes.peek(disk).items(), capacityWeight,
+                            DriveVolumes.publicPermille(disk))
                     .forEach((key, count) -> merged.merge(key, count, Long::sum));
         }
         return merged;
@@ -244,7 +250,7 @@ public final class LocalStore implements IWeightedStore {
             }
             final long capacityWeight = diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM;
             final long publicHave = DiskStorageView.publicView(volume.items(), capacityWeight,
-                    DiskItem.publicPermille(disk)).getOrDefault(key, 0L);
+                    DriveVolumes.publicPermille(disk)).getOrDefault(key, 0L);
             if (publicHave <= 0L) {
                 continue;
             }

@@ -9,10 +9,10 @@ package dev.jstech.computers.os.fs;
 
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -111,7 +111,7 @@ public final class DiskTrash {
     /** What is in the trash, in the order it went in; a thing without a record, or a record without it, is left out. */
     public static List<Entry> list(final ItemStack disk, final TrashFolder trash) {
         final FilesystemContents fs = contents(disk);
-        final HardwareEra era = DiskFilesystem.eraOf(disk);
+        final Era era = DiskFilesystem.eraOf(disk);
         final List<Entry> out = new ArrayList<>();
         for (final Map.Entry<String, String> one : records(disk, trash).entrySet()) {
             final String at = trash.storedPath(one.getKey());
@@ -269,7 +269,7 @@ public final class DiskTrash {
     }
 
     /** The room everything under a folder takes. */
-    private static long weightUnder(final FilesystemContents fs, final String dir, final HardwareEra era) {
+    private static long weightUnder(final FilesystemContents fs, final String dir, final Era era) {
         long total = 0L;
         for (final StoredFile file : fs.files().values()) {
             if (FsPaths.isUnder(dir, file.path())) {

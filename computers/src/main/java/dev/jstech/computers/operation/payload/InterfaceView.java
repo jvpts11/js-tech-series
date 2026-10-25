@@ -9,10 +9,11 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.crafting.CraftingLog;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 
@@ -45,7 +46,7 @@ import java.util.Map;
  * @param log       what its jobs did lately, newest first
  * @param marks     which setting a program set last, by the setting's word, and the program's name
  */
-public record InterfaceView(String name, String shortId, HardwareEra skin, boolean linked, int capacity,
+public record InterfaceView(String name, String shortId, Era skin, boolean linked, int capacity,
                             List<PatternView> patterns, List<Text> routers, byte mode, boolean exclusive, Text feeds,
                             Text receiving, boolean paused, int maxJobs, List<Text> warnings, Text now, byte nowTone,
                             List<CraftingLog.Entry> log, Map<String, String> marks) {
@@ -151,7 +152,7 @@ public record InterfaceView(String name, String shortId, HardwareEra skin, boole
     public static InterfaceView read(final RegistryFriendlyByteBuf buf) {
         final String name = buf.readUtf(MOST_TEXT);
         final String shortId = buf.readUtf(MOST_TEXT);
-        final HardwareEra skin = HardwareEra.fromLevel(buf.readVarInt());
+        final Era skin = Eras.at(buf.readVarInt());
         final boolean linked = buf.readBoolean();
         final int capacity = buf.readVarInt();
         final int patternCount = Math.min(MOST, buf.readVarInt());

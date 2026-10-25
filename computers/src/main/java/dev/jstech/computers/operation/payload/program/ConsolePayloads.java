@@ -9,7 +9,6 @@ package dev.jstech.computers.operation.payload.program;
 
 import dev.jstech.computers.client.CommandPromptScreen;
 import dev.jstech.computers.engine.EngineRequirements;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
@@ -31,6 +30,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.SshTerminal;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -301,8 +301,7 @@ public final class ConsolePayloads {
         final List<String> devices = new ArrayList<>();
         if (live && host instanceof IOsHost computer) {
             for (int i = 0; i < computer.diskSlots(); i++) {
-                if (computer.diskInSlot(i).getItem()
-                        instanceof DiskItem) {
+                if (DriveVolumes.isDisk(computer.diskInSlot(i))) {
                     devices.add("sd" + (char) ('a' + i));
                 }
             }

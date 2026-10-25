@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class BusLayoutTest {
     @Test
     void frame_isCleanForEveryEraAndEveryKindOfBus() {
         for (final BusLayout.Window window : BusLayout.Window.values()) {
-            for (final HardwareEra era : HardwareEra.values()) {
+            for (final Era era : HardwareEra.SERIES) {
                 final GuiLayout l = BusLayout.frame(BusLayout.abilities(era, window), window);
                 assertTrue(l.isClean(), window + " " + era + ": " + l.overlaps() + " " + l.outOfBounds());
             }
@@ -32,7 +33,7 @@ class BusLayoutTest {
     @Test
     void content_isCleanWithEverythingAtItsMost() {
         for (final BusLayout.Window window : BusLayout.Window.values()) {
-            for (final HardwareEra era : HardwareEra.values()) {
+            for (final Era era : HardwareEra.SERIES) {
                 final GuiLayout l = BusLayout.content(BusLayout.Shape.most(BusLayout.abilities(era, window),
                         window));
                 assertTrue(l.isClean(), window + " " + era + ": " + l.overlaps() + " " + l.outOfBounds());
@@ -43,7 +44,7 @@ class BusLayoutTest {
     @Test
     void configureHeight_neverPassesWhatAScreenHolds() {
         for (final BusLayout.Window window : BusLayout.Window.values()) {
-            for (final HardwareEra era : HardwareEra.values()) {
+            for (final Era era : HardwareEra.SERIES) {
                 assertTrue(BusLayout.configureHeight(BusLayout.abilities(era, window), window)
                         <= BusLayout.MAX_HEIGHT, window + " " + era);
             }
@@ -139,7 +140,7 @@ class BusLayoutTest {
         assertTrue(title.x() + title.width() < BusLayout.LAMP_X);
     }
 
-    private static List<BusLayout.Kind> kinds(final HardwareEra era, final BusLayout.Window window, final int items,
+    private static List<BusLayout.Kind> kinds(final Era era, final BusLayout.Window window, final int items,
                                               final int conditions) {
         final BusLayout.Shape shape = new BusLayout.Shape(BusLayout.abilities(era, window), window, 2, items, 1,
                 false, 2, conditions, false, 3);

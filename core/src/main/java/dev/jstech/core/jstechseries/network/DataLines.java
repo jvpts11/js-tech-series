@@ -8,7 +8,7 @@
 package dev.jstech.core.jstechseries.network;
 
 import dev.jstech.core.connect.Connection;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
@@ -52,12 +52,12 @@ public final class DataLines {
     }
 
     /** What a port of {@code line} on a machine of {@code era} takes: that era's cable and every earlier one. */
-    public static Connection upTo(final HardwareEra era, final DataLine line) {
+    public static Connection upTo(final Era era, final DataLine line) {
         return new Connection(id(line), line.generation(era));
     }
 
     /** What a port that takes each of {@code lines} on a machine of {@code era} takes. */
-    public static Connection[] upTo(final HardwareEra era, final DataLine... lines) {
+    public static Connection[] upTo(final Era era, final DataLine... lines) {
         final Connection[] out = new Connection[lines.length];
         for (int i = 0; i < lines.length; i++) {
             out[i] = upTo(era, lines[i]);

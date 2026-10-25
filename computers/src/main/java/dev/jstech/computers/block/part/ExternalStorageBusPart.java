@@ -16,8 +16,8 @@ import dev.jstech.computers.operation.ExternalStores;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.multipart.PartType;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.Direction;
@@ -54,7 +54,7 @@ public final class ExternalStorageBusPart extends AbstractBusPart {
     /* How often, in ticks, the bus says again where it is, so the network finds it after a load. */
     private static final long REGISTER_EVERY = 20L;
 
-    public ExternalStorageBusPart(final HardwareEra era) {
+    public ExternalStorageBusPart(final Era era) {
         super(era, BusAbilities.external(era));
     }
 

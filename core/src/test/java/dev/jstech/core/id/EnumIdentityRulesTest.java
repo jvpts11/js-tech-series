@@ -151,7 +151,7 @@ class EnumIdentityRulesTest {
         }
         assertTrue(modules.containsAll(List.of("core", "computers", "industrial", "tests")),
                 () -> "the sources read come from " + modules);
-        assertTrue(MainSources.ALL.enums().contains("HardwareEra"), "the series' enums are found");
+        assertTrue(MainSources.ALL.enums().contains("IndustrialTier"), "the series' enums are found");
     }
 
     @Test

@@ -17,11 +17,11 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
-import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -51,12 +51,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 @TextHolder
 public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
-    private final HardwareEra era;
+    private final Era era;
     private final FacePorts ports;
 
     public static final MapCodec<PrinterBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(b -> b.era)
     ).apply(i, PrinterBlock::new));
 
     /** The printer's block entity, ticking its link and its pages, with its window as its menu. */
@@ -65,7 +65,7 @@ public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraCha
             .opensMenu(PrinterMenu::new);
     private static final TextKey TRAY_FULL = TextKey.of("block.jsc.printer.tray_full", "The paper tray is full");
 
-    public PrinterBlock(final Properties properties, final HardwareEra era) {
+    public PrinterBlock(final Properties properties, final Era era) {
         super(properties, DEVICE);
         this.era = era;
         this.ports = PeripheralSockets.back(era);
@@ -76,12 +76,12 @@ public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraCha
         return PrinterModel.of(era);
     }
 
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
     @Override
-    public HardwareEra chassisEra() {
+    public Era chassisEra() {
         return era;
     }
 

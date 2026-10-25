@@ -7,13 +7,14 @@
  */
 package dev.jstech.computers.os.boot;
 
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ final class BsdBootLines {
 
     /** What the kernel itself prints as it comes up: itself, the processor, the memory, each disk, and its root. */
     static List<String> kernel(final IOsHost machine, final OsDef system) {
-        final HardwareEra era = machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD;
+        final Era era = machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD;
         final String arch = KernelNames.architecture(Platform.FREEBSD, machine.processorBits());
         final List<String> out = new ArrayList<>();
         out.add(Branding.systemCopyright(system.displayName(), era));
@@ -52,7 +53,7 @@ final class BsdBootLines {
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
-            if (disk.getItem() instanceof DiskItem) {
+            if (DriveVolumes.isDisk(disk)) {
                 out.add(Installers.adaLabel(drive++) + ": <" + disk.getHoverName().getString() + ">");
             }
         }

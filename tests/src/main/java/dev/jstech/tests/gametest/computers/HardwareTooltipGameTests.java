@@ -10,14 +10,17 @@ package dev.jstech.tests.gametest.computers;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.Microarchitectures;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.os.MinSpecTooltip;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.computers.PartSheets;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -54,8 +57,8 @@ public final class HardwareTooltipGameTests {
         assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C5_4590.get()), HardwareEra.STANDARD);
         assertEraColour(helper, new ItemStack(HardwareItems.RAM_SIMM_4.get()), HardwareEra.VINTAGE);
         assertEraColour(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()), HardwareEra.STANDARD);
-        helper.assertTrue(HardwareEra.VINTAGE.screenColor() != HardwareEra.LEGACY.screenColor()
-                        && HardwareEra.LEGACY.screenColor() != HardwareEra.STANDARD.screenColor(),
+        helper.assertTrue(HardwareEra.VINTAGE.colour() != HardwareEra.LEGACY.colour()
+                        && HardwareEra.LEGACY.colour() != HardwareEra.STANDARD.colour(),
                 "the three eras tell apart by colour");
         helper.succeed();
     }
@@ -90,7 +93,7 @@ public final class HardwareTooltipGameTests {
         final Object era = lines.get(0).getContents() instanceof TranslatableContents sentence
                 && sentence.getArgs().length > 0 ? sentence.getArgs()[0] : null;
         final TextColor colour = era instanceof Component word ? word.getStyle().getColor() : null;
-        helper.assertTrue(colour != null && colour.getValue() == HardwareEra.LEGACY.screenColor(),
+        helper.assertTrue(colour != null && colour.getValue() == HardwareEra.LEGACY.colour(),
                 "the era word carries the Legacy screen colour; got " + colour);
         helper.succeed();
     }
@@ -158,24 +161,25 @@ public final class HardwareTooltipGameTests {
             if (!JsComputers.MODID.equals(id.getNamespace())) {
                 continue;
             }
-            if (item instanceof CpuItem cpu) {
-                helper.assertTrue(cpu.spec().design().arch() != Microarchitectures.UNSPECIFIED,
+            final HardwareRegistry.Part part = HardwareRegistry.part(item);
+            if (part != null && part.spec() instanceof CpuSpec cpu) {
+                helper.assertTrue(cpu.design().arch() != Microarchitectures.UNSPECIFIED,
                         id + " says nothing of its design");
-            } else if (item instanceof GpuItem gpu) {
-                helper.assertTrue(gpu.spec().arch() != Microarchitectures.UNSPECIFIED,
+            } else if (part != null && part.spec() instanceof GpuSpec gpu) {
+                helper.assertTrue(gpu.arch() != Microarchitectures.UNSPECIFIED,
                         id + " says nothing of its design");
             }
         }
-        helper.assertTrue(HardwareItems.CPU_INTEGRA_486DX2.get().spec().orchestrationCapacity() == 1,
+        helper.assertTrue(PartSheets.cpu(HardwareItems.CPU_INTEGRA_486DX2.get()).orchestrationCapacity() == 1,
                 "the 486 design makes a 66 MHz chip one item a tick");
-        helper.assertTrue(HardwareItems.CPU_VELOCION_K6_II.get().spec().orchestrationCapacity() == 11,
+        helper.assertTrue(PartSheets.cpu(HardwareItems.CPU_VELOCION_K6_II.get()).orchestrationCapacity() == 11,
                 "a K6-II orchestrates 11");
-        helper.assertTrue(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get().spec().orchestrationCapacity() == 307,
-                "an E6600 orchestrates 307");
-        helper.assertTrue(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get().spec().orchestrationCapacity() == 2074,
-                "a 4790K with two threads a core orchestrates 2,074");
-        helper.assertTrue(HardwareItems.GPU_VERTEX_GTX_780_TI.get().spec().power() == 2520
-                        && HardwareItems.GPU_RADIANCE_HD_6850.get().spec().power() == 744,
+        helper.assertTrue(PartSheets.cpu(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get())
+                .orchestrationCapacity() == 307, "an E6600 orchestrates 307");
+        helper.assertTrue(PartSheets.cpu(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get())
+                .orchestrationCapacity() == 2074, "a 4790K with two threads a core orchestrates 2,074");
+        helper.assertTrue(PartSheets.gpu(HardwareItems.GPU_VERTEX_GTX_780_TI.get()).power() == 2520
+                        && PartSheets.gpu(HardwareItems.GPU_RADIANCE_HD_6850.get()).power() == 744,
                 "the cards' power follows their design");
         helper.succeed();
     }
@@ -255,13 +259,13 @@ public final class HardwareTooltipGameTests {
         return new ItemStack(ComputingModule.disk(tier, size));
     }
 
-    private static void assertEraColour(final GameTestHelper helper, final ItemStack stack, final HardwareEra era) {
+    private static void assertEraColour(final GameTestHelper helper, final ItemStack stack, final Era era) {
         final List<Component> tooltip = stack.getTooltipLines(Item.TooltipContext.of(helper.getLevel()), null,
                 TooltipFlag.NORMAL);
         for (final Component line : tooltip) {
             if (line.getString().endsWith(" era")) {
                 final TextColor colour = line.getStyle().getColor();
-                helper.assertTrue(colour != null && colour.getValue() == era.screenColor(),
+                helper.assertTrue(colour != null && colour.getValue() == era.colour(),
                         stack.getHoverName().getString() + ": the era line is " + colour + ", not " + era + "'s colour");
                 return;
             }

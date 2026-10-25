@@ -12,11 +12,11 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.FormFactor;
-import dev.jstech.computers.item.CraftingCardItem;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.item.ServerHardwareHandler;
-import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.registry.ComputingComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -118,9 +118,9 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         hardware.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START, new ItemStack(EraParts.ramFor(board)));
         hardware.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(EraParts.psuFor(kit.era())));
         hardware.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
-                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+                new ItemStack(EraParts.cardFor(board, GpuSpec.class)));
         hardware.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
-                new ItemStack(EraParts.cardFor(board, CraftingCardItem.class)));
+                new ItemStack(EraParts.cardFor(board, CraftingCardSpec.class)));
         hardware.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(EraParts.diskFor(kit.era())));
         if (!computer.installOs(kit.desktopOs())) {
@@ -139,7 +139,7 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
     public static ItemStack server(final EraKit kit) {
         final Item board = kit.serverBoard();
         return hasOwnVideo(board) ? built(kit.server(), board)
-                : built(kit.server(), board, EraParts.cardFor(board, GpuItem.class));
+                : built(kit.server(), board, EraParts.cardFor(board, GpuSpec.class));
     }
 
     /**
@@ -151,7 +151,7 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         if (hasOwnVideo(board)) {
             return built(kit.storageServer(), board, kit.array());
         }
-        return built(kit.storageServer(), board, kit.array(), EraParts.cardFor(board, GpuItem.class));
+        return built(kit.storageServer(), board, kit.array(), EraParts.cardFor(board, GpuSpec.class));
     }
 
     /**
@@ -206,7 +206,7 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         slots.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(EraParts.psuFor(kit.era())));
         slots.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, new ItemStack(EraParts.diskFor(kit.era())));
         slots.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
-                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+                new ItemStack(EraParts.cardFor(board, GpuSpec.class)));
         if (kit.fibre()) {
             slots.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START + 1,
                     new ItemStack(ComputingModule.OPTICAL_NETWORK_CARD.get()));
@@ -255,11 +255,11 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, new ItemStack(EraParts.ramFor(board)));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(EraParts.psuFor(kit.era())));
         hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
-                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+                new ItemStack(EraParts.cardFor(board, GpuSpec.class)));
         // Before the Transition a board had no sound of its own: the era's player put a sound card in beside it.
         if (!EraParts.board(board).hasOnBoardAudio()) {
             hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START + 1,
-                    new ItemStack(EraParts.cardFor(board, SoundCardItem.class)));
+                    new ItemStack(EraParts.cardFor(board, SoundCardSpec.class)));
         }
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(EraParts.diskFor(kit.era())));

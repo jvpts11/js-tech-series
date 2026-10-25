@@ -236,6 +236,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Items drawn in three dimensions: J's Core's API stays at version 12, all experimental. `IItemLook.HELD`
   shows an item's flat texture in a slot and an item frame and its model `held/<id>` in the hand, on the ground and on
   the head, as the game's spyglass and trident are.
+- One type of era: J's Core's API stays at version 12, all experimental. `Era` is the one type of era in every
+  mod, a record of its id, its name, its colour and the year its machines are made in, compared by its place in the
+  order (`isAtLeast`, `isAtMost`, `next`, `prev`). `HardwareEra` is no longer an enum but the class holding the
+  series' seven as `Era` constants, with `SERIES`, `WITH_PARTS` and `withParts`; `Eras` declares an era at the end or
+  after another and finds one by its id or a bare name; `EraTable` gives values era by era, an era without its own
+  taking the nearest earlier era's; `EraCodecs` saves an era by its id and sends it by its place. An axis whose steps
+  grow while the game loads is `ProgressionAxis.following`, and `PlayerProgress` and `TeamProgress` keep every axis's
+  step by its name.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1562,6 +1570,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Modules by trait: a module may say how many of it one item takes and what the item must be, the piece of
   armour it is or a seal, with names the series' mods share, so one mod's module fits another's suit with neither
   knowing the other.
+- Eras of other mods: an era another mod declares between the series' own is an era of hardware
+  everywhere, its machines, its tables and its progress. Whatever a rule of the series says era by era, an era that
+  says nothing takes the nearest earlier era's, as the Exa and the Singularity take the Advanced's.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -1672,6 +1683,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The packets counted tick by tick keep the biggest one of each kind too.
 - A multiblock's terminal: the block a multiblock is worked from is called its terminal, where it was its
   controller, in the Structure Projector, the Multiblock Builder, the recipe viewers, the manuals, the studio and Jade.
+- Eras in saves: an era is saved by its id (`jscore:legacy`), and progress along every axis by the
+  step's name, so an era another mod inserts moves nothing a world saved. A world saved before starts its progress
+  over, and the era advancements wait for the era by its id.
 
 ### Fixed
 - A tall stack of moving structures set down touching stands still and is heard striking nothing, its

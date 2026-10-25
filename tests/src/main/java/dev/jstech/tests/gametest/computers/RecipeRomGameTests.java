@@ -9,8 +9,8 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.crafting.CraftingCards;
 import dev.jstech.computers.crafting.CraftingPattern;
-import dev.jstech.computers.item.CraftingCardItem;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -45,7 +45,7 @@ public final class RecipeRomGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final int size = computer.romSize();
-                    helper.assertTrue(size == CraftingCardItem.romSize(
+                    helper.assertTrue(size == CraftingCards.romSize(
                                     new ItemStack(ComputingModule.CRAFTING_CARD_T2.get())),
                             "one card's ROM is the computer's whole ROM; got " + size);
                     for (int i = 1; i <= size; i++) {

@@ -7,17 +7,19 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.Locale;
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Immutable specification of a storage disk. Capacity is counted in items; what that is in megabytes
- * follows from the era the disk was made for ({@link HardwareEra#mbPerItem()}), so a 20 MB vintage drive
+ * follows from the era the disk was made for ({@link EraStorage#mbPerItem}), so a 20 MB vintage drive
  * and a 500 GB standard one are both honest about their nameplate.
  */
-public record DiskSpec(StorageTier tier, HardwareEra era, long capacityItems, int tdpWatts) {
+@ApiStatus.Experimental
+public record DiskSpec(StorageTier tier, Era era, long capacityItems, int tdpWatts) {
 
     public DiskSpec {
         Objects.requireNonNull(tier, "tier must not be null");
@@ -32,7 +34,7 @@ public record DiskSpec(StorageTier tier, HardwareEra era, long capacityItems, in
 
     /** The nameplate size: the items it holds at its era's cost per item. */
     public long capacityMb() {
-        return capacityItems * era.mbPerItem();
+        return capacityItems * EraStorage.mbPerItem(era);
     }
 
     /** A size in megabytes the way a drive label writes it: {@code 20 MB}, {@code 1.5 GB}, {@code 8 TB}. */

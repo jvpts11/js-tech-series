@@ -7,8 +7,9 @@ ladders of steps a player climbs, each kept per player and saved with the world.
 
 *Added 2026-04-28.*
 
-- **Hardware eras** (`HardwareEra`): Vintage, Legacy, Transition, Standard, Advanced, Exa, Singularity. The
-  generation of the computers a player builds.
+- **Hardware eras** (`HardwareEra`): Vintage, Legacy, Transition, Standard, Advanced, Exa, Singularity, and any era
+  an add-on declares between them ([Eras as a registry](#eras-as-a-registry)). The generation of the computers a
+  player builds.
 - **Industrial tiers** (`IndustrialTier`): T0 to T9. How far a player's industry has come.
 
 They are two different ladders on purpose: a player can run an Advanced computer on a T2 industry, and the other
@@ -53,19 +54,34 @@ Rank now = PlayerProgress.reached(server, playerUuid, RANK);
 
 *Added 2026-10-16.*
 
-The eras of hardware are a registry (`Eras`), not a closed list. Each `Era` has an id, saved in worlds, a name and a
-colour; the Core declares the series' seven (`jscore:vintage` to `jscore:singularity`, `Eras.of(HardwareEra.LEGACY)`),
-and an add-on declares its own after the last or right after any other, while the game loads:
+The eras of hardware are a registry (`Eras`), not a closed list, and `Era` is the one type of era in every mod. Each
+era has an id, saved in worlds, a name, a colour and the year its machines are made in, which the firmware and the
+installers print; the Core declares the series' seven as the constants of `HardwareEra` (`HardwareEra.LEGACY` is
+`jscore:legacy`), and an add-on declares its own after the last or right after any other, while the game loads:
 
 ```java
-public static final Era QUANTUM = Eras.declareAfter(new Era(
-        ResourceLocation.fromNamespaceAndPath("myaddon", "quantum"), MyTexts.QUANTUM.text(), 0xFF00FF),
-        Eras.idOf(HardwareEra.ADVANCED));     // between Advanced and Exa
+public static final Era QUANTUM = Eras.declareAfter(
+        new Era("myaddon:quantum", MyTexts.QUANTUM.text(), 0xFF00FF, 2034), HardwareEra.ADVANCED);
 ```
 
-`Eras.ordered()` is the order, earliest first; `Eras.atLeast(era, least)` asks "this era or later", as every rule of
-the kind should; `Eras.CODEC` saves an era by its id and refuses one no mod declared. The registry closes once the game
-has loaded. J's Computers' own eras of hardware move onto it when its hardware does.
+- `Eras.ordered()` is the order, earliest first, and `era.isAtLeast(other)` asks "this era or later", as every rule of
+  the kind should; a rule of one era alone compares with `==`. Once the registry closes, both are a read by the era's
+  place.
+- `EraCodecs.CODEC` saves an era by its id and refuses one no mod declared; a data file may name one of the series'
+  seven bare (`"legacy"`). A packet sends an era by its place in the order, which both sides agree on.
+- **Values era by era** go in an `EraTable`: given for some eras, and an era without its own takes the nearest earlier
+  era's. The series' Exa and Singularity take the Advanced's that way, and so does every era an add-on brings, so a
+  rule written era by era answers for any era a world has.
+
+```java
+private static final EraTable<Integer> HUB_PORTS = EraTable.of(2)
+        .from(HardwareEra.LEGACY, 4)
+        .from(HardwareEra.STANDARD, 7);
+int ports = HUB_PORTS.get(era);
+```
+
+*Changed 2026-10-25.* Progress along every axis is saved by the step's name, so an era an add-on inserts moves no step
+a world has saved. A world saved before then starts its progress over. The registry closes once the game has loaded.
 
 ## The axes move by playing
 
@@ -74,9 +90,9 @@ has loaded. J's Computers' own eras of hardware move onto it when its hardware d
 A mod says what moves a player along an axis the first time they do it:
 
 ```java
-ProgressionTriggers.whenMade(MyItems.T2_CIRCUIT.get(), ProgressionAxes.INDUSTRIAL_TIER, IndustrialTier.T2);
-ProgressionTriggers.whenMade(MyTags.LEGACY_BOARDS, ProgressionAxes.HARDWARE_ERA, HardwareEra.LEGACY);
-ProgressionTriggers.whenPlaced(MyBlocks.LEGACY_PC.get(), ProgressionAxes.HARDWARE_ERA, HardwareEra.LEGACY);
+ProgressionTriggers.whenMade(MyItems.T2_CIRCUIT.get(), SeriesAxes.INDUSTRIAL_TIER, IndustrialTier.T2);
+ProgressionTriggers.whenMade(MyTags.LEGACY_BOARDS, SeriesAxes.HARDWARE_ERA, HardwareEra.LEGACY);
+ProgressionTriggers.whenPlaced(MyBlocks.LEGACY_PC.get(), SeriesAxes.HARDWARE_ERA, HardwareEra.LEGACY);
 ```
 
 Making counts at a crafting table, in a furnace, and in any of the Core's processing machines, for the machine's

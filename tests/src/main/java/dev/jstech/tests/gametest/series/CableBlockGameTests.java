@@ -23,6 +23,7 @@ import dev.jstech.core.content.ModContent;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -475,7 +476,7 @@ public final class CableBlockGameTests {
      * that era's colour, or no era line for a cable of none.
      */
     private static void assertTooltip(final GameTestHelper helper, final CableEntry cable, final String job,
-                                      @Nullable final HardwareEra era) {
+                                      @Nullable final Era era) {
         final List<Component> lines = new ItemStack(cable.asItem()).getTooltipLines(
                 Item.TooltipContext.of(helper.getLevel()), null, TooltipFlag.NORMAL);
         final List<String> said = lines.stream().map(Component::getString).toList();
@@ -489,7 +490,7 @@ public final class CableBlockGameTests {
         }
         final TextColor colour = eraLine == null ? null : eraLine.getStyle().getColor();
         helper.assertTrue(eraLine != null && eraLine.getString().equals(GameText.component(era.named()).getString())
-                        && colour != null && colour.getValue() == era.screenColor(),
+                        && colour != null && colour.getValue() == era.colour(),
                 cable.id() + " names the " + era + " era in its colour; it says " + said);
     }
 }

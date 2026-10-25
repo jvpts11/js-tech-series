@@ -9,6 +9,8 @@ package dev.jstech.computers.os;
 
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
@@ -18,7 +20,7 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
  * the classic blue-panel BIOS for Legacy and Transition hardware (the Transition's is a later version of the
  * same BIOS), and a modern UEFI interface for Standard and any later era.
  *
- * <p>This enum is pure (it depends only on {@link HardwareEra}, which is itself pure) so it
+ * <p>This enum is pure (it depends only on {@link Era}, which is itself pure) so it
  * compiles and runs in the JUnit test sourceset without any Minecraft dependency.
  */
 public enum FirmwareKind implements IStableId {
@@ -30,6 +32,9 @@ public enum FirmwareKind implements IStableId {
     UEFI(2);
 
     private static final StableIds<FirmwareKind> IDS = StableIds.of(FirmwareKind.class);
+    private static final EraTable<FirmwareKind> BY_ERA = EraTable.of(CLI_BIOS)
+            .from(HardwareEra.LEGACY, BLUE_BIOS)
+            .from(HardwareEra.STANDARD, UEFI);
 
     private final int id;
 
@@ -50,12 +55,8 @@ public enum FirmwareKind implements IStableId {
      *         {@link HardwareEra#LEGACY} and {@link HardwareEra#TRANSITION}, and {@link #UEFI} for
      *         {@link HardwareEra#STANDARD} or any later era
      */
-    public static FirmwareKind forEra(HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> CLI_BIOS;
-            case LEGACY, TRANSITION -> BLUE_BIOS;
-            default -> UEFI;
-        };
+    public static FirmwareKind forEra(Era era) {
+        return BY_ERA.get(era);
     }
 
     /** The kind that declares {@code id}; an id no kind declares reads as {@link #UEFI}, the look of any later era. */

@@ -16,6 +16,7 @@ import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.AudioOutput;
 import dev.jstech.core.audio.FrequencyResponse;
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -159,7 +160,7 @@ public final class SpeakerGameTests {
         final List<SpeakerBlock> speakers = List.of(ComputingModule.LEGACY_SPEAKER.get(),
                 ComputingModule.TRANSITION_SPEAKER.get(), ComputingModule.SPEAKER.get(),
                 ComputingModule.ADVANCED_SPEAKER.get());
-        final List<HardwareEra> eras = speakers.stream().map(SpeakerBlock::era).toList();
+        final List<Era> eras = speakers.stream().map(SpeakerBlock::era).toList();
         helper.assertTrue(eras.equals(List.of(HardwareEra.LEGACY, HardwareEra.TRANSITION, HardwareEra.STANDARD,
                 HardwareEra.ADVANCED)), "the ToneWorks, the Inspira 2.1, the WattWorks T20 and the Cobble, an era"
                 + " each; got " + eras);

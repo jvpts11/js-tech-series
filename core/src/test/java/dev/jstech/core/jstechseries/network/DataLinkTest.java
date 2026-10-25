@@ -12,12 +12,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
 class DataLinkTest {
 
-    private static final HardwareEra[] ERAS = {HardwareEra.VINTAGE, HardwareEra.LEGACY, HardwareEra.TRANSITION,
+    private static final Era[] ERAS = {HardwareEra.VINTAGE, HardwareEra.LEGACY, HardwareEra.TRANSITION,
             HardwareEra.STANDARD, HardwareEra.ADVANCED};
 
     @Test
@@ -78,7 +79,7 @@ class DataLinkTest {
     @Test
     void serializedName_readsBackTheSameLink() {
         for (final DataLine line : DataLine.values()) {
-            for (final HardwareEra era : ERAS) {
+            for (final Era era : ERAS) {
                 final DataLink link = new DataLink(line, era);
                 assertEquals(link, DataLink.byName(link.serializedName()), link.serializedName());
             }

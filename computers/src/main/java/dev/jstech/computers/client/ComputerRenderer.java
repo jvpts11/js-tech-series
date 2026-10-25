@@ -24,6 +24,7 @@ import dev.jstech.core.client.model.kit.KitInstance;
 import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.KitRenderer;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelAnimator;
@@ -32,7 +33,6 @@ import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelPose;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +112,7 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
     /* The seats of each form of disk, on the board or in the case: seat_<form>_<n>. */
     private static final Map<String, String[]> DISK_SEATS = new HashMap<>();
     private static final Map<String, ResourceLocation> COOLERS = new HashMap<>();
-    private static final Map<HardwareEra, String> LEADS = new EnumMap<>(HardwareEra.class);
+    private static final Map<Era, String> LEADS = new HashMap<>();
     private static final ModelFacts<PartShape> SHAPES = new ModelFacts<>(ComputerRenderer::shapeOf);
     /* The part's moves: its fans turned, its supply's leads chosen. */
     private static final IKitDriver<PartFrame> PART_MOVES = new IKitDriver<>() {
@@ -429,7 +429,8 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
                 if (PSU_COVER.equals(held) && !PSU_COVER.equals(form)) {
                     return;
                 }
-                final String lead = LEADS.computeIfAbsent(chassis.chassisEra(), era -> LEAD + era.serializedName());
+                final String lead = LEADS.computeIfAbsent(chassis.chassisEra(),
+                        era -> LEAD + HardwareEra.withParts(era).path());
                 draw(slot(slot), psu, caseInstance, PSU_SEATS[k], PSU_TOP.equals(held) != PSU_TOP.equals(form),
                         lead);
                 return;

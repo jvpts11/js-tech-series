@@ -16,8 +16,8 @@ import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.ShellApp;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
-import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.SoundCardItem;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.WireLine;
@@ -263,9 +263,9 @@ public final class EraEndClientTests {
     private static List<Item> parts(final EraKit kit) {
         final Item board = kit.computerBoard();
         final List<Item> parts = new ArrayList<>(List.of(board, EraParts.cpuFor(board), EraParts.ramFor(board),
-                EraParts.psuFor(kit.era()), EraParts.diskFor(kit.era()), EraParts.cardFor(board, GpuItem.class)));
+                EraParts.psuFor(kit.era()), EraParts.diskFor(kit.era()), EraParts.cardFor(board, GpuSpec.class)));
         if (!EraParts.board(board).hasOnBoardAudio()) {
-            parts.add(EraParts.cardFor(board, SoundCardItem.class));
+            parts.add(EraParts.cardFor(board, SoundCardSpec.class));
         }
         return parts;
     }

@@ -21,6 +21,7 @@ import dev.jstech.computers.operation.payload.InterfaceView;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -126,7 +127,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
 
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         final InterfaceView state = menu.state();
         return state == null ? HardwareEra.STANDARD : state.skin();
     }
@@ -781,7 +782,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
                 Math.min(2, lines(GameText.resolve(s.now()), valueRoom)));
     }
 
-    private static int capacityOf(final HardwareEra era) {
+    private static int capacityOf(final Era era) {
         return CraftingEras.patternsPerInterface(era);
     }
 

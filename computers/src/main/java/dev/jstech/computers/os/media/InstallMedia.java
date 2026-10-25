@@ -8,10 +8,12 @@
 package dev.jstech.computers.os.media;
 
 import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
  * Which physical medium a piece of software ships on. One axis, the generation the software belongs
@@ -19,6 +21,9 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
  * did it, a bootable flash drive for the system and the daemons that run it, a DVD for the applications a
  * player opens; the Advanced era keeps the stick for those and puts the applications on a Blu-ray disc. Size never
  * decides: a small server daemon is not a floppy program because it is small.
+ *
+ * <p>An era an add-on brings says what its software ships on through the register event; one that says nothing ships
+ * on what the era before it does, as the Exa and the Singularity ship on the Advanced's.
  *
  * <p>Pure, so the rule is unit-tested and the creative tab, the tooltip and the installer projection
  * all read the same answer.
@@ -32,29 +37,47 @@ public final class InstallMedia {
     private static final TextKey DOCK_STATION = TextKey.of("jsc.media.install_media.dock_station", "Dock Station");
     private static final TextKey BLU_RAY_DRIVE = TextKey.of("jsc.media.install_media.blu_ray_drive", "Blu-ray Drive");
 
+    /*
+     * The systems of the late 2000s came on a DVD, before a stick could boot one; from the Standard on the stick
+     * carries the systems and the services, and the programs a player opens go on a DVD and then a Blu-ray disc.
+     */
+    private static volatile EraTable<EraMedia> byEra = EraTable.ofFive(
+            EraMedia.all(MediaFormat.FLOPPY),
+            EraMedia.all(MediaFormat.CD),
+            EraMedia.all(MediaFormat.DVD),
+            new EraMedia(MediaFormat.USB, MediaFormat.DVD, MediaFormat.USB),
+            new EraMedia(MediaFormat.USB, MediaFormat.BLU_RAY, MediaFormat.USB));
+
     private InstallMedia() {
     }
 
+    /**
+     * Says what the software of {@code era} ships on, while the game loads: what the register event does for an era
+     * an add-on brings.
+     *
+     * @throws IllegalStateException once the eras' registry has closed
+     */
+    public static synchronized void declare(final Era era, final EraMedia media) {
+        if (Eras.settled()) {
+            throw new IllegalStateException("the media of " + era.id() + " are declared after the game has loaded");
+        }
+        byEra = byEra.from(era, media);
+    }
+
+    /** What the software of {@code era} ships on. */
+    public static EraMedia of(final Era era) {
+        return byEra.get(era);
+    }
+
     /** The medium an operating system of {@code era} ships on. */
-    public static MediaFormat forSystem(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> MediaFormat.FLOPPY;
-            case LEGACY -> MediaFormat.CD;
-            // The systems of the late 2000s came on a DVD, before a stick could boot one.
-            case TRANSITION -> MediaFormat.DVD;
-            case STANDARD, ADVANCED, EXA, SINGULARITY -> MediaFormat.USB;
-        };
+    public static MediaFormat forSystem(final Era era) {
+        return of(era).systems();
     }
 
     /** The medium a program written in {@code era} ships on; a headless service goes on the stick. */
-    public static MediaFormat forProgram(final HardwareEra era, final ProgramKind kind) {
-        return switch (era) {
-            case VINTAGE -> MediaFormat.FLOPPY;
-            case LEGACY -> MediaFormat.CD;
-            case TRANSITION -> MediaFormat.DVD;
-            case STANDARD -> kind.runsInBackground() ? MediaFormat.USB : MediaFormat.DVD;
-            case ADVANCED, EXA, SINGULARITY -> kind.runsInBackground() ? MediaFormat.USB : MediaFormat.BLU_RAY;
-        };
+    public static MediaFormat forProgram(final Era era, final ProgramKind kind) {
+        final EraMedia media = of(era);
+        return kind.runsInBackground() ? media.services() : media.programs();
     }
 
     /** The drive a medium of {@code format} is read in, for the words on a tooltip. */

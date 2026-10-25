@@ -9,17 +9,18 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.gui.layout.DockLayout;
 import dev.jstech.computers.hardware.DiskSpec;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.menu.DockStationMenu;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -93,7 +94,7 @@ public class DockStationScreen extends AbstractComputerScreen<DockStationMenu> {
     /** The dock's own era, the Standard, whose skin its window wears. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return HardwareEra.STANDARD;
     }
 
@@ -167,8 +168,7 @@ public class DockStationScreen extends AbstractComputerScreen<DockStationMenu> {
     /* A disk's era and how much of it is used; a stick's share used. */
     private static String detail(final ItemStack held) {
         final long free = DriveTable.freeWeightOf(held);
-        if (held.getItem() instanceof DiskItem disk) {
-            final DiskSpec spec = disk.spec();
+        if (HardwareRegistry.disk(held) instanceof DiskSpec spec) {
             final long capacity = spec.capacityItems() * StorageKey.MB_EQ_PER_ITEM;
             final long usedMb = capacity <= 0 ? 0L : spec.capacityMb() * (capacity - free) / capacity;
             final String era = GameText.resolve(spec.era().text());

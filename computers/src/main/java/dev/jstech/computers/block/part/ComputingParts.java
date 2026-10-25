@@ -9,6 +9,8 @@ package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.PartType;
@@ -17,6 +19,7 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -94,6 +97,43 @@ public final class ComputingParts {
     public static final DeferredHolder<PartType<?>, PartType<CraftingInterfacePart>> ADVANCED_INTERFACE =
             craftingInterface("advanced_crafting_interface", HardwareEra.ADVANCED);
 
+    /*
+     * Each era's parts and the items a broken one gives back; an era after the Advanced has the Advanced's. The items
+     * are asked for when a part breaks, never while this class loads, so the module's items load in their own time.
+     */
+    private static final EraTable<Supplier<PartType<CraftingInterfacePart>>> INTERFACES = EraTable.ofFive(
+            VINTAGE_INTERFACE, LEGACY_INTERFACE, TRANSITION_INTERFACE, INTERFACE, ADVANCED_INTERFACE);
+    private static final EraTable<Supplier<PartType<ExternalStorageBusPart>>> EXTERNALS = EraTable.ofFive(
+            VINTAGE_EXTERNAL, LEGACY_EXTERNAL, TRANSITION_EXTERNAL, EXTERNAL, ADVANCED_EXTERNAL);
+    private static final EraTable<Supplier<PartType<ImportBusPart>>> IMPORTS = EraTable.ofFive(
+            VINTAGE_IMPORT, LEGACY_IMPORT, TRANSITION_IMPORT, IMPORT, ADVANCED_IMPORT);
+    private static final EraTable<Supplier<PartType<ExportBusPart>>> EXPORTS = EraTable.ofFive(
+            VINTAGE_EXPORT, LEGACY_EXPORT, TRANSITION_EXPORT, EXPORT, ADVANCED_EXPORT);
+    private static final EraTable<Supplier<Item>> INTERFACE_ITEMS = EraTable.ofFive(
+            () -> ComputingModule.VINTAGE_CRAFTING_INTERFACE_ITEM.get(),
+            () -> ComputingModule.LEGACY_CRAFTING_INTERFACE_ITEM.get(),
+            () -> ComputingModule.TRANSITION_CRAFTING_INTERFACE_ITEM.get(),
+            () -> ComputingModule.CRAFTING_INTERFACE_ITEM.get(),
+            () -> ComputingModule.ADVANCED_CRAFTING_INTERFACE_ITEM.get());
+    private static final EraTable<Supplier<Item>> EXTERNAL_ITEMS = EraTable.ofFive(
+            () -> ComputingModule.VINTAGE_EXTERNAL_STORAGE_BUS_ITEM.get(),
+            () -> ComputingModule.LEGACY_EXTERNAL_STORAGE_BUS_ITEM.get(),
+            () -> ComputingModule.TRANSITION_EXTERNAL_STORAGE_BUS_ITEM.get(),
+            () -> ComputingModule.EXTERNAL_STORAGE_BUS_ITEM.get(),
+            () -> ComputingModule.ADVANCED_EXTERNAL_STORAGE_BUS_ITEM.get());
+    private static final EraTable<Supplier<Item>> IMPORT_ITEMS = EraTable.ofFive(
+            () -> ComputingModule.VINTAGE_IMPORT_BUS_ITEM.get(),
+            () -> ComputingModule.LEGACY_IMPORT_BUS_ITEM.get(),
+            () -> ComputingModule.TRANSITION_IMPORT_BUS_ITEM.get(),
+            () -> ComputingModule.IMPORT_BUS_ITEM.get(),
+            () -> ComputingModule.ADVANCED_IMPORT_BUS_ITEM.get());
+    private static final EraTable<Supplier<Item>> EXPORT_ITEMS = EraTable.ofFive(
+            () -> ComputingModule.VINTAGE_EXPORT_BUS_ITEM.get(),
+            () -> ComputingModule.LEGACY_EXPORT_BUS_ITEM.get(),
+            () -> ComputingModule.TRANSITION_EXPORT_BUS_ITEM.get(),
+            () -> ComputingModule.EXPORT_BUS_ITEM.get(),
+            () -> ComputingModule.ADVANCED_EXPORT_BUS_ITEM.get());
+
     private ComputingParts() {
     }
 
@@ -113,25 +153,13 @@ public final class ComputingParts {
     }
 
     /** The Crafting Interface of {@code era}; an era after the Advanced has the Advanced's. */
-    public static PartType<CraftingInterfacePart> craftingInterface(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> VINTAGE_INTERFACE.get();
-            case LEGACY -> LEGACY_INTERFACE.get();
-            case TRANSITION -> TRANSITION_INTERFACE.get();
-            case STANDARD -> INTERFACE.get();
-            case ADVANCED, EXA, SINGULARITY -> ADVANCED_INTERFACE.get();
-        };
+    public static PartType<CraftingInterfacePart> craftingInterface(final Era era) {
+        return INTERFACES.get(era).get();
     }
 
     /** The item of the Crafting Interface of {@code era}, which a broken interface gives back. */
-    public static ItemStack craftingInterfaceItem(final HardwareEra era) {
-        return new ItemStack(switch (era) {
-            case VINTAGE -> ComputingModule.VINTAGE_CRAFTING_INTERFACE_ITEM.get();
-            case LEGACY -> ComputingModule.LEGACY_CRAFTING_INTERFACE_ITEM.get();
-            case TRANSITION -> ComputingModule.TRANSITION_CRAFTING_INTERFACE_ITEM.get();
-            case STANDARD -> ComputingModule.CRAFTING_INTERFACE_ITEM.get();
-            case ADVANCED, EXA, SINGULARITY -> ComputingModule.ADVANCED_CRAFTING_INTERFACE_ITEM.get();
-        });
+    public static ItemStack craftingInterfaceItem(final Era era) {
+        return new ItemStack(INTERFACE_ITEMS.get(era).get());
     }
 
     /** Whether {@code type} is an Import Bus of any era. */
@@ -153,88 +181,52 @@ public final class ComputingParts {
     }
 
     /** The External Storage Bus of {@code era}; an era after the Advanced has the Advanced's. */
-    public static PartType<ExternalStorageBusPart> externalBus(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> VINTAGE_EXTERNAL.get();
-            case LEGACY -> LEGACY_EXTERNAL.get();
-            case TRANSITION -> TRANSITION_EXTERNAL.get();
-            case STANDARD -> EXTERNAL.get();
-            case ADVANCED, EXA, SINGULARITY -> ADVANCED_EXTERNAL.get();
-        };
+    public static PartType<ExternalStorageBusPart> externalBus(final Era era) {
+        return EXTERNALS.get(era).get();
     }
 
     /** The item of the External Storage Bus of {@code era}, which a broken bus gives back. */
-    public static ItemStack externalBusItem(final HardwareEra era) {
-        return new ItemStack(switch (era) {
-            case VINTAGE -> ComputingModule.VINTAGE_EXTERNAL_STORAGE_BUS_ITEM.get();
-            case LEGACY -> ComputingModule.LEGACY_EXTERNAL_STORAGE_BUS_ITEM.get();
-            case TRANSITION -> ComputingModule.TRANSITION_EXTERNAL_STORAGE_BUS_ITEM.get();
-            case STANDARD -> ComputingModule.EXTERNAL_STORAGE_BUS_ITEM.get();
-            case ADVANCED, EXA, SINGULARITY -> ComputingModule.ADVANCED_EXTERNAL_STORAGE_BUS_ITEM.get();
-        });
+    public static ItemStack externalBusItem(final Era era) {
+        return new ItemStack(EXTERNAL_ITEMS.get(era).get());
     }
 
     /** The Import Bus of {@code era}; an era after the Advanced has the Advanced's. */
-    public static PartType<ImportBusPart> importBus(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> VINTAGE_IMPORT.get();
-            case LEGACY -> LEGACY_IMPORT.get();
-            case TRANSITION -> TRANSITION_IMPORT.get();
-            case STANDARD -> IMPORT.get();
-            case ADVANCED, EXA, SINGULARITY -> ADVANCED_IMPORT.get();
-        };
+    public static PartType<ImportBusPart> importBus(final Era era) {
+        return IMPORTS.get(era).get();
     }
 
     /** The Export Bus of {@code era}; an era after the Advanced has the Advanced's. */
-    public static PartType<ExportBusPart> exportBus(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> VINTAGE_EXPORT.get();
-            case LEGACY -> LEGACY_EXPORT.get();
-            case TRANSITION -> TRANSITION_EXPORT.get();
-            case STANDARD -> EXPORT.get();
-            case ADVANCED, EXA, SINGULARITY -> ADVANCED_EXPORT.get();
-        };
+    public static PartType<ExportBusPart> exportBus(final Era era) {
+        return EXPORTS.get(era).get();
     }
 
     /** The item of the Import Bus of {@code era}, which a broken bus gives back. */
-    public static ItemStack importBusItem(final HardwareEra era) {
-        return new ItemStack(switch (era) {
-            case VINTAGE -> ComputingModule.VINTAGE_IMPORT_BUS_ITEM.get();
-            case LEGACY -> ComputingModule.LEGACY_IMPORT_BUS_ITEM.get();
-            case TRANSITION -> ComputingModule.TRANSITION_IMPORT_BUS_ITEM.get();
-            case STANDARD -> ComputingModule.IMPORT_BUS_ITEM.get();
-            case ADVANCED, EXA, SINGULARITY -> ComputingModule.ADVANCED_IMPORT_BUS_ITEM.get();
-        });
+    public static ItemStack importBusItem(final Era era) {
+        return new ItemStack(IMPORT_ITEMS.get(era).get());
     }
 
     /** The item of the Export Bus of {@code era}, which a broken bus gives back. */
-    public static ItemStack exportBusItem(final HardwareEra era) {
-        return new ItemStack(switch (era) {
-            case VINTAGE -> ComputingModule.VINTAGE_EXPORT_BUS_ITEM.get();
-            case LEGACY -> ComputingModule.LEGACY_EXPORT_BUS_ITEM.get();
-            case TRANSITION -> ComputingModule.TRANSITION_EXPORT_BUS_ITEM.get();
-            case STANDARD -> ComputingModule.EXPORT_BUS_ITEM.get();
-            case ADVANCED, EXA, SINGULARITY -> ComputingModule.ADVANCED_EXPORT_BUS_ITEM.get();
-        });
+    public static ItemStack exportBusItem(final Era era) {
+        return new ItemStack(EXPORT_ITEMS.get(era).get());
     }
 
     private static DeferredHolder<PartType<?>, PartType<ImportBusPart>> importBus(final String id,
-                                                                                    final HardwareEra era) {
+                                                                                    final Era era) {
         return PARTS.register(id, () -> type(() -> new ImportBusPart(era), IMPORT_NAME, id));
     }
 
     private static DeferredHolder<PartType<?>, PartType<ExportBusPart>> exportBus(final String id,
-                                                                                    final HardwareEra era) {
+                                                                                    final Era era) {
         return PARTS.register(id, () -> type(() -> new ExportBusPart(era), EXPORT_NAME, id));
     }
 
     private static DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> externalBus(final String id,
-                                                                                             final HardwareEra era) {
+                                                                                             final Era era) {
         return PARTS.register(id, () -> type(() -> new ExternalStorageBusPart(era), EXTERNAL_NAME, id));
     }
 
     private static DeferredHolder<PartType<?>, PartType<CraftingInterfacePart>> craftingInterface(
-            final String id, final HardwareEra era) {
+            final String id, final Era era) {
         return PARTS.register(id, () -> type(() -> new CraftingInterfacePart(era), INTERFACE_NAME, id));
     }
 

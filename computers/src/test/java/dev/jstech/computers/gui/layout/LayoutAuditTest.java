@@ -19,6 +19,7 @@ import dev.jstech.computers.gui.help.HelpForm;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.io.File;
 import java.lang.reflect.Modifier;
@@ -84,7 +85,7 @@ class LayoutAuditTest {
         final List<AuditCase> c = new ArrayList<>();
         // Each era's window of each kind of bus, and the rows its Configure tab scrolls, laid out flat at their most.
         for (final BusLayout.Window window : BusLayout.Window.values()) {
-            for (final HardwareEra era : HardwareEra.values()) {
+            for (final Era era : HardwareEra.SERIES) {
                 final BusAbilities can = BusLayout.abilities(era, window);
                 c.add(new AuditCase("BusLayout(" + window + " " + era + ")", BusLayout.frame(can, window), true));
                 c.add(new AuditCase("BusLayout.rows(" + window + " " + era + ")",
@@ -135,7 +136,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));
         c.add(new AuditCase("OpenWithLayout", OpenWithLayout.layout(), true));
         // The three towers wear their era's case, whose bays and supply stand differently in each era.
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             c.add(new AuditCase("ClusterManagementComputerLayout(" + era + ")",
                     ClusterManagementComputerLayout.layout(era), true));
             c.add(new AuditCase("CraftingComputerLayout(" + era + ")", CraftingComputerLayout.layout(era), true));

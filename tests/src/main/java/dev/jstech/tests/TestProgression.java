@@ -9,6 +9,7 @@ package dev.jstech.tests;
 
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.Eras;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.progression.IAxisStep;
 import dev.jstech.core.progression.Knowledge;
 import dev.jstech.core.progression.Knowledges;
@@ -20,7 +21,6 @@ import dev.jstech.core.progression.ProgressionTriggers;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
@@ -43,9 +43,9 @@ public final class TestProgression {
     public static final TextKey ORBIT_NAME = TextKey.of("jstests.milestone.orbit", "Test Orbit");
     public static final TextKey UNREACHED_NAME = TextKey.of("jstests.knowledge.unreached", "Test Unreached");
 
-    /** An add-on's era, right after Advanced. */
-    public static final Era QUANTUM = Eras.declareAfter(new Era(id("test_quantum"), QUANTUM_NAME.text(), 0xFF00FF),
-            Eras.idOf(HardwareEra.ADVANCED));
+    /** An add-on's era, right after Advanced, its machines built in 2034. */
+    public static final Era QUANTUM = Eras.declareAfter(new Era(id("test_quantum").toString(), QUANTUM_NAME.text(),
+            0xFF00FF, 2034), HardwareEra.ADVANCED);
     /** An axis of three stages of the test mod's own. */
     public static final ProgressionAxis<Stage> STAGES = ProgressionAxis.of(id("test_stages"), AXIS_NAME,
             List.of(Stage.values()));

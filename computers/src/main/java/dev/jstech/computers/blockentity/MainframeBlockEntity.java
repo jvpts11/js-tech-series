@@ -28,7 +28,9 @@ import dev.jstech.computers.crafting.PendingCraftOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.engine.INetworkEngine;
 import dev.jstech.computers.engine.NetworkOperationsService;
+import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.QueueSpeeds;
 import dev.jstech.computers.operation.INetworkOperation;
@@ -38,6 +40,7 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkUpdateOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.OsInstallRunner;
@@ -63,6 +66,7 @@ import dev.jstech.core.jstechseries.operation.IOperationTask;
 import dev.jstech.core.jstechseries.operation.OperationStatistics;
 import dev.jstech.core.jstechseries.operation.SelfTestOperationTask;
 import dev.jstech.core.audio.LoopRequest;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.time.GameCalendar;
@@ -133,11 +137,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     public static final int DISK_SLOTS = 4;
     public static final int TOTAL_SLOTS = 24;
 
-    private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
-            MOTHERBOARD_SLOT, CPU_SLOTS_START, CPU_SLOTS, RAM_SLOTS_START, RAM_SLOTS,
-            GPU_SLOTS_START, GPU_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, TOTAL_SLOTS, 0, TOTAL_SLOTS);
-
     public static final int STORAGE_SLOTS = 27;
+    /** What a Mainframe's cabinet counts, whatever its era: the slots above are where they sit; it has no bays. */
+    public static final CaseParts PARTS = new CaseParts(CPU_SLOTS, RAM_SLOTS, GPU_SLOTS, DISK_SLOTS, 0, STORAGE_SLOTS);
 
     /*
      * the cabinet as one model: what the renderer needs to know
@@ -178,7 +180,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     /** The era of this cabinet, read from its block; it picks the model and the atlas. */
-    public HardwareEra mainframeEra() {
+    public Era mainframeEra() {
         return getBlockState().getBlock()
                 instanceof MainframeBlock mainframe
                 ? mainframe.era() : HardwareEra.STANDARD;
@@ -317,37 +319,18 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             operationLog = new ArrayDeque<>();
 
     public MainframeBlockEntity(final BlockPos pos, final BlockState state) {
-        super(ComputingModule.MAINFRAME_BE.get(), pos, state, LAYOUT);
+        super(ComputingModule.MAINFRAME_BE.get(), pos, state);
         // What only a Mainframe keeps: its network, its Operations and their log, its holds and its services.
         fields().part("Mainframe", IFieldPart.of(this::saveMainframe, this::loadMainframe)).save();
     }
 
-    @Override
-    protected Set<FormFactor> acceptedFormFactors() {
-        // A Mainframe takes the MTX board of every shipped era.
-        return Set.of(FormFactor.MTX);
-    }
-
     /**
-     * A Mainframe accepts only an MTX board of its own era: a board of a different era is neither
-     * installable nor counted in the build.
+     * What a Mainframe of {@code era} is: the MTX board of its own era, which every shipped era makes; a board of a
+     * different era is neither installable nor counted in the build.
      */
-    @Override
-    protected HardwareEra requiredBoardEra() {
-        return blockEra();
+    public static ComputerDef computer(final Era era) {
+        return new ComputerDef(era, Set.of(FormFactor.MTX), HostScope.MAINFRAME, PARTS);
     }
-
-    private HardwareEra blockEra() {
-        return getBlockState().getBlock()
-                instanceof MainframeBlock mf
-                ? mf.era()
-                : HardwareEra.STANDARD;
-    }
-
-    /*
-     * Slot validity is governed by the inherited instance isValidForSlot, which the acceptedFormFactors
-     * override above ties to MTX-only boards over the CPU/RAM/PCIe/disk ranges of the shared layout.
-     */
 
     /*
      * The hardware handler is inherited; this shim keeps the historic public name so the Menu/Screen,
@@ -1444,7 +1427,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     @Override
     public int usableStorageSlots() {
         final long capacity = storageItems(); // already net of OS footprint
-        return capacity <= 0 ? 0 : (int) Math.min(STORAGE_SLOTS, (capacity + 63) / 64);
+        return capacity <= 0 ? 0 : (int) Math.min(computer().parts().storage(), (capacity + 63) / 64);
     }
 
     @Override

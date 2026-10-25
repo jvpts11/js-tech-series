@@ -8,13 +8,13 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.gui.CdeStyle;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.ThemePreset;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -229,7 +229,7 @@ public final class MachineConfigService {
     /** The system disk's public-share permille, or 0 when there is no system disk. */
     private int diskPermille() {
         final DriveTable.Drive drive = DriveTable.of((BlockEntity) this.terminal, this.level).find('C');
-        return drive == null || drive.disk().isEmpty() ? 0 : DiskItem.publicPermille(drive.disk());
+        return drive == null || drive.disk().isEmpty() ? 0 : DriveVolumes.publicPermille(drive.disk());
     }
 
     /** Writes a clamped public-share permille onto the system disk; false when there is none. */
@@ -238,7 +238,7 @@ public final class MachineConfigService {
         if (drive == null || drive.disk().isEmpty()) {
             return false;
         }
-        DiskItem.setPublicPermille(drive.disk(), permille);
+        DriveVolumes.setPublicPermille(drive.disk(), permille);
         return true;
     }
 

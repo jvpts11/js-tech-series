@@ -15,14 +15,14 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.item.StorageCardItem;
+import dev.jstech.computers.item.StorageCards;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.computers.registry.ComputerRegistry;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStore;
@@ -30,6 +30,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
+import dev.jstech.tests.testkit.computers.PartSheets;
 import dev.jstech.tests.testkit.computers.ServerStacks;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -186,7 +187,7 @@ public final class RackUnitGameTests {
 
                     // Pull the server: the drives and their data stay with the rack.
                     rack.getServers().setStackInSlot(0, ItemStack.EMPTY);
-                    helper.assertTrue(rack.getFrontSlots().getStackInSlot(0).getItem() instanceof DiskItem,
+                    helper.assertTrue(DriveVolumes.isDisk(rack.getFrontSlots().getStackInSlot(0)),
                             "the drives must stay in the front slots when the server is pulled");
                     helper.assertTrue(rack.getServerStorage(0).count(Items.COBBLESTONE) == 0L,
                             "an empty rack unit claims no drives, so it reads no storage");
@@ -481,7 +482,7 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void raid_modeNeedsEnoughDrivesAndSetsTheLogicalVolume(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = storageArray(helper, new BlockPos(2, 2, 2), 3);
-        final long perDrive = ((DiskItem) nvmeDrive().getItem()).spec().capacityItems();
+        final long perDrive = PartSheets.disk(nvmeDrive().getItem()).capacityItems();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rack.hasRaidController(0),
@@ -512,7 +513,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.setRaidMode(0, RaidMode.RAID5), "3 drives form a RAID 5");
                     final ItemStack pulled = rack.getServers().getStackInSlot(0).copy();
                     final ItemStack card = ServerItem.card(pulled, ExpansionCardKind.RAID_CONTROLLER);
-                    helper.assertTrue(StorageCardItem.raidMode(card) == RaidMode.RAID5,
+                    helper.assertTrue(StorageCards.raidMode(card) == RaidMode.RAID5,
                             "the mode is kept on the card in the server, not in the rack");
                     helper.assertTrue(card.getOrDefault(ComputingComponents.RAID_MEMBERS.get(), 0) == 3,
                             "the card remembers how many drives its array was formed with");
@@ -537,7 +538,7 @@ public final class RackUnitGameTests {
         helper.assertTrue(slots.insertItem(ServerHardwareHandler.GPU_START + 1,
                         new ItemStack(ComputingModule.VAULTIS_CACHE_PCIE3.get()), false).isEmpty(),
                 "and the Standard Cache in the next");
-        helper.assertTrue(StorageCardItem.kindOf(ServerItem.card(player.getItemInHand(InteractionHand.MAIN_HAND),
+        helper.assertTrue(StorageCards.kindOf(ServerItem.card(player.getItemInHand(InteractionHand.MAIN_HAND),
                         ExpansionCardKind.RAID_CONTROLLER)) == ExpansionCardKind.RAID_CONTROLLER,
                 "the server carries the Array it was given");
         helper.succeed();
@@ -564,10 +565,10 @@ public final class RackUnitGameTests {
                             new ItemStack(ComputingModule.VAULTIS_CACHE_PCIE4.get()));
                     for (int era = 0; era < caches.size(); era++) {
                         final int expected = 10 + 5 * era;
-                        helper.assertTrue(StorageCardItem.readCutPercent(caches.get(era)) == expected,
+                        helper.assertTrue(StorageCards.readCutPercent(caches.get(era)) == expected,
                                 caches.get(era).getHoverName().getString() + " cuts " + expected + "%");
                     }
-                    helper.assertTrue(StorageCardItem.readCutPercent(
+                    helper.assertTrue(StorageCards.readCutPercent(
                                     new ItemStack(ComputingModule.VAULTIS_ARRAY_PCIE3.get())) == 0,
                             "an array card caches nothing");
                 })
@@ -596,7 +597,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.raidDegraded(0), "the array reads as degraded");
                     helper.assertTrue(!rack.raidFailed(0), "a mirror down one member has not failed");
                     helper.assertTrue(rack.getServerStorage(0).capacity()
-                                    == ((DiskItem) nvmeDrive().getItem()).spec().capacityItems(),
+                                    == PartSheets.disk(nvmeDrive().getItem()).capacityItems(),
                             "a degraded array keeps the volume size it promised");
                 })
                 .thenSucceed();
@@ -920,7 +921,7 @@ public final class RackUnitGameTests {
                      * instead of filling drive after drive. The first write lands anywhere; what the
                      * service changes is where the SECOND one goes.
                      */
-                    final long perDrive = ((DiskItem) nvmeDrive().getItem()).spec().capacityItems();
+                    final long perDrive = PartSheets.disk(nvmeDrive().getItem()).capacityItems();
                     rack.getServerStorage(0).insert(StorageKey.of(Items.COBBLESTONE), perDrive / 4);
                     rack.consoleOf(0).install("jsc:load_balancer");
                     rack.getServerStorage(0).insert(StorageKey.of(Items.DIRT), perDrive / 4);
@@ -957,7 +958,8 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.rackType() == RackChassis.RackType.SERVER,
                             "the Server Rack is the general cabinet");
                     // The server chassis belong to this cabinet; the supercomputer nodes, of every era, do not.
-                    for (final RackChassis chassis : RackChassis.values()) {
+                    for (final RackChassis chassis : ComputerRegistry.servers().stream().map(ComputerRegistry::chassis)
+                            .toList()) {
                         final boolean server = !chassis.isSupercomputerNode();
                         helper.assertTrue((chassis.rackType() == RackChassis.RackType.SERVER) == server,
                                 chassis + (server ? " belongs in the Server Rack"
@@ -1005,7 +1007,7 @@ public final class RackUnitGameTests {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
         rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         final ItemStack drive = nvmeDrive();
-        final long perDrive = ((DiskItem) drive.getItem()).spec().capacityItems();
+        final long perDrive = PartSheets.disk(drive.getItem()).capacityItems();
         rack.insertDrive(0, drive.copy());
         rack.insertDrive(0, drive.copy());
         helper.startSequence()
@@ -1014,7 +1016,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(store.capacity() == perDrive * 2,
                             "capacity must be the sum of the claimed drives; got " + store.capacity());
                     helper.assertTrue(rack.bayStorageMb(0)
-                                    == ((DiskItem) drive.getItem()).spec().capacityMb() * 2,
+                                    == PartSheets.disk(drive.getItem()).capacityMb() * 2,
                             "the registered node capacity must come from the bay drives");
                     // A drive parked in an unclaimed row counts for nothing.
                     rack.getFrontSlots().setStackInSlot(RackLayout.SLOTS_PER_U * 2, nvmeDrive());

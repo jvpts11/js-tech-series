@@ -10,7 +10,7 @@ package dev.jstech.computers.guide;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.part.ComputingParts;
-import dev.jstech.computers.item.CraftingCardItem;
+import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
@@ -185,7 +185,7 @@ final class AutocraftingPages {
 
     private static void craftingCards(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("crafting_cards", section).titled("Crafting Cards").icon(ComputingModule.CRAFTING_CARD_PCIE3)
-                .coversAll(ComputersGuide.itemsOf(CraftingCardItem.class))
+                .coversAll(ComputersGuide.hardwareOf(CraftingCardSpec.class))
                 .paragraph("The Crafting Card is the part that lets a Crafting Computer craft. You put it in an"
                         + " expansion slot of the computer. Without a card the computer does not craft at all"
                         + " ([](jsc:crafting_computers)).")

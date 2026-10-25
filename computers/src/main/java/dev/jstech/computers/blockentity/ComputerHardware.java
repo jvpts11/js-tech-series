@@ -12,14 +12,11 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamSpec;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.IExpansionCardItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.PsuItem;
-import dev.jstech.computers.item.RamItem;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -137,7 +134,7 @@ final class ComputerHardware {
     }
 
     /** How many of the layout's 5.25-inch bays the case really has, by the era of the case. */
-    int caseBays(final HardwareEra caseEra) {
+    int caseBays(final Era caseEra) {
         return Math.min(this.layout.bayCount(), CaseBays.of(caseEra));
     }
 
@@ -156,23 +153,23 @@ final class ComputerHardware {
      */
 
     int boardCpuSlots() {
-        final MotherboardItem board = board();
-        return board == null ? 0 : Math.min(this.layout.cpuCount(), board.spec().cpuSlots());
+        final MotherboardSpec board = board();
+        return board == null ? 0 : Math.min(this.layout.cpuCount(), board.cpuSlots());
     }
 
     int boardRamSlots() {
-        final MotherboardItem board = board();
-        return board == null ? 0 : Math.min(this.layout.ramCount(), board.spec().ramSlots());
+        final MotherboardSpec board = board();
+        return board == null ? 0 : Math.min(this.layout.ramCount(), board.ramSlots());
     }
 
     int boardPcieSlots() {
-        final MotherboardItem board = board();
-        return board == null ? 0 : Math.min(this.layout.pcieCount(), board.spec().pcieSlots());
+        final MotherboardSpec board = board();
+        return board == null ? 0 : Math.min(this.layout.pcieCount(), board.pcieSlots());
     }
 
     int boardDiskSlots() {
-        final MotherboardItem board = board();
-        return board == null ? 0 : Math.min(this.layout.diskCount(), board.spec().diskSlots());
+        final MotherboardSpec board = board();
+        return board == null ? 0 : Math.min(this.layout.diskCount(), board.diskSlots());
     }
 
     /**
@@ -180,9 +177,9 @@ final class ComputerHardware {
      * alone, so the assembly GUI can adopt the era's skin the moment a board goes in.
      */
     @Nullable
-    HardwareEra installedEra() {
-        final MotherboardItem board = board();
-        return board == null ? null : board.spec().era();
+    Era installedEra() {
+        final MotherboardSpec board = board();
+        return board == null ? null : board.era();
     }
 
     int installedCpus() {
@@ -229,65 +226,56 @@ final class ComputerHardware {
 
     /** The board installed, or null when the board slot is empty or holds something else. */
     @Nullable
-    private MotherboardItem board() {
-        return this.handler.getStackInSlot(this.layout.motherboardSlot()).getItem()
-                instanceof MotherboardItem board ? board : null;
+    private MotherboardSpec board() {
+        return HardwareRegistry.board(this.handler.getStackInSlot(this.layout.motherboardSlot()));
     }
 
     @Nullable
     private ComputerBuild compute() {
         final ItemStack boardStack = this.handler.getStackInSlot(this.layout.motherboardSlot());
-        if (!(boardStack.getItem() instanceof MotherboardItem motherboard)
-                || !this.machine.isAcceptedBoard(boardStack)) {
+        final MotherboardSpec motherboard = HardwareRegistry.board(boardStack);
+        if (motherboard == null || !this.machine.isAcceptedBoard(boardStack)) {
             /*
              * A board this computer does not accept (wrong form factor or wrong era) yields no build, so a
              * direct setStackInSlot or a board installed before an era gate existed can never run the machine.
              */
             return null;
         }
-        if (!(this.handler.getStackInSlot(this.layout.psuSlot()).getItem() instanceof PsuItem psu)) {
+        final PsuSpec psu = HardwareRegistry.psu(this.handler.getStackInSlot(this.layout.psuSlot()));
+        if (psu == null) {
             return null;
         }
         /*
          * Every count is clamped to what the installed board exposes, so a part in a slot the board
          * does not offer is ignored.
          */
-        final int cpuCount = Math.min(this.layout.cpuCount(), motherboard.spec().cpuSlots());
         final List<CpuSpec> cpus = new ArrayList<>();
-        for (int i = 0; i < cpuCount; i++) {
-            if (this.handler.getStackInSlot(this.layout.cpuStart() + i).getItem() instanceof CpuItem cpu) {
-                cpus.add(cpu.spec());
-            }
+        for (int i = 0; i < Math.min(this.layout.cpuCount(), motherboard.cpuSlots()); i++) {
+            add(cpus, HardwareRegistry.cpu(this.handler.getStackInSlot(this.layout.cpuStart() + i)));
         }
-        final int ramCount = Math.min(this.layout.ramCount(), motherboard.spec().ramSlots());
         final List<RamSpec> rams = new ArrayList<>();
-        for (int i = 0; i < ramCount; i++) {
-            if (this.handler.getStackInSlot(this.layout.ramStart() + i).getItem() instanceof RamItem ram) {
-                rams.add(ram.spec());
-            }
+        for (int i = 0; i < Math.min(this.layout.ramCount(), motherboard.ramSlots()); i++) {
+            add(rams, HardwareRegistry.ram(this.handler.getStackInSlot(this.layout.ramStart() + i)));
         }
-        final int pcieCount = Math.min(this.layout.pcieCount(), motherboard.spec().pcieSlots());
         final List<IExpansionCardSpec> pcieCards = new ArrayList<>();
-        for (int i = 0; i < pcieCount; i++) {
-            if (this.handler.getStackInSlot(this.layout.pcieStart() + i).getItem()
-                    instanceof IExpansionCardItem card) {
-                pcieCards.add(card.cardSpec());
-            }
+        for (int i = 0; i < Math.min(this.layout.pcieCount(), motherboard.pcieSlots()); i++) {
+            add(pcieCards, HardwareRegistry.card(this.handler.getStackInSlot(this.layout.pcieStart() + i)));
         }
-        final int diskCount = Math.min(this.layout.diskCount(), motherboard.spec().diskSlots());
         final List<DiskSpec> disks = new ArrayList<>();
-        for (int i = 0; i < diskCount; i++) {
-            if (this.handler.getStackInSlot(this.layout.diskStart() + i).getItem() instanceof DiskItem disk) {
-                disks.add(disk.spec());
-            }
+        for (int i = 0; i < Math.min(this.layout.diskCount(), motherboard.diskSlots()); i++) {
+            add(disks, HardwareRegistry.disk(this.handler.getStackInSlot(this.layout.diskStart() + i)));
         }
         // The disks in the case's hot-swap bays, which hold, draw and run as the board's do.
         final List<DiskSpec> frontDisks = new ArrayList<>();
         for (int bay = 0; bay < this.machine.frontDiskSlots(); bay++) {
-            if (this.machine.frontDisk(bay).getItem() instanceof DiskItem disk) {
-                frontDisks.add(disk.spec());
-            }
+            add(frontDisks, HardwareRegistry.disk(this.machine.frontDisk(bay)));
         }
-        return new ComputerBuild(motherboard.spec(), cpus, pcieCards, rams, psu.spec(), disks, frontDisks);
+        return new ComputerBuild(motherboard, cpus, pcieCards, rams, psu, disks, frontDisks);
+    }
+
+    private static <S> void add(final List<S> into, final @Nullable S part) {
+        if (part != null) {
+            into.add(part);
+        }
     }
 }

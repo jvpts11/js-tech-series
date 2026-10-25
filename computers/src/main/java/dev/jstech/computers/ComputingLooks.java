@@ -17,6 +17,8 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.content.GeoLook;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -91,6 +93,17 @@ public final class ComputingLooks {
 
     /** The case a block that is not a small computer's falls back to, so a stray state still draws something. */
     private static final String FALLBACK_CASE = "computer_standard_neutral_personal_computer";
+    /* Each era's model of each family; an era after the Advanced is drawn as the Advanced is, until it has its own. */
+    private static final EraTable<String> MAINFRAMES = EraTable.ofFive("vintage_mainframe", "legacy_mainframe",
+            "transition_mainframe", "mainframe", "advanced_mainframe");
+    private static final EraTable<String> PATTERN_ENCODERS = EraTable.ofFive("vintage_pattern_encoder",
+            "legacy_pattern_encoder", "transition_pattern_encoder", "pattern_encoder", "advanced_pattern_encoder");
+    private static final EraTable<String> PRINTERS = EraTable.ofFive("vintage_printer", "legacy_printer",
+            "transition_printer", "printer", "advanced_printer");
+    private static final EraTable<String> SERVER_RACKS = EraTable.ofFive("vintage_server_rack",
+            "legacy_server_rack", "transition_server_rack", "server_rack", "advanced_server_rack");
+    private static final EraTable<String> SUPERCOMPUTER_RACKS = EraTable.of("supercomputer_rack")
+            .from(HardwareEra.ADVANCED, "advanced_supercomputer_rack");
 
     private ComputingLooks() {
     }
@@ -101,59 +114,28 @@ public final class ComputingLooks {
     }
 
     /** The model of a Redstone Interface of {@code era}; an era after the Advanced has the Advanced's. */
-    public static String redstoneInterface(final HardwareEra era) {
-        final HardwareEra drawn = era.level() > HardwareEra.ADVANCED.level() ? HardwareEra.ADVANCED : era;
-        return drawn.serializedName() + "_redstone_interface";
+    public static String redstoneInterface(final Era era) {
+        return HardwareEra.withParts(era).path() + "_redstone_interface";
     }
 
     /** The model of a Mainframe cabinet of {@code era}. */
-    public static String mainframe(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> "vintage_mainframe";
-            case LEGACY -> "legacy_mainframe";
-            case TRANSITION -> "transition_mainframe";
-            case ADVANCED -> "advanced_mainframe";
-            default -> "mainframe";
-        };
+    public static String mainframe(final Era era) {
+        return MAINFRAMES.get(era);
     }
 
     /** The model of a Pattern Encoder body of {@code era}. */
-    public static String patternEncoder(final HardwareEra era) {
-        if (era == HardwareEra.VINTAGE) {
-            return "vintage_pattern_encoder";
-        }
-        if (era == HardwareEra.LEGACY) {
-            return "legacy_pattern_encoder";
-        }
-        if (era == HardwareEra.TRANSITION) {
-            return "transition_pattern_encoder";
-        }
-        // An era after the Advanced has the Advanced's.
-        return era.level() >= HardwareEra.ADVANCED.level() ? "advanced_pattern_encoder" : "pattern_encoder";
+    public static String patternEncoder(final Era era) {
+        return PATTERN_ENCODERS.get(era);
     }
 
     /** The model of the printer of {@code era}: the Standard one has no era in its name, as its block has none. */
-    public static String printer(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> "vintage_printer";
-            case LEGACY -> "legacy_printer";
-            case TRANSITION -> "transition_printer";
-            case STANDARD -> "printer";
-            case ADVANCED, EXA, SINGULARITY -> "advanced_printer";
-        };
+    public static String printer(final Era era) {
+        return PRINTERS.get(era);
     }
 
     /** The model of a rack's cabinet: by kind first, then by era. */
     public static String rack(final ServerRackBlockEntity rack) {
-        if (rack.getBlockState().getBlock() instanceof SupercomputerRackBlock) {
-            return rack.rackEra() == HardwareEra.ADVANCED ? "advanced_supercomputer_rack" : "supercomputer_rack";
-        }
-        return switch (rack.rackEra()) {
-            case VINTAGE -> "vintage_server_rack";
-            case LEGACY -> "legacy_server_rack";
-            case TRANSITION -> "transition_server_rack";
-            case ADVANCED -> "advanced_server_rack";
-            default -> "server_rack";
-        };
+        return (rack.getBlockState().getBlock() instanceof SupercomputerRackBlock ? SUPERCOMPUTER_RACKS : SERVER_RACKS)
+                .get(rack.rackEra());
     }
 }

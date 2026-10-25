@@ -14,7 +14,6 @@ import dev.jstech.computers.client.ServerAssemblyScreen;
 import dev.jstech.computers.client.ServerRackScreen;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -22,6 +21,7 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.EraKit;
 import dev.jstech.tests.testkit.computers.EraNetwork;
 import dev.jstech.tests.testkit.computers.EraParts;
+import dev.jstech.tests.testkit.computers.PartSheets;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -93,7 +93,7 @@ public final class EraStorageClientTests {
 
     private static void storage(final ClientTestContext ctx, final EraKit kit) {
         final Item disk = EraParts.smallestDiskFor(kit.era());
-        final long perDisk = ((DiskItem) disk).spec().capacityItems();
+        final long perDisk = PartSheets.disk(disk).capacityItems();
         final String era = kit.name().toLowerCase();
         EraJourney.lay(ctx, kit)
                 .thenGive(0, EraNetwork.storageServer(kit),

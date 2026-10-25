@@ -11,15 +11,16 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.connect.Connection;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
+import dev.jstech.tests.testkit.computers.PartSheets;
 import dev.jstech.tests.testkit.computers.ServerStacks;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -197,15 +198,14 @@ public final class NetworkStorageGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkStorage ns = NetworkStorage.of(helper.getLevel(), mainframe.networkUuid());
-                    final long nameplate = ((dev.jstech.computers.item.DiskItem) drive.getItem()).spec().capacityMb();
+                    final long nameplate = PartSheets.disk(drive.getItem()).capacityMb();
                     helper.assertTrue(ns.capacityMb() == nameplate,
                             "the network is as big as the drive's label says; got " + ns.capacityMb()
                                     + " against " + nameplate);
                     helper.assertTrue(ns.usedMb() == 0L, "and empty; got " + ns.usedMb());
 
                     ns.insert(new ItemStack(Items.COBBLESTONE, 960));
-                    final long perItem = ((dev.jstech.computers.item.DiskItem) drive.getItem())
-                            .spec().era().mbPerItem();
+                    final long perItem = EraStorage.mbPerItem(PartSheets.disk(drive.getItem()).era());
                     helper.assertTrue(ns.usedMb() == 960L * perItem,
                             "960 items take 960 times what one costs on that drive; got " + ns.usedMb());
                     helper.assertTrue(ns.used() == 960L && ns.capacity() == 2_000L,

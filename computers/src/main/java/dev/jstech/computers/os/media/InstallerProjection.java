@@ -14,7 +14,6 @@ import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
-import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.fs.InstallerLayout;
@@ -124,14 +123,7 @@ public final class InstallerProjection {
      * own language like every other file, so these words are the same whoever reads them.
      */
     private static String hostLabel(final HostScope scope) {
-        return Text.literal(switch (scope) {
-            case MAINFRAME -> "the Mainframe";
-            case SERVER -> "a server in a rack";
-            case CRAFTING_COMPUTER -> "a Crafting Computer";
-            case CLUSTER_MANAGEMENT_COMPUTER -> "a Cluster Management Computer";
-            case PERSONAL_COMPUTER -> "a Personal Computer";
-            default -> "any computer";
-        }).english();
+        return scope.name().text().english();
     }
 
     /* The lines as the file on the disc carries them: in English, like every other file. */

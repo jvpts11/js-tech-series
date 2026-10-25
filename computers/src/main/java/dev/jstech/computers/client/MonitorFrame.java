@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -39,7 +40,7 @@ public final class MonitorFrame {
      * screen coordinates. Call from {@code renderBg} before drawing the software window, which paints over the glass.
      */
     public static void renderBody(final GuiGraphics g, final int sx, final int sy, final int sw, final int sh,
-                                  final HardwareEra era, final Font font) {
+                                  final Era era, final Font font) {
         final MonitorFrameStyle s = MonitorFrameStyle.forEra(era == null ? HardwareEra.STANDARD : era);
         final MonitorFrameStyle.Geometry geo = s.geometry(sx, sy, sw, sh);
 

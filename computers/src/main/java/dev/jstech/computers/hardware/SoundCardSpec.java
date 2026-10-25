@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.Objects;
 
@@ -26,7 +26,7 @@ import java.util.Objects;
  * @param stereo     whether it plays a recording in two channels rather than one
  * @param rate       how often it samples a recording
  */
-public record SoundCardSpec(HardwareEra era, PcieGeneration bus, int tdpWatts, Synthesis synthesis, int voices,
+public record SoundCardSpec(Era era, PcieGeneration bus, int tdpWatts, Synthesis synthesis, int voices,
                             int sampleBits, boolean stereo, SampleRate rate) implements IExpansionCardSpec {
 
     public SoundCardSpec {

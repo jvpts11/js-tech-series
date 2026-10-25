@@ -17,7 +17,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.CommandPromptScreen;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.WireLine;
@@ -208,7 +208,7 @@ public final class SupercomputerJourneyClientTests {
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.PCIE_SLOTS_START, new ItemStack(
                 kit == EraKit.ADVANCED ? ComputingModule.FABRIC_DPU.get() : ComputingModule.FABRIC_HOST_ADAPTER.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.PCIE_SLOTS_START + 1,
-                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+                new ItemStack(EraParts.cardFor(board, GpuSpec.class)));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(EraParts.diskFor(kit.era())));
         if (!manager.installOs(MC_DOS)) {

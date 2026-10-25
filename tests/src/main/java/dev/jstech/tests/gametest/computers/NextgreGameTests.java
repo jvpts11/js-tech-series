@@ -30,9 +30,9 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.network.ServerNode;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.CraftFiles;
@@ -90,7 +90,7 @@ public final class NextgreGameTests {
             if (!(helper.getBlockEntity(at) instanceof MainframeBlockEntity mainframe)) {
                 throw new IllegalStateException("no Mainframe at " + at);
             }
-            final HardwareEra era = mainframe.mainframeEra();
+            final Era era = mainframe.mainframeEra();
             final boolean installed = mainframe.installEngine(NEXTGRE);
             helper.assertTrue(installed == (age.version() != null),
                     "NextgreIQL on a " + era + " Mainframe: " + installed);

@@ -7,14 +7,13 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.SystemProcesses;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
+import dev.jstech.computers.registry.HardwareRegistry;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,9 +88,9 @@ final class MachineCrash {
         ItemStack board = ItemStack.EMPTY;
         ItemStack cpu = ItemStack.EMPTY;
         for (final ItemStack part : machine.hardwareStacks()) {
-            if (board.isEmpty() && part.getItem() instanceof MotherboardItem) {
+            if (board.isEmpty() && HardwareRegistry.board(part) != null) {
                 board = part;
-            } else if (cpu.isEmpty() && part.getItem() instanceof CpuItem) {
+            } else if (cpu.isEmpty() && HardwareRegistry.cpu(part) != null) {
                 cpu = part;
             }
         }

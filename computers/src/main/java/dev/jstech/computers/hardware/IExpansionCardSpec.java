@@ -7,14 +7,17 @@
  */
 package dev.jstech.computers.hardware;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
- * What every PCIe expansion card exposes to a {@link ComputerBuild}, regardless of what the card does: the bus generation it needs (to check it fits the board), its power draw, and its {@link ExpansionCardKind}.
+ * What every expansion card exposes to a {@link ComputerBuild}, regardless of what the card does: the bus generation
+ * it needs (to check it fits the board), its power draw, and its {@link ExpansionCardKind}.
  *
- * <p>The card kinds are a closed set, so this is sealed to exactly the concrete specs, one for each kind of card. That lets callers rely on {@link #kind()} being exhaustive and keeps a stray external implementation from claiming a slot.
+ * <p>Open: this mod's own cards each have a spec of their own, and an add-on brings a card of a kind of its own the
+ * same way, or declares a plain one ({@link PlainCardSpec}), and finds it in a build by its kind.
  */
-public sealed interface IExpansionCardSpec
-        permits GpuSpec, CraftingCardSpec, PhiCoprocessorSpec, ClusterInterfaceCardSpec, SoundCardSpec,
-        NetworkCardSpec, WorkshopCardSpec, StorageCardSpec {
+@ApiStatus.Experimental
+public interface IExpansionCardSpec {
 
     PcieGeneration bus();
 

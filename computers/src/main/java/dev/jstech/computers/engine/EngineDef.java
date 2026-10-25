@@ -7,12 +7,12 @@
  */
 package dev.jstech.computers.engine;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
-import java.util.EnumMap;
+import dev.jstech.core.jstechseries.tier.Era;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,25 +30,26 @@ import org.jetbrains.annotations.Nullable;
  * @param versions the version it ships in, by the age of the Mainframe it is installed on
  * @param extras   what it offers beyond what every engine answers
  */
-public record EngineDef(ResourceLocation program, String dialect, Map<HardwareEra, String> versions,
+@ApiStatus.Experimental
+public record EngineDef(ResourceLocation program, String dialect, Map<Era, String> versions,
                         Set<EngineCapability> extras) {
 
     public EngineDef {
         if (versions.isEmpty()) {
             throw new IllegalArgumentException("an engine is made for at least one age: " + program);
         }
-        versions = Map.copyOf(new EnumMap<>(versions));
+        versions = Map.copyOf(versions);
         extras = extras.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(extras));
     }
 
     /** The version a Mainframe of {@code era} installs, or {@code null} when the engine was not made for it. */
     @Nullable
-    public String versionFor(final HardwareEra era) {
+    public String versionFor(final Era era) {
         return versions.get(era);
     }
 
     /** Whether the engine was made for a Mainframe of {@code era}. */
-    public boolean madeFor(final HardwareEra era) {
+    public boolean madeFor(final Era era) {
         return versions.containsKey(era);
     }
 

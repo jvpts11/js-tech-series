@@ -7,8 +7,9 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.FilesystemKind;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 /**
  * Pure utility methods for filesystem paths and file-size accounting.
@@ -35,18 +36,18 @@ public final class FsPaths {
 
     /**
      * Converts a byte count into mB-equivalents on a disk of {@code era}, rounding up: one mB-eq is
-     * {@link HardwareEra#bytesPerMbEq()} bytes there, so the same file weighs more on older hardware.
+     * {@link EraStorage#bytesPerMbEq} bytes there, so the same file weighs more on older hardware.
      * Zero bytes map to zero mB-eq.
      *
      * @param bytes the raw byte count (must be &ge; 0)
      * @param era   the era of the disk the file sits on
      * @return the ceiling of {@code bytes / era.bytesPerMbEq()}
      */
-    public static long sizeMbEq(final long bytes, final HardwareEra era) {
+    public static long sizeMbEq(final long bytes, final Era era) {
         if (bytes <= 0) {
             return 0L;
         }
-        final long block = era.bytesPerMbEq();
+        final long block = EraStorage.bytesPerMbEq(era);
         return (bytes + block - 1L) / block;
     }
 

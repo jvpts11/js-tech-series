@@ -11,13 +11,15 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A line a player advances along, step by step: the eras of hardware, the tiers of industry, or one a mod adds. A
  * mod gates what it offers on how far a player has come along an axis, through a {@link ProgressionGate}, and moves
- * a player along it with {@link PlayerProgress#reach}.
+ * a player along it with {@link PlayerProgress#reach}. How far a player has come is saved by the step's name, so a
+ * step a mod puts between two others moves nobody.
  *
  * @param <S> the axis's steps
  */
@@ -25,9 +27,9 @@ public final class ProgressionAxis<S extends IAxisStep> {
 
     private final ResourceLocation id;
     private final TextKey name;
-    private final List<S> steps;
+    private final Supplier<List<S>> steps;
 
-    private ProgressionAxis(final ResourceLocation id, final TextKey name, final List<S> steps) {
+    private ProgressionAxis(final ResourceLocation id, final TextKey name, final Supplier<List<S>> steps) {
         this.id = id;
         this.name = name;
         this.steps = steps;
@@ -59,7 +61,19 @@ public final class ProgressionAxis<S extends IAxisStep> {
                 }
             }
         }
-        return new ProgressionAxis<>(id, name, List.copyOf(steps));
+        final List<S> fixed = List.copyOf(steps);
+        return new ProgressionAxis<>(id, name, () -> fixed);
+    }
+
+    /**
+     * An axis whose steps a registry keeps, read from it each time: the steps mods declare while the game loads join
+     * it, wherever they go in the order. The registry gives the steps lowest first, each at its level.
+     */
+    public static <S extends IAxisStep> ProgressionAxis<S> following(final ResourceLocation id, final TextKey name,
+                                                                    final Supplier<List<S>> steps) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(name, "name");
+        return new ProgressionAxis<>(id, name, Objects.requireNonNull(steps, "steps"));
     }
 
     public ResourceLocation id() {
@@ -78,31 +92,38 @@ public final class ProgressionAxis<S extends IAxisStep> {
 
     /** The steps, lowest first. */
     public List<S> steps() {
-        return steps;
+        return steps.get();
     }
 
     /** The first step, where every player starts. */
     public S first() {
-        return steps.getFirst();
+        return steps().getFirst();
     }
 
     /** The step at {@code level}, held to the axis's ends. */
     public S at(final int level) {
-        return steps.get(Math.max(0, Math.min(steps.size() - 1, level)));
+        final List<S> all = steps();
+        return all.get(Math.max(0, Math.min(all.size() - 1, level)));
     }
 
-    /** The step saved as {@code serializedName}, or null when the axis has none of that name. */
-    public @Nullable S byName(final String serializedName) {
-        for (final S step : steps) {
-            if (step.serializedName().equals(serializedName)) {
+    /** The step named {@code name} ({@link IAxisStep#answersTo}), or null when the axis has none of that name. */
+    public @Nullable S byName(final String name) {
+        for (final S step : steps()) {
+            if (step.answersTo(name)) {
                 return step;
             }
         }
         return null;
     }
 
+    /** The step saved as {@code name}, or the first step for none, or for a name no step has any longer. */
+    public S savedAs(final @Nullable String name) {
+        final S step = name == null ? null : byName(name);
+        return step == null ? first() : step;
+    }
+
     @Override
     public String toString() {
-        return "ProgressionAxis[" + id + ", " + steps.size() + " steps]";
+        return "ProgressionAxis[" + id + ", " + steps().size() + " steps]";
     }
 }

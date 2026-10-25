@@ -40,6 +40,7 @@ import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.OsMotions;
 import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
@@ -53,7 +54,6 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.HashMap;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
@@ -1152,7 +1152,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     }
 
     @Override
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         /*
          * Resolve the host computer's era from its block entity on the client so the first frame already wears
          * the right era skin; the synced era slot lagged a tick and flashed the default era on open. Fall back

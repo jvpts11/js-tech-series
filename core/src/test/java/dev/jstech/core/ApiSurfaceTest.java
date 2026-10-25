@@ -46,6 +46,13 @@ class ApiSurfaceTest {
             "IsaSpec", "KernelDef", "OsDef", "ProgramSpec", "DesktopEnvironmentDef", "OperatingSpaceDef",
             // the engines a Mainframe can run to plan its network's work, and what they may offer
             "EngineDef", "EngineCapability",
+            // the hardware: the sheet of each kind of part, and the kinds parts are made of
+            "CpuSpec", "GpuSpec", "RamSpec", "DiskSpec", "MotherboardSpec", "PsuSpec", "IExpansionCardSpec",
+            "PlainCardSpec", "RamGeneration", "PcieGeneration", "FormFactor", "ExpansionCardKind", "EraMedia",
+            "CpuSocketId", "CpuDesign", "Microarchitecture", "IntegratedGraphics", "StorageTier", "ExpansionBus",
+            "MediaFormat",
+            // the computers: what one is, the machine it is, and the chassis of a server
+            "ComputerDef", "CaseParts", "HostScope", "RackChassis",
             // the former name of IsaSpec, deprecated for one cycle before it goes
             "ArchitectureSpec");
 
@@ -73,7 +80,6 @@ class ApiSurfaceTest {
             "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.install.InstallerStyle",
             "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.Platform",
             "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.ProgramKind",
-            "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.HostScope",
             "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.SoftwareHouse",
             "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.ProgramRequirement");
 

@@ -25,14 +25,14 @@ import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
@@ -74,13 +74,13 @@ import java.util.List;
 public class ServerRackBlock extends AbstractBigBlock
         implements IFaceConnector {
 
-    private final HardwareEra era;
+    private final Era era;
     /* The backbone on its back, its era's cable and every earlier one's; the small computers reach it by a router. */
     private final FacePorts ports;
 
     public static final MapCodec<ServerRackBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(ServerRackBlock::era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(ServerRackBlock::era)
     ).apply(i, ServerRackBlock::new));
 
     public static final IntegerProperty BAYS =
@@ -93,7 +93,7 @@ public class ServerRackBlock extends AbstractBigBlock
     public static final TextKey ROW_TAKEN =
             TextKey.of("block.jsc.rack.row_taken", "That rack unit is taken or too small for this");
 
-    public ServerRackBlock(final Properties properties, final HardwareEra era) {
+    public ServerRackBlock(final Properties properties, final Era era) {
         this(properties, era, FacePorts.builder()
                 .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
                 .port(FaceRule.EVERY, PeripheralLine.of(era))
@@ -101,7 +101,7 @@ public class ServerRackBlock extends AbstractBigBlock
     }
 
     /* For a cabinet with a port set of its own, so the base never builds one that would go unused. */
-    protected ServerRackBlock(final Properties properties, final HardwareEra era, final FacePorts ports) {
+    protected ServerRackBlock(final Properties properties, final Era era, final FacePorts ports) {
         super(properties);
         this.era = era;
         this.ports = ports;
@@ -127,7 +127,7 @@ public class ServerRackBlock extends AbstractBigBlock
      * The era of the cabinet. A cabinet seats servers of its own era or earlier, so a Standard rack
      * takes everything and a Vintage rack takes only Vintage servers.
      */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
@@ -189,7 +189,7 @@ public class ServerRackBlock extends AbstractBigBlock
         return ComputingModule.SERVER_RACK_PART.get().defaultBlockState()
                 .setValue(ServerRackPartBlock.TOP, ServerRackStructure.isTopLayer(origin, part))
                 .setValue(ServerRackPartBlock.FACING, facing)
-                .setValue(ServerRackPartBlock.ERA, era().level())
+                .setValue(ServerRackPartBlock.ERA, PartEras.valueFor(era()))
                 .setValue(ServerRackPartBlock.COMPUTE,
                         rackType() == RackChassis.RackType.SUPERCOMPUTER)
                 .setValue(ServerRackPartBlock.FRONT,

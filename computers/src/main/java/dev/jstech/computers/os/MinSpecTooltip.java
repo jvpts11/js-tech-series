@@ -8,6 +8,7 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.item.HardwareTooltip;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -123,12 +124,12 @@ public final class MinSpecTooltip {
     }
 
     /** A readable name for a hardware era. */
-    public static Text eraLabel(final HardwareEra era) {
+    public static Text eraLabel(final Era era) {
         return era.text();
     }
 
     /** "Needs X hardware or later", with the era in the colour every hardware tooltip gives it. */
-    private static Component needsEra(final HardwareEra era) {
+    private static Component needsEra(final Era era) {
         return Component.translatableWithFallback(NEEDS_ERA.key(), NEEDS_ERA.english(),
                 HardwareTooltip.eraName(era, era.text())).withStyle(ChatFormatting.DARK_GRAY);
     }

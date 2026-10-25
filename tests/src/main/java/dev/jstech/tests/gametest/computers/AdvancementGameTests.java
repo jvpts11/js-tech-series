@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.advancement.MachineOperators;
@@ -25,6 +26,7 @@ import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.advancement.EventTrigger;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachines;
@@ -113,13 +115,14 @@ public final class AdvancementGameTests {
     public static void award_everyDetailCountsOnItsOwn(final GameTestHelper helper) {
         final ServerPlayer player = join(helper);
         try {
-            JscEvents.award(player, JscEvents.ERA_BUILT, "vintage");
-            JscEvents.award(player, JscEvents.ERA_BUILT, "legacy");
-            JscEvents.award(player, JscEvents.ERA_BUILT, "transition");
-            JscEvents.award(player, JscEvents.ERA_BUILT, "standard");
+            // The detail is the era's id, as a machine built of the era posts it.
+            JscEvents.award(player, JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(HardwareEra.VINTAGE));
+            JscEvents.award(player, JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(HardwareEra.LEGACY));
+            JscEvents.award(player, JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(HardwareEra.TRANSITION));
+            JscEvents.award(player, JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(HardwareEra.STANDARD));
             helper.assertTrue(done(player, "hardware/vintage_build"), "a Vintage build earns its own");
             helper.assertFalse(done(player, "hardware/time_traveller"), "four eras of five are not every era");
-            JscEvents.award(player, JscEvents.ERA_BUILT, "advanced");
+            JscEvents.award(player, JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(HardwareEra.ADVANCED));
             helper.assertTrue(done(player, "hardware/time_traveller"), "the fifth era completes Time Traveller");
         } finally {
             leave(player);

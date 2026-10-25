@@ -10,6 +10,7 @@ package dev.jstech.tests.testkit.computers;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -61,7 +62,7 @@ public enum EraKit {
     /** The system every era's Mainframe runs the network with. */
     public static final ResourceLocation NETWORK_OS = ResourceLocation.fromNamespaceAndPath("jsc", "mc_net");
 
-    private final HardwareEra era;
+    private final Era era;
     private final DeferredBlock<? extends Block> mainframe;
     private final DeferredItem<? extends Item> mainframeBoard;
     private final DeferredBlock<? extends Block> rack;
@@ -78,7 +79,7 @@ public enum EraKit {
     private final DeferredItem<? extends Item> fibreInterface;
     private final ResourceLocation desktopOs;
 
-    EraKit(final HardwareEra era, final DeferredBlock<? extends Block> mainframe,
+    EraKit(final Era era, final DeferredBlock<? extends Block> mainframe,
            final DeferredItem<? extends Item> mainframeBoard, final DeferredBlock<? extends Block> rack,
            final DeferredItem<? extends Item> server, final DeferredItem<? extends Item> serverBoard,
            final DeferredBlock<? extends Block> junction, final DeferredBlock<? extends Block> router,
@@ -102,7 +103,7 @@ public enum EraKit {
         this.desktopOs = desktopOs;
     }
 
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

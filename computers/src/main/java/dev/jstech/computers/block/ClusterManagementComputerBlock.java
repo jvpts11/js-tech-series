@@ -19,7 +19,8 @@ import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -42,7 +43,7 @@ public class ClusterManagementComputerBlock extends AbstractSmallComputerBlock<C
 
     public static final MapCodec<ClusterManagementComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(ClusterManagementComputerBlock::era),
+            EraCodecs.CODEC.fieldOf("era").forGetter(ClusterManagementComputerBlock::era),
             StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(ClusterManagementComputerBlock::caseStyle)
     ).apply(i, ClusterManagementComputerBlock::new));
 
@@ -51,7 +52,7 @@ public class ClusterManagementComputerBlock extends AbstractSmallComputerBlock<C
      * backbone directly, the fibre only with an Optical Network Card. Never the compute fabric; the racks are reached
      * over the network.
      */
-    public ClusterManagementComputerBlock(final Properties properties, final HardwareEra era,
+    public ClusterManagementComputerBlock(final Properties properties, final Era era,
                                           final CaseStyle caseStyle) {
         super(properties, era, caseStyle,
                 FacePorts.builder()

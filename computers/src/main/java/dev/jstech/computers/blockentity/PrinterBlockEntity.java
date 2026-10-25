@@ -31,6 +31,7 @@ import dev.jstech.core.id.StableIds;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -274,7 +275,7 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
 
     /** The animation of a printer's page coming out. */
     public static String clip(final PrinterModel model) {
-        return "animation.printer.print_" + model.era().serializedName();
+        return "animation.printer.print_" + HardwareEra.withParts(model.era()).path();
     }
 
     /*

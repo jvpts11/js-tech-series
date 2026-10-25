@@ -9,11 +9,11 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.GpuItem;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.computers.PartSheets;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -247,20 +247,20 @@ public final class CatalogRulerGameTests {
     }
 
     private static void assertCardsClimb(final GameTestHelper helper, final String ladderName,
-                                         final List<DeferredItem<GpuItem>> ladder) {
+                                         final List<DeferredItem<Item>> ladder) {
         for (int i = 1; i < ladder.size(); i++) {
-            final long below = ladder.get(i - 1).get().spec().power();
-            final long card = ladder.get(i).get().spec().power();
+            final long below = PartSheets.gpu(ladder.get(i - 1).get()).power();
+            final long card = PartSheets.gpu(ladder.get(i).get()).power();
             helper.assertTrue(card >= below, ladderName + ": " + ladder.get(i).getId() + " (" + card
                     + ") is weaker than " + ladder.get(i - 1).getId() + " (" + below + ") below it");
         }
     }
 
     private static void assertProcessorsClimb(final GameTestHelper helper, final String socket,
-                                              final List<DeferredItem<CpuItem>> ladder) {
+                                              final List<DeferredItem<Item>> ladder) {
         for (int i = 1; i < ladder.size(); i++) {
-            final long below = ladder.get(i - 1).get().spec().orchestrationCapacity();
-            final long step = ladder.get(i).get().spec().orchestrationCapacity();
+            final long below = PartSheets.cpu(ladder.get(i - 1).get()).orchestrationCapacity();
+            final long step = PartSheets.cpu(ladder.get(i).get()).orchestrationCapacity();
             helper.assertTrue(step >= below, socket + ": " + ladder.get(i).getId() + " (" + step
                     + ") is slower than " + ladder.get(i - 1).getId() + " (" + below + ") below it");
         }

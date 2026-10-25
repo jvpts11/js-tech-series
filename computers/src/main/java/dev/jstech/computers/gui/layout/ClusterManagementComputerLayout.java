@@ -8,7 +8,7 @@
 package dev.jstech.computers.gui.layout;
 
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 /**
  * The Cluster Management Computer's assembly screen: its era's tower case, its expansion slots, and four readouts on its
@@ -24,12 +24,12 @@ public final class ClusterManagementComputerLayout {
     }
 
     /** Where everything stands on the screen of a Cluster Management Computer of that era. */
-    public static AssemblyGeometry geometry(final HardwareEra era) {
+    public static AssemblyGeometry geometry(final Era era) {
         return AssemblyGeometry.tower(era, READOUTS);
     }
 
     /** The layout the menu seats its slots from: every seat, the panels, the inventory and the captions. */
-    public static GuiLayout layout(final HardwareEra era) {
+    public static GuiLayout layout(final Era era) {
         return geometry(era).layout("pcie");
     }
 }

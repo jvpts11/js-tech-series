@@ -8,7 +8,9 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
@@ -23,7 +25,9 @@ import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -354,7 +358,7 @@ final class OsSession {
      */
     long systemDiskFreeMb() {
         final ItemStack disk = systemDisk();
-        return OsDisks.systemDiskFreeWeight(disk) * diskEra(disk).mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
+        return OsDisks.systemDiskFreeWeight(disk) * EraStorage.mbPerItem(diskEra(disk)) / StorageKey.MB_EQ_PER_ITEM;
     }
 
     /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
@@ -483,7 +487,7 @@ final class OsSession {
     void uninstallOs() {
         for (int i = 0; i < diskCount(); i++) {
             final ItemStack stack = diskInSlot(i);
-            if (!(stack.getItem() instanceof DiskItem) || OsDisks.systemOn(stack) == null) {
+            if (!DriveVolumes.isDisk(stack) || OsDisks.systemOn(stack) == null) {
                 continue;
             }
             /*
@@ -584,8 +588,12 @@ final class OsSession {
     }
 
     /* The disk slots the system sees: the layout's, then the bays of the case's front a disk slides into. */
+    /*
+     * The disk slots the system reads, the same count its firmware and its slots show: a board that wires fewer disks
+     * than the case holds leaves the case's other slots unread.
+     */
     private int diskCount() {
-        return this.machine.layout().diskCount() + this.machine.frontDiskSlots();
+        return this.machine.diskSlots();
     }
 
     /** The disks changed under the players watching this block, who are drawing what is in them. */
@@ -594,7 +602,8 @@ final class OsSession {
     }
 
     /** The era a disk was made for, which sets what an item and a system image cost on it; standard for none. */
-    private static HardwareEra diskEra(final ItemStack disk) {
-        return disk.getItem() instanceof DiskItem item ? item.spec().era() : HardwareEra.STANDARD;
+    private static Era diskEra(final ItemStack disk) {
+        final DiskSpec spec = HardwareRegistry.disk(disk);
+        return spec != null ? spec.era() : HardwareEra.STANDARD;
     }
 }

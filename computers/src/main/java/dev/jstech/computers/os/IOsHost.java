@@ -21,7 +21,7 @@ import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.IInstallingMachine;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.List;
@@ -44,6 +44,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
 
     /** Whether the machine is powered on with a valid build. */
     boolean isRunning();
+
+    /**
+     * The kind of machine this computer is, as its entry names it: what decides which programs made for one machine
+     * install and show a launcher on it. A host with no entry of its own is no machine in particular.
+     */
+    default HostScope machine() {
+        return HostScope.ANY;
+    }
 
     /**
      * Switches the machine on or off, as its own power control does. Shutting down from inside the
@@ -314,11 +322,11 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
 
     /** The hardware era of the installed motherboard, or null when no board is present. */
     @Nullable
-    HardwareEra installedEra();
+    Era installedEra();
 
     /** The hardware era the GUI should wear (a fixed-era chassis wins over the board). */
     @Nullable
-    HardwareEra displayEra();
+    Era displayEra();
 
     /**
      * The machine's recipe workbench: the drafts the Pattern Studio edits, kept with the machine so they survive

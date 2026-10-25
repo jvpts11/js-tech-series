@@ -16,7 +16,7 @@ import dev.jstech.computers.crafting.CraftingDispatch;
 import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
-import dev.jstech.computers.item.CraftingCardItem;
+import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
@@ -36,6 +36,7 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.MachineMedia;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -384,8 +385,8 @@ public final class CraftManagerPayloads {
                                 : recipe.multi().isPresent() ? CraftManagerStatePayload.PIPELINE
                                 : CraftManagerStatePayload.PROCESSING));
             }
-            final int drives = place.isCard() && place.card().getItem() instanceof CraftingCardItem card
-                    ? card.spec().interfaces() : 0;
+            final int drives = place.isCard() && HardwareRegistry.card(place.card()) instanceof CraftingCardSpec card
+                    ? card.interfaces() : 0;
             wirePlaces.add(new CraftManagerStatePayload.WirePlace(place.isCard(), placeTitle(place), place.used(),
                     place.capacity(), drives, entries));
             if (!place.isCard() && floor != null) {

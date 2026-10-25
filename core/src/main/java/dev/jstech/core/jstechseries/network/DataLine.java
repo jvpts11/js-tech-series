@@ -11,9 +11,10 @@ import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -104,8 +105,11 @@ public enum DataLine implements IStableId, IStableName {
         };
     }
 
-    /** The generation a cable of this line has in {@code era}; the crafting line has one for every era. */
-    public int generation(final HardwareEra era) {
-        return this == CRAFTING ? 0 : era.id();
+    /**
+     * The generation a cable of this line has in {@code era}: the place among the series' seven of its era, or of the
+     * series' era an add-on's era comes after; the crafting line has one for every era.
+     */
+    public int generation(final Era era) {
+        return this == CRAFTING ? 0 : HardwareEra.seriesLevel(era);
     }
 }

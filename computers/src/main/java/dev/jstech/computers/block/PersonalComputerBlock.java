@@ -20,7 +20,8 @@ import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -42,13 +43,13 @@ public class PersonalComputerBlock extends AbstractSmallComputerBlock<PersonalCo
 
     public static final MapCodec<PersonalComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(PersonalComputerBlock::era),
+            EraCodecs.CODEC.fieldOf("era").forGetter(PersonalComputerBlock::era),
             StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(PersonalComputerBlock::caseStyle)
     ).apply(i, PersonalComputerBlock::new));
 
     /* PCs are Ethernet-only, on their back, the access line of their era's cable and every earlier one's; they reach
      * HBW through a Personal Router. */
-    public PersonalComputerBlock(final Properties properties, final HardwareEra era, final CaseStyle caseStyle) {
+    public PersonalComputerBlock(final Properties properties, final Era era, final CaseStyle caseStyle) {
         super(properties, era, caseStyle,
                 FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS))
                         .port(FaceRule.EVERY, PeripheralLine.of(era)).build(),

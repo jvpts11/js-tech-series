@@ -11,6 +11,7 @@ import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
@@ -24,7 +25,7 @@ import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.resources.ResourceLocation;
@@ -47,6 +48,11 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public boolean isRunning() {
         return rack.asUnit(row, rack::isRunning);
+    }
+
+    @Override
+    public HostScope machine() {
+        return rack.asUnit(row, rack::machine);
     }
 
     @Override
@@ -540,13 +546,13 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
 
     @Override
     @Nullable
-    public HardwareEra installedEra() {
+    public Era installedEra() {
         return rack.asUnit(row, rack::installedEra);
     }
 
     @Override
     @Nullable
-    public HardwareEra displayEra() {
+    public Era displayEra() {
         return rack.asUnit(row, rack::displayEra);
     }
 

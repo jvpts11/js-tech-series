@@ -7,41 +7,26 @@
  */
 package dev.jstech.computers.item;
 
-import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 
-import java.util.List;
-
-/**
- * A GPU component item.
- */
+/** What a graphics card's tooltip says: its cores and video memory, its design, its queue and its slot. */
 @TextHolder
-public class GpuItem extends SpecItem<GpuSpec> implements IExpansionCardItem {
+final class GraphicsCardTooltip {
 
     private static final TextKey CORES = TextKey.of("jsc.item.gpu.cores", "%s cores  -  %s MB VRAM");
     private static final TextKey QUEUE = TextKey.of("jsc.item.gpu.queue", "+1 parallel queue  -  %s W");
     private static final TextKey OLDER_SLOT = TextKey.of("jsc.item.gpu.older_slot", "%s  -  slower on an older slot");
 
-    public GpuItem(final Properties properties, final GpuSpec spec) {
-        super(properties, spec);
+    private GraphicsCardTooltip() {
     }
 
-    @Override
-    public IExpansionCardSpec cardSpec() {
-        return spec();
-    }
-
-    @Override
-    public void appendHoverText(final ItemStack stack, final TooltipContext context,
-                                final List<Component> tooltip, final TooltipFlag flag) {
-        final GpuSpec spec = spec();
+    static void append(final GpuSpec spec, final List<Component> tooltip) {
         tooltip.add(GameText.component(CORES.with(spec.cores(), spec.vramMb())).withStyle(ChatFormatting.GRAY));
         HardwareTooltip.appendDesign(tooltip, spec.designLabel());
         tooltip.add(GameText.component(QUEUE.with(spec.tdpWatts())).withStyle(ChatFormatting.DARK_GRAY));

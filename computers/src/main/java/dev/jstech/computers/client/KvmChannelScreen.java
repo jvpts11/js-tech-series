@@ -13,8 +13,8 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.KvmSelectPayload;
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -60,7 +60,7 @@ public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessio
     /** The rack's own generation, so the switch wears the monitor that rack would really have. */
     @Override
     @Nullable
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return this.getMenu().hardwareEra();
     }
 

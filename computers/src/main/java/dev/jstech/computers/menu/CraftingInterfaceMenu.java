@@ -18,8 +18,8 @@ import dev.jstech.computers.operation.payload.crafting.CraftingViews;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.menu.CoreMenu;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -49,7 +49,7 @@ public class CraftingInterfaceMenu extends CoreMenu {
     private final Player owner;
     private final BlockPos cablePos;
     private final Direction face;
-    private final HardwareEra era;
+    private final Era era;
     private String interfaceName;
     /* What the window shows: on the client, the last state received; on the server, the last one sent. */
     @Nullable
@@ -88,7 +88,7 @@ public class CraftingInterfaceMenu extends CoreMenu {
     }
 
     /** What an interface's window is opened with, written by the server and read by the client first. */
-    public record Opening(BlockPos pos, Direction face, String name, HardwareEra era) {
+    public record Opening(BlockPos pos, Direction face, String name, Era era) {
 
         public void write(final FriendlyByteBuf buf) {
             new AbstractBusMenu.Opening(pos, face, name, era).write(buf, CraftingInterfacePart.MAX_NAME_LENGTH);
@@ -116,7 +116,7 @@ public class CraftingInterfaceMenu extends CoreMenu {
     }
 
     /** The interface's era, which says how many patterns it holds. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

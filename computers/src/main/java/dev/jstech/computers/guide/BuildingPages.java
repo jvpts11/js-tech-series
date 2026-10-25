@@ -7,22 +7,23 @@
  */
 package dev.jstech.computers.guide;
 
+import static dev.jstech.computers.guide.ComputersGuide.hardwareOf;
 import static dev.jstech.computers.guide.ComputersGuide.itemsOf;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
+import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.NetworkCardSpec;
+import dev.jstech.computers.hardware.PhiCoprocessorSpec;
+import dev.jstech.computers.hardware.PsuSpec;
+import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.computers.hardware.SoundCardSpec;
+import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.BayDriveItem;
-import dev.jstech.computers.item.ClusterInterfaceCardItem;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.NetworkCardItem;
-import dev.jstech.computers.item.PhiCoprocessorItem;
-import dev.jstech.computers.item.PsuItem;
-import dev.jstech.computers.item.RamItem;
-import dev.jstech.computers.item.SoundCardItem;
-import dev.jstech.computers.item.WorkshopCardItem;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
@@ -388,7 +389,7 @@ final class BuildingPages {
     private static void motherboards(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("motherboards", section).titled("Motherboards")
                 .icon(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150)
-                .coversAll(itemsOf(MotherboardItem.class))
+                .coversAll(hardwareOf(MotherboardSpec.class))
                 .paragraph("The motherboard is the board every other part sits on, like the skeleton of a real"
                         + " computer. It decides which processor, memory and cards the computer can take, and which"
                         + " case takes it.")
@@ -452,7 +453,7 @@ final class BuildingPages {
 
     private static void processors(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("processors", section).titled("Processors").icon(HardwareItems.CPU_INTEGRA_CENTRO_C5_4690K)
-                .coversAll(itemsOf(CpuItem.class))
+                .coversAll(hardwareOf(CpuSpec.class))
                 .paragraph("The processor, or CPU, does the actual computing. Every program you run is the processor"
                         + " following its instructions, one after the other, very fast.")
                 .paragraph("Two numbers say how much a processor can do: its cores, and its clock speed in GHz. Your"
@@ -498,7 +499,7 @@ final class BuildingPages {
 
     private static void memory(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("memory", section).titled("Memory").icon(HardwareItems.RAM_SIMM_4)
-                .coversAll(itemsOf(RamItem.class))
+                .coversAll(hardwareOf(RamSpec.class))
                 .paragraph("Memory, or RAM, is where a computer keeps what it works on right now: the system, the"
                         + " programs that are open, the file you are editing. RAM is fast, and it forgets everything"
                         + " when the computer turns off, which is why the disk is there too.")
@@ -587,7 +588,7 @@ final class BuildingPages {
 
     private static void graphicsCards(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("graphics_cards", section).titled("Graphics cards").icon(HardwareItems.GPU_VERTEX_GTX_970)
-                .coversAll(itemsOf(GpuItem.class))
+                .coversAll(hardwareOf(GpuSpec.class))
                 .paragraph("The graphics card draws the picture: it lights the monitors and draws the windows"
                         + " on them. A"
                         + " computer with no graphics card has nothing to show, unless its processor has graphics built"
@@ -650,7 +651,7 @@ final class BuildingPages {
 
     private static void disks(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("disks", section).titled("Disks").icon(HardwareItems.DISK_TRENCH_20M)
-                .coversAll(itemsOf(DiskItem.class))
+                .coversAll(hardwareOf(DiskSpec.class))
                 .paragraph("A disk keeps what must survive turning the computer off: its system, its programs and your"
                         + " files. The size of a disk is counted in items, as [Items as data](jsc:items_as_data)"
                         + " explains.")
@@ -706,7 +707,7 @@ final class BuildingPages {
 
     private static void powerSupplies(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("power_supplies", section).titled("Power supplies").icon(HardwareItems.PSU_200)
-                .coversAll(itemsOf(PsuItem.class))
+                .coversAll(hardwareOf(PsuSpec.class))
                 .paragraph("Most parts draw power, and the power supply gives it. The processors, the memory,"
                         + " the graphics cards, the disks and the expansion cards each draw watts. The supply has"
                         + " to give at least their total.")
@@ -755,7 +756,7 @@ final class BuildingPages {
 
     private static void soundCards(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("sound_cards", section).titled("Sound cards").icon(HardwareItems.SOUND_CARD_TONE_BLASTER)
-                .coversAll(itemsOf(SoundCardItem.class))
+                .coversAll(hardwareOf(SoundCardSpec.class))
                 .paragraph("Sound comes from the board or from a sound card. A Vintage or Legacy board"
                         + " has no sound of its own, so it needs a sound card for anything more than a beep.")
                 .define("PC speaker", "The small beeper of the computer. On a Vintage or Legacy board with no"
@@ -796,8 +797,8 @@ final class BuildingPages {
 
     private static void expansionCards(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("expansion_cards", section).titled("Expansion cards").icon(ComputingModule.FURNACE_CARD)
-                .coversAll(itemsOf(WorkshopCardItem.class, ClusterInterfaceCardItem.class, NetworkCardItem.class,
-                        PhiCoprocessorItem.class))
+                .coversAll(hardwareOf(WorkshopCardSpec.class, ClusterInterfaceCardSpec.class, NetworkCardSpec.class,
+                        PhiCoprocessorSpec.class))
                 .paragraph("Besides graphics and sound, the expansion slots of a board take cards that give a"
                         + " computer a"
                         + " job it could not do before. Each card goes in a slot of its own bus family"

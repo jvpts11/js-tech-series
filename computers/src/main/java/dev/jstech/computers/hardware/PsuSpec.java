@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Immutable specification of a power supply unit.
  *
@@ -15,6 +17,7 @@ package dev.jstech.computers.hardware;
  * {@code wattage} of an auto-scaling unit is only a nominal/display value and is not used to gate the
  * build's power check.
  */
+@ApiStatus.Experimental
 public record PsuSpec(int wattage, int efficiencyPercent, boolean autoScaling) {
 
     public PsuSpec {

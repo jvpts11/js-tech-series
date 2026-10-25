@@ -19,9 +19,9 @@ import dev.jstech.computers.operation.payload.prophet.ProphetPayloads;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.CraftFiles;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -70,7 +70,7 @@ public final class ProphetGameTests {
             if (!(helper.getBlockEntity(at) instanceof MainframeBlockEntity mainframe)) {
                 throw new IllegalStateException("no Mainframe at " + at);
             }
-            final HardwareEra era = mainframe.mainframeEra();
+            final Era era = mainframe.mainframeEra();
             helper.assertTrue(mainframe.installEngine(PROPHET) == (age.version() != null),
                     "Prophet YourIQL on a " + era + " Mainframe");
             if (age.version() != null) {

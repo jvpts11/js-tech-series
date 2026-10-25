@@ -18,14 +18,17 @@ import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.hardware.MachinePorts;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.PartFitting;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
@@ -60,6 +63,8 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RackThermals;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.ServerStore;
@@ -78,6 +83,9 @@ import dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport;
 import dev.jstech.core.jstechseries.peripheral.PeripheralPorts;
 import dev.jstech.core.jstechseries.peripheral.PeripheralReconciler;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -160,6 +168,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /* The storage and compute servers of the other eras, four in a row each in the same way. */
     public static final int UNIT_STORAGE_2U_VINTAGE = 27;
     public static final int UNIT_COMPUTE_2U_VINTAGE = 31;
+    /* The 1U server's face of each era, and the supercomputer node's, which only the Standard and the Advanced make. */
+    private static final EraTable<Integer> SERVER_FACES = EraTable.ofFive(UNIT_SERVER_VINTAGE, UNIT_SERVER_LEGACY,
+            UNIT_SERVER_TRANSITION, UNIT_SERVER_STANDARD, UNIT_SERVER_ADVANCED);
+    private static final EraTable<Integer> NODE_FACES = EraTable.ofFive(UNIT_NODE_2U, UNIT_NODE_2U, UNIT_NODE_2U,
+            UNIT_NODE_2U, UNIT_NODE_2U_ADVANCED);
 
     /** The model bone names, indexed by unit code. */
     public static final String[] UNIT_BONES = {"", "server_1u_standard", "server_1u_legacy", "server_1u_vintage",
@@ -183,7 +196,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private boolean servicePanelOff;
 
     /** The era of this cabinet, read from its block. */
-    public HardwareEra rackEra() {
+    public Era rackEra() {
         return getBlockState().getBlock()
                 instanceof ServerRackBlock rack
                 ? rack.era() : HardwareEra.STANDARD;
@@ -200,18 +213,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         final RackChassis chassis = ServerItem.chassisOf(stack);
         if (chassis != null) {
-            return switch (chassis) {
-                case SERVER -> UNIT_SERVER_STANDARD;
-                case LEGACY_SERVER -> UNIT_SERVER_LEGACY;
-                case VINTAGE_SERVER -> UNIT_SERVER_VINTAGE;
-                case SUPERCOMPUTER_NODE -> UNIT_NODE_2U;
-                case TRANSITION_SERVER -> UNIT_SERVER_TRANSITION;
-                case ADVANCED_SERVER -> UNIT_SERVER_ADVANCED;
-                case ADVANCED_SUPERCOMPUTER_NODE -> UNIT_NODE_2U_ADVANCED;
-                case STORAGE_SERVER, VINTAGE_STORAGE_SERVER, LEGACY_STORAGE_SERVER, TRANSITION_STORAGE_SERVER,
-                     ADVANCED_STORAGE_SERVER -> eraUnit(UNIT_STORAGE_2U, UNIT_STORAGE_2U_VINTAGE, chassis.era());
-                case COMPUTE_SERVER, VINTAGE_COMPUTE_SERVER, LEGACY_COMPUTE_SERVER, TRANSITION_COMPUTE_SERVER,
-                     ADVANCED_COMPUTE_SERVER -> eraUnit(UNIT_COMPUTE_2U, UNIT_COMPUTE_2U_VINTAGE, chassis.era());
+            // A chassis is drawn as the face it names, in its era's version: an era after the Advanced has its own.
+            return switch (chassis.look()) {
+                case SERVER -> SERVER_FACES.get(chassis.era());
+                case NODE -> NODE_FACES.get(chassis.era());
+                case STORAGE -> eraUnit(UNIT_STORAGE_2U, UNIT_STORAGE_2U_VINTAGE, chassis.era());
+                case COMPUTE -> eraUnit(UNIT_COMPUTE_2U, UNIT_COMPUTE_2U_VINTAGE, chassis.era());
             };
         }
         if (!(stack.getItem() instanceof RackUnitItem unit)) {
@@ -761,7 +768,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
         @Override
         public ItemStack extractItem(final int slot, final int amount, final boolean simulate) {
-            if (!simulate && getStackInSlot(slot).getItem() instanceof DiskItem) {
+            if (!simulate && DriveVolumes.isDisk(getStackInSlot(slot))) {
                 /*
                  * Pulling a member out of an array is the moment the array's promise is tested:
                  * a redundant array keeps its data (and hands back a blank drive), a stripe dies.
@@ -807,12 +814,17 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         block.setFibre(level, worldPosition, reach);
     }
 
-    /* The code of a unit of {@code era}: the Standard's own, or its era's among the other four kept in a row. */
-    private static int eraUnit(final int standard, final int vintage, final HardwareEra era) {
-        if (era == HardwareEra.STANDARD) {
+    /*
+     * The code of a unit of {@code era}: the Standard's own, or its era's among the other four kept in a row, the
+     * Vintage's first; an era after the Advanced is drawn as the Advanced.
+     */
+    private static int eraUnit(final int standard, final int vintage, final Era era) {
+        final int index = HardwareEra.partsIndex(era);
+        final int standardIndex = HardwareEra.seriesIndex(HardwareEra.STANDARD);
+        if (index == standardIndex) {
             return standard;
         }
-        return vintage + (era.isAtMost(HardwareEra.TRANSITION) ? era.level() : HardwareEra.STANDARD.level());
+        return vintage + (index < standardIndex ? index : index - 1);
     }
 
     private void updateBayVisuals() {
@@ -1060,7 +1072,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                     continue;
                 }
                 final ItemStack stack = frontSlots.getStackInSlot(row * RackLayout.SLOTS_PER_U + column);
-                if (stack.getItem() instanceof DiskItem) {
+                if (DriveVolumes.isDisk(stack)) {
                     drives.add(stack);
                 }
             }
@@ -1161,8 +1173,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         long items = 0L;
         for (final ItemStack drive : claimedDriveStacks(serverSlot)) {
-            if (drive.getItem() instanceof DiskItem disk) {
-                items += disk.spec().capacityItems();
+            final DiskSpec disk = HardwareRegistry.disk(drive);
+            if (disk != null) {
+                items += disk.capacityItems();
             }
         }
         bayItemsCache[serverSlot] = items;
@@ -1175,8 +1188,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public long bayStorageMb(final int serverSlot) {
         long mb = 0L;
         for (final ItemStack drive : claimedDriveStacks(serverSlot)) {
-            if (drive.getItem() instanceof DiskItem disk) {
-                mb += disk.spec().capacityMb();
+            final DiskSpec disk = HardwareRegistry.disk(drive);
+            if (disk != null) {
+                mb += disk.capacityMb();
             }
         }
         return mb;
@@ -1480,7 +1494,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             return null;
         }
         return switch (roleOfFrontSlot(slot)) {
-            case DRIVE -> stack.getItem() instanceof DiskItem ? PartRefusals.DISK_TOO_NEW : PartRefusals.DRIVE_BAY;
+            case DRIVE -> DriveVolumes.isDisk(stack) ? PartRefusals.DISK_TOO_NEW : PartRefusals.DRIVE_BAY;
             case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> null;
         };
     }
@@ -1619,6 +1633,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public boolean isRunning() {
         final ComputerBuild build = soleBuild();
         return build != null && build.isPowered() && bayPowerOn(soleComputerSlot());
+    }
+
+    /** The machine of the server it hosts, as its chassis' entry names it: a server, for this mod's own. */
+    @Override
+    public HostScope machine() {
+        final RackChassis chassis = ServerItem.chassisOf(soleServerStack());
+        return chassis == null ? HostScope.SERVER : chassis.computer().machine();
     }
 
     @Override
@@ -2356,7 +2377,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public long systemDiskFreeMb() {
         final ItemStack disk = systemDisk();
         return OsDisks.systemDiskFreeWeight(disk)
-                * diskEra(disk).mbPerItem()
+                * EraStorage.mbPerItem(diskEra(disk))
                 / StorageKey.MB_EQ_PER_ITEM;
     }
 
@@ -2376,18 +2397,19 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      * disk slots': a disk of that era or an older one. A disk made for a later machine has nothing to plug into.
      */
     private boolean fitsBay(final ItemStack stack) {
-        return stack.getItem() instanceof DiskItem disk && disk.spec().era().isAtMost(rackEra());
+        final DiskSpec disk = HardwareRegistry.disk(stack);
+        return disk != null && PartFitting.diskFits(disk, rackEra());
     }
 
     /** The era a disk was made for, which sets what an item and a system cost on it; standard for no disk. */
-    private static HardwareEra diskEra(final ItemStack disk) {
-        return disk.getItem() instanceof DiskItem item
-                ? item.spec().era() : HardwareEra.STANDARD;
+    private static Era diskEra(final ItemStack disk) {
+        final DiskSpec spec = HardwareRegistry.disk(disk);
+        return spec != null ? spec.era() : HardwareEra.STANDARD;
     }
 
     @Override
     @Nullable
-    public HardwareEra installedEra() {
+    public Era installedEra() {
         final int mobo = ServerHardwareHandler.MOBO;
         final ItemContainerContents parts =
                 ServerItem.hardware(soleServerStack());
@@ -2398,14 +2420,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (mobo >= parts.getSlots()) {
             return null;
         }
-        return parts.getStackInSlot(mobo).getItem()
-                instanceof MotherboardItem m
-                ? m.spec().era() : null;
+        final MotherboardSpec board = HardwareRegistry.board(parts.getStackInSlot(mobo));
+        return board != null ? board.era() : null;
     }
 
     @Override
     @Nullable
-    public HardwareEra displayEra() {
+    public Era displayEra() {
         /*
          * The client copy of a rack holds no mounted servers, so the era has to travel to it: screens
          * that dress themselves by era (the boot sequence, the terminal bezel) render client-side.
@@ -2414,7 +2435,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             return clientEra;
         }
         // A server with no board yet is dressed in its chassis's era, as a computer is in its case's.
-        final HardwareEra board = installedEra();
+        final Era board = installedEra();
         if (board != null) {
             return board;
         }
@@ -2511,7 +2532,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public int installedDisks() {
         int count = 0;
         for (final ItemStack disk : diskStacks()) {
-            if (disk.getItem() instanceof DiskItem) {
+            if (DriveVolumes.isDisk(disk)) {
                 count++;
             }
         }
@@ -2666,7 +2687,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      * ever written on the client; the server always answers from the mounted hardware itself.
      */
     @Nullable
-    private HardwareEra clientEra;
+    private Era clientEra;
 
     /*
      * The system the machine the monitor is showing boots, as last received from the server: a help program on it
@@ -2706,10 +2727,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
             /*
              * Only the active channel's era travels. Sending the mounted stacks would put every server's
-             * full build on the wire on every block update, for one enum the screens need.
+             * full build on the wire on every block update, for one era the screens need.
              */
-            final HardwareEra era = displayEra();
-            tag.putInt("DisplayEra", era == null ? -1 : era.id());
+            final Era era = displayEra();
+            tag.putString("DisplayEra", era == null ? "" : era.id());
             final ResourceLocation os = installedOsId();
             tag.putString("ClientOs", os == null ? "" : os.toString());
             /*
@@ -2730,7 +2751,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
         @Override
         public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
-            clientEra = HardwareEra.find(tag.getInt("DisplayEra"));
+            clientEra = EraCodecs.find(tag.getString("DisplayEra"));
             final String os = tag.getString("ClientOs");
             clientOs = os.isEmpty() ? null : ResourceLocation.tryParse(os);
             final byte[] units = tag.getByteArray("Units");

@@ -18,6 +18,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.crash.OomKiller;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ final class DesktopMemory {
     private final ResourceLocation osId;
     /** The machine's era, which says what each window holds; null when it has none to tell. */
     @Nullable
-    private final HardwareEra era;
+    private final Era era;
     /** The desktop's windows, read to weigh what is open. */
     private final List<DesktopWindow> windows;
     private final int totalMb;
@@ -55,7 +56,7 @@ final class DesktopMemory {
     /** Whether the warning of a memory past nine tenths has been raised since it last dropped back under. */
     private boolean warned;
 
-    DesktopMemory(final DesktopState desktop, final ResourceLocation osId, @Nullable final HardwareEra era,
+    DesktopMemory(final DesktopState desktop, final ResourceLocation osId, @Nullable final Era era,
                   final List<DesktopWindow> windows, final int totalMb, final int reservedMb) {
         this.desktop = desktop;
         this.osId = osId;
@@ -145,7 +146,7 @@ final class DesktopMemory {
                 || !(minecraft.level.getBlockEntity(desktop.host()) instanceof AbstractComputerBlockEntity machine)) {
             return true;
         }
-        final HardwareEra era = machine.displayEra() == null ? HardwareEra.STANDARD : machine.displayEra();
+        final Era era = machine.displayEra() == null ? HardwareEra.STANDARD : machine.displayEra();
         long held = machine.vramMonitorsKb();
         for (final DesktopWindow w : windows) {
             if (!w.dialog() && GraphicsPrograms.isGraphical(w.appKey())) {

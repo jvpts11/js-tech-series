@@ -9,7 +9,6 @@ package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.os.WelcomeApp;
-import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.RequestWelcomePayload;
@@ -19,6 +18,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.boot.WelcomeFacts;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.live.LiveRate;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
 import dev.jstech.core.text.GameText;
@@ -108,7 +108,7 @@ public final class WelcomePayloads {
         final ItemStackHandler hardware = machine.getHardware();
         for (int i = 0; i < hardware.getSlots(); i++) {
             final ItemStack part = hardware.getStackInSlot(i);
-            if (!part.isEmpty() && part.getItem() instanceof CpuItem) {
+            if (!part.isEmpty() && HardwareRegistry.cpu(part) != null) {
                 return part;
             }
         }

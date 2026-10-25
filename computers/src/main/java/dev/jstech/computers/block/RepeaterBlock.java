@@ -12,10 +12,10 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.blockentity.RepeaterBlockEntity;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -40,22 +40,22 @@ public class RepeaterBlock extends Block implements EntityBlock, IFaceConnector 
     public static final List<DataLine> LINES = List.of(DataLine.ACCESS, DataLine.BACKBONE, DataLine.HPC,
             DataLine.CRAFTING);
 
-    private final HardwareEra era;
+    private final Era era;
     private final FacePorts ports;
 
     public static final MapCodec<RepeaterBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(RepeaterBlock::era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(RepeaterBlock::era)
     ).apply(i, RepeaterBlock::new));
 
-    public RepeaterBlock(final Properties properties, final HardwareEra era) {
+    public RepeaterBlock(final Properties properties, final Era era) {
         super(properties);
         this.era = era;
         this.ports = FacePorts.everyFace(DataLines.upTo(era, LINES.toArray(DataLine[]::new)));
     }
 
     /** The era the repeater belongs to: the newest cables it takes. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

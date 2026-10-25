@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.Set;
 
@@ -39,7 +39,7 @@ public final class OsGating {
      * @param hardware the era of the computer's hardware
      * @return {@code true} iff the hardware era is at least {@code osMinEra}
      */
-    public static boolean canInstall(HardwareEra osMinEra, HardwareEra hardware) {
+    public static boolean canInstall(Era osMinEra, Era hardware) {
         return hardware.isAtLeast(osMinEra);
     }
 

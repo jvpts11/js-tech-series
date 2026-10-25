@@ -13,7 +13,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.testkit.client.ClientTestFailure;
@@ -196,7 +196,7 @@ public final class MemoryCrashClientTests {
                     hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                             new ItemStack(EraParts.psuFor(HardwareEra.LEGACY)));
                     hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
-                            new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+                            new ItemStack(EraParts.cardFor(board, GpuSpec.class)));
                     hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                             new ItemStack(EraParts.diskFor(HardwareEra.LEGACY)));
                     if (!computer.installOs(system)) {

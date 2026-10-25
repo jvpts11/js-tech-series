@@ -23,6 +23,7 @@ import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLink;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
@@ -129,7 +130,7 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
     }
 
     /** The era of its model, which decides how well it plays. */
-    public HardwareEra era() {
+    public Era era() {
         return getBlockState().getBlock() instanceof SpeakerBlock speaker ? speaker.era() : HardwareEra.STANDARD;
     }
 

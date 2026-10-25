@@ -7,179 +7,135 @@
  */
 package dev.jstech.core.jstechseries.tier;
 
-import dev.jstech.core.id.IStableId;
-import dev.jstech.core.id.IStableName;
-import dev.jstech.core.id.StableIds;
-import dev.jstech.core.progression.IAxisStep;
-import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.util.Sizes;
+import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Hardware Era: the progression axis for computational hardware (motherboards, CPUs, RAM, storage).
+ * The series' seven eras of hardware, from the Vintage to the Singularity, declared in the registry of eras
+ * ({@link Eras}) in their order. An era is an {@link Era}, whoever declared it; these are the ones every world has.
  *
- * <p>This is pure domain logic with no Minecraft dependency, so it stays unit-testable. Each era declares its
- * {@link #level()}, its place in the progression counted from 0 without gaps, and that level is also its stable id:
- * saves, packets and menu data carry it. When an era has to back a block-state property, the binding layer stores
- * the level as an {@code IntegerProperty} and turns the stored value back into an era with {@link #fromLevel(int)};
- * that keeps the Minecraft-aware property type out of this enum. Data files name an era by its
- * {@link #serializedName()}.
+ * <p>The series' own blocks that keep an era in their state (the parts of a Mainframe and of a rack) exist only in
+ * these seven, so they keep its place among them ({@link #seriesIndex}), which no era an add-on brings can move.
  */
 @TextHolder
-public enum HardwareEra implements IStableId, IStableName, IAxisStep {
-    VINTAGE(0, "vintage", TextKey.of("jscore.era.vintage", "Vintage")),
-    LEGACY(1, "legacy", TextKey.of("jscore.era.legacy", "Legacy")),
-    TRANSITION(2, "transition", TextKey.of("jscore.era.transition", "Transition")),
-    STANDARD(3, "standard", TextKey.of("jscore.era.standard", "Standard")),
-    ADVANCED(4, "advanced", TextKey.of("jscore.era.advanced", "Advanced")),
-    EXA(5, "exa", TextKey.of("jscore.era.exa", "Exa")),
-    SINGULARITY(6, "singularity", TextKey.of("jscore.era.singularity", "Singularity"));
+public final class HardwareEra {
 
-    private final int level;
-    private final String serializedName;
-    /** The era's name as a player reads it. */
-    private final TextKey name;
+    private static final TextKey VINTAGE_NAME = TextKey.of("jscore.era.vintage", "Vintage");
+    private static final TextKey LEGACY_NAME = TextKey.of("jscore.era.legacy", "Legacy");
+    private static final TextKey TRANSITION_NAME = TextKey.of("jscore.era.transition", "Transition");
+    private static final TextKey STANDARD_NAME = TextKey.of("jscore.era.standard", "Standard");
+    private static final TextKey ADVANCED_NAME = TextKey.of("jscore.era.advanced", "Advanced");
+    private static final TextKey EXA_NAME = TextKey.of("jscore.era.exa", "Exa");
+    private static final TextKey SINGULARITY_NAME = TextKey.of("jscore.era.singularity", "Singularity");
 
-    private static final StableIds<HardwareEra> IDS = StableIds.of(HardwareEra.class);
-
-    /** An era named as one: "Legacy era", with the name put where each language puts it. */
-    private static final TextKey NAMED = TextKey.of("jscore.era.named", "%s era");
-
-    HardwareEra(final int level, final String serializedName, final TextKey name) {
-        this.level = level;
-        this.serializedName = serializedName;
-        this.name = name;
-    }
-
-    /** The era's name: "Legacy". */
-    @Override
-    public Text text() {
-        return this.name.text();
-    }
-
-    /** The era as an era: "Legacy era". */
-    @Override
-    public Text named() {
-        return NAMED.with(this.name);
-    }
-
-    /** The colour the era is shown in: the one its screens are remembered by ({@link #screenColor}). */
-    @Override
-    public int colour() {
-        return screenColor();
-    }
-
-    /**
-     * The colour an era's screens are remembered by, as an RGB int for a tooltip: the green phosphor of a
-     * CRT terminal for Vintage, the blue of the Legacy desktop's chrome, the sky blue of the glass desktops of
-     * the Transition, the accent blue of the Standard desktop, and a colder cast for each generation past that.
-     * A part's era reads at a glance, before the word does, which is what a player sorting a chest of boards and
-     * chips needs.
+    /*
+     * Each era's colour is the one its screens are remembered by: the green phosphor of a CRT terminal for Vintage, the
+     * blue of the Legacy desktop's chrome, the sky blue of the glass desktops of the Transition, the accent blue of
+     * the Standard desktop, and a colder cast for each generation past that. Its year is the one its machines were
+     * built in, as a firmware banner prints it.
      */
-    public int screenColor() {
-        return switch (this) {
-            case VINTAGE -> 0x33FF33;
-            case LEGACY -> 0x245EDC;
-            case TRANSITION -> 0x3FA9E0;
-            case STANDARD -> 0x0078D4;
-            case ADVANCED -> 0x9B59FF;
-            case EXA -> 0x00E5FF;
-            case SINGULARITY -> 0xF2F2F2;
-        };
+    public static final Era VINTAGE = series("vintage", VINTAGE_NAME, 0x33FF33, 1987);
+    public static final Era LEGACY = series("legacy", LEGACY_NAME, 0x245EDC, 1998);
+    public static final Era TRANSITION = series("transition", TRANSITION_NAME, 0x3FA9E0, 2008);
+    public static final Era STANDARD = series("standard", STANDARD_NAME, 0x0078D4, 2026);
+    public static final Era ADVANCED = series("advanced", ADVANCED_NAME, 0x9B59FF, 2044);
+    public static final Era EXA = series("exa", EXA_NAME, 0x00E5FF, 2071);
+    public static final Era SINGULARITY = series("singularity", SINGULARITY_NAME, 0xF2F2F2, 2099);
+    /** The seven, earliest first. */
+    public static final List<Era> SERIES = List.of(VINTAGE, LEGACY, TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY);
+    /** The five that have parts, the Vintage to the Advanced; the Exa's and the Singularity's are still to come. */
+    public static final List<Era> WITH_PARTS = List.of(VINTAGE, LEGACY, TRANSITION, STANDARD, ADVANCED);
+
+    private HardwareEra() {
     }
 
-    /** The word size of the era's processors; what an item costs on the era's disks follows from it. */
-    public int bits() {
-        return switch (this) {
-            case VINTAGE -> 16;
-            case LEGACY -> 32;
-            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> 64;
-        };
+    /** Where {@code era} stands among the series' seven, from 0 for the Vintage; -1 for an era an add-on brings. */
+    public static int seriesIndex(final Era era) {
+        return SERIES.indexOf(era);
     }
 
     /**
-     * The megabytes one item (or a bucket of fluid, which weighs the same) takes on a disk of this era: a
-     * wider word makes a bigger record. Older hardware therefore packs more into the same megabytes, which
-     * is how a 20 MB vintage drive holds anything at all, and a 500 GB standard one holds 2 000 items.
+     * The place among the seven of the latest of them at or before {@code era}: its own for one of the seven, that of
+     * the series' era it comes after for one an add-on brings. What a saved number that only the series' eras have,
+     * such as a cable's generation, keeps, so an era put between two moves no number already saved.
      */
-    public long mbPerItem() {
-        return switch (this) {
-            case VINTAGE -> 1L;
-            case LEGACY -> 16L;
-            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> 256L;
+    public static int seriesLevel(final Era era) {
+        for (int i = SERIES.size() - 1; i > 0; i--) {
+            if (SERIES.get(i).isAtMost(era)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * The latest of the five eras with parts at or before {@code era}: the one whose models and textures an era
+     * wears until it has its own, as the Exa and the Singularity wear the Advanced's.
+     */
+    public static Era withParts(final Era era) {
+        return WITH_PARTS.get(partsIndex(era));
+    }
+
+    /**
+     * Where the era {@code era} is drawn as ({@link #withParts}) stands among the five with parts, from 0 for the
+     * Vintage to 4 for the Advanced: what a palette that keeps one colour per era of parts picks by.
+     */
+    public static int partsIndex(final Era era) {
+        return Math.min(seriesLevel(era), WITH_PARTS.size() - 1);
+    }
+
+    /**
+     * The one of five values, the Vintage's to the Advanced's, that {@code era} is drawn with ({@link #withParts}):
+     * what a palette that keeps one colour for each era of parts picks its colour by.
+     */
+    public static int pick(final Era era, final int vintage, final int legacy, final int transition,
+                           final int standard, final int advanced) {
+        return switch (partsIndex(era)) {
+            case 0 -> vintage;
+            case 1 -> legacy;
+            case 2 -> transition;
+            case 3 -> standard;
+            default -> advanced;
         };
     }
 
     /**
-     * How many items a size in megabytes costs on this era's disks, rounded up: a system image, say.
+     * The series' era at {@code index} among the seven, the inverse of {@link #seriesIndex}: what a block state of
+     * the series' own blocks reads back.
      *
-     * <p>Rounded up without the addition the obvious form uses, because that addition is itself an amount
-     * that can run past the end: a size near the largest number there is would round up to a negative one,
-     * and something enormous would then cost nothing to store.
+     * @throws IllegalArgumentException if no era of the series has that index
      */
-    public long itemsFor(final long mb) {
-        return Sizes.ceilDiv(mb, mbPerItem());
-    }
-
-    /**
-     * The bytes one thousandth of an item weighs on this era's disks, where an item weighs 1 000 of those
-     * units, the same unit a millibucket of fluid weighs one of. A file of N bytes costs
-     * {@code ceil(N / bytesPerMbEq())} of them.
-     */
-    public long bytesPerMbEq() {
-        return mbPerItem() * 1024L * 1024L / 1000L;
-    }
-
-    public HardwareEra next() {
-        return this == SINGULARITY ? SINGULARITY : fromLevel(level + 1);
-    }
-
-    public HardwareEra prev() {
-        return this == VINTAGE ? VINTAGE : fromLevel(level - 1);
-    }
-
-    @Override
-    public int level() {
-        return level;
-    }
-
-    @Override
-    public int id() {
-        return level;
-    }
-
-    @Override
-    public String serializedName() {
-        return serializedName;
-    }
-
-    /**
-     * The era whose {@link #level()} equals {@code level}. This is the inverse of {@link #level()}, used
-     * by the binding layer to turn a block-state {@code IntegerProperty} value back into an era.
-     *
-     * @throws IllegalArgumentException if no era has that level
-     */
-    public static HardwareEra fromLevel(final int level) {
-        final HardwareEra era = IDS.find(level);
+    public static Era ofSeriesIndex(final int index) {
+        final Era era = seriesAt(index);
         if (era == null) {
-            throw new IllegalArgumentException("no hardware era at level " + level);
+            throw new IllegalArgumentException("no era of the series at " + index);
         }
         return era;
     }
 
-    /** The era a save or a packet names by {@code id}, or null for an id no era has (the -1 of "no era"). */
-    @Nullable
-    public static HardwareEra find(final int id) {
-        return IDS.find(id);
+    /** The series' era at {@code index} among the seven, or null when there is none there: a save's "no era". */
+    public static @Nullable Era seriesAt(final int index) {
+        return index < 0 || index >= SERIES.size() ? null : SERIES.get(index);
     }
 
-    public boolean isAtLeast(HardwareEra other) {
-        return this.level() >= other.level();
+    /** The series' era of that bare name ({@code legacy}), or null when none of the seven has it. */
+    public static @Nullable Era seriesNamed(final String path) {
+        for (final Era era : SERIES) {
+            if (era.path().equals(path)) {
+                return era;
+            }
+        }
+        return null;
     }
 
-    public boolean isAtMost(HardwareEra other) {
-        return this.level() <= other.level();
+    /* Loads the class, which declares the seven; what the registry calls before anything can read it. */
+    static void load() {
+        // Loading the class is the whole of it.
+    }
+
+    private static Era series(final String path, final TextKey name, final int colour, final int year) {
+        return Eras.declare(new Era(Eras.SERIES_NAMESPACE + ":" + path, name.text(), colour, year));
     }
 }

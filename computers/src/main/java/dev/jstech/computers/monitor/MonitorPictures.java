@@ -24,6 +24,7 @@ import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public final class MonitorPictures {
         }
         final BlockPos at = monitor.getBlockPos();
         final long now = level.getGameTime();
-        final HardwareEra era = host.displayEra();
+        final Era era = host.displayEra();
         return switch (MonitorBlock.entryFor(host, false)) {
             case NO_POWER -> IMonitorPicture.DARK;
             case POST -> {
@@ -92,7 +93,7 @@ public final class MonitorPictures {
     }
 
     /* A system coming up or going down, its clock stopped at nought and the time it ends beside it. */
-    private static IMonitorPicture booting(@Nullable final HardwareEra era, final OpenSystemBootPayload boot,
+    private static IMonitorPicture booting(@Nullable final Era era, final OpenSystemBootPayload boot,
                                            final long now) {
         return new IMonitorPicture.Session(era,new OpenSystemBootPayload(boot.hostPos(), boot.monitorPos(), 0,
                 boot.totalTicks(), boot.sequence(), boot.endsDark(), boot.splash(), boot.who()), null,
@@ -100,7 +101,7 @@ public final class MonitorPictures {
     }
 
     /* A crashed system's page, its clock stopped at nought and the time it ends beside it; dark when it stands none. */
-    private static IMonitorPicture crashed(@Nullable final HardwareEra era, @Nullable final OpenCrashPayload crash,
+    private static IMonitorPicture crashed(@Nullable final Era era, @Nullable final OpenCrashPayload crash,
                                            final long now) {
         if (crash == null) {
             return IMonitorPicture.DARK;
@@ -112,7 +113,7 @@ public final class MonitorPictures {
     /* An install: an installer's page, as it is and with the parts it reads, or a copy with its clock stopped. */
     private static IMonitorPicture installing(final ServerLevel level, final IOsHost host, final BlockPos owner,
                                               final BlockPos at, final long now) {
-        final HardwareEra era = host.displayEra();
+        final Era era = host.displayEra();
         final CustomPacketPayload opening = SessionOpenings.installProgress(at, owner, host);
         if (opening instanceof OsInstallProgressPayload copy) {
             return new IMonitorPicture.Session(era,new OsInstallProgressPayload(copy.hostPos(), copy.monitorPos(),
@@ -146,7 +147,7 @@ public final class MonitorPictures {
         if (!(be instanceof IComputerTerminalHost terminal) || terminal.console() == null) {
             return IMonitorPicture.DARK;
         }
-        final HardwareEra era = host.displayEra() == null ? HardwareEra.STANDARD : host.displayEra();
+        final Era era = host.displayEra() == null ? HardwareEra.STANDARD : host.displayEra();
         final ServerCliComputer here = new ServerCliComputer(terminal, level);
         // A booted live medium is a Linux console, whatever is or is not installed under it.
         final Platform platform = terminal.console().liveInstall() != null ? Platform.LINUX

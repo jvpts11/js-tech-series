@@ -8,11 +8,13 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.core.jstechseries.operation.OperationBalance;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The performance class of a disk. The seek latency is a balance value the server config owns; the rest
  * is fixed by the hardware.
  */
+@ApiStatus.Experimental
 public enum StorageTier {
 
     HDD(1, 6, "Vaultis Keep HDD"),

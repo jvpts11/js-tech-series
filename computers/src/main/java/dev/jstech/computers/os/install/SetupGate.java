@@ -7,13 +7,8 @@
  */
 package dev.jstech.computers.os.install;
 
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.IMainframeService;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.blockentity.RackUnitHost;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
@@ -21,6 +16,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -71,16 +67,6 @@ public final class SetupGate {
             "%s cannot install on this computer's system or hardware.");
     private static final TextKey ONLY_INSTALLS_ON = TextKey.of("jsc.install.setup_gate.only_installs_on",
             "%s only installs on %s.");
-    private static final TextKey ON_A_MAINFRAME = TextKey.of("jsc.install.setup_gate.on_a_mainframe", "a Mainframe");
-    private static final TextKey ON_A_CRAFTING_COMPUTER = TextKey.of("jsc.install.setup_gate.on_a_crafting_computer",
-            "a Crafting Computer");
-    private static final TextKey ON_A_SERVER = TextKey.of("jsc.install.setup_gate.on_a_server", "a server in a rack");
-    private static final TextKey ON_A_CLUSTER_MANAGER = TextKey.of("jsc.install.setup_gate.on_a_cluster_manager",
-            "a Cluster Management Computer");
-    private static final TextKey ON_A_PERSONAL_COMPUTER = TextKey.of(
-            "jsc.install.setup_gate.on_a_personal_computer", "a Personal Computer");
-    private static final TextKey ON_THIS_COMPUTER = TextKey.of("jsc.install.setup_gate.on_this_computer",
-            "this computer");
     private static final TextKey AND = TextKey.of("jsc.install.setup_gate.and", "%s and %s");
     private static final TextKey NOTHING = TextKey.of("jsc.install.setup_gate.nothing", "nothing");
 
@@ -109,7 +95,7 @@ public final class SetupGate {
         if (installed(host, console, spec)) {
             return Optional.of(ALREADY_INSTALLED.with(name));
         }
-        final HardwareEra era = host.displayEra();
+        final Era era = host.displayEra();
         if (spec.minEra() != HardwareEra.VINTAGE && era != null && !OsGating.canInstall(spec.minEra(), era)) {
             return Optional.of(NEEDS_ERA.with(name, spec.minEra().text(), era.text()));
         }
@@ -169,26 +155,10 @@ public final class SetupGate {
 
     /** A program bound to one kind of machine refuses every other kind by name. */
     private static Optional<Text> hostScope(final IOsHost host, final ProgramSpec spec) {
-        final boolean allowed = switch (spec.hostScope()) {
-            case ANY -> true;
-            case MAINFRAME -> host instanceof MainframeBlockEntity;
-            case CRAFTING_COMPUTER -> host instanceof CraftingComputerBlockEntity;
-            case SERVER -> host instanceof ServerRackBlockEntity || host instanceof RackUnitHost;
-            case CLUSTER_MANAGEMENT_COMPUTER -> host instanceof ClusterManagementComputerBlockEntity;
-            case PERSONAL_COMPUTER -> host instanceof PersonalComputerBlockEntity;
-        };
-        if (allowed) {
+        if (spec.hostScope().admits(host.machine())) {
             return Optional.empty();
         }
-        final TextKey where = switch (spec.hostScope()) {
-            case MAINFRAME -> ON_A_MAINFRAME;
-            case CRAFTING_COMPUTER -> ON_A_CRAFTING_COMPUTER;
-            case SERVER -> ON_A_SERVER;
-            case CLUSTER_MANAGEMENT_COMPUTER -> ON_A_CLUSTER_MANAGER;
-            case PERSONAL_COMPUTER -> ON_A_PERSONAL_COMPUTER;
-            default -> ON_THIS_COMPUTER;
-        };
-        return Optional.of(ONLY_INSTALLS_ON.with(spec.displayName(), where));
+        return Optional.of(ONLY_INSTALLS_ON.with(spec.displayName(), spec.hostScope().name().text()));
     }
 
     /** The families a program runs on, joined the way a sentence lists them; the families' names are data. */

@@ -14,6 +14,7 @@ import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.ProcessingRecipeBuilder;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.progression.Knowledges;
 import dev.jstech.core.progression.Milestones;
@@ -64,19 +65,21 @@ public final class TeamProgressGameTests {
     @GameTest(template = ARENA)
     public static void eras_areARegistryAnAddonsEraGoesIntoTheMiddleOf(final GameTestHelper helper) {
         final List<Era> order = Eras.ordered();
-        final int advanced = order.indexOf(Eras.of(HardwareEra.ADVANCED));
+        final int advanced = order.indexOf(HardwareEra.ADVANCED);
         helper.assertTrue(order.get(advanced + 1) == TestProgression.QUANTUM, "the add-on's era right after Advanced");
-        helper.assertTrue(order.get(advanced + 2) == Eras.of(HardwareEra.EXA), "and Exa after it; got " + order);
-        helper.assertTrue(order.size() == HardwareEra.values().length + 1, "the series' seven and one more");
-        helper.assertTrue(Eras.atLeast(Eras.of(HardwareEra.EXA), TestProgression.QUANTUM),
-                "Exa is the add-on's era or later");
-        helper.assertTrue(!Eras.atLeast(Eras.of(HardwareEra.STANDARD), TestProgression.QUANTUM),
-                "Standard is not");
-        final Era back = Eras.CODEC.parse(JsonOps.INSTANCE, Eras.CODEC.encodeStart(JsonOps.INSTANCE,
+        helper.assertTrue(order.get(advanced + 2) == HardwareEra.EXA, "and Exa after it; got " + order);
+        helper.assertTrue(order.size() == HardwareEra.SERIES.size() + 1, "the series' seven and one more");
+        helper.assertTrue(HardwareEra.EXA.isAtLeast(TestProgression.QUANTUM), "Exa is the add-on's era or later");
+        helper.assertTrue(!HardwareEra.STANDARD.isAtLeast(TestProgression.QUANTUM), "Standard is not");
+        helper.assertTrue(TestProgression.QUANTUM.level() == advanced + 1 && Eras.settled(),
+                "its place is settled once the game has loaded");
+        final Era back = EraCodecs.CODEC.parse(JsonOps.INSTANCE, EraCodecs.CODEC.encodeStart(JsonOps.INSTANCE,
                 TestProgression.QUANTUM).getOrThrow()).getOrThrow();
         helper.assertTrue(back == TestProgression.QUANTUM, "an era is saved by its id and read back");
-        helper.assertTrue(Eras.CODEC.parse(JsonOps.INSTANCE, new JsonPrimitive("jstests:no_such_era")).isError(),
+        helper.assertTrue(EraCodecs.CODEC.parse(JsonOps.INSTANCE, new JsonPrimitive("jstests:no_such_era")).isError(),
                 "an id no era has is refused");
+        helper.assertTrue(EraCodecs.CODEC.parse(JsonOps.INSTANCE, new JsonPrimitive("legacy")).getOrThrow()
+                == HardwareEra.LEGACY, "a data file may name one of the series' seven bare");
         helper.succeed();
     }
 

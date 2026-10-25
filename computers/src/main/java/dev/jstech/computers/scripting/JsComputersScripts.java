@@ -14,6 +14,8 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ReadyDisks;
 import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.registry.ComputingContent;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +63,7 @@ public final class JsComputersScripts {
 
     /** The ids of the systems that first run in {@code era} ({@code 'vintage'}, {@code 'legacy'}...). */
     public static List<String> systems(final String era) {
-        final HardwareEra wanted = era(era);
+        final Era wanted = era(era);
         final List<String> ids = new ArrayList<>();
         for (final OsDef os : OsRegistry.oses()) {
             if (os.minEra() == wanted) {
@@ -73,7 +75,7 @@ public final class JsComputersScripts {
 
     /** The ids of the programs of {@code era} a player installs from a medium. */
     public static List<String> programs(final String era) {
-        final HardwareEra wanted = era(era);
+        final Era wanted = era(era);
         final List<String> ids = new ArrayList<>();
         for (final ProgramSpec program : OsRegistry.programs()) {
             if (program.installable() && program.era() == wanted) {
@@ -89,12 +91,75 @@ public final class JsComputersScripts {
      */
     public static List<String> eras() {
         final List<String> names = new ArrayList<>();
-        for (final HardwareEra era : HardwareEra.values()) {
+        for (final Era era : HardwareEra.SERIES) {
             if (ComputingContent.tab(era) != null) {
-                names.add(era.serializedName());
+                names.add(era.path());
             }
         }
         return names;
+    }
+
+    /*
+     * The parts and the kinds a startup script declares, each as an object of its sheet's fields: they are kept as the
+     * script runs and declared once the game sets up, as an add-on's are.
+     */
+
+    /** Makes the item {@code item} a processor of that sheet: era, isa, socket, cores, freq_mhz, tdp_watts. */
+    public static void processor(final String item, final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.PROCESSOR, item, sheet, null);
+    }
+
+    /** Makes the item a graphics card: era, bus, cores, vram_mb, tdp_watts, clock_mhz, arch. */
+    public static void graphicsCard(final String item, final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.GRAPHICS_CARD, item, sheet, null);
+    }
+
+    /** Makes the item a memory module: era, generation, buffer_items, tdp_watts. */
+    public static void memory(final String item, final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.MEMORY, item, sheet, null);
+    }
+
+    /** Makes the item a disk: tier (hdd, ssd or nvme), era, capacity_items, tdp_watts. */
+    public static void disk(final String item, final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.DISK, item, sheet, null);
+    }
+
+    /**
+     * Makes the item a motherboard: form_factor, era, socket, cpu_slots, memory (the generations it takes),
+     * ram_slots, bus, slots, disk_slots.
+     */
+    public static void motherboard(final String item, final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.MOTHERBOARD, item, sheet, null);
+    }
+
+    /** Makes the item a power supply, shown with {@code era}: wattage, efficiency_percent. */
+    public static void powerSupply(final String item, final Object sheet, final String era) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.POWER_SUPPLY, item, sheet, era);
+    }
+
+    /** Makes the item an expansion card of a kind that asks only for its slot: kind, era, bus, tdp_watts. */
+    public static void expansionCard(final String item, final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.CARD, item, sheet, null);
+    }
+
+    /** Adds a generation of memory: id, label, latency_ticks. */
+    public static void memoryGeneration(final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.MEMORY_GENERATION, null, sheet, null);
+    }
+
+    /** Adds a generation of expansion slot: id, generation, label, slot_name, family (isa, pci, agp or pcie). */
+    public static void slotGeneration(final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.SLOT_GENERATION, null, sheet, null);
+    }
+
+    /** Adds a form factor of motherboard: id, label. */
+    public static void formFactor(final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.FORM_FACTOR, null, sheet, null);
+    }
+
+    /** Adds a kind of expansion card: id. */
+    public static void cardKind(final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.CARD_KIND, null, sheet, null);
     }
 
     private static ResourceLocation id(final String id) {
@@ -102,11 +167,10 @@ public final class JsComputersScripts {
                 : ResourceLocation.parse(id);
     }
 
-    private static HardwareEra era(final String name) {
-        for (final HardwareEra era : HardwareEra.values()) {
-            if (era.serializedName().equals(name)) {
-                return era;
-            }
+    private static Era era(final String name) {
+        final Era found = Eras.byName(name).orElse(null);
+        if (found != null) {
+            return found;
         }
         throw new IllegalArgumentException("no era is called '" + name + "'; the eras are " + eras());
     }

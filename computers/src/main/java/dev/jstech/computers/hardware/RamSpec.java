@@ -7,14 +7,16 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Immutable specification of a RAM module.
  */
-public record RamSpec(HardwareEra era,
+@ApiStatus.Experimental
+public record RamSpec(Era era,
                       RamGeneration generation,
                       long bufferItems,
                       int tdpWatts) {

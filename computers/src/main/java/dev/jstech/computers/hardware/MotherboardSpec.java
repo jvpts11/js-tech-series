@@ -7,10 +7,12 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 import java.util.Objects;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,8 +26,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param olderBus the older bus the board also has slots of, or null when it has only {@code pcieGeneration}'s
  */
+@ApiStatus.Experimental
 public record MotherboardSpec(FormFactor formFactor,
-                              HardwareEra era,
+                              Era era,
                               CpuSocketId socket,
                               int cpuSlots,
                               Set<RamGeneration> acceptedRam,
@@ -36,7 +39,7 @@ public record MotherboardSpec(FormFactor formFactor,
                               @Nullable PcieGeneration olderBus) {
 
     /** A board with slots of one bus. */
-    public MotherboardSpec(final FormFactor formFactor, final HardwareEra era, final CpuSocketId socket,
+    public MotherboardSpec(final FormFactor formFactor, final Era era, final CpuSocketId socket,
                            final int cpuSlots, final Set<RamGeneration> acceptedRam, final int ramSlots,
                            final PcieGeneration pcieGeneration, final int pcieSlots, final int diskSlots) {
         this(formFactor, era, socket, cpuSlots, acceptedRam, ramSlots, pcieGeneration, pcieSlots, diskSlots, null);

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.audio;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -37,7 +38,7 @@ public final class SoundHardwareTexts {
     }
 
     /** A computer case's line: a Vintage or Legacy case only beeps, a later one has its sound on the board. */
-    public static void appendComputer(final List<Component> tooltip, final HardwareEra era) {
+    public static void appendComputer(final List<Component> tooltip, final Era era) {
         final TextKey line = era.isAtLeast(HardwareEra.TRANSITION) ? SOUND_ON_BOARD : PC_SPEAKER_ONLY;
         tooltip.add(GameText.component(line).withStyle(ChatFormatting.GRAY));
     }

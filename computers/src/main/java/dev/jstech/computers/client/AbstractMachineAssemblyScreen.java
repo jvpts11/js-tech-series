@@ -14,11 +14,14 @@ import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.text.TextKey;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +96,10 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     /** The board's silkscreen, white ink on each era's board. */
     private static final Palette<Silk> SILK = Palettes.declare(JsComputers.MODID, "screen/assembly_silk",
             new Silk(0xFFA3AEAB, 0xFFACC6B8, 0xFFA8B3C5, 0xFFA7AAAE, 0xFFA6A9AD));
+    /* The bus printed on each era's board: ISA on the Vintage's, PCI on the Legacy's, PCIe from the Transition on. */
+    private static final EraTable<TextKey> BUS_LABELS = EraTable.of(AssemblyTexts.BUS_ISA)
+            .from(HardwareEra.LEGACY, AssemblyTexts.BUS_PCI)
+            .from(HardwareEra.TRANSITION, AssemblyTexts.PCIE);
 
     protected AbstractMachineAssemblyScreen(final T menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
@@ -189,7 +196,7 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         final AssemblyGeometry geo = geometry();
         final int x = leftPos;
         final int y = topPos;
-        final HardwareEra era = caseEra();
+        final Era era = caseEra();
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
         drawHeader(g, geo, x, y);
         // The case, the board over its tray, and each card along its slot with its bracket on the back panel.
@@ -257,7 +264,7 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     }
 
     @Override
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         return caseEra();
     }
 
@@ -268,7 +275,7 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     }
 
     /** The machine's era, whose case and theme the screen wears. */
-    protected abstract HardwareEra caseEra();
+    protected abstract Era caseEra();
 
     /** Where everything stands on this machine's screen. */
     protected abstract AssemblyGeometry makeGeometry();
@@ -354,7 +361,7 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     }
 
     private void drawCaptions(final GuiGraphics g, final AssemblyGeometry geo, final int x, final int y,
-                              final HardwareEra era, final boolean boardIn) {
+                              final Era era, final boolean boardIn) {
         final int dim = JsTechTheme.dim();
         final int rail = y + AssemblyGeometry.RAIL_Y;
         JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.REAR), x + AssemblyGeometry.REAR_X, rail, dim);
@@ -368,11 +375,7 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                     y + geo.diskCaptionY(), dim);
         }
         // The bus, printed on the board in its silkscreen once there is one, and in the case's own grey before.
-        final String bus = GameText.resolve(switch (era) {
-            case VINTAGE -> AssemblyTexts.BUS_ISA;
-            case LEGACY -> AssemblyTexts.BUS_PCI;
-            default -> AssemblyTexts.PCIE;
-        });
+        final String bus = GameText.resolve(BUS_LABELS.get(era));
         JsTechTheme.textS(g, font, bus, x + geo.busX(), y + geo.busY(), boardIn ? SILK.get().of(era) : dim);
     }
 
@@ -411,14 +414,8 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     /** The silkscreen's ink on each era's board. */
     private record Silk(int vintage, int legacy, int transition, int standard, int advanced) {
 
-        int of(final HardwareEra era) {
-            return switch (era) {
-                case VINTAGE -> vintage;
-                case LEGACY -> legacy;
-                case TRANSITION -> transition;
-                case ADVANCED, EXA, SINGULARITY -> advanced;
-                default -> standard;
-            };
+        int of(final Era era) {
+            return HardwareEra.pick(era, vintage, legacy, transition, standard, advanced);
         }
     }
 }

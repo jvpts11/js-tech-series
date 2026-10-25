@@ -11,9 +11,10 @@ import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.IWatchedConsole;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.layout.NetworkInteractorLayout;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -45,8 +46,6 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
     public static final int INVENTORY_SLOTS = 36;
     /** How far the desktop's screen reaches, at the monitor showing the host. */
     private static final double REACH = 8.0;
-    /** What the open buffer says for a machine with no era. */
-    private static final int NO_ERA = -1;
 
     /** The vanilla inventory index for a menu slot: menu slots 0-26 are main (inv 9-35), 27-35 the hotbar (inv 0-8). */
     private static int inventoryIndexFor(final int menuSlot) {
@@ -63,7 +62,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
     private final int ramReservedMb;
     /** The host's era, which says what each window it opens holds; null when the machine has none to tell. */
     @Nullable
-    private final HardwareEra era;
+    private final Era era;
 
     /** Whether the 36 inventory slots are live this frame (true only while a Network Interactor window is focused). */
     private boolean slotsActive;
@@ -93,7 +92,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
     public DesktopMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                        final BlockPos hostPos, final ResourceLocation osId, final ResourceLocation desktopId,
                        final String name, final int ramTotalMb, final int ramReservedMb,
-                       @Nullable final HardwareEra era) {
+                       @Nullable final Era era) {
         super(ComputingMenus.DESKTOP_MENU.get(), containerId, playerInventory,
                 validity(playerInventory.player.level(), monitorPos, hostPos));
         this.playerInventory = playerInventory;
@@ -196,7 +195,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
         final String machineName = buf.readUtf();
         final int ramTotalMb = buf.readVarInt();
         final int ramReservedMb = buf.readVarInt();
-        final HardwareEra era = HardwareEra.find(buf.readVarInt());
+        final Era era = EraCodecs.orNone(buf.readVarInt());
         return new DesktopMenu(containerId, playerInventory, monitor, host, os, desktop, machineName,
                 ramTotalMb, ramReservedMb, era);
     }
@@ -209,7 +208,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
                                        final BlockPos hostPos, final ResourceLocation osId,
                                        final ResourceLocation desktopId, final String name,
                                        final int ramTotalMb, final int ramReservedMb,
-                                       @Nullable final HardwareEra era) {
+                                       @Nullable final Era era) {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
         buf.writeResourceLocation(osId);
@@ -217,7 +216,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
         buf.writeUtf(name);
         buf.writeVarInt(ramTotalMb);
         buf.writeVarInt(ramReservedMb);
-        buf.writeVarInt(era == null ? NO_ERA : era.id());
+        buf.writeVarInt(EraCodecs.placeOf(era));
     }
 
     /** The desktop environment the screen draws (equals the OS id for the Frames editions). */
@@ -237,7 +236,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
 
     /** The host's era, which says what each window it opens holds; null when the machine has none to tell. */
     @Nullable
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

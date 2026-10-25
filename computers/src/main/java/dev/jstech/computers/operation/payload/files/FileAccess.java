@@ -15,7 +15,6 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.StorageProjection;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.IMediaDrive;
@@ -116,7 +115,7 @@ public final class FileAccess {
      * own disks count it.
      */
     static long mediaFreeWeight(final ItemStack media) {
-        if (media.getItem() instanceof DiskItem) {
+        if (DriveVolumes.isDisk(media)) {
             return DriveTable.freeWeightOf(media);
         }
         final long cap = media.getItem()

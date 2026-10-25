@@ -7,7 +7,7 @@ own ideas from zero, each with the code that adds one; it does not teach Java or
 What is promised and for how long (versions, the experimental mark, deprecation) is on the series' page,
 [docs/API.md](../../docs/API.md). Everything here is part of that promise: the packages `dev.jstech.computers.api`,
 `.api.client` and `.api.planner`, and the types this page names from elsewhere. `JsComputersApi.VERSION` is the
-number of its shape (5 today); much of it is still marked `@ApiStatus.Experimental`.
+number of its shape (8 today); much of it is still marked `@ApiStatus.Experimental`.
 
 ## The way in
 
@@ -49,8 +49,13 @@ A computer of the mod is built like a real one, and the API follows the same lay
 | Operating space | A full-screen program a system runs instead of a prompt (MC-NET's Interactor). | `OperatingSpaceDef` |
 | Network engine | The program on a Mainframe that reads the network's language and plans its work. | `EngineDef` |
 
+| Part | A processor, a card, memory, a disk, a board or a supply: an item and its sheet. | `CpuSpec` and kin |
+| Computer | A block that is a computer, or an item that is a server, and what its case is. | `ComputerDef` |
+
 Every kind of thing has an **era**, the generation of computing it belongs to (`HardwareEra`: Vintage, Legacy,
-Transition, Standard, Advanced). A thing's **first era** is a gate: hardware older than it refuses it.
+Transition, Standard, Advanced, Exa, Singularity, and the eras other mods add, J's Core's
+[eras](../../core/docs/PROGRESSION.md#eras-as-a-registry)). A thing's **first era** is a gate: hardware older than it
+refuses it.
 
 In the examples, `rl("scanner")` stands for `ResourceLocation.fromNamespaceAndPath(MyAddon.MODID, "scanner")`.
 
@@ -67,6 +72,80 @@ public static final IsaSpec ARM64 = new IsaSpec("myaddon:arm64", "ARM64", 64, Se
 processor runs x86 and IA-16 programs). A program built for an instruction set runs on every processor whose
 `runs` holds it. Bringing processors of your own needs no socket registration: a socket is an id in the
 `namespace:path` form that a processor and a board both name.
+
+## Parts
+
+*Added 2026-10-25.*
+
+An item of your mod is a part because the event says so, with the sheet of what it is. J's Computers' own parts,
+some four hundred, are declared through the very same calls, and the tooltip of every part is written from its sheet,
+whichever mod's item it is.
+
+```java
+public static final CpuSocketId Q1 = new CpuSocketId("myaddon:q1");
+
+// in your listener for ComputersRegisterEvent:
+event.processor(MyItems.Q_CPU.get(), new CpuSpec(QUANTUM, Isas.X86_64, Q1, 32, 6000, 95, false));
+event.motherboard(MyItems.Q_BOARD.get(), new MotherboardSpec(FormFactor.ATX, QUANTUM, Q1, 1, Set.of(QRAM), 4,
+        PcieGeneration.PCIE_6_0, 4, 2, null));
+event.memory(MyItems.Q_RAM.get(), new RamSpec(QUANTUM, QRAM, 65_536L, 4));
+event.disk(MyItems.Q_SSD.get(), new DiskSpec(StorageTier.NVME, QUANTUM, 8_192L, 5));
+event.graphicsCard(MyItems.Q_GPU.get(), MY_GPU_SPEC);
+event.powerSupply(MyItems.Q_PSU.get(), new PsuSpec(1200, 94, false), QUANTUM);
+event.expansionCard(MyItems.Q_CARD.get(), new PlainCardSpec(MY_KIND, QUANTUM, PcieGeneration.PCIE_6_0, 15),
+        QUANTUM);
+```
+
+- What fits with what is the same for every part, in one place (`PartFitting`): a board goes in a case that takes its
+  form factor, of the case's own era; a processor seats on a board of its socket and era; memory on a board of its era
+  that takes its generation; a card in a slot of its bus's family; a disk in a machine of its era or a later one.
+- **The kinds parts are made of are open too**, ids like sockets: generations of memory (`event.memoryGeneration`),
+  of expansion slot (`slotGeneration`), form factors of board (`formFactor`) and kinds of card (`cardKind`). A card of
+  a kind of your own is a `PlainCardSpec`, or a sheet of your own implementing `IExpansionCardSpec`, and your mod
+  finds it in a build by its kind (`ComputerBuild.cardsOfKind`).
+- `HardwareRegistry` answers what a stack is: `cpu(stack)`, `board(stack)`, `card(stack)` and so on, null for anything
+  that is no part. An item without an entry goes in no part slot.
+- What the software of your era ships on (its systems', programs' and services' media) is `event.eraMedia(era,
+  EraMedia)`; an era that says nothing ships on what the era before it does.
+
+## A computer
+
+*Added 2026-10-25.*
+
+A block of your mod is a computer because the event says so, and its block entity reads from the entry what its case
+is: the era, the form factors of the boards it takes, the machine it is, and how many parts of each kind it counts.
+
+```java
+public static final HostScope LAB = new HostScope("myaddon:lab", MyTexts.A_LAB, MyTexts.LAB_ONLY);
+
+// in your mod's block register: one of the cases J's Computers ships, of your era
+public static final DeferredBlock<SmallComputerBlock> LAB_COMPUTER = BLOCKS.register("lab_computer",
+        () -> new SmallComputerBlock(BlockBehaviour.Properties.of().strength(2.0F).noOcclusion(), QUANTUM,
+                CaseStyle.NEUTRAL));
+
+// in your listener for ComputersRegisterEvent:
+event.machine(LAB);
+event.computer(LAB_COMPUTER.get(), new ComputerDef(QUANTUM, Set.of(FormFactor.ATX), LAB,
+        new CaseParts(1, 2, 2, 1, 1, 0)));
+```
+
+- **The machine** (`HostScope`) is what a program is made for: a program whose host scope is your machine installs and
+  shows a launcher only on a computer that is it, and the package manager refuses it elsewhere with your machine's
+  `refusal` sentence. J's Computers' own are `ANY`, `PERSONAL_COMPUTER`, `CRAFTING_COMPUTER`,
+  `CLUSTER_MANAGEMENT_COMPUTER`, `MAINFRAME` and `SERVER`.
+- **A small computer** of yours is a `SmallComputerBlock`, drawn in the case of its era and style (an era after the
+  Advanced draws the Advanced's) and assembled on the Personal Computer's screen, so its case counts no more parts than
+  a Personal Computer's: one processor, four modules, four cards, two disks, two bays. Its block entity is J's
+  Computers' `SmallComputerBlockEntity`, one type every mod's small computers share.
+- **A server** of yours is a `ServerItem` and a chassis: `event.server(item, RackChassis.of(look, heightU, drives,
+  processors, cards, rackType, era))`, drawn in the rack as one of the faces J's Computers ships.
+
+## Hardware from a modpack
+
+*Added 2026-10-25.*
+
+A modpack declares parts and kinds without a mod of its own, from KubeJS's startup scripts, each as an object of its
+sheet's fields; see [MODPACKS.md](MODPACKS.md).
 
 ## A kernel and an operating system
 

@@ -8,23 +8,26 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
+import dev.jstech.computers.crafting.CraftingCards;
 import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
-import dev.jstech.computers.item.CraftingCardItem;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
@@ -96,13 +99,21 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     /** How long, in ticks, the crafting network this computer reads stays as it was last read. */
     public static final int FLOOR_FRESH_TICKS = 20;
 
-    private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
-            MOTHERBOARD_SLOT, CPU_SLOT, 1, RAM_SLOTS_START, RAM_SLOTS,
-            PCIE_SLOTS_START, PCIE_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, BAY_SLOTS_START, BAY_SLOTS,
-            HARDWARE_SLOTS);
+    /** What a Crafting Computer's case counts, whatever its era: the slots above are where they sit. */
+    public static final CaseParts PARTS = new CaseParts(1, RAM_SLOTS, PCIE_SLOTS, DISK_SLOTS, BAY_SLOTS, 0);
 
     public CraftingComputerBlockEntity(final BlockPos pos, final BlockState state) {
-        super(ComputingModule.CRAFTING_COMPUTER_BE.get(), pos, state, LAYOUT);
+        super(ComputingModule.CRAFTING_COMPUTER_BE.get(), pos, state);
+    }
+
+    /**
+     * What a Crafting Computer of {@code era} is: a PC-class machine, each era on its own consumer form factor,
+     * Vintage on Baby-AT/AT and the later eras on ATX.
+     */
+    public static ComputerDef computer(final Era era) {
+        final Set<FormFactor> boards = era == HardwareEra.VINTAGE ? Set.of(FormFactor.BABY_AT, FormFactor.AT)
+                : Set.of(FormFactor.ATX);
+        return new ComputerDef(era, boards, HostScope.CRAFTING_COMPUTER, PARTS);
     }
 
     public static void serverTick(final Level level, final BlockPos pos,
@@ -190,7 +201,7 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     public List<Integer> cardSlots() {
         final List<Integer> slots = new ArrayList<>();
         for (int i = 0; i < PCIE_SLOTS; i++) {
-            if (getHardware().getStackInSlot(PCIE_SLOTS_START + i).getItem() instanceof CraftingCardItem) {
+            if (CraftingCards.isCard(getHardware().getStackInSlot(PCIE_SLOTS_START + i))) {
                 slots.add(PCIE_SLOTS_START + i);
             }
         }
@@ -201,14 +212,14 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     public ItemStack cardIn(final int slot) {
         final ItemStack stack = slot >= PCIE_SLOTS_START && slot < PCIE_SLOTS_START + PCIE_SLOTS
                 ? getHardware().getStackInSlot(slot) : ItemStack.EMPTY;
-        return stack.getItem() instanceof CraftingCardItem ? stack : ItemStack.EMPTY;
+        return CraftingCards.isCard(stack) ? stack : ItemStack.EMPTY;
     }
 
     /** Every bench recipe the cards keep, card by card in slot order. */
     public List<CraftingPattern> romPatterns() {
         final List<CraftingPattern> all = new ArrayList<>();
         for (final int slot : cardSlots()) {
-            all.addAll(CraftingCardItem.rom(getHardware().getStackInSlot(slot)));
+            all.addAll(CraftingCards.rom(getHardware().getStackInSlot(slot)));
         }
         return all;
     }
@@ -222,7 +233,7 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     public int romSize() {
         int size = 0;
         for (final int slot : cardSlots()) {
-            size += CraftingCardItem.romSize(getHardware().getStackInSlot(slot));
+            size += CraftingCards.romSize(getHardware().getStackInSlot(slot));
         }
         return size;
     }
@@ -252,7 +263,7 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     /** Writes {@code pattern} into the card in hardware slot {@code slot}; false when it is full or none is there. */
     public boolean loadPatternInto(final int slot, final CraftingPattern pattern) {
         final ItemStack card = cardIn(slot);
-        if (card.isEmpty() || romContains(pattern) || !CraftingCardItem.load(card, pattern)) {
+        if (card.isEmpty() || romContains(pattern) || !CraftingCards.load(card, pattern)) {
             return false;
         }
         setChanged();
@@ -264,9 +275,9 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
         int at = index;
         for (final int slot : cardSlots()) {
             final ItemStack card = getHardware().getStackInSlot(slot);
-            final int held = CraftingCardItem.rom(card).size();
+            final int held = CraftingCards.rom(card).size();
             if (at < held) {
-                if (CraftingCardItem.remove(card, at)) {
+                if (CraftingCards.remove(card, at)) {
                     setChanged();
                 }
                 return;
@@ -481,27 +492,6 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     }
 
     @Override
-    protected Set<FormFactor> acceptedFormFactors() {
-        /*
-         * A Crafting Computer is a PC-class machine: each era takes its own consumer form factor:
-         * Vintage on Baby-AT/AT, the later eras on ATX.
-         */
-        return switch (blockEra()) {
-            case VINTAGE -> Set.of(FormFactor.BABY_AT, FormFactor.AT);
-            default -> Set.of(FormFactor.ATX);
-        };
-    }
-
-    @Override
-    protected HardwareEra requiredBoardEra() {
-        /*
-         * A Crafting Computer accepts only a board of its own era, so a Legacy and a Standard ATX board
-         * are not interchangeable: each installs in its matching machine alone.
-         */
-        return blockEra();
-    }
-
-    @Override
     protected void registerNode(final NetworkSystem system, final NetworkUuid network) {
         system.registerCraftingComputer(new NetworkSystem.CraftingComputerNode(
                 nodeUuid(), network, capacity(), worldPosition.asLong()));
@@ -525,17 +515,6 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
             }
         }
         return cards;
-    }
-
-    /**
-     * The era this Crafting Computer belongs to, read from its block. Defaults to Standard for any block that
-     * is not a {@link CraftingComputerBlock} (never happens in practice, but keeps the read total).
-     */
-    private HardwareEra blockEra() {
-        return getBlockState().getBlock()
-                instanceof CraftingComputerBlock cc
-                ? cc.era()
-                : HardwareEra.STANDARD;
     }
 
     /** Net local-storage capacity in item-equivalents, after the installed OS footprint. */

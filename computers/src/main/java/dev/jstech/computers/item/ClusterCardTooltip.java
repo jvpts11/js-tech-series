@@ -8,23 +8,19 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
-import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-
-import java.util.List;
 
 /**
- * The Cluster Interface Card family: exclusive to the Cluster Management Computer, one per machine.
- * The card decides which cabinets the machine can drive and how many nodes it installs at once.
+ * What a Cluster Interface Card's tooltip says: which cabinets the Cluster Management Computer it sits in can drive,
+ * and how many nodes it installs at once.
  */
 @TextHolder
-public class ClusterInterfaceCardItem extends SpecItem<ClusterInterfaceCardSpec> implements IExpansionCardItem {
+final class ClusterCardTooltip {
 
     private static final TextKey PURPOSE = TextKey.of("jsc.item.cluster_interface_card.purpose",
             "Cluster interface for a Cluster Management Computer");
@@ -40,19 +36,10 @@ public class ClusterInterfaceCardItem extends SpecItem<ClusterInterfaceCardSpec>
     private static final TextKey INSTALLS_MANY =
             TextKey.of("jsc.item.cluster_interface_card.installs_many", "Installs  -  %s nodes in parallel");
 
-    public ClusterInterfaceCardItem(final Properties properties, final ClusterInterfaceCardSpec spec) {
-        super(properties.stacksTo(16), spec);
+    private ClusterCardTooltip() {
     }
 
-    @Override
-    public IExpansionCardSpec cardSpec() {
-        return spec();
-    }
-
-    @Override
-    public void appendHoverText(final ItemStack stack, final TooltipContext context,
-                                final List<Component> tooltip, final TooltipFlag flag) {
-        final ClusterInterfaceCardSpec spec = spec();
+    static void append(final ClusterInterfaceCardSpec spec, final List<Component> tooltip) {
         tooltip.add(GameText.component(PURPOSE).withStyle(ChatFormatting.GRAY));
         final TextKey reach = switch (spec.reach()) {
             case DATACENTERS -> REACH_DATACENTERS;

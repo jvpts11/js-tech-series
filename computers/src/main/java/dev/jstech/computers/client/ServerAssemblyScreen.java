@@ -18,6 +18,7 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -61,8 +62,8 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
     }
 
     @Override
-    protected HardwareEra caseEra() {
-        final HardwareEra era = menu.hardwareEra();
+    protected Era caseEra() {
+        final Era era = menu.hardwareEra();
         return era == null ? HardwareEra.STANDARD : era;
     }
 

@@ -7,7 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 
 /**
  * How many 5.25-inch bays the case of each era has on its front, where an internal drive or the hot-swap bay goes.
@@ -18,15 +19,13 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
  */
 public final class CaseBays {
 
+    private static final EraTable<Integer> BAYS = EraTable.ofFive(1, 2, 2, 1, 0);
+
     private CaseBays() {
     }
 
     /** The 5.25-inch bays on the front of that era's case. */
-    public static int of(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE, STANDARD -> 1;
-            case LEGACY, TRANSITION -> 2;
-            case ADVANCED, EXA, SINGULARITY -> 0;
-        };
+    public static int of(final Era era) {
+        return BAYS.get(era);
     }
 }

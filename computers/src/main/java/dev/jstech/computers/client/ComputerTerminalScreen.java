@@ -28,13 +28,13 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.gui.TextScreen;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
@@ -1848,7 +1848,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     @Override
-    protected HardwareEra screenEra() {
+    protected Era screenEra() {
         /*
          * Read the host computer's era straight from its block entity on the client, so the very first frame
          * already wears the right era skin. Relying only on the synced era slot lagged one tick and flashed

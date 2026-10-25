@@ -8,10 +8,12 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -71,21 +73,19 @@ enum IsmsLook {
 
     private final Palette<Colours> palette;
 
+    /* The look of each era's studio: the Query Analyzer before the Transition, then by age. */
+    private static final EraTable<IsmsLook> BY_ERA = EraTable.of(QUERY_ANALYZER)
+            .from(HardwareEra.TRANSITION, STUDIO_2008)
+            .from(HardwareEra.STANDARD, STUDIO_2012)
+            .from(HardwareEra.ADVANCED, STUDIO_2022);
+
     IsmsLook(final Palette<Colours> palette) {
         this.palette = palette;
     }
 
     /** The look of the studio on a computer of {@code era}: the Query Analyzer before Transition, then by age. */
-    static IsmsLook of(@Nullable final HardwareEra era) {
-        if (era == null) {
-            return STUDIO_2012;
-        }
-        return switch (era) {
-            case VINTAGE, LEGACY -> QUERY_ANALYZER;
-            case TRANSITION -> STUDIO_2008;
-            case STANDARD -> STUDIO_2012;
-            default -> STUDIO_2022;
-        };
+    static IsmsLook of(@Nullable final Era era) {
+        return era == null ? STUDIO_2012 : BY_ERA.get(era);
     }
 
     /** The look's colours, as a resource pack may have repainted them. */

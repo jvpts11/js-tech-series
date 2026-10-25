@@ -27,11 +27,13 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.bigblock.AbstractBigBlock;
 import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.testkit.computers.CraftFiles;
 import dev.jstech.tests.testkit.computers.CraftingRig;
+import dev.jstech.tests.testkit.computers.PartSheets;
 import dev.jstech.tests.testkit.computers.ServerStacks;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -409,7 +411,7 @@ public final class BigBaseScenario {
         world.setBlock(new BlockPos(rx, Y, routerZ), ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, away));
         // A cabinet's bays take drives of its own era or older, so the Advanced drives need an Advanced cabinet.
-        final HardwareEra driveEra = ComputingModule.disk(StorageTier.NVME, params.driveSize()).spec().era();
+        final Era driveEra = PartSheets.disk(ComputingModule.disk(StorageTier.NVME, params.driveSize())).era();
         final Block cabinet = driveEra.isAtMost(HardwareEra.STANDARD)
                 ? ComputingModule.SERVER_RACK.get() : ComputingModule.ADVANCED_SERVER_RACK.get();
         return placeCabinetRow(world, ComputingModule.HBW_CABLE, cabinet, rx,

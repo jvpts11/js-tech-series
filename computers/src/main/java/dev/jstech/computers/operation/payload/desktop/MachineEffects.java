@@ -12,6 +12,7 @@ import dev.jstech.computers.hardware.ExperienceIndex;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ComputerSettings;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import java.util.Set;
@@ -59,7 +60,7 @@ public final class MachineEffects {
         return !indexOf(computer).runsEffects();
     }
 
-    private static boolean needsGraphics(final ResourceLocation desktop, final HardwareEra era) {
+    private static boolean needsGraphics(final ResourceLocation desktop, final Era era) {
         final String name = desktop.getPath();
         if (ALWAYS.contains(name)) {
             return true;

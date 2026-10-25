@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.computers.blockentity.IAssemblyComputer;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
@@ -123,7 +124,7 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
     }
 
     @Nullable
-    public HardwareEra hardwareEra() {
+    public Era hardwareEra() {
         return computer.displayEra();
     }
 
@@ -170,8 +171,8 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
     }
 
     /** The era whose case the machine stands in, which seats the parts where that case has them. */
-    protected static HardwareEra caseEra(final AbstractSmallComputerBlockEntity be) {
-        final HardwareEra era = be.displayEra();
+    protected static Era caseEra(final AbstractSmallComputerBlockEntity be) {
+        final Era era = be.displayEra();
         return era == null ? HardwareEra.STANDARD : era;
     }
 

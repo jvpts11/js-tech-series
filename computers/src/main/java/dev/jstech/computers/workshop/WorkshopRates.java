@@ -7,7 +7,8 @@
  */
 package dev.jstech.computers.workshop;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 
 /**
  * What the personal-use cards charge and how fast they work, beside the blocks they stand in for. The Furnace Card
@@ -21,19 +22,14 @@ public final class WorkshopRates {
     private static final int[] ENCHANT_LEVELS = {1, 1, 2};
     /** The bookshelves the card's offers are drawn as if a table had around it: all it can use. */
     public static final int BOOKSHELVES = 15;
+    private static final EraTable<Integer> FURNACE_SPEEDS = EraTable.ofFive(0, 2, 3, 4, 6);
 
     private WorkshopRates() {
     }
 
     /** How many times a furnace's pace the Furnace Card smelts at in a computer of {@code era}; none before Legacy. */
-    public static int furnaceSpeed(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> 0;
-            case LEGACY -> 2;
-            case TRANSITION -> 3;
-            case STANDARD -> 4;
-            case ADVANCED, EXA, SINGULARITY -> 6;
-        };
+    public static int furnaceSpeed(final Era era) {
+        return FURNACE_SPEEDS.get(era);
     }
 
     /** The ticks one item takes at {@code speed}: the recipe's own time divided by it, never under one tick. */

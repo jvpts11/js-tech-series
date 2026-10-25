@@ -8,6 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * How a processor is built, beside how many cores it has and how fast they run: the design of its cores, the codename
@@ -25,6 +26,7 @@ import java.util.Objects;
  * @param efficiencyArch   the design of the efficiency cores
  * @param graphics         the graphics the chip carries on its die, {@link IntegratedGraphics#NONE} on most
  */
+@ApiStatus.Experimental
 public record CpuDesign(Microarchitecture arch, String codename, boolean smt, int efficiencyCores, int efficiencyMhz,
                         Microarchitecture efficiencyArch, IntegratedGraphics graphics) {
 

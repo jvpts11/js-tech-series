@@ -13,8 +13,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -39,23 +39,23 @@ public final class StableCodecGameTests {
 
     @GameTest(template = ARENA)
     public static void byName_writesEveryConstantAsItsNameAndReadsItBack(final GameTestHelper helper) {
-        final Codec<HardwareEra> codec = StableCodecs.byName(HardwareEra.class);
-        for (final HardwareEra era : HardwareEra.values()) {
-            final JsonElement written = codec.encodeStart(JsonOps.INSTANCE, era).getOrThrow();
-            helper.assertTrue(era.serializedName().equals(written.getAsString()),
-                    era + " is written as " + written + " instead of its name");
-            helper.assertTrue(codec.parse(JsonOps.INSTANCE, written).getOrThrow() == era,
-                    era + " does not read back from its name");
+        final Codec<DataLine> codec = StableCodecs.byName(DataLine.class);
+        for (final DataLine line : DataLine.values()) {
+            final JsonElement written = codec.encodeStart(JsonOps.INSTANCE, line).getOrThrow();
+            helper.assertTrue(line.serializedName().equals(written.getAsString()),
+                    line + " is written as " + written + " instead of its name");
+            helper.assertTrue(codec.parse(JsonOps.INSTANCE, written).getOrThrow() == line,
+                    line + " does not read back from its name");
         }
         helper.succeed();
     }
 
     @GameTest(template = ARENA)
     public static void byName_refusesANameNoConstantDeclaresAndSaysWhichExist(final GameTestHelper helper) {
-        final DataResult<HardwareEra> read = StableCodecs.byName(HardwareEra.class)
-                .parse(JsonOps.INSTANCE, new JsonPrimitive("STANDARD"));
+        final DataResult<DataLine> read = StableCodecs.byName(DataLine.class)
+                .parse(JsonOps.INSTANCE, new JsonPrimitive("BACKBONE"));
         helper.assertTrue(read.error().isPresent(), "a constant's Java name is not the name it declares");
-        helper.assertTrue(read.error().get().message().contains("standard"), "the error lists the names there are");
+        helper.assertTrue(read.error().get().message().contains("backbone"), "the error lists the names there are");
         helper.succeed();
     }
 

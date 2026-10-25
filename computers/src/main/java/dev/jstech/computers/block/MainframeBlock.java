@@ -19,10 +19,11 @@ import dev.jstech.core.bigblock.IBigBlockGeometry;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
@@ -56,7 +57,7 @@ import java.util.List;
 public class MainframeBlock extends AbstractBigBlock
         implements IFaceConnector, IEraChassisBlock {
 
-    private final HardwareEra era;
+    private final Era era;
     /*
      * The Mainframe sits on the backbone, on any face, its era's cable and every earlier one's, the fibre only with an
      * Optical Network Card; it never takes the access line directly (a router joins that).
@@ -65,7 +66,7 @@ public class MainframeBlock extends AbstractBigBlock
 
     public static final MapCodec<MainframeBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(MainframeBlock::era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(MainframeBlock::era)
     ).apply(i, MainframeBlock::new));
     /**
      * The power button on the sill, at the cabinet's middle, which is the middle of this block's front: where the
@@ -73,7 +74,7 @@ public class MainframeBlock extends AbstractBigBlock
      */
     public static final FrontArea POWER_BUTTON = new FrontArea(28, 42, 36, 50);
 
-    public MainframeBlock(final Properties properties, final HardwareEra era) {
+    public MainframeBlock(final Properties properties, final Era era) {
         super(properties);
         this.era = era;
         this.ports = FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE), PeripheralLine.of(era));
@@ -85,12 +86,12 @@ public class MainframeBlock extends AbstractBigBlock
      * The hardware era this Mainframe belongs to. It selects the cabinet's model and skin and gates which MTX board
      * installs: only a board of this same era is accepted and counted in the build.
      */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
     @Override
-    public HardwareEra chassisEra() {
+    public Era chassisEra() {
         return era();
     }
 
@@ -144,7 +145,7 @@ public class MainframeBlock extends AbstractBigBlock
     protected BlockState partStateFor(final BlockPos origin, final Direction facing,
                                       final BlockPos part, final BlockState originState) {
         // Stamp the origin's era onto every structural part so the whole footprint wears one skin.
-        final HardwareEra era =
+        final Era era =
                 originState.getBlock() instanceof MainframeBlock mf
                         ? mf.era()
                         : HardwareEra.STANDARD;
@@ -152,7 +153,7 @@ public class MainframeBlock extends AbstractBigBlock
                 .setValue(FACING, facing)
                 .setValue(MainframePartBlock.CORE,
                         MainframeStructure.isCentralColumn(origin, facing, part))
-                .setValue(MainframePartBlock.ERA, era.level())
+                .setValue(MainframePartBlock.ERA, PartEras.valueFor(era))
                 .setValue(OpticalPort.OPTICAL, originState.hasProperty(OpticalPort.OPTICAL)
                         && originState.getValue(OpticalPort.OPTICAL));
     }

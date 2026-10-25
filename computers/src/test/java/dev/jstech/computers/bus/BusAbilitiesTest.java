@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
@@ -32,8 +33,8 @@ class BusAbilitiesTest {
 
     @Test
     void of_givesEveryEraAfterTheVintageAFilter() {
-        for (final HardwareEra era : HardwareEra.values()) {
-            assertEquals(era != HardwareEra.VINTAGE, BusAbilities.of(era).can(BusFeature.FILTER), era.name());
+        for (final Era era : HardwareEra.SERIES) {
+            assertEquals(era != HardwareEra.VINTAGE, BusAbilities.of(era).can(BusFeature.FILTER), era.id());
         }
     }
 
@@ -47,10 +48,10 @@ class BusAbilitiesTest {
 
     @Test
     void of_givesTheStandardAndTheAdvancedQuantitiesForTheWholeBus() {
-        for (final HardwareEra era : new HardwareEra[] {HardwareEra.LEGACY, HardwareEra.STANDARD,
+        for (final Era era : new Era[] {HardwareEra.LEGACY, HardwareEra.STANDARD,
                 HardwareEra.ADVANCED}) {
-            assertTrue(BusAbilities.of(era).can(BusFeature.QUANTITIES), era.name());
-            assertFalse(BusAbilities.of(era).can(BusFeature.ITEM_QUANTITIES), era.name());
+            assertTrue(BusAbilities.of(era).can(BusFeature.QUANTITIES), era.id());
+            assertFalse(BusAbilities.of(era).can(BusFeature.ITEM_QUANTITIES), era.id());
         }
     }
 
@@ -92,9 +93,9 @@ class BusAbilitiesTest {
 
     @Test
     void external_neverKeepsQuantitiesOrConditions() {
-        for (final HardwareEra era : HardwareEra.values()) {
-            assertFalse(BusAbilities.external(era).can(BusFeature.QUANTITIES), era.name());
-            assertFalse(BusAbilities.external(era).can(BusFeature.CONDITIONS), era.name());
+        for (final Era era : HardwareEra.SERIES) {
+            assertFalse(BusAbilities.external(era).can(BusFeature.QUANTITIES), era.id());
+            assertFalse(BusAbilities.external(era).can(BusFeature.CONDITIONS), era.id());
         }
     }
 

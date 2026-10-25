@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 /**
  * The page for modpack makers, {@code computers/docs/MODPACKS.md}, says only what is so: the tags it names are the
  * ones the data run writes, and all of them; the calls of {@code JsComputers} it shows are methods the binding has;
- * and every example it prints is in the test mod's own data or script, which the GameTests load and check, with the
+ * and every example it prints is in the test mod's own data or scripts, which the GameTests load and check, with the
  * namespace changed from {@code jstests} to {@code mypack}.
  */
 class ModpacksDocTest {
@@ -41,7 +41,9 @@ class ModpacksDocTest {
     private static final Path BINDING = ROOT.resolve(
             "computers/src/main/java/dev/jstech/computers/scripting/JsComputersScripts.java");
     private static final Path TEST_DATA = ROOT.resolve("tests/src/main/resources/data");
-    private static final Path TEST_SCRIPT = ROOT.resolve("tests/src/kubejs/server_scripts/jstests_recipes.js");
+    private static final List<Path> TEST_SCRIPTS = List.of(
+            ROOT.resolve("tests/src/kubejs/server_scripts/jstests_recipes.js"),
+            ROOT.resolve("tests/src/kubejs/startup_scripts/jstests_hardware.js"));
     private static final Pattern TAG = Pattern.compile("#jsc:([a-z0-9_/]+)");
     private static final Pattern CALL = Pattern.compile("JsComputers\\.(\\w+)\\(");
     private static final Pattern BLOCK = Pattern.compile("```(json|js)\\r?\\n(.*?)```", Pattern.DOTALL);
@@ -103,7 +105,7 @@ class ModpacksDocTest {
 
     @Test
     void scriptExamples_areTheTestScript() {
-        final String script = squeezed(read(TEST_SCRIPT));
+        final String script = TEST_SCRIPTS.stream().map(path -> squeezed(read(path))).reduce("", String::concat);
         final List<String> examples = blocks("js");
         assertTrue(examples.size() >= 2, "the page prints the script examples; found " + examples.size());
         for (final String example : examples) {

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +42,7 @@ class OsGatingTest {
     @Test
     void canInstall_acceptsVintageMinOsOnAnyLaterEra() {
         // Vintage-minimum OS installs on every later era too.
-        for (HardwareEra hw : HardwareEra.values()) {
+        for (Era hw : HardwareEra.SERIES) {
             assertTrue(OsGating.canInstall(HardwareEra.VINTAGE, hw),
                     "Expected canInstall(VINTAGE, " + hw + ") to be true");
         }

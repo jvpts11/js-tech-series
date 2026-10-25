@@ -8,10 +8,11 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.IAudible;
 import dev.jstech.core.audio.LoopRequest;
@@ -227,7 +228,7 @@ final class ComputerSounds implements IAudible {
 
     private boolean hasHardDrive() {
         for (final ItemStack disk : machine.diskStacks()) {
-            if (disk.getItem() instanceof DiskItem drive && drive.spec().tier() == StorageTier.HDD) {
+            if (HardwareRegistry.disk(disk) instanceof DiskSpec drive && drive.tier() == StorageTier.HDD) {
                 return true;
             }
         }

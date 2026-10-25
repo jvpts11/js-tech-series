@@ -11,9 +11,9 @@ import dev.jstech.computers.block.RedstoneInterfaceBlock;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.gui.layout.RedstoneInterfaceLayout;
 import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -106,7 +106,7 @@ public class RedstoneInterfaceMenu extends CoreMenu {
      * @param computerKind the translation key of its computer's block, empty when it is not linked to one
      * @param era          the era of its housing, whose skin the screen wears
      */
-    public record Opening(BlockPos pos, String name, String computerName, String computerKind, HardwareEra era) {
+    public record Opening(BlockPos pos, String name, String computerName, String computerKind, Era era) {
 
         public void write(final RegistryFriendlyByteBuf buf) {
             new NamedDeviceOpening(pos, name, computerName, computerKind, era)

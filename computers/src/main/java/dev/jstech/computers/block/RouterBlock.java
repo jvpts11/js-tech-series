@@ -14,12 +14,12 @@ import dev.jstech.computers.blockentity.RouterBlockEntity;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.network.INetworkBridge;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -42,17 +42,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RouterBlock extends Block implements EntityBlock, IFaceConnector, INetworkBridge {
 
-    private final HardwareEra era;
+    private final Era era;
     private final boolean optical;
     private final FacePorts ports;
 
     public static final MapCodec<RouterBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(RouterBlock::era),
+            EraCodecs.CODEC.fieldOf("era").forGetter(RouterBlock::era),
             Codec.BOOL.optionalFieldOf("optical", false).forGetter(RouterBlock::optical)
     ).apply(i, RouterBlock::new));
 
-    public RouterBlock(final Properties properties, final HardwareEra era, final boolean optical) {
+    public RouterBlock(final Properties properties, final Era era, final boolean optical) {
         super(properties);
         this.era = era;
         this.optical = optical;
@@ -61,7 +61,7 @@ public class RouterBlock extends Block implements EntityBlock, IFaceConnector, I
     }
 
     /** The era the router belongs to: the newest cables it takes. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 

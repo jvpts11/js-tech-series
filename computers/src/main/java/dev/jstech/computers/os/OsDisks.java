@@ -7,8 +7,9 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -96,13 +97,13 @@ public final class OsDisks {
                                      final int preferredSlot) {
         if (preferredSlot >= 0 && preferredSlot < diskCount) {
             final ItemStack preferred = diskInSlot.apply(preferredSlot);
-            if (preferred.getItem() instanceof DiskItem && hasSystem(preferred)) {
+            if (DriveVolumes.isDisk(preferred) && hasSystem(preferred)) {
                 return preferredSlot;
             }
         }
         for (int i = 0; i < diskCount; i++) {
             final ItemStack stack = diskInSlot.apply(i);
-            if (stack.getItem() instanceof DiskItem && hasSystem(stack)) {
+            if (DriveVolumes.isDisk(stack) && hasSystem(stack)) {
                 return i;
             }
         }
@@ -127,7 +128,7 @@ public final class OsDisks {
         int firstDisk = -1;
         for (int i = 0; i < diskCount; i++) {
             final ItemStack stack = diskInSlot.apply(i);
-            if (!(stack.getItem() instanceof DiskItem)) {
+            if (!DriveVolumes.isDisk(stack)) {
                 continue;
             }
             if (!hasSystem(stack)) {
@@ -167,9 +168,10 @@ public final class OsDisks {
         if (systemsOn(disk).count() >= DiskSystems.MOST_SYSTEMS) {
             return false;
         }
-        final DiskItem target = (DiskItem) disk.getItem();
+        final DiskSpec target = HardwareRegistry.disk(disk);
         // The room left already accounts for the systems the disk carries, so a second one cannot overfill it.
-        return def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM <= systemDiskFreeWeight(disk);
+        return target != null
+                && def.footprintItemsOn(target.era()) * StorageKey.MB_EQ_PER_ITEM <= systemDiskFreeWeight(disk);
     }
 
     /**
@@ -179,12 +181,12 @@ public final class OsDisks {
     private static int targetFor(final int diskCount, final IntFunction<ItemStack> diskInSlot,
                                  final ResourceLocation osId, final int preferredSlot) {
         if (preferredSlot >= 0 && preferredSlot < diskCount
-                && diskInSlot.apply(preferredSlot).getItem() instanceof DiskItem) {
+                && DriveVolumes.isDisk(diskInSlot.apply(preferredSlot))) {
             return preferredSlot;
         }
         for (int i = 0; i < diskCount; i++) {
             final ItemStack stack = diskInSlot.apply(i);
-            if (stack.getItem() instanceof DiskItem && systemsOn(stack).has(osId)) {
+            if (DriveVolumes.isDisk(stack) && systemsOn(stack).has(osId)) {
                 return ALREADY_THERE;
             }
         }
@@ -292,7 +294,7 @@ public final class OsDisks {
             return FormatResult.NOTHING;
         }
         final ItemStack disk = diskInSlot.apply(slot);
-        if (!(disk.getItem() instanceof DiskItem)) {
+        if (!DriveVolumes.isDisk(disk)) {
             return FormatResult.NOTHING;
         }
         final boolean hadSystem = hasSystem(disk);
@@ -405,10 +407,11 @@ public final class OsDisks {
      * minus the stored items, the existing files, and the installed OS footprint.
      */
     public static long systemDiskFreeWeight(final ItemStack disk) {
-        if (!(disk.getItem() instanceof DiskItem diskItem)) {
+        final DiskSpec spec = HardwareRegistry.disk(disk);
+        if (spec == null) {
             return 0L;
         }
-        final long capacity = diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
+        final long capacity = spec.capacityItems() * StorageKey.MB_EQ_PER_ITEM;
         final long storageUsed = DriveVolumes.usedWeight(disk);
         final long fsUsed = DiskFilesystem.filesWeight(disk);
         /*
@@ -419,7 +422,7 @@ public final class OsDisks {
         for (final ResourceLocation osId : systemsOn(disk).ids()) {
             final OsDef os = OsRegistry.getOs(osId);
             if (os != null) {
-                osReserved += os.footprintItemsOn(diskItem.spec().era()) * StorageKey.MB_EQ_PER_ITEM;
+                osReserved += os.footprintItemsOn(spec.era()) * StorageKey.MB_EQ_PER_ITEM;
             }
         }
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);

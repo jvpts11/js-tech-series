@@ -24,6 +24,7 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.computers.PartSheets;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -55,14 +56,14 @@ public final class DiskEraGameTests {
 
     @GameTest(template = ARENA)
     public static void diskSpec_nameplateFollowsTheEraOfTheDrive(final GameTestHelper helper) {
-        final DiskSpec vintage = HardwareItems.DISK_TRENCH_20M.get().spec();
+        final DiskSpec vintage = PartSheets.disk(HardwareItems.DISK_TRENCH_20M.get());
         helper.assertTrue(vintage.era() == HardwareEra.VINTAGE && vintage.capacityItems() == 20 && vintage.capacityMb() == 20,
                 "the Trench 20M is a 20 MB vintage drive of 20 items; got " + vintage);
         helper.assertTrue("20 MB".equals(DiskSpec.sizeLabel(vintage.capacityMb())), "labelled 20 MB");
-        final DiskSpec legacy = HardwareItems.DISK_LINK_IDE_4G.get().spec();
+        final DiskSpec legacy = PartSheets.disk(HardwareItems.DISK_LINK_IDE_4G.get());
         helper.assertTrue(legacy.era() == HardwareEra.LEGACY && legacy.capacityItems() == 256 && legacy.capacityMb() == 4_096,
                 "the IDE 4G is a 4 GB legacy drive of 256 items; got " + legacy);
-        final DiskSpec standard = ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1).spec();
+        final DiskSpec standard = PartSheets.disk(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
         helper.assertTrue(standard.era() == HardwareEra.STANDARD && standard.capacityItems() == 4_096
                         && "1 TB".equals(DiskSpec.sizeLabel(standard.capacityMb())),
                 "the 1 TB NVMe is 4 096 items at 256 MB each; got " + standard + " " + DiskSpec.sizeLabel(standard.capacityMb()));

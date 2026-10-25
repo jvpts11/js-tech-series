@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +24,17 @@ import org.jetbrains.annotations.Nullable;
 public final class EraMemory {
 
     /** The era a program's declared memory is written for. */
-    public static final HardwareEra DECLARED_FOR = HardwareEra.LEGACY;
+    public static final Era DECLARED_FOR = HardwareEra.LEGACY;
 
     /** The factors are counted in sixteenths, which is how the Vintage's sixteenth stays a whole number. */
     private static final int SIXTEENTHS_PER_ONE = 16;
+    private static final EraTable<Integer> SIXTEENTHS = EraTable.of(1)
+            .from(HardwareEra.LEGACY, 16)
+            .from(HardwareEra.TRANSITION, 128)
+            .from(HardwareEra.STANDARD, 512)
+            .from(HardwareEra.ADVANCED, 2_048)
+            .from(HardwareEra.EXA, 8_192)
+            .from(HardwareEra.SINGULARITY, 32_768);
 
     private EraMemory() {
     }
@@ -34,7 +43,7 @@ public final class EraMemory {
      * What a program declaring {@code legacyMb} holds on a machine of {@code era}, never less than a megabyte for one
      * that holds anything; a machine whose era is not known is taken for a Legacy one.
      */
-    public static int scaled(final int legacyMb, @Nullable final HardwareEra era) {
+    public static int scaled(final int legacyMb, @Nullable final Era era) {
         if (legacyMb <= 0) {
             return 0;
         }
@@ -43,15 +52,7 @@ public final class EraMemory {
     }
 
     /** How many times a Legacy machine's memory a typical machine of {@code era} has, in sixteenths. */
-    public static int sixteenths(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> 1;
-            case LEGACY -> 16;
-            case TRANSITION -> 128;
-            case STANDARD -> 512;
-            case ADVANCED -> 2_048;
-            case EXA -> 8_192;
-            case SINGULARITY -> 32_768;
-        };
+    public static int sixteenths(final Era era) {
+        return SIXTEENTHS.get(era);
     }
 }

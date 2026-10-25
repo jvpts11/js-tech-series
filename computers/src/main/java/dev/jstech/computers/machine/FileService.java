@@ -7,9 +7,10 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDisks;
@@ -28,9 +29,11 @@ import dev.jstech.computers.program.cli.NetPath;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,6 +74,9 @@ public final class FileService {
     private static final int VINTAGE_OPEN_FILES = 8;
     private static final int LEGACY_OPEN_FILES = 20;
     private static final int MOST_OPEN_FILES = 64;
+    private static final EraTable<Integer> OPEN_FILES = EraTable.of(VINTAGE_OPEN_FILES)
+            .from(HardwareEra.LEGACY, LEGACY_OPEN_FILES)
+            .from(HardwareEra.TRANSITION, MOST_OPEN_FILES);
     private static final TextKey NOT_EDITABLE =
             TextKey.of("jsc.service.file.not_editable", "%s: .%s files cannot be edited");
     private static final TextKey WROTE = TextKey.of("jsc.service.file.wrote", "wrote %s");
@@ -145,8 +151,8 @@ public final class FileService {
      */
     private void heard(final Resolved r) {
         final IOsHost host = this.osHost();
-        if (host != null && r.drive() != null && r.drive().disk().getItem() instanceof DiskItem disk
-                && disk.spec().tier() == StorageTier.HDD) {
+        if (host != null && r.drive() != null
+                && HardwareRegistry.disk(r.drive().disk()) instanceof DiskSpec disk && disk.tier() == StorageTier.HDD) {
             host.diskWorked(this.level);
         }
     }
@@ -700,8 +706,8 @@ public final class FileService {
             final ItemStack stack = drive.disk();
             final boolean ready = !stack.isEmpty();
             final long capacity;
-            if (stack.getItem() instanceof DiskItem diskItem) {
-                capacity = diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
+            if (HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
+                capacity = disk.capacityItems() * StorageKey.MB_EQ_PER_ITEM;
             } else if (stack.getItem() instanceof FormattedMediaItem mediaItem) {
                 capacity = mediaItem.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
             } else {
@@ -812,15 +818,8 @@ public final class FileService {
      * table of open files, and later ones a larger one (estimates, to be tuned in play).
      */
     public int openFileLimit() {
-        final HardwareEra era = this.machine instanceof IComputerTerminalHost host ? host.displayEra() : null;
-        if (era == null) {
-            return MOST_OPEN_FILES;
-        }
-        return switch (era) {
-            case VINTAGE -> VINTAGE_OPEN_FILES;
-            case LEGACY -> LEGACY_OPEN_FILES;
-            default -> MOST_OPEN_FILES;
-        };
+        final Era era = this.machine instanceof IComputerTerminalHost host ? host.displayEra() : null;
+        return era == null ? MOST_OPEN_FILES : OPEN_FILES.get(era);
     }
 
     /**

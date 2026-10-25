@@ -7,10 +7,11 @@
  */
 package dev.jstech.tests.gametest.computers;
 
-import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.EraKit;
 import dev.jstech.tests.testkit.computers.EraParts;
@@ -70,13 +71,13 @@ public final class ServerCardSlotGameTests {
         for (final EraKit kit : EraKit.values()) {
             for (final Item server : List.of(kit.server(), kit.storageServer(), kit.computeServer())) {
                 for (final Item item : BuiltInRegistries.ITEM) {
-                    if (!(item instanceof MotherboardItem board) || board.spec().era() != kit.era()
-                            || !seats(helper, server, item)) {
+                    final MotherboardSpec board = HardwareRegistry.board(new ItemStack(item));
+                    if (board == null || board.era() != kit.era() || !seats(helper, server, item)) {
                         continue;
                     }
                     tried++;
                     if (!takes(helper, server, item, kit.array())) {
-                        refused.add(server + " with " + item + " (" + board.spec().pcieSlots() + " slots)");
+                        refused.add(server + " with " + item + " (" + board.pcieSlots() + " slots)");
                     }
                 }
             }
@@ -99,7 +100,7 @@ public final class ServerCardSlotGameTests {
             final ServerAssemblyMenu menu = new ServerAssemblyMenu(0, player.getInventory(),
                     InteractionHand.MAIN_HAND);
             slotOf(menu, ServerHardwareHandler.MOBO).set(new ItemStack(kit.serverBoard()));
-            final Item graphics = EraParts.cardFor(kit.serverBoard(), GpuItem.class);
+            final Item graphics = EraParts.cardFor(kit.serverBoard(), GpuSpec.class);
             final Slot first = slotOf(menu, ServerHardwareHandler.GPU_START);
             final Slot second = slotOf(menu, ServerHardwareHandler.GPU_START + 1);
             if (!first.mayPlace(new ItemStack(kit.array())) || !second.isActive()

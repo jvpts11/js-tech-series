@@ -120,7 +120,7 @@ public final class ComputingComponents {
     /*
      * How much of a (non-Server) computer disk's storage is public, as a per-mille 0..1000. The
      * component rides on the disk ItemStack so the split travels with the disk when it is pulled
-     * and reinserted. An absent component reads as fully private (see DiskItem.publicPermille).
+     * and reinserted. An absent component reads as fully private (see DriveVolumes.publicPermille).
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>>
             DISK_PUBLIC_PERMILLE = COMPONENTS.registerComponentType("disk_public_permille", b -> b
@@ -160,7 +160,7 @@ public final class ComputingComponents {
                     .networkSynchronized(ByteBufCodecs.VAR_INT));
 
     /*
-     * Disk filesystem components: files and the installed OS live on the DiskItem stack so
+     * Disk filesystem components: files and the installed OS live on the disk's stack so
      * they travel with the disk when it is inserted or removed.
      */
 

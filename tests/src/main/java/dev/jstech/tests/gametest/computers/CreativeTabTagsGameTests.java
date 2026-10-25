@@ -12,7 +12,8 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.content.ContentTab;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,15 +50,15 @@ public final class CreativeTabTagsGameTests {
             for (final Item item : ComputingContent.shelf(shelf, null).items()) {
                 checked++;
                 expect(wrong, item, shelfTag, true);
-                for (final HardwareEra era : erasWithTabs()) {
+                for (final Era era : erasWithTabs()) {
                     expect(wrong, item, tag(ComputingContent.eraTag(era)), false);
                 }
             }
-            for (final HardwareEra era : erasWithTabs()) {
+            for (final Era era : erasWithTabs()) {
                 for (final Item item : ComputingContent.shelf(shelf, era).items()) {
                     checked++;
                     expect(wrong, item, shelfTag, true);
-                    for (final HardwareEra other : erasWithTabs()) {
+                    for (final Era other : erasWithTabs()) {
                         expect(wrong, item, tag(ComputingContent.eraTag(other)), other == era);
                     }
                 }
@@ -79,9 +80,9 @@ public final class CreativeTabTagsGameTests {
         helper.succeed();
     }
 
-    private static List<HardwareEra> erasWithTabs() {
-        final List<HardwareEra> eras = new ArrayList<>();
-        for (final HardwareEra era : HardwareEra.values()) {
+    private static List<Era> erasWithTabs() {
+        final List<Era> eras = new ArrayList<>();
+        for (final Era era : Eras.ordered()) {
             final ContentTab tab = ComputingContent.tab(era);
             if (tab != null) {
                 eras.add(era);

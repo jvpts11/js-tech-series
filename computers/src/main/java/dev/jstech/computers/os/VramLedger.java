@@ -9,6 +9,8 @@ package dev.jstech.computers.os;
 
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,16 @@ public final class VramLedger {
 
     /** The kilobytes in a megabyte. */
     public static final long KB_PER_MB = 1024L;
+    /* A block of the Vintage's sixteen-colour tube, beside the monochrome one the table gives the era. */
+    private static final long VINTAGE_COLOUR_KB = 256L;
+    /* A block of each era's lit monitor, each era four times the one before. */
+    private static final EraTable<Long> MONITOR_KB = EraTable.of(64L)
+            .from(HardwareEra.LEGACY, 4L * KB_PER_MB)
+            .from(HardwareEra.TRANSITION, 16L * KB_PER_MB)
+            .from(HardwareEra.STANDARD, 64L * KB_PER_MB)
+            .from(HardwareEra.ADVANCED, 256L * KB_PER_MB)
+            .from(HardwareEra.EXA, 1_024L * KB_PER_MB)
+            .from(HardwareEra.SINGULARITY, 4_096L * KB_PER_MB);
 
     public VramLedger(final long totalKb) {
         this.totalKb = Math.max(0L, totalKb);
@@ -115,23 +127,18 @@ public final class VramLedger {
      * its sixteen-colour one, then 4 MB, 16 MB, 64 MB and 256 MB from the Legacy to the Advanced, each era after
      * four times the one before.
      */
-    public static long monitorKbPerBlock(final HardwareEra era, final boolean sixteenColours) {
-        return switch (era) {
-            case VINTAGE -> sixteenColours ? 256L : 64L;
-            case LEGACY -> 4L * KB_PER_MB;
-            case TRANSITION -> 16L * KB_PER_MB;
-            case STANDARD -> 64L * KB_PER_MB;
-            case ADVANCED -> 256L * KB_PER_MB;
-            case EXA -> 1024L * KB_PER_MB;
-            case SINGULARITY -> 4096L * KB_PER_MB;
-        };
+    public static long monitorKbPerBlock(final Era era, final boolean sixteenColours) {
+        if (sixteenColours && era == HardwareEra.VINTAGE) {
+            return VINTAGE_COLOUR_KB;
+        }
+        return MONITOR_KB.get(era);
     }
 
     /**
      * The kilobytes a graphics window of a machine of {@code era} holds: a quarter of a colour monitor block of that
      * era, or a whole block while it fills the screen.
      */
-    public static long windowKb(final HardwareEra era, final boolean fullScreen) {
+    public static long windowKb(final Era era, final boolean fullScreen) {
         final long block = monitorKbPerBlock(era, true);
         return fullScreen ? block : block / 4L;
     }

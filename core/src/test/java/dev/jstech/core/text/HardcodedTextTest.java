@@ -117,6 +117,8 @@ class HardcodedTextTest {
     private static final String MCP_TOOLS = "what the MCP server's tools do and what their arguments are, which an "
             + "agent reads in English as the protocol is written, and the arguments' names";
     private static final String CORE = "core/src/main/java/dev/jstech/core/";
+    private static final String DECLARED_WHAT = "what a declared kind or part is, named in the message of the error a "
+            + "wrong declaration is refused with, which whoever made the mod reads in the log";
     private static final String MODIFIER_PROBLEMS = "what a datapack's worldgen modifier gets wrong, for the log and the "
             + "structures' dump, which whoever wrote the datapack reads";
     private static final String PARSER_WANTS = "what a model file's parser wanted where the file does not read, the "
@@ -161,6 +163,14 @@ class HardcodedTextTest {
                     "the name of the covers' worker thread, which only a thread dump shows"),
             data(COMPUTERS + "hardware/IsaSpec.java", 1,
                     "the kind of thing an exception's message names when an id has no namespace"),
+            data(COMPUTERS + "hardware/ExpansionCardKind.java", 2, DECLARED_WHAT),
+            data(COMPUTERS + "hardware/FormFactor.java", 2, DECLARED_WHAT),
+            data(COMPUTERS + "hardware/PcieGeneration.java", 2, DECLARED_WHAT),
+            data(COMPUTERS + "hardware/RamGeneration.java", 2, DECLARED_WHAT),
+            data(COMPUTERS + "hardware/HardwareCodecs.java", 4, DECLARED_WHAT),
+            data(COMPUTERS + "registry/HardwareRegistry.java", 4, DECLARED_WHAT),
+            data(COMPUTERS + "scripting/ScriptedHardware.java", 15, DECLARED_WHAT
+                    + ", from a modpack's startup script"),
             data(COMPUTERS + "blockentity/AbstractComputerBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "blockentity/MainframeBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "client/os/ItemCategories.java", 7,

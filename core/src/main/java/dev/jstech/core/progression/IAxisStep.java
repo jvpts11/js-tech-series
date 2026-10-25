@@ -21,11 +21,16 @@ public interface IAxisStep {
     /** The step's place along its axis, counted from 0. */
     int level();
 
-    /** The name the step is saved and written by in data files, lower case: {@code legacy}, {@code t3}. */
+    /** The name the step is saved and written by in data files, lower case: {@code jscore:legacy}, {@code t3}. */
     String serializedName();
 
     /** The step's name as a player reads it. */
     Text text();
+
+    /** Whether a save or a data file that names {@code name} means this step: its own saved name unless told. */
+    default boolean answersTo(final String name) {
+        return serializedName().equals(name);
+    }
 
     /** The step's name with what it is a step of, as a tooltip says it ("Legacy era"); its bare name unless told. */
     default Text named() {

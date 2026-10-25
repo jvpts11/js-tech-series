@@ -28,6 +28,7 @@ import dev.jstech.industrial.multiblock.SizeGives;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -56,13 +57,13 @@ public final class TestOvenBattery {
     /* Their block states and models are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<Block> BRICKS = BATTERY.built(TestSounds.CONTENT.block("test_oven_bricks",
                     Block::new)).named("Test oven bricks").look(IBlockLook.cubeAll("test_oven_bricks"))
-            .item().tab(TestItems.ITEMS).register();
+            .tag(BlockTags.MINEABLE_WITH_PICKAXE).item().tab(TestItems.ITEMS).register();
     /* With an item, as every terminal, so a wrench takes it away whole. */
     public static final BlockEntry<DeviceBlock> TERMINAL = BATTERY.built(TestSounds.CONTENT.block(
                     "test_oven_battery_terminal", Device.of(() -> TestOvenBattery.TERMINAL_ENTITY.get())
                             .ticks(MachineBlockEntity::serverTick).opensMenu(MachineMenu::new)::block))
             .named("Test oven battery terminal").look(IBlockLook.cubeAll("test_oven_battery_terminal"))
-            .item().tab(TestItems.ITEMS).register();
+            .tag(BlockTags.MINEABLE_WITH_PICKAXE).item().tab(TestItems.ITEMS).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TerminalBlockEntity>> TERMINAL_ENTITY =
             TestSounds.CONTENT.blockEntity("test_oven_battery_terminal", TerminalBlockEntity::new, TERMINAL);
 

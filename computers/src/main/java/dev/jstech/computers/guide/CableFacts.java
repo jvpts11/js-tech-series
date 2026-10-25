@@ -13,11 +13,14 @@ import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.function.ToLongFunction;
 
 /**
@@ -42,8 +45,14 @@ public final class CableFacts {
     /** What a table says in an era a line does not exist in. */
     static final TextKey NONE = TextKey.of("jsc.guide.facts.none", "none");
     /** The eras the tables run across, in the order of their columns. */
-    private static final List<HardwareEra> ERAS = List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY,
-            HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED);
+    private static final List<Era> ERAS = HardwareEra.WITH_PARTS;
+    /* Each era's peripheral cable, asked for when a page is written, never while this class loads. */
+    private static final EraTable<Supplier<CableEntry>> PERIPHERAL_CABLES = EraTable.ofFive(
+            () -> ComputingModule.VINTAGE_PERIPHERAL_CABLE,
+            () -> ComputingModule.LEGACY_PERIPHERAL_CABLE,
+            () -> ComputingModule.TRANSITION_PERIPHERAL_CABLE,
+            () -> ComputingModule.PERIPHERAL_CABLE,
+            () -> ComputingModule.ADVANCED_PERIPHERAL_CABLE);
 
     private CableFacts() {
     }
@@ -61,7 +70,7 @@ public final class CableFacts {
         for (final DataLine line : DataLine.values()) {
             final List<GuideBlock.GuideValue> cells = new ArrayList<>();
             cells.add(new GuideBlock.GuideValue.Words(nameOf(line).key()));
-            for (final HardwareEra era : ERAS) {
+            for (final Era era : ERAS) {
                 final DataLink link = new DataLink(line, era);
                 cells.add(link.exists() ? new GuideBlock.GuideValue.Amount(figure.applyAsLong(link), "")
                         : new GuideBlock.GuideValue.Words(NONE.key()));
@@ -74,7 +83,7 @@ public final class CableFacts {
     /* A row for each era's peripheral cable: the era, the cable's name and how far the cable says it reaches. */
     private static List<GuideBlock.TableRow> peripheralRows() {
         final List<GuideBlock.TableRow> rows = new ArrayList<>();
-        for (final HardwareEra era : ERAS) {
+        for (final Era era : ERAS) {
             final CableEntry cable = peripheralCableOf(era);
             rows.add(new GuideBlock.TableRow(List.of(new GuideBlock.GuideValue.Said(era.named()),
                     new GuideBlock.GuideValue.Words(cable.asItem().getDescriptionId()),
@@ -93,13 +102,7 @@ public final class CableFacts {
         };
     }
 
-    private static CableEntry peripheralCableOf(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> ComputingModule.VINTAGE_PERIPHERAL_CABLE;
-            case LEGACY -> ComputingModule.LEGACY_PERIPHERAL_CABLE;
-            case TRANSITION -> ComputingModule.TRANSITION_PERIPHERAL_CABLE;
-            case STANDARD -> ComputingModule.PERIPHERAL_CABLE;
-            case ADVANCED, EXA, SINGULARITY -> ComputingModule.ADVANCED_PERIPHERAL_CABLE;
-        };
+    private static CableEntry peripheralCableOf(final Era era) {
+        return PERIPHERAL_CABLES.get(era).get();
     }
 }

@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.OpticalPort;
+import dev.jstech.computers.block.PartEras;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.guide.CableFacts;
@@ -26,6 +27,7 @@ import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
@@ -101,7 +103,7 @@ public final class CableLineGameTests {
     @GameTest(template = ARENA)
     public static void mainframeParts_takeOnlyTheCablesOfTheirMainframesEra(final GameTestHelper helper) {
         final BlockState part = ComputingModule.MAINFRAME_PART.get().defaultBlockState()
-                .setValue(MainframePartBlock.ERA, HardwareEra.VINTAGE.level());
+                .setValue(MainframePartBlock.ERA, PartEras.valueFor(HardwareEra.VINTAGE));
         final IFaceConnector block = (IFaceConnector) part.getBlock();
         helper.assertFalse(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.ADVANCED)),
                 "a Vintage Mainframe's part refuses the Advanced peripheral cable");
@@ -132,7 +134,7 @@ public final class CableLineGameTests {
             }
         }
         helper.assertTrue(part != null, "the cabinet raised its parts");
-        helper.assertTrue(part.getValue(ServerRackPartBlock.ERA) == HardwareEra.VINTAGE.level(),
+        helper.assertTrue(part.getValue(ServerRackPartBlock.ERA) == PartEras.valueFor(HardwareEra.VINTAGE),
                 "the cabinet stamps its era on its parts");
         final IFaceConnector block = (IFaceConnector) part.getBlock();
         helper.assertFalse(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.ADVANCED)),
@@ -140,7 +142,7 @@ public final class CableLineGameTests {
         helper.assertTrue(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.VINTAGE)),
                 "and takes its own era's");
         final BlockState compute = part.setValue(ServerRackPartBlock.COMPUTE, true)
-                .setValue(ServerRackPartBlock.ERA, HardwareEra.STANDARD.level());
+                .setValue(ServerRackPartBlock.ERA, PartEras.valueFor(HardwareEra.STANDARD));
         helper.assertFalse(block.accepts(compute, Direction.NORTH, PeripheralLine.of(HardwareEra.STANDARD)),
                 "a Supercomputer Rack's part takes no peripheral cable, as its cabinet takes none");
         helper.succeed();
@@ -163,7 +165,7 @@ public final class CableLineGameTests {
                     laid.cable().id() + " says it reaches " + reach + " cables: " + said);
             // The table's rows are the lines in their order, its columns after the first the eras in theirs.
             final GuideBlock.GuideValue cell = reaches.get(List.of(DataLine.values()).indexOf(laid.line())).cells()
-                    .get(1 + List.of(HardwareEra.values()).indexOf(laid.era()));
+                    .get(1 + HardwareEra.SERIES.indexOf(laid.era()));
             helper.assertTrue(cell.equals(new GuideBlock.GuideValue.Amount(reach, "")),
                     "the manual's table reads " + reach + " for " + laid.cable().id() + ": " + cell);
         }
@@ -312,6 +314,6 @@ public final class CableLineGameTests {
     }
 
     /** A cable as the test lays it, with the line and era it is. */
-    private record Laid(CableEntry cable, DataLine line, HardwareEra era) {
+    private record Laid(CableEntry cable, DataLine line, Era era) {
     }
 }

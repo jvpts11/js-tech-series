@@ -14,7 +14,7 @@ import dev.jstech.computers.client.os.DeviceManagerApp;
 import dev.jstech.computers.client.os.HelpViewerApp;
 import dev.jstech.computers.client.os.SettingsApp;
 import dev.jstech.computers.client.os.TaskManagerApp;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -116,7 +116,7 @@ public final class EraSystemProgramsClientTests {
     /* The Device Manager listing the graphics card the era's computer was built with. */
     private static void deviceManager(final ClientTestContext ctx, final EraKit kit) {
         final String label = "Device Manager";
-        final String card = new ItemStack(EraParts.cardFor(kit.computerBoard(), GpuItem.class)).getHoverName()
+        final String card = new ItemStack(EraParts.cardFor(kit.computerBoard(), GpuSpec.class)).getHoverName()
                 .getString();
         open(ctx, kit, label)
                 .thenWaitUntil(() -> app(ctx, label, DeviceManagerApp.class).shownRows().stream()

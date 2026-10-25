@@ -12,10 +12,12 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.MainframeStructure;
+import dev.jstech.computers.block.PartEras;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.menu.MainframeMenu;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -286,7 +288,7 @@ public final class EraMachineGameTests {
     }
 
     private static void assertPartsCarryEra(final GameTestHelper helper, final MainframeBlock block,
-                                            final HardwareEra era) {
+                                            final Era era) {
         final BlockPos origin = new BlockPos(4, 2, 4);
         final Direction facing = Direction.NORTH;
         helper.setBlock(origin, block.defaultBlockState().setValue(MainframeBlock.FACING, facing));
@@ -300,7 +302,7 @@ public final class EraMachineGameTests {
                         final var state = helper.getBlockState(p);
                         if (state.getBlock() instanceof MainframePartBlock) {
                             parts++;
-                            if (HardwareEra.fromLevel(state.getValue(MainframePartBlock.ERA)) == era) {
+                            if (PartEras.eraOf(state.getValue(MainframePartBlock.ERA)) == era) {
                                 eraParts++;
                             }
                         }

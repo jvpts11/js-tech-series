@@ -7,9 +7,10 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Immutable specification of a CPU.
@@ -22,7 +23,8 @@ import java.util.Objects;
  * ({@link CpuDesign}): an old chip at a high clock no longer outruns a better one that came after it. A chip is
  * declared with its design on top, {@code new CpuSpec(...).on(Microarchitectures.HASWELL, "")}.
  */
-public record CpuSpec(HardwareEra era,
+@ApiStatus.Experimental
+public record CpuSpec(Era era,
                       IsaSpec isa,
                       CpuSocketId socket,
                       int cores,
@@ -58,13 +60,13 @@ public record CpuSpec(HardwareEra era,
     }
 
     /** A processor that says nothing of its design, which counts as the P6's. */
-    public CpuSpec(final HardwareEra era, final IsaSpec isa, final CpuSocketId socket, final int cores,
+    public CpuSpec(final Era era, final IsaSpec isa, final CpuSocketId socket, final int cores,
                    final int freqMhz, final int tdpWatts, final boolean alien) {
         this(era, isa, socket, cores, freqMhz, tdpWatts, alien, CpuDesign.UNSPECIFIED);
     }
 
     /** A processor of this mod's own hardware, built on the instruction set its era is made of. */
-    public CpuSpec(final HardwareEra era, final CpuSocketId socket, final int cores, final int freqMhz,
+    public CpuSpec(final Era era, final CpuSocketId socket, final int cores, final int freqMhz,
                    final int tdpWatts, final boolean alien) {
         this(era, Isas.of(era), socket, cores, freqMhz, tdpWatts, alien);
     }

@@ -8,8 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.os.OsDisks;
-import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
@@ -24,6 +23,7 @@ import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.InstallerProjection;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.TextHolder;
@@ -90,7 +90,7 @@ public final class DriveTable {
         // Data disks: every disk slot holding a real disk other than the boot disk.
         for (int i = 0; i < computer.diskSlots() && letter <= 'Z'; i++) {
             final ItemStack disk = computer.diskInSlot(i);
-            if (disk.isEmpty() || disk == system || !(disk.getItem() instanceof DiskItem)) {
+            if (disk.isEmpty() || disk == system || !DriveVolumes.isDisk(disk)) {
                 continue;
             }
             table.add(new Drive(letter, disk, FilesystemKind.HIERARCHICAL, computer::setChanged));
@@ -167,8 +167,8 @@ public final class DriveTable {
     /** Free space in mB-equivalents on a disk or medium: its capacity less the items, files and system it holds. */
     public static long freeWeightOf(final ItemStack stack) {
         final long capacityItems;
-        if (stack.getItem() instanceof DiskItem diskItem) {
-            capacityItems = diskItem.spec().capacityItems();
+        if (HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
+            capacityItems = disk.capacityItems();
         } else if (stack.getItem() instanceof FormattedMediaItem mediaItem) {
             capacityItems = mediaItem.format().capacityItems();
         } else {

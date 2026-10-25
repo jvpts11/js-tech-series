@@ -8,22 +8,18 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
-/**
- * A CPU component item.
- */
+/** What a processor's tooltip says: its cores and clock, its design, what it orchestrates, its socket and its ISA. */
 @TextHolder
-public class CpuItem extends SpecItem<CpuSpec> {
+final class ProcessorTooltip {
 
     private static final TextKey CORES = TextKey.of("jsc.item.cpu.cores", "%s cores @ %s GHz");
     private static final TextKey THROUGHPUT = TextKey.of("jsc.item.cpu.throughput", "%s it/t  -  %s W");
@@ -33,14 +29,10 @@ public class CpuItem extends SpecItem<CpuSpec> {
     /* The instruction set, then what an item costs on the era's disks. */
     private static final TextKey WORD = TextKey.of("jsc.item.cpu.word", "%s  -  %s");
 
-    public CpuItem(final Properties properties, final CpuSpec spec) {
-        super(properties, spec);
+    private ProcessorTooltip() {
     }
 
-    @Override
-    public void appendHoverText(final ItemStack stack, final TooltipContext context,
-                                final List<Component> tooltip, final TooltipFlag flag) {
-        final CpuSpec spec = spec();
+    static void append(final CpuSpec spec, final List<Component> tooltip) {
         tooltip.add(GameText.component(CORES.with(spec.cores(),
                         String.format(Locale.ROOT, "%.2f", spec.freqMhz() / 1000.0)))
                 .withStyle(ChatFormatting.GRAY));
@@ -58,7 +50,8 @@ public class CpuItem extends SpecItem<CpuSpec> {
          * read the ladder off the chip.
          */
         tooltip.add(GameText.component(WORD.with(HardwareTooltip.isa(spec),
-                HardwareTooltip.MB_PER_ITEM.with(spec.era().mbPerItem()))).withStyle(ChatFormatting.DARK_GRAY));
+                        HardwareTooltip.MB_PER_ITEM.with(EraStorage.mbPerItem(spec.era()))))
+                .withStyle(ChatFormatting.DARK_GRAY));
         HardwareTooltip.appendEra(tooltip, spec.era());
     }
 }

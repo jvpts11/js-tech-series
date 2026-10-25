@@ -7,12 +7,13 @@
  */
 package dev.jstech.computers.os;
 
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -35,8 +36,8 @@ public final class ReadyDisks {
     }
 
     /** A disk of {@code era} with the system {@code osId} on it, or an empty stack when no disk of the era fits it. */
-    public static ItemStack withSystem(final ResourceLocation osId, final HardwareEra era) {
-        final DiskItem disk = biggestOf(era);
+    public static ItemStack withSystem(final ResourceLocation osId, final Era era) {
+        final Item disk = biggestOf(era);
         if (disk == null) {
             return ItemStack.EMPTY;
         }
@@ -55,12 +56,14 @@ public final class ReadyDisks {
 
     /* The disk of that era that holds the most, which leaves the most room once the system is on it. */
     @Nullable
-    private static DiskItem biggestOf(final HardwareEra era) {
-        DiskItem best = null;
+    private static Item biggestOf(final Era era) {
+        Item best = null;
+        long most = 0L;
         for (final Item item : BuiltInRegistries.ITEM) {
-            if (item instanceof DiskItem disk && disk.spec().era() == era
-                    && (best == null || disk.spec().capacityItems() > best.spec().capacityItems())) {
-                best = disk;
+            final DiskSpec disk = HardwareRegistry.disk(item);
+            if (disk != null && disk.era() == era && (best == null || disk.capacityItems() > most)) {
+                best = item;
+                most = disk.capacityItems();
             }
         }
         return best;

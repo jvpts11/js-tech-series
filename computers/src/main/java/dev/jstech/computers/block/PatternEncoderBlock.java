@@ -24,11 +24,13 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IStandingParts;
-import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
+import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Containers;
@@ -62,12 +64,12 @@ import org.jetbrains.annotations.Nullable;
 public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock, ITrayBlock,
         IStandingParts {
 
-    private final HardwareEra era;
+    private final Era era;
     private final FacePorts ports;
 
     public static final MapCodec<PatternEncoderBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
+            EraCodecs.CODEC.fieldOf("era").forGetter(b -> b.era)
     ).apply(i, PatternEncoderBlock::new));
 
     /** The encoder's block entity, ticking its link and its jobs, with the bay's panel as its menu. */
@@ -102,20 +104,30 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
     /* Each era's tray as its model slides it out, seven model pixels, with the disc lying on it. */
     private static final StandingTray LEGACY_TRAY = new StandingTray(new FrontArea(10, 12, 52, 20), 24);
     private static final StandingTray LATER_TRAY = new StandingTray(new FrontArea(8, 12, 46, 20), 24);
+    /* The Vintage encoder writes floppies, which go through a slot, and has neither button nor tray. */
+    private static final EraTable<EjectButton> BUTTONS = EraTable.<EjectButton>of(null)
+            .from(HardwareEra.LEGACY, LEGACY_BUTTON)
+            .from(HardwareEra.TRANSITION, LATER_BUTTON);
+    private static final EraTable<StandingTray> TRAYS = EraTable.<StandingTray>of(null)
+            .from(HardwareEra.LEGACY, LEGACY_TRAY)
+            .from(HardwareEra.TRANSITION, LATER_TRAY);
+    /* What each era's encoder says when handed a medium it does not write. */
+    private static final EraTable<TextKey> ONLY = EraTable.ofFive(VINTAGE_ONLY, LEGACY_ONLY, TRANSITION_ONLY,
+            STANDARD_ONLY, ADVANCED_ONLY);
 
-    public PatternEncoderBlock(final Properties properties, final HardwareEra era) {
+    public PatternEncoderBlock(final Properties properties, final Era era) {
         super(properties, DEVICE);
         this.era = era;
         this.ports = PeripheralSockets.back(era);
     }
 
     /** The era of this encoder, which decides which media it writes. */
-    public HardwareEra era() {
+    public Era era() {
         return era;
     }
 
     @Override
-    public HardwareEra chassisEra() {
+    public Era chassisEra() {
         return era;
     }
 
@@ -129,21 +141,13 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
     @Override
     @Nullable
     public EjectButton ejectButton() {
-        return switch (era) {
-            case VINTAGE -> null;
-            case LEGACY -> LEGACY_BUTTON;
-            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> LATER_BUTTON;
-        };
+        return BUTTONS.get(era);
     }
 
     @Override
     @Nullable
     public StandingTray standingTray() {
-        return switch (era) {
-            case VINTAGE -> null;
-            case LEGACY -> LEGACY_TRAY;
-            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> LATER_TRAY;
-        };
+        return TRAYS.get(era);
     }
 
     /* Its tray, once open, stands out of the block, and is looked at and clicked as the encoder's own. */
@@ -270,12 +274,6 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
                 && !fmt.writable()) {
             return READ_ONLY;
         }
-        return switch (era) {
-            case VINTAGE -> VINTAGE_ONLY;
-            case LEGACY -> LEGACY_ONLY;
-            case TRANSITION -> TRANSITION_ONLY;
-            case STANDARD -> STANDARD_ONLY;
-            case ADVANCED, EXA, SINGULARITY -> ADVANCED_ONLY;
-        };
+        return ONLY.get(era);
     }
 }

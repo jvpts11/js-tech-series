@@ -15,13 +15,15 @@ import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.InstallMode;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.api.client.IGuideBlockRenderer;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.lang.ref.WeakReference;
@@ -38,6 +40,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
@@ -102,13 +105,13 @@ public final class FirmwarePictures implements IGuideBlockRenderer {
     /* The setup of an example machine of the age that wears the look, as its monitor would show it. */
     private static AbstractComputerScreen<?> build(final FirmwareKind look) {
         final Minecraft minecraft = Minecraft.getInstance();
-        final HardwareEra era = switch (look) {
+        final Era era = switch (look) {
             case CLI_BIOS -> HardwareEra.VINTAGE;
             case BLUE_BIOS -> HardwareEra.LEGACY;
             case UEFI -> HardwareEra.STANDARD;
         };
-        final FirmwareStatePayload state = new FirmwareStatePayload(BlockPos.ZERO, era.id(), machine(look, era), 0,
-                -1, entries(look), FirmwareStatePayload.RaidInfo.ABSENT);
+        final FirmwareStatePayload state = new FirmwareStatePayload(BlockPos.ZERO, EraCodecs.placeOf(era),
+                machine(look, era), 0, -1, entries(look), FirmwareStatePayload.RaidInfo.ABSENT);
         FirmwareScreen.faceWith(look, nameOf(computerOf(era)), state);
         final MonitorSessionMenu menu = new MonitorSessionMenu(0, minecraft.player.getInventory(), BlockPos.ZERO,
                 BlockPos.ZERO, era, MonitorSessionMenu.Phase.FIRMWARE);
@@ -116,7 +119,7 @@ public final class FirmwarePictures implements IGuideBlockRenderer {
                 Component.empty()), MonitorGlass.BESIDE, MonitorGlass.ABOVE_AND_BELOW);
     }
 
-    private static FirmwareStatePayload.Machine machine(final FirmwareKind look, final HardwareEra era) {
+    private static FirmwareStatePayload.Machine machine(final FirmwareKind look, final Era era) {
         return switch (look) {
             case CLI_BIOS -> new FirmwareStatePayload.Machine(text(computerOf(era)),
                     text(HardwareItems.CPU_INTEGRA_486DX2), 1, 66, "IA-16", 16,
@@ -151,8 +154,9 @@ public final class FirmwarePictures implements IGuideBlockRenderer {
 
     /* A disk entry whose size is the label the disk itself would show, as the real firmware screen writes it. */
     private static FirmwareStatePayload.Entry disk(final int slot, final Text system,
-                                                   final Supplier<? extends DiskItem> device) {
-        final String size = DiskSpec.sizeLabel(device.get().spec().capacityMb());
+                                                   final Supplier<? extends Item> device) {
+        final DiskSpec spec = HardwareRegistry.disk(device.get());
+        final String size = spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb());
         return new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, slot, "", system, text(device), size,
                 Text.EMPTY, true, -1);
     }
@@ -162,12 +166,12 @@ public final class FirmwarePictures implements IGuideBlockRenderer {
                 Text.EMPTY, true, mode);
     }
 
-    private static Supplier<? extends ItemLike> computerOf(final HardwareEra era) {
-        return switch (era) {
-            case VINTAGE -> ComputingModule.VINTAGE_PERSONAL_COMPUTER;
-            case LEGACY -> ComputingModule.LEGACY_PERSONAL_COMPUTER;
-            default -> ComputingModule.PERSONAL_COMPUTER;
-        };
+    private static Supplier<? extends ItemLike> computerOf(final Era era) {
+        if (era == HardwareEra.VINTAGE) {
+            return ComputingModule.VINTAGE_PERSONAL_COMPUTER;
+        }
+        return era == HardwareEra.LEGACY ? ComputingModule.LEGACY_PERSONAL_COMPUTER
+                : ComputingModule.PERSONAL_COMPUTER;
     }
 
     /* A part named as its tooltip names it, in the reader's language. */

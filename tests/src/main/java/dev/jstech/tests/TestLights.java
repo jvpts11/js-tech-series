@@ -69,7 +69,8 @@ public final class TestLights {
             .named("Test beam lamp").look(IBlockLook.cubeAll("test_beam_lamp")).register();
     public static final BlockEntry<LampBlock> FRAGILE_LAMP = TestSounds.CONTENT.block("test_fragile_lamp",
             properties -> new LampBlock(properties, FRAGILE, () -> TestLights.LAMP.get()))
-            .named("Test fragile lamp").look(IBlockLook.cubeAll("test_fragile_lamp")).item().register();
+            .named("Test fragile lamp").look(IBlockLook.cubeAll("test_fragile_lamp")).item().tab(TestItems.ITEMS)
+            .register();
     /* One block entity for every lamp, which reads its kind from its block. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LampBlockEntity>> LAMP =
             TestSounds.CONTENT.blockEntity("test_lamp", (pos, state) -> new LampBlockEntity(TestLights.LAMP.get(),

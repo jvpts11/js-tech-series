@@ -47,6 +47,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -162,7 +163,7 @@ public final class FreeBsdGameTests {
         helper.assertTrue(menu.entries().get(0).slot() >= 0 && !menu.entries().get(0).isFirmware(),
                 "the boot names the disk the system is really on: " + menu.entries().get(0));
         helper.assertTrue(menu.entries().get(1).isRestart(), "starting over comes second: " + menu.entries());
-        final HardwareEra era = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
+        final Era era = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
         final boolean reached = FirmwareKind.forEra(era) == FirmwareKind.UEFI;
         helper.assertTrue(menu.entries().size() == (reached ? 3 : 2),
                 "and nothing is listed that does nothing: " + menu.entries());

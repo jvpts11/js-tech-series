@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.os.boot;
 
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
@@ -15,6 +14,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -77,7 +77,7 @@ public final class WelcomeFacts {
         final ResourceLocation booted = machine.installedOsId();
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
-            if (!(disk.getItem() instanceof DiskItem)) {
+            if (!DriveVolumes.isDisk(disk)) {
                 continue;
             }
             final ResourceLocation osId = OsDisks.systemOn(disk);

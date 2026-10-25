@@ -8,7 +8,7 @@
 package dev.jstech.computers.operation.payload.files;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.operation.payload.CopyProgressPayload;
@@ -22,10 +22,11 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.InstallerProjection;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.server.level.ServerLevel;
@@ -113,7 +114,7 @@ final class CopyPlans {
                 return 0L;
             }
             final ICliComputer.FsResult read = shell.readFile(netDos(src));
-            final HardwareEra era = DiskFilesystem.eraOf(computer.systemDisk());
+            final Era era = DiskFilesystem.eraOf(computer.systemDisk());
             // A file read over the network comes back as its words, whose length is what it weighs.
             return read.ok() && read.message() instanceof Text.Literal words
                     ? FsPaths.sizeMbEq(words.value().length(), era) : 0L;
@@ -132,8 +133,8 @@ final class CopyPlans {
     }
 
     private static double volumeRate(final ItemStack volume) {
-        if (volume.getItem() instanceof DiskItem disk) {
-            return CopyTiming.diskRate(disk.spec().tier().speedMultiplier());
+        if (HardwareRegistry.disk(volume) instanceof DiskSpec disk) {
+            return CopyTiming.diskRate(disk.tier().speedMultiplier());
         }
         return volume.isEmpty() ? CopyTiming.diskRate(1) : CopyTiming.mediaRate(InstallerProjection.formatOf(volume));
     }

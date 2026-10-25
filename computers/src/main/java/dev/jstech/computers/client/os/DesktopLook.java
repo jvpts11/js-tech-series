@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +84,7 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, @Nullable Os
      * Transition, 11 is Advanced), so only a desktop that outlived its first faces has others to wear: its period
      * one up to the Legacy, its Transition one there, and today's from the Standard on.
      */
-    public OsSkin skinOn(@Nullable final HardwareEra era) {
+    public OsSkin skinOn(@Nullable final Era era) {
         if (era == null) {
             return this.skin;
         }

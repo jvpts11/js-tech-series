@@ -16,12 +16,13 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.ThisPcApp;
-import dev.jstech.computers.item.CpuItem;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.item.HardwareTooltip;
-import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.PsuItem;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.operation.payload.CancelSetupPayload;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -108,8 +109,9 @@ public final class ThisPcPayloads {
             final ItemStack sys = computer.systemDisk();
             int slot = 0;
             for (final ItemStack stack : computer.diskStacks()) {
-                if (stack.getItem() instanceof DiskItem diskItem) {
-                    final long cap = diskItem.spec().capacityItems();
+                final DiskSpec spec = HardwareRegistry.disk(stack);
+                if (spec != null) {
+                    final long cap = spec.capacityItems();
                     final ResourceLocation osId = OsDisks.systemOn(stack);
                     final DiskShares shares = DiskShares.of(stack);
                     /*
@@ -139,7 +141,8 @@ public final class ThisPcPayloads {
     /** A disk in a Dock Station's tray, as This PC lists it: an external drive, its name, size and use. */
     private static ThisPcPayload.WireMedia dockedRow(final BlockPos host, final IMediaDrive drive) {
         final ItemStack disk = drive.medium();
-        final long capItems = disk.getItem() instanceof DiskItem item ? item.spec().capacityItems() : 0L;
+        final DiskSpec spec = HardwareRegistry.disk(disk);
+        final long capItems = spec != null ? spec.capacityItems() : 0L;
         final long usedItems = Math.max(0L, capItems - DriveTable.freeWeightOf(disk) / StorageKey.MB_EQ_PER_ITEM);
         final int blocksAway = drive.pos().distManhattan(host);
         return new ThisPcPayload.WireMedia(drive.volume().readerPos(), drive.type().serializedName(),
@@ -226,19 +229,21 @@ public final class ThisPcPayloads {
                 if (part.isEmpty()) {
                     continue;
                 }
-                if (part.getItem() instanceof MotherboardItem) {
-                    board = GameText.of(part.getHoverName());
-                } else if (part.getItem() instanceof CpuItem chip) {
-                    cpus++;
-                    if (cpu.isEmpty()) {
-                        cpu = GameText.of(part.getHoverName());
-                        // A machine has one instruction set, so the first chip answers for all of them.
-                        isa = HardwareTooltip.isa(chip.spec());
+                final HardwareRegistry.Part seated = HardwareRegistry.part(part.getItem());
+                switch (seated == null ? null : seated.spec()) {
+                    case MotherboardSpec ignored -> board = GameText.of(part.getHoverName());
+                    case CpuSpec chip -> {
+                        cpus++;
+                        if (cpu.isEmpty()) {
+                            cpu = GameText.of(part.getHoverName());
+                            // A machine has one instruction set, so the first chip answers for all of them.
+                            isa = HardwareTooltip.isa(chip);
+                        }
                     }
-                } else if (part.getItem() instanceof GpuItem) {
-                    gpus++;
-                } else if (part.getItem() instanceof PsuItem) {
-                    psu = GameText.of(part.getHoverName());
+                    case GpuSpec ignored -> gpus++;
+                    case PsuSpec ignored -> psu = GameText.of(part.getHoverName());
+                    case null, default -> {
+                    }
                 }
             }
             valid = be.buildValid();

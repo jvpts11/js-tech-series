@@ -16,7 +16,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.crafting.NetworkRecipe;
-import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.crafting.CraftPlaces;
@@ -25,6 +25,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlTable;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -260,14 +261,14 @@ public final class IqlTables {
             }
             final String label = NetworkLookup.serverLabel(level, node.nodeUuid());
             for (final ItemStack disk : rack.claimedDriveStacks(slot)) {
-                if (!(disk.getItem() instanceof DiskItem item)) {
+                if (!(HardwareRegistry.disk(disk) instanceof DiskSpec spec)) {
                     continue;
                 }
                 final Map<String, Text> row = new LinkedHashMap<>();
                 row.put("disk", GameText.of(disk.getHoverName()));
                 row.put("server", Text.literal(label));
-                row.put("tier", Text.literal(item.spec().tier().name()));
-                row.put("size", Text.literal(Long.toString(item.spec().capacityItems())));
+                row.put("tier", Text.literal(spec.tier().name()));
+                row.put("size", Text.literal(Long.toString(spec.capacityItems())));
                 row.put("used", Text.literal(Long.toString(DriveVolumes.usedWeight(disk)
                         / StorageKey.MB_EQ_PER_ITEM)));
                 rows.add(row);

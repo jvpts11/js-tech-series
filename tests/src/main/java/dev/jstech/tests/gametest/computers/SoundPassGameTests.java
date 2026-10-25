@@ -27,6 +27,7 @@ import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
@@ -363,9 +364,9 @@ public final class SoundPassGameTests {
     }
 
     /* The context a machine running that system and desktop, of that age, gives its sounds. */
-    private static SoundContext on(final String system, final String desktop, final HardwareEra era) {
+    private static SoundContext on(final String system, final String desktop, final Era era) {
         return SoundContext.EMPTY.with(ComputingSounds.SYSTEM, system).with(ComputingSounds.DESKTOP, desktop)
-                .with(SoundContext.ERA, era.serializedName());
+                .with(SoundContext.ERA, era.path());
     }
 
     private static void picks(final GameTestHelper helper, final SoundCue cue, final SoundContext context,

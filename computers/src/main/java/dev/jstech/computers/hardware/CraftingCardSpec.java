@@ -8,7 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.crafting.CraftingEras;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.IndustrialTier;
 
 import java.util.Objects;
@@ -20,7 +20,7 @@ import java.util.Objects;
  * {@code cpuFactor}, the crafting throughput it delivers, as a multiple of the host CPU's capacity, and by its era
  * how many Crafting Interfaces it drives and how many bench recipes its own ROM keeps.
  */
-public record CraftingCardSpec(HardwareEra era, IndustrialTier tier, PcieGeneration bus, double cpuFactor,
+public record CraftingCardSpec(Era era, IndustrialTier tier, PcieGeneration bus, double cpuFactor,
                                int threads, int tdpWatts) implements IExpansionCardSpec {
 
     public CraftingCardSpec {

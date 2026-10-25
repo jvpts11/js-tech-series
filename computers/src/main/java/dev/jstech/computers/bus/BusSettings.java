@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.bus;
 
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ import java.util.Map;
  * @param access     for an External Storage Bus, which way the network may use it: {@link #READ_WRITE},
  *                   {@link #READ_ONLY} or {@link #WRITE_ONLY}
  */
-public record BusSettings(String name, HardwareEra era, List<String> filter, boolean exclude, int keep, int max,
+public record BusSettings(String name, Era era, List<String> filter, boolean exclude, int keep, int max,
                           List<Integer> itemKeep, List<Integer> itemMax, int priority, List<BusCondition> conditions,
                           List<String> tags, boolean fuzzy, boolean powered, boolean onDemand,
                           Map<String, String> setBy, boolean external, int access) {
@@ -70,7 +70,7 @@ public record BusSettings(String name, HardwareEra era, List<String> filter, boo
     }
 
     /** The settings of a bus that moves: an Import, an Export, or a crafting bus. */
-    public BusSettings(final String name, final HardwareEra era, final List<String> filter, final boolean exclude,
+    public BusSettings(final String name, final Era era, final List<String> filter, final boolean exclude,
                        final int keep, final int max, final List<Integer> itemKeep, final List<Integer> itemMax,
                        final int priority, final List<BusCondition> conditions, final List<String> tags,
                        final boolean fuzzy, final boolean powered, final boolean onDemand,
@@ -80,7 +80,7 @@ public record BusSettings(String name, HardwareEra era, List<String> filter, boo
     }
 
     /** A new bus of {@code era}: no name, nothing listed, nothing kept, on, and moving all the time. */
-    public static BusSettings fresh(final HardwareEra era) {
+    public static BusSettings fresh(final Era era) {
         final List<String> empty = List.of("", "", "", "", "");
         final List<Integer> zeros = List.of(0, 0, 0, 0, 0);
         return new BusSettings("", era, empty, false, 0, 0, zeros, zeros, 0, List.of(), List.of(), false, true, false,
@@ -88,7 +88,7 @@ public record BusSettings(String name, HardwareEra era, List<String> filter, boo
     }
 
     /** A new External Storage Bus of {@code era}: the whole inventory, read and written. */
-    public static BusSettings freshExternal(final HardwareEra era) {
+    public static BusSettings freshExternal(final Era era) {
         final BusSettings bus = fresh(era);
         return new BusSettings("", era, bus.filter(), false, 0, 0, bus.itemKeep(), bus.itemMax(), 0, List.of(),
                 List.of(), false, true, false, Map.of(), true, READ_WRITE);

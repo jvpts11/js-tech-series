@@ -3,7 +3,7 @@
   "criteria": {
     "done": {
       "conditions": {
-        "detail": "vintage",
+        "detail": "jscore:vintage",
         "event": "jsc:era_built"
       },
       "trigger": "jscore:event"

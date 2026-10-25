@@ -18,7 +18,8 @@ import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLines;
 import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -34,7 +35,7 @@ public class CraftingComputerBlock extends AbstractSmallComputerBlock<CraftingCo
 
     public static final MapCodec<CraftingComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(CraftingComputerBlock::era),
+            EraCodecs.CODEC.fieldOf("era").forGetter(CraftingComputerBlock::era),
             StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(CraftingComputerBlock::caseStyle)
     ).apply(i, CraftingComputerBlock::new));
 
@@ -42,7 +43,7 @@ public class CraftingComputerBlock extends AbstractSmallComputerBlock<CraftingCo
      * Data over its era's access line on the back (through a router to the backbone), and the crafting cable to its
      * Crafting Interfaces on any face, since the search for the crafting network walks out of all six.
      */
-    public CraftingComputerBlock(final Properties properties, final HardwareEra era, final CaseStyle caseStyle) {
+    public CraftingComputerBlock(final Properties properties, final Era era, final CaseStyle caseStyle) {
         super(properties, era, caseStyle,
                 FacePorts.builder()
                         .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS))

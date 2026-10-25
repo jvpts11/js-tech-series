@@ -177,7 +177,7 @@ public final class ClusterManagerStateBuilder {
                 nodes.add(new ClusterManagerStatePayload.WireNode(node.rack().asLong(), rIdx, node.row(),
                         ClusterManagementComputerBlockEntity.nodeName(rack, node.row()),
                         osLabel(host), programsLabel(host),
-                        phi == null ? -1 : HbwInterfaceBlockEntity.modelIndex(phi.spec()),
+                        phi == null ? -1 : HbwInterfaceBlockEntity.modelIndex(phi),
                         rack.bayPowerOn(node.row()), slotIndex, code, 0L, 0L,
                         nodeState(cmc, rack, node.row(), server, host, slotIndex, code)));
             }

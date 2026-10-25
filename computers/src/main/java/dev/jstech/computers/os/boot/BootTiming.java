@@ -8,7 +8,7 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.os.install.SetupTiming;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.Era;
 
 /**
  * How long a machine takes to come up: the self-test, the system booting, and shutting down again.
@@ -91,7 +91,7 @@ public final class BootTiming {
      * @param devices       how many devices have to be found: disks, cards and drives holding something
      * @param era           the machine's generation, which is how fast its firmware works
      */
-    public static int postTicks(final int memoryModules, final int devices, final HardwareEra era) {
+    public static int postTicks(final int memoryModules, final int devices, final Era era) {
         final double found = POST_BASE_SECONDS
                 + Math.max(0, memoryModules) * POST_SECONDS_PER_MODULE
                 + Math.max(0, devices) * POST_SECONDS_PER_DEVICE;
@@ -106,7 +106,7 @@ public final class BootTiming {
      * @param era                the machine's generation
      * @param tightRam           whether the machine leaves the system no room to spare
      */
-    public static int bootTicks(final int footprintMb, final int diskSpeedMultiplier, final HardwareEra era,
+    public static int bootTicks(final int footprintMb, final int diskSpeedMultiplier, final Era era,
                                 final boolean tightRam) {
         final double rate = BOOT_FOOTPRINT_MB_PER_SECOND
                 * Math.max(1, diskSpeedMultiplier) * SetupTiming.eraFactor(era);

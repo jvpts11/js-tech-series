@@ -15,6 +15,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -127,10 +128,10 @@ public final class DesktopSplashArt {
      *                 smooth between them and still while motion is reduced
      * @param progress how far through the desktop's own share of the wait, in hundredths
      */
-    public static void draw(final GuiGraphics g, final Font font, final BootIdentity who, final HardwareEra era,
+    public static void draw(final GuiGraphics g, final Font font, final BootIdentity who, final Era era,
                             final int x, final int y, final int w, final int h, final double loop,
                             final int progress) {
-        final boolean old = era != null && era.compareTo(HardwareEra.STANDARD) < 0;
+        final boolean old = era != null && !era.isAtLeast(HardwareEra.STANDARD);
         final String systemName = who.systemName();
         final PanelStyle style = styleOf(who.desktopId());
         switch (style == null ? PanelStyle.GNOME : style) {
@@ -160,8 +161,8 @@ public final class DesktopSplashArt {
      * The one colour that desktop's loading screen is mostly made of, which is what is left over the desktop as the
      * screen gives way to it.
      */
-    public static int ground(final BootIdentity who, final HardwareEra era) {
-        final boolean old = era != null && era.compareTo(HardwareEra.STANDARD) < 0;
+    public static int ground(final BootIdentity who, final Era era) {
+        final boolean old = era != null && !era.isAtLeast(HardwareEra.STANDARD);
         final PanelStyle style = styleOf(who.desktopId());
         return switch (style == null ? PanelStyle.GNOME : style) {
             case KDE -> old ? KDE_CLASSIC.get().ground() : PLASMA.get().bottom();

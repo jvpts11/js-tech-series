@@ -9,6 +9,7 @@ package dev.jstech.computers.crafting;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
@@ -16,8 +17,8 @@ class CraftingErasTest {
 
     @Test
     void romPerCard_neverExceedsTheWireCap() {
-        for (final HardwareEra era : HardwareEra.values()) {
-            assertTrue(CraftingEras.romPerCard(era) <= CraftingEras.MAX_ROM_PER_CARD, era.name());
+        for (final Era era : HardwareEra.SERIES) {
+            assertTrue(CraftingEras.romPerCard(era) <= CraftingEras.MAX_ROM_PER_CARD, era.id());
         }
     }
 }

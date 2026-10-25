@@ -10,12 +10,16 @@ package dev.jstech.computers.os;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.api.ComputersRegisterEvent;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Optional;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Immutable descriptor for an operating system registered with the mod.
@@ -53,10 +57,11 @@ import java.util.Optional;
  *                       the family has no order: nothing is newer or older than anything else in it, and a
  *                       program is decided by the platform alone
  */
+@ApiStatus.Experimental
 public record OsDef(
         ResourceLocation id,
         OsCapability capability,
-        HardwareEra minEra,
+        Era minEra,
         ResourceLocation kernelId,
         int footprintMb,
         Optional<ResourceLocation> installMediaId,
@@ -75,7 +80,7 @@ public record OsDef(
     public static final Codec<OsDef> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(OsDef::id),
             StableCodecs.byName(OsCapability.class).fieldOf("capability").forGetter(OsDef::capability),
-            StableCodecs.byName(HardwareEra.class).fieldOf("min_era").forGetter(OsDef::minEra),
+            EraCodecs.CODEC.fieldOf("min_era").forGetter(OsDef::minEra),
             ResourceLocation.CODEC.fieldOf("kernel").forGetter(OsDef::kernelId),
             Codec.INT.optionalFieldOf("footprint_mb", 0).forGetter(OsDef::footprintMb),
             ResourceLocation.CODEC.optionalFieldOf("install_media").forGetter(OsDef::installMediaId),
@@ -100,7 +105,7 @@ public record OsDef(
      * package manager, guided install, and the given bundled desktop (empty for a terminal or network OS).
      */
     public static OsDef mediaInstalled(final ResourceLocation id, final OsCapability capability,
-                                       final HardwareEra minEra, final ResourceLocation kernelId,
+                                       final Era minEra, final ResourceLocation kernelId,
                                        final int footprintMb, final Platform platform,
                                        final String displayName, final Optional<ResourceLocation> bundledDesktop,
                                        final SoftwareHouse house) {
@@ -129,7 +134,7 @@ public record OsDef(
      * no Linux but are met at the same kind of prompt are too.
      */
     public static OsDef terminalSystem(final ResourceLocation id, final ResourceLocation kernelId,
-                                       final Platform platform, final HardwareEra minEra, final int footprintMb,
+                                       final Platform platform, final Era minEra, final int footprintMb,
                                        final String displayName, final ShellKind shell,
                                        final PackageManagerKind packageManager, final InstallMode installMode,
                                        final SoftwareHouse house) {
@@ -206,8 +211,8 @@ public record OsDef(
      * cost per item, rounded up. A 20 GB system is 80 items on a standard disk and more than a whole
      * vintage drive.
      */
-    public long footprintItemsOn(final HardwareEra diskEra) {
-        return diskEra.itemsFor(footprintMb);
+    public long footprintItemsOn(final Era diskEra) {
+        return EraStorage.itemsFor(diskEra, footprintMb);
     }
 
     /** The translation key for this OS's display name, in vanilla {@code os.<ns>.<path>} form. */

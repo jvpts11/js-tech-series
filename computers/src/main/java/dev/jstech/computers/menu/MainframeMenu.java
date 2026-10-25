@@ -11,13 +11,13 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.gui.layout.MainframeLayout;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.menu.SlotGroup;
 import dev.jstech.core.jstechseries.network.FailoverRole;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -92,7 +92,7 @@ public class MainframeMenu extends CoreMenu {
     }
 
     @Nullable
-    public HardwareEra hardwareEra() {
+    public Era hardwareEra() {
         return blockEntity.displayEra();
     }
 
