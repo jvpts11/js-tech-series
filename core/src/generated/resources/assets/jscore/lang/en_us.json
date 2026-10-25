@@ -2826,6 +2826,7 @@
   "jscore.operation.failure.cancelled": "the machine running it stopped",
   "jscore.operation.failure.crashed": "the Operation ran into a problem: %s (%s)",
   "jscore.operation.failure.no_result": "the Operation finished without saying what it did",
+  "jscore.operation.handler_broke": "the code of %s broke on the request",
   "jscore.overhead.blocked": "Something is in the way at %s",
   "jscore.overhead.full": "This insulator holds no more wires",
   "jscore.overhead.hung": "Hung %s blocks of wire",

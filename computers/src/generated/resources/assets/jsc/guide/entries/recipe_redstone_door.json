@@ -136,7 +136,7 @@
   ],
   "icon": "jsc:standard_redstone_interface",
   "id": "jsc:recipe_redstone_door",
-  "order": 326,
+  "order": 327,
   "section": "jsc:iql_recipe_list",
   "title": "jsc.guide.recipe_redstone_door.title"
 }

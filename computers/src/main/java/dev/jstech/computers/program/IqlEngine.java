@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.MemberRuns;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IIqlView;
@@ -229,6 +230,11 @@ public final class IqlEngine {
             final ICliComputer.OpResult set = computer.setRedstone(parsed.redstone(),
                     job == null ? IqlBusSetter.TYPED : job);
             return new Outcome(set.ok(), set.message(), List.of());
+        }
+        // Another mod's kind of Operation goes to a machine of the network, through the network's door.
+        if (parsed.isRun()) {
+            final MemberRuns.Outcome given = mainframe.networkOperations().run(parsed.run());
+            return new Outcome(given.ok(), given.said(), List.of());
         }
         return runOperation(parsed.operation(), depth);
     }

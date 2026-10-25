@@ -1,0 +1,178 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_run.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_run.definition1",
+      "term": "jsc.guide.iql_run.term1"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH"
+      ],
+      "name": "beam.iql"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_run.table1",
+      "heads": [
+        "jsc.guide.iql_run.table1_head1",
+        "jsc.guide.iql_run.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ON 'name'"
+          },
+          {
+            "words": "jsc.guide.iql_run.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "WITH field = value"
+          },
+          {
+            "words": "jsc.guide.iql_run.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "PRIORITY HIGH"
+          },
+          {
+            "words": "jsc.guide.iql_run.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_run.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_run.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_run.text3"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "RUN mymod:accel_run ON '12, 64, -3'"
+      ],
+      "name": "by_place.iql"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_run.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_run.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_run.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_run.text6"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CREATE JOB shield AS RUN mymod:shield_up WHEN EVENT mymod:solar_storm COMING"
+      ],
+      "name": "shield.iql"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_run.table2",
+      "heads": [
+        "jsc.guide.iql_run.table2_head1",
+        "jsc.guide.iql_run.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "<kind> queued for <machine>"
+          },
+          {
+            "words": "jsc.guide.iql_run.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "no machine on the network carries out <kind>"
+          },
+          {
+            "words": "jsc.guide.iql_run.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "no machine named <name> is on the network"
+          },
+          {
+            "words": "jsc.guide.iql_run.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_run.fix1",
+          "problem": "jsc.guide.iql_run.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_run.fix2",
+          "problem": "jsc.guide.iql_run.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql_run.fix3",
+          "problem": "jsc.guide.iql_run.problem3"
+        },
+        {
+          "fix": "jsc.guide.iql_run.fix4",
+          "problem": "jsc.guide.iql_run.problem4"
+        },
+        {
+          "fix": "jsc.guide.iql_run.fix5",
+          "problem": "jsc.guide.iql_run.problem5"
+        },
+        {
+          "fix": "jsc.guide.iql_run.fix6",
+          "problem": "jsc.guide.iql_run.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql_jobs",
+        "jsc:query_and_select",
+        "jsc:clauses_priority_if_with"
+      ]
+    }
+  ],
+  "id": "jsc:iql_run",
+  "order": 297,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.iql_run.title"
+}

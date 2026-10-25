@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.core;
 
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.multiblock.IMatchResult;
+import dev.jstech.core.jstechseries.operation.OperationRequest;
 import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.jstechseries.operation.SelfTestOperationTask;
 import dev.jstech.core.optional.OptionalMod;
@@ -36,6 +37,7 @@ import dev.jstech.tests.TestKitMachine;
 import dev.jstech.tests.TestMultiblocks;
 import dev.jstech.tests.TestNetworkMembers;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -244,11 +246,19 @@ public final class TestKitGameTests {
         helper.setBlock(AT.west(), TestNetworkMembers.ACCELERATOR.get());
         final NetworkScenes.Dispatch dispatch = NetworkScenes.dispatch(helper, 1);
         final UUID[] queued = new UUID[1];
+        final List<OperationRequest<TestNetworkMembers.AccelerateArgs>> beam = new ArrayList<>();
         helper.startSequence()
                 .thenWaitUntil(() -> network.expectMembers(helper, 1))
                 .thenExecute(() -> Expect.equal(helper, AT, "a request given to the accelerator",
                         OperationStatus.COMPLETED, NetworkScenes.send(helper, network, TestNetworkMembers.ACCELERATE,
-                                new TestNetworkMembers.AccelerateArgs())))
+                                new TestNetworkMembers.AccelerateArgs(0))))
+                // A beam of a second goes on after the request is given, and the machine says when it is over.
+                .thenExecute(() -> beam.add(NetworkScenes.request(helper, network, TestNetworkMembers.ACCELERATE,
+                        new TestNetworkMembers.AccelerateArgs(1))))
+                .thenExecute(() -> Expect.equal(helper, AT, "a beam of a second as it is given",
+                        OperationStatus.PROCESSING, beam.getFirst().status()))
+                .thenWaitUntil(() -> Expect.equal(helper, AT, "a beam of a second, a second later",
+                        OperationStatus.COMPLETED, beam.getFirst().status()))
                 .thenExecute(() -> queued[0] = dispatch.submit(new SelfTestOperationTask(1_000)))
                 .thenWaitUntil(() -> dispatch.expect(helper, AT, queued[0], OperationStatus.COMPLETED))
                 .thenExecute(() -> {

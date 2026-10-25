@@ -138,7 +138,7 @@
     }
   ],
   "id": "jsc:sigma_example_redstone",
-  "order": 400,
+  "order": 401,
   "section": "jsc:examples_devices",
   "title": "jsc.guide.sigma_example_redstone.title"
 }

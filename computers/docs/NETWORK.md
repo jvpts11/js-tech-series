@@ -96,10 +96,21 @@ QUERY disks
   coming when a machine on it is the event's instrument; each step goes into the network's event log as well.
 - **Upkeep**: `ANALYZE`, `VACUUM`, `REINDEX`.
 - **Changing items**: `UPDATE ... SET SMELT`, `ENCHANT`, `REPAIR`, `COMBINE ... WITH ...`, `NAME '...'`.
+- **Other mods' machines** (added 2026-10-25): `RUN` and the id of a kind of Operation another mod registered, to
+  have one of its machines on the network do it: `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton',
+  energy = 20 PRIORITY HIGH`. `ON` names the machine by the name you gave it on its screen, by its block's name and
+  short id, or by where it stands (`ON '12, 64, -3'`, as the `at` column writes it); without `ON`, the able machine
+  with the fewest such requests in flight takes it. `WITH` gives the fields the kind reads, by name; one it has not,
+  or a value it cannot read, is refused, naming the field. The request waits for a queue by its priority as any
+  other, goes to the machine, and lets the queue go: the machine's work, however long, holds none of the
+  Mainframe's queues. It stays in the list of what runs (where you can call it off, which stops the machine, or
+  change its priority) and goes into the log once the machine says it is done, under `RUN`, with its kind, the
+  machine and what was asked.
 - **Settings**: `SET BUS 'name' ...`, `SET REDSTONE 'name' ...`, `SET INTERFACE ...`, `SET ROUTER ...`.
 - **Saved work** (engines that offer it): `CREATE VIEW`, `CREATE PROCEDURE` and `EXEC`, and `CREATE JOB` with
   `EVERY` a time or `WHEN` a condition, for the network to run on its own. A job can wait for a world event:
-  `CREATE JOB safe AS EXEC shutdown WHEN EVENT mymod:solar_storm COMING` (or `UNDER WAY`, or `ENDED`).
+  `CREATE JOB safe AS EXEC shutdown WHEN EVENT mymod:solar_storm COMING` (or `UNDER WAY`, or `ENDED`), and answer it
+  on another mod's machine: `CREATE JOB shield AS RUN mymod:shield_up WHEN EVENT mymod:solar_storm COMING`.
 - A script is statements separated by `;`, with `--` comments, and can ask for values when it is run:
   `CRAFT <count, number, 64> <item, name, torch>`.
 

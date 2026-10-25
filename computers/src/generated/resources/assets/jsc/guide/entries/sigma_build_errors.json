@@ -88,7 +88,7 @@
     }
   ],
   "id": "jsc:sigma_build_errors",
-  "order": 384,
+  "order": 385,
   "section": "jsc:errors_compile",
   "title": "jsc.guide.sigma_build_errors.title"
 }

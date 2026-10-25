@@ -10,12 +10,16 @@ package dev.jstech.testkit.kit;
 import dev.jstech.core.jstechseries.network.ConnectivityIndex;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLink;
+import dev.jstech.core.jstechseries.network.INetworkMember;
+import dev.jstech.core.jstechseries.network.NetworkMembers;
+import dev.jstech.core.jstechseries.network.NetworkMembership;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.operation.IOperationArgs;
 import dev.jstech.core.jstechseries.operation.IOperationTask;
 import dev.jstech.core.jstechseries.operation.OperationDispatch;
 import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationRequest;
 import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.jstechseries.operation.OperationType;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -85,11 +89,21 @@ public final class NetworkScenes {
     }
 
     /**
-     * Gives a request of {@code type} to a member of {@code network} that carries it out, as the network gives it,
-     * and answers how it went; a failure when no member of the network carries that kind out.
+     * Gives a request of {@code type} to the first member of {@code network} that carries it out, as the network gives
+     * it, and answers the state it is in after; a failure when no member of the network carries that kind out.
      */
     public static <T extends IOperationArgs> OperationStatus send(final GameTestHelper helper, final Network network,
                                                                   final OperationType<T> type, final T args) {
+        return request(helper, network, type, args).status();
+    }
+
+    /**
+     * Gives a request of {@code type} to the first member of {@code network} that carries it out, as {@link #send}
+     * does, and hands back the request, to follow what the machine says of it over the ticks after.
+     */
+    public static <T extends IOperationArgs> OperationRequest<T> request(final GameTestHelper helper,
+                                                                         final Network network,
+                                                                         final OperationType<T> type, final T args) {
         final List<NetworkSystem.MemberNode> able = NetworkSystem.get(network.level())
                 .membersCarryingOut(network.id(), type.id());
         if (able.isEmpty()) {
@@ -97,7 +111,14 @@ public final class NetworkScenes {
                     "a request of " + type.id() + ": expected a member that carries it out, found "
                             + network.members().size() + " members, none of them able");
         }
-        return type.handler().execute(args);
+        final BlockPos at = BlockPos.of(able.getFirst().pos());
+        final INetworkMember machine = NetworkMembers.at(network.level(), at)
+                .map(NetworkMembership::member)
+                .orElseThrow(() -> Expect.failure(helper, helper.relativePos(at),
+                        "a request of " + type.id() + ": the member that carries it out is no longer loaded"));
+        final OperationRequest<T> request = new OperationRequest<>(type, args, machine);
+        request.start();
+        return request;
     }
 
     /**

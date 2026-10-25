@@ -15,6 +15,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.event.IOperationLifecycleEvent;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationRequest;
 import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.jstechseries.operation.OperationType;
 import dev.jstech.tests.JsTests;
@@ -188,9 +189,9 @@ public final class OperationLifecycleGameTests {
                     @SuppressWarnings("unchecked")
                     final OperationType<ComputingOperations.PullArgs> select = (OperationType<ComputingOperations.PullArgs>)
                             JsCore.operations().get(ComputingOperations.SELECT).orElseThrow();
-                    final OperationStatus status = select.handler().execute(new ComputingOperations.PullArgs(
+                    final OperationStatus status = OperationRequest.of(select, new ComputingOperations.PullArgs(
                             mainframe, StorageKey.of(Items.COBBLESTONE), 30L, StorageNetworkFixture.port(dest),
-                            "addon", null, OperationPriority.HIGH));
+                            "addon", null, OperationPriority.HIGH)).start();
                     helper.assertTrue(status == OperationStatus.PENDING, "a timed Operation is accepted as PENDING; got " + status);
                     final var live = mainframe.activeOperationRecords();
                     helper.assertTrue(live.size() == 1 && live.get(0).priority() == OperationPriority.HIGH,

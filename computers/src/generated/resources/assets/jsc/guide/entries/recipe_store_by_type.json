@@ -247,7 +247,7 @@
   ],
   "icon": "jsc:import_bus",
   "id": "jsc:recipe_store_by_type",
-  "order": 324,
+  "order": 325,
   "section": "jsc:iql_recipe_list",
   "title": "jsc.guide.recipe_store_by_type.title"
 }

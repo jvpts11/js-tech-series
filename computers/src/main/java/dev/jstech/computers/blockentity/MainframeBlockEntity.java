@@ -35,6 +35,7 @@ import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.QueueSpeeds;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.IPersistentOperation;
+import dev.jstech.computers.operation.MemberOperation;
 import dev.jstech.computers.operation.NetworkIndex;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
@@ -62,6 +63,7 @@ import dev.jstech.core.jstechseries.network.SubframeNode;
 import dev.jstech.core.jstechseries.operation.OperationBalance;
 import dev.jstech.core.jstechseries.operation.OperationDispatch;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationRequest;
 import dev.jstech.core.jstechseries.operation.IOperationTask;
 import dev.jstech.core.jstechseries.operation.OperationStatistics;
 import dev.jstech.core.jstechseries.operation.SelfTestOperationTask;
@@ -789,6 +791,28 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         }
         final var operation = new NetworkUpdateOperation(serverLevel, networkUuid(), request, networkIndex,
                 ensureDispatch());
+        track(operation);
+        return operation;
+    }
+
+    /**
+     * Takes on a request of another mod's kind for the machine of this network standing at {@code machinePos}: it
+     * waits for a queue at {@code priority}, then goes to the machine. Refused, like every timed Operation, without
+     * a booted system to run it.
+     *
+     * @param machineName the name the machine answers to on the network, for the log
+     * @param asked       what was asked of it, as the network's language writes it, for the log
+     */
+    @Nullable
+    public MemberOperation submitMemberRun(final OperationRequest<?> request, final long machinePos,
+                                           final String machineName, final String asked,
+                                           final OperationPriority priority) {
+        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null) {
+            return null;
+        }
+        final MemberOperation operation = new MemberOperation(serverLevel, networkUuid(), request, machinePos,
+                machineName, asked);
+        operation.setPriority(priority);
         track(operation);
         return operation;
     }

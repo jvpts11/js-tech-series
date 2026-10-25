@@ -40,7 +40,12 @@ public enum OperationTypeId implements IStableId {
     REINDEX(7, "reindex"),
     VACUUM(8, "vacuum"),
     DROP(9, "drop"),
-    UPDATE(10, "update");
+    UPDATE(10, "update"),
+    /*
+     * Work of another mod's kind, given to a machine of the network: registered under that mod's id, never this one,
+     * so the row says which kind it was beside its number.
+     */
+    RUN(11, "run");
 
     /** A kind this version does not know, which is what a row from a later one reads as. */
     public static final byte UNKNOWN = 0;

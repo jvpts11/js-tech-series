@@ -326,7 +326,7 @@
     }
   ],
   "id": "jsc:sigma_printf_old_names",
-  "order": 350,
+  "order": 351,
   "section": "jsc:sigma_old_style",
   "title": "jsc.guide.sigma_printf_old_names.title"
 }

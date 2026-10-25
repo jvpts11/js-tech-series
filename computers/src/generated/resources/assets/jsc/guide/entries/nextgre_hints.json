@@ -134,7 +134,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:nextgre_hints",
-  "order": 310,
+  "order": 311,
   "section": "jsc:engine_choice",
   "title": "jsc.guide.nextgre_hints.title"
 }

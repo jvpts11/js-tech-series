@@ -96,6 +96,8 @@ final class NetworkManagerTexts {
     static final TextKey TIMING = TextKey.of("jsc.network_manager.timing", "waited %s, ran %s");
     static final TextKey STAGES = TextKey.of("jsc.network_manager.stages", "STAGES");
     static final TextKey SOURCES = TextKey.of("jsc.network_manager.sources", "SOURCES");
+    static final TextKey MACHINE_AND_ASKED = TextKey.of("jsc.network_manager.machine_and_asked", "MACHINE AND REQUEST");
+    static final TextKey NOTHING_ASKED = TextKey.of("jsc.network_manager.nothing_asked", "no fields");
     static final TextKey NO_SUB_OPERATIONS = TextKey.of("jsc.network_manager.no_sub_operations", "No sub-operations.");
 
     // What state an Operation is in.

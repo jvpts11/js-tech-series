@@ -370,16 +370,42 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     /**
-     * The centre of the Devices, Hardware, Map or Log tab ({@code devices}, {@code hardware}, {@code map},
-     * {@code log}); for tests.
+     * The centre of the Devices, Processes, Hardware, Map or Log tab ({@code devices}, {@code processes},
+     * {@code hardware}, {@code map}, {@code log}); for tests.
      */
     public int[] tabPoint(final String which) {
         return tabs.tabCenter(switch (which) {
+            case "processes" -> TAB_PROCESSES;
             case "hardware" -> TAB_HARDWARE;
             case "map" -> TAB_MAP;
             case "log" -> TAB_LOG;
             default -> TAB_DEVICES;
         });
+    }
+
+    /** The Operations in flight the Processes tab lists now; for tests. */
+    public List<OperationRecord> processesShown() {
+        return processes.operations();
+    }
+
+    /** The middle of the Processes tab's row {@code index}; for tests. */
+    public int[] processRowPoint(final int index) {
+        return processes.rowCenter(index);
+    }
+
+    /** Whether an Operation's detail is open; for tests. */
+    public boolean detailOpen() {
+        return detailPopup.isOpen();
+    }
+
+    /** The centre of the detail's Cancel, shown for an Operation still in flight; for tests. */
+    public int[] detailCancelPoint() {
+        return detailCancel.center();
+    }
+
+    /** The Operations the Log tab lists now, newest first; for tests. */
+    public List<OperationRecord> logShown() {
+        return logNewestFirst;
     }
 
     /** The nodes as the window has them, with their links; for tests. */
@@ -1298,7 +1324,12 @@ public final class NetworkManagerApp implements IDesktopApp {
     private void showDetail(final OperationRecord op) {
         detailOp = op;
         final List<DetailRow> rows = new ArrayList<>();
-        if (!op.subs().isEmpty()) {
+        if (op.ofAnotherMod()) {
+            // Another mod's work lists the machine it went to and what was asked of it, in place of where items went.
+            rows.add(new DetailRow(op.machine(), "", skin.text()));
+            rows.add(new DetailRow(op.asked().isEmpty() ? GameText.resolve(NetworkManagerTexts.NOTHING_ASKED)
+                    : op.asked(), "", skin.dim()));
+        } else if (!op.subs().isEmpty()) {
             for (final OperationRecord.SubRow s : op.subs()) {
                 rows.add(new DetailRow(s.server(), s.moved() + "/" + s.planned(), subStateColor(s.state())));
             }
@@ -1313,6 +1344,9 @@ public final class NetworkManagerApp implements IDesktopApp {
     private String detailAmountText() {
         if (detailOp == null) {
             return "";
+        }
+        if (detailOp.ofAnotherMod()) {
+            return statusLabel(detailOp.status());
         }
         final Text requested = detailOp.requested() >= 1_000_000_000L ? NetworkManagerTexts.ALL.text()
                 : Text.literal(JsTechTheme.fmt(detailOp.requested()));
@@ -1341,7 +1375,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (why.isPresent()) {
             return why.get().getString();
         }
-        return GameText.resolve(!detailOp.subs().isEmpty() ? NetworkManagerTexts.STAGES
+        return GameText.resolve(detailOp.ofAnotherMod() ? NetworkManagerTexts.MACHINE_AND_ASKED
+                : !detailOp.subs().isEmpty() ? NetworkManagerTexts.STAGES
                 : !detailOp.moves().isEmpty() ? NetworkManagerTexts.SOURCES : NetworkManagerTexts.NO_SUB_OPERATIONS);
     }
 

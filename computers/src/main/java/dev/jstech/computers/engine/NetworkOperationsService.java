@@ -13,15 +13,20 @@ import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.INetworkOperation;
+import dev.jstech.computers.operation.MemberRuns;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkUpdateOperation;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.iql.IIqlView;
+import dev.jstech.computers.program.iql.IqlRunStatement;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.computers.workshop.UpdateRequest;
+import dev.jstech.core.jstechseries.operation.IOperationArgs;
+import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.jstechseries.operation.OperationType;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -168,6 +173,22 @@ public final class NetworkOperationsService {
     public NetworkUpdateOperation update(final UpdateRequest request) {
         final INetworkEngine engine = engine();
         return engine == null ? null : planned(engine.update(core, request));
+    }
+
+    /**
+     * Gives a request of another mod's kind of Operation to a machine of the network: the one named
+     * {@code machine}, by its name on the network or its position, or the least busy able one when that is empty.
+     * The machine does the work, so no engine is needed; the request waits for a queue like any other.
+     */
+    public <T extends IOperationArgs> MemberRuns.Outcome run(final OperationType<T> type, final T args,
+                                                             final String machine,
+                                                             final OperationPriority priority) {
+        return MemberRuns.run(core, type, args, machine, priority);
+    }
+
+    /** Gives out the request a {@code RUN} statement writes, read as its kind says its requests are written. */
+    public MemberRuns.Outcome run(final IqlRunStatement statement) {
+        return MemberRuns.run(core, statement);
     }
 
     /** How the running engine plans a craft before anything is made, or {@code null} when no engine is running. */

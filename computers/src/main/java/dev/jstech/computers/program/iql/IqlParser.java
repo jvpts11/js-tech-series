@@ -87,6 +87,14 @@ public final class IqlParser {
                 return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
             }
         }
+        // And a request of another mod's kind of Operation: RUN mod:kind ON 'machine' WITH field = value.
+        if (IqlRunStatement.isRun(input)) {
+            try {
+                return IqlParseResult.okRun(IqlRunStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
+        }
         /*
          * Layer 2 first: CREATE/DROP/EXEC of a saved object. tryParse returns null (and we fall through)
          * for an ordinary action; it throws only when the text *is* a malformed definition.

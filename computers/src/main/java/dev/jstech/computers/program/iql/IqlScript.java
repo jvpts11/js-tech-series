@@ -34,7 +34,7 @@ public final class IqlScript {
     private static final Set<String> KEYWORDS = Set.of("SHOW", "FROM", "TO", "WHERE", "IF", "ORDER", "BY", "LIMIT",
             "SET", "OFFER", "WITH", "ASC", "DESC", "AND", "OR", "NOT", "ALL", "CONTAINS", "HAS", "LIKE", "IN", "ON",
             "CREATE", "VIEW", "PROCEDURE", "PROC", "JOB", "AS", "EVERY", "WHEN", "EXEC", "CALL", "TOP", "BUS",
-            "INTERFACE", "REDSTONE", "OUT");
+            "INTERFACE", "REDSTONE", "OUT", "RUN", "PRIORITY");
 
     private IqlScript() {
     }

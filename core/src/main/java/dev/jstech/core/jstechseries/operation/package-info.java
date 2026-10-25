@@ -12,10 +12,12 @@
  * mod declares its kinds of Operation in, the eight states a request goes through, and the dispatcher that runs their
  * work on virtual threads while every change to the world stays on the server's thread.
  *
- * <p>A kind of Operation is an {@link OperationType}: its id, saved in worlds; the record a request of it carries,
- * which implements {@link IOperationArgs}; the {@link OperationCategory} screens list it under; the lowest industrial
- * tier that can run it; the categories of member that may run it; and the {@link IOperationHandler} that does the work
- * on the spot, or starts it and answers {@code PENDING}. A mod registers its kinds once, while the game loads, through
+ * <p>A kind of Operation is an {@link OperationType}: its id, saved in worlds; the name a player reads it by; the
+ * record a request of it carries, which implements {@link IOperationArgs}; the {@link OperationCategory} screens list
+ * it under; the lowest industrial tier that can run it; the categories of member that may run it; how a request of it
+ * is read from text, when it can be; and the {@link IOperationHandler} that does the work on the spot, or starts it on
+ * the machine given the {@link IOperationRequest}, which says how it goes until it is over ({@link OperationRequest}
+ * is that request as whoever gives it holds it). A mod registers its kinds once, while the game loads, through
  * {@code RegisterOperationTypesEvent.operations()}, which is the {@link OperationTypeRegistry}: it refuses an id taken
  * and closes once the game has loaded. A request goes from {@code PENDING} to one of the outcomes of
  * {@link OperationStatus}; one that failed says why as an {@link OperationFailure}, a sentence each player reads in

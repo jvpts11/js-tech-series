@@ -6853,7 +6853,14 @@ stable 4
 12 dev.jstech.core.jstechseries.operation.IOperationContext  abstract void onMainThread(Runnable)
 12 dev.jstech.core.jstechseries.operation.IOperationContext  default void doOnMain(Runnable)
 12 dev.jstech.core.jstechseries.operation.IOperationHandler  type interface<T extends IOperationArgs>
-12 dev.jstech.core.jstechseries.operation.IOperationHandler  abstract OperationStatus execute(T)
+12 dev.jstech.core.jstechseries.operation.IOperationHandler  abstract OperationStatus execute(IOperationRequest<T>)
+12 dev.jstech.core.jstechseries.operation.IOperationRequest  type interface<T extends IOperationArgs>
+12 dev.jstech.core.jstechseries.operation.IOperationRequest  abstract Optional<INetworkMember> machine()
+12 dev.jstech.core.jstechseries.operation.IOperationRequest  abstract T args()
+12 dev.jstech.core.jstechseries.operation.IOperationRequest  abstract boolean cancelled()
+12 dev.jstech.core.jstechseries.operation.IOperationRequest  abstract void fail(OperationFailure)
+12 dev.jstech.core.jstechseries.operation.IOperationRequest  abstract void report(OperationStatus)
+12 dev.jstech.core.jstechseries.operation.IOperationRequest  abstract void whenCancelled(Runnable)
 12 dev.jstech.core.jstechseries.operation.IOperationResult  type sealed interface
 12 dev.jstech.core.jstechseries.operation.IOperationResult  static IOperationResult failure(OperationFailure)
 12 dev.jstech.core.jstechseries.operation.IOperationResult  static IOperationResult failure(String, String...)
@@ -6944,6 +6951,21 @@ stable 4
 12 dev.jstech.core.jstechseries.operation.OperationPriority  static OperationPriority byId(int)
 12 dev.jstech.core.jstechseries.operation.OperationPriority  static Optional<OperationPriority> fromKeyword(String)
 12 dev.jstech.core.jstechseries.operation.OperationPriority  static final OperationPriority DEFAULT
+12 dev.jstech.core.jstechseries.operation.OperationRequest  type final class<T extends IOperationArgs> implements IOperationRequest<T>
+12 dev.jstech.core.jstechseries.operation.OperationRequest  OperationFailure failure()
+12 dev.jstech.core.jstechseries.operation.OperationRequest  OperationStatus start()
+12 dev.jstech.core.jstechseries.operation.OperationRequest  OperationStatus status()
+12 dev.jstech.core.jstechseries.operation.OperationRequest  OperationType<T> type()
+12 dev.jstech.core.jstechseries.operation.OperationRequest  Optional<INetworkMember> machine()
+12 dev.jstech.core.jstechseries.operation.OperationRequest  T args()
+12 dev.jstech.core.jstechseries.operation.OperationRequest  boolean cancelled()
+12 dev.jstech.core.jstechseries.operation.OperationRequest  new(OperationType<T>, T, INetworkMember)
+12 dev.jstech.core.jstechseries.operation.OperationRequest  static <T extends IOperationArgs> OperationRequest<T> of(OperationType<T>, T)
+12 dev.jstech.core.jstechseries.operation.OperationRequest  static final TextKey HANDLER_BROKE
+12 dev.jstech.core.jstechseries.operation.OperationRequest  void cancel()
+12 dev.jstech.core.jstechseries.operation.OperationRequest  void fail(OperationFailure)
+12 dev.jstech.core.jstechseries.operation.OperationRequest  void report(OperationStatus)
+12 dev.jstech.core.jstechseries.operation.OperationRequest  void whenCancelled(Runnable)
 12 dev.jstech.core.jstechseries.operation.OperationSettings  type final class
 12 dev.jstech.core.jstechseries.operation.OperationSettings  static final ConfigFile FILE
 12 dev.jstech.core.jstechseries.operation.OperationSettings  static final ConfigKey<Integer> ORPHANED_EXPIRY_HOURS
@@ -6977,8 +6999,10 @@ stable 4
 12 dev.jstech.core.jstechseries.operation.OperationStatus  int id()
 12 dev.jstech.core.jstechseries.operation.OperationStatus  static Optional<OperationStatus> of(int)
 12 dev.jstech.core.jstechseries.operation.OperationStatus  static final byte UNKNOWN
-12 dev.jstech.core.jstechseries.operation.OperationType  type record<T extends IOperationArgs>(String id, Class<T> argsClass, OperationCategory category, IndustrialTier minTier, EnumSet<NetworkCategory> requiredCategories, IOperationHandler<T> handler)
+12 dev.jstech.core.jstechseries.operation.OperationType  type record<T extends IOperationArgs>(String id, TextKey name, Class<T> argsClass, OperationCategory category, IndustrialTier minTier, EnumSet<NetworkCategory> requiredCategories, MapCodec<T> text, IOperationHandler<T> handler)
 12 dev.jstech.core.jstechseries.operation.OperationType  EnumSet<NetworkCategory> requiredCategories()
+12 dev.jstech.core.jstechseries.operation.OperationType  boolean readsText()
+12 dev.jstech.core.jstechseries.operation.OperationType  new(String, TextKey, Class<T>, OperationCategory, IndustrialTier, EnumSet<NetworkCategory>, IOperationHandler<T>)
 12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  type final class
 12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  <T extends IOperationArgs> OperationType<T> register(OperationType<T>)
 12 dev.jstech.core.jstechseries.operation.OperationTypeRegistry  Collection<OperationType<?>> all()

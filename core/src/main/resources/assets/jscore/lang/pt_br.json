@@ -2339,6 +2339,7 @@
   "jscore.operation.failure.cancelled": "a máquina que a executava parou",
   "jscore.operation.failure.crashed": "a Operation encontrou um problema: %s (%s)",
   "jscore.operation.failure.no_result": "a Operation terminou sem dizer o que fez",
+  "jscore.operation.handler_broke": "o código de %s quebrou com o pedido",
   "jscore.overhead.blocked": "Há algo no caminho em %s",
   "jscore.overhead.full": "Este isolador não segura mais fios",
   "jscore.overhead.hung": "%s blocos de fio pendurados",

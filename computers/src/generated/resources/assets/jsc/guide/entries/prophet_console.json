@@ -490,7 +490,7 @@
     }
   ],
   "id": "jsc:prophet_console",
-  "order": 322,
+  "order": 323,
   "section": "jsc:engine_programs",
   "title": "jsc.guide.prophet_console.title"
 }

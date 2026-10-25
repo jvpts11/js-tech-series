@@ -134,6 +134,17 @@ public final class IqlError extends IllegalArgumentException {
     static final TextKey A_LIST = TextKey.of("jsc.iql.error.a_list", "a list of items");
     static final TextKey A_COUNT = TextKey.of("jsc.iql.error.a_count", "a count");
 
+    // A RUN of another mod's kind of Operation.
+    static final TextKey RUN_NEEDS_KIND = TextKey.of("jsc.iql.error.run_needs_kind",
+            "RUN needs the id of a kind of Operation, as mod:kind");
+    static final TextKey NOT_A_KIND = TextKey.of("jsc.iql.error.not_a_kind",
+            "not the id of a kind of Operation, which is written mod:kind: %s");
+    static final TextKey CLAUSE_TWICE = TextKey.of("jsc.iql.error.clause_twice", "%s is said twice");
+    static final TextKey RUN_FIELD_NEEDS_VALUE = TextKey.of("jsc.iql.error.run_field_needs_value",
+            "WITH needs each field as name = value, the next one after a comma: %s");
+    static final TextKey FIELD_TWICE = TextKey.of("jsc.iql.error.field_twice", "the field %s is given twice");
+    static final TextKey A_MACHINE = TextKey.of("jsc.iql.expected.machine", "the machine's name or position");
+
     // A duration.
     static final TextKey EMPTY_DURATION = TextKey.of("jsc.iql.error.empty_duration", "empty duration");
     static final TextKey NOT_A_DURATION = TextKey.of("jsc.iql.error.not_a_duration", "not a duration: %s");

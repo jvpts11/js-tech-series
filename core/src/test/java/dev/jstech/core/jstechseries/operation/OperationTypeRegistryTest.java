@@ -9,6 +9,7 @@ package dev.jstech.core.jstechseries.operation;
 
 import dev.jstech.core.jstechseries.network.NetworkCategory;
 import dev.jstech.core.jstechseries.tier.IndustrialTier;
+import dev.jstech.core.text.TextKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +29,8 @@ class OperationTypeRegistryTest {
      */
     private record DummyArgs(int value) implements IOperationArgs {}
 
+    private static final TextKey NAME = TextKey.of("jsc.operation.test", "Test");
+
     private OperationTypeRegistry registry;
 
     @BeforeEach
@@ -38,6 +41,7 @@ class OperationTypeRegistryTest {
     private OperationType<DummyArgs> sampleType(String path) {
         return new OperationType<>(
                 "jsc:" + path,
+                NAME,
                 DummyArgs.class,
                 OperationCategory.STORAGE,
                 IndustrialTier.T2,
@@ -106,6 +110,7 @@ class OperationTypeRegistryTest {
     void operationType_rejectsNullId() {
         assertThrows(NullPointerException.class, () -> new OperationType<>(
                 null,
+                NAME,
                 DummyArgs.class,
                 OperationCategory.STORAGE,
                 IndustrialTier.T2,
@@ -118,6 +123,7 @@ class OperationTypeRegistryTest {
     void operationType_rejectsEmptyRequiredCategories() {
         assertThrows(IllegalArgumentException.class, () -> new OperationType<>(
                 "jsc:test",
+                NAME,
                 DummyArgs.class,
                 OperationCategory.STORAGE,
                 IndustrialTier.T2,
@@ -131,6 +137,7 @@ class OperationTypeRegistryTest {
         // No namespace prefix
         assertThrows(IllegalArgumentException.class, () -> new OperationType<>(
                 "test_op",
+                NAME,
                 DummyArgs.class,
                 OperationCategory.STORAGE,
                 IndustrialTier.T2,
@@ -144,6 +151,7 @@ class OperationTypeRegistryTest {
         // Uppercase not allowed in either namespace or path
         assertThrows(IllegalArgumentException.class, () -> new OperationType<>(
                 "JSC:TestOp",
+                NAME,
                 DummyArgs.class,
                 OperationCategory.STORAGE,
                 IndustrialTier.T2,
@@ -156,8 +164,29 @@ class OperationTypeRegistryTest {
     void operationType_acceptsValidConstruction() {
         var type = sampleType("valid_op");
         assertEquals("jsc:valid_op", type.id());
+        assertSame(NAME, type.name());
         assertSame(OperationCategory.STORAGE, type.category());
         assertTrue(type.requiredCategories().contains(NetworkCategory.C));
+    }
+
+    /* A kind declared without a way to read it from text is one only code asks for. */
+    @Test
+    void operationType_readsNoTextUnlessToldHow() {
+        assertFalse(sampleType("coded_op").readsText());
+        assertNull(sampleType("coded_op").text());
+    }
+
+    @Test
+    void operationType_rejectsNullName() {
+        assertThrows(NullPointerException.class, () -> new OperationType<>(
+                "jsc:test",
+                null,
+                DummyArgs.class,
+                OperationCategory.STORAGE,
+                IndustrialTier.T2,
+                EnumSet.of(NetworkCategory.C),
+                request -> OperationStatus.COMPLETED
+        ));
     }
 
     /*
@@ -186,6 +215,7 @@ class OperationTypeRegistryTest {
     void operationType_rejectsNullHandler() {
         assertThrows(NullPointerException.class, () -> new OperationType<>(
                 "jsc:test",
+                NAME,
                 DummyArgs.class,
                 OperationCategory.STORAGE,
                 IndustrialTier.T2,

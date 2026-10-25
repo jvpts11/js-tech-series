@@ -14,6 +14,7 @@ import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.operation.INetworkOperation;
+import dev.jstech.computers.operation.MemberOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.event.IOperationLifecycleEvent;
@@ -510,11 +511,13 @@ final class MainframeScheduler {
      * Whether {@code operation} occupies one of the Mainframe's operation queues. A craft's machine stage is
      * orchestrated by its Crafting Computer and gated by that computer's crafting threads, not by the
      * Mainframe, so it never occupies a Mainframe queue: the queues gate distinct operations (a craft, a
-     * SELECT, an INSERT), the crafting threads gate one craft's concurrent stages. Every non-stage operation
-     * occupies a queue.
+     * SELECT, an INSERT), the crafting threads gate one craft's concurrent stages. A request of another mod's
+     * kind holds a queue only until it is given to its machine: from then on the work is the machine's. Every
+     * other operation occupies a queue.
      */
     private static boolean occupiesQueue(final INetworkOperation operation) {
-        return !(operation instanceof NetworkProcessingOperation proc && proc.isNested());
+        return !(operation instanceof NetworkProcessingOperation proc && proc.isNested())
+                && !(operation instanceof MemberOperation member && member.handedOff());
     }
 
     private void countTick(final INetworkOperation operation, final int slot) {

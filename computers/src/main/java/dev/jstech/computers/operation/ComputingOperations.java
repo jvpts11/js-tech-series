@@ -18,17 +18,19 @@ import dev.jstech.core.jstechseries.network.NetworkCategory;
 import dev.jstech.core.jstechseries.operation.IOperationArgs;
 import dev.jstech.core.jstechseries.operation.OperationCategory;
 import dev.jstech.core.jstechseries.operation.OperationTypeRegistry;
-import dev.jstech.core.jstechseries.operation.IOperationHandler;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.jstechseries.operation.OperationType;
 import dev.jstech.core.jstechseries.tier.IndustrialTier;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * The Operation types the computing mod declares in the core registry, one per verb the network runs,
@@ -40,6 +42,7 @@ import java.util.Set;
  * <p>The handlers return the status the request settled or was accepted at: a timed Operation is accepted
  * as PENDING and finishes on its own ticks; an instant one runs to COMPLETED on the spot.
  */
+@TextHolder
 public final class ComputingOperations {
 
     private static final String NAMESPACE = OperationTypeId.NAMESPACE;
@@ -68,6 +71,22 @@ public final class ComputingOperations {
     public static final String UNLOCK = NAMESPACE + ":unlock";
 
     private static final EnumSet<NetworkCategory> ORCHESTRATED = EnumSet.of(NetworkCategory.C);
+
+    /* What each kind is called where a player reads it: the language's own word, in every language alike. */
+    public static final TextKey SELECT_NAME = TextKey.of("jsc.operation.kind.select", "SELECT");
+    public static final TextKey INSERT_NAME = TextKey.of("jsc.operation.kind.insert", "INSERT");
+    public static final TextKey DELETE_NAME = TextKey.of("jsc.operation.kind.delete", "DELETE");
+    public static final TextKey MOVE_NAME = TextKey.of("jsc.operation.kind.move", "MOVE");
+    public static final TextKey CRAFT_NAME = TextKey.of("jsc.operation.kind.craft", "CRAFT");
+    public static final TextKey PROCESSING_NAME = TextKey.of("jsc.operation.kind.processing", "CRAFT by machine");
+    public static final TextKey MULTI_STAGE_NAME = TextKey.of("jsc.operation.kind.multi_stage", "CRAFT in stages");
+    public static final TextKey UPDATE_NAME = TextKey.of("jsc.operation.kind.update", "UPDATE");
+    public static final TextKey ANALYZE_NAME = TextKey.of("jsc.operation.kind.analyze", "ANALYZE");
+    public static final TextKey REINDEX_NAME = TextKey.of("jsc.operation.kind.reindex", "REINDEX");
+    public static final TextKey VACUUM_NAME = TextKey.of("jsc.operation.kind.vacuum", "VACUUM");
+    public static final TextKey DROP_NAME = TextKey.of("jsc.operation.kind.drop", "DROP");
+    public static final TextKey LOCK_NAME = TextKey.of("jsc.operation.kind.lock", "LOCK");
+    public static final TextKey UNLOCK_NAME = TextKey.of("jsc.operation.kind.unlock", "UNLOCK");
 
     private ComputingOperations() {
     }
@@ -123,40 +142,42 @@ public final class ComputingOperations {
             return;
         }
         // Every kind that asks for work goes in through the network's door, to whichever engine runs there.
-        registry.register(timed(SELECT, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
+        registry.register(timed(SELECT, SELECT_NAME, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
                 a.mainframe().networkOperations().pull(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
                 a.priority())));
-        registry.register(timed(MOVE, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
+        registry.register(timed(MOVE, MOVE_NAME, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
                 a.mainframe().networkOperations().move(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
                 a.priority())));
-        registry.register(timed(DELETE, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
+        registry.register(timed(DELETE, DELETE_NAME, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
                 a.mainframe().networkOperations().export(a.key(), a.demand(), a.destination(), a.label()),
                 a.priority())));
-        registry.register(timed(INSERT, InsertArgs.class, OperationCategory.STORAGE, a -> accepted(
+        registry.register(timed(INSERT, INSERT_NAME, InsertArgs.class, OperationCategory.STORAGE, a -> accepted(
                 a.mainframe().networkOperations().push(a.key(), a.amount(), a.label()), a.priority())));
-        registry.register(timed(CRAFT, CraftArgs.class, OperationCategory.CRAFTING, a -> accepted(
+        registry.register(timed(CRAFT, CRAFT_NAME, CraftArgs.class, OperationCategory.CRAFTING, a -> accepted(
                 a.mainframe().networkOperations().craft(CraftRequest.of(a.key(), a.demand(), a.partial(), a.label(),
                         null)), a.priority())));
-        registry.register(timed(PROCESSING, ProcessingArgs.class, OperationCategory.CRAFTING, a -> accepted(
-                a.mainframe().networkOperations().process(a.pattern(), a.demand(), a.label()), a.priority())));
-        registry.register(timed(MULTI_STAGE, MultiStageArgs.class, OperationCategory.CRAFTING, a -> accepted(
-                a.mainframe().networkOperations().pipeline(a.pattern(), a.demand(), a.label()), a.priority())));
+        registry.register(timed(PROCESSING, PROCESSING_NAME, ProcessingArgs.class, OperationCategory.CRAFTING,
+                a -> accepted(a.mainframe().networkOperations().process(a.pattern(), a.demand(), a.label()),
+                        a.priority())));
+        registry.register(timed(MULTI_STAGE, MULTI_STAGE_NAME, MultiStageArgs.class, OperationCategory.CRAFTING,
+                a -> accepted(a.mainframe().networkOperations().pipeline(a.pattern(), a.demand(), a.label()),
+                        a.priority())));
         // An UPDATE changes what is stored and never makes anything: it is storage work, never a craft's.
-        registry.register(timed(UPDATE, UpdateArgs.class, OperationCategory.STORAGE, a -> accepted(
+        registry.register(timed(UPDATE, UPDATE_NAME, UpdateArgs.class, OperationCategory.STORAGE, a -> accepted(
                 a.mainframe().networkOperations().update(a.request()), a.priority())));
-        registry.register(instant(ANALYZE, IndexArgs.class, OperationCategory.NETWORK, a -> {
+        registry.register(instant(ANALYZE, ANALYZE_NAME, IndexArgs.class, OperationCategory.NETWORK, a -> {
             a.mainframe().networkIndex().analyzeIncremental(a.level(), a.mainframe().networkUuid());
             return OperationStatus.COMPLETED;
         }));
-        registry.register(instant(REINDEX, IndexArgs.class, OperationCategory.NETWORK, a -> {
+        registry.register(instant(REINDEX, REINDEX_NAME, IndexArgs.class, OperationCategory.NETWORK, a -> {
             a.mainframe().networkIndex().rebuild(a.level(), a.mainframe().networkUuid());
             return OperationStatus.COMPLETED;
         }));
-        registry.register(instant(VACUUM, IndexArgs.class, OperationCategory.NETWORK, a -> {
+        registry.register(instant(VACUUM, VACUUM_NAME, IndexArgs.class, OperationCategory.NETWORK, a -> {
             a.mainframe().networkIndex().vacuum(a.level(), a.mainframe().networkUuid());
             return OperationStatus.COMPLETED;
         }));
-        registry.register(instant(DROP, DropArgs.class, OperationCategory.STORAGE, a -> {
+        registry.register(instant(DROP, DROP_NAME, DropArgs.class, OperationCategory.STORAGE, a -> {
             if (a.key() == null) {
                 a.mainframe().networkIndex().dropAll(a.level(), a.mainframe().networkUuid());
             } else {
@@ -164,29 +185,36 @@ public final class ComputingOperations {
             }
             return OperationStatus.COMPLETED;
         }));
-        registry.register(instant(LOCK, LockArgs.class, OperationCategory.CONCURRENCY, a ->
+        registry.register(instant(LOCK, LOCK_NAME, LockArgs.class, OperationCategory.CONCURRENCY, a ->
                 a.mainframe().lockType(a.key(), a.demand(), a.sources()) > 0L
                         ? OperationStatus.COMPLETED : OperationStatus.RESOURCE_LOCKED));
-        registry.register(instant(UNLOCK, LockArgs.class, OperationCategory.CONCURRENCY, a -> {
+        registry.register(instant(UNLOCK, UNLOCK_NAME, LockArgs.class, OperationCategory.CONCURRENCY, a -> {
             a.mainframe().unlockType(a.key());
             return OperationStatus.COMPLETED;
         }));
     }
 
-    private static <T extends IOperationArgs> OperationType<T> timed(final String id, final Class<T> args,
+    /*
+     * These kinds are the Mainframe's own work, never a machine's: their arguments name the Mainframe, so each is
+     * written on what its request carries alone.
+     */
+    private static <T extends IOperationArgs> OperationType<T> timed(final String id, final TextKey name,
+                                                                   final Class<T> args,
                                                                    final OperationCategory category,
-                                                                   final IOperationHandler<T> handler) {
-        return new OperationType<>(id, args, category, IndustrialTier.T1, ORCHESTRATED, handler);
+                                                                   final Function<T, OperationStatus> work) {
+        return new OperationType<>(id, name, args, category, IndustrialTier.T1, ORCHESTRATED,
+                request -> work.apply(request.args()));
     }
 
     /**
      * An Operation whose handler settles at once. It is the same type as a timed one: the difference lives
      * in what the handler returns, not in the type, so this only names the intent at the call site.
      */
-    private static <T extends IOperationArgs> OperationType<T> instant(final String id, final Class<T> args,
+    private static <T extends IOperationArgs> OperationType<T> instant(final String id, final TextKey name,
+                                                                     final Class<T> args,
                                                                      final OperationCategory category,
-                                                                     final IOperationHandler<T> handler) {
-        return timed(id, args, category, handler);
+                                                                     final Function<T, OperationStatus> work) {
+        return timed(id, name, args, category, work);
     }
 
     /** A submitted timed Operation is PENDING until the Mainframe ticks it; a refused one is FAILED. */

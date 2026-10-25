@@ -25,38 +25,83 @@ Your mod can add a kind of Operation. Declare it once, while the game loads, by 
 `RegisterOperationTypesEvent` (`dev.jstech.core.jstechseries.operation`) on your mod's event bus:
 
 ```java
-public record CountItemsArgs(String item) implements IOperationArgs {
+public record CoolArgs(int kelvin) implements IOperationArgs {
+    // How a request written as text is read: RUN myaddon:cool WITH kelvin = 300
+    public static final MapCodec<CoolArgs> TEXT = RecordCodecBuilder.mapCodec(cool -> cool.group(
+            Codec.intRange(0, 10_000).fieldOf("kelvin").forGetter(CoolArgs::kelvin)).apply(cool, CoolArgs::new));
 }
+
+public static final TextKey COOL_NAME = TextKey.of("myaddon.operation.cool", "Cool down");
 
 // In your mod's constructor:
 modBus.addListener(RegisterOperationTypesEvent.class, event -> event.operations().register(new OperationType<>(
-        "myaddon:count_items",         // saved in worlds: never change it
-        CountItemsArgs.class,           // what the request carries
-        OperationCategory.STORAGE,      // the family it belongs to
+        "myaddon:cool",                 // saved in worlds: never change it
+        COOL_NAME,                      // what the log, the list of what runs and the statistics call it
+        CoolArgs.class,                 // what the request carries
+        OperationCategory.INDUSTRIAL,   // the family it belongs to
         IndustrialTier.T1,              // the lowest tier that can run it
-        EnumSet.of(NetworkCategory.C),  // who may run it: the computers
-        new CountItemsHandler())));     // the code that does the work
+        EnumSet.of(NetworkCategory.C),  // who may run it: the members given work
+        CoolArgs.TEXT,                  // how a request written as text is read; leave it out for code only
+        new CoolHandler())));           // the code that does the work
 ```
 
 After the game has loaded, the list closes and `register` returns `null` instead of adding. That is on purpose: a
 world saved yesterday has to mean the same thing today. An id another mod already registered is refused with an
 exception, which stops the load while somebody is there to read why.
 
-The handler is handed each request's arguments and answers the state the request is in: a finished one for work
-done on the spot, or `PENDING` for work that goes on over the next ticks.
+A kind that leaves the text reader out (the constructor without it) can only be asked for from code, such as a button
+on the machine's own screen; one with it can be asked for in J's Computers' network language, by a player at a
+prompt, by a job, or by a program, with its fields by name (`RUN myaddon:cool ON 'Reactor 1' WITH kelvin = 300`). A
+field the reader does not have, or a value it cannot read, is refused with the field named.
+
+Reach the kinds of every mod with `JsCore.operations()`: `get("jsc:select")`, `contains(id)`, `all()`.
+
+## Doing the work: the request
+
+*Added 2026-10-25.*
+
+The handler is handed each request as an `IOperationRequest`: what it carries (`args()`), the machine of the network
+it was given to (`machine()`, the member that carries the kind out), and the way that machine says how the work goes.
+It answers the state the request is in once it returns: a finished one for work done on the spot, or `PROCESSING` for
+work that goes on over the next ticks. A machine whose work takes time keeps the request and reports on it from its
+own tick:
 
 ```java
-public final class CountItemsHandler implements IOperationHandler<CountItemsArgs> {
+public final class CoolHandler implements IOperationHandler<CoolArgs> {
 
     @Override
-    public OperationStatus execute(final CountItemsArgs args) {
-        // look the item up, report the count somewhere
-        return OperationStatus.COMPLETED;
+    public OperationStatus execute(final IOperationRequest<CoolArgs> request) {
+        if (!(request.machine().orElse(null) instanceof ReactorBlockEntity reactor)) {
+            return OperationStatus.FAILED;
+        }
+        return reactor.coolTo(request);   // keeps the request, answers PROCESSING
     }
+}
+
+// in the reactor's tick
+if (cooling != null && temperature <= cooling.args().kelvin()) {
+    cooling.report(OperationStatus.COMPLETED);
+    cooling = null;
 }
 ```
 
-Reach the kinds of every mod with `JsCore.operations()`: `get("jsc:select")`, `contains(id)`, `all()`.
+| The machine says | With |
+| --- | --- |
+| it runs, or waits on something | `report(PROCESSING)`, `report(WAITING)` |
+| it is over | `report(COMPLETED)`, `report(COMPLETED_PARTIAL)`, `report(RESOURCE_LOCKED)` |
+| it cannot go on | `fail(OperationFailure.of(MY_REASON, what))`, a reason each player reads in their language |
+
+Whoever asked can call a request off at any time (J's Computers' list of what runs has a button for it, and a
+Mainframe that switches off calls off everything it gave out): it becomes `DISCARDED`, the machine hears it through
+`whenCancelled(stop)`, and nothing it reports after that counts. Once a request is over, what is said changes nothing.
+
+Code that asks for one itself builds an `OperationRequest` and starts it: `new OperationRequest<>(COOL, new
+CoolArgs(300), reactor).start()`, then reads `status()` and `failure()` as the ticks go. A handler that throws fails
+its request, with the reason naming the kind and the exception in the log, rather than taking the server's tick down.
+
+In J's Computers, the Mainframe gives these requests out: it queues each by its priority as it does its own, hands it
+to the machine when a queue is free and lets the queue go at once, and keeps it in the log as running until the
+machine says it is over. A test gives one to a member with the test kit's `NetworkScenes.request(...)`.
 
 ## The eight states
 
@@ -106,3 +151,7 @@ order they subscribed; unsubscribe with the same listener when you are done.
 - **`register` gives back null.** It was called after loading. Register from `RegisterOperationTypesEvent` only.
 - **"requiredCategories must contain at least one".** Say who may run it; the computers are `NetworkCategory.C`.
 - **The id is refused.** It must be `namespace:path` in lower case letters, digits, `_` and `/`.
+- **A request fails at once, "the code of ... broke on the request".** The handler threw; the exception is in the
+  log, under the kind's id.
+- **"... is asked for from its machine's own screen".** The kind was declared without a text reader, so the network's
+  language cannot ask for it; give it one (`MapCodec` of its arguments) if players and programs should.

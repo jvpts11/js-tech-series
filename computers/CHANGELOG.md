@@ -74,6 +74,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The world's events on the network: `QUERY events` lists the world events the network sees, under way
   where it stands or coming when a machine on it is the event's instrument; the event log writes each one expected,
   under way and over; and a job can wait for one, `WHEN EVENT mymod:solar_storm COMING` (or `UNDER WAY`, `ENDED`).
+- Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
+  its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
+  from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`
+  names the machine by the name a player gave it, by its block's name and short id, or by where it stands; without
+  it, the able machine with the fewest such requests in flight takes it. `WITH` gives the fields the kind reads, by
+  name, and a field it has not or a value it cannot read is refused, naming the field. The request waits for a queue
+  by its priority, goes to the machine and lets the queue go, so a machine's long work holds none of the Mainframe's
+  queues; it stays in the Processes tab, where calling it off stops the machine, and goes into the log under `RUN`,
+  with its kind, the machine and what was asked, once the machine says it is done. A machine that leaves the network
+  first fails it, saying so.
 
 ### Changed
 - Listeners declared: every class of the three mods that answers the game's events is

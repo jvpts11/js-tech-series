@@ -58,17 +58,18 @@ public final class OperationNumberingGameTests {
 
     @GameTest(template = ARENA)
     public static void type_isTheSameNumberInTheLogAsInTheKind(final GameTestHelper helper) {
-        final Map<OperationTypeId, Byte> written = Map.of(
-                OperationTypeId.SELECT, OperationRecord.TYPE_SELECT,
-                OperationTypeId.INSERT, OperationRecord.TYPE_INSERT,
-                OperationTypeId.DELETE, OperationRecord.TYPE_DELETE,
-                OperationTypeId.MOVE, OperationRecord.TYPE_MOVE,
-                OperationTypeId.CRAFT, OperationRecord.TYPE_CRAFT,
-                OperationTypeId.ANALYZE, OperationRecord.TYPE_ANALYZE,
-                OperationTypeId.REINDEX, OperationRecord.TYPE_REINDEX,
-                OperationTypeId.VACUUM, OperationRecord.TYPE_VACUUM,
-                OperationTypeId.DROP, OperationRecord.TYPE_DROP,
-                OperationTypeId.UPDATE, OperationRecord.TYPE_UPDATE);
+        final Map<OperationTypeId, Byte> written = Map.ofEntries(
+                Map.entry(OperationTypeId.SELECT, OperationRecord.TYPE_SELECT),
+                Map.entry(OperationTypeId.INSERT, OperationRecord.TYPE_INSERT),
+                Map.entry(OperationTypeId.DELETE, OperationRecord.TYPE_DELETE),
+                Map.entry(OperationTypeId.MOVE, OperationRecord.TYPE_MOVE),
+                Map.entry(OperationTypeId.CRAFT, OperationRecord.TYPE_CRAFT),
+                Map.entry(OperationTypeId.ANALYZE, OperationRecord.TYPE_ANALYZE),
+                Map.entry(OperationTypeId.REINDEX, OperationRecord.TYPE_REINDEX),
+                Map.entry(OperationTypeId.VACUUM, OperationRecord.TYPE_VACUUM),
+                Map.entry(OperationTypeId.DROP, OperationRecord.TYPE_DROP),
+                Map.entry(OperationTypeId.UPDATE, OperationRecord.TYPE_UPDATE),
+                Map.entry(OperationTypeId.RUN, OperationRecord.TYPE_RUN));
         for (final Map.Entry<OperationTypeId, Byte> pair : written.entrySet()) {
             helper.assertTrue(pair.getKey().id() == pair.getValue(),
                     pair.getKey() + " is " + pair.getKey().id() + " but the log writes it as " + pair.getValue());

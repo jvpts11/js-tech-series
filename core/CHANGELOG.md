@@ -249,6 +249,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   asks whether a network has one, and `NetworkSystem.networks()` lists the networks of a level that run.
   `Device.ports(FacePorts)` gives a device's block the ports a cable joins it through, and `DeviceBlock` is an
   `IFaceConnector` answering by them.
+- Work given to a machine: J's Core's API stays at version 12, all experimental. `OperationType` has a `name`,
+  the `TextKey` a player reads the kind by, and `text`, the `MapCodec` a request of it written as text is read with
+  (null, and the constructor without it, for a kind only code asks for), with `readsText()`. A handler is handed an
+  `IOperationRequest` in place of the arguments alone: what it carries, the machine of the network given it, `report`
+  and `fail` for how the work goes until it is over, and `cancelled` and `whenCancelled` for a request called off.
+  `OperationRequest` is that request as whoever gives it holds it: `start()` hands it to the handler, a handler that
+  throws failing it, `status()`, `failure()` and `cancel()`. The test kit's `NetworkScenes.request` gives one to a
+  member and hands it back to follow.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

@@ -10,9 +10,11 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.OperationTypeId;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -46,10 +48,18 @@ import java.util.UUID;
  * is the level it was scheduled at. {@code waitedTicks} counts the ticks it sat queued or waiting before it
  * could run and {@code ranTicks} the ticks it was actually running: together they are how long it took.
  * {@code cause} is why it failed, where it did, so the row says more than the word {@code failed}.
+ *
+ * <p>An Operation of another mod's kind, given to a machine of the network ({@link #TYPE_RUN}), moves no items: its
+ * {@code key} is the machine's block, for the row's icon, and in place of an item it says the kind ({@code kind}, the
+ * id it is registered under), the machine that did it ({@code machine}, the name it answers to on the network) and
+ * what was asked of it ({@code asked}, as the network's language writes it: {@code seconds 3}). All three are empty
+ * for an Operation of the network's own.
  */
+@TextHolder
 public record OperationRecord(UUID id, byte type, StorageKey key, long requested, long moved, byte status,
                               OperationPriority priority, List<MoveRow> moves, List<SubRow> subs,
-                              long waitedTicks, long ranTicks, OperationFailure cause) {
+                              long waitedTicks, long ranTicks, OperationFailure cause, String kind, String machine,
+                              String asked) {
 
     /*
      * The lists and the reason are copied on the way in, because a record that hands out the very list it was
@@ -61,6 +71,19 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         moves = List.copyOf(moves.size() > MAX_MOVES ? moves.subList(0, MAX_MOVES) : moves);
         subs = List.copyOf(subs.size() > MAX_SUBS ? subs.subList(0, MAX_SUBS) : subs);
         cause = cause == null ? OperationFailure.NONE : cause;
+        // Cut to what travels here too, so a record and the one read back from the wire or a save are the same.
+        kind = Utf8Text.clamp(kind == null ? "" : kind, MAX_KIND_BYTES);
+        machine = Utf8Text.clamp(machine == null ? "" : machine, MAX_MACHINE_BYTES);
+        asked = Utf8Text.clamp(asked == null ? "" : asked, MAX_ASKED_BYTES);
+    }
+
+    /** A record of an Operation of the network's own, whose kind is said by its {@code type} alone. */
+    public OperationRecord(final UUID id, final byte type, final StorageKey key, final long requested,
+                           final long moved, final byte status, final OperationPriority priority,
+                           final List<MoveRow> moves, final List<SubRow> subs, final long waitedTicks,
+                           final long ranTicks, final OperationFailure cause) {
+        this(id, type, key, requested, moved, status, priority, moves, subs, waitedTicks, ranTicks, cause, "", "",
+                "");
     }
 
     /** The id of a record that never had a live Operation behind it (an instant maintenance record). */
@@ -82,6 +105,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
     public static final byte TYPE_VACUUM = 8;
     public static final byte TYPE_DROP = 9;
     public static final byte TYPE_UPDATE = 10;
+    public static final byte TYPE_RUN = 11;
 
     /*
      * The same eight states a state carries a number for, written here as the numbers themselves because a
@@ -100,6 +124,15 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
 
     public static final int MAX_MOVES = 32;
     public static final int MAX_SUBS = 32;
+
+    /* As much of each of another mod's Operation's words as a row keeps: an id, a name, a line of arguments. */
+    public static final int MAX_KIND_BYTES = 128;
+    public static final int MAX_MACHINE_BYTES = 128;
+    public static final int MAX_ASKED_BYTES = 256;
+
+    /** What another mod's Operation reads as in place of an item: its kind, the machine, and what was asked. */
+    public static final TextKey RUN_BY = TextKey.of("jsc.operation.run_by", "%s by %s");
+    public static final TextKey RUN_BY_WITH = TextKey.of("jsc.operation.run_by_with", "%s by %s: %s");
 
     /**
      * The verb a record's type reads by, as the prompt, the terminal and a program's queries all show it, or
@@ -161,23 +194,40 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
 
     public OperationRecord withStatus(final byte newStatus) {
         return new OperationRecord(id, type, key, requested, moved, newStatus, priority, moves, subs,
-                waitedTicks, ranTicks, cause);
+                waitedTicks, ranTicks, cause, kind, machine, asked);
     }
 
     public OperationRecord withPriority(final OperationPriority newPriority) {
         return new OperationRecord(id, type, key, requested, moved, status, newPriority, moves, subs,
-                waitedTicks, ranTicks, cause);
+                waitedTicks, ranTicks, cause, kind, machine, asked);
     }
 
     public OperationRecord withTiming(final long waited, final long ran) {
         return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs, waited, ran,
-                cause);
+                cause, kind, machine, asked);
     }
 
     /** The same record with the reason it failed, which only a failed one has any use for. */
     public OperationRecord withCause(final OperationFailure newCause) {
         return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs,
-                waitedTicks, ranTicks, newCause);
+                waitedTicks, ranTicks, newCause, kind, machine, asked);
+    }
+
+    /** Whether it is of another mod's kind, given to a machine of the network, rather than the network's own. */
+    public boolean ofAnotherMod() {
+        return !kind.isEmpty();
+    }
+
+    /**
+     * What the kind is called, as a player reads it: another mod's kind by the name it was registered with, or its id
+     * where this side does not have it; the network's own by the word of its {@link #type}.
+     */
+    public Text kindName() {
+        if (!ofAnotherMod()) {
+            return Text.literal(typeName(type));
+        }
+        return JsCore.operations().get(kind).<Text>map(registered -> registered.name().text())
+                .orElse(Text.literal(kind));
     }
 
     /**
@@ -208,8 +258,13 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         return key.stack(1);
     }
 
+    /** What it was about: the item for the network's own; the kind, the machine and what was asked otherwise. */
     public Component name() {
-        return key.displayName();
+        if (!ofAnotherMod()) {
+            return key.displayName();
+        }
+        return GameText.component(asked.isEmpty() ? RUN_BY.with(kindName(), machine)
+                : RUN_BY_WITH.with(kindName(), machine, asked));
     }
 
     public boolean isFluid() {
@@ -297,6 +352,9 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                         buf.writeVarLong(rec.waitedTicks());
                         buf.writeVarLong(rec.ranTicks());
                         CAUSE_CODEC.encode(buf, rec.cause());
+                        buf.writeUtf(rec.kind(), MAX_KIND_BYTES);
+                        buf.writeUtf(rec.machine(), MAX_MACHINE_BYTES);
+                        buf.writeUtf(rec.asked(), MAX_ASKED_BYTES);
                     },
                     buf -> new OperationRecord(
                             UUIDUtil.STREAM_CODEC.decode(buf),
@@ -310,7 +368,10 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                             SUBS_CODEC.decode(buf),
                             buf.readVarLong(),
                             buf.readVarLong(),
-                            CAUSE_CODEC.decode(buf)));
+                            CAUSE_CODEC.decode(buf),
+                            buf.readUtf(MAX_KIND_BYTES),
+                            buf.readUtf(MAX_MACHINE_BYTES),
+                            buf.readUtf(MAX_ASKED_BYTES)));
 
     public CompoundTag toNbt(final HolderLookup.Provider registries) {
         final CompoundTag tag = new CompoundTag();
@@ -356,6 +417,11 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
             why.put("args", argumentList);
             tag.put("cause", why);
         }
+        if (ofAnotherMod()) {
+            tag.putString("kind", kind);
+            tag.putString("machine", machine);
+            tag.putString("asked", asked);
+        }
         return tag;
     }
 
@@ -394,7 +460,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         }
         return new OperationRecord(id, tag.getByte("type"), key, tag.getLong("requested"),
                 tag.getLong("moved"), tag.getByte("status"), priority, List.copyOf(moves), List.copyOf(subs),
-                tag.getLong("waited"), tag.getLong("ran"), cause);
+                tag.getLong("waited"), tag.getLong("ran"), cause, tag.getString("kind"), tag.getString("machine"),
+                tag.getString("asked"));
     }
 
     /** The displayed words of the Operation states. */

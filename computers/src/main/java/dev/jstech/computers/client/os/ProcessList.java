@@ -151,14 +151,17 @@ final class ProcessList extends Panel {
                     ? PALETTE.get().heldUp() : ctx.skin().dim(), ground);
             nameX += font.width(tag) + 4;
         }
-        final int barX = x + w / 2 + 4;
+        final String st = statusLabel(op.status());
+        // Another mod's work moves no items, so it has no bar to fill: its name has the row up to the state.
+        final int barX = op.ofAnotherMod() ? x + w - font.width(st) : x + w / 2 + 4;
         Draw.text(g, font, Texts.clip(font, op.name().getString(), barX - nameX - 4), nameX, y + 3,
                 ctx.skin().text(), ground);
-        final int barLen = w / 2 - 40;
-        final double frac = op.requested() > 0 ? Math.min(1.0, (double) op.moved() / op.requested()) : 0.0;
-        g.fill(barX, y + 4, barX + barLen, y + h - 3, ctx.skin().fieldBg());
-        g.fill(barX, y + 4, barX + (int) (barLen * frac), y + h - 3, statusColour(op.status(), ctx.skin()));
-        final String st = statusLabel(op.status());
+        if (!op.ofAnotherMod()) {
+            final int barLen = w / 2 - 40;
+            final double frac = op.requested() > 0 ? Math.min(1.0, (double) op.moved() / op.requested()) : 0.0;
+            g.fill(barX, y + 4, barX + barLen, y + h - 3, ctx.skin().fieldBg());
+            g.fill(barX, y + 4, barX + (int) (barLen * frac), y + h - 3, statusColour(op.status(), ctx.skin()));
+        }
         Draw.text(g, font, st, x + w - font.width(st), y + 3, statusColour(op.status(), ctx.skin()), ground);
     }
 

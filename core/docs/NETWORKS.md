@@ -124,7 +124,13 @@ a block that only carries the network (category A) is no member; a member only r
 Operation; and each kind it carries out must be registered and open to its category.
 
 Whatever runs the network reads its members through `NetworkSystem`: `membersOf(network)`, `memberAt(pos)`, and
-`membersCarryingOut(network, kind)`, the machines that can be given a kind of Operation.
+`membersCarryingOut(network, kind)`, the machines that can be given a kind of Operation. The work itself reaches the
+machine as a request its kind's handler is handed, with the machine in it
+([Operations](OPERATIONS.md#doing-the-work-the-request)).
+
+A machine is called on the network by the name a player gave it on its own screen, when its block entity is a
+vanilla `Nameable` with a custom name; otherwise by its block's name and the first six characters of its identity on
+the network (`Accelerator-3fa2c1`). J's Computers' network language names it that way, or by where it stands.
 
 ### State as tables
 

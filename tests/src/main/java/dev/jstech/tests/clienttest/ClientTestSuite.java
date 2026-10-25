@@ -71,6 +71,7 @@ import dev.jstech.tests.clienttest.computers.MainframeClientTests;
 import dev.jstech.tests.clienttest.computers.McNetSpaceClientTests;
 import dev.jstech.tests.clienttest.computers.MediaDriveClientTests;
 import dev.jstech.tests.clienttest.computers.MekanismClientTests;
+import dev.jstech.tests.clienttest.computers.MemberRunClientTests;
 import dev.jstech.tests.clienttest.computers.MemoryCrashClientTests;
 import dev.jstech.tests.clienttest.computers.MenuSwapCursorClientTests;
 import dev.jstech.tests.clienttest.computers.MonitorClientTests;
@@ -412,6 +413,7 @@ public final class ClientTestSuite {
             NetworkInteractorClientTests.class,
             NetworkServicesClientTests.class,
             NetworkEventLogClientTests.class,
+            MemberRunClientTests.class,
             NetworkSharesClientTests.class,
             OffscreenDesktopClientTests.class,
             SystemMotionClientTests.class,

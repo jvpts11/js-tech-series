@@ -63,13 +63,15 @@ dependencies {
         }
     }
     /*
-     * The TOML and JSON libraries the settings formats are written on, and the vector library the models are worked
-     * out with, come with the game, and the unit tests run without it; they get the same three, at the versions the
-     * game and NeoForge bring, and nothing else of the game. The model tests read model files as JSON themselves.
+     * The TOML and JSON libraries the settings formats are written on, the vector library the models are worked out
+     * with, and the serialization library a kind of Operation names to read a request written as text, come with the
+     * game, and the unit tests run without it; they get the same four, at the versions the game and NeoForge bring,
+     * and nothing else of the game. The model tests read model files as JSON themselves.
      */
     testRuntimeOnly 'com.electronwill.night-config:toml:3.8.3'
     testImplementation 'com.google.code.gson:gson:2.10.1'
     testImplementation 'org.joml:joml:1.10.5'
+    testImplementation 'com.mojang:datafixerupper:8.0.16'
     /*
      * The test kit's checks that read sources, the test of the API's surface among them, run in the Core's unit
      * tests as they run in any mod's: the kit's own classes only, none of the game it is built against.
