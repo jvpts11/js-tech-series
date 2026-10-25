@@ -1561,6 +1561,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   knowing the other.
 
 ### Changed
+- A halo is the glare the eye sees: drawn whole over the picture, never cut by the floor a lamp stands on or
+  the wall beside it, and fading, smoothly, only as much as the blocks between hide the light itself, glass hiding
+  none of it. A block's glow follows its drawing: a lantern or a torch glows about its own shape and as big as it, and
+  glow lichen glows in its own drawing with no round halo about it.
 - A click on a machine's progress arrow opens the recipes it works in JEI, EMI or REI, as "Show recipes" says
   over it; the bar under the window takes the click when the lanes do not fit.
 - An element's symbol shows alone at the head of its tooltip, in gold, rather than as "Symbol: Fe".

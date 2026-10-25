@@ -23,8 +23,9 @@ import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The lighting kit on a player's game: coloured light tinting the world ({@link ColouredLightModel}), dynamic light
- * ({@link DynamicLightsClient}), and the glow of bright things, the halos ({@link Halos}) and the shafts of
- * spotlights ({@link BeamVisuals}), drawn after the world's particles. Coloured light and glow step aside for Shimmer.
+ * ({@link DynamicLightsClient}), and the glow of bright things, the shafts of spotlights ({@link BeamVisuals}) and,
+ * over all of the world, the halos ({@link Halos}), drawn after the world's particles. Coloured light and glow step
+ * aside for Shimmer.
  */
 public final class LightingClient {
 
@@ -66,9 +67,11 @@ public final class LightingClient {
         BeamVisuals.draw(level, event.getCamera(), poses, buffers,
                 event.getPartialTick().getGameTimeDeltaPartialTick(false));
         // A shader pack glows bright things with a bloom of its own; a halo of the Core's over it would glow twice.
-        if (!Instancing.shaderPack()) {
-            Halos.draw(level, event.getCamera(), poses, buffers);
-        }
         buffers.endBatch(LightRenderTypes.GLOW);
+        if (!Instancing.shaderPack()) {
+            // Last of the world, over all of it: the glare the eye sees.
+            Halos.draw(level, event.getCamera(), poses, buffers);
+            buffers.endBatch(LightRenderTypes.GLARE);
+        }
     }
 }

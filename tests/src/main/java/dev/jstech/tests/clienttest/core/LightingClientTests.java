@@ -13,6 +13,8 @@ import dev.jstech.core.client.instancing.Instancing;
 import dev.jstech.core.client.light.DynamicLightsClient;
 import dev.jstech.core.light.LampBlockEntity;
 import dev.jstech.core.light.LightBlock;
+import dev.jstech.core.light.LightingSettings;
+import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.TestLights;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -31,6 +33,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirectionalBlock;
+import net.minecraft.world.level.block.MultifaceBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.ModList;
@@ -45,7 +48,8 @@ import org.slf4j.Logger;
  * which only hands it over; a lamp placed with a click, lit and tinting its floor within a tick of showing, and a
  * soul lantern's blue seen and gone with the lantern; the colours under a deferred shader pack, run with Iris; a torch
  * held lights the way on the player's own game, and the way goes dark once it is put away; a floodlight's shaft
- * through the night air, lighting a wall twenty blocks off; and the halos of bright lamps in the dark.
+ * through the night air, lighting a wall twenty blocks off; and the halos of bright lamps in the dark, whole over the
+ * floor, gone behind stone and there behind glass, and none about glow lichen, which glows in its own drawing.
  */
 public final class LightingClientTests {
 
@@ -68,6 +72,19 @@ public final class LightingClientTests {
     private static final long FULL_DAY = 24_000L;
     private static final long DUSK = 13_000L;
     private static final int WAIT = 300;
+    /*
+     * The halo read off the screen: how far above and below the lamp, in the GUI's pixels, past the lamp itself and
+     * within its glow, and how far aside of the crosshair, past its arms; over how many pixels each is read; how much
+     * brighter a glow seen makes them at least, and a hidden one at most, in the sum of the three channels; how much
+     * of the brightening above shows below too; and the ticks for a change of the glow to be drawn.
+     */
+    private static final int GLARE_OFF = 36;
+    private static final int GLARE_NEAR = 12;
+    private static final int GLARE_PIXELS = 9;
+    private static final int GLARE_SEEN = 20;
+    private static final int GLARE_HIDDEN = 8;
+    private static final double GLARE_WHOLE = 0.5;
+    private static final int GLARE_SETTLE = 5;
     private static final int CHANNEL = 0xFF;
     private static final int GREEN_SHIFT = 8;
     private static final int BLUE_SHIFT = 16;
@@ -382,6 +399,118 @@ public final class LightingClientTests {
                     level.setDayTime(DAY);
                     clear(ctx, level);
                 });
+    }
+
+    /*
+     * A lamp on the floor seen from above at night, its halo read off the screen against the same view with no glow:
+     * as bright under the lamp, over the floor, as above it, never cut by the floor; gone behind a stone wall, which
+     * hides the lamp; and there behind a glass one, which does not.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void halos_areWholeOverTheFloorAndHiddenOnlyByWhatHidesTheLamp(final ClientTestContext ctx) {
+        final int[][] glowing = new int[3][];
+        final int[][] dark = new int[3][];
+        ctx.afterTest(() -> LightingSettings.FILE.set(LightingSettings.BLOOM, 1.0));
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                    level.setBlockAndUpdate(ctx.abs(LAMP), TestLights.FRAGILE_LAMP.get().defaultBlockState());
+                })
+                .thenWaitUntil(() -> lit(ctx, LAMP), WAIT, "the lamp to be on on the player's game")
+                .then(30, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(LAMP))));
+        for (int seen = 0; seen < glowing.length; seen++) {
+            final int phase = seen;
+            if (phase > 0) {
+                ctx.thenServer(0, level -> {
+                    for (int x = -2; x <= 2; x++) {
+                        for (int y = 2; y <= 5; y++) {
+                            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, y, 0)), phase == 1
+                                    ? Blocks.STONE.defaultBlockState() : Blocks.GLASS.defaultBlockState());
+                        }
+                    }
+                });
+            }
+            ctx.then(GLARE_SETTLE, () -> glowing[phase] = glare(ctx))
+                    .thenScreenshot(0, "halo-" + new String[] {"on-the-floor", "behind-stone", "behind-glass"}[phase])
+                    .then(0, () -> LightingSettings.FILE.set(LightingSettings.BLOOM, 0.0))
+                    .then(GLARE_SETTLE, () -> dark[phase] = glare(ctx))
+                    .then(0, () -> LightingSettings.FILE.set(LightingSettings.BLOOM, 1.0));
+        }
+        ctx.then(0, () -> {
+            final int above = glowing[0][0] - dark[0][0];
+            final int below = glowing[0][1] - dark[0][1];
+            ctx.assertTrue(above >= GLARE_SEEN && below >= above * GLARE_WHOLE, "the halo is whole, as bright over"
+                    + " the floor under the lamp as above it: " + above + " above, " + below + " below");
+            final int stone = Math.max(glowing[1][0] - dark[1][0], glowing[1][1] - dark[1][1]);
+            ctx.assertTrue(stone <= GLARE_HIDDEN, "behind a stone wall the lamp's halo is gone: " + stone);
+            final int glass = Math.min(glowing[2][0] - dark[2][0], glowing[2][1] - dark[2][1]);
+            ctx.assertTrue(glass >= GLARE_SEEN, "behind glass the lamp's halo is there: " + glass);
+        }).thenServer(0, level -> {
+            level.setDayTime(DAY);
+            clear(ctx, level);
+        });
+    }
+
+    /*
+     * Glow lichen on the floor at night, read off the screen against the same view with no glow: it glows in its own
+     * drawing and has no halo about it, at its middle or round it.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void halos_leaveGlowLichenToGlowInItsOwnDrawing(final ClientTestContext ctx) {
+        final int[][] read = new int[2][];
+        ctx.afterTest(() -> LightingSettings.FILE.set(LightingSettings.BLOOM, 1.0));
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                    level.setBlockAndUpdate(ctx.abs(LAMP), Blocks.GLOW_LICHEN.defaultBlockState()
+                            .setValue(MultifaceBlock.getFaceProperty(Direction.DOWN), true));
+                })
+                .thenWaitUntil(() -> ctx.mc().level.getBlockState(ctx.abs(LAMP)).is(Blocks.GLOW_LICHEN), WAIT,
+                        "the lichen on the player's game")
+                .then(30, () -> ctx.lookAt(Vec3.atBottomCenterOf(ctx.abs(LAMP))))
+                .then(GLARE_SETTLE, () -> read[0] = glare(ctx))
+                .thenScreenshot(0, "glow-lichen-at-night")
+                .then(0, () -> LightingSettings.FILE.set(LightingSettings.BLOOM, 0.0))
+                .then(GLARE_SETTLE, () -> read[1] = glare(ctx))
+                .then(0, () -> LightingSettings.FILE.set(LightingSettings.BLOOM, 1.0))
+                .then(0, () -> {
+                    int most = 0;
+                    for (int side = 0; side < read[0].length; side++) {
+                        most = Math.max(most, read[0][side] - read[1][side]);
+                    }
+                    ctx.assertTrue(most <= GLARE_HIDDEN, "glow lichen has no halo about it: " + most);
+                })
+                .thenServer(0, level -> {
+                    level.setDayTime(DAY);
+                    clear(ctx, level);
+                });
+    }
+
+    /*
+     * How bright the screen is a little above and a little below its middle, where the light looked at stands, and
+     * just left and right of the crosshair, which inverts what is under it, each the sum of its red, green and blue
+     * over a few pixels.
+     */
+    private static int[] glare(final ClientTestContext ctx) {
+        final int x = ctx.mc().getWindow().getGuiScaledWidth() / 2;
+        final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2;
+        final int[][] points = {{x, y - GLARE_OFF}, {x, y + GLARE_OFF}, {x - GLARE_NEAR, y}, {x + GLARE_NEAR, y}};
+        final int[] bright = new int[points.length];
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int side = 0; side < bright.length; side++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        final int argb = frame.pixel(points[side][0] + dx, points[side][1] + dy);
+                        bright[side] += (argb >> BLUE_SHIFT & CHANNEL) + (argb >> GREEN_SHIFT & CHANNEL)
+                                + (argb & CHANNEL);
+                    }
+                }
+                bright[side] /= GLARE_PIXELS;
+            }
+        }
+        return bright;
     }
 
     /* Whether it is night on the player's game, which hears the time a second at a time. */

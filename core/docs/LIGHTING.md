@@ -131,8 +131,16 @@ DynamicLightsClient.provide(level -> Cars.near(level).stream()
 
 Bright lamps, blocks that give coloured or bright light, and glowing parts that cast light have a soft halo in their
 colour, and spotlights a shaft of light through the air, bright at the lamp and fading along its reach, as dust and
-haze show it. Both are light added to what lies behind them and hidden behind walls; only the nearest are drawn. They
-are drawn after the clouds, so a cloud lies behind them.
+haze show it. Both are light added to what lies behind them; only the nearest are drawn. They are drawn after the
+clouds, so a cloud lies behind them.
+
+A halo is the glare the eye sees (*changed 2026-10-25*): it is drawn over the whole picture, whole, never cut by the
+floor a lamp stands on or the wall beside it, and it fades only as the light itself is hidden. Five points of the
+light are looked at from the eye, a few lights a frame; as many of them as a block between hides by its shape, a wall,
+a slab, so much of the halo goes, smoothly, while glass, leaves and what draws nothing hide none of it. A block's glow
+follows its drawing: a whole block glows about its middle, and so do fire and liquids; a smaller one, a lantern or a
+torch, about the middle of its shape and as big as its shape; a flat one, glow lichen or a layer, glows in its own
+drawing alone, with no halo about it. The shafts of spotlights stay in the world, hidden behind walls.
 
 ## Under a shader pack
 
