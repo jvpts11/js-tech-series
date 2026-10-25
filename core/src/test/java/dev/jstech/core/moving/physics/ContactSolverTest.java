@@ -20,8 +20,9 @@ class ContactSolverTest {
     private static final double MASS = 100;
     private static final Matrix3d CUBE = new Matrix3d().scaling(MASS / 6);
     private static final double GRIP = 0.6;
-    /* How far into each other two bodies rest, as the solver lets them be. */
+    /* How far into each other two bodies rest, as the solver lets them be, and how fast they settle that deep. */
     private static final double LETS_BE = 0.005;
+    private static final double SETTLES = 0.05;
 
     @Test
     void solve_stopsABodyFallingOntoTheGround() {
@@ -86,8 +87,8 @@ class ContactSolverTest {
         body.velocity().set(0, -20, 0);
         final Landing landing = new Landing();
         landing.step(body);
-        assertEquals(-(0.4 + LETS_BE) / STEP, body.velocity().y, 1.0e-3,
-                "it closes the gap to the depth a contact lets be and no more, not bouncing yet");
+        assertEquals(-(0.4 / STEP + SETTLES), body.velocity().y, 1.0e-3,
+                "it closes the gap to touching, settling no faster into the depth a contact lets be, not bouncing yet");
         body.drift(CUBE, STEP);
         landing.step(body);
         assertTrue(body.velocity().y > 0.15 * 20, "touching, it bounces as fast as it came: " + body.velocity());
@@ -157,6 +158,21 @@ class ContactSolverTest {
         }
         // Each lands on the one below just landed and bounces a little, as fast as it came: never thrown aside.
         assertTrue(thrown < 0.3, "the top is never thrown aside: " + thrown);
+        stack.assertSquare();
+    }
+
+    @Test
+    void solve_settlesAStackSetDownTouchingWithoutItsTopFalling() {
+        // Each cube touching the one below, as blocks set down from the grid are: no deeper than none.
+        final Stack stack = new Stack(1);
+        double fell = 0;
+        for (int i = 0; i < Stack.SETTLED; i++) {
+            stack.step();
+            fell = Math.max(fell, -stack.topUp());
+        }
+        // Each joint settles into the depth it lets be no faster than that: the top falls no faster than all of them.
+        assertTrue(fell <= (Stack.CUBES + 1) * SETTLES + 0.05, "set down touching, its top barely falls: " + fell
+                + " m/s");
         stack.assertSquare();
     }
 

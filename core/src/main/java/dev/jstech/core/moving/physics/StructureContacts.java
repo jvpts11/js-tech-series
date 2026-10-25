@@ -384,10 +384,22 @@ final class StructureContacts {
             final RigidBody theirBody;
             final StructureParts made;
             if (physics != null && physics.active()) {
-                // Each works the pair in its own step, both pushed: so each meets the other as its own pull acts. One
-                // asleep, met gently, holds as the ground does, so what rests on it rests still; met hard, it wakes.
-                // One worked with it in the same steps moves with it, asleep or not.
-                if (!together && physics.asleep() && body.velocity().length() + body.spin().length() < GENTLE) {
+                /*
+                 * Each works the pair in its own step, both pushed: so each meets the other as its own pull acts. One
+                 * asleep, met gently, holds as the ground does, so what rests on it rests still; met hard, it wakes.
+                 * One that took its turn this tick already, waiting on the budget or worked in an island before this
+                 * one, is held as it goes, standing still if it waits: pushed, it would take the weight of what rests
+                 * on it with nothing of what holds it up worked here. One worked with it in the same steps moves with
+                 * it, asleep or not.
+                 */
+                if (!together && physics.tookTurn(island.now())) {
+                    theirBody = held(them);
+                    if (physics.waitsAt(island.now())) {
+                        theirBody.velocity().zero();
+                        theirBody.spin().zero();
+                    }
+                } else if (!together && physics.asleep()
+                        && body.velocity().length() + body.spin().length() < GENTLE) {
                     theirBody = held(them);
                 } else {
                     physics.prepareBody();

@@ -135,9 +135,12 @@ public final class StructureBalance {
         return physicsMillis;
     }
 
-    /** Sets how much of a tick the physics of a dimension's structures takes at most; from the balance file. */
+    /**
+     * Sets how much of a tick the physics of a dimension's structures takes at most; from the balance file. None at
+     * all, which no setting gives, has every structure wait every other tick, as a test of their waiting.
+     */
     public static void physicsMillis(final double millis) {
-        physicsMillis = Math.max(0.1, millis);
+        physicsMillis = Math.max(0, millis);
     }
 
     /** Whether a structure whose blocks are no longer all joined becomes as many structures as it now is. */

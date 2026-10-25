@@ -189,6 +189,11 @@ final class PhysicsIsland {
         return most;
     }
 
+    /* The tick it is worked in. */
+    long now() {
+        return now;
+    }
+
     /** The physics of this island whose body {@code structure} is part of, or null. */
     @Nullable StructurePhysics member(final MovingStructure structure) {
         final StructurePhysics direct = members.get(structure);
@@ -267,11 +272,13 @@ final class PhysicsIsland {
     /*
      * The structures moving by their physics, awake, that {@code at}, one of the island, may meet this tick: worked
      * with it, so a stack of them holds as one, each held up by what is under it. One asleep is not taken in: met
-     * gently it holds as the ground does, and met hard it wakes and takes its own turn.
+     * gently it holds as the ground does, and met hard it wakes and takes its own turn. One just let go is taken in
+     * before its own first turn, and so is the island's own: a stack let go at once is worked as one from its first
+     * tick, never each of it alone, falling a tick on what has gone already.
      */
     private void touching(final ServerLevel level, final MovingStructure at, final Deque<MovingStructure> next) {
         final StructurePhysics own = members.get(at);
-        if (own == null || !own.active()) {
+        if (own == null) {
             return;
         }
         for (final IStructureBody near : MovingStructures.near(level, own.reachThisTick())) {
@@ -286,7 +293,7 @@ final class PhysicsIsland {
                 continue;
             }
             final StructurePhysics physics = root.physicsMade();
-            if (physics.active() && !physics.asleep() && !physics.tookTurn(level.getGameTime())) {
+            if (!physics.asleep() && !physics.tookTurn(level.getGameTime())) {
                 members.put(root, physics);
                 next.add(root);
                 stacked = true;

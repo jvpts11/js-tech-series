@@ -195,7 +195,9 @@ great hull on the ground holds still from the first; it slides as the blocks' sl
 bounces a little from a hard blow, only as it meets, never while it rests. A structure that sank into another, as one
 landing on a stack may, is moved out of it over a few steps, never given a speed to come out, so a stack pushed apart
 does not throw its top. Every point where two of them meet rests as deep, a hair into the other, so a stack shaken by
-its landing settles upright rather than left leaning. Another structure moving by its physics is pushed back as hard
+its landing settles upright rather than left leaning; two touching settle that hair deep slowly, at five centimetres a
+second, so a tall stack set down touching settles into all its joints at once without its top falling as fast as a
+blow (*changed 2026-10-25*). Another structure moving by its physics is pushed back as hard
 as it pushes; one moved by a motion carries what rests on it, a crate on a lift. A blow harder than a block holds, by
 its blast strength (`jscore:blast_strength`), breaks it, of the world or of the structure: a heavy block falling on
 glass goes through it.
@@ -204,7 +206,7 @@ glass goes through it.
 crates is held up from the ground through every crate in it, each pass going up it from the lowest and back down, with
 more passes the taller it is and its tick cut into shorter steps, so it settles still rather than sinking or swaying.
 They fall asleep together too, once each of them has been still a second, and none is left holding the rest up as the
-ground does.
+ground does. A stack let go at once is worked as one from its very first tick (*changed 2026-10-25*).
 
 A tick is worked in as many steps as keep a structure from going more than half a block in one, and its stiffest
 hold, a liquid's surface, steady. A structure still for a second, its engines and burners idle, falls asleep and
@@ -214,7 +216,10 @@ chunk not loaded is read: a structure reaching one waits there. Each structure's
 diagnostics as `jscore:structure_physics`; twenty small structures falling and landing at once take a few
 milliseconds a tick. The
 physics of a dimension's structures takes no more of a tick than `moving_structures.physics_millis` lets it: past
-that, a structure waits a tick, and goes the next whatever the budget.
+that, a structure waits a tick, and goes the next whatever the budget. Structures worked together wait and go
+together after, so a stack is never split by its budget; and one that took its turn already in the tick, waiting or
+gone, is held as it goes by those that go after it, standing still if it waits, so a crate landing on a stack that
+waits rests on it and never shoves it down (*changed 2026-10-25*).
 
 Structures moving by their physics far apart are worked at once, beside the server's thread. At the start of the
 dimension's tick each readies its tick on the server's thread; those whose reach this tick (where they stand, how far

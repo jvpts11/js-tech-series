@@ -12,6 +12,7 @@ import dev.jstech.core.dimension.Winds;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructureEvent;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureBalance;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.moving.StructureYard;
@@ -21,8 +22,10 @@ import dev.jstech.core.moving.physics.StructurePhysics;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestPhysics;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,11 +47,12 @@ import org.joml.Vector3d;
 
 /**
  * How steady the solver of moving structures is: a stack of five structures dropped one on another settles, falls
- * asleep and stays still; a stack of twelve set down at rest stands, sleeps and hears no blow; stacks falling on
- * themselves never sink into themselves as each lands, whichever of two meeting works their meeting; a great hull
- * let down on the ground comes to rest flat without trembling and sleeps on; a body flying at a wall, fast or very
- * fast, stops at it and never goes through; and a cart on its wheels, set going, rolls on where a sled set going as
- * fast slides to a stop. Each arena's air is still, so no wind moves what rests.
+ * asleep and stays still; a stack of twelve set down at rest stands, sleeps and hears no blow, and stands as well
+ * waiting on a physics budget of none; a crate thrown onto a stack waiting on the budget pushes none of it while it
+ * waits; stacks falling on themselves never sink into themselves as each lands, whichever of two meeting works their
+ * meeting; a great hull let down on the ground comes to rest flat without trembling and sleeps on; a body flying at a
+ * wall, fast or very fast, stops at it and never goes through; and a cart on its wheels, set going, rolls on where a
+ * sled set going as fast slides to a stop. Each arena's air is still, so no wind moves what rests.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -79,8 +83,12 @@ public final class MovingStructureSolverGameTests {
     private static final int LATELY = 3;
     /* How fast the top going sideways is told, in metres a second. */
     private static final double ASIDE = 0.5;
-    /* How many crates the tall stack set down at rest stands. */
+    /*
+     * How many crates the tall stack set down at rest stands, and the fastest, in metres a second, any of it may fall
+     * as it settles into its joints: well short of a blow's metre a second, which it once came within a hair of.
+     */
     private static final int TALL_STACKED = 12;
+    private static final double SETTLING = 0.75;
     /*
      * The landing test, in its batch of its own: four stacks of three, far apart, so that in some the one standing
      * still and not the one falling onto it works their meeting; watched while they fall and settle; how deep one may
@@ -92,6 +100,23 @@ public final class MovingStructureSolverGameTests {
     private static final int LANDING_APART = 11;
     private static final int LANDING_WATCHED = 200;
     private static final double SUNK_AT_MOST = 0.02;
+    /*
+     * The waiting test, in its batch of its own, as it takes the dimension's physics budget away: how long the stack is
+     * watched waiting every other tick.
+     */
+    private static final String WAITING_BATCH = "jscore_moving_solver_waiting";
+    private static final int WAITING_WATCHED = 60;
+    /*
+     * The landing on a stack waiting, in a batch of its own too: how many crates the stack stands, how far above it
+     * the crate thrown onto it starts, in blocks, and how fast it is thrown down, in metres a second: a block and a
+     * half a tick, so the tick before it lands it is still beyond the stack's reach and goes on alone.
+     */
+    private static final String WAITING_LANDING_BATCH = "jscore_moving_solver_waiting_landing";
+    private static final int WAITING_STACKED = 4;
+    private static final int WAITING_DROP = 3;
+    private static final double WAITING_THROWN = 30;
+    /* How much a structure's speed may change in a tick it waited, in metres a second: only rounding. */
+    private static final double PUSHED_WAITING = 1.0e-6;
     /* The wall the fast bodies fly at: its west face, in the arena's places. */
     private static final int WALL = 40;
     /*
@@ -190,15 +215,133 @@ public final class MovingStructureSolverGameTests {
             }
         };
         NeoForge.EVENT_BUS.addListener(MovingStructureEvent.Collision.class, ear);
+        final double[] fastest = {0};
+        final String[] when = {""};
         stack.forEach(structure -> structure.move(PhysicsMotion.AT_REST));
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(stack.stream().allMatch(MovingStructureSolverGameTests::asleep),
-                        "the stack falls asleep: " + boxes(stack)))
+                .thenWaitUntil(() -> {
+                    for (final MovingStructure each : stack) {
+                        final StructurePhysics physics = each.physics();
+                        final double down = physics == null ? 0 : -physics.body().velocity().y();
+                        if (down > fastest[0]) {
+                            fastest[0] = down;
+                            when[0] = watched(helper, stack);
+                        }
+                    }
+                    helper.assertTrue(stack.stream().allMatch(MovingStructureSolverGameTests::asleep),
+                            "the stack falls asleep: " + boxes(stack));
+                })
                 .thenExecute(() -> {
                     NeoForge.EVENT_BUS.unregister(ear);
                     stack.forEach(MovingStructures::takeAway);
                     SHELTERED.remove(sheltered);
                     helper.assertTrue(heard.isEmpty(), "set down at rest, no blow is heard: " + heard);
+                    helper.assertTrue(fastest[0] <= SETTLING, "set down at rest, none of it falls as fast as a blow: "
+                            + String.format(Locale.ROOT, "%.3f m/s", fastest[0]) + " at " + when[0]);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * The tall stack set down at rest with no physics budget at all, in its batch of its own, so each crate waits every
+     * other tick and those beside it go on without it: one waiting stands as it is for those that go, as one asleep
+     * does, never pushed down with nothing of the crate below under it. No crate sinks into the one below and no blow
+     * is heard; given its budget again, the stack falls asleep.
+     */
+    @GameTest(template = TALL, batch = WAITING_BATCH, timeoutTicks = 400)
+    public static void stack_aStackWaitingOnTheBudgetStandsAndHearsNoBlow(final GameTestHelper helper) {
+        final AABB sheltered = shelter(helper);
+        final List<MovingStructure> stack = new ArrayList<>();
+        for (int i = 0; i < TALL_STACKED; i++) {
+            stack.add(made(helper, List.of(new BlockPos(5, FLOOR + i, 5)), Blocks.OAK_PLANKS));
+        }
+        final List<String> heard = new CopyOnWriteArrayList<>();
+        final Consumer<MovingStructureEvent.Collision> ear = event -> {
+            if (stack.contains(event.structure())) {
+                heard.add(String.format(Locale.ROOT, "t%d %.2f m/s at %.1f", helper.getTick(), event.speed(),
+                        event.at().y - y(helper, FLOOR)));
+            }
+        };
+        final double budget = StructureBalance.physicsMillis();
+        final double[] sunk = {0};
+        final String[] deepest = {""};
+        NeoForge.EVENT_BUS.addListener(MovingStructureEvent.Collision.class, ear);
+        StructureBalance.physicsMillis(0);
+        stack.forEach(structure -> structure.move(PhysicsMotion.AT_REST));
+        helper.startSequence()
+                .thenExecuteFor(WAITING_WATCHED, () -> {
+                    for (int i = 1; i < stack.size(); i++) {
+                        final double into = stack.get(i - 1).worldBox().maxY - stack.get(i).worldBox().minY;
+                        if (into > sunk[0]) {
+                            sunk[0] = into;
+                            deepest[0] = watched(helper, stack);
+                        }
+                    }
+                })
+                .thenExecute(() -> StructureBalance.physicsMillis(budget))
+                .thenWaitUntil(() -> helper.assertTrue(stack.stream().allMatch(MovingStructureSolverGameTests::asleep),
+                        "given its budget again, the stack falls asleep: " + watched(helper, stack)))
+                .thenExecute(() -> {
+                    NeoForge.EVENT_BUS.unregister(ear);
+                    stack.forEach(MovingStructures::takeAway);
+                    SHELTERED.remove(sheltered);
+                    helper.assertTrue(heard.isEmpty(), "waiting on its budget, no blow is heard: " + heard);
+                    helper.assertTrue(sunk[0] <= SUNK_AT_MOST, "no crate sinks into the one below while they wait: "
+                            + String.format(Locale.ROOT, "%.3f", sunk[0]) + " at " + deepest[0]);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A crate dropped onto a stack with no physics budget at all, in its batch of its own: the stack, let go a tick
+     * before the crate and worked first each tick, as it was made first, waits every tick the crate goes, so the
+     * crate lands on it while it waits. The stack waiting stands as it is for the crate, as the ground does, and the
+     * landing never shoves its top crate down into the one below with nothing of the stack under it.
+     */
+    @GameTest(template = TALL, batch = WAITING_LANDING_BATCH, timeoutTicks = 300)
+    public static void landing_aCrateLandingOnAStackWaitingOnTheBudgetNeverShovesItDown(final GameTestHelper helper) {
+        final AABB sheltered = shelter(helper);
+        final List<MovingStructure> stack = new ArrayList<>();
+        for (int i = 0; i < WAITING_STACKED; i++) {
+            stack.add(made(helper, List.of(new BlockPos(5, FLOOR + i, 5)), Blocks.IRON_BLOCK));
+        }
+        final MovingStructure crate = made(helper, List.of(new BlockPos(5, FLOOR + WAITING_STACKED + WAITING_DROP,
+                5)), Blocks.IRON_BLOCK);
+        final double budget = StructureBalance.physicsMillis();
+        final Map<MovingStructure, double[]> before = new HashMap<>();
+        final List<String> pushed = new ArrayList<>();
+        StructureBalance.physicsMillis(0);
+        stack.forEach(structure -> structure.move(PhysicsMotion.AT_REST));
+        final List<MovingStructure> all = new ArrayList<>(stack);
+        all.add(crate);
+        helper.startSequence()
+                .thenIdle(1)
+                .thenExecute(() -> crate.move(PhysicsMotion.going(0, -WAITING_THROWN, 0)))
+                .thenExecuteFor(WAITING_WATCHED, () -> {
+                    // One that stood still since the last tick waited, and was to be pushed by nothing meanwhile.
+                    for (final MovingStructure each : stack) {
+                        final StructurePhysics physics = each.physics();
+                        if (physics == null) {
+                            continue;
+                        }
+                        final AABB box = each.worldBox();
+                        final double[] now = {box.minX, box.minY, box.minZ, physics.body().velocity().x(),
+                                physics.body().velocity().y(), physics.body().velocity().z()};
+                        final double[] last = before.put(each, now);
+                        if (last != null && last[0] == now[0] && last[1] == now[1] && last[2] == now[2]
+                                && Math.abs(last[4] - now[4]) + Math.abs(last[3] - now[3]) + Math.abs(last[5] - now[5])
+                                > PUSHED_WAITING && pushed.isEmpty()) {
+                            pushed.add(watched(helper, all));
+                        }
+                    }
+                })
+                .thenExecute(() -> {
+                    StructureBalance.physicsMillis(budget);
+                    all.forEach(MovingStructures::takeAway);
+                    SHELTERED.remove(sheltered);
+                    helper.assertTrue(crate.worldBox().minY < y(helper, FLOOR + WAITING_STACKED) + RESTS,
+                            "the crate lands on the stack: " + watched(helper, all));
+                    helper.assertTrue(pushed.isEmpty(), "a crate of the stack waiting is pushed by none: " + pushed);
                 })
                 .thenSucceed();
     }

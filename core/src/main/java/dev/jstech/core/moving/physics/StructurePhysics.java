@@ -79,8 +79,9 @@ public final class StructurePhysics {
     private double mass;
     private boolean filled;
     private boolean asleep;
-    /* Whether it waited last tick, the dimension's physics having taken its share. */
+    /* Whether it waited last tick, the dimension's physics having taken its share; and the tick it last waited. */
     private boolean waited;
+    private long waitedAt = Long.MIN_VALUE;
     private int still;
     private long woke;
     private List<PhysicsMotion.WarmRoom> warmSaved = List.of();
@@ -308,6 +309,7 @@ public final class StructurePhysics {
         if (budget.spent() && !waited) {
             // The dimension's physics took its share of this tick: it waits, as it is, and goes the next whatever.
             waited = true;
+            waitedAt = askedAt;
             return new IStructureMotion.Step(structure.frame().pose(), motion);
         }
         waited = false;
@@ -334,6 +336,7 @@ public final class StructurePhysics {
         askedAt = now;
         if (PhysicsBudget.of(level).spentWith(expected) && !waited) {
             waited = true;
+            waitedAt = now;
             worked(now, new IStructureMotion.Step(structure.frame().pose(), motion));
             return null;
         }
@@ -353,9 +356,14 @@ public final class StructurePhysics {
         Diagnostics.record(TIMED, System.nanoTime() - nanos);
     }
 
-    /* It is worked in an island this tick, readied already: no other island takes it in. */
+    /*
+     * It is worked in an island this tick, readied already: no other island takes it in. It goes this tick, so it
+     * waits on the budget next tick as those it went with do, and a stack waits and goes as one, never split by
+     * some of it going because it waited before.
+     */
     void taken(final long now) {
         askedAt = now;
+        waited = false;
     }
 
     /*
@@ -435,6 +443,14 @@ public final class StructurePhysics {
     /* Whether it took its turn this tick already, worked or waiting, and is not to be worked again now. */
     boolean tookTurn(final long now) {
         return askedAt == now || workedAt == now;
+    }
+
+    /*
+     * Whether it waits on the dimension's budget in the tick {@code now}, standing as it is: those that go this tick
+     * meet it still, as the ground, and never push it with nothing of what holds it up worked with them.
+     */
+    boolean waitsAt(final long now) {
+        return waitedAt == now;
     }
 
     /*

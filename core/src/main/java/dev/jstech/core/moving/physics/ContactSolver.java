@@ -43,9 +43,14 @@ public final class ContactSolver {
 
     /** How many times every contact is worked in a step. */
     public static final int ITERATIONS = 10;
-    /* How much of its depth a contact into the other body moves it out a step, and the depth it lets be. */
+    /*
+     * How much of its depth a contact into the other body moves it out a step, the depth it lets be, and how fast,
+     * in metres a second, two bodies touching settle into that depth: slowly enough that a tall stack settling into
+     * the depths of all its joints at once never reaches the speed of a blow.
+     */
     private static final double BAUMGARTE = 0.2;
     private static final double SLOP = 0.005;
+    private static final double SETTLE = 0.05;
     /* The fastest a contact moves a body out of another, in metres a second, so a deep one comes out over steps. */
     private static final double MOST_PUSH = 3.0;
     /*
@@ -291,9 +296,12 @@ public final class ContactSolver {
         /*
          * The bodies close up to the depth it lets be and no further, whether apart or a hair into each other: so
          * every point of a face rests as deep, and a body left leaning a hair on another settles flat rather than
-         * held leaning by its shallower points, every joint of a stack adding its lean.
+         * held leaning by its shallower points, every joint of a stack adding its lean. Apart, they close to touching
+         * within the step; the depth it lets be they settle into slowly, as a stack set down touching would
+         * otherwise fall as far as all its joints let it in one step, its top as fast as a blow.
          */
-        double bias = contact.apart > -SLOP ? -(contact.apart + SLOP) / seconds : 0;
+        double bias = contact.apart > -SLOP ? -(Math.max(0, contact.apart) / seconds
+                + Math.min((Math.min(0, contact.apart) + SLOP) / seconds, SETTLE)) : 0;
         // Into the other, it is moved out a little a step, never sped out: a speed given to push it out would stay
         // with it once out, and a stack sunk into itself would throw its top as high as each of its sinkings sped it.
         contact.pushOut = contact.apart > 0 ? 0

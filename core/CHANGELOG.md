@@ -1662,6 +1662,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   controller, in the Structure Projector, the Multiblock Builder, the recipe viewers, the manuals, the studio and Jade.
 
 ### Fixed
+- A tall stack of moving structures set down touching stands still and is heard striking nothing, its
+  dimension's physics budget spent or not. A stack let go at once is worked as one from its first tick, where each of
+  it went alone that tick and fell onto what had gone already; two touching settle into the hair's depth they rest at
+  slowly, where a stack of twelve settled all its joints at once and its top fell at a metre a second, as fast as a
+  blow; structures worked together wait on the budget and go together after, where some of a stack went on while the
+  rest waited and it leaned and swayed; and one that took its turn already, waiting or gone, is held as it goes by
+  those that go after it in the tick, where a crate landing on a stack that waited shoved its top crate down with
+  nothing of the crate below holding it up.
 - A stack of moving structures comes to rest upright however it landed, and a tall one stands still and falls
   asleep: every point where two meet rests as deep, so none is left leaning on its shallower points, each joint of the
   stack adding its lean; a face lying square or a hair turned on another rests on its four corners, not on points
