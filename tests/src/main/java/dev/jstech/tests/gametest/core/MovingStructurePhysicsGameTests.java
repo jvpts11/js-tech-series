@@ -356,10 +356,21 @@ public final class MovingStructurePhysicsGameTests {
         final MovingStructure balloon = made(helper, envelope, TestPhysics.ENVELOPE.get(),
                 new BlockPos(5, 2, 5), TestPhysics.BURNER.get());
         final double start = balloon.worldBox().minY;
+        // The tick the room its burner opens into was first found, for a failure to tell whether it ever was.
+        final BlockPos burner = find(helper.getLevel(), balloon, state -> state.is(TestPhysics.BURNER.get()));
+        final long[] roomFound = {-1};
         balloon.move(PhysicsMotion.AT_REST);
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(balloon.worldBox().minY > start + 1,
-                        "warmed, it rises: " + balloon.worldBox().minY + " from " + start))
+                .thenWaitUntil(() -> {
+                    if (roomFound[0] < 0 && burner != null
+                            && SealedRooms.roomAt(helper.getLevel(), burner.above()).isPresent()) {
+                        roomFound[0] = helper.getTick();
+                    }
+                    helper.assertTrue(balloon.worldBox().minY > start + 1, "warmed, it rises: "
+                            + balloon.worldBox().minY + " from " + start + "; " + (burner == null ? "no burner found"
+                            : roomFound[0] < 0 ? "its burner's room not found yet"
+                            : "its burner's room found at tick " + roomFound[0]));
+                })
                 .thenExecute(() -> MovingStructures.takeAway(balloon))
                 .thenSucceed();
     }
