@@ -64,6 +64,8 @@ public final class PhysicsGameTests {
     private static final double STILL = 0.05;
     /* What an item keeps of its speed a tick in the air. */
     private static final double AIR_DRAG = 0.98;
+    /* How many ticks an item has fallen when it is weighed: long before it reaches the ground it is let go above. */
+    private static final int WEIGHED_AT = 10;
 
     private PhysicsGameTests() {
     }
@@ -141,13 +143,23 @@ public final class PhysicsGameTests {
         full.setChunkForced(0, 0, true);
         final ItemEntity light = drop(half, new Vec3(8.5, 60, 8.5));
         final ItemEntity heavy = drop(full, new Vec3(8.5, 60, 8.5));
-        // A new land starts ticking its entities when its chunk is ready, so each item is weighed by its own ticks.
+        // A new land starts ticking its entities when its chunk is ready, so each item is weighed by its own ticks,
+        // the tick it has fallen ten: one land may start many ticks before the other, and its item reach the ground.
+        final double[] pulls = {Double.NaN, Double.NaN};
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(light.getAge() >= 10 && heavy.getAge() >= 10,
-                        "both items have fallen ten ticks"))
+                .thenWaitUntil(() -> {
+                    if (Double.isNaN(pulls[0]) && light.getAge() >= WEIGHED_AT) {
+                        pulls[0] = pullOf(light);
+                    }
+                    if (Double.isNaN(pulls[1]) && heavy.getAge() >= WEIGHED_AT) {
+                        pulls[1] = pullOf(heavy);
+                    }
+                    helper.assertTrue(!Double.isNaN(pulls[0]) && !Double.isNaN(pulls[1]),
+                            "both items have fallen ten ticks");
+                })
                 .thenExecute(() -> {
-                    final double halfPull = pullOf(light);
-                    final double fullPull = pullOf(heavy);
+                    final double halfPull = pulls[0];
+                    final double fullPull = pulls[1];
                     RuntimeDimensions.remove(server, halfKey);
                     RuntimeDimensions.remove(server, fullKey);
                     helper.assertTrue(fullPull > 0 && Math.abs(halfPull / fullPull - 0.5) < 0.02,
