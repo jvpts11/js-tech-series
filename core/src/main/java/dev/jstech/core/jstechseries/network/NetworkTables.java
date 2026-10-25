@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.jstechseries.network;
 
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -15,6 +16,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What a data network may read of the machines of any mod on it, as state tables ({@link StateTable}): the rows of a
@@ -34,8 +36,8 @@ public final class NetworkTables {
             if (!node.tables().contains(table.id())) {
                 continue;
             }
-            final BlockPos pos = BlockPos.of(node.pos());
-            if (!level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof INetworkMember member)) {
+            // A member whose chunk is not in memory has no row: asking the level for it would wait on its loading.
+            if (!(Loaded.blockEntity(level, BlockPos.of(node.pos())) instanceof INetworkMember member)) {
                 continue;
             }
             final StateRow.Writer row = new StateRow.Writer(table);
@@ -43,6 +45,22 @@ public final class NetworkTables {
             rows.add(row.done(node.nodeUuid(), node.pos()));
         }
         return rows;
+    }
+
+    /**
+     * Whether a loaded member of {@code network} is the instrument of the world event kind {@code eventType}
+     * ({@link INetworkMember#instrumentOf}), so the network sees that event coming.
+     */
+    @ApiStatus.Experimental
+    public static boolean hasInstrument(final ServerLevel level, final NetworkUuid network,
+                                        final ResourceLocation eventType) {
+        for (final NetworkSystem.MemberNode node : NetworkSystem.get(level).membersOf(network)) {
+            if (Loaded.blockEntity(level, BlockPos.of(node.pos())) instanceof INetworkMember member
+                    && member.instrumentOf().contains(eventType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The tables {@code network} has a row in, in the order the mods declared them. */

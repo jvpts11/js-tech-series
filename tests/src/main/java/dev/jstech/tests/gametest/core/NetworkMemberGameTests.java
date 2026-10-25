@@ -7,9 +7,8 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.jstechseries.network.ConnectivityIndex;
-import dev.jstech.core.jstechseries.network.DataLine;
-import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.network.NetworkCategory;
 import dev.jstech.core.jstechseries.network.NetworkMemberEvent;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
@@ -17,14 +16,13 @@ import dev.jstech.core.jstechseries.network.NetworkTables;
 import dev.jstech.core.jstechseries.network.StateRow;
 import dev.jstech.core.jstechseries.network.StateTable;
 import dev.jstech.core.jstechseries.operation.OperationType;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.DeclarationError;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestNetworkMembers;
+import dev.jstech.tests.testkit.TestCables;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,6 +32,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -64,7 +63,7 @@ public final class NetworkMemberGameTests {
         helper.setBlock(CABLE.west(), TestNetworkMembers.REACTOR.get());
         final NetworkSystem system = NetworkSystem.get(helper.getLevel());
         // A block entity is loaded the tick after its block is placed, and joins the network then.
-        helper.startSequence().thenWaitUntil(() -> {
+        helper.startSequence().thenWaitUntil(() -> carries(helper, network)).thenWaitUntil(() -> {
             final List<NetworkSystem.MemberNode> members = system.membersOf(network);
             helper.assertTrue(members.size() == 1, "the reactor on the network, of " + members.size());
             helper.assertTrue(members.getFirst().category() == NetworkCategory.B, "read, never given work");
@@ -72,7 +71,7 @@ public final class NetworkMemberGameTests {
                     "where it stands");
             helper.assertTrue(network.equals(reactor(helper, CABLE.west()).membership().network().orElse(null)),
                     "and it knows which network it is on");
-        }).thenExecute(() -> connectivity(helper).onCableRemoved(helper.absolutePos(CABLE).asLong()))
+        }).thenExecute(() -> helper.setBlock(CABLE, Blocks.AIR))
                 .thenWaitUntil(() -> helper.assertTrue(system.membersOf(network).isEmpty(),
                         "off the network once its cable went"))
                 .thenSucceed();
@@ -84,9 +83,10 @@ public final class NetworkMemberGameTests {
         final NetworkUuid network = cable(helper);
         final BlockPos at = helper.absolutePos(CABLE.west());
         helper.setBlock(CABLE.west(), TestNetworkMembers.REACTOR.get());
-        helper.startSequence().thenWaitUntil(() -> helper.assertTrue(heard(at, NetworkMemberEvent.Joined.class,
-                        network), "the game is told the reactor joined the network"))
-                .thenExecute(() -> connectivity(helper).onCableRemoved(helper.absolutePos(CABLE).asLong()))
+        helper.startSequence().thenWaitUntil(() -> carries(helper, network))
+                .thenWaitUntil(() -> helper.assertTrue(heard(at, NetworkMemberEvent.Joined.class, network),
+                        "the game is told the reactor joined the network"))
+                .thenExecute(() -> helper.setBlock(CABLE, Blocks.AIR))
                 .thenWaitUntil(() -> helper.assertTrue(heard(at, NetworkMemberEvent.Left.class, network),
                         "and that it left once its cable went"))
                 .thenSucceed();
@@ -99,7 +99,7 @@ public final class NetworkMemberGameTests {
         helper.setBlock(CABLE.east(), TestNetworkMembers.REACTOR.get());
         reactor(helper, CABLE.west()).reads(350.0, 1200.0, true, "Alpha");
         reactor(helper, CABLE.east()).reads(20.0, 0.0, false, "Beta");
-        helper.startSequence().thenWaitUntil(() -> {
+        helper.startSequence().thenWaitUntil(() -> carries(helper, network)).thenWaitUntil(() -> {
             final List<StateRow> rows = NetworkTables.rows(helper.getLevel(), network, TestNetworkMembers.REACTORS);
             helper.assertTrue(rows.size() == 2, "a row for each reactor, of " + rows.size());
             final StateRow alpha = "Alpha".equals(rows.getFirst().text("name").orElse("")) ? rows.getFirst()
@@ -120,7 +120,7 @@ public final class NetworkMemberGameTests {
         helper.setBlock(CABLE.west(), TestNetworkMembers.REACTOR.get());
         helper.setBlock(CABLE.east(), TestNetworkMembers.ACCELERATOR.get());
         final NetworkSystem system = NetworkSystem.get(helper.getLevel());
-        helper.startSequence().thenWaitUntil(() -> {
+        helper.startSequence().thenWaitUntil(() -> carries(helper, network)).thenWaitUntil(() -> {
             helper.assertTrue(system.membersOf(network).size() == 2, "both on the network");
             final List<NetworkSystem.MemberNode> able = system.membersCarryingOut(network,
                     TestNetworkMembers.ACCELERATE.id());
@@ -199,16 +199,23 @@ public final class NetworkMemberGameTests {
                 && event.network().equals(network));
     }
 
+    /* A data cable at {@code CABLE}, and the network it will carry once it is in its grid ({@link #carries}). */
     private static NetworkUuid cable(final GameTestHelper helper) {
-        final long at = helper.absolutePos(CABLE).asLong();
-        final NetworkUuid network = new NetworkUuid(UUID.randomUUID());
-        connectivity(helper).onCablePlaced(at, Set.of(), new DataLink(DataLine.ACCESS, HardwareEra.STANDARD));
-        connectivity(helper).assignUuid(at, network);
-        return network;
+        // The Core has no data cable of its own: the series' data cables are J's Computers'.
+        TestCables.lay(helper, CABLE, ComputingModule.ETHERNET_CABLE);
+        return new NetworkUuid(UUID.randomUUID());
     }
 
+    /* Gives the cable its network, once the cable is in its grid, which it enters as its block entity loads. */
+    private static void carries(final GameTestHelper helper, final NetworkUuid network) {
+        final long number = TestCables.dataNumber(helper, CABLE)
+                .orElseThrow(() -> new GameTestAssertException("the cable is not in its grid yet"));
+        connectivity(helper).assignUuid(number, network);
+    }
+
+    /* Takes the cable away, and the network with it. */
     private static void clear(final GameTestHelper helper, final NetworkUuid network) {
-        connectivity(helper).onCableRemoved(helper.absolutePos(CABLE).asLong());
+        helper.setBlock(CABLE, Blocks.AIR);
         connectivity(helper).clearNetwork(network);
     }
 

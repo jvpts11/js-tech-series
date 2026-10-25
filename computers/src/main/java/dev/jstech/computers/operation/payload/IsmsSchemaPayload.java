@@ -33,17 +33,21 @@ import org.jetbrains.annotations.Nullable;
  * @param window    the studio window that asked
  * @param network   the network's name
  * @param host      the name of the computer the studio runs on
- * @param tableRows how many rows each table holds, in the order of the language's tables
- * @param views     the saved views, each with the query it runs, so the studio can script it again
+ * @param tableRows   how many rows each table holds, in the order of the language's tables
+ * @param views       the saved views, each with the query it runs, so the studio can script it again
+ * @param otherTables the state tables of other mods' machines the network has rows in
  */
 @TextHolder
 public record IsmsSchemaPayload(int window, Text network, String host, Engine engine, List<Integer> tableRows,
                                 List<Saved> views, List<Saved> procedures, List<Job> jobs, List<String> servers,
-                                @Nullable Index index, List<Lock> locks) implements CustomPacketPayload {
+                                @Nullable Index index, List<Lock> locks, List<OtherTable> otherTables)
+        implements CustomPacketPayload {
 
     public static final int MAX_SERVERS = 128;
     public static final int MAX_OBJECTS = 256;
     public static final int MAX_LOCKS = 64;
+    public static final int MAX_OTHER_TABLES = 64;
+    public static final int MAX_COLUMNS = 32;
     private static final int MAX_NAME = 64;
     private static final int MAX_TABLES = 8;
     /** A saved object's body, which a statement of the language holds whole. */
@@ -67,6 +71,7 @@ public record IsmsSchemaPayload(int window, Text network, String host, Engine en
         jobs = List.copyOf(jobs.subList(0, Math.min(MAX_OBJECTS, jobs.size())));
         servers = servers.stream().limit(MAX_SERVERS).map(IsmsSchemaPayload::clip).toList();
         locks = List.copyOf(locks.subList(0, Math.min(MAX_LOCKS, locks.size())));
+        otherTables = List.copyOf(otherTables.subList(0, Math.min(MAX_OTHER_TABLES, otherTables.size())));
     }
 
     /** How the network's Midsoft IQL Server stands, and the word the studio shows for it. */
@@ -126,6 +131,18 @@ public record IsmsSchemaPayload(int window, Text network, String host, Engine en
     public record Lock(String item, Text name, long qty) {
     }
 
+    /**
+     * Another mod's state table: its id, which a QUERY names it by, its columns with the unit of each (empty for none),
+     * and how many rows the network has in it.
+     */
+    public record OtherTable(String id, List<String> columns, List<String> units, int rows) {
+
+        public OtherTable {
+            columns = List.copyOf(columns.subList(0, Math.min(MAX_COLUMNS, columns.size())));
+            units = List.copyOf(units.subList(0, Math.min(MAX_COLUMNS, units.size())));
+        }
+    }
+
     @Override
     public CustomPacketPayload.Type<IsmsSchemaPayload> type() {
         return TYPE;
@@ -168,6 +185,13 @@ public record IsmsSchemaPayload(int window, Text network, String host, Engine en
             TextCodecs.STREAM_CODEC.encode(buf, lock.name());
             buf.writeVarLong(lock.qty());
         }
+        buf.writeVarInt(otherTables.size());
+        for (final OtherTable table : otherTables) {
+            string(buf, table.id());
+            strings(buf, table.columns());
+            strings(buf, table.units());
+            buf.writeVarInt(table.rows());
+        }
     }
 
     private static IsmsSchemaPayload read(final RegistryFriendlyByteBuf buf) {
@@ -196,8 +220,14 @@ public record IsmsSchemaPayload(int window, Text network, String host, Engine en
         for (int i = 0; i < lockCount; i++) {
             locks.add(new Lock(string(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readVarLong()));
         }
+        final int otherCount = Math.min(buf.readVarInt(), MAX_OTHER_TABLES);
+        final List<OtherTable> otherTables = new ArrayList<>(otherCount);
+        for (int i = 0; i < otherCount; i++) {
+            otherTables.add(new OtherTable(string(buf), strings(buf, MAX_COLUMNS), strings(buf, MAX_COLUMNS),
+                    buf.readVarInt()));
+        }
         return new IsmsSchemaPayload(window, network, host, engine, tableRows, views, procedures, jobs, servers,
-                index, locks);
+                index, locks, otherTables);
     }
 
     private static void string(final RegistryFriendlyByteBuf buf, final String text) {

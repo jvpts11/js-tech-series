@@ -444,8 +444,9 @@ final class NetworkPages {
                 .subheading("The network's events")
                 .paragraph("The Log tab's Events view is the network's event log, apart from its Operations. Each"
                         + " line has the time, a level, the machine and what happened. INFO is something that"
-                        + " happened, such as a machine switched on or off. WARN is something to look at. ERROR is"
-                        + " something that went wrong, such as two Mainframes on one network.")
+                        + " happened, such as a machine switched on or off. WARN is something to look at, such as a"
+                        + " world event expected or under way. ERROR is something that went wrong, such as two"
+                        + " Mainframes on one network.")
                 .paragraph("Three lists over it filter what it shows: the level, the machine (or the network itself)"
                         + " and how far back, from the last hour to everything it keeps. Print sends what it shows to"
                         + " the computer's printer. Export writes it to a text file on a disk of the Mainframe, one"

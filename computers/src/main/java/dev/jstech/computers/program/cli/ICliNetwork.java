@@ -9,7 +9,9 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlTable;
+import dev.jstech.core.text.Text;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What a command reads of the data network its computer is on: whether there is one, what it holds and where, and its
@@ -74,6 +76,12 @@ public interface ICliNetwork {
     default IqlTable queryTable(final String object, final IIqlCondition where, final String server,
                                 final int limit, final String orderBy, final boolean descending) {
         return IqlTable.NONE;
+    }
+
+    /** Why a {@code QUERY} of {@code object} has nothing to answer; null when it has, or where none can tell. */
+    @Nullable
+    default Text tableProblem(final String object) {
+        return null;
     }
 
     /** Which servers hold the named item and how much each has. */

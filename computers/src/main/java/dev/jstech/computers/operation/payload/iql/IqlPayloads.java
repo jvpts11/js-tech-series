@@ -15,6 +15,7 @@ import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.engine.ICraftPlanning;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.engine.NetworkOperationsService;
+import dev.jstech.computers.machine.IqlStateTables;
 import dev.jstech.computers.machine.IqlTables;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -40,7 +41,10 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.trace.IsmsTraces;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkTables;
 import dev.jstech.core.jstechseries.network.ServerNode;
+import dev.jstech.core.jstechseries.network.StateColumn;
+import dev.jstech.core.jstechseries.network.StateTable;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -130,7 +134,7 @@ public final class IqlPayloads {
         if (net == null) {
             return new IsmsSchemaPayload(window, IsmsSchemaPayload.OFFLINE.with(DEFAULT_NETWORK), host.hostname(),
                     IsmsSchemaPayload.Engine.offline(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                    null, List.of());
+                    null, List.of(), List.of());
         }
         final MainframeBlockEntity mainframe = resolveMainframe(level, net);
         final List<Integer> tableRows = new ArrayList<>();
@@ -166,7 +170,22 @@ public final class IqlPayloads {
             }
         }
         return new IsmsSchemaPayload(window, Text.literal(networkLabel(net)), host.hostname(), engine(mainframe),
-                tableRows, views, procedures, jobs, servers, index, locks);
+                tableRows, views, procedures, jobs, servers, index, locks, otherTables(level, net));
+    }
+
+    /* The other mods' state tables the network has rows in: each with its columns, their units, and its rows. */
+    private static List<IsmsSchemaPayload.OtherTable> otherTables(final ServerLevel level, final NetworkUuid net) {
+        final List<IsmsSchemaPayload.OtherTable> tables = new ArrayList<>();
+        for (final StateTable table : IqlStateTables.tablesOf(level, net)) {
+            final List<String> units = new ArrayList<>();
+            for (final StateColumn column : table.columns()) {
+                units.add(column.unit());
+            }
+            units.add("");
+            tables.add(new IsmsSchemaPayload.OtherTable(table.id().toString(), IqlStateTables.columnsOf(table), units,
+                    NetworkTables.rows(level, net, table).size()));
+        }
+        return tables;
     }
 
     /**

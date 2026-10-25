@@ -73,6 +73,8 @@ public final class NetworkScenes {
                 }
             }
             connectivity.onCablePlaced(pos.asLong(), beside, new DataLink(DataLine.ACCESS, HardwareEra.STANDARD));
+            // No cable block stands there, so the members beside it are told where the scene's cable is.
+            connectivity.standIn(pos.asLong(), pos.asLong());
             placed.add(pos.asLong());
             laid.add(pos.asLong());
         }
@@ -134,6 +136,7 @@ public final class NetworkScenes {
             final ConnectivityIndex connectivity = NetworkSystem.get(level).connectivity();
             for (final long cable : cables) {
                 connectivity.onCableRemovedIfRegistered(cable);
+                connectivity.dropStandIn(cable);
             }
             connectivity.clearNetwork(id);
         }

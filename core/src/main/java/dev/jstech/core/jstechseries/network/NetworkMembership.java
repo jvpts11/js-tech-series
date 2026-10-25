@@ -10,6 +10,8 @@ package dev.jstech.core.jstechseries.network;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.cable.Cables;
+import dev.jstech.core.cable.Wire;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.jstechseries.operation.OperationType;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -18,11 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +91,7 @@ public final class NetworkMembership {
             return;
         }
         final @Nullable NetworkUuid before = this.network;
-        this.network = beside(system);
+        this.network = beside(level, system);
         tellOfChange(level, before);
         if (this.network == null) {
             system.unregisterMemberAt(pos);
@@ -124,25 +128,50 @@ public final class NetworkMembership {
     }
 
     /*
-     * The network of a data cable touching it, through a face that takes the cable, for a machine that says which of
-     * its faces take which lines; any face, for one that does not.
+     * The network of a data wire crossing into it from a cable block beside it, through a face that takes the wire,
+     * for a machine that says which of its faces take which lines; any face, for one that does not. The crafting
+     * line runs apart from the network and joins no member to it.
      */
-    private @Nullable NetworkUuid beside(final NetworkSystem system) {
+    private @Nullable NetworkUuid beside(final ServerLevel level, final NetworkSystem system) {
         final BlockPos at = this.blockEntity.getBlockPos();
         final ConnectivityIndex connectivity = system.connectivity();
         for (final Direction face : Direction.values()) {
-            final long neighbour = at.relative(face).asLong();
-            final Optional<NetworkUuid> there = connectivity.networkOf(neighbour);
-            if (there.isEmpty()) {
-                continue;
+            final BlockPos cable = at.relative(face);
+            // The cable block says which of its wires cross into the machine, from what the machine takes there.
+            for (final Wire wire : Cables.reaching(level, at, face)) {
+                final DataLink link = wire.type().grid().carriesNetwork() ? DataLines.linkOf(wire.type().line())
+                        : null;
+                if (link == null || link.line() == DataLine.CRAFTING) {
+                    continue;
+                }
+                // The network is kept by the number the wire is known by in its grid, never by where it stands.
+                final OptionalLong number = Cables.number(level, cable, wire.type());
+                final Optional<NetworkUuid> there = number.isEmpty() ? Optional.empty()
+                        : connectivity.networkOf(number.getAsLong());
+                if (there.isPresent()) {
+                    return there.get();
+                }
             }
-            final Optional<DataLink> link = connectivity.linkOf(neighbour);
-            if (this.blockEntity instanceof IFaceConnector connector && link.isPresent()
-                    && !connector.accepts(this.blockEntity.getBlockState(), face, DataLines.of(link.get()))) {
-                continue;
+            final Optional<NetworkUuid> scene = standIn(connectivity, cable.asLong(), face);
+            if (scene.isPresent()) {
+                return scene.get();
             }
-            return there.get();
         }
         return null;
+    }
+
+    /* The network of a test scene's cable standing at {@code pos}, when the machine's face there takes its line. */
+    private Optional<NetworkUuid> standIn(final ConnectivityIndex connectivity, final long pos, final Direction face) {
+        final OptionalLong number = connectivity.standInAt(pos);
+        if (number.isEmpty()) {
+            return Optional.empty();
+        }
+        final Optional<DataLink> link = connectivity.linkOf(number.getAsLong());
+        final BlockState state = this.blockEntity.getBlockState();
+        if (state.getBlock() instanceof IFaceConnector connector && link.isPresent()
+                && !connector.accepts(state, face, DataLines.of(link.get()))) {
+            return Optional.empty();
+        }
+        return connectivity.networkOf(number.getAsLong());
     }
 }

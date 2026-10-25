@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -47,10 +48,34 @@ public final class ConnectivityIndex {
      * this index, so these are what let a removal tell the fragment that still reaches it from one it cut away.
      */
     private final Map<Long, Anchor> anchors = new HashMap<>();
+    /*
+     * Where a test scene says a data cable stands with no cable block there, each with the number its stand-in is
+     * known by here. Only the Core's test kit lays them; the game's own cables are found through their wires.
+     */
+    private final Map<Long, Long> standIns = new HashMap<>();
 
     /** The grid itself, for what any grid answers: the runs, their lengths, the ways through it. */
     public Grid grid() {
         return grid;
+    }
+
+    /** Says a test scene's data cable stands at {@code pos}, known here by {@code number}; from the test kit. */
+    @ApiStatus.Internal
+    public void standIn(final long pos, final long number) {
+        standIns.put(pos, number);
+    }
+
+    /** Takes the test scene's data cable at {@code pos} away; from the test kit. */
+    @ApiStatus.Internal
+    public void dropStandIn(final long pos) {
+        standIns.remove(pos);
+    }
+
+    /** The number of the test scene's data cable standing at {@code pos}, if a scene laid one there. */
+    @ApiStatus.Internal
+    public OptionalLong standInAt(final long pos) {
+        final Long number = standIns.get(pos);
+        return number == null ? OptionalLong.empty() : OptionalLong.of(number);
     }
 
     /** What a cable of {@code link} stands for in the data grid. */
@@ -371,6 +396,7 @@ public final class ConnectivityIndex {
         grid.clear();
         rootToUuid.clear();
         anchors.clear();
+        standIns.clear();
     }
 
     /* The network the part {@code encodedPos} is joined into belongs to, or null. */

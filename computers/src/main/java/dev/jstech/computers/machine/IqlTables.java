@@ -16,6 +16,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.eventlog.NetworkWorldEvents;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -30,7 +31,9 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.NetworkTables;
 import dev.jstech.core.jstechseries.network.ServerNode;
+import dev.jstech.core.jstechseries.network.StateTable;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -40,6 +43,8 @@ import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import dev.jstech.core.world.event.WorldEvent;
+import dev.jstech.core.world.event.WorldEvents;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -49,6 +54,7 @@ import java.util.Locale;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -61,7 +67,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The tables of the network's language with every column they have: what the network holds, its servers, their
- * disks, its Operations, its recipes and its computers. A read filters on any column, and on the few fields a table
+ * disks, its Operations, its recipes, its computers and the world events it sees, and after them the state tables of
+ * other mods' machines on it ({@link IqlStateTables}). A read filters on any column, and on the few fields a table
  * keeps without showing them, sorts by any column and stops at its limit, so a WHERE, an ORDER BY and a LIMIT mean
  * the same thing on every table.
  */
@@ -81,9 +88,14 @@ public final class IqlTables {
     public static final List<String> RECIPES = List.of("recipe", "where", "machine", "chance");
     /** The computers on the network: the name, the kind, the age, whether it runs and its system. */
     public static final List<String> COMPUTERS = List.of("name", "kind", "era", "state", "os");
-    /** The tables, in the order a studio lists them. */
+    /**
+     * The world events the network sees: the kind, its name, whether it is coming or under way, and the minutes of the
+     * world's clock until it begins and until it ends.
+     */
+    public static final List<String> EVENTS = List.of("event", "name", "state", "starts", "ends");
+    /** The network's own tables, in the order a studio lists them; the other mods' come after. */
     public static final List<String> TABLES = List.of("items", "servers", "disks", "operations", "recipes",
-            "computers");
+            "computers", "events");
 
     private static final TextKey ON_SERVERS = TextKey.of("jsc.iql.table.on_servers", "%s servers");
     private static final TextKey MAINFRAME = TextKey.of("jsc.iql.table.mainframe", "Mainframe");
@@ -97,6 +109,13 @@ public final class IqlTables {
     private static final TextKey BENCH = TextKey.of("jsc.iql.table.bench", "bench");
     private static final TextKey MACHINE = TextKey.of("jsc.iql.table.machine", "machine");
     private static final TextKey STAGES = TextKey.of("jsc.iql.table.stages", "stages");
+    private static final TextKey COMING = TextKey.of("jsc.iql.table.coming", "coming");
+    private static final TextKey UNDER_WAY = TextKey.of("jsc.iql.table.under_way", "under way");
+    private static final TextKey NO_SUCH_TABLE = TextKey.of("jsc.iql.table.no_such_table", "No table is named %s");
+    private static final TextKey SHARED_NAME = TextKey.of("jsc.iql.table.shared_name",
+            "More than one table is named %s: write its id, one of %s");
+    /** Ticks of the world's clock in one of its minutes. */
+    private static final double TICKS_PER_MINUTE = 1_000.0 / 60.0;
     /** The number a row is limited to when the caller asks for none. */
     private static final int MOST_ROWS = 4096;
 
@@ -118,8 +137,11 @@ public final class IqlTables {
         if (columns == null) {
             return IqlTable.NONE;
         }
+        // Another mod's table heads its columns with their units; a WHERE and an ORDER BY name them without.
+        final StateTable state = ownColumnsOf(table) == null ? IqlStateTables.find(table) : null;
+        final List<String> headings = state == null ? columns : IqlStateTables.headingsOf(state);
         if (network == null) {
-            return new IqlTable(columns, List.of());
+            return new IqlTable(headings, List.of());
         }
         final List<Map<String, Text>> rows = switch (table) {
             case "items", "*" -> items(level, network, server);
@@ -127,7 +149,9 @@ public final class IqlTables {
             case "disks" -> disks(level, network);
             case "operations" -> operations(level, network, operations);
             case "recipes" -> recipes(level, network);
-            default -> computers(level, network);
+            case "computers" -> computers(level, network);
+            case "events" -> events(level, network);
+            default -> IqlStateTables.rows(level, network, state);
         };
         final List<Map<String, Text>> kept = new ArrayList<>();
         for (final Map<String, Text> row : rows) {
@@ -153,7 +177,27 @@ public final class IqlTables {
             }
             cells.add(line);
         }
-        return new IqlTable(columns, cells);
+        return new IqlTable(headings, cells);
+    }
+
+    /**
+     * Why a {@code QUERY} of {@code object} has nothing to answer: no table has that name, or more than one other mod's
+     * table has it; null when one table does.
+     */
+    @Nullable
+    public static Text problem(final String object) {
+        if (columnsOf(object) != null) {
+            return null;
+        }
+        final List<ResourceLocation> sharing = IqlStateTables.sharing(object);
+        if (!sharing.isEmpty()) {
+            final List<Text> ids = new ArrayList<>(sharing.size());
+            for (final ResourceLocation id : sharing) {
+                ids.add(Text.literal(id.toString()));
+            }
+            return SHARED_NAME.with(object, TextLists.join(", ", ids));
+        }
+        return NO_SUCH_TABLE.with(object);
     }
 
     /**
@@ -172,13 +216,27 @@ public final class IqlTables {
             }
             case "recipes" -> recipes(level, network).size();
             case "computers" -> computers(level, network).size();
-            default -> 0;
+            case "events" -> events(level, network).size();
+            default -> {
+                final StateTable state = IqlStateTables.find(table);
+                yield state == null ? 0 : NetworkTables.rows(level, network, state).size();
+            }
         };
     }
 
-    /** The columns of the table {@code table} names, or null when no table has that name. */
+    /**
+     * The columns of the table {@code table} names, the network's own or another mod's, or null when no table has that
+     * name.
+     */
     @Nullable
     public static List<String> columnsOf(final String table) {
+        final List<String> own = ownColumnsOf(table);
+        return own != null ? own : IqlStateTables.columnsOf(table);
+    }
+
+    /* The columns of the network's own table {@code table} names, or null when none of them has that name. */
+    @Nullable
+    private static List<String> ownColumnsOf(final String table) {
         return switch (table.toLowerCase(Locale.ROOT)) {
             case "items", "*" -> ITEMS;
             case "servers" -> SERVERS;
@@ -186,8 +244,38 @@ public final class IqlTables {
             case "operations" -> OPERATIONS;
             case "recipes" -> RECIPES;
             case "computers" -> COMPUTERS;
+            case "events" -> EVENTS;
             default -> null;
         };
+    }
+
+    /*
+     * The world events the network sees now, those under way and then those coming, with the minutes of the world's
+     * clock until each begins and ends.
+     */
+    private static List<Map<String, Text>> events(final ServerLevel level, final NetworkUuid network) {
+        final long now = level.getGameTime();
+        final List<Map<String, Text>> rows = new ArrayList<>();
+        for (final WorldEvent event : WorldEvents.planned(level)) {
+            final boolean underWay = NetworkWorldEvents.underWay(level, network, event, now);
+            if (!underWay && !NetworkWorldEvents.coming(level, network, event, now)) {
+                continue;
+            }
+            final Map<String, Text> row = new LinkedHashMap<>();
+            row.put("event", Text.literal(event.type().toString()));
+            row.put("name", WorldEvents.get(level, event.type()).map(type -> type.title().text())
+                    .orElse(Text.literal(event.type().toString())));
+            row.put("state", (underWay ? UNDER_WAY : COMING).text());
+            row.put("starts", Text.literal(Long.toString(minutes(event.startsAt() - now))));
+            row.put("ends", Text.literal(Long.toString(minutes(event.endsAt() - now))));
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    /* {@code ticks} as whole minutes of the world's clock, none for a time gone by. */
+    private static long minutes(final long ticks) {
+        return ticks <= 0 ? 0L : (long) Math.ceil(ticks / TICKS_PER_MINUTE);
     }
 
     /* A field of a row as a WHERE and an ORDER BY compare it: what it says in English, or null when it has none. */

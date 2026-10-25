@@ -68,6 +68,12 @@ final class AutomationPages {
                         + " number. The operators are =, ==, !=, <, >, <=, and >=. An item name without a colon means"
                         + " minecraft:, so iron_ingot is minecraft:iron_ingot. A modded item needs its full name, with"
                         + " its mod's name before the colon.")
+                .paragraph("WHEN EVENT waits for a world event the network sees: WHEN EVENT mymod:solar_storm COMING"
+                        + " fires as the network first sees it coming, which needs a machine on the network that is"
+                        + " the event's instrument; UNDER WAY fires as it begins where the network stands; ENDED fires"
+                        + " as it ends. Name the event by its id, or by the part after the colon.")
+                .listingIn("iql", "storm_shelter.iql", "CREATE JOB shelter AS SET BUS 'Ore in' OFF"
+                        + " WHEN EVENT mymod:solar_storm COMING")
                 .table("Forms of a duration", "Form", "Meaning", "Ticks")
                 .row(GuideCell.code("30s"), GuideCell.words("30 seconds"), GuideCell.words("600"))
                 .row(GuideCell.code("5m"), GuideCell.words("5 minutes"), GuideCell.words("6,000"))

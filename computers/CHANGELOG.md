@@ -66,6 +66,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   switched on or off, two Mainframes on one network and the end of it. It filters by level, machine and period,
   prints, and exports to a text file on a disk of the Mainframe. A network keeps its last seven days, at most 2,000
   events, saved with the world.
+- Other mods' machines in the network's language: `QUERY` reads the state table another mod declares,
+  by its id or, when no other table shares it, its last part (`QUERY mymod:reactors WHERE temperature > 90`), a row
+  for each of its machines on the network with its columns, their units in the heading, and `at`, where it stands. A
+  name no table has, or one two tables share, is said rather than read as nothing. The studio's Object Explorer and
+  its suggestions know those tables and their columns.
+- The world's events on the network: `QUERY events` lists the world events the network sees, under way
+  where it stands or coming when a machine on it is the event's instrument; the event log writes each one expected,
+  under way and over; and a job can wait for one, `WHEN EVENT mymod:solar_storm COMING` (or `UNDER WAY`, `ENDED`).
 
 ### Changed
 - Listeners declared: every class of the three mods that answers the game's events is

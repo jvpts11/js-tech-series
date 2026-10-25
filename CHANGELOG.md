@@ -257,6 +257,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   height, its cabinet and its `Look`; `SmallComputerBlock` is the block of a small computer another mod brings. The
   part item classes (`CpuItem` and the rest) are gone: a part is an item and its entry. `IOperatingSpace.era()` gives
   an `Era`.
+- (Core) Machines on the network that see the world: J's Core's API stays at version 12, all experimental.
+  `INetworkMember.instrumentOf()` names the world events a member is the instrument of, `NetworkTables.hasInstrument`
+  asks whether a network has one, and `NetworkSystem.networks()` lists the networks of a level that run.
+  `Device.ports(FacePorts)` gives a device's block the ports a cable joins it through, and `DeviceBlock` is an
+  `IFaceConnector` answering by them.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1701,6 +1706,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   switched on or off, two Mainframes on one network and the end of it. It filters by level, machine and period,
   prints, and exports to a text file on a disk of the Mainframe. A network keeps its last seven days, at most 2,000
   events, saved with the world.
+- (Computers) Other mods' machines in the network's language: `QUERY` reads the state table another mod declares,
+  by its id or, when no other table shares it, its last part (`QUERY mymod:reactors WHERE temperature > 90`), a row
+  for each of its machines on the network with its columns, their units in the heading, and `at`, where it stands. A
+  name no table has, or one two tables share, is said rather than read as nothing. The studio's Object Explorer and
+  its suggestions know those tables and their columns.
+- (Computers) The world's events on the network: `QUERY events` lists the world events the network sees, under way
+  where it stands or coming when a machine on it is the event's instrument; the event log writes each one expected,
+  under way and over; and a job can wait for one, `WHEN EVENT mymod:solar_storm COMING` (or `UNDER WAY`, `ENDED`).
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -1942,6 +1955,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the chunk is kept; this was the game's own, made likelier by anything that loads chunks a while and lets them go.
 - (Computers) The Exa and the Singularity draw what the Advanced draws: the supercomputer rack, the server rack, the
   speaker and the Pattern Encoder's USB-C took the Standard's look in those eras.
+- (Core) Machines of other mods join the data network by its real cables: a member looked for its network where the
+  cable beside it stood, which only a hand-built index answered; it now takes the network of the data wire crossing
+  into it, and a block made with the Core's `Device` takes cables on the ports its device declares. A member whose
+  chunk is not in memory has no row in a state table, and reading the table no longer waits on that chunk.
 
 ## [0.5.2a] - 2026-10-14
 

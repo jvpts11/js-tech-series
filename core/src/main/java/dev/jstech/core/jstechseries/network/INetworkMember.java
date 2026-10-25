@@ -9,6 +9,8 @@ package dev.jstech.core.jstechseries.network;
 
 import dev.jstech.core.jstechseries.operation.OperationType;
 import java.util.List;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A machine of any mod that is a member of the data network it touches, through the Core and never through another
@@ -55,5 +57,15 @@ public interface INetworkMember {
 
     /** Writes its row of {@code table}, one of its {@link #tables()}, as it is now; on the server. */
     default void fill(final StateTable table, final StateRow.Writer row) {
+    }
+
+    /**
+     * The kinds of world event it is the instrument of, by their ids: a seismograph of earthquakes, a ground station
+     * of solar storms. A network with it on sees those events coming, as a player carrying one is warned. None unless
+     * said.
+     */
+    @ApiStatus.Experimental
+    default List<ResourceLocation> instrumentOf() {
+        return List.of();
     }
 }

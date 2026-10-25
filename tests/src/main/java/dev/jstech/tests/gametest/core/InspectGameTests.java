@@ -23,26 +23,25 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.moving.StructureYard;
 import dev.jstech.core.moving.YardLayout;
+import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.jstechseries.network.ConnectivityIndex;
-import dev.jstech.core.jstechseries.network.DataLine;
-import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestHeat;
 import dev.jstech.tests.TestNetworkMembers;
+import dev.jstech.tests.testkit.TestCables;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -119,19 +118,21 @@ public final class InspectGameTests {
     @GameTest(template = ARENA)
     public static void inspect_readsAMemberOfTheDataNetworkOnItsNetwork(final GameTestHelper helper) {
         final ConnectivityIndex connectivity = NetworkSystem.get(helper.getLevel()).connectivity();
-        final long cable = helper.absolutePos(AT).asLong();
+        // The Core has no data cable of its own: the series' data cables are J's Computers'.
+        TestCables.lay(helper, AT, ComputingModule.ETHERNET_CABLE);
         final NetworkUuid network = new NetworkUuid(UUID.randomUUID());
-        connectivity.onCablePlaced(cable, Set.of(), new DataLink(DataLine.ACCESS, HardwareEra.STANDARD));
-        connectivity.assignUuid(cable, network);
         helper.setBlock(AT.west(), TestNetworkMembers.REACTOR.get());
-        helper.startSequence().thenWaitUntil(() -> {
+        // The cable carries the network once it is in its grid, which it enters as its block entity loads.
+        helper.startSequence().thenWaitUntil(() -> connectivity.assignUuid(TestCables.dataNumber(helper, AT)
+                .orElseThrow(() -> new GameTestAssertException("the cable is not in its grid yet")), network))
+                .thenWaitUntil(() -> {
             final List<Inspectors.Line> lines = linesOf(Inspectors.read(helper.getLevel(),
                     helper.absolutePos(AT.west())), CoreLogs.NETWORK);
             helper.assertTrue(has(lines, InspectTexts.NETWORK.text(), network.value().toString()),
                     "the network it is on: " + lines);
             helper.assertTrue(has(lines, InspectTexts.MEMBERS.text(), "1"), "with its members");
         }).thenExecute(() -> {
-            connectivity.onCableRemoved(cable);
+            helper.setBlock(AT, Blocks.AIR);
             connectivity.clearNetwork(network);
         }).thenSucceed();
     }

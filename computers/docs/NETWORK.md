@@ -88,12 +88,18 @@ QUERY disks
 - **Requests**: `SELECT`, `INSERT`, `DELETE`, `MOVE`, `DROP`, `CRAFT`, `COUNT`, `LOCK`, `UNLOCK`, each with a
   quantity and an item, and optionally `FROM`, `TO`, `WHERE`, `IF`, `ORDER BY`, `LIMIT` and `PRIORITY` (`LOW`,
   `MEDIUM_LOW`, `MEDIUM`, `MEDIUM_HIGH`, `HIGH`).
-- **Questions**: `QUERY` or `SHOW` and what to look at (`items`, `disks`...), with `WHERE`, `ORDER BY`, `LIMIT`.
+- **Questions**: `QUERY` or `SHOW` and what to look at (`items`, `servers`, `disks`, `operations`, `recipes`,
+  `computers`, `events`), with `WHERE`, `ORDER BY`, `LIMIT`. Other mods' machines on the network are read the same
+  way, by their table's id or, when no other table shares it, its last part (`QUERY mymod:reactors WHERE temperature
+  > 90`): a row for each machine, its columns with their units, and `at`, where it stands (added 2026-10-25).
+- **World events** (added 2026-10-25): `QUERY events` lists those the network sees, under way where it stands, and
+  coming when a machine on it is the event's instrument; each step goes into the network's event log as well.
 - **Upkeep**: `ANALYZE`, `VACUUM`, `REINDEX`.
 - **Changing items**: `UPDATE ... SET SMELT`, `ENCHANT`, `REPAIR`, `COMBINE ... WITH ...`, `NAME '...'`.
 - **Settings**: `SET BUS 'name' ...`, `SET REDSTONE 'name' ...`, `SET INTERFACE ...`, `SET ROUTER ...`.
 - **Saved work** (engines that offer it): `CREATE VIEW`, `CREATE PROCEDURE` and `EXEC`, and `CREATE JOB` with
-  `EVERY` a time or `WHEN` a condition, for the network to run on its own.
+  `EVERY` a time or `WHEN` a condition, for the network to run on its own. A job can wait for a world event:
+  `CREATE JOB safe AS EXEC shutdown WHEN EVENT mymod:solar_storm COMING` (or `UNDER WAY`, or `ENDED`).
 - A script is statements separated by `;`, with `--` comments, and can ask for values when it is run:
   `CRAFT <count, number, 64> <item, name, torch>`.
 

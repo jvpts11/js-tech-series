@@ -135,9 +135,15 @@ final class IqlLanguagePages {
                 .row(GuideCell.code("computers"), GuideCell.words("The computers on the network."))
                 .row(GuideCell.code("recipes"), GuideCell.words("The recipes the network knows."))
                 .row(GuideCell.code("disks"), GuideCell.words("The disks of the network."))
-                .paragraph("Any other name gives 0 rows and no error. After a QUERY, the reply counts the rows, such as"
-                        + " \"12 rows\" or \"1 row\". To read the rows themselves, open the table view in the"
-                        + " Management Studio ([](jsc:studio_queries)).")
+                .row(GuideCell.code("events"), GuideCell.words("The world events the network sees: under way where it"
+                        + " stands, or coming when a machine on it is the event's instrument."))
+                .paragraph("Machines of other mods on the network have tables of their own. Name one by its id, such"
+                        + " as QUERY mymod:reactors, or by the part after the colon when no other table has it. Each"
+                        + " row is one machine, with its columns, their units in the heading, and at, where it stands.")
+                .paragraph("A name no table has is refused: \"No table is named <name>\". A name two tables share asks"
+                        + " for the id. After a QUERY, the reply counts the rows, such as \"12 rows\" or \"1 row\". To"
+                        + " read the rows themselves, open the table view in the Management Studio"
+                        + " ([](jsc:studio_queries)).")
                 .listingIn("iql", "stock.iql", "QUERY items WHERE qty > 100 ORDER BY qty DESC LIMIT 5")
                 .subheading("SELECT")
                 .paragraph("SELECT takes items out of the network. You type a quantity, the item and, if you want, a"
@@ -283,8 +289,8 @@ final class IqlLanguagePages {
                 .subheading("DROP")
                 .warning("A DROP destroys the items for good. They leave the network and are not kept.")
                 .paragraph("DROP takes no TO. It destroys only the items the network holds, so you cannot drop what"
-                        + " you do not have on the network. The Management Studio asks you to confirm a DROP, and a"
-                        + " DELETE with ALL, before it runs them.")
+                        + " you do not have on the network. It runs as you type it, with no question, as on a real"
+                        + " database. The Management Studio asks only before a DELETE with ALL.")
                 .table("The replies of DROP", "Reply", "What it means")
                 .row(GuideCell.code("DROP queued: <quantity> <item>"), GuideCell.words("The items are being "
                         + "destroyed."))

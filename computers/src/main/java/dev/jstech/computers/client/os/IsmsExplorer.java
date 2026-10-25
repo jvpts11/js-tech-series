@@ -81,6 +81,12 @@ final class IsmsExplorer {
                     seen.put(table, new Seen(rows, now));
                 }
             }
+            for (final IsmsSchemaPayload.OtherTable other : payload.otherTables()) {
+                final Seen before = seen.get(other.id());
+                if (before == null || before.rows() != other.rows()) {
+                    seen.put(other.id(), new Seen(other.rows(), now));
+                }
+            }
         }
         root = build(payload, look);
         selected = key == null ? null : find(root, key);
@@ -274,8 +280,19 @@ final class IsmsExplorer {
 
     /** How many rows {@code table} held at the last schema, or 0 before one came. */
     int rowsOf(final String table) {
+        if (schema == null) {
+            return 0;
+        }
         final int index = IqlTables.TABLES.indexOf(table);
-        return schema == null || index < 0 || index >= schema.tableRows().size() ? 0 : schema.tableRows().get(index);
+        if (index >= 0) {
+            return index < schema.tableRows().size() ? schema.tableRows().get(index) : 0;
+        }
+        for (final IsmsSchemaPayload.OtherTable other : schema.otherTables()) {
+            if (other.id().equals(table)) {
+                return other.rows();
+            }
+        }
+        return 0;
     }
 
     /** The saved view or procedure named {@code name}, or null. */
@@ -303,6 +320,14 @@ final class IsmsExplorer {
             }
         }
         if (schema != null) {
+            for (final IsmsSchemaPayload.OtherTable other : schema.otherTables()) {
+                out.add(other.id());
+                for (final String column : other.columns()) {
+                    if (!out.contains(column)) {
+                        out.add(column);
+                    }
+                }
+            }
             schema.views().forEach(view -> out.add(view.name()));
             schema.procedures().forEach(procedure -> out.add(procedure.name()));
         }
@@ -372,6 +397,17 @@ final class IsmsExplorer {
             final Node node = new Node(Kind.TABLE, "table/" + table, table, "", table);
             for (final String column : columnsOf(table)) {
                 node.children.add(new Node(Kind.COLUMN, "column/" + table + "/" + column, column, "", column));
+            }
+            tables.children.add(node);
+        }
+        // Other mods' tables the network has rows in, after its own, each column with its unit beside it.
+        for (final IsmsSchemaPayload.OtherTable other : s == null ? List.<IsmsSchemaPayload.OtherTable>of()
+                : s.otherTables()) {
+            final Node node = new Node(Kind.TABLE, "table/" + other.id(), other.id(), "", other.id());
+            for (int i = 0; i < other.columns().size(); i++) {
+                final String column = other.columns().get(i);
+                node.children.add(new Node(Kind.COLUMN, "column/" + other.id() + "/" + column, column,
+                        i < other.units().size() ? other.units().get(i) : "", column));
             }
             tables.children.add(node);
         }

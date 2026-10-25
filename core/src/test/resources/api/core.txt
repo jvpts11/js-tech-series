@@ -2996,15 +2996,17 @@ stable 4
 10 dev.jstech.core.content.Device  type final class<E extends BlockEntity>
 12 dev.jstech.core.content.Device  Device<E> fillsFromContainers()
 10 dev.jstech.core.content.Device  Device<E> opensMenu(IMenuFactory<E>)
+12 dev.jstech.core.content.Device  Device<E> ports(FacePorts)
 10 dev.jstech.core.content.Device  Device<E> ticks(BlockEntityTicker<E>)
 10 dev.jstech.core.content.Device  DeviceBlock block(BlockBehaviour.Properties)
 10 dev.jstech.core.content.Device  static <E extends BlockEntity> Device<E> of(Supplier<? extends BlockEntityType<E>>)
 10 dev.jstech.core.content.Device.IMenuFactory  type interface<E extends BlockEntity>
 10 dev.jstech.core.content.Device.IMenuFactory  abstract AbstractContainerMenu create(int, Inventory, E)
-10 dev.jstech.core.content.DeviceBlock  type class extends HorizontalDirectionalBlock implements EntityBlock
+12 dev.jstech.core.content.DeviceBlock  type class extends HorizontalDirectionalBlock implements EntityBlock, IFaceConnector
 10 dev.jstech.core.content.DeviceBlock  <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level, BlockState, BlockEntityType<T>)
 10 dev.jstech.core.content.DeviceBlock  BlockEntity newBlockEntity(BlockPos, BlockState)
 10 dev.jstech.core.content.DeviceBlock  BlockState getStateForPlacement(BlockPlaceContext)
+12 dev.jstech.core.content.DeviceBlock  FacePorts ports()
 10 dev.jstech.core.content.DeviceBlock  new(Properties, Device<?>)
 10 dev.jstech.core.content.DeviceBlock  protected InteractionResult useWithoutItem(BlockState, Level, BlockPos, Player, BlockHitResult)
 12 dev.jstech.core.content.DeviceBlock  protected ItemInteractionResult useItemOn(ItemStack, BlockState, Level, BlockPos, Player, InteractionHand, BlockHitResult)
@@ -6696,6 +6698,7 @@ stable 4
 12 dev.jstech.core.jstechseries.network.INetworkMember  type interface
 12 dev.jstech.core.jstechseries.network.INetworkMember  abstract NetworkCategory category()
 12 dev.jstech.core.jstechseries.network.INetworkMember  default List<OperationType<?>> carriesOut()
+12 dev.jstech.core.jstechseries.network.INetworkMember  default List<ResourceLocation> instrumentOf()
 12 dev.jstech.core.jstechseries.network.INetworkMember  default List<StateTable> tables()
 12 dev.jstech.core.jstechseries.network.INetworkMember  default void fill(StateTable, StateRow.Writer)
 12 dev.jstech.core.jstechseries.network.INetworkNode  type sealed interface permits IComputerNode, IServiceNode
@@ -6745,6 +6748,7 @@ stable 4
 12 dev.jstech.core.jstechseries.network.NetworkSystem  List<CraftingComputerNode> craftingComputersOf(NetworkUuid)
 12 dev.jstech.core.jstechseries.network.NetworkSystem  List<MemberNode> membersCarryingOut(NetworkUuid, String)
 12 dev.jstech.core.jstechseries.network.NetworkSystem  List<MemberNode> membersOf(NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkSystem  List<NetworkUuid> networks()
 12 dev.jstech.core.jstechseries.network.NetworkSystem  List<PersonalComputerNode> personalComputersOf(NetworkUuid)
 12 dev.jstech.core.jstechseries.network.NetworkSystem  List<ServerNode> serversOf(NetworkUuid)
 12 dev.jstech.core.jstechseries.network.NetworkSystem  List<ServerRouterElement> routersOf(NetworkUuid)
@@ -6788,6 +6792,7 @@ stable 4
 12 dev.jstech.core.jstechseries.network.NetworkTables  type final class
 12 dev.jstech.core.jstechseries.network.NetworkTables  static List<StateRow> rows(ServerLevel, NetworkUuid, StateTable)
 12 dev.jstech.core.jstechseries.network.NetworkTables  static List<StateTable> tablesOf(ServerLevel, NetworkUuid)
+12 dev.jstech.core.jstechseries.network.NetworkTables  static boolean hasInstrument(ServerLevel, NetworkUuid, ResourceLocation)
 12 dev.jstech.core.jstechseries.network.ServerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long storageItems) implements IServiceNode
 12 dev.jstech.core.jstechseries.network.ServerNode  NetworkCategory category()
 12 dev.jstech.core.jstechseries.network.ServerRouterElement  type record(NetworkUuid networkUuid, long pos, IndustrialTier tier) implements INetworkTopologyElement

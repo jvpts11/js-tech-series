@@ -97,10 +97,24 @@ public class AcceleratorBlockEntity extends SyncedBlockEntity implements INetwor
 }
 ```
 
-From then on the machine is on the network of a data cable touching it, through a face that takes the cable when it
-is an `IFaceConnector`: worked out as it loads, as the blocks beside it change, and once a second besides, as networks
-form and part around it; off it once it is broken or unloaded. `membership.node()` is its identity on the network,
-kept with it in the world, and `membership.network()` the network it is on now.
+From then on the machine is on the network of a data wire crossing into it from a cable block beside it: worked out
+as it loads, as the blocks beside it change, and once a second besides, as networks form and part around it; off it
+once it is broken or unloaded. `membership.node()` is its identity on the network, kept with it in the world, and
+`membership.network()` the network it is on now.
+
+A cable joins only a block that takes it on that face, so the machine's block says which faces take the data lines,
+as an `IFaceConnector`. A block made with the Core's `Device` gets its ports from it (changed 2026-10-25; before, a
+machine joined only a network whose cables were indexed by where they stand, which real cables never are):
+
+```java
+public static final BlockEntry<DeviceBlock> ACCELERATOR = CONTENT.block("accelerator",
+        Device.of(() -> MyBlocks.ACCELERATOR_ENTITY.get())
+                .ports(FacePorts.everyFace(DataLines.upTo(HardwareEra.SINGULARITY, DataLine.ACCESS,
+                        DataLine.BACKBONE)))::block)
+        .register();
+```
+
+The crafting line, which runs from a Crafting Computer to its interfaces, never joins a member to a network.
 
 The network gives a machine more; it never makes it work: a member works through its own screens with no network at
 all, and a world without J's Computers simply has no network for it to join.
@@ -146,12 +160,31 @@ public void fill(StateTable table, StateRow.Writer row) {
 `NetworkTables.rows(level, network, table)` reads a table across a network, and `NetworkTables.tablesOf(level,
 network)` lists the tables a network has rows in. A row says whose it is (`member()`, `pos()`) and gives each value
 by its column's name (`number`, `text`, `flag`), or nothing where the machine had nothing to say. J's Computers'
-SELECT reads them this way, so a player asks the network about a reactor or a satellite the same way as about
-storage, and no mod depends on another to be read.
+QUERY reads them this way (`QUERY mymod:reactors WHERE temperature > 90`), so a player asks the network about a
+reactor or a satellite the same way as about storage, and no mod depends on another to be read. A member whose chunk
+is not in memory has no row, and reading the table never loads its chunk.
 
 A column is named in lower case; its name is kept in saved queries, so it never changes once released. A row refuses
 a value its column does not hold, and a column the table has not. After the game has loaded, the list of tables is
 closed: a table declared later stops the game, and so does a name declared twice.
+
+### Instruments of world events
+
+*Added 2026-10-25.*
+
+A member can be the **instrument** of kinds of world event ([World](WORLD.md)), as a seismograph is of earthquakes or a
+ground station of solar storms: a network with it on sees those events coming, as a player carrying the event's
+instrument is warned of it.
+
+```java
+@Override
+public List<ResourceLocation> instrumentOf() {
+    return List.of(MyEvents.SOLAR_STORM);
+}
+```
+
+`NetworkTables.hasInstrument(level, network, kind)` answers whether a network has one, and
+`NetworkSystem.networks()` lists the networks of a level that run.
 
 ## Peripheral links
 

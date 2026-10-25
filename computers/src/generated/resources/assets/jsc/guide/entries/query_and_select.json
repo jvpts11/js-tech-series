@@ -67,12 +67,24 @@
           {
             "words": "jsc.guide.query_and_select.table1_6_2"
           }
+        ],
+        [
+          {
+            "literal": "events"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table1_7_2"
+          }
         ]
       ]
     },
     {
       "type": "text",
       "text": "jsc.guide.query_and_select.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text4"
     },
     {
       "type": "listing",
@@ -88,7 +100,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.query_and_select.text4"
+      "text": "jsc.guide.query_and_select.text5"
     },
     {
       "type": "steps",
@@ -142,7 +154,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.query_and_select.text5"
+      "text": "jsc.guide.query_and_select.text6"
     },
     {
       "type": "heading",
@@ -150,7 +162,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.query_and_select.text6"
+      "text": "jsc.guide.query_and_select.text7"
     },
     {
       "type": "table",
@@ -212,7 +224,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.query_and_select.text7"
+      "text": "jsc.guide.query_and_select.text8"
     },
     {
       "type": "listing",
@@ -228,7 +240,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.query_and_select.text8"
+      "text": "jsc.guide.query_and_select.text9"
     },
     {
       "type": "table",
@@ -274,11 +286,11 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.query_and_select.text9"
+      "text": "jsc.guide.query_and_select.text10"
     },
     {
       "type": "text",
-      "text": "jsc.guide.query_and_select.text10"
+      "text": "jsc.guide.query_and_select.text11"
     },
     {
       "type": "heading",

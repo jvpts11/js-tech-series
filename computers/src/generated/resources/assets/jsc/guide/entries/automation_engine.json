@@ -53,6 +53,18 @@
       "text": "jsc.guide.automation_engine.text7"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text8"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CREATE JOB shelter AS SET BUS 'Ore in' OFF WHEN EVENT mymod:solar_storm COMING"
+      ],
+      "name": "storm_shelter.iql"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.automation_engine.table1",
       "heads": [
@@ -120,7 +132,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.automation_engine.text8"
+      "text": "jsc.guide.automation_engine.text9"
     },
     {
       "type": "heading",
@@ -145,7 +157,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.automation_engine.text9"
+      "text": "jsc.guide.automation_engine.text10"
     },
     {
       "type": "heading",
@@ -153,7 +165,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.automation_engine.text10"
+      "text": "jsc.guide.automation_engine.text11"
     },
     {
       "type": "table",
@@ -191,7 +203,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.automation_engine.text11"
+      "text": "jsc.guide.automation_engine.text12"
     },
     {
       "type": "heading",
@@ -199,7 +211,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.automation_engine.text12"
+      "text": "jsc.guide.automation_engine.text13"
     },
     {
       "type": "heading",

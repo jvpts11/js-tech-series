@@ -116,6 +116,11 @@ public final class IqlEngine {
             }
 
             @Override
+            public Text tableProblem(final String object) {
+                return computer.tableProblem(object);
+            }
+
+            @Override
             public ICliComputer.OpResult execute(final IqlOperation operation) {
                 return computer.execute(operation);
             }
@@ -318,6 +323,11 @@ public final class IqlEngine {
                     mainframe.iqlCatalog().get(IqlDefinition.ObjectType.VIEW, operation.item());
             if (view != null) {
                 return run(view.body(), depth + 1); // QUERY <view> runs the saved query
+            }
+            // A name no table has, or one more than one other mod's table has, is said rather than read as nothing.
+            final Text problem = operation.verb() == IqlVerb.QUERY ? computer.tableProblem(operation.item()) : null;
+            if (problem != null) {
+                return Outcome.fail(problem);
             }
             final int limit = operation.limit() > 0 ? operation.limit() : queryRowLimit;
             final boolean ordered = !operation.orderBy().isEmpty();

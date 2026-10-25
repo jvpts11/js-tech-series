@@ -16,6 +16,7 @@ import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +119,12 @@ abstract class ServerCliNetwork extends ServerCliFiles {
     public IqlTable queryTable(final String object, final IIqlCondition where, final String server, final int limit,
                                final String orderBy, final boolean descending) {
         return networkReads().queryTable(object, where, server, limit, orderBy, descending);
+    }
+
+    @Override
+    @Nullable
+    public Text tableProblem(final String object) {
+        return networkReads().tableProblem(object);
     }
 
     @Override

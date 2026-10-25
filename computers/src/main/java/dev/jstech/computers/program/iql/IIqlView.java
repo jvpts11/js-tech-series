@@ -8,7 +8,9 @@
 package dev.jstech.computers.program.iql;
 
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.Text;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The whole of a machine that the IQL Engine needs: one way to read, one way to act.
@@ -36,6 +38,15 @@ public interface IIqlView {
     default IqlTable queryTable(final String object, final IIqlCondition where, final String server, final int limit,
                                 final String orderBy, final boolean descending) {
         return IqlTable.NONE;
+    }
+
+    /**
+     * Why a {@code QUERY} of {@code object} has nothing to answer, such as no table by that name; null when it has, or
+     * where the machine cannot tell.
+     */
+    @Nullable
+    default Text tableProblem(final String object) {
+        return null;
     }
 
     /** Carries out a statement that changes something, and says how it went. */

@@ -22,6 +22,7 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -262,6 +263,12 @@ public final class NetworkReadService {
                 orderBy, descending);
     }
 
+    /** Why a {@code QUERY} of {@code object} has nothing to answer; null when a table has that name. */
+    @Nullable
+    public Text tableProblem(final String object) {
+        return IqlTables.problem(object);
+    }
+
     /**
      * The rows a {@code QUERY <object>} asks of the network: {@code items} (what it holds), {@code servers},
      * {@code disks}, {@code operations}, {@code computers} and {@code recipes}. An object nothing answers reads as no
@@ -281,8 +288,29 @@ public final class NetworkReadService {
             case "computers" -> this.queryRows("computers", where, limit, "name", null, "kind");
             case "recipes" -> this.queryRows("recipes", where, limit, "recipe", null, "where");
             case "disks" -> this.queryRows("disks", where, limit, "disk", "used", "server");
-            default -> List.of();
+            default -> this.listRows(object, where, limit);
         };
+    }
+
+    /*
+     * The rows of the world events or of another mod's table as a listing: the first column names each row, and the
+     * others follow it as "column value", so a Command Prompt shows every column of them.
+     */
+    private List<ICliComputer.StoredItem> listRows(final String object, @Nullable final IIqlCondition where,
+                                                  final int limit) {
+        final IqlTable table = this.queryTable(object, where, "", limit, "", false);
+        if (table.isNone() || table.columns().isEmpty()) {
+            return List.of();
+        }
+        final List<ICliComputer.StoredItem> out = new ArrayList<>(table.rows().size());
+        for (final List<Text> row : table.rows()) {
+            final List<Text> rest = new ArrayList<>();
+            for (int column = 1; column < table.columns().size() && column < row.size(); column++) {
+                rest.add(Text.literal(table.columns().get(column) + " " + row.get(column).english()));
+            }
+            out.add(new ICliComputer.StoredItem(row.get(0), 1L, TextLists.join(" · ", rest)));
+        }
+        return out;
     }
 
     /**

@@ -64,7 +64,9 @@ public final class NetworkEventLogGameTests {
                 .thenExecute(computer::togglePower)
                 .thenExecute(computer::togglePower)
                 .thenExecute(() -> {
-                    final List<NetworkEvent> log = newest(helper, computer.networkUuid());
+                    // Its own lines: a world event another test plans is written into every network's log too.
+                    final List<NetworkEvent> log = newest(helper, computer.networkUuid()).stream()
+                            .filter(event -> computer.nodeUuid().equals(event.machine())).toList();
                     helper.assertTrue(log.size() >= 2, "both switches are written down: " + log);
                     final NetworkEvent on = log.get(0);
                     final NetworkEvent off = log.get(1);
@@ -88,8 +90,9 @@ public final class NetworkEventLogGameTests {
                         "the rack's server joins the network"))
                 .thenExecute(() -> rack.toggleBayPower(0))
                 .thenExecute(() -> {
-                    final List<NetworkEvent> log = newest(helper, rack.networkUuid());
                     final NodeUuid server = new NodeUuid(ServerItem.nodeUuid(rack.getServers().getStackInSlot(0)));
+                    final List<NetworkEvent> log = newest(helper, rack.networkUuid()).stream()
+                            .filter(event -> server.equals(event.machine())).toList();
                     helper.assertTrue(!log.isEmpty() && server.equals(log.get(0).machine())
                             && log.get(0).message().english().equals("Turned off"),
                             "the server's switch is written down: " + log);
@@ -116,7 +119,8 @@ public final class NetworkEventLogGameTests {
                 .thenExecute(() -> helper.setBlock(second, Blocks.AIR))
                 .thenWaitUntil(() -> helper.assertFalse(first.hasNetworkConflict(), "the conflict ends"))
                 .thenExecute(() -> {
-                    final List<NetworkEvent> log = newest(helper, network[0]);
+                    final List<NetworkEvent> log = newest(helper, network[0]).stream()
+                            .filter(event -> event.machine() != null).toList();
                     helper.assertTrue(!log.isEmpty() && log.get(0).level() == EventLevel.INFO
                             && log.get(0).message().english().equals("Network conflict resolved"),
                             "its end is the newest: " + log);

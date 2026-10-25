@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -164,6 +165,12 @@ public final class NetworkSystem {
 
     public Optional<MainframeNode> mainframeOf(NetworkUuid networkUuid) {
         return Optional.ofNullable(mainframesByNetwork.get(networkUuid));
+    }
+
+    /** The networks of this level that have a Mainframe now, which are the networks that run. */
+    @ApiStatus.Experimental
+    public List<NetworkUuid> networks() {
+        return List.copyOf(mainframesByNetwork.keySet());
     }
 
     public List<SubframeNode> subframesOf(NetworkUuid networkUuid) {

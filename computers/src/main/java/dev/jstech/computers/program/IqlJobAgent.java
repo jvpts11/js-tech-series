@@ -9,15 +9,19 @@ package dev.jstech.computers.program;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.eventlog.NetworkWorldEvents;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.program.iql.IqlConditionParser;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
+import dev.jstech.computers.program.iql.IqlEventTrigger;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.uuid.NetworkUuid;
+import dev.jstech.core.world.event.WorldEvent;
+import dev.jstech.core.world.event.WorldEvents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -32,7 +36,9 @@ import java.util.Map;
  * The IQL Engine's job agent, the "SQL Server Agent". Each Mainframe owns one; it runs on the Mainframe
  * tick (only while the Engine is installed and running) and fires the catalog's jobs by their trigger:
  * {@code EVERY <duration>} on a schedule, {@code WHEN <condition>} on the rising edge of the condition
- * (so it fires once when the condition becomes true, not every tick it stays true). Firing runs the job's
+ * (so it fires once when the condition becomes true, not every tick it stays true), and
+ * {@code WHEN EVENT <kind> COMING | UNDER WAY | ENDED} at that step of a world event the network sees
+ * ({@link IqlEventTrigger}). Firing runs the job's
  * body through the {@link IqlEngine}, producing ordinary network Operations, and there is no special per-job
  * cost beyond those Operations. The agent evaluates every {@value #EVAL_INTERVAL} ticks to keep the
  * condition checks cheap; its scheduling state is transient (a reload reschedules from the next tick).
@@ -117,6 +123,10 @@ public final class IqlJobAgent {
 
     private boolean shouldFireWhen(final IqlSavedObject job, final MainframeBlockEntity mainframe,
                                    final ServerLevel level) {
+        final IqlEventTrigger event = IqlEventTrigger.parse(job.triggerSpec());
+        if (event != null) {
+            return shouldFireOnEvent(job, event, mainframe, level);
+        }
         final IIqlCondition condition;
         try {
             condition = IqlConditionParser.parse(job.triggerSpec());
@@ -127,6 +137,30 @@ public final class IqlJobAgent {
         final boolean was = lastCondition.getOrDefault(job.name(), false);
         lastCondition.put(job.name(), now);
         return now && !was; // rising edge: fire once when the condition turns true
+    }
+
+    /*
+     * A trigger on a world event: COMING and UNDER WAY fire as the network first sees the event so, ENDED as it stops
+     * seeing it under way. What the network sees is read off the world's calendar at each evaluation.
+     */
+    private boolean shouldFireOnEvent(final IqlSavedObject job, final IqlEventTrigger trigger,
+                                      final MainframeBlockEntity mainframe, final ServerLevel level) {
+        final NetworkUuid network = mainframe.networkUuid();
+        if (network == null) {
+            return false;
+        }
+        final long now = level.getGameTime();
+        boolean seen = false;
+        for (final WorldEvent event : WorldEvents.planned(level)) {
+            if (trigger.names(event.type().toString())) {
+                seen |= trigger.stage() == IqlEventTrigger.Stage.COMING
+                        ? NetworkWorldEvents.coming(level, network, event, now)
+                        : NetworkWorldEvents.underWay(level, network, event, now);
+            }
+        }
+        final boolean was = lastCondition.getOrDefault(job.name(), false);
+        lastCondition.put(job.name(), seen);
+        return trigger.stage() == IqlEventTrigger.Stage.ENDED ? was && !seen : seen && !was;
     }
 
     /** Resolves the fields a WHEN condition can test today: {@code qty(<item>)} against the live network. */

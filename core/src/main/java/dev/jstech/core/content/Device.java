@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.content;
 
+import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -19,6 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
@@ -37,6 +39,7 @@ public final class Device<E extends BlockEntity> {
     private @Nullable BlockEntityTicker<E> serverTicker;
     private @Nullable IMenuFactory<E> menu;
     private boolean fillsFromContainers;
+    private FacePorts ports = FacePorts.builder().build();
 
     private Device(final Supplier<? extends BlockEntityType<E>> type) {
         this.type = type;
@@ -68,6 +71,16 @@ public final class Device<E extends BlockEntity> {
         return this;
     }
 
+    /**
+     * Gives the block the ports a cable or a line joins it through: a data cable, so a machine that is a member of the
+     * data network joins the network of the cable at its side. None unless said.
+     */
+    @ApiStatus.Experimental
+    public Device<E> ports(final FacePorts taken) {
+        this.ports = taken;
+        return this;
+    }
+
     /** The block, made with these properties. */
     public DeviceBlock block(final BlockBehaviour.Properties properties) {
         return new DeviceBlock(properties, this);
@@ -88,6 +101,10 @@ public final class Device<E extends BlockEntity> {
 
     boolean fillsFromContainersByHand() {
         return fillsFromContainers;
+    }
+
+    FacePorts ports() {
+        return ports;
     }
 
     /** Opens the menu on the block entity at {@code pos}, telling the client where it is. */

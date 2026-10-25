@@ -9,6 +9,8 @@ package dev.jstech.core.content;
 
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.Neighbours;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.signal.ISignalOutput;
@@ -44,9 +46,9 @@ import org.jetbrains.annotations.Nullable;
  * replaced, however that happens.
  *
  * <p>A block that does more than that (takes a medium into a slot, forms a structure) extends this one and adds only
- * what it does besides.
+ * what it does besides. A cable or a line joins it through the ports its device declares, none unless it does.
  */
-public class DeviceBlock extends HorizontalDirectionalBlock implements EntityBlock {
+public class DeviceBlock extends HorizontalDirectionalBlock implements EntityBlock, IFaceConnector {
 
     private final Device<?> device;
     private final MapCodec<DeviceBlock> codec;
@@ -66,6 +68,11 @@ public class DeviceBlock extends HorizontalDirectionalBlock implements EntityBlo
     @Override
     public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return device.create(pos, state);
+    }
+
+    @Override
+    public FacePorts ports() {
+        return device.ports();
     }
 
     @Override

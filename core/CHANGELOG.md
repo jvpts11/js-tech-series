@@ -244,6 +244,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   taking the nearest earlier era's; `EraCodecs` saves an era by its id and sends it by its place. An axis whose steps
   grow while the game loads is `ProgressionAxis.following`, and `PlayerProgress` and `TeamProgress` keep every axis's
   step by its name.
+- Machines on the network that see the world: J's Core's API stays at version 12, all experimental.
+  `INetworkMember.instrumentOf()` names the world events a member is the instrument of, `NetworkTables.hasInstrument`
+  asks whether a network has one, and `NetworkSystem.networks()` lists the networks of a level that run.
+  `Device.ports(FacePorts)` gives a device's block the ports a cable joins it through, and `DeviceBlock` is an
+  `IFaceConnector` answering by them.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1753,6 +1758,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   longer holds the server: the game's unloading of it went round and round for all the server's spare time, so the
   generation never went on, new land never came and the server could not stop. The Core drops that unloading, as
   the chunk is kept; this was the game's own, made likelier by anything that loads chunks a while and lets them go.
+- Machines of other mods join the data network by its real cables: a member looked for its network where the
+  cable beside it stood, which only a hand-built index answered; it now takes the network of the data wire crossing
+  into it, and a block made with the Core's `Device` takes cables on the ports its device declares. A member whose
+  chunk is not in memory has no row in a state table, and reading the table no longer waits on that chunk.
 
 ## [0.5.2a] - 2026-10-14
 

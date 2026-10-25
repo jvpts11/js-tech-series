@@ -255,7 +255,9 @@ public final class PayloadRoundTripGameTests {
                 List.of(new IsmsSchemaPayload.Job("nightly_vacuum", true, "EVERY 20m", "VACUUM")),
                 List.of("Server A", "Server B"),
                 new IsmsSchemaPayload.Index(IndexHealth.State.STALE, 120, 2),
-                List.of(new IsmsSchemaPayload.Lock("minecraft:diamond", Text.literal("Diamond"), 64L))));
+                List.of(new IsmsSchemaPayload.Lock("minecraft:diamond", Text.literal("Diamond"), 64L)),
+                List.of(new IsmsSchemaPayload.OtherTable("jstests:reactors", List.of("temperature", "running", "at"),
+                        List.of("°C", "", ""), 2))));
         helper.succeed();
     }
 

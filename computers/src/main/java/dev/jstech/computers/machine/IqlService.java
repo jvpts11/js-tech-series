@@ -770,6 +770,11 @@ public final class IqlService {
             }
 
             @Override
+            public Text tableProblem(final String object) {
+                return IqlService.this.network.tableProblem(object);
+            }
+
+            @Override
             public ICliComputer.OpResult execute(final IqlOperation operation) {
                 return IqlService.this.execute(operation);
             }
