@@ -1696,6 +1696,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   machine of its own, which only the programs made for it install on.
 - (Computers) Hardware from a modpack: KubeJS's startup scripts declare parts and their kinds, each as an object of
   its sheet's fields (`JsComputers.processor`, `memory`, `motherboard` and the rest).
+- (Computers) The network's event log: the Network Manager's Log tab shows, beside the Operations, what happened to
+  every machine on the network, newest first, at three levels (INFO, WARN, ERROR): a machine or a server's bay
+  switched on or off, two Mainframes on one network and the end of it. It filters by level, machine and period,
+  prints, and exports to a text file on a disk of the Mainframe. A network keeps its last seven days, at most 2,000
+  events, saved with the world.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -1859,6 +1864,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   step's name, so an era another mod inserts moves nothing a world saved. A world saved before starts its progress
   over, and the era advancements wait for the era by its id.
 - (Computers) Tooltips of the slots a card fits are one sentence for every card ("Fits a PCI-e slot").
+- (Computers) A DROP runs without asking: the studio no longer asks before a DROP of items or of a saved view,
+  procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
 - (Core) A tall stack of moving structures set down touching stands still and is heard striking nothing, its

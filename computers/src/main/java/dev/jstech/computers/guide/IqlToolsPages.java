@@ -234,14 +234,15 @@ final class IqlToolsPages {
                         + " started - Cancel Executing Query stops it\". Press [[Alt]]+[[Break]], or the toolbar's"
                         + " Cancel, to stop the run. The studio then answers \"Query was cancelled by user.\"")
                 .subheading("Statements that cannot be undone")
-                .paragraph("Some statements cannot be undone: every DROP statement, and a DELETE of ALL. Before one"
-                        + " runs, the studio asks \"This statement cannot be undone:\", shows the statement and asks"
-                        + " \"Run it?\". Its buttons are Yes, No and a box named \"Don't ask again\". Ticking that box"
-                        + " turns the question off.")
+                .paragraph("A DROP runs as you type it, with no question, as on a real database: what it drops is"
+                        + " gone. A DELETE of ALL sends everything of an item out of the network, and before one runs"
+                        + " the studio asks \"This statement cannot be undone:\", shows the statement and asks \"Run"
+                        + " it?\". Its buttons are Yes, No and a box named \"Don't ask again\". Ticking that box turns"
+                        + " the question off.")
                 .subheading("Options")
                 .table("Options of the studio", "Option", "Default", "What it does")
                 .row(GuideCell.words("Ask before a statement that cannot be undone"), GuideCell.words("on"),
-                        GuideCell.words("Asks before each statement that cannot be undone. Tools > Options."))
+                        GuideCell.words("Asks before each DELETE of ALL. Tools > Options."))
                 .row(GuideCell.words("Open a new query when the studio starts"), GuideCell.words("on"),
                         GuideCell.words("Opens an empty query tab at the start. Tools > Options."))
                 .row(GuideCell.words("Show line numbers"), GuideCell.words("on"),

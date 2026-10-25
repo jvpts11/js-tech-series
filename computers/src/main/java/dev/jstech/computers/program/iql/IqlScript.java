@@ -125,20 +125,16 @@ public final class IqlScript {
     }
 
     /**
-     * Whether running {@code statement} loses something for good, which a studio asks about first: items dropped,
-     * everything of an item sent out of the network, or a saved view, procedure or job dropped.
+     * Whether a studio asks before running {@code statement}: everything of an item sent out of the network. A DROP,
+     * of items or of a saved view, procedure or job, runs as typed with no question, as on a real database.
      */
     public static boolean destructive(final String statement) {
         final IqlParseResult parsed = IqlParser.tryParse(statement);
         if (parsed.definition() != null) {
-            return parsed.definition().verb() == IqlDefinition.Verb.DROP;
-        }
-        final IqlOperation operation = parsed.operation();
-        if (operation == null) {
             return false;
         }
-        return operation.verb() == IqlVerb.DROP
-                || operation.verb() == IqlVerb.DELETE && operation.quantity() == IqlOperation.ALL;
+        final IqlOperation operation = parsed.operation();
+        return operation != null && operation.verb() == IqlVerb.DELETE && operation.quantity() == IqlOperation.ALL;
     }
 
     /** The template parameters of {@code text}, each once, in the order they first appear. */

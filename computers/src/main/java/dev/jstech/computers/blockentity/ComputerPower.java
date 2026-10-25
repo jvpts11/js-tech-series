@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.os.boot.BootPhases;
+import java.util.function.Consumer;
 import net.minecraft.nbt.CompoundTag;
 
 /**
@@ -17,23 +18,26 @@ import net.minecraft.nbt.CompoundTag;
  * and not every machine has this switch: a machine in a rack is switched on by its bay, and it still
  * tests itself, still stops at its boot manager and still takes time to come up.
  *
- * <p>Two things are handed in because they belong to the machine and not to its power: {@code changed}
- * marks the machine to be saved, and {@code endSession} is what a cold start or a power cut does to the
- * desktop and to an installer left waiting for a restart.
+ * <p>Three things are handed in because they belong to the machine and not to its power: {@code changed}
+ * marks the machine to be saved, {@code endSession} is what a cold start or a power cut does to the
+ * desktop and to an installer left waiting for a restart, and {@code switched} hears the switch go on or
+ * off, which the network's event log writes down.
  */
 final class ComputerPower {
 
     private final Runnable changed;
     private final Runnable endSession;
+    private final Consumer<Boolean> switched;
     /** Where the machine is on its way up: the self-test, the boot manager and the system coming up. */
     private final BootPhases phases = new BootPhases();
 
     private boolean manualOn;
     private boolean autoStart;
 
-    ComputerPower(final Runnable changed, final Runnable endSession) {
+    ComputerPower(final Runnable changed, final Runnable endSession, final Consumer<Boolean> switched) {
         this.changed = changed;
         this.endSession = endSession;
+        this.switched = switched;
     }
 
     boolean on() {
@@ -167,7 +171,11 @@ final class ComputerPower {
     }
 
     void setPowered(final boolean on) {
+        final boolean was = this.manualOn;
         this.manualOn = on;
+        if (was != on) {
+            this.switched.accept(on);
+        }
         this.phases.powered(on);
         // Power off or a cold start: neither leaves a desktop or an installer session behind.
         this.endSession.run();
@@ -190,6 +198,7 @@ final class ComputerPower {
                  */
                 this.phases.setNeedsPost(true);
                 this.endSession.run();
+                this.switched.accept(true);
             }
             this.manualOn = true;
         }

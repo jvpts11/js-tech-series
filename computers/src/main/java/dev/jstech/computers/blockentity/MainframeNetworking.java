@@ -10,6 +10,9 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.MainframeStructure;
+import dev.jstech.computers.eventlog.EventLevel;
+import dev.jstech.computers.eventlog.NetworkEvents;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.jstechseries.network.ConnectivityIndex;
 import dev.jstech.core.jstechseries.network.FailoverRole;
@@ -18,10 +21,12 @@ import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuidState;
+import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -79,6 +84,9 @@ final class MainframeNetworking {
     private final MainframeBlockEntity mainframe;
 
     private boolean conflicted;
+    /** The network a conflict under way is over, whose event log hears it end. */
+    @Nullable
+    private NetworkUuid conflictOn;
     private boolean failoverEnabled;
     private FailoverRole failoverRole = FailoverRole.NONE;
     private int waitTicks;
@@ -173,7 +181,7 @@ final class MainframeNetworking {
         if (adopted == null) {
             NetworkRegistry.addNetwork(level, effective);
         }
-        setConflict(level, primaryPeerPresent);
+        setConflict(level, effective, primaryPeerPresent);
         if (primaryPeerPresent) {
             // Two owners on one network: collapse it until they are physically separated.
             NetworkRegistry.setNetworkState(level, effective, NetworkUuidState.CONFLICTED);
@@ -189,7 +197,7 @@ final class MainframeNetworking {
                                  final ConnectivityIndex index, final Set<Long> cables,
                                  @Nullable final NetworkUuid adopted, final boolean primaryPeerPresent,
                                  final List<MainframeBlockEntity> peers) {
-        setConflict(level, false); // a standby never holds the network in conflict on its own
+        setConflict(level, adopted, false); // a standby never holds the network in conflict on its own
         if (adopted == null) {
             // Not on any network yet: dormant until it reaches an owner's network.
             standBy(system, null);
@@ -266,7 +274,7 @@ final class MainframeNetworking {
     /** Lets go of the network, which is what a Mainframe losing power does: data no longer passes through it. */
     void leave(final ServerLevel level) {
         mainframe.networkAttachment().attachTo(null);
-        setConflict(level, false);
+        setConflict(level, null, false);
         unregisterFrom(NetworkSystem.get(level));
     }
 
@@ -369,9 +377,19 @@ final class MainframeNetworking {
     }
 
     /** Says so in chat when a conflict starts and when it clears, since nothing else would show it. */
-    private void setConflict(final ServerLevel level, final boolean conflict) {
+    /*
+     * A conflict starting is written into the log of the network it is over, and its end into the same one, even when
+     * the Mainframe is leaving that network as it ends.
+     */
+    private void setConflict(final ServerLevel level, @Nullable final NetworkUuid network, final boolean conflict) {
         if (conflict && !conflicted) {
             JscEvents.awardOperator(mainframe, JscEvents.MAINFRAME_CONFLICT);
+            conflictOn = network;
+            logConflict(level, network, EventLevel.ERROR,
+                    NetworkEvents.CONFLICT.with(mainframe.getBlockPos().toShortString()));
+        } else if (!conflict && conflicted) {
+            logConflict(level, conflictOn, EventLevel.INFO, NetworkEvents.CONFLICT_RESOLVED.text());
+            conflictOn = null;
         }
         if (conflict != conflicted && level.getServer() != null) {
             final String where = mainframe.getBlockPos().toShortString();
@@ -379,6 +397,15 @@ final class MainframeNetworking {
             level.getServer().getPlayerList().broadcastSystemMessage(GameText.component(message.with(where)), false);
         }
         conflicted = conflict;
+    }
+
+    private void logConflict(final ServerLevel level, @Nullable final NetworkUuid network, final EventLevel what,
+                             final Text message) {
+        final NodeUuid node = mainframe.nodeUuid();
+        if (node != null) {
+            NetworkEvents.record(level, network, what, node,
+                    NetworkEvents.machineName(mainframe.customName(), HostScope.MAINFRAME, node), message);
+        }
     }
 
     /**

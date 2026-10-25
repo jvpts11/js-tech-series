@@ -38,6 +38,7 @@ import dev.jstech.computers.operation.payload.interactor.ItemInfoPayloads;
 import dev.jstech.computers.operation.payload.interactor.NetworkInteractorPayloads;
 import dev.jstech.computers.operation.payload.iql.IqlPayloads;
 import dev.jstech.computers.operation.payload.machine.MachinePayloads;
+import dev.jstech.computers.operation.payload.network.NetworkEventPayloads;
 import dev.jstech.computers.operation.payload.network.NetworkPayloads;
 import dev.jstech.computers.operation.payload.network.NetworkServicesPayloads;
 import dev.jstech.computers.operation.payload.nextgre.NextgrePayloads;
@@ -103,6 +104,7 @@ public final class ComputingPayloads {
         CraftManagerPayloads.register(registrar);
         NetworkPayloads.register(registrar);
         NetworkServicesPayloads.register(registrar);
+        NetworkEventPayloads.register(registrar);
         MachinePayloads.register(registrar);
         FirmwarePayloads.register(registrar);
         CrashPayloads.register(registrar);

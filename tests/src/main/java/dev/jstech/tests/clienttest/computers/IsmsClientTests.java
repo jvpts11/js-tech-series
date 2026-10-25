@@ -105,7 +105,7 @@ public final class IsmsClientTests {
 
     /**
      * A script runs a statement at a time, each table with its real columns; Parse underlines what it cannot read;
-     * a statement that cannot be undone is asked about first; results go to text on Ctrl+T.
+     * a DROP runs as typed, with no question; results go to text on Ctrl+T.
      */
     @ClientTest(timeoutTicks = 3000)
     public static void isms_runsAScriptAStatementAtATime(final ClientTestContext ctx) {
@@ -139,14 +139,10 @@ public final class IsmsClientTests {
                     studio(ctx).typeScript("DROP 1 cobblestone;");
                     ctx.key(GLFW.GLFW_KEY_F5);
                 })
-                .thenWaitUntil(() -> studio(ctx).dialogOpen(), SCREEN_WAIT,
-                        "the question before a statement that cannot be undone")
-                .then(0, () -> expect(ctx, String.join(" ", studio(ctx).dialogText()).contains("DROP 1 cobblestone"),
-                        "it names the statement; got " + studio(ctx).dialogText()))
-                .thenScreenshot(1, "isms-confirm")
-                .then(1, () -> studio(ctx).pressDialog())
                 .thenWaitUntilServer(level -> held(ctx, level, Items.COBBLESTONE) == 63L, WORK_WAIT,
-                        "Yes to drop the one cobblestone", level -> "held=" + held(ctx, level, Items.COBBLESTONE))
+                        "the DROP to take the one cobblestone", level -> "held=" + held(ctx, level, Items.COBBLESTONE))
+                .then(0, () -> expect(ctx, !studio(ctx).dialogOpen(),
+                        "nothing asks before a DROP; got " + studio(ctx).dialogText()))
                 .then(SETTLE, () -> leave(ctx))
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }

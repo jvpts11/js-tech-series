@@ -16,6 +16,7 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -953,6 +954,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         endRun(slot);
         flushConsole(slot);
         setChanged();
+        bayPowerSwitched(slot);
     }
 
     public ServerRackBlockEntity(final BlockPos pos, final BlockState state) {
@@ -2707,6 +2709,19 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /** Sends the active channel's era to watching clients, so era-dressed screens match the machine. */
     private void syncDisplayEra() {
         fields().syncToClients();
+    }
+
+    /* The bay's switch went on or off: the server seated there is a machine, and its network writes that down. */
+    private void bayPowerSwitched(final int slot) {
+        final ItemStack stack = servers.getStackInSlot(slot);
+        final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;
+        if (!(level instanceof ServerLevel server) || node == null) {
+            return;
+        }
+        final RackChassis chassis = ServerItem.chassisOf(stack);
+        final NodeUuid machine = new NodeUuid(node);
+        NetworkEvents.switched(server, networkUuid(), machine, NetworkEvents.machineName(ServerItem.customName(stack),
+                chassis == null ? HostScope.SERVER : chassis.computer().machine(), machine), bayPowerOn(slot));
     }
 
     /**

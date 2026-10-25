@@ -21,6 +21,7 @@ import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -135,7 +136,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
     private final ComputerHardware hardware;
     /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
-    private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
+    private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession, this::switched);
     /** What its system does when it runs short: the page it goes down on, and what its kernel ends for memory. */
     private final MachineKernel kernel = new MachineKernel(power.phases());
     /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
@@ -635,6 +636,15 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private void testedInvalidBuild() {
         if (power.on() && !buildValid() && level instanceof ServerLevel server) {
             sounds.postFailed(server);
+        }
+    }
+
+    /* Its switch went on or off: the network it is on writes that down in its event log. */
+    private void switched(final boolean on) {
+        final NodeUuid node = nodeUuid();
+        if (level instanceof ServerLevel server && node != null) {
+            NetworkEvents.switched(server, networkUuid(), node,
+                    NetworkEvents.machineName(customName(), machine(), node), on);
         }
     }
 

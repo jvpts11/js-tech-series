@@ -430,7 +430,8 @@ final class NetworkPages {
                         + " the RAM buffer and the network storage, and how many computers of each kind there are."))
                 .row(GuideCell.words("Map"), GuideCell.words("The nodes and their lines, drawn as a map. Drag a node"
                         + " to move it."))
-                .row(GuideCell.words("Log"), GuideCell.words("The Operations logged so far, under Network log."))
+                .row(GuideCell.words("Log"), GuideCell.words("Two views along its top. Operations: the Operations"
+                        + " logged so far. Events: what happened to every machine on the network, newest first."))
                 .row(GuideCell.words("Stats"), GuideCell.words("How many Operations settled in the last hour, and"
                         + " how long they waited and ran."))
                 .row(GuideCell.words("Services"), GuideCell.words("The engines and services of the Mainframe, and the"
@@ -440,6 +441,17 @@ final class NetworkPages {
                         + " and high compute.")
                 .paragraph("The Processes tab lists the work the network is doing right now. Each Operation has its"
                         + " own priority and its own record of how much it has moved ([](jsc:what_operations_are)).")
+                .subheading("The network's events")
+                .paragraph("The Log tab's Events view is the network's event log, apart from its Operations. Each"
+                        + " line has the time, a level, the machine and what happened. INFO is something that"
+                        + " happened, such as a machine switched on or off. WARN is something to look at. ERROR is"
+                        + " something that went wrong, such as two Mainframes on one network.")
+                .paragraph("Three lists over it filter what it shows: the level, the machine (or the network itself)"
+                        + " and how far back, from the last hour to everything it keeps. Print sends what it shows to"
+                        + " the computer's printer. Export writes it to a text file on a disk of the Mainframe, one"
+                        + " event a line.")
+                .paragraph("The network keeps its last seven days, and at most 2,000 events. Older ones make way for"
+                        + " new ones.")
                 .define("Node", "Any block the network knows: a Mainframe, a server, a Subframe or a computer.")
                 .define("Service", "A program installed on a server, or on the Mainframe, that gives the machine its"
                         + " job. You choose the services of each machine.")

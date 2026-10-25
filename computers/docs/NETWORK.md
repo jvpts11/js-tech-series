@@ -18,6 +18,11 @@ graphics card adds a queue of work done alongside the others.
 The **Network Manager**, which only runs on the Mainframe, is the network's control room: every machine on it,
 the storage, and the Operations being worked.
 
+**The network's event log** (added 2026-10-25), in the Network Manager's Log tab beside the Operations, writes
+down what happens to every machine: INFO (a machine switched on or off), WARN and ERROR (two Mainframes on one
+network). It filters by level, machine and period, prints, and exports to a text file on a disk of the Mainframe.
+A network keeps its last seven days, at most 2,000 events.
+
 ## Storage: items are data
 
 *Added 2026-06-05.*
@@ -46,7 +51,7 @@ ticks and finishes. They work like the commands of a database, which is where th
 | CRAFT | Makes items, from crafting table recipes, machine recipes, or both in many steps ([Autocrafting](AUTOCRAFTING.md)). |
 | UPDATE | Changes stored items with the workshop cards: smelts, enchants, repairs, combines, names them. |
 | ANALYZE, REINDEX, VACUUM | Look after the network's index of what it stores. |
-| DROP | Destroys what is stored. |
+| DROP | Destroys what is stored, with no question, as on a real database. |
 
 An Operation is always in one of eight states:
 

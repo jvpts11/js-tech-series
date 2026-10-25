@@ -61,6 +61,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   machine of its own, which only the programs made for it install on.
 - Hardware from a modpack: KubeJS's startup scripts declare parts and their kinds, each as an object of
   its sheet's fields (`JsComputers.processor`, `memory`, `motherboard` and the rest).
+- The network's event log: the Network Manager's Log tab shows, beside the Operations, what happened to
+  every machine on the network, newest first, at three levels (INFO, WARN, ERROR): a machine or a server's bay
+  switched on or off, two Mainframes on one network and the end of it. It filters by level, machine and period,
+  prints, and exports to a text file on a disk of the Mainframe. A network keeps its last seven days, at most 2,000
+  events, saved with the world.
 
 ### Changed
 - Listeners declared: every class of the three mods that answers the game's events is
@@ -89,6 +94,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   step's name, so an era another mod inserts moves nothing a world saved. A world saved before starts its progress
   over, and the era advancements wait for the era by its id.
 - Tooltips of the slots a card fits are one sentence for every card ("Fits a PCI-e slot").
+- A DROP runs without asking: the studio no longer asks before a DROP of items or of a saved view,
+  procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
 - The Exa and the Singularity draw what the Advanced draws: the supercomputer rack, the server rack, the

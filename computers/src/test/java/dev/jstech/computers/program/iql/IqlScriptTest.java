@@ -94,10 +94,10 @@ class IqlScriptTest {
     }
 
     @Test
-    void destructive_asksForDroppedItemsAndDroppedObjects() {
-        assertTrue(IqlScript.destructive("DROP 64 dirt"));
-        assertTrue(IqlScript.destructive("DROP VIEW low_stock"));
-        assertTrue(IqlScript.destructive("DROP PROCEDURE restock"));
+    void destructive_letsADropRunWithoutAsking() {
+        assertFalse(IqlScript.destructive("DROP 64 dirt"));
+        assertFalse(IqlScript.destructive("DROP VIEW low_stock"));
+        assertFalse(IqlScript.destructive("DROP PROCEDURE restock"));
     }
 
     @Test

@@ -57,7 +57,8 @@ class LayoutAuditTest {
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CrashLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
-            "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
+            "NetworkServicesLayout", "NetworkLinksLayout", "NetworkEventLogLayout", "PrinterLayout", "DockLayout",
+            "PrintedPaperLayout",
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
             "EffectsPageLayout", "TransitionPanelLayout");
 
@@ -359,6 +360,11 @@ class LayoutAuditTest {
                 true), false));
         c.add(new AuditCase("NetworkLinksLayout(narrowest)", NetworkLinksLayout.devices(
                 NetworkServicesLayout.MIN_W - NetworkServicesLayout.WINDOW_PAD, 150 - 38, true), false));
+        c.add(new AuditCase("NetworkEventLogLayout(default)", NetworkEventLogLayout.events(
+                NetworkServicesLayout.DEFAULT_W - NetworkServicesLayout.WINDOW_PAD,
+                NetworkServicesLayout.DEFAULT_H - 38), false));
+        c.add(new AuditCase("NetworkEventLogLayout(narrowest)", NetworkEventLogLayout.events(
+                NetworkServicesLayout.MIN_W - NetworkServicesLayout.WINDOW_PAD, 150 - 38), false));
         // The trash window in each of its three looks, at its smallest and at its first size.
         for (final int[] size : new int[][]{
                 {TrashLayout.MIN_W - TrashLayout.FRAME_W, TrashLayout.MIN_H - TrashLayout.FRAME_H},

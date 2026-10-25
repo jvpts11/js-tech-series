@@ -79,6 +79,7 @@ import dev.jstech.tests.clienttest.computers.MsdClientTests;
 import dev.jstech.tests.clienttest.computers.MultipartModelClientTests;
 import dev.jstech.tests.clienttest.computers.MusicImportClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkDeviceClientTests;
+import dev.jstech.tests.clienttest.computers.NetworkEventLogClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkInteractorClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkLinksClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkServicesClientTests;
@@ -410,6 +411,7 @@ public final class ClientTestSuite {
             RedstoneInterfaceClientTests.class,
             NetworkInteractorClientTests.class,
             NetworkServicesClientTests.class,
+            NetworkEventLogClientTests.class,
             NetworkSharesClientTests.class,
             OffscreenDesktopClientTests.class,
             SystemMotionClientTests.class,

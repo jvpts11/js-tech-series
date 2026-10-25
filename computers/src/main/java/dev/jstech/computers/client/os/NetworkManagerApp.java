@@ -14,9 +14,12 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.engine.EngineSwap;
+import dev.jstech.computers.eventlog.EventLevel;
+import dev.jstech.computers.gui.layout.NetworkEventLogLayout;
 import dev.jstech.computers.gui.layout.NetworkLinksLayout;
 import dev.jstech.computers.gui.layout.NetworkServicesLayout;
 import dev.jstech.computers.operation.payload.CancelOperationPayload;
+import dev.jstech.computers.operation.payload.NetworkEventsPayload;
 import dev.jstech.computers.operation.payload.NetworkManagerPayload;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
 import dev.jstech.computers.operation.payload.NetworkServicesPayload;
@@ -140,6 +143,8 @@ public final class NetworkManagerApp implements IDesktopApp {
     private NetworkManagerPayload data;
     private List<OperationRecord> activeOps = List.of();
     private List<OperationRecord> logNewestFirst = List.of();
+    /** Whether the Log tab shows the network's events rather than its Operations. */
+    private boolean showingEvents;
     private int tab;
     private int frame;
     private int lastX;
@@ -194,6 +199,9 @@ public final class NetworkManagerApp implements IDesktopApp {
     private final ListView<HardwareRow> hwList;
     private final ScrollBar hwBar;
     private final MapCanvas map;
+    /* The Log tab's switch between the Operations and the network's events. */
+    private final TabStrip logSwitch;
+    private final NetworkEventLogView events;
     private final Label noLogLabel;
     private final ListView<OperationRecord> logList;
     private final Button logPrint;
@@ -281,6 +289,10 @@ public final class NetworkManagerApp implements IDesktopApp {
                 v -> logList.setScroll(v)));
         printDialog = new PrintDialog(host, this);
         logPrint = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::printLog));
+        logSwitch = root.add(new TabStrip(words(NetworkEventLogTexts.OPERATIONS, NetworkEventLogTexts.EVENTS))
+                .fitToLabels(10).setOnSelect(this::selectLogView));
+        events = new NetworkEventLogView(host, this, printDialog, () -> ActiveDesktop.windowName(PROGRAM));
+        root.add(events.component());
 
         statsHeader = root.add(new Label(this::statsHeaderText, Label.Tone.DIM));
         noStatsLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_STATS), Label.Tone.DIM));
@@ -357,11 +369,15 @@ public final class NetworkManagerApp implements IDesktopApp {
         return tabs.tabCenter(TAB_SERVICES);
     }
 
-    /** The centre of the Devices, Hardware or Map tab ({@code devices}, {@code hardware}, {@code map}); for tests. */
+    /**
+     * The centre of the Devices, Hardware, Map or Log tab ({@code devices}, {@code hardware}, {@code map},
+     * {@code log}); for tests.
+     */
     public int[] tabPoint(final String which) {
         return tabs.tabCenter(switch (which) {
             case "hardware" -> TAB_HARDWARE;
             case "map" -> TAB_MAP;
+            case "log" -> TAB_LOG;
             default -> TAB_DEVICES;
         });
     }
@@ -417,6 +433,54 @@ public final class NetworkManagerApp implements IDesktopApp {
                 return;
             }
         }
+    }
+
+    /** Routes what the network's event log shows to the open window. */
+    public static void acceptEvents(final NetworkEventsPayload payload) {
+        if (active != null) {
+            active.events.accept(payload);
+        }
+    }
+
+    /** The network's events the Log tab shows now, newest first; for tests. */
+    public List<NetworkEventsPayload.Row> eventRows() {
+        return events.rows();
+    }
+
+    /** Whether the server has answered what the event log shows; for tests. */
+    public boolean eventsAnswered() {
+        return events.answered();
+    }
+
+    /** The centre of the Log tab's switch to the Operations or to the events; for tests. */
+    public int[] logViewPoint(final boolean showEvents) {
+        return logSwitch.tabCenter(showEvents ? 1 : 0);
+    }
+
+    /** The centre of the events' Export; for tests. */
+    public int[] exportPoint() {
+        return events.exportPoint();
+    }
+
+    /** Shows only the events of {@code level}, or every level for null; for tests. */
+    public void showEventLevel(@Nullable final EventLevel level) {
+        events.showLevel(level);
+    }
+
+    /** The events as Export writes them; for tests. */
+    public String exportText() {
+        return events.exportText();
+    }
+
+    /** The system's file dialog the events' Export opens; for tests. */
+    public FileDialog exportDialog() {
+        return events.exportDialog();
+    }
+
+    /** Where the events were last exported to, or null before any; for tests. */
+    @Nullable
+    public String exportedPath() {
+        return events.exportedPath();
     }
 
     /** Routes the recent Operations log to the open window; it arrives oldest-first and is shown newest-first. */
@@ -574,6 +638,19 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (target == TAB_SERVICES) {
             services.request();
         }
+        if (target == TAB_LOG && showingEvents) {
+            events.request();
+        }
+    }
+
+    private void selectLogView(final int view) {
+        showingEvents = view == 1;
+        detailPopup.close();
+        if (showingEvents) {
+            events.request();
+        } else {
+            requestOps();
+        }
     }
 
     // rendering
@@ -719,18 +796,26 @@ public final class NetworkManagerApp implements IDesktopApp {
         map.setVisible(ready && tab == TAB_MAP);
         map.setBounds(px, top, pw, h);
 
-        final boolean log = ready && tab == TAB_LOG;
+        // The Log tab switches between the Operations and the network's events along its top.
+        final boolean logTab = ready && tab == TAB_LOG;
+        logSwitch.setVisible(logTab);
+        logSwitch.setSelected(showingEvents ? 1 : 0);
+        logSwitch.setBounds(px, top, NetworkEventLogLayout.SWITCH_W, NetworkEventLogLayout.SWITCH_H);
+        events.layout(px, top, pw, h, logTab && showingEvents);
+        final boolean log = logTab && !showingEvents;
         noLogLabel.setVisible(log && logNewestFirst.isEmpty());
         logList.setVisible(log && !logNewestFirst.isEmpty());
         logBar.setVisible(logList.visible() && logNewestFirst.size() > logList.visibleRows());
         // The log prints from a button under it, as a list a program keeps has its Print beside it.
         logPrint.setVisible(log && !logNewestFirst.isEmpty());
         if (log) {
-            final int listH = Math.max(LOG_ROW_H, h - PRINT_ROW_H);
-            noLogLabel.setBounds(px + 2, top + 2, pw, 8);
-            logList.setBounds(px, top, pw - BAR_W, listH);
-            logBar.setBounds(px + pw - BAR_W, top, BAR_W, logList.visibleRows() * LOG_ROW_H);
-            logPrint.setBounds(px + pw - PRINT_W, top + h - PRINT_ROW_H + 2, PRINT_W, 11);
+            final int opsTop = top + NetworkEventLogLayout.FILTER_Y;
+            final int opsH = h - NetworkEventLogLayout.FILTER_Y;
+            final int listH = Math.max(LOG_ROW_H, opsH - PRINT_ROW_H);
+            noLogLabel.setBounds(px + 2, opsTop + 2, pw, 8);
+            logList.setBounds(px, opsTop, pw - BAR_W, listH);
+            logBar.setBounds(px + pw - BAR_W, opsTop, BAR_W, logList.visibleRows() * LOG_ROW_H);
+            logPrint.setBounds(px + pw - PRINT_W, opsTop + opsH - PRINT_ROW_H + 2, PRINT_W, 11);
         }
 
         final boolean stats = ready && tab == TAB_STATS;
@@ -1114,6 +1199,10 @@ public final class NetworkManagerApp implements IDesktopApp {
     @Override
     public void renderTooltip(final GuiGraphics g, final Font font, final int x, final int y,
                               final int width, final int height, final int mouseX, final int mouseY) {
+        if (tab == TAB_LOG && showingEvents) {
+            events.renderTooltip(g, font, skin, mouseX, mouseY, x, y, width, height);
+            return;
+        }
         if (tab != TAB_MAP || detailPopup.isOpen()) {
             return;
         }
@@ -1386,7 +1475,11 @@ public final class NetworkManagerApp implements IDesktopApp {
         // The wheel anywhere in the window moves the tab's list.
         final int step = delta > 0 ? -1 : 1;
         if (tab == TAB_LOG) {
-            logList.setScroll(logList.scroll() + step);
+            if (showingEvents) {
+                events.scroll(step);
+            } else {
+                logList.setScroll(logList.scroll() + step);
+            }
             return true;
         }
         if (tab == TAB_PROCESSES) {
