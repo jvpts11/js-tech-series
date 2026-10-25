@@ -9,6 +9,7 @@ package dev.jstech.core.jstechseries.tools;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.FlowSight;
+import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SharedUses;
@@ -37,10 +38,14 @@ public final class SharedTools {
     public static final TagKey<Item> WRENCHES = TagKey.create(Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath("c", "tools/wrench"));
 
+    /** How hard a blow of the Basic Wrench harms, and how many it gives a second: a bar of iron, swung slowly. */
+    public static final double WRENCH_DAMAGE = 5;
+    public static final double WRENCH_SPEED = 0.8;
     /** The Basic Wrench. */
     public static final ItemEntry<BasicWrenchItem> WRENCH = CoreItems.CONTENT.item("basic_wrench",
                     properties -> new BasicWrenchItem(properties.stacksTo(1))).named("Basic Wrench")
-            .tag(WRENCHES).tag(FlowSight.SEES_FLOW).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .look(IItemLook.HANDHELD).strikes(WRENCH_DAMAGE, WRENCH_SPEED).tag(WRENCHES).tag(FlowSight.SEES_FLOW)
+            .tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     /** The setup a Configuration Card holds, copied from a machine. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<MachineSetup.Copied>> SETUP =
             CoreItems.CONTENT.component("machine_setup", MachineSetup.CODEC, MachineSetup.STREAM_CODEC);
@@ -53,10 +58,14 @@ public final class SharedTools {
             .tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     /** How many cuts a saw makes before it wears out. */
     public static final int SAW_CUTS = 512;
+    /** How hard a blow of the saw harms, and how many it gives a second: a light blade, swung quickly. */
+    public static final double SAW_DAMAGE = 4;
+    public static final double SAW_SPEED = 1.2;
     /** The saw, which cuts microblocks in the crafting grid and is worn by each cut. */
     public static final ItemEntry<Item> SAW = CoreItems.CONTENT.item("saw",
                     properties -> new Item(properties.durability(SAW_CUTS))).named("Saw")
-            .tag(CoreSpaces.SAWS).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .look(IItemLook.HANDHELD).strikes(SAW_DAMAGE, SAW_SPEED).tag(CoreSpaces.SAWS)
+            .tab(JsTechTab.BLOCKS_AND_TOOLS).register();
 
     static {
         // Every mod of the series sets its lines' ends with it and its machines up with the card, so the Core itself

@@ -43,13 +43,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -66,7 +73,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * J's Industrial's materials as a contract, from the catalogue's data: its minerals' ores named and tagged by the
  * Core's rule and dropping their raw minerals; the Macerator grinding any of them into two dusts and a counted share of
  * their byproducts; the furnace smelting the simple minerals raw and never a sulfide; the hand tools yielding less and
- * wearing in the grid; the Draw Plate's scraps, counted; a scrap melting into a nugget; an element discovered at its
+ * wearing in the grid; the Forge Hammer made of four iron on a stick and striking as a heavy tool; the Draw Plate's
+ * scraps, counted; a scrap melting into a nugget; an element discovered at its
  * first synthesis by a team; and a reaction become a chemical machine's recipe, in its coefficients' amounts.
  */
 @GameTestHolder(JsTests.MODID)
@@ -77,6 +85,9 @@ public final class IndustrialMaterialsGameTests {
     private static final BlockPos MACERATOR = new BlockPos(2, 2, 2);
     private static final int GROUND = 4;
     private static final int WIRES = 8;
+    /* The start of the game's names of a tool's harm and swing, base_attack_damage and base_attack_speed. */
+    private static final String TOOL_ATTACK = "base_attack_";
+    private static final double CLOSE = 1.0e-6;
 
     private IndustrialMaterialsGameTests() {
     }
@@ -149,6 +160,26 @@ public final class IndustrialMaterialsGameTests {
                 "the hammer stays in the grid, a use worn");
         hammer.setDamageValue(hammer.getMaxDamage() - 1);
         helper.assertTrue(hammer.getCraftingRemainingItem().isEmpty(), "until it is worn out");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void forgeHammer_isFourIronOnAStickAndStrikesAsAHeavyTool(final GameTestHelper helper) {
+        final ItemStack iron = new ItemStack(Items.IRON_INGOT);
+        final ItemStack stick = new ItemStack(Items.STICK);
+        helper.assertTrue(crafted(helper, CraftingInput.of(2, 3, List.of(iron, iron, iron, iron, ItemStack.EMPTY,
+                stick))).is(HandTools.FORGE_HAMMER.get()), "four iron on a stick make the Forge Hammer");
+        helper.assertTrue(crafted(helper, CraftingInput.of(2, 3, List.of(iron, iron, iron, stick, ItemStack.EMPTY,
+                stick))).is(Items.IRON_AXE), "and the axe's three iron make the axe, not the hammer");
+        final FakePlayer hand = FakePlayerFactory.getMinecraft(helper.getLevel());
+        final ItemStack hammer = new ItemStack(HandTools.FORGE_HAMMER.get());
+        final double harm = shown(hammer, Attributes.ATTACK_DAMAGE,
+                hand.getAttributeBaseValue(Attributes.ATTACK_DAMAGE));
+        final double swing = shown(hammer, Attributes.ATTACK_SPEED,
+                hand.getAttributeBaseValue(Attributes.ATTACK_SPEED));
+        helper.assertTrue(Math.abs(harm - HandTools.HAMMER_DAMAGE) < CLOSE
+                && Math.abs(swing - HandTools.HAMMER_SPEED) < CLOSE, "it strikes " + HandTools.HAMMER_DAMAGE
+                + " a blow, " + HandTools.HAMMER_SPEED + " a second, as a tool: " + harm + ", " + swing);
         helper.succeed();
     }
 
@@ -263,6 +294,28 @@ public final class IndustrialMaterialsGameTests {
         return helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(
                 new ItemStack(item)), helper.getLevel()).map(found -> found.value().getResultItem(
                 helper.getLevel().registryAccess()));
+    }
+
+    private static ItemStack crafted(final GameTestHelper helper, final CraftingInput input) {
+        return helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
+                .map(found -> found.value().assemble(input, helper.getLevel().registryAccess()))
+                .orElse(ItemStack.EMPTY);
+    }
+
+    /*
+     * What a tooltip shows of {@code attribute} for {@code stack} in the main hand, as it shows a tool's: the hand's
+     * own and the stack's under the game's names of a tool's harm and swing.
+     */
+    private static double shown(final ItemStack stack, final Holder<Attribute> attribute, final double hand) {
+        double value = hand;
+        for (final ItemAttributeModifiers.Entry entry : stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
+                ItemAttributeModifiers.EMPTY).modifiers()) {
+            if (entry.attribute().equals(attribute) && entry.slot() == EquipmentSlotGroup.MAINHAND
+                    && entry.modifier().id().getPath().startsWith(TOOL_ATTACK)) {
+                value += entry.modifier().amount();
+            }
+        }
+        return value;
     }
 
     private static Recipe<?> recipe(final GameTestHelper helper, final String path) {

@@ -38,12 +38,12 @@ public class JsIndustrialRecipeProvider extends RecipeProvider {
     }
 
     /*
-     * The hand tools: a hammer's iron head on a stick; a plate of iron bored with flint, the holes the wire is pulled
-     * through; a stone bowl with its flint pestle.
+     * The hand tools: a hammer's head of four iron on a stick, not an axe's three; a plate of iron bored with flint,
+     * the holes the wire is pulled through; a stone bowl with its flint pestle.
      */
     private void tools(final RecipeOutput out) {
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, HandTools.FORGE_HAMMER.get())
-                .pattern("II").pattern("IS").pattern(" S")
+                .pattern("II").pattern("II").pattern(" S")
                 .define('I', Items.IRON_INGOT).define('S', Items.STICK)
                 .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT))
                 .save(out, MaterialFormRecipes.rl("forge_hammer"));

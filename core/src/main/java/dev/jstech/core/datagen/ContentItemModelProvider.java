@@ -62,6 +62,9 @@ public final class ContentItemModelProvider extends ItemModelProvider {
             case IItemLook.Standard.OF_BLOCK ->
                     getBuilder(id).parent(new ModelFile.UncheckedModelFile(modLoc("block/" + id)));
             case IItemLook.Standard.FLAT -> basicItem(item);
+            case IItemLook.Standard.HANDHELD -> getBuilder(id)
+                    .parent(new ModelFile.UncheckedModelFile("item/handheld"))
+                    .texture("layer0", modLoc("item/" + id));
             case IItemLook.Standard.DRAWN_BY_ENTITY -> drawnByEntity(id);
             case IItemLook.Standard.HANDMADE -> {
                 // Written by hand beside the textures; nothing to generate.

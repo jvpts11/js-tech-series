@@ -226,6 +226,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Contacts read before they start: J's Core's API stays at version 12, all experimental.
   `ContactSolver.ready` readies a step's contacts and `warm` starts them from their pushes of the step before, so
   several solvers on the same bodies read them before any pushes them; `begin` does both, as before.
+- (Core) Tools that strike: J's Core's API stays at version 12, all experimental. `ItemBuilder.strikes(damage,
+  speed)` makes an item a weapon in the main hand, with the harm a blow and the blows a second its tooltip shows,
+  counted as the game counts a tool's; `IItemLook.HANDHELD` holds its flat texture slanted up in the hand, as an axe.
 - (Core) Sources spread over their blocks: J's Core's API stays at version 12, all experimental.
   `Radiation.transmission(level, from, to, kind, source)` lets through the blocks `source` names, the source's own,
   so a source read from the middle of its blocks is not shielded by them.
@@ -448,7 +451,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   default nothing; the Core gives a rule that breaks the pipe after a while and lets the liquid spill.
 - (Core) The Basic Wrench: the series' shared wrench, in the common wrench tag; on a cable it goes round the modes of
   the end it points at, and says which it set; sneaking, it opens the end's screen. Items can be declared in tags of
-  their own, besides their tab's.
+  their own, besides their tab's. Held as a tool, it strikes as a bar of iron: 5 a blow, 0.8 blows a second.
 - (Core) The screen of a line's end: on an end of a pipe or a line of items, a screen in the game's own look sets
   everything the end has: its mode; its priority and its rate, typed or stepped, ten at a time with Shift; its channel,
   one of sixteen in the dyes' colours; and its filter, only or all but, whose nine slots take a stack clicked onto them
@@ -631,7 +634,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The saw, a tool of the series' shared content, of a stick and two iron ingots: in the crafting grid, above a
   block or a piece it cuts two halves, beside one it cuts posts and corners, at a corner of one it hollows it; each
   cut wears it. Two pieces of one shape and block join into one as thick as both, and two slabs make the block again.
-  Any mod's saw cuts alike, and a pack can keep a block from being cut.
+  Any mod's saw cuts alike, and a pack can keep a block from being cut. Held as a tool, it strikes as a light blade:
+  4 a blow, 1.2 blows a second.
 - (Core) Facades: a cover joined with any cable hides the cable behind it on its face, while the cable keeps working.
 - (Core) Microblocks drawn as cleanly as blocks: where two pieces on faces side by side meet along their edge, one
   gives way, so two blocks never flicker in one place; a face lying flat on an opaque piece is not drawn, nor a
@@ -1534,7 +1538,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Industrial) The forms of iron, copper, gold, tin and bronze: plates, wire, dust, nuggets, blocks and their scraps.
 - (Industrial) Hand tools for the start: the Forge Hammer beats three ingots into two plates, the Draw Plate pulls an
   ingot into a wire and leaves a scrap every eighth, the Mortar grinds three ingots into two dusts; each stays in the
-  grid, a use worn each time. A scrap melts into a nugget.
+  grid, a use worn each time. A scrap melts into a nugget. The Forge Hammer is a head of four iron ingots on a stick,
+  not an axe's three, held as a tool, and strikes as a heavy one: 7 a blow, 0.9 blows a second.
 - (Industrial) Elements discovered: a team's first synthesis of an element science discovered by making it is its
   discovery, the team knows it from then on, and its players earn the Discovery advancement, the machine's owner too
   when they join.

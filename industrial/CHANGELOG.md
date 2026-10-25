@@ -34,7 +34,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The forms of iron, copper, gold, tin and bronze: plates, wire, dust, nuggets, blocks and their scraps.
 - Hand tools for the start: the Forge Hammer beats three ingots into two plates, the Draw Plate pulls an
   ingot into a wire and leaves a scrap every eighth, the Mortar grinds three ingots into two dusts; each stays in the
-  grid, a use worn each time. A scrap melts into a nugget.
+  grid, a use worn each time. A scrap melts into a nugget. The Forge Hammer is a head of four iron ingots on a stick,
+  not an axe's three, held as a tool, and strikes as a heavy one: 7 a blow, 0.9 blows a second.
 - Elements discovered: a team's first synthesis of an element science discovered by making it is its
   discovery, the team knows it from then on, and its players earn the Discovery advancement, the machine's owner too
   when they join.

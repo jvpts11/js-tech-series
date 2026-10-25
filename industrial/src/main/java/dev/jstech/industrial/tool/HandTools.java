@@ -25,11 +25,14 @@ public final class HandTools {
     public static final int DRAW_PLATE_USES = 128;
     /** The Mortar's uses. */
     public static final int MORTAR_USES = 64;
+    /** How hard a blow of the Forge Hammer harms, and how many it gives a second: a heavy head, swung slowly. */
+    public static final double HAMMER_DAMAGE = 7;
+    public static final double HAMMER_SPEED = 0.9;
 
     public static final ItemEntry<HandTool> FORGE_HAMMER = IndustrialModule.CONTENT.item("forge_hammer",
                     properties -> new HandTool(properties, FormRoute.ByHand.FORGE_HAMMER))
-            .named("Forge Hammer").look(IItemLook.FLAT).durability(HAMMER_USES).tab(IndustrialModule.TOOLS)
-            .register();
+            .named("Forge Hammer").look(IItemLook.HANDHELD).durability(HAMMER_USES)
+            .strikes(HAMMER_DAMAGE, HAMMER_SPEED).tab(IndustrialModule.TOOLS).register();
     public static final ItemEntry<HandTool> DRAW_PLATE = IndustrialModule.CONTENT.item("draw_plate",
                     properties -> new HandTool(properties, FormRoute.ByHand.DRAW_PLATE))
             .named("Draw Plate").look(IItemLook.FLAT).durability(DRAW_PLATE_USES).tab(IndustrialModule.TOOLS)

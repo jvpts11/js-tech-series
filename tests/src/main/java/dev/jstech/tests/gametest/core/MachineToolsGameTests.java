@@ -28,11 +28,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Blocks;
@@ -48,7 +53,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * its contents going with it and coming back when it is placed again, for its owner only; broken instead, a machine
  * spills its fuse and battery with its items; the Configuration Card copies a setup and pastes it whole into a machine
  * of the same kind, what fits into another, and into every machine of a box; and an installer grows a machine into
- * the next tier of its family in its place, its items moved into the slots of the same use.
+ * the next tier of its family in its place, its items moved into the slots of the same use. The wrench and the saw
+ * strike in the hand as tools do.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -57,6 +63,9 @@ public final class MachineToolsGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos AT = new BlockPos(2, 2, 2);
     private static final long STORED = 5_000L;
+    /* The start of the game's names of a tool's harm and swing, base_attack_damage and base_attack_speed. */
+    private static final String TOOL_ATTACK = "base_attack_";
+    private static final double CLOSE = 1.0e-6;
 
     private MachineToolsGameTests() {
     }
@@ -78,6 +87,16 @@ public final class MachineToolsGameTests {
         helper.assertTrue(machine.sides().mode(MachineResource.GAS, RelativeFace.FRONT) == FaceMode.NONE
                         && machine.sides().mode(MachineResource.ITEMS, RelativeFace.FRONT) == FaceMode.NONE,
                 "and the next use turns the gas alone");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void sharedTools_theWrenchAndTheSawStrikeInTheHandAsTools(final GameTestHelper helper) {
+        final FakePlayer hand = player(helper, "tool_striker");
+        strikes(helper, hand, new ItemStack(SharedTools.WRENCH.get()), SharedTools.WRENCH_DAMAGE,
+                SharedTools.WRENCH_SPEED, "the Basic Wrench");
+        strikes(helper, hand, new ItemStack(SharedTools.SAW.get()), SharedTools.SAW_DAMAGE, SharedTools.SAW_SPEED,
+                "the saw");
         helper.succeed();
     }
 
@@ -255,5 +274,32 @@ public final class MachineToolsGameTests {
     private static FakePlayer player(final GameTestHelper helper, final String name) {
         return FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.nameUUIDFromBytes(name.getBytes(
                 StandardCharsets.UTF_8)), name));
+    }
+
+    /* {@code stack} in {@code hand}'s main hand strikes {@code damage} a blow and {@code speed} blows a second. */
+    private static void strikes(final GameTestHelper helper, final FakePlayer hand, final ItemStack stack,
+                                final double damage, final double speed, final String what) {
+        final double harm = shown(stack, Attributes.ATTACK_DAMAGE,
+                hand.getAttributeBaseValue(Attributes.ATTACK_DAMAGE));
+        final double swing = shown(stack, Attributes.ATTACK_SPEED,
+                hand.getAttributeBaseValue(Attributes.ATTACK_SPEED));
+        helper.assertTrue(Math.abs(harm - damage) < CLOSE && Math.abs(swing - speed) < CLOSE, what + " strikes "
+                + damage + " a blow, " + speed + " a second, as a tool: " + harm + ", " + swing);
+    }
+
+    /*
+     * What a tooltip shows of {@code attribute} for {@code stack} in the main hand, as it shows a tool's: the hand's
+     * own and the stack's under the game's names of a tool's harm and swing.
+     */
+    private static double shown(final ItemStack stack, final Holder<Attribute> attribute, final double hand) {
+        double value = hand;
+        for (final ItemAttributeModifiers.Entry entry : stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS,
+                ItemAttributeModifiers.EMPTY).modifiers()) {
+            if (entry.attribute().equals(attribute) && entry.slot() == EquipmentSlotGroup.MAINHAND
+                    && entry.modifier().id().getPath().startsWith(TOOL_ATTACK)) {
+                value += entry.modifier().amount();
+            }
+        }
+        return value;
     }
 }

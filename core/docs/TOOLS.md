@@ -222,6 +222,20 @@ own rule over one of the material's properties. The material's declared value is
 declared, since the game fixes how long an item lasts as it starts; a data pack's value for that property does not
 change it. An item that wears out stacks alone.
 
+## A tool that strikes
+
+*Added 2026-10-25.*
+
+```java
+.look(IItemLook.HANDHELD)                                             // slanted up in the hand, as an axe
+.strikes(7, 0.9)                                                      // 7 harm a blow, 0.9 blows a second
+```
+
+`strikes(damage, speed)` makes a tool a weapon in the main hand, with the two numbers its tooltip shows: the harm a
+blow does and the blows a second, a bare hand's own counted in, as the game shows an iron axe's 9 and 0.9. It is
+counted under the game's own names for a tool's attack, so the tooltip writes it in green as it does a sword's.
+`IItemLook.HANDHELD` holds the tool slanted up in the hand, as the game holds an axe, from the same flat texture.
+
 ## What can go wrong
 
 - **The ring of modes never opens.** The mode key has no key bound (it has none until the player gives it one), or

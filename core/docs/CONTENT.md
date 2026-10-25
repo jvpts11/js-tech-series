@@ -72,6 +72,7 @@ An item's look is an `IItemLook`:
 | --- | --- |
 | `OF_BLOCK` | A block's item showing its block's model (what a block's item gets by default). |
 | `FLAT` | A flat picture, the texture `textures/item/<id>.png`. |
+| `HANDHELD` | The same picture, held as a tool is, slanted up in the hand as an axe or a sword. |
 | `DRAWN_BY_ENTITY` | Drawn by the renderer of the block's block entity, for a body too large or too alive for a model. |
 | `HANDMADE` | A model you wrote by hand; nothing is generated. |
 | `CABLE` | A length of cable, for a cable's item. |

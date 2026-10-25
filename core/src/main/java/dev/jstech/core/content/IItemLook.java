@@ -20,6 +20,9 @@ public sealed interface IItemLook
     /** A flat sprite: the texture {@code item/<id>}. */
     IItemLook FLAT = Standard.FLAT;
 
+    /** The texture {@code item/<id>} held as a tool is, slanted up in the hand as an axe or a sword. */
+    IItemLook HANDHELD = Standard.HANDHELD;
+
     /**
      * Drawn by the renderer of the block's entity rather than by a model, held and placed in the slot the way a block
      * is: for a body too large or too alive for a baked model (a cabinet, an animated machine).
@@ -44,6 +47,7 @@ public sealed interface IItemLook
     enum Standard implements IItemLook {
         OF_BLOCK,
         FLAT,
+        HANDHELD,
         DRAWN_BY_ENTITY,
         HANDMADE,
         CABLE,

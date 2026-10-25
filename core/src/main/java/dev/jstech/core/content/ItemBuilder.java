@@ -21,8 +21,13 @@ import java.util.function.DoubleToIntFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,6 +51,18 @@ public final class ItemBuilder<I extends Item> {
     private ItemState state = ItemState.NOTHING;
     private int durability;
     private Optional<ToolSpec> tool = Optional.empty();
+    /* How hard a blow of it harms and how many it gives a second, as its tooltip shows them; none for no weapon. */
+    private double damage;
+    private double speed;
+
+    /*
+     * The game's own names of a tool's harm and swing, and what a bare hand has of each: a blow of it is shown and
+     * counted as an axe's is, the hand's own counted in.
+     */
+    private static final ResourceLocation TOOL_DAMAGE = ResourceLocation.withDefaultNamespace("base_attack_damage");
+    private static final ResourceLocation TOOL_SPEED = ResourceLocation.withDefaultNamespace("base_attack_speed");
+    private static final double HAND_DAMAGE = 1;
+    private static final double HAND_SPEED = 4;
 
     ItemBuilder(final ModContent content, final String id, final Function<Item.Properties, ? extends I> factory) {
         this.content = content;
@@ -159,6 +176,20 @@ public final class ItemBuilder<I extends Item> {
         return durability(rule.applyAsInt(value.get().doubleValue()));
     }
 
+    /**
+     * It strikes as a weapon does, held in the main hand: {@code damage} points of harm a blow and {@code speed}
+     * blows a second, as its tooltip shows them, a bare hand's own counted in, as an axe's 9 and 0.9.
+     */
+    public ItemBuilder<I> strikes(final double damage, final double speed) {
+        if (damage <= 0 || speed <= 0) {
+            throw new IllegalArgumentException("an item that strikes harms and swings, not " + damage + " at "
+                    + speed);
+        }
+        this.damage = damage;
+        this.speed = speed;
+        return this;
+    }
+
     /** What it does as a tool: its areas, what it builds, what it works on, its heat, its wait and its charge. */
     public ItemBuilder<I> tool(final ToolSpec spec) {
         this.tool = Optional.of(spec);
@@ -178,9 +209,11 @@ public final class ItemBuilder<I extends Item> {
         tool.ifPresent(this::check);
         final boolean alone = state.stacksAlone();
         final int uses = durability;
-        final ItemEntry<I> entry = new ItemEntry<>(
-                content.itemRegister().register(id, () -> factory.apply(properties(alone, uses))).getId(),
-                english, look, state, defaults, tags, tool);
+        final double harm = damage;
+        final double swing = speed;
+        final ItemEntry<I> entry = new ItemEntry<>(content.itemRegister().register(id,
+                () -> factory.apply(properties(alone, uses, harm, swing))).getId(), english, look, state, defaults,
+                tags, tool);
         if (section != null) {
             section.add(entry);
         }
@@ -188,9 +221,21 @@ public final class ItemBuilder<I extends Item> {
         return entry;
     }
 
-    /* The properties an item is made with: alone in its stack, and lasting {@code uses} when it wears out. */
-    private static Item.Properties properties(final boolean alone, final int uses) {
+    /*
+     * The properties an item is made with: alone in its stack, lasting {@code uses} when it wears out, and striking
+     * {@code harm} a blow, {@code swing} blows a second, when it is a weapon.
+     */
+    private static Item.Properties properties(final boolean alone, final int uses, final double harm,
+                                              final double swing) {
         final Item.Properties properties = new Item.Properties();
+        if (harm > 0) {
+            properties.attributes(ItemAttributeModifiers.builder()
+                    .add(Attributes.ATTACK_DAMAGE, new AttributeModifier(TOOL_DAMAGE, harm - HAND_DAMAGE,
+                            AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND)
+                    .add(Attributes.ATTACK_SPEED, new AttributeModifier(TOOL_SPEED, swing - HAND_SPEED,
+                            AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND)
+                    .build());
+        }
         if (uses > 0) {
             return properties.durability(uses);
         }

@@ -3113,6 +3113,7 @@ stable 4
 10 dev.jstech.core.content.IItemLook  static final IItemLook CABLE
 10 dev.jstech.core.content.IItemLook  static final IItemLook DRAWN_BY_ENTITY
 10 dev.jstech.core.content.IItemLook  static final IItemLook FLAT
+12 dev.jstech.core.content.IItemLook  static final IItemLook HANDHELD
 10 dev.jstech.core.content.IItemLook  static final IItemLook HANDMADE
 10 dev.jstech.core.content.IItemLook  static final IItemLook OF_BLOCK
 10 dev.jstech.core.content.IItemLook.Parent  type record(String model) implements IItemLook
@@ -3121,6 +3122,7 @@ stable 4
 10 dev.jstech.core.content.IItemLook.Standard  CABLE
 10 dev.jstech.core.content.IItemLook.Standard  DRAWN_BY_ENTITY
 10 dev.jstech.core.content.IItemLook.Standard  FLAT
+12 dev.jstech.core.content.IItemLook.Standard  HANDHELD
 10 dev.jstech.core.content.IItemLook.Standard  HANDMADE
 10 dev.jstech.core.content.IItemLook.Standard  OF_BLOCK
 12 dev.jstech.core.content.IMenuTitle  type interface
@@ -3138,6 +3140,7 @@ stable 4
 10 dev.jstech.core.content.ItemBuilder  ItemBuilder<I> look(IItemLook)
 10 dev.jstech.core.content.ItemBuilder  ItemBuilder<I> modes(ItemMode...)
 10 dev.jstech.core.content.ItemBuilder  ItemBuilder<I> named(String)
+12 dev.jstech.core.content.ItemBuilder  ItemBuilder<I> strikes(double, double)
 10 dev.jstech.core.content.ItemBuilder  ItemBuilder<I> tab(ContentTab.Section)
 10 dev.jstech.core.content.ItemBuilder  ItemBuilder<I> tag(TagKey<Item>)
 10 dev.jstech.core.content.ItemBuilder  ItemBuilder<I> tool(ToolSpec)
