@@ -85,7 +85,7 @@ public final class ClampMeter {
             CoreItems.CONTENT.component("meter_state", MeterState.CODEC, MeterState.STREAM_CODEC);
     /** The clamp meter. */
     public static final ItemEntry<ClampMeterItem> ITEM = CoreItems.CONTENT.item("clamp_meter", ClampMeterItem::new)
-            .named("Clamp Meter").look(IItemLook.FLAT).component(STATE, MeterState.DEFAULT)
+            .named("Clamp Meter").look(IItemLook.HELD).component(STATE, MeterState.DEFAULT)
             .tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     private static final String NETWORK_VERSION = "1";
 

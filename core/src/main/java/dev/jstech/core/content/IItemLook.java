@@ -32,6 +32,13 @@ public sealed interface IItemLook
     /** A model written by hand in the mod's resources, used as it is: nothing is generated. */
     IItemLook HANDMADE = Standard.HANDMADE;
 
+    /**
+     * Drawn in three dimensions in the hand, as the game's spyglass and trident are: the texture {@code item/<id>} in a
+     * slot and an item frame, and the model {@code held/<id>}, written beside the textures, in the hand, on the ground
+     * and on the head, its display transforms its own.
+     */
+    IItemLook HELD = Standard.HELD;
+
     /** A cable's item: a length of the cable, as thick as it is, in its own jacket. */
     IItemLook CABLE = Standard.CABLE;
 
@@ -50,6 +57,7 @@ public sealed interface IItemLook
         HANDHELD,
         DRAWN_BY_ENTITY,
         HANDMADE,
+        HELD,
         CABLE,
         BUCKET
     }

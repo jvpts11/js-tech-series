@@ -215,6 +215,7 @@ import dev.jstech.tests.clienttest.series.ManualClientTests;
 import dev.jstech.tests.clienttest.series.ManualRecipeViewClientTests;
 import dev.jstech.tests.clienttest.series.ManualImmersionClientTests;
 import dev.jstech.tests.clienttest.series.ManualSiteClientTests;
+import dev.jstech.tests.clienttest.series.HeldModelsClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
 import dev.jstech.tests.testkit.TestSuites;
 import java.lang.reflect.Method;
@@ -276,6 +277,7 @@ public final class ClientTestSuite {
             ManualSiteClientTests.class,
             ManualImmersionClientTests.class,
             SeriesManualsClientTests.class,
+            HeldModelsClientTests.class,
             BookStylesClientTests.class,
             GuideScenesClientTests.class,
             BookPagesClientTests.class,

@@ -119,6 +119,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   creative tab away.
 
 ### Changed
+- The Forge Hammer, the Draw Plate and the Mortar are drawn in three dimensions in the hand and on the
+  ground: the hammer and the plate held as tools, the mortar with its pestle in the palm.
 - The Computational Research Centre's terminal stands in the middle of its front, at a player's eyes,
   one layer up: a CRC built before stands unformed until its terminal is moved there.
 - The CRC's Research chart draws its years twice as wide and is dragged with the mouse: across along the

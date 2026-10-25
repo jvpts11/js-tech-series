@@ -23,6 +23,7 @@ import net.neoforged.neoforge.client.model.generators.ItemModelBuilder;
 import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
 import net.neoforged.neoforge.client.model.generators.ModelFile;
 import net.neoforged.neoforge.client.model.generators.loaders.DynamicFluidContainerModelBuilder;
+import net.neoforged.neoforge.client.model.generators.loaders.SeparateTransformsModelBuilder;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
 /**
@@ -69,6 +70,7 @@ public final class ContentItemModelProvider extends ItemModelProvider {
             case IItemLook.Standard.HANDMADE -> {
                 // Written by hand beside the textures; nothing to generate.
             }
+            case IItemLook.Standard.HELD -> held(id);
             case IItemLook.Standard.CABLE -> cable(id, item);
             case IItemLook.Standard.BUCKET -> bucket(id, item);
             case IItemLook.Parent parent -> getBuilder(id)
@@ -88,6 +90,25 @@ public final class ContentItemModelProvider extends ItemModelProvider {
                 .fluid(bucket.content)
                 .applyTint(true)
                 .end();
+    }
+
+    /*
+     * The model held/<id> in the hand, on the ground and on the head, and the flat texture item/<id> in a slot and an
+     * item frame, by NeoForge's model of separate transforms.
+     */
+    private void held(final String id) {
+        getBuilder(id)
+                .customLoader(SeparateTransformsModelBuilder::begin)
+                .base(nested().parent(new ModelFile.UncheckedModelFile(modLoc("held/" + id))))
+                .perspective(ItemDisplayContext.GUI, flat(id))
+                .perspective(ItemDisplayContext.FIXED, flat(id))
+                .end();
+    }
+
+    /* The flat texture item/<id>, as a flat item draws it. */
+    private ItemModelBuilder flat(final String id) {
+        return nested().parent(new ModelFile.UncheckedModelFile("item/generated")).texture("layer0",
+                modLoc("item/" + id));
     }
 
     /* A length of the cable in its own jacket, from the Core's model of a cable as thick as it is. */

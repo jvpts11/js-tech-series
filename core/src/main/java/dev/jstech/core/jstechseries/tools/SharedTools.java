@@ -44,7 +44,7 @@ public final class SharedTools {
     /** The Basic Wrench. */
     public static final ItemEntry<BasicWrenchItem> WRENCH = CoreItems.CONTENT.item("basic_wrench",
                     properties -> new BasicWrenchItem(properties.stacksTo(1))).named("Basic Wrench")
-            .look(IItemLook.HANDHELD).strikes(WRENCH_DAMAGE, WRENCH_SPEED).tag(WRENCHES).tag(FlowSight.SEES_FLOW)
+            .look(IItemLook.HELD).strikes(WRENCH_DAMAGE, WRENCH_SPEED).tag(WRENCHES).tag(FlowSight.SEES_FLOW)
             .tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     /** The setup a Configuration Card holds, copied from a machine. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<MachineSetup.Copied>> SETUP =
@@ -64,7 +64,7 @@ public final class SharedTools {
     /** The saw, which cuts microblocks in the crafting grid and is worn by each cut. */
     public static final ItemEntry<Item> SAW = CoreItems.CONTENT.item("saw",
                     properties -> new Item(properties.durability(SAW_CUTS))).named("Saw")
-            .look(IItemLook.HANDHELD).strikes(SAW_DAMAGE, SAW_SPEED).tag(CoreSpaces.SAWS)
+            .look(IItemLook.HELD).strikes(SAW_DAMAGE, SAW_SPEED).tag(CoreSpaces.SAWS)
             .tab(JsTechTab.BLOCKS_AND_TOOLS).register();
 
     static {

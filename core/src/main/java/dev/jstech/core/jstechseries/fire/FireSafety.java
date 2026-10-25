@@ -38,19 +38,19 @@ public final class FireSafety {
     public static final ItemEntry<ExtinguisherItem> WATER_EXTINGUISHER = CoreItems.CONTENT.item(
                     "water_extinguisher", properties -> new ExtinguisherItem(ExtinguishingAgent.WATER,
                             properties.durability(ExtinguisherItem.holds(ExtinguishingAgent.WATER))))
-            .named("Water Extinguisher").look(IItemLook.FLAT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .named("Water Extinguisher").look(IItemLook.HELD).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     public static final ItemEntry<ExtinguisherItem> FOAM_EXTINGUISHER = CoreItems.CONTENT.item("foam_extinguisher",
                     properties -> new ExtinguisherItem(ExtinguishingAgent.FOAM,
                             properties.durability(ExtinguisherItem.holds(ExtinguishingAgent.FOAM))))
-            .named("Foam Extinguisher").look(IItemLook.FLAT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .named("Foam Extinguisher").look(IItemLook.HELD).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     public static final ItemEntry<ExtinguisherItem> CARBON_DIOXIDE_EXTINGUISHER = CoreItems.CONTENT.item(
                     "carbon_dioxide_extinguisher", properties -> new ExtinguisherItem(ExtinguishingAgent.CARBON_DIOXIDE,
                             properties.durability(ExtinguisherItem.holds(ExtinguishingAgent.CARBON_DIOXIDE))))
-            .named("Carbon Dioxide Extinguisher").look(IItemLook.FLAT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .named("Carbon Dioxide Extinguisher").look(IItemLook.HELD).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     public static final ItemEntry<ExtinguisherItem> DRY_POWDER_EXTINGUISHER = CoreItems.CONTENT.item(
                     "dry_powder_extinguisher", properties -> new ExtinguisherItem(ExtinguishingAgent.DRY_POWDER,
                             properties.durability(ExtinguisherItem.holds(ExtinguishingAgent.DRY_POWDER))))
-            .named("Dry Powder Extinguisher").look(IItemLook.FLAT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .named("Dry Powder Extinguisher").look(IItemLook.HELD).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     public static final BlockEntry<SprinklerBlock> SPRINKLER = CoreItems.CONTENT.block("sprinkler",
                     SprinklerBlock::new)
             .properties(properties -> properties.mapColor(MapColor.COLOR_RED).strength(1.5F)

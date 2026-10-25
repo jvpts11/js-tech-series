@@ -31,15 +31,15 @@ public final class HandTools {
 
     public static final ItemEntry<HandTool> FORGE_HAMMER = IndustrialModule.CONTENT.item("forge_hammer",
                     properties -> new HandTool(properties, FormRoute.ByHand.FORGE_HAMMER))
-            .named("Forge Hammer").look(IItemLook.HANDHELD).durability(HAMMER_USES)
+            .named("Forge Hammer").look(IItemLook.HELD).durability(HAMMER_USES)
             .strikes(HAMMER_DAMAGE, HAMMER_SPEED).tab(IndustrialModule.TOOLS).register();
     public static final ItemEntry<HandTool> DRAW_PLATE = IndustrialModule.CONTENT.item("draw_plate",
                     properties -> new HandTool(properties, FormRoute.ByHand.DRAW_PLATE))
-            .named("Draw Plate").look(IItemLook.FLAT).durability(DRAW_PLATE_USES).tab(IndustrialModule.TOOLS)
+            .named("Draw Plate").look(IItemLook.HELD).durability(DRAW_PLATE_USES).tab(IndustrialModule.TOOLS)
             .register();
     public static final ItemEntry<HandTool> MORTAR = IndustrialModule.CONTENT.item("mortar",
                     properties -> new HandTool(properties, FormRoute.ByHand.MORTAR))
-            .named("Mortar").look(IItemLook.FLAT).durability(MORTAR_USES).tab(IndustrialModule.TOOLS).register();
+            .named("Mortar").look(IItemLook.HELD).durability(MORTAR_USES).tab(IndustrialModule.TOOLS).register();
 
     private HandTools() {
     }

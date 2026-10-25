@@ -233,6 +233,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   joins the promise, experimental. An `InteractiveModel` names the doors, places and controls of a formed model by
   its bones, `MachineStructure.handsOn` gives it to a structure, and `HandGeometry` says, free of the game, which part
   a line of sight meets, the box it is outlined by and how the model stands round its terminal.
+- Items drawn in three dimensions: J's Core's API stays at version 12, all experimental. `IItemLook.HELD`
+  shows an item's flat texture in a slot and an item frame and its model `held/<id>` in the hand, on the ground and on
+  the head, as the game's spyglass and trident are.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1561,6 +1564,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   knowing the other.
 
 ### Changed
+- The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
+  counter and the pocket dosimeter are drawn in three dimensions in the hand and on the ground, each held as its own
+  is: the saw and the wrench as tools, the extinguishers and the Geiger counter carried by their handles, the
+  instruments upright, their screens turned to the player. Their icons stay; the pocket dosimeter is the HUD's yellow
+  device everywhere now, its icon too.
 - A halo is the glare the eye sees: drawn whole over the picture, never cut by the floor a lamp stands on or
   the wall beside it, and fading, smoothly, only as much as the blocks between hide the light itself, glass hiding
   none of it. A block's glow follows its drawing: a lantern or a torch glows about its own shape and as big as it, and

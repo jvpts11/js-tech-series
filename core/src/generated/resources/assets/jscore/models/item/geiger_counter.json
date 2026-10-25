@@ -1,6 +1,20 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "jscore:item/geiger_counter"
+  "base": {
+    "parent": "jscore:held/geiger_counter"
+  },
+  "loader": "neoforge:separate_transforms",
+  "perspectives": {
+    "fixed": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jscore:item/geiger_counter"
+      }
+    },
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jscore:item/geiger_counter"
+      }
+    }
   }
 }

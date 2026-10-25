@@ -1,6 +1,20 @@
 {
-  "parent": "minecraft:item/handheld",
-  "textures": {
-    "layer0": "jsindustrial:item/forge_hammer"
+  "base": {
+    "parent": "jsindustrial:held/forge_hammer"
+  },
+  "loader": "neoforge:separate_transforms",
+  "perspectives": {
+    "fixed": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jsindustrial:item/forge_hammer"
+      }
+    },
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jsindustrial:item/forge_hammer"
+      }
+    }
   }
 }

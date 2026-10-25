@@ -70,10 +70,10 @@ public final class HazardDevices {
             CoreItems.CONTENT.component("hazard_device", DeviceState.CODEC, DeviceState.STREAM_CODEC);
     public static final ItemEntry<HazardDeviceItem> GEIGER_COUNTER = CoreItems.CONTENT.item("geiger_counter",
                     properties -> new HazardDeviceItem(HazardDevice.GEIGER_COUNTER, properties))
-            .named("Geiger Counter").look(IItemLook.FLAT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .named("Geiger Counter").look(IItemLook.HELD).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     public static final ItemEntry<HazardDeviceItem> POCKET_DOSIMETER = CoreItems.CONTENT.item("pocket_dosimeter",
                     properties -> new HazardDeviceItem(HazardDevice.POCKET_DOSIMETER, properties))
-            .named("Pocket Dosimeter").look(IItemLook.FLAT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .named("Pocket Dosimeter").look(IItemLook.HELD).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     public static final ItemEntry<HazardDeviceItem> HAZARD_MAP = CoreItems.CONTENT.item("hazard_map",
                     properties -> new HazardDeviceItem(HazardDevice.HAZARD_MAP, properties))
             .named("Hazard Map").look(IItemLook.FLAT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();

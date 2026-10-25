@@ -83,7 +83,7 @@ public final class SignalProbe {
             CoreItems.CONTENT.component("signal_probe_state", SignalProbeState.CODEC, SignalProbeState.STREAM_CODEC);
     /** The signal probe. */
     public static final ItemEntry<SignalProbeItem> ITEM = CoreItems.CONTENT.item("signal_probe",
-                    SignalProbeItem::new).named("Signal Probe").look(IItemLook.FLAT)
+                    SignalProbeItem::new).named("Signal Probe").look(IItemLook.HELD)
             .component(STATE, SignalProbeState.DEFAULT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     private static final String NETWORK_VERSION = "1";
 

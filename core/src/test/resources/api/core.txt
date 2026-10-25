@@ -3115,6 +3115,7 @@ stable 4
 10 dev.jstech.core.content.IItemLook  static final IItemLook FLAT
 12 dev.jstech.core.content.IItemLook  static final IItemLook HANDHELD
 10 dev.jstech.core.content.IItemLook  static final IItemLook HANDMADE
+12 dev.jstech.core.content.IItemLook  static final IItemLook HELD
 10 dev.jstech.core.content.IItemLook  static final IItemLook OF_BLOCK
 10 dev.jstech.core.content.IItemLook.Parent  type record(String model) implements IItemLook
 10 dev.jstech.core.content.IItemLook.Standard  type enum implements IItemLook
@@ -3124,6 +3125,7 @@ stable 4
 10 dev.jstech.core.content.IItemLook.Standard  FLAT
 12 dev.jstech.core.content.IItemLook.Standard  HANDHELD
 10 dev.jstech.core.content.IItemLook.Standard  HANDMADE
+12 dev.jstech.core.content.IItemLook.Standard  HELD
 10 dev.jstech.core.content.IItemLook.Standard  OF_BLOCK
 12 dev.jstech.core.content.IMenuTitle  type interface
 12 dev.jstech.core.content.IMenuTitle  abstract Component menuTitle()

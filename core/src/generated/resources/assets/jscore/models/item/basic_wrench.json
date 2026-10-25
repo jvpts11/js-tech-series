@@ -1,6 +1,20 @@
 {
-  "parent": "minecraft:item/handheld",
-  "textures": {
-    "layer0": "jscore:item/basic_wrench"
+  "base": {
+    "parent": "jscore:held/basic_wrench"
+  },
+  "loader": "neoforge:separate_transforms",
+  "perspectives": {
+    "fixed": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jscore:item/basic_wrench"
+      }
+    },
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jscore:item/basic_wrench"
+      }
+    }
   }
 }

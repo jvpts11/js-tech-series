@@ -235,6 +235,9 @@ change it. An item that wears out stacks alone.
 blow does and the blows a second, a bare hand's own counted in, as the game shows an iron axe's 9 and 0.9. It is
 counted under the game's own names for a tool's attack, so the tooltip writes it in green as it does a sword's.
 `IItemLook.HANDHELD` holds the tool slanted up in the hand, as the game holds an axe, from the same flat texture.
+`IItemLook.HELD` draws it in three dimensions in the hand and on the ground instead, from a model `held/<id>` of its
+own, its flat texture left for the slot ([Content](CONTENT.md)): the Core's saw and wrench, and its extinguishers,
+probes, Clamp Meter, Geiger counter and dosimeter, are drawn so.
 
 ## What can go wrong
 

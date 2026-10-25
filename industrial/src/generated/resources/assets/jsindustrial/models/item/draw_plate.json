@@ -1,6 +1,20 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "jsindustrial:item/draw_plate"
+  "base": {
+    "parent": "jsindustrial:held/draw_plate"
+  },
+  "loader": "neoforge:separate_transforms",
+  "perspectives": {
+    "fixed": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jsindustrial:item/draw_plate"
+      }
+    },
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jsindustrial:item/draw_plate"
+      }
+    }
   }
 }

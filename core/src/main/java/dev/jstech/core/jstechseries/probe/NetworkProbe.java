@@ -118,7 +118,7 @@ public final class NetworkProbe {
             CoreItems.CONTENT.component("probe_state", ProbeState.CODEC, ProbeState.STREAM_CODEC);
     /** The network probe. */
     public static final ItemEntry<NetworkProbeItem> ITEM = CoreItems.CONTENT.item("network_probe",
-                    NetworkProbeItem::new).named("Network Probe").look(IItemLook.FLAT)
+                    NetworkProbeItem::new).named("Network Probe").look(IItemLook.HELD)
             .component(STATE, ProbeState.DEFAULT).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
     private static final String NETWORK_VERSION = "1";
 

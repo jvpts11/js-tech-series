@@ -75,6 +75,7 @@ An item's look is an `IItemLook`:
 | `HANDHELD` | The same picture, held as a tool is, slanted up in the hand as an axe or a sword. |
 | `DRAWN_BY_ENTITY` | Drawn by the renderer of the block's block entity, for a body too large or too alive for a model. |
 | `HANDMADE` | A model you wrote by hand; nothing is generated. |
+| `HELD` | Drawn in three dimensions, as the game's spyglass and trident are: the flat picture `textures/item/<id>.png` in a slot and an item frame, and the model `models/held/<id>.json`, which you write beside the textures with its boxes and its display transforms, in the hand, on the ground and on the head (*added 2026-10-25*). |
 | `CABLE` | A length of cable, for a cable's item. |
 | `BUCKET` | The game's bucket with the fluid it holds drawn in it. |
 | `IItemLook.parent("block/...")` | Another model, unchanged. |
