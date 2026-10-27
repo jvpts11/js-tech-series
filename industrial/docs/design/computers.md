@@ -81,7 +81,7 @@ states of an Operation:
 
 | Operation | Run by | What it does |
 | --- | --- | --- |
-| `MACHINE_READ`, `MACHINE_SET` | the ICC | reads and changes a machine's parameters |
+| `MACHINE_SET` | the ICC | changes a machine's parameters, or what it does with redstone |
 | `VALVE_SET` | the ICC | opens, closes or throttles a valve |
 | `BREAKER_SET` | the ICC | opens and closes a breaker of the grid |
 | `STATION_SEND` | the ICC | a pneumatic station sends a capsule to an address; it waits without air |
@@ -95,8 +95,15 @@ states of an Operation:
 | `PROBE_LAUNCH` | the Aleph Gate | sends a probe into the Aleph and writes the data it brings back |
 | `REPLICATE` | the Reality Projector | replicates N items from their record; it completes partially if the energy runs out first |
 
-The ICC **exposes the state of the machines it controls as a table**: a `SELECT` can ask which machines have a blown
-fuse, or which reactors are above 90% of their temperature, as any other query of the network.
+Reading needs no Operation: the ICC **exposes the state of the machines it controls as a table**, and a `QUERY` can ask
+which machines have a blown fuse, or which reactors are above 90% of their temperature, as any other query of the
+network. Its controllers and its alerts are tables too (`QUERY controllers`, `QUERY alerts`).
+
+**Alerts:** a switched-on ICC looks at its machines once a second and raises an alert the moment one falls into a
+fault, and marks it over once the machine is out of it, as a plant's alarm panel does: overheating and a blown fuse
+are critical, undervoltage and a gas leak (a poison past its IDLH, a fuel past its lower explosive limit) are
+warnings, a damaged machine is a notice. Each goes into the network's event log as it is raised; acknowledging one
+only dims it.
 
 ### Programs
 
@@ -106,7 +113,7 @@ series' own, as J's Computers' other programs have theirs.
 | Program | What it does | In real life |
 | --- | --- | --- |
 | Reactor Control System | a reactor's state, target power, rods, **SCRAM**, a target temperature held by PID control, and **automation rules** ("IF the temperature passes X, THEN lower the power"); it runs on the ICC | the distributed control systems of power plants |
-| Integrity Monitor | alerts from machines: blown fuses, damage, overheating, gas leaks, undervoltage | |
+| Machine Monitor | the **alerts** of every ICC on the network: blown fuses, damage, overheating, gas leaks, undervoltage, each with its grade, the machine's panel, and acknowledging them; by Wonderwork Systems, from the Legacy on, in a classic look on the older desktops and a modern one from Frames 10 on | the alarm screens of plant control rooms |
 | Grid SCADA | the **map of the grid**: generators, lines, substations, breakers and meters, load and losses, with breakers commanded from afar; the Control Panel of [Energy](energy.md), at scale | grid SCADA systems, from the 1960s |
 | Fab MES | the Clean Room's **lots**: where each is, its next layer, the **yield**, and routing between tools | the execution systems of chip fabs |
 | Plant Historian | logs **any value of any machine over time**, with graphs | plant historians (OSIsoft's PI) |

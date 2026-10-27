@@ -1,0 +1,88 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_monitor.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_monitor.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_monitor.get"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.machine_monitor.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_monitor.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_monitor.text2"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_monitor.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.machine_monitor.use1",
+        "jsindustrial.guide.machine_monitor.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.machine_monitor.fix1",
+          "problem": "jsindustrial.guide.machine_monitor.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.machine_monitor.fix2",
+          "problem": "jsindustrial.guide.machine_monitor.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:machine_alerts",
+        "jsc:programs"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:industrial_controller_computer",
+  "id": "jsindustrial:machine_monitor",
+  "order": 21,
+  "section": "jsindustrial:control",
+  "title": "jsindustrial.guide.machine_monitor.title"
+}

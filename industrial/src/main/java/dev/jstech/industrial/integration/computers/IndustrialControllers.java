@@ -29,6 +29,7 @@ import java.util.List;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
@@ -118,12 +119,14 @@ public final class IndustrialControllers {
         ControllerTables.declare();
         modEventBus.addListener(ComputersRegisterEvent.class, IndustrialControllers::register);
         modEventBus.addListener(RegisterOperationTypesEvent.class, ControllerOperations::register);
+        modEventBus.addListener(RegisterPayloadHandlersEvent.class, MachineMonitorPayloads::register);
     }
 
     /* The machine, the cards and each computer, on J's Computers' register event. */
     private static void register(final ComputersRegisterEvent event) {
         event.machine(MACHINE);
         FieldbusCards.register(event);
+        MachineMonitor.register(event);
         for (final BlockEntry<IndustrialControllerBlock> controller : ALL) {
             event.computer(controller.get(), computer(controller.get().era()));
         }

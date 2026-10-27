@@ -140,6 +140,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   jsindustrial:station_send` has a capsule station send what waits in it to an address, the request waiting while the
   station has no air. `ON` names the controller; without it the request goes to the controller that reads the machine,
   and one switched off, or that reads no machine of that name, refuses it, saying why.
+- Machine alerts: a switched-on Industrial Controller Computer looks at its machines once a second and
+  raises an alert the moment one falls into a fault, marking it over once the machine is out of it. Overheating and a
+  blown fuse are critical, undervoltage and a gas leak (a poison past the share dangerous to breathe, or a fuel past
+  the share that can burn, at the machine) are warnings, and a damaged machine is a notice. Each goes into the
+  network's event log as it is raised, and `QUERY alerts` lists the latest 64 of each controller.
+- The Machine Monitor, by Wonderwork Systems, from the Legacy on: the alerts of every Industrial
+  Controller Computer on the network, newest first, with the lamp of each one's grade, the count of each kind, a
+  choice of the kind shown, and the panel of the machine chosen with what it reads now. Acknowledge dims the alert
+  chosen and Acknowledge all every one; nothing is taken away. On Frames 95, XP and 7 it opens in its classic look,
+  with its menus and the panel under the list; from Frames 10 on, in its modern look, with a search by machine and
+  the panel beside the list. The Plant Drawings have its page, and pages on reading the plant from the network and on
+  the alerts.
 
 ### Changed
 - The Forge Hammer, the Draw Plate and the Mortar are drawn in three dimensions in the hand and on the

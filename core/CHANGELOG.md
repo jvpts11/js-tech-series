@@ -1794,6 +1794,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   cable beside it stood, which only a hand-built index answered; it now takes the network of the data wire crossing
   into it, and a block made with the Core's `Device` takes cables on the ports its device declares. A member whose
   chunk is not in memory has no row in a state table, and reading the table no longer waits on that chunk.
+- A controller keeps the machines on its industrial control cable: a computer's check of the screens and
+  devices it holds ports for let them go every five seconds, as a machine keeps nothing of its controller, and they
+  came back a second later; in between, the network read none of them and refused a request for any.
 
 ## [0.5.2a] - 2026-10-14
 

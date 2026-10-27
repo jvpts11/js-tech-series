@@ -217,6 +217,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "program/cli/interac/InteracCommand.java", 2, COMMANDS),
             data(COMPUTERS + "program/cli/ScreenfetchLogos.java", 16, "logos drawn in characters"),
             data(COMPUTERS + "sigma/LanguageLevel.java", 1, PRODUCTS),
+            data("industrial/src/main/java/dev/jstech/industrial/integration/computers/MachineMonitor.java", 2,
+                    PRODUCTS),
             data(COMPUTERS + "sigma/edit/SigmaCompletions.java", 2,
                     "the marks for who declares a candidate, which are never drawn"),
             data(COMPUTERS + "sigma/sem/BareFunctions.java", 32, SIGNATURES),

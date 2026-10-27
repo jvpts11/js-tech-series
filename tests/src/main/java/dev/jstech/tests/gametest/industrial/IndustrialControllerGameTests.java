@@ -18,6 +18,7 @@ import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.jstechseries.peripheral.ControlLinks;
+import dev.jstech.core.jstechseries.peripheral.PeripheralReconciler;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.industrial.IndustrialModule;
@@ -170,6 +171,28 @@ public final class IndustrialControllerGameTests {
                 })
                 .thenExecute(() -> helper.assertTrue(controllerOf(helper, MACHINES.get(2)).isEmpty(),
                         "the third is past what its card reads"))
+                .thenSucceed();
+    }
+
+    /*
+     * A controller keeps the machines it reads past its checks of the screens and devices it holds ports for: a
+     * machine keeps nothing of the controller, and only the walk of the cables lets it go.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void aController_keepsItsMachines_pastTheChecksOfItsDevices(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity controller = place(helper,
+                IndustrialControllers.VINTAGE_INDUSTRIAL_CONTROLLER_COMPUTER.get(), CONTROLLER);
+        assemble(helper, controller, EraKit.VINTAGE.computerBoard(), FieldbusCards.RS485.get());
+        for (int i = 0; i < 2; i++) {
+            TestCables.lay(helper, RUN.get(i), IndustrialControlCable.CABLE);
+            helper.setBlock(MACHINES.get(i), IndustrialModule.COMPRESSOR.get());
+        }
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(controller.portsInUse(PortKind.CONTROL) == 2,
+                        "it reads both machines"))
+                .thenExecuteFor((int) (2 * PeripheralReconciler.INTERVAL_TICKS), () -> helper.assertTrue(
+                        controller.portsInUse(PortKind.CONTROL) == 2, "and keeps them, tick after tick: "
+                                + controller.portsInUse(PortKind.CONTROL)))
                 .thenSucceed();
     }
 

@@ -202,6 +202,7 @@ import dev.jstech.tests.clienttest.industrial.CrcHandsClientTests;
 import dev.jstech.tests.clienttest.industrial.CrcModelClientTests;
 import dev.jstech.tests.clienttest.industrial.CrcScreenClientTests;
 import dev.jstech.tests.clienttest.industrial.IndustrialControllerClientTests;
+import dev.jstech.tests.clienttest.industrial.MachineMonitorClientTests;
 import dev.jstech.tests.clienttest.industrial.IndustrialScreensClientTests;
 import dev.jstech.tests.clienttest.industrial.RecipeViewClientTests;
 import dev.jstech.tests.clienttest.series.CableBlockClientTests;
@@ -321,6 +322,7 @@ public final class ClientTestSuite {
             CrcModelClientTests.class,
             CrcHandsClientTests.class,
             IndustrialControllerClientTests.class,
+            MachineMonitorClientTests.class,
             InfoCenterClientTests.class,
             InstallMediaClientTests.class,
             InteracTuiClientTests.class,

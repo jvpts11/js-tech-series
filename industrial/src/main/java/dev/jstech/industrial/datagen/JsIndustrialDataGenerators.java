@@ -10,6 +10,7 @@ package dev.jstech.industrial.datagen;
 import dev.jstech.core.datagen.ContentData;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.datagen.advancement.IndustrialAdvancementTabs;
+import dev.jstech.industrial.integration.computers.ComputersIntegration;
 import java.util.List;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.data.AdvancementProvider;
@@ -32,7 +33,8 @@ public final class JsIndustrialDataGenerators {
 
     public static void onGatherData(final GatherDataEvent event) {
         final ContentData data = ContentData.gather(event, IndustrialModule.CONTENT)
-                .alsoNaming(IndustrialAdvancementTabs::translations);
+                .alsoNaming(IndustrialAdvancementTabs::translations)
+                .alsoNaming(ComputersIntegration::names);
         data.server(new JsIndustrialRecipeProvider(data.output(), data.lookup()));
         data.server(new AdvancementProvider(data.output(), data.lookup(), data.existingFiles(),
                 List.<AdvancementProvider.AdvancementGenerator>copyOf(IndustrialAdvancementTabs.all())));

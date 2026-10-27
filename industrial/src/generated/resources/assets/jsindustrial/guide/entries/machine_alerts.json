@@ -1,0 +1,137 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_alerts.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_alerts.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.machine_alerts.get"
+    },
+    {
+      "type": "table",
+      "caption": "jsindustrial.guide.machine_alerts.table1",
+      "heads": [
+        "jsindustrial.guide.machine_alerts.table1_head1",
+        "jsindustrial.guide.machine_alerts.table1_head2",
+        "jsindustrial.guide.machine_alerts.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_1_1"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_1_2"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_2_1"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_2_2"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_3_1"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_3_2"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_4_1"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_4_2"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_5_1"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_5_2"
+          },
+          {
+            "words": "jsindustrial.guide.machine_alerts.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.machine_alerts.use1",
+        "jsindustrial.guide.machine_alerts.use2",
+        "jsindustrial.guide.machine_alerts.use3",
+        "jsindustrial.guide.machine_alerts.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.machine_alerts.fix1",
+          "problem": "jsindustrial.guide.machine_alerts.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:machine_monitor",
+        "jsindustrial:reading_the_plant",
+        "jsc:network_manager"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:industrial_controller_computer",
+  "id": "jsindustrial:machine_alerts",
+  "order": 20,
+  "section": "jsindustrial:control",
+  "title": "jsindustrial.guide.machine_alerts.title"
+}

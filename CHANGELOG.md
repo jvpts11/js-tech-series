@@ -1795,6 +1795,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A capsule station is read and set from outside as a machine is (its address, where it sends the rest, what
   waits in it), and can be told to send what waits to an address at once. Its pace counts the capsules that left, so
   a look that sent nothing never holds one back.
+- (Industrial) Machine alerts: a switched-on Industrial Controller Computer looks at its machines once a second and
+  raises an alert the moment one falls into a fault, marking it over once the machine is out of it. Overheating and a
+  blown fuse are critical, undervoltage and a gas leak (a poison past the share dangerous to breathe, or a fuel past
+  the share that can burn, at the machine) are warnings, and a damaged machine is a notice. Each goes into the
+  network's event log as it is raised, and `QUERY alerts` lists the latest 64 of each controller.
+- (Industrial) The Machine Monitor, by Wonderwork Systems, from the Legacy on: the alerts of every Industrial
+  Controller Computer on the network, newest first, with the lamp of each one's grade, the count of each kind, a
+  choice of the kind shown, and the panel of the machine chosen with what it reads now. Acknowledge dims the alert
+  chosen and Acknowledge all every one; nothing is taken away. On Frames 95, XP and 7 it opens in its classic look,
+  with its menus and the panel under the list; from Frames 10 on, in its modern look, with a search by machine and
+  the panel beside the list. The Plant Drawings have its page, and pages on reading the plant from the network and on
+  the alerts.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -2040,6 +2052,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   cable beside it stood, which only a hand-built index answered; it now takes the network of the data wire crossing
   into it, and a block made with the Core's `Device` takes cables on the ports its device declares. A member whose
   chunk is not in memory has no row in a state table, and reading the table no longer waits on that chunk.
+- (Core) A controller keeps the machines on its industrial control cable: a computer's check of the screens and
+  devices it holds ports for let them go every five seconds, as a machine keeps nothing of its controller, and they
+  came back a second later; in between, the network read none of them and refused a request for any.
 
 ## [0.5.2a] - 2026-10-14
 

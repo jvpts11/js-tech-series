@@ -1,0 +1,117 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_the_plant.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_the_plant.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_the_plant.get"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.reading_the_plant.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_the_plant.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_the_plant.text2"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "QUERY machines WHERE state = 'overheated'"
+      ],
+      "name": "plant.iql"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.reading_the_plant.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_the_plant.text3"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "RUN jsindustrial:machine_set WITH machine = 'Compressor #1', parameter = 'on', value = 0",
+        "RUN jsindustrial:machine_set WITH machine = 'Compressor #2', redstone = 'low'",
+        "RUN jsindustrial:valve_set WITH valve = 'Valve #1', open = true",
+        "RUN jsindustrial:station_send WITH station = 'Capsule Station #1', to = 3"
+      ],
+      "name": "work.iql"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_the_plant.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.reading_the_plant.use1",
+        "jsindustrial.guide.reading_the_plant.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.reading_the_plant.fix1",
+          "problem": "jsindustrial.guide.reading_the_plant.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.reading_the_plant.fix2",
+          "problem": "jsindustrial.guide.reading_the_plant.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:industrial_controller_computer",
+        "jsindustrial:machine_alerts",
+        "jsc:query_and_select",
+        "jsc:iql_run"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:industrial_controller_computer",
+  "id": "jsindustrial:reading_the_plant",
+  "order": 19,
+  "section": "jsindustrial:control",
+  "title": "jsindustrial.guide.reading_the_plant.title"
+}

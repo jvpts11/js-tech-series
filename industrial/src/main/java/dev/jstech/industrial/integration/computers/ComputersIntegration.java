@@ -9,6 +9,7 @@ package dev.jstech.industrial.integration.computers;
 
 import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.optional.OptionalMod;
+import java.util.function.BiConsumer;
 import net.neoforged.bus.api.IEventBus;
 
 /**
@@ -32,6 +33,11 @@ public final class ComputersIntegration {
     /** Draws what comes with J's Computers on a player's game, when it is installed; from the client entry point. */
     public static void client(final IEventBus modEventBus) {
         COMPUTERS.ifLoaded(() -> () -> IndustrialControllersClient.listen(modEventBus));
+    }
+
+    /** Hands the language file the names of what comes with J's Computers, when it is installed; from the datagen. */
+    public static void names(final BiConsumer<String, String> add) {
+        COMPUTERS.ifLoaded(() -> () -> MachineMonitor.names(add));
     }
 
     /**

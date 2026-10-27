@@ -13,23 +13,34 @@ import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.iql.IqlTable;
+import dev.jstech.computers.eventlog.EventLevel;
+import dev.jstech.computers.eventlog.NetworkEvent;
+import dev.jstech.computers.eventlog.NetworkEventLog;
+import dev.jstech.core.hazard.GasClouds;
+import dev.jstech.core.jstechseries.Element;
+import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.machine.IMachineParameters;
+import dev.jstech.core.material.Material;
 import dev.jstech.core.machine.RedstoneMode;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.transit.CapsuleTransit;
 import dev.jstech.industrial.IndustrialModule;
+import dev.jstech.industrial.integration.computers.AlertKind;
 import dev.jstech.industrial.integration.computers.ControllerOperations;
 import dev.jstech.industrial.integration.computers.FieldbusCards;
 import dev.jstech.industrial.integration.computers.IndustrialControlCable;
 import dev.jstech.industrial.integration.computers.IndustrialControllerBlockEntity;
 import dev.jstech.industrial.integration.computers.IndustrialControllers;
+import dev.jstech.industrial.integration.computers.MachineAlert;
+import dev.jstech.industrial.integration.computers.MachineMonitorPayloads;
 import dev.jstech.industrial.line.CompressedAir;
 import dev.jstech.industrial.line.PneumaticPost;
 import dev.jstech.industrial.line.PneumaticStation;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestCableTypes;
 import dev.jstech.tests.TestFluidMachines;
+import dev.jstech.tests.TestHotMachine;
 import dev.jstech.tests.TestPneumatics;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.EraKit;
@@ -37,6 +48,7 @@ import dev.jstech.tests.testkit.computers.EraNetwork;
 import dev.jstech.tests.testkit.computers.EraParts;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -49,6 +61,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -72,6 +85,8 @@ public final class ControllerOperationsGameTests {
     private static final int ROWS = 50;
     private static final int TARGET = 3;
     private static final int NO_STATION = 9;
+    private static final double CHLORINE_MOLES = 0.2;
+    private static final double NEAR = 16.0;
 
     private ControllerOperationsGameTests() {
     }
@@ -181,6 +196,66 @@ public final class ControllerOperationsGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A Vintage controller reading a machine that overheats and one a cloud of chlorine reaches: an alert for each,
+     * also written into the network's event log; the alerts table and the Machine Monitor's answer have both; one
+     * acknowledged is dimmed, not taken away; and the overheating, once the machine has cooled, is over.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void controller_raisesAlertsAndLogsThem(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final EraNetwork network = EraNetwork.lay(world, EraKit.VINTAGE);
+        final IndustrialControllerBlockEntity controller = controller(world, EraKit.VINTAGE,
+                IndustrialControllers.VINTAGE_INDUSTRIAL_CONTROLLER_COMPUTER.get(), FieldbusCards.RS485.get());
+        TestCables.lay(helper, RUN_OF_CABLE.get(0), IndustrialControlCable.CABLE);
+        TestCables.lay(helper, RUN_OF_CABLE.get(1), IndustrialControlCable.CABLE);
+        helper.setBlock(BESIDE.get(0), TestHotMachine.BLOCK.get());
+        helper.setBlock(BESIDE.get(1), IndustrialModule.COMPRESSOR.get());
+        final TestHotMachine.HotMachineBlockEntity hot = helper.getBlockEntity(BESIDE.get(0));
+        final Material chlorine = Elements.of(Element.CHLORINE);
+        helper.startSequence()
+                .thenWaitUntil(() -> joined(helper, network.mainframe()))
+                .thenWaitUntil(() -> helper.assertTrue(controller.machines().size() == 2,
+                        "it reads both machines: " + controller.machines()))
+                .thenExecute(() -> {
+                    hot.heatBody().set(TestHotMachine.LIMIT + 100.0);
+                    // A whiff of chlorine: past its ten parts in a million at the compressor, and gone in seconds.
+                    GasClouds.release(helper.getLevel(), helper.absolutePos(BESIDE.get(1)), chlorine, CHLORINE_MOLES);
+                })
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(alertOf(controller, AlertKind.OVERHEATING).isPresent(),
+                            "an alert for the machine past its limit: " + controller.alerts());
+                    helper.assertTrue(alertOf(controller, AlertKind.GAS_LEAK).isPresent(),
+                            "and one for the gas at the other: " + controller.alerts());
+                })
+                .thenExecute(() -> {
+                    clearClouds(helper);
+                    final List<NetworkEvent> logged = NetworkEventLog.of(helper.getLevel()).newest(
+                            network.mainframe().networkUuid(), helper.getLevel().getGameTime(), event -> true, 50);
+                    helper.assertTrue(logged.stream().anyMatch(event -> event.level() == EventLevel.ERROR
+                                    && event.message().english().contains("Overheating")),
+                            "the overheating is in the network's log as an error: " + logged);
+                    helper.assertTrue(logged.stream().anyMatch(event -> event.level() == EventLevel.WARN
+                            && event.message().english().contains("Gas leak")), "and the leak as a warning");
+                    final IqlTable alerts = run(helper, network.mainframe(), "QUERY alerts").table();
+                    helper.assertTrue(column(alerts, "alert").containsAll(Set.of("overheating", "gas_leak")),
+                            "the alerts table has both: " + column(alerts, "alert"));
+                    final MachineMonitorPayloads.Answer answer = MachineMonitorPayloads.collect(helper.getLevel(),
+                            controller.getBlockPos());
+                    helper.assertTrue(answer.rows().size() == controller.alerts().size() && answer.controllers() == 1
+                            && answer.machines() == 2, "the Machine Monitor is sent every alert: " + answer);
+                    final int kept = controller.alerts().size();
+                    final long heat = alertOf(controller, AlertKind.OVERHEATING).map(MachineAlert::id).orElse(-1L);
+                    helper.assertTrue(controller.acknowledge(heat), "the overheating is acknowledged");
+                    helper.assertTrue(controller.alerts().size() == kept && alertOf(controller, AlertKind.OVERHEATING)
+                            .map(MachineAlert::acknowledged).orElse(false), "and kept, dimmed");
+                    hot.heatBody().set(TestHotMachine.LIMIT - 200.0);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(alertOf(controller, AlertKind.OVERHEATING)
+                        .map(alert -> !alert.active()).orElse(false), "cooled, the overheating is over"))
+                .thenSucceed();
+    }
+
     /* The era's controller at the computer's place, built of the era's parts and the card, its system on, on. */
     private static IndustrialControllerBlockEntity controller(final TestWorldBuilder world, final EraKit kit,
                                                               final Block block, final Item card) {
@@ -217,6 +292,18 @@ public final class ControllerOperationsGameTests {
         final int members = mainframe.networkUuid() == null ? 0 : NetworkSystem.get(helper.getLevel())
                 .membersCarryingOut(mainframe.networkUuid(), ControllerOperations.MACHINE_SET.id()).size();
         helper.assertTrue(members == 1, "the controller joins the network: " + members);
+    }
+
+    private static Optional<MachineAlert> alertOf(final IndustrialControllerBlockEntity controller,
+                                                  final AlertKind kind) {
+        return controller.alerts().stream().filter(alert -> alert.kind() == kind).findFirst();
+    }
+
+    /* Takes the clouds near the machines away, so no other test breathes them. */
+    private static void clearClouds(final GameTestHelper helper) {
+        final Vec3 centre = Vec3.atCenterOf(helper.absolutePos(BESIDE.get(1)));
+        GasClouds.STATE.set(helper.getLevel(), new GasClouds.Book(GasClouds.of(helper.getLevel()).stream()
+                .filter(cloud -> cloud.centre().distanceTo(centre) > NEAR).toList()));
     }
 
     private static Set<String> column(final IqlTable table, final String column) {

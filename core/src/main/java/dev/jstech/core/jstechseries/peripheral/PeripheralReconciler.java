@@ -49,7 +49,10 @@ public final class PeripheralReconciler {
     /**
      * Once every {@link #INTERVAL_TICKS} ticks, frees the port of each linked peripheral whose chunk is loaded and
      * whose block is no longer a peripheral linked to an owner. A position in an unloaded chunk is left alone, as
-     * nothing can be asked of it. The owners are spread over the interval by their position.
+     * nothing can be asked of it. The owners are spread over the interval by their position. A machine on a port of
+     * {@link PortKind#CONTROL} is left to {@link ControlLinks#keep}: it keeps nothing of its controller, so it would
+     * never answer as linked back, and the walk of the controller's cables already lets go of what they no longer
+     * reach.
      *
      * @param ownerPos the owner's own position, packed
      */
@@ -59,7 +62,7 @@ public final class PeripheralReconciler {
         }
         for (final long pos : owner.linkedEndpoints()) {
             final BlockPos at = BlockPos.of(pos);
-            if (!level.isLoaded(at)) {
+            if (owner.kindOf(pos) == PortKind.CONTROL || !level.isLoaded(at)) {
                 continue;
             }
             final boolean linkedBack = level.getBlockEntity(at) instanceof IPeripheralEndpoint endpoint

@@ -39,6 +39,14 @@ public final class ControllerTables {
     public static final String PORTS_COLUMN = "ports";
     public static final String READS_COLUMN = "reads";
     public static final String LEFT_OUT_COLUMN = "left_out";
+    public static final String DAY_COLUMN = "day";
+    public static final String TIME_COLUMN = "time";
+    public static final String MACHINE_COLUMN = "machine";
+    public static final String ALERT_COLUMN = "alert";
+    public static final String SEVERITY_COLUMN = "severity";
+    public static final String READING_COLUMN = "reading";
+    public static final String ACKNOWLEDGED_COLUMN = "acknowledged";
+    public static final String ACTIVE_COLUMN = "active";
 
     public static final TextKey MACHINES_TITLE = TextKey.of("jsindustrial.table.machines", "Machines");
     public static final TextKey NAME = TextKey.of("jsindustrial.table.machines.name", "Name");
@@ -91,6 +99,33 @@ public final class ControllerTables {
             .number(PORTS_COLUMN, PORTS, "")
             .number(READS_COLUMN, READS, "")
             .number(LEFT_OUT_COLUMN, LEFT_OUT, "")
+            .build());
+
+    public static final TextKey ALERTS_TITLE = TextKey.of("jsindustrial.table.alerts", "Machine alerts");
+    public static final TextKey DAY = TextKey.of("jsindustrial.table.alerts.day", "Day");
+    public static final TextKey TIME = TextKey.of("jsindustrial.table.alerts.time", "Time");
+    public static final TextKey MACHINE = TextKey.of("jsindustrial.table.alerts.machine", "Machine");
+    public static final TextKey ALERT = TextKey.of("jsindustrial.table.alerts.alert", "Alert");
+    public static final TextKey SEVERITY = TextKey.of("jsindustrial.table.alerts.severity", "Severity");
+    public static final TextKey READING = TextKey.of("jsindustrial.table.alerts.reading", "Reading");
+    public static final TextKey ACKNOWLEDGED = TextKey.of("jsindustrial.table.alerts.acknowledged", "Acknowledged");
+    public static final TextKey ACTIVE = TextKey.of("jsindustrial.table.alerts.active", "Active");
+    /**
+     * Each alert a switched-on controller keeps, where its machine stands: the day and the time it was raised, the
+     * machine, what it is about ({@code overheating}, {@code blown_fuse}, {@code undervoltage}, {@code gas_leak},
+     * {@code damaged}) and how grave ({@code critical}, {@code warning}, {@code notice}), what the machine read then,
+     * whether an operator has acknowledged it, whether what raised it still holds, and the controller.
+     */
+    public static final StateTable ALERTS = StateTables.declare(StateTable.builder(id("alerts"), ALERTS_TITLE)
+            .number(DAY_COLUMN, DAY, "")
+            .text(TIME_COLUMN, TIME)
+            .text(MACHINE_COLUMN, MACHINE)
+            .text(ALERT_COLUMN, ALERT)
+            .text(SEVERITY_COLUMN, SEVERITY)
+            .text(READING_COLUMN, READING)
+            .flag(ACKNOWLEDGED_COLUMN, ACKNOWLEDGED)
+            .flag(ACTIVE_COLUMN, ACTIVE)
+            .text(CONTROLLER_COLUMN, CONTROLLER)
             .build());
 
     private ControllerTables() {

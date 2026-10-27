@@ -173,7 +173,7 @@ block that offers J's Core's `IMachineParameters` capability, so a machine of an
 that offers the capability itself, is linked the same way.
 
 The controller is a member of the data network (J's Core's `INetworkMember`), of category C, and what the network
-reads of it are two state tables, which J's Computers' language reads with `QUERY`:
+reads of it are three state tables, which J's Computers' language reads with `QUERY`:
 
 - `jsindustrial:machines` (`QUERY machines`), a row for each machine a switched-on controller reads, where the machine
   stands (`at`): `name` (the block's and the machine's number among the controller's machines of that block, counted
@@ -185,6 +185,8 @@ reads of it are two state tables, which J's Computers' language reads with `QUER
 - `jsindustrial:controllers` (`QUERY controllers`), a row for each controller: `name`, `cards`, `ports` (the machines
   its cards can read), `reads` and `left_out` (the machines its cables reach that no controller reads, for want of
   ports).
+- `jsindustrial:alerts` (`QUERY alerts`), a row for each alert a controller keeps, newest first: `day` and `time`
+  (the world's), `machine`, `alert`, `severity`, `reading`, `acknowledged`, `active` and `icc`.
 
 It carries out three kinds of Operation, which `RUN` asks for, naming the machine as the `machines` table does or by
 where it stands (`'12, 64, -3'`); `ON` names the controller, and without it the request goes to the controller that
@@ -203,6 +205,20 @@ RUN jsindustrial:station_send WITH station = '14, 64, -3', to = 3
 waits in it to an address; while the station cannot send yet, without its compressed air, the request waits, and it
 is done once the capsule leaves. J's Industrial ships no valve or station blocks of its own yet: the requests reach
 those of any mod built on J's Core's, and its own once they come.
+
+A switched-on controller looks at its machines once a second and raises an alert the moment one falls into a fault,
+marking it over once the machine is out of it. A machine of any mod raises them through the same capability, from
+what it already offers: its `MachineStatus` (`overheated` raises `overheating` and `fuse_blown` raises `blown_fuse`,
+both critical; `undervoltage`, a warning; `damaged`, a notice), and the gas at its place, from J's Core's gas clouds
+and the air of its sealed room (`gas_leak`, a warning, past a poison's IDLH or a fuel's lower explosive limit; the
+air's own oxygen, nitrogen and argon never count). Each alert goes into the network's event log as it is raised, as
+an error, a warning or information by its grade. A controller keeps its latest 64; acknowledging one only marks it.
+
+The Machine Monitor, a program by Wonderwork Systems (`jsindustrial:machine_monitor`, from the Legacy era on), shows
+the alerts of every controller on its computer's network and acknowledges them. It is registered as any add-on
+program is, through J's Computers' `ComputersRegisterEvent` and `DesktopApps`, and asks the server for what it shows
+with its own payloads (`jsindustrial:machine_monitor_request`, `..._acknowledge` and `..._answer`), each checked
+against the computer it is open on.
 
 ## The API
 

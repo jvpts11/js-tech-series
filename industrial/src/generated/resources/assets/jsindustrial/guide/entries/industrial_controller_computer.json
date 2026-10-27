@@ -62,7 +62,9 @@
       "type": "see",
       "entries": [
         "jsindustrial:fieldbus_cards",
-        "jsindustrial:industrial_control_cable"
+        "jsindustrial:industrial_control_cable",
+        "jsindustrial:reading_the_plant",
+        "jsindustrial:machine_alerts"
       ]
     }
   ],

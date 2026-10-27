@@ -8,6 +8,7 @@
 package dev.jstech.industrial.integration.computers;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.core.id.StableNames;
@@ -31,6 +32,7 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.time.GameCalendar;
 import dev.jstech.core.transit.CapsuleStationBlockEntity;
 import dev.jstech.core.transit.SendOutcome;
 import dev.jstech.industrial.integration.computers.ControllerOperations.MachineSetArgs;
@@ -65,11 +67,19 @@ public class IndustrialControllerBlockEntity extends PersonalComputerBlockEntity
 
     /* The capsules asked for while their station could not send yet, sent as soon as it can. */
     private final List<PendingSend> pending = new ArrayList<>();
+    /* The alerts it keeps of its machines. */
+    private final MachineAlerts alerts = new MachineAlerts(fields());
+    /* Ticks left before it looks at its machines for alerts again. */
+    private int alertsIn;
 
     /** A card in the {@code card} column: its field bus and the machine's node on it, "PROFIBUS, node 5". */
     public static final TextKey CARD_NODE = TextKey.of("jsindustrial.controller.card_node", "%s, node %s");
     /** A machine's name in the {@code machines} table: its block's and its number, "Compressor #1". */
     public static final TextKey NUMBERED = TextKey.of("jsindustrial.controller.numbered", "%s #%s");
+    /** An alert as the network's event log writes it: the machine, the alert and what it read. */
+    public static final TextKey ALERT_LOGGED = TextKey.of("jsindustrial.controller.alert_logged", "%s: %s, %s");
+    /* How often it looks at its machines for alerts, in ticks: once a second. */
+    private static final int ALERTS_EVERY = 20;
     /* Degrees Celsius above kelvin. */
     private static final double CELSIUS = 273.15;
     private static final double PERCENT = 100.0;
@@ -93,7 +103,7 @@ public class IndustrialControllerBlockEntity extends PersonalComputerBlockEntity
 
     @Override
     public List<StateTable> tables() {
-        return List.of(ControllerTables.MACHINES, ControllerTables.CONTROLLERS);
+        return List.of(ControllerTables.MACHINES, ControllerTables.CONTROLLERS, ControllerTables.ALERTS);
     }
 
     /** A row of the machines table for each machine it reads, where the machine stands; one of its own for itself. */
@@ -112,6 +122,20 @@ public class IndustrialControllerBlockEntity extends PersonalComputerBlockEntity
         }
         if (!isRunning()) {
             // Switched off, it reads nothing.
+            return;
+        }
+        if (table == ControllerTables.ALERTS) {
+            for (final MachineAlert alert : this.alerts.all()) {
+                rows.at(BlockPos.of(alert.pos())).set(ControllerTables.DAY_COLUMN, GameCalendar.day(alert.dayTime()))
+                        .set(ControllerTables.TIME_COLUMN, clock(alert.dayTime()))
+                        .set(ControllerTables.MACHINE_COLUMN, alert.machine())
+                        .set(ControllerTables.ALERT_COLUMN, alert.kind().serializedName())
+                        .set(ControllerTables.SEVERITY_COLUMN, alert.kind().severity().serializedName())
+                        .set(ControllerTables.READING_COLUMN, alert.reading().english())
+                        .set(ControllerTables.ACKNOWLEDGED_COLUMN, alert.acknowledged())
+                        .set(ControllerTables.ACTIVE_COLUMN, alert.active())
+                        .set(ControllerTables.CONTROLLER_COLUMN, controllerName());
+            }
             return;
         }
         final Map<Long, String> names = names(server);
@@ -232,10 +256,58 @@ public class IndustrialControllerBlockEntity extends PersonalComputerBlockEntity
         return hasCustomName() ? Component.literal(customName()) : null;
     }
 
-    /* Its machine's tick, then the capsules that wait for their station. */
+    /** The alerts it keeps, newest first. */
+    public List<MachineAlert> alerts() {
+        return this.alerts.all();
+    }
+
+    /** Acknowledges the alert numbered {@code id}; whether it keeps one. */
+    public boolean acknowledge(final long id) {
+        return this.alerts.acknowledge(id);
+    }
+
+    /** Acknowledges every alert it keeps. */
+    public void acknowledgeAll() {
+        this.alerts.acknowledgeAll();
+    }
+
+    /** Its alerts as the Machine Monitor shows them, newest first, each with what its machine reads now. */
+    public List<MachineMonitorPayloads.Row> monitorRows(final ServerLevel level) {
+        final Map<Long, String> cards = cardsOf();
+        final List<MachineMonitorPayloads.Row> rows = new ArrayList<>();
+        for (final MachineAlert alert : this.alerts.all()) {
+            final BlockPos at = BlockPos.of(alert.pos());
+            rows.add(new MachineMonitorPayloads.Row(this.worldPosition.asLong(), alert.id(), alert.dayTime(),
+                    alert.machine(), at, alert.kind(), alert.reading(), alert.acknowledged(), alert.active(),
+                    detailOf(level, at, cards.getOrDefault(alert.pos(), ""))));
+        }
+        return rows;
+    }
+
+    /** What the network calls it, in English, as its tables write it. */
+    public String controllerName() {
+        return GameText.of(getName()).english();
+    }
+
+    /** The world's clock at {@code dayTime}, "14:02". */
+    public static String clock(final long dayTime) {
+        return String.format(Locale.ROOT, "%02d:%02d", GameCalendar.hourOf(dayTime), GameCalendar.minuteOf(dayTime));
+    }
+
+    /* Its machine's tick, then, while on, its alerts once a second, then the capsules that wait for their station. */
     @Override
     protected void tickNode(final ServerLevel level) {
         super.tickNode(level);
+        if (--this.alertsIn <= 0) {
+            this.alertsIn = ALERTS_EVERY;
+            if (isRunning()) {
+                for (final MachineAlert raised : this.alerts.look(level, names(level))) {
+                    NetworkEvents.record(level, networkUuid(), raised.kind().severity().logged(), nodeUuid(),
+                            NetworkEvents.machineName(customName(), IndustrialControllers.MACHINE, nodeUuid()),
+                            ALERT_LOGGED.with(raised.machine(), raised.kind().text(), raised.reading()));
+                }
+            }
+        }
         if (this.pending.isEmpty()) {
             return;
         }
@@ -358,8 +430,22 @@ public class IndustrialControllerBlockEntity extends PersonalComputerBlockEntity
         return left;
     }
 
-    private String controllerName() {
-        return GameText.of(getName()).english();
+    /* What the machine at {@code at} reads now, for the Machine Monitor's panel. */
+    private MachineMonitorPayloads.Detail detailOf(final ServerLevel level, final BlockPos at, final String card) {
+        final IMachineParameters values = level.getCapability(IMachineParameters.CAPABILITY, at, null);
+        final long none = MachineMonitorPayloads.Detail.NONE;
+        if (values == null) {
+            return new MachineMonitorPayloads.Detail(Text.EMPTY, none, none, none, Text.EMPTY, controllerName(),
+                    card);
+        }
+        final Text state = values.statusNow().map(status -> status.text().text()).orElse(Text.EMPTY);
+        final Optional<MachineParameter> temperature = values.parameter("temperature");
+        final long now = temperature.map(value -> Math.round(value.value() - CELSIUS)).orElse(none);
+        final long most = temperature.map(value -> Math.round(value.most() - CELSIUS)).orElse(none);
+        final long power = values.powerDrawn().map(drawn -> drawn.perSecond()).orElse(none);
+        final Text port = values.powerDrawn().flatMap(drawn -> drawn.portClass()).map(of -> of.name().text())
+                .orElse(Text.EMPTY);
+        return new MachineMonitorPayloads.Detail(state, now, most, power, port, controllerName(), card);
     }
 
     private static String kindOf(final ServerLevel level, final BlockPos at) {

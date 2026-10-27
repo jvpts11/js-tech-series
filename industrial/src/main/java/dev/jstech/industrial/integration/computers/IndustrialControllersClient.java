@@ -7,6 +7,7 @@
  */
 package dev.jstech.industrial.integration.computers;
 
+import dev.jstech.computers.api.client.DesktopApps;
 import dev.jstech.computers.client.ComputerRenderer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
@@ -20,9 +21,14 @@ final class IndustrialControllersClient {
     private IndustrialControllersClient() {
     }
 
-    /** Listens for the renderers' registration; through the guard, from the mod's client entry point. */
+    /**
+     * Listens for the renderers' registration, and gives the Machine Monitor its window; through the guard, from the
+     * mod's client entry point.
+     */
     static void listen(final IEventBus modEventBus) {
         modEventBus.addListener(EntityRenderersEvent.RegisterRenderers.class, event ->
                 event.registerBlockEntityRenderer(IndustrialControllers.ENTITY.get(), ComputerRenderer::create));
+        DesktopApps.register(MachineMonitor.ID, false,
+                (host, monitor, desktop) -> new MachineMonitorProgram(host, desktop));
     }
 }
