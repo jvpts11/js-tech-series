@@ -12525,14 +12525,16 @@ stable 4
 12 dev.jstech.core.transit.CapsuleRules  type record(int stacks, int every, double blocksPerSecond)
 12 dev.jstech.core.transit.CapsuleRules  long ticksFor(int)
 12 dev.jstech.core.transit.CapsuleRules  static final double TICKS_A_SECOND
-12 dev.jstech.core.transit.CapsuleStationBlockEntity  type class extends SyncedBlockEntity implements LineGroups.IGroupMember
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  type class extends SyncedBlockEntity implements LineGroups.IGroupMember, IMachineParameters
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  CapsuleRules rules()
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  Direction front()
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  FieldItemHandler incoming()
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  FieldItemHandler outgoing()
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  IItemHandler items()
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  List<CapsuleRoute> routes()
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  List<MachineParameter> parameters()
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  OptionalInt addressOf(ItemStack)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  SendOutcome sendNow(ServerLevel, int)
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  boolean receive(List<ItemStack>)
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  int address()
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  int otherwise()
@@ -12540,6 +12542,10 @@ stable 4
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  protected boolean readyToSend(ServerLevel, int)
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  protected void sent(ServerLevel, Capsule)
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  static <T extends CapsuleStationBlockEntity> void register(RegisterCapabilitiesEvent, BlockEntityType<T>)
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  static final TextKey PARAMETER_ADDRESS
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  static final TextKey PARAMETER_OTHERWISE
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  static final TextKey PARAMETER_WAITING
+12 dev.jstech.core.transit.CapsuleStationBlockEntity  static final int MOST_ADDRESS
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  static final int NO_ADDRESS
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  static final int UNLOADS_EVERY
 12 dev.jstech.core.transit.CapsuleStationBlockEntity  static void serverTick(Level, BlockPos, BlockState, CapsuleStationBlockEntity)
@@ -12559,6 +12565,11 @@ stable 4
 12 dev.jstech.core.transit.CapsuleTransit.Book  Book with(List<Capsule>)
 12 dev.jstech.core.transit.CapsuleTransit.Book  static final Book EMPTY
 12 dev.jstech.core.transit.CapsuleTransit.Book  static final Codec<Book> CODEC
+12 dev.jstech.core.transit.SendOutcome  type enum
+12 dev.jstech.core.transit.SendOutcome  NOTHING
+12 dev.jstech.core.transit.SendOutcome  NOT_YET
+12 dev.jstech.core.transit.SendOutcome  NO_STATION
+12 dev.jstech.core.transit.SendOutcome  SENT
 10 dev.jstech.core.uuid.NetworkUuid  type record(UUID value)
 10 dev.jstech.core.uuid.NetworkUuid  String asString()
 10 dev.jstech.core.uuid.NetworkUuid  static NetworkUuid fromString(String)

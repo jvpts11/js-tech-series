@@ -16,6 +16,10 @@ import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.LineGroup;
 import dev.jstech.core.grid.LineGroups;
 import dev.jstech.core.inventory.ItemFilters;
+import dev.jstech.core.machine.IMachineParameters;
+import dev.jstech.core.machine.MachineParameter;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +38,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A station of a pneumatic post, on a line of tubes of its mod's: it has an address, and what is put into it (by a
@@ -44,6 +49,10 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
  * it unloads into the block it faces, keeping what does not fit until it does. Its mod may make it spend something to
  * send ({@link #readyToSend}, {@link #sent}), as J's Industrial's stations spend compressed air.
  *
+ * <p>A controller reads and sets it as it does a machine ({@link IMachineParameters}): its {@code address}, the address
+ * it sends the rest to ({@code otherwise}) and how many stacks wait ({@code waiting}); and has it send what waits to an
+ * address at once ({@link #sendNow}).
+ *
  * <pre>{@code
  * public static final GridKind TUBES = GridKind.declare(rl("capsule_tube"), GridPolicies.GROUP);
  * // its type, made with (pos, state) -> new CapsuleStationBlockEntity(STATION_BE.get(), pos, state, TUBES,
@@ -52,7 +61,9 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
  * CapsuleStationBlockEntity.register(event, STATION_BE.get());
  * }</pre>
  */
-public class CapsuleStationBlockEntity extends SyncedBlockEntity implements LineGroups.IGroupMember {
+@TextHolder
+public class CapsuleStationBlockEntity extends SyncedBlockEntity implements LineGroups.IGroupMember,
+        IMachineParameters {
 
     private final GridKind tubes;
     private final CapsuleRules rules;
@@ -62,11 +73,21 @@ public class CapsuleStationBlockEntity extends SyncedBlockEntity implements Line
     private final FieldItemHandler outgoing;
     private final FieldItemHandler incoming;
     private final LongField nextSend;
+    /* When its next capsule may leave: its rules' pace counts the capsules that left, not the looks that sent none. */
+    private final LongField nextCapsule;
+    /* What a controller reads and sets of it, made once. */
+    private @Nullable List<MachineParameter> parameters;
 
     /** The address of no station: a station of it receives nothing, a route never goes to it. */
     public static final int NO_ADDRESS = 0;
+    /** The highest address a controller sets: four digits, as the station numbers of a real pneumatic post. */
+    public static final int MOST_ADDRESS = 9_999;
     /** How often a station unloads what arrived into the block it faces, in ticks. */
     public static final int UNLOADS_EVERY = 10;
+    public static final TextKey PARAMETER_ADDRESS = TextKey.of("jscore.capsule_station.address", "Address");
+    public static final TextKey PARAMETER_OTHERWISE = TextKey.of("jscore.capsule_station.otherwise",
+            "Sends the rest to");
+    public static final TextKey PARAMETER_WAITING = TextKey.of("jscore.capsule_station.waiting", "Stacks waiting");
 
     /** A station on the tubes of {@code tubes}, a grid that groups the stations its runs join, under {@code rules}. */
     public CapsuleStationBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
@@ -80,16 +101,18 @@ public class CapsuleStationBlockEntity extends SyncedBlockEntity implements Line
         this.outgoing = fields().items("Outgoing", rules.stacks()).save().dropsWhenBroken();
         this.incoming = fields().items("Incoming", rules.stacks()).save().dropsWhenBroken();
         this.nextSend = fields().longInteger("NextSend", 0L).save();
+        this.nextCapsule = fields().longInteger("NextCapsule", 0L).save();
     }
 
     /**
      * Gives stations of {@code type} their faces: every face takes what the station has an address for and gives
-     * what arrived; and the tubes find them on every face.
+     * what arrived; the tubes find them on every face; and a controller reads and sets their values on every face.
      */
     public static <T extends CapsuleStationBlockEntity> void register(final RegisterCapabilitiesEvent event,
                                                                       final BlockEntityType<T> type) {
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (station, side) -> station.items());
         event.registerBlockEntity(LineGroups.MEMBER, type, (station, side) -> station);
+        event.registerBlockEntity(IMachineParameters.CAPABILITY, type, (station, side) -> station);
     }
 
     /** One server tick of {@code station}, the ticker its block is ticked by: it unloads, then sends. */
@@ -195,6 +218,48 @@ public class CapsuleStationBlockEntity extends SyncedBlockEntity implements Line
         return getBlockState().getValue(HorizontalDirectionalBlock.FACING);
     }
 
+    /**
+     * Sends a capsule of what waits in it to the station of address {@code to} at once, whatever its routes say: up
+     * to its rules' stacks, to the nearest station of that address its tubes join. Only as its rules and its mod let
+     * it: not before its next capsule is due, and not without what its mod has it spend.
+     */
+    public SendOutcome sendNow(final ServerLevel level, final int to) {
+        final List<Integer> slots = new ArrayList<>();
+        for (int slot = 0; slot < this.outgoing.getSlots() && slots.size() < this.rules.stacks(); slot++) {
+            if (!this.outgoing.getStackInSlot(slot).isEmpty()) {
+                slots.add(slot);
+            }
+        }
+        if (slots.isEmpty()) {
+            return SendOutcome.NOTHING;
+        }
+        final Optional<BlockPos> station = to <= NO_ADDRESS ? Optional.empty() : nearest(level, to);
+        if (station.isEmpty()) {
+            return SendOutcome.NO_STATION;
+        }
+        final long now = level.getGameTime();
+        if (now < this.nextCapsule.get() || !readyToSend(level, slots.size())) {
+            return SendOutcome.NOT_YET;
+        }
+        launch(level, now, station.get(), slots);
+        return SendOutcome.SENT;
+    }
+
+    /** Its address, what it sends the rest to, both set by a controller, and how many stacks wait to go. */
+    @Override
+    public List<MachineParameter> parameters() {
+        if (this.parameters == null) {
+            this.parameters = List.of(
+                    MachineParameter.set("address", PARAMETER_ADDRESS, null, NO_ADDRESS, MOST_ADDRESS,
+                            this.address::get, value -> setAddress((int) Math.round(value))),
+                    MachineParameter.set("otherwise", PARAMETER_OTHERWISE, null, NO_ADDRESS, MOST_ADDRESS,
+                            this.otherwise::get, value -> setOtherwise((int) Math.round(value))),
+                    MachineParameter.read("waiting", PARAMETER_WAITING, null, 0, this.rules.stacks(),
+                            this::waiting));
+        }
+        return this.parameters;
+    }
+
     /** It joined a run of tubes: it looks for its stations as it sends, so it keeps nothing of it. */
     @Override
     public void joined(final LineGroup group) {
@@ -253,6 +318,11 @@ public class CapsuleStationBlockEntity extends SyncedBlockEntity implements Line
         if (first < 0) {
             return;
         }
+        if (now < this.nextCapsule.get()) {
+            // A capsule a controller had it send just left: it looks again once the next may.
+            this.nextSend.set(this.nextCapsule.get());
+            return;
+        }
         this.nextSend.set(now + this.rules.every());
         final OptionalInt to = addressOf(this.outgoing.getStackInSlot(first));
         if (to.isEmpty()) {
@@ -272,15 +342,30 @@ public class CapsuleStationBlockEntity extends SyncedBlockEntity implements Line
         if (!readyToSend(level, slots.size())) {
             return;
         }
+        launch(level, now, station.get(), slots);
+    }
+
+    /* Sends a capsule of what waits in {@code slots} to the station at {@code to}, and spends what sending costs. */
+    private void launch(final ServerLevel level, final long now, final BlockPos to, final List<Integer> slots) {
         final List<ItemStack> items = new ArrayList<>(slots.size());
         for (final int slot : slots) {
             items.add(this.outgoing.getStackInSlot(slot).copy());
             this.outgoing.setStackInSlot(slot, ItemStack.EMPTY);
         }
-        final Capsule capsule = new Capsule(this.worldPosition, station.get(), items,
-                now + this.rules.ticksFor(this.worldPosition.distManhattan(station.get())));
+        final Capsule capsule = new Capsule(this.worldPosition, to, items,
+                now + this.rules.ticksFor(this.worldPosition.distManhattan(to)));
+        this.nextCapsule.set(now + this.rules.every());
         CapsuleTransit.send(level, capsule);
         sent(level, capsule);
+    }
+
+    /* How many stacks wait to be sent. */
+    private int waiting() {
+        int stacks = 0;
+        for (int slot = 0; slot < this.outgoing.getSlots(); slot++) {
+            stacks += this.outgoing.getStackInSlot(slot).isEmpty() ? 0 : 1;
+        }
+        return stacks;
     }
 
     /* The nearest station of {@code to} its tubes join, other than itself. */

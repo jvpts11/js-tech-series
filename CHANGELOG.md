@@ -292,6 +292,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   computer with such a card is a device whose port takes the cable's plug of that kind.
 - (Core) The pages of another mod's things: J's Core's API stays at version 12. `GuideEntry.aboutAbsentItems(present)`
   says whether an entry is the page of items the game has none of, which the manuals leave out.
+- (Core) A capsule station a controller drives: J's Core's API stays at version 12. `CapsuleStationBlockEntity` offers
+  `IMachineParameters` (`address` and `otherwise` set, `waiting` read; `MOST_ADDRESS`), registered with its other
+  faces by `register`, and `sendNow(level, to)` sends what waits in it to an address at once, answering a
+  `SendOutcome` (`SENT`, `NOT_YET`, `NOTHING`, `NO_STATION`).
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1778,6 +1782,19 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   is the same.
 - (Core) A manual leaves out the page of things the game has none of, such as what a mod brings with another mod that
   is not installed.
+- (Industrial) The Industrial Controller Computer reads and commands its machines from the data network. `QUERY
+  machines` has a row for each machine a switched-on controller reads, from every controller on the network: its name
+  (`Compressor #1`), kind and state, its temperature and its limit in degrees Celsius and how hot it is as a share of
+  that limit (`heat`), what it draws and its port, its progress, and the controller and the card's node that read it
+  (`PROFIBUS, node 5`); `QUERY controllers` says, for each controller, how many machines its cards can read, how many
+  it reads and how many its cables reach past them. `RUN jsindustrial:machine_set` sets a value a machine lets be set
+  or what it does with redstone, `RUN jsindustrial:valve_set` opens or closes a valve opened by hand, and `RUN
+  jsindustrial:station_send` has a capsule station send what waits in it to an address, the request waiting while the
+  station has no air. `ON` names the controller; without it the request goes to the controller that reads the machine,
+  and one switched off, or that reads no machine of that name, refuses it, saying why.
+- (Core) A capsule station is read and set from outside as a machine is (its address, where it sends the rest, what
+  waits in it), and can be told to send what waits to an address at once. Its pace counts the capsules that left, so
+  a look that sent nothing never holds one back.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

@@ -243,6 +243,14 @@ shoot each capsule with compressed air, and stop without it. Every face of a sta
 for and gives what arrived (`items()`), and the tubes find it on every face. The test mod's `IndustrialAirGameTests`
 is a worked set: routes, the trip's time, a capsule kept with the world, and a station without air.
 
+*Added 2026-10-27.* A station is also read and set from outside as a machine is (`IMachineParameters`, on every face):
+its `address` and `otherwise`, which a controller sets, and `waiting`, how many stacks wait to go. `sendNow(level, to)`
+has it send what waits in it to the station of address `to` at once, whatever its routes say, and answers a
+`SendOutcome`: `SENT`; `NOT_YET` while its next capsule is not due or its mod's cost is not there; `NOTHING` when
+nothing waits; `NO_STATION` when no station of that address is on its tubes. Its rules' pace counts the capsules that
+left, so a look that sent nothing never holds a capsule asked for back. J's Industrial's Industrial Controller Computer
+uses it for `RUN jsindustrial:station_send`.
+
 | What you see | Why |
 | --- | --- |
 | A station takes nothing in | It has no route that lets the item through and no address for the rest. |

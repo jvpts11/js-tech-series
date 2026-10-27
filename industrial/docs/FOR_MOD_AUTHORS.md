@@ -172,6 +172,38 @@ control line (`ControlLinks`). The controller links the machines its cable reach
 block that offers J's Core's `IMachineParameters` capability, so a machine of another mod built on J's Core, or one
 that offers the capability itself, is linked the same way.
 
+The controller is a member of the data network (J's Core's `INetworkMember`), of category C, and what the network
+reads of it are two state tables, which J's Computers' language reads with `QUERY`:
+
+- `jsindustrial:machines` (`QUERY machines`), a row for each machine a switched-on controller reads, where the machine
+  stands (`at`): `name` (the block's and the machine's number among the controller's machines of that block, counted
+  west to east, down to up, north to south: `Compressor #1`), `kind`, `state` (the machine's `MachineStatus`, as
+  `fuse_blown`), `temperature` and `temperature_limit` in degrees Celsius, `heat` (the temperature as a share of the
+  limit, in percent), `power` (what it draws, in watts) and `port` (its class), `progress` (in percent), `icc` (the
+  controller) and `card` (its field bus and the machine's node on it, `PROFIBUS, node 5`). A value the machine does
+  not offer is left empty.
+- `jsindustrial:controllers` (`QUERY controllers`), a row for each controller: `name`, `cards`, `ports` (the machines
+  its cards can read), `reads` and `left_out` (the machines its cables reach that no controller reads, for want of
+  ports).
+
+It carries out three kinds of Operation, which `RUN` asks for, naming the machine as the `machines` table does or by
+where it stands (`'12, 64, -3'`); `ON` names the controller, and without it the request goes to the controller that
+reads the machine named. A switched-off controller, or one that reads no machine of that name, refuses it, saying why.
+
+```
+RUN jsindustrial:machine_set WITH machine = 'Compressor #1', parameter = 'on', value = 0
+RUN jsindustrial:machine_set WITH machine = 'Compressor #1', redstone = 'low'
+RUN jsindustrial:valve_set WITH valve = '12, 64, -3', open = true
+RUN jsindustrial:station_send WITH station = '14, 64, -3', to = 3
+```
+
+`machine_set` sets any value the machine declares as settable, or what it does with redstone (`ignore`, `high`,
+`low`, `pulse`). `valve_set` opens or closes a valve opened by hand (J's Core's `LineValveBlockEntity`, of any mod).
+`station_send` has a capsule station of a pneumatic post (J's Core's `CapsuleStationBlockEntity`, of any mod) send what
+waits in it to an address; while the station cannot send yet, without its compressed air, the request waits, and it
+is done once the capsule leaves. J's Industrial ships no valve or station blocks of its own yet: the requests reach
+those of any mod built on J's Core's, and its own once they come.
+
 ## The API
 
 *Added 2026-10-23.*

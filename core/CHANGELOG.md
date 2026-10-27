@@ -272,6 +272,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   so a mod brings a member to another mod's family of machines.
 - The pages of another mod's things: J's Core's API stays at version 12. `GuideEntry.aboutAbsentItems(present)`
   says whether an entry is the page of items the game has none of, which the manuals leave out.
+- A capsule station a controller drives: J's Core's API stays at version 12. `CapsuleStationBlockEntity` offers
+  `IMachineParameters` (`address` and `otherwise` set, `waiting` read; `MOST_ADDRESS`), registered with its other
+  faces by `register`, and `sendNow(level, to)` sends what waits in it to an address at once, answering a
+  `SendOutcome` (`SENT`, `NOT_YET`, `NOTHING`, `NO_STATION`).
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1603,6 +1607,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   says nothing takes the nearest earlier era's, as the Exa and the Singularity take the Advanced's.
 - A manual leaves out the page of things the game has none of, such as what a mod brings with another mod that
   is not installed.
+- A capsule station is read and set from outside as a machine is (its address, where it sends the rest, what
+  waits in it), and can be told to send what waits to an address at once. Its pace counts the capsules that left, so
+  a look that sent nothing never holds one back.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

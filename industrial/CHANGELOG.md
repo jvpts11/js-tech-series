@@ -130,6 +130,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   blocks of cable away; it ends in the plug of the card's connector at the controller and in an M12 at a machine.
   The Plant Drawings have a Control section with their pages. Without J's Computers none of them exist, and the mod
   is the same.
+- The Industrial Controller Computer reads and commands its machines from the data network. `QUERY
+  machines` has a row for each machine a switched-on controller reads, from every controller on the network: its name
+  (`Compressor #1`), kind and state, its temperature and its limit in degrees Celsius and how hot it is as a share of
+  that limit (`heat`), what it draws and its port, its progress, and the controller and the card's node that read it
+  (`PROFIBUS, node 5`); `QUERY controllers` says, for each controller, how many machines its cards can read, how many
+  it reads and how many its cables reach past them. `RUN jsindustrial:machine_set` sets a value a machine lets be set
+  or what it does with redstone, `RUN jsindustrial:valve_set` opens or closes a valve opened by hand, and `RUN
+  jsindustrial:station_send` has a capsule station send what waits in it to an address, the request waiting while the
+  station has no air. `ON` names the controller; without it the request goes to the controller that reads the machine,
+  and one switched off, or that reads no machine of that name, refuses it, saying why.
 
 ### Changed
 - The Forge Hammer, the Draw Plate and the Mortar are drawn in three dimensions in the hand and on the

@@ -35,21 +35,28 @@ public final class FieldbusCards {
     public static final ExpansionCardKind FIELDBUS = new ExpansionCardKind("jsindustrial:fieldbus")
             .onlyIn(FIELDBUS_ONLY, IndustrialControllers.MACHINE);
 
+    /* The field buses, as the machines table names the card that reads a machine. */
+    public static final TextKey RS485_BUS = TextKey.of("jsindustrial.fieldbus.rs485", "RS-485");
+    public static final TextKey PROFIBUS_BUS = TextKey.of("jsindustrial.fieldbus.profibus", "PROFIBUS");
+    public static final TextKey PROFINET_BUS = TextKey.of("jsindustrial.fieldbus.profinet", "PROFINET");
+    public static final TextKey ETHERNET_IP_BUS = TextKey.of("jsindustrial.fieldbus.ethernet_ip", "EtherNet/IP");
+    public static final TextKey ETHERCAT_BUS = TextKey.of("jsindustrial.fieldbus.ethercat", "EtherCAT");
+
     public static final ItemEntry<FieldbusCardItem> RS485 = card("fieldbus_card_rs485",
-            new FieldbusCardSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 3, 2, FieldbusCardSpec.RS485))
+            new FieldbusCardSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 3, 2, FieldbusCardSpec.RS485, RS485_BUS))
             .named("RS-485 Fieldbus Card").register();
     public static final ItemEntry<FieldbusCardItem> PROFIBUS = card("fieldbus_card_profibus",
-            new FieldbusCardSpec(HardwareEra.LEGACY, PcieGeneration.PCI, 4, 4, FieldbusCardSpec.PROFIBUS))
-            .named("PROFIBUS Fieldbus Card").register();
+            new FieldbusCardSpec(HardwareEra.LEGACY, PcieGeneration.PCI, 4, 4, FieldbusCardSpec.PROFIBUS,
+                    PROFIBUS_BUS)).named("PROFIBUS Fieldbus Card").register();
     public static final ItemEntry<FieldbusCardItem> PROFINET = card("fieldbus_card_profinet",
-            new FieldbusCardSpec(HardwareEra.TRANSITION, PcieGeneration.PCI, 5, 6, FieldbusCardSpec.RJ45))
-            .named("PROFINET Fieldbus Card").register();
+            new FieldbusCardSpec(HardwareEra.TRANSITION, PcieGeneration.PCI, 5, 6, FieldbusCardSpec.RJ45,
+                    PROFINET_BUS)).named("PROFINET Fieldbus Card").register();
     public static final ItemEntry<FieldbusCardItem> ETHERNET_IP = card("fieldbus_card_ethernet_ip",
-            new FieldbusCardSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 5, 8, FieldbusCardSpec.RJ45))
-            .named("EtherNet/IP Fieldbus Card").register();
+            new FieldbusCardSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 5, 8, FieldbusCardSpec.RJ45,
+                    ETHERNET_IP_BUS)).named("EtherNet/IP Fieldbus Card").register();
     public static final ItemEntry<FieldbusCardItem> ETHERCAT = card("fieldbus_card_ethercat",
-            new FieldbusCardSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 6, 12, FieldbusCardSpec.RJ45))
-            .named("EtherCAT Fieldbus Card").register();
+            new FieldbusCardSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 6, 12, FieldbusCardSpec.RJ45,
+                    ETHERCAT_BUS)).named("EtherCAT Fieldbus Card").register();
     /** Every Fieldbus Card, the oldest first. */
     public static final List<ItemEntry<FieldbusCardItem>> ALL = List.of(RS485, PROFIBUS, PROFINET, ETHERNET_IP,
             ETHERCAT);

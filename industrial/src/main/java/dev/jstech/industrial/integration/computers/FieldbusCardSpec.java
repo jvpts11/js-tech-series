@@ -12,6 +12,7 @@ import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.text.TextKey;
 import java.util.Objects;
 
 /**
@@ -24,9 +25,10 @@ import java.util.Objects;
  * @param tdpWatts what it draws
  * @param machines how many machines it lets its computer read
  * @param plug     its connector, the kind of port the control cable's plug enters at the computer
+ * @param fieldbus the field bus it speaks, as the machines table names it: "PROFIBUS"
  */
-public record FieldbusCardSpec(Era era, PcieGeneration bus, int tdpWatts, int machines, String plug)
-        implements IExpansionCardSpec {
+public record FieldbusCardSpec(Era era, PcieGeneration bus, int tdpWatts, int machines, String plug,
+                               TextKey fieldbus) implements IExpansionCardSpec {
 
     /** The RJ45 of the field buses that run on Ethernet: PROFINET, EtherNet/IP and EtherCAT. */
     public static final String RJ45 = "rj45";
@@ -39,6 +41,7 @@ public record FieldbusCardSpec(Era era, PcieGeneration bus, int tdpWatts, int ma
         Objects.requireNonNull(era, "era");
         Objects.requireNonNull(bus, "bus");
         Objects.requireNonNull(plug, "plug");
+        Objects.requireNonNull(fieldbus, "fieldbus");
         if (machines < 1) {
             throw new IllegalArgumentException("a field bus card reads at least one machine");
         }

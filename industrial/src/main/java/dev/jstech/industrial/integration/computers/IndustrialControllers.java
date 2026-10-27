@@ -19,14 +19,17 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.IItemLook;
+import dev.jstech.core.jstechseries.operation.RegisterOperationTypesEvent;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.industrial.IndustrialModule;
 import java.util.List;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * The Industrial Controller Computers, one in each case J's Computers ships: the Vintage, the Legacy and the
@@ -88,6 +91,10 @@ public final class IndustrialControllers {
             HIGH_PERFORMANCE_INDUSTRIAL_CONTROLLER_COMPUTER, AESTHETIC_INDUSTRIAL_CONTROLLER_COMPUTER,
             ADVANCED_INDUSTRIAL_CONTROLLER_COMPUTER, ADVANCED_HIGH_PERFORMANCE_INDUSTRIAL_CONTROLLER_COMPUTER,
             ADVANCED_AESTHETIC_INDUSTRIAL_CONTROLLER_COMPUTER);
+    /** The block entity every Industrial Controller Computer shares: a Personal Computer, and a network member. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<IndustrialControllerBlockEntity>> ENTITY =
+            IndustrialModule.CONTENT.blockEntity("industrial_controller_computer",
+                    IndustrialControllerBlockEntity::new, ALL.toArray(BlockEntry[]::new));
 
     private IndustrialControllers() {
     }
@@ -108,7 +115,9 @@ public final class IndustrialControllers {
     static void declare(final IEventBus modEventBus) {
         FieldbusCards.declare();
         IndustrialControlCable.declare();
+        ControllerTables.declare();
         modEventBus.addListener(ComputersRegisterEvent.class, IndustrialControllers::register);
+        modEventBus.addListener(RegisterOperationTypesEvent.class, ControllerOperations::register);
     }
 
     /* The machine, the cards and each computer, on J's Computers' register event. */

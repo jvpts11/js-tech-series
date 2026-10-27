@@ -29,6 +29,11 @@ public final class ComputersIntegration {
         COMPUTERS.ifLoaded(() -> () -> IndustrialControllers.declare(modEventBus));
     }
 
+    /** Draws what comes with J's Computers on a player's game, when it is installed; from the client entry point. */
+    public static void client(final IEventBus modEventBus) {
+        COMPUTERS.ifLoaded(() -> () -> IndustrialControllersClient.listen(modEventBus));
+    }
+
     /**
      * Writes the pages of what comes with J's Computers into the mod's chapter, in {@code section}, when it is
      * installed; a game without it leaves them out of its manuals.

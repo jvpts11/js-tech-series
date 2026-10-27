@@ -8,6 +8,7 @@
 package dev.jstech.industrial;
 
 import dev.jstech.industrial.client.IndustrialClientSetup;
+import dev.jstech.industrial.integration.computers.ComputersIntegration;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -19,5 +20,7 @@ public final class JsIndustrialClient {
 
     public JsIndustrialClient(final IEventBus modEventBus, final ModContainer modContainer) {
         IndustrialClientSetup.listen(modEventBus);
+        // With J's Computers installed: the Industrial Controller Computers' cases.
+        ComputersIntegration.client(modEventBus);
     }
 }
