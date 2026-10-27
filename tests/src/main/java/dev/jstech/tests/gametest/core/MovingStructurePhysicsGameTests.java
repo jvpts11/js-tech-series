@@ -308,6 +308,8 @@ public final class MovingStructurePhysicsGameTests {
     @GameTest(template = TALL, batch = BATCH, timeoutTicks = 400)
     public static void physics_aBalloonOfHydrogenRises(final GameTestHelper helper) {
         calm(helper);
+        // Sheltered as the hot air balloon is: the wind would press it against the arena's wall.
+        final AABB sheltered = shelter(helper);
         final ServerLevel level = helper.getLevel();
         final MovingStructure balloon = made(helper, shell(2, 2, 2, BALLOON_SIDE), TestPhysics.ENVELOPE.get());
         final BlockPos inside = centreOf(balloon);
@@ -343,6 +345,7 @@ public final class MovingStructurePhysicsGameTests {
                                     + forcesOf(balloon) + "; its room " + (now == null ? "none" : now.id() + " volume "
                                     + now.volume() + " breached " + now.breached() + " leaks " + now.leaks().size()
                                     + " gases " + now.gases() + " bounds " + now.bounds()) + "; " + seen);
+                    SHELTERED.remove(sheltered);
                     MovingStructures.takeAway(balloon);
                 })
                 .thenSucceed();
@@ -351,6 +354,12 @@ public final class MovingStructurePhysicsGameTests {
     @GameTest(template = TALL, batch = BATCH, timeoutTicks = 600)
     public static void physics_aHotAirBalloonRisesAsItsBurnerWarmsIt(final GameTestHelper helper) {
         calm(helper);
+        /*
+         * Sheltered, its air still. The wind turns with the world's time and blows harder in its gusts and in rain;
+         * blowing from most sides it presses the light balloon against the arena's wall, and the wall holds it there
+         * as a wall would a real one: under a rainy day's gust it never rises, and under a calm day's it barely does.
+         */
+        final AABB sheltered = shelter(helper);
         final List<BlockPos> envelope = shell(2, 2, 2, 7);
         envelope.remove(new BlockPos(5, 2, 5));
         final MovingStructure balloon = made(helper, envelope, TestPhysics.ENVELOPE.get(),
@@ -371,7 +380,10 @@ public final class MovingStructurePhysicsGameTests {
                             : roomFound[0] < 0 ? "its burner's room not found yet"
                             : "its burner's room found at tick " + roomFound[0]));
                 })
-                .thenExecute(() -> MovingStructures.takeAway(balloon))
+                .thenExecute(() -> {
+                    SHELTERED.remove(sheltered);
+                    MovingStructures.takeAway(balloon);
+                })
                 .thenSucceed();
     }
 
