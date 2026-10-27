@@ -270,6 +270,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A family's model in another mod's files: J's Core's API stays at version 12. A `GeoLook` model named with
   its mod (`othermod:computer_vintage_reader`) is read from that mod's `geo/` and its atlas from that mod's textures,
   so a mod brings a member to another mod's family of machines.
+- The pages of another mod's things: J's Core's API stays at version 12. `GuideEntry.aboutAbsentItems(present)`
+  says whether an entry is the page of items the game has none of, which the manuals leave out.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1599,6 +1601,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
   everywhere, its machines, its tables and its progress. Whatever a rule of the series says era by era, an era that
   says nothing takes the nearest earlier era's, as the Exa and the Singularity take the Advanced's.
+- A manual leaves out the page of things the game has none of, such as what a mod brings with another mod that
+  is not installed.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

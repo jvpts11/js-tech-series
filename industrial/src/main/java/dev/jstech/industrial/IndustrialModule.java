@@ -64,6 +64,11 @@ public final class IndustrialModule {
     public static final ContentTab.Section TOOLS = INDUSTRIAL_TAB.section();
     /** What research takes: the data of each kind. */
     public static final ContentTab.Section RESEARCH = INDUSTRIAL_TAB.section();
+    /**
+     * The Industrial Controller Computers, their Fieldbus Cards and the industrial control cable, which come with J's
+     * Computers installed; empty without it.
+     */
+    public static final ContentTab.Section CONTROLLERS = INDUSTRIAL_TAB.section();
     /** The tab's last shelf: the mod's manual. */
     public static final ContentTab.Section MANUALS = INDUSTRIAL_TAB.section();
 

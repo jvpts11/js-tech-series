@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsindustrial:block/legacy_industrial_controller_computer_body"
+    }
+  }
+}

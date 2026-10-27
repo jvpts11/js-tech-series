@@ -51,10 +51,11 @@ public final class CaseBaysGameTests {
     private static final Map<Era, Integer> BAYS = Map.of(HardwareEra.VINTAGE, 1, HardwareEra.LEGACY, 2,
             HardwareEra.TRANSITION, 2, HardwareEra.STANDARD, 1, HardwareEra.ADVANCED, 0);
     /**
-     * The cases there are: nine for each of the Personal, Crafting and Cluster Management Computers, and the test
-     * mod's Quantum computer, whose era has the Advanced's case.
+     * The cases there are: nine for each of the Personal, Crafting and Cluster Management Computers and for J's
+     * Industrial's Industrial Controller Computer, and the test mod's Quantum computer, whose era has the Advanced's
+     * case.
      */
-    private static final int CASES = 28;
+    private static final int CASES = 37;
     /** How many parts a small computer held before its case had bays. */
     private static final int SLOTS_BEFORE_BAYS = 13;
 

@@ -354,6 +354,7 @@ stable 7
 8 dev.jstech.computers.hardware.IExpansionCardSpec  abstract ExpansionCardKind kind()
 8 dev.jstech.computers.hardware.IExpansionCardSpec  abstract PcieGeneration bus()
 8 dev.jstech.computers.hardware.IExpansionCardSpec  abstract int tdpWatts()
+8 dev.jstech.computers.hardware.IExpansionCardSpec  default String controlPlug()
 8 dev.jstech.computers.hardware.IExpansionCardSpec  default boolean fits(PcieGeneration)
 8 dev.jstech.computers.hardware.IExpansionCardSpec  default int controlPorts()
 8 dev.jstech.computers.hardware.IntegratedGraphics  type record(String model, int units, int mhz)

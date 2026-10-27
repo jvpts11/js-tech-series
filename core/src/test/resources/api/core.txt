@@ -5469,6 +5469,7 @@ stable 4
 10 dev.jstech.core.guide.GuideEntry  List<GuideBlock.Define> terms()
 10 dev.jstech.core.guide.GuideEntry  List<String> shown()
 10 dev.jstech.core.guide.GuideEntry  String namespace()
+12 dev.jstech.core.guide.GuideEntry  boolean aboutAbsentItems(Predicate<String>)
 10 dev.jstech.core.guide.GuideEntry  new(String, String, int, String, String, List<String>, List<GuideBlock>)
 10 dev.jstech.core.guide.GuideEntry  new(String, String, int, String, String, List<String>, List<String>, List<GuideBlock>)
 10 dev.jstech.core.guide.GuideFacts  type final class

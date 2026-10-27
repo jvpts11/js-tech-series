@@ -110,7 +110,9 @@ event.expansionCard(MyItems.Q_CARD.get(), new PlainCardSpec(MY_KIND, QUANTUM, Pc
 - **A card that reads machines** (added 2026-10-25) gives its computer ports on the industrial control cable: its sheet
   answers `controlPorts()`, how many machines it reaches. A computer with such ports keeps its links on that cable by
   itself, once a second, so the machines its cables reach are its own to read and command (J's Core's
-  `ControlLinks`).
+  `ControlLinks`). Its `controlPlug()` (added 2026-10-27) names the connector the cable plugs into on the card, such as
+  `profibus`: the computer is then a device whose port takes the cable's plug of that kind (`CableType.plug(kind)`),
+  as a screen takes a video plug, and every other cable ends at it in its own plug.
 - `HardwareRegistry` answers what a stack is: `cpu(stack)`, `board(stack)`, `card(stack)` and so on, null for anything
   that is no part. An item without an entry goes in no part slot.
 - What the software of your era ships on (its systems', programs' and services' media) is `event.eraMedia(era,

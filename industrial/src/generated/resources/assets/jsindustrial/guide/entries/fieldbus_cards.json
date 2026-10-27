@@ -1,0 +1,87 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.fieldbus_cards.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.fieldbus_cards.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.fieldbus_cards.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.fieldbus_cards.text1"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.fieldbus_cards.use1",
+        "jsindustrial.guide.fieldbus_cards.use2",
+        "jsindustrial.guide.fieldbus_cards.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.fieldbus_cards.fix1",
+          "problem": "jsindustrial.guide.fieldbus_cards.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.fieldbus_cards.fix2",
+          "problem": "jsindustrial.guide.fieldbus_cards.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:industrial_controller_computer"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:fieldbus_card_profibus",
+  "id": "jsindustrial:fieldbus_cards",
+  "items": [
+    "jsindustrial:fieldbus_card_rs485",
+    "jsindustrial:fieldbus_card_profibus",
+    "jsindustrial:fieldbus_card_profinet",
+    "jsindustrial:fieldbus_card_ethernet_ip",
+    "jsindustrial:fieldbus_card_ethercat"
+  ],
+  "order": 17,
+  "section": "jsindustrial:control",
+  "title": "jsindustrial.guide.fieldbus_cards.title"
+}

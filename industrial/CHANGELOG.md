@@ -119,6 +119,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   creative tab away.
 - Tanks read from outside: the tank and the tanks of a size the player chooses say what they hold, and a
   gas tank its pressure, to a controller on the industrial control cable.
+- With J's Computers installed, the Industrial Controller Computer: one in each case J's Computers ships
+  (the Vintage, the Legacy and the Transition, and the Standard and the Advanced in their Neutral, High Performance
+  and Aesthetic cases), built as a Personal Computer of its era and drawn with a plant's control panel under its
+  front, its RUN, BUS and FAULT lamps, its LOCAL/REMOTE key and its terminal strip. It is a machine of its own, the
+  Industrial Controller, and only the Fieldbus Cards go in it: RS-485 for the Vintage on ISA, PROFIBUS for the Legacy
+  and PROFINET for the Transition on PCI, EtherNet/IP for the Standard and EtherCAT for the Advanced on PCIe, reading 2,
+  4, 6, 8 and 12 machines, each drawn in its slot with its bus's connectors. The Industrial Control Cable, violet in
+  the bottom left lane of the series' cable block, links it the machines it reaches, the nearest first, up to eight
+  blocks of cable away; it ends in the plug of the card's connector at the controller and in an M12 at a machine.
+  The Plant Drawings have a Control section with their pages. Without J's Computers none of them exist, and the mod
+  is the same.
 
 ### Changed
 - The Forge Hammer, the Draw Plate and the Mortar are drawn in three dimensions in the hand and on the

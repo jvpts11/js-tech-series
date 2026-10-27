@@ -1,10 +1,15 @@
-// J's Industrial: the industrial mod of the series. Depends on the core only, never on the computing mod.
+/*
+ * J's Industrial: the industrial mod of the series. It depends on the core only; with J's Computers installed beside
+ * it, its integration (behind a guard) brings the Industrial Controller Computer, so it compiles against J's Computers
+ * for that alone and never requires it.
+ */
 plugins {
     id 'net.neoforged.moddev'
 }
 
-// The data run below reaches into the core's source set, so it must be configured first.
+// The data run below reaches into the core's and the computing mod's source sets, so they must be configured first.
 evaluationDependsOn(':core')
+evaluationDependsOn(':computers')
 
 // checkGeneratedData: the data run's files kept up to date.
 apply from: rootProject.file('gradle/generated-data.gradle')
@@ -34,13 +39,18 @@ neoForge {
             programArguments.addAll '--mod', project.mod_id, '--all',
                     '--output', file('src/generated/resources/').getAbsolutePath(),
                     '--existing', file('src/main/resources/').getAbsolutePath(),
-                    '--existing', rootProject.file('core/src/main/resources/').getAbsolutePath()
+                    '--existing', rootProject.file('core/src/main/resources/').getAbsolutePath(),
+                    '--existing', rootProject.file('computers/src/main/resources/').getAbsolutePath(),
+                    '--existing', rootProject.file('computers/src/generated/resources/').getAbsolutePath()
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }
 
-    // Which source sets belong to which mod: the data run loads this mod and the core it depends on.
+    /*
+     * Which source sets belong to which mod: the data run loads this mod, the core it depends on, and J's Computers,
+     * so the content that comes with it is generated too.
+     */
     mods {
         "${mod_id}" {
             sourceSet(sourceSets.main)
@@ -48,11 +58,17 @@ neoForge {
         jscore {
             sourceSet(rootProject.project(':core').sourceSets.main)
         }
+        jsc {
+            sourceSet(rootProject.project(':computers').sourceSets.main)
+        }
     }
 }
 
 dependencies {
     implementation project(':core')
+    // For the integration alone, which starts only when J's Computers is installed; the data run has it at hand.
+    compileOnly project(':computers')
+    localRuntime project(':computers')
 }
 
 // Expands the declared properties into the mod metadata template. A missing property is an error.

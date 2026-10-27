@@ -26,6 +26,7 @@ import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.crc.CrcContent;
+import dev.jstech.industrial.integration.computers.ComputersIntegration;
 import dev.jstech.industrial.tool.HandTools;
 import net.minecraft.world.item.Items;
 
@@ -89,6 +90,8 @@ public final class IndustrialGuide {
         guide.section("clean_room").titled("Clean Room").code("CR").register();
         final ModGuide.SectionRef science = guide.section("science").titled("Science").code("SC")
                 .icon(CrcContent.TERMINAL).register();
+        // Instrumentation and control: the computer that reads the machines, with J's Computers installed.
+        final ModGuide.SectionRef control = guide.section("control").titled("Control").code("IC").register();
         guide.section("nuclear").titled("Nuclear").code("NU").register();
         guide.section("transcendence").titled("Transcendence").code("TR").register();
         guide.section("the_aleph").titled("The Aleph").code("AL").register();
@@ -103,6 +106,7 @@ public final class IndustrialGuide {
         materials(guide, metallurgy);
         tank(guide, fluids);
         ResearchPages.declare(guide, science, fluids);
+        ComputersIntegration.pages(guide, control);
     }
 
     private static void tank(final ModGuide guide, final ModGuide.SectionRef section) {

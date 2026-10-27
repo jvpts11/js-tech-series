@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -84,6 +85,8 @@ public final class GuideReloadListener extends SimplePreparableReloadListener<Gu
         chapters.putAll(markdown.chapters());
         sections.putAll(markdown.sections());
         entries.putAll(markdown.entries());
+        // The pages of what a mod brings with another mod installed stay out of a game without that other mod.
+        entries.values().removeIf(entry -> entry.aboutAbsentItems(GuideReloadListener::itemPresent));
         manuals.putAll(markdown.manuals());
         return new GuideLibrary(chapters, sections, entries, manuals, readStyles(resources));
     }
@@ -154,5 +157,10 @@ public final class GuideReloadListener extends SimplePreparableReloadListener<Gu
             LOGGER.warn("The manual file {} could not be read", file.getKey(), e);
             return Optional.empty();
         }
+    }
+
+    private static boolean itemPresent(final String id) {
+        final ResourceLocation item = ResourceLocation.tryParse(id);
+        return item != null && BuiltInRegistries.ITEM.containsKey(item);
     }
 }

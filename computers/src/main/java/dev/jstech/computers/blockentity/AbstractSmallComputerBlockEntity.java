@@ -10,7 +10,10 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CasePorts;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.blockentity.BoolField;
+import dev.jstech.core.cable.IPlugged;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.model.network.ModelAnimations;
@@ -22,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -33,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * one of three cases it comes in; with the parts put in it, its lamps lit as it runs and works its disk, and its
  * fans turning while it runs.
  */
-public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerBlockEntity {
+public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerBlockEntity implements IPlugged {
 
     /** The left side taken off the case, showing what the player put inside; the world and the screen both show it. */
     private final BoolField sidePanelOff = fields().flag("SidePanelOff", false).save().toClient().toMenu();
@@ -48,6 +52,8 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
             fields().derived("Lamps", () -> (isRunning() ? POWER_LAMP : 0) | (diskBusy() ? DISK_LAMP : 0)).toClient();
     /** What the case's bays and front ports hold, and the trays of the drives in its bays. */
     private final CaseFront front = new CaseFront(this, fields());
+    /** The plug its control cables were last drawn ending in, on the client, so a card changed redraws them. */
+    private String drawnPlug = "";
 
     /** The controller the power button's press plays on, and the press. */
     public static final String POWER = "power";
@@ -103,6 +109,22 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
         }
         final ResourceLocation part = parts.get(slot);
         return part.equals(BuiltInRegistries.ITEM.getKey(Items.AIR)) ? null : part;
+    }
+
+    /**
+     * The port a control cable plugs into on it: the connector of its first card that reads machines, as a PROFIBUS
+     * card's violet D-sub; read off the parts the players who see it are told of, so it is the same on both sides.
+     * Every other cable ends at it in its own plug.
+     */
+    @Override
+    public String plugKind() {
+        for (final ResourceLocation part : installed.get()) {
+            final IExpansionCardSpec card = HardwareRegistry.card(new ItemStack(BuiltInRegistries.ITEM.get(part)));
+            if (card != null && !card.controlPlug().isEmpty()) {
+                return card.controlPlug();
+            }
+        }
+        return "";
     }
 
     /** Whether the machine runs, as its power lamp shows it on every side. */
@@ -163,10 +185,19 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
         front.beforeClientUpdate();
     }
 
+    /*
+     * A card that reads machines put in or taken out changes the plug its control cables end in, which they choose as
+     * they are drawn: its block is drawn again, and the cable blocks around it with it.
+     */
     @Override
     protected void afterClientUpdate() {
         super.afterClientUpdate();
         front.afterClientUpdate();
+        final String plug = plugKind();
+        if (!plug.equals(drawnPlug) && level != null) {
+            drawnPlug = plug;
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     @Override

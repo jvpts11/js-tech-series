@@ -38,4 +38,13 @@ public interface IExpansionCardSpec {
     default int controlPorts() {
         return 0;
     }
+
+    /**
+     * The kind of port the industrial control cable plugs into on the card, for a card with control ports: its field
+     * bus's connector, such as {@code profibus}, which the cable's plug of that kind enters at the computer. Empty for
+     * every other card, and the cable ends there in its own plug.
+     */
+    default String controlPlug() {
+        return "";
+    }
 }

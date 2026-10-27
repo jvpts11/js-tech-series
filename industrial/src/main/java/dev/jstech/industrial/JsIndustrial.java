@@ -17,6 +17,7 @@ import dev.jstech.industrial.crc.CrcStructure;
 import dev.jstech.industrial.datagen.JsIndustrialDataGenerators;
 import dev.jstech.industrial.discovery.ElementDiscovery;
 import dev.jstech.industrial.guide.IndustrialGuide;
+import dev.jstech.industrial.integration.computers.ComputersIntegration;
 import dev.jstech.industrial.line.IndustrialPipeMarks;
 import dev.jstech.industrial.line.PneumaticPost;
 import dev.jstech.industrial.world.IndustrialDeposits;
@@ -35,7 +36,8 @@ import org.slf4j.Logger;
 /**
  * The industrial mod of the J's Tech Series: energy, machines and the processing chains that feed the
  * network. It is built on the core alone; the computing mod drives its machines through the core's
- * capabilities and never the other way round.
+ * capabilities and never the other way round. With the computing mod installed beside it, it brings the
+ * computer that reads and commands them, behind a guard.
  */
 @Mod(JsIndustrial.MODID)
 public final class JsIndustrial {
@@ -81,6 +83,8 @@ public final class JsIndustrial {
         // What its Research tab asks of the server: a discovery researched now, or queued.
         CrcCalls.declare();
         IndustrialModule.register(modEventBus);
+        // With J's Computers installed: the Industrial Controller Computers, their Fieldbus Cards and their cable.
+        ComputersIntegration.declare(modEventBus);
         // The mod's data generation, which runs only in a data run.
         JsIndustrialDataGenerators.listen(modEventBus);
     }

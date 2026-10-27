@@ -64,4 +64,6 @@ playable (see [docs/RELEASING.md](../docs/RELEASING.md)).
 - [J's Core](../core/README.md) at the same version (required).
 
 It does not need [J's Computers](../computers/README.md), the machines work on their
-own, with any FE source, and the computing mod only adds ways to drive them.
+own, with any FE source, and the computing mod only adds ways to drive them. With J's Computers installed it brings
+the Industrial Controller Computer of each era, its Fieldbus Cards and the Industrial Control Cable that links it to
+the machines it reads.

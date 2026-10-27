@@ -159,9 +159,18 @@ and burns only what is drawn from it. A machine's battery slot takes any item ho
 
 ## With J's Computers
 
-J's Industrial does not need J's Computers and does not know about it. J's Computers drives these machines the
-way it drives any machine of any mod, through the capabilities above: a crafting computer's interface puts the
-inputs in and a bus takes the outputs, and the Pattern Studio knows which machine works which recipe kind.
+J's Industrial does not need J's Computers. J's Computers drives these machines the way it drives any machine of any
+mod, through the capabilities above: a crafting computer's interface puts the inputs in and a bus takes the outputs,
+and the Pattern Studio knows which machine works which recipe kind.
+
+*Added 2026-10-27.* When J's Computers is installed, J's Industrial's integration with it (under
+`dev.jstech.industrial.integration.computers`, reached only through its guard, so nothing of J's Computers is loaded
+without it) brings the Industrial Controller Computer, a small computer of each of J's Computers' cases and a machine
+of its own, `jsindustrial:industrial_controller`; the Fieldbus Cards, a card kind of their own,
+`jsindustrial:fieldbus`, made for that machine alone; and the Industrial Control Cable, on J's Core's industrial
+control line (`ControlLinks`). The controller links the machines its cable reaches, as many as its cards read: any
+block that offers J's Core's `IMachineParameters` capability, so a machine of another mod built on J's Core, or one
+that offers the capability itself, is linked the same way.
 
 ## The API
 

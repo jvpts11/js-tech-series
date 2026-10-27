@@ -42,3 +42,12 @@ type = "required"
 versionRange = "[${mod_version}]"
 ordering = "AFTER"
 side = "BOTH"
+
+# J's Computers, when it is installed beside it: the Industrial Controller Computer, its Fieldbus Cards and the
+# industrial control cable come with it. Without it the mod is the same, less those. In lockstep as the core is.
+[[dependencies.${mod_id}]]
+modId = "jsc"
+type = "optional"
+versionRange = "[${mod_version}]"
+ordering = "AFTER"
+side = "BOTH"

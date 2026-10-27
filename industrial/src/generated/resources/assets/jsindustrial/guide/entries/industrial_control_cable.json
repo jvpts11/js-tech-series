@@ -1,0 +1,75 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.industrial_control_cable.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.industrial_control_cable.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.industrial_control_cable.use1",
+        "jsindustrial.guide.industrial_control_cable.use2",
+        "jsindustrial.guide.industrial_control_cable.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.industrial_control_cable.fix1",
+          "problem": "jsindustrial.guide.industrial_control_cable.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.industrial_control_cable.fix2",
+          "problem": "jsindustrial.guide.industrial_control_cable.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:industrial_controller_computer"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:industrial_control_cable",
+  "id": "jsindustrial:industrial_control_cable",
+  "items": [
+    "jsindustrial:industrial_control_cable"
+  ],
+  "order": 18,
+  "section": "jsindustrial:control",
+  "title": "jsindustrial.guide.industrial_control_cable.title"
+}

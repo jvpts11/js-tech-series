@@ -287,6 +287,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `ExpansionCardKind` is `(id, machines, refusal)`: `onlyIn(refusal, machines...)` makes a kind for its machines alone
   and `fitsIn(machine)` asks it, the plain `new ExpansionCardKind(id)` going in any computer.
   `IExpansionCardSpec.controlPorts()` is how many machines a card reads on the industrial control cable.
+- (Computers) The plug of a card that reads machines: J's Computers' API stays at version 8.
+  `IExpansionCardSpec.controlPlug()` names the connector the industrial control cable plugs into on the card, and a
+  computer with such a card is a device whose port takes the cable's plug of that kind.
+- (Core) The pages of another mod's things: J's Core's API stays at version 12. `GuideEntry.aboutAbsentItems(present)`
+  says whether an entry is the page of items the game has none of, which the manuals leave out.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1760,6 +1765,19 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   machine's reason.
 - (Industrial) Tanks read from outside: the tank and the tanks of a size the player chooses say what they hold, and a
   gas tank its pressure, to a controller on the industrial control cable.
+- (Industrial) With J's Computers installed, the Industrial Controller Computer: one in each case J's Computers ships
+  (the Vintage, the Legacy and the Transition, and the Standard and the Advanced in their Neutral, High Performance
+  and Aesthetic cases), built as a Personal Computer of its era and drawn with a plant's control panel under its
+  front, its RUN, BUS and FAULT lamps, its LOCAL/REMOTE key and its terminal strip. It is a machine of its own, the
+  Industrial Controller, and only the Fieldbus Cards go in it: RS-485 for the Vintage on ISA, PROFIBUS for the Legacy
+  and PROFINET for the Transition on PCI, EtherNet/IP for the Standard and EtherCAT for the Advanced on PCIe, reading 2,
+  4, 6, 8 and 12 machines, each drawn in its slot with its bus's connectors. The Industrial Control Cable, violet in
+  the bottom left lane of the series' cable block, links it the machines it reaches, the nearest first, up to eight
+  blocks of cable away; it ends in the plug of the card's connector at the controller and in an M12 at a machine.
+  The Plant Drawings have a Control section with their pages. Without J's Computers none of them exist, and the mod
+  is the same.
+- (Core) A manual leaves out the page of things the game has none of, such as what a mod brings with another mod that
+  is not installed.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

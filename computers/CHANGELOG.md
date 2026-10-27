@@ -50,6 +50,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `ExpansionCardKind` is `(id, machines, refusal)`: `onlyIn(refusal, machines...)` makes a kind for its machines alone
   and `fitsIn(machine)` asks it, the plain `new ExpansionCardKind(id)` going in any computer.
   `IExpansionCardSpec.controlPorts()` is how many machines a card reads on the industrial control cable.
+- The plug of a card that reads machines: J's Computers' API stays at version 8.
+  `IExpansionCardSpec.controlPlug()` names the connector the industrial control cable plugs into on the card, and a
+  computer with such a card is a device whose port takes the cable's plug of that kind.
 
 ### Added
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware

@@ -10,6 +10,7 @@ package dev.jstech.core.guide;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * One entry of a manual: a thing a player can look up, such as a machine, a part or an idea, with its blocks.
@@ -65,6 +66,17 @@ public record GuideEntry(String id, String section, int order, String titleKey, 
     /** The mod the entry belongs to: the namespace of its id. */
     public String namespace() {
         return GuideIds.namespace(this.id);
+    }
+
+    /**
+     * Whether it is the page of items only, none of them one the game has: the page of what a mod brings with another
+     * mod installed, read in a game without that other mod, which the manuals leave out. An entry that is the page of
+     * no item, an idea, is always kept.
+     *
+     * @param present whether the game has the item of that id
+     */
+    public boolean aboutAbsentItems(final Predicate<String> present) {
+        return !this.items.isEmpty() && this.items.stream().noneMatch(present);
     }
 
     /** The words the entry explains, in the order it explains them, which the index lists as the glossary. */
