@@ -12,6 +12,8 @@ import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.datagen.JsSpaceDataGenerators;
 import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.guide.MissionHandbook;
+import dev.jstech.space.universe.StarSystems;
+import dev.jstech.space.universe.SystemSpaces;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -35,6 +37,10 @@ public final class JsSpace {
         MissionHandbook.declare();
         // The firsts of spaceflight a team reaches, which any mod reads and the advancements of the same firsts follow.
         SpaceMilestones.declare();
+        // The star systems of the three galaxies, and the template every system's space is made from on its first
+        // visit.
+        StarSystems.declare();
+        SystemSpaces.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

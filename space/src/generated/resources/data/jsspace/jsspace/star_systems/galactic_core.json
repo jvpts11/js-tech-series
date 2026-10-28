@@ -1,0 +1,6 @@
+{
+  "galaxy": "milky_way",
+  "light_years": 26000.0,
+  "name": "jsspace.star_system.galactic_core",
+  "star": "jsspace.star_system.galactic_core.star"
+}

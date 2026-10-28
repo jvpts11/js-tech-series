@@ -41,6 +41,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Its advancement tabs, on the night sky: Leaving the Earth, which opens with a player's first rocket; The
   Moon, as they first see the Earth rise over it; and Mars, as they first land there. Each shows its world's picture
   on its tab; their advancements follow with what earns them.
+- The universe: twenty-six star systems in three galaxies, eighteen in the Milky Way, real stars at their real
+  distances from the Sun, five in Andromeda and three in Triangulum, each with its name and what shines at its heart,
+  in English and Brazilian Portuguese. They are written to `data/<namespace>/jsspace/star_systems/`, so a data pack
+  changes one or adds its own. Every system has a space of its own, a dimension made the first time someone gets
+  there and kept with the world: empty, vacuum and with no gravity, by its rules.
 
 ## [0.5.2a] - 2026-10-14
 
