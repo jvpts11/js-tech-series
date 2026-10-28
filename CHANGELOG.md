@@ -317,6 +317,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) The tabs of its advancements: J's Space's API is at version 2. `SpaceAdvancementTab` names the three
   tabs, `LEAVING_THE_EARTH`, `THE_MOON` and `MARS`, with each one's root, which an add-on hangs its own advancements
   under. Experimental.
+- (Space) The world model: J's Space's API is at version 3. `SpaceWorld` is a world's data (its name, its system,
+  its dimension, the generator that shaped its ground, the modifiers laid over it and its width), `SpaceWorlds` the
+  worlds by id, declared in code or written by a data pack under `data/<namespace>/jsspace/worlds/`, and
+  `WorldGenerators` and `WorldModifiers` the processes that shape them, each `IWorldGenerator` giving a world's ground
+  as a density function and its surface as rules, each `IWorldModifier` laid over them. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1875,6 +1880,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   in English and Brazilian Portuguese. They are written to `data/<namespace>/jsspace/star_systems/`, so a data pack
   changes one or adds its own. Every system has a space of its own, a dimension made the first time someone gets
   there and kept with the world: empty, vacuum and with no gravity, by its rules.
+- (Space) The worlds of the skeleton: the Overworld, the Moon and Mars, each a world of the Solar System made of its
+  generator, its modifiers and its data, at their real widths. The Moon pulls a sixth as hard as the Overworld, has no
+  air and a day as long as a month, about ten real hours; Mars pulls two fifths as hard, has a thin air of carbon
+  dioxide, a sol barely longer than the Overworld's day and a year of thirteen sols.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

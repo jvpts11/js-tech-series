@@ -119,6 +119,8 @@ public final class JsTests {
         TestNetworkMembers.declare(modEventBus);
         // An era between two of the series', an axis, milestones and knowledge, to prove the Core's progression.
         TestProgression.declare();
+        // A world of its own with a generator and two modifiers, to prove J's Space's world model.
+        TestSpaceWorlds.declare();
         // A kind of data and discoveries, one locked behind another, to prove the Core's research.
         TestResearch.declare();
         // Discoveries for J's Industrial's research computer to work.

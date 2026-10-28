@@ -5,6 +5,12 @@
 # it meets the bar docs/API.md sets for a stable part. Kept by the API surface test,
 # which writes to build/api-photo what this file would have to say when the API changes.
 stable 0
+3 dev.jstech.space.api.IWorldGenerator  type interface
+3 dev.jstech.space.api.IWorldGenerator  abstract DensityFunction ground(SpaceWorld, HolderGetter<NormalNoise.NoiseParameters>, HolderGetter<DensityFunction>)
+3 dev.jstech.space.api.IWorldGenerator  abstract SurfaceRules.RuleSource surface(SpaceWorld)
+3 dev.jstech.space.api.IWorldModifier  type interface
+3 dev.jstech.space.api.IWorldModifier  default DensityFunction ground(SpaceWorld, DensityFunction, HolderGetter<NormalNoise.NoiseParameters>, HolderGetter<DensityFunction>)
+3 dev.jstech.space.api.IWorldModifier  default SurfaceRules.RuleSource surface(SpaceWorld, SurfaceRules.RuleSource)
 1 dev.jstech.space.api.JsSpaceApi  type final class
 1 dev.jstech.space.api.JsSpaceApi  static final int VERSION
 2 dev.jstech.space.api.SpaceAdvancementTab  type enum
@@ -14,3 +20,19 @@ stable 0
 2 dev.jstech.space.api.SpaceAdvancementTab  ResourceLocation root()
 2 dev.jstech.space.api.SpaceAdvancementTab  String path()
 2 dev.jstech.space.api.SpaceAdvancementTab  THE_MOON
+3 dev.jstech.space.api.SpaceWorld  type record(String name, ResourceLocation system, ResourceKey<Level> dimension, Optional<ResourceLocation> generator, List<ResourceLocation> modifiers, double diameter)
+3 dev.jstech.space.api.SpaceWorld  static final Codec<SpaceWorld> CODEC
+3 dev.jstech.space.api.SpaceWorlds  type final class
+3 dev.jstech.space.api.SpaceWorlds  static Map<ResourceLocation, SpaceWorld> all(Level)
+3 dev.jstech.space.api.SpaceWorlds  static Map<ResourceLocation, SpaceWorld> declared()
+3 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> get(Level, ResourceLocation)
+3 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> ofDimension(Level, ResourceKey<Level>)
+3 dev.jstech.space.api.SpaceWorlds  static SpaceWorld declare(ResourceLocation, SpaceWorld)
+3 dev.jstech.space.api.WorldGenerators  type final class
+3 dev.jstech.space.api.WorldGenerators  static Map<ResourceLocation, IWorldGenerator> all()
+3 dev.jstech.space.api.WorldGenerators  static Optional<IWorldGenerator> get(ResourceLocation)
+3 dev.jstech.space.api.WorldGenerators  static void register(ResourceLocation, IWorldGenerator)
+3 dev.jstech.space.api.WorldModifiers  type final class
+3 dev.jstech.space.api.WorldModifiers  static Map<ResourceLocation, IWorldModifier> all()
+3 dev.jstech.space.api.WorldModifiers  static Optional<IWorldModifier> get(ResourceLocation)
+3 dev.jstech.space.api.WorldModifiers  static void register(ResourceLocation, IWorldModifier)

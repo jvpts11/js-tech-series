@@ -11,8 +11,8 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 
 /**
- * The names of the universe, each declared once and translated once: the three galaxies, every star system, and what
- * shines at the heart of each, as the astronomers describe it.
+ * The names of the universe, each declared once and translated once: the three galaxies, every star system, what
+ * shines at the heart of each, as the astronomers describe it, and the worlds.
  */
 @TextHolder
 public final class UniverseTexts {
@@ -84,6 +84,10 @@ public final class UniverseTexts {
     public static final TextKey ITHEL_STAR = TextKey.of("jsspace.star_system.ithel.star", "a carbon star");
     public static final TextKey SOLUM_CADENS = TextKey.of("jsspace.star_system.solum_cadens", "Solum Cadens");
     public static final TextKey SOLUM_CADENS_STAR = TextKey.of("jsspace.star_system.solum_cadens.star", "two stars");
+
+    public static final TextKey OVERWORLD_WORLD = TextKey.of("jsspace.world.overworld", "The Overworld");
+    public static final TextKey MOON_WORLD = TextKey.of("jsspace.world.moon", "The Moon");
+    public static final TextKey MARS_WORLD = TextKey.of("jsspace.world.mars", "Mars");
 
     private UniverseTexts() {
     }

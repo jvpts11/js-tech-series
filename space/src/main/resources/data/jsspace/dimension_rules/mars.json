@@ -1,0 +1,15 @@
+{
+  "gravity": 0.38,
+  "temperature": -63,
+  "weather": "clear",
+  "pressure": 0.6,
+  "clock": {
+    "day": 24660,
+    "year": 13
+  },
+  "air": {
+    "jscore:carbon_dioxide": 0.95,
+    "jscore:nitrogen": 0.03,
+    "jscore:argon": 0.02
+  }
+}

@@ -11,6 +11,8 @@ import dev.jstech.core.datagen.ContentData;
 import dev.jstech.core.datagen.DeclaredFilesProvider;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
+import dev.jstech.space.api.SpaceWorld;
+import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.datagen.advancement.SpaceAdvancementTabs;
 import dev.jstech.space.universe.StarSystem;
 import dev.jstech.space.universe.StarSystems;
@@ -42,6 +44,8 @@ public final class JsSpaceDataGenerators {
                 List.<AdvancementProvider.AdvancementGenerator>copyOf(SpaceAdvancementTabs.all())));
         data.server(new DeclaredFilesProvider<>(data.output(), JsSpace.MODID, "star_systems",
                 "jsspace/star_systems", StarSystem.CODEC, StarSystems::declared));
+        data.server(new DeclaredFilesProvider<>(data.output(), JsSpace.MODID, "worlds", "jsspace/worlds",
+                SpaceWorld.CODEC, SpaceWorlds::declared));
         data.check();
     }
 }

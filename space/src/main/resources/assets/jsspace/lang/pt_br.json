@@ -124,5 +124,8 @@
   "jsspace.star_system.ithel": "Ithel",
   "jsspace.star_system.ithel.star": "uma estrela de carbono",
   "jsspace.star_system.solum_cadens": "Solum Cadens",
-  "jsspace.star_system.solum_cadens.star": "duas estrelas"
+  "jsspace.star_system.solum_cadens.star": "duas estrelas",
+  "jsspace.world.overworld": "O Overworld",
+  "jsspace.world.moon": "A Lua",
+  "jsspace.world.mars": "Marte"
 }

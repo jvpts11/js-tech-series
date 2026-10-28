@@ -12,6 +12,7 @@ import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.datagen.JsSpaceDataGenerators;
 import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.guide.MissionHandbook;
+import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemSpaces;
 import net.neoforged.bus.api.IEventBus;
@@ -41,6 +42,8 @@ public final class JsSpace {
         // visit.
         StarSystems.declare();
         SystemSpaces.declare();
+        // The worlds the skeleton holds: the Overworld, the Moon and Mars, each its generator, modifiers and data.
+        SolarSystemWorlds.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

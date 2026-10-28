@@ -1,0 +1,10 @@
+{
+  "gravity": 0.165,
+  "breathable": false,
+  "temperature": -20,
+  "weather": "clear",
+  "pressure": 0,
+  "clock": {
+    "day": 708734
+  }
+}

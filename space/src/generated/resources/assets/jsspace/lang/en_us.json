@@ -124,5 +124,8 @@
   "jsspace.star_system.verath": "Verath",
   "jsspace.star_system.verath.star": "an ageing red giant",
   "jsspace.star_system.vorna": "Vorna",
-  "jsspace.star_system.vorna.star": "a subgiant poor in metals"
+  "jsspace.star_system.vorna.star": "a subgiant poor in metals",
+  "jsspace.world.mars": "Mars",
+  "jsspace.world.moon": "The Moon",
+  "jsspace.world.overworld": "The Overworld"
 }
