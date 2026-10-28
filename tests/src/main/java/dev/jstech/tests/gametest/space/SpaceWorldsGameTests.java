@@ -117,6 +117,14 @@ public final class SpaceWorldsGameTests {
                 "Mars' sky is butterscotch, with blue sunsets");
         helper.assertTrue(Math.abs(mars.suns().getFirst().distance() - MARS_FROM_THE_SUN) < CLOSE
                 && mars.suns().getFirst().apparentSize() < 1, "and its sun, farther, looks smaller");
+        // Both are round: the Sun's hour follows the longitude and its path leans with the latitude.
+        helper.assertTrue(moon.round() && mars.round(), "the Moon's and Mars' skies are a round world's");
+        helper.assertTrue(moon.stars().byDay() > 0, "the Moon's stars shine by day, there being no air");
+        // Phobos goes round the other way, rising in the west; Deimos and the Overworld are points of light.
+        helper.assertTrue(mars.bodies().size() == 3 && mars.bodies().getFirst().orbitDays() < 0
+                && mars.bodies().getFirst().texture().isPresent() && !mars.bodies().getFirst().point()
+                && mars.bodies().get(1).point() && mars.bodies().get(2).point(),
+                "Mars' sky holds Phobos, Deimos and the Overworld as an evening star: " + mars.bodies());
         final SkySpec space = Skies.of(ResourceKey.create(Registries.DIMENSION, SystemSpaces.TEMPLATE.id()));
         helper.assertTrue(space.skyColour().filter(colour -> colour == BLACK).isPresent(),
                 "every system's space is black, by its template");

@@ -83,11 +83,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   from where it stands: relief from their height maps, a soft line of dawn, a warm dusk and a glow of air on the limb
   where there is air, and the night side in the deep tone of its night. A planet's poles lie level and square to the
   Sun, so its equator runs under its orbit with the day towards the Sun and the night away from it, and it turns once
-  a day; the Moon keeps its near side to the Overworld a quarter round from the Sun, so each sees the other half lit.
+  a day; the Moon keeps its near side to the Overworld a quarter round from the Sun, so it sees the Overworld half lit
+  and the Overworld sees it gibbous.
   The Overworld is never the Earth: its continents, biomes, mountain ranges and polar caps come from the world's seed,
   of which the server sends only a number made from it, and the game's own clouds wrap round it in bands that drift at
   their own pace, with their shadows on the ground. The Sun is the game's square, as big as in the Overworld's sky,
   and the stars shine by day, crowding along the Milky Way.
+- The skies seen from the ground: the Overworld stands still in the Moon's sky, high in the north over the
+  middle of the Moon's map, lower the farther one goes, on the horizon a quarter of the way round and hidden on the
+  far side, the same sphere as in space, its phases following the Moon's hour, its texels as wide as the game's
+  moon's; the Sun's hour follows the longitude on the Moon and on Mars; the Moon's sky is black, its stars shining by
+  day; in Mars' butterscotch sky Phobos rises in the west and crosses it twice a sol, Deimos is a slow point of light
+  and the Overworld an evening star beside the Sun.
 
 ## [0.5.2a] - 2026-10-14
 

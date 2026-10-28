@@ -26,7 +26,7 @@ import net.minecraft.world.level.block.Blocks;
  * The Solar System's space on a player's game, read from the picture: over the Overworld's day side the ground below is
  * lit, over its night side it is the deep blue of its night and not the black of space, and straight over its middle
  * the line of dawn runs below, day towards the Sun and night away from it; the Sun is the game's bright square where it
- * stands; the Moon, a quarter round from the Sun, is lit on its sunward half only; a block in space stands in full
+ * stands; the Moon is lit on its side towards the Sun and dark away from it; a block in space stands in full
  * daylight; and over Mars the ground is red.
  */
 public final class SystemSpaceClientTests {
@@ -41,7 +41,14 @@ public final class SystemSpaceClientTests {
     /* Where the screen is read, in the GUI's points from its middle: clear of the crosshair, and to either side. */
     private static final int OFF_CROSSHAIR = 12;
     private static final int WIDE = 100;
-    private static final int MOON_SIDE = 10;
+    /*
+     * The Moon is about eight points round from the Overworld's orbit and seen gibbous, its dark part a crescent on the
+     * side away from the Sun: read half way out on the lit side and near the edge on the dark, just under the
+     * crosshair.
+     */
+    private static final int MOON_LIT = 4;
+    private static final int MOON_DARK = -7;
+    private static final int MOON_DOWN = 3;
     /* The sum of red, green and blue over which a pixel is lit, under which it is night. */
     private static final int LIT = 120;
     private static final int DARK = 45;
@@ -112,10 +119,10 @@ public final class SystemSpaceClientTests {
                 })
                 .then(SETTLE, () -> {
                     // Looking south, the west and the Sun are on the right.
-                    final int lit = bright(ctx, MOON_SIDE, 0);
-                    final int dark = bright(ctx, -MOON_SIDE, 0);
-                    ctx.assertTrue(lit > LIT && dark < DARK, "the Moon, a quarter round from the Sun, is half lit: "
-                            + lit + " against " + dark);
+                    final int lit = bright(ctx, MOON_LIT, MOON_DOWN);
+                    final int dark = bright(ctx, MOON_DARK, MOON_DOWN);
+                    ctx.assertTrue(lit > LIT && dark < DARK, "the Moon is lit on its side towards the Sun and dark"
+                            + " away from it: " + lit + " against " + dark);
                 })
                 .thenScreenshot(0, "moon_quarter")
                 .thenServer(0, level -> {

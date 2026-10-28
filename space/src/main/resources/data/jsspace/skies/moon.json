@@ -4,7 +4,8 @@
   "suns": [
     {"kind": "g", "distance": 1.0}
   ],
-  "stars": {"count": 3000, "brightness": 1.6},
-  "galaxy": {"colour": "#C8CCD8", "brightness": 0.35, "tilt": 60},
-  "clouds": {"height": 320, "colour": "#FFFFFF", "density": 0}
+  "stars": {"count": 3000, "brightness": 1.6, "by_day": 0.75},
+  "galaxy": {"colour": "#C8CCD8", "brightness": 0.0, "tilt": 60},
+  "clouds": {"height": 320, "colour": "#FFFFFF", "density": 0},
+  "round": true
 }

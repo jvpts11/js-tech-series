@@ -67,6 +67,48 @@ class SkyMathTest {
     }
 
     @Test
+    void drift_goesTheOtherWayForAnOrbitBelowZero() {
+        assertEquals(0.25, SkyMath.drift(0.75, -2, 1), CLOSE, "half its orbit back in half its days");
+    }
+
+    @Test
+    void longitudeAndLatitude_spanTheBorderOnceRoundAndPoleToPole() {
+        assertEquals(0.5, SkyMath.longitude(500, 0, 1_000), CLOSE, "the east edge is half round");
+        assertEquals(-0.25, SkyMath.longitude(-250, 0, 1_000), CLOSE);
+        assertEquals(90, SkyMath.latitude(-250, 0, 1_000), CLOSE, "the north edge is the north pole");
+        assertEquals(-45, SkyMath.latitude(125, 0, 1_000), CLOSE);
+        assertEquals(-90, SkyMath.latitude(400, 0, 1_000), CLOSE, "past the pole is still the pole");
+    }
+
+    @Test
+    void localTime_isLaterTheFartherEast() {
+        assertEquals(SkyMath.celestial(18_000L), SkyMath.celestial(SkyMath.localTime(6_000, 0.5)), CLOSE,
+                "half round from noon is midnight");
+        assertEquals(SkyMath.celestial(6_000L), SkyMath.celestial(6_000.0), CLOSE);
+    }
+
+    @Test
+    void sky_leansTheNoonSunSouthByTheLatitude() {
+        final double[] equator = SkyMath.sky(0, 0);
+        assertEquals(1, equator[1], CLOSE, "at the equator the noon sun is overhead");
+        final double[] north = SkyMath.sky(0, 60);
+        assertEquals(0.5, north[1], CLOSE, "sixty degrees north it stands thirty degrees high");
+        assertTrue(north[2] > 0, "towards the south");
+        assertEquals(-1, SkyMath.sky(0.25, 30)[0], CLOSE, "it sets in the west at any latitude");
+        assertEquals(north[1], SkyMath.sunHeight(0, 60), CLOSE);
+        assertEquals(0, SkyMath.sunHeight(0, 90), CLOSE, "at the pole it circles the horizon");
+    }
+
+    @Test
+    void dayLightAndStarlight_matchTheGamesAtTheEquator() {
+        assertEquals(1, SkyMath.dayLight(1, 0, 0), CLOSE, "noon is full light");
+        assertEquals(0.2, SkyMath.dayLight(-1, 0, 0), CLOSE, "midnight is the game's night");
+        assertEquals(0.2 + 0.8 * 11 / 16.0, SkyMath.dayLight(1, 1, 0), CLOSE, "rain darkens by five sixteenths");
+        assertEquals(0.5, SkyMath.starlight(-1), CLOSE, "the stars at midnight");
+        assertEquals(0, SkyMath.starlight(0.5), CLOSE, "none by day");
+    }
+
+    @Test
     void eclipseLight_leavesTheCoronaAtTotality() {
         assertEquals(1, SkyMath.eclipseLight(0), CLOSE);
         assertEquals(SkyMath.TOTALITY, SkyMath.eclipseLight(1), CLOSE);

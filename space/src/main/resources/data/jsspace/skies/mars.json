@@ -5,7 +5,14 @@
   "suns": [
     {"kind": "g", "distance": 1.52}
   ],
+  "bodies": [
+    {"texture": "jsspace:textures/environment/world/phobos.png", "size": 0.13, "squash": 0.81,
+     "orbit_days": -0.319, "offset": 0.3, "tilt": 1.1},
+    {"point": true, "colour": "#D2CCBE", "size": 0.015, "orbit_days": -1.262, "offset": 0.62, "tilt": 1.8},
+    {"point": true, "colour": "#8CB8FF", "size": 0.02, "offset": -0.07}
+  ],
   "stars": {"count": 1500, "brightness": 0.8},
   "clouds": {"height": 220, "colour": "#E8D2B8", "density": 0.08},
-  "haze": {"colour": "#C08A60", "density": 0.3}
+  "haze": {"colour": "#C08A60", "density": 0.3},
+  "round": true
 }

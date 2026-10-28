@@ -25,6 +25,8 @@ uniform int HasDusk;
 uniform vec3 Air;
 uniform float AirThickness;
 uniform int HasClouds;
+// The fewest pixels a texel is drawn across: a world far off in a sky keeps texels as wide as a vanilla moon's.
+uniform float TexelPixels;
 
 in vec3 worldPos;
 
@@ -78,7 +80,7 @@ void main() {
     vec2 dx = vec2(seamless(dFdx(uv.x), dFdx(turned.x)), dFdx(uv.y));
     vec2 dy = vec2(seamless(dFdy(uv.x), dFdy(turned.x)), dFdy(uv.y));
     vec2 size = vec2(textureSize(Sampler0, 0));
-    float lod = max(0.0, log2(max(length(dx * size), length(dy * size))) + 0.5);
+    float lod = max(0.0, log2(max(length(dx * size), length(dy * size)) * TexelPixels) + 0.5);
 
     if (apart >= Radius || along <= 0.0) {
         // Past the limb: the air seen edge-on, a glow fading outwards, bright where the sun lights it.

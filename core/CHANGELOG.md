@@ -1652,6 +1652,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The sky kit: a sky's stars may shine by day, as in a sky with no air, at a share of how bright they are at
   midnight (`"by_day": 0.75`), and a sun may light the day and tint it while the mod that declared it draws it where
   it stands (`"drawn": false`).
+- The sky of a round world (`"round": true`): its border from west to east goes once round it and from north
+  to south from pole to pole, so the sun's hour follows the longitude, later the farther east, and the sky's pole
+  stands as high as the latitude, the sun climbing less the nearer the poles; the day's light, the stars, the fog and
+  the clouds follow the hour where the player stands, and `SkyPlace` gives it to a mod. A body may go round the other
+  way, as Phobos rises in the west, be squashed into a lump, or show as a point of light, as a far planet does.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -1767,6 +1772,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A player in a dimension that keeps its own border is told that border, where the game told them the
+  overworld's.
 - The band of the galaxy in a sky drawn by the Core fades towards both its edges; half of it went undrawn,
   leaving a hard edge along its middle.
 - A tall stack of moving structures set down touching stands still and is heard striking nothing, its

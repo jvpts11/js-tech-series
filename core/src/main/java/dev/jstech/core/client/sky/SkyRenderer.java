@@ -88,10 +88,12 @@ final class SkyRenderer {
         }
         final PoseStack pose = new PoseStack();
         pose.mulPose(modelView);
-        final float celestial = level.getTimeOfDay(partialTick);
-        final float daylight = SkySight.daylight(celestial);
+        // The hour and the sky's lean where the camera is: the clock's, or on a round world the place's own.
+        final SkyPlace place = SkyPlace.of(level, sky);
+        final float celestial = (float) place.celestial();
+        final float daylight = place.skyLight();
         final float light = (float) (Math.min(1.0, SkySight.sunlight(sky)) * SkySight.eclipseLight(level, sky,
-                partialTick));
+                place.celestial()));
         final Vec3 colour = sky.skyColour().map(c -> SkySight.shown(c, daylight))
                 .orElseGet(() -> level.getSkyColor(camera.getPosition(), partialTick)).scale(light);
         FogRenderer.levelFogColor();
@@ -107,11 +109,12 @@ final class SkyRenderer {
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         final float clear = 1.0F - level.getRainLevel(partialTick);
         pose.pushPose();
+        // The sky's pole stands as high over the north as the place's latitude.
+        pose.mulPose(Axis.XP.rotationDegrees((float) place.latitude()));
         pose.mulPose(Axis.YP.rotationDegrees(-90.0F));
         pose.pushPose();
         pose.mulPose(Axis.XP.rotationDegrees(celestial * 360.0F));
-        final float night = Math.max(level.getStarBrightness(partialTick),
-                (float) sky.stars().byDay() * MIDNIGHT_STARS) * clear;
+        final float night = Math.max(place.starlight(), (float) sky.stars().byDay() * MIDNIGHT_STARS) * clear;
         if (night > 0) {
             FogRenderer.setupNoFog();
             starField(sky, pose, projection, (float) (night * sky.stars().brightness()));
@@ -127,7 +130,7 @@ final class SkyRenderer {
                 sun(sun, pose, celestial, clear);
             }
         }
-        SkyBodies.render(level, sky, pose, celestial, colour, clear);
+        SkyBodies.render(level, sky, pose, celestial, colour, clear, night);
         pose.popPose();
         sky.aurora().ifPresent(aurora -> aurora(aurora, pose, ticks + partialTick, night * 2F));
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -175,7 +178,7 @@ final class SkyRenderer {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         pose.pushPose();
         pose.mulPose(Axis.XP.rotationDegrees(90.0F));
-        pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin(level.getSunAngle(partialTick)) < 0.0F ? 180.0F : 0.0F));
+        pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin(celestial * Mth.TWO_PI) < 0.0F ? 180.0F : 0.0F));
         pose.mulPose(Axis.ZP.rotationDegrees(90.0F));
         final Matrix4f matrix = pose.last().pose();
         final BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_FAN,

@@ -17,12 +17,15 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import net.minecraft.network.protocol.game.ClientboundInitializeBorderPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -74,6 +77,11 @@ public final class DimensionBorders {
                 holdInside(player);
             }
         });
+        // The game tells a player the overworld's border wherever they arrive; one arriving in a dimension that keeps
+        // its own is told that one, after.
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerChangedDimensionEvent.class, event -> tell(event.getEntity()));
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, event -> tell(event.getEntity()));
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerRespawnEvent.class, event -> tell(event.getEntity()));
     }
 
     /**
@@ -105,7 +113,15 @@ public final class DimensionBorders {
             OWNED.add(border);
             border.setCenter((bounds.minX() + bounds.maxX()) / 2, (bounds.minZ() + bounds.maxZ()) / 2);
             border.setSize(Math.max(bounds.maxX() - bounds.minX(), bounds.maxZ() - bounds.minZ()));
+            level.players().forEach(DimensionBorders::tell);
         });
+    }
+
+    /* Tells {@code player} the border of the dimension they stand in, when it keeps its own. */
+    private static void tell(final Player player) {
+        if (player instanceof ServerPlayer server && of(server.serverLevel()).isPresent()) {
+            server.connection.send(new ClientboundInitializeBorderPacket(server.serverLevel().getWorldBorder()));
+        }
     }
 
     /* A player past a north or south end is put back inside it, at a stop. */

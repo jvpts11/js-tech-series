@@ -47,7 +47,7 @@ public final class SkyClient {
             return;
         }
         final SkySpec sky = Skies.of(level);
-        final float daylight = SkySight.daylight(level.getTimeOfDay((float) event.getPartialTick()));
+        final float daylight = SkyPlace.of(level, sky).skyLight();
         sky.fogColour().ifPresent(colour -> {
             final float[] rgb = SkyRenderer.rgb(colour);
             event.setRed(rgb[0] * daylight);

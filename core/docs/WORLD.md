@@ -900,7 +900,8 @@ DimensionBorders.fix(level, new DimensionBorders.Bounds(-8_000_000, 8_000_000, -
 The first bounds given are kept; giving others later changes nothing. The game's own border is set across their
 width, so its wall, collision and warning stand at the west and east ends, and the Core holds players inside the
 north and south ends, which may be nearer, as a round world's poles are. A change to the overworld's border, by a
-command or another mod, no longer reaches the dimension.
+command or another mod, no longer reaches the dimension. A player arriving in it, joining in it or coming back to life
+in it is told its own border, where the game tells every player the overworld's.
 
 ### Where the dead come back
 
@@ -982,7 +983,14 @@ template's:
 - **Planets and moons**, spheres lit from where the first sun stands, so their phases come of the geometry, their
   surface (a map of the whole of it, pole to pole) wrapped round them and turning once in `turn_days`, coming round
   to the sun again in `orbit_days`; their dark side is the colour of the sky behind, and one passing over a sun
-  eclipses it, the day darkening to a tenth at totality.
+  eclipses it, the day darkening to a tenth at totality. An `orbit_days` below 0 goes round the other way, as Phobos
+  rises in the west; `"squash": 0.8` makes a lump's disc shorter than it is wide; and `"point": true` shows a body too
+  far off for a disc as a point of its colour, as a planet shows, brighter than the stars and only when they shine.
+- **A round world** (`"round": true`): the border from west to east goes once round it and from north to south from
+  pole to pole ([A dimension's own border](#a-dimensions-own-border)), so the sun's hour follows the longitude, later
+  the farther east, and the sky's pole stands as high over the north as the latitude, the sun climbing less the nearer
+  the poles. The day's light, the stars, the fog and the clouds follow the hour where the player stands;
+  `SkyPlace.of(level, sky)` gives a mod that hour and where a sun lies.
 - **Stars**, square as the game's, **the band of the galaxy**, **nebulae** and **an aurora** over the north at night;
   `"stars": { "by_day": 0.75 }` lights the stars, the galaxy and the nebulae by day as well, at that share of how
   bright they are at midnight, for a sky with no air.

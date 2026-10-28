@@ -42,6 +42,8 @@ final class SkyBodies {
     private static final int SEGMENTS = 32;
     private static final int RING_SEGMENTS = 64;
     private static final float AMBIENT = 0.03F;
+    /* How bright a point shines beside the stars: twice, as a planet outshines them. */
+    private static final float POINT_SHINE = 2.0F;
     /* How quickly a face turned towards the sun goes solid: a soft terminator, then the whole surface. */
     private static final double TERMINATOR = 3.0;
     /* The ring's bands, from its inner edge out: how much of its colour each holds. */
@@ -51,9 +53,12 @@ final class SkyBodies {
     private SkyBodies() {
     }
 
-    /** Draws every body of {@code sky}, the sky's own colour behind them being {@code skyColour}. */
+    /**
+     * Draws every body of {@code sky}, the sky's own colour behind them being {@code skyColour}, the points among them
+     * as bright as the stars are, {@code night}.
+     */
     static void render(final ClientLevel level, final SkySpec sky, final PoseStack pose, final float celestial,
-                       final Vec3 skyColour, final float clear) {
+                       final Vec3 skyColour, final float clear, final float night) {
         if (sky.bodies().isEmpty()) {
             return;
         }
@@ -65,16 +70,43 @@ final class SkyBodies {
             pose.pushPose();
             pose.mulPose(Axis.ZP.rotationDegrees((float) body.tilt()));
             pose.mulPose(Axis.XP.rotationDegrees((float) (turns * 360.0)));
+            // A lump's disc is shorter than it is wide; it is lit as the sphere it is drawn over.
+            pose.scale(1.0F, 1.0F, (float) body.squash());
             final Matrix4f matrix = pose.last().pose();
             final float half = (float) (MOON_HALF * body.size());
-            body.rings().ifPresent(rings -> rings(matrix, rings, half, false, clear));
-            base(matrix, half, skyColour);
-            lit(matrix, body, half, sun, turns, SkyMath.turned(body.turnDays(), days), clear);
-            body.rings().ifPresent(rings -> rings(matrix, rings, half, true, clear));
+            if (body.point()) {
+                point(matrix, body, half, night);
+            } else {
+                body.rings().ifPresent(rings -> rings(matrix, rings, half, false, clear));
+                base(matrix, half, skyColour);
+                lit(matrix, body, half, sun, turns, SkyMath.turned(body.turnDays(), days), clear);
+                body.rings().ifPresent(rings -> rings(matrix, rings, half, true, clear));
+            }
             pose.popPose();
         }
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+    }
+
+    /* A body too far to show a disc: a square of its colour, added to the sky as a star is, as bright as they are. */
+    private static void point(final Matrix4f matrix, final SkySpec.Body body, final float half, final float night) {
+        if (night <= 0) {
+            return;
+        }
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        final float[] colour = SkyRenderer.rgb(body.colour());
+        final float shine = Math.min(1F, night * POINT_SHINE);
+        final BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS,
+                DefaultVertexFormat.POSITION_COLOR);
+        builder.addVertex(matrix, -half, DISTANCE, -half).setColor(colour[0], colour[1], colour[2], shine);
+        builder.addVertex(matrix, half, DISTANCE, -half).setColor(colour[0], colour[1], colour[2], shine);
+        builder.addVertex(matrix, half, DISTANCE, half).setColor(colour[0], colour[1], colour[2], shine);
+        builder.addVertex(matrix, -half, DISTANCE, half).setColor(colour[0], colour[1], colour[2], shine);
+        RenderSystem.disableCull();
+        SkyRenderer.drawNow(builder);
+        RenderSystem.enableCull();
     }
 
     /* The body's whole disc in the colour of the sky behind: its dark side, hiding what lies beyond. */

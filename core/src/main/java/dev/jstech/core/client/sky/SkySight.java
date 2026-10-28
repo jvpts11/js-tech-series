@@ -28,22 +28,36 @@ public final class SkySight {
     private static final int GREEN_SHIFT = 8;
     private static final int BYTE = 0xFF;
     private static final int LIGHT_LEVELS = 15;
+    /* How the game builds the sky's light in its light map: a level's brightness times the darkening kept almost
+     * whole, its red and green the darkening drawn a third of the way to white, the whole drawn a little to grey. */
+    private static final float SKY_KEEP = 0.95F;
+    private static final float SKY_FLOOR = 0.05F;
+    private static final float SKY_WHITE = 0.35F;
+    private static final float BLEND_KEEP = 0.96F;
 
     private SkySight() {
     }
 
-    /** How much of its day's light the sky shows now, eclipses taken in, 0 to 1. */
+    /** How much of its day's light the sky shows now where the camera is, eclipses taken in, 0 to 1. */
     public static double eclipseLight(final ClientLevel level, final SkySpec sky, final float partialTick) {
+        return eclipseLight(level, sky, SkyPlace.of(level, sky).celestial());
+    }
+
+    /** The same with the first sun {@code celestial} turns round the sky. */
+    public static double eclipseLight(final ClientLevel level, final SkySpec sky, final double celestial) {
         if (sky.suns().isEmpty() || sky.bodies().isEmpty()) {
             return 1;
         }
-        final double celestial = level.getTimeOfDay(partialTick);
         final double days = level.getDayTime() / SkyMath.DAY;
         double hidden = 0;
         for (final SkySpec.Sun sun : sky.suns()) {
             final double[] towards = SkyMath.direction(celestial + sun.offset(), 0);
             final double radius = SkyMath.sunRadius(sun.apparentSize());
             for (final SkySpec.Body body : sky.bodies()) {
+                if (body.point()) {
+                    // A point of light hides nothing of a sun.
+                    continue;
+                }
                 final double[] at = SkyMath.direction(celestial + SkyMath.drift(body.offset(), body.orbitDays(),
                         days), body.tilt());
                 hidden = Math.max(hidden, SkyMath.coverage(radius, SkyMath.bodyRadius(body.size()),
@@ -83,15 +97,6 @@ public final class SkySight {
         return new Vector3f(toward(red / most), toward(green / most), toward(blue / most));
     }
 
-    /**
-     * How light the sky is at {@code celestial} (the sun's turn round the sky), 0 at night to 1 at noon, as the game
-     * works out the colour of its sky.
-     */
-    public static float daylight(final float celestial) {
-        final float cos = (float) Math.cos(celestial * SkyMath.TURN) * 2.0F + 0.5F;
-        return Math.max(0F, Math.min(1F, cos));
-    }
-
     /** {@code colour} ({@code 0xRRGGBB}) as the sky shows it in {@code daylight}. */
     public static Vec3 shown(final int colour, final float daylight) {
         return new Vec3((colour >> RED_SHIFT & BYTE) / CHANNEL * daylight,
@@ -112,6 +117,25 @@ public final class SkySight {
                 colours.y * (1F - share + share * light * tint.y),
                 colours.z * (1F - share + share * light * tint.z));
         colours.set(Math.min(1F, colours.x), Math.min(1F, colours.y), Math.min(1F, colours.z));
+    }
+
+    /**
+     * Lights the sky's part of a light-map colour by the day's light at the place, {@code to}, where the game lit it
+     * by its clock's, {@code from}: the part the game adds for a level whose own brightness is {@code brightness},
+     * taken out as the game made it and put back as the place's.
+     */
+    public static void relight(final Vector3f colours, final float brightness, final float from, final float to) {
+        final float before = brightness * (from * SKY_KEEP + SKY_FLOOR);
+        final float after = brightness * (to * SKY_KEEP + SKY_FLOOR);
+        // The game takes the sky's colour from the darkening, bluer at night, and blends the whole a little to grey.
+        final float red = (sky(to) * after - sky(from) * before) * BLEND_KEEP;
+        final float blue = (after - before) * BLEND_KEEP;
+        colours.set(Math.max(0F, colours.x + red), Math.max(0F, colours.y + red), Math.max(0F, colours.z + blue));
+    }
+
+    /* The red and green of the game's sky light at a darkening, its blue being whole. */
+    private static float sky(final float darkening) {
+        return darkening + (1F - darkening) * SKY_WHITE;
     }
 
     /* A share of a sun's colour, taken {@link #TINT} of the way from white. */

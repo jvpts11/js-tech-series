@@ -41,10 +41,13 @@ import net.minecraft.resources.ResourceLocation;
  * @param aurora       the aurora over its north at night, if it has one
  * @param clouds       its clouds, if not the game's; a density of 0 for none at all
  * @param haze         the haze in its air, if any
+ * @param round        whether its world is round: its border from west to east goes once round it and from north to
+ *                     south from pole to pole, so the sun's hour follows the longitude and its path leans with the
+ *                     latitude, as on a real world
  */
 public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, Optional<Integer> sunsetColour,
                       List<Sun> suns, List<Body> bodies, Stars stars, Optional<Galaxy> galaxy, List<Nebula> nebulae,
-                      Optional<Aurora> aurora, Optional<Clouds> clouds, Optional<Haze> haze) {
+                      Optional<Aurora> aurora, Optional<Clouds> clouds, Optional<Haze> haze, boolean round) {
 
     /** The farthest a sun may be, in astronomical units, and the nearest. */
     public static final double FARTHEST = 1_000.0;
@@ -54,7 +57,7 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
     /** The overworld's sky: one yellow sun, its stars, and nothing else of the Core's. */
     public static final SkySpec DEFAULT = new SkySpec(Optional.empty(), Optional.empty(), Optional.empty(),
             List.of(Sun.OURS), List.of(), Stars.DEFAULT, Optional.empty(), List.of(), Optional.empty(),
-            Optional.empty(), Optional.empty());
+            Optional.empty(), Optional.empty(), false);
     public static final Codec<SkySpec> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             LightColours.COLOUR.optionalFieldOf("sky_colour").forGetter(SkySpec::skyColour),
             LightColours.COLOUR.optionalFieldOf("fog_colour").forGetter(SkySpec::fogColour),
@@ -66,7 +69,8 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
             Nebula.CODEC.listOf().optionalFieldOf("nebulae", List.of()).forGetter(SkySpec::nebulae),
             Aurora.CODEC.optionalFieldOf("aurora").forGetter(SkySpec::aurora),
             Clouds.CODEC.optionalFieldOf("clouds").forGetter(SkySpec::clouds),
-            Haze.CODEC.optionalFieldOf("haze").forGetter(SkySpec::haze))
+            Haze.CODEC.optionalFieldOf("haze").forGetter(SkySpec::haze),
+            Codec.BOOL.optionalFieldOf("round", false).forGetter(SkySpec::round))
             .apply(instance, SkySpec::new));
 
     public SkySpec {
@@ -105,29 +109,36 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
 
     /**
      * A planet or a moon in the sky: lit by the first sun from where it stands, so its phases follow, its surface
-     * turning, round the sky on its own path.
+     * turning, round the sky on its own path; or, too far to show a disc, a point of its colour shining as the stars
+     * do.
      *
      * @param texture   its surface, a map of the whole of it from pole to pole; none for a plain colour
      * @param colour    its colour, the surface's tint, or its whole colour with no surface
      * @param size      how large it looks beside the overworld's moon
-     * @param orbitDays how many days it takes to come round to the sun again; 0 to stay where it stands from it
+     * @param orbitDays how many days it takes to come round to the sun again; 0 to stay where it stands from it, and
+     *                  below 0 going round the other way, as a moon that rises in the west, Phobos, does
      * @param offset    where it stands from the first sun as the world begins, in turns
      * @param tilt      how far its path leans from the sun's, in degrees
      * @param turnDays  how many days its surface takes to turn once; 0 for a face it never turns
      * @param rings     its rings, if it has any
+     * @param point     whether it shows as a point of light, as a planet far off does, rather than a lit disc
+     * @param squash    how tall its disc is beside how wide, for a lump that is not round
      */
     public record Body(Optional<ResourceLocation> texture, int colour, double size, double orbitDays, double offset,
-                       double tilt, double turnDays, Optional<Rings> rings) {
+                       double tilt, double turnDays, Optional<Rings> rings, boolean point, double squash) {
 
         public static final Codec<Body> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ResourceLocation.CODEC.optionalFieldOf("texture").forGetter(Body::texture),
                 LightColours.COLOUR.optionalFieldOf("colour", 0xFFFFFF).forGetter(Body::colour),
                 Codec.doubleRange(0.01, LARGEST).optionalFieldOf("size", 1.0).forGetter(Body::size),
-                Codec.doubleRange(0, 1_000_000).optionalFieldOf("orbit_days", 0.0).forGetter(Body::orbitDays),
+                Codec.doubleRange(-1_000_000, 1_000_000).optionalFieldOf("orbit_days", 0.0)
+                        .forGetter(Body::orbitDays),
                 Codec.doubleRange(-1, 1).optionalFieldOf("offset", 0.5).forGetter(Body::offset),
                 Codec.doubleRange(-90, 90).optionalFieldOf("tilt", 0.0).forGetter(Body::tilt),
                 Codec.doubleRange(0, 1_000_000).optionalFieldOf("turn_days", 0.0).forGetter(Body::turnDays),
-                Rings.CODEC.optionalFieldOf("rings").forGetter(Body::rings))
+                Rings.CODEC.optionalFieldOf("rings").forGetter(Body::rings),
+                Codec.BOOL.optionalFieldOf("point", false).forGetter(Body::point),
+                Codec.doubleRange(0.1, 1).optionalFieldOf("squash", 1.0).forGetter(Body::squash))
                 .apply(instance, Body::new));
     }
 

@@ -13,9 +13,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Where the bodies of a system stand in its space, how big they are drawn and how they are turned. Each world keeps its
  * place there, so the stations, satellites and debris in its orbit stay over it: a planet stands where its orbit starts
- * as the world begins, and the Moon a quarter of the way round the Overworld from the Sun, so each is seen half lit
- * from the other. How the worlds go round their sun lives in their orbits, which give the launch windows and the
- * trips; the space only gives each its place.
+ * as the world begins, and the Moon a quarter of the way round the Overworld from the Sun, so from the Moon the
+ * Overworld is seen half lit and from the Overworld the Moon more than half. How the worlds go round their sun lives
+ * in their orbits, which give the launch windows and the trips; the space only gives each its place.
  *
  * <p>Distances are squeezed far more than sizes, so worlds look grand and journeys stay short: an astronomical unit is
  * 10,000 blocks, while the Overworld is a sphere 1,000 blocks in radius and every other world in proportion to its
@@ -24,11 +24,12 @@ import org.jetbrains.annotations.Nullable;
  * Overworld's middle. The Sun stands in the middle, level with the Overworld's middle, a sphere of 1,500 blocks: at the
  * Overworld's distance it looks as big as the game's own sun.
  *
- * <p>A planet's poles lie level and square to its sun, so its equator runs under the floor of stations with the line of
- * dawn across it: day on the side towards the Sun, night on the other. It turns east once a day about them, its map's
- * middle facing the Sun at its noon, the Overworld's by the Overworld's clock. The Moon keeps its near side to the
- * Overworld, so its poles stand up and down: over its north pole the Sun stays low and the Overworld rises over its
- * limb.
+ * <p>A planet's poles stand square to its sun, its north leaning half way up from the space's north, so the stations
+ * over it look on its middle latitudes with the line of dawn under them: day on the side towards the Sun, night on the
+ * other; and the Moon, beside the Overworld, looks on its other hemisphere. It turns east once a day about them, its
+ * map's middle facing the Sun at its noon, the Overworld's by the Overworld's clock. The Moon keeps its near side to the
+ * Overworld, which stands still a little north of its map's middle, so its poles stand nearly up and down: over its
+ * north the Sun stays low and the Overworld rises over its limb.
  *
  * <p>Directions are unit vectors of x, y and z. Every size and distance here is an estimate, set by playing. Pure: no
  * game types.
@@ -43,8 +44,21 @@ public final class SystemLayout {
     public static final double ORBIT_Y = 64;
     /** The Sun's radius, in blocks. */
     public static final double SUN_RADIUS = 1_500;
-    /** How far the Moon stands from the Overworld's middle, in blocks. */
-    public static final double MOON_DISTANCE = 3_000;
+    /**
+     * How far the Moon stands from the Overworld's middle, in blocks: so far that the Overworld looks from it about 18
+     * degrees wide, as the approved views of the Moon's sky and orbit draw it.
+     */
+    public static final double MOON_DISTANCE = 6_300;
+    /**
+     * How far north of the middle of the Moon's map the Overworld stands still in its sky, in degrees: off the Sun's
+     * path by more than the two together are wide, so it never hides the Sun.
+     */
+    public static final double OVERWORLD_OVER_THE_MOON = 20;
+    /*
+     * How far a planet's north pole leans up from the level, in degrees, square to the Sun all the while: so the
+     * stations over it look on its middle latitudes of the north and the Moon, beside it, on those of the south.
+     */
+    private static final double POLE_LEAN = 45;
     /* The tick of a world's noon, in its day. */
     private static final double NOON = 6_000;
     private static final double[] UP = {0, 1, 0};
@@ -64,7 +78,7 @@ public final class SystemLayout {
         if (orbit != null) {
             return new double[] {orbit.xAt(0), y, orbit.zAt(0)};
         }
-        // A quarter of the way round from the Sun, so the Moon and the Overworld each see the other half lit.
+        // A quarter of the way round from the Sun, so the Moon sees the Overworld half lit.
         final double[] home = centre(SolarBody.OVERWORLD);
         return new double[] {home[0], y, home[2] + MOON_DISTANCE};
     }
@@ -75,28 +89,35 @@ public final class SystemLayout {
     }
 
     /**
-     * Where {@code body}'s north pole points: for a planet level, square to the Sun and on the side of the space's
-     * north; for the Moon, up.
+     * Where {@code body}'s north pole points: for a planet square to the Sun, half way between the space's north and
+     * up; for the Moon nearly up, leaning so the Overworld stands {@link #OVERWORLD_OVER_THE_MOON} north of its map's
+     * middle.
      */
     public static double[] north(final SolarBody body) {
         if (body.dayTicks() <= 0) {
-            return UP.clone();
+            final double lean = Math.toRadians(OVERWORLD_OVER_THE_MOON);
+            final double[] home = homeward();
+            final double[] up = upright(home);
+            return add(home, Math.sin(lean), up, Math.cos(lean));
         }
         final double[] sunward = levelSunward(body);
-        // Of the two level directions square to the Sun, the one towards the space's north, which is -z.
-        final double[] north = {-sunward[2], 0, sunward[0]};
-        return north[2] <= 0 ? north : new double[] {-north[0], 0, -north[2]};
+        // Of the two level directions square to the Sun, the one towards the space's north, which is -z, leaned up.
+        final double[] level = {-sunward[2], 0, sunward[0]};
+        final double sign = level[2] <= 0 ? 1 : -1;
+        final double lean = Math.toRadians(POLE_LEAN);
+        return new double[] {sign * level[0] * Math.cos(lean), Math.sin(lean), sign * level[2] * Math.cos(lean)};
     }
 
     /**
      * Where the middle of {@code body}'s map (its longitude and latitude 0) faces at {@code tick}: a planet's the Sun
-     * at its noon, turning east once a day; the Moon's the Overworld, always.
+     * at its noon, turning east once a day; the Moon's always just south of the Overworld.
      */
     public static double[] middle(final SolarBody body, final long tick) {
         if (body.dayTicks() <= 0) {
-            final double[] home = centre(SolarBody.OVERWORLD);
-            final double[] moon = centre(body);
-            return unit(new double[] {home[0] - moon[0], 0, home[2] - moon[2]});
+            final double lean = Math.toRadians(OVERWORLD_OVER_THE_MOON);
+            final double[] home = homeward();
+            final double[] up = upright(home);
+            return add(home, Math.cos(lean), up, -Math.sin(lean));
         }
         final double[] sunward = levelSunward(body);
         final double[] east = cross(north(body), sunward);
@@ -129,6 +150,24 @@ public final class SystemLayout {
     /** {@code a} across {@code b}: square to both, by the right hand. */
     public static double[] cross(final double[] a, final double[] b) {
         return new double[] {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
+    }
+
+    /* The direction from the Moon's middle to the Overworld's. */
+    private static double[] homeward() {
+        final double[] home = centre(SolarBody.OVERWORLD);
+        final double[] moon = centre(SolarBody.MOON);
+        return unit(new double[] {home[0] - moon[0], home[1] - moon[1], home[2] - moon[2]});
+    }
+
+    /* Up, made square to {@code direction}. */
+    private static double[] upright(final double[] direction) {
+        final double along = UP[1] * direction[1];
+        return unit(new double[] {-along * direction[0], UP[1] - along * direction[1], -along * direction[2]});
+    }
+
+    /* {@code a} times {@code k} plus {@code b} times {@code m}. */
+    private static double[] add(final double[] a, final double k, final double[] b, final double m) {
+        return new double[] {a[0] * k + b[0] * m, a[1] * k + b[1] * m, a[2] * k + b[2] * m};
     }
 
     /* The level part of the direction to the Sun. */

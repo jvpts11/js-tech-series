@@ -45,12 +45,75 @@ public final class SkyMath {
         return (d * 2.0 + e) / 3.0;
     }
 
+    /** The same at a time of the clock with a part of a tick, as a place's own hour is. */
+    public static double celestial(final double dayTime) {
+        final double d = frac(dayTime / DAY - 0.25);
+        final double e = 0.5 - Math.cos(d * Math.PI) / 2.0;
+        return (d * 2.0 + e) / 3.0;
+    }
+
+    /**
+     * How far round a round world a place at {@code x} stands from the middle of its border, in turns east: the border
+     * from west to east goes once round it.
+     */
+    public static double longitude(final double x, final double centreX, final double borderSize) {
+        return (x - centreX) / borderSize;
+    }
+
+    /**
+     * How far north a place at {@code z} stands on a round world, in degrees from -90 to 90: its border from north to
+     * south, half as long as from west to east, goes from pole to pole.
+     */
+    public static double latitude(final double z, final double centreZ, final double borderSize) {
+        return Math.max(-90, Math.min(90, -(z - centreZ) / borderSize * 360));
+    }
+
+    /** The clock's time where a place {@code longitude} turns east of the middle stands: later the farther east. */
+    public static double localTime(final long dayTime, final double longitude) {
+        return dayTime + longitude * DAY;
+    }
+
+    /**
+     * The direction a sun {@code turns} round the sky lies in, as the game turns its sky, seen from {@code latitude}
+     * degrees north, where the sky's pole stands that high over the north and the sun at noon that far from overhead,
+     * towards the south.
+     *
+     * @return {x, y, z} in the world's directions, a unit vector
+     */
+    public static double[] sky(final double turns, final double latitude) {
+        final double angle = turns * TURN;
+        final double lean = Math.toRadians(latitude);
+        return new double[] {-Math.sin(angle), Math.cos(angle) * Math.cos(lean), Math.cos(angle) * Math.sin(lean)};
+    }
+
+    /** How high a sun {@code turns} round the sky stands from {@code latitude}, as the sine of its height. */
+    public static double sunHeight(final double turns, final double latitude) {
+        return Math.cos(turns * TURN) * Math.cos(Math.toRadians(latitude));
+    }
+
+    /**
+     * How light the day is with the sun {@code height} high (the sine of it), in rain and thunder of their levels, as
+     * the game works out its darkening of the day: from 0.2 at night to 1.
+     */
+    public static double dayLight(final double height, final double rain, final double thunder) {
+        double light = 1 - Math.max(0, Math.min(1, 1 - (height * 2 + 0.2)));
+        light *= 1 - rain * 5 / 16;
+        light *= 1 - thunder * 5 / 16;
+        return light * 0.8 + 0.2;
+    }
+
+    /** How bright the stars shine with the sun {@code height} high, as the game works it out: 0.5 at midnight. */
+    public static double starlight(final double height) {
+        final double dark = Math.max(0, Math.min(1, 1 - (height * 2 + 0.25)));
+        return dark * dark * 0.5;
+    }
+
     /**
      * Where a body stands from the first sun after {@code days} of the clock, in turns: where it stood as the world
-     * began, moving round once in {@code orbitDays}; still for 0.
+     * began, moving round once in {@code orbitDays}, the other way when below 0; still for 0.
      */
     public static double drift(final double offset, final double orbitDays, final double days) {
-        return orbitDays <= 0 ? offset : offset + days / orbitDays;
+        return orbitDays == 0 ? offset : offset + days / orbitDays;
     }
 
     /** How far round a surface turning once in {@code turnDays} has turned after {@code days}, in turns. */

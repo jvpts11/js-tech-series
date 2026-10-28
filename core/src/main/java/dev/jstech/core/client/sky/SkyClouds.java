@@ -14,6 +14,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import dev.jstech.core.sky.Skies;
 import dev.jstech.core.sky.SkySpec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -51,7 +52,7 @@ final class SkyClouds {
         final Matrix4f matrix = pose.last().pose();
         final float reach = Minecraft.getInstance().options.getEffectiveRenderDistance() * 16F * 2F;
         final float drift = (ticks + partialTick) * DRIFT;
-        final float daylight = Math.max(NIGHT, SkySight.daylight(level.getTimeOfDay(partialTick)));
+        final float daylight = Math.max(NIGHT, SkyPlace.at(level, Skies.of(level), camX, camZ).skyLight());
         final float[] colour = SkyRenderer.rgb(clouds.colour());
         final float alpha = (float) clouds.density() * 0.8F;
         final float height = (float) (clouds.height() - camY);

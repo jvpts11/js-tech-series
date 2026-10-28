@@ -14,6 +14,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -79,15 +80,25 @@ public final class SkyEffects extends DimensionSpecialEffects {
                 camZ, modelView, projection);
     }
 
-    /* The day's light from the sky: dimmer with its sun's distance and in an eclipse, tinted by its suns. */
+    /*
+     * The day's light from the sky: on a round world as light as the hour and the latitude make it where the player
+     * is; dimmer with its sun's distance and in an eclipse; tinted by its suns.
+     */
     @Override
     public void adjustLightmapColors(final ClientLevel level, final float partialTicks, final float skyDarken,
                                      final float blockLightRedFlicker, final float skyLight, final int pixelX,
                                      final int pixelY, final Vector3f colors) {
         final SkySpec sky = Skies.of(level);
+        final SkyPlace place = SkyPlace.of(level, sky);
+        float darkening = skyDarken;
+        if (sky.round()) {
+            darkening = place.dayLight(level, partialTicks);
+            SkySight.relight(colors, LightTexture.getBrightness(level.dimensionType(), pixelY), skyDarken,
+                    darkening);
+        }
         final float light = (float) (Math.min(1.0, SkySight.sunlight(sky))
-                * SkySight.eclipseLight(level, sky, partialTicks));
-        SkySight.adjust(colors, pixelX, pixelY, Math.max(0F, Math.min(1F, skyDarken)), light, SkySight.tint(sky));
+                * SkySight.eclipseLight(level, sky, place.celestial()));
+        SkySight.adjust(colors, pixelX, pixelY, Math.max(0F, Math.min(1F, darkening)), light, SkySight.tint(sky));
     }
 
     /* The sky of the level the player stands in, if they stand in one. */
