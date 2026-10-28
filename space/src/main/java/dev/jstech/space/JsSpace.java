@@ -14,7 +14,9 @@ import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.exploration.SpaceProperties;
 import dev.jstech.space.exploration.WorldDiscovery;
 import dev.jstech.space.guide.MissionHandbook;
+import dev.jstech.space.universe.LandingCabins;
 import dev.jstech.space.universe.SolarSystemWorlds;
+import dev.jstech.space.universe.SpaceRespawns;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.space.universe.WorldSizes;
@@ -52,6 +54,9 @@ public final class JsSpace {
         SolarSystemWorlds.declare();
         // Each round world's size, fixed as it first loads, with its border at the far side and the poles.
         WorldSizes.listen();
+        // Where those who die on another world come back: a bed with air, the cabin landed in, or home.
+        LandingCabins.register();
+        SpaceRespawns.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

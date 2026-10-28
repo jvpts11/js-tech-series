@@ -34,6 +34,8 @@ public final class TestSpaceWorlds {
 
     /** A world of the test mod's, in a system of its own, shaped by the generator and both modifiers. */
     public static final ResourceLocation WORLD = id("test_world");
+    /** Another, its dimension made by its tests as a copy of a land with air, where a player can die and come back. */
+    public static final ResourceLocation HAVEN = id("test_haven");
     public static final ResourceLocation GENERATOR = id("test_slab");
     public static final ResourceLocation RAISE = id("test_raise");
     public static final ResourceLocation PAVE = id("test_pave");
@@ -78,6 +80,8 @@ public final class TestSpaceWorlds {
         SpaceWorlds.declare(WORLD, new SpaceWorld("jstests.world.test_world", id("test_system"),
                 ResourceKey.create(Registries.DIMENSION, WORLD), Optional.of(GENERATOR), List.of(RAISE, PAVE),
                 1_000));
+        SpaceWorlds.declare(HAVEN, new SpaceWorld("jstests.world.test_haven", id("test_system"),
+                ResourceKey.create(Registries.DIMENSION, HAVEN), Optional.empty(), List.of(), 500));
     }
 
     private static ResourceLocation id(final String path) {

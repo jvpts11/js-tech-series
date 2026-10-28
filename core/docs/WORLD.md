@@ -902,6 +902,22 @@ width, so its wall, collision and warning stand at the west and east ends, and t
 north and south ends, which may be nearer, as a round world's poles are. A change to the overworld's border, by a
 command or another mod, no longer reaches the dimension.
 
+### Where the dead come back
+
+*Added 2026-10-28.*
+
+The game sends a player who died back to their bed or the world's spawn, whatever the dimension. A mod gives rules
+for its own dimensions, asked in the order they were added; the first to say where wins, and with none the game's
+choice stands:
+
+```java
+DimensionRespawns.add((player, died, planned) -> died.dimension().equals(MY_DUNGEON)
+        ? Optional.of(new DimensionTransition(died, DOOR, Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING))
+        : Optional.empty());
+```
+
+`planned` is where the game would send them; a rule that returns nothing leaves it to the next.
+
 ### Travelling between dimensions
 
 *Added 2026-10-17.*

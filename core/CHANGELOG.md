@@ -1647,6 +1647,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A dimension's own border: `DimensionBorders.fix` gives a dimension bounds of its own, from west to east and
   north to south, kept with it; the game's border spans their width, players are held inside their north and south
   ends, and changes to the overworld's border no longer reach it.
+- Where the dead come back: `DimensionRespawns.add` gives a rule for a mod's dimensions, asked in order before
+  the game's own choice, which stands where no rule says otherwise.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

@@ -74,6 +74,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The blocks of a round world lie on its sphere: X is the longitude and Z the latitude, its spawn at the middle
   of its near side. Each world is the Overworld's border wide times its width over the Earth's (the Moon about 27%,
   Mars 53%), fixed as it first loads, and half as tall, its border at the middle of its far side and at its poles.
+- Where a player who dies on another world comes back, in this order: their bed there, if it stands in a
+  sealed room with air; else the cabin of the module they landed in, if it is still whole and has air, which their
+  landing marks; else home, in the Overworld.
 
 ## [0.5.2a] - 2026-10-14
 
