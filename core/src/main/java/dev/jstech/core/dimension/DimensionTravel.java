@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.dimension;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.client.dimension.TravelScreens;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * Going from one dimension to another with what one rides: a player in a vehicle goes with the vehicle and everyone
  * riding it, and they arrive together at a safe place near where they were sent ({@link SafeLanding}), the land there
  * loaded before they arrive. A mod can show the passage through a screen of its own, the fire of a re-entry, instead
- * of the game's "loading terrain".
+ * of the game's "loading terrain", or through none at all ({@link #SEAMLESS}).
  *
  * <pre>{@code
  * DimensionTravel.travel(player, mars, new BlockPos(0, 90, 0), MySpace.REENTRY_SCREEN);
@@ -36,9 +37,22 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DimensionTravel {
 
+    /**
+     * The passage shown through no screen at all: the world goes on being drawn while the land loads, for a passage
+     * where both ends show only sky, as a climb to orbit does high over the ground.
+     */
+    public static final ResourceLocation SEAMLESS = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "seamless");
     private static final String VERSION = "1";
 
     private DimensionTravel() {
+    }
+
+    /**
+     * Tells {@code player}'s game that its next passage to another dimension is shown through the screen declared as
+     * {@code screen}, or through none for {@link #SEAMLESS}; for a passage the mod makes itself.
+     */
+    public static void announce(final ServerPlayer player, final ResourceLocation screen) {
+        PacketDistributor.sendToPlayer(player, new TravelScreenPayload(screen));
     }
 
     /** Hands the mod's bus the payload this sends, once, from the Core's constructor. */
@@ -63,9 +77,8 @@ public final class DimensionTravel {
         to.getChunkAt(near);
         final BlockPos landing = SafeLanding.find(to, near, stackHeight(root));
         if (screen != null && from != to) {
-            final TravelScreenPayload payload = new TravelScreenPayload(screen);
             for (final ServerPlayer player : players(root)) {
-                PacketDistributor.sendToPlayer(player, payload);
+                announce(player, screen);
             }
         }
         final UUID id = traveller.getUUID();
@@ -105,8 +118,11 @@ public final class DimensionTravel {
         return out;
     }
 
-    /* Runs on a client only: the payload is only ever sent to one. */
+    /*
+     * Runs on a client only: the payload is only ever sent to one. It is handled on the game's thread in the order it
+     * came, so it is noted at once: put off to later, it would be noted after the passage it announces had opened.
+     */
     private static void onScreen(final TravelScreenPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> TravelScreens.expect(payload.screen()));
+        TravelScreens.expect(payload.screen());
     }
 }

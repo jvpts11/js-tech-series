@@ -56,21 +56,48 @@ class OverworldMapTest {
 
     @Test
     void clouds_coverSomeOfTheWorldAndMoveAsTheyTurn() {
-        final boolean[] tile = tile();
-        final double[] weather = OverworldMap.weather(WIDTH, SEED);
-        final boolean[] now = OverworldMap.clouds(WIDTH, 0.0, SEED, tile, weather);
-        final boolean[] later = OverworldMap.clouds(WIDTH, 0.1, SEED, tile, weather);
+        final boolean[] bands = OverworldMap.cloudBands(WIDTH, SEED, tile());
+        final int[] paces = OverworldMap.cloudPaces(WIDTH, SEED);
+        final boolean[] gathering = OverworldMap.gathering(WIDTH, SEED);
+        final boolean[] now = OverworldMap.clouds(WIDTH, 0.0, bands, paces, gathering);
         final double share = share(now);
         assertTrue(share > 0.05 && share < 0.6, "cloud cover " + share);
-        assertFalse(Arrays.equals(now, later));
-        assertArrayEquals(now, OverworldMap.clouds(WIDTH, 0.0, SEED, tile, weather));
+        assertFalse(Arrays.equals(now, OverworldMap.clouds(WIDTH, 0.1, bands, paces, gathering)));
+        assertArrayEquals(now, OverworldMap.clouds(WIDTH, 0.0, bands, paces, gathering));
+        // Counting the turns modulo the pace steps changes nothing.
+        assertArrayEquals(OverworldMap.clouds(WIDTH, 0.3, bands, paces, gathering),
+                OverworldMap.clouds(WIDTH, 0.3 + OverworldMap.PACE_STEPS * 5, bands, paces, gathering));
     }
 
     @Test
     void clouds_comeOnlyFromTheGamesCloudMap() {
-        final boolean[] clear = new boolean[TILE * TILE];
-        final boolean[] none = OverworldMap.clouds(WIDTH, 0.3, SEED, clear, OverworldMap.weather(WIDTH, SEED));
+        final boolean[] none = OverworldMap.clouds(WIDTH, 0.3,
+                OverworldMap.cloudBands(WIDTH, SEED, new boolean[TILE * TILE]), OverworldMap.cloudPaces(WIDTH, SEED),
+                OverworldMap.gathering(WIDTH, SEED));
         assertEquals(0, share(none));
+    }
+
+    @Test
+    void cloudPaces_areWholeStepsTheSameAcrossEachBand() {
+        final int[] paces = OverworldMap.cloudPaces(WIDTH, SEED);
+        assertEquals(WIDTH / 2, paces.length);
+        for (int y = 0; y < paces.length; y++) {
+            assertTrue(paces[y] >= 48 && paces[y] <= 80, "pace " + paces[y]);
+            assertEquals(paces[y / 32 * 32], paces[y], "row " + y);
+        }
+    }
+
+    @Test
+    void slide_goesOnSmoothlyWhereTheTurnsAreCountedAgain() {
+        final double tick = 1.0 / 48_000;
+        for (final int pace : new int[] {48, 61, OverworldMap.FRONT_PACE, 80}) {
+            for (final double wrap : new double[] {1, OverworldMap.PACE_STEPS, OverworldMap.PACE_STEPS * 3}) {
+                final double before = OverworldMap.slide(wrap - tick, pace);
+                final double after = OverworldMap.slide(wrap + tick, pace);
+                final double step = after - before - Math.floor(after - before + 0.5);
+                assertEquals(2 * tick * pace / OverworldMap.PACE_STEPS, step, 1e-9, "pace " + pace + " at " + wrap);
+            }
+        }
     }
 
     /* A cloud map like the game's: clumps of cloud, about half of it. */

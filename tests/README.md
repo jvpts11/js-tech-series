@@ -11,4 +11,6 @@ the shipped jars. It is built on J's Core Test Kit ([testkit/](../testkit/README
 - If you found this jar in a modpack or a download, it does not belong there.
 
 For contributors: `./gradlew runGameTestServer` runs every GameTest, `./gradlew runClientTests0` runs a
-client test shard, and `./gradlew runClient` starts the game with the whole series and this mod loaded.
+client test shard, and `./gradlew runClient` starts the game with the whole series and this mod loaded. The client
+tests run in a flat world; `-PctWorld=normal -PctSeed=<seed>` runs those asked for with `-PctOnly` in the game's
+normal land of that seed instead, for a look at how the land itself is drawn from far above.

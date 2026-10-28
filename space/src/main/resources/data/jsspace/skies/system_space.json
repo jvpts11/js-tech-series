@@ -6,5 +6,6 @@
   ],
   "stars": {"count": 4000, "brightness": 1.8, "by_day": 1.0},
   "galaxy": {"colour": "#C8CCD8", "brightness": 0.0, "tilt": 60},
-  "clouds": {"height": 320, "colour": "#FFFFFF", "density": 0}
+  "clouds": {"height": 320, "colour": "#FFFFFF", "density": 0},
+  "ground": false
 }

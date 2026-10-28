@@ -281,7 +281,7 @@ class HardcodedTextTest {
             data(CORE + "client/studio/StudioMcpTools.java", 18, MCP_TOOLS),
             data(CORE + "client/mcp/PlaySeeing.java", 17, MCP_TOOLS),
             data(CORE + "client/mcp/PlayScene.java", 6, MCP_TOOLS),
-            data(CORE + "client/mcp/PlayActing.java", 42, MCP_TOOLS),
+            data(CORE + "client/mcp/PlayActing.java", 47, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWorld.java", 22, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWaiting.java", 22, MCP_TOOLS));
 

@@ -942,6 +942,18 @@ TravelScreens.register(MySpace.REENTRY, (ready, reason) -> new ReentryScreen(rea
 The screen is a `ReceivingLevelScreen` of the mod's own, so it closes as the game's does, once `ready` says the land
 round the player is there to be seen.
 
+A passage shown through no screen at all, `DimensionTravel.SEAMLESS`, keeps the world drawn while the land loads:
+for a passage where both ends show only sky, as a climb to orbit does high over the ground, the mod drawing the same
+picture on both sides. A mod that moves the player itself tells their game first:
+
+```java
+DimensionTravel.announce(player, DimensionTravel.SEAMLESS);
+player.changeDimension(new DimensionTransition(space, at, player.getDeltaMovement(), yaw, pitch, DO_NOTHING));
+```
+
+The game opens its loading screen twice in a passage, as it takes up the new level and as it waits for its land; the
+passage's screen, or none, stands for both.
+
 ## Sky, time and weather
 
 *Added 2026-10-17.*
@@ -991,6 +1003,16 @@ template's:
   the farther east, and the sky's pole stands as high over the north as the latitude, the sun climbing less the nearer
   the poles. The day's light, the stars, the fog and the clouds follow the hour where the player stands;
   `SkyPlace.of(level, sky)` gives a mod that hour and where a sun lies.
+- **No ground under it** (`"ground": false`), for a space: the sky goes on under the horizon however low the eye is,
+  never dark under it as the game draws the void under a world.
+- **One sky through another**: `Skies.of(level, dimension)` reads any dimension's sky on either side, and
+  `SkyLayers.stars(sky, modelView, projection, celestial, latitude, starlight)` draws its stars, its galaxy and its
+  nebulae over whatever is drawn, as the stars of space come out over a world's sky on the way up to it.
+- **The ground drawn by its mod** (`GroundCovers`): a mod drawing a level's ground itself, as from so high over the
+  land that the loaded blocks are a speck it draws better at its own scale, asks the game to draw none of the level's
+  blocks and none of its clouds while it does; entities, moving structures and everything hung on the stages of the
+  blocks are drawn as ever. On the way there it can ask the game's sight to reach down, so every loaded block in sight
+  is drawn however far below the eye it is, where the game draws only those within its sight's reach up or down.
 - **Stars**, square as the game's, **the band of the galaxy**, **nebulae** and **an aurora** over the north at night;
   `"stars": { "by_day": 0.75 }` lights the stars, the galaxy and the nebulae by day as well, at that share of how
   bright they are at midnight, for a sky with no air.

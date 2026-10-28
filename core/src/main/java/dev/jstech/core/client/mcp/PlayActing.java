@@ -49,6 +49,11 @@ public final class PlayActing {
     private static final int BREAK_TICKS = 400;
     private static final int OPEN_TICKS = 40;
     private static final int SLOTS = 9;
+    /* How long a flight up or down may take, in ticks: four minutes, a climb of well over a thousand blocks. */
+    private static final int FLY_TICKS = 4_800;
+    /* The heights a flight may be asked to reach. */
+    private static final int MIN_HEIGHT = -2_048;
+    private static final int MAX_HEIGHT = 30_000;
 
     private PlayActing() {
     }
@@ -62,6 +67,12 @@ public final class PlayActing {
                                 "Whether to sprint.").build(), McpPermission.ACT, PlayActing::walk),
                 new McpTool("player_jump", "Jumps, as the jump key does.", McpSchema.object().build(),
                         McpPermission.ACT, PlayActing::jump),
+                new McpTool("player_fly", "Flies the player straight up or down to a height, as the jump and sneak "
+                        + "keys held in flight do, taking to the air first where the player may fly, and answers "
+                        + "once there, or once the flight has taken them into another dimension; any key the player "
+                        + "presses stops it.", McpSchema.object()
+                        .whole("height", "The height to fly to.", MIN_HEIGHT, MAX_HEIGHT, true).build(),
+                        McpPermission.ACT, PlayActing::fly),
                 new McpTool("player_sneak", "Holds the sneak key down, or lets it go.", McpSchema.object().flag("down",
                         "Whether to hold it down.").build(), McpPermission.ACT, call -> Play.withPlayer(player -> {
                             Minecraft.getInstance().options.keyShift.setDown(call.flag("down", true));
@@ -161,6 +172,50 @@ public final class PlayActing {
                 game.options.keyUp.setDown(false);
                 game.options.keySprint.setDown(false);
                 game.options.keyJump.setDown(false);
+            }
+        });
+    }
+
+    private static CompletableFuture<McpResult> fly(final McpCall call) {
+        final double height = call.whole("height").orElse(0L);
+        final Object[] from = new Object[1];
+        return PlayTasks.run(call, FLY_TICKS, new PlayTasks.ITask() {
+            @Override
+            public Optional<McpResult> step(final Minecraft game, final int tick) {
+                final LocalPlayer player = game.player;
+                if (player == null || game.level == null) {
+                    return Optional.of(McpResult.failed(McpTexts.NO_WORLD.text()));
+                }
+                if (!player.getAbilities().mayfly) {
+                    return Optional.of(done("flying", false));
+                }
+                from[0] = from[0] == null ? game.level.dimension() : from[0];
+                if (!game.level.dimension().equals(from[0])) {
+                    final JsonObject out = new JsonObject();
+                    out.addProperty("dimension", game.level.dimension().location().toString());
+                    out.addProperty("height", player.getY());
+                    return Optional.of(McpResult.json(out));
+                }
+                if (!player.getAbilities().flying) {
+                    // Taking to the air, as the jump key pressed twice does.
+                    player.getAbilities().flying = true;
+                    player.onUpdateAbilities();
+                }
+                final double off = height - player.getY();
+                if (Math.abs(off) < ARRIVED) {
+                    final JsonObject out = new JsonObject();
+                    out.addProperty("height", player.getY());
+                    return Optional.of(McpResult.json(out));
+                }
+                game.options.keyJump.setDown(off > 0);
+                game.options.keyShift.setDown(off < 0);
+                return Optional.empty();
+            }
+
+            @Override
+            public void release(final Minecraft game) {
+                game.options.keyJump.setDown(false);
+                game.options.keyShift.setDown(false);
             }
         });
     }

@@ -10,9 +10,12 @@ package dev.jstech.core.mixin;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexBuffer;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.client.moving.StructureMeshes;
+import dev.jstech.core.client.sky.GroundCovers;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.YardLayout;
 import net.minecraft.client.particle.Particle;
@@ -20,6 +23,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,6 +40,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *   <li>the game draws an entity only where the section of the world it stands in is built, and a structure's entity
  *       stands at its pivot, which may be in a section hidden or not built while its blocks are in sight; a
  *       structure's entity is drawn wherever it stands, its own box deciding whether it is seen.</li>
+ *   <li>while a mod draws a level's ground itself ({@link GroundCovers}), the game's own blocks and clouds are not
+ *       drawn, though everything hung on the stages of the blocks still is.</li>
  * </ul>
  * Every other section, particle and entity is let be.
  */
@@ -79,5 +85,22 @@ public abstract class LevelRendererMixin {
     private boolean jscore$drawStructuresWhereverTheyStand(final LevelRenderer renderer, final BlockPos pos,
                                                            final Operation<Boolean> original) {
         return original.call(renderer, pos) || ClientMovingStructures.pivotAt(pos);
+    }
+
+    @WrapOperation(method = "renderSectionLayer", at = @At(value = "INVOKE",
+            target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;draw()V"))
+    private void jscore$groundDrawnByItsMod(final VertexBuffer section, final Operation<Void> original) {
+        if (!GroundCovers.covered()) {
+            original.call(section);
+        }
+    }
+
+    @Inject(method = "renderClouds", at = @At("HEAD"), cancellable = true)
+    private void jscore$cloudsDrawnByTheirMod(final PoseStack pose, final Matrix4f frustum, final Matrix4f projection,
+                                              final float partialTick, final double camX, final double camY,
+                                              final double camZ, final CallbackInfo info) {
+        if (GroundCovers.covered()) {
+            info.cancel();
+        }
     }
 }

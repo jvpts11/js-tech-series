@@ -224,6 +224,7 @@ import dev.jstech.tests.clienttest.series.ManualImmersionClientTests;
 import dev.jstech.tests.clienttest.series.ManualSiteClientTests;
 import dev.jstech.tests.clienttest.series.HeldModelsClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
+import dev.jstech.tests.clienttest.space.ClimbClientTests;
 import dev.jstech.tests.clienttest.space.GroundSkyClientTests;
 import dev.jstech.tests.clienttest.space.SystemSpaceClientTests;
 import dev.jstech.tests.testkit.TestSuites;
@@ -455,7 +456,8 @@ public final class ClientTestSuite {
             UnixClientTests.class,
             UnixFreeBsdEditorsClientTests.class,
             SystemSpaceClientTests.class,
-            GroundSkyClientTests.class);
+            GroundSkyClientTests.class,
+            ClimbClientTests.class);
 
     private ClientTestSuite() {
     }

@@ -141,6 +141,10 @@ neoForge {
                 // industrial, space, example, series; see TestSuites), shared out over the shards as the whole
                 // suite is.
                 systemProperty 'jstestkit.clienttests.suites', (providers.gradleProperty('ctMods').getOrElse(''))
+                // -PctWorld=normal -PctSeed=<seed> runs them in the game's normal land of that seed instead of the
+                // flat one, for the tests about how the land itself looks from far above.
+                systemProperty 'jstestkit.clienttests.world', (providers.gradleProperty('ctWorld').getOrElse('flat'))
+                systemProperty 'jstestkit.clienttests.seed', (providers.gradleProperty('ctSeed').getOrElse('0'))
                 // -Pjfr records the window with Java Flight Recorder, for profiling what the client draws.
                 if (providers.gradleProperty('jfr').present) {
                     jvmArguments.addAll(

@@ -95,6 +95,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   moon's; the Sun's hour follows the longitude on the Moon and on Mars; the Moon's sky is black, its stars shining by
   day; in Mars' butterscotch sky Phobos rises in the west and crosses it twice a sol, Deimos is a slow point of light
   and the Overworld an evening star beside the Sun.
+- The way up to space with no loading screen, for players and for rockets and ships alike: seven hundred
+  blocks over a world's build limit it becomes its system's space. On the way up the loaded land goes on, out to the
+  horizon, in a far map of the real ground as the world's own generator makes it, its mountains standing in relief
+  block by block, painted in the blocks' own colours as each biome tints them, its coasts and snow lines where its
+  heights put them; the game's clouds go on to the horizon, drifting as they do, and a haze like the game's fog
+  thickens with the distance, so the loaded land melts into the far one with no seam. The sky turns navy and then
+  black, the stars come out, and from halfway up the eye rises ever faster as the ground bends into the world's
+  sphere; near the top the real ground melts under a veil of haze into the world's painted sphere, never seen
+  through, and the line is crossed with the very picture the space shows. Each place of a world arrives at its own
+  spot of the low orbit, laid out like a map of the world, so a station built there stands over its base; going down
+  through the floor of the low orbits shows the climb's own pictures on the way and comes back down over the same
+  place, high over the ground.
+
+### Fixed
+- The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
+  a little, as their cover was drawn anew, and the world turned a tick at a time.
 
 ## [0.5.2a] - 2026-10-14
 

@@ -24,10 +24,11 @@ public final class GroundSky {
 
     /**
      * {@code direction}, a direction of the system's space, as seen from the place at {@code longitude} and
-     * {@code latitude}, in degrees, on {@code world} at {@code tick}: east, up and south.
+     * {@code latitude}, in degrees, on {@code world} at {@code tick}, which may fall between two ticks: east, up and
+     * south.
      */
     public static double[] seen(final SolarBody world, final double longitude, final double latitude,
-                                final long tick, final double[] direction) {
+                                final double tick, final double[] direction) {
         final double[] north = SystemLayout.north(world);
         final double[] middle = SystemLayout.middle(world, tick);
         final double[] east = SystemLayout.cross(north, middle);
@@ -49,7 +50,7 @@ public final class GroundSky {
 
     /** Where {@code body} lies from {@code world}, seen from the place at {@code longitude} and {@code latitude}. */
     public static double[] towards(final SolarBody world, final SolarBody body, final double longitude,
-                                   final double latitude, final long tick) {
+                                   final double latitude, final double tick) {
         final double[] from = SystemLayout.centre(world);
         final double[] to = SystemLayout.centre(body);
         final double apart = distance(from, to);

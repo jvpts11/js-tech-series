@@ -19,10 +19,12 @@ import dev.jstech.space.JsSpace;
 import dev.jstech.space.universe.SolarBody;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
@@ -51,7 +53,7 @@ final class SphereDrawing {
             null, null, 0);
     private static final Look MARS = new Look(0.015 * MARS_HEIGHTS, 0.30, new float[] {0.020F, 0.010F, 0.008F},
             new float[] {0.55F, 0.62F, 0.85F}, new float[] {0.80F, 0.58F, 0.46F}, 0.010);
-    private static final int SAMPLERS = 3;
+    private static final int SAMPLERS = 5;
     /* The textures the game had bound where the worlds' maps go, given back once they are drawn. */
     private static final int[] SAVED = new int[SAMPLERS];
 
@@ -81,6 +83,14 @@ final class SphereDrawing {
         return shader != null;
     }
 
+    /**
+     * The time of {@code level} as {@code event}'s frame is drawn, in ticks and the share of the next tick gone, so the
+     * worlds turn and their clouds drift smoothly between ticks.
+     */
+    static double time(final ClientLevel level, final RenderLevelStageEvent event) {
+        return level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false);
+    }
+
     /** Readies the card to draw worlds over the sky and under the blocks, keeping what the game had bound. */
     static void begin() {
         for (int unit = 0; unit < SAMPLERS; unit++) {
@@ -105,36 +115,36 @@ final class SphereDrawing {
     }
 
     /**
-     * Draws {@code body} at {@code tick}, its middle {@code at} from the eye and as wide as {@code radius}, both
-     * already brought within {@link #DRAWN_WITHIN}; its pole and its map's middle pointing {@code north} and
-     * {@code middle}, lit from {@code sunward}, its texels at least {@code texelPixels} pixels wide. Not drawn until
-     * its maps are on the card.
+     * Draws {@code body} at {@code time}, in ticks, its middle {@code at} from the eye and as wide as {@code radius},
+     * both already brought within {@link #DRAWN_WITHIN}; its pole and its map's middle pointing {@code north} and
+     * {@code middle}, lit from {@code sunward}, its texels at least {@code texelPixels} pixels wide, {@code fade} of
+     * it over what is behind, under {@code veil}. Not drawn until its maps are on the card.
      */
-    static void draw(final SolarBody body, final long tick, final Vector3d at, final double radius,
+    static void draw(final SolarBody body, final double time, final Vector3d at, final double radius,
                      final double[] north, final double[] middle, final double[] sunward, final float texelPixels,
-                     final Matrix4f view, final Matrix4f projection) {
+                     final float fade, final Veil veil, final Matrix4f view, final Matrix4f projection) {
         final ShaderInstance spheres = shader;
         final WorldSpheres.Maps maps = WorldSpheres.of(body);
         if (spheres == null || maps == null) {
             return;
         }
-        final SphereTexture cover = body == SolarBody.OVERWORLD ? WorldSpheres.clouds(tick) : null;
-        if (body == SolarBody.OVERWORLD && cover == null) {
-            // Not without its clouds, which are drawn a moment after its ground.
-            return;
-        }
+        final WorldSpheres.Cover cover = body == SolarBody.OVERWORLD ? WorldSpheres.clouds() : null;
         final Look look = switch (body) {
             case OVERWORLD -> OVERWORLD;
             case MOON -> MOON;
             case MARS -> MARS;
         };
-        final double reach = radius * (1 + look.airThickness() * 1.6) * MARGIN;
-        if (at.length() <= reach) {
+        final double away = at.length();
+        if (away <= radius) {
             return;
         }
+        // The square covers the world and its air, or, from an eye inside the air, the world and as much of the air
+        // as lies between them.
+        final double reach = Math.min(radius * (1 + look.airThickness() * 1.6) * MARGIN, (radius + away) / 2);
         RenderSystem.setShaderTexture(0, maps.colour().getId());
         RenderSystem.setShaderTexture(1, maps.height().getId());
-        RenderSystem.setShaderTexture(2, cover != null ? cover.getId() : maps.colour().getId());
+        RenderSystem.setShaderTexture(2, cover != null ? cover.bands().getId() : maps.colour().getId());
+        RenderSystem.setShaderTexture(4, cover != null ? cover.gathering().getId() : maps.colour().getId());
         spheres.safeGetUniform("Centre").set((float) at.x, (float) at.y, (float) at.z);
         spheres.safeGetUniform("Radius").set((float) radius);
         spheres.safeGetUniform("North").set((float) north[0], (float) north[1], (float) north[2]);
@@ -150,7 +160,11 @@ final class SphereDrawing {
         spheres.safeGetUniform("Air").set(air[0], air[1], air[2]);
         spheres.safeGetUniform("AirThickness").set((float) look.airThickness());
         spheres.safeGetUniform("HasClouds").set(cover != null ? 1 : 0);
+        spheres.safeGetUniform("CloudTurn").set(WorldSpheres.cloudTurn(time));
         spheres.safeGetUniform("TexelPixels").set(texelPixels);
+        spheres.safeGetUniform("Fade").set(fade);
+        spheres.safeGetUniform("Veil").set(veil.thickness());
+        spheres.safeGetUniform("VeilColour").set(veil.colour()[0], veil.colour()[1], veil.colour()[2]);
         // The disc comes solid and the glow of the air already weighed by its own strength.
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         if (squares == null) {
@@ -193,6 +207,22 @@ final class SphereDrawing {
         buffer.upload(square);
         buffer.drawWithShader(view, projection, with);
         VertexBuffer.unbind();
+    }
+
+    /**
+     * A veil of haze over a world's disc, as its real ground melts into it on the way up.
+     *
+     * @param thickness how much of the disc it hides
+     * @param colour    its colour
+     */
+    record Veil(float thickness, float[] colour) {
+
+        /** No veil at all. */
+        static final Veil NONE = new Veil(0F, new float[3]);
+
+        Veil {
+            colour = colour.clone();
+        }
     }
 
     /* How a world is lit; no dusk and no air where it has no air. */

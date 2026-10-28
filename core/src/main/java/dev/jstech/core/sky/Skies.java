@@ -12,6 +12,7 @@ import dev.jstech.core.data.DataRegistry;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -52,10 +53,18 @@ public final class Skies {
 
     /** The sky of {@code level}: the server's on the server, the one it sent on a player's game, copies included. */
     public static SkySpec of(final Level level) {
+        return of(level, level.dimension().location());
+    }
+
+    /**
+     * The sky of the dimension {@code dimension} as {@code level}'s side knows it, whether or not it is the one
+     * {@code level} is: for a sky shown from another, as on the way up into space.
+     */
+    public static SkySpec of(final Level level, final ResourceLocation dimension) {
         if (!level.isClientSide()) {
-            return of(level.dimension());
+            return of(ResourceKey.create(Registries.DIMENSION, dimension));
         }
-        return FILES.entries(level).getOrDefault(level.dimension().location(), SkySpec.DEFAULT);
+        return FILES.entries(level).getOrDefault(dimension, SkySpec.DEFAULT);
     }
 
     /* The sky each dimension made while the game runs takes from the dimension it copies, sent to the players. */

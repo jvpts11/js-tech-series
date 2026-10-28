@@ -27,9 +27,9 @@ import org.jetbrains.annotations.Nullable;
  * <p>A planet's poles stand square to its sun, its north leaning half way up from the space's north, so the stations
  * over it look on its middle latitudes with the line of dawn under them: day on the side towards the Sun, night on the
  * other; and the Moon, beside the Overworld, looks on its other hemisphere. It turns east once a day about them, its
- * map's middle facing the Sun at its noon, the Overworld's by the Overworld's clock. The Moon keeps its near side to the
- * Overworld, which stands still a little north of its map's middle, so its poles stand nearly up and down: over its
- * north the Sun stays low and the Overworld rises over its limb.
+ * map's middle facing the Sun at its noon, the Overworld's by the Overworld's clock. The Moon keeps its near side to
+ * the Overworld, which stands still a little north of its map's middle, so its poles stand nearly up and down: over
+ * its north the Sun stays low and the Overworld rises over its limb.
  *
  * <p>Directions are unit vectors of x, y and z. Every size and distance here is an estimate, set by playing. Pure: no
  * game types.
@@ -59,6 +59,9 @@ public final class SystemLayout {
      * stations over it look on its middle latitudes of the north and the Moon, beside it, on those of the south.
      */
     private static final double POLE_LEAN = 45;
+    /* How far out the square of a low orbit its world's places are laid over reaches, as a share of the orbit's
+     * radius: its corners just inside the circle. */
+    private static final double SPREAD = 0.7;
     /* The tick of a world's noon, in its day. */
     private static final double NOON = 6_000;
     private static final double[] UP = {0, 1, 0};
@@ -109,10 +112,11 @@ public final class SystemLayout {
     }
 
     /**
-     * Where the middle of {@code body}'s map (its longitude and latitude 0) faces at {@code tick}: a planet's the Sun
-     * at its noon, turning east once a day; the Moon's always just south of the Overworld.
+     * Where the middle of {@code body}'s map (its longitude and latitude 0) faces at {@code tick}, which may fall
+     * between two ticks: a planet's the Sun at its noon, turning east once a day; the Moon's always just south of the
+     * Overworld.
      */
-    public static double[] middle(final SolarBody body, final long tick) {
+    public static double[] middle(final SolarBody body, final double tick) {
         if (body.dayTicks() <= 0) {
             final double lean = Math.toRadians(OVERWORLD_OVER_THE_MOON);
             final double[] home = homeward();
@@ -135,6 +139,32 @@ public final class SystemLayout {
         return unit(new double[] {sun[0] - from[0], sun[1] - from[1], sun[2] - from[2]});
     }
 
+    /**
+     * Where in {@code body}'s low orbit one who climbs from the place at {@code longitude} and {@code latitude}, in
+     * degrees, arrives: the whole world laid over a square of its orbit, west to east and north to south, so the same
+     * place always reaches the same spot, a station built there stands over it, and coming down from there comes back
+     * to it.
+     *
+     * @return {x, z} in the space
+     */
+    public static double[] orbitSpot(final SolarBody body, final double longitude, final double latitude) {
+        final double[] c = centre(body);
+        final double spread = spread(body);
+        return new double[] {c[0] + clampUnit(longitude / 180) * spread, c[2] - clampUnit(latitude / 90) * spread};
+    }
+
+    /**
+     * The place of {@code body}'s world that the spot ({@code x}, {@code z}) of its low orbit stands over, the way
+     * back of {@link #orbitSpot}: a spot past the square stands over its edge.
+     *
+     * @return {longitude, latitude} in degrees
+     */
+    public static double[] placeUnder(final SolarBody body, final double x, final double z) {
+        final double[] c = centre(body);
+        final double spread = spread(body);
+        return new double[] {clampUnit((x - c[0]) / spread) * 180, -clampUnit((z - c[2]) / spread) * 90};
+    }
+
     /** Which body's low orbit a point of the space at ({@code x}, {@code z}) lies over, if any. */
     public static @Nullable SolarBody over(final double x, final double z) {
         for (final SolarBody body : SolarBody.values()) {
@@ -150,6 +180,15 @@ public final class SystemLayout {
     /** {@code a} across {@code b}: square to both, by the right hand. */
     public static double[] cross(final double[] a, final double[] b) {
         return new double[] {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
+    }
+
+    /* Half the side of the square of a world's low orbit its places are laid over: within the low orbit's circle. */
+    private static double spread(final SolarBody body) {
+        return radius(body) * (1 + LOW_ORBIT) * SPREAD;
+    }
+
+    private static double clampUnit(final double value) {
+        return Math.max(-1, Math.min(1, value));
     }
 
     /* The direction from the Moon's middle to the Overworld's. */

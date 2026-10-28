@@ -1940,6 +1940,28 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   moon's; the Sun's hour follows the longitude on the Moon and on Mars; the Moon's sky is black, its stars shining by
   day; in Mars' butterscotch sky Phobos rises in the west and crosses it twice a sol, Deimos is a slow point of light
   and the Overworld an evening star beside the Sun.
+- (Core) Passages with no screen at all: `DimensionTravel.SEAMLESS` keeps the world drawn while the land loads, for a
+  passage where both ends show only sky, and `DimensionTravel.announce` tells a player's game of a passage a mod
+  makes itself; the player made anew for the new level keeps the old one's swing and the sway of their view, so their
+  hand does not drop and nothing on the screen tells that the dimension changed. `SkyLayers` draws one sky's stars over
+  another's, and `Skies.of(level, dimension)` reads any dimension's sky.
+- (Core) The ground drawn by its mod: `GroundCovers` lets a mod draw a level's ground itself from far above, the game
+  drawing none of the level's blocks and none of its clouds while it does, and on the way there lets the game's sight
+  reach down, every loaded block in sight drawn however far below the eye it is.
+- (Core) A sky with no ground under it (`"ground": false`), for a space: the sky goes on under the horizon however low
+  the eye is, never dark under it as the game draws the void under a world.
+- (Space) The way up to space with no loading screen, for players and for rockets and ships alike: seven hundred
+  blocks over a world's build limit it becomes its system's space. On the way up the loaded land goes on, out to the
+  horizon, in a far map of the real ground as the world's own generator makes it, its mountains standing in relief
+  block by block, painted in the blocks' own colours as each biome tints them, its coasts and snow lines where its
+  heights put them; the game's clouds go on to the horizon, drifting as they do, and a haze like the game's fog
+  thickens with the distance, so the loaded land melts into the far one with no seam. The sky turns navy and then
+  black, the stars come out, and from halfway up the eye rises ever faster as the ground bends into the world's
+  sphere; near the top the real ground melts under a veil of haze into the world's painted sphere, never seen
+  through, and the line is crossed with the very picture the space shows. Each place of a world arrives at its own
+  spot of the low orbit, laid out like a map of the world, so a station built there stands over its base; going down
+  through the floor of the low orbits shows the climb's own pictures on the way and comes back down over the same
+  place, high over the ground.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -2107,6 +2129,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
+  a little, as their cover was drawn anew, and the world turned a tick at a time.
+- (Core) A passage shown through a mod's own screen stands in for both openings of the game's loading screen in it,
+  and is told to the player's game before the passage, where it was told after the first had opened.
 - (Core) A player in a dimension that keeps its own border is told that border, where the game told them the
   overworld's.
 - (Core) The band of the galaxy in a sky drawn by the Core fades towards both its edges; half of it went undrawn,

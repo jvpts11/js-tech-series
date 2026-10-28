@@ -52,7 +52,7 @@ final class GroundSkyRenderer {
         final double size = Math.max(1, border.getSize());
         final double longitude = SkyMath.longitude(eye.x, border.getCenterX(), size) * TURN_DEGREES;
         final double latitude = SkyMath.latitude(eye.z, border.getCenterZ(), size);
-        final long tick = level.getGameTime();
+        final double tick = SphereDrawing.time(level, event);
         final double[] towards = GroundSky.towards(SolarBody.MOON, SolarBody.OVERWORLD, longitude, latitude, tick);
         final double radius = GroundSky.radius(SolarBody.MOON, SolarBody.OVERWORLD);
         if (towards[1] < -Math.sin(radius)) {
@@ -70,7 +70,7 @@ final class GroundSkyRenderer {
         SphereDrawing.begin();
         SphereDrawing.draw(SolarBody.OVERWORLD, tick, new Vector3d(towards[0], towards[1], towards[2]).mul(distance),
                 distance * Math.sin(radius), north, middle, new double[] {sun.x, sun.y, sun.z}, SKY_TEXEL_PIXELS,
-                event.getModelViewMatrix(), event.getProjectionMatrix());
+                1F, SphereDrawing.Veil.NONE, event.getModelViewMatrix(), event.getProjectionMatrix());
         SphereDrawing.end();
     }
 

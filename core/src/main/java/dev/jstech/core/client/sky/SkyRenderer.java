@@ -137,7 +137,7 @@ final class SkyRenderer {
         RenderSystem.disableBlend();
         RenderSystem.defaultBlendFunc();
         final Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null && minecraft.player.getEyePosition(partialTick).y
+        if (sky.ground() && minecraft.player != null && minecraft.player.getEyePosition(partialTick).y
                 - level.getLevelData().getHorizonHeight(level) < 0.0) {
             RenderSystem.setShaderColor(0.0F, 0.0F, 0.0F, 1.0F);
             pose.pushPose();
@@ -148,6 +148,35 @@ final class SkyRenderer {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.depthMask(true);
         return true;
+    }
+
+    /**
+     * Draws the stars, the galaxy's band and the nebulae of {@code sky}, turned as they stand with the sun
+     * {@code celestial} turns round the sky at {@code latitude}, as bright as the starlight {@code night}, over what
+     * is drawn.
+     */
+    static void stars(final SkySpec sky, final Matrix4f modelView, final Matrix4f projection, final double celestial,
+                      final double latitude, final float night) {
+        if (night <= 0) {
+            return;
+        }
+        final PoseStack pose = new PoseStack();
+        pose.mulPose(modelView);
+        pose.mulPose(Axis.XP.rotationDegrees((float) latitude));
+        pose.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        pose.mulPose(Axis.XP.rotationDegrees((float) (celestial * 360.0)));
+        RenderSystem.depthMask(false);
+        RenderSystem.enableBlend();
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        FogRenderer.setupNoFog();
+        starField(sky, pose, projection, (float) (night * sky.stars().brightness()));
+        sky.galaxy().ifPresent(galaxy -> band(galaxy, pose, night));
+        for (final SkySpec.Nebula nebula : sky.nebulae()) {
+            nebula(nebula, pose, night);
+        }
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.defaultBlendFunc();
     }
 
     /* Whether the camera sees no sky: in powder snow or lava, or blinded. */

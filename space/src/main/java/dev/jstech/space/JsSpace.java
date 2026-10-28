@@ -15,8 +15,10 @@ import dev.jstech.space.exploration.SpaceProperties;
 import dev.jstech.space.exploration.WorldDiscovery;
 import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.space.network.SpacePayloads;
+import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.LandingCabins;
 import dev.jstech.space.universe.SolarSystemWorlds;
+import dev.jstech.space.universe.SpaceClimbs;
 import dev.jstech.space.universe.SpaceRespawns;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemSpaces;
@@ -60,6 +62,9 @@ public final class JsSpace {
         SpaceRespawns.declare();
         // What the server sends a player's game: the number the Overworld's sphere is drawn from, as they join.
         SpacePayloads.register(modEventBus);
+        // The way up from a world to its space and back, with no loading screen, and the far map seen on the way.
+        SpaceClimbs.listen();
+        FarMaps.listen();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

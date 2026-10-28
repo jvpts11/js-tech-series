@@ -7,7 +7,9 @@
  */
 package dev.jstech.space.universe;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.SplittableRandom;
 
 /**
@@ -24,6 +26,10 @@ import java.util.SplittableRandom;
  */
 public final class OverworldMap {
 
+    /** How many steps a turn round the world is cut into for the clouds' paces. */
+    public static final int PACE_STEPS = 64;
+    /** The pace of the weather's fronts, drifting east a little faster than the clouds go west, in steps. */
+    public static final int FRONT_PACE = 70;
     /** The tones of each class, as RGB: the seas, the beaches, the biomes, the mountains and the ice. */
     private static final int[][] TONES = {
         {0x203D8A, 0x244494, 0x28499C}, {0x2C55AE, 0x305CB8, 0x3563C0}, {0x2A80C4, 0x2F8ACE, 0x3594D6},
@@ -58,6 +64,10 @@ public final class OverworldMap {
     /* The game's cloud map is 256 texels square, and the bands of cloud drifting past each other 32 texels tall. */
     private static final int CLOUD_TILE = 256;
     private static final int CLOUD_BAND = 32;
+    /* The slowest and the fastest band of clouds, and how strongly the weather must gather them for cloud to be. */
+    private static final int SLOWEST_PACE = 48;
+    private static final int FASTEST_PACE = 80;
+    private static final double GATHERED = 0.58;
 
     private OverworldMap() {
     }
@@ -144,43 +154,73 @@ public final class OverworldMap {
     }
 
     /**
-     * The weather the clouds are gathered by, for {@code seed}: worked out once, then slid east as the clouds turn.
+     * The Overworld's clouds as they stand at the start, a texel at a time from the north pole: the game's 256 by 256
+     * cloud map {@code tile}, true where it has cloud, laid round the world in bands, each from its own corner of the
+     * map, its lone specks dropped and its neighbours joined, so from afar the clouds read as clumps. Each band then
+     * drifts west at its own pace ({@link #cloudPaces}), whole: the world-sphere shader slides it, so it moves as
+     * smoothly as the world turns.
      */
-    public static double[] weather(final int width, final long seed) {
-        return fbm(width, width / 2, 6, seed * 7 + 5, 4, 1.0, 0.5);
-    }
-
-    /**
-     * The Overworld's cloud cover at {@code turn} turns of the clouds round it, a texel at a time from the north pole:
-     * {@code tile} is the game's 256 by 256 cloud map, true where it has cloud, and {@code weather} the seed's
-     * ({@link #weather}).
-     */
-    public static boolean[] clouds(final int width, final double turn, final long seed, final boolean[] tile,
-                                   final double[] weather) {
+    public static boolean[] cloudBands(final int width, final long seed, final boolean[] tile) {
         final int height = width / 2;
-        final SplittableRandom random = new SplittableRandom(seed * 7 + 3);
         final int scale = Math.max(1, width / (2 * CLOUD_TILE));
-        final boolean[] out = new boolean[width * height];
-        for (int top = 0; top < height; top += CLOUD_BAND) {
-            final int startY = random.nextInt(CLOUD_TILE);
-            final int startX = random.nextInt(CLOUD_TILE * scale);
-            final double speed = 1.0 + (random.nextDouble() - 0.5) * 0.5;
-            final boolean flip = random.nextBoolean();
-            final int shift = (int) (startX + turn * width * speed);
-            for (int y = top; y < Math.min(height, top + CLOUD_BAND); y++) {
-                final int ty = Math.floorMod(y / scale + startY, CLOUD_TILE);
+        final boolean[] laid = new boolean[width * height];
+        final List<Band> bands = bands(height, seed);
+        for (int b = 0; b < bands.size(); b++) {
+            final Band band = bands.get(b);
+            for (int y = b * CLOUD_BAND; y < Math.min(height, (b + 1) * CLOUD_BAND); y++) {
+                final int ty = Math.floorMod(y / scale + band.startY(), CLOUD_TILE);
                 for (int x = 0; x < width; x++) {
-                    int tx = Math.floorMod(Math.floorDiv(x + shift, scale), CLOUD_TILE);
-                    if (flip) {
+                    int tx = Math.floorMod(Math.floorDiv(x + band.startX(), scale), CLOUD_TILE);
+                    if (band.flip()) {
                         tx = CLOUD_TILE - 1 - tx;
                     }
-                    out[y * width + x] = tile[ty * CLOUD_TILE + tx];
+                    laid[y * width + x] = tile[ty * CLOUD_TILE + tx];
                 }
             }
         }
-        // The weather gathers the clouds into belts at the equator and the middle latitudes, and fronts drifting east.
-        final int drift = (int) (turn * width * 1.1);
-        final boolean[] gathered = new boolean[out.length];
+        // Clumped within each band only, as the bands slide past each other.
+        final boolean[] clumped = new boolean[laid.length];
+        for (int y = 0; y < height; y++) {
+            final int top = y / CLOUD_BAND * CLOUD_BAND;
+            final int bottom = Math.min(height, top + CLOUD_BAND) - 1;
+            for (int x = 0; x < width; x++) {
+                int count = 0;
+                for (int dy = -1; dy <= 1; dy++) {
+                    final int yy = Math.max(top, Math.min(bottom, y + dy));
+                    for (int dx = -1; dx <= 1; dx++) {
+                        if (laid[yy * width + Math.floorMod(x + dx, width)]) {
+                            count++;
+                        }
+                    }
+                }
+                clumped[y * width + x] = count >= 4 || laid[y * width + x] && count >= 3;
+            }
+        }
+        return clumped;
+    }
+
+    /**
+     * How fast each row of the clouds drifts west, row by row from the north pole: the {@link #PACE_STEPS}ths of a
+     * turn round the world its band goes for each turn of the clouds, from three quarters of a turn to five quarters.
+     */
+    public static int[] cloudPaces(final int width, final long seed) {
+        final int height = width / 2;
+        final List<Band> bands = bands(height, seed);
+        final int[] paces = new int[height];
+        for (int y = 0; y < height; y++) {
+            paces[y] = bands.get(y / CLOUD_BAND).pace();
+        }
+        return paces;
+    }
+
+    /**
+     * Where the weather lets clouds be at the start, a texel at a time from the north pole: belts at the equator and
+     * the middle latitudes, and fronts that drift east whole at {@link #FRONT_PACE}.
+     */
+    public static boolean[] gathering(final int width, final long seed) {
+        final int height = width / 2;
+        final double[] weather = fbm(width, height, 6, seed * 7 + 5, 4, 1.0, 0.5);
+        final boolean[] out = new boolean[width * height];
         for (int y = 0; y < height; y++) {
             final double lat = lat(y, height);
             final double alat = Math.abs(lat);
@@ -188,27 +228,56 @@ public final class OverworldMap {
                     + 0.55 * Math.exp(-Math.pow((alat - 52) / 14, 2))
                     - 0.35 * Math.exp(-Math.pow((alat - 25) / 8, 2)) - (alat > 76 ? 0.25 : 0);
             for (int x = 0; x < width; x++) {
-                final double front = weather[y * width + Math.floorMod(x - drift, width)];
-                gathered[y * width + x] = out[y * width + x] && front + belts > 0.58;
+                out[y * width + x] = weather[y * width + x] + belts > GATHERED;
             }
         }
-        // Lone specks dropped and neighbours joined, so from afar the clouds read as clumps.
-        final boolean[] clumped = new boolean[out.length];
+        return out;
+    }
+
+    /**
+     * The cloud cover at {@code turn} turns of the clouds round the world, as the world-sphere shader lays it: each
+     * band of {@code bands} slid west by its pace in {@code paces}, where {@code gathering}, slid east by the fronts'
+     * pace, lets clouds be.
+     */
+    public static boolean[] clouds(final int width, final double turn, final boolean[] bands, final int[] paces,
+                                   final boolean[] gathering) {
+        final int height = width / 2;
+        final boolean[] out = new boolean[width * height];
+        final double drift = slide(turn, FRONT_PACE);
         for (int y = 0; y < height; y++) {
+            final double shift = slide(turn, paces[y]);
             for (int x = 0; x < width; x++) {
-                int count = 0;
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dx = -1; dx <= 1; dx++) {
-                        final int yy = Math.floorMod(y + dy, height);
-                        if (gathered[yy * width + Math.floorMod(x + dx, width)]) {
-                            count++;
-                        }
-                    }
-                }
-                clumped[y * width + x] = count >= 4 || gathered[y * width + x] && count >= 3;
+                final int cloud = Math.floorMod((int) Math.floor(x + 0.5 + shift * width), width);
+                final int front = Math.floorMod((int) Math.floor(x + 0.5 - drift * width), width);
+                out[y * width + x] = bands[y * width + cloud] && gathering[y * width + front];
             }
         }
-        return clumped;
+        return out;
+    }
+
+    /**
+     * How far round the world something drifting at {@code pace} {@link #PACE_STEPS}ths of a turn a turn has gone in
+     * {@code turn} turns, as a share of a turn from 0 to 1. A pace is whole steps so the turns can be counted modulo
+     * {@link #PACE_STEPS} and stay exact on the graphics card.
+     */
+    public static double slide(final double turn, final int pace) {
+        final double gone = Math.floorMod((long) Math.floor(turn), PACE_STEPS) + (turn - Math.floor(turn));
+        final double share = gone * pace / PACE_STEPS;
+        return share - Math.floor(share);
+    }
+
+    /* Each band of the clouds: where in the game's cloud map it starts, its pace and whether it is mirrored. */
+    private static List<Band> bands(final int height, final long seed) {
+        final SplittableRandom random = new SplittableRandom(seed * 7 + 3);
+        final int scale = Math.max(1, height / CLOUD_TILE);
+        final List<Band> bands = new ArrayList<>();
+        for (int top = 0; top < height; top += CLOUD_BAND) {
+            final int startY = random.nextInt(CLOUD_TILE);
+            final int startX = random.nextInt(CLOUD_TILE * scale);
+            final int pace = SLOWEST_PACE + random.nextInt(FASTEST_PACE - SLOWEST_PACE + 1);
+            bands.add(new Band(startY, startX, pace, random.nextBoolean()));
+        }
+        return bands;
     }
 
     /* The biome of land by its warmth, wetness, ridge and height, in the order the mock lays them. */
@@ -359,5 +428,9 @@ public final class OverworldMap {
      * @param heights its relief: 0 at the sea, rising to about 1 on the highest peaks
      */
     public record Maps(int[] colours, double[] heights) {
+    }
+
+    /* A band of the clouds: the row and column of the game's cloud map it starts at, its pace, and if mirrored. */
+    private record Band(int startY, int startX, int pace, boolean flip) {
     }
 }

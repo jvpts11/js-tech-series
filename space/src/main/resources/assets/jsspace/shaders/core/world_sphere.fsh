@@ -6,11 +6,16 @@
 // its height map lean the light, a slope turned from the sun falls to the world's shadow tone, and the terminator is a
 // soft band into the tone of its night, warmed by dusk where there is air. Air hazes the limb and glows past it on the
 // lit side. The Overworld's clouds are read from their own cover: white tops, a greyer edge on the side away from the
-// sun, and their shadows on the ground a little beside them.
+// sun, and their shadows on the ground a little beside them. The cover is laid once, in bands that each slide west at
+// their own pace, where the weather's fronts, sliding east, let cloud be, so they move as smoothly as the world turns.
 
 uniform sampler2D Sampler0;
 uniform sampler2D Sampler1;
+// The clouds' bands as they stand at the start, each texel's red the pace of its row in 64ths of a turn a turn; and
+// where the weather lets cloud be, at the start. CloudTurn is how many turns the clouds have gone, modulo 64.
 uniform sampler2D Sampler2;
+uniform sampler2D Sampler4;
+uniform float CloudTurn;
 
 uniform vec3 Centre;
 uniform float Radius;
@@ -27,6 +32,11 @@ uniform float AirThickness;
 uniform int HasClouds;
 // The fewest pixels a texel is drawn across: a world far off in a sky keeps texels as wide as a vanilla moon's.
 uniform float TexelPixels;
+// How much of the world is drawn, as it fades in over what is behind.
+uniform float Fade;
+// On the way up from it, the veil of haze its real ground melts under: how thick, and its colour.
+uniform float Veil;
+uniform vec3 VeilColour;
 
 in vec3 worldPos;
 
@@ -36,6 +46,9 @@ const float PI = 3.14159265358979;
 // How far a cloud's shadow and its grey edge are read from it, in turns round the world and from pole to pole.
 const vec2 CLOUD_SHADOW = vec2(-0.8 / 360.0, -0.5 / 180.0);
 const vec2 CLOUD_EDGE = vec2(0.5 / 360.0, 0.35 / 180.0);
+// The steps a turn is cut into for the clouds' paces, and the pace of the weather's fronts.
+const float PACE_STEPS = 64.0;
+const float FRONT_PACE = 70.0;
 
 // The smaller of a derivative across the map's seam and the same one read from a map turned half round.
 float seamless(float plain, float turned) {
@@ -60,15 +73,22 @@ vec3 shade(vec3 colour, float light, float bumped, vec3 normal, vec3 view) {
 }
 
 bool cloudAt(vec2 uv, float lod) {
-    return textureLod(Sampler2, vec2(fract(uv.x), clamp(uv.y, 0.0, 1.0)), lod).a > 0.5;
+    float v = clamp(uv.y, 0.0, 1.0);
+    float pace = floor(textureLod(Sampler2, vec2(0.0, v), lod).r * 255.0 + 0.5);
+    float west = fract(CloudTurn * (pace / PACE_STEPS));
+    float east = fract(CloudTurn * (FRONT_PACE / PACE_STEPS));
+    return textureLod(Sampler2, vec2(fract(uv.x + west), v), lod).a > 0.5
+            && textureLod(Sampler4, vec2(fract(uv.x - east), v), lod).a > 0.5;
 }
 
 void main() {
     vec3 ray = normalize(worldPos);
     float along = dot(Centre, ray);
     vec3 closest = ray * along - Centre;
-    float apart = length(closest);
-    float depth = sqrt(max(Radius * Radius - apart * apart, 0.0));
+    // How far the ray passes from the middle, and how deep it goes in, worked so a huge world seen from just over its
+    // ground keeps a clean horizon.
+    float apart = length(cross(Centre, ray));
+    float depth = sqrt(max((Radius - apart) * (Radius + apart), 0.0));
     vec3 normal = normalize(ray * (along - depth) - Centre);
 
     // Where the ray meets the world on its maps: its latitude from its pole, its longitude east from its map's middle.
@@ -88,7 +108,7 @@ void main() {
         if (AirThickness > 0.0 && along > 0.0 && reach < 1.0 + AirThickness * 1.6) {
             float lit = smoothstep(-0.25, 0.25, dot(closest / apart, SunDir));
             float glow = exp(-(reach - 1.0) / AirThickness * 2.2) * lit;
-            fragColor = vec4(Air * glow, clamp(glow * 1.2, 0.0, 1.0));
+            fragColor = vec4(Air * glow, clamp(glow * 1.2, 0.0, 1.0)) * Fade;
             return;
         }
         discard;
@@ -114,16 +134,15 @@ void main() {
     }
 
     vec3 view = -ray;
-    if (HasClouds == 1) {
-        bool cloud = cloudAt(uv, lod);
-        if (cloud) {
-            vec3 top = vec3(cloudAt(uv + CLOUD_EDGE, lod) ? 0.97 : 0.82);
-            fragColor = vec4(shade(top, light, light, normal, view), 1.0);
-            return;
-        }
-        if (cloudAt(uv + CLOUD_SHADOW, lod)) {
+    vec3 shaded;
+    if (HasClouds == 1 && cloudAt(uv, lod)) {
+        vec3 top = vec3(cloudAt(uv + CLOUD_EDGE, lod) ? 0.97 : 0.82);
+        shaded = shade(top, light, light, normal, view);
+    } else {
+        if (HasClouds == 1 && cloudAt(uv + CLOUD_SHADOW, lod)) {
             colour *= 0.74;
         }
+        shaded = shade(colour, light, bumped, normal, view);
     }
-    fragColor = vec4(shade(colour, light, bumped, normal, view), 1.0);
+    fragColor = vec4(mix(shaded, VeilColour, Veil), 1.0) * Fade;
 }

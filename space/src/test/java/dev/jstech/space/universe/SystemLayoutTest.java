@@ -135,6 +135,18 @@ class SystemLayoutTest {
     }
 
     @Test
+    void orbitSpot_andPlaceUnder_goThereAndBackWithinTheLowOrbit() {
+        for (final SolarBody body : SolarBody.values()) {
+            final double[] spot = SystemLayout.orbitSpot(body, 123.4, -56.7);
+            assertEquals(body, SystemLayout.over(spot[0], spot[1]), "the spot lies in the low orbit");
+            assertArrayEquals(new double[] {123.4, -56.7}, SystemLayout.placeUnder(body, spot[0], spot[1]), 1e-9);
+        }
+        final double[] corner = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 180, 90);
+        assertEquals(SolarBody.OVERWORLD, SystemLayout.over(corner[0], corner[1]), "even the world's far corner");
+        assertTrue(corner[1] < SystemLayout.centre(SolarBody.OVERWORLD)[2], "the north lies to the space's north");
+    }
+
+    @Test
     void lowOrbits_neverMeet() {
         final SolarBody[] bodies = SolarBody.values();
         for (int a = 0; a < bodies.length; a++) {

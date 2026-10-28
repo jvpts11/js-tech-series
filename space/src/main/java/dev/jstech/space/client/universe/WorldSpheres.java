@@ -30,17 +30,16 @@ import org.slf4j.Logger;
 /**
  * The maps the Solar System's worlds are drawn from in its space, on the graphics card: the Moon's and Mars' colour and
  * height maps from the mod's textures, and the Overworld's drawn from the number the server sends for its seed
- * ({@link OverworldMap}), with its cloud cover redrawn as the clouds turn round it. The maps are drawn away from the
- * render thread; only putting them on the card is done on it, where everything here is called.
+ * ({@link OverworldMap}), with its clouds laid once in bands the world-sphere shader slides round it. The maps are
+ * drawn away from the render thread; only putting them on the card is done on it, where everything here is called.
  */
 final class WorldSpheres {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     /* The Overworld's maps, as wide as the approved views draw it. */
     private static final int OVERWORLD_WIDTH = 2_048;
-    /* How long the clouds take to go once round the Overworld, and how often their cover is redrawn, in ticks. */
+    /* How long the clouds take to go once round the Overworld at the pace of a whole turn, in ticks. */
     private static final double CLOUD_TURN_TICKS = 48_000;
-    private static final long CLOUD_STEP_TICKS = 20;
     private static final ResourceLocation CLOUDS = ResourceLocation.withDefaultNamespace(
             "textures/environment/clouds.png");
     private static final int CLOUD_TILE = 256;
@@ -52,14 +51,7 @@ final class WorldSpheres {
     @Nullable
     private static CompletableFuture<Overworld> overworldJob;
     @Nullable
-    private static double[] weather;
-    @Nullable
-    private static boolean[] cloudTile;
-    @Nullable
-    private static SphereTexture clouds;
-    @Nullable
-    private static CompletableFuture<NativeImage[]> cloudJob;
-    private static long cloudStep = -1;
+    private static Cover clouds;
     /* Set when a map could not be read or drawn, so it is not tried on every frame; cleared as the player leaves. */
     private static boolean failed;
 
@@ -102,29 +94,18 @@ final class WorldSpheres {
         return MAPS.get(body);
     }
 
-    /** The Overworld's cloud cover at {@code tick}, kept turning; none until it is first drawn. */
-    static @Nullable SphereTexture clouds(final long tick) {
-        final CompletableFuture<NativeImage[]> job = cloudJob;
-        if (job != null && job.isDone()) {
-            cloudJob = null;
-            final NativeImage[] cover = done(job);
-            if (cover != null && clouds == null) {
-                clouds = new SphereTexture(cover);
-            } else if (cover != null) {
-                clouds.replace(cover);
-            }
-        }
-        final long step = tick / CLOUD_STEP_TICKS;
-        final double[] gathering = weather;
-        final boolean[] tile = cloudTile;
-        if (!failed && cloudJob == null && step != cloudStep && gathering != null && tile != null) {
-            cloudStep = step;
-            final long seed = mapSeed;
-            final double turn = step * CLOUD_STEP_TICKS / CLOUD_TURN_TICKS;
-            cloudJob = CompletableFuture.supplyAsync(() -> cover(OverworldMap.clouds(OVERWORLD_WIDTH, turn, seed,
-                    tile, gathering)), Util.backgroundExecutor());
-        }
+    /** The Overworld's clouds, laid once with its maps; none until then. */
+    static @Nullable Cover clouds() {
         return clouds;
+    }
+
+    /**
+     * How many turns the Overworld's clouds have gone round it at {@code time}, in ticks, counted modulo
+     * {@link OverworldMap#PACE_STEPS} so the shader's single floats keep them exact ({@link OverworldMap#slide}).
+     */
+    static float cloudTurn(final double time) {
+        final double turn = time / CLOUD_TURN_TICKS;
+        return (float) (Math.floorMod((long) Math.floor(turn), OverworldMap.PACE_STEPS) + turn - Math.floor(turn));
     }
 
     private static @Nullable Maps overworld() {
@@ -134,15 +115,15 @@ final class WorldSpheres {
         }
         if (overworldJob == null) {
             final long seed = mapSeed;
+            final boolean[] tile = cloudTile();
             overworldJob = CompletableFuture.supplyAsync(() -> {
                 final OverworldMap.Maps maps = OverworldMap.maps(OVERWORLD_WIDTH, seed);
                 return new Overworld(SphereTexture.chain(opaque(maps.colours()), OVERWORLD_WIDTH),
                         SphereTexture.chain(grey(maps.heights()), OVERWORLD_WIDTH),
-                        OverworldMap.weather(OVERWORLD_WIDTH, seed));
+                        bands(OverworldMap.cloudBands(OVERWORLD_WIDTH, seed, tile),
+                                OverworldMap.cloudPaces(OVERWORLD_WIDTH, seed)),
+                        cover(OverworldMap.gathering(OVERWORLD_WIDTH, seed)));
             }, Util.backgroundExecutor());
-            if (cloudTile == null) {
-                cloudTile = cloudTile();
-            }
         }
         final CompletableFuture<Overworld> job = overworldJob;
         if (!job.isDone()) {
@@ -153,7 +134,7 @@ final class WorldSpheres {
         if (drawn == null) {
             return null;
         }
-        weather = drawn.weather();
+        clouds = new Cover(new SphereTexture(drawn.bands()), new SphereTexture(drawn.gathering()));
         final Maps maps = new Maps(new SphereTexture(drawn.colour()), new SphereTexture(drawn.height()));
         MAPS.put(SolarBody.OVERWORLD, maps);
         return maps;
@@ -177,7 +158,7 @@ final class WorldSpheres {
             maps.release();
         }
         if (clouds != null) {
-            clouds.releaseId();
+            clouds.release();
             clouds = null;
         }
         final CompletableFuture<Overworld> job = overworldJob;
@@ -185,16 +166,11 @@ final class WorldSpheres {
             job.thenAccept(drawn -> {
                 SphereTexture.close(drawn.colour());
                 SphereTexture.close(drawn.height());
+                SphereTexture.close(drawn.bands());
+                SphereTexture.close(drawn.gathering());
             });
         }
-        final CompletableFuture<NativeImage[]> cover = cloudJob;
-        if (cover != null) {
-            cover.thenAccept(SphereTexture::close);
-        }
         overworldJob = null;
-        cloudJob = null;
-        weather = null;
-        cloudStep = -1;
     }
 
     /* The Moon's or Mars' maps, read from the mod's textures. */
@@ -258,11 +234,20 @@ final class WorldSpheres {
         return out;
     }
 
-    /* The cover as white, see-through where there is no cloud. */
+    /* A cover as white, see-through where it is false. */
     private static NativeImage[] cover(final boolean[] cloud) {
         final int[] out = new int[cloud.length];
         for (int i = 0; i < cloud.length; i++) {
             out[i] = FastColor.ARGB32.color(cloud[i] ? FULL : 0, FULL, FULL, FULL);
+        }
+        return SphereTexture.chain(out, OVERWORLD_WIDTH);
+    }
+
+    /* The clouds' bands, see-through where there is no cloud, each texel's red its row's pace. */
+    private static NativeImage[] bands(final boolean[] cloud, final int[] paces) {
+        final int[] out = new int[cloud.length];
+        for (int i = 0; i < cloud.length; i++) {
+            out[i] = FastColor.ARGB32.color(cloud[i] ? FULL : 0, paces[i / OVERWORLD_WIDTH], 0, 0);
         }
         return SphereTexture.chain(out, OVERWORLD_WIDTH);
     }
@@ -281,7 +266,22 @@ final class WorldSpheres {
         }
     }
 
-    /* The Overworld's maps, drawn away from the render thread. */
-    private record Overworld(NativeImage[] colour, NativeImage[] height, double[] weather) {
+    /**
+     * The Overworld's clouds on the card.
+     *
+     * @param bands its bands of cloud as they stand at the start, each texel's red the pace of its row
+     * @param gathering where the weather lets clouds be, at the start
+     */
+    record Cover(SphereTexture bands, SphereTexture gathering) {
+
+        void release() {
+            this.bands.releaseId();
+            this.gathering.releaseId();
+        }
+    }
+
+    /* The Overworld's maps and clouds, drawn away from the render thread. */
+    private record Overworld(NativeImage[] colour, NativeImage[] height, NativeImage[] bands,
+                             NativeImage[] gathering) {
     }
 }

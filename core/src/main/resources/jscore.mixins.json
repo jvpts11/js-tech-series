@@ -16,6 +16,7 @@
     "FireBlockMixin",
     "LevelMixin",
     "LevelStorageAccessMixin",
+    "LivingEntityAccessor",
     "LivingEntityMixin",
     "MappedRegistryMixin",
     "NaturalSpawnerMixin",
@@ -42,7 +43,8 @@
     "ParticleEngineMixin",
     "ParticleMixin",
     "RenderChunkRegionMixin",
-    "RenderSectionMixin"
+    "RenderSectionMixin",
+    "SectionOcclusionGraphMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1657,6 +1657,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stands as high as the latitude, the sun climbing less the nearer the poles; the day's light, the stars, the fog and
   the clouds follow the hour where the player stands, and `SkyPlace` gives it to a mod. A body may go round the other
   way, as Phobos rises in the west, be squashed into a lump, or show as a point of light, as a far planet does.
+- Passages with no screen at all: `DimensionTravel.SEAMLESS` keeps the world drawn while the land loads, for a
+  passage where both ends show only sky, and `DimensionTravel.announce` tells a player's game of a passage a mod
+  makes itself; the player made anew for the new level keeps the old one's swing and the sway of their view, so their
+  hand does not drop and nothing on the screen tells that the dimension changed. `SkyLayers` draws one sky's stars over
+  another's, and `Skies.of(level, dimension)` reads any dimension's sky.
+- The ground drawn by its mod: `GroundCovers` lets a mod draw a level's ground itself from far above, the game
+  drawing none of the level's blocks and none of its clouds while it does, and on the way there lets the game's sight
+  reach down, every loaded block in sight drawn however far below the eye it is.
+- A sky with no ground under it (`"ground": false`), for a space: the sky goes on under the horizon however low
+  the eye is, never dark under it as the game draws the void under a world.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -1772,6 +1782,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A passage shown through a mod's own screen stands in for both openings of the game's loading screen in it,
+  and is told to the player's game before the passage, where it was told after the first had opened.
 - A player in a dimension that keeps its own border is told that border, where the game told them the
   overworld's.
 - The band of the galaxy in a sky drawn by the Core fades towards both its edges; half of it went undrawn,

@@ -45,6 +45,26 @@ public final class SolarSystemWorlds {
         // Loading the class declares them.
     }
 
+    /** The body the world {@code id} is drawn as in the Solar System's space, if it is one of these. */
+    public static Optional<SolarBody> bodyOf(final ResourceLocation id) {
+        if (OVERWORLD.equals(id)) {
+            return Optional.of(SolarBody.OVERWORLD);
+        }
+        if (MOON.equals(id)) {
+            return Optional.of(SolarBody.MOON);
+        }
+        return MARS.equals(id) ? Optional.of(SolarBody.MARS) : Optional.empty();
+    }
+
+    /** The world drawn as {@code body} in the Solar System's space. */
+    public static ResourceLocation worldOf(final SolarBody body) {
+        return switch (body) {
+            case OVERWORLD -> OVERWORLD;
+            case MOON -> MOON;
+            case MARS -> MARS;
+        };
+    }
+
     /* A world, {@code generator} null for one whose dimension generates itself. */
     private static ResourceLocation declare(final String path, final TextKey name, final ResourceKey<Level> dimension,
                                             @Nullable final ResourceLocation generator, final double diameter) {

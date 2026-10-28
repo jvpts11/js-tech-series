@@ -44,10 +44,13 @@ import net.minecraft.resources.ResourceLocation;
  * @param round        whether its world is round: its border from west to east goes once round it and from north to
  *                     south from pole to pole, so the sun's hour follows the longitude and its path leans with the
  *                     latitude, as on a real world
+ * @param ground       whether it has ground under it: with none, as in a space, the sky goes on under the horizon
+ *                     however low the eye is, never dark under it as the game draws the void under a world
  */
 public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, Optional<Integer> sunsetColour,
                       List<Sun> suns, List<Body> bodies, Stars stars, Optional<Galaxy> galaxy, List<Nebula> nebulae,
-                      Optional<Aurora> aurora, Optional<Clouds> clouds, Optional<Haze> haze, boolean round) {
+                      Optional<Aurora> aurora, Optional<Clouds> clouds, Optional<Haze> haze, boolean round,
+                      boolean ground) {
 
     /** The farthest a sun may be, in astronomical units, and the nearest. */
     public static final double FARTHEST = 1_000.0;
@@ -57,7 +60,7 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
     /** The overworld's sky: one yellow sun, its stars, and nothing else of the Core's. */
     public static final SkySpec DEFAULT = new SkySpec(Optional.empty(), Optional.empty(), Optional.empty(),
             List.of(Sun.OURS), List.of(), Stars.DEFAULT, Optional.empty(), List.of(), Optional.empty(),
-            Optional.empty(), Optional.empty(), false);
+            Optional.empty(), Optional.empty(), false, true);
     public static final Codec<SkySpec> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             LightColours.COLOUR.optionalFieldOf("sky_colour").forGetter(SkySpec::skyColour),
             LightColours.COLOUR.optionalFieldOf("fog_colour").forGetter(SkySpec::fogColour),
@@ -70,7 +73,8 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
             Aurora.CODEC.optionalFieldOf("aurora").forGetter(SkySpec::aurora),
             Clouds.CODEC.optionalFieldOf("clouds").forGetter(SkySpec::clouds),
             Haze.CODEC.optionalFieldOf("haze").forGetter(SkySpec::haze),
-            Codec.BOOL.optionalFieldOf("round", false).forGetter(SkySpec::round))
+            Codec.BOOL.optionalFieldOf("round", false).forGetter(SkySpec::round),
+            Codec.BOOL.optionalFieldOf("ground", true).forGetter(SkySpec::ground))
             .apply(instance, SkySpec::new));
 
     public SkySpec {

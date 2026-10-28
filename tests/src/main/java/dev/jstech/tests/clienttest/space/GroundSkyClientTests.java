@@ -86,9 +86,13 @@ public final class GroundSkyClientTests {
         final boolean[] daylight = new boolean[1];
         ctx.afterTest(() -> ctx.server().execute(() -> {
             ctx.server().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(daylight[0], ctx.server());
+            // Back on the ground and no longer flying, as the next test expects the player.
+            final ServerPlayer player = ctx.serverPlayer();
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
             final BlockPos origin = ctx.origin().above(2);
-            ctx.serverPlayer().teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(),
-                    origin.getZ() + 0.5, 0F, 0F);
+            player.teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0F,
+                    0F);
             forget(ctx, SolarSystemWorlds.MOON);
             forget(ctx, SolarSystemWorlds.MARS);
         }));

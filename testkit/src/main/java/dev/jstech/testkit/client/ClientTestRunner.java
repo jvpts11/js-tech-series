@@ -53,8 +53,10 @@ import org.slf4j.Logger;
  *
  * <p>The run is told what to do by system properties: {@code jstestkit.clienttests.shard} and {@code .shards}, which
  * slice it runs of how many; {@code .only}, parts of names separated by commas, a test run when its name holds any
- * of them; and {@code .suites}, the suites to run. Each test owns a strip of the world 64 blocks from its neighbours,
- * by its number among every test, so shards never overlap; the player is moved there before its steps run.
+ * of them; {@code .suites}, the suites to run; and {@code .world} and {@code .seed}, the game's normal land of that
+ * seed instead of the flat one, for the few tests about how the land itself looks, the flat land's tests not run there.
+ * Each test owns a strip of the world 64 blocks from its neighbours, by its number among every test, so shards never
+ * overlap; the player is moved there before its steps run.
  */
 public final class ClientTestRunner {
 
@@ -87,6 +89,8 @@ public final class ClientTestRunner {
     private static final int SHARDS = Math.max(1, Integer.getInteger(PROPERTY + ".shards", 1));
     private static final String ONLY = System.getProperty(PROPERTY + ".only", "").trim();
     private static final String SUITES = System.getProperty(PROPERTY + ".suites", "").trim();
+    private static final boolean NORMAL_LAND = "normal".equals(System.getProperty(PROPERTY + ".world", "flat"));
+    private static final long SEED = Long.getLong(PROPERTY + ".seed", 0L);
     private static final int AREA_SPACING = 64;
     private static final int SETTLE_TICKS = 40;
     private static final int AREA_TICKS = 600;
@@ -226,10 +230,11 @@ public final class ClientTestRunner {
         rules.getRule(GameRules.RULE_DO_IMMEDIATE_RESPAWN).set(true, null);
         final LevelSettings settings = new LevelSettings(WORLD_NAME, GameType.CREATIVE, false, Difficulty.PEACEFUL,
                 true, rules, WorldDataConfiguration.DEFAULT);
-        final WorldOptions options = new WorldOptions(0L, false, false);
+        final WorldOptions options = new WorldOptions(SEED, false, false);
         mc.createWorldOpenFlows().createFreshLevel(WORLD_NAME, settings, options,
                 registry -> registry.registryOrThrow(Registries.WORLD_PRESET)
-                        .getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
+                        .getHolderOrThrow(NORMAL_LAND ? WorldPresets.NORMAL : WorldPresets.FLAT).value()
+                        .createWorldDimensions(),
                 mc.screen);
         enter(State.WAIT_LEVEL);
     }

@@ -17,15 +17,20 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
  * The payloads J's Space sends between the server and a player's game, and when: the Overworld's map number as a
- * player joins. What a player's game does with each is given to it from its own side, so nothing of a player's game is
- * loaded on a server.
+ * player joins, a far map on the way up ({@code FarMaps}), and the worlds under a system's space as a player arrives in
+ * it ({@code SpaceClimbs}). What a player's game does with each is given to it from its own side, so nothing of a
+ * player's game is loaded on a server.
  */
 public final class SpacePayloads {
 
     private static final String VERSION = "1";
 
-    /* What a player's game does with the Overworld's map number; nothing until its side gives it. */
+    /* What a player's game does with the Overworld's map number and with a far map; nothing until its side gives it. */
     private static volatile IMapSeedReceiver mapSeedReceiver = seed -> {
+    };
+    private static volatile IFarMapReceiver farMapReceiver = map -> {
+    };
+    private static volatile IClimbWorldsReceiver climbWorldsReceiver = worlds -> {
     };
 
     private SpacePayloads() {
@@ -37,6 +42,10 @@ public final class SpacePayloads {
             final PayloadRegistrar registrar = event.registrar(VERSION);
             registrar.playToClient(OverworldMapPayload.TYPE, OverworldMapPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> mapSeedReceiver.receive(payload.mapSeed())));
+            registrar.playToClient(FarMapPayload.TYPE, FarMapPayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> farMapReceiver.receive(payload)));
+            registrar.playToClient(ClimbWorldsPayload.TYPE, ClimbWorldsPayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> climbWorldsReceiver.receive(payload)));
         });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, event -> {
             if (event.getEntity() instanceof ServerPlayer player) {
@@ -51,10 +60,34 @@ public final class SpacePayloads {
         mapSeedReceiver = receiver;
     }
 
+    /** Gives what a player's game does with a far map, from its own side's entry point. */
+    public static void onFarMap(final IFarMapReceiver receiver) {
+        farMapReceiver = receiver;
+    }
+
+    /** Gives what a player's game does with the worlds under a system's space, from its own side's entry point. */
+    public static void onClimbWorlds(final IClimbWorldsReceiver receiver) {
+        climbWorldsReceiver = receiver;
+    }
+
     /** What a player's game does with the Overworld's map number. */
     @FunctionalInterface
     public interface IMapSeedReceiver {
 
         void receive(long mapSeed);
+    }
+
+    /** What a player's game does with a far map. */
+    @FunctionalInterface
+    public interface IFarMapReceiver {
+
+        void receive(FarMapPayload map);
+    }
+
+    /** What a player's game does with the worlds under a system's space. */
+    @FunctionalInterface
+    public interface IClimbWorldsReceiver {
+
+        void receive(ClimbWorldsPayload worlds);
     }
 }
