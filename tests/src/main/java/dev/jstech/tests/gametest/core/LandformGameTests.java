@@ -15,6 +15,9 @@ import dev.jstech.core.worldgen.landform.SeaConfig;
 import dev.jstech.core.worldgen.landform.SeaFeature;
 import dev.jstech.core.worldgen.strata.StrataConfig;
 import dev.jstech.core.worldgen.strata.StrataFeature;
+import dev.jstech.core.worldgen.variation.RockRule;
+import dev.jstech.core.worldgen.variation.RockVariationConfig;
+import dev.jstech.core.worldgen.variation.RockVariationFeature;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +47,10 @@ public final class LandformGameTests {
     private static final int TOP = 3;
     private static final int SIDE = 8;
     private static final int MIDDLE = 4;
+    /* A scarp's first column, how high it rises over the plain, and a column of the plain away from it and the edge. */
+    private static final int SCARP = 6;
+    private static final int RISE = 5;
+    private static final int PLAIN = 2;
     private static final double WATER_FREEZES = 273.15;
     private static final double WATER_BOILS = 373.15;
     /* Hotter and colder than any arena's air, to see a liquid freeze or boil whatever the place. */
@@ -327,6 +334,46 @@ public final class LandformGameTests {
                 () -> "and the rock below the last layer is left as it was");
         helper.assertBlockState(new BlockPos(MIDDLE + 1, TOP, MIDDLE), state -> state.is(Blocks.DIRT),
                 () -> "what is not the rock the layers replace is left alone");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, skyAccess = true)
+    public static void variations_putEachVariantWhereGeologyPutsIt(final GameTestHelper helper) {
+        floor(helper);
+        // A scarp: the east of the arena raised five blocks over its plain.
+        for (int x = SCARP; x <= SIDE; x++) {
+            for (int z = 0; z <= SIDE; z++) {
+                for (int y = TOP + 1; y <= TOP + RISE; y++) {
+                    helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                }
+            }
+        }
+        final RockVariationConfig config = new RockVariationConfig(Blocks.STONE, List.of(
+                new RockVariationConfig.Variant(state(Blocks.ANDESITE),
+                        RockRule.ANYWHERE.exposed(RockRule.Exposure.SIDE).slope(2), Optional.empty()),
+                new RockVariationConfig.Variant(state(Blocks.COBBLESTONE),
+                        RockRule.ANYWHERE.exposed(RockRule.Exposure.TOP), Optional.empty()),
+                new RockVariationConfig.Variant(state(Blocks.TUFF), RockRule.ANYWHERE.depth(1, 1),
+                        Optional.empty())));
+        final BlockPos low = helper.absolutePos(BlockPos.ZERO);
+        final BlockPos high = helper.absolutePos(new BlockPos(SIDE, 0, SIDE));
+        RockVariationFeature.vary(helper.getLevel(), config, Math.min(low.getX(), high.getX()),
+                Math.min(low.getZ(), high.getZ()), Math.max(low.getX(), high.getX()),
+                Math.max(low.getZ(), high.getZ()), Heightmap.Types.OCEAN_FLOOR);
+        helper.assertBlockState(new BlockPos(PLAIN, TOP, MIDDLE), state -> state.is(Blocks.COBBLESTONE),
+                () -> "the top of the plain takes the variant of the ground's top");
+        helper.assertBlockState(new BlockPos(PLAIN, TOP - 1, MIDDLE), state -> state.is(Blocks.TUFF),
+                () -> "the block under it the variant of its depth");
+        helper.assertBlockState(new BlockPos(PLAIN, TOP - 2, MIDDLE), state -> state.is(Blocks.STONE),
+                () -> "and the rock where no variant goes is left as it was");
+        helper.assertBlockState(new BlockPos(SCARP, TOP + 2, MIDDLE), state -> state.is(Blocks.ANDESITE),
+                () -> "the scarp's face takes the variant of steep faces");
+        helper.assertBlockState(new BlockPos(SCARP, TOP + RISE, MIDDLE), state -> state.is(Blocks.ANDESITE),
+                () -> "its edge too, the first variant that fits taken");
+        helper.assertBlockState(new BlockPos(SCARP + 1, TOP + RISE, MIDDLE), state -> state.is(Blocks.COBBLESTONE),
+                () -> "the scarp's top, open to nothing but the sky, the variant of the ground's top");
+        helper.assertBlockState(new BlockPos(SCARP + 1, TOP + 2, MIDDLE), state -> state.is(Blocks.STONE),
+                () -> "the rock behind the scarp's face is left as it was");
         helper.succeed();
     }
 

@@ -1667,6 +1667,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   reach down, every loaded block in sight drawn however far below the eye it is.
 - A sky with no ground under it (`"ground": false`), for a space: the sky goes on under the horizon however low
   the eye is, never dark under it as the game draws the void under a world.
+- Rock varied by geology: `RockVariations` puts each variant of a rock where geology puts it, as the faces of
+  scarps, the tops of flows, the upper layers of every exposure or the rock below ground, each told by how the rock
+  lies open, how deep, how steep the ground is round it, its height and its biome; the feature
+  `jscore:rock_variations` is laid after the rock in layers and before the ores, and written by the data generation
+  for a data pack to change.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

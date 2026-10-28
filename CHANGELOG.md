@@ -1962,6 +1962,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   spot of the low orbit, laid out like a map of the world, so a station built there stands over its base; going down
   through the floor of the low orbits shows the climb's own pictures on the way and comes back down over the same
   place, high over the ground.
+- (Core) Rock varied by geology: `RockVariations` puts each variant of a rock where geology puts it, as the faces of
+  scarps, the tops of flows, the upper layers of every exposure or the rock below ground, each told by how the rock
+  lies open, how deep, how steep the ground is round it, its height and its biome; the feature
+  `jscore:rock_variations` is laid after the rock in layers and before the ores, and written by the data generation
+  for a data pack to change.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

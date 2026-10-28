@@ -14,6 +14,7 @@ import dev.jstech.core.worldgen.landform.Landforms;
 import dev.jstech.core.worldgen.terrain.DensitySpec;
 import dev.jstech.core.worldgen.terrain.NoiseSpec;
 import dev.jstech.core.worldgen.terrain.Terrains;
+import dev.jstech.core.worldgen.variation.RockVariations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -152,7 +153,8 @@ public final class WorldGenProvider extends DatapackBuiltinEntriesProvider {
 
     /*
      * The shapes of the land the mod declared, each a feature of the Core's: landforms first, laid on the raw ground,
-     * then the rock in layers through what they raised, before the ores; the seas last, once everything else is laid.
+     * then the rock in layers through what they raised, then each rock's variants where geology puts them, before the
+     * ores; the seas last, once everything else is laid.
      */
     private static List<Shaped> shapes(final String modid) {
         final List<Shaped> shapes = new ArrayList<>();
@@ -161,6 +163,9 @@ public final class WorldGenProvider extends DatapackBuiltinEntriesProvider {
         Landforms.strataOf(modid).forEach(one -> shapes.add(new Shaped(one.id(), one.biomes(),
                 GenerationStep.Decoration.LOCAL_MODIFICATIONS,
                 all -> new ConfiguredFeature<>(CoreFeatures.STRATA.get(), one.config()))));
+        RockVariations.declaredBy(modid).forEach(one -> shapes.add(new Shaped(one.id(), one.biomes(),
+                GenerationStep.Decoration.UNDERGROUND_STRUCTURES,
+                all -> new ConfiguredFeature<>(CoreFeatures.ROCK_VARIATIONS.get(), one.config(all)))));
         Landforms.seasOf(modid).forEach(one -> shapes.add(new Shaped(one.id(), one.biomes(),
                 GenerationStep.Decoration.TOP_LAYER_MODIFICATION,
                 all -> new ConfiguredFeature<>(CoreFeatures.SEA.get(), one.config()))));

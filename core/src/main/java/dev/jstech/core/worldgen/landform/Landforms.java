@@ -8,6 +8,7 @@
 package dev.jstech.core.worldgen.landform;
 
 import dev.jstech.core.worldgen.strata.StrataConfig;
+import dev.jstech.core.worldgen.variation.RockVariations;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,7 +93,8 @@ public final class Landforms {
 
     /** Whether the mod of that namespace declared any shape of the land. */
     public static boolean declares(final String namespace) {
-        return !landformsOf(namespace).isEmpty() || !strataOf(namespace).isEmpty() || !seasOf(namespace).isEmpty();
+        return !landformsOf(namespace).isEmpty() || !strataOf(namespace).isEmpty() || !seasOf(namespace).isEmpty()
+                || !RockVariations.declaredBy(namespace).isEmpty();
     }
 
     /**

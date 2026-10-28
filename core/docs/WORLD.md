@@ -7,7 +7,8 @@ they are made (generation in old chunks, a surface that changes with the climate
 over the chunks), dimensions of your own with
 rules for gravity, air (by height), heat and weather, laws of physics of their own for places, dimensions and
 bodies, their terrain and biomes with climates in real values, the shapes of the
-land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers, seas that freeze or boil away,
+land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers, rock varied by geology (each
+variant of a rock where geology puts it), seas that freeze or boil away,
 dimensions made while the game runs, data kept over areas of the world, and chunks kept loaded for their owners.
 
 ## The words
@@ -777,6 +778,27 @@ Each column takes its region's sequence and, from the top of the ground down, pu
 the rock it replaces; below the last layer the rock is left as it was. Regions meet along wavy borders. It is laid
 after the landforms, through what they raised, and before the ores, which then lie in the layers.
 
+### Rock varied by geology
+
+```java
+public static final RockVariations.Spec MARTIAN_BASALT = RockVariations.rock(rl("martian_basalt"), () -> BASALT)
+        // the faces of scarps and the walls of canyons: open on a side, on ground rising 2 or more within 2 blocks
+        .variant(() -> COLUMNAR_BASALT, RockRule.ANYWHERE.exposed(RockRule.Exposure.SIDE).slope(2))
+        // the tops of lava flows, in the lava plains only
+        .variant(() -> VESICULAR_BASALT, RockRule.ANYWHERE.exposed(RockRule.Exposure.TOP), MY_LAVA_PLAINS)
+        // the upper layers of every exposure
+        .variant(() -> DUSTED_BASALT, RockRule.ANYWHERE.depth(0, 3))
+        .biomes(MY_MARS_BIOMES)
+        .declare();
+```
+
+Every block of the rock, from the top of the ground down as deep as any variant reaches, takes the first variant
+whose place it lies in, and stays as it is where it lies in none. A place is told by how the block lies open (to the
+sky, on a side, or buried), how deep under the top of the ground it lies, how steep the ground is round it (how many
+blocks it rises or falls within two blocks, the steepest way), its height and its biome. It is laid after the rock in
+layers, so a layer's rock can be varied too, and before the ores, which then lie in the variants;
+`RockVariationFeature.vary(level, config, x0, z0, x1, z1, heightmap)` varies it where code wants.
+
 ### Seas
 
 ```java
@@ -791,8 +813,8 @@ The terrain fills its low ground with its liquid up to its sea; where it is cold
 sea's top freezes, and where it is hotter than it boils, the sea is gone down to its floor. It is the last thing
 laid.
 
-The data generation writes each landform, rock in layers and sea as a configured feature, a placed feature and a
-NeoForge biome modifier under the same name, so a data pack can change or remove any of them.
+The data generation writes each landform, rock in layers, rock varied by geology and sea as a configured feature, a
+placed feature and a NeoForge biome modifier under the same name, so a data pack can change or remove any of them.
 
 ### Runtime-only dimensions
 

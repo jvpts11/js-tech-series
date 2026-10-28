@@ -16,6 +16,8 @@ import dev.jstech.core.worldgen.landform.SeaFeature;
 import dev.jstech.core.worldgen.reservoir.ReservoirFeature;
 import dev.jstech.core.worldgen.strata.StrataConfig;
 import dev.jstech.core.worldgen.strata.StrataFeature;
+import dev.jstech.core.worldgen.variation.RockVariationConfig;
+import dev.jstech.core.worldgen.variation.RockVariationFeature;
 import dev.jstech.core.worldgen.vein.VeinFeature;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -27,8 +29,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 /**
- * The kinds of feature the Core gives every mod's world generation (landforms, rock in layers, seas, veins and
- * reservoirs), and the biome modifier that adds features to every biome.
+ * The kinds of feature the Core gives every mod's world generation (landforms, rock in layers, rock varied by
+ * geology, seas, veins and reservoirs), and the biome modifier that adds features to every biome.
  */
 public final class CoreFeatures {
 
@@ -43,6 +45,9 @@ public final class CoreFeatures {
     /** {@code jscore:strata}: see {@link StrataFeature}. */
     public static final DeferredHolder<Feature<?>, Feature<StrataConfig>> STRATA =
             FEATURES.register("strata", StrataFeature::new);
+    /** {@code jscore:rock_variations}: see {@link RockVariationFeature}. */
+    public static final DeferredHolder<Feature<?>, Feature<RockVariationConfig>> ROCK_VARIATIONS =
+            FEATURES.register("rock_variations", RockVariationFeature::new);
     /** {@code jscore:sea}: see {@link SeaFeature}. */
     public static final DeferredHolder<Feature<?>, Feature<SeaConfig>> SEA = FEATURES.register("sea", SeaFeature::new);
     /** {@code jscore:veins}: see {@link VeinFeature}. */
