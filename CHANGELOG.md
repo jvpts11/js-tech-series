@@ -1809,6 +1809,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the alerts.
 - (Space) The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
   the same version as every mod of the series. It adds nothing to the game yet.
+- (Space) The settings of a world, `jsspace-server.toml`, none of which turns a part of the mod off: fourteen
+  consequences, each on unless a server turns it off and saying what happens instead (launch damage, no launch in a
+  thunderstorm, falling stages that leave craters, five failures of a rocket, cruise events, landing only once a
+  world's essentials are known, dust on Mars, naming hidden worlds, debris, and the Laser Satellite as a weapon), and
+  two rules of balance that start off, fast travel and J's Industrial's chains as the only path. They are on J's
+  Core's settings screen, in English and Brazilian Portuguese; each is read by what it governs as that is built.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

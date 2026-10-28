@@ -8,6 +8,7 @@
 package dev.jstech.space;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.datagen.JsSpaceDataGenerators;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -30,6 +31,8 @@ public final class JsSpace {
         LOGGER.info("J's Space {} loaded.", modContainer.getModInfo().getVersion());
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
+        // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.
+        SpaceServerConfig.register(modEventBus, modContainer);
         // The mod's data generation, which runs only in a data run.
         JsSpaceDataGenerators.listen(modEventBus);
     }
