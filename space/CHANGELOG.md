@@ -6,6 +6,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+### API
+- The promise: J's Space's API is at version 1, in `dev.jstech.space.api`, experimental. For now it holds
+  only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
+  landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
+  it with the model it holds, raising that number. Its photo is `core/src/test/resources/api/space.txt`.
+
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
   the same version as every mod of the series. It adds nothing to the game yet.

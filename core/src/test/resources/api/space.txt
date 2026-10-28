@@ -1,0 +1,9 @@
+# The public API of the mod in the folder 'space': every type and member a mod
+# built on it can reach. The number before a line is the version of the API that brought
+# it in the shape written there. Whatever came after the stable version carries
+# @ApiStatus.Experimental; the stable version rises only once what came up to
+# it meets the bar docs/API.md sets for a stable part. Kept by the API surface test,
+# which writes to build/api-photo what this file would have to say when the API changes.
+stable 0
+1 dev.jstech.space.api.JsSpaceApi  type final class
+1 dev.jstech.space.api.JsSpaceApi  static final int VERSION

@@ -296,6 +296,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `IMachineParameters` (`address` and `otherwise` set, `waiting` read; `MOST_ADDRESS`), registered with its other
   faces by `register`, and `sendNow(level, to)` sends what waits in it to an address at once, answering a
   `SendOutcome` (`SENT`, `NOT_YET`, `NOTHING`, `NO_STATION`).
+- (Space) The promise: J's Space's API is at version 1, in `dev.jstech.space.api`, experimental. For now it holds
+  only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
+  landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
+  it with the model it holds, raising that number. Its photo is `core/src/test/resources/api/space.txt`.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

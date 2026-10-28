@@ -11,6 +11,7 @@ Each mod's api packages, the packages it lists as promised beside them, and noth
   shares on the side of the game that has screens.
 - `dev.jstech.computers.api`, for the computers, `dev.jstech.computers.api.planner` for their planners and
   `dev.jstech.computers.api.client` for what a mod draws on a player's game.
+- `dev.jstech.industrial.api`, for the industrial mod, and `dev.jstech.space.api`, for the space mod.
 - The packages listed in `JsCoreApi.PROMISED_PACKAGES`: the Core's kits, each entering the list once it is
   documented for a reader who knows nothing of it, starting with its package's `package-info`. From then on
   everything public in it is part of the API, as an api package is.
@@ -133,9 +134,9 @@ processors of its own brings the socket they sit in by writing its id, with noth
 
 ## The version, and how stable this is
 
-`JsCoreApi.VERSION` and `JsComputersApi.VERSION` are the numbers of the shape of each mod's API. Each goes
-up by one whenever something is added to that mod's API or changes shape in it. A mod that needs something
-added later can refuse to load below the number that added it.
+`JsCoreApi.VERSION`, `JsComputersApi.VERSION`, `JsIndustrialApi.VERSION` and `JsSpaceApi.VERSION` are the
+numbers of the shape of each mod's API. Each goes up by one whenever something is added to that mod's API or
+changes shape in it. A mod that needs something added later can refuse to load below the number that added it.
 
 `JsCoreApi.SETTLED` says whether the shape has settled. **It has not.** The computing side of the series
 is still being built, and until J's Computers and J's Industrial are both finished in what they do and in
@@ -165,9 +166,9 @@ What came before that bar was set lost its mark in the cycle after its release, 
 
 ## How the API is kept
 
-Each mod's API is written down line by line in a file of its own, `core/src/test/resources/api/core.txt`
-and `computers.txt`: one line for every type and every member a mod can reach, each with the version of
-the API that brought it in the shape written there. A line reads like this:
+Each mod's API is written down line by line in a file of its own, `core/src/test/resources/api/core.txt`,
+`computers.txt`, `industrial.txt` and `space.txt`: one line for every type and every member a mod can reach, each
+with the version of the API that brought it in the shape written there. A line reads like this:
 
 ```
 10 dev.jstech.core.material.Materials  static List<Material> all()
