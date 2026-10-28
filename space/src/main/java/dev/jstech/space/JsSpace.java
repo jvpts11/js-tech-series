@@ -10,6 +10,7 @@ package dev.jstech.space;
 import com.mojang.logging.LogUtils;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.datagen.JsSpaceDataGenerators;
+import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.guide.MissionHandbook;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -32,6 +33,8 @@ public final class JsSpace {
         LOGGER.info("J's Space {} loaded.", modContainer.getModInfo().getVersion());
         // The Mission Handbook's item and the style it is drawn in; the handbook itself is written in Markdown.
         MissionHandbook.declare();
+        // The firsts of spaceflight a team reaches, which any mod reads and the advancements of the same firsts follow.
+        SpaceMilestones.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

@@ -14,7 +14,10 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** The advancement triggers the Core gives every mod: an event by its id, and a step reached along an axis. */
+/**
+ * The advancement triggers the Core gives every mod: an event by its id, a step reached along an axis, and a milestone
+ * of the player's team.
+ */
 public final class CoreTriggers {
 
     private static final DeferredRegister<CriterionTrigger<?>> TRIGGERS =
@@ -26,6 +29,9 @@ public final class CoreTriggers {
     /** {@code jscore:axis_step}: see {@link AxisStepTrigger}. */
     public static final DeferredHolder<CriterionTrigger<?>, AxisStepTrigger> AXIS_STEP =
             TRIGGERS.register("axis_step", AxisStepTrigger::new);
+    /** {@code jscore:milestone}: see {@link MilestoneTrigger}. */
+    public static final DeferredHolder<CriterionTrigger<?>, MilestoneTrigger> MILESTONE =
+            TRIGGERS.register("milestone", MilestoneTrigger::new);
 
     private CoreTriggers() {
     }

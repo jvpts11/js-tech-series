@@ -1,0 +1,15 @@
+{
+  "criteria": {
+    "done": {
+      "trigger": "jscore:milestone",
+      "conditions": {
+        "milestone": "jstests:test_orbit"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

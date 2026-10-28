@@ -1,0 +1,32 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsspace:rocket_launched"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "background": "jsspace:textures/gui/advancements/sky.png",
+    "description": {
+      "translate": "advancements.jsspace.leaving_the_earth.root.description"
+    },
+    "icon": {
+      "components": {
+        "jscore:picture": "jsspace:gui/advancements/rocket"
+      },
+      "count": 1,
+      "id": "minecraft:paper"
+    },
+    "title": {
+      "translate": "advancements.jsspace.leaving_the_earth.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

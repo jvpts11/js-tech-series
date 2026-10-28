@@ -7,3 +7,10 @@
 stable 0
 1 dev.jstech.space.api.JsSpaceApi  type final class
 1 dev.jstech.space.api.JsSpaceApi  static final int VERSION
+2 dev.jstech.space.api.SpaceAdvancementTab  type enum
+2 dev.jstech.space.api.SpaceAdvancementTab  LEAVING_THE_EARTH
+2 dev.jstech.space.api.SpaceAdvancementTab  MARS
+2 dev.jstech.space.api.SpaceAdvancementTab  ResourceLocation advancement(String)
+2 dev.jstech.space.api.SpaceAdvancementTab  ResourceLocation root()
+2 dev.jstech.space.api.SpaceAdvancementTab  String path()
+2 dev.jstech.space.api.SpaceAdvancementTab  THE_MOON

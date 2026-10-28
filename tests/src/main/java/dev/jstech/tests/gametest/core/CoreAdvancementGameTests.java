@@ -12,21 +12,27 @@ import dev.jstech.core.advancement.AxisStepTrigger;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.jstechseries.tier.SeriesAxes;
+import dev.jstech.core.progression.TeamProgress;
+import dev.jstech.core.team.CoreTeams;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestProgression;
 import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The Core's advancement triggers, through two advancements of the test mod written by hand: one earned by an event a
- * mod reports under its own namespace, and one by reaching the Transition era, or any era past it.
+ * The Core's advancement triggers, through three advancements of the test mod written by hand: one earned by an event
+ * a mod reports under its own namespace, one by reaching the Transition era, or any era past it, and one by the
+ * player's team reaching the test mod's orbit milestone.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -79,6 +85,36 @@ public final class CoreAdvancementGameTests {
                 "nor a step of an axis no mod registered");
         helper.assertTrue(new AxisStepTrigger.Instance(Optional.empty(), era, "legacy").matches(era, 1),
                 "while the step itself is met");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void milestone_earnsItsAdvancementForTheTeamThatReachesIt(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            final String team = CoreTeams.teamOf(player.server, player.getUUID());
+            TeamProgress.reach(player.server, team, TestProgression.FIRSTS.get(0));
+            helper.assertFalse(done(player, "reached_orbit"), "another milestone earns nothing");
+            TeamProgress.reach(player.server, team, TestProgression.FIRSTS.get(1));
+            helper.assertTrue(done(player, "reached_orbit"), "the team's milestone earns it, for the member here");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void milestone_reachedWhileAMemberWasAwayIsEarnedAsTheyJoin(final GameTestHelper helper) {
+        final UUID away = UUID.randomUUID();
+        TeamProgress.reach(helper.getLevel().getServer(), CoreTeams.solo(away), TestProgression.FIRSTS.get(1));
+        final ServerPlayer player = GameTestPlayers.join(helper.getLevel(), away, "returner");
+        try {
+            helper.assertFalse(done(player, "reached_orbit"), "nothing is paid out before they join");
+            Advancements.onLoggedIn(new PlayerEvent.PlayerLoggedInEvent(player));
+            helper.assertTrue(done(player, "reached_orbit"), "joining pays out what their team reached meanwhile");
+        } finally {
+            leave(player);
+        }
         helper.succeed();
     }
 

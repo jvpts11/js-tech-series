@@ -11,6 +11,12 @@ import dev.jstech.core.progression.AxisStepReachedEvent;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionAxes;
 import dev.jstech.core.progression.ProgressionAxis;
+import dev.jstech.core.progression.TeamProgress;
+import dev.jstech.core.progression.TeamProgressEvent;
+import dev.jstech.core.team.CoreTeams;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -21,8 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * How a mod reports what its advancements are earned by, and how the Core pays out the steps a player reaches along
- * the progression axes: at once when the player is here, and again each time they join, so a step reached while they
- * were away, or an advancement added since, is earned all the same.
+ * the progression axes and the milestones their team reaches: at once to whoever is here, and again each time a player
+ * joins, so a step or a milestone reached while they were away, or an advancement added since, is earned all the
+ * same.
  */
 public final class Advancements {
 
@@ -45,6 +52,7 @@ public final class Advancements {
     /** Hands the game's bus what this answers, once, from the mod's constructor. */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(AxisStepReachedEvent.class, Advancements::onStepReached);
+        NeoForge.EVENT_BUS.addListener(TeamProgressEvent.MilestoneReached.class, Advancements::onMilestoneReached);
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, Advancements::onLoggedIn);
     }
 
@@ -55,12 +63,34 @@ public final class Advancements {
         }
     }
 
+    /*
+     * A milestone belongs to the team: every member here earns what it gives. A source of teams that cannot list a
+     * team's players leaves the players here to be asked which team they are on.
+     */
+    public static void onMilestoneReached(final TeamProgressEvent.MilestoneReached event) {
+        final List<UUID> members = CoreTeams.membersOf(event.server(), event.team());
+        final List<ServerPlayer> here = members.isEmpty() ? event.server().getPlayerList().getPlayers().stream()
+                .filter(player -> CoreTeams.teamOf(event.server(), player.getUUID()).equals(event.team())).toList()
+                : members.stream().map(event.server().getPlayerList()::getPlayer).filter(Objects::nonNull).toList();
+        for (final ServerPlayer player : here) {
+            if (!(player instanceof FakePlayer)) {
+                CoreTriggers.MILESTONE.get().trigger(player, event.milestone().id());
+            }
+        }
+    }
+
     public static void onLoggedIn(final PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && !(player instanceof FakePlayer)) {
             for (final ProgressionAxis<?> axis : ProgressionAxes.all()) {
                 final int level = PlayerProgress.reached(player.server, player.getUUID(), axis).level();
                 if (level > 0) {
                     CoreTriggers.AXIS_STEP.get().trigger(player, axis.id(), level);
+                }
+            }
+            for (final String milestone : TeamProgress.ofPlayer(player.server, player.getUUID()).milestones()) {
+                final ResourceLocation id = ResourceLocation.tryParse(milestone);
+                if (id != null) {
+                    CoreTriggers.MILESTONE.get().trigger(player, id);
                 }
             }
         }

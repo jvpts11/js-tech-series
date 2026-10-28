@@ -1,0 +1,32 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsspace:earthrise"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "background": "jsspace:textures/gui/advancements/sky.png",
+    "description": {
+      "translate": "advancements.jsspace.the_moon.root.description"
+    },
+    "icon": {
+      "components": {
+        "jscore:picture": "jsspace:gui/advancements/moon"
+      },
+      "count": 1,
+      "id": "minecraft:paper"
+    },
+    "title": {
+      "translate": "advancements.jsspace.the_moon.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

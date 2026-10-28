@@ -8,6 +8,7 @@
 package dev.jstech.core;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.advancement.AdvancementIcons;
 import dev.jstech.core.advancement.Advancements;
 import dev.jstech.core.advancement.CoreTriggers;
 import dev.jstech.core.audio.AudioNetwork;
@@ -560,6 +561,8 @@ public final class JsCore {
         // The manuals each player was handed as they first joined, so each is handed once.
         GuideGifts.register();
         CoreTriggers.register(modEventBus);
+        // An advancement's icon drawn as a picture, for what has no item to show.
+        AdvancementIcons.register(modEventBus);
         // The series' commands under /jstech: the Core's own, the recordings' upkeep, the log's levels, and what
         // the server's administrators read of the series' health and cost.
         CoreCommands.declare();

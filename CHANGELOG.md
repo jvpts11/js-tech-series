@@ -314,6 +314,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
   landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
   it with the model it holds, raising that number. Its photo is `core/src/test/resources/api/space.txt`.
+- (Space) The tabs of its advancements: J's Space's API is at version 2. `SpaceAdvancementTab` names the three
+  tabs, `LEAVING_THE_EARTH`, `THE_MOON` and `MARS`, with each one's root, which an add-on hangs its own advancements
+  under. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1854,6 +1857,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   colour and lettered with its code, and the pages numbered by section (LO 2-3). It is written in Markdown, in English
   and Brazilian Portuguese, and its chapter is in the Technical Reference too. For now it holds the page that says
   how to read it; the other sections show as their pages are written.
+- (Core) Advancements of a team's milestones: the trigger `jscore:milestone` is met once the player's team reaches a
+  milestone, by whichever of its members, so every member online earns it at once and one who was away as they log
+  in; a tab writes it as `reached(milestone)`. And an advancement's icon may be a picture rather than an item
+  (`picture(texture)` in a tab, `AdvancementIcons.of` elsewhere), drawn 16 pixels square on its tab, in the tree, in
+  the tooltip and in the toast.
+- (Space) Its milestones: the firsts of spaceflight, in the order they happened, from the first suborbital flight,
+  satellite, person in orbit, spacewalk and docking to the first starship, star and galaxy, nineteen in all. They
+  belong to the team, any mod can read them, and each is knowledge a recipe can ask for; each is reached by what does
+  it, as that is built.
+- (Space) Its advancement tabs, on the night sky: Leaving the Earth, which opens with a player's first rocket; The
+  Moon, as they first see the Earth rise over it; and Mars, as they first land there. Each shows its world's picture
+  on its tab; their advancements follow with what earns them.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

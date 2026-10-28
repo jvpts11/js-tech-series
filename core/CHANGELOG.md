@@ -1635,6 +1635,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   notices under a bar of their colour, figures numbered short (Fig. 1-1), pages numbered by section after its
   letters (LO 2-3) and tabs one a section, lettered and coloured. A checklist, a card's title, a notice's word
   and the boxed heads are typed, in the style's code font. Every manual written before reads as it did.
+- Advancements of a team's milestones: the trigger `jscore:milestone` is met once the player's team reaches a
+  milestone, by whichever of its members, so every member online earns it at once and one who was away as they log
+  in; a tab writes it as `reached(milestone)`. And an advancement's icon may be a picture rather than an item
+  (`picture(texture)` in a tab, `AdvancementIcons.of` elsewhere), drawn 16 pixels square on its tab, in the tree, in
+  the tooltip and in the toast.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

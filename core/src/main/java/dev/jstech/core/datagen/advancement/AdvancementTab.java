@@ -7,10 +7,13 @@
  */
 package dev.jstech.core.datagen.advancement;
 
+import dev.jstech.core.advancement.AdvancementIcons;
 import dev.jstech.core.advancement.Advancements;
 import dev.jstech.core.advancement.AxisStepTrigger;
 import dev.jstech.core.advancement.EventTrigger;
+import dev.jstech.core.advancement.MilestoneTrigger;
 import dev.jstech.core.progression.IAxisStep;
+import dev.jstech.core.progression.Milestone;
 import dev.jstech.core.progression.ProgressionAxis;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
@@ -113,38 +116,57 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
         return () -> AxisStepTrigger.reached(axis, step);
     }
 
+    /** Earned once the player's team has reached {@code milestone}, by whichever of its members. */
+    protected static Supplier<Criterion<?>> reached(final Milestone milestone) {
+        return () -> MilestoneTrigger.reached(milestone);
+    }
+
+    /**
+     * An icon drawn as a picture, {@code <namespace>:<path>} under {@code textures/}, for what has no item to show
+     * ({@link AdvancementIcons}).
+     */
+    protected static Supplier<ItemStack> picture(final String texture) {
+        return () -> AdvancementIcons.of(texture);
+    }
+
     /** The tab's root, the one every other hangs from, whose background the whole tab shows. */
     protected final void root(final ItemLike icon, final String title, final String description,
+                              final Supplier<Criterion<?>> criterion) {
+        this.root(stackOf(icon), title, description, criterion);
+    }
+
+    /** The same, its icon a stack made as the advancements are written: a picture ({@link #picture}). */
+    protected final void root(final Supplier<ItemStack> icon, final String title, final String description,
                               final Supplier<Criterion<?>> criterion) {
         this.one(ROOT, null, icon, AdvancementType.TASK, false, title, description, criterion, null);
     }
 
     protected final void task(final String name, final String parent, final ItemLike icon, final String title,
                               final String description, final Supplier<Criterion<?>> criterion) {
-        this.one(name, parent, icon, AdvancementType.TASK, false, title, description, criterion, null);
+        this.one(name, parent, stackOf(icon), AdvancementType.TASK, false, title, description, criterion, null);
     }
 
     protected final void goal(final String name, final String parent, final ItemLike icon, final String title,
                               final String description, final Supplier<Criterion<?>> criterion) {
-        this.one(name, parent, icon, AdvancementType.GOAL, false, title, description, criterion, null);
+        this.one(name, parent, stackOf(icon), AdvancementType.GOAL, false, title, description, criterion, null);
     }
 
     protected final void challenge(final String name, final String parent, final ItemLike icon, final String title,
                                    final String description, final Supplier<Criterion<?>> criterion) {
-        this.one(name, parent, icon, AdvancementType.CHALLENGE, false, title, description, criterion, null);
+        this.one(name, parent, stackOf(icon), AdvancementType.CHALLENGE, false, title, description, criterion, null);
     }
 
     /** A task nobody sees in the tab until they have earned it. */
     protected final void secret(final String name, final String parent, final ItemLike icon, final String title,
                                 final String description, final Supplier<Criterion<?>> criterion) {
-        this.one(name, parent, icon, AdvancementType.TASK, true, title, description, criterion, null);
+        this.one(name, parent, stackOf(icon), AdvancementType.TASK, true, title, description, criterion, null);
     }
 
     /** A goal that exists only when {@code mod} is present beside this one. */
     protected final void goalWith(final String mod, final String name, final String parent, final ItemLike icon,
                                   final String title, final String description,
                                   final Supplier<Criterion<?>> criterion) {
-        this.one(name, parent, icon, AdvancementType.GOAL, false, title, description, criterion, mod);
+        this.one(name, parent, stackOf(icon), AdvancementType.GOAL, false, title, description, criterion, mod);
     }
 
     /** A challenge asking for every one of several things, each its own criterion, in the order given. */
@@ -152,12 +174,12 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
                                         final String title, final String description,
                                         final Map<String, Supplier<Criterion<?>>> criteria) {
         this.requireParent(name, parent);
-        this.specs.add(new AdvancementSpec(name, parent, icon, AdvancementType.CHALLENGE, false, title, description,
-                new LinkedHashMap<>(criteria), null));
+        this.specs.add(new AdvancementSpec(name, parent, stackOf(icon), AdvancementType.CHALLENGE, false, title,
+                description, new LinkedHashMap<>(criteria), null));
     }
 
-    private void one(final String name, final String parent, final ItemLike icon, final AdvancementType frame,
-                     final boolean hidden, final String title, final String description,
+    private void one(final String name, final String parent, final Supplier<ItemStack> icon,
+                     final AdvancementType frame, final boolean hidden, final String title, final String description,
                      final Supplier<Criterion<?>> criterion, final String requiredMod) {
         this.requireParent(name, parent);
         this.specs.add(new AdvancementSpec(name, parent, icon, frame, hidden, title, description,
@@ -178,13 +200,17 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
         if (spec.parent() != null) {
             builder.parent(this.id(spec.parent()));
         }
-        builder.display(new ItemStack(spec.icon()),
+        builder.display(spec.icon().get(),
                 Component.translatable(this.key(spec.name(), "title")),
                 Component.translatable(this.key(spec.name(), "description")),
                 spec.parent() == null ? this.background : null,
                 spec.frame(), true, true, spec.hidden());
         spec.criteria().forEach((name, criterion) -> builder.addCriterion(name, criterion.get()));
         return builder;
+    }
+
+    private static Supplier<ItemStack> stackOf(final ItemLike icon) {
+        return () -> new ItemStack(icon);
     }
 
     private ResourceLocation id(final String name) {

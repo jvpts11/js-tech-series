@@ -248,13 +248,16 @@ viewers and the manuals show no padlock either.
 
 *Added 2026-10-05.*
 
-The Core gives two triggers an advancement can wait for, and writes the advancement files from code.
+The Core gives three triggers an advancement can wait for, and writes the advancement files from code.
 
 - **`jscore:event`** is met when code says something happened: `Advancements.award(player,
   rl("first_network"))`, optionally with a detail (`"jsc:frames_95"`). Nothing happens for no player or for a
   machine acting as one.
 - **`jscore:axis_step`** is met when a player reaches a step of an axis, or any later one. It is checked again when
   a player logs in, so a step reached while they were away still counts.
+- **`jscore:milestone`** is met when the player's team reaches a milestone (`milestone`: `jsspace:satellite`), by
+  whichever of its members: every member online earns it at once, and one who was away earns it as they log in.
+  *Added 2026-10-28.*
 
 A tab of advancements is a class, declared root first and each advancement after its parent:
 
@@ -271,7 +274,7 @@ public final class MyAdvancements extends AdvancementTab {
 ```
 
 - `on("fired")` waits for the event `mymod:fired`, the id your code awards with `Advancements.award`; `on("fired",
-  "detail")` for that event with exactly that detail.
+  "detail")` for that event with exactly that detail; `reached(MILESTONE)` for the team's milestone.
 - `task`, `goal`, `challenge` and `secret` (a task nobody sees until they earn it) each take a name, the name of
   their parent, an icon, an English title and description, and what earns them. `challengeOfAll` asks for several
   things at once; `goalWith(otherMod, ...)` only exists when that mod is installed.
@@ -287,6 +290,15 @@ data.server(new ConditionalAdvancementProvider(data.output(), data.lookup(),
 
 The provider writes `data/<namespace>/advancement/<tab>/<name>.json`; `alsoNaming` puts the titles and
 descriptions in your English file.
+
+### A picture for an icon
+
+*Added 2026-10-28.*
+
+An advancement shows an item for its icon, which leaves nothing to show for what is not an item: a rocket in flight,
+a world. `picture("mymod:gui/advancements/moon")` gives an icon drawn as that texture of the mod, under
+`textures/`, 16 pixels square, on the tab, in the tree, in the tooltip and in the toast. The root takes one
+(`root(picture(...), "The Moon", ...)`); outside a tab, `AdvancementIcons.of(texture)` is the same icon as a stack.
 
 ### A wide background
 

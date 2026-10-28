@@ -1,0 +1,33 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "jsspace:mars",
+        "event": "jsspace:landed"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "background": "jsspace:textures/gui/advancements/sky.png",
+    "description": {
+      "translate": "advancements.jsspace.mars.root.description"
+    },
+    "icon": {
+      "components": {
+        "jscore:picture": "jsspace:gui/advancements/mars"
+      },
+      "count": 1,
+      "id": "minecraft:paper"
+    },
+    "title": {
+      "translate": "advancements.jsspace.mars.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -126,6 +126,7 @@ import dev.jstech.tests.clienttest.computers.VolumeClientTests;
 import dev.jstech.tests.clienttest.computers.WorkshopClientTests;
 import dev.jstech.tests.clienttest.computers.WreckedMachineClientTests;
 import dev.jstech.tests.clienttest.core.AcousticsClientTests;
+import dev.jstech.tests.clienttest.core.AdvancementIconClientTests;
 import dev.jstech.tests.clienttest.core.AudioClientTests;
 import dev.jstech.tests.clienttest.core.AwayOwnersClientTests;
 import dev.jstech.tests.clienttest.core.BigPayloadClientTests;
@@ -361,6 +362,7 @@ public final class ClientTestSuite {
             AwayOwnersClientTests.class,
             InstancingClientTests.class,
             FadeLayerClientTests.class,
+            AdvancementIconClientTests.class,
             TabPictureClientTests.class,
             WideBackgroundClientTests.class,
             ComponentMotionClientTests.class,

@@ -8,9 +8,10 @@
 
 /**
  * What J's Space promises to a mod built on it, beside what J's Core promises every mod: for now, the number of the
- * shape of this promise ({@link JsSpaceApi#VERSION}). Each registry an add-on adds to (worlds, their generators and
- * modifiers, landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a
- * world) joins it with the model it holds, and raises that number.
+ * shape of this promise ({@link JsSpaceApi#VERSION}) and the tabs of its advancements, which an add-on hangs its own
+ * under ({@link SpaceAdvancementTab}). Each registry an add-on adds to (worlds, their generators and modifiers,
+ * landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins it
+ * with the model it holds, and raises that number.
  *
  * <p>Most of what an add-on builds with is J's Core's: materials, multiblocks, moving structures, the sky, sealed
  * rooms. Everything here is declared explicitly, through builders and constructors, while the game loads; nothing
