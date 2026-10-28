@@ -11,9 +11,9 @@
  * this promise ({@link JsSpaceApi#VERSION}), the tabs of its advancements, which an add-on hangs its own under
  * ({@link SpaceAdvancementTab}), and its worlds: the world model ({@link SpaceWorld}), the worlds themselves
  * ({@link SpaceWorlds}, which data packs add to as well), and the generators and modifiers that shape them
- * ({@link WorldGenerators}, {@link WorldModifiers}). Each other registry an add-on adds to (landmarks, rocket parts,
- * starship sections, kinds of satellite and probe, what can be discovered of a world) joins it with the model it holds,
- * and raises that number.
+ * ({@link WorldGenerators}, {@link WorldModifiers}), and what can be known of a world ({@link WorldProperties}). Each
+ * other registry an add-on adds to (landmarks, rocket parts, starship sections, kinds of satellite and probe) joins it
+ * with the model it holds, and raises that number.
  *
  * <p>Most of what an add-on builds with is J's Core's: materials, multiblocks, moving structures, the sky, sealed
  * rooms. Everything here is declared explicitly, through builders and constructors, while the game loads; nothing

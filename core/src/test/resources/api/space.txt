@@ -36,3 +36,8 @@ stable 0
 3 dev.jstech.space.api.WorldModifiers  static Map<ResourceLocation, IWorldModifier> all()
 3 dev.jstech.space.api.WorldModifiers  static Optional<IWorldModifier> get(ResourceLocation)
 3 dev.jstech.space.api.WorldModifiers  static void register(ResourceLocation, IWorldModifier)
+4 dev.jstech.space.api.WorldProperties  type final class
+4 dev.jstech.space.api.WorldProperties  static Map<ResourceLocation, WorldProperty> all()
+4 dev.jstech.space.api.WorldProperties  static Optional<WorldProperty> get(ResourceLocation)
+4 dev.jstech.space.api.WorldProperties  static void register(ResourceLocation, WorldProperty)
+4 dev.jstech.space.api.WorldProperty  type record(String name, boolean essential)

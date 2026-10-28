@@ -127,5 +127,15 @@
   "jsspace.star_system.solum_cadens.star": "duas estrelas",
   "jsspace.world.overworld": "O Overworld",
   "jsspace.world.moon": "A Lua",
-  "jsspace.world.mars": "Marte"
+  "jsspace.world.mars": "Marte",
+  "jsspace.property.orbit": "Órbita e posição",
+  "jsspace.property.gravity": "Tamanho, massa e gravidade",
+  "jsspace.property.atmosphere": "Atmosfera",
+  "jsspace.property.temperature": "Temperatura",
+  "jsspace.property.radiation": "Campo magnético e radiação",
+  "jsspace.property.relief": "Relevo",
+  "jsspace.property.ground": "O que há no chão",
+  "jsspace.property.interior": "Interior",
+  "jsspace.property.structures": "Estruturas",
+  "jsspace.property.samples": "Amostras"
 }

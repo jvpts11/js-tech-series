@@ -322,6 +322,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   worlds by id, declared in code or written by a data pack under `data/<namespace>/jsspace/worlds/`, and
   `WorldGenerators` and `WorldModifiers` the processes that shape them, each `IWorldGenerator` giving a world's ground
   as a density function and its surface as rules, each `IWorldModifier` laid over them. Experimental.
+- (Space) What can be known of a world: J's Space's API is at version 4. `WorldProperties` registers the
+  properties, each a `WorldProperty` with its name and whether a crew needs it known to land. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1893,6 +1895,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   round as they really do, Mars about every five real hours; a launch out of the window costs more delta-v, up to
   twice from the worst place; a trip is shortened by the delta-v spent on it; a rocket's delta-v is Tsiolkovsky's and
   it lifts off only when its thrust beats its weight on the world it stands on.
+- (Core) The minerals of the Moon and Mars join the series' catalogue, each with its formula, its family and the
+  byproducts it gives, shared by every mod: ilmenite, armalcolite, tranquillityite, merrillite (the rare earths of the
+  Moon's KREEP) and native iron; olivine, jarosite and gypsum. None joins the first industry's veins.
+- (Space) What a team knows of each world: ten properties, from its orbit and position to its samples, each known by
+  a share that only grows; a world's share known is their mean, and a world known whole reaches the milestone. A probe
+  goes only where the orbit is known, and a crew lands only where what kills there (the atmosphere, the temperature,
+  the radiation, the gravity and the relief) is known, unless the server lets crews land blind. Every team knows the
+  Overworld whole and the places of the Moon and Mars from its sky.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

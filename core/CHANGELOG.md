@@ -1641,6 +1641,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   in; a tab writes it as `reached(milestone)`. And an advancement's icon may be a picture rather than an item
   (`picture(texture)` in a tab, `AdvancementIcons.of` elsewhere), drawn 16 pixels square on its tab, in the tree, in
   the tooltip and in the toast.
+- The minerals of the Moon and Mars join the series' catalogue, each with its formula, its family and the
+  byproducts it gives, shared by every mod: ilmenite, armalcolite, tranquillityite, merrillite (the rare earths of the
+  Moon's KREEP) and native iron; olivine, jarosite and gypsum. None joins the first industry's veins.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

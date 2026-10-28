@@ -11,6 +11,8 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.datagen.JsSpaceDataGenerators;
 import dev.jstech.space.exploration.SpaceMilestones;
+import dev.jstech.space.exploration.SpaceProperties;
+import dev.jstech.space.exploration.WorldDiscovery;
 import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.StarSystems;
@@ -38,6 +40,9 @@ public final class JsSpace {
         MissionHandbook.declare();
         // The firsts of spaceflight a team reaches, which any mod reads and the advancements of the same firsts follow.
         SpaceMilestones.declare();
+        // What can be known of a world, and what each team knows of each.
+        SpaceProperties.declare();
+        WorldDiscovery.register();
         // The star systems of the three galaxies, and the template every system's space is made from on its first
         // visit.
         StarSystems.declare();
