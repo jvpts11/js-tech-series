@@ -1649,6 +1649,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   ends, and changes to the overworld's border no longer reach it.
 - Where the dead come back: `DimensionRespawns.add` gives a rule for a mod's dimensions, asked in order before
   the game's own choice, which stands where no rule says otherwise.
+- The sky kit: a sky's stars may shine by day, as in a sky with no air, at a share of how bright they are at
+  midnight (`"by_day": 0.75`), and a sun may light the day and tint it while the mod that declared it draws it where
+  it stands (`"drawn": false`).
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -1764,6 +1767,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- The band of the galaxy in a sky drawn by the Core fades towards both its edges; half of it went undrawn,
+  leaving a hard edge along its middle.
 - A tall stack of moving structures set down touching stands still and is heard striking nothing, its
   dimension's physics budget spent or not. A stack let go at once is worked as one from its first tick, where each of
   it went alone that tick and fell onto what had gone already; two touching settle into the hair's depth they rest at

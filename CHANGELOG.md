@@ -1914,6 +1914,20 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) Where a player who dies on another world comes back, in this order: their bed there, if it stands in a
   sealed room with air; else the cabin of the module they landed in, if it is still whole and has air, which their
   landing marks; else home, in the Overworld.
+- (Core) The sky kit: a sky's stars may shine by day, as in a sky with no air, at a share of how bright they are at
+  midnight (`"by_day": 0.75`), and a sun may light the day and tint it while the mod that declared it draws it where
+  it stands (`"drawn": false`).
+- (Space) The Solar System's space, drawn: the Overworld, the Moon and Mars are round bodies in their places, each
+  kept still so whatever is built in its orbit stays over it, drawn at the screen's own resolution with a smooth
+  outline and the texels of their maps, read from a smaller copy the farther they are. The Sun lights them smoothly
+  from where it stands: relief from their height maps, a soft line of dawn, a warm dusk and a glow of air on the limb
+  where there is air, and the night side in the deep tone of its night. A planet's poles lie level and square to the
+  Sun, so its equator runs under its orbit with the day towards the Sun and the night away from it, and it turns once
+  a day; the Moon keeps its near side to the Overworld a quarter round from the Sun, so each sees the other half lit.
+  The Overworld is never the Earth: its continents, biomes, mountain ranges and polar caps come from the world's seed,
+  of which the server sends only a number made from it, and the game's own clouds wrap round it in bands that drift at
+  their own pace, with their shadows on the ground. The Sun is the game's square, as big as in the Overworld's sky,
+  and the stars shine by day, crowding along the Milky Way.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -2081,6 +2095,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) The band of the galaxy in a sky drawn by the Core fades towards both its edges; half of it went undrawn,
+  leaving a hard edge along its middle.
 - (Core) A tall stack of moving structures set down touching stands still and is heard striking nothing, its
   dimension's physics budget spent or not. A stack let go at once is worked as one from its first tick, where each of
   it went alone that tick and fell onto what had gone already; two touching settle into the hair's depth they rest at

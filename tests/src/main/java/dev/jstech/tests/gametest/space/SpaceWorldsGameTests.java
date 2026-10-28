@@ -117,8 +117,13 @@ public final class SpaceWorldsGameTests {
                 "Mars' sky is butterscotch, with blue sunsets");
         helper.assertTrue(Math.abs(mars.suns().getFirst().distance() - MARS_FROM_THE_SUN) < CLOSE
                 && mars.suns().getFirst().apparentSize() < 1, "and its sun, farther, looks smaller");
-        helper.assertTrue(Skies.of(ResourceKey.create(Registries.DIMENSION, SystemSpaces.TEMPLATE.id())).skyColour()
-                .filter(colour -> colour == BLACK).isPresent(), "every system's space is black, by its template");
+        final SkySpec space = Skies.of(ResourceKey.create(Registries.DIMENSION, SystemSpaces.TEMPLATE.id()));
+        helper.assertTrue(space.skyColour().filter(colour -> colour == BLACK).isPresent(),
+                "every system's space is black, by its template");
+        // Its sun lights the day but is drawn where it stands in the space, not where a clock would put it, and its
+        // stars never fade.
+        helper.assertTrue(space.suns().size() == 1 && !space.suns().getFirst().drawn() && space.stars().byDay() == 1,
+                "space's sun lights it but is not drawn by a clock, and its stars shine by day as by night");
         helper.succeed();
     }
 

@@ -8,6 +8,7 @@
 package dev.jstech.space;
 
 import dev.jstech.core.client.advancement.WideBackgrounds;
+import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -26,5 +27,7 @@ public final class JsSpaceClient {
     public JsSpaceClient(final IEventBus modEventBus, final ModContainer modContainer) {
         // A tab that names the tile as its background is drawn with the whole sky, once, sliding slower than the tree.
         WideBackgrounds.declare(SKY, WIDE_SKY, WIDE_SKY_WIDTH, WIDE_SKY_HEIGHT);
+        // The worlds of the Solar System's space, drawn as spheres in their places, and the Sun among the stars.
+        SystemSpaceRenderer.listen(modEventBus);
     }
 }

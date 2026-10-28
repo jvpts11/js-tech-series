@@ -1,0 +1,26 @@
+{
+    "vertex": "jsspace:world_sphere",
+    "fragment": "jsspace:world_sphere",
+    "samplers": [
+        { "name": "Sampler0" },
+        { "name": "Sampler1" },
+        { "name": "Sampler2" }
+    ],
+    "uniforms": [
+        { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "Centre", "type": "float", "count": 3, "values": [ 0.0, 0.0, -10.0 ] },
+        { "name": "Radius", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "North", "type": "float", "count": 3, "values": [ 0.0, 0.0, -1.0 ] },
+        { "name": "Middle", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] },
+        { "name": "SunDir", "type": "float", "count": 3, "values": [ 1.0, 0.0, 0.0 ] },
+        { "name": "Relief", "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "Shadow", "type": "float", "count": 1, "values": [ 0.3 ] },
+        { "name": "Night", "type": "float", "count": 3, "values": [ 0.01, 0.01, 0.012 ] },
+        { "name": "Dusk", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
+        { "name": "HasDusk", "type": "int", "count": 1, "values": [ 0 ] },
+        { "name": "Air", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
+        { "name": "AirThickness", "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "HasClouds", "type": "int", "count": 1, "values": [ 0 ] }
+    ]
+}

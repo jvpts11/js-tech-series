@@ -77,6 +77,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Where a player who dies on another world comes back, in this order: their bed there, if it stands in a
   sealed room with air; else the cabin of the module they landed in, if it is still whole and has air, which their
   landing marks; else home, in the Overworld.
+- The Solar System's space, drawn: the Overworld, the Moon and Mars are round bodies in their places, each
+  kept still so whatever is built in its orbit stays over it, drawn at the screen's own resolution with a smooth
+  outline and the texels of their maps, read from a smaller copy the farther they are. The Sun lights them smoothly
+  from where it stands: relief from their height maps, a soft line of dawn, a warm dusk and a glow of air on the limb
+  where there is air, and the night side in the deep tone of its night. A planet's poles lie level and square to the
+  Sun, so its equator runs under its orbit with the day towards the Sun and the night away from it, and it turns once
+  a day; the Moon keeps its near side to the Overworld a quarter round from the Sun, so each sees the other half lit.
+  The Overworld is never the Earth: its continents, biomes, mountain ranges and polar caps come from the world's seed,
+  of which the server sends only a number made from it, and the game's own clouds wrap round it in bands that drift at
+  their own pace, with their shadows on the ground. The Sun is the game's square, as big as in the Overworld's sky,
+  and the stars shine by day, crowding along the Milky Way.
 
 ## [0.5.2a] - 2026-10-14
 

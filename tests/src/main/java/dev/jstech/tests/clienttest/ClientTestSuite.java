@@ -224,6 +224,7 @@ import dev.jstech.tests.clienttest.series.ManualImmersionClientTests;
 import dev.jstech.tests.clienttest.series.ManualSiteClientTests;
 import dev.jstech.tests.clienttest.series.HeldModelsClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
+import dev.jstech.tests.clienttest.space.SystemSpaceClientTests;
 import dev.jstech.tests.testkit.TestSuites;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -451,7 +452,8 @@ public final class ClientTestSuite {
             VolumeClientTests.class,
             WreckedMachineClientTests.class,
             UnixClientTests.class,
-            UnixFreeBsdEditorsClientTests.class);
+            UnixFreeBsdEditorsClientTests.class,
+            SystemSpaceClientTests.class);
 
     private ClientTestSuite() {
     }

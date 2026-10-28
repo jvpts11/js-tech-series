@@ -35,7 +35,7 @@ import net.minecraft.resources.ResourceLocation;
  * @param sunsetColour the colour of its sunrises and sunsets, if not the game's orange
  * @param suns         its suns, the first the one its clock follows
  * @param bodies       the planets and moons in its sky
- * @param stars        its stars at night
+ * @param stars        its stars at night, or by day too
  * @param galaxy       the band of its galaxy, if it shows
  * @param nebulae      the nebulae among its stars
  * @param aurora       the aurora over its north at night, if it has one
@@ -82,16 +82,19 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
      * @param size     how much larger than its kind it looks, for a sun nearer or farther than its distance says
      * @param offset   how far round the sky it stands from where the clock puts the first sun, in turns
      * @param distance how far it is, in astronomical units: the farther, the smaller and dimmer
+     * @param drawn    whether the Core draws it where the clock puts it; a sun a mod draws itself where it stands,
+     *                 as in a space where the player flies among the worlds, still lights the day and tints it
      */
-    public record Sun(StarKind kind, double size, double offset, double distance) {
+    public record Sun(StarKind kind, double size, double offset, double distance, boolean drawn) {
 
         /** The overworld's sun. */
-        public static final Sun OURS = new Sun(StarKind.G, 1.0, 0.0, 1.0);
+        public static final Sun OURS = new Sun(StarKind.G, 1.0, 0.0, 1.0, true);
         public static final Codec<Sun> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 StableCodecs.byName(StarKind.class).optionalFieldOf("kind", StarKind.G).forGetter(Sun::kind),
                 Codec.doubleRange(0.01, LARGEST).optionalFieldOf("size", 1.0).forGetter(Sun::size),
                 Codec.doubleRange(-1, 1).optionalFieldOf("offset", 0.0).forGetter(Sun::offset),
-                Codec.doubleRange(NEAREST, FARTHEST).optionalFieldOf("distance", 1.0).forGetter(Sun::distance))
+                Codec.doubleRange(NEAREST, FARTHEST).optionalFieldOf("distance", 1.0).forGetter(Sun::distance),
+                Codec.BOOL.optionalFieldOf("drawn", true).forGetter(Sun::drawn))
                 .apply(instance, Sun::new));
 
         /** How large it looks beside the overworld's sun: its kind's size, its own, shrinking with distance. */
@@ -149,18 +152,20 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
     }
 
     /**
-     * Its stars at night, square as the game's are.
+     * Its stars at night, square as the game's are, or by day too where no air scatters the sunlight over them.
      *
      * @param count      how many there are
      * @param brightness how bright they shine, beside the overworld's
+     * @param byDay      how bright they shine by day, as a share of how bright they shine at midnight: 0 for none
      */
-    public record Stars(int count, double brightness) {
+    public record Stars(int count, double brightness, double byDay) {
 
-        public static final Stars DEFAULT = new Stars(1_500, 1.0);
+        public static final Stars DEFAULT = new Stars(1_500, 1.0, 0.0);
         public static final Codec<Stars> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.intRange(0, 20_000).optionalFieldOf("count", DEFAULT.count()).forGetter(Stars::count),
                 Codec.doubleRange(0, 4).optionalFieldOf("brightness", DEFAULT.brightness())
-                        .forGetter(Stars::brightness))
+                        .forGetter(Stars::brightness),
+                Codec.doubleRange(0, 1).optionalFieldOf("by_day", DEFAULT.byDay()).forGetter(Stars::byDay))
                 .apply(instance, Stars::new));
     }
 

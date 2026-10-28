@@ -977,11 +977,15 @@ template's:
 
 - **Suns**, each of a kind of star (`o`, `b`, `a`, `f`, `g`, `k`, `m`, `white_dwarf`, `red_giant`) that gives its
   colour and size, smaller the farther it is, `offset` turns round the sky from the first, which the clock follows.
+  A sun with `"drawn": false` still lights the day and tints it, but the Core leaves drawing it to the mod, which
+  draws it where it stands: in a space the player flies through among the worlds, no clock says where the sun is.
 - **Planets and moons**, spheres lit from where the first sun stands, so their phases come of the geometry, their
   surface (a map of the whole of it, pole to pole) wrapped round them and turning once in `turn_days`, coming round
   to the sun again in `orbit_days`; their dark side is the colour of the sky behind, and one passing over a sun
   eclipses it, the day darkening to a tenth at totality.
-- **Stars**, square as the game's, **the band of the galaxy**, **nebulae** and **an aurora** over the north at night.
+- **Stars**, square as the game's, **the band of the galaxy**, **nebulae** and **an aurora** over the north at night;
+  `"stars": { "by_day": 0.75 }` lights the stars, the galaxy and the nebulae by day as well, at that share of how
+  bright they are at midnight, for a sky with no air.
 - **The colour of the sky, its fog and its sunsets**; **clouds** of their own height, colour and density (0 for none);
   **haze** that closes the view in.
 - **Sunlight by distance**: the day's light falls with the square of the first sun's distance (a dark day on Pluto),

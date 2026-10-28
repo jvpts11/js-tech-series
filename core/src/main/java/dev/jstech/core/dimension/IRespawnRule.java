@@ -20,8 +20,8 @@ import net.minecraft.world.level.portal.DimensionTransition;
 public interface IRespawnRule {
 
     /**
-     * Where {@code player}, who died in {@code died}, comes back: somewhere of the rule's own, or nothing to leave it to
-     * the next rule and at last to the game, whose choice is {@code planned}.
+     * Where {@code player}, who died in {@code died}, comes back: somewhere of the rule's own, or nothing to leave it
+     * to the next rule and at last to the game, whose choice is {@code planned}.
      */
     Optional<DimensionTransition> respawn(ServerPlayer player, ServerLevel died, DimensionTransition planned);
 }

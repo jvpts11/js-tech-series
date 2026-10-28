@@ -67,6 +67,8 @@ final class SkyRenderer {
     private static final float SUNRISE_DEPTH = 40F;
     private static final int SUNRISE_STEPS = 16;
     private static final float HORIZON_DROP = 12F;
+    /* How bright the game's stars shine at midnight. */
+    private static final float MIDNIGHT_STARS = 0.5F;
 
     private static @Nullable VertexBuffer dome;
     private static @Nullable VertexBuffer dark;
@@ -108,7 +110,8 @@ final class SkyRenderer {
         pose.mulPose(Axis.YP.rotationDegrees(-90.0F));
         pose.pushPose();
         pose.mulPose(Axis.XP.rotationDegrees(celestial * 360.0F));
-        final float night = level.getStarBrightness(partialTick) * clear;
+        final float night = Math.max(level.getStarBrightness(partialTick),
+                (float) sky.stars().byDay() * MIDNIGHT_STARS) * clear;
         if (night > 0) {
             FogRenderer.setupNoFog();
             starField(sky, pose, projection, (float) (night * sky.stars().brightness()));
@@ -120,7 +123,9 @@ final class SkyRenderer {
         }
         pose.popPose();
         for (final SkySpec.Sun sun : sky.suns()) {
-            sun(sun, pose, celestial, clear);
+            if (sun.drawn()) {
+                sun(sun, pose, celestial, clear);
+            }
         }
         SkyBodies.render(level, sky, pose, celestial, colour, clear);
         pose.popPose();
@@ -273,7 +278,10 @@ final class SkyRenderer {
                 vertex(builder, matrix, from, 0F, lean, colour, alpha);
             }
         }
+        // The band's two halves wind opposite ways, so neither may be culled: both fade from its middle line.
+        RenderSystem.disableCull();
         drawNow(builder);
+        RenderSystem.enableCull();
     }
 
     private static void vertex(final BufferBuilder builder, final Matrix4f matrix, final float round,
