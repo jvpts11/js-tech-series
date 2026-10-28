@@ -21,6 +21,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   world's essentials are known, dust on Mars, naming hidden worlds, debris, and the Laser Satellite as a weapon), and
   two rules of balance that start off, fast travel and J's Industrial's chains as the only path. They are on J's
   Core's settings screen, in English and Brazilian Portuguese; each is read by what it governs as that is built.
+- Its mark and its tab: J's Space's logo, the word in the white of the Apollo rockets with a red livery band
+  and a Saturn V beside it, and its square icon, in the mods list and the README; its creative tab, with the Saturn V
+  on its button, shown once it holds a thing; and the night sky its advancement tabs will stand on, the Milky Way
+  across a 400 by 200 sky drawn once and wide, with a 16-pixel tile of it.
 
 ## [0.5.2a] - 2026-10-14
 

@@ -47,6 +47,10 @@ public final class TestItems {
     public static final ContentTab TAB = TestSounds.CONTENT.tab("tests", "Test Items", () -> TestItems.FULL);
     /** The tab's one shelf, which the other test items join. */
     static final ContentTab.Section ITEMS = TAB.section();
+    /** A tab whose button shows a picture in place of an item, J's Space's Saturn V; it holds the full tool. */
+    public static final ContentTab PICTURED_TAB = TestSounds.CONTENT.tab("tests_pictured", "Pictured Test Tab",
+            "jsspace:gui/tab_icon");
+    static final ContentTab.Section PICTURED = PICTURED_TAB.section().with(() -> TestItems.FULL);
 
     /** Everything an item can hold. */
     public static final ItemEntry<Item> FULL = TestSounds.CONTENT.item("full_tool", Item::new)

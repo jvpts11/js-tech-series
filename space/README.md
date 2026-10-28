@@ -1,3 +1,5 @@
+<p align="center"><img src="../docs/brand/space.png" alt="J's Space" width="680"></p>
+
 # J's Space
 
 Rockets, satellites, the worlds of the Solar System and of other stars, and the starships that reach them.

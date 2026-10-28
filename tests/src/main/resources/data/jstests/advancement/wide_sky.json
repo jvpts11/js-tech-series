@@ -1,0 +1,30 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:compass"
+    },
+    "title": {
+      "text": "Wide Sky"
+    },
+    "description": {
+      "text": "A tab whose background is J's Space's sky, drawn once and wide."
+    },
+    "background": "jsspace:textures/gui/advancements/sky.png",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "jscore:event",
+      "conditions": {
+        "event": "jstests:wide_sky"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

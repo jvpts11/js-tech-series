@@ -276,6 +276,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `IMachineParameters` (`address` and `otherwise` set, `waiting` read; `MOST_ADDRESS`), registered with its other
   faces by `register`, and `sendNow(level, to)` sends what waits in it to an address at once, answering a
   `SendOutcome` (`SENT`, `NOT_YET`, `NOTHING`, `NO_STATION`).
+- A picture on a creative tab: J's Core's API is at version 13. `ContentTab.picture(texture)` shows a 16-pixel
+  picture on a tab's button in place of its icon item, `ContentTab.pictureOf(tab)` says which a tab shows, and
+  `ModContent.tab(id, title, picture)` declares a tab with one; all experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1610,6 +1613,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A capsule station is read and set from outside as a machine is (its address, where it sends the rest, what
   waits in it), and can be told to send what waits to an address at once. Its pace counts the capsules that left, so
   a look that sent nothing never holds one back.
+- Wide advancement backgrounds: a mod declares a wide picture for a tab's tile (`WideBackgrounds.declare`),
+  drawn once behind the tree in place of the 16-pixel tiles and sliding at half the tree's speed as the player drags
+  it, so it never repeats and the window never reaches its edge; a tab whose tile has none is tiled as before.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

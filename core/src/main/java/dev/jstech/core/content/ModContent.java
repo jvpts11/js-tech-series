@@ -51,6 +51,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -255,6 +256,14 @@ public final class ModContent {
         tabs.register(id, tab::build);
         declaredTabs.add(tab);
         return tab;
+    }
+
+    /**
+     * Declares a creative tab, called that in English, whose button shows a 16-pixel picture instead of an item
+     * ({@link ContentTab#picture}): for a mod whose mark is no item of its own.
+     */
+    public ContentTab tab(final String id, final String englishTitle, final String picture) {
+        return tab(id, englishTitle, () -> Items.AIR).picture(picture);
     }
 
     /** Starts declaring a sound, known by that path under the mod's namespace ({@code computer/power_on}). */

@@ -296,6 +296,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `IMachineParameters` (`address` and `otherwise` set, `waiting` read; `MOST_ADDRESS`), registered with its other
   faces by `register`, and `sendNow(level, to)` sends what waits in it to an address at once, answering a
   `SendOutcome` (`SENT`, `NOT_YET`, `NOTHING`, `NO_STATION`).
+- (Core) A picture on a creative tab: J's Core's API is at version 13. `ContentTab.picture(texture)` shows a 16-pixel
+  picture on a tab's button in place of its icon item, `ContentTab.pictureOf(tab)` says which a tab shows, and
+  `ModContent.tab(id, title, picture)` declares a tab with one; all experimental.
 - (Space) The promise: J's Space's API is at version 1, in `dev.jstech.space.api`, experimental. For now it holds
   only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
   landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
@@ -1819,6 +1822,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   world's essentials are known, dust on Mars, naming hidden worlds, debris, and the Laser Satellite as a weapon), and
   two rules of balance that start off, fast travel and J's Industrial's chains as the only path. They are on J's
   Core's settings screen, in English and Brazilian Portuguese; each is read by what it governs as that is built.
+- (Core) Wide advancement backgrounds: a mod declares a wide picture for a tab's tile (`WideBackgrounds.declare`),
+  drawn once behind the tree in place of the 16-pixel tiles and sliding at half the tree's speed as the player drags
+  it, so it never repeats and the window never reaches its edge; a tab whose tile has none is tiled as before.
+- (Space) Its mark and its tab: J's Space's logo, the word in the white of the Apollo rockets with a red livery band
+  and a Saturn V beside it, and its square icon, in the mods list and the README; its creative tab, with the Saturn V
+  on its button, shown once it holds a thing; and the night sky its advancement tabs will stand on, the Milky Way
+  across a 400 by 200 sky drawn once and wide, with a 16-pixel tile of it.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

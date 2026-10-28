@@ -288,6 +288,23 @@ data.server(new ConditionalAdvancementProvider(data.output(), data.lookup(),
 The provider writes `data/<namespace>/advancement/<tab>/<name>.json`; `alsoNaming` puts the titles and
 descriptions in your English file.
 
+### A wide background
+
+*Added 2026-10-28.*
+
+The game draws a tab's background as 16-pixel tiles, so any picture that small repeats every 16 pixels. A mod can
+give a tab's tile a wide picture, at least as big as the tab's window (234 by 113), drawn once behind the tree and
+sliding at half its speed as the player drags it, so it never repeats and the window never reaches its edge. Declare
+it on the player's game, from the mod's client entry point:
+
+```java
+WideBackgrounds.declare("mymod:textures/gui/advancements/sky.png",
+        "mymod:textures/gui/advancements/sky_wide.png", 400, 200);
+```
+
+The tab still names the tile as its background, and the tile is what is drawn where the Core is not installed, so it
+should be a fair piece of the wide picture.
+
 ## What can go wrong
 
 - **An advancement never pays.** Its event id is not the one the code awards, or the award is given to a fake

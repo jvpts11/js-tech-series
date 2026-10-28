@@ -100,6 +100,21 @@ A section can also take an item declared elsewhere as one of its entries (`with(
 that gathers what several places declare, and can show only the entries a test lets through
 (`shownIf(item -> ...)`), asked each time the tab is filled.
 
+### A picture on the tab's button
+
+*Added 2026-10-28.*
+
+A tab's button shows its icon item. A mod whose mark is no item of its own can show a 16-pixel picture there
+instead:
+
+```java
+public static final ContentTab TAB = CONTENT.tab("main", "My Mod", "mymod:gui/tab_icon");
+```
+
+The picture is named as an item's texture is, `mymod:gui/tab_icon` being `assets/mymod/textures/gui/tab_icon.png`,
+and drawn where the item would stand. A tab declared with an item can take one too, with `.picture(texture)`. As
+every creative tab, it shows once it holds a thing.
+
 ### The J's Tech tab
 
 *Added 2026-10-15.*

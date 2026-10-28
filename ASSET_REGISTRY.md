@@ -256,6 +256,14 @@ listed; the language guide in [docs/CODE_STYLE.md](docs/CODE_STYLE.md) covers th
 | `industrial/src/main/resources/assets/jsindustrial/models/block/cable/plug/{m12,fieldbus_rj45,profibus,rs485}.json` | The industrial control cable's plugs: the round M12 with its nut, an RJ45 in a violet boot, PROFIBUS's violet D-sub and RS-485's grey one, each with its two thumbscrews | Placed by the cable block where the cable meets a machine (the M12) or an Industrial Controller Computer (the plug of its card's connector), turned to the face and moved to the cable's lane | AI-generated | AI assistant, with a generator script, to be replaced |
 | `industrial/src/generated/resources/assets/**` | Block states, block and item models, the English file, the manuals' files and their palette | Written from J's Industrial's declarations | Datagen | J's Industrial's data generation |
 
+## J's Space
+
+| Asset | What it is | Where and how it is used | Origin | Made by |
+| --- | --- | --- | --- | --- |
+| `space/src/main/resources/jsspace_{logo,icon}.png` | J's Space's logo and square icon: the word in the white of the Apollo rockets with a red livery band, a Saturn V standing beside it; the icon a Saturn V in a night sky | The mods list: the logo drawn over the series logo, the icon in lists that show one | AI-generated | AI assistant, with a generator script; the logo's letters are the Minercraftory font by Jayvee D. Enaguas (GrandChaos9000), CC BY-SA 3.0, https://www.dafont.com/minercraftory.font, and the logo is shared under CC BY-SA 3.0 too |
+| `space/src/main/resources/assets/jsspace/textures/gui/tab_icon.png` | A Saturn V standing in a night sky, 16 pixels | The icon of J's Space's creative tab, drawn by J's Core in place of an item | AI-generated | AI assistant, with a generator script, to be replaced |
+| `space/src/main/resources/assets/jsspace/textures/gui/advancements/{sky,sky_wide}.png` | The night sky: the Milky Way crossing a 400 by 200 sky on a slant as one band, split by its dark rift, with dust, two faint nebulae, a cluster and a far galaxy; and a 16-pixel tile of it | Behind J's Space's advancement tabs: the wide sky drawn once by J's Core, sliding slower than the tree, and the tile the game repeats where the wide one is not drawn | AI-generated | AI assistant, with a generator script, to be replaced |
+
 ## Art that lives in the code
 
 Some pictures are drawn by the code itself, out of rectangles and gradients, rather than loaded from a file.

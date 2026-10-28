@@ -214,6 +214,7 @@
   "item.jstests.test_wand": "Test Wand",
   "item.jstests.test_yield_upgrade": "Test Yield Upgrade",
   "itemGroup.jstests.tests": "Test Items",
+  "itemGroup.jstests.tests_pictured": "Pictured Test Tab",
   "jstests.audio_device.buzzer": "Test buzzer",
   "jstests.axis.stages": "Test stages",
   "jstests.card.test_bus_only": "Only a Test Quantum Computer seats a test bus card",

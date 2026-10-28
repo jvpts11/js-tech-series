@@ -14,6 +14,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -46,12 +48,33 @@ public final class ContentTab {
     /** The tab of the same mod this one stands right after, or null for a mod's first tab. */
     private final @Nullable ContentTab after;
 
+    /* The picture each tab's button shows in place of its icon item, by the tab's registry name. */
+    private static final Map<ResourceLocation, ResourceLocation> PICTURES = new ConcurrentHashMap<>();
+
     ContentTab(final String modid, final String id, final String englishTitle, final Supplier<? extends ItemLike> icon,
                final @Nullable ContentTab after) {
         this.id = ResourceLocation.fromNamespaceAndPath(modid, id);
         this.title = new TextKey("itemGroup." + modid + "." + id, englishTitle);
         this.icon = icon;
         this.after = after;
+    }
+
+    /**
+     * The picture the tab's button shows in place of its icon item, by the tab's registry name, or null for a tab that
+     * shows its item.
+     */
+    public static @Nullable ResourceLocation pictureOf(final ResourceLocation tab) {
+        return PICTURES.get(tab);
+    }
+
+    /**
+     * Shows a 16-pixel picture on the tab's button in place of its icon item: a mark that is no item of the mod.
+     * {@code texture} names it as an item's texture is named, {@code "mymod:gui/tab_icon"} being
+     * {@code assets/mymod/textures/gui/tab_icon.png}.
+     */
+    public ContentTab picture(final String texture) {
+        PICTURES.put(id, ResourceLocation.parse(texture).withPath(path -> "textures/" + path + ".png"));
+        return this;
     }
 
     /** A new section, shown after every section made before it. */

@@ -29,8 +29,10 @@
     "WorldDimensionsMixin"
   ],
   "client": [
+    "AdvancementTabMixin",
     "AdvancementWidgetMixin",
     "ClientChunkCacheMixin",
+    "CreativeModeInventoryScreenMixin",
     "ClientLevelMixin",
     "GameRendererMixin",
     "LevelRendererMixin",

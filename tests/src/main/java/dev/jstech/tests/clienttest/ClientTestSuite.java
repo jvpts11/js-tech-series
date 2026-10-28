@@ -182,6 +182,8 @@ import dev.jstech.tests.clienttest.core.RecipeChooserClientTests;
 import dev.jstech.tests.clienttest.core.ReiRecipeViewClientTests;
 import dev.jstech.tests.clienttest.core.InstancingClientTests;
 import dev.jstech.tests.clienttest.core.FadeLayerClientTests;
+import dev.jstech.tests.clienttest.core.TabPictureClientTests;
+import dev.jstech.tests.clienttest.core.WideBackgroundClientTests;
 import dev.jstech.tests.clienttest.core.ComponentMotionClientTests;
 import dev.jstech.tests.clienttest.core.OutlineFontClientTests;
 import dev.jstech.tests.clienttest.core.JadeStyleClientTests;
@@ -359,6 +361,8 @@ public final class ClientTestSuite {
             AwayOwnersClientTests.class,
             InstancingClientTests.class,
             FadeLayerClientTests.class,
+            TabPictureClientTests.class,
+            WideBackgroundClientTests.class,
             ComponentMotionClientTests.class,
             OutlineFontClientTests.class,
             JadeStyleClientTests.class,

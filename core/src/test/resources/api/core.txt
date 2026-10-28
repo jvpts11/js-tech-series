@@ -2964,12 +2964,14 @@ stable 4
 10 dev.jstech.core.content.CableBuilder  CableBuilder tab(ContentTab.Section)
 10 dev.jstech.core.content.CableBuilder  CableEntry register()
 10 dev.jstech.core.content.ContentTab  type final class
+13 dev.jstech.core.content.ContentTab  ContentTab picture(String)
 10 dev.jstech.core.content.ContentTab  ContentTab tagging(String)
 10 dev.jstech.core.content.ContentTab  List<Section> sections()
 10 dev.jstech.core.content.ContentTab  List<TagKey<Item>> tags()
 10 dev.jstech.core.content.ContentTab  ResourceLocation id()
 10 dev.jstech.core.content.ContentTab  Section section()
 10 dev.jstech.core.content.ContentTab  TextKey title()
+13 dev.jstech.core.content.ContentTab  static ResourceLocation pictureOf(ResourceLocation)
 10 dev.jstech.core.content.ContentTab.Section  type static final class
 10 dev.jstech.core.content.ContentTab.Section  List<Item> items()
 10 dev.jstech.core.content.ContentTab.Section  List<Item> shown()
@@ -3169,6 +3171,7 @@ stable 4
 10 dev.jstech.core.content.ModContent  <T> DeferredHolder<DataComponentType<?>, DataComponentType<T>> component(String, Codec<T>, StreamCodec<? super RegistryFriendlyByteBuf, T>)
 10 dev.jstech.core.content.ModContent  <T> ResourceKey<Registry<T>> datapackRegistry(String, Codec<T>)
 10 dev.jstech.core.content.ModContent  CableBuilder cable(String, CableType.Builder)
+13 dev.jstech.core.content.ModContent  ContentTab tab(String, String, String)
 10 dev.jstech.core.content.ModContent  ContentTab tab(String, String, Supplier<? extends ItemLike>)
 10 dev.jstech.core.content.ModContent  CueBuilder cue(String)
 10 dev.jstech.core.content.ModContent  FluidBuilder fluid(String)

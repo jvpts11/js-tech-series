@@ -1,4 +1,5 @@
 {
+  "itemGroup.jsspace.space": "J's Space",
   "jsspace.configuration.failures": "Rocket failures",
   "jsspace.configuration.failures.burning_up": "Burning up on re-entry",
   "jsspace.configuration.failures.burning_up.tooltip": "A capsule that comes down through air with no heat shield, or with the wrong one for that air, burns up.\nOff, such a capsule cannot begin to come down, and stays where it is.",
