@@ -5305,6 +5305,11 @@ stable 4
 10 dev.jstech.core.gui.style.StyleSprite.Slice  type record(ResourceLocation texture, int u, int v, int width, int height, int textureWidth, int textureHeight, int border) implements StyleSprite
 10 dev.jstech.core.gui.style.StyleSprite.Sprite  type record(ResourceLocation id) implements StyleSprite
 10 dev.jstech.core.gui.style.StyleSprite.Tile  type record(ResourceLocation texture, int width, int height) implements StyleSprite
+14 dev.jstech.core.guide.ChecklistLines  type final class
+14 dev.jstech.core.guide.ChecklistLines  static Line check(String)
+14 dev.jstech.core.guide.ChecklistLines  static Line step(String)
+14 dev.jstech.core.guide.ChecklistLines  static boolean boxed(String)
+14 dev.jstech.core.guide.ChecklistLines.Line  type record(String first, String second, boolean changed)
 10 dev.jstech.core.guide.CoreGuide  type final class
 10 dev.jstech.core.guide.CoreGuide  static GuideStyle binder(String, boolean)
 10 dev.jstech.core.guide.CoreGuide  static GuideStyle book(String, GuideStyle.Make, List<GuideStyle.CoverPart>)
@@ -5326,6 +5331,11 @@ stable 4
 10 dev.jstech.core.guide.GuideBlock.BreakKind  PAGE
 10 dev.jstech.core.guide.GuideBlock.BreakKind  String serializedName()
 10 dev.jstech.core.guide.GuideBlock.Callout  type record(int number, View view, int u, int v, String key)
+14 dev.jstech.core.guide.GuideBlock.Card  type record(String titleKey, int first, List<CardStep> steps) implements GuideBlock
+14 dev.jstech.core.guide.GuideBlock.CardStep  type record(String nameKey, String textKey, boolean changed)
+14 dev.jstech.core.guide.GuideBlock.Caution  type record(String key) implements GuideBlock
+14 dev.jstech.core.guide.GuideBlock.Check  type record(String itemKey, String stateKey, boolean changed)
+14 dev.jstech.core.guide.GuideBlock.Checklist  type record(List<Check> lines) implements GuideBlock
 10 dev.jstech.core.guide.GuideBlock.Command  type record(String source) implements GuideBlock
 10 dev.jstech.core.guide.GuideBlock.Custom  type record(String type, int height, String data) implements GuideBlock
 10 dev.jstech.core.guide.GuideBlock.Define  type record(String termKey, String definitionKey) implements GuideBlock
@@ -5627,9 +5637,10 @@ stable 4
 10 dev.jstech.core.guide.GuideSearch.Found  USE
 10 dev.jstech.core.guide.GuideSearch.Hit  type record(String text, String target, String folio, String icon, boolean term, int page, String line, Found found)
 10 dev.jstech.core.guide.GuideSearch.Hit  new(String, String, String, String, boolean, int, String)
-12 dev.jstech.core.guide.GuideSection  type record(String id, int order, String titleKey, String icon, String chapter, String code)
+14 dev.jstech.core.guide.GuideSection  type record(String id, int order, String titleKey, String icon, String chapter, String code, String tab)
 10 dev.jstech.core.guide.GuideSection  new(String, int, String, String)
 12 dev.jstech.core.guide.GuideSection  new(String, int, String, String, String)
+14 dev.jstech.core.guide.GuideSection  new(String, int, String, String, String, String)
 10 dev.jstech.core.guide.GuideSite  type final class
 10 dev.jstech.core.guide.GuideSite  static Map<String, String> files(ManualReader, IGuideText, IRecipeWords, String)
 10 dev.jstech.core.guide.GuideSite  static String pathOf(String)
@@ -5654,8 +5665,12 @@ stable 4
 10 dev.jstech.core.guide.GuideStyle  int pageHeight()
 10 dev.jstech.core.guide.GuideStyle  int pageWidth()
 10 dev.jstech.core.guide.GuideStyle  new(String, Map<String, String>, Pages, Decor, String, String, Folios, String, Cover, HoldBar)
+14 dev.jstech.core.guide.GuideStyle  static String standIn(String)
 10 dev.jstech.core.guide.GuideStyle  static final String ACCENT
 10 dev.jstech.core.guide.GuideStyle  static final String BAND
+14 dev.jstech.core.guide.GuideStyle  static final String CARD
+14 dev.jstech.core.guide.GuideStyle  static final String CAUTION
+14 dev.jstech.core.guide.GuideStyle  static final String CAUTION_PAPER
 10 dev.jstech.core.guide.GuideStyle  static final String CODE_COMMENT
 10 dev.jstech.core.guide.GuideStyle  static final String CODE_COPIED
 10 dev.jstech.core.guide.GuideStyle  static final String CODE_HEAD
@@ -5677,6 +5692,7 @@ stable 4
 10 dev.jstech.core.guide.GuideStyle  static final String LABEL_INK
 10 dev.jstech.core.guide.GuideStyle  static final String LINK
 10 dev.jstech.core.guide.GuideStyle  static final String MARGIN
+14 dev.jstech.core.guide.GuideStyle  static final String MARK
 10 dev.jstech.core.guide.GuideStyle  static final String NUMBER
 10 dev.jstech.core.guide.GuideStyle  static final String PAPER
 10 dev.jstech.core.guide.GuideStyle  static final String RIBBON
@@ -5687,6 +5703,7 @@ stable 4
 10 dev.jstech.core.guide.GuideStyle  static final String TAB
 10 dev.jstech.core.guide.GuideStyle  static final String TAB_INK
 10 dev.jstech.core.guide.GuideStyle  static final String WARNING
+14 dev.jstech.core.guide.GuideStyle  static final String WARNING_PAPER
 10 dev.jstech.core.guide.GuideStyle.Binding  type enum implements IStableName
 10 dev.jstech.core.guide.GuideStyle.Binding  GLUED
 10 dev.jstech.core.guide.GuideStyle.Binding  RINGS
@@ -5714,12 +5731,15 @@ stable 4
 10 dev.jstech.core.guide.GuideStyle.CoverPart  static CoverPart image(int, int, int, int, String)
 10 dev.jstech.core.guide.GuideStyle.CoverPart  static CoverPart stamp(int, int, int, int, int, int, String)
 10 dev.jstech.core.guide.GuideStyle.CoverPart  static CoverPart words(PartKind, int, int, int, int, float, String)
-10 dev.jstech.core.guide.GuideStyle.Decor  type record(boolean rings, boolean grid, boolean frame, boolean titleBlock, boolean upperHeadings, boolean traced, boolean plainNumbers, boolean smallText)
+14 dev.jstech.core.guide.GuideStyle.Decor  type record(boolean rings, boolean grid, boolean frame, boolean titleBlock, boolean upperHeadings, boolean traced, boolean plainNumbers, boolean smallText, boolean boxedHeads, boolean headedNotices, boolean shortFigures)
+14 dev.jstech.core.guide.GuideStyle.Decor  new(boolean, boolean, boolean, boolean, boolean, boolean, boolean, boolean)
 10 dev.jstech.core.guide.GuideStyle.Decor  static Decor binder(boolean)
 10 dev.jstech.core.guide.GuideStyle.Decor  static Decor drawing()
+14 dev.jstech.core.guide.GuideStyle.Decor  static Decor missionDocument()
 10 dev.jstech.core.guide.GuideStyle.Folios  type enum implements IStableName
 10 dev.jstech.core.guide.GuideStyle.Folios  CHAPTER_PAGE
 10 dev.jstech.core.guide.GuideStyle.Folios  DRAWING
+14 dev.jstech.core.guide.GuideStyle.Folios  SECTION_PAGE
 10 dev.jstech.core.guide.GuideStyle.Folios  SEQUENTIAL
 10 dev.jstech.core.guide.GuideStyle.Folios  String serializedName()
 10 dev.jstech.core.guide.GuideStyle.HoldBar  type enum implements IStableName
@@ -5731,6 +5751,7 @@ stable 4
 10 dev.jstech.core.guide.GuideStyle.Make  static Make of(Decor)
 10 dev.jstech.core.guide.GuideStyle.Marks  type enum implements IStableName
 10 dev.jstech.core.guide.GuideStyle.Marks  FLAGS
+14 dev.jstech.core.guide.GuideStyle.Marks  SECTION_TABS
 10 dev.jstech.core.guide.GuideStyle.Marks  String serializedName()
 10 dev.jstech.core.guide.GuideStyle.Marks  TABS
 10 dev.jstech.core.guide.GuideStyle.Marks  THUMB
@@ -5764,7 +5785,10 @@ stable 4
 10 dev.jstech.core.guide.GuideTexts  static final TextKey BLANK
 10 dev.jstech.core.guide.GuideTexts  static final TextKey BOOKMARKS
 10 dev.jstech.core.guide.GuideTexts  static final TextKey BOOKMARKS_TIP
+14 dev.jstech.core.guide.GuideTexts  static final TextKey CAUTION
+14 dev.jstech.core.guide.GuideTexts  static final TextKey CAUTION_LINE
 10 dev.jstech.core.guide.GuideTexts  static final TextKey CHAPTER
+14 dev.jstech.core.guide.GuideTexts  static final TextKey CHECK_LINE
 10 dev.jstech.core.guide.GuideTexts  static final TextKey CLOSE
 10 dev.jstech.core.guide.GuideTexts  static final TextKey CONTENTS
 10 dev.jstech.core.guide.GuideTexts  static final TextKey COPIED
@@ -5774,6 +5798,7 @@ stable 4
 10 dev.jstech.core.guide.GuideTexts  static final TextKey EXAMPLE
 10 dev.jstech.core.guide.GuideTexts  static final TextKey EXAMPLES
 10 dev.jstech.core.guide.GuideTexts  static final TextKey FIGURE
+14 dev.jstech.core.guide.GuideTexts  static final TextKey FIGURE_SHORT
 10 dev.jstech.core.guide.GuideTexts  static final TextKey FORWARD
 10 dev.jstech.core.guide.GuideTexts  static final TextKey FOUND
 10 dev.jstech.core.guide.GuideTexts  static final TextKey FOUND_NONE
@@ -5993,6 +6018,9 @@ stable 4
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder balloon(int, GuideBlock.ScenePart, String, String)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder callout(int, GuideBlock.View, int, int, String)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder callout(int, GuideBlock.View, int, int, TextKey)
+14 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder card(String, String...)
+14 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder caution(String)
+14 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder checklist(String...)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder command(String)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder covers(Supplier<? extends ItemLike>)
 10 dev.jstech.core.guide.ModGuide.EntryBuilder  EntryBuilder coversAll(Supplier<? extends Collection<? extends ItemLike>>)
@@ -6069,6 +6097,7 @@ stable 4
 12 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder code(String)
 10 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder icon(Supplier<? extends ItemLike>)
 10 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder in(GuideChapter)
+14 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder tab(String)
 10 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionBuilder titled(String)
 10 dev.jstech.core.guide.ModGuide.SectionBuilder  SectionRef register()
 10 dev.jstech.core.guide.ModGuide.SectionRef  type record(String id)

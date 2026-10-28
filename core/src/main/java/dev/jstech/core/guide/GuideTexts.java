@@ -19,6 +19,8 @@ public final class GuideTexts {
     public static final TextKey INDEX = TextKey.of("jscore.guide.index", "Index");
     public static final TextKey GLOSSARY = TextKey.of("jscore.guide.glossary", "Glossary");
     public static final TextKey FIGURE = TextKey.of("jscore.guide.figure", "Figure %s.");
+    /** A figure's number written short, as a mission's documents wrote it. */
+    public static final TextKey FIGURE_SHORT = TextKey.of("jscore.guide.figure_short", "Fig. %s");
     public static final TextKey TABLE = TextKey.of("jscore.guide.table", "Table %s.");
     /** The caption of a table again over the part of it that runs on to the next page. */
     public static final TextKey TABLE_CONTINUED = TextKey.of("jscore.guide.table_continued", "%s (continued)");
@@ -30,6 +32,7 @@ public final class GuideTexts {
     public static final TextKey PROPERTY = TextKey.of("jscore.guide.property", "Property");
     public static final TextKey VALUE = TextKey.of("jscore.guide.value", "Value");
     public static final TextKey WARNING = TextKey.of("jscore.guide.warning", "Warning");
+    public static final TextKey CAUTION = TextKey.of("jscore.guide.caution", "Caution");
     public static final TextKey SEE = TextKey.of("jscore.guide.see", "See");
     public static final TextKey AND = TextKey.of("jscore.guide.and", "and");
     public static final TextKey NO_RECIPES = TextKey.of("jscore.guide.no_recipes",
@@ -163,6 +166,9 @@ public final class GuideTexts {
     /** A manual read as text, in a help program or at a terminal: links, warnings and optional parts in words. */
     public static final TextKey SEE_ALSO = TextKey.of("jscore.guide.see_also", "See also:");
     public static final TextKey WARNING_LINE = TextKey.of("jscore.guide.warning_line", "Warning: %s");
+    public static final TextKey CAUTION_LINE = TextKey.of("jscore.guide.caution_line", "Caution: %s");
+    /** A checklist's line read as text: what to look at, then what it should be. */
+    public static final TextKey CHECK_LINE = TextKey.of("jscore.guide.check_line", "%s: %s");
     public static final TextKey OPTIONAL_PART = TextKey.of("jscore.guide.optional_part", "%s (optional)");
     /** The items an entry shows under its title, named when there is no room to draw them. */
     public static final TextKey ITEMS_LINE = TextKey.of("jscore.guide.items_line", "Items: %s");

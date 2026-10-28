@@ -81,6 +81,20 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
     /** The line down a page of graph paper's outer margin, and a hardcover's ribbon. */
     public static final String MARGIN = "margin";
     public static final String RIBBON = "ribbon";
+    /**
+     * A caution's colour, and the pale grounds of a caution and a warning under a headed notice's bar; a ring-bound
+     * card's title bar, and the mark of a step a revision changed. A style names them in its colours; one that does
+     * not is drawn with the role each stands in for ({@link #standIn}).
+     */
+    public static final String CAUTION = "caution";
+    public static final String CAUTION_PAPER = "cautionPaper";
+    public static final String WARNING_PAPER = "warningPaper";
+    public static final String CARD = "card";
+    public static final String MARK = "mark";
+
+    /* The roles a palette may not know, each with the one it falls back on. */
+    private static final Map<String, String> STAND_INS = Map.of(CAUTION, ACCENT, CAUTION_PAPER, HIGHLIGHT,
+            WARNING_PAPER, HIGHLIGHT, CARD, HEADING, MARK, WARNING);
 
     public GuideStyle {
         palette = palette == null ? "" : palette;
@@ -102,6 +116,15 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
                       final Cover cover, final HoldBar holdBar) {
         this(palette, colours, pages, decor, bodyFont, codeFont, folios, drawingPrefix, cover, holdBar,
                 Make.of(decor));
+    }
+
+    /**
+     * The role a palette's colour is read from when it does not know {@code role}: a caution's colour from the accent,
+     * the pale grounds from the highlight, a card's bar from the headings, a changed step's mark from the warning;
+     * {@code role} itself for every role a palette always knows.
+     */
+    public static String standIn(final String role) {
+        return STAND_INS.getOrDefault(role, role);
     }
 
     /** The same style with another bar filling while the manual key is held over an item. */
@@ -176,9 +199,23 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
      * @param traced        blocks drawn as line work traced from their faces rather than as they look
      * @param plainNumbers  steps numbered without a full stop after the number
      * @param smallText     running text lettered small, as a drawing's notes are, so a sheet holds two columns
+     * @param boxedHeads    a page's head ruled into boxes, as a mission document's was: the manual and its edition
+     *                      over a left page, the section and the folio over a right one; and its foot the folio
+     *                      and the chapter
+     * @param headedNotices a warning or a caution under a bar of its colour with its word in it, as such documents
+     *                      printed them, over a pale ground of the same colour
+     * @param shortFigures  a figure's number written short, "Fig. 1-1", with no full stop after it
      */
     public record Decor(boolean rings, boolean grid, boolean frame, boolean titleBlock, boolean upperHeadings,
-                        boolean traced, boolean plainNumbers, boolean smallText) {
+                        boolean traced, boolean plainNumbers, boolean smallText, boolean boxedHeads,
+                        boolean headedNotices, boolean shortFigures) {
+
+        /** What a decor said before boxed heads, headed notices and short figures came: none of them. */
+        public Decor(final boolean rings, final boolean grid, final boolean frame, final boolean titleBlock,
+                     final boolean upperHeadings, final boolean traced, final boolean plainNumbers,
+                     final boolean smallText) {
+            this(rings, grid, frame, titleBlock, upperHeadings, traced, plainNumbers, smallText, false, false, false);
+        }
 
         /** Nothing but a binder's rings, or not even those. */
         public static Decor binder(final boolean rings) {
@@ -188,6 +225,14 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         /** Everything a sheet of drawings has: the grid, the frame and its title block, its lettering. */
         public static Decor drawing() {
             return new Decor(false, true, true, true, true, true, true, true);
+        }
+
+        /**
+         * A binder made as a mission's documents were: its rings, headings in capitals, steps numbered plain, boxed
+         * heads, headed notices and short figures.
+         */
+        public static Decor missionDocument() {
+            return new Decor(true, false, false, false, true, false, true, false, true, true, true);
         }
     }
 
@@ -291,7 +336,12 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         /** A thumb index printed on the edge of the right page, the open chapter's block the widest. */
         THUMB("thumb"),
         /** Paper flags stuck on the pages' edge by the book's owner, each its chapter's colour. */
-        FLAGS("flags");
+        FLAGS("flags"),
+        /**
+         * A binder's plastic tabs, one for each section of the chapters it holds rather than each chapter, every tab
+         * in its section's colour and lettered with its section's code, as a mission's book was tabbed.
+         */
+        SECTION_TABS("section_tabs");
 
         private final String serializedName;
 
@@ -503,7 +553,12 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
          * As drawings are numbered: each entry a drawing of one or more sheets, numbered by its section in hundreds
          * and its place in the section ({@code JI-102} is the second drawing of the second section).
          */
-        DRAWING("drawing");
+        DRAWING("drawing"),
+        /**
+         * By section and page within it, after the section's code, as a mission's book numbered them: {@code LO 2-3}
+         * is page three of section 2, whose code is LO. A page outside any section with a code is numbered by chapter.
+         */
+        SECTION_PAGE("section_page");
 
         private final String serializedName;
 

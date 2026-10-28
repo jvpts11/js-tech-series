@@ -210,6 +210,55 @@ class MarkdownBlocksTest {
         assertEquals(List.of(7, 9), parsed.problems().stream().map(ManualFileException::line).toList());
     }
 
+    @Test
+    void parse_readsACautionAsACautionAndAnImportantLineAsAWarning() {
+        final List<GuideBlock> blocks = parse("""
+                > [!CAUTION]
+                > No launch in a thunderstorm.
+
+                > [!IMPORTANT] It burns.
+                """).blocks();
+        assertEquals(new GuideBlock.Caution("No launch in a thunderstorm."), blocks.get(0));
+        assertEquals(new GuideBlock.Warning("It burns."), blocks.get(1));
+    }
+
+    @Test
+    void parse_readsAListOpeningWithABoxAsAChecklist() {
+        final List<GuideBlock> blocks = parse("""
+                - [ ] Rocket ... on pad
+                - [!] Cryo tanks ..... venting
+                - [ ] Climb
+
+                1. Light the engines.
+                """).blocks();
+        assertEquals(new GuideBlock.Checklist(List.of(new GuideBlock.Check("Rocket", "on pad", false),
+                new GuideBlock.Check("Cryo tanks", "venting", true), new GuideBlock.Check("Climb", "", false))),
+                blocks.get(0));
+        assertEquals(new GuideBlock.Steps(List.of("Light the engines.")), blocks.get(1),
+                "a list with no box stays as it was");
+    }
+
+    @Test
+    void parse_readsCardsCountingTheirStepsOnFromTheCardBefore() {
+        final List<GuideBlock> blocks = parse("""
+                ```card
+                title: Leaving a world 1/2
+                [ ] On the pad: tower beside, hoses on
+                [ ] Ignition: engines lit
+                ```
+
+                ```card
+                title: Leaving a world 2/2
+                - [!] Staging: each spent stage comes loose
+                ```
+                """).blocks();
+        assertEquals(new GuideBlock.Card("Leaving a world 1/2", 1, List.of(
+                new GuideBlock.CardStep("On the pad", "tower beside, hoses on", false),
+                new GuideBlock.CardStep("Ignition", "engines lit", false))), blocks.get(0));
+        assertEquals(new GuideBlock.Card("Leaving a world 2/2", 3, List.of(
+                new GuideBlock.CardStep("Staging", "each spent stage comes loose", true))), blocks.get(1));
+    }
+
     private static MarkdownBlocks.Parsed parse(final String body) {
         return MarkdownBlocks.parse(body, 1, IJsonBlocks.NONE);
     }

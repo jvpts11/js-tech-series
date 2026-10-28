@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.guide.markdown;
 
+import dev.jstech.core.guide.ChecklistLines;
 import dev.jstech.core.guide.GuideBlock;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -45,14 +46,17 @@ import java.util.Set;
  *
  * <p>Besides those, {@code structure} (as {@code multiblock}, of a saved structure), {@code command} ({@code id}),
  * {@code plan} ({@code caption}, then {@code part: item | label} and {@code optional: label}), {@code views}
- * ({@code item}, then {@code callout: number view u v | text}), {@code custom kind height} and
- * {@code drawing kind height caption}, the last two holding their data as JSON.
+ * ({@code item}, then {@code callout: number view u v | text}), {@code card} ({@code title}, then a step a line,
+ * {@code [ ] Ignition: engines lit}), {@code custom kind height} and {@code drawing kind height caption}, the last two
+ * holding their data as JSON.
  */
 public final class FencedBlocks {
 
     /** The names of the fences it reads. */
     public static final Set<String> KINDS = Set.of("recipes", "multiblock", "structure", "command", "table",
-            "session", "plan", "views", "custom", "drawing");
+            "session", "plan", "views", "custom", "drawing", "card");
+    /* A list item's mark, which a card's step may carry before its box. */
+    private static final String ITEM = "- ";
 
     private static final String TYPED = ">";
     private static final String PROMPT = "prompt";
@@ -83,6 +87,7 @@ public final class FencedBlocks {
                 case "session" -> session(said, body);
                 case "plan" -> plan(said, body);
                 case "views" -> views(said, body);
+                case "card" -> card(said, body);
                 case "custom" -> new GuideBlock.Custom(word(words, 1), Integer.parseInt(word(words, 2)),
                         String.join("\n", body).strip());
                 default -> new GuideBlock.Picture("", word(words, 1), String.join("\n", body).strip(), 0,
@@ -94,6 +99,25 @@ public final class FencedBlocks {
                     + wrong.getMessage()));
             return Optional.empty();
         }
+    }
+
+    /*
+     * A card bound on rings: its title, then a step a line, each opening with a box as a checklist's line does; the
+     * reader of the file counts its steps on from the cards before it.
+     */
+    private static GuideBlock.Card card(final Map<String, String> said, final List<String> body) {
+        final List<GuideBlock.CardStep> steps = new ArrayList<>();
+        for (final String line : body) {
+            final String step = line.strip().startsWith(ITEM) ? line.strip().substring(ITEM.length()) : line.strip();
+            if (ChecklistLines.boxed(step)) {
+                final ChecklistLines.Line read = ChecklistLines.step(MarkdownText.of(step));
+                steps.add(new GuideBlock.CardStep(read.first(), read.second(), read.changed()));
+            }
+        }
+        if (steps.isEmpty()) {
+            throw new IllegalArgumentException("a card holds a step at least, each a line opening with [ ]");
+        }
+        return new GuideBlock.Card(MarkdownText.of(needed(said, "title")), 1, steps);
     }
 
     private static GuideBlock.Session session(final Map<String, String> said, final List<String> body) {

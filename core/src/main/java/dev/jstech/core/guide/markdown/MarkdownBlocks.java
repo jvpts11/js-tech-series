@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.guide.markdown;
 
+import dev.jstech.core.guide.ChecklistLines;
 import dev.jstech.core.guide.GuideBlock;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,8 @@ public final class MarkdownBlocks {
     private @Nullable String caption;
     private boolean lastWasProblem;
     private int at;
+    /** How many steps the entry's cards have so far. */
+    private int cardSteps;
 
     private static final Pattern HEADING = Pattern.compile("^ {0,3}(#{1,6})\\s+(.*?)\\s*#*\\s*$");
     private static final Pattern ORDERED = Pattern.compile("^ {0,3}\\d+[.)]\\s+(.*)$");
@@ -93,11 +96,9 @@ public final class MarkdownBlocks {
             } else if (this.tableAt(this.at)) {
                 this.table();
             } else if (ORDERED.matcher(line).matches()) {
-                this.add(new GuideBlock.Steps(this.items(ORDERED)));
+                this.list(ORDERED, true);
             } else if (BULLET.matcher(line).matches()) {
-                for (final String item : this.items(BULLET)) {
-                    this.add(new GuideBlock.Paragraph(BULLET_MARK + item));
-                }
+                this.list(BULLET, false);
             } else if (IMAGE.matcher(line).matches()) {
                 this.image(line);
             } else {
@@ -107,8 +108,33 @@ public final class MarkdownBlocks {
     }
 
     private void add(final GuideBlock block) {
-        this.blocks.add(block);
+        // A card counts its steps on from the cards before it in the entry, as a run of cuff cards was numbered.
+        if (block instanceof GuideBlock.Card card) {
+            this.blocks.add(new GuideBlock.Card(card.titleKey(), this.cardSteps + 1, card.steps()));
+            this.cardSteps += card.steps().size();
+        } else {
+            this.blocks.add(block);
+        }
         this.lastWasProblem = false;
+    }
+
+    /* A list: a checklist when its first item opens with a box, otherwise numbered steps or lines with bullets. */
+    private void list(final Pattern marker, final boolean ordered) {
+        final List<String> items = this.items(marker);
+        if (!items.isEmpty() && ChecklistLines.boxed(items.get(0))) {
+            final List<GuideBlock.Check> lines = new ArrayList<>();
+            for (final String item : items) {
+                final ChecklistLines.Line line = ChecklistLines.check(item);
+                lines.add(new GuideBlock.Check(line.first(), line.second(), line.changed()));
+            }
+            this.add(new GuideBlock.Checklist(lines));
+        } else if (ordered) {
+            this.add(new GuideBlock.Steps(items));
+        } else {
+            for (final String item : items) {
+                this.add(new GuideBlock.Paragraph(BULLET_MARK + item));
+            }
+        }
     }
 
     /* The line of the file the line at {@code index} of the body is. */
@@ -225,7 +251,8 @@ public final class MarkdownBlocks {
         final String kind = alert.group(1).toUpperCase(Locale.ROOT);
         switch (kind) {
             case "NOTE", "TIP" -> this.add(new GuideBlock.Note(MarkdownText.of(said)));
-            case "WARNING", "CAUTION", "IMPORTANT" -> this.add(new GuideBlock.Warning(MarkdownText.of(said)));
+            case "WARNING", "IMPORTANT" -> this.add(new GuideBlock.Warning(MarkdownText.of(said)));
+            case "CAUTION" -> this.add(new GuideBlock.Caution(MarkdownText.of(said)));
             case "PROBLEM" -> this.troubled(said, start);
             case "DEFINE" -> {
                 if (said.size() < 2) {

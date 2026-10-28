@@ -318,6 +318,29 @@ public final class ManualReader {
                 }
                 case GuideBlock.Warning warning -> pieces.add(new Piece.Paragraph(this.text.text(
                         GuideTexts.WARNING_LINE.key(), this.linked(warning.key(), linked)), Tone.WARNING));
+                // Read as text, a caution stands out as a warning does, its own word in front of it.
+                case GuideBlock.Caution caution -> pieces.add(new Piece.Paragraph(this.text.text(
+                        GuideTexts.CAUTION_LINE.key(), this.linked(caution.key(), linked)), Tone.WARNING));
+                case GuideBlock.Checklist checklist -> {
+                    int number = 0;
+                    for (final GuideBlock.Check line : checklist.lines()) {
+                        number++;
+                        final String item = this.text.text(line.itemKey());
+                        pieces.add(new Piece.Item(number + ".", line.stateKey().isEmpty() ? item
+                                : this.text.text(GuideTexts.CHECK_LINE.key(), item, this.text.text(line.stateKey()))));
+                    }
+                }
+                case GuideBlock.Card card -> {
+                    pieces.add(new Piece.Paragraph(this.text.text(card.titleKey()), Tone.PLAIN));
+                    int number = card.first() - 1;
+                    for (final GuideBlock.CardStep step : card.steps()) {
+                        number++;
+                        final String name = this.text.text(step.nameKey());
+                        pieces.add(new Piece.Item(number + ".", step.textKey().isEmpty() ? name
+                                : this.text.text(GuideTexts.CHECK_LINE.key(), name,
+                                this.linked(step.textKey(), linked))));
+                    }
+                }
                 case GuideBlock.Problems problems -> {
                     for (final GuideBlock.Problem problem : problems.problems()) {
                         pieces.add(new Piece.Term(this.text.text(problem.problemKey()),

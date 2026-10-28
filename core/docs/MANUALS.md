@@ -101,7 +101,7 @@ What the header says depends on what the file is, which its `kind` says (an entr
 | Kind | Its header | Its body |
 | --- | --- | --- |
 | entry | `section` (required), `order`, `icon`, `covers` (the items it is the page of), `covers_family` (a family only your code knows, see below), `shows` (the items on the plate under its title, when they are others), `needs` (the knowledge it needs), and `id` when it is not the mod's id and the file's name | Its blocks |
-| `section` | `chapter` (the mod's main chapter unless it says), `order`, `icon`, `code` (the letters a set of drawings numbers it by, below) | Its title alone |
+| `section` | `chapter` (the mod's main chapter unless it says), `order`, `icon`, `code` (the letters a set of drawings numbers it by, or a book numbered by section prints before its folios, below), `tab` (its tab's colour in a book tabbed by section) | Its title alone |
 | `chapter` | `order`, `tab` (a palette's id or a colour written `"#AARRGGBB"`), `own_books_only: true` for a chapter the Technical Reference leaves out; the file named `chapter.md` is the mod's main chapter, any other `mymod:<name>` | What it is about, on its opening page |
 | `manual` | `style` and `chapters` (required; `[*]` for every chapter), `cover` (its cover's lines), `edition`, `part_number`, `priority`, `icon` | The paragraphs of its "About this manual" |
 
@@ -125,11 +125,12 @@ Each form of Markdown is a block of the manual:
 | `## A heading` (any level but the first `#`) | A heading. The five parts are headings like any other, `## What it is` in English and in another language its own words. |
 | `1.` a numbered list | Numbered steps. |
 | `-` a list | A paragraph for each item, after a bullet. |
+| A list whose first item opens with a box, `- [ ] Rocket ... on pad` | A checklist: each line a box to tick, its number, what to look at and, past a row of dots, what it should be. Three dots or more part the two; a line without them has its words alone. `[!]` in place of `[ ]` marks a line the manual's last revision changed, with a bar in the margin. |
 | `Table: caption` on its own line, then a table | A numbered table; its first row is its heads. A cell written as code, `` `KX-1` ``, is kept as it is written. |
 | `![caption](item:mymod:kiln)` alone on its line | The item's figure. |
 | `![caption](mymod:gui/guide/cutaway "120x80")` | A picture of a texture, at that size; `"0x80"` takes the column's width, and `"64x32 frames=8 ticks=2"` is a picture that moves. |
 | `> a quote` | A note. |
-| `> [!WARNING]` (or `CAUTION`, `IMPORTANT`), `> [!NOTE]` (or `TIP`) | A warning, a note. |
+| `> [!WARNING]` (or `IMPORTANT`), `> [!CAUTION]`, `> [!NOTE]` (or `TIP`) | A warning, for what does harm; a caution, in a colour of its own, for what stops a thing from working; a note. |
 | `> [!PROBLEM] what goes wrong` and the fix under it | A problem and its fix; problems one after another are one list. |
 | `> [!DEFINE] a word` and what it means under it | A word explained, which goes into the glossary. |
 | `> [!SEE] mymod:generator, mymod:press` | "See" with those entries. |
@@ -169,7 +170,18 @@ prompt: C:\>
 ```scene
 {"height": 120, "caption": "The kiln in place", "blocks": [{"x": 0, "y": 0, "z": 0, "state": "mymod:kiln"}]}
 ```
+
+```card
+title: Leaving a world 1/2
+[ ] On the pad: tower beside, hoses on
+[!] Ignition: engines lit, deluge to steam
+```
 ````
+
+A `card` is a card bound on rings, as the checklists a crew wore on their cuff were: a bar with its `title`, then a
+step a line, each a box, the step's name, a colon and what it is, ruled one from the next; `[!]` marks a step the
+revision changed, with a clip on the card's edge. A card counts its steps on from the cards before it in the entry,
+so a run of cards reads 1 to 3, then 4 to 6.
 
 `structure` is as `multiblock`, of a structure saved with the structure block; `command` takes the `id` of a command's
 page; `plan` takes a `caption`, then `part: mymod:kiln | The kiln` and `optional: A second one`; `views` takes the
@@ -366,6 +378,9 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 | `recipes(type)`, `recipes(type, making)` | Every recipe of a type the world holds, or those making one item, with the time and energy over the arrow. |
 | `steps(english...)` | Numbered steps of the entry's own. |
 | `warning(english)` | A warning in a box. |
+| `caution(english)` | A caution in a box of its own colour: what stops a thing from working, where a warning is for harm. |
+| `checklist(lines...)` | A checklist, each line `"Rocket ... on pad"` as in Markdown, `"[!] ..."` for a changed one. |
+| `card(title, steps...)` | A card on rings, each step `"Ignition: engines lit"` as in Markdown, counting on from the cards before it. |
 | `seeAlso(entries...)` | "See 3.2.2 and 3.4.3", each number a link. |
 | `note(english)` | A line set apart in the style's accent: what to read next, a hint. |
 | `views(block)`, then `callout(number, view, u, v, english)` | The block from above, the front and the side, with the width of one block under the front. Each callout is a numbered balloon pointing at a place of one face (`u`, `v` in the face's sixteen pixels), and a line of the legend under the views. |
@@ -739,7 +754,14 @@ Two helpers make the usual ones in code:
   `colours` sets any of them outright, so a style needs no code at all.
 - `pages`: two at a time or one, their size, the margin, and how many columns the text runs in.
 - `decor`: a binder's `rings`; a drawing's `grid`, `frame` and `title_block`; `upper_headings`; `traced` blocks;
-  `plain_numbers` for steps without a full stop; `small_text` for notes lettered small.
+  `plain_numbers` for steps without a full stop; `small_text` for notes lettered small. Three more dress a book as a
+  mission's documents were (`GuideStyle.Decor.missionDocument()` turns them on with the rings, capitals and plain
+  numbers): `boxed_heads`, a page's head ruled into boxes, the manual and its edition over a left page and the
+  section and the folio over a right one, and the folio and the chapter at its foot; `headed_notices`, a warning or
+  a caution under a bar of its colour with its word in it, on a pale ground; and `short_figures`, "Fig. 1-1".
+- Five roles a palette may leave out are drawn as the role each stands in for when it does: `caution` (the accent),
+  `cautionPaper` and `warningPaper` (the highlight), `card` for a card's bar (the heading) and `mark` for its rule
+  and a changed step's clip (the warning). A style sets them in `colours`.
 - `cover`: a `binder` with its spine, rivets and tabs, or a `folder` with the edges of its sheets showing; on a
   `label` or not; with a `band` or not.
 - `body_font` and `code_font`: the fonts the running text, and the code and figures, are written in; empty for the
@@ -751,6 +773,9 @@ Two helpers make the usual ones in code:
   numbers its drawings by its place, in hundreds, unless it has letters of its own, as a real set numbers each
   discipline's sheets: `GUIDE.section("power").titled("Power").code("EL")` makes its drawings JI-EL-001, JI-EL-002,
   and the drawing list is sheet zero of the first section (JI-GN-000). A section with no drawing yet is not shown.
+- `folios` may also be `section_page`, as a mission's book numbered its pages: `LO 2-3` is page three of section 2,
+  whose letters are LO. Its sections are then counted through the whole book and its entries by their section
+  alone (2.3); a page of no section with letters is numbered by its chapter.
 - A chapter's tab takes its colour from the chapter's `tab`: a palette's id whose role `tab` it is, or a colour
   written `#AARRGGBB`.
 - `hold_bar` is the bar that fills while the manual key is held over an item this manual opens: `plain` (a thin bar
@@ -781,7 +806,10 @@ it is off, so every style written before it keeps its looks.
   `margin`, down the outer side of each page).
 - `marks`: how the reader finds a chapter. `tabs` stand out past the cover, as a binder's do; `thumb` prints a
   block for each chapter down the right page's edge, the open one widest, as a reference book's thumb index; `flags`
-  are paper flags stuck under the pages' edge, the open one reaching furthest onto the page.
+  are paper flags stuck under the pages' edge, the open one reaching furthest onto the page; `section_tabs` are a
+  binder's tabs, one for each section rather than each chapter, every one lettered with its section's code and in its
+  section's colour, `GUIDE.section("launch").code("LO").tab("#FFD52B23")` or `tab: "#FFD52B23"` in a section's
+  Markdown file.
 - `colours`: the colours of the thumb index's blocks or of the flags, one chapter after another and round again,
   each a role of the palette or a colour written `#AARRGGBB`. Without them each mark takes its chapter's colour; with
   them a chapter bound in several books takes each book's colours.

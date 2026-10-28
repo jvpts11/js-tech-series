@@ -29,6 +29,10 @@ class GuideLayoutTest {
             new GuideStyle.Pages(false, 340, 201, 15, 2), GuideStyle.Decor.drawing(), "", "",
             GuideStyle.Folios.DRAWING, "JI", new GuideStyle.Cover(GuideStyle.CoverKind.FOLDER, true, true),
             GuideStyle.HoldBar.HAZARD);
+    /** A book made as a mission's documents were: boxed heads, headed notices, short figures, by section. */
+    private static final GuideStyle MISSION = new GuideStyle("", Map.of(), new GuideStyle.Pages(true, 166, 201, 10, 1),
+            GuideStyle.Decor.missionDocument(), "", "", GuideStyle.Folios.SECTION_PAGE, "",
+            new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, false), GuideStyle.HoldBar.PLAIN);
     private static final GuideManual MANUAL = new GuideManual("test:manual", "manual.title", List.of(), "", "",
             "test:style", List.of(GuideManual.EVERY_CHAPTER), List.of("about.one"), 0, "");
     /** A command as its mod would answer for it: what it is for, how it is typed, an option, an example, systems. */
@@ -847,6 +851,140 @@ class GuideLayoutTest {
         assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text line
                 && line.text().startsWith(GuideTexts.FIGURE.key() + "[1-1]")), "it is the first figure, the one"
                 + " left out not counted");
+    }
+
+    @Test
+    void lay_numbersBySectionThroughTheBookWhenItsFoliosAreBySection() {
+        final GuideBook book = mission(new GuideBlock.Paragraph("launch.text"));
+
+        assertEquals("1", book.numbers().get("space:launch"));
+        assertEquals("1.1", book.numbers().get("space:panel"));
+        assertEquals("2", book.numbers().get("space:worlds"));
+        assertEquals("2.1", book.numbers().get("space:moon"));
+    }
+
+    @Test
+    void lay_writesASectionsFoliosAfterItsLetters() {
+        final GuideBook book = mission(new GuideBlock.Paragraph("launch.text"));
+
+        assertEquals("LO 1-1", book.pages().get(book.pageOf("space:panel").orElseThrow()).folio());
+        assertEquals("WD 2-1", book.pages().get(book.pageOf("space:moon").orElseThrow()).folio());
+    }
+
+    @Test
+    void lay_headsABoxedSectionWithItsTitleAlone() {
+        // A checklist long enough to run over three pages, so the section has a right page of its own.
+        final List<GuideBlock.Check> lines = new ArrayList<>();
+        for (int i = 0; i < 40; i++) {
+            lines.add(new GuideBlock.Check("item" + i, "state", false));
+        }
+        final GuideBook book = mission(new GuideBlock.Checklist(lines));
+
+        final int from = book.pageOf("space:panel").orElseThrow();
+        final int to = book.pageOf("space:moon").orElseThrow();
+        final List<String> rightHeads = new ArrayList<>();
+        for (int page = from; page < to; page++) {
+            if (page % 2 == 1) {
+                rightHeads.add(book.pages().get(page).header());
+            }
+        }
+        assertTrue(!rightHeads.isEmpty() && rightHeads.stream().allMatch("launch.title"::equals),
+                () -> "the right pages of the launch section are headed " + rightHeads);
+    }
+
+    @Test
+    void lay_headsANoticeWithABarOfItsColourWhereTheStyleHeadsThem() {
+        final List<GuidePiece> pieces = missionPieces(new GuideBlock.Caution("careful"));
+
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Box box
+                && box.fill().equals(GuideStyle.CAUTION_PAPER) && box.edge().equals(GuideStyle.CAUTION)), () -> "the "
+                + "caution's ground: " + pieces);
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Box box
+                && box.fill().equals(GuideStyle.CAUTION) && box.edge().equals(GuideStyle.CAUTION)), () -> "its bar");
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.colour().equals(GuideStyle.PAPER) && text.text().equals("JSCORE.GUIDE.CAUTION")),
+                () -> "its word in the bar: " + pieces);
+    }
+
+    @Test
+    void lay_drawsAWarningAsBeforeWhereTheStyleDoesNotHeadNotices() {
+        final GuideBook book = lay(new GuideContents(List.of(chapter("mod", entry("mod:careful",
+                new GuideBlock.Warning("warned"), new GuideBlock.Caution("cautioned"))))));
+
+        final List<GuidePiece> pieces = book.pages().get(book.pageOf("mod:careful").orElseThrow()).pieces();
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Box box
+                && box.fill().equals(GuideStyle.HIGHLIGHT) && box.edge().equals(GuideStyle.WARNING)));
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Box box
+                && box.fill().equals(GuideStyle.HIGHLIGHT) && box.edge().equals(GuideStyle.CAUTION)));
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.colour().equals(GuideStyle.WARNING) && text.text().equals(GuideTexts.WARNING.key())));
+    }
+
+    @Test
+    void lay_setsAChecklistLineAsItsBoxNumberWordsAndStateBehindDots() {
+        final List<GuidePiece> pieces = missionPieces(new GuideBlock.Checklist(List.of(
+                new GuideBlock.Check("rocket", "on.pad", false), new GuideBlock.Check("tanks", "venting", true),
+                new GuideBlock.Check("climb", "", false))));
+
+        final List<GuidePiece.Leader> leaders = pieces.stream().filter(GuidePiece.Leader.class::isInstance)
+                .map(GuidePiece.Leader.class::cast).toList();
+        assertEquals(List.of("ROCKET", "TANKS"), leaders.stream().map(GuidePiece.Leader::left).toList());
+        assertEquals(List.of("ON.PAD", "VENTING"), leaders.stream().map(GuidePiece.Leader::right).toList());
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.text().equals("CLIMB")), "a line with no state has its words alone");
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.text().equals("3")), "every line is numbered");
+        final int columnEnd = GuideLayout.columnX(MISSION, 0) + MISSION.pages().width() - 2 * MISSION.margin();
+        assertEquals(1, pieces.stream().filter(piece -> piece instanceof GuidePiece.Box box
+                && box.fill().equals(GuideStyle.INK) && box.x() > columnEnd).count(),
+                "the changed line has a bar beside it in the margin, and no other line does");
+    }
+
+    @Test
+    void lay_numbersACardsStepsOnFromTheCardsBeforeIt() {
+        final List<GuidePiece> pieces = missionPieces(new GuideBlock.Card("leaving", 4, List.of(
+                new GuideBlock.CardStep("staging", "jolt", false), new GuideBlock.CardStep("space", "black", true))));
+
+        final String words = read(pieces);
+        assertTrue(words.contains("LEAVING") && words.contains("4  STAGING") && words.contains("5  SPACE"),
+                () -> "the card reads " + words);
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Box box
+                && box.fill().equals(GuideStyle.CARD)), "its title bar");
+        assertTrue(pieces.stream().filter(piece -> piece instanceof GuidePiece.Box box
+                && box.fill().equals(GuideStyle.RING)).count() > 2, "its rings");
+        assertEquals(2, pieces.stream().filter(piece -> piece instanceof GuidePiece.Box box
+                && box.fill().equals(GuideStyle.MARK)).count(), "the rule under its bar and the changed step's clip");
+    }
+
+    @Test
+    void lay_writesAFiguresNumberShortWhereTheStyleDoes() {
+        final List<GuidePiece> pieces = missionPieces(new GuideBlock.Figure("minecraft:stone", "orbit"));
+
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.text().startsWith(GuideTexts.FIGURE_SHORT.key())), () -> "the caption: " + read(pieces));
+    }
+
+    /*
+     * A book made as a mission's documents were: numbered and tabbed by section, its notices headed, a section of
+     * launch operations whose entry holds {@code blocks}, then one of world data.
+     */
+    private static GuideBook mission(final GuideBlock... blocks) {
+        final GuideEntry panel = new GuideEntry("space:panel", "space:launch", 0, "panel.title", "", List.of(),
+                List.of(blocks));
+        final GuideEntry moon = new GuideEntry("space:moon", "space:worlds", 0, "moon.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("moon.text")));
+        return GuideLayout.lay(MANUAL, MISSION, new GuideContents(List.of(new GuideContents.Chapter(
+                new GuideChapter("space", 0, "space.title", "", ""), List.of(
+                        new GuideContents.Section(new GuideSection("space:launch", 0, "launch.title", "", "space",
+                                "LO", "#FFD52B23"), List.of(panel)),
+                        new GuideContents.Section(new GuideSection("space:worlds", 1, "worlds.title", "", "space",
+                                "WD", ""), List.of(moon)))))), new FixedText(Map.of()));
+    }
+
+    /* The pieces of the first page of the mission book's launch entry, which holds {@code blocks}. */
+    private static List<GuidePiece> missionPieces(final GuideBlock... blocks) {
+        final GuideBook book = mission(blocks);
+        return book.pages().get(book.pageOf("space:panel").orElseThrow()).pieces();
     }
 
     private static GuideBook lay(final GuideContents contents) {

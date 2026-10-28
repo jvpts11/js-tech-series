@@ -39,6 +39,7 @@ import dev.jstech.tests.TestMultiblocks;
 import dev.jstech.tests.TestPress;
 import dev.jstech.tests.TestSounds;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -292,6 +293,32 @@ public final class GuideGameTests {
     private static GuideEntry entry(final String id) {
         return TestSounds.CONTENT.guide().declaredEntries().stream().filter(entry -> entry.id().equals(id))
                 .findFirst().orElseThrow();
+    }
+
+    /*
+     * What a manual made as a mission's documents uses reads back from its files the same: a caution, a checklist
+     * with a changed line, cards counting on, a section with its letters and its tab's colour, and the style itself,
+     * numbered and tabbed by section with boxed heads, headed notices and short figures.
+     */
+    @GameTest(template = ARENA)
+    public static void missionPieces_readBackFromTheirFilesTheSame(final GameTestHelper helper) {
+        final List<GuideBlock> blocks = List.of(new GuideBlock.Caution("careful"),
+                new GuideBlock.Checklist(List.of(new GuideBlock.Check("rocket", "on.pad", false),
+                        new GuideBlock.Check("tanks", "venting", true), new GuideBlock.Check("climb", "", false))),
+                new GuideBlock.Card("leaving", 4, List.of(new GuideBlock.CardStep("staging", "jolt", true),
+                        new GuideBlock.CardStep("orbit", "", false))));
+        for (final GuideBlock block : blocks) {
+            helper.assertTrue(roundTrips(GuideCodecs.BLOCK, block), block + " reads back the same");
+        }
+        helper.assertTrue(roundTrips(GuideCodecs.SECTION, new GuideSection("mod:launch", 0, "launch.title", "",
+                "mod", "LO", "#FFD52B23")), "a section with its letters and its tab reads back the same");
+        final GuideStyle mission = new GuideStyle("", Map.of(GuideStyle.CAUTION, "#FF8B5A00"),
+                new GuideStyle.Pages(true, 166, 201, 10, 1), GuideStyle.Decor.missionDocument(), "", "",
+                GuideStyle.Folios.SECTION_PAGE, "", new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, true),
+                GuideStyle.HoldBar.PLAIN).withMake(new GuideStyle.Make(GuideStyle.Binding.RINGS,
+                GuideStyle.Board.PLAIN, GuideStyle.Paper.PLAIN, GuideStyle.Marks.SECTION_TABS, List.of(), false));
+        helper.assertTrue(roundTrips(GuideCodecs.STYLE, mission), "the style reads back the same");
+        helper.succeed();
     }
 
     private static <T> boolean roundTrips(final Codec<T> codec, final T value) {

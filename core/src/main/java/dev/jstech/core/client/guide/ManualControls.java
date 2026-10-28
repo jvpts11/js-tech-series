@@ -96,17 +96,17 @@ final class ManualControls {
     }
 
     /**
-     * A chapter's tab at the binder's edge, its number in the middle: the shown chapter's reaches two pixels over the
-     * page and one further out, its number bold; the one under the pointer a pixel over the page, lighter.
+     * A chapter's tab at the binder's edge, its number in the middle, or a section's with its letters: the shown one
+     * reaches two pixels over the page and one further out, its writing bold; the one under the pointer a pixel over
+     * the page, lighter.
      */
     static void tab(final GuiGraphics g, final Font font, final GuideStyle style, final ManualScreenLayout.Rect rect,
-                    final int number, final boolean on, final boolean pointed, final int colour, final int ink) {
+                    final String written, final boolean on, final boolean pointed, final int colour, final int ink) {
         final int x = rect.x() - (on ? 2 : pointed ? 1 : 0);
         final int right = rect.x() + rect.width() + (on ? 1 : 0);
         final int fill = pointed && !on ? ManualButtonLook.lighten(colour, TAB_LIT) : colour;
         bevel(g, x, rect.y(), right - x, rect.height(), fill, ManualButtonLook.lighten(fill, TAB_LIGHT),
                 ManualButtonLook.darken(fill, TAB_SHADE));
-        final String written = String.valueOf(number);
         final TextSize size = on ? TextSize.SMALL_BOLD : TextSize.SMALL;
         final int width = GuideFonts.width(font, written, size, style);
         GuideFonts.draw(g, font, written, size, style, x + (right - x - width + 1) / 2,

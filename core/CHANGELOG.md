@@ -279,6 +279,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A picture on a creative tab: J's Core's API is at version 13. `ContentTab.picture(texture)` shows a 16-pixel
   picture on a tab's button in place of its icon item, `ContentTab.pictureOf(tab)` says which a tab shows, and
   `ModContent.tab(id, title, picture)` declares a tab with one; all experimental.
+- Manuals made as a mission's documents were: J's Core's API is at version 14. The blocks
+  `GuideBlock.Caution`, `GuideBlock.Checklist` with its `Check` lines and `GuideBlock.Card` with its `CardStep`s, the
+  entry builder's `caution`, `checklist` and `card`, and `ChecklistLines`, which reads a line or a step as Markdown
+  and code write it. `GuideStyle.Decor` gains `boxedHeads`, `headedNotices` and `shortFigures` (and
+  `missionDocument()`), `Folios.SECTION_PAGE`, `Marks.SECTION_TABS`, the roles `CAUTION`, `CAUTION_PAPER`,
+  `WARNING_PAPER`, `CARD` and `MARK` with `standIn(role)`; a `GuideSection` has its `tab` colour
+  (`SectionBuilder.tab`); `GuideTexts` gains `CAUTION`, `CAUTION_LINE`, `CHECK_LINE` and `FIGURE_SHORT`. All
+  experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1616,6 +1624,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Wide advancement backgrounds: a mod declares a wide picture for a tab's tile (`WideBackgrounds.declare`),
   drawn once behind the tree in place of the 16-pixel tiles and sliding at half the tree's speed as the player drags
   it, so it never repeats and the window never reaches its edge; a tab whose tile has none is tiled as before.
+- Manuals dressed as a mission's documents: a caution in a box of its own colour beside the warning
+  (`> [!CAUTION]` in Markdown, which drew a warning before); checklists, a box to tick, a number, what to look at
+  and what it should be past a row of dots (`- [ ] Rocket ... on pad`), a line the revision changed marked by a bar
+  in the margin (`[!]`); cards on rings as a crew wore on their cuff, numbered on from card to card (a `card` fence);
+  and, for a style that asks, heads ruled into boxes with the manual and its edition or the section and its folio,
+  notices under a bar of their colour, figures numbered short (Fig. 1-1), pages numbered by section after its
+  letters (LO 2-3) and tabs one a section, lettered and coloured. Every manual written before reads as it did.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

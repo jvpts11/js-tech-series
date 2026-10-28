@@ -301,6 +301,7 @@ public final class ModGuide {
         private Supplier<? extends ItemLike> icon;
         private String chapterId;
         private String code = "";
+        private String tab = "";
 
         private SectionBuilder(final String path) {
             this.path = path;
@@ -342,6 +343,15 @@ public final class ModGuide {
             return this;
         }
 
+        /**
+         * The colour of the section's tab in a manual tabbed by section, written {@code #AARRGGBB} or as a palette's
+         * role.
+         */
+        public SectionBuilder tab(final String colour) {
+            this.tab = colour;
+            return this;
+        }
+
         public SectionRef register() {
             if (this.title == null) {
                 throw new IllegalStateException("the section " + ModGuide.this.id(this.path) + " needs a title");
@@ -352,8 +362,9 @@ public final class ModGuide {
             final Supplier<? extends ItemLike> sectionIcon = this.icon;
             final String chapter = this.chapterId == null ? ModGuide.this.namespace : this.chapterId;
             final String letters = this.code;
+            final String colour = this.tab;
             ModGuide.this.sections.add(() -> new GuideSection(id, order, titleKey, itemId(sectionIcon), chapter,
-                    letters));
+                    letters, colour));
             return new SectionRef(id);
         }
     }
@@ -378,6 +389,11 @@ public final class ModGuide {
         private int tables;
         private int steps;
         private int warnings;
+        private int cautions;
+        private int checks;
+        private int cards;
+        /** How many steps the entry's cards have so far, so the next card counts on from them. */
+        private int cardSteps;
         private int problems;
         private int terms;
         private int notes;
@@ -672,6 +688,52 @@ public final class ModGuide {
             this.warnings++;
             final String key = this.key("warning" + this.warnings, english);
             return this.add(() -> new GuideBlock.Warning(key));
+        }
+
+        /** A caution, in a box of its own colour: what stops a thing from working, where a warning is for harm. */
+        public EntryBuilder caution(final String english) {
+            this.cautions++;
+            final String key = this.key("caution" + this.cautions, english);
+            return this.add(() -> new GuideBlock.Caution(key));
+        }
+
+        /**
+         * A checklist, one line each as {@link ChecklistLines#check} reads it: {@code "Rocket ... on pad"}, or
+         * {@code "[!] Cryo tanks ... venting"} for a line the manual's last revision changed.
+         */
+        public EntryBuilder checklist(final String... english) {
+            final List<GuideBlock.Check> lines = new ArrayList<>();
+            for (final String written : english) {
+                final ChecklistLines.Line line = ChecklistLines.check(written);
+                this.checks++;
+                final String item = this.key("check" + this.checks, line.first());
+                final String state = line.second().isEmpty() ? "" : this.key("check" + this.checks + ".state",
+                        line.second());
+                lines.add(new GuideBlock.Check(item, state, line.changed()));
+            }
+            final GuideBlock block = new GuideBlock.Checklist(lines);
+            return this.add(() -> block);
+        }
+
+        /**
+         * A card bound on rings, titled {@code title}, one step each as {@link ChecklistLines#step} reads it:
+         * {@code "Ignition: engines lit, deluge to steam"}. Its steps count on from the entry's cards before it.
+         */
+        public EntryBuilder card(final String title, final String... english) {
+            this.cards++;
+            final String titleKey = this.key("card" + this.cards, title);
+            final int first = this.cardSteps + 1;
+            final List<GuideBlock.CardStep> steps = new ArrayList<>();
+            for (final String written : english) {
+                final ChecklistLines.Line line = ChecklistLines.step(written);
+                this.cardSteps++;
+                final String name = this.key("card_step" + this.cardSteps, line.first());
+                final String text = line.second().isEmpty() ? "" : this.key("card_step" + this.cardSteps + ".text",
+                        line.second());
+                steps.add(new GuideBlock.CardStep(name, text, line.changed()));
+            }
+            final GuideBlock block = new GuideBlock.Card(titleKey, first, steps);
+            return this.add(() -> block);
         }
 
         /** A word explained where the entry first uses it; the index lists it. */

@@ -70,7 +70,7 @@ public final class GuideCodecs {
     /** The type every kind of block is written with in a file, as {@link #BLOCK} reads it. */
     public static final Set<String> BLOCK_TYPES = Set.of("text", "heading", "figure", "picture", "table", "listing",
             "session", "recipes", "steps", "warning", "problems", "define", "see", "custom", "note", "break", "views",
-            "plan", "command", "scene", "multiblock", "structure", "modes");
+            "plan", "command", "scene", "multiblock", "structure", "modes", "caution", "checklist", "card");
 
     public static final Codec<GuideEntry> ENTRY = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("id").forGetter(GuideEntry::id),
@@ -90,7 +90,8 @@ public final class GuideCodecs {
             Codec.STRING.fieldOf("title").forGetter(GuideSection::titleKey),
             Codec.STRING.optionalFieldOf("icon", "").forGetter(GuideSection::icon),
             Codec.STRING.optionalFieldOf("chapter", "").forGetter(GuideSection::chapter),
-            Codec.STRING.optionalFieldOf("code", "").forGetter(GuideSection::code)
+            Codec.STRING.optionalFieldOf("code", "").forGetter(GuideSection::code),
+            Codec.STRING.optionalFieldOf("tab", "").forGetter(GuideSection::tab)
     ).apply(instance, GuideSection::new));
 
     public static final Codec<GuideChapter> CHAPTER = RecordCodecBuilder.create(instance -> instance.group(
@@ -131,7 +132,10 @@ public final class GuideCodecs {
             Codec.BOOL.optionalFieldOf("upper_headings", false).forGetter(GuideStyle.Decor::upperHeadings),
             Codec.BOOL.optionalFieldOf("traced", false).forGetter(GuideStyle.Decor::traced),
             Codec.BOOL.optionalFieldOf("plain_numbers", false).forGetter(GuideStyle.Decor::plainNumbers),
-            Codec.BOOL.optionalFieldOf("small_text", false).forGetter(GuideStyle.Decor::smallText)
+            Codec.BOOL.optionalFieldOf("small_text", false).forGetter(GuideStyle.Decor::smallText),
+            Codec.BOOL.optionalFieldOf("boxed_heads", false).forGetter(GuideStyle.Decor::boxedHeads),
+            Codec.BOOL.optionalFieldOf("headed_notices", false).forGetter(GuideStyle.Decor::headedNotices),
+            Codec.BOOL.optionalFieldOf("short_figures", false).forGetter(GuideStyle.Decor::shortFigures)
     ).apply(instance, GuideStyle.Decor::new));
 
     public static final Codec<GuideStyle.CoverPart> COVER_PART = RecordCodecBuilder.create(instance -> instance.group(
@@ -248,6 +252,27 @@ public final class GuideCodecs {
     private static final MapCodec<GuideBlock.Warning> WARNING = RecordCodecBuilder.mapCodec(instance ->
             instance.group(Codec.STRING.fieldOf("text").forGetter(GuideBlock.Warning::key))
                     .apply(instance, GuideBlock.Warning::new));
+    private static final MapCodec<GuideBlock.Caution> CAUTION = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(Codec.STRING.fieldOf("text").forGetter(GuideBlock.Caution::key))
+                    .apply(instance, GuideBlock.Caution::new));
+    private static final Codec<GuideBlock.Check> CHECK = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.STRING.fieldOf("item").forGetter(GuideBlock.Check::itemKey),
+            Codec.STRING.optionalFieldOf("state", "").forGetter(GuideBlock.Check::stateKey),
+            Codec.BOOL.optionalFieldOf("changed", false).forGetter(GuideBlock.Check::changed)
+    ).apply(instance, GuideBlock.Check::new));
+    private static final MapCodec<GuideBlock.Checklist> CHECKLIST = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(CHECK.listOf().fieldOf("lines").forGetter(GuideBlock.Checklist::lines))
+                    .apply(instance, GuideBlock.Checklist::new));
+    private static final Codec<GuideBlock.CardStep> CARD_STEP = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.STRING.fieldOf("name").forGetter(GuideBlock.CardStep::nameKey),
+            Codec.STRING.optionalFieldOf("text", "").forGetter(GuideBlock.CardStep::textKey),
+            Codec.BOOL.optionalFieldOf("changed", false).forGetter(GuideBlock.CardStep::changed)
+    ).apply(instance, GuideBlock.CardStep::new));
+    private static final MapCodec<GuideBlock.Card> CARD = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.STRING.fieldOf("title").forGetter(GuideBlock.Card::titleKey),
+            Codec.INT.optionalFieldOf("first", 1).forGetter(GuideBlock.Card::first),
+            CARD_STEP.listOf().fieldOf("steps").forGetter(GuideBlock.Card::steps)
+    ).apply(instance, GuideBlock.Card::new));
     private static final MapCodec<GuideBlock.Problems> PROBLEMS = RecordCodecBuilder.mapCodec(instance ->
             instance.group(PROBLEM.listOf().fieldOf("problems").forGetter(GuideBlock.Problems::problems))
                     .apply(instance, GuideBlock.Problems::new));
@@ -401,6 +426,9 @@ public final class GuideCodecs {
             case GuideBlock.Multiblock multiblock -> "multiblock";
             case GuideBlock.Structure structure -> "structure";
             case GuideBlock.Modes modes -> "modes";
+            case GuideBlock.Caution caution -> "caution";
+            case GuideBlock.Checklist checklist -> "checklist";
+            case GuideBlock.Card card -> "card";
         };
     }
 
@@ -429,6 +457,9 @@ public final class GuideCodecs {
             case "multiblock" -> MULTIBLOCK;
             case "structure" -> STRUCTURE;
             case "modes" -> MODES;
+            case "caution" -> CAUTION;
+            case "checklist" -> CHECKLIST;
+            case "card" -> CARD;
             default -> throw new IllegalArgumentException("no block of the type " + type);
         };
     }

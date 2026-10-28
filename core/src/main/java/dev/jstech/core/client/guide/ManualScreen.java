@@ -32,6 +32,7 @@ import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuidePiece;
 import dev.jstech.core.guide.GuideSearch;
+import dev.jstech.core.guide.GuideSection;
 import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
@@ -113,7 +114,10 @@ public final class ManualScreen extends Screen {
     private final Map<String, Integer> ways = new HashMap<>();
     /** The colours of each terminal a session names, read once when the manual's colours are. */
     private final Map<String, Map<String, Integer>> terminals = new HashMap<>();
+    /** What each tab leads to: a chapter, or a section in a book tabbed by section. */
     private final List<String> chapters = new ArrayList<>();
+    /** The letters on each section's tab, in a book tabbed by section. */
+    private final Map<String, String> sectionCodes = new HashMap<>();
     /** Where the reader jumped from in this manual: the book's own way back. */
     private final GuideHistory history;
     private GuideBook book;
@@ -223,6 +227,11 @@ public final class ManualScreen extends Screen {
     private static final int UNSET = Integer.MIN_VALUE;
     /** The least room between a page's folio and the manual's title at its foot. */
     private static final int FOOT_GAP = 10;
+    /** A boxed head: how far down the page it starts, how tall it is, the room inside its cells, its right cell. */
+    private static final int HEAD_BOX_TOP = 2;
+    private static final int HEAD_BOX = 11;
+    private static final int HEAD_PAD = 3;
+    private static final int HEAD_CELL = 40;
     /** A listing's Copy button, its Close button over the whole book, and how long Copy says it has copied. */
     private static final int COPY_WIDTH = GuideLayout.LISTING_COPY;
     private static final int CLOSE_WIDTH = 26;
@@ -315,12 +324,22 @@ public final class ManualScreen extends Screen {
         this.resolveColours();
         final GuideContents contents = library.contentsOf(this.manual);
         this.chapters.clear();
+        this.sectionCodes.clear();
         final Set<String> mods = new HashSet<>();
         for (final GuideContents.Chapter chapter : contents.chapters()) {
             final GuideChapter held = chapter.chapter();
             this.tabColours.put(held.id(), this.tabColour(held));
-            // A book has a tab a chapter; a manual holding every chapter, a tab a mod, leading to its first chapter.
-            if (!this.manual.holdsEvery() || mods.add(held.namespace())) {
+            if (this.bySection()) {
+                // A book tabbed by section has a tab a section, in the section's colour, lettered with its code.
+                for (final GuideContents.Section section : chapter.sections()) {
+                    final GuideSection part = section.section();
+                    final Integer own = PaletteLookup.colourOf(part.tab(), GuideStyle.TAB);
+                    this.tabColours.put(part.id(), own == null ? this.tabColours.get(held.id()) : own);
+                    this.sectionCodes.put(part.id(), part.code());
+                    this.chapters.add(part.id());
+                }
+            } else if (!this.manual.holdsEvery() || mods.add(held.namespace())) {
+                // A book has a tab a chapter; a manual holding every chapter, a tab a mod, leading to its first one.
                 this.chapters.add(held.id());
             }
         }
@@ -1192,14 +1211,29 @@ public final class ManualScreen extends Screen {
     /** Where the mark of the chapter of that tab stands: a binder's tab, a printed thumb block or a paper flag. */
     private ManualScreenLayout.Rect markOf(final int index) {
         return switch (this.style.make().marks()) {
-            case TABS -> ManualScreenLayout.tab(this.geometry, index);
+            case TABS, SECTION_TABS -> ManualScreenLayout.tab(this.geometry, index);
             case THUMB -> ManualScreenLayout.thumb(this.geometry, index, this.tabCount(), this.isOpen(index));
             case FLAGS -> ManualScreenLayout.flag(this.geometry, index, this.isOpen(index));
         };
     }
 
-    /** Whether the chapter of that tab is the one shown. */
+    /** Whether the book's tabs lead to its sections rather than its chapters. */
+    private boolean bySection() {
+        return this.style.make().marks() == GuideStyle.Marks.SECTION_TABS;
+    }
+
+    /** Whether the chapter, or the section, of that tab is the one shown. */
     private boolean isOpen(final int index) {
+        if (this.bySection()) {
+            // A section is open from its first page up to the next tab's section.
+            final int first = this.style.spread() ? this.spread * 2 : this.spread;
+            final OptionalInt start = this.book.pageOf(this.chapters.get(index));
+            final OptionalInt next = index + 1 < this.chapters.size() ? this.book.pageOf(this.chapters.get(index + 1))
+                    : OptionalInt.empty();
+            final int last = this.style.spread() ? first + 1 : first;
+            return start.isPresent() && start.getAsInt() <= last
+                    && (next.isEmpty() || next.getAsInt() > first);
+        }
         final String chapter = this.chapters.get(index);
         final String current = this.currentChapter();
         return this.manual.holdsEvery()
@@ -1265,6 +1299,11 @@ public final class ManualScreen extends Screen {
         final Integer colour = this.colours.get(role);
         if (colour != null) {
             return colour;
+        }
+        // A role a palette may leave out is drawn as the role it stands in for: a caution as the accent.
+        final Integer standIn = this.colours.get(GuideStyle.standIn(role));
+        if (standIn != null) {
+            return standIn;
         }
         // A role not even the binder names is drawn in ink, so nothing is ever left unpainted.
         return GuidePalettes.BINDER.get().ink();
@@ -1531,10 +1570,35 @@ public final class ManualScreen extends Screen {
                 Optional.ofNullable(ResourceLocation.tryParse(knowledge))));
     }
 
-    /** Whether a tab's chapter, or its mod's chapters for a manual of every mod, holds what the reader has not seen. */
+    /** The title of the section {@code id} in the reader's language, or its id when the book holds no such section. */
+    private String sectionTitle(final String id) {
+        for (final GuideContents.Chapter held : this.contents.chapters()) {
+            for (final GuideContents.Section section : held.sections()) {
+                if (section.section().id().equals(id)) {
+                    return this.text(section.section().titleKey());
+                }
+            }
+        }
+        return id;
+    }
+
+    /**
+     * Whether a tab's chapter, or its mod's chapters for a manual of every mod, or its section for a book tabbed by
+     * section, holds what the reader has not seen.
+     */
     private boolean tabHoldsNew(final String chapter) {
         final String mod = GuideChapter.namespaceOf(chapter);
         final List<GuideEntry> entries = new ArrayList<>();
+        if (this.bySection()) {
+            for (final GuideContents.Chapter held : this.contents.chapters()) {
+                for (final GuideContents.Section section : held.sections()) {
+                    if (section.section().id().equals(chapter)) {
+                        entries.addAll(section.entries());
+                    }
+                }
+            }
+            return ReaderMarks.anyNew(entries, this.seenNow);
+        }
         for (final GuideContents.Chapter held : this.contents.chapters()) {
             final boolean under = this.manual.holdsEvery() ? GuideChapter.namespaceOf(held.chapter().id()).equals(mod)
                     : held.chapter().id().equals(chapter);
@@ -1551,9 +1615,13 @@ public final class ManualScreen extends Screen {
             final String chapter = this.chapters.get(i);
             final boolean on = this.isOpen(i);
             final boolean pointed = tab.contains(mx, my);
-            if (this.style.make().marks() == GuideStyle.Marks.TABS) {
-                ManualControls.tab(g, this.font, this.style, tab, i + 1, on, pointed, this.tabColours.get(chapter),
-                        this.colour(GuideStyle.TAB_INK));
+            if (this.bySection()) {
+                final String code = this.sectionCodes.getOrDefault(chapter, "");
+                ManualControls.tab(g, this.font, this.style, tab, code.isEmpty() ? String.valueOf(i + 1) : code, on,
+                        pointed, this.tabColours.get(chapter), this.colour(GuideStyle.TAB_INK));
+            } else if (this.style.make().marks() == GuideStyle.Marks.TABS) {
+                ManualControls.tab(g, this.font, this.style, tab, String.valueOf(i + 1), on, pointed,
+                        this.tabColours.get(chapter), this.colour(GuideStyle.TAB_INK));
             } else {
                 ManualMake.mark(g, this.font, this.style, tab, i + 1, on, pointed, this.markColour(i, chapter),
                         this::colour);
@@ -1565,7 +1633,9 @@ public final class ManualScreen extends Screen {
                 g.fill(dotX - 1, tab.y(), dotX + TAB_DOT + 1, tab.y() + TAB_DOT + 2, marks.dotEdge());
                 g.fill(dotX, tab.y() + 1, dotX + TAB_DOT, tab.y() + TAB_DOT + 1, marks.dot());
             }
-            if (pointed) {
+            if (pointed && this.bySection()) {
+                this.hoveredWords = List.of(Component.literal(this.sectionTitle(chapter)));
+            } else if (pointed) {
                 // A tab of a manual holding every chapter stands for the mod, named by its main chapter.
                 final String named = this.manual.holdsEvery() ? GuideChapter.namespaceOf(chapter) : chapter;
                 this.hoveredWords = List.of(Component.literal(this.text(GuideLibrary.loaded().chapter(named)
@@ -1742,9 +1812,59 @@ public final class ManualScreen extends Screen {
         return false;
     }
 
+    /*
+     * The head and the foot ruled as a mission's documents ruled them: a box of two cells over the page, the manual
+     * and its edition over a left page, the section and the folio over a right one; and at the foot the folio at the
+     * outer end and the chapter at the inner one.
+     */
+    private void drawBoxedRunning(final GuiGraphics g, final ManualScreenLayout.Rect page,
+                                  final GuideBook.Page shown, final boolean leftPage) {
+        final int margin = this.style.margin();
+        final int x = page.x() + margin;
+        final int width = page.width() - 2 * margin;
+        final int ink = this.colour(GuideStyle.INK);
+        final String first = (leftPage ? this.text(this.manual.titleKey()) : shown.header()).toUpperCase(Locale.ROOT);
+        final String second = (leftPage ? this.editionLine() : shown.folio()).toUpperCase(Locale.ROOT);
+        final int top = page.y() + HEAD_BOX_TOP;
+        final int bottom = top + HEAD_BOX;
+        g.fill(x, top, x + width, top + 1, ink);
+        g.fill(x, bottom - 1, x + width, bottom, ink);
+        g.fill(x, top, x + 1, bottom, ink);
+        g.fill(x + width - 1, top, x + width, bottom, ink);
+        GuideFonts.draw(g, this.font, first, TextSize.SMALL, this.style, x + HEAD_PAD, page.y() + GuideLayout.HEADER_Y,
+                ink);
+        if (!second.isEmpty()) {
+            final int secondWidth = GuideFonts.width(this.font, second, TextSize.SMALL, this.style);
+            final int split = x + width - Math.max(HEAD_CELL, secondWidth + 2 * HEAD_PAD);
+            g.fill(split, top, split + 1, bottom, ink);
+            GuideFonts.draw(g, this.font, second, TextSize.SMALL, this.style, x + width - HEAD_PAD - secondWidth,
+                    page.y() + GuideLayout.HEADER_Y, ink);
+        }
+        final int footY = page.y() + page.height() - 16;
+        g.fill(x, footY, x + width, footY + 1, this.colour(GuideStyle.RULE));
+        final String folio = shown.folio().toUpperCase(Locale.ROOT);
+        final int folioWidth = GuideFonts.width(this.font, folio, TextSize.SMALL, this.style);
+        GuideFonts.draw(g, this.font, folio, TextSize.SMALL, this.style, leftPage ? x : x + width - folioWidth,
+                footY + 5, ink);
+        final String chapter = GuideLibrary.loaded().chapter(shown.chapter()).map(held -> this.text(held.titleKey()))
+                .orElse("").toUpperCase(Locale.ROOT);
+        final int chapterWidth = GuideFonts.width(this.font, chapter, TextSize.SMALL, this.style);
+        GuideFonts.draw(g, this.font, chapter, TextSize.SMALL, this.style, leftPage ? x + width - chapterWidth : x,
+                footY + 5, this.colour(GuideStyle.FAINT));
+    }
+
+    /* The manual's edition as its cover writes it, or nothing for a manual that names none. */
+    private String editionLine() {
+        return this.manual.edition().isEmpty() ? "" : this.text(this.manual.edition(), this.sheetCount());
+    }
+
     /** The head and the foot of a page: the chapter or the section, the folio and the manual's title. */
     private void drawRunning(final GuiGraphics g, final ManualScreenLayout.Rect page, final GuideBook.Page shown,
                              final boolean leftPage) {
+        if (this.style.decor().boxedHeads()) {
+            this.drawBoxedRunning(g, page, shown, leftPage);
+            return;
+        }
         final int margin = this.style.margin();
         final int contentX = page.x() + margin;
         final int contentWidth = page.width() - 2 * margin;

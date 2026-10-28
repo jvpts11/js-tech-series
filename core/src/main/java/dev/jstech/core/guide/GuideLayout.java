@@ -89,8 +89,16 @@ public final class GuideLayout {
     private String chapterId = "";
     private String chapterTitle = "";
     private String sectionLabel = "";
+    /** The open section's letters and number, and how many pages it has, for a manual numbered by section. */
+    private String sectionCode = "";
+    private String sectionNumber = "";
+    private int pageInSection;
     /** The head of the page being laid, as it was when the page was opened. */
     private String pageLabel = "";
+    /** The section the page being laid belongs to, as it was when the page was opened, and its page in it. */
+    private String pageSectionCode = "";
+    private String pageSectionNumber = "";
+    private int pageOfSection;
     private String drawing = "";
     private String drawingTitle = "";
     /** The letters of the first section, which the drawing list is numbered by. */
@@ -170,6 +178,34 @@ public final class GuideLayout {
     private static final int SMALL_FIX_INDENT = 4;
     private static final int SECTION_INDENT = 10;
     private static final int BOX_PAD = 4;
+    /** Above and below the word in a headed notice's bar. */
+    private static final int NOTICE_BAR_PAD = 1;
+    /** A checklist line: its box, where its number and its words start, the room under it, a changed line's bar. */
+    private static final int CHECK_BOX = 7;
+    private static final int CHECK_NUMBER = 10;
+    private static final int CHECK_ITEM = 18;
+    private static final int CHECK_GAP = 4;
+    private static final int CHANGE_BAR = 2;
+    private static final int CHANGE_BAR_GAP = 3;
+    /** A card on rings: how far in from the column's edges, its rings, its bar, its steps, its shadow and its clip. */
+    private static final int CARD_INSET = 4;
+    private static final int CARD_RISE = 2;
+    private static final int CARD_RING_FROM = 8;
+    private static final int CARD_RING_STEP = 7;
+    private static final int CARD_RING_WIDTH = 3;
+    private static final int CARD_RING_HEIGHT = 5;
+    private static final int CARD_BAR_TOP = 6;
+    private static final int CARD_BAR = 12;
+    private static final int CARD_STEPS_TOP = 25;
+    private static final int CARD_BOX = 9;
+    private static final int CARD_BOX_LEFT = 6;
+    private static final int CARD_TEXT = 20;
+    private static final int CARD_NAME_GAP = 3;
+    private static final int CARD_RULE_GAP = 2;
+    private static final int CARD_STEP_GAP = 8;
+    private static final int CARD_SHADOW = 2;
+    private static final int CARD_CLIP = 6;
+    private static final int CARD_CLIP_OUT = 3;
     /** The fewest rows a part of a parted table keeps, at the foot of one page and at the top of the next. */
     private static final int MIN_PART_ROWS = 3;
     private static final int TITLE_GAP = 2;
@@ -389,6 +425,8 @@ public final class GuideLayout {
 
     /** Numbers every section and entry first, so a link may lead to one printed after it. */
     private void number(final GuideContents contents) {
+        // A manual numbered by section counts its sections through the whole book, an entry by its section alone.
+        final boolean bySection = this.style.folios() == GuideStyle.Folios.SECTION_PAGE;
         int chapterNo = 0;
         int sectionsBefore = 0;
         for (final GuideContents.Chapter chapter : contents.chapters()) {
@@ -404,13 +442,14 @@ public final class GuideLayout {
                 if (sectionsBefore == 1) {
                     this.listCode = code;
                 }
+                final String numbered = bySection ? String.valueOf(sectionsBefore) : chapterNo + "." + sectionNo;
                 this.numbers.put(section.section().id(), this.drawings ? this.drawingNumber(code, base)
-                        : chapterNo + "." + sectionNo);
+                        : numbered);
                 int entryNo = 0;
                 for (final GuideEntry entry : section.entries()) {
                     entryNo++;
                     this.numbers.put(entry.id(), this.drawings ? this.drawingNumber(code, base + entryNo)
-                            : chapterNo + "." + sectionNo + "." + entryNo);
+                            : numbered + "." + entryNo);
                 }
             }
         }
@@ -436,6 +475,10 @@ public final class GuideLayout {
         this.chapterId = part.chapter().id();
         this.chapterTitle = this.text.text(part.chapter().titleKey());
         this.sectionLabel = this.chapterTitle;
+        // The chapter's opening pages belong to no section, and so are numbered by the chapter.
+        this.sectionCode = "";
+        this.sectionNumber = "";
+        this.pageInSection = 0;
         if (this.drawings) {
             // A set of drawings has no opening pages: its list says what each drawing is.
             this.bodyTargets.put(this.chapterId, this.body.size());
@@ -518,8 +561,13 @@ public final class GuideLayout {
     }
 
     private void section(final GuideContents.Section part) {
-        this.sectionLabel = this.numbers.get(part.section().id()) + " "
-                + this.text.text(part.section().titleKey());
+        // A boxed head has the folio beside it, so it names the section without its number.
+        final String title = this.text.text(part.section().titleKey());
+        this.sectionLabel = this.style.decor().boxedHeads() ? title : this.numbers.get(part.section().id()) + " "
+                + title;
+        this.sectionCode = part.section().code();
+        this.sectionNumber = this.numbers.get(part.section().id());
+        this.pageInSection = 0;
         if (this.drawings) {
             // The drawing list heads each section's drawings with its title, as a set's list groups its disciplines.
             this.drawingRows.add(new DrawingRow("", this.text.text(part.section().titleKey()).toUpperCase(Locale.ROOT),
@@ -612,6 +660,10 @@ public final class GuideLayout {
                 this.y += height + BLOCK_GAP;
             }
             case GuideBlock.Modes modes -> this.modes(modes, entry);
+            case GuideBlock.Caution caution -> this.notice(caution.key(), GuideTexts.CAUTION.key(), GuideStyle.CAUTION,
+                    GuideStyle.CAUTION_PAPER);
+            case GuideBlock.Checklist checklist -> this.checklist(checklist);
+            case GuideBlock.Card card -> this.card(card);
         }
     }
 
@@ -739,9 +791,15 @@ public final class GuideLayout {
         }
     }
 
+    /* The number of the figure just counted, written in full or short as the style writes it. */
+    private String figureLabel() {
+        return this.text.text((this.style.decor().shortFigures() ? GuideTexts.FIGURE_SHORT : GuideTexts.FIGURE).key(),
+                this.chapterNumber + "-" + this.figures);
+    }
+
     private void figure(final GuideBlock.Figure figure) {
         this.figures++;
-        final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
+        final String label = this.figureLabel();
         final List<String> caption = this.captionLines(label, this.text.text(figure.captionKey()));
         this.ensure(FIGURE_HEIGHT + CAPTION_GAP + this.captionHeight(label, caption));
         this.place(new GuidePiece.Box(this.x(), this.y, this.width, FIGURE_HEIGHT, GuideStyle.SHADE,
@@ -756,7 +814,7 @@ public final class GuideLayout {
     /* A picture is counted with the figures, drawn as wide as asked (the column at most) and centred in it. */
     private void picture(final GuideBlock.Picture picture) {
         this.figures++;
-        final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
+        final String label = this.figureLabel();
         final List<String> caption = this.captionLines(label, this.text.text(picture.captionKey()));
         final int askedWidth = picture.width() == 0 ? this.width : Math.min(this.width, picture.width());
         final int askedHeight = picture.width() == 0 || picture.width() <= this.width ? picture.height()
@@ -1050,27 +1108,139 @@ public final class GuideLayout {
     }
 
     private void warning(final GuideBlock.Warning warning) {
+        this.notice(warning.key(), GuideTexts.WARNING.key(), GuideStyle.WARNING, GuideStyle.WARNING_PAPER);
+    }
+
+    /*
+     * A warning or a caution in a box of its own, its word over its sentence: on the highlight inside an edge of its
+     * colour, or, in a style that heads its notices, under a bar of its colour with its word in it, on a pale ground
+     * of that colour. One too tall for a page runs on as lines in its colour.
+     */
+    private void notice(final String key, final String wordKey, final String colour, final String paper) {
         final TextSize body = this.sized(TextSize.BODY);
         final TextSize bold = this.sized(TextSize.BOLD);
-        final List<List<Run>> lines = this.richWrap(this.text.text(warning.key()), this.width - 2 * BOX_PAD, body);
-        final int height = 2 * BOX_PAD + bold.lineHeight() + lines.size() * body.lineHeight();
+        final boolean headed = this.style.decor().headedNotices();
+        final List<List<Run>> lines = this.richWrap(this.text.text(key), this.width - 2 * BOX_PAD, body);
+        final int bar = bold.lineHeight() + 2 * NOTICE_BAR_PAD;
+        final int height = headed ? bar + 2 * BOX_PAD + lines.size() * body.lineHeight()
+                : 2 * BOX_PAD + bold.lineHeight() + lines.size() * body.lineHeight();
         if (height > this.bottom() - this.top) {
-            this.richLines(this.text.text(warning.key()), 0, this.width, body, GuideStyle.WARNING);
+            this.richLines(this.text.text(key), 0, this.width, body, colour);
             this.y += PARAGRAPH_GAP;
             return;
         }
         this.ensure(height);
-        this.place(new GuidePiece.Box(this.x(), this.y, this.width, height, GuideStyle.HIGHLIGHT,
-                GuideStyle.WARNING));
-        this.place(new GuidePiece.Text(this.x() + BOX_PAD, this.y + BOX_PAD,
-                this.upper(this.text.text(GuideTexts.WARNING.key())), bold, GuideStyle.WARNING, ""));
+        final String word = this.upper(this.text.text(wordKey));
         final int boxBottom = this.y + height;
-        this.y += BOX_PAD + bold.lineHeight();
+        if (headed) {
+            this.place(new GuidePiece.Box(this.x(), this.y, this.width, height, paper, colour));
+            this.place(new GuidePiece.Box(this.x(), this.y, this.width, bar, colour, colour));
+            this.place(new GuidePiece.Text(this.x() + (this.width - this.text.width(word, bold)) / 2,
+                    this.y + NOTICE_BAR_PAD, word, bold, GuideStyle.PAPER, ""));
+            this.y += bar + BOX_PAD;
+        } else {
+            this.place(new GuidePiece.Box(this.x(), this.y, this.width, height, GuideStyle.HIGHLIGHT, colour));
+            this.place(new GuidePiece.Text(this.x() + BOX_PAD, this.y + BOX_PAD, word, bold, colour, ""));
+            this.y += BOX_PAD + bold.lineHeight();
+        }
         for (final List<Run> line : lines) {
             this.placeRun(line, BOX_PAD, body, GuideStyle.INK);
             this.y += body.lineHeight();
         }
         this.y = boxBottom + BLOCK_GAP;
+    }
+
+    /*
+     * A checklist: each line a box to tick, its number, what to look at and, past a row of dots, what it should be,
+     * in the small lettering; a line the revision changed has a bar beside it in the margin. A line moves on whole.
+     */
+    private void checklist(final GuideBlock.Checklist checklist) {
+        final TextSize size = this.sized(TextSize.SMALL);
+        final int row = Math.max(CHECK_BOX, size.lineHeight()) + CHECK_GAP;
+        int number = 0;
+        for (final GuideBlock.Check line : checklist.lines()) {
+            number++;
+            this.ensure(row);
+            this.place(new GuidePiece.Box(this.x(), this.y, CHECK_BOX, CHECK_BOX, GuideStyle.PAPER, GuideStyle.INK));
+            this.place(new GuidePiece.Text(this.x() + CHECK_NUMBER, this.y, String.valueOf(number), size,
+                    GuideStyle.INK, ""));
+            final String item = this.upper(this.text.text(line.itemKey()));
+            if (line.stateKey().isEmpty()) {
+                this.place(new GuidePiece.Text(this.x() + CHECK_ITEM, this.y, item, size, GuideStyle.INK, ""));
+            } else {
+                this.place(new GuidePiece.Leader(this.x() + CHECK_ITEM, this.y, this.width - CHECK_ITEM, "", item,
+                        this.upper(this.text.text(line.stateKey())), size, GuideStyle.INK, "", ""));
+            }
+            if (line.changed()) {
+                this.place(new GuidePiece.Box(this.x() + this.width + CHANGE_BAR_GAP, this.y - 1, CHANGE_BAR,
+                        row - CHECK_GAP + 2, GuideStyle.INK, GuideStyle.INK));
+            }
+            this.y += row;
+        }
+        this.y += BLOCK_GAP - CHECK_GAP;
+    }
+
+    /*
+     * A card on rings, as a crew wore their checklists on the cuff: the rings over its top edge, a bar of the card's
+     * colour with its title under a rule of the mark's colour, then each step under a box to tick, its number and name
+     * in bold and what it is under them, a rule after each; a step the revision changed has a clip on the card's edge.
+     * The card moves on whole.
+     */
+    private void card(final GuideBlock.Card card) {
+        final TextSize small = this.sized(TextSize.SMALL);
+        final TextSize bold = this.sized(TextSize.BOLD);
+        final TextSize body = this.sized(TextSize.BODY);
+        final int left = this.x() + CARD_INSET / 2;
+        final int width = this.width - CARD_INSET;
+        final int room = width - CARD_TEXT - CARD_BOX_LEFT;
+        final List<List<List<Run>>> texts = new ArrayList<>();
+        int steps = 0;
+        for (final GuideBlock.CardStep step : card.steps()) {
+            final List<List<Run>> lines = step.textKey().isEmpty() ? List.of()
+                    : this.richWrap(this.text.text(step.textKey()), room, body);
+            texts.add(lines);
+            steps += bold.lineHeight() + CARD_NAME_GAP + lines.size() * body.lineHeight() + CARD_STEP_GAP;
+        }
+        final int height = CARD_STEPS_TOP + steps;
+        this.ensure(Math.min(CARD_RISE + height + CARD_SHADOW, this.bottom() - this.top));
+        final int top = this.y + CARD_RISE;
+        this.place(new GuidePiece.Box(left + CARD_SHADOW, top + CARD_SHADOW, width, height, GuideStyle.SHADE,
+                GuideStyle.SHADE));
+        this.place(new GuidePiece.Box(left, top, width, height, GuideStyle.PAPER, GuideStyle.RULE));
+        for (int ring = left + CARD_RING_FROM; ring < left + width - CARD_RING_FROM; ring += CARD_RING_STEP) {
+            this.place(new GuidePiece.Box(ring, this.y, CARD_RING_WIDTH, CARD_RING_HEIGHT, GuideStyle.RING,
+                    GuideStyle.RING));
+        }
+        this.place(new GuidePiece.Box(left, top + CARD_BAR_TOP, width, CARD_BAR, GuideStyle.CARD, GuideStyle.CARD));
+        this.place(new GuidePiece.Box(left, top + CARD_BAR_TOP + CARD_BAR, width, 1, GuideStyle.MARK,
+                GuideStyle.MARK));
+        final String title = this.upper(this.text.text(card.titleKey()));
+        this.place(new GuidePiece.Text(left + (width - this.text.width(title, small)) / 2,
+                top + CARD_BAR_TOP + (CARD_BAR - small.lineHeight()) / 2 + 1, title, small, GuideStyle.PAPER, ""));
+        this.y = top + CARD_STEPS_TOP;
+        int number = card.first() - 1;
+        for (int i = 0; i < card.steps().size(); i++) {
+            final GuideBlock.CardStep step = card.steps().get(i);
+            number++;
+            final int stepTop = this.y;
+            this.place(new GuidePiece.Box(left + CARD_BOX_LEFT, this.y, CARD_BOX, CARD_BOX, GuideStyle.PAPER,
+                    GuideStyle.INK));
+            this.place(new GuidePiece.Text(left + CARD_TEXT, this.y + 1, number + "  "
+                    + this.upper(this.text.text(step.nameKey())), bold, GuideStyle.INK, ""));
+            this.y += bold.lineHeight() + CARD_NAME_GAP;
+            for (final List<Run> line : texts.get(i)) {
+                this.placeRun(line, left - this.x() + CARD_TEXT, body, GuideStyle.INK);
+                this.y += body.lineHeight();
+            }
+            this.place(new GuidePiece.Box(left + CARD_BOX_LEFT, this.y + CARD_RULE_GAP, width - 2 * CARD_BOX_LEFT, 1,
+                    GuideStyle.RULE, GuideStyle.RULE));
+            this.y += CARD_STEP_GAP;
+            if (step.changed()) {
+                this.place(new GuidePiece.Box(left + width - CARD_CLIP_OUT, stepTop, CARD_CLIP,
+                        this.y - stepTop - CARD_STEP_GAP, GuideStyle.MARK, GuideStyle.MARK));
+            }
+        }
+        this.y = top + height + CARD_SHADOW + BLOCK_GAP;
     }
 
     private void problems(final GuideBlock.Problems problems) {
@@ -1176,7 +1346,7 @@ public final class GuideLayout {
      */
     private void scene(final GuideBlock.Scene scene) {
         this.figures++;
-        final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
+        final String label = this.figureLabel();
         final List<String> caption = this.captionLines(label, this.text.text(scene.captionKey()));
         final int captionRoom = CAPTION_GAP + this.captionHeight(label, caption);
         // A scene taller than a fresh page holds with its caption is drawn shorter, so nothing runs past the foot.
@@ -1559,14 +1729,19 @@ public final class GuideLayout {
         this.y = this.top;
         this.column = 0;
         this.pageInChapter++;
+        this.pageInSection++;
         this.pageLabel = this.sectionLabel;
+        this.pageSectionCode = this.sectionCode;
+        this.pageSectionNumber = this.sectionNumber;
+        this.pageOfSection = this.pageInSection;
         this.open = true;
     }
 
     private void finishPage() {
         if (this.open) {
             this.body.add(new BodyPage(this.pieces, this.chapterId, this.chapterTitle, this.pageLabel,
-                    this.chapterNumber, this.pageInChapter, this.drawing, this.drawingTitle));
+                    this.chapterNumber, this.pageInChapter, this.drawing, this.drawingTitle, this.pageSectionCode,
+                    this.pageSectionNumber, this.pageOfSection));
             this.open = false;
         }
     }
@@ -1620,6 +1795,9 @@ public final class GuideLayout {
                 case CHAPTER_PAGE -> page.chapterNumber() + "-" + page.pageInChapter();
                 case SEQUENTIAL -> String.valueOf(this.front + i + 1);
                 case DRAWING -> page.drawing().isEmpty() ? String.valueOf(this.front + i + 1) : page.drawing();
+                case SECTION_PAGE -> page.sectionCode().isEmpty()
+                        ? page.chapterNumber() + "-" + page.pageInChapter()
+                        : page.sectionCode() + " " + page.sectionNumber() + "-" + page.pageInSection();
             });
         }
         return folios;
@@ -1980,11 +2158,15 @@ public final class GuideLayout {
     /**
      * A page of a chapter as it was laid, before the front matter's length fixes its place and its head.
      *
-     * @param drawing the number of the drawing it is a sheet of, in a set of drawings, or empty
-     * @param title   that drawing's title
+     * @param drawing       the number of the drawing it is a sheet of, in a set of drawings, or empty
+     * @param title         that drawing's title
+     * @param sectionCode   the letters of the section it belongs to, or empty for a page of no section with them
+     * @param sectionNumber that section's number
+     * @param pageInSection which page of that section it is, from one
      */
     private record BodyPage(List<GuidePiece> pieces, String chapter, String chapterTitle, String sectionLabel,
-                            int chapterNumber, int pageInChapter, String drawing, String title) {
+                            int chapterNumber, int pageInChapter, String drawing, String title, String sectionCode,
+                            String sectionNumber, int pageInSection) {
     }
 
     /**

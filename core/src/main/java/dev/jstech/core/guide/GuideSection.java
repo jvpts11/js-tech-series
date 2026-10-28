@@ -20,9 +20,13 @@ import java.util.Objects;
  * @param chapter  the id of the chapter it belongs to
  * @param code     in a manual drawn as a set of drawings, the letters its drawings are numbered by, as a real set
  *                 numbers each discipline's sheets ({@code GS} gives JI-GS-001); empty to number it by its place, in
- *                 hundreds
+ *                 hundreds. In a manual numbered by section, the letters before its folios ({@code LO 2-3}) and on its
+ *                 tab
+ * @param tab      the colour of its tab in a manual tabbed by section, written {@code #AARRGGBB} or as a palette's
+ *                 role; empty for the style's tab colour
  */
-public record GuideSection(String id, int order, String titleKey, String icon, String chapter, String code) {
+public record GuideSection(String id, int order, String titleKey, String icon, String chapter, String code,
+                           String tab) {
 
     public GuideSection {
         Objects.requireNonNull(id, "id");
@@ -30,6 +34,13 @@ public record GuideSection(String id, int order, String titleKey, String icon, S
         icon = icon == null ? "" : icon;
         chapter = chapter == null || chapter.isEmpty() ? GuideIds.namespace(id) : chapter;
         code = code == null ? "" : code;
+        tab = tab == null ? "" : tab;
+    }
+
+    /** A section with its code and no tab of its own colour. */
+    public GuideSection(final String id, final int order, final String titleKey, final String icon,
+                        final String chapter, final String code) {
+        this(id, order, titleKey, icon, chapter, code, "");
     }
 
     /** A section of a chapter, its drawings numbered by its place. */

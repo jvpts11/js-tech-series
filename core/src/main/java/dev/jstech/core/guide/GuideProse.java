@@ -151,7 +151,14 @@ public final class GuideProse {
                 case GuideBlock.Paragraph paragraph -> List.of(paragraph.key());
                 case GuideBlock.Note note -> List.of(note.key());
                 case GuideBlock.Warning warning -> List.of(warning.key());
+                case GuideBlock.Caution caution -> List.of(caution.key());
                 case GuideBlock.Steps steps -> steps.keys();
+                case GuideBlock.Checklist checklist -> checklist.lines().stream()
+                        .flatMap(line -> line.stateKey().isEmpty() ? List.of(line.itemKey()).stream()
+                                : List.of(line.itemKey(), line.stateKey()).stream()).toList();
+                case GuideBlock.Card card -> card.steps().stream()
+                        .flatMap(step -> step.textKey().isEmpty() ? List.of(step.nameKey()).stream()
+                                : List.of(step.nameKey(), step.textKey()).stream()).toList();
                 case GuideBlock.Problems problems -> problems.problems().stream()
                         .flatMap(problem -> List.of(problem.problemKey(), problem.fixKey()).stream()).toList();
                 case GuideBlock.Define define -> List.of(define.termKey(), define.definitionKey());
@@ -213,6 +220,12 @@ public final class GuideProse {
                 case GuideBlock.Paragraph paragraph -> keys.add(paragraph.key());
                 case GuideBlock.Note note -> keys.add(note.key());
                 case GuideBlock.Warning warning -> keys.add(warning.key());
+                case GuideBlock.Caution caution -> keys.add(caution.key());
+                case GuideBlock.Card card -> card.steps().forEach(step -> {
+                    if (!step.textKey().isEmpty()) {
+                        keys.add(step.textKey());
+                    }
+                });
                 case GuideBlock.Steps steps -> keys.addAll(steps.keys());
                 case GuideBlock.Problems problems -> problems.problems().forEach(problem -> keys.add(problem.fixKey()));
                 case GuideBlock.Define define -> keys.add(define.definitionKey());

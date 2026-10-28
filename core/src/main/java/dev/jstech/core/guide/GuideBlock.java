@@ -308,6 +308,75 @@ public sealed interface GuideBlock {
         }
     }
 
+    /**
+     * A caution drawn in a box of its own, in a colour of its own: what stops a thing from working or holds it back,
+     * where a warning is for what does harm.
+     */
+    record Caution(String key) implements GuideBlock {
+
+        public Caution {
+            Objects.requireNonNull(key, "key");
+        }
+    }
+
+    /**
+     * A checklist, as a crew reads one: each line a box to tick, its number, what to look at, a row of dots and what
+     * it should be ({@code ROCKET ..... ON PAD}).
+     */
+    record Checklist(List<Check> lines) implements GuideBlock {
+
+        public Checklist {
+            lines = List.copyOf(lines);
+        }
+    }
+
+    /**
+     * One line of a checklist.
+     *
+     * @param itemKey  what to look at
+     * @param stateKey what it should be, or empty for a line with no state
+     * @param changed  whether the manual's last revision changed the line, which a bar in the margin marks
+     */
+    record Check(String itemKey, String stateKey, boolean changed) {
+
+        public Check {
+            Objects.requireNonNull(itemKey, "itemKey");
+            stateKey = stateKey == null ? "" : stateKey;
+        }
+    }
+
+    /**
+     * A card bound on rings, as the checklists a crew wore on their cuff were: a title bar, then numbered steps, each a
+     * box to tick, its name and a line of what it is, ruled one from the next.
+     *
+     * @param titleKey the card's title
+     * @param first    the number of its first step, so a run of cards counts on from the one before
+     * @param steps    its steps
+     */
+    record Card(String titleKey, int first, List<CardStep> steps) implements GuideBlock {
+
+        public Card {
+            Objects.requireNonNull(titleKey, "titleKey");
+            first = Math.max(1, first);
+            steps = List.copyOf(steps);
+        }
+    }
+
+    /**
+     * One step of a card.
+     *
+     * @param nameKey its name
+     * @param textKey what it is, in a line or two
+     * @param changed whether the manual's last revision changed the step, which a clip on the card's edge marks
+     */
+    record CardStep(String nameKey, String textKey, boolean changed) {
+
+        public CardStep {
+            Objects.requireNonNull(nameKey, "nameKey");
+            textKey = textKey == null ? "" : textKey;
+        }
+    }
+
     /** What can go wrong: each problem as a player sees it, and what to do about it. */
     record Problems(List<Problem> problems) implements GuideBlock {
 
