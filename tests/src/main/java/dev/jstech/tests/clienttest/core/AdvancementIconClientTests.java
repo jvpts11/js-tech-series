@@ -60,7 +60,7 @@ public final class AdvancementIconClientTests {
                     final AdvancementsScreen screen = ctx.screen(AdvancementsScreen.class);
                     final int x = (screen.width - FRAME_WIDTH) / 2 + WINDOW_LEFT + ICON_X;
                     final int y = (screen.height - FRAME_HEIGHT) / 2 + WINDOW_TOP + ICON_Y;
-                    try (NativeImage drawn = ctx.capture(x, y, ICON, ICON);
+                    try (NativeImage drawn = ctx.captureGuiPixels(x, y, ICON, ICON);
                          NativeImage picture = read(ctx, ROCKET);
                          NativeImage expected = new NativeImage(ICON, ICON, false)) {
                         // What shows through the picture's clear pixels is the frame's; every other pixel is its.

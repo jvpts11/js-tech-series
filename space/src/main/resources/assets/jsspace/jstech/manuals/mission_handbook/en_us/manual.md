@@ -3,7 +3,7 @@ kind: manual
 style: jsspace:flight_data_file
 chapters: [jsspace]
 cover: [J'S SPACE, MISSION OPERATIONS, DIRECTORATE, FLIGHT DATA FILE, MISSION, HANDBOOK, THE MOON AND MARS, BASIC, REV A, PREPARED BY, FLIGHT OPERATIONS, J'S TECH SERIES]
-edition: Basic, Rev A (October 2026)
+edition: Rev A
 priority: 50
 icon: jsspace:gui/guide/emblem
 ---

@@ -59,7 +59,7 @@ public final class TabPictureClientTests {
                     final int x = screen.getGuiLeft() + TAB_W * page.getColumn(tab) + ICON_LEFT;
                     final int y = page.isTop(tab) ? screen.getGuiTop() + ICON_TOP_ROW
                             : screen.getGuiTop() + screen.getYSize() + ICON_BOTTOM_ROW;
-                    try (NativeImage drawn = ctx.capture(x, y, ICON, ICON); NativeImage picture = read(ctx)) {
+                    try (NativeImage drawn = ctx.captureGuiPixels(x, y, ICON, ICON); NativeImage picture = read(ctx)) {
                         ctx.assertSamePicture("tab-picture", drawn, picture);
                     }
                 })

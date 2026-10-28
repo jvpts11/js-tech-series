@@ -3,7 +3,7 @@ kind: manual
 style: jsspace:flight_data_file
 chapters: [jsspace]
 cover: [J'S SPACE, DIRETORIA DE, OPERAÇÕES DE MISSÃO, ARQUIVO DE DADOS DE VOO, MANUAL, DE MISSÃO, A LUA E MARTE, BÁSICO, REV A, PREPARADO POR, OPERAÇÕES DE VOO, J'S TECH SERIES]
-edition: Básico, Rev A (Outubro de 2026)
+edition: Rev A
 priority: 50
 icon: jsspace:gui/guide/emblem
 ---

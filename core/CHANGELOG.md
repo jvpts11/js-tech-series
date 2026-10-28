@@ -1631,7 +1631,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   (`> [!CAUTION]` in Markdown, which drew a warning before); checklists, a box to tick, a number, what to look at
   and what it should be past a row of dots (`- [ ] Rocket ... on pad`), a line the revision changed marked by a bar
   in the margin (`[!]`); cards on rings as a crew wore on their cuff, numbered on from card to card (a `card` fence);
-  and, for a style that asks, heads ruled into boxes with the manual and its edition or the section and its folio,
+  and, for a style that asks, heads ruled into boxes with the manual and its edition or the section and its folio
+  (a title too long for its cell cut short at the cell's edge),
   notices under a bar of their colour, figures numbered short (Fig. 1-1), pages numbered by section after its
   letters (LO 2-3) and tabs one a section, lettered and coloured. A checklist, a card's title, a notice's word
   and the boxed heads are typed, in the style's code font. Every manual written before reads as it did.

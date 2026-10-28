@@ -13,17 +13,24 @@ import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.guide.ManualScreen;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBook;
+import dev.jstech.core.guide.GuideStyle;
+import dev.jstech.core.gui.layout.ManualScreenLayout;
 import dev.jstech.industrial.guide.IndustrialGuide;
+import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 
 /**
- * The series' three manuals as a player reads them: the Technical Reference, its cover, its contents, a chapter's
- * opening on a left page and an entry; the Guide to Operations, its own cover and an entry of its one chapter; and
- * the Plant Drawings, the folder, its drawing list, a drawing's two sheets with their title block, and the switch that
- * shows a diagram as its blocks and a geological section in its rocks' colours.
+ * The series' manuals as a player reads them: the Technical Reference, its cover, its contents, a chapter's opening on
+ * a left page and an entry; the Guide to Operations, its own cover and an entry of its one chapter; the Plant
+ * Drawings, the folder, its drawing list, a drawing's two sheets with their title block, and the switch that shows a
+ * diagram as its blocks and a geological section in its rocks' colours; and the Mission Handbook, its typed cover with
+ * the mission's emblem, its tabs one a section and every piece of a mission's document on the test mod's page.
  */
 public final class SeriesManualsClientTests {
 
@@ -43,6 +50,16 @@ public final class SeriesManualsClientTests {
     private static final int MOST_SHEETS_A_DRAWING = 3;
     /** A part on the plate of the first computer's page, whose own page is the processors'. */
     private static final String PROCESSOR = "jsc:cpu_integra_centro_c5_4690k";
+    /* The Mission Handbook's emblem, and where its cover prints it, 32 pixels square. */
+    private static final ResourceLocation EMBLEM = ResourceLocation.parse("jsspace:textures/gui/guide/emblem.png");
+    private static final int EMBLEM_X = 23;
+    private static final int EMBLEM_Y = 13;
+    private static final int EMBLEM_SIZE = 32;
+    private static final int OPAQUE = 0xFF;
+    /* The handbook's own page, the test mod's page with every piece, and the tab of its section, Launch Operations. */
+    private static final String THIS_HANDBOOK = "jsspace:this_handbook";
+    private static final String LAUNCH_DRILL = "jstests:launch_drill";
+    private static final int LAUNCH_OPERATIONS_TAB = 1;
 
     private SeriesManualsClientTests() {
     }
@@ -248,6 +265,67 @@ public final class SeriesManualsClientTests {
     }
 
     /* A manual opens where it was last closed; this turns it back to its cover. */
+    @ClientTest(timeoutTicks = 400)
+    public static void missionHandbook_isTypedTabbedBySectionAndDressedAsItsCover(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(MissionHandbook.MANUAL, ""))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, SeriesManualsClientTests::toCover)
+                .thenAssert(SETTLE, () -> manual().spread() == -1, "the binder closes to its cover")
+                .then(2, () -> {
+                    // The emblem is printed where an agency printed its own: every pixel it has, on the board.
+                    final GuideStyle style = manual().style();
+                    final ManualScreenLayout.Geometry geometry = ManualScreenLayout.of(style.pageWidth(),
+                            style.pageHeight(), style.spread());
+                    final int x = (manual().width - geometry.width()) / 2 + ManualScreenLayout.cover(geometry).x()
+                            + EMBLEM_X;
+                    final int y = (manual().height - geometry.height()) / 2 + EMBLEM_Y;
+                    try (NativeImage drawn = ctx.captureGuiPixels(x, y, EMBLEM_SIZE, EMBLEM_SIZE);
+                         NativeImage emblem = read(ctx, EMBLEM);
+                         NativeImage expected = new NativeImage(EMBLEM_SIZE, EMBLEM_SIZE, false)) {
+                        drawn.copyRect(expected, 0, 0, 0, 0, EMBLEM_SIZE, EMBLEM_SIZE, false, false);
+                        for (int py = 0; py < EMBLEM_SIZE; py++) {
+                            for (int px = 0; px < EMBLEM_SIZE; px++) {
+                                final int pixel = emblem.getPixelRGBA(px, py);
+                                if ((pixel >>> 24) == OPAQUE) {
+                                    expected.setPixelRGBA(px, py, pixel);
+                                }
+                            }
+                        }
+                        ctx.assertSamePicture("handbook-emblem", drawn, expected);
+                    }
+                })
+                .thenScreenshot(0, "space_handbook_cover")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(SETTLE, "space_handbook_contents")
+                .thenAssert(0, () -> manual().goTo(THIS_HANDBOOK) && shows(THIS_HANDBOOK)
+                        && page(THIS_HANDBOOK).folio().startsWith("GN 1-"),
+                        "the handbook's own page is in General, numbered by its section")
+                .thenScreenshot(SETTLE, "space_handbook_entry")
+                .then(0, () -> {
+                    final int[] tab = manual().markPoint(LAUNCH_OPERATIONS_TAB);
+                    ctx.assertTrue(tab != null, "Launch Operations has its tab, holding the test mod's page");
+                    ctx.click(tab[0], tab[1]);
+                })
+                .thenAssert(SETTLE, () -> shows(LAUNCH_DRILL) && page(LAUNCH_DRILL).folio().startsWith("LO 2-"),
+                        "its tab opens Launch Operations, section 2, its pages numbered LO 2-")
+                .thenScreenshot(2, "space_handbook_launch_drill")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(SETTLE, "space_handbook_launch_drill_2")
+                .thenAssert(0, () -> manual().goTo(LAUNCH_DRILL) && manual().turn(1) && manual().turn(1),
+                        "the cards on rings follow, on the next spread")
+                .thenScreenshot(SETTLE, "space_handbook_launch_drill_3")
+                .then(0, SeriesManualsClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    private static NativeImage read(final ClientTestContext ctx, final ResourceLocation texture) {
+        try (InputStream in = ctx.mc().getResourceManager().getResourceOrThrow(texture).open()) {
+            return NativeImage.read(in);
+        } catch (final IOException failed) {
+            throw new IllegalStateException("the picture " + texture + " could not be read", failed);
+        }
+    }
+
     private static void toCover() {
         manual().turn(-manual().spread() - 1);
     }

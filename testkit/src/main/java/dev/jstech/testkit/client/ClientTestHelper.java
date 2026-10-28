@@ -381,6 +381,24 @@ public class ClientTestHelper {
         return ReferencePictures.capture(mc, x, y, width, height);
     }
 
+    /**
+     * The same, one pixel to a GUI pixel, to compare with a texture the GUI draws at its own size: the frame holds as
+     * many pixels to a GUI pixel, across and down, as the GUI's scale, all of one colour where a texture is drawn.
+     */
+    public NativeImage captureGuiPixels(final int x, final int y, final int width, final int height) {
+        final int scale = (int) Math.round(mc.getWindow().getGuiScale());
+        try (NativeImage frame = capture(x, y, width, height)) {
+            final NativeImage out = new NativeImage(width, height, true);
+            for (int py = 0; py < height; py++) {
+                for (int px = 0; px < width; px++) {
+                    out.setPixelRGBA(px, py, frame.getPixelRGBA(Math.min(px * scale, frame.getWidth() - 1),
+                            Math.min(py * scale, frame.getHeight() - 1)));
+                }
+            }
+            return out;
+        }
+    }
+
     /** Fails unless two pictures of {@code label} look the same, as a reference picture is compared. */
     public void assertSamePicture(final String label, final NativeImage drawn, final NativeImage other) {
         ReferencePictures.same(mc, pictureName(label), drawn, other);

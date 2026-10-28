@@ -1833,14 +1833,17 @@ public final class ManualScreen extends Screen {
         g.fill(x + width - 1, top, x + width, bottom, ink);
         // Typed, as the documents' heads and feet were.
         final TextSize typed = TextSize.CODE;
-        GuideFonts.draw(g, this.font, first, typed, this.style, x + HEAD_PAD, page.y() + GuideLayout.HEADER_Y, ink);
+        int split = x + width;
         if (!second.isEmpty()) {
             final int secondWidth = GuideFonts.width(this.font, second, typed, this.style);
-            final int split = x + width - Math.max(HEAD_CELL, secondWidth + 2 * HEAD_PAD);
+            split = x + width - Math.max(HEAD_CELL, secondWidth + 2 * HEAD_PAD);
             g.fill(split, top, split + 1, bottom, ink);
             GuideFonts.draw(g, this.font, second, typed, this.style, x + width - HEAD_PAD - secondWidth,
                     page.y() + GuideLayout.HEADER_Y, ink);
         }
+        // A title longer than its cell is cut short at the cell's edge, never written over the next cell.
+        GuideFonts.draw(g, this.font, this.fit(first, split - x - 2 * HEAD_PAD, typed), typed, this.style,
+                x + HEAD_PAD, page.y() + GuideLayout.HEADER_Y, ink);
         final int footY = page.y() + page.height() - 16;
         g.fill(x, footY, x + width, footY + 1, this.colour(GuideStyle.RULE));
         final String folio = shown.folio().toUpperCase(Locale.ROOT);

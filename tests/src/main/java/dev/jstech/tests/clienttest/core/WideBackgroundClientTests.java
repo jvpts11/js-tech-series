@@ -36,8 +36,9 @@ public final class WideBackgroundClientTests {
     private static final int FRAME_HEIGHT = 140;
     private static final int WINDOW_LEFT = 9;
     private static final int WINDOW_TOP = 18;
-    /* A corner of the window, far from the tree in its middle. */
+    /* A corner of the window, far from the tree in its middle, clear of the shade the window's frame casts in. */
     private static final int CORNER = 40;
+    private static final int INSET = 4;
 
     private WideBackgroundClientTests() {
     }
@@ -52,14 +53,16 @@ public final class WideBackgroundClientTests {
                     advancements.setSelectedTab(advancements.get(TAB), true);
                 })
                 .thenAwaitScreen(AdvancementsScreen.class, WAIT)
+                // The pointer off the tree: over an advancement, the game shades the whole window.
+                .then(0, () -> ctx.pointAt(0, 0))
                 .then(SETTLE, () -> {
                     final AdvancementsScreen screen = ctx.screen(AdvancementsScreen.class);
-                    final int x = (screen.width - FRAME_WIDTH) / 2 + WINDOW_LEFT;
-                    final int y = (screen.height - FRAME_HEIGHT) / 2 + WINDOW_TOP;
+                    final int x = (screen.width - FRAME_WIDTH) / 2 + WINDOW_LEFT + INSET;
+                    final int y = (screen.height - FRAME_HEIGHT) / 2 + WINDOW_TOP + INSET;
                     // The tree has not moved, so the window shows the sky's middle.
-                    final int u = (SKY_WIDTH - WideBackgrounds.WINDOW_WIDTH) / 2;
-                    final int v = (SKY_HEIGHT - WideBackgrounds.WINDOW_HEIGHT) / 2;
-                    try (NativeImage drawn = ctx.capture(x, y, CORNER, CORNER);
+                    final int u = (SKY_WIDTH - WideBackgrounds.WINDOW_WIDTH) / 2 + INSET;
+                    final int v = (SKY_HEIGHT - WideBackgrounds.WINDOW_HEIGHT) / 2 + INSET;
+                    try (NativeImage drawn = ctx.captureGuiPixels(x, y, CORNER, CORNER);
                          NativeImage sky = read(ctx, WIDE);
                          NativeImage expected = new NativeImage(CORNER, CORNER, false)) {
                         sky.copyRect(expected, u, v, 0, 0, CORNER, CORNER, false, false);
