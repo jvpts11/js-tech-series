@@ -11,10 +11,13 @@ import dev.jstech.core.air.AirMix;
 import dev.jstech.core.dimension.DimensionClock;
 import dev.jstech.core.dimension.DimensionRules;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.sky.Skies;
+import dev.jstech.core.sky.SkySpec;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.StarSystems;
+import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.space.universe.WorldShapes;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestSpaceWorlds;
@@ -23,6 +26,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.locale.Language;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -34,9 +38,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * J's Space's world model as the server holds it: the Solar System's three worlds of the skeleton, each its own
- * generator and the rules its dimension's file gives (the Moon's long day and a sixth of the pull, Mars' sol, its thin
- * air of carbon dioxide); and a world put together from its layers, its generator's ground with each modifier laid
- * over in order, as the test mod's world is.
+ * generator, the rules its dimension's file gives (the Moon's long day and a sixth of the pull, Mars' sol, its thin
+ * air of carbon dioxide) and the sky its sky file gives (the Moon's black, Mars' butterscotch with blue sunsets, a
+ * system's space black by its template); and a world put together from its layers, its generator's ground with each
+ * modifier laid over in order, as the test mod's world is.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -49,6 +54,11 @@ public final class SpaceWorldsGameTests {
     private static final int SOL = 24_660;
     /* Mars' year, 1.88 of the Earth's, at the game's year of seven of the Overworld's days, in sols. */
     private static final int MARS_YEAR = 13;
+    /* The colours of the skies: the Moon's and space's, Mars' at noon and at sunset; how far Mars is from the Sun. */
+    private static final int BLACK = 0x000000;
+    private static final int BUTTERSCOTCH = 0xC99A6E;
+    private static final int BLUE_SUNSET = 0x5E8FD6;
+    private static final double MARS_FROM_THE_SUN = 1.52;
     /* A height in the test world's middle, and one near its top. */
     private static final int MIDDLE = 64;
     private static final int HIGH = 127;
@@ -91,6 +101,24 @@ public final class SpaceWorldsGameTests {
                 && mars.clock().filter(clock -> clock.day() == SOL && clock.year() == MARS_YEAR).isPresent()
                 && mars.air().filter(air -> air.share(AirMix.CARBON_DIOXIDE) > 0.9).isPresent(),
                 "Mars: two fifths of the pull, a sol, thin air of carbon dioxide: " + mars);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void skies_ofTheMoonMarsAndSpaceAreTheirOwn(final GameTestHelper helper) {
+        final Level level = helper.getLevel();
+        final SkySpec moon = Skies.of(SpaceWorlds.get(level, SolarSystemWorlds.MOON).orElseThrow().dimension());
+        helper.assertTrue(moon.skyColour().filter(colour -> colour == BLACK).isPresent()
+                && moon.clouds().filter(clouds -> clouds.density() == 0).isPresent(),
+                "the Moon's sky is black, with no air for clouds");
+        final SkySpec mars = Skies.of(SpaceWorlds.get(level, SolarSystemWorlds.MARS).orElseThrow().dimension());
+        helper.assertTrue(mars.skyColour().filter(colour -> colour == BUTTERSCOTCH).isPresent()
+                && mars.sunsetColour().filter(colour -> colour == BLUE_SUNSET).isPresent(),
+                "Mars' sky is butterscotch, with blue sunsets");
+        helper.assertTrue(Math.abs(mars.suns().getFirst().distance() - MARS_FROM_THE_SUN) < CLOSE
+                && mars.suns().getFirst().apparentSize() < 1, "and its sun, farther, looks smaller");
+        helper.assertTrue(Skies.of(ResourceKey.create(Registries.DIMENSION, SystemSpaces.TEMPLATE.id())).skyColour()
+                .filter(colour -> colour == BLACK).isPresent(), "every system's space is black, by its template");
         helper.succeed();
     }
 

@@ -1,0 +1,11 @@
+{
+  "sky_colour": "#C99A6E",
+  "fog_colour": "#C4936A",
+  "sunset_colour": "#5E8FD6",
+  "suns": [
+    {"kind": "g", "distance": 1.52}
+  ],
+  "stars": {"count": 1500, "brightness": 0.8},
+  "clouds": {"height": 220, "colour": "#E8D2B8", "density": 0.08},
+  "haze": {"colour": "#C08A60", "density": 0.3}
+}

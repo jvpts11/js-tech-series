@@ -1,0 +1,10 @@
+{
+  "sky_colour": "#000000",
+  "fog_colour": "#000000",
+  "suns": [
+    {"kind": "g", "distance": 1.0}
+  ],
+  "stars": {"count": 4000, "brightness": 1.8},
+  "galaxy": {"colour": "#C8CCD8", "brightness": 0.5, "tilt": 60},
+  "clouds": {"height": 320, "colour": "#FFFFFF", "density": 0}
+}

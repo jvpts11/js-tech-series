@@ -8,6 +8,7 @@
 package dev.jstech.space.universe;
 
 import dev.jstech.core.dimension.RuntimeDimensions;
+import dev.jstech.core.sky.Skies;
 import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.space.JsSpace;
 import java.util.Optional;
@@ -28,10 +29,14 @@ import net.minecraft.world.level.block.Blocks;
  */
 public final class SystemSpaces {
 
-    /** What every system's space is a copy of: nothing at all, as tall as the Overworld. */
+    /**
+     * What every system's space is a copy of: nothing at all, as tall as the Overworld, its sun always up since nothing
+     * turns under it, and its black, starry sky drawn by J's Core's sky kit from
+     * {@code data/jsspace/skies/system_space.json}.
+     */
     public static final WorldGen.DimensionSpec TEMPLATE = WorldGen.dimension(id("system_space"))
-            .layer(() -> Blocks.AIR, 1).biome(Biomes.THE_VOID).heights(-64, 384).fixedTime(18_000)
-            .ambientLight(0.1F).unnatural().runtimeOnly().declare();
+            .layer(() -> Blocks.AIR, 1).biome(Biomes.THE_VOID).heights(-64, 384).fixedTime(6_000)
+            .effects(Skies.EFFECTS).unnatural().runtimeOnly().declare();
     /* What a system's space is called after the system: jsspace:solar_system_space. */
     private static final String SPACE = "_space";
 

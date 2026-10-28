@@ -55,6 +55,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   generator, its modifiers and its data, at their real widths. The Moon pulls a sixth as hard as the Overworld, has no
   air and a day as long as a month, about ten real hours; Mars pulls two fifths as hard, has a thin air of carbon
   dioxide, a sol barely longer than the Overworld's day and a year of thirteen sols.
+- The skies and the light of the worlds, as J's Core's sky files of their dimensions: the Moon's black, with
+  no air for clouds and its stars bright; Mars' butterscotch, with blue sunsets, thin clouds, a haze of dust and a sun
+  that looks smaller and gives less light from half again as far; and every system's space black and starry, its sun
+  always up since nothing turns under it.
 
 ## [0.5.2a] - 2026-10-14
 
