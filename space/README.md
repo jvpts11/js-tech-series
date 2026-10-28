@@ -14,8 +14,10 @@ of them.
 
 ## Where it is
 
-J's Space is only starting, and it adds nothing to the game yet. The first part being built is its base: the Moon and
-Mars, a rocket trip made the way the mod will really make it, and a small ship with the shipyard that builds it.
+J's Space is only starting. So far it adds its Mission Handbook, the mod's own manual, typed and tabbed as a crew's
+flight documents are, which will hold a page for everything the mod adds. The first part being built is its base:
+the Moon and Mars, a rocket trip made the way the mod will really make it, and a small ship with the shipyard that
+builds it.
 
 How each of its systems works, and why, is in [its design](docs/design/README.md), one page per subject.
 

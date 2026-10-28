@@ -25,6 +25,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   and a Saturn V beside it, and its square icon, in the mods list and the README; its creative tab, with the Saturn V
   on its button, shown once it holds a thing; and the night sky its advancement tabs will stand on, the Milky Way
   across a 400 by 200 sky drawn once and wide, with a 16-pixel tile of it.
+- The Mission Handbook, the mod's own manual and the first thing in its tab, dressed as a crew's flight
+  documents were: an off-white ring binder with the mission's emblem and its typed lines on the cover, cream pages
+  typed in capitals, a tab at the edge for each section (Launch Operations, Flight, Suits and World Data) in its
+  colour and lettered with its code, and the pages numbered by section (LO 2-3). It is written in Markdown, in English
+  and Brazilian Portuguese, and its chapter is in the Technical Reference too. For now it holds the page that says
+  how to read it; the other sections show as their pages are written.
 
 ## [0.5.2a] - 2026-10-14
 

@@ -1135,8 +1135,9 @@ public final class GuideLayout {
         if (headed) {
             this.place(new GuidePiece.Box(this.x(), this.y, this.width, height, paper, colour));
             this.place(new GuidePiece.Box(this.x(), this.y, this.width, bar, colour, colour));
-            this.place(new GuidePiece.Text(this.x() + (this.width - this.text.width(word, bold)) / 2,
-                    this.y + NOTICE_BAR_PAD, word, bold, GuideStyle.PAPER, ""));
+            // The word in the bar is typed, as the documents' were.
+            this.place(new GuidePiece.Text(this.x() + (this.width - this.text.width(word, TextSize.CODE)) / 2,
+                    this.y + NOTICE_BAR_PAD + 1, word, TextSize.CODE, GuideStyle.PAPER, ""));
             this.y += bar + BOX_PAD;
         } else {
             this.place(new GuidePiece.Box(this.x(), this.y, this.width, height, GuideStyle.HIGHLIGHT, colour));
@@ -1152,10 +1153,11 @@ public final class GuideLayout {
 
     /*
      * A checklist: each line a box to tick, its number, what to look at and, past a row of dots, what it should be,
-     * in the small lettering; a line the revision changed has a bar beside it in the margin. A line moves on whole.
+     * typed as a crew's checklist was; a line the revision changed has a bar beside it in the margin. A line moves on
+     * whole.
      */
     private void checklist(final GuideBlock.Checklist checklist) {
-        final TextSize size = this.sized(TextSize.SMALL);
+        final TextSize size = TextSize.CODE;
         final int row = Math.max(CHECK_BOX, size.lineHeight()) + CHECK_GAP;
         int number = 0;
         for (final GuideBlock.Check line : checklist.lines()) {
@@ -1187,7 +1189,7 @@ public final class GuideLayout {
      * The card moves on whole.
      */
     private void card(final GuideBlock.Card card) {
-        final TextSize small = this.sized(TextSize.SMALL);
+        final TextSize typed = TextSize.CODE;
         final TextSize bold = this.sized(TextSize.BOLD);
         final TextSize body = this.sized(TextSize.BODY);
         final int left = this.x() + CARD_INSET / 2;
@@ -1215,8 +1217,8 @@ public final class GuideLayout {
         this.place(new GuidePiece.Box(left, top + CARD_BAR_TOP + CARD_BAR, width, 1, GuideStyle.MARK,
                 GuideStyle.MARK));
         final String title = this.upper(this.text.text(card.titleKey()));
-        this.place(new GuidePiece.Text(left + (width - this.text.width(title, small)) / 2,
-                top + CARD_BAR_TOP + (CARD_BAR - small.lineHeight()) / 2 + 1, title, small, GuideStyle.PAPER, ""));
+        this.place(new GuidePiece.Text(left + (width - this.text.width(title, typed)) / 2,
+                top + CARD_BAR_TOP + (CARD_BAR - typed.lineHeight()) / 2 + 1, title, typed, GuideStyle.PAPER, ""));
         this.y = top + CARD_STEPS_TOP;
         int number = card.first() - 1;
         for (int i = 0; i < card.steps().size(); i++) {

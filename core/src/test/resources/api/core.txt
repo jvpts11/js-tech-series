@@ -5763,6 +5763,7 @@ stable 4
 10 dev.jstech.core.guide.GuideStyle.PartKind  type enum implements IStableName
 10 dev.jstech.core.guide.GuideStyle.PartKind  BOLD
 10 dev.jstech.core.guide.GuideStyle.PartKind  CENTRED
+15 dev.jstech.core.guide.GuideStyle.PartKind  CENTRED_CODE
 10 dev.jstech.core.guide.GuideStyle.PartKind  CENTRED_SMALL
 10 dev.jstech.core.guide.GuideStyle.PartKind  CLOTH
 10 dev.jstech.core.guide.GuideStyle.PartKind  CODE
@@ -5772,6 +5773,7 @@ stable 4
 10 dev.jstech.core.guide.GuideStyle.PartKind  IMAGE
 10 dev.jstech.core.guide.GuideStyle.PartKind  KRAFT
 10 dev.jstech.core.guide.GuideStyle.PartKind  PLATE
+15 dev.jstech.core.guide.GuideStyle.PartKind  RIGHT_CODE
 10 dev.jstech.core.guide.GuideStyle.PartKind  SMALL
 10 dev.jstech.core.guide.GuideStyle.PartKind  SMALL_BOLD
 10 dev.jstech.core.guide.GuideStyle.PartKind  STAMP

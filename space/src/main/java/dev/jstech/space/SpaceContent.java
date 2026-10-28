@@ -21,6 +21,8 @@ public final class SpaceContent {
     public static final ModContent CONTENT = new ModContent(JsSpace.MODID);
     /** The mod's creative tab, its button showing the Saturn V of the mod's mark; it shows once it holds a thing. */
     public static final ContentTab TAB = CONTENT.tab("space", "J's Space", "jsspace:gui/tab_icon");
+    /** The tab's first row: the Mission Handbook. */
+    public static final ContentTab.Section MANUALS = TAB.section();
 
     private SpaceContent() {
     }

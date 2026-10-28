@@ -47,6 +47,9 @@ import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.text.TextFormat;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.industrial.IndustrialModule;
+import dev.jstech.space.JsSpace;
+import dev.jstech.space.SpaceContent;
+import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.tests.JsTests;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -84,7 +87,7 @@ public final class SeriesManualsGameTests {
     /** Fewer entries than this, and a chapter of the series was lost on its way to the manuals. */
     private static final int FEWEST_ENTRIES = 50;
     /** The mods of the series whose every item a manual explains. */
-    private static final List<String> SERIES = List.of("jscore", "jsc", "jsindustrial");
+    private static final List<String> SERIES = List.of("jscore", "jsc", "jsindustrial", "jsspace");
     /* The namespace the series' own chapter is written under, which the Core ships. */
     private static final String SERIES_OWN = "jstech";
     /* The folder the Core writes the Technical Reference's chapters in. */
@@ -164,6 +167,50 @@ public final class SeriesManualsGameTests {
             looks.add(manual.style());
         }
         helper.assertTrue(looks.size() == books.size(), "each book is dressed its own way: " + looks);
+        helper.succeed();
+    }
+
+    /*
+     * J's Space's Mission Handbook is an item that opens it, a ring binder dressed as a crew's flight documents: its
+     * pages numbered by section, a tab for each section lettered with its code in its colour, its cover drawn from its
+     * parts, every line one of the handbook's cover lines and its emblem a texture the mod ships, and the handbook's
+     * own page in it.
+     */
+    @GameTest(template = ARENA)
+    public static void missionHandbook_isATabbedFlightDocumentWithItsCoverAndItsItem(final GameTestHelper helper) {
+        final GuideLibrary library = library();
+        helper.assertTrue(MissionHandbook.ITEM.get().manual().equals(MissionHandbook.MANUAL),
+                "the handbook's item opens the handbook");
+        final GuideManual manual = library.manual(MissionHandbook.MANUAL).orElse(null);
+        helper.assertTrue(manual != null && manual.style().equals(MissionHandbook.STYLE),
+                "the handbook is written, in its own style: " + manual);
+        final GuideStyle style = library.style(manual.style()).orElse(null);
+        helper.assertTrue(style != null && style.rings() && style.make().marks() == GuideStyle.Marks.SECTION_TABS
+                && style.folios() == GuideStyle.Folios.SECTION_PAGE,
+                "it is a ring binder tabbed by section, its pages numbered by section");
+        helper.assertTrue(style.cover().kind() == GuideStyle.CoverKind.BOOK && !style.cover().parts().isEmpty(),
+                "its cover is drawn from its parts");
+        for (final GuideStyle.CoverPart part : style.cover().parts()) {
+            helper.assertTrue(part.words() <= manual.coverKeys().size(),
+                    "the cover prints line " + part.words() + " of " + manual.coverKeys().size());
+            if (!part.image().isEmpty()) {
+                helper.assertTrue(ships(ResourceLocation.parse(part.image())),
+                        "the cover shows " + part.image() + ", a texture the mod does not ship");
+            }
+        }
+        final GuideContents contents = library.contentsOf(manual);
+        helper.assertTrue(contents.chapters().size() == 1
+                && contents.chapters().get(0).chapter().id().equals(JsSpace.MODID),
+                "it holds J's Space's chapter alone: " + contents.chapters());
+        boolean ownPage = false;
+        for (final GuideContents.Section section : contents.chapters().get(0).sections()) {
+            helper.assertTrue(!section.section().code().isEmpty() && !section.section().tab().isEmpty(),
+                    section.section().id() + " is lettered with its code, in its colour");
+            for (final GuideEntry entry : section.entries()) {
+                ownPage |= entry.items().contains(MissionHandbook.ITEM.getId().toString());
+            }
+        }
+        helper.assertTrue(ownPage, "the handbook has a page of its own in it");
         helper.succeed();
     }
 
@@ -519,11 +566,14 @@ public final class SeriesManualsGameTests {
         };
     }
 
-    /** What the series writes in the manuals: the Core's and the series' own, the Computers' and the Industrial's. */
+    /**
+     * What the series writes in the manuals: the Core's and the series' own, the Computers', the Industrial's and the
+     * Space's.
+     */
     private static List<ModGuide> guides() {
         final List<ModGuide> guides = new ArrayList<>();
         for (final ModContent content : List.of(CoreItems.CONTENT, ComputingContent.CONTENT,
-                IndustrialModule.CONTENT)) {
+                IndustrialModule.CONTENT, SpaceContent.CONTENT)) {
             guides.addAll(content.declaredGuides());
         }
         return guides;

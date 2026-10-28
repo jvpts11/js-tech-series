@@ -1831,26 +1831,26 @@ public final class ManualScreen extends Screen {
         g.fill(x, bottom - 1, x + width, bottom, ink);
         g.fill(x, top, x + 1, bottom, ink);
         g.fill(x + width - 1, top, x + width, bottom, ink);
-        GuideFonts.draw(g, this.font, first, TextSize.SMALL, this.style, x + HEAD_PAD, page.y() + GuideLayout.HEADER_Y,
-                ink);
+        // Typed, as the documents' heads and feet were.
+        final TextSize typed = TextSize.CODE;
+        GuideFonts.draw(g, this.font, first, typed, this.style, x + HEAD_PAD, page.y() + GuideLayout.HEADER_Y, ink);
         if (!second.isEmpty()) {
-            final int secondWidth = GuideFonts.width(this.font, second, TextSize.SMALL, this.style);
+            final int secondWidth = GuideFonts.width(this.font, second, typed, this.style);
             final int split = x + width - Math.max(HEAD_CELL, secondWidth + 2 * HEAD_PAD);
             g.fill(split, top, split + 1, bottom, ink);
-            GuideFonts.draw(g, this.font, second, TextSize.SMALL, this.style, x + width - HEAD_PAD - secondWidth,
+            GuideFonts.draw(g, this.font, second, typed, this.style, x + width - HEAD_PAD - secondWidth,
                     page.y() + GuideLayout.HEADER_Y, ink);
         }
         final int footY = page.y() + page.height() - 16;
         g.fill(x, footY, x + width, footY + 1, this.colour(GuideStyle.RULE));
         final String folio = shown.folio().toUpperCase(Locale.ROOT);
-        final int folioWidth = GuideFonts.width(this.font, folio, TextSize.SMALL, this.style);
-        GuideFonts.draw(g, this.font, folio, TextSize.SMALL, this.style, leftPage ? x : x + width - folioWidth,
-                footY + 5, ink);
+        final int folioWidth = GuideFonts.width(this.font, folio, typed, this.style);
+        GuideFonts.draw(g, this.font, folio, typed, this.style, leftPage ? x : x + width - folioWidth, footY + 5, ink);
         final String chapter = GuideLibrary.loaded().chapter(shown.chapter()).map(held -> this.text(held.titleKey()))
                 .orElse("").toUpperCase(Locale.ROOT);
-        final int chapterWidth = GuideFonts.width(this.font, chapter, TextSize.SMALL, this.style);
-        GuideFonts.draw(g, this.font, chapter, TextSize.SMALL, this.style, leftPage ? x + width - chapterWidth : x,
-                footY + 5, this.colour(GuideStyle.FAINT));
+        final int chapterWidth = GuideFonts.width(this.font, chapter, typed, this.style);
+        GuideFonts.draw(g, this.font, chapter, typed, this.style, leftPage ? x + width - chapterWidth : x, footY + 5,
+                this.colour(GuideStyle.FAINT));
     }
 
     /* The manual's edition as its cover writes it, or nothing for a manual that names none. */

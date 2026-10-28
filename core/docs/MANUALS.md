@@ -842,6 +842,8 @@ wide and as tall as its pages. Its `colour` is a role of the style's palette, or
 - `words`, `bold`, `small`, `small_bold`, `centred`, `centred_small` and `code`: one of the manual's `cover` lines,
   `line` from 1, in the reader's language, wrapped in the part's `width` at its `scale`; the centred ones stand on
   the part's middle, and `code` is written in the style's code font.
+- `centred_code` and `right_code`: a cover line typed in the style's code font on one line, centred in the part's
+  `width` or set against its right edge, as a typed cover lines up its title and its revision.
 - `stamp`: a rubber stamp's frame, turned `turn` degrees, with its line in bold inside it.
 - `cloth`, `kraft`, `wire` and `holes`: a material over the part. A cloth's weave, kraft card's flecks (scattered
   the same way each time, so the cover does not shimmer), a wire coil's loops down a spine, or the holes punched in

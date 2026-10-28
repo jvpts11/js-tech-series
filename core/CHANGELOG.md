@@ -287,6 +287,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `WARNING_PAPER`, `CARD` and `MARK` with `standIn(role)`; a `GuideSection` has its `tab` colour
   (`SectionBuilder.tab`); `GuideTexts` gains `CAUTION`, `CAUTION_LINE`, `CHECK_LINE` and `FIGURE_SHORT`. All
   experimental.
+- Typed lines on a cover: J's Core's API is at version 15. `GuideStyle.PartKind` gains `CENTRED_CODE` and
+  `RIGHT_CODE`, a cover line in the style's code font centred in its part or set against its right edge.
+  Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1630,7 +1633,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   in the margin (`[!]`); cards on rings as a crew wore on their cuff, numbered on from card to card (a `card` fence);
   and, for a style that asks, heads ruled into boxes with the manual and its edition or the section and its folio,
   notices under a bar of their colour, figures numbered short (Fig. 1-1), pages numbered by section after its
-  letters (LO 2-3) and tabs one a section, lettered and coloured. Every manual written before reads as it did.
+  letters (LO 2-3) and tabs one a section, lettered and coloured. A checklist, a card's title, a notice's word
+  and the boxed heads are typed, in the style's code font. Every manual written before reads as it did.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

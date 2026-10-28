@@ -77,6 +77,13 @@ final class ManualCovers {
             case BOLD, CENTRED -> words(g, font, style, x, y, part, TextSize.BOLD, tint, line(manual, part, text),
                     text);
             case CODE -> scaled(g, font, style, line(manual, part, text), TextSize.CODE, x, y, part.scale(), tint);
+            case CENTRED_CODE, RIGHT_CODE -> {
+                final String typed = line(manual, part, text);
+                final int width = (int) (GuideFonts.width(font, typed, TextSize.CODE, style) * part.scale());
+                final int from = part.kind() == GuideStyle.PartKind.CENTRED_CODE ? x + (part.width() - width) / 2
+                        : x + part.width() - width;
+                scaled(g, font, style, typed, TextSize.CODE, from, y, part.scale(), tint);
+            }
             case STAMP -> stamp(g, font, style, x, y, part, tint, line(manual, part, text));
             case CLOTH -> ManualMake.cloth(g, x, y, part.width(), part.height(), tint);
             case KRAFT -> ManualMake.kraft(g, x, y, part.width(), part.height(), tint, COVER_FLECKS);

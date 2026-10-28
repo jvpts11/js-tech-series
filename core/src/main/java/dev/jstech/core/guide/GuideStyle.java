@@ -478,6 +478,10 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         CENTRED_SMALL("centred_small"),
         /** Words in the code font, each of its pixels as large as the part's scale says. */
         CODE("code"),
+        /** Words in the code font, centred on the part's middle, as a typed title block centres its lines. */
+        CENTRED_CODE("centred_code"),
+        /** Words in the code font, set against the part's right edge, as a typed revision line ends a row. */
+        RIGHT_CODE("right_code"),
         /** A rubber stamp: a turned frame round words. */
         STAMP("stamp"),
         /** A cloth's fine weave: a darker line every other row. */
