@@ -31,7 +31,7 @@ public final class SolarSystemWorlds {
     private static final ResourceLocation ARID = id("arid");
 
     public static final ResourceLocation OVERWORLD = declare("overworld", UniverseTexts.OVERWORLD_WORLD,
-            Level.OVERWORLD, null, 12_742);
+            Level.OVERWORLD, null, SphereMap.EARTH_DIAMETER);
     public static final ResourceLocation MOON = declare("moon", UniverseTexts.MOON_WORLD, dimension("moon"), CRATERED,
             3_474.8);
     public static final ResourceLocation MARS = declare("mars", UniverseTexts.MARS_WORLD, dimension("mars"), ARID,

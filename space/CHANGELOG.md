@@ -71,6 +71,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   goes only where the orbit is known, and a crew lands only where what kills there (the atmosphere, the temperature,
   the radiation, the gravity and the relief) is known, unless the server lets crews land blind. Every team knows the
   Overworld whole and the places of the Moon and Mars from its sky.
+- The blocks of a round world lie on its sphere: X is the longitude and Z the latitude, its spawn at the middle
+  of its near side. Each world is the Overworld's border wide times its width over the Earth's (the Moon about 27%,
+  Mars 53%), fixed as it first loads, and half as tall, its border at the middle of its far side and at its poles.
 
 ## [0.5.2a] - 2026-10-14
 

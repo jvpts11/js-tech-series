@@ -17,6 +17,7 @@ import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemSpaces;
+import dev.jstech.space.universe.WorldSizes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -49,6 +50,8 @@ public final class JsSpace {
         SystemSpaces.declare();
         // The worlds the skeleton holds: the Overworld, the Moon and Mars, each its generator, modifiers and data.
         SolarSystemWorlds.declare();
+        // Each round world's size, fixed as it first loads, with its border at the far side and the poles.
+        WorldSizes.listen();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

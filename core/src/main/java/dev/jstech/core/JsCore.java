@@ -74,6 +74,7 @@ import dev.jstech.core.weather.Weathers;
 import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.effect.EffectSettings;
 import dev.jstech.core.effect.Effects;
+import dev.jstech.core.dimension.DimensionBorders;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.DimensionTravel;
 import dev.jstech.core.explosion.Explosions;
@@ -676,6 +677,9 @@ public final class JsCore {
         OwnedProtection.listen();
         Protection.listen();
         RuntimeDimensions.listen();
+        // A dimension's own border, kept apart from the overworld's, its north and south ends held for players.
+        DimensionBorders.register();
+        DimensionBorders.listen();
         DimensionTravel.listen(modEventBus);
         RuntimePacks.listen(modEventBus);
         Sections.listen();

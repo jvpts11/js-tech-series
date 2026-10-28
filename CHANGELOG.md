@@ -1903,6 +1903,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   goes only where the orbit is known, and a crew lands only where what kills there (the atmosphere, the temperature,
   the radiation, the gravity and the relief) is known, unless the server lets crews land blind. Every team knows the
   Overworld whole and the places of the Moon and Mars from its sky.
+- (Core) A dimension's own border: `DimensionBorders.fix` gives a dimension bounds of its own, from west to east and
+  north to south, kept with it; the game's border spans their width, players are held inside their north and south
+  ends, and changes to the overworld's border no longer reach it.
+- (Space) The blocks of a round world lie on its sphere: X is the longitude and Z the latitude, its spawn at the middle
+  of its near side. Each world is the Overworld's border wide times its width over the Earth's (the Moon about 27%,
+  Mars 53%), fixed as it first loads, and half as tall, its border at the middle of its far side and at its poles.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

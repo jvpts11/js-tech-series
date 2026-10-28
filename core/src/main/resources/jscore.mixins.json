@@ -6,6 +6,7 @@
     "AbstractFurnaceBlockEntityMixin",
     "AbstractFurnaceMenuAccessor",
     "BlockGetterMixin",
+    "BorderDelegateMixin",
     "ChunkMapMixin",
     "ChunkStatusTasksMixin",
     "ChunkUnloadMixin",

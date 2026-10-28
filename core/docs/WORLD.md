@@ -886,6 +886,22 @@ the same with `/jstech dimension create <id> <template>` and `remove <id>` ([Com
 copy kept loaded (`ServerLevel.setChunkForced`) are loaded again whenever it is made again, as the world's own
 dimensions' are when the server starts.
 
+### A dimension's own border
+
+*Added 2026-10-28.*
+
+The game gives every dimension the overworld's border, and a border is a square. A dimension can keep bounds of its
+own instead, from west to east and from north to south, saved with it:
+
+```java
+DimensionBorders.fix(level, new DimensionBorders.Bounds(-8_000_000, 8_000_000, -4_000_000, 4_000_000));
+```
+
+The first bounds given are kept; giving others later changes nothing. The game's own border is set across their
+width, so its wall, collision and warning stand at the west and east ends, and the Core holds players inside the
+north and south ends, which may be nearer, as a round world's poles are. A change to the overworld's border, by a
+command or another mod, no longer reaches the dimension.
+
 ### Travelling between dimensions
 
 *Added 2026-10-17.*

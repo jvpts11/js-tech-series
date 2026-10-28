@@ -1644,6 +1644,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The minerals of the Moon and Mars join the series' catalogue, each with its formula, its family and the
   byproducts it gives, shared by every mod: ilmenite, armalcolite, tranquillityite, merrillite (the rare earths of the
   Moon's KREEP) and native iron; olivine, jarosite and gypsum. None joins the first industry's veins.
+- A dimension's own border: `DimensionBorders.fix` gives a dimension bounds of its own, from west to east and
+  north to south, kept with it; the game's border spans their width, players are held inside their north and south
+  ends, and changes to the overworld's border no longer reach it.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
