@@ -97,15 +97,15 @@ Every development cycle has a codename, and every release that brings more than 
    release's name when it has one (`## [0.3.0a] - 2026-09-13 - The Programming Update`). The section
    opens with the cycle's codename, and notes a phase change if the release crosses a gate. Its API part
    comes first and says the version each mod's API reached. Add the name to the table above. Then run
-   `./gradlew changelogs`, which writes each mod's own changelog (`core/`, `computers/` and
-   `industrial/CHANGELOG.md`) from the series' one, and commit what it writes.
+   `./gradlew changelogs`, which writes each mod's own changelog (`core/`, `computers/`, `industrial/` and
+   `space/CHANGELOG.md`) from the series' one, and commit what it writes.
 4. Tag the commit `v<version>` (for example `v0.1.0a`) and push the tag.
 5. The tag starts the Release workflow. It checks that the tag and `mod_version` agree, builds the jars
    with `./gradlew build -Prelease`, takes the version's section of `CHANGELOG.md` as the notes and drafts
    a GitHub release, titled with the version and the release's name when the section heading gives one,
    with each mod's jar attached, named `<mod id>-<minecraft version>-<version>.jar`
-   (`jscore-…`, `jsc-…`, `jsindustrial-…`). The `tests` subproject's jar is a development tool, never a
-   release: it is not attached, not offered, and not to be installed by anyone.
+   (`jscore-…`, `jsc-…`, `jsindustrial-…`, `jsspace-…`). The `tests` subproject's jar is a development
+   tool, never a release: it is not attached, not offered, and not to be installed by anyone.
 6. Keep a copy of the jars in a local `releases/` folder (ignored by git); every version stays there.
 7. Review the draft and publish it.
 

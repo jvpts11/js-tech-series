@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
 class HardcodedTextTest {
 
     /** The mods whose text a player reads; the test mod is for development only. */
-    private static final Set<String> MODULES = Set.of("core", "computers", "industrial");
+    private static final Set<String> MODULES = Set.of("core", "computers", "industrial", "space");
 
     /** Methods that put what they are handed in front of a player. */
     private static final Set<String> SINKS = Set.of("drawString", "drawCenteredString", "drawWordWrap",

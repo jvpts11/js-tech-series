@@ -149,7 +149,7 @@ class EnumIdentityRulesTest {
         for (final Source file : MainSources.ALL.files()) {
             modules.add(Path.of(file.label()).getName(0).toString());
         }
-        assertTrue(modules.containsAll(List.of("core", "computers", "industrial", "tests")),
+        assertTrue(modules.containsAll(List.of("core", "computers", "industrial", "space", "tests")),
                 () -> "the sources read come from " + modules);
         assertTrue(MainSources.ALL.enums().contains("IndustrialTier"), "the series' enums are found");
     }

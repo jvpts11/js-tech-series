@@ -123,7 +123,7 @@ class BedrockReaderTest {
     private static List<Path> filesEnding(final String suffix) {
         final Path root = Path.of("").toAbsolutePath().getParent();
         final List<Path> out = new ArrayList<>();
-        for (final String module : List.of("computers", "industrial", "core", "tests")) {
+        for (final String module : List.of("computers", "industrial", "space", "core", "tests")) {
             final Path resources = root.resolve(module).resolve("src/main/resources");
             if (!Files.isDirectory(resources)) {
                 continue;

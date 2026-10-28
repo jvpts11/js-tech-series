@@ -10,6 +10,7 @@ holds what concerns the whole series.
 | [J's Core](../core/README.md) | (a library: nothing to play on its own) | [J's Core documentation](../core/docs/README.md): every part of the library, from zero, with code. |
 | [J's Computers](../computers/README.md) | [J's Computers documentation](../computers/docs/README.md): computers, systems, the network, autocrafting, cables, Σ#. | [Building on J's Computers](../computers/docs/API.md). |
 | [J's Industrial](../industrial/README.md) | [The machines](../industrial/docs/MACHINES.md). | [For mod and pack authors](../industrial/docs/FOR_MOD_AUTHORS.md). |
+| [J's Space](../space/README.md) | [J's Space documentation](../space/docs/README.md): for now, its design. | (the pages come with the code) |
 
 ## The whole series
 

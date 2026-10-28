@@ -35,10 +35,10 @@ class SourceHygieneTest {
 
     /** Each module and the name its files' licence header gives as their owner. */
     private static final Map<String, String> OWNERS = Map.of("core", "J's Core", "computers", "J's Computers",
-            "industrial", "J's Industrial", "tests", "J's Tech Series");
+            "industrial", "J's Industrial", "space", "J's Space", "tests", "J's Tech Series");
 
     /** The mods a player plays with, whose declarations reach a language file or a palette file. */
-    private static final List<String> SHIPPED = List.of("core", "computers", "industrial");
+    private static final List<String> SHIPPED = List.of("core", "computers", "industrial", "space");
 
     /** Written as its number, so that this file does not hold the character it looks for. */
     private static final char EM_DASH = (char) 0x2014;
@@ -59,7 +59,7 @@ class SourceHygieneTest {
      * The modules whose every listener is declared from their mod's constructor, so that what runs is what the
      * constructor says.
      */
-    private static final List<String> DECLARED_LISTENERS = List.of("core", "computers", "industrial");
+    private static final List<String> DECLARED_LISTENERS = List.of("core", "computers", "industrial", "space");
 
     /** The annotation by which a class registers itself, written in two halves so this file does not hold it. */
     private static final String SELF_REGISTERING = "@EventBus" + "Subscriber";

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       suites:
-        description: 'GameTest suites to run (core, computers, industrial, example, series); empty runs every suite'
+        description: 'GameTest suites to run (core, computers, industrial, space, example, series); empty runs all'
         required: false
         default: ''
 
@@ -42,7 +42,7 @@ jobs:
       - name: Regenerate the data of every mod
         # One at a time: the data runs share the same game directory.
         run: |
-          for project in core computers industrial example tests; do
+          for project in core computers industrial space example tests; do
             ./gradlew ":$project:runData" --console=plain
           done
 
@@ -85,7 +85,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if ! printf '%s' "$ASKED" | grep -Eq '^[a-z, ]*$'; then
-              echo "Suites are named with lowercase letters and commas: core, computers, industrial, example, series."
+              echo "Suites are named with lowercase letters and commas: core, computers, industrial, space, example," \
+                "series."
               exit 1
             fi
             echo "mods=$ASKED" >> "$GITHUB_OUTPUT"
@@ -111,6 +112,7 @@ jobs:
               example/src/*|example/build.gradle) mods="$mods example" ;;
               computers/src/*|computers/build.gradle) mods="$mods computers series" ;;
               industrial/src/*|industrial/build.gradle) mods="$mods industrial series" ;;
+              space/src/*|space/build.gradle) mods="$mods space series" ;;
               tests/src/main/java/dev/jstech/tests/gametest/*/*|tests/src/main/java/dev/jstech/tests/clienttest/*/*)
                 mods="$mods $(echo "$file" | cut -d/ -f9)" ;;
               tests/*|build.gradle|settings.gradle|gradle.properties|gradle/*|.github/workflows/*) every=true ;;

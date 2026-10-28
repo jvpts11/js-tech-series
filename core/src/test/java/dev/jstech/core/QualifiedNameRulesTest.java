@@ -110,7 +110,7 @@ class QualifiedNameRulesTest {
             modules.add(Path.of(file).getName(0).toString());
         }
 
-        assertTrue(modules.containsAll(List.of("core", "computers", "industrial")),
+        assertTrue(modules.containsAll(List.of("core", "computers", "industrial", "space")),
                 () -> "the sources read come from " + modules);
     }
 

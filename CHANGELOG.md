@@ -1807,6 +1807,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   with its menus and the panel under the list; from Frames 10 on, in its modern look, with a search by machine and
   the panel beside the list. The Plant Drawings have its page, and pages on reading the plant from the network and on
   the alerts.
+- (Space) The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
+  the same version as every mod of the series. It adds nothing to the game yet.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

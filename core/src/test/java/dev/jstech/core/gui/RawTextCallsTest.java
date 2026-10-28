@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 class RawTextCallsTest {
 
     /** The mods whose screens a player sees; the test mod is for development only. */
-    private static final Set<String> MODULES = Set.of("core", "computers", "industrial");
+    private static final Set<String> MODULES = Set.of("core", "computers", "industrial", "space");
     /** The one place a raw call is the point: the drawer every shadowed line goes through. */
     private static final String DRAWER = "core/src/main/java/dev/jstech/core/client/gui/component/Draw.java";
     /** The game's calls that write a line of text. */

@@ -3,12 +3,12 @@
 // "(Computers) Racks and servers: ...", and a mod's file takes the entries that name it, without that opening. The
 // releases before it, whose entries name no mod, stay in the series' changelog alone.
 //
-//   ./gradlew changelogs        writes core/, computers/ and industrial/CHANGELOG.md
+//   ./gradlew changelogs        writes core/, computers/, industrial/ and space/CHANGELOG.md
 //   ./gradlew checkChangelogs   fails when one of them is not what changelogs would write (part of every check)
 
 // The names an entry may open with, and the folder each mod's changelog goes in; a name with no folder is a mod
 // still being designed, whose entries stay in the series' changelog.
-def changelogMods = [Computers: 'computers', Industrial: 'industrial', Core: 'core', Space: '']
+def changelogMods = [Computers: 'computers', Industrial: 'industrial', Core: 'core', Space: 'space']
 
 abstract class ModChangelogs extends DefaultTask {
 

@@ -37,7 +37,7 @@ class AssetRegistryTest {
     private static final String REGISTRY = "ASSET_REGISTRY.md";
 
     /** The mods whose assets ship; the test mod is for development only. */
-    private static final List<String> MODULES = List.of("core", "computers", "industrial");
+    private static final List<String> MODULES = List.of("core", "computers", "industrial", "space");
 
     /** Where an origin can come from; anything else is not an answer. */
     private static final Set<String> ORIGINS = Set.of("AI-generated", "Hand-made", "Datagen", "Third-party");

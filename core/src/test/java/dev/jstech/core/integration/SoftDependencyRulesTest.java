@@ -45,7 +45,7 @@ class SoftDependencyRulesTest {
     }
 
     private static List<Path> roots() {
-        return List.of("core", "computers", "industrial").stream()
+        return List.of("core", "computers", "industrial", "space").stream()
                 .map(module -> ROOT.resolve(module).resolve("src").resolve("main").resolve("java")).toList();
     }
 }

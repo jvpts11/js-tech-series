@@ -10,10 +10,10 @@ real dependency being J's Core for all of them. They are also fully modifiable a
 new things to them. This project is a personal passion project to, in the end, have a full series of tech mods
 fully playable, and with a fun experience.
 
-Currently, the series only has three mods: J's Core, J's Industrial and J's Computers. And the most developed one
-currently is J's Computers, which has the backbone for every other mod that comes in the future, which is the mod's
-own network and the operations system. After J's Computers reaches a good level of readiness, J's Industrial will
-be the next one in the list.
+Currently, the series only has four mods: J's Core, J's Industrial, J's Computers and J's Space. And the most
+developed one currently is J's Computers, which has the backbone for every other mod that comes in the future, which
+is the mod's own network and the operations system. After J's Computers reaches a good level of readiness, J's
+Industrial will be the next one in the list. J's Space has only just started, and adds nothing to the game yet.
 
 The series is in alpha. See [what a version means](docs/RELEASING.md), [what changed](CHANGELOG.md), you can also find
 the mod's builds and releases here: [releases page](https://github.com/jvpts11/js-tech-series/releases). Also, be warned, that
@@ -27,13 +27,14 @@ be broken while updating from older versions to focus time and effort in fixing 
 | [J's Core](core/README.md) | `jscore` | The shared library. Every mod of the series requires it. No gameplay of its own beyond the material items the others share. |
 | [J's Computers](computers/README.md) | `jsc` | Computers, the data network, the systems and programs, storage and autocrafting. |
 | [J's Industrial](industrial/README.md) | `jsindustrial` | Energy, machines and the processing chains that feed the network and the other ones in the future. |
+| [J's Space](space/README.md) | `jsspace` | Rockets, satellites, the worlds of the Solar System and of other stars, and the starships that reach them. |
 
-Planned, in the order the series grows: Space, Warfare, Transport, Agriculture, Civil Works, Robotics,
+Planned, in the order the series grows: Warfare, Transport, Agriculture, Civil Works, Robotics,
 Geology and Oceanics. The phases the series goes through, and what each phase needs before it starts, are
 in [docs/RELEASING.md](docs/RELEASING.md).
 
 **Every mod of the series depends only on J's Core, never on another mod of the series.** J's Computers needs only
-J's Core, and so does J's Industrial; J's Space will need only J's Core, and so will every mod that comes after it.
+J's Core, and so do J's Industrial and J's Space, and so will every mod that comes after them.
 When several are installed together, they work with each other through what J's Core gives them all and through
 integrations that only wake when the other mod is present, so leaving any of them out never breaks the others. The
 computing mod drives any machine that exposes the usual item and energy capabilities, and the industrial mod's
@@ -55,6 +56,7 @@ Until the entire series hit v1.0.0r, all mods of the J's Tech Series live here i
 - `core/`: J's Core (`jscore`), the shared library.
 - `computers/`: J's Computers (`jsc`), the computing mod.
 - `industrial/`: J's Industrial (`jsindustrial`), the industrial mod.
+- `space/`: J's Space (`jsspace`), the space mod.
 - `testkit/`: J's Core Test Kit (`jstestkit`), what a mod built on the Core writes its tests with. A test
   dependency, never installed; see [testkit/README.md](testkit/README.md).
 - `gradle-plugin/`: the Core's Gradle plugin, `dev.jstech.core`, which sets a mod built on the Core up; see
@@ -81,7 +83,7 @@ The J's Tech series use Java 21. Each mod's jar lands in its own `build/libs`, f
 a build that is not the tagged release carries a `-SNAPSHOT.<commit>` suffix. Useful tasks: `runClient`,
 `runServer`, `test` (pure logic, JUnit), `runGameTestServer` (the mods in a headless server),
 `runClientTests0` (a real client that drives the screens and takes screenshots), and `:core:runData`,
-`:computers:runData` and `:industrial:runData` to regenerate a mod's data.
+`:computers:runData`, `:industrial:runData` and `:space:runData` to regenerate a mod's data.
 
 ## Contributing
 

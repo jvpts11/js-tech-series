@@ -83,7 +83,7 @@ class RecordCopyRulesTest {
             }
         }
 
-        assertTrue(modules.containsAll(List.of("core", "computers", "industrial")),
+        assertTrue(modules.containsAll(List.of("core", "computers", "industrial", "space")),
                 () -> "the sources read come from " + modules);
     }
 

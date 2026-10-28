@@ -23,7 +23,7 @@ package dev.jstech.computers...;
 The SPDX tag identifies the licence; its full text lives in `COPYING.LESSER`, and the GPL it builds on in
 `COPYING`. Do not use the line-comment form and
 do not paste the long licence preamble. The last line names the mod the file belongs to: J's Core, J's
-Computers or J's Industrial.
+Computers, J's Industrial or J's Space.
 
 ## Modelling
 

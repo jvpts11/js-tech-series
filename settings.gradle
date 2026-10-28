@@ -13,4 +13,4 @@ plugins {
 // on its public API alone, and a development-only test mod that holds every test and hosts the dev runs, which load
 // all of them.
 rootProject.name = 'js-tech-series'
-include 'core', 'computers', 'industrial', 'testkit', 'gradle-plugin', 'example', 'tests'
+include 'core', 'computers', 'industrial', 'space', 'testkit', 'gradle-plugin', 'example', 'tests'

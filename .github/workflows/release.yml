@@ -79,4 +79,5 @@ jobs:
             --notes-file release-notes.md \
             "core/build/libs/jscore-$MINECRAFT-$VERSION.jar" \
             "computers/build/libs/jsc-$MINECRAFT-$VERSION.jar" \
-            "industrial/build/libs/jsindustrial-$MINECRAFT-$VERSION.jar"
+            "industrial/build/libs/jsindustrial-$MINECRAFT-$VERSION.jar" \
+            "space/build/libs/jsspace-$MINECRAFT-$VERSION.jar"

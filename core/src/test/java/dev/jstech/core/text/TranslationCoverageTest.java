@@ -39,7 +39,7 @@ class TranslationCoverageTest {
 
     private static final String ENGLISH = "en_us.json";
 
-    private static final Set<String> MODULES = Set.of("core", "computers", "industrial", "example");
+    private static final Set<String> MODULES = Set.of("core", "computers", "industrial", "space", "example");
 
     /** A sentence declared as a field: the key is the first string it is made with. */
     private static final Pattern DECLARED = Pattern.compile("TextKey\\.of\\(\\s*\"([^\"]+)\"");

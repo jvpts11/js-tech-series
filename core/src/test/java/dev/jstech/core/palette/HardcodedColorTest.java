@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 class HardcodedColorTest {
 
     /** The mods whose screens a player sees; the test mod is for development only. */
-    private static final Set<String> MODULES = Set.of("core", "computers", "industrial");
+    private static final Set<String> MODULES = Set.of("core", "computers", "industrial", "space");
 
     /**
      * The files whose eight-digit numbers are data, not colours of the mod's look, and how many each holds. The count

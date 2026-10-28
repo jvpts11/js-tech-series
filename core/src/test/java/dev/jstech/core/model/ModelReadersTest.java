@@ -56,7 +56,7 @@ class ModelReadersTest {
     void read_readsEveryModelFileOfTheSeriesKit() throws IOException {
         final Path root = Path.of("").toAbsolutePath().getParent();
         final List<Path> files = new ArrayList<>();
-        for (final String module : List.of("core", "computers", "industrial", "tests")) {
+        for (final String module : List.of("core", "computers", "industrial", "space", "tests")) {
             final Path resources = root.resolve(module).resolve("src/main/resources/assets");
             if (Files.isDirectory(resources)) {
                 try (Stream<Path> walked = Files.walk(resources)) {
