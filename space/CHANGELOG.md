@@ -32,6 +32,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `data/<namespace>/jsspace/suits/`, `suit_modules/` and `dangers/`. Experimental.
 - The Sun's glare: J's Space's API is at version 7. A suit module may cut the Sun's glare where no air
   softens it, `SuitModule.Kind.GLARE`, its amount the share it cuts. Experimental.
+- Rocket parts: J's Space's API is at version 8. `RocketPart` is a part of a rocket, what kind it is (an
+  engine, a tank, a separation ring, a capsule and the rest), its diameter of 3, 5, 7 or 9 blocks and the one on its
+  top, its height and whether it is built in layers, its mass, the propellant it holds, its engine's thrust and
+  specific impulses at sea level and in a vacuum, its seats and its tier; registered in `RocketParts`, which takes a
+  data pack's files, `data/<namespace>/jsspace/rocket_parts/`. Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -192,6 +197,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lamps, and the purge, fan and light buttons. With little oxygen left the screen's rim turns amber, holed it turns
   red. O, until the player changes it, holds the controls up close, twice the size, where the light's button lights
   the face.
+- Rockets of parts and stages: a rocket is a moving structure whose blocks are its parts stacked from the
+  bottom up, and its stages are split at its separation rings, each carrying what is above it; boosters strapped on
+  burn beside the core and drop first. Its delta-v is summed from its parts by Tsiolkovsky's equation and its
+  thrust-to-weight from its engines' thrust at sea level, so a rocket that lifts off the Moon may not lift off the
+  Overworld. A tank is built in layers, as tall as it is wanted. The parts come in diameters of 3 and 5 blocks, all
+  burning methalox: the sea-level and vacuum engines, the tank, the separation and instrument rings, the capsule, the
+  landing legs and the two stages of the lunar lander; a part fits only on one of its own diameter. A rocket belongs
+  to whoever built it and is flown by their team.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

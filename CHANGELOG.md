@@ -347,6 +347,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `data/<namespace>/jsspace/suits/`, `suit_modules/` and `dangers/`. Experimental.
 - (Space) The Sun's glare: J's Space's API is at version 7. A suit module may cut the Sun's glare where no air
   softens it, `SuitModule.Kind.GLARE`, its amount the share it cuts. Experimental.
+- (Space) Rocket parts: J's Space's API is at version 8. `RocketPart` is a part of a rocket, what kind it is (an
+  engine, a tank, a separation ring, a capsule and the rest), its diameter of 3, 5, 7 or 9 blocks and the one on its
+  top, its height and whether it is built in layers, its mass, the propellant it holds, its engine's thrust and
+  specific impulses at sea level and in a vacuum, its seats and its tier; registered in `RocketParts`, which takes a
+  data pack's files, `data/<namespace>/jsspace/rocket_parts/`. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2078,6 +2083,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lamps, and the purge, fan and light buttons. With little oxygen left the screen's rim turns amber, holed it turns
   red. O, until the player changes it, holds the controls up close, twice the size, where the light's button lights
   the face.
+- (Space) Rockets of parts and stages: a rocket is a moving structure whose blocks are its parts stacked from the
+  bottom up, and its stages are split at its separation rings, each carrying what is above it; boosters strapped on
+  burn beside the core and drop first. Its delta-v is summed from its parts by Tsiolkovsky's equation and its
+  thrust-to-weight from its engines' thrust at sea level, so a rocket that lifts off the Moon may not lift off the
+  Overworld. A tank is built in layers, as tall as it is wanted. The parts come in diameters of 3 and 5 blocks, all
+  burning methalox: the sea-level and vacuum engines, the tank, the separation and instrument rings, the capsule, the
+  landing legs and the two stages of the lunar lander; a part fits only on one of its own diameter. A rocket belongs
+  to whoever built it and is flown by their team.
 - (Core) Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

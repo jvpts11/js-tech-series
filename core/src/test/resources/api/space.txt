@@ -13,6 +13,41 @@ stable 0
 3 dev.jstech.space.api.IWorldModifier  default SurfaceRules.RuleSource surface(SpaceWorld, SurfaceRules.RuleSource)
 1 dev.jstech.space.api.JsSpaceApi  type final class
 1 dev.jstech.space.api.JsSpaceApi  static final int VERSION
+8 dev.jstech.space.api.RocketPart  type record(String name, Kind kind, int diameter, int topDiameter, int height, boolean stretches, double mass, double propellant, Optional<Engine> engine, int seats, int tier)
+8 dev.jstech.space.api.RocketPart  static final Codec<RocketPart> CODEC
+8 dev.jstech.space.api.RocketPart  static final List<Integer> DIAMETERS
+8 dev.jstech.space.api.RocketPart.Engine  type record(double thrust, double seaLevelIsp, double vacuumIsp, ResourceLocation propellant)
+8 dev.jstech.space.api.RocketPart.Engine  static final Codec<Engine> CODEC
+8 dev.jstech.space.api.RocketPart.Kind  type enum implements IStableName
+8 dev.jstech.space.api.RocketPart.Kind  ADAPTER
+8 dev.jstech.space.api.RocketPart.Kind  CAPSULE
+8 dev.jstech.space.api.RocketPart.Kind  CARGO_CONTAINER
+8 dev.jstech.space.api.RocketPart.Kind  CONTROL_THRUSTERS
+8 dev.jstech.space.api.RocketPart.Kind  DOCKING_PORT
+8 dev.jstech.space.api.RocketPart.Kind  ENGINE
+8 dev.jstech.space.api.RocketPart.Kind  ENGINE_MOUNT
+8 dev.jstech.space.api.RocketPart.Kind  ESCAPE_TOWER
+8 dev.jstech.space.api.RocketPart.Kind  FAIRING
+8 dev.jstech.space.api.RocketPart.Kind  GRID_FINS
+8 dev.jstech.space.api.RocketPart.Kind  HABITATION
+8 dev.jstech.space.api.RocketPart.Kind  INSTRUMENT_RING
+8 dev.jstech.space.api.RocketPart.Kind  LANDER_ASCENT
+8 dev.jstech.space.api.RocketPart.Kind  LANDER_DESCENT
+8 dev.jstech.space.api.RocketPart.Kind  LANDING_LEGS
+8 dev.jstech.space.api.RocketPart.Kind  PAYLOAD_ADAPTER
+8 dev.jstech.space.api.RocketPart.Kind  RADIAL_SEPARATOR
+8 dev.jstech.space.api.RocketPart.Kind  SEPARATION_RING
+8 dev.jstech.space.api.RocketPart.Kind  SERVICE_MODULE
+8 dev.jstech.space.api.RocketPart.Kind  SOLID_BOOSTER
+8 dev.jstech.space.api.RocketPart.Kind  String serializedName()
+8 dev.jstech.space.api.RocketPart.Kind  TANK
+8 dev.jstech.space.api.RocketPart.Kind  boolean endsStage()
+8 dev.jstech.space.api.RocketPart.Kind  static final Codec<Kind> CODEC
+8 dev.jstech.space.api.RocketParts  type final class
+8 dev.jstech.space.api.RocketParts  static Map<ResourceLocation, RocketPart> all(Level)
+8 dev.jstech.space.api.RocketParts  static Map<ResourceLocation, RocketPart> declared()
+8 dev.jstech.space.api.RocketParts  static Optional<RocketPart> get(Level, ResourceLocation)
+8 dev.jstech.space.api.RocketParts  static RocketPart declare(ResourceLocation, RocketPart)
 2 dev.jstech.space.api.SpaceAdvancementTab  type enum
 2 dev.jstech.space.api.SpaceAdvancementTab  LEAVING_THE_EARTH
 2 dev.jstech.space.api.SpaceAdvancementTab  MARS

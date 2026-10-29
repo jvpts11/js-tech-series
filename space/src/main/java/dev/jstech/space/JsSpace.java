@@ -25,6 +25,7 @@ import dev.jstech.space.life.SuitControls;
 import dev.jstech.space.life.SuitData;
 import dev.jstech.space.life.SuitModuleItems;
 import dev.jstech.space.life.SuitSupplies;
+import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.network.SpacePayloads;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.LandingCabins;
@@ -98,6 +99,8 @@ public final class JsSpace {
         SuitSupplies.declare();
         SuitControls.declare();
         LifeSupport.listen();
+        // The rockets' parts of the skeleton, in the diameters of 3 and 5 blocks.
+        SkeletonRocketParts.declare();
         SuitAir.listen();
         SpaceFlames.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
