@@ -55,6 +55,13 @@ itself the same map on entity types:
 }
 ```
 
+What is fitted to a worn stack, which its item's data cannot know, a suit's module, a lining sewn in, stops harm too:
+a mod says how much of a kind, beside what the item stops (*added 2026-10-29*):
+
+```java
+Resistances.source((stack, kind) -> kind == DamageKinds.RADIATION ? vestsFittedTo(stack) * 0.5 : 0);
+```
+
 What is worn adds up by kind, never past all of it; with what the body stops itself, what gets through is
 `(1 - worn) x (1 - own)`. As damage of a kind lands on a living thing, it is cut by that share, whoever dealt it. A
 worn thing's tooltip says what it stops of each kind.

@@ -25,6 +25,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   name, its kind, its place by longitude and latitude and its radius in degrees, and `SpaceLandmarks` registers them,
   a data pack's files in `data/<namespace>/jsspace/landmarks/` winning over a declaration; a world's generator lays
   those declared on it. Experimental.
+- Life support: J's Space's API is at version 6. `SpaceSuit` is a pressure suit, its four pieces, the air its
+  tanks hold and the cold and heat it stands, registered in `SpaceSuits`, which says the suit a body wears whole;
+  `SuitModule`, a suit's module, what it does (more air, radiation stopped, light), the piece it fits and how much,
+  registered in `SuitModules`; and `WorldDangers` lists each world's `WorldDanger`s. Each takes a data pack's files,
+  `data/<namespace>/jsspace/suits/`, `suit_modules/` and `dangers/`. Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -150,6 +155,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   on the tops of flows and faceted below; its mudstone dusted red in the upper layers of every exposure, buff on the
   scarps and grey below. Vesicular basalt's stones lie loose on its plains, and veins of hematite, of magnetite and
   olivine, and of gypsum and jarosite lie in their rocks.
+- Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
+  tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
+  within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece
+  they go on: Extra Oxygen, half as much air again; the Radiation Vest, which stops half the sky's radiation; and Suit
+  Lamps, lighting the way. Every world says its dangers, and the sky's radiation reaches the open ground of the Moon
+  at 1.4 millisieverts a day of the game and of Mars at 0.7, a dose that builds up slowly in whoever stays long.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

@@ -11,8 +11,11 @@ import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.worn.WornItems;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
@@ -44,8 +47,18 @@ public final class Resistances {
     public static final DataMapType<EntityType<?>, Map<ResourceLocation, Float>> ENTITIES = DataMapType.builder(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "resistances"), Registries.ENTITY_TYPE, CODEC)
             .synced(CODEC, false).build();
+    /* What else a worn stack stops besides its item's, by what is fitted to it, as mods declared. */
+    private static final List<IStackResistance> SOURCES = new CopyOnWriteArrayList<>();
 
     private Resistances() {
+    }
+
+    /**
+     * Declares {@code source} of what a worn stack stops besides its item's, by what is fitted to that very stack: a
+     * suit's module.
+     */
+    public static void source(final IStackResistance source) {
+        SOURCES.add(Objects.requireNonNull(source, "source"));
     }
 
     /** Hands the buses the data maps and what cuts damage, once, from the Core's constructor. */
@@ -57,29 +70,31 @@ public final class Resistances {
         NeoForge.EVENT_BUS.addListener(LivingIncomingDamageEvent.class, Resistances::onDamage);
     }
 
-    /** What share of {@code kind} the item of {@code stack} stops, worn. */
+    /**
+     * What share of {@code kind} {@code stack} stops, worn: its item's, and what is fitted to it, never past all of it.
+     */
     public static double of(final ItemStack stack, final DamageKind kind) {
         if (stack.isEmpty()) {
             return 0;
         }
         final Map<ResourceLocation, Float> map = stack.getItemHolder().getData(ITEMS);
-        return map == null ? 0 : map.getOrDefault(kind.id(), 0F);
+        double share = map == null ? 0 : map.getOrDefault(kind.id(), 0F);
+        for (final IStackResistance source : SOURCES) {
+            share += source.share(stack, kind);
+        }
+        return Math.min(1, share);
     }
 
-    /** Each kind the item of {@code stack} stops some of, and how much, in the order kinds were declared. */
+    /** Each kind {@code stack} stops some of, and how much, in the order kinds were declared. */
     public static Map<DamageKind, Double> of(final ItemStack stack) {
         final Map<DamageKind, Double> out = new LinkedHashMap<>();
         if (stack.isEmpty()) {
             return out;
         }
-        final Map<ResourceLocation, Float> map = stack.getItemHolder().getData(ITEMS);
-        if (map == null) {
-            return out;
-        }
         for (final DamageKind kind : DamageKinds.all()) {
-            final Float share = map.get(kind.id());
-            if (share != null && share > 0) {
-                out.put(kind, (double) share);
+            final double share = of(stack, kind);
+            if (share > 0) {
+                out.put(kind, share);
             }
         }
         return out;

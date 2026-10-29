@@ -340,6 +340,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   name, its kind, its place by longitude and latitude and its radius in degrees, and `SpaceLandmarks` registers them,
   a data pack's files in `data/<namespace>/jsspace/landmarks/` winning over a declaration; a world's generator lays
   those declared on it. Experimental.
+- (Space) Life support: J's Space's API is at version 6. `SpaceSuit` is a pressure suit, its four pieces, the air its
+  tanks hold and the cold and heat it stands, registered in `SpaceSuits`, which says the suit a body wears whole;
+  `SuitModule`, a suit's module, what it does (more air, radiation stopped, light), the piece it fits and how much,
+  registered in `SuitModules`; and `WorldDangers` lists each world's `WorldDanger`s. Each takes a data pack's files,
+  `data/<namespace>/jsspace/suits/`, `suit_modules/` and `dangers/`. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2022,6 +2027,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   on the tops of flows and faceted below; its mudstone dusted red in the upper layers of every exposure, buff on the
   scarps and grey below. Vesicular basalt's stones lie loose on its plains, and veins of hematite, of magnetite and
   olivine, and of gypsum and jarosite lie in their rocks.
+- (Space) Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
+  tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
+  within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece
+  they go on: Extra Oxygen, half as much air again; the Radiation Vest, which stops half the sky's radiation; and Suit
+  Lamps, lighting the way. Every world says its dangers, and the sky's radiation reaches the open ground of the Moon
+  at 1.4 millisieverts a day of the game and of Mars at 0.7, a dose that builds up slowly in whoever stays long.
+- (Core) What is fitted to a worn thing stops harm too: a mod says what a module or a lining fitted to that very
+  stack stops of a kind, beside what its item stops by the data map (`Resistances.source`).
 - (Core) Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

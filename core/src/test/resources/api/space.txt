@@ -31,6 +31,14 @@ stable 0
 5 dev.jstech.space.api.SpaceLandmarks  static Map<ResourceLocation, SpaceLandmark> all(Level)
 5 dev.jstech.space.api.SpaceLandmarks  static Map<ResourceLocation, SpaceLandmark> declared()
 5 dev.jstech.space.api.SpaceLandmarks  static SpaceLandmark declare(ResourceLocation, SpaceLandmark)
+6 dev.jstech.space.api.SpaceSuit  type record(String name, ResourceLocation helmet, ResourceLocation chest, ResourceLocation legs, ResourceLocation feet, int air, double coldest, double hottest)
+6 dev.jstech.space.api.SpaceSuit  boolean stands(double)
+6 dev.jstech.space.api.SpaceSuit  static final Codec<SpaceSuit> CODEC
+6 dev.jstech.space.api.SpaceSuits  type final class
+6 dev.jstech.space.api.SpaceSuits  static Map<ResourceLocation, SpaceSuit> all(Level)
+6 dev.jstech.space.api.SpaceSuits  static Map<ResourceLocation, SpaceSuit> declared()
+6 dev.jstech.space.api.SpaceSuits  static Optional<SpaceSuit> worn(LivingEntity)
+6 dev.jstech.space.api.SpaceSuits  static SpaceSuit declare(ResourceLocation, SpaceSuit)
 3 dev.jstech.space.api.SpaceWorld  type record(String name, ResourceLocation system, ResourceKey<Level> dimension, Optional<ResourceLocation> generator, List<ResourceLocation> modifiers, double diameter)
 3 dev.jstech.space.api.SpaceWorld  static final Codec<SpaceWorld> CODEC
 3 dev.jstech.space.api.SpaceWorlds  type final class
@@ -39,6 +47,41 @@ stable 0
 3 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> get(Level, ResourceLocation)
 3 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> ofDimension(Level, ResourceKey<Level>)
 3 dev.jstech.space.api.SpaceWorlds  static SpaceWorld declare(ResourceLocation, SpaceWorld)
+6 dev.jstech.space.api.SuitModule  type record(String name, Kind kind, EquipmentSlot piece, double amount)
+6 dev.jstech.space.api.SuitModule  static final Codec<SuitModule> CODEC
+6 dev.jstech.space.api.SuitModule.Kind  type enum implements IStableName
+6 dev.jstech.space.api.SuitModule.Kind  AIR
+6 dev.jstech.space.api.SuitModule.Kind  LIGHT
+6 dev.jstech.space.api.SuitModule.Kind  RADIATION
+6 dev.jstech.space.api.SuitModule.Kind  String serializedName()
+6 dev.jstech.space.api.SuitModule.Kind  static final Codec<Kind> CODEC
+6 dev.jstech.space.api.SuitModules  type final class
+6 dev.jstech.space.api.SuitModules  static Map<ResourceLocation, SuitModule> all(Level)
+6 dev.jstech.space.api.SuitModules  static Map<ResourceLocation, SuitModule> declared()
+6 dev.jstech.space.api.SuitModules  static Optional<SuitModule> get(Level, ResourceLocation)
+6 dev.jstech.space.api.SuitModules  static SuitModule declare(ResourceLocation, SuitModule)
+6 dev.jstech.space.api.WorldDanger  type enum implements IStableName
+6 dev.jstech.space.api.WorldDanger  COLD
+6 dev.jstech.space.api.WorldDanger  COSMIC_RADIATION
+6 dev.jstech.space.api.WorldDanger  CRUSHING_PRESSURE
+6 dev.jstech.space.api.WorldDanger  DUST
+6 dev.jstech.space.api.WorldDanger  GRAVITY
+6 dev.jstech.space.api.WorldDanger  HEAT
+6 dev.jstech.space.api.WorldDanger  PERCHLORATES
+6 dev.jstech.space.api.WorldDanger  POISONOUS_AIR
+6 dev.jstech.space.api.WorldDanger  RADIATION_BELTS
+6 dev.jstech.space.api.WorldDanger  SOLAR_STORMS
+6 dev.jstech.space.api.WorldDanger  STRONG_FIELDS
+6 dev.jstech.space.api.WorldDanger  String serializedName()
+6 dev.jstech.space.api.WorldDanger  THIN_AIR
+6 dev.jstech.space.api.WorldDanger  VACUUM
+6 dev.jstech.space.api.WorldDanger  VIOLENT_STARS
+6 dev.jstech.space.api.WorldDanger  static final Codec<WorldDanger> CODEC
+6 dev.jstech.space.api.WorldDangers  type final class
+6 dev.jstech.space.api.WorldDangers  static List<WorldDanger> declare(ResourceLocation, List<WorldDanger>)
+6 dev.jstech.space.api.WorldDangers  static List<WorldDanger> of(Level, ResourceLocation)
+6 dev.jstech.space.api.WorldDangers  static Map<ResourceLocation, List<WorldDanger>> all(Level)
+6 dev.jstech.space.api.WorldDangers  static Map<ResourceLocation, List<WorldDanger>> declared()
 3 dev.jstech.space.api.WorldGenerators  type final class
 3 dev.jstech.space.api.WorldGenerators  static Map<ResourceLocation, IWorldGenerator> all()
 3 dev.jstech.space.api.WorldGenerators  static Optional<IWorldGenerator> get(ResourceLocation)

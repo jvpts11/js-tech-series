@@ -1684,6 +1684,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lies open, how deep, how steep the ground is round it, its height and its biome; the feature
   `jscore:rock_variations` is laid after the rock in layers and before the ores, and written by the data generation
   for a data pack to change.
+- What is fitted to a worn thing stops harm too: a mod says what a module or a lining fitted to that very
+  stack stops of a kind, beside what its item stops by the data map (`Resistances.source`).
 - Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`
