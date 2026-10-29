@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:add",
+  "argument1": {
+    "type": "minecraft:y_clamped_gradient",
+    "from_value": 8.0,
+    "from_y": -64,
+    "to_value": -16.0,
+    "to_y": 320
+  },
+  "argument2": {
+    "type": "minecraft:mul",
+    "argument1": 0.0625,
+    "argument2": {
+      "type": "minecraft:flat_cache",
+      "argument": {
+        "type": "minecraft:add",
+        "argument1": {
+          "type": "jscore:round_map",
+          "high": 80.0,
+          "low": -80.0,
+          "map": "jsspace:mars/height",
+          "world": "jsspace:mars"
+        },
+        "argument2": {
+          "type": "minecraft:mul",
+          "argument1": 2.0,
+          "argument2": {
+            "type": "minecraft:noise",
+            "noise": "jsspace:arid_bumps",
+            "xz_scale": 1.0,
+            "y_scale": 0.0
+          }
+        }
+      }
+    }
+  }
+}

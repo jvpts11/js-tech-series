@@ -1,5 +1,40 @@
 {
   "values": {
+    "jsspace:mars_chaos_terrain": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -63.0
+    },
+    "jsspace:mars_dark_dunes": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -63.0
+    },
+    "jsspace:mars_lakebed": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -63.0
+    },
+    "jsspace:mars_northern_plains": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -63.0
+    },
+    "jsspace:mars_oxide_plains": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -63.0
+    },
+    "jsspace:mars_polar_cap": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -125.0
+    },
+    "jsspace:mars_southern_highlands": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -63.0
+    },
     "jsspace:moon_highlands": {
       "rain": 0.0,
       "seasons": 14.0,

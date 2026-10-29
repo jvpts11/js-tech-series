@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 192,
+    "chance": 0.7,
+    "fill": {
+      "Name": "jsspace:martian_basalt"
+    },
+    "height": 0.3,
+    "kind": "crater",
+    "largest": 60,
+    "salt": 1873410077,
+    "scatter": {
+      "Name": "jsspace:martian_basalt"
+    },
+    "smallest": 8,
+    "surface": {
+      "Name": "jsspace:martian_regolith"
+    }
+  }
+}

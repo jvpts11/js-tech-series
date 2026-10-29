@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_chaos",
+  "features": "jsspace:mars_chaos_blocks",
+  "step": "raw_generation"
+}

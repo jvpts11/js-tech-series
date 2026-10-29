@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 96,
+    "chance": 0.95,
+    "fill": {
+      "Name": "jsspace:mudstone"
+    },
+    "height": 0.5,
+    "kind": "mesa",
+    "largest": 40,
+    "salt": -1478440302,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 12,
+    "surface": {
+      "Name": "jsspace:martian_regolith"
+    }
+  }
+}

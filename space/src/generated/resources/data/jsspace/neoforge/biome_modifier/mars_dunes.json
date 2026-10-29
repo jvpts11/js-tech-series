@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_dunes",
+  "features": "jsspace:mars_dunes",
+  "step": "raw_generation"
+}

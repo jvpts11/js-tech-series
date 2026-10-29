@@ -9,6 +9,7 @@ package dev.jstech.space.client.universe;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.worldgen.MarsBiomes;
 import dev.jstech.space.worldgen.MoonBiomes;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,10 +76,14 @@ final class GroundColours {
     private static final ResourceLocation MYCELIUM = texture("mycelium_top");
     private static final ResourceLocation PODZOL = texture("podzol_top");
     /* The Moon's grounds: the maria's dark regolith, and the highlands' bright one. */
-    private static final ResourceLocation MARE_REGOLITH = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
-            "textures/block/mare_regolith.png");
-    private static final ResourceLocation HIGHLAND_REGOLITH = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
-            "textures/block/highland_regolith.png");
+    private static final ResourceLocation MARE_REGOLITH = own("mare_regolith");
+    private static final ResourceLocation HIGHLAND_REGOLITH = own("highland_regolith");
+    /* Mars' grounds: its red regolith, its oxides, its dunes' dark sand, its lakes' mudstone and its caps' frost. */
+    private static final ResourceLocation MARTIAN_REGOLITH = own("martian_regolith");
+    private static final ResourceLocation HEMATITE_REGOLITH = own("hematite_regolith");
+    private static final ResourceLocation BASALT_SAND = own("basalt_sand");
+    private static final ResourceLocation DUSTED_MUDSTONE = own("dusted_mudstone_top");
+    private static final ResourceLocation DRY_ICE = own("dry_ice");
     /* The leaves the game tints with fixed colours, not the biome's. */
     private static final int SPRUCE_TINT = 0x619961;
     private static final int BIRCH_TINT = 0x80A755;
@@ -158,6 +163,21 @@ final class GroundColours {
         }
         if (biome.is(MoonBiomes.ANORTHOSITE)) {
             return mean(HIGHLAND_REGOLITH);
+        }
+        if (biome.is(MarsBiomes.POLAR_CAP.key())) {
+            return mean(DRY_ICE);
+        }
+        if (biome.is(MarsBiomes.DARK_DUNES.key())) {
+            return mean(BASALT_SAND);
+        }
+        if (biome.is(MarsBiomes.OXIDE_PLAINS.key())) {
+            return mean(HEMATITE_REGOLITH);
+        }
+        if (biome.is(MarsBiomes.LAKEBED.key())) {
+            return mean(DUSTED_MUDSTONE);
+        }
+        if (biome.is(MarsBiomes.STONY) || biome.is(MarsBiomes.CHAOS)) {
+            return mean(MARTIAN_REGOLITH);
         }
         if (biome.is(Biomes.MUSHROOM_FIELDS)) {
             return mean(MYCELIUM);
@@ -263,6 +283,11 @@ final class GroundColours {
 
     private static ResourceLocation texture(final String block) {
         return ResourceLocation.withDefaultNamespace("textures/block/" + block + ".png");
+    }
+
+    /* A block texture of J's Space's own. */
+    private static ResourceLocation own(final String block) {
+        return ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "textures/block/" + block + ".png");
     }
 
     /* {@code colour} tinted by {@code tint}, both RGB, as the game tints a grey texture. */

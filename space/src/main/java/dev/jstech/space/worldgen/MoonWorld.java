@@ -46,9 +46,15 @@ public final class MoonWorld {
     private static final float POLAR = -1.4F;
     private static final float HIGHLAND = -0.2F;
     private static final float MARE = 1F;
-    /* And by wetness: a mare cut by rilles or holed by skylights, and the young craters' ejecta. */
-    private static final float CUT = 0.7F;
+    /*
+     * And by wetness: a mare cut by rilles or holed by skylights, and the young craters' ejecta at the edge of the
+     * game's range of a biome's place, which their map pushes a place far past, beyond where the slow noise, of which
+     * only half reaches the biomes, can pull it back.
+     */
+    private static final float CUT = 0.4F;
     private static final float YOUNG = 2F;
+    private static final float YOUNG_PUSH = 4F;
+    private static final double NOISE = 0.5;
     private static final int BEDROCK = 3;
 
     public static final TextKey TYCHO_NAME = TextKey.of("jsspace.landmark.tycho", "Tycho");
@@ -70,8 +76,9 @@ public final class MoonWorld {
     /** How wet a place is, to its biomes: the slow noise, and the young craters' ejecta far above it. */
     public static final DensitySpec WETNESS = Terrains.density(id("moon/wetness"), (noises, densities) ->
             DensityFunctions.add(
-                    DensityFunctions.noise(noises.getOrThrow(PATCHES.key()), 1.0, 0.0),
-                    CoreDensities.roundMap(id("moon/young"), dimension(), 0, YOUNG)));
+                    DensityFunctions.mul(DensityFunctions.constant(NOISE),
+                            DensityFunctions.noise(noises.getOrThrow(PATCHES.key()), 1.0, 0.0)),
+                    CoreDensities.roundMap(id("moon/young"), dimension(), 0, YOUNG_PUSH)));
     public static final Terrains.TerrainSpec TERRAIN = Terrains.terrain(id("moon"))
             .heights(CrateredGenerator.MIN_Y, CrateredGenerator.HEIGHT).ground(CrateredGenerator.GROUND).hills(1, 64)
             .sea(CrateredGenerator.MIN_Y).stone(SpaceRocks.ANORTHOSITE).liquid(() -> Blocks.AIR).bedrock(BEDROCK)

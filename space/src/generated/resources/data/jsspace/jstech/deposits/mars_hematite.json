@@ -1,0 +1,17 @@
+{
+  "biomes": "jsspace:mars_oxides",
+  "frequency": 0.2,
+  "max_y": 110,
+  "min_y": 40,
+  "minerals": [
+    {
+      "material": "jscore:hematite"
+    }
+  ],
+  "radius": 16.0,
+  "rocks": [
+    "jsspace:martian_regolith",
+    "jsspace:mudstone"
+  ],
+  "thickness": 4.0
+}

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:add",
+  "argument1": {
+    "type": "jscore:round_map",
+    "low": -0.20000000298023224,
+    "map": "jsspace:mars/north",
+    "world": "jsspace:mars"
+  },
+  "argument2": {
+    "type": "jscore:round_map",
+    "high": -2.4000000953674316,
+    "map": "jsspace:mars/polar",
+    "world": "jsspace:mars"
+  }
+}

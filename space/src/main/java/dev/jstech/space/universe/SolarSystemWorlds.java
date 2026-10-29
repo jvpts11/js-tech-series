@@ -12,6 +12,7 @@ import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.api.WorldGenerators;
+import dev.jstech.space.worldgen.AridGenerator;
 import dev.jstech.space.worldgen.CrateredGenerator;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +47,7 @@ public final class SolarSystemWorlds {
     public static void declare() {
         // Loading the class declares the worlds; the generators that shape their ground are registered here.
         WorldGenerators.register(CRATERED, new CrateredGenerator());
+        WorldGenerators.register(ARID, new AridGenerator());
     }
 
     /** The body the world {@code id} is drawn as in the Solar System's space, if it is one of these. */

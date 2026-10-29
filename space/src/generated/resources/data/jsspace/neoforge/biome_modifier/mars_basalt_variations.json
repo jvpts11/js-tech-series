@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_basalt",
+  "features": "jsspace:mars_basalt_variations",
+  "step": "underground_structures"
+}

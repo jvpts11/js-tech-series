@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_lakes",
+  "features": "jsspace:mars_lake_craters",
+  "step": "raw_generation"
+}

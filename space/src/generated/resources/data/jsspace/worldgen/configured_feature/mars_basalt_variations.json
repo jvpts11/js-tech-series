@@ -1,0 +1,25 @@
+{
+  "type": "jscore:rock_variations",
+  "config": {
+    "rock": "jsspace:martian_basalt",
+    "variants": [
+      {
+        "block": {
+          "Name": "jsspace:columnar_martian_basalt"
+        },
+        "where": {
+          "exposure": "side",
+          "min_slope": 3
+        }
+      },
+      {
+        "block": {
+          "Name": "jsspace:vesicular_martian_basalt"
+        },
+        "where": {
+          "exposure": "top"
+        }
+      }
+    ]
+  }
+}

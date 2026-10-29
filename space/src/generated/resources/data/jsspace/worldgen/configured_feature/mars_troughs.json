@@ -1,0 +1,18 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 640,
+    "chance": 0.7,
+    "height": 0.12,
+    "kind": "canyon",
+    "largest": 300,
+    "salt": -205935833,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 120,
+    "surface": {
+      "Name": "jsspace:water_ice"
+    }
+  }
+}

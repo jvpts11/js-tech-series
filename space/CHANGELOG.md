@@ -141,6 +141,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   by the thousand, fresh ones bright, loose stones of basalt and of anorthosite strewn over the ground, and veins of
   ilmenite with armalcolite and tranquillityite, of KREEP's merrillite and of the native iron of meteorites. Tycho is
   the first landmark of the worlds. The far map seen climbing from the Moon is painted in its regoliths.
+- Mars' ground, as its sphere shows it from orbit: the low smooth north and the old cratered south either side
+  of the dichotomy, Tharsis' volcanoes standing and Valles Marineris cut where its height map has them, under a dusty
+  sky. Seven biomes of its own: Northern Plains and Southern Highlands of red regolith over basalt, Oxide Plains of
+  hematite regolith, Dark Dunes of basalt sand walking in crescents where its map is dark, Chaos Terrain broken into
+  flat-topped blocks of mudstone where its canyons open, Lakebeds of mudstone in old craters, and Polar Caps of water
+  ice under carbon dioxide frost, cut by spiral troughs. Its basalt lies in columns on the scarps and walls, pocked
+  on the tops of flows and faceted below; its mudstone dusted red in the upper layers of every exposure, buff on the
+  scarps and grey below. Vesicular basalt's stones lie loose on its plains, and veins of hematite, of magnetite and
+  olivine, and of gypsum and jarosite lie in their rocks.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

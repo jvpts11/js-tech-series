@@ -1,0 +1,21 @@
+{
+  "biomes": "jsspace:mars_basalt",
+  "density": 0.45,
+  "frequency": 0.12,
+  "max_y": 100,
+  "min_y": 0,
+  "minerals": [
+    {
+      "material": "jscore:magnetite",
+      "weight": 2.0
+    },
+    {
+      "material": "jscore:olivine"
+    }
+  ],
+  "radius": 18.0,
+  "rocks": [
+    "jsspace:martian_basalt"
+  ],
+  "thickness": 5.0
+}

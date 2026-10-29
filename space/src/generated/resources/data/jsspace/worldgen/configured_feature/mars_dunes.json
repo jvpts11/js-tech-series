@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 64,
+    "chance": 0.9,
+    "fill": {
+      "Name": "jsspace:basalt_sand"
+    },
+    "height": 0.3,
+    "kind": "dunes",
+    "largest": 40,
+    "salt": 1878564804,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 12,
+    "surface": {
+      "Name": "jsspace:basalt_sand"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "type": "jscore:rock_variations",
+  "config": {
+    "rock": "jsspace:mudstone",
+    "variants": [
+      {
+        "block": {
+          "Name": "jsspace:dusted_mudstone"
+        },
+        "where": {
+          "max_depth": 2
+        }
+      },
+      {
+        "block": {
+          "Name": "jsspace:buff_mudstone"
+        },
+        "where": {
+          "exposure": "side",
+          "min_slope": 3
+        }
+      }
+    ]
+  }
+}

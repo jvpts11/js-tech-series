@@ -1,0 +1,21 @@
+{
+  "biomes": "jsspace:mars_mudstone",
+  "density": 0.45,
+  "frequency": 0.15,
+  "max_y": 110,
+  "min_y": 20,
+  "minerals": [
+    {
+      "material": "jscore:gypsum",
+      "weight": 2.0
+    },
+    {
+      "material": "jscore:jarosite"
+    }
+  ],
+  "radius": 14.0,
+  "rocks": [
+    "jsspace:mudstone"
+  ],
+  "thickness": 4.0
+}

@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.space;
 import dev.jstech.core.dimension.DimensionBorders;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.worldgen.biome.WorldBiomes;
+import dev.jstech.core.worldgen.terrain.RoundMap;
 import dev.jstech.core.worldgen.terrain.RoundMaps;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.SpaceLandmark;
@@ -17,6 +18,8 @@ import dev.jstech.space.api.SpaceLandmarks;
 import dev.jstech.space.worldgen.MoonBiomes;
 import dev.jstech.space.worldgen.MoonWorld;
 import dev.jstech.tests.JsTests;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.minecraft.core.Holder;
@@ -27,6 +30,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -59,6 +63,10 @@ public final class MoonGameTests {
     private static final double FLOOR = 0.25;
     private static final int RIM_OVER_BOWL = 40;
     private static final int PEAK_OVER_FLOOR = 25;
+    /* The grid the biomes are read on, in degrees, and how sure a map must be to say what lies there. */
+    private static final double LONGITUDE_STEP = 7.5;
+    private static final double LATITUDE_STEP = 4;
+    private static final double SURE = 0.98;
 
     private MoonGameTests() {
     }
@@ -98,6 +106,44 @@ public final class MoonGameTests {
         final Holder<Biome> tycho = biome(moon, new double[] {MoonWorld.TYCHO.longitude(),
                 MoonWorld.TYCHO.latitude()});
         helper.assertTrue(tycho.is(MoonBiomes.YOUNG_CRATER.key()), "Tycho lies in its young ejecta; " + name(tycho));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void biomes_followTheMoonsMapsAcrossIt(final GameTestHelper helper) {
+        final ServerLevel moon = moon(helper);
+        final RoundMap maria = RoundMaps.get(map("maria")).orElseThrow();
+        final RoundMap young = RoundMaps.get(map("young")).orElseThrow();
+        final RoundMap polar = RoundMaps.get(map("polar")).orElseThrow();
+        final List<String> wrong = new ArrayList<>();
+        int read = 0;
+        for (double lat = -88; lat <= 88; lat += LATITUDE_STEP) {
+            for (double lon = -180; lon < 180; lon += LONGITUDE_STEP) {
+                final double mare = maria.at(lon, lat);
+                final boolean bright = young.at(lon, lat) > SURE;
+                final boolean dull = young.at(lon, lat) < 1 - SURE;
+                final double pole = polar.at(lon, lat);
+                final Holder<Biome> found = biome(moon, new double[] {lon, lat});
+                final boolean right;
+                if (bright) {
+                    right = found.is(MoonBiomes.YOUNG_CRATER.key());
+                } else if (dull && pole > SURE) {
+                    right = found.is(MoonBiomes.POLAR_CRATERS.key());
+                } else if (dull && pole < 1 - SURE && (mare > SURE || mare < 1 - SURE)) {
+                    final TagKey<Biome> rock = mare > SURE ? MoonBiomes.MARIA : MoonBiomes.ANORTHOSITE;
+                    right = found.is(rock) && !found.is(MoonBiomes.YOUNG_CRATER.key())
+                            && !found.is(MoonBiomes.POLAR_CRATERS.key());
+                } else {
+                    continue;
+                }
+                read++;
+                if (!right) {
+                    wrong.add(lon + ", " + lat + ": " + name(found));
+                }
+            }
+        }
+        helper.assertTrue(read > 0 && wrong.isEmpty(), "every place a map is sure of holds its biome, of " + read
+                + " read: " + wrong);
         helper.succeed();
     }
 
@@ -160,6 +206,10 @@ public final class MoonGameTests {
     private static int ground(final ServerLevel moon, final int x, final int z) {
         return moon.getChunkSource().getGenerator().getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, moon,
                 moon.getChunkSource().randomState());
+    }
+
+    private static ResourceLocation map(final String which) {
+        return ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "moon/" + which);
     }
 
     private static String name(final Holder<Biome> biome) {

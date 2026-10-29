@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 768,
+    "chance": 0.85,
+    "fill": {
+      "Name": "jsspace:martian_basalt"
+    },
+    "height": 0.08,
+    "kind": "crater",
+    "largest": 400,
+    "salt": 1808207361,
+    "scatter": {
+      "Name": "jsspace:martian_basalt"
+    },
+    "smallest": 150,
+    "surface": {
+      "Name": "jsspace:mudstone"
+    }
+  }
+}

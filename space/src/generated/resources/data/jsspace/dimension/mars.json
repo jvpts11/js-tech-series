@@ -1,0 +1,120 @@
+{
+  "type": "jsspace:mars",
+  "generator": {
+    "type": "minecraft:noise",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        {
+          "biome": "jsspace:mars_northern_plains",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 0.0,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_southern_highlands",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 0.0,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_polar_cap",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 0.0,
+            "offset": 0.0,
+            "temperature": -1.4,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_oxide_plains",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 0.4,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_lakebed",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": -0.4,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_dark_dunes",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 2.0,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_dark_dunes",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 2.0,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_chaos_terrain",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": -2.0,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_chaos_terrain",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": -2.0,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.0
+          }
+        }
+      ]
+    },
+    "settings": "jsspace:mars"
+  }
+}
