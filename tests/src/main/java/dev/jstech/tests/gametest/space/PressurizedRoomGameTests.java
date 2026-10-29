@@ -251,11 +251,12 @@ public final class PressurizedRoomGameTests {
     }
 
     /*
-     * Whether a torch lies as an item near {@code pos}: popped out in the Moon's pull, it flies some blocks up and away
-     * before it comes down.
+     * Whether a torch is out as an item near {@code pos} or anywhere under it: popped out in the Moon's pull, it flies
+     * some blocks up and away, then falls past the block it stood on to the ground far below.
      */
     private static boolean fallen(final ServerLevel level, final BlockPos pos) {
-        return !level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(FALL_REACH),
+        return !level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(FALL_REACH)
+                .expandTowards(0, level.getMinBuildHeight() - pos.getY(), 0),
                 item -> item.getItem().is(Items.TORCH)).isEmpty();
     }
 

@@ -180,6 +180,18 @@ event.registerEntityRenderer(ROBOT.get(), context -> KitEntityRenderer.of(contex
 An item moves apart in each place it is drawn (in the hand, in first person, in a slot, on the ground), so the one in
 a slot does not play what the one in the hand plays; a stack the server animates moves alike everywhere.
 
+Armour shares one model among its pieces, and each piece worn draws the bones of its own slot: the helmet
+`armorHead`, the chestplate `armorBody` and the arms, the leggings the legs, the boots the boots. Each bone hangs by its
+pivot on the joint of the limb it follows (in a glTF, a node's own place is its pivot, so its mesh is laid round it).
+Leggings show `armorBody` too, as the waist they hang from, unless the model has a bone of its own for the waist,
+`armorWaist`, which follows the body: then the chest is the chestplate's alone, and leggings worn alone show no chest.
+*Added 2026-10-29:* a bone may be shown only while the piece's stack says so, a visor lowered or a module fitted:
+
+```java
+event.registerItem(KitArmorModel.of(SUIT.id()).shownWhile("goldVisor", stack -> visorDown(stack)).extensions(),
+        HELMET.get(), SUIT_PIECE.get(), TROUSERS.get(), BOOTS.get());
+```
+
 ## What moves a model
 
 A model's `ModelAnimator` holds its **controllers**, each playing one animation, in the order they were first asked

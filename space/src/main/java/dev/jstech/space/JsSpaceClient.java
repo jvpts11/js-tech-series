@@ -8,7 +8,9 @@
 package dev.jstech.space;
 
 import dev.jstech.core.client.advancement.WideBackgrounds;
+import dev.jstech.space.client.life.LunarSuitClient;
 import dev.jstech.space.client.life.SuitLamps;
+import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -30,7 +32,10 @@ public final class JsSpaceClient {
         WideBackgrounds.declare(SKY, WIDE_SKY, WIDE_SKY_WIDTH, WIDE_SKY_HEIGHT);
         // The worlds of the Solar System's space, drawn as spheres in their places, and the Sun among the stars.
         SystemSpaceRenderer.listen(modEventBus);
-        // The lamps on suits' helmets, lighting the way.
+        // The lamps on suits' helmets, lighting the way; the lunar suit worn, drawn with its model; and the Sun's glare
+        // where no air softens it, which the gold visor cuts.
         SuitLamps.listen();
+        LunarSuitClient.listen(modEventBus);
+        SunGlare.listen(modEventBus);
     }
 }

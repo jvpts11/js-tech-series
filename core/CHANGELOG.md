@@ -1691,6 +1691,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its own flames, and the Core puts them out wherever they are lit with too little oxygen and when their room runs
   short (`Flames`, `IFlame`). A dimension's rules may say how blocks seal a room there, over the map of seals
   (`seals`, `DimensionSeal`).
+- Armour drawn with the Core's models draws each piece worn, every one of them, where only the first was drawn
+  before; a model may give the leggings a waist of their own, `armorWaist`, so leggings worn alone show no chest; and a
+  bone may be shown only while the piece's stack says so (`KitArmorModel.shownWhile`), a visor lowered or a module
+  fitted.
 - Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

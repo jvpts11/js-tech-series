@@ -345,6 +345,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `SuitModule`, a suit's module, what it does (more air, radiation stopped, light), the piece it fits and how much,
   registered in `SuitModules`; and `WorldDangers` lists each world's `WorldDanger`s. Each takes a data pack's files,
   `data/<namespace>/jsspace/suits/`, `suit_modules/` and `dangers/`. Experimental.
+- (Space) The Sun's glare: J's Space's API is at version 7. A suit module may cut the Sun's glare where no air
+  softens it, `SuitModule.Kind.GLARE`, its amount the share it cuts. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2047,6 +2049,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its own flames, and the Core puts them out wherever they are lit with too little oxygen and when their room runs
   short (`Flames`, `IFlame`). A dimension's rules may say how blocks seal a room there, over the map of seals
   (`seals`, `DimensionSeal`).
+- (Space) The lunar suit, after Apollo's A7L: the Lunar Helmet, hard and white with its smoked visor in its frame, its
+  hinges and its red stripe; the Lunar Suit with its neck ring, bearings, convolutes, gloves, the chest module with its
+  connectors and hoses, and the life-support pack on its back with its hatch, vent, lamps, purge unit, antenna and
+  bottles; the Lunar Trousers and the Lunar Boots. Worn whole it is a pressure suit with half an hour of air in its
+  tanks that stands the cold of the lunar night and the heat of its noon, and armour as leather is. The Gold Visor, a
+  module for the helmet, is lowered gold over its visor. On the Moon and in space, where no air softens it, looking
+  near the Sun whites out the view, the nearer the more; the gold visor cuts it, and the view through it is a little
+  gold. It harms no one.
+- (Core) Armour drawn with the Core's models draws each piece worn, every one of them, where only the first was drawn
+  before; a model may give the leggings a waist of their own, `armorWaist`, so leggings worn alone show no chest; and a
+  bone may be shown only while the piece's stack says so (`KitArmorModel.shownWhile`), a visor lowered or a module
+  fitted.
 - (Core) Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

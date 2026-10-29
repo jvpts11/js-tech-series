@@ -18,6 +18,7 @@ import dev.jstech.space.geology.SpaceOres;
 import dev.jstech.space.geology.SpaceRocks;
 import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.space.life.LifeSupport;
+import dev.jstech.space.life.LunarSuit;
 import dev.jstech.space.life.SpaceFlames;
 import dev.jstech.space.life.SuitData;
 import dev.jstech.space.life.SuitModuleItems;
@@ -86,8 +87,9 @@ public final class JsSpace {
         MoonWorld.declare();
         MarsBiomes.declare();
         MarsWorld.declare();
-        // Life support: the suits' air and modules, and each world's dangers and the sky's radiation on it; the open
-        // flames that go out where the air holds too little oxygen.
+        // Life support: the lunar suit, the suits' air and modules, and each world's dangers and the sky's radiation
+        // on it; the open flames that go out where the air holds too little oxygen.
+        LunarSuit.declare(modEventBus);
         SuitData.declare();
         SuitModuleItems.declare();
         LifeSupport.listen();

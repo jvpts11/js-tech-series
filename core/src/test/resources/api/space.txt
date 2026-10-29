@@ -51,6 +51,7 @@ stable 0
 6 dev.jstech.space.api.SuitModule  static final Codec<SuitModule> CODEC
 6 dev.jstech.space.api.SuitModule.Kind  type enum implements IStableName
 6 dev.jstech.space.api.SuitModule.Kind  AIR
+7 dev.jstech.space.api.SuitModule.Kind  GLARE
 6 dev.jstech.space.api.SuitModule.Kind  LIGHT
 6 dev.jstech.space.api.SuitModule.Kind  RADIATION
 6 dev.jstech.space.api.SuitModule.Kind  String serializedName()

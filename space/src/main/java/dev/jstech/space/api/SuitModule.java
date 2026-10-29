@@ -25,7 +25,8 @@ import net.minecraft.world.entity.EquipmentSlot;
  * @param name   the key of its name in the language files
  * @param kind   what it does
  * @param piece  the piece of a suit it fits
- * @param amount how much: the share of the tanks it adds, of the radiation it stops, the light it gives
+ * @param amount how much: the share of the tanks it adds, of the radiation it stops, the light it gives, of the glare
+ *               it cuts
  */
 public record SuitModule(String name, Kind kind, EquipmentSlot piece, double amount) {
 
@@ -50,7 +51,12 @@ public record SuitModule(String name, Kind kind, EquipmentSlot piece, double amo
         /** Stops cosmic radiation and the Sun's storms: its amount the share it stops. */
         RADIATION("radiation"),
         /** Lights the way: its amount the light it gives, 0 to 15. */
-        LIGHT("light");
+        LIGHT("light"),
+        /**
+         * Cuts the Sun's glare where no air softens it, a visor lowered over the helmet's: its amount the share it
+         * cuts, 1 for all of it.
+         */
+        GLARE("glare");
 
         public static final Codec<Kind> CODEC = StableCodecs.byName(Kind.class);
 

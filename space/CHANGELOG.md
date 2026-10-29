@@ -30,6 +30,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `SuitModule`, a suit's module, what it does (more air, radiation stopped, light), the piece it fits and how much,
   registered in `SuitModules`; and `WorldDangers` lists each world's `WorldDanger`s. Each takes a data pack's files,
   `data/<namespace>/jsspace/suits/`, `suit_modules/` and `dangers/`. Experimental.
+- The Sun's glare: J's Space's API is at version 7. A suit module may cut the Sun's glare where no air
+  softens it, `SuitModule.Kind.GLARE`, its amount the share it cuts. Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -168,6 +170,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   little oxygen to burn, in a vacuum, in Mars' air, in a room whose air runs short: a candle or a campfire is left
   unlit, and a torch or a lantern falls as an item with a puff of smoke. A new consequence in `jsspace-server.toml`,
   Flames need air, lets them burn anywhere.
+- The lunar suit, after Apollo's A7L: the Lunar Helmet, hard and white with its smoked visor in its frame, its
+  hinges and its red stripe; the Lunar Suit with its neck ring, bearings, convolutes, gloves, the chest module with its
+  connectors and hoses, and the life-support pack on its back with its hatch, vent, lamps, purge unit, antenna and
+  bottles; the Lunar Trousers and the Lunar Boots. Worn whole it is a pressure suit with half an hour of air in its
+  tanks that stands the cold of the lunar night and the heat of its noon, and armour as leather is. The Gold Visor, a
+  module for the helmet, is lowered gold over its visor. On the Moon and in space, where no air softens it, looking
+  near the Sun whites out the view, the nearer the more; the gold visor cuts it, and the view through it is a little
+  gold. It harms no one.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

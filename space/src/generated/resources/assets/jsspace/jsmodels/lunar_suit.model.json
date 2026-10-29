@@ -1,0 +1,6 @@
+{
+  "model": "jsspace:jsmodels/lunar_suit.gltf",
+  "textures": [
+    "jsspace:textures/models/lunar_suit.png"
+  ]
+}
