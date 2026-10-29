@@ -53,7 +53,7 @@ class StageMathTest {
     void burns_ofAStageWithNoEngineGiveNothing() {
         final List<StageMath.Burn> burns = StageMath.burns(List.of(StageMath.Piece.inert(3_000, 0, false)));
         assertEquals(0, burns.getFirst().vacuumDeltaV(), CLOSE);
-        assertEquals(0, StageMath.deltaV(burns, false), CLOSE);
+        assertEquals(0, StageMath.deltaV(burns, 0), CLOSE);
     }
 
     @Test
@@ -81,17 +81,27 @@ class StageMathTest {
                 false)));
         final StageMath.Burn burn = burns.getFirst();
         final double weight = burn.startMass() * G0;
-        assertEquals(THRUST * SEA_LEVEL / VACUUM / weight, StageMath.thrustToWeight(burn, 1, true), CLOSE);
-        assertEquals(THRUST / (weight * 0.165), StageMath.thrustToWeight(burn, 0.165, false), CLOSE);
+        assertEquals(THRUST * SEA_LEVEL / VACUUM / weight, StageMath.thrustToWeight(burn, 1, 1), CLOSE);
+        assertEquals(THRUST / (weight * 0.165), StageMath.thrustToWeight(burn, 0.165, 0), CLOSE);
     }
 
     @Test
     void deltaV_sumsTheBurns() {
         final List<StageMath.Burn> burns = StageMath.burns(List.of(engine(1_000),
                 StageMath.Piece.inert(500, 9_000, true), engine(800), StageMath.Piece.inert(300, 2_000, false)));
-        assertEquals(burns.get(0).vacuumDeltaV() + burns.get(1).vacuumDeltaV(), StageMath.deltaV(burns, false),
-                CLOSE);
-        assertTrue(StageMath.deltaV(burns, true) < StageMath.deltaV(burns, false));
+        assertEquals(burns.get(0).vacuumDeltaV() + burns.get(1).vacuumDeltaV(), StageMath.deltaV(burns, 0), CLOSE);
+        assertTrue(StageMath.deltaV(burns, 1) < StageMath.deltaV(burns, 0));
+    }
+
+    @Test
+    void deltaV_fallsInAStraightLineWithTheAirsPressure() {
+        final StageMath.Burn burn = StageMath.burns(List.of(engine(1_000), StageMath.Piece.inert(500, 9_000,
+                false))).getFirst();
+        final double half = (burn.vacuumDeltaV() + burn.seaLevelDeltaV()) / 2;
+        assertEquals(half, StageMath.deltaV(burn, StageMath.air(StageMath.SEA_LEVEL_KILOPASCALS / 2)), CLOSE);
+        assertEquals((VACUUM + SEA_LEVEL) / 2, StageMath.isp(SEA_LEVEL, VACUUM, 0.5), CLOSE);
+        assertEquals(0, StageMath.isp(SEA_LEVEL, VACUUM, 100), CLOSE);
+        assertEquals(0, StageMath.deltaV(burn, 1_000), CLOSE);
     }
 
     private static StageMath.Piece engine(final double mass) {

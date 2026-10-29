@@ -17,11 +17,29 @@ import java.util.List;
  * stage. Boosters hung at a stage's side burn with it and drop first, as the Space Shuttle's did: while they burn, the
  * core's engines burn too, and the stage's delta-v comes in two burns, the boosters' and the core's after them. Each
  * burn's delta-v is Tsiolkovsky's, the engines' specific impulse the thrust-weighted one of all that burn, everything
- * above it carried; in the air the engines' thrust and impulse are their sea-level ones.
+ * above it carried. The air's pressure on the nozzles takes thrust off as it rises, the same mass flowing: an engine's
+ * thrust and impulse fall in a straight line from their vacuum ones to their sea-level ones at the Overworld's
+ * sea-level pressure, and on past it in thicker air, so on Mars an engine is nearly as good as in a vacuum.
  */
 public final class StageMath {
 
+    /** The Overworld's air at sea level, in kilopascals, where engines give their sea-level thrust. */
+    public static final double SEA_LEVEL_KILOPASCALS = 101.325;
+
     private StageMath() {
+    }
+
+    /** The share of the Overworld's sea-level pressure {@code kiloPascals} is: what the sums here call the air. */
+    public static double air(final double kiloPascals) {
+        return Math.max(0, kiloPascals) / SEA_LEVEL_KILOPASCALS;
+    }
+
+    /**
+     * An engine's specific impulse in {@code air}, the share of the sea-level pressure round it, from its impulses at
+     * sea level and in a vacuum; never below nothing, however thick the air.
+     */
+    public static double isp(final double seaLevelIsp, final double vacuumIsp, final double air) {
+        return Math.max(0, vacuumIsp - (vacuumIsp - seaLevelIsp) * Math.max(0, air));
     }
 
     /** The burns of the rocket of {@code pieces}, from the bottom up, in the order they fire. */
@@ -49,21 +67,29 @@ public final class StageMath {
         return List.copyOf(burns);
     }
 
-    /** The whole rocket's delta-v, its burns' summed, in a vacuum or, for the burns in {@code air}, at sea level. */
-    public static double deltaV(final List<Burn> burns, final boolean air) {
+    /**
+     * The whole rocket's delta-v, its burns' summed, with every burn in {@code air}, the share of the sea-level
+     * pressure: 0 in a vacuum, 1 at the Overworld's sea level.
+     */
+    public static double deltaV(final List<Burn> burns, final double air) {
         double sum = 0;
         for (final Burn burn : burns) {
-            sum += air ? burn.seaLevelDeltaV() : burn.vacuumDeltaV();
+            sum += deltaV(burn, air);
         }
         return sum;
     }
 
+    /** The delta-v of {@code burn} in {@code air}, the share of the sea-level pressure. */
+    public static double deltaV(final Burn burn, final double air) {
+        return Math.max(0, burn.vacuumDeltaV() - (burn.vacuumDeltaV() - burn.seaLevelDeltaV()) * Math.max(0, air));
+    }
+
     /**
      * How many times its weight the thrust of {@code burn} is at its start on a world pulling {@code pull} of the
-     * Overworld's, at sea level where there is {@code air}.
+     * Overworld's, in {@code air}, the share of the sea-level pressure.
      */
-    public static double thrustToWeight(final Burn burn, final double pull, final boolean air) {
-        final double thrust = air ? burn.seaLevelThrust() : burn.thrust();
+    public static double thrustToWeight(final Burn burn, final double pull, final double air) {
+        final double thrust = Math.max(0, burn.thrust() - (burn.thrust() - burn.seaLevelThrust()) * Math.max(0, air));
         return burn.startMass() <= 0 || pull <= 0 ? 0
                 : thrust / (burn.startMass() * OrbitScale.STANDARD_GRAVITY * pull);
     }

@@ -352,6 +352,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   top, its height and whether it is built in layers, its mass, the propellant it holds, its engine's thrust and
   specific impulses at sea level and in a vacuum, its seats and its tier; registered in `RocketParts`, which takes a
   data pack's files, `data/<namespace>/jsspace/rocket_parts/`. Experimental.
+- (Space) Propellants: J's Space's API is at version 9. `Propellant` is what a rocket burns: the materials of J's
+  Core's catalogue it is made of, each in the state it is carried in and its share of the mass, the specific impulse a
+  good engine gets of it in a vacuum, and whether its halves light on touching; registered in `Propellants`, which
+  takes a data pack's files, `data/<namespace>/jsspace/propellants/`. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2091,6 +2095,20 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   burning methalox: the sea-level and vacuum engines, the tank, the separation and instrument rings, the capsule, the
   landing legs and the two stages of the lunar lander; a part fits only on one of its own diameter. A rocket belongs
   to whoever built it and is flown by their team.
+- (Space) Propellants and where spent stages go: the skeleton's rockets burn methalox, liquid methane and liquid
+  oxygen in Raptor's mixture, and a rocket's delta-v comes from what its tanks really hold; an engine lights only on
+  its own propellant, and what it does not burn is carried as dead weight. An engine's thrust and impulse fall from
+  their vacuum values with the air's pressure, so on Mars it is nearly as good as in a vacuum. Liquids kept cold boil
+  off a rocket's tanks as it stands, liquid hydrogen fastest, oxygen next, methane least, and a liquid that keeps at
+  the place's warmth not at all. A stage that comes loose lands on the landing platform set for it when it has legs
+  and an engine and the platform is free and wide enough, falls into the fall zone set for it, or falls anywhere in
+  the world already loaded. The Landing Platform is a slab of Landing Pads three times as wide as the stages it takes,
+  nine blocks for those of three and fifteen for those of five, with its terminal in the middle and its target painted
+  across it; built on a structure afloat it is a floating platform, and it holds one stage at a time. A stage that
+  strikes the ground leaves a crater and Rocket Wreckage that gives back a third of its blocks; with the server's
+  Falling stages do damage off, only the wreckage is left.
+- (Core) Methane in the shared catalogue: the natural gas a rocket burns with liquid oxygen, liquid at -162 °C,
+  flammable between 5% and 15% of the air.
 - (Core) Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

@@ -173,4 +173,9 @@ public final class SpaceServerConfig {
     public static boolean flamesNeedAir() {
         return FILE.get(FLAMES_NEED_AIR);
     }
+
+    /** Whether a stage falling with no fall zone and no platform leaves a crater, or only lies there as wreckage. */
+    public static boolean fallingStagesDoDamage() {
+        return FILE.get(FALLING_STAGES_DO_DAMAGE);
+    }
 }

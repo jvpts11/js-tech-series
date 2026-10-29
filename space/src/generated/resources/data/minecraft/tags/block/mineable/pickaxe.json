@@ -10,6 +10,9 @@
     "jsspace:vesicular_martian_basalt",
     "jsspace:mudstone",
     "jsspace:buff_mudstone",
-    "jsspace:dusted_mudstone"
+    "jsspace:dusted_mudstone",
+    "jsspace:landing_pad",
+    "jsspace:landing_platform",
+    "jsspace:rocket_wreckage"
   ]
 }

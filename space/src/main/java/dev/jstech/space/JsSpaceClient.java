@@ -12,6 +12,7 @@ import dev.jstech.space.client.life.LunarSuitClient;
 import dev.jstech.space.client.life.SuitControlsHud;
 import dev.jstech.space.client.life.SuitLamps;
 import dev.jstech.space.client.life.SunGlare;
+import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -40,5 +41,7 @@ public final class JsSpaceClient {
         SunGlare.listen(modEventBus);
         // The suit's controls on the HUD, stacked with the hazard devices, and up close on their key.
         SuitControlsHud.listen(modEventBus);
+        // The target painted across a formed landing platform.
+        LandingPlatformRenderer.listen(modEventBus);
     }
 }

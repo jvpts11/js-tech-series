@@ -13,6 +13,17 @@ stable 0
 3 dev.jstech.space.api.IWorldModifier  default SurfaceRules.RuleSource surface(SpaceWorld, SurfaceRules.RuleSource)
 1 dev.jstech.space.api.JsSpaceApi  type final class
 1 dev.jstech.space.api.JsSpaceApi  static final int VERSION
+9 dev.jstech.space.api.Propellant  type record(String name, List<Component> components, double vacuumIsp, boolean hypergolic)
+9 dev.jstech.space.api.Propellant  boolean solid()
+9 dev.jstech.space.api.Propellant  double share(ResourceLocation)
+9 dev.jstech.space.api.Propellant  static final Codec<Propellant> CODEC
+9 dev.jstech.space.api.Propellant.Component  type record(ResourceLocation material, MatterState state, double share)
+9 dev.jstech.space.api.Propellant.Component  static final Codec<Component> CODEC
+9 dev.jstech.space.api.Propellants  type final class
+9 dev.jstech.space.api.Propellants  static Map<ResourceLocation, Propellant> all(Level)
+9 dev.jstech.space.api.Propellants  static Map<ResourceLocation, Propellant> declared()
+9 dev.jstech.space.api.Propellants  static Optional<Propellant> get(Level, ResourceLocation)
+9 dev.jstech.space.api.Propellants  static Propellant declare(ResourceLocation, Propellant)
 8 dev.jstech.space.api.RocketPart  type record(String name, Kind kind, int diameter, int topDiameter, int height, boolean stretches, double mass, double propellant, Optional<Engine> engine, int seats, int tier)
 8 dev.jstech.space.api.RocketPart  static final Codec<RocketPart> CODEC
 8 dev.jstech.space.api.RocketPart  static final List<Integer> DIAMETERS

@@ -79,12 +79,12 @@ public final class RocketGameTests {
         final Map<ResourceLocation, RocketPart> parts = RocketParts.all(helper.getLevel());
         final RocketStack small = small();
         final List<StageMath.Burn> burns = RocketStages.burns(parts, small).orElseThrow();
-        final double deltaV = StageMath.deltaV(burns, false);
-        final double lift = StageMath.thrustToWeight(burns.getFirst(), 1, true);
+        final double deltaV = StageMath.deltaV(burns, 0);
+        final double lift = StageMath.thrustToWeight(burns.getFirst(), 1, 1);
         helper.assertTrue(burns.size() == 2, "two stages, split at the separation ring: " + burns.size());
         helper.assertTrue(deltaV >= Rocketry.SURFACE_TO_LOW_ORBIT, "it reaches a low orbit: " + deltaV + " m/s");
         helper.assertTrue(lift > 1, "and lifts off the Overworld: " + lift);
-        helper.assertTrue(StageMath.thrustToWeight(burns.getFirst(), 0.165, false) > 5 * lift,
+        helper.assertTrue(StageMath.thrustToWeight(burns.getFirst(), 0.165, 0) > 5 * lift,
                 "and would leap off the Moon");
         helper.assertTrue(RocketStages.height(parts, small) == SMALL_HEIGHT, "it stands "
                 + RocketStages.height(parts, small) + " blocks tall");

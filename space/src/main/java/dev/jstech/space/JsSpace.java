@@ -25,6 +25,8 @@ import dev.jstech.space.life.SuitControls;
 import dev.jstech.space.life.SuitData;
 import dev.jstech.space.life.SuitModuleItems;
 import dev.jstech.space.life.SuitSupplies;
+import dev.jstech.space.platform.LandingPlatform;
+import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.network.SpacePayloads;
 import dev.jstech.space.universe.FarMaps;
@@ -39,6 +41,8 @@ import dev.jstech.space.worldgen.MarsBiomes;
 import dev.jstech.space.worldgen.MarsWorld;
 import dev.jstech.space.worldgen.MoonBiomes;
 import dev.jstech.space.worldgen.MoonWorld;
+import dev.jstech.space.wreck.RocketWreckage;
+import dev.jstech.space.wreck.StageImpacts;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -99,8 +103,15 @@ public final class JsSpace {
         SuitSupplies.declare();
         SuitControls.declare();
         LifeSupport.listen();
-        // The rockets' parts of the skeleton, in the diameters of 3 and 5 blocks.
+        // The rockets' propellant and parts of the skeleton: methalox, and the parts in the diameters of 3 and 5
+        // blocks.
+        SkeletonPropellants.declare();
         SkeletonRocketParts.declare();
+        // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
+        // its wreckage.
+        LandingPlatform.declare();
+        RocketWreckage.declare();
+        StageImpacts.listen();
         SuitAir.listen();
         SpaceFlames.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.

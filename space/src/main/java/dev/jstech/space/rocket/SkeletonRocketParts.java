@@ -40,7 +40,7 @@ public final class SkeletonRocketParts {
     public static final TextKey LANDER_ASCENT = TextKey.of("jsspace.rocket_part.lander_ascent",
             "Lunar Lander Ascent Stage");
     /** The propellant the skeleton's engines burn: methane and liquid oxygen. */
-    public static final ResourceLocation METHALOX = id("methalox");
+    public static final ResourceLocation METHALOX = SkeletonPropellants.METHALOX;
     /* The tier each diameter's parts carry. */
     private static final int SMALL_TIER = 1;
     private static final int LARGE_TIER = 2;

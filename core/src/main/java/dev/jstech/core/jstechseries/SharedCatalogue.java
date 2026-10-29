@@ -26,8 +26,8 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * What the series' mods share that is no element: the common fuels, liquids every mod may burn or store, carbon
- * dioxide, which every body and fire breathes out, ammonia, the first product of industrial chemistry, air, which every
- * compressor draws in (the other gases,
+ * dioxide, which every body and fire breathes out, ammonia, the first product of industrial chemistry, methane, the
+ * natural gas a rocket burns, air, which every compressor draws in (the other gases,
  * hydrogen, oxygen, nitrogen, helium, xenon and the rest, are their elements), and the generic components, items with
  * no game of their own. Each exists only when an installed mod declares it uses it ({@code MaterialLiquids},
  * {@link CatalogueItems}); each mod that makes one gives its own recipe, J's Industrial the whole industrial chain, a
@@ -42,6 +42,7 @@ public final class SharedCatalogue {
     public static final TextKey DIESEL_NAME = TextKey.of("jscore.material.diesel", "Diesel");
     public static final TextKey CARBON_DIOXIDE_NAME = TextKey.of("jscore.material.carbon_dioxide", "Carbon Dioxide");
     public static final TextKey AMMONIA_NAME = TextKey.of("jscore.material.ammonia", "Ammonia");
+    public static final TextKey METHANE_NAME = TextKey.of("jscore.material.methane", "Methane");
     public static final TextKey AIR_NAME = TextKey.of("jscore.material.air", "Air");
 
     public static final TextKey SERVOMOTOR_NAME = TextKey.of("item.jscore.servomotor", "Servomotor");
@@ -91,6 +92,20 @@ public final class SharedCatalogue {
             .with(MaterialHazards.HAZARDS, List.of(HazardClass.CORROSIVE, HazardClass.ACUTELY_TOXIC,
                     HazardClass.ENVIRONMENTAL)).with(GasLimits.LOWER_EXPLOSIVE, 0.15)
             .with(GasLimits.UPPER_EXPLOSIVE, 0.28).with(GasLimits.IDLH, 300.0).declare();
+    /*
+     * Methane, natural gas: what a rocket burns with liquid oxygen, kept liquid at -162 °C, and what a Sabatier
+     * reactor makes of carbon dioxide and hydrogen, so a rocket's propellant can be made on Mars. It poisons nobody,
+     * but burns between 5% and 15% of the air and crowds the oxygen out of a closed room. Its values are the gas's at
+     * 0 °C, and its liquid's at its boiling point.
+     */
+    public static final Material METHANE = Materials.material(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "methane"), MaterialKind.GAS, METHANE_NAME)
+            .colour(0xDCE6EE).also(MatterState.LIQUID).with(MaterialProperties.FORMULA, "CH4")
+            .with(Thermal.MOLAR_MASS, 0.016_04).with(Thermal.DENSITY, 0.717).with(Thermal.SPECIFIC_HEAT, 2_220.0)
+            .with(Thermal.CONDUCTIVITY, 0.0302).with(Thermal.MELTING, 90.69).with(Thermal.BOILING, 111.65)
+            .with(Thermal.LATENT_HEAT, 510_000.0).with(Thermal.LIQUID_DENSITY, 422.6)
+            .with(MaterialHazards.HAZARDS, List.of(HazardClass.FLAMMABLE, HazardClass.ASPHYXIANT))
+            .with(GasLimits.LOWER_EXPLOSIVE, 0.05).with(GasLimits.UPPER_EXPLOSIVE, 0.15).declare();
     /*
      * Air, the mixture a compressor draws in: 78% nitrogen, 21% oxygen and nearly 1% argon by volume, which a factory
      * sends compressed to its machines and an air separation plant splits. It has no one formula, and harms nobody.

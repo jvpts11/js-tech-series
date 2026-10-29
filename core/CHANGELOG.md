@@ -1698,6 +1698,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Air of its own: a mod gives a body its own air to breathe, a suit's tanks or a mask's line (`Lungs`,
   `IAirSupply`); whether it can breathe and whether the air poisons it are read from that air, and it breathes nothing
   of the room it stands in.
+- Methane in the shared catalogue: the natural gas a rocket burns with liquid oxygen, liquid at -162 °C,
+  flammable between 5% and 15% of the air.
 - Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

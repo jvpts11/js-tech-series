@@ -564,7 +564,7 @@ A liquid is itself (gasoline), molten for a solid (`jscore:molten_tin`, "Molten 
 and is drawn as the game's water in its material's colour.
 
 The shared catalogue (`SharedCatalogue`) holds what the series' mods share that is no element: the common fuels
-(gasoline, kerosene, diesel), carbon dioxide, ammonia and air, and the generic components (servomotor, electric motor, LED, sensor, oscillator,
+(gasoline, kerosene, diesel), carbon dioxide, ammonia, methane and air, and the generic components (servomotor, electric motor, LED, sensor, oscillator,
 antenna, magnetic head). A component exists only when a mod uses it, through the catalogue any mod adds to:
 
 ```java

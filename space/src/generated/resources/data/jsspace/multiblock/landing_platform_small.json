@@ -1,0 +1,24 @@
+{
+  "key": {
+    "P": {
+      "blocks": [
+        "jsspace:landing_pad"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "PPPPPPPPP",
+      "PPPPPPPPP",
+      "PPPPPPPPP",
+      "PPPPPPPPP",
+      "PPPP#PPPP",
+      "PPPPPPPPP",
+      "PPPPPPPPP",
+      "PPPPPPPPP",
+      "PPPPPPPPP"
+    ]
+  ],
+  "name": "landing_platform_small",
+  "terminal": "jsspace:landing_platform"
+}

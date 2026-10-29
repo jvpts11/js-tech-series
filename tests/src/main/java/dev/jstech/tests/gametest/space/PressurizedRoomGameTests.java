@@ -126,7 +126,11 @@ public final class PressurizedRoomGameTests {
         final ResourceKey<Level> key = key("rooms_torch");
         final ServerLevel moon = moon(helper, key);
         final BlockPos open = new BlockPos(8, HIGH_UP + 1, 8);
-        moon.setBlockAndUpdate(open.below(), Blocks.STONE.defaultBlockState());
+        // A ledge round the torch, so its item comes to rest beside it rather than sliding off into a long fall out of
+        // the loaded chunk.
+        for (final BlockPos ledge : BlockPos.betweenClosed(open.offset(-2, -1, -2), open.offset(2, -1, 2))) {
+            moon.setBlockAndUpdate(ledge, Blocks.STONE.defaultBlockState());
+        }
         moon.setBlockAndUpdate(open, Blocks.TORCH.defaultBlockState());
         final BlockPos low = new BlockPos(1, HIGH_UP, 1);
         final BlockPos torch = inside(low);
