@@ -863,6 +863,7 @@ A dimension's rules are a data file, `data/<namespace>/dimension_rules/<path>.js
 | `air` | What its air is made of, each gas by its share: `{"jscore:nitrogen": 0.78, "jscore:oxygen": 0.21}`. It is breathed where the oxygen's own pressure is 16 kPa or more. *Added 2026-10-17.* | shares 0 to 1 | none: `breathable` says |
 | `bands` | Its air, pressure and temperature by height (below). *Added 2026-10-17.* | | none |
 | `laws` | Laws of its own for the whole dimension ([Laws of their own](#laws-of-their-own)). *Added 2026-10-17.* | | none |
+| `seals` | How blocks seal a sealed room here, over what the map of seals says everywhere: a list of `{"blocks": [...], "leak", "rating", "door"}`, each block by id or `#tag` ([Sealed rooms](ROOMS.md#how-blocks-seal)). *Added 2026-10-29.* | as a seal's | none: the map's |
 
 Every rule is optional. The Core applies them: entities fall as the gravity says; once a second a player in air
 they cannot breathe, or in heat or cold past the limits, is hurt; the weather follows the rule. Before hurting a

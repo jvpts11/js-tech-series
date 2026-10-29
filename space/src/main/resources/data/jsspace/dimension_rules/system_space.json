@@ -3,5 +3,24 @@
   "breathable": false,
   "temperature": -270,
   "weather": "clear",
-  "pressure": 0
+  "pressure": 0,
+  "seals": [
+    {
+      "blocks": ["#c:glass_blocks", "#c:glass_panes"],
+      "leak": 0.02,
+      "rating": 10
+    },
+    {
+      "blocks": ["#minecraft:doors", "#minecraft:trapdoors"],
+      "door": true,
+      "leak": 0.02,
+      "rating": 10
+    },
+    {
+      "blocks": ["#minecraft:fence_gates"],
+      "door": true,
+      "leak": 0.05,
+      "rating": 10
+    }
+  ]
 }

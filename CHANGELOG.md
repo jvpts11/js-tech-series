@@ -1858,10 +1858,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the alerts.
 - (Space) The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
   the same version as every mod of the series. It adds nothing to the game yet.
-- (Space) The settings of a world, `jsspace-server.toml`, none of which turns a part of the mod off: fourteen
+- (Space) The settings of a world, `jsspace-server.toml`, none of which turns a part of the mod off: fifteen
   consequences, each on unless a server turns it off and saying what happens instead (launch damage, no launch in a
   thunderstorm, falling stages that leave craters, five failures of a rocket, cruise events, landing only once a
-  world's essentials are known, dust on Mars, naming hidden worlds, debris, and the Laser Satellite as a weapon), and
+  world's essentials are known, dust on Mars, naming hidden worlds, flames that need air, debris, and the Laser
+  Satellite as a weapon), and
   two rules of balance that start off, fast travel and J's Industrial's chains as the only path. They are on J's
   Core's settings screen, in English and Brazilian Portuguese; each is read by what it governs as that is built.
 - (Core) Wide advancement backgrounds: a mod declares a wide picture for a tab's tile (`WideBackgrounds.declare`),
@@ -2035,6 +2036,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   at 1.4 millisieverts a day of the game and of Mars at 0.7, a dose that builds up slowly in whoever stays long.
 - (Core) What is fitted to a worn thing stops harm too: a mod says what a module or a lining fitted to that very
   stack stops of a kind, beside what its item stops by the data map (`Resistances.source`).
+- (Space) Sealed rooms on other worlds: on the Moon, on Mars and in space the game's glass and doors, its iron door
+  too, do not stand a room's air held against the thin air or the vacuum outside, and burst as the room is filled;
+  whole blocks of stone and rock hold it. Torches, lanterns, candles and campfires go out where the air holds too
+  little oxygen to burn, in a vacuum, in Mars' air, in a room whose air runs short: a candle or a campfire is left
+  unlit, and a torch or a lantern falls as an item with a puff of smoke. A new consequence in `jsspace-server.toml`,
+  Flames need air, lets them burn anywhere.
+- (Core) Flames need oxygen as fire does: the game's furnaces, smokers and blast furnaces light their fuel only where a
+  fire could burn in the air round them, and go out the second the room round them runs that short; a mod declares
+  its own flames, and the Core puts them out wherever they are lit with too little oxygen and when their room runs
+  short (`Flames`, `IFlame`). A dimension's rules may say how blocks seal a room there, over the map of seals
+  (`seals`, `DimensionSeal`).
 - (Core) Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

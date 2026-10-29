@@ -62,6 +62,11 @@ public final class Room {
     private int settledOpen;
     /* Whether its air could be breathed a second ago, to tell when it fills. */
     private boolean breathableBefore = true;
+    /*
+     * Whether its air could keep a flame alight a second ago, to tell when it runs short; a room just found or loaded
+     * counts as having burned, so the flames of one found short are put out at once.
+     */
+    private boolean burnedBefore = true;
 
     private static final String ID = "Id";
     private static final String CELLS = "Cells";
@@ -318,6 +323,13 @@ public final class Room {
         final boolean filled = breathable && !this.breathableBefore;
         this.breathableBefore = breathable;
         return filled;
+    }
+
+    /** Notes whether its air can keep a flame alight this second; whether it could the second before and not now. */
+    boolean smotheredSince(final boolean burns) {
+        final boolean smothered = !burns && this.burnedBefore;
+        this.burnedBefore = burns;
+        return smothered;
     }
 
     /** Notes its pressure after a second, and how hard its air rushes out through its holes. */

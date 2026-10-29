@@ -25,9 +25,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * What a room's air does to the room: a fire goes out where there is too little oxygen; in air mostly of oxygen any
- * flame or lava sets alight at once everything round it that burns, an inferno; a block facing a greater difference in
- * pressure than it stands bursts; and air rushing out through a hole pulls things and players towards it.
+ * What a room's air does to the room: a fire, and any flame, goes out where there is too little oxygen; in air mostly
+ * of oxygen any flame or lava sets alight at once everything round it that burns, an inferno; a block facing a greater
+ * difference in pressure than it stands bursts; and air rushing out through a hole pulls things and players towards
+ * it.
  */
 final class RoomConsequences {
 
@@ -43,6 +44,7 @@ final class RoomConsequences {
     /** A second of what {@code room}'s air does to it. */
     static void second(final LevelRooms rooms, final Room room) {
         fire(rooms, room);
+        smother(rooms, room);
         burst(rooms, room);
     }
 
@@ -92,6 +94,35 @@ final class RoomConsequences {
                 room.fire(cell.asLong(), true);
                 lit++;
             }
+        }
+    }
+
+    /*
+     * Every flame in the room or in its walls put out, the second its air runs too short of oxygen to keep one alight
+     * ({@link Flames}); one lit after is weighed as it is lit.
+     */
+    private static void smother(final LevelRooms rooms, final Room room) {
+        if (!room.smotheredSince(GasMath.burns(room.air().partial(AirMix.OXYGEN)))) {
+            return;
+        }
+        final ServerLevel level = rooms.level();
+        for (final long cell : room.cells().toLongArray()) {
+            putOut(level, BlockPos.of(cell));
+        }
+        for (final RoomFace face : room.faces()) {
+            putOut(level, face.block());
+        }
+    }
+
+    /*
+     * The flame at {@code pos} put out, if one burns there and has no air to burn: a furnace in a wall between this
+     * room and one full of air burns on from the other.
+     */
+    private static void putOut(final ServerLevel level, final BlockPos pos) {
+        final BlockState state = level.getBlockState(pos);
+        final IFlame flame = Flames.of(state);
+        if (flame != null && !Flames.canBurn(level, pos, state)) {
+            flame.putOut(level, pos, state);
         }
     }
 

@@ -29,6 +29,7 @@ public final class SpaceServerConfig {
     private static final String FAILURES = "failures";
     private static final String TRAVEL = "travel";
     private static final String WORLDS = "worlds";
+    private static final String LIFE = "life_support";
     private static final String ORBIT = "orbit";
     private static final String SERIES = "series";
 
@@ -101,6 +102,12 @@ public final class SpaceServerConfig {
                     true)
             .comment("The first team to find a hidden world names it.", "Off, every world keeps its default name.")
             .named("Naming hidden worlds");
+    /** Whether torches, lanterns, candles and campfires go out where the air holds too little oxygen to burn. */
+    public static final ConfigKey<Boolean> FLAMES_NEED_AIR = ConfigKey.flag(LIFE + ".flames_need_air", true)
+            .comment("Torches, lanterns, candles and campfires go out where the air holds too little oxygen to burn: "
+                    + "in a vacuum, in the thin air of Mars, in a room whose air runs short.",
+                    "Off, they burn anywhere, as on the Earth.")
+            .named("Flames need air");
     /** Whether a destroyed satellite leaves debris in orbit. */
     public static final ConfigKey<Boolean> DEBRIS = ConfigKey.flag(ORBIT + ".debris", true)
             .comment("A destroyed satellite leaves debris in orbit, which strikes what passes through it and "
@@ -137,6 +144,9 @@ public final class SpaceServerConfig {
             .sectionNamed(WORLDS, "Worlds")
             .sectionComment(WORLDS, "What the worlds do, and who names the hidden ones.")
             .key(DUST_ON_MARS).key(NAMING_HIDDEN_WORLDS)
+            .sectionNamed(LIFE, "Life support")
+            .sectionComment(LIFE, "What the air of other worlds does to what burns in it.")
+            .key(FLAMES_NEED_AIR)
             .sectionNamed(ORBIT, "Orbit")
             .sectionComment(ORBIT, "What is left in orbit, and what a satellite may strike.")
             .key(DEBRIS).key(LASER_SATELLITE_WEAPON)
@@ -149,7 +159,7 @@ public final class SpaceServerConfig {
     public static final List<ConfigKey<Boolean>> CONSEQUENCES = List.of(LAUNCH_DAMAGE, NO_LAUNCH_IN_THUNDERSTORMS,
             FALLING_STAGES_DO_DAMAGE, TOO_HEAVY_TO_LIFT, BURNING_UP, CRASH_LANDINGS, WORN_STAGES_FAIL,
             DAMAGED_TANKS_EXPLODE, CRUISE_EVENTS, LANDING_NEEDS_THE_ESSENTIALS, DUST_ON_MARS, NAMING_HIDDEN_WORLDS,
-            DEBRIS, LASER_SATELLITE_WEAPON);
+            FLAMES_NEED_AIR, DEBRIS, LASER_SATELLITE_WEAPON);
 
     private SpaceServerConfig() {
     }
@@ -157,5 +167,10 @@ public final class SpaceServerConfig {
     /** Puts the file beside the world, where the server reads it. */
     public static void register(final IEventBus modEventBus, final ModContainer modContainer) {
         ConfigFiles.register(FILE, modEventBus, modContainer);
+    }
+
+    /** Whether torches, lanterns, candles and campfires go out where the air holds too little oxygen to burn. */
+    public static boolean flamesNeedAir() {
+        return FILE.get(FLAMES_NEED_AIR);
     }
 }

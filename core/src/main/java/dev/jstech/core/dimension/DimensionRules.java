@@ -14,6 +14,7 @@ import dev.jstech.core.air.AirMath;
 import dev.jstech.core.air.AirMix;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.physics.Laws;
+import dev.jstech.core.room.DimensionSeal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -23,7 +24,8 @@ import java.util.function.Function;
 /**
  * What a dimension is like to stand in: how hard it pulls, whether its air can be breathed, how hot or cold it is,
  * what its weather does, how thick its atmosphere is, its own clock and how hard its wind blows, what its air is made
- * of, how all that changes with height in bands, and laws of its own. A dimension's rules are a datapack file named
+ * of, how all that changes with height in bands, laws of its own, and how blocks seal a room there when not as they do
+ * everywhere ({@link DimensionSeal}). A dimension's rules are a datapack file named
  * after it, {@code data/<namespace>/dimension_rules/<path>.json} for the dimension {@code <namespace>:<path>}; a
  * dimension without one is like the overworld. What it is like at a height is {@link #at}.
  *
@@ -44,10 +46,11 @@ import java.util.function.Function;
  * @param air         what its air is made of, if said: then whether it can be breathed is read from its oxygen
  * @param bands       how it changes with height, the lowest first
  * @param laws        laws of its own over the whole of it, if any
+ * @param seals       how blocks seal a room here over what they do everywhere, the first that covers a block said
  */
 public record DimensionRules(double gravity, boolean breathable, double temperature, Weather weather,
                              double pressure, Optional<DimensionClock> clock, double wind, Optional<AirMix> air,
-                             List<AltitudeBand> bands, Optional<Laws> laws) {
+                             List<AltitudeBand> bands, Optional<Laws> laws, List<DimensionSeal> seals) {
 
     /** Hotter than this, a player not made for it burns. */
     public static final double SCORCHING = 60.0;
@@ -56,7 +59,7 @@ public record DimensionRules(double gravity, boolean breathable, double temperat
 
     /** The overworld's rules, which every dimension without a file of its own keeps. */
     public static final DimensionRules OVERWORLD = new DimensionRules(1.0, true, 15.0, Weather.NATURAL, 101.3,
-            Optional.empty(), 1.0, Optional.empty(), List.of(), Optional.empty());
+            Optional.empty(), 1.0, Optional.empty(), List.of(), Optional.empty(), List.of());
     /** The hardest a dimension's wind may blow, as a share of the overworld's. */
     public static final double MOST_WIND = 20.0;
 
@@ -75,13 +78,15 @@ public record DimensionRules(double gravity, boolean breathable, double temperat
                     .forGetter(DimensionRules::wind),
             AirMix.CODEC.optionalFieldOf("air").forGetter(DimensionRules::air),
             AltitudeBand.CODEC.listOf().optionalFieldOf("bands", List.of()).forGetter(DimensionRules::bands),
-            Laws.CODEC.optionalFieldOf("laws").forGetter(DimensionRules::laws)
+            Laws.CODEC.optionalFieldOf("laws").forGetter(DimensionRules::laws),
+            DimensionSeal.CODEC.listOf().optionalFieldOf("seals", List.of()).forGetter(DimensionRules::seals)
     ).apply(instance, DimensionRules::new));
 
     public DimensionRules {
         final List<AltitudeBand> ordered = new ArrayList<>(bands);
         ordered.sort(Comparator.comparingDouble(AltitudeBand::at));
         bands = List.copyOf(ordered);
+        seals = List.copyOf(seals);
     }
 
     /** Whether a player not made for it burns here, at its ground. */

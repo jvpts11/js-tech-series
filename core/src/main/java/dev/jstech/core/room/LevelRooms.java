@@ -165,7 +165,8 @@ final class LevelRooms {
 
     /** Notes a block of the dimension changed from {@code before} to {@code after}. */
     void note(final BlockPos pos, final BlockState before, final BlockState after) {
-        if (after.getBlock() instanceof BaseFireBlock && !(before.getBlock() instanceof BaseFireBlock)) {
+        if (after.getBlock() instanceof BaseFireBlock && !(before.getBlock() instanceof BaseFireBlock)
+                || Flames.lit(before, after)) {
             this.fireChecks.add(pos.asLong());
         }
         final RoomStore rooms = this.store;
@@ -516,16 +517,13 @@ final class LevelRooms {
         SealedRooms.fill(room, SealedRooms.placeClimate(this.level, middle));
     }
 
-    /* Puts out the fires lit where there is too little oxygen for them, outside any room. */
+    /* Puts out the fires and the flames lit where there is too little oxygen for them, in a room or out of one. */
     private void checkFires() {
         if (this.fireChecks.isEmpty()) {
             return;
         }
         final long[] lit = this.fireChecks.toLongArray();
         this.fireChecks.clear();
-        if (!RoomBalance.fireNeedsOxygen()) {
-            return;
-        }
         for (final long cell : lit) {
             final BlockPos pos = BlockPos.of(cell);
             // A fire whose chunk is not loaded now is not read: that would load the chunk, or wait on it.
@@ -533,13 +531,20 @@ final class LevelRooms {
                 continue;
             }
             final BlockState state = this.level.getBlockState(pos);
-            if (state.getBlock() instanceof BaseFireBlock && !GasMath.burns(SealedRooms.oxygenAt(this.level, pos))) {
-                set(pos, Blocks.AIR.defaultBlockState());
-                final RoomStore rooms = this.store;
-                final Room room = rooms == null ? null : rooms.roomAt(cell);
-                if (room != null) {
-                    room.fire(cell, false);
+            if (state.getBlock() instanceof BaseFireBlock) {
+                if (RoomBalance.fireNeedsOxygen() && !GasMath.burns(SealedRooms.oxygenAt(this.level, pos))) {
+                    set(pos, Blocks.AIR.defaultBlockState());
+                    final RoomStore rooms = this.store;
+                    final Room room = rooms == null ? null : rooms.roomAt(cell);
+                    if (room != null) {
+                        room.fire(cell, false);
+                    }
                 }
+                continue;
+            }
+            final IFlame flame = Flames.of(state);
+            if (flame != null && !Flames.canBurn(this.level, pos, state)) {
+                flame.putOut(this.level, pos, state);
             }
         }
     }

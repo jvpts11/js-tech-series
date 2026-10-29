@@ -43,6 +43,8 @@ final class RoomFinder {
     private final LongArrayList starts;
     private final LongOpenHashSet previous;
     private final int largest;
+    /* How its dimension's rules say blocks seal there, read once for the many blocks it reads. */
+    private final List<DimensionSeal> here;
     private final List<LongOpenHashSet> parts = new ArrayList<>();
     private final List<Boolean> open = new ArrayList<>();
     private final List<Part> found = new ArrayList<>();
@@ -84,6 +86,7 @@ final class RoomFinder {
         this.starts = starts;
         this.previous = previous;
         this.largest = largest;
+        this.here = DimensionRulesData.of(level).seals();
     }
 
     /** The room it works out again, or -1 for a search for a new one. */
@@ -143,7 +146,7 @@ final class RoomFinder {
                     return read;
                 }
                 read++;
-                if (Seals.of(this.level, this.at, state).wall()) {
+                if (Seals.of(this.here, this.level, this.at, state).wall()) {
                     continue;
                 }
                 this.part = new LongOpenHashSet();
@@ -172,7 +175,7 @@ final class RoomFinder {
                     return read;
                 }
                 read++;
-                if (Seals.of(this.level, this.at, state).wall()) {
+                if (Seals.of(this.here, this.level, this.at, state).wall()) {
                     continue;
                 }
                 filling.add(next);
@@ -268,7 +271,7 @@ final class RoomFinder {
     /* The face of {@code cell} towards {@code block}, of {@code state}: what bounds it there, and what lies beyond. */
     private RoomFace bound(final DimensionRules rules, final long cell, final Direction side, final BlockPos block,
                            final BlockState state) {
-        final Seal seal = Seals.of(this.level, block, state);
+        final Seal seal = Seals.of(this.here, this.level, block, state);
         final RoomFace.Kind kind;
         final BlockPos beyond;
         if (!seal.wall()) {

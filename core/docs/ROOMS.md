@@ -103,6 +103,16 @@ water, a slab, a fence, lets air through and is part of the room it stands in. T
 
 A leak of less than a hundredth of a face, glass or a shut door, is not shown as a leak.
 
+A dimension's rules may say some blocks seal otherwise there, over what the map says ([The world](WORLD.md)): the
+game's glass stands the overworld's water, but a world made for bases on the Moon may say it does not stand a room's
+air held against a vacuum. The first entry that covers a block is how it seals in that dimension. *Added 2026-10-29.*
+
+```json
+{ "pressure": 0, "seals": [
+    { "blocks": ["#c:glass_blocks", "#c:glass_panes"], "leak": 0.02, "rating": 10 },
+    { "blocks": ["#minecraft:doors", "#minecraft:trapdoors"], "door": true, "leak": 0.02, "rating": 10 } ] }
+```
+
 ## What the air does
 
 *Added 2026-10-17.*
@@ -121,6 +131,22 @@ Fire needs oxygen: a fire goes out where there are less than 12 kPa of it, in a 
 it, and does not light there. In a room whose air is mostly oxygen any flame or lava sets alight at once everything
 round it that burns, an inferno, as in Apollo 1; pure oxygen at a third of an atmosphere is cheap to fill a room
 with, and that is its price. A mod's machine that burns fuel asks `SealedRooms.oxygenAt(level, pos)` whether it can.
+
+Other flames need oxygen as fire does. The game's furnaces, smokers and blast furnaces light their fuel only where a
+fire could burn in the air round them, and go out, their fuel done, the second the room round them runs that short of
+oxygen, while fire needs oxygen in the settings. A mod declares a flame of its own, a lamp or a burner, and the Core
+puts it out wherever it is lit or set with too little oxygen, and the second the room it burns in runs short:
+*Added 2026-10-29.*
+
+```java
+Flames.declare(new IFlame() {
+    public boolean burning(BlockState state) { return state.is(MY_LAMP.get()) && state.getValue(LIT); }
+    public void putOut(ServerLevel level, BlockPos pos, BlockState state) {
+        level.setBlockAndUpdate(pos, state.setValue(LIT, false));
+    }
+});
+boolean can = Flames.canBurn(level, pos, state);   // for a block in a wall, the air on any open side of it
+```
 
 Water stays liquid only in air thicker than its triple point, 0.6117 kPa. The game's ice, melting beside a torch or
 broken, becomes water only where the air it meets is that thick: in a vacuum, or in air as thin as Mars', it turns
@@ -230,4 +256,4 @@ In the Core's settings, the section `rooms` ([Settings](SETTINGS.md)):
 | A closed building is no room. | No block asked for its room (`SealedRooms.track`), it is larger than `largest_room`, or one of its walls lets air through: a slab, a fence, an open trapdoor. |
 | A room's air never fills. | It leaks: look at it through goggles or its detector, its leaks marked. |
 | Glass burst. | The room's pressure and the place's differ by more than glass stands, 120 kPa: under deep water, or a room filled too full. Use a window a mod rates higher. |
-| Torches stay lit in a vacuum. | Torches and candles going out are J's Space's rule, not the Core's; fire blocks go out by the Core's. |
+| Torches stay lit in a vacuum. | Torches and candles going out are J's Space's rule, a flame it declares, not the Core's; fire blocks and furnaces go out by the Core's. |

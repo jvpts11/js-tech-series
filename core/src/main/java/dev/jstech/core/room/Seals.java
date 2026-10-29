@@ -8,10 +8,13 @@
 package dev.jstech.core.room;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.dimension.DimensionRulesData;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,7 +28,8 @@ import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
  * data pack fills ({@link Seal}). A block the map says nothing of is a wall when it is a whole solid block, which does
  * not leak and stands as hard as it is to blow up (stone a great deal, dirt little); anything else, air, water, a slab
  * or a fence, lets air through and is part of the room it stands in. The game's glass leaks a little and stands
- * little, its doors, trapdoors and fence gates leak a little more while shut and let everything through while open.
+ * little, its doors, trapdoors and fence gates leak a little more while shut and let everything through while open. A
+ * dimension's rules may say some blocks seal otherwise there ({@link DimensionSeal}).
  */
 public final class Seals {
 
@@ -44,8 +48,26 @@ public final class Seals {
         modBus.addListener(RegisterDataMapTypesEvent.class, event -> event.register(SEALS));
     }
 
-    /** How {@code state}, at {@code pos} of {@code level}, seals: the map's seal, or what its shape makes it. */
+    /**
+     * How {@code state}, at {@code pos} of {@code level}, seals: as its dimension's rules say there, else the map's
+     * seal, or what its shape makes it.
+     */
     public static Seal of(final BlockGetter level, final BlockPos pos, final BlockState state) {
+        return of(level instanceof Level placed ? DimensionRulesData.of(placed).seals() : List.of(), level, pos,
+                state);
+    }
+
+    /**
+     * How {@code state} seals where {@code here} are the seals its dimension's rules say, read once by whoever asks of
+     * many blocks.
+     */
+    static Seal of(final List<DimensionSeal> here, final BlockGetter level, final BlockPos pos,
+                   final BlockState state) {
+        for (final DimensionSeal local : here) {
+            if (local.covers(state)) {
+                return local.seal();
+            }
+        }
         final Seal declared = state.getBlockHolder().getData(SEALS);
         if (declared != null) {
             return declared;

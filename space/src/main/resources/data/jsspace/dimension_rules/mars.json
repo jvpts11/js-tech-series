@@ -11,5 +11,24 @@
     "jscore:carbon_dioxide": 0.95,
     "jscore:nitrogen": 0.03,
     "jscore:argon": 0.02
-  }
+  },
+  "seals": [
+    {
+      "blocks": ["#c:glass_blocks", "#c:glass_panes"],
+      "leak": 0.02,
+      "rating": 10
+    },
+    {
+      "blocks": ["#minecraft:doors", "#minecraft:trapdoors"],
+      "door": true,
+      "leak": 0.02,
+      "rating": 10
+    },
+    {
+      "blocks": ["#minecraft:fence_gates"],
+      "door": true,
+      "leak": 0.05,
+      "rating": 10
+    }
+  ]
 }

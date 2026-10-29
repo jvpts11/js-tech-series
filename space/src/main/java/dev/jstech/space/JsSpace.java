@@ -18,6 +18,7 @@ import dev.jstech.space.geology.SpaceOres;
 import dev.jstech.space.geology.SpaceRocks;
 import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.space.life.LifeSupport;
+import dev.jstech.space.life.SpaceFlames;
 import dev.jstech.space.life.SuitData;
 import dev.jstech.space.life.SuitModuleItems;
 import dev.jstech.space.network.SpacePayloads;
@@ -85,10 +86,12 @@ public final class JsSpace {
         MoonWorld.declare();
         MarsBiomes.declare();
         MarsWorld.declare();
-        // Life support: the suits' air and modules, and each world's dangers and the sky's radiation on it.
+        // Life support: the suits' air and modules, and each world's dangers and the sky's radiation on it; the open
+        // flames that go out where the air holds too little oxygen.
         SuitData.declare();
         SuitModuleItems.declare();
         LifeSupport.listen();
+        SpaceFlames.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

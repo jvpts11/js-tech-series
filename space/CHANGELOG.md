@@ -34,10 +34,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
   the same version as every mod of the series. It adds nothing to the game yet.
-- The settings of a world, `jsspace-server.toml`, none of which turns a part of the mod off: fourteen
+- The settings of a world, `jsspace-server.toml`, none of which turns a part of the mod off: fifteen
   consequences, each on unless a server turns it off and saying what happens instead (launch damage, no launch in a
   thunderstorm, falling stages that leave craters, five failures of a rocket, cruise events, landing only once a
-  world's essentials are known, dust on Mars, naming hidden worlds, debris, and the Laser Satellite as a weapon), and
+  world's essentials are known, dust on Mars, naming hidden worlds, flames that need air, debris, and the Laser
+  Satellite as a weapon), and
   two rules of balance that start off, fast travel and J's Industrial's chains as the only path. They are on J's
   Core's settings screen, in English and Brazilian Portuguese; each is read by what it governs as that is built.
 - Its mark and its tab: J's Space's logo, the word in the white of the Apollo rockets with a red livery band
@@ -161,6 +162,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   they go on: Extra Oxygen, half as much air again; the Radiation Vest, which stops half the sky's radiation; and Suit
   Lamps, lighting the way. Every world says its dangers, and the sky's radiation reaches the open ground of the Moon
   at 1.4 millisieverts a day of the game and of Mars at 0.7, a dose that builds up slowly in whoever stays long.
+- Sealed rooms on other worlds: on the Moon, on Mars and in space the game's glass and doors, its iron door
+  too, do not stand a room's air held against the thin air or the vacuum outside, and burst as the room is filled;
+  whole blocks of stone and rock hold it. Torches, lanterns, candles and campfires go out where the air holds too
+  little oxygen to burn, in a vacuum, in Mars' air, in a room whose air runs short: a candle or a campfire is left
+  unlit, and a torch or a lantern falls as an item with a puff of smoke. A new consequence in `jsspace-server.toml`,
+  Flames need air, lets them burn anywhere.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
