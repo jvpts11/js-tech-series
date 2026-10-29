@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.core;
 
 import com.mojang.authlib.GameProfile;
+import dev.jstech.core.moving.BlockAboard;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureAutopilot;
@@ -27,12 +28,15 @@ import dev.jstech.core.moving.joint.JointKind;
 import dev.jstech.core.moving.joint.StructureJoint;
 import dev.jstech.core.moving.joint.StructureJoints;
 import dev.jstech.core.moving.physics.PhysicsMotion;
+import dev.jstech.core.multiblock.FormedPartBlock;
+import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestAboard;
 import dev.jstech.tests.TestPhysics;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +53,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.level.block.BedBlock;
@@ -70,8 +75,9 @@ import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 /**
  * Living aboard moving structures, in a real world: a player sits on a seat aboard and is carried with it, and a seat
- * taken is refused to another and gone once left; at a helm, the controls they hold fire the engines pushing the way
- * they ask, and are let go a second after they stop; an autopilot flies a hovering craft to a place and holds it
+ * taken is refused to another and gone once left; on a seat a formed model makes a couch, they lie as a sleeper does,
+ * their head to the model's head side as it is turned, and stand once up; at a helm, the controls they hold fire the
+ * engines pushing the way they ask, and are let go a second after they stop; an autopilot flies a hovering craft to a place and holds it
  * there; an arrow loosed from a moving deck flies on with it; a villager sleeps in a bed aboard where the bed is in the
  * world and is carried with it, and stands up beside it there; a player coming back to a bed aboard comes back where it
  * is; a rider hanging from a rope rides it down; and an engine burning is told to the players who see it, and told
@@ -89,6 +95,9 @@ public final class MovingStructureLifeGameTests {
     private static final double KEEPS = 0.1;
     /* The height above a bed's block a sleeper lies at, as the game's own. */
     private static final double LIES = 0.6875;
+    /* The couch pod's terminal, in the middle of the west side of a pod built facing east, and its seat. */
+    private static final BlockPos COUCH_POD = new BlockPos(4, 1, 5);
+    private static final BlockPos COUCH = COUCH_POD.offset(1, 1, 0);
 
     private MovingStructureLifeGameTests() {
     }
@@ -102,7 +111,8 @@ public final class MovingStructureLifeGameTests {
         final BlockPos seat = find(level, cart, state -> state.is(TestAboard.SEAT.get()));
         final ServerPlayer rider = rider(helper, new Vec3(3.5, 3, 4.5));
         helper.assertTrue(MovingStructures.sit(rider, seat), "the player sits on the seat aboard");
-        helper.assertTrue(rider.getVehicle() instanceof StructureSeatEntity, "in the seat's entity");
+        helper.assertTrue(rider.getVehicle() instanceof StructureSeatEntity sitting && sitting.lyingHead() == null,
+                "in the seat's entity, sat on upright");
         final StructurePose start = cart.pose();
         MovingStructures.move(cart, new TowardMotion(start.movedTo(start.x() + 4, start.y(), start.z()), 4, 0));
         helper.startSequence()
@@ -138,6 +148,79 @@ public final class MovingStructureLifeGameTests {
                     leave(first);
                     leave(second);
                     MovingStructures.takeAway(bench);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 300)
+    public static void seats_theSitterOfACouchItsFormedModelSaysLiesOnIt(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        // The couch pod, built facing east: the test turbine's pattern with a seat in the middle of its top.
+        for (int y = 0; y < 2; y++) {
+            for (int a = -1; a <= 1; a++) {
+                for (int b = 0; b <= 2; b++) {
+                    final BlockPos at = COUCH_POD.offset(b, y, a);
+                    if (!at.equals(COUCH_POD)) {
+                        helper.setBlock(at, at.equals(COUCH) ? TestAboard.SEAT.get() : Blocks.IRON_BLOCK);
+                    }
+                }
+            }
+        }
+        helper.setBlock(COUCH_POD, TestAboard.COUCH_POD.get());
+        final List<MovingStructure> made = new ArrayList<>();
+        final List<ServerPlayer> riders = new ArrayList<>();
+        final BlockPos[] couch = new BlockPos[1];
+        final Direction[] head = new Direction[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(((TestAboard.CouchPodEntity) helper.getBlockEntity(COUCH_POD))
+                        .structure().merged(), "the couch pod forms and merges"))
+                .thenExecute(() -> {
+                    helper.assertTrue(helper.getBlockState(COUCH).getBlock() instanceof FormedPartBlock,
+                            "its seat merged into it");
+                    made.add(assembled(helper, COUCH_POD.offset(0, 0, -1), COUCH_POD.offset(2, 1, 1)));
+                    for (final BlockPos at : BlockPos.betweenClosed(made.getFirst().bounds().minX(),
+                            made.getFirst().bounds().minY(), made.getFirst().bounds().minZ(),
+                            made.getFirst().bounds().maxX(), made.getFirst().bounds().maxY(),
+                            made.getFirst().bounds().maxZ())) {
+                        if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part
+                                && part.original().is(TestAboard.SEAT.get()) && part.place() != null) {
+                            couch[0] = at.immutable();
+                            // The model's head side, its south, turned as the pod stands.
+                            final int[] way = part.place().turn().apply(0, 0, 1);
+                            head[0] = Direction.getNearest(way[0], way[1], way[2]);
+                        }
+                    }
+                    helper.assertTrue(head[0] != null, "the couch is aboard, a block of the pod's model");
+                    final ServerPlayer rider = rider(helper, new Vec3(5.5, 4, 5.5));
+                    riders.add(rider);
+                    helper.assertTrue(MovingStructures.sit(rider, couch[0]), "the player lies down on the couch");
+                    final StructureSeatEntity seat = (StructureSeatEntity) rider.getVehicle();
+                    helper.assertTrue(seat.lyingHead() == head[0], "their head lies to the model's head side, as"
+                            + " the pod is turned: " + seat.lyingHead() + " for " + head[0]);
+                })
+                .thenIdle(2)
+                .thenExecute(() -> {
+                    final ServerPlayer rider = riders.getFirst();
+                    rider.doTick();
+                    helper.assertTrue(rider.getPose() == Pose.SLEEPING, "they lie as a sleeper does: "
+                            + rider.getPose());
+                    helper.assertTrue(rider.getBedOrientation() == head[0], "drawn their head that way: "
+                            + rider.getBedOrientation());
+                    final BlockPos at = couch[0];
+                    final Vec3 eyes = worldOf(made.getFirst(), new Vec3(
+                            at.getX() + 0.5 + head[0].getStepX() * BlockAboard.Seat.LYING_REACH,
+                            at.getY() + TestAboard.COUCH_HEIGHT + rider.getEyeHeight(),
+                            at.getZ() + 0.5 + head[0].getStepZ() * BlockAboard.Seat.LYING_REACH));
+                    helper.assertTrue(rider.getEyePosition().distanceTo(eyes) < KEEPS, "their eyes low over the "
+                            + "couch, towards their head: " + rider.getEyePosition() + " for " + eyes);
+                    rider.stopRiding();
+                    rider.doTick();
+                    // Neither lying nor asleep, the game has their head up.
+                    helper.assertTrue(rider.getPose() != Pose.SLEEPING && rider.getVehicle() == null
+                            && rider.getBedOrientation() == Direction.UP, "up again, they stand: " + rider.getPose()
+                            + ", their head " + rider.getBedOrientation() + ", riding " + rider.getVehicle());
+                    leave(rider);
+                    MovingStructures.takeAway(made.getFirst());
                 })
                 .thenSucceed();
     }

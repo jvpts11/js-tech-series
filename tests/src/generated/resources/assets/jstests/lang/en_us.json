@@ -67,6 +67,7 @@
   "block.jstests.test_item_output_port": "Test item output port",
   "block.jstests.test_join": "Test join",
   "block.jstests.test_kiln": "Test kiln",
+  "block.jstests.test_kit_couch_pod": "Test kit couch pod",
   "block.jstests.test_kit_dock": "Test kit dock",
   "block.jstests.test_kit_machine": "Test kit machine",
   "block.jstests.test_kit_machine_mk2": "Test kit machine Mk2",

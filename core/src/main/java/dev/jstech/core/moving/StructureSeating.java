@@ -10,7 +10,6 @@ package dev.jstech.core.moving;
 import dev.jstech.core.moving.joint.JointKind;
 import dev.jstech.core.moving.joint.StructureJoint;
 import dev.jstech.core.moving.joint.StructureJoints;
-import dev.jstech.core.moving.physics.BlockPhysics;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,7 +22,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
@@ -70,7 +68,7 @@ final class StructureSeating {
             held.put(axis, (keys & StructureHelmPayload.bit(axis)) != 0 ? 1F : 0F);
         }
         final StructureFrame frame = structure.frame();
-        final Direction way = BlockPhysics.wayOf(level.getBlockState(seat.seat()));
+        final Direction way = BlockAboard.wayAt(level, seat.seat());
         final Vec3 forward = new Vec3(frame.turnX(way.getStepX(), way.getStepY(), way.getStepZ()),
                 frame.turnY(way.getStepX(), way.getStepY(), way.getStepZ()),
                 frame.turnZ(way.getStepX(), way.getStepY(), way.getStepZ()));
@@ -116,7 +114,7 @@ final class StructureSeating {
             return false;
         }
         final ServerLevel level = player.serverLevel();
-        final Optional<BlockAboard.Seat> seat = BlockAboard.of(level.getBlockState(pos)).seat();
+        final Optional<BlockAboard.Seat> seat = BlockAboard.at(level, pos).seat();
         if (seat.isEmpty() || MovingStructures.at(level, pos) == null || taken(level, pos) != null) {
             return false;
         }
@@ -133,8 +131,7 @@ final class StructureSeating {
             return;
         }
         final Level level = event.getLevel();
-        final BlockState state = level.getBlockState(pos);
-        if (BlockAboard.of(state).seat().isEmpty() || MovingStructures.at(level, pos) == null) {
+        if (BlockAboard.at(level, pos).seat().isEmpty() || MovingStructures.at(level, pos) == null) {
             return;
         }
         event.setCanceled(true);

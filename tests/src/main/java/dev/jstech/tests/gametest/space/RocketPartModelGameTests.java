@@ -7,16 +7,20 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.moving.BlockAboard;
+import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.space.api.RocketKit;
 import dev.jstech.space.api.RocketKits;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketPartModels;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -28,6 +32,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * engine, its lowest, middle and highest layers, or one layer alone; a separation ring with its interstage skirt round
  * a vacuum engine standing on it and without one under a sea-level engine; the instrument ring of five with its adapter
  * round a lunar lander; the legs folded on the way up and spread to land; each model at the height its part stands at.
+ * And the crew seat is a chair of its own and in the lander's cabin, and a couch its crew lie on in a capsule.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -64,6 +69,23 @@ public final class RocketPartModelGameTests {
                 + "no interstage round a sea-level engine, the adapter round the lander: " + lunar);
         helper.assertTrue(RocketPartModels.names().stream().allMatch(name -> RocketPartModels.get(name).isPresent()),
                 "every model is declared");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void crewSeat_isSatUprightAloneAndInTheLanderAndLainOnInACapsule(final GameTestHelper helper) {
+        final Optional<BlockAboard.Seat> alone = BlockAboard.of(RocketKitBlocks.CREW_SEAT.get().defaultBlockState())
+                .seat();
+        helper.assertTrue(alone.isPresent() && !alone.get().lying() && !alone.get().helm(),
+                "a crew seat of its own is sat on upright: " + alone);
+        for (final String capsule : List.of("capsule_3", "capsule_5")) {
+            final BlockAboard couch = FormedShapes.aboardDeclared(RocketPartModels.get(capsule).orElseThrow().id())
+                    .get(RocketKitBlocks.CREW_SEAT.getId());
+            helper.assertTrue(couch != null && couch.seat().isPresent() && couch.seat().get().lying(),
+                    "in " + capsule + " its crew lie on it: " + couch);
+        }
+        helper.assertTrue(FormedShapes.aboardDeclared(RocketPartModels.get("lunar_lander_ascent").orElseThrow().id())
+                .isEmpty(), "in the lander's cabin it stays a chair facing the Flight Computer");
         helper.succeed();
     }
 

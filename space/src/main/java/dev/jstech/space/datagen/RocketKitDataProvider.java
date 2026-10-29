@@ -8,6 +8,7 @@
 package dev.jstech.space.datagen;
 
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.moving.BlockAboard;
 import dev.jstech.core.moving.physics.BlockPhysics;
 import dev.jstech.core.room.Seal;
 import dev.jstech.core.room.Seals;
@@ -32,7 +33,8 @@ import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.data.DataMapProvider;
 
 /**
- * What the rocket parts' blocks are in J's Core's rooms and physics. The capsules' and the lander cabin's pressure
+ * What the rocket parts' blocks are in J's Core's rooms, physics and moving structures. The crew seat is a seat aboard.
+ * The capsules' and the lander cabin's pressure
  * shell holds a crew's air against the vacuum, its windows and hatch as well as its hull, whatever a world's rules say
  * of glass and doors. Each block weighs its share of the parts it is built into: a part's mass empty spread over its
  * blocks, and a block used in several parts the mean of its shares, so a structure of them weighs what the rockets'
@@ -42,6 +44,8 @@ public final class RocketKitDataProvider extends DataMapProvider {
 
     /** What a pressure shell stands, in kilopascals: well beyond an atmosphere held against a vacuum. */
     public static final double SHELL_RATING = 300;
+    /* How high over its block's bottom a crew seat's sitter sits. */
+    private static final double CREW_SEAT_HEIGHT = 0.5;
     /* The blocks of the pressure shell round a crew. */
     private static final List<BlockEntry<Block>> SHELL = List.of(RocketKitBlocks.HEAT_SHIELD,
             RocketKitBlocks.CAPSULE_HULL, RocketKitBlocks.CAPSULE_WINDOW, RocketKitBlocks.CAPSULE_HATCH,
@@ -95,6 +99,10 @@ public final class RocketKitDataProvider extends DataMapProvider {
         for (final BlockEntry<Block> block : SHELL) {
             seals.add(block, Seal.wall(0.0, SHELL_RATING), false);
         }
+        // A crew seat is sat on upright, as in the lander's cabin; a capsule's model lays its crew down on it.
+        builder(BlockAboard.ABOARD).add(RocketKitBlocks.CREW_SEAT, new BlockAboard(Optional.of(
+                new BlockAboard.Seat(CREW_SEAT_HEIGHT, false)), Optional.empty(), Optional.empty(), Optional.empty()),
+                false);
         final Builder<BlockPhysics, Block> physics = builder(BlockPhysics.PHYSICS);
         masses(RocketParts.declared(), RocketKits.declared()).forEach((id, mass) -> physics.add(
                 BuiltInRegistries.BLOCK.wrapAsHolder(BuiltInRegistries.BLOCK.get(id)),

@@ -1,0 +1,6 @@
+{
+  "model": "jstests:jsmodels/test_kit_turbine.bbmodel",
+  "textures": [
+    "minecraft:textures/block/iron_block.png"
+  ]
+}

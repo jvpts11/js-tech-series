@@ -27,6 +27,8 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 /**
  * The pictures shown in the world, each drawn into a texture of its own and drawn again as often as its viewer's
@@ -43,6 +45,11 @@ public final class LiveScreens {
     private static final long FORGET_NANOS = 5_000_000_000L;
     /* At most this many pictures are drawn in one frame; the rest are drawn in the frames after. */
     private static final int PAINTS_PER_FRAME = 4;
+    /* The world's two lights a model's faces are lit by, and how much each gives and none does, as the game's are. */
+    private static final Vector3fc FIRST_LIGHT = new Vector3f(0.2F, 1.0F, -0.7F).normalize();
+    private static final Vector3fc SECOND_LIGHT = new Vector3f(-0.2F, 1.0F, 0.7F).normalize();
+    private static final float LIGHTS = 0.6F;
+    private static final float UNLIT = 0.4F;
     private static final Map<Object, LiveScreen> SCREENS = new HashMap<>();
     private static int named;
 
@@ -68,15 +75,37 @@ public final class LiveScreens {
      */
     public static void draw(final PoseStack pose, final MultiBufferSource buffers, final LiveScreen screen,
                             final float x0, final float y0, final float x1, final float y1, final int light) {
+        draw(pose, buffers, screen, x0, y0, x1, y1, light, 1.0F);
+    }
+
+    /**
+     * Draws a picture's texture as {@link #draw(PoseStack, MultiBufferSource, LiveScreen, float, float, float, float,
+     * int)} does, darkened to {@code shade}, from 0 to 1: for a picture laid on a face of a model, which the game
+     * darkens as it turns from the world's lights ({@link #shade}), so the picture matches the face round it.
+     */
+    public static void draw(final PoseStack pose, final MultiBufferSource buffers, final LiveScreen screen,
+                            final float x0, final float y0, final float x1, final float y1, final int light,
+                            final float shade) {
         if (!screen.ready()) {
             return;
         }
+        final int grey = Math.round(Math.max(0.0F, Math.min(1.0F, shade)) * 255);
         final VertexConsumer quad = buffers.getBuffer(RenderType.text(screen.texture()));
         final Matrix4f at = pose.last().pose();
-        quad.addVertex(at, x0, y0, 0.0F).setColor(255, 255, 255, 255).setUv(0.0F, 1.0F).setLight(light);
-        quad.addVertex(at, x0, y1, 0.0F).setColor(255, 255, 255, 255).setUv(0.0F, 0.0F).setLight(light);
-        quad.addVertex(at, x1, y1, 0.0F).setColor(255, 255, 255, 255).setUv(1.0F, 0.0F).setLight(light);
-        quad.addVertex(at, x1, y0, 0.0F).setColor(255, 255, 255, 255).setUv(1.0F, 1.0F).setLight(light);
+        quad.addVertex(at, x0, y0, 0.0F).setColor(grey, grey, grey, 255).setUv(0.0F, 1.0F).setLight(light);
+        quad.addVertex(at, x0, y1, 0.0F).setColor(grey, grey, grey, 255).setUv(0.0F, 0.0F).setLight(light);
+        quad.addVertex(at, x1, y1, 0.0F).setColor(grey, grey, grey, 255).setUv(1.0F, 0.0F).setLight(light);
+        quad.addVertex(at, x1, y0, 0.0F).setColor(grey, grey, grey, 255).setUv(1.0F, 1.0F).setLight(light);
+    }
+
+    /**
+     * How bright the game draws a face of a model whose normal, in the pose's space, is {@code normal}: as its shader
+     * lights an entity's faces, by the world's two lights from above and a floor of light beneath.
+     */
+    public static float shade(final Vector3fc normal) {
+        final float first = Math.max(0.0F, normal.dot(FIRST_LIGHT));
+        final float second = Math.max(0.0F, normal.dot(SECOND_LIGHT));
+        return Math.min(1.0F, (first + second) * LIGHTS + UNLIT);
     }
 
     /** How many pictures are held right now, drawn or waiting. */

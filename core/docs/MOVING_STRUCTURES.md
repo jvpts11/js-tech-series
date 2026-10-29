@@ -348,6 +348,14 @@ MovingStructures.sit(player, seatBlock);                                  // as 
 structure.controls().tell(now, held, forward, up, false);                 // what a computer or a mod tells it
 ```
 
+*Added 2026-10-29.* A seat may be one its sitter **lies** on, as a capsule's crew lie on their couches:
+`{"seat": {"height": 0.1, "lying": true}}`. They lie on their back as a sleeper does, their feet the way the seat looks
+and their head the other way, their eyes low over the seat at its edge towards their head, so looking straight up they
+see what is over the seat and a good way past their head; they look round as they like, are drawn lying, and stand up
+as from any seat. A seat that looks up or down is sat on upright. A block merged into a formed structure looks the way
+the block it was looked, turned as the structure stands, and does aboard what the structure's formed model says that
+kind of block does, when the model says ([MULTIBLOCKS.md](MULTIBLOCKS.md#shaped-as-the-model)).
+
 Whatever is shot or thrown from a seat aboard, or from a deck, goes on with the deck's speed, so an arrow loosed from a
 moving ship flies with the ship.
 

@@ -75,9 +75,9 @@ public final class ModelGameTests {
     @GameTest(template = ARENA)
     public static void declaredModels_haveTheirDefinitionsBesideThem(final GameTestHelper helper) {
         final List<DeclaredModel> declared = TestSounds.CONTENT.declaredModels();
-        // The press, the crate, the walker, the helmet, the arms, the turbine, the shaft, the gear, the two pulleys,
-        // and the pump, the bracket, the collar and the fan of CAD and scene files.
-        helper.assertTrue(declared.size() == 14, "the test mod declares its fourteen models; it has "
+        // The press, the crate, the walker, the helmet, the arms, the turbine, the couch pod, the shaft, the gear, the
+        // two pulleys, and the pump, the bracket, the collar and the fan of CAD and scene files.
+        helper.assertTrue(declared.size() == 15, "the test mod declares its fifteen models; it has "
                 + declared.size());
         for (final DeclaredModel model : declared) {
             final ResourceLocation file = DeclaredModel.definitionFile(model.id());

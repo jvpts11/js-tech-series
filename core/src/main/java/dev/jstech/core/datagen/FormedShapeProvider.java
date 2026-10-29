@@ -120,7 +120,7 @@ public final class FormedShapeProvider implements DataProvider {
         }
         final Map<Long, int[]> cells = new TreeMap<>();
         split.pieces().forEach((cell, pieces) -> cells.put(cell, MeshVoxels.boxes(pieces)));
-        return new FormedShape(FormedShapes.patternOrigin(), apart, cells);
+        return new FormedShape(FormedShapes.patternOrigin(), apart, cells, FormedShapes.aboardDeclared(id));
     }
 
     /* The places {@code keys} as people read them, or a dash for none. */

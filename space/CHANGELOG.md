@@ -242,6 +242,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   vacuum engine standing on it; the instrument ring of five closes its adapter's four panels round a lunar lander; the
   legs, and the lunar lander's, are folded on the way up and spread to land. A capsule is drawn with its crew's cabin
   inside, the couches, the panel, the hatch in its recess and the windows at its corners.
+- Live cabins: the capsules' panels and the lunar lander's cabin show the flight as it goes. The strips show
+  the stage's fuel and oxidiser and how fast the rocket climbs, the attitude ball turns with its pitch, roll and
+  heading, the throttle slides to its setting, the heading's tape and the mission clock in seven segments run, the
+  gauges show the cabin's air and the propellant left, and the lamps light green, amber or red: the engine burning, the
+  stage ready to part, the Flight Computer flying, an abort, the master alarm, the cabin's air, propellant running low,
+  the parachutes, the legs and the docking port. The Flight Computer's face shows on the panel, and on the lander's
+  front wall, its fail lamp lit with the master alarm. A capsule's crew lie on their couches facing its nose, looking
+  up at the panel; in the lander's cabin the crew seat is a chair facing the Flight Computer.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

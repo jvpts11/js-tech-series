@@ -425,6 +425,17 @@ public static final DeclaredModel TURBINE = CONTENT.model("turbine")
   its faces.
 - A model formed from a pattern that repeats has no one size, and is refused. The terminal, which draws the model,
   keeps its own block's shape.
+- **What its blocks do aboard** (*added 2026-10-29*): the model may say that a kind of its blocks does aboard a moving
+  structure something else than the block does alone, written into its shape file, so the same seat is a couch in a
+  capsule and a chair in a lander's cabin. A merged block reads it before its own block's data
+  (`BlockAboard.at(level, pos)`).
+
+```java
+CONTENT.model("capsule").file("jsmodels/capsule.gltf").formedFrom(rl("capsule"))
+        .aboard(CREW_SEAT.getId(), new BlockAboard(Optional.of(new BlockAboard.Seat(0.1, false, true)),
+                Optional.empty(), Optional.empty(), Optional.empty()))
+        .register();
+```
 
 ### Worked by hand
 

@@ -3204,6 +3204,7 @@ stable 4
 10 dev.jstech.core.content.ModContent  void register(IEventBus)
 10 dev.jstech.core.content.ModelBuilder  type final class
 10 dev.jstech.core.content.ModelBuilder  DeclaredModel register()
+20 dev.jstech.core.content.ModelBuilder  ModelBuilder aboard(ResourceLocation, BlockAboard)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder animations(String...)
 12 dev.jstech.core.content.ModelBuilder  ModelBuilder far(int, int)
 10 dev.jstech.core.content.ModelBuilder  ModelBuilder file(String)
@@ -9665,7 +9666,9 @@ stable 4
 12 dev.jstech.core.motion.Rhythm  static int frame(MotionSpec, double)
 10 dev.jstech.core.moving.BlockAboard  type record(Optional<Seat> seat, Optional<Clamp> clamp, Optional<Decoupler> decoupler, Optional<Tool> tool)
 10 dev.jstech.core.moving.BlockAboard  boolean any()
+20 dev.jstech.core.moving.BlockAboard  static BlockAboard at(Level, BlockPos)
 10 dev.jstech.core.moving.BlockAboard  static BlockAboard of(BlockState)
+20 dev.jstech.core.moving.BlockAboard  static Direction wayAt(Level, BlockPos)
 10 dev.jstech.core.moving.BlockAboard  static final BlockAboard NONE
 10 dev.jstech.core.moving.BlockAboard  static final Codec<BlockAboard> CODEC
 10 dev.jstech.core.moving.BlockAboard  static final DataMapType<Block, BlockAboard> ABOARD
@@ -9674,8 +9677,10 @@ stable 4
 10 dev.jstech.core.moving.BlockAboard.Clamp  static final Codec<Clamp> CODEC
 10 dev.jstech.core.moving.BlockAboard.Decoupler  type record(double push, BlockPhysics.SignalSide signal)
 10 dev.jstech.core.moving.BlockAboard.Decoupler  static final Codec<Decoupler> CODEC
-10 dev.jstech.core.moving.BlockAboard.Seat  type record(double height, boolean helm)
+20 dev.jstech.core.moving.BlockAboard.Seat  type record(double height, boolean helm, boolean lying)
+20 dev.jstech.core.moving.BlockAboard.Seat  new(double, boolean)
 10 dev.jstech.core.moving.BlockAboard.Seat  static final Codec<Seat> CODEC
+20 dev.jstech.core.moving.BlockAboard.Seat  static final double LYING_REACH
 10 dev.jstech.core.moving.BlockAboard.Tool  type record(ToolKind kind, double speed, Optional<ResourceLocation> loot, int reach)
 10 dev.jstech.core.moving.BlockAboard.Tool  ItemStack lootTool()
 10 dev.jstech.core.moving.BlockAboard.Tool  static final Codec<Tool> CODEC
@@ -10272,6 +10277,7 @@ stable 4
 10 dev.jstech.core.moving.StructureResult  static StructureResult refused(Text)
 10 dev.jstech.core.moving.StructureSeatEntity  type final class extends Entity
 10 dev.jstech.core.moving.StructureSeatEntity  BlockPos seat()
+20 dev.jstech.core.moving.StructureSeatEntity  Direction lyingHead()
 10 dev.jstech.core.moving.StructureSeatEntity  IStructureBody structure()
 10 dev.jstech.core.moving.StructureSeatEntity  PushReaction getPistonPushReaction()
 10 dev.jstech.core.moving.StructureSeatEntity  Vec3 getDismountLocationForPassenger(LivingEntity)
@@ -11233,14 +11239,19 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedPlace  static final Codec<FormedPlace> CODEC
 19 dev.jstech.core.multiblock.shape.FormedShape  type final class
 19 dev.jstech.core.multiblock.shape.FormedShape  Map<Long, int[]> cells()
+20 dev.jstech.core.multiblock.shape.FormedShape  Map<ResourceLocation, BlockAboard> aboard()
+20 dev.jstech.core.multiblock.shape.FormedShape  Optional<BlockAboard> aboard(Block)
 19 dev.jstech.core.multiblock.shape.FormedShape  Optional<int[]> boxes(long)
 19 dev.jstech.core.multiblock.shape.FormedShape  Set<Long> apart()
 19 dev.jstech.core.multiblock.shape.FormedShape  VoxelShape shape(FormedPlace)
 19 dev.jstech.core.multiblock.shape.FormedShape  double[] origin()
 19 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>)
+20 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>, Map<ResourceLocation, BlockAboard>)
 19 dev.jstech.core.multiblock.shape.FormedShape  static final Codec<FormedShape> CODEC
 19 dev.jstech.core.multiblock.shape.FormedShapes  type final class
+20 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, BlockAboard> aboardDeclared(ResourceLocation)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, ResourceLocation> declaredBy(String)
+20 dev.jstech.core.multiblock.shape.FormedShapes  static Optional<BlockAboard> aboard(Level, FormedPlace, Block)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static Optional<FormedPlace> place(IStructureShape, int, BlockPos, BlockPos)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static Optional<FormedShape> get(Level, ResourceLocation)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static Optional<ResourceLocation> modelOf(IStructureShape)
@@ -11249,6 +11260,7 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedShapes  static double[] patternOrigin()
 19 dev.jstech.core.multiblock.shape.FormedShapes  static final List<Orientation> ORIENTATIONS
 19 dev.jstech.core.multiblock.shape.FormedShapes  static void declare(ResourceLocation, ResourceLocation)
+20 dev.jstech.core.multiblock.shape.FormedShapes  static void declareAboard(ResourceLocation, ResourceLocation, BlockAboard)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static void register()
 19 dev.jstech.core.multiblock.shape.IFormedMeshes  type interface
 19 dev.jstech.core.multiblock.shape.IFormedMeshes  abstract float[] lines(FormedPlace, FormedShape)

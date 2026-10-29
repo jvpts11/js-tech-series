@@ -311,6 +311,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   them out among a structure's blocks, `MeshVoxels` makes a block's boxes, `MeshOutline` its outline, `MeshPick` meets
   a line of sight with its faces, and `CellSpace` turns a block as its structure stands; `FormedAim` aims at the
   faces where they are known, from an `IFormedMeshes`.
+- Seats one lies on, and formed models that say what their blocks do aboard: J's Core's API is at version 20.
+  `BlockAboard.Seat` has `lying`, with `LYING_REACH`, and `StructureSeatEntity.lyingHead()` tells which way a sitter
+  lying has their head. `BlockAboard.at` reads what the block at a place does aboard, a merged block by what its formed
+  model says or else by the block it was, and `BlockAboard.wayAt` the way it looks. `ModelBuilder.aboard` says what a
+  kind of block does as a block of the model, `FormedShapes.declareAboard`, `aboardDeclared` and `aboard` hold it, and
+  `FormedShape.aboard` reads it from a shape file.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1709,6 +1715,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   of the room it stands in.
 - Methane in the shared catalogue: the natural gas a rocket burns with liquid oxygen, liquid at -162 °C,
   flammable between 5% and 15% of the air.
+- Seats one lies on: a seat aboard a moving structure may lay its sitter on their back, as a capsule's crew lie
+  on their couches, their eyes low over it, looking round as they like and drawn lying; and a formed structure's model
+  may make a kind of its blocks do something else aboard, so the same seat is a couch in one model and a chair in
+  another. A seat merged into a formed structure is a seat aboard again, as the block it was.
 - Formed blocks shaped as their model: a structure whose formed model is declared formed from its pattern
   has each of its merged blocks shaped as its part of the model, not as a whole block. What walks on it stands on the
   model's floor, a ray or an arrow stops at the model's wall, and the player aims at the model's faces, through a gap

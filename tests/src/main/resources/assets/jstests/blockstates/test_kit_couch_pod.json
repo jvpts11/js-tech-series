@@ -1,0 +1,5 @@
+{
+  "multipart": [
+    {"apply": {"model": "jstests:block/test_kit_couch_pod"}}
+  ]
+}

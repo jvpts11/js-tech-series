@@ -10,6 +10,7 @@ package dev.jstech.core.multiblock.shape;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.moving.BlockAboard;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,6 +21,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -30,11 +34,13 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * through, in sixteenths of the block, as the model stands facing north. Worked out by the data run from the model's
  * faces, since a server has no models, and sent to the players. Each block's shape turned each way a structure can
  * stand is worked out once, the first time a block stands that way, and shared by every block of every structure of
- * the model that stands so.
+ * the model that stands so. It also holds what a kind of its blocks does aboard a moving structure in place of what it
+ * does alone, as its model's declaration says: the same seat a couch in a capsule and a chair in a lander's cabin.
  *
  * <pre>{@code
  * {"origin": [-0.5, 0.0, -0.5], "apart": [[0, 0, 0]],
- *  "cells": [{"at": [0, 1, 0], "boxes": [0, 0, 0, 16, 2, 16, ...]}, ...]}
+ *  "cells": [{"at": [0, 1, 0], "boxes": [0, 0, 0, 16, 2, 16, ...]}, ...],
+ *  "aboard": {"mymod:crew_seat": {"seat": {"height": 0.1, "lying": true}}}}
  * }</pre>
  */
 public final class FormedShape {
@@ -42,6 +48,7 @@ public final class FormedShape {
     private final double[] origin;
     private final Set<Long> apart;
     private final Map<Long, int[]> cells;
+    private final Map<ResourceLocation, BlockAboard> aboard;
     private final Map<Turned, VoxelShape> turned = new ConcurrentHashMap<>();
 
     private static final int AXES = 3;
@@ -56,7 +63,9 @@ public final class FormedShape {
     public static final Codec<FormedShape> CODEC = RecordCodecBuilder.<Raw>create(instance -> instance.group(
                     Codec.DOUBLE.listOf().fieldOf("origin").forGetter(Raw::origin),
                     TRIPLE.listOf().optionalFieldOf("apart", List.of()).forGetter(Raw::apart),
-                    CELL.listOf().fieldOf("cells").forGetter(Raw::cells)).apply(instance, Raw::new))
+                    CELL.listOf().fieldOf("cells").forGetter(Raw::cells),
+                    Codec.unboundedMap(ResourceLocation.CODEC, BlockAboard.CODEC).optionalFieldOf("aboard", Map.of())
+                            .forGetter(Raw::aboard)).apply(instance, Raw::new))
             .comapFlatMap(FormedShape::build, FormedShape::raw);
 
     /**
@@ -65,8 +74,10 @@ public final class FormedShape {
      * @param origin where the lowest corner of the block {@code (0, 0, 0)} is in the model's space
      * @param apart  the blocks of its structure that stand for themselves, as its terminal does
      * @param cells  each merging block's boxes, by {@link MeshCells#key}, {@link MeshVoxels#BOX} numbers a box
+     * @param aboard what a kind of its blocks does aboard in place of what it does alone, by the block's id
      */
-    public FormedShape(final double[] origin, final Set<Long> apart, final Map<Long, int[]> cells) {
+    public FormedShape(final double[] origin, final Set<Long> apart, final Map<Long, int[]> cells,
+                       final Map<ResourceLocation, BlockAboard> aboard) {
         if (origin.length != AXES) {
             throw new IllegalArgumentException("an origin is three numbers");
         }
@@ -78,6 +89,12 @@ public final class FormedShape {
         this.origin = origin.clone();
         this.apart = Collections.unmodifiableSet(new LinkedHashSet<>(apart));
         this.cells = Collections.unmodifiableMap(new TreeMap<>(cells));
+        this.aboard = Map.copyOf(aboard);
+    }
+
+    /** The shapes of a model's blocks, none of which does anything aboard in place of what it does alone. */
+    public FormedShape(final double[] origin, final Set<Long> apart, final Map<Long, int[]> cells) {
+        this(origin, apart, cells, Map.of());
     }
 
     /** Where the lowest corner of the block {@code (0, 0, 0)} is in the model's space. */
@@ -93,6 +110,17 @@ public final class FormedShape {
     /** Each merging block's boxes, by its key. */
     public Map<Long, int[]> cells() {
         return this.cells;
+    }
+
+    /** What a kind of its blocks does aboard in place of what it does alone, by the block's id. */
+    public Map<ResourceLocation, BlockAboard> aboard() {
+        return this.aboard;
+    }
+
+    /** What the block {@code block} does aboard as a block of the formed model, if the model says. */
+    public Optional<BlockAboard> aboard(final Block block) {
+        return this.aboard.isEmpty() ? Optional.empty()
+                : Optional.ofNullable(this.aboard.get(BuiltInRegistries.BLOCK.getKey(block)));
     }
 
     /** The boxes of the block {@code cell}, as the model stands facing north, in sixteenths. */
@@ -140,7 +168,7 @@ public final class FormedShape {
                     cell.boxes().stream().mapToInt(Integer::intValue).toArray());
         }
         return DataResult.success(new FormedShape(new double[] {raw.origin().get(0), raw.origin().get(1),
-            raw.origin().get(2)}, apart, cells));
+            raw.origin().get(2)}, apart, cells, raw.aboard()));
     }
 
     private static Raw raw(final FormedShape shape) {
@@ -149,7 +177,8 @@ public final class FormedShape {
         final List<Cell> cells = new ArrayList<>();
         shape.cells.forEach((key, boxes) -> cells.add(new Cell(List.of(MeshCells.x(key), MeshCells.y(key),
                 MeshCells.z(key)), Arrays.stream(boxes).boxed().toList())));
-        return new Raw(List.of(shape.origin[0], shape.origin[1], shape.origin[2]), apart, cells);
+        return new Raw(List.of(shape.origin[0], shape.origin[1], shape.origin[2]), apart, cells,
+                new TreeMap<>(shape.aboard));
     }
 
     /* A block's shape standing one way. */
@@ -166,7 +195,8 @@ public final class FormedShape {
     }
 
     /* A shape file as it reads. */
-    private record Raw(List<Double> origin, List<List<Integer>> apart, List<Cell> cells) {
+    private record Raw(List<Double> origin, List<List<Integer>> apart, List<Cell> cells,
+                       Map<ResourceLocation, BlockAboard> aboard) {
 
         Raw {
             origin = List.copyOf(origin);

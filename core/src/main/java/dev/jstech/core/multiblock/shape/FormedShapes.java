@@ -9,6 +9,7 @@ package dev.jstech.core.multiblock.shape;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.data.DataRegistry;
+import dev.jstech.core.moving.BlockAboard;
 import dev.jstech.core.multiblock.IStructureShape;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
@@ -22,6 +23,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +49,9 @@ public final class FormedShapes {
     private static final Map<ResourceLocation, ResourceLocation> PATTERNS =
             Collections.synchronizedMap(new LinkedHashMap<>());
     private static final Map<ResourceLocation, ResourceLocation> MODELS =
+            Collections.synchronizedMap(new LinkedHashMap<>());
+    /* What a kind of block does aboard as a block of a formed model, by the model, then the block. */
+    private static final Map<ResourceLocation, Map<ResourceLocation, BlockAboard>> ABOARD =
             Collections.synchronizedMap(new LinkedHashMap<>());
     /* Where the lowest corner of a pattern's terminal block is in its formed model's space. */
     private static final double[] PATTERN_ORIGIN = {-0.5, 0.0, -0.5};
@@ -76,6 +81,22 @@ public final class FormedShapes {
             MODELS.put(pattern, model);
             PATTERNS.put(model, pattern);
         }
+    }
+
+    /**
+     * Declares that the block {@code block}, as a block of the formed model {@code model}, does aboard a moving
+     * structure what {@code aboard} says, in place of what it does alone: the same seat a couch in one model and a
+     * chair in another. Written into the model's shape file by the data run.
+     */
+    public static void declareAboard(final ResourceLocation model, final ResourceLocation block,
+                                     final BlockAboard aboard) {
+        ABOARD.computeIfAbsent(model, any -> Collections.synchronizedMap(new LinkedHashMap<>())).put(block, aboard);
+    }
+
+    /** What each kind of block does aboard as a block of the formed model {@code model}, as declared. */
+    public static Map<ResourceLocation, BlockAboard> aboardDeclared(final ResourceLocation model) {
+        final Map<ResourceLocation, BlockAboard> declared = ABOARD.get(model);
+        return declared == null ? Map.of() : Map.copyOf(declared);
     }
 
     /** The models declared formed by the mod of that namespace, each with its pattern, for its data run. */
@@ -123,6 +144,11 @@ public final class FormedShapes {
     /** The shapes of the blocks of the formed model {@code model}, on the side {@code level} is on. */
     public static Optional<FormedShape> get(final Level level, final ResourceLocation model) {
         return Optional.ofNullable(FILES.entries(level).get(model));
+    }
+
+    /** What {@code block} does aboard as the block {@code place} of a formed model, if its model's file says. */
+    public static Optional<BlockAboard> aboard(final Level level, final FormedPlace place, final Block block) {
+        return get(level, place.model()).flatMap(shape -> shape.aboard(block));
     }
 
     /** The faces of the block {@code place} in its own space, where its model is known; none on a server. */

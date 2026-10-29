@@ -331,6 +331,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   them out among a structure's blocks, `MeshVoxels` makes a block's boxes, `MeshOutline` its outline, `MeshPick` meets
   a line of sight with its faces, and `CellSpace` turns a block as its structure stands; `FormedAim` aims at the
   faces where they are known, from an `IFormedMeshes`.
+- (Core) Seats one lies on, and formed models that say what their blocks do aboard: J's Core's API is at version 20.
+  `BlockAboard.Seat` has `lying`, with `LYING_REACH`, and `StructureSeatEntity.lyingHead()` tells which way a sitter
+  lying has their head. `BlockAboard.at` reads what the block at a place does aboard, a merged block by what its formed
+  model says or else by the block it was, and `BlockAboard.wayAt` the way it looks. `ModelBuilder.aboard` says what a
+  kind of block does as a block of the model, `FormedShapes.declareAboard`, `aboardDeclared` and `aboard` hold it, and
+  `FormedShape.aboard` reads it from a shape file.
 - (Space) The promise: J's Space's API is at version 1, in `dev.jstech.space.api`, experimental. For now it holds
   only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
   landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
@@ -2139,6 +2145,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   vacuum engine standing on it; the instrument ring of five closes its adapter's four panels round a lunar lander; the
   legs, and the lunar lander's, are folded on the way up and spread to land. A capsule is drawn with its crew's cabin
   inside, the couches, the panel, the hatch in its recess and the windows at its corners.
+- (Space) Live cabins: the capsules' panels and the lunar lander's cabin show the flight as it goes. The strips show
+  the stage's fuel and oxidiser and how fast the rocket climbs, the attitude ball turns with its pitch, roll and
+  heading, the throttle slides to its setting, the heading's tape and the mission clock in seven segments run, the
+  gauges show the cabin's air and the propellant left, and the lamps light green, amber or red: the engine burning, the
+  stage ready to part, the Flight Computer flying, an abort, the master alarm, the cabin's air, propellant running low,
+  the parachutes, the legs and the docking port. The Flight Computer's face shows on the panel, and on the lander's
+  front wall, its fail lamp lit with the master alarm. A capsule's crew lie on their couches facing its nose, looking
+  up at the panel; in the lander's cabin the crew seat is a chair facing the Flight Computer.
+- (Core) Seats one lies on: a seat aboard a moving structure may lay its sitter on their back, as a capsule's crew lie
+  on their couches, their eyes low over it, looking round as they like and drawn lying; and a formed structure's model
+  may make a kind of its blocks do something else aboard, so the same seat is a couch in one model and a chair in
+  another. A seat merged into a formed structure is a seat aboard again, as the block it was.
 - (Core) Formed blocks shaped as their model: a structure whose formed model is declared formed from its pattern
   has each of its merged blocks shaped as its part of the model, not as a whole block. What walks on it stands on the
   model's floor, a ray or an arrow stops at the model's wall, and the player aims at the model's faces, through a gap

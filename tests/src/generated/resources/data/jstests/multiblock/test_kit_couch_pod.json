@@ -1,0 +1,28 @@
+{
+  "key": {
+    "I": {
+      "blocks": [
+        "minecraft:iron_block"
+      ]
+    },
+    "S": {
+      "blocks": [
+        "jstests:test_seat"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "III",
+      "III",
+      "I#I"
+    ],
+    [
+      "III",
+      "ISI",
+      "III"
+    ]
+  ],
+  "name": "test_kit_couch_pod",
+  "terminal": "jstests:test_kit_couch_pod"
+}

@@ -13,6 +13,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -67,16 +68,30 @@ public final class TestRockets {
         }
     }
 
-    /** What the stand shows: a rocket's stack, and whether its legs are spread to land. */
+    /** What the stand shows: a rocket's stack, whether its legs are spread to land, and what its cabins read. */
     public static final class DisplayEntity extends SyncedBlockEntity {
 
         private final ValueField<RocketStack> stack;
         private final ValueField<Boolean> legsDown;
+        private final ValueField<CabinReadings> readings;
 
         public DisplayEntity(final BlockPos pos, final BlockState state) {
             super(DISPLAY_ENTITY.get(), pos, state);
             this.stack = fields().value("Stack", RocketStack.CODEC, new RocketStack(List.of())).save().toClient();
             this.legsDown = fields().value("LegsDown", Codec.BOOL, false).save().toClient();
+            this.readings = fields().value("Readings", CabinReadings.CODEC, CabinReadings.AT_REST).save().toClient();
+        }
+
+        /** What its rocket's cabins read. */
+        public CabinReadings readings() {
+            final CabinReadings shown = this.readings.get();
+            return shown == null ? CabinReadings.AT_REST : shown;
+        }
+
+        /** Has its rocket's cabins read {@code read}. */
+        public void read(final CabinReadings read) {
+            this.readings.set(read);
+            setChanged();
         }
 
         /** The rocket it shows. */

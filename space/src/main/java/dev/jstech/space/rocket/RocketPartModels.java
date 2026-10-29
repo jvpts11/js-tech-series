@@ -8,6 +8,8 @@
 package dev.jstech.space.rocket;
 
 import dev.jstech.core.content.DeclaredModel;
+import dev.jstech.core.content.ModelBuilder;
+import dev.jstech.core.moving.BlockAboard;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
 import dev.jstech.space.api.RocketKit;
@@ -41,12 +43,23 @@ public final class RocketPartModels {
     /* A vacuum engine's impulse at sea level is well under its own in a vacuum: its large nozzle does badly there. */
     private static final double VACUUM_NOZZLE = 0.7;
     /* The capsule of five, its crew's cabin inside it, has the most triangles, and every one of them is drawn. */
-    private static final int MOST_TRIANGLES = 24_000;
+    private static final int MOST_TRIANGLES = 28_000;
+    /*
+     * A capsule's crew lie on their couches on their backs, facing its nose, their eyes a little over the couch: the
+     * crew seat, which in the lander's cabin is a chair facing its Flight Computer, is a couch in a capsule.
+     */
+    private static final BlockAboard COUCH = new BlockAboard(Optional.of(new BlockAboard.Seat(0.1, false, true)),
+            Optional.empty(), Optional.empty(), Optional.empty());
 
     static {
         for (final String name : NAMES) {
-            MODELS.put(name, SpaceContent.CONTENT.model("rocket/" + name).file("jsmodels/rocket/" + name + ".gltf")
-                    .texture("textures/models/rocket/" + name + ".png").triangles(MOST_TRIANGLES).register());
+            final ModelBuilder model = SpaceContent.CONTENT.model("rocket/" + name)
+                    .file("jsmodels/rocket/" + name + ".gltf").texture("textures/models/rocket/" + name + ".png")
+                    .triangles(MOST_TRIANGLES);
+            if (name.startsWith("capsule_")) {
+                model.aboard(RocketKitBlocks.CREW_SEAT.getId(), COUCH);
+            }
+            MODELS.put(name, model.register());
         }
     }
 

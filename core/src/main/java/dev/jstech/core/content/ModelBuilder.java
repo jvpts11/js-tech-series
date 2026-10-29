@@ -9,6 +9,7 @@ package dev.jstech.core.content;
 
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelReaders;
+import dev.jstech.core.moving.BlockAboard;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
@@ -55,6 +56,7 @@ public final class ModelBuilder {
     private int farFrom;
     private int farTriangles;
     private @Nullable ResourceLocation formedFrom;
+    private final Map<ResourceLocation, BlockAboard> aboard = new LinkedHashMap<>();
 
     ModelBuilder(final ModContent content, final String path) {
         this.content = content;
@@ -140,6 +142,16 @@ public final class ModelBuilder {
         return this;
     }
 
+    /**
+     * As a block of its formed structure, the block {@code block} does aboard a moving structure what {@code does}
+     * says, in place of what it does alone: a capsule lays its crew on couches where the same seat in a lander's
+     * cabin is a chair. It holds once the structure is formed into this model.
+     */
+    public ModelBuilder aboard(final ResourceLocation block, final BlockAboard does) {
+        this.aboard.put(block, does);
+        return this;
+    }
+
     /** A variant chosen by the state of the block it is drawn for, as {@code variant} says. */
     public ModelBuilder variant(final Consumer<VariantBuilder> variant) {
         final VariantBuilder builder = new VariantBuilder();
@@ -179,6 +191,7 @@ public final class ModelBuilder {
         if (this.formedFrom != null) {
             FormedShapes.declare(id, this.formedFrom);
         }
+        this.aboard.forEach((block, does) -> FormedShapes.declareAboard(id, block, does));
         return model;
     }
 

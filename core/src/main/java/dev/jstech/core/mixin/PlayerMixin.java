@@ -10,24 +10,37 @@ package dev.jstech.core.mixin;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureFrame;
+import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.moving.YardLayout;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Lets a player reach the blocks of a moving structure: every block a player uses, breaks, opens or keeps a screen of
  * is checked to be within their reach, and the game measures it to the block's place, out in the yard; so a chest on
  * a deck would close the tick after it opened. A block of a structure is measured where it is in the world; any other
- * block as before.
+ * block as before. A player lying on a seat of a structure keeps lying, as a sleeper does, their eyes low over it,
+ * whatever the game would stand them up as; getting up, they stand as before.
  */
 @Mixin(Player.class)
 public abstract class PlayerMixin {
+
+    @Inject(method = "updatePlayerPose", at = @At("HEAD"), cancellable = true)
+    private void jscore$lieOnACouchAboard(final CallbackInfo info) {
+        final Player player = (Player) (Object) this;
+        if (player.getVehicle() instanceof StructureSeatEntity seat && seat.lyingHead() != null) {
+            player.setPose(Pose.SLEEPING);
+            info.cancel();
+        }
+    }
 
     @Inject(method = "canInteractWithBlock", at = @At("HEAD"), cancellable = true)
     private void jscore$reachStructureBlocks(final BlockPos pos, final double distance,

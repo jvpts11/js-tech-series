@@ -1,0 +1,23 @@
+{
+  "amber": "#FFFFB22D",
+  "bezel": "#FF7A7F89",
+  "dark": "#FF191C21",
+  "dialFace": "#FF0A0C0F",
+  "dialInk": "#FFDBE0E5",
+  "green": "#FF4CF272",
+  "housing": "#FF23262B",
+  "ink": "#FF1E2126",
+  "inset": "#FF848C93",
+  "labelLit": "#FF0C0C0C",
+  "labelOff": "#FF8C9199",
+  "lampOff": "#FF3D4247",
+  "needle": "#FFFFF9E5",
+  "pivot": "#FF9EA3AD",
+  "pointer": "#FF2666CC",
+  "red": "#FFF23D2D",
+  "segmentOff": "#FF110C03",
+  "stripEdge": "#FF282B30",
+  "stripFace": "#FFE0E5E5",
+  "timerFace": "#FF050505",
+  "white": "#FFE5EAED"
+}

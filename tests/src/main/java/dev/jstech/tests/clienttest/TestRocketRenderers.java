@@ -51,8 +51,8 @@ public final class TestRocketRenderers {
             poses.pushPose();
             poses.translate(0.5, 0, 0.5);
             RocketPartsRenderer.draw(stand, RocketPartModels.of(RocketParts.all(stand.getLevel()),
-                    RocketKits.all(stand.getLevel()), stand.stack(), stand.legsDown()), poses, buffers, light,
-                    overlay);
+                    RocketKits.all(stand.getLevel()), stand.stack(), stand.legsDown()), stand.readings(), poses,
+                    buffers, light, overlay);
             poses.popPose();
         }
 
