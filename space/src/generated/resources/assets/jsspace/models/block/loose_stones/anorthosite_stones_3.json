@@ -1,0 +1,7 @@
+{
+  "parent": "jsspace:block/loose_stones/arrangement_3",
+  "textures": {
+    "side": "jsspace:block/anorthosite",
+    "top": "jsspace:block/anorthosite"
+  }
+}

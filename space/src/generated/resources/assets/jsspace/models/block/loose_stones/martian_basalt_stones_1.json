@@ -1,0 +1,7 @@
+{
+  "parent": "jsspace:block/loose_stones/arrangement_1",
+  "textures": {
+    "side": "jsspace:block/vesicular_martian_basalt",
+    "top": "jsspace:block/vesicular_martian_basalt_top"
+  }
+}

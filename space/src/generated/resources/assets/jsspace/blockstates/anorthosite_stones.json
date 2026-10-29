@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "arrangement=0,facing=east": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_0",
+      "y": 90
+    },
+    "arrangement=0,facing=north": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_0"
+    },
+    "arrangement=0,facing=south": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_0",
+      "y": 180
+    },
+    "arrangement=0,facing=west": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_0",
+      "y": 270
+    },
+    "arrangement=1,facing=east": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_1",
+      "y": 90
+    },
+    "arrangement=1,facing=north": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_1"
+    },
+    "arrangement=1,facing=south": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_1",
+      "y": 180
+    },
+    "arrangement=1,facing=west": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_1",
+      "y": 270
+    },
+    "arrangement=2,facing=east": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_2",
+      "y": 90
+    },
+    "arrangement=2,facing=north": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_2"
+    },
+    "arrangement=2,facing=south": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_2",
+      "y": 180
+    },
+    "arrangement=2,facing=west": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_2",
+      "y": 270
+    },
+    "arrangement=3,facing=east": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_3",
+      "y": 90
+    },
+    "arrangement=3,facing=north": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_3"
+    },
+    "arrangement=3,facing=south": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_3",
+      "y": 180
+    },
+    "arrangement=3,facing=west": {
+      "model": "jsspace:block/loose_stones/anorthosite_stones_3",
+      "y": 270
+    }
+  }
+}

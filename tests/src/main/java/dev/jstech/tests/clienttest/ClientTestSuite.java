@@ -226,6 +226,7 @@ import dev.jstech.tests.clienttest.series.HeldModelsClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
 import dev.jstech.tests.clienttest.space.ClimbClientTests;
 import dev.jstech.tests.clienttest.space.GroundSkyClientTests;
+import dev.jstech.tests.clienttest.space.LooseStonesClientTests;
 import dev.jstech.tests.clienttest.space.SpaceOresClientTests;
 import dev.jstech.tests.clienttest.space.SpaceRocksClientTests;
 import dev.jstech.tests.clienttest.space.SystemSpaceClientTests;
@@ -461,7 +462,8 @@ public final class ClientTestSuite {
             GroundSkyClientTests.class,
             ClimbClientTests.class,
             SpaceRocksClientTests.class,
-            SpaceOresClientTests.class);
+            SpaceOresClientTests.class,
+            LooseStonesClientTests.class);
 
     private ClientTestSuite() {
     }

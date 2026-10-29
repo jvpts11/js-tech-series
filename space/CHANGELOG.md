@@ -120,6 +120,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   hematite in the Martian Regolith and the Mudstone, its magnetite and olivine in the Martian Basalt, and its jarosite
   and gypsum, the proofs of its old water, in the Mudstone, the gypsum in white veins. Each breaks under a pickaxe into
   its raw mineral. Those six rocks are host rocks any mod can lay its own ores in.
+- Loose stones, a decoration of a few small stones lying on the ground, never a whole block: Mare Basalt
+  Stones of the Moon's maria, Anorthosite Stones of its highlands, and Martian Basalt Stones, the vesicular basalt
+  strewn over Mars' plains. They lie in one of four arrangements, turned as chance has it, are walked through, break
+  at once to be picked up, and go with the ground under them.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

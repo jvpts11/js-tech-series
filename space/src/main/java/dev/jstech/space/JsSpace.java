@@ -13,6 +13,7 @@ import dev.jstech.space.datagen.JsSpaceDataGenerators;
 import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.exploration.SpaceProperties;
 import dev.jstech.space.exploration.WorldDiscovery;
+import dev.jstech.space.geology.LooseStones;
 import dev.jstech.space.geology.SpaceOres;
 import dev.jstech.space.geology.SpaceRocks;
 import dev.jstech.space.guide.MissionHandbook;
@@ -67,9 +68,11 @@ public final class JsSpace {
         // The way up from a world to its space and back, with no loading screen, and the far map seen on the way.
         SpaceClimbs.listen();
         FarMaps.listen();
-        // The ground of the Moon and of Mars: regoliths, sands, rocks and ices, and the ores in their rocks.
+        // The ground of the Moon and of Mars: regoliths, sands, rocks and ices, the ores in their rocks, and the
+        // stones lying loose on them.
         SpaceRocks.declare();
         SpaceOres.declare();
+        LooseStones.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

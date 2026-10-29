@@ -1,0 +1,7 @@
+{
+  "parent": "jsspace:block/loose_stones/arrangement_2",
+  "textures": {
+    "side": "jsspace:block/mare_basalt",
+    "top": "jsspace:block/mare_basalt"
+  }
+}

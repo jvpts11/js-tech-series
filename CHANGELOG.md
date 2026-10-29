@@ -1989,6 +1989,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   hematite in the Martian Regolith and the Mudstone, its magnetite and olivine in the Martian Basalt, and its jarosite
   and gypsum, the proofs of its old water, in the Mudstone, the gypsum in white veins. Each breaks under a pickaxe into
   its raw mineral. Those six rocks are host rocks any mod can lay its own ores in.
+- (Space) Loose stones, a decoration of a few small stones lying on the ground, never a whole block: Mare Basalt
+  Stones of the Moon's maria, Anorthosite Stones of its highlands, and Martian Basalt Stones, the vesicular basalt
+  strewn over Mars' plains. They lie in one of four arrangements, turned as chance has it, are walked through, break
+  at once to be picked up, and go with the ground under them.
 - (Core) Ores in the rocks a mod declares, each made once every mod has registered its blocks, as hard as its rock and
   a little more, and sounding as it does. The series' minerals glint as they are: hematite and magnetite steel grey,
   ilmenite black with a metal's sheen, native iron bright.

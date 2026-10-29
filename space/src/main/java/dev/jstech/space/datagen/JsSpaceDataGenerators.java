@@ -38,8 +38,11 @@ public final class JsSpaceDataGenerators {
     }
 
     public static void onGatherData(final GatherDataEvent event) {
+        // The loose stones' block states name models written beside them, so they are known before any is asked for.
+        LooseStoneModelProvider.announce(event.getExistingFileHelper());
         final ContentData data = ContentData.gather(event, SpaceContent.CONTENT)
                 .alsoNaming(SpaceAdvancementTabs::translations);
+        data.client(new LooseStoneModelProvider(data.output(), data.existingFiles()));
         data.server(new AdvancementProvider(data.output(), data.lookup(), data.existingFiles(),
                 List.<AdvancementProvider.AdvancementGenerator>copyOf(SpaceAdvancementTabs.all())));
         data.server(new DeclaredFilesProvider<>(data.output(), JsSpace.MODID, "star_systems",
