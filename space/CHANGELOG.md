@@ -185,6 +185,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   mends one. The Oxygen Bottle holds half an hour of breathing and pours it into the suit's tanks, from the hand or
   clicked onto the suit; it fills from a sealed room's air, taking the oxygen out of it, or from any gas tank or line
   of oxygen.
+- The suit's controls, its display and control module, on the HUD while a suit's chest piece is worn, drawn
+  as the hazard devices are and stacked with the dosimeter: the suit's white case with its red and blue hose stubs,
+  the black face with the suit's pressure on a needle from 0 to 5 pounds an inch, the time of air left, the state
+  (sealed, oxygen low, holed and leaking, or open), the oxygen and carbon dioxide on bars, the O2, PSI, CO2 and FAN
+  lamps, and the purge, fan and light buttons. With little oxygen left the screen's rim turns amber, holed it turns
+  red. O, until the player changes it, holds the controls up close, twice the size, where the light's button lights
+  the face.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

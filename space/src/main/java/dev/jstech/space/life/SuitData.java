@@ -35,6 +35,9 @@ public final class SuitData {
     /** The holes in the suit, on the piece worn on the chest, each leaking until it is patched. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> HOLES =
             SpaceContent.CONTENT.component("suit_holes", Codec.intRange(0, Integer.MAX_VALUE), ByteBufCodecs.VAR_INT);
+    /** Whether the face of the suit's controls, on the piece worn on the chest, is lit. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> CONTROLS_LIGHT =
+            SpaceContent.CONTENT.component("suit_controls_light", Codec.BOOL, ByteBufCodecs.BOOL);
     /** The seconds of breathing an oxygen bottle holds; one that never had it said is empty. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> BOTTLE_AIR =
             SpaceContent.CONTENT.component("bottle_air", Codec.intRange(0, Integer.MAX_VALUE), ByteBufCodecs.VAR_INT);

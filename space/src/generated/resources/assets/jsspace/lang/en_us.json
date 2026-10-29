@@ -190,7 +190,20 @@
   "jsspace.star_system.vorna": "Vorna",
   "jsspace.star_system.vorna.star": "a subgiant poor in metals",
   "jsspace.suit.lunar": "Lunar Suit",
+  "jsspace.suit_controls.carbon_dioxide": "CO2",
+  "jsspace.suit_controls.fan": "FAN",
+  "jsspace.suit_controls.leak": "LEAK, PATCH IT",
+  "jsspace.suit_controls.left": "LEFT",
+  "jsspace.suit_controls.light": "LIGHT",
+  "jsspace.suit_controls.open": "SUIT OPEN",
+  "jsspace.suit_controls.oxygen": "O2",
+  "jsspace.suit_controls.oxygen_low": "O2 LOW",
+  "jsspace.suit_controls.psi": "PSI",
+  "jsspace.suit_controls.purge": "PURGE",
+  "jsspace.suit_controls.sealed": "SUIT SEALED",
+  "jsspace.suit_controls.suit_psi": "SUIT PSI",
   "jsspace.world.mars": "Mars",
   "jsspace.world.moon": "The Moon",
-  "jsspace.world.overworld": "The Overworld"
+  "jsspace.world.overworld": "The Overworld",
+  "key.jsspace.suit_controls": "Look at the suit's controls"
 }

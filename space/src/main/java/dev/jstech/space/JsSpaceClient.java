@@ -9,6 +9,7 @@ package dev.jstech.space;
 
 import dev.jstech.core.client.advancement.WideBackgrounds;
 import dev.jstech.space.client.life.LunarSuitClient;
+import dev.jstech.space.client.life.SuitControlsHud;
 import dev.jstech.space.client.life.SuitLamps;
 import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
@@ -37,5 +38,7 @@ public final class JsSpaceClient {
         SuitLamps.listen();
         LunarSuitClient.listen(modEventBus);
         SunGlare.listen(modEventBus);
+        // The suit's controls on the HUD, stacked with the hazard devices, and up close on their key.
+        SuitControlsHud.listen(modEventBus);
     }
 }

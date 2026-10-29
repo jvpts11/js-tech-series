@@ -2071,6 +2071,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Air of its own: a mod gives a body its own air to breathe, a suit's tanks or a mask's line (`Lungs`,
   `IAirSupply`); whether it can breathe and whether the air poisons it are read from that air, and it breathes nothing
   of the room it stands in.
+- (Space) The suit's controls, its display and control module, on the HUD while a suit's chest piece is worn, drawn
+  as the hazard devices are and stacked with the dosimeter: the suit's white case with its red and blue hose stubs,
+  the black face with the suit's pressure on a needle from 0 to 5 pounds an inch, the time of air left, the state
+  (sealed, oxygen low, holed and leaking, or open), the oxygen and carbon dioxide on bars, the O2, PSI, CO2 and FAN
+  lamps, and the purge, fan and light buttons. With little oxygen left the screen's rim turns amber, holed it turns
+  red. O, until the player changes it, holds the controls up close, twice the size, where the light's button lights
+  the face.
 - (Core) Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

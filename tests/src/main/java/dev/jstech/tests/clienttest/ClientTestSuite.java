@@ -232,6 +232,7 @@ import dev.jstech.tests.clienttest.space.MarsClientTests;
 import dev.jstech.tests.clienttest.space.MoonClientTests;
 import dev.jstech.tests.clienttest.space.SpaceOresClientTests;
 import dev.jstech.tests.clienttest.space.SpaceRocksClientTests;
+import dev.jstech.tests.clienttest.space.SuitControlsClientTests;
 import dev.jstech.tests.clienttest.space.SystemSpaceClientTests;
 import dev.jstech.tests.testkit.TestSuites;
 import java.lang.reflect.Method;
@@ -469,7 +470,8 @@ public final class ClientTestSuite {
             LooseStonesClientTests.class,
             MoonClientTests.class,
             MarsClientTests.class,
-            LunarSuitClientTests.class);
+            LunarSuitClientTests.class,
+            SuitControlsClientTests.class);
 
     private ClientTestSuite() {
     }
