@@ -2,5 +2,6 @@
   "model": "jsspace:jsmodels/rocket/separation_ring_5_skirt.gltf",
   "textures": [
     "jsspace:textures/models/rocket/separation_ring_5_skirt.png"
-  ]
+  ],
+  "triangles": 24000
 }

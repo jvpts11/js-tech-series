@@ -43,7 +43,7 @@ public final class JsCoreApi {
      * }
      * }</pre>
      */
-    public static final int VERSION = 18;
+    public static final int VERSION = 19;
 
     /**
      * The Core's packages that are part of the promise beside this one, each a kit a mod may build on.
@@ -75,6 +75,7 @@ public final class JsCoreApi {
             "dev.jstech.core.material", "dev.jstech.core.matter", "dev.jstech.core.mechanical",
             "dev.jstech.core.menu", "dev.jstech.core.model", "dev.jstech.core.motion", "dev.jstech.core.moving",
             "dev.jstech.core.moving.physics", "dev.jstech.core.multiblock", "dev.jstech.core.multiblock.hands",
+            "dev.jstech.core.multiblock.shape",
             "dev.jstech.core.multipart",
             "dev.jstech.core.notification", "dev.jstech.core.optional", "dev.jstech.core.palette",
             "dev.jstech.core.persistence",

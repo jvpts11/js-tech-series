@@ -125,8 +125,8 @@ public final class ModelDefinitionProvider implements DataProvider {
         });
     }
 
-    private static List<ModelData> read(final DeclaredModel model, final String file,
-                                        final ExistingFileHelper files) {
+    /* The model of the declaration {@code model} read from its file {@code file}, or the run stops saying why. */
+    static List<ModelData> read(final DeclaredModel model, final String file, final ExistingFileHelper files) {
         final ResourceLocation location = ResourceLocation.parse(file);
         final String folder = location.getPath().contains("/")
                 ? location.getPath().substring(0, location.getPath().lastIndexOf('/') + 1) : "";

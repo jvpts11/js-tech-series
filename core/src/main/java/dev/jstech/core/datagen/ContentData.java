@@ -69,6 +69,9 @@ public final class ContentData {
         if (!content.declaredModels().isEmpty()) {
             data.client(new ModelDefinitionProvider(output, content, data.existingFiles()));
         }
+        if (FormedShapeProvider.declares(content)) {
+            data.client(new FormedShapeProvider(output, content, data.existingFiles()));
+        }
         data.server(new ContentLootProvider(output, data.lookup(), content));
         data.server(new ContentBlockTagsProvider(output, data.lookup(), content, data.existingFiles()));
         if (ContentItemTagsProvider.hasTags(content)) {

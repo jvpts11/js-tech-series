@@ -2,5 +2,6 @@
   "model": "jsspace:jsmodels/rocket/tank_5_bottom.gltf",
   "textures": [
     "jsspace:textures/models/rocket/tank_5_bottom.png"
-  ]
+  ],
+  "triangles": 24000
 }

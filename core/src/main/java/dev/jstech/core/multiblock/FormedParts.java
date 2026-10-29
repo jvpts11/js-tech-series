@@ -11,10 +11,13 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.registry.CoreItems;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -37,7 +40,7 @@ public final class FormedParts {
     public static final BlockEntry<FormedPartBlock> BLOCK = CoreItems.CONTENT.block("formed_part",
                     FormedPartBlock::new)
             .properties(properties -> properties.mapColor(MapColor.METAL).strength(2.0F).noOcclusion()
-                    .pushReaction(PushReaction.BLOCK))
+                    .pushReaction(PushReaction.BLOCK).dynamicShape())
             .named("Formed structure")
             .look(IBlockLook.fixed(new IBlockModel.ParticleOnly("formed_part", "minecraft:block/iron_block")))
             .drops(Drops.NONE)
@@ -72,6 +75,16 @@ public final class FormedParts {
      * @return the places that merged
      */
     public static List<Long> merge(final ServerLevel level, final BlockPos terminal, final Collection<Long> places) {
+        return merge(level, terminal, places, at -> Optional.empty());
+    }
+
+    /**
+     * The same, each block taking the shape of the block of the formed model {@code shaped} says it is.
+     *
+     * @return the places that merged
+     */
+    public static List<Long> merge(final ServerLevel level, final BlockPos terminal, final Collection<Long> places,
+                                   final Function<BlockPos, Optional<FormedPlace>> shaped) {
         final List<Long> out = new ArrayList<>();
         for (final long place : places) {
             final BlockPos at = MultiblockPatterns.decode(place);
@@ -82,7 +95,7 @@ public final class FormedParts {
             // Its neighbours are not told: nothing round it changed, as the structure sees it.
             level.setBlock(at, BLOCK.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part) {
-                part.merged(was, terminal);
+                part.merged(was, terminal, shaped.apply(at).orElse(null));
                 out.add(place);
                 puff(level, at);
             }

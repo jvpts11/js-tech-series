@@ -9,6 +9,7 @@ package dev.jstech.core.content;
 
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelReaders;
+import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,6 +54,7 @@ public final class ModelBuilder {
     private int triangles;
     private int farFrom;
     private int farTriangles;
+    private @Nullable ResourceLocation formedFrom;
 
     ModelBuilder(final ModContent content, final String path) {
         this.content = content;
@@ -127,6 +129,17 @@ public final class ModelBuilder {
         return this;
     }
 
+    /**
+     * It is the formed model of the structure of the pattern {@code pattern}, drawn by the terminal as the structure
+     * stands, its origin the middle of the terminal's floor: each block of the structure that merges into it takes
+     * the shape of its own part of it, worked out by the data run, which stops when a block of the pattern has no
+     * face of the model or a face lies more than a block outside the pattern ({@code FormedShapes}).
+     */
+    public ModelBuilder formedFrom(final ResourceLocation pattern) {
+        this.formedFrom = pattern;
+        return this;
+    }
+
     /** A variant chosen by the state of the block it is drawn for, as {@code variant} says. */
     public ModelBuilder variant(final Consumer<VariantBuilder> variant) {
         final VariantBuilder builder = new VariantBuilder();
@@ -163,6 +176,9 @@ public final class ModelBuilder {
                 this.animations.stream().map(each -> full(modid, each)).toList(), this.translucent, this.glow,
                 this.cracks, this.variants, this.glowLight, this.glowColour, detail));
         this.content.declare(model);
+        if (this.formedFrom != null) {
+            FormedShapes.declare(id, this.formedFrom);
+        }
         return model;
     }
 

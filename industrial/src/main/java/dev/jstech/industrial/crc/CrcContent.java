@@ -103,11 +103,15 @@ public final class CrcContent {
             CrcPart.LIQUID_COOLER, LIQUID_COOLER,
             CrcPart.HEAT_PIPE_COOLER, HEAT_PIPE_COOLER)));
 
-    /** The formed model, one cabinet of three frames drawn by the terminal over the whole structure. */
+    /**
+     * The formed model, one cabinet of three frames drawn by the terminal over the whole structure, whose blocks take
+     * their shapes from it.
+     */
     public static final DeclaredModel MODEL = IndustrialModule.CONTENT.model("computational_research_centre")
             .file("jsmodels/computational_research_centre.geo.json")
             .texture("textures/model/computational_research_centre.png")
             .glow(IntStream.range(0, LAMPS).mapToObj(k -> "lamp_" + k).toArray(String[]::new))
+            .formedFrom(CrcStructure.ID)
             .register();
     /**
      * What of the formed model a player works by hand: each frame's glazed door, swinging out on its hinge; the nine

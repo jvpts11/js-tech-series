@@ -152,6 +152,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   with its menus and the panel under the list; from Frames 10 on, in its modern look, with a search by machine and
   the panel beside the list. The Plant Drawings have its page, and pages on reading the plant from the network and on
   the alerts.
+- The Computational Research Centre shaped as its model: once formed, its blocks stand as its cabinet is
+  drawn, its frames, its desk and the gaps between them.
 
 ### Changed
 - The Forge Hammer, the Draw Plate and the Mortar are drawn in three dimensions in the hand and on the

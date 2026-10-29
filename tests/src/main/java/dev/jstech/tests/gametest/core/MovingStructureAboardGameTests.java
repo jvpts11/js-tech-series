@@ -21,6 +21,10 @@ import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.shape.CellSpace;
+import dev.jstech.core.multiblock.shape.FormedPlace;
+import dev.jstech.core.multiblock.shape.FormedShapes;
+import dev.jstech.core.multiblock.shape.MeshVoxels;
 import dev.jstech.core.overhead.HungWire;
 import dev.jstech.core.overhead.OverheadLines;
 import dev.jstech.core.overhead.WireEnd;
@@ -31,6 +35,7 @@ import dev.jstech.tests.TestModels;
 import dev.jstech.tests.testkit.TestCables;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.AfterBatch;
@@ -48,6 +53,9 @@ import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -115,6 +123,8 @@ public final class MovingStructureAboardGameTests {
                         helper.assertTrue(level.getBlockEntity(part) instanceof FormedPartBlockEntity formed
                                 && terminal.equals(formed.terminal()) && formed.original().is(Blocks.IRON_BLOCK),
                                 "each held by its terminal where it is now, and still iron: " + part);
+                        helper.assertTrue(shapedAsItsModel(level, part, Orientation.NORTH),
+                                "and shaped as its part of the model, aboard: " + part);
                     }
                     for (final BlockPos at : BlockPos.betweenClosed(helper.absolutePos(new BlockPos(3, 3, 3)),
                             helper.absolutePos(new BlockPos(5, 4, 5)))) {
@@ -139,6 +149,13 @@ public final class MovingStructureAboardGameTests {
                     helper.assertTrue(turbine.formed() && turbine.merged(), "formed and merged as it lands");
                     helper.assertTrue(turbine.orientation().orElse(Orientation.NORTH) != Orientation.NORTH,
                             "and standing turned as the structure was: " + turbine.orientation());
+                    for (final BlockPos each : BlockPos.betweenClosed(terminal.offset(-3, -1, -3),
+                            terminal.offset(3, 2, 3))) {
+                        if (level.getBlockState(each).getBlock() instanceof FormedPartBlock) {
+                            helper.assertTrue(shapedAsItsModel(level, each, turbine.orientation().orElseThrow()),
+                                    "each merged block's shape turned with it: " + each);
+                        }
+                    }
                 })
                 .thenSucceed();
     }
@@ -370,5 +387,32 @@ public final class MovingStructureAboardGameTests {
 
     private static String refusal(final StructureResult result) {
         return result.refusal() == null ? "done" : result.refusal().english();
+    }
+
+    /*
+     * Whether the merged block at {@code pos} collides as its model's shape file says its block does, turned
+     * {@code turn}: what a structure's collisions read aboard.
+     */
+    private static boolean shapedAsItsModel(final ServerLevel level, final BlockPos pos, final Orientation turn) {
+        if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part) || part.place() == null
+                || !part.place().turn().equals(turn)) {
+            return false;
+        }
+        final FormedPlace place = part.place();
+        final Optional<int[]> boxes = FormedShapes.get(level, place.model()).flatMap(file -> file.boxes(
+                place.cell()));
+        if (boxes.isEmpty()) {
+            return false;
+        }
+        final int[] turned = CellSpace.boxes(boxes.get(), turn);
+        VoxelShape wanted = Shapes.empty();
+        for (int b = 0; b + MeshVoxels.BOX <= turned.length; b += MeshVoxels.BOX) {
+            wanted = Shapes.or(wanted, Shapes.box((double) turned[b] / MeshVoxels.FINE,
+                    (double) turned[b + 1] / MeshVoxels.FINE, (double) turned[b + 2] / MeshVoxels.FINE,
+                    (double) turned[b + 3] / MeshVoxels.FINE, (double) turned[b + 4] / MeshVoxels.FINE,
+                    (double) turned[b + 5] / MeshVoxels.FINE));
+        }
+        final VoxelShape stands = level.getBlockState(pos).getCollisionShape(level, pos);
+        return !wanted.isEmpty() && !Shapes.joinIsNotEmpty(wanted, stands, BooleanOp.NOT_SAME);
     }
 }

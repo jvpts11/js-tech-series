@@ -217,6 +217,7 @@ import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.hands.HandUse;
+import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.notification.NotificationSettings;
 import dev.jstech.core.notification.NotificationSounds;
 import dev.jstech.core.notification.Notifications;
@@ -588,8 +589,9 @@ public final class JsCore {
         CoreInspectors.declare();
         NetworkInspection.declare();
         DiagnosticNotifications.declare();
-        // The multiblock patterns of every mod, read from data and declared in code.
+        // The multiblock patterns of every mod, read from data and declared in code, and their formed blocks' shapes.
         MultiblockPatterns.register();
+        FormedShapes.register();
         DataMachines.register();
         // What each dimension is like to stand in, and what its sky holds, read from data.
         DimensionRulesData.register();

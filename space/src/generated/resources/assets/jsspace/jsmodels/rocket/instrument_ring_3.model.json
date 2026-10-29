@@ -2,5 +2,6 @@
   "model": "jsspace:jsmodels/rocket/instrument_ring_3.gltf",
   "textures": [
     "jsspace:textures/models/rocket/instrument_ring_3.png"
-  ]
+  ],
+  "triangles": 24000
 }

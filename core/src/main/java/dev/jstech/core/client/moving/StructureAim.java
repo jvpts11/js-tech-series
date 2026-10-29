@@ -9,6 +9,7 @@ package dev.jstech.core.client.moving;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.jstech.core.client.multiblock.FormedMeshes;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
@@ -94,6 +95,12 @@ public final class StructureAim {
                 (float) (block.getZ() - structure.pivotZ()));
         final PoseStack.Pose at = pose.last();
         final VertexConsumer lines = event.getMultiBufferSource().getBuffer(RenderType.lines());
+        // A block of a formed structure aboard is outlined by its model's faces, as on the ground.
+        if (FormedMeshes.outline(level, block, state, (x1, y1, z1, x2, y2, z2) -> FormedMeshes.line(lines, at,
+                (float) x1, (float) y1, (float) z1, (float) x2, (float) y2, (float) z2))) {
+            pose.popPose();
+            return;
+        }
         shape.forAllEdges((x1, y1, z1, x2, y2, z2) -> {
             final float dx = (float) (x2 - x1);
             final float dy = (float) (y2 - y1);

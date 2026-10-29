@@ -17,6 +17,7 @@ import dev.jstech.core.datagen.ContentPartModelProvider;
 import dev.jstech.core.datagen.ContentSoundProvider;
 import dev.jstech.core.datagen.DeclaredFilesProvider;
 import dev.jstech.core.datagen.FontSheetProvider;
+import dev.jstech.core.datagen.FormedShapeProvider;
 import dev.jstech.core.datagen.GuideProvider;
 import dev.jstech.core.datagen.LightKindProvider;
 import dev.jstech.core.datagen.ModelDefinitionProvider;
@@ -73,6 +74,8 @@ public final class JsTestsDataGenerators {
                 new GuideProvider(output, guide)));
         generator.addProvider(event.includeClient(),
                 new ModelDefinitionProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
+        generator.addProvider(event.includeClient(),
+                new FormedShapeProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
         generator.addProvider(event.includeClient(),
                 new FontSheetProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
     }

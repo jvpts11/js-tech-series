@@ -2,5 +2,6 @@
   "model": "jsspace:jsmodels/rocket/capsule_5.gltf",
   "textures": [
     "jsspace:textures/models/rocket/capsule_5.png"
-  ]
+  ],
+  "triangles": 24000
 }

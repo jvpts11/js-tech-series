@@ -84,6 +84,7 @@ import dev.jstech.core.client.model.kit.KitClock;
 import dev.jstech.core.client.model.kit.KitEntityModels;
 import dev.jstech.core.client.model.kit.KitInstancing;
 import dev.jstech.core.client.model.kit.KitModels;
+import dev.jstech.core.client.multiblock.FormedMeshes;
 import dev.jstech.core.client.multiblock.FormedPartsClient;
 import dev.jstech.core.client.multiblock.HandsAim;
 import dev.jstech.core.client.motion.CoreMotionClient;
@@ -147,6 +148,7 @@ public final class JsCoreClient {
         CableClientEvents.listen();
         CableDragClient.listen();
         HandsAim.listen();
+        FormedMeshes.listen();
         ClampMeterClient.listen(modEventBus);
         HazardDevicesClient.listen(modEventBus);
         CableColours.listen(modEventBus);

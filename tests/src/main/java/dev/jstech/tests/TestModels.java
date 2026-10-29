@@ -105,14 +105,18 @@ public final class TestModels {
             .named("Test kit helmet").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
     public static final EntityEntry<Walker> WALKER_ENTITY = TestSounds.CONTENT.entity("test_kit_walker",
             Walker::new, MobCategory.MISC).size(0.6F, 1.3F).named("Test kit walker").register();
-    /** The turbine's model: its casing round its terminal's front, and the rotor on its top. */
-    public static final DeclaredModel TURBINE = TestSounds.CONTENT.model("test_kit_turbine")
-            .file("jsmodels/test_kit_turbine.bbmodel")
-            .texture("minecraft:textures/block/iron_block.png")
-            .register();
     /** The turbine's pattern: two layers of iron three by three, its terminal in the middle of its south side. */
     public static final ResourceLocation TURBINE_PATTERN_ID = ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
             "test_kit_turbine");
+    /**
+     * The turbine's model: its casing round its terminal's front, and the rotor on its top; its pattern's blocks take
+     * their shapes from it.
+     */
+    public static final DeclaredModel TURBINE = TestSounds.CONTENT.model("test_kit_turbine")
+            .file("jsmodels/test_kit_turbine.bbmodel")
+            .texture("minecraft:textures/block/iron_block.png")
+            .formedFrom(TURBINE_PATTERN_ID)
+            .register();
     public static final MultiblockPattern TURBINE_PATTERN = MultiblockPatterns.declare(TURBINE_PATTERN_ID,
             MultiblockPattern.builder("test_kit_turbine")
                     .layer("III", "III", "I#I")

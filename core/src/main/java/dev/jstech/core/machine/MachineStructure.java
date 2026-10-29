@@ -29,6 +29,7 @@ import dev.jstech.core.multiblock.RedstonePortBlockEntity;
 import dev.jstech.core.multiblock.ShapeMatch;
 import dev.jstech.core.multiblock.hands.InteractiveModel;
 import dev.jstech.core.multiblock.hands.StructureHands;
+import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -608,7 +609,9 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
                 fresh.add(place);
             }
         }
-        kept.addAll(FormedParts.merge(level, pos, fresh));
+        // Each takes the shape of its own block of the formed model, for a structure of a declared model.
+        kept.addAll(FormedParts.merge(level, pos, fresh, at -> FormedShapes.place(this.shape, this.orientation, pos,
+                at)));
         this.merged = List.copyOf(kept);
     }
 

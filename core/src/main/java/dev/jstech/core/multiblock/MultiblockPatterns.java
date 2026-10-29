@@ -190,6 +190,18 @@ public final class MultiblockPatterns {
         return sent != null ? Optional.of(sent) : Optional.ofNullable(DECLARED.get(id));
     }
 
+    /** The id the pattern {@code pattern} was declared by, for a structure that holds the declared pattern itself. */
+    public static Optional<ResourceLocation> idOf(final MultiblockPattern pattern) {
+        synchronized (DECLARED) {
+            for (final Map.Entry<ResourceLocation, MultiblockPattern> entry : DECLARED.entrySet()) {
+                if (entry.getValue() == pattern) {
+                    return Optional.of(entry.getKey());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     /**
      * Matches {@code pattern} against the world with its terminal at {@code terminal}, in any of the four
      * rotations, block tags included.

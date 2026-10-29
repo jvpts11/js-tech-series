@@ -140,6 +140,7 @@ import dev.jstech.tests.clienttest.core.MaterialsClientTests;
 import dev.jstech.tests.clienttest.core.NotificationsClientTests;
 import dev.jstech.tests.clienttest.core.SettingsKitClientTests;
 import dev.jstech.tests.clienttest.core.FluidClientTests;
+import dev.jstech.tests.clienttest.core.FormedShapeClientTests;
 import dev.jstech.tests.clienttest.core.GridPainterClientTests;
 import dev.jstech.tests.clienttest.core.HazardDevicesClientTests;
 import dev.jstech.tests.clienttest.core.BodyTemperatureClientTests;
@@ -335,6 +336,7 @@ public final class ClientTestSuite {
             CrcScreenClientTests.class,
             CrcModelClientTests.class,
             CrcHandsClientTests.class,
+            FormedShapeClientTests.class,
             IndustrialControllerClientTests.class,
             MachineMonitorClientTests.class,
             InfoCenterClientTests.class,

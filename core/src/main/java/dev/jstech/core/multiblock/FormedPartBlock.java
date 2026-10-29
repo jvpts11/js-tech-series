@@ -31,13 +31,17 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A block of a formed structure that has merged into its terminal's model: drawn as nothing, since the model draws
- * it, but solid as it was, as hard to break, as loud, as bright, and dropping what the block it was drops. Breaking it
- * breaks the structure, which gives every other block back. It looks for its terminal now and then, and a block
- * whose terminal has gone, broken by any means, turns back into what it was by itself.
+ * it, but solid as it was, as hard to break, as loud, as bright, and dropping what the block it was drops. A structure
+ * of a declared formed model gives it the shape of its own part of the model ({@code FormedShapes}); any other, a
+ * whole block. Breaking it breaks the structure, which gives every other block back. It looks for its terminal now
+ * and then, and a block whose terminal has gone, broken by any means, turns back into what it was by itself.
  */
 public final class FormedPartBlock extends Block implements EntityBlock {
 
@@ -62,6 +66,16 @@ public final class FormedPartBlock extends Block implements EntityBlock {
     @Override
     protected RenderShape getRenderShape(final BlockState state) {
         return RenderShape.INVISIBLE;
+    }
+
+    /*
+     * It stands as its part of its structure's formed model, for a structure of a declared model: collided with,
+     * outlined and aimed at as the model is drawn there; whole otherwise.
+     */
+    @Override
+    protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                  final CollisionContext context) {
+        return level.getBlockEntity(pos) instanceof FormedPartBlockEntity part ? part.shape() : Shapes.block();
     }
 
     @Override

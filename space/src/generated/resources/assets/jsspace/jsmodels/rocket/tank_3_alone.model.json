@@ -2,5 +2,6 @@
   "model": "jsspace:jsmodels/rocket/tank_3_alone.gltf",
   "textures": [
     "jsspace:textures/models/rocket/tank_3_alone.png"
-  ]
+  ],
+  "triangles": 24000
 }

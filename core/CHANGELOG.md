@@ -302,6 +302,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Ice by its air: J's Core's API is at version 18. `Thawing` tells whether ice at a place is warmed, by air
   above freezing on its faces or by a bright light, and whether it melts into water there, where the air it meets is
   thicker than water's triple point, `WATER_TRIPLE_POINT_KPA`; experimental.
+- Formed blocks shaped as their model: J's Core's API is at version 19, and `dev.jstech.core.multiblock.shape`
+  joins the promise, experimental. `ModelBuilder.formedFrom` declares a model the formed model of a pattern's
+  structure; `FormedShapeProvider` writes its shape file in the data run, `FormedShapes` reads the files and tells a
+  merged block which block of the model it is, a `FormedPlace`, and `FormedShape` is one model's file. `FormedPartBlockEntity.place()` and `shape()`
+  give a merged block's place and shape, `FormedParts.merge` takes each block's place, and `MultiblockPatterns.idOf`
+  names a declared pattern. The geometry is pure: `ModelTriangles` reads a model's faces at rest, `MeshCells` shares
+  them out among a structure's blocks, `MeshVoxels` makes a block's boxes, `MeshOutline` its outline, `MeshPick` meets
+  a line of sight with its faces, and `CellSpace` turns a block as its structure stands; `FormedAim` aims at the
+  faces where they are known, from an `IFormedMeshes`.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1700,6 +1709,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   of the room it stands in.
 - Methane in the shared catalogue: the natural gas a rocket burns with liquid oxygen, liquid at -162 °C,
   flammable between 5% and 15% of the air.
+- Formed blocks shaped as their model: a structure whose formed model is declared formed from its pattern
+  has each of its merged blocks shaped as its part of the model, not as a whole block. What walks on it stands on the
+  model's floor, a ray or an arrow stops at the model's wall, and the player aims at the model's faces, through a gap
+  the shape's boxes would close, and sees the block outlined by the model's own edges; on the ground and aboard a
+  moving structure, turned as the structure stands. The data run works each block's boxes out from the model, in
+  sixteenths of a block, in eighths for a block that would have too many, and stops when a block of the pattern has
+  no face of the model or the model reaches more than a block outside it.
 - Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

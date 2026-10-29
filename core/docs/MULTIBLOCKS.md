@@ -388,6 +388,44 @@ event.registerBlockEntityRenderer(MyContent.TURBINE_ENTITY.get(), context -> Kit
   across the whole model.
 - A structure is checked through its formed parts as through the blocks they were.
 
+### Shaped as the model
+
+*Added 2026-10-29.*
+
+A formed part is a whole block unless its model says otherwise. Declare the model formed from the structure's
+pattern and each formed part takes the shape of its own part of the model: what walks on it stands on the model's
+floor, a ray or an arrow stops at the model's wall, a gap in the model is a gap to look through, and the player aims at
+the model's faces and sees each block outlined by the model's own edges.
+
+```java
+public static final DeclaredModel TURBINE = CONTENT.model("turbine")
+        .file("jsmodels/turbine.bbmodel")
+        .texture("textures/model/turbine.png")
+        .formedFrom(rl("turbine"))          // the pattern it is the formed model of
+        .register();
+```
+
+- **The data run works the shapes out**, since a server has no models: it reads the model at rest, shares its faces
+  out among the blocks of the pattern, as the structure stands facing north round its terminal, and writes
+  `data/<mod>/formed_shape/<model>.json`, each block's boxes in sixteenths of a block. A block whose faces would make
+  more than 32 boxes is worked out in eighths, that block alone. The file is sent to the players, whose own collisions
+  read it.
+- **The run stops when model and pattern have drifted apart**: a block of the pattern with no face of the model in
+  it, or faces more than a block outside the pattern, each named by its place from the terminal. Faces less than a
+  block outside, a lip or a rotor's tip, are carried by the nearest block of the pattern, pressed onto its side.
+- **A face on the wall between two blocks** belongs to the block whose solid it closes, the one it faces away from,
+  as a floor closes the block under it; or to the one it faces, when the other is not the structure's.
+- **Turned as the structure stands**: each formed part knows which block of the model it is and how its structure
+  stands, and takes that block's shape turned so; each shape is worked out once for each block and way of standing,
+  and shared by every structure of the model. A structure aboard a moving structure keeps its shapes, turned as it
+  turns.
+- **On the player's game the model is aimed at, not the boxes**: a look that finds a formed part is followed again
+  against the faces of the model, so the crosshair rests on a curved wall where it is drawn, and a gap the boxes
+  close is looked through. The block aimed at is outlined by the model's sharp edges, and where the block's walls cut
+  its faces.
+- A model formed from a pattern that repeats has no one size, and is refused. The terminal, which draws the model,
+  keeps its own block's shape.
+
 ### Worked by hand
 
 *Added 2026-10-25.*

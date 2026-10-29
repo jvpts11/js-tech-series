@@ -40,11 +40,13 @@ public final class RocketPartModels {
         "capsule_3", "capsule_5"};
     /* A vacuum engine's impulse at sea level is well under its own in a vacuum: its large nozzle does badly there. */
     private static final double VACUUM_NOZZLE = 0.7;
+    /* The capsule of five, its crew's cabin inside it, has the most triangles, and every one of them is drawn. */
+    private static final int MOST_TRIANGLES = 24_000;
 
     static {
         for (final String name : NAMES) {
             MODELS.put(name, SpaceContent.CONTENT.model("rocket/" + name).file("jsmodels/rocket/" + name + ".gltf")
-                    .texture("textures/models/rocket/" + name + ".png").register());
+                    .texture("textures/models/rocket/" + name + ".png").triangles(MOST_TRIANGLES).register());
         }
     }
 

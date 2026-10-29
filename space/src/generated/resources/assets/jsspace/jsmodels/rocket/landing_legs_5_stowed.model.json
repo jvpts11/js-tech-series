@@ -2,5 +2,6 @@
   "model": "jsspace:jsmodels/rocket/landing_legs_5_stowed.gltf",
   "textures": [
     "jsspace:textures/models/rocket/landing_legs_5_stowed.png"
-  ]
+  ],
+  "triangles": 24000
 }

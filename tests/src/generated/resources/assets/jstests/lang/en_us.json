@@ -101,6 +101,7 @@
   "block.jstests.test_relay": "Test relay",
   "block.jstests.test_relief_valve": "Test relief valve",
   "block.jstests.test_robot_charger": "Test robot charger",
+  "block.jstests.test_rocket_display": "Test rocket display",
   "block.jstests.test_safe_machine": "Test safe machine",
   "block.jstests.test_seal": "Test seal",
   "block.jstests.test_seat": "Test seat",

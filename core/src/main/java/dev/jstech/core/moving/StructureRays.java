@@ -7,8 +7,11 @@
  */
 package dev.jstech.core.moving;
 
+import dev.jstech.core.multiblock.shape.FormedAim;
+import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.util.Loaded;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
@@ -104,6 +107,11 @@ public final class StructureRays {
         final FluidState fluid = level.getFluidState(pos);
         if (state.isAir() && fluid.isEmpty()) {
             return null;
+        }
+        // A block of a formed structure aboard, whose model is known here, is aimed at by the model's faces.
+        final Optional<FormedPlace> formed = FormedAim.place(level, pos, state);
+        if (formed.isPresent()) {
+            return FormedAim.hit(level, formed.get(), from, to, pos);
         }
         final VoxelShape shape = ray.getBlockShape(state, level, pos);
         final BlockHitResult block = level.clipWithInteractionOverride(from, to, pos, shape, state);
