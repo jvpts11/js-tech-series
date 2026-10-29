@@ -41,6 +41,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Core's catalogue it is made of, each in the state it is carried in and its share of the mass, the specific impulse a
   good engine gets of it in a vacuum, and whether its halves light on touching; registered in `Propellants`, which
   takes a data pack's files, `data/<namespace>/jsspace/propellants/`. Experimental.
+- Rocket kits: J's Space's API is at version 10. `RocketKit` is the kit of blocks a rocket part is built of
+  and where each goes, its layers from the bottom drawn in letters with the block each letter stands for, the layer a
+  part built in layers repeats, the one layer it is when built a single layer tall, and the foot it stands on over an
+  engine; registered in `RocketKits` by the part's id, which takes a data pack's files,
+  `data/<namespace>/jsspace/rocket_kits/`. Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -221,6 +226,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   across it; built on a structure afloat it is a floating platform, and it holds one stage at a time. A stage that
   strikes the ground leaves a crater and Rocket Wreckage that gives back a third of its blocks; with the server's
   Falling stages do damage off, only the wreckage is left.
+- The rocket parts' block kits: every part is built of blocks, a kind for each real thing it has, placed where
+  it goes, 44 kinds in all, each showing one detailed face on all six sides so it is known from any side while the
+  part is built. The instrument ring of the wall, avionics and battery panels, access door, umbilical plate, telemetry
+  antenna, cooling louvres and the guidance platform in its middle; the separation ring of its wall, retro rockets and
+  ullage motors; the engine of its mount, combustion chamber, turbopump, gimbal actuators and the nozzle's walls, a
+  vacuum engine's extension under them; the tank of its walls, domes, fill port, vent valve and cable raceway, as tall
+  as it is built, standing on its skirt over an engine; the legs; the lunar lander's foil, engines, legs, ladder and
+  cabin; and the capsule of three, 27 blocks, and of five for three crew, 49, of its heat shield, hull, windows, hatch,
+  crew seats, flight computer, thruster quads, parachute bays and docking port. The crews' pressure shell holds an
+  atmosphere against the vacuum, its windows and hatch too, and every block weighs its share of its parts.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

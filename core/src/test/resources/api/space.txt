@@ -24,6 +24,18 @@ stable 0
 9 dev.jstech.space.api.Propellants  static Map<ResourceLocation, Propellant> declared()
 9 dev.jstech.space.api.Propellants  static Optional<Propellant> get(Level, ResourceLocation)
 9 dev.jstech.space.api.Propellants  static Propellant declare(ResourceLocation, Propellant)
+10 dev.jstech.space.api.RocketKit  type record(List<List<String>> layers, Map<String, ResourceLocation> key, Optional<Integer> stretch, Optional<List<String>> alone, Optional<List<String>> foot)
+10 dev.jstech.space.api.RocketKit  Map<ResourceLocation, Integer> counts(int, boolean)
+10 dev.jstech.space.api.RocketKit  Optional<List<List<String>>> built(int, boolean)
+10 dev.jstech.space.api.RocketKit  int least()
+10 dev.jstech.space.api.RocketKit  int width()
+10 dev.jstech.space.api.RocketKit  static RocketKit of(List<List<String>>, Map<String, ResourceLocation>)
+10 dev.jstech.space.api.RocketKit  static final Codec<RocketKit> CODEC
+10 dev.jstech.space.api.RocketKits  type final class
+10 dev.jstech.space.api.RocketKits  static Map<ResourceLocation, RocketKit> all(Level)
+10 dev.jstech.space.api.RocketKits  static Map<ResourceLocation, RocketKit> declared()
+10 dev.jstech.space.api.RocketKits  static Optional<RocketKit> get(Level, ResourceLocation)
+10 dev.jstech.space.api.RocketKits  static RocketKit declare(ResourceLocation, RocketKit)
 8 dev.jstech.space.api.RocketPart  type record(String name, Kind kind, int diameter, int topDiameter, int height, boolean stretches, double mass, double propellant, Optional<Engine> engine, int seats, int tier)
 8 dev.jstech.space.api.RocketPart  static final Codec<RocketPart> CODEC
 8 dev.jstech.space.api.RocketPart  static final List<Integer> DIAMETERS

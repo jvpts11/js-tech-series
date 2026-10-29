@@ -49,6 +49,8 @@ public final class JsSpaceDataGenerators {
                 "jsspace/star_systems", StarSystem.CODEC, StarSystems::declared));
         data.server(new DeclaredFilesProvider<>(data.output(), JsSpace.MODID, "worlds", "jsspace/worlds",
                 SpaceWorld.CODEC, SpaceWorlds::declared));
+        // The rocket parts' blocks as rooms and physics see them: the crews' pressure shell, and each block's mass.
+        data.server(new RocketKitDataProvider(data.output(), data.lookup()));
         data.check();
     }
 }

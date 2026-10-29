@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsspace:block/flight_computer"
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "values": {
+    "jsspace:access_door": {
+      "mass": 54.57516339869281
+    },
+    "jsspace:ascent_engine": {
+      "mass": 84.61538461538461
+    },
+    "jsspace:avionics_panel": {
+      "mass": 57.95206971677559
+    },
+    "jsspace:battery_panel": {
+      "mass": 57.95206971677559
+    },
+    "jsspace:cabin_wall": {
+      "mass": 84.61538461538461
+    },
+    "jsspace:cabin_window": {
+      "mass": 84.61538461538461
+    },
+    "jsspace:cable_raceway": {
+      "mass": 35.4375
+    },
+    "jsspace:capsule_hatch": {
+      "mass": 132.63949454425645
+    },
+    "jsspace:capsule_hull": {
+      "mass": 172.09264658244248
+    },
+    "jsspace:capsule_window": {
+      "mass": 156.65154950869237
+    },
+    "jsspace:combustion_chamber": {
+      "mass": 96.12421891833655
+    },
+    "jsspace:cooling_louvres": {
+      "mass": 57.95206971677559
+    },
+    "jsspace:crew_seat": {
+      "mass": 153.0530844816559
+    },
+    "jsspace:descent_engine": {
+      "mass": 63.63636363636363
+    },
+    "jsspace:descent_foil": {
+      "mass": 63.63636363636363
+    },
+    "jsspace:docking_port": {
+      "mass": 132.63949454425645
+    },
+    "jsspace:engine_mount": {
+      "mass": 98.06465321171203
+    },
+    "jsspace:fill_port": {
+      "mass": 32.66666666666667
+    },
+    "jsspace:flight_computer": {
+      "mass": 132.63949454425645
+    },
+    "jsspace:gimbal_actuator": {
+      "mass": 96.12421891833655
+    },
+    "jsspace:guidance_platform": {
+      "mass": 54.57516339869281
+    },
+    "jsspace:heat_shield": {
+      "mass": 167.46031746031744
+    },
+    "jsspace:instrument_wall": {
+      "mass": 60.65359477124183
+    },
+    "jsspace:lander_ladder": {
+      "mass": 63.63636363636363
+    },
+    "jsspace:lander_leg": {
+      "mass": 63.63636363636363
+    },
+    "jsspace:landing_leg": {
+      "mass": 62.5
+    },
+    "jsspace:leg_actuator": {
+      "mass": 66.66666666666667
+    },
+    "jsspace:leg_mount": {
+      "mass": 75.0
+    },
+    "jsspace:nozzle_extension": {
+      "mass": 80.1994301994302
+    },
+    "jsspace:nozzle_wall": {
+      "mass": 98.61263736263736
+    },
+    "jsspace:parachute_bay": {
+      "mass": 156.65154950869237
+    },
+    "jsspace:propellant_tank": {
+      "mass": 84.61538461538461
+    },
+    "jsspace:rendezvous_radar": {
+      "mass": 84.61538461538461
+    },
+    "jsspace:retro_rocket": {
+      "mass": 50.0
+    },
+    "jsspace:separation_wall": {
+      "mass": 50.0
+    },
+    "jsspace:tank_dome": {
+      "mass": 32.13333333333334
+    },
+    "jsspace:tank_skirt": {
+      "mass": 45.833333333333336
+    },
+    "jsspace:tank_wall": {
+      "mass": 36.139583333333334
+    },
+    "jsspace:telemetry_antenna": {
+      "mass": 64.61789844142785
+    },
+    "jsspace:thruster_quad": {
+      "mass": 132.63949454425645
+    },
+    "jsspace:turbopump": {
+      "mass": 96.12421891833655
+    },
+    "jsspace:ullage_motor": {
+      "mass": 50.0
+    },
+    "jsspace:umbilical_plate": {
+      "mass": 54.57516339869281
+    },
+    "jsspace:vent_valve": {
+      "mass": 32.66666666666667
+    }
+  }
+}

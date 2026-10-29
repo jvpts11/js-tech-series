@@ -1,0 +1,28 @@
+{
+  "values": {
+    "jsspace:cabin_wall": {
+      "rating": 300.0
+    },
+    "jsspace:cabin_window": {
+      "rating": 300.0
+    },
+    "jsspace:capsule_hatch": {
+      "rating": 300.0
+    },
+    "jsspace:capsule_hull": {
+      "rating": 300.0
+    },
+    "jsspace:capsule_window": {
+      "rating": 300.0
+    },
+    "jsspace:docking_port": {
+      "rating": 300.0
+    },
+    "jsspace:flight_computer": {
+      "rating": 300.0
+    },
+    "jsspace:heat_shield": {
+      "rating": 300.0
+    }
+  }
+}

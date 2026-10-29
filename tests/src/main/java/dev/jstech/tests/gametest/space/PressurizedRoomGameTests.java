@@ -28,6 +28,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -126,17 +127,17 @@ public final class PressurizedRoomGameTests {
         final ResourceKey<Level> key = key("rooms_torch");
         final ServerLevel moon = moon(helper, key);
         final BlockPos open = new BlockPos(8, HIGH_UP + 1, 8);
-        // A ledge round the torch, so its item comes to rest beside it rather than sliding off into a long fall out of
-        // the loaded chunk.
-        for (final BlockPos ledge : BlockPos.betweenClosed(open.offset(-2, -1, -2), open.offset(2, -1, 2))) {
-            moon.setBlockAndUpdate(ledge, Blocks.STONE.defaultBlockState());
-        }
-        moon.setBlockAndUpdate(open, Blocks.TORCH.defaultBlockState());
+        moon.setBlockAndUpdate(open.below(), Blocks.STONE.defaultBlockState());
         final BlockPos low = new BlockPos(1, HIGH_UP, 1);
         final BlockPos torch = inside(low);
         hut(moon, low);
         SealedRooms.track(moon, inside(low).above());
         helper.startSequence()
+                // The new world's entities load a while after its chunk is forced, slower while many tests run; an
+                // item dropped before they have would be hidden from the search.
+                .thenWaitUntil(() -> helper.assertTrue(moon.areEntitiesLoaded(ChunkPos.asLong(open)),
+                        "the Moon's chunk holds its entities"))
+                .thenExecute(() -> moon.setBlockAndUpdate(open, Blocks.TORCH.defaultBlockState()))
                 .thenWaitUntil(() -> helper.assertTrue(moon.getBlockState(open).isAir() && fallen(moon, open),
                         "a torch set in the Moon's vacuum goes out and falls; " + moon.getBlockState(open)))
                 .thenWaitUntil(() -> helper.assertTrue(room(moon, low).isPresent(), "the hut is a room"))
