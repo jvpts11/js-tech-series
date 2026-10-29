@@ -2214,6 +2214,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   cabin at rest; the Flight Computer stays a block of its own and is drawn by its capsule's panel once the capsule
   forms. In a formed capsule the crew seat is a couch. A hangar broken, or a new design sent, gives the rocket's blocks
   back.
+- (Space) The hologram of the rocket being built: once a design is sent to the bay, every block still to place stands
+  where it goes as a see-through ghost of itself, the layer to build next glowing amber and a wrong block outlined in
+  red; each part, a multiblock, has its box drawn round it in the colour of its kind, with its name, its size and how
+  far it stands (to build, the layer it is at, or formed) written beside it; and a line across the top of the screen
+  names the rocket, the part and layer being built and the block that layer needs most, as "Orbital I - Tank, layer 7
+  of 9 - 9 x Tank Wall". A part that forms draws its own model and leaves the hologram, which goes once the rocket is
+  whole.
+- (Core) The hologram of a plan being built, drawn as the Structure Projector draws its multiblock: the blocks still
+  missing as ghosts, the next layer glowing, wrong blocks marked, each part's box and words, and a line across the top
+  of the screen for the nearest plan.
 - (Core) Building by a plan: a structure laid out ahead, place by place, as a hangar keeps the rocket it builds; each
   part forms by itself once its last block is down and comes apart when one goes, counted one block at a time however
   large the plan, with no terminal of its own; its blocks never look for their owner, which may hand the plan on. A

@@ -87,6 +87,7 @@ import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.multiblock.FormedMeshes;
 import dev.jstech.core.client.multiblock.FormedPartsClient;
 import dev.jstech.core.client.multiblock.HandsAim;
+import dev.jstech.core.client.multiblock.PlanHologram;
 import dev.jstech.core.client.motion.CoreMotionClient;
 import dev.jstech.core.client.motion.GreyFilter;
 import dev.jstech.core.client.motion.MotionClock;
@@ -159,6 +160,7 @@ public final class JsCoreClient {
         ClientStateEvents.listen();
         EnergyConvertersClient.listen(modEventBus);
         ProjectorClient.listen(modEventBus);
+        PlanHologram.listen(modEventBus);
         AtmosphereClient.listen(modEventBus);
         SkyClient.listen(modEventBus);
         WeatherClient.listen();

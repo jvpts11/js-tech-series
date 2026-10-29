@@ -8,10 +8,12 @@
 package dev.jstech.space;
 
 import dev.jstech.core.client.advancement.WideBackgrounds;
+import dev.jstech.core.client.multiblock.PlanHologram;
 import dev.jstech.space.client.flight.FlightComputerScreen;
 import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.client.hangar.HangarTerminalRenderer;
 import dev.jstech.space.client.hangar.RocketDesignScene;
+import dev.jstech.space.client.hangar.RocketHolograms;
 import dev.jstech.space.client.hangar.RocketDesignScreen;
 import dev.jstech.space.client.life.LunarSuitClient;
 import dev.jstech.space.client.life.SuitControlsHud;
@@ -60,7 +62,8 @@ public final class JsSpaceClient {
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(RocketDesigner.MENU.get(),
                 RocketDesignScreen::new));
         RocketDesignScene.listen();
-        // The rocket the hangar builds, each part drawn with its model once it has formed.
+        // The rocket the hangar builds, each part drawn with its model once it has formed, and its hologram till then.
         HangarTerminalRenderer.listen(modEventBus);
+        PlanHologram.show(RocketHolograms::shown);
     }
 }

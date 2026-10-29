@@ -19,10 +19,13 @@ import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -61,6 +64,10 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity {
     private static final int LOOK_UNFORMED = 40;
     private static final int LOOK_FORMED = 100;
 
+    /* The terminals loaded on a player's game, forgotten as they go. */
+    private static final Set<HangarTerminalBlockEntity> LOADED_ON_CLIENT = Collections.newSetFromMap(
+            new WeakHashMap<>());
+
     public HangarTerminalBlockEntity(final BlockPos pos, final BlockState state) {
         super(HangarBlocks.TERMINAL_ENTITY.get(), pos, state);
         this.bay = fields().nullable("Bay", HangarBay.CODEC).save().toClient();
@@ -93,6 +100,27 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity {
     public void onChunkUnloaded() {
         super.onChunkUnloaded();
         stopBuild(false);
+        LOADED_ON_CLIENT.remove(this);
+    }
+
+    /** On a player's game it is known among the terminals loaded there, whose plans are shown as holograms. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (this.level != null && this.level.isClientSide()) {
+            LOADED_ON_CLIENT.add(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        LOADED_ON_CLIENT.remove(this);
+    }
+
+    /** The terminals loaded on this player's game. */
+    public static List<HangarTerminalBlockEntity> loadedOnClient() {
+        return List.copyOf(LOADED_ON_CLIENT);
     }
 
     /** The bay it found, if it is formed. */

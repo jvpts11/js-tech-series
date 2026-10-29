@@ -237,6 +237,7 @@ import dev.jstech.tests.clienttest.space.RocketBuildClientTests;
 import dev.jstech.tests.clienttest.space.RocketCabinClientTests;
 import dev.jstech.tests.clienttest.space.RocketDesignClientTests;
 import dev.jstech.tests.clienttest.space.RocketHangarClientTests;
+import dev.jstech.tests.clienttest.space.RocketHologramClientTests;
 import dev.jstech.tests.clienttest.space.RocketPartsClientTests;
 import dev.jstech.tests.clienttest.space.SpaceOresClientTests;
 import dev.jstech.tests.clienttest.space.SpaceRocksClientTests;
@@ -487,7 +488,8 @@ public final class ClientTestSuite {
             LandingGroundClientTests.class,
             RocketHangarClientTests.class,
             RocketDesignClientTests.class,
-            RocketBuildClientTests.class);
+            RocketBuildClientTests.class,
+            RocketHologramClientTests.class);
 
     private ClientTestSuite() {
     }

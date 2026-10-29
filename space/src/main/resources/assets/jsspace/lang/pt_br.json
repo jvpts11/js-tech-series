@@ -475,5 +475,10 @@
   "jsspace.design.screen.in_the_bay": "Na baia",
   "jsspace.design.screen.no_plans": "Nenhum plano salvo",
   "jsspace.design.screen.count_one": "1 estágio %s bl",
-  "jsspace.design.seat_one": "Tripulação: 1 assento"
+  "jsspace.design.seat_one": "Tripulação: 1 assento",
+  "jsspace.hologram.size": "%s x %s x %s  %s",
+  "jsspace.hologram.to_build": "a construir",
+  "jsspace.hologram.layer": "camada %s de %s",
+  "jsspace.hologram.formed": "formada",
+  "jsspace.hologram.banner": "%s  -  %s, camada %s de %s  -  %s x %s"
 }

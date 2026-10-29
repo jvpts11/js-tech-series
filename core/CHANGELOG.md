@@ -1730,6 +1730,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   hands and HUD hidden while it holds it; it finds where a point of the world falls on the screen and which way into
   the world the mouse looks, to pick what is under it. A model can be drawn see-through and tinted, as a hologram of a
   part being placed.
+- The hologram of a plan being built, drawn as the Structure Projector draws its multiblock: the blocks still
+  missing as ghosts, the next layer glowing, wrong blocks marked, each part's box and words, and a line across the top
+  of the screen for the nearest plan.
 - Building by a plan: a structure laid out ahead, place by place, as a hangar keeps the rocket it builds; each
   part forms by itself once its last block is down and comes apart when one goes, counted one block at a time however
   large the plan, with no terminal of its own; its blocks never look for their owner, which may hand the plan on. A

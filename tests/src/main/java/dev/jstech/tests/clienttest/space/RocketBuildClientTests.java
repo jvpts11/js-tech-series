@@ -64,8 +64,8 @@ public final class RocketBuildClientTests {
         ctx.thenServer(0, level -> build(ctx, level))
                 .thenTeleport(SETTLE, EYE, Direction.NORTH)
                 .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(TERMINAL))
-                        instanceof HangarTerminalBlockEntity terminal && terminal.plan().isPresent(), ARRIVE,
-                        "the hangar and its plan to reach the player")
+                        instanceof HangarTerminalBlockEntity terminal && terminal.bay().isPresent(), ARRIVE,
+                        "the formed hangar to reach the player")
                 .then(SETTLE, () -> ctx.lookAt(Vec3.atLowerCornerOf(ctx.abs(BlockPos.ZERO)).add(ROCKET)))
                 .then(SETTLE, () -> seen[0] = mean(ctx))
                 .thenServer(0, level -> lay(ctx, level))
@@ -81,7 +81,7 @@ public final class RocketBuildClientTests {
                 });
     }
 
-    /* The hangar, lamps in its roof and along its walls, its plan sent: an engine, a tank and a capsule. */
+    /* The hangar, lamps in its roof and along its walls, its far wall green, formed. */
     private static void build(final ClientTestContext ctx, final ServerLevel level) {
         for (int x = X0 - 1; x <= X1 + 1; x++) {
             for (int z = Z0 - 1; z <= Z1 + 1; z++) {
@@ -112,17 +112,19 @@ public final class RocketBuildClientTests {
                 .defaultBlockState());
         level.setBlockAndUpdate(ctx.abs(new BlockPos(X0 - 1, Y0, Z0 + 5)), HangarBlocks.BAY_DOOR.get()
                 .defaultBlockState());
+        ((HangarTerminalBlockEntity) level.getBlockEntity(ctx.abs(TERMINAL))).look();
+    }
+
+    /*
+     * Its plan sent, an engine, a tank and a capsule, and every block of it laid at once, each the block wanted
+     * there, so the rocket is whole before its hologram is ever drawn.
+     */
+    private static void lay(final ClientTestContext ctx, final ServerLevel level) {
         final HangarTerminalBlockEntity terminal = (HangarTerminalBlockEntity) level.getBlockEntity(ctx.abs(TERMINAL));
-        terminal.look();
         terminal.design(new RocketDesign("BUILT", RocketStack.of(part("sea_level_engine_3", 1), part("tank_3", 2),
                 part("capsule_3", 1))));
         terminal.confirm();
-    }
-
-    /* Every block of the plan, each the block wanted there. */
-    private static void lay(final ClientTestContext ctx, final ServerLevel level) {
-        final PlannedBuild plan = ((HangarTerminalBlockEntity) level.getBlockEntity(ctx.abs(TERMINAL))).build()
-                .orElseThrow();
+        final PlannedBuild plan = terminal.build().orElseThrow();
         for (final PlanSpot spot : plan.plan().spots()) {
             level.setBlockAndUpdate(plan.where(spot), BuiltInRegistries.BLOCK.get(spot.block()).defaultBlockState());
         }

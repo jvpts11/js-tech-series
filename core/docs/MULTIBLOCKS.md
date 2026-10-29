@@ -596,6 +596,12 @@ build.start(serverLevel, ownerPos, () -> tellMyPlayers(build));   // counts once
 - **Hollow blocks**: a round part on a square of blocks may leave the corners of a layer outside its hull. Declared
   hollow, those blocks merge with no shape at all, as the model shows nothing there; any other block with no face
   still stops the run.
+- **Its hologram** (on the player's game): `PlanHologram.show(() -> holograms)` draws, each frame, what the owner says
+  of its plans near the player, as the Structure Projector draws its multiblock: every block still missing as a ghost
+  of itself (`Look.MISSING`), the layer to build next glowing amber (`Look.NEXT`), a wrong block outlined in red
+  (`Look.WRONG`); each part's box in its own colour, with its name and its size and state written beside it, facing
+  the player; and, for the nearest plan, a line across the top of the screen saying what is being built and what it
+  needs.
 
 ## Showing a multiblock before it is built
 
