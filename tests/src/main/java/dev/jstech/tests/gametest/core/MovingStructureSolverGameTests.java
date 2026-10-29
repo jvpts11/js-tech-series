@@ -40,6 +40,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -89,6 +90,15 @@ public final class MovingStructureSolverGameTests {
      */
     private static final int TALL_STACKED = 12;
     private static final double SETTLING = 0.75;
+    /*
+     * The swaying stack, in its batch of its own: how many ticks after it is set down it is set swaying, and how fast
+     * each crate goes east and north for each crate under it, in metres a second, so its top goes about a tenth of a
+     * metre a second, as the stack once seen swaying for good did.
+     */
+    private static final String SWAYING_BATCH = "jscore_moving_solver_swaying";
+    private static final int SWAY_AFTER = 3;
+    private static final double SWAY_EAST = 0.01;
+    private static final double SWAY_NORTH = 0.008;
     /*
      * The landing test, in its batch of its own: four stacks of three, far apart, so that in some the one standing
      * still and not the one falling onto it works their meeting; watched while they fall and settle; how deep one may
@@ -189,6 +199,46 @@ public final class MovingStructureSolverGameTests {
                     }
                 })
                 .thenExecute(() -> {
+                    stack.forEach(MovingStructures::takeAway);
+                    SHELTERED.remove(sheltered);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A tall stack set swaying as a whole, turning slowly about its foot, its top going a tenth of a metre a second, as
+     * a hair of the solver's own may set one going: it comes still and falls asleep, upright where it stood, its sway
+     * dying away rather than growing with every swing. In its batch of its own, so nothing else takes its budget.
+     */
+    @GameTest(template = TALL, batch = SWAYING_BATCH, timeoutTicks = 400)
+    public static void stack_aTallStackSwayingComesStillAndSleeps(final GameTestHelper helper) {
+        final AABB sheltered = shelter(helper);
+        final List<MovingStructure> stack = new ArrayList<>();
+        for (int i = 0; i < TALL_STACKED; i++) {
+            stack.add(made(helper, List.of(new BlockPos(5, FLOOR + i, 5)), Blocks.OAK_PLANKS));
+        }
+        stack.forEach(structure -> structure.move(PhysicsMotion.AT_REST));
+        helper.startSequence()
+                .thenExecuteAfter(SWAY_AFTER, () -> {
+                    for (int i = 0; i < stack.size(); i++) {
+                        final StructurePhysics physics = stack.get(i).physics();
+                        helper.assertTrue(physics != null, "each crate moves by its physics");
+                        final Vec3 middle = stack.get(i).worldBox().getCenter();
+                        // Each crate as fast as the tower turning about its foot carries it: faster the higher it is.
+                        physics.push(new Vector3d(physics.mass() * SWAY_EAST * i, 0, -physics.mass() * SWAY_NORTH * i),
+                                new Vector3d(middle.x, middle.y, middle.z));
+                    }
+                })
+                .thenWaitUntil(() -> helper.assertTrue(stack.stream().allMatch(MovingStructureSolverGameTests::asleep),
+                        "the swaying stack comes still and falls asleep: " + watched(helper, stack)))
+                .thenExecute(() -> {
+                    final BlockPos foot = helper.absolutePos(new BlockPos(5, FLOOR, 5));
+                    for (final MovingStructure crate : stack) {
+                        final AABB box = crate.worldBox();
+                        helper.assertTrue(Math.abs(box.minX - foot.getX()) < DRIFTS
+                                && Math.abs(box.minZ - foot.getZ()) < DRIFTS,
+                                "upright where it stood: " + boxes(stack));
+                    }
                     stack.forEach(MovingStructures::takeAway);
                     SHELTERED.remove(sheltered);
                 })

@@ -2307,6 +2307,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A tall stack of moving structures set swaying comes still and falls asleep: each contact finds its grip
+  against sliding afresh every step, where it started from the grip it gave the step before, which, given again a
+  step late, pushed the stack on as it swung back, so a stack of twelve nudged by a hair of the solver's own swayed
+  ever wider and never slept.
 - (Space) The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
   a little, as their cover was drawn anew, and the world turned a tick at a time.
 - (Core) A passage shown through a mod's own screen stands in for both openings of the game's loading screen in it,

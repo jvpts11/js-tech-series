@@ -1826,6 +1826,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A tall stack of moving structures set swaying comes still and falls asleep: each contact finds its grip
+  against sliding afresh every step, where it started from the grip it gave the step before, which, given again a
+  step late, pushed the stack on as it swung back, so a stack of twelve nudged by a hair of the solver's own swayed
+  ever wider and never slept.
 - A passage shown through a mod's own screen stands in for both openings of the game's loading screen in it,
   and is told to the player's game before the passage, where it was told after the first had opened.
 - A player in a dimension that keeps its own border is told that border, where the game told them the

@@ -22,9 +22,10 @@ import org.joml.Vector3d;
  * it out a little a step; one still apart, or less than a hair into it, lets the bodies close up to resting a hair into
  * each other, and no further, so a fast body stops where it meets, never through, and every point of a face rests as
  * deep; a blow bounces a little as the bodies touch, as fast as they came. Each contact
- * starts from the whole push it gave the step before, so a body resting on many points rests still. A body into
- * another is moved out of it, never sped out: what pushes it out moves it over the step and is forgotten, so however a
- * stack came to sink into itself, it is pushed apart without its top being thrown.
+ * starts from the whole push along its way it gave the step before, so a body resting on many points rests still; its
+ * grip against sliding it finds afresh each step. A body into another is moved out of it, never sped out: what pushes
+ * it out moves it over the step and is forgotten, so however a stack came to sink into itself, it is pushed apart
+ * without its top being thrown.
  */
 public final class ContactSolver {
 
@@ -54,17 +55,20 @@ public final class ContactSolver {
     /* The fastest a contact moves a body out of another, in metres a second, so a deep one comes out over steps. */
     private static final double MOST_PUSH = 3.0;
     /*
-     * How much of last step's push a contact starts from: all of it, so a body resting on many points, a great hull on
-     * the ground, holds still from the first pass instead of sinking a little each step and righting itself.
+     * How much of last step's push along its way a contact starts from: all of it, so a body resting on many points, a
+     * great hull on the ground, holds still from the first pass instead of sinking a little each step and righting
+     * itself. Its grip starts from nothing: what it gripped with the step before, given again a step late, pushes a
+     * swaying stack on as it swings back, and a tall stack nudged by a hair sways ever wider and never comes still.
+     * A step's passes find all the grip a body resting on a slope needs, from the speed it slides at.
      */
     private static final double WARM = 1.0;
     /*
-     * What is kept of a contact from step to step: its three pushes, how fast it came while apart, and whether its
-     * bodies were still apart there.
+     * What is kept of a contact from step to step: its push along its way, how fast it came while apart, and whether
+     * its bodies were still apart there.
      */
-    private static final int KEPT = 5;
-    private static final int COMING = 3;
-    private static final int WAS_APART = 4;
+    private static final int KEPT = 3;
+    private static final int COMING = 1;
+    private static final int WAS_APART = 2;
     /* Below this a way is taken for none. */
     private static final double TINY = 1.0e-9;
     /* A way leaning towards south or north more than this, the sine of 45 degrees, lies nearest that axis. */
@@ -259,16 +263,12 @@ public final class ContactSolver {
                  * are: what they gave is kept as one push, for the next step to start from once, not twice.
                  */
                 already[0] += contact.normalImpulse;
-                already[1] += contact.firstImpulse;
-                already[2] += contact.secondImpulse;
                 already[COMING] = Math.max(already[COMING], contact.coming);
                 continue;
             }
             final double[] kept = before.get(contact.key);
             final double[] into = kept != null ? kept : new double[KEPT];
             into[0] = contact.normalImpulse;
-            into[1] = contact.firstImpulse;
-            into[2] = contact.secondImpulse;
             into[COMING] = contact.coming;
             into[WAS_APART] = contact.groupApart > SLOP ? 1 : 0;
             after.put(contact.key, into);
@@ -325,19 +325,16 @@ public final class ContactSolver {
     }
 
     /*
-     * Starts the contact from the push it gave the step before, if it was there and touching: one still apart then
-     * only slowed the bodies coming, unevenly from point to point, and its points share the blow out evenly afresh.
-     * Of two points known alike, the first starts from what both gave, and the other from nothing.
+     * Starts the contact from the push along its way it gave the step before, if it was there and touching: one still
+     * apart then only slowed the bodies coming, unevenly from point to point, and its points share the blow out evenly
+     * afresh. Of two points known alike, the first starts from what both gave, and the other from nothing. Its grip
+     * starts from nothing ({@link #WARM}).
      */
     private void warm(final Contact contact) {
         final double[] last = before.get(contact.key);
         if (last != null && last[COMING] == 0 && started.add(contact.key)) {
             contact.normalImpulse = last[0] * WARM;
-            contact.firstImpulse = last[1] * WARM;
-            contact.secondImpulse = last[2] * WARM;
             apply(contact, contact.normal, contact.normalImpulse);
-            apply(contact, contact.first, contact.firstImpulse);
-            apply(contact, contact.second, contact.secondImpulse);
         }
     }
 
@@ -504,8 +501,7 @@ public final class ContactSolver {
             this.closing = 0;
             this.coming = 0;
             // The ways along the face, chosen by the axis the way lies nearest, so a way a hair off upright keeps the
-            // same ways from step to step: chosen by its smallest parts instead, they swap at a hair's turn, and the
-            // grip carried over from the step before pushes the wrong way, setting a stack swaying.
+            // same ways from step to step: chosen by its smallest parts instead, they swap at a hair's turn.
             if (Math.abs(normal.z) > NEAR_Z) {
                 this.first.set(0, -normal.z, normal.y);
             } else {
