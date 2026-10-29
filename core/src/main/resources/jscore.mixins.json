@@ -14,6 +14,7 @@
     "CraftingMenuMixin",
     "EntityMixin",
     "FireBlockMixin",
+    "IceBlockMixin",
     "LevelMixin",
     "LevelStorageAccessMixin",
     "LivingEntityAccessor",

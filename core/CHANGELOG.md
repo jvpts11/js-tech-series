@@ -299,6 +299,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   colour the brightest texels of a metallic or glassy mineral's specks catch, so a black mineral shows on a dark rock;
   `FormArt.shine` draws specks so, and `FormArt.ore` takes the sheen before the second colour. `OreLook` has a sixth
   component, `sheen`: a mod that built one with its constructor gives it `OptionalInt.empty()`. Experimental.
+- Ice by its air: J's Core's API is at version 18. `Thawing` tells whether ice at a place is warmed, by air
+  above freezing on its faces or by a bright light, and whether it melts into water there, where the air it meets is
+  thicker than water's triple point, `WATER_TRIPLE_POINT_KPA`; experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1681,6 +1684,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lies open, how deep, how steep the ground is round it, its height and its biome; the feature
   `jscore:rock_variations` is laid after the rock in layers and before the ores, and written by the data generation
   for a data pack to change.
+- Water stays liquid only in air thicker than its triple point: the game's ice, melting by a torch or broken,
+  turns to vapour where the air is thinner, as it does in the Nether's heat, and melts as before where it is thick.
+  `Thawing` tells a mod's ice whether it is warmed and whether it melts into water where it lies.
 - Ores in the rocks a mod declares, each made once every mod has registered its blocks, as hard as its rock and
   a little more, and sounding as it does. The series' minerals glint as they are: hematite and magnetite steel grey,
   ilmenite black with a metal's sheen, native iron bright.

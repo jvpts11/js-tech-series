@@ -319,6 +319,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   colour the brightest texels of a metallic or glassy mineral's specks catch, so a black mineral shows on a dark rock;
   `FormArt.shine` draws specks so, and `FormArt.ore` takes the sheen before the second colour. `OreLook` has a sixth
   component, `sheen`: a mod that built one with its constructor gives it `OptionalInt.empty()`. Experimental.
+- (Core) Ice by its air: J's Core's API is at version 18. `Thawing` tells whether ice at a place is warmed, by air
+  above freezing on its faces or by a bright light, and whether it melts into water there, where the air it meets is
+  thicker than water's triple point, `WATER_TRIPLE_POINT_KPA`; experimental.
 - (Space) The promise: J's Space's API is at version 1, in `dev.jstech.space.api`, experimental. For now it holds
   only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
   landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
@@ -1993,6 +1996,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Stones of the Moon's maria, Anorthosite Stones of its highlands, and Martian Basalt Stones, the vesicular basalt
   strewn over Mars' plains. They lie in one of four arrangements, turned as chance has it, are walked through, break
   at once to be picked up, and go with the ground under them.
+- (Space) The ices of Mars off the Earth: Water Ice, warmed, melts into water only in a sealed room full of air, and
+  anywhere else, in a vacuum or in Mars' thin air, turns straight to vapour and is gone; Dry Ice, warmed, turns to
+  gas wherever it lies, even in a sealed room, giving the room its carbon dioxide share by share, a cubic metre's
+  worth, some 35,000 moles, until it is gone; the Icy Regolith never thaws by itself. Ice is warmed by air above
+  freezing round it, a sealed room's, or by a bright light beside it.
+- (Core) Water stays liquid only in air thicker than its triple point: the game's ice, melting by a torch or broken,
+  turns to vapour where the air is thinner, as it does in the Nether's heat, and melts as before where it is thick.
+  `Thawing` tells a mod's ice whether it is warmed and whether it melts into water where it lies.
 - (Core) Ores in the rocks a mod declares, each made once every mod has registered its blocks, as hard as its rock and
   a little more, and sounding as it does. The series' minerals glint as they are: hematite and magnetite steel grey,
   ilmenite black with a metal's sheen, native iron bright.

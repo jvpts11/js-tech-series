@@ -6321,6 +6321,12 @@ stable 4
 10 dev.jstech.core.heat.LevelHeatLines  new(GridKind)
 10 dev.jstech.core.heat.LevelHeatLines  void tapsChanged()
 10 dev.jstech.core.heat.LevelHeatLines  void tick(ServerLevel)
+18 dev.jstech.core.heat.Thawing  type final class
+18 dev.jstech.core.heat.Thawing  static HeatClimate.Air airMet(Level, BlockPos)
+18 dev.jstech.core.heat.Thawing  static boolean meltsToWater(Level, BlockPos)
+18 dev.jstech.core.heat.Thawing  static boolean warmed(Level, BlockPos)
+18 dev.jstech.core.heat.Thawing  static final double FREEZING_KELVIN
+18 dev.jstech.core.heat.Thawing  static final double WATER_TRIPLE_POINT_KPA
 10 dev.jstech.core.heat.Thermal  type record(double density, double specificHeat, double conductivity, double emissivity, double melting, double boiling, double latentHeat, double molarMass, double liquidDensity)
 10 dev.jstech.core.heat.Thermal  MatterState phaseAt(double, double)
 10 dev.jstech.core.heat.Thermal  Thermal boils(double, double, double)

@@ -14,11 +14,13 @@ import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.space.SpaceContent;
+import java.util.function.Function;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.ColorRGBA;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ColoredFallingBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 
 /**
@@ -59,11 +61,12 @@ public final class SpaceRocks {
     public static final BlockEntry<ColoredFallingBlock> BASALT_SAND = loose("basalt_sand", 0x3D3634,
             MapColor.COLOR_BLACK).named("Basalt Sand").register();
     /** The water ice of Mars' polar caps, with dust between its layers, frozen as hard as rock in their cold. */
-    public static final BlockEntry<Block> WATER_ICE = rock("water_ice", MapColor.ICE, false)
-            .properties(properties -> properties.sound(SoundType.GLASS)).named("Water Ice").register();
+    public static final BlockEntry<WaterIceBlock> WATER_ICE = rock("water_ice", WaterIceBlock::new, MapColor.ICE,
+            false).properties(properties -> properties.sound(SoundType.GLASS).randomTicks()).named("Water Ice")
+            .register();
     /** The frost of carbon dioxide over Mars' polar caps. */
-    public static final BlockEntry<Block> DRY_ICE = frozen("dry_ice", MapColor.SNOW, SoundType.SNOW)
-            .named("Dry Ice").register();
+    public static final BlockEntry<DryIceBlock> DRY_ICE = frozen("dry_ice", DryIceBlock::new, MapColor.SNOW,
+            SoundType.SNOW).properties(BlockBehaviour.Properties::randomTicks).named("Dry Ice").register();
     /** Martian Basalt broken in fine facets: the bedrock of the highlands and the rock below ground. */
     public static final BlockEntry<Block> MARTIAN_BASALT = rock("martian_basalt", MapColor.TERRACOTTA_BLACK, true)
             .named("Martian Basalt").register();
@@ -107,18 +110,30 @@ public final class SpaceRocks {
 
     /* Rock, broken with a pickaxe to drop itself; with a top of its own when {@code ownTop}. */
     private static BlockBuilder<Block> rock(final String id, final MapColor colour, final boolean ownTop) {
+        return rock(id, Block::new, colour, ownTop);
+    }
+
+    private static <B extends Block> BlockBuilder<B> rock(final String id,
+                                                          final Function<BlockBehaviour.Properties, B> made,
+                                                          final MapColor colour, final boolean ownTop) {
         final IBlockModel model = ownTop ? new IBlockModel.Column(id, "block/" + id, "block/" + id + "_top")
                 : new IBlockModel.CubeAll(id, "block/" + id);
-        return SpaceContent.CONTENT.block(id, Block::new)
+        return SpaceContent.CONTENT.block(id, made)
                 .properties(properties -> properties.mapColor(colour).strength(ROCK, ROCK_BLAST)
                         .requiresCorrectToolForDrops().sound(SoundType.STONE))
                 .look(IBlockLook.fixed(model))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(GROUND);
     }
 
-    /* Frozen ground; how it melts and what it gives is its own, beside its look. */
+    /* Frozen ground, broken with anything; how it melts or sublimates is its block's own. */
     private static BlockBuilder<Block> frozen(final String id, final MapColor colour, final SoundType sound) {
-        return SpaceContent.CONTENT.block(id, Block::new)
+        return frozen(id, Block::new, colour, sound);
+    }
+
+    private static <B extends Block> BlockBuilder<B> frozen(final String id,
+                                                            final Function<BlockBehaviour.Properties, B> made,
+                                                            final MapColor colour, final SoundType sound) {
+        return SpaceContent.CONTENT.block(id, made)
                 .properties(properties -> properties.mapColor(colour).strength(ICE).sound(sound))
                 .look(IBlockLook.fixed(new IBlockModel.CubeAll(id, "block/" + id)))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(GROUND);

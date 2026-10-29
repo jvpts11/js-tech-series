@@ -124,6 +124,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Stones of the Moon's maria, Anorthosite Stones of its highlands, and Martian Basalt Stones, the vesicular basalt
   strewn over Mars' plains. They lie in one of four arrangements, turned as chance has it, are walked through, break
   at once to be picked up, and go with the ground under them.
+- The ices of Mars off the Earth: Water Ice, warmed, melts into water only in a sealed room full of air, and
+  anywhere else, in a vacuum or in Mars' thin air, turns straight to vapour and is gone; Dry Ice, warmed, turns to
+  gas wherever it lies, even in a sealed room, giving the room its carbon dioxide share by share, a cubic metre's
+  worth, some 35,000 moles, until it is gone; the Icy Regolith never thaws by itself. Ice is warmed by air above
+  freezing round it, a sealed room's, or by a bright light beside it.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

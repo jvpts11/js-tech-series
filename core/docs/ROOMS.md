@@ -122,6 +122,12 @@ it, and does not light there. In a room whose air is mostly oxygen any flame or 
 round it that burns, an inferno, as in Apollo 1; pure oxygen at a third of an atmosphere is cheap to fill a room
 with, and that is its price. A mod's machine that burns fuel asks `SealedRooms.oxygenAt(level, pos)` whether it can.
 
+Water stays liquid only in air thicker than its triple point, 0.6117 kPa. The game's ice, melting beside a torch or
+broken, becomes water only where the air it meets is that thick: in a vacuum, or in air as thin as Mars', it turns
+straight to vapour and is gone, as the game has it do in the Nether's heat. A sealed room full of air melts it as the
+Earth does. A mod's ice asks the same of `Thawing`: whether it is warmed, by air above freezing on one of its faces or
+by a bright light, and whether it melts into water there. *Added 2026-10-29.*
+
 When a room's air rushes out through a hole, it pulls items, mobs and players towards the hole while the difference
 lasts.
 
