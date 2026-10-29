@@ -122,7 +122,7 @@ public final class PressurizedRoomGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
     public static void torch_fallsInTheMoonsVacuumAndBurnsInARoomOfAirUntilItRunsOut(final GameTestHelper helper) {
         final ResourceKey<Level> key = key("rooms_torch");
         final ServerLevel moon = moon(helper, key);
@@ -133,8 +133,8 @@ public final class PressurizedRoomGameTests {
         hut(moon, low);
         SealedRooms.track(moon, inside(low).above());
         helper.startSequence()
-                // The new world's entities load a while after its chunk is forced, slower while many tests run; an
-                // item dropped before they have would be hidden from the search.
+                // The new world's entities load a while after its chunk is forced, as much as twenty seconds while
+                // many tests read and write the disk; an item dropped before they have would be hidden from the search.
                 .thenWaitUntil(() -> helper.assertTrue(moon.areEntitiesLoaded(ChunkPos.asLong(open)),
                         "the Moon's chunk holds its entities"))
                 .thenExecute(() -> moon.setBlockAndUpdate(open, Blocks.TORCH.defaultBlockState()))

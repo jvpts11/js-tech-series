@@ -236,6 +236,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   cabin; and the capsule of three, 27 blocks, and of five for three crew, 49, of its heat shield, hull, windows, hatch,
   crew seats, flight computer, thruster quads, parachute bays and docking port. The crews' pressure shell holds an
   atmosphere against the vacuum, its windows and hatch too, and every block weighs its share of its parts.
+- The rocket parts' formed models: a formed part is drawn round, as the real one is, each of its blocks a
+  panel or piece of its own, hollow where the real part is. A tank is drawn a layer at a time, standing on its skirt
+  over an engine; a separation ring raises its black interstage skirt round a vacuum engine standing on it; the
+  instrument ring of five closes its adapter's four panels round a lunar lander; the legs, and the lunar lander's, are
+  folded on the way up and spread to land.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

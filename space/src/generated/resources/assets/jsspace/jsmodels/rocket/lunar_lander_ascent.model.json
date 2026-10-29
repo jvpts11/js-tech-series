@@ -1,0 +1,6 @@
+{
+  "model": "jsspace:jsmodels/rocket/lunar_lander_ascent.gltf",
+  "textures": [
+    "jsspace:textures/models/rocket/lunar_lander_ascent.png"
+  ]
+}

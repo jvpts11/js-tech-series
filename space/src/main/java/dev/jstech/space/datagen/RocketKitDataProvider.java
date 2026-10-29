@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -64,7 +65,8 @@ public final class RocketKitDataProvider extends DataMapProvider {
     public static Map<ResourceLocation, Double> masses(final Map<ResourceLocation, RocketPart> parts,
                                                        final Map<ResourceLocation, RocketKit> kits) {
         final Map<ResourceLocation, double[]> summed = new LinkedHashMap<>();
-        for (final Map.Entry<ResourceLocation, RocketKit> entry : kits.entrySet()) {
+        // In the kits' order by id, so the sums come out the same on every run.
+        for (final Map.Entry<ResourceLocation, RocketKit> entry : new TreeMap<>(kits).entrySet()) {
             final RocketPart part = parts.get(entry.getKey());
             final RocketKit kit = entry.getValue();
             if (part == null) {

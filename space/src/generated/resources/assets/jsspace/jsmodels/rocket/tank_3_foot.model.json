@@ -1,0 +1,6 @@
+{
+  "model": "jsspace:jsmodels/rocket/tank_3_foot.gltf",
+  "textures": [
+    "jsspace:textures/models/rocket/tank_3_foot.png"
+  ]
+}

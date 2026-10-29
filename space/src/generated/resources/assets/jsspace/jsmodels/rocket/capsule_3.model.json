@@ -1,0 +1,6 @@
+{
+  "model": "jsspace:jsmodels/rocket/capsule_3.gltf",
+  "textures": [
+    "jsspace:textures/models/rocket/capsule_3.png"
+  ]
+}

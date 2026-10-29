@@ -1,0 +1,6 @@
+{
+  "model": "jsspace:jsmodels/rocket/separation_ring_3_skirt.gltf",
+  "textures": [
+    "jsspace:textures/models/rocket/separation_ring_3_skirt.png"
+  ]
+}

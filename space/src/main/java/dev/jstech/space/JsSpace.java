@@ -27,6 +27,7 @@ import dev.jstech.space.life.SuitModuleItems;
 import dev.jstech.space.life.SuitSupplies;
 import dev.jstech.space.platform.LandingPlatform;
 import dev.jstech.space.rocket.RocketKitBlocks;
+import dev.jstech.space.rocket.RocketPartModels;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketKits;
 import dev.jstech.space.rocket.SkeletonRocketParts;
@@ -112,6 +113,7 @@ public final class JsSpace {
         // The blocks every part is built of, and where each goes in each part.
         RocketKitBlocks.declare();
         SkeletonRocketKits.declare();
+        RocketPartModels.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();
