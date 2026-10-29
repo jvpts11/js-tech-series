@@ -55,7 +55,11 @@ public final class WorldEditGameTests {
     private static final String ARENA = "empty";
     private static final int FAR = 2_000_000;
     private static final int SPREAD = 1_000_000;
-    private static final int SKY = 200;
+    /*
+     * Above the highest ground the game raises, its jagged peaks among it, and the box's eight blocks still under the
+     * build limit: at 200 a box far out can meet a mountain, its blocks not the air the edit plans to fill.
+     */
+    private static final int SKY = 300;
     private static final int WIDE = 47;
     private static final int HIGH = 7;
     private static final String COMMAND_FILE = JsTests.MODID + ":edit_command_test";
