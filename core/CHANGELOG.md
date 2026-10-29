@@ -295,6 +295,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   on any rock in the mineral's colour; experimental. The game's rock a pattern is taken off is asked of the pattern
   now, `pattern.rock(deepslate)`, where it was asked of `OreLook.Pattern` itself: a mod that called it calls it on
   its pattern.
+- Minerals that shine: J's Core's API is at version 17. An ore's look can have a sheen, `OreLook.withSheen`, the
+  colour the brightest texels of a metallic or glassy mineral's specks catch, so a black mineral shows on a dark rock;
+  `FormArt.shine` draws specks so, and `FormArt.ore` takes the sheen before the second colour. `OreLook` has a sixth
+  component, `sheen`: a mod that built one with its constructor gives it `OptionalInt.empty()`. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1677,6 +1681,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lies open, how deep, how steep the ground is round it, its height and its biome; the feature
   `jscore:rock_variations` is laid after the rock in layers and before the ores, and written by the data generation
   for a data pack to change.
+- Ores in the rocks a mod declares, each made once every mod has registered its blocks, as hard as its rock and
+  a little more, and sounding as it does. The series' minerals glint as they are: hematite and magnetite steel grey,
+  ilmenite black with a metal's sheen, native iron bright.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

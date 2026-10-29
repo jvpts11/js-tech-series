@@ -48,14 +48,18 @@ public final class SeriesMinerals {
     public static final TextKey JAROSITE_NAME = TextKey.of("jscore.material.jarosite", "Jarosite");
     public static final TextKey GYPSUM_NAME = TextKey.of("jscore.material.gypsum", "Gypsum");
 
-    /** Iron's red oxide, the ore of the world's steel. */
+    /**
+     * Iron's oxide, the ore of the world's steel: red as a dust, its crystals a steel grey with a metal's glint, round
+     * as the spherules Opportunity found on Mars.
+     */
     public static final Material HEMATITE = mineral("hematite", HEMATITE_NAME, MineralFamilies.OXIDE, Element.IRON)
-            .formula("Fe2O3").colour(0x8B3A2E).ore(OreLook.of(OreLook.Pattern.IRON).inColour(0x9C4A3A))
+            .formula("Fe2O3").colour(0x8B3A2E)
+            .ore(OreLook.of(OreLook.Pattern.REDSTONE).inColour(0x4A3A3C).withSheen(0x8A7A80))
             .rocks(HostRocks.STONE, HostRocks.SANDSTONE).declare();
-    /** Iron's black, magnetic oxide, which carries titanium and vanadium. */
+    /** Iron's black, magnetic oxide, which carries titanium and vanadium, with a metal's glint. */
     public static final Material MAGNETITE = mineral("magnetite", MAGNETITE_NAME, MineralFamilies.OXIDE,
             Element.IRON).formula("Fe3O4").trace(Element.TITANIUM, 0.03).trace(Element.VANADIUM, 0.005)
-            .colour(0x2B2B2E).ore(OreLook.of(OreLook.Pattern.COAL).inColour(0x26262A))
+            .colour(0x2B2B2E).ore(OreLook.of(OreLook.Pattern.IRON).inColour(0x16161A).withSheen(0x6A6E78))
             .rocks(HostRocks.DEEPSLATE, HostRocks.DIORITE, HostRocks.ANDESITE).declare();
     /** Iron's carbonate, with manganese in it. */
     public static final Material SIDERITE = mineral("siderite", SIDERITE_NAME, MineralFamilies.CARBONATE,
@@ -91,9 +95,10 @@ public final class SeriesMinerals {
     public static final Material CASSITERITE = mineral("cassiterite", CASSITERITE_NAME, MineralFamilies.OXIDE,
             Element.TIN).formula("SnO2").colour(0x4A3426).ore(OreLook.of(OreLook.Pattern.COAL).inColour(0x3E2C20))
             .rocks(HostRocks.GRANITE).declare();
-    /** Iron and titanium's black oxide, the Moon's titanium, and its oxygen by reduction. */
+    /** Iron and titanium's black oxide, glinting like a metal: the Moon's titanium, and its oxygen by reduction. */
     public static final Material ILMENITE = mineral("ilmenite", ILMENITE_NAME, MineralFamilies.OXIDE,
-            Element.TITANIUM).formula("FeTiO3").byproduct(Element.IRON).colour(0x1E1C1F).ore(OreLook.of(OreLook.Pattern.COAL).inColour(0x2A2730))
+            Element.TITANIUM).formula("FeTiO3").byproduct(Element.IRON).colour(0x1E1C1F)
+            .ore(OreLook.of(OreLook.Pattern.IRON).inColour(0x1E1E22).withSheen(0x8A8E98))
             .rocks(HostRocks.DIORITE, HostRocks.ANDESITE).declare();
     /**
      * A titanium oxide of magnesium and iron, found by Apollo 11 and named after Armstrong, Aldrin and Collins; its
@@ -101,15 +106,16 @@ public final class SeriesMinerals {
      */
     public static final Material ARMALCOLITE = mineral("armalcolite", ARMALCOLITE_NAME, MineralFamilies.OXIDE,
             Element.TITANIUM).formula("MgFeTi4O10").byproduct(Element.MAGNESIUM).colour(0x3A3338)
-            .ore(OreLook.of(OreLook.Pattern.IRON).inColour(0x4A4048)).rocks(HostRocks.BASALT).declare();
+            .ore(OreLook.of(OreLook.Pattern.DIAMOND).inColour(0x3E3630).withSheen(0x9A8E82)).rocks(HostRocks.BASALT)
+            .declare();
     /**
      * A silicate of iron, zirconium and yttrium named after the Sea of Tranquillity, found on the Earth in 2011; its
      * formula the zirconium one, with the yttrium that stands in for some of it.
      */
     public static final Material TRANQUILLITYITE = mineral("tranquillityite", TRANQUILLITYITE_NAME,
             MineralFamilies.SILICATE, Element.ZIRCONIUM).formula("Fe8Zr2Ti3Si3O24").byproduct(Element.TITANIUM)
-            .trace(Element.YTTRIUM, 0.02).colour(0x7A3E2A).ore(OreLook.of(OreLook.Pattern.REDSTONE)
-                    .inColour(0x8A4A30)).rocks(HostRocks.BASALT).declare();
+            .trace(Element.YTTRIUM, 0.02).colour(0x7A3E2A).ore(OreLook.of(OreLook.Pattern.EMERALD)
+                    .inColour(0x7A3A1E).withSheen(0xC26A3A)).rocks(HostRocks.BASALT).declare();
     /**
      * The phosphate that carries the rare earths of the Moon's KREEP, with thorium and uranium in it; its formula the
      * merrillite of the rare earths, cerium standing for them.
@@ -117,29 +123,33 @@ public final class SeriesMinerals {
     public static final Material MERRILLITE = mineral("merrillite", MERRILLITE_NAME, MineralFamilies.PHOSPHATE,
             Element.CERIUM).formula("Ca8CeMg(PO4)7").byproduct(Element.PHOSPHORUS).trace(Element.LANTHANUM, 0.01)
             .trace(Element.NEODYMIUM, 0.01).trace(Element.THORIUM, 0.000_5).trace(Element.URANIUM, 0.000_1)
-            .colour(0xD8D2C0).ore(OreLook.of(OreLook.Pattern.LAPIS).inColour(0xC8C0A8)).rocks(HostRocks.BASALT)
-            .declare();
+            .colour(0xD8D2C0).ore(OreLook.of(OreLook.Pattern.COAL).inColour(0xB89A6A).withSheen(0xE8D6A8))
+            .rocks(HostRocks.BASALT).declare();
     /** Iron as metal, unrusted where there is no air, with nickel in it, as on the Moon and in meteorites. */
     public static final Material NATIVE_IRON = mineral("native_iron", NATIVE_IRON_NAME, MineralFamilies.NATIVE,
             Element.IRON).part(Element.IRON, 0.94).part(Element.NICKEL, 0.06).byproduct(Element.NICKEL)
-            .colour(0x9A9A9E).ore(OreLook.of(OreLook.Pattern.IRON).inColour(0xA8A8AE)).rocks(HostRocks.BASALT)
-            .declare();
+            .colour(0x9A9A9E).ore(OreLook.of(OreLook.Pattern.GOLD).inColour(0x8A8C90).withSheen(0xD8DADE))
+            .rocks(HostRocks.BASALT).declare();
     /**
      * The green silicate of magnesium and iron of the mantle, in bulk at Mars' Nili Fossae; its formula forsterite's,
      * the magnesium end of the series, with the iron that stands in for some of it.
      */
     public static final Material OLIVINE = mineral("olivine", OLIVINE_NAME, MineralFamilies.SILICATE,
             Element.MAGNESIUM).formula("Mg2SiO4").byproduct(Element.SILICON).trace(Element.IRON, 0.08).colour(0x6B8E23)
-            .ore(OreLook.of(OreLook.Pattern.EMERALD).inColour(0x7A9A30)).rocks(HostRocks.BASALT).declare();
+            .ore(OreLook.of(OreLook.Pattern.EMERALD).inColour(0x7A8A2A).withSheen(0xB8C85A)).rocks(HostRocks.BASALT)
+            .declare();
     /** The yellow sulfate of iron and potassium that forms only in acid water, Mars' proof of an old wet past. */
     public static final Material JAROSITE = mineral("jarosite", JAROSITE_NAME, MineralFamilies.SULFATE,
             Element.IRON).formula("KFe3(SO4)2(OH)6").byproduct(Element.SULFUR).byproduct(Element.POTASSIUM)
-            .colour(0xC9A227).ore(OreLook.of(OreLook.Pattern.GOLD).inColour(0xD0AC30)).rocks(HostRocks.SANDSTONE)
-            .declare();
-    /** Calcium's hydrated sulfate, left where water evaporated, in veins on Mars as on the Earth. */
+            .colour(0xC9A227).ore(OreLook.of(OreLook.Pattern.GOLD).inColour(0xB8922A).withSheen(0xE8C85A))
+            .rocks(HostRocks.SANDSTONE).declare();
+    /**
+     * Calcium's hydrated sulfate, left where water evaporated: white veins filling the cracks of its rock, on Mars as
+     * on the Earth, drawn as the veins of the Nether's quartz.
+     */
     public static final Material GYPSUM = mineral("gypsum", GYPSUM_NAME, MineralFamilies.SULFATE, Element.CALCIUM)
             .formula("CaSO4·2H2O").byproduct(Element.SULFUR).colour(0xEDE6DA)
-            .ore(OreLook.of(OreLook.Pattern.DIAMOND).inColour(0xF2EEE6))
+            .ore(OreLook.of(OreLook.Pattern.QUARTZ).inColour(0xE6E0D4).withSheen(0xFFFFFF))
             .rocks(HostRocks.SANDSTONE, HostRocks.CALCITE).declare();
 
     private SeriesMinerals() {

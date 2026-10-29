@@ -8550,8 +8550,9 @@ stable 4
 10 dev.jstech.core.material.FormArt  static final int SIZE
 10 dev.jstech.core.material.FormArt  static int ramp(int, double)
 10 dev.jstech.core.material.FormArt  static int[] drawn(String, int)
-10 dev.jstech.core.material.FormArt  static int[] ore(int[], int, int[], int, OptionalInt, double, double)
+17 dev.jstech.core.material.FormArt  static int[] ore(int[], int, int[], int, OptionalInt, OptionalInt, double, double)
 10 dev.jstech.core.material.FormArt  static int[] recolour(int[], int, int)
+17 dev.jstech.core.material.FormArt  static int[] shine(int[], int, int)
 10 dev.jstech.core.material.FormArt  static int[] specks(int[], int, int[], int)
 10 dev.jstech.core.material.Forms  type final class
 10 dev.jstech.core.material.Forms  static Form.Builder form(ResourceLocation, Form.Shape, String, TextKey)
@@ -8909,8 +8910,9 @@ stable 4
 10 dev.jstech.core.material.NamingBalance  static void setDiscoverersName(boolean)
 10 dev.jstech.core.material.NamingBalance  static void setLongest(int)
 10 dev.jstech.core.material.NamingBalance  static void setRequireIum(boolean)
-10 dev.jstech.core.material.OreLook  type record(Pattern pattern, OptionalInt colour, OptionalInt second, double lowHue, double highHue)
+17 dev.jstech.core.material.OreLook  type record(Pattern pattern, OptionalInt colour, OptionalInt second, double lowHue, double highHue, OptionalInt sheen)
 10 dev.jstech.core.material.OreLook  OreLook inColour(int)
+17 dev.jstech.core.material.OreLook  OreLook withSheen(int)
 10 dev.jstech.core.material.OreLook  int speckColour(int)
 10 dev.jstech.core.material.OreLook  static OreLook of(Pattern)
 10 dev.jstech.core.material.OreLook  static OreLook of(Pattern, int, double, double)

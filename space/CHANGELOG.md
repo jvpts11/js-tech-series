@@ -114,6 +114,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lakebeds, the buff of Jezero's delta and dusted red, each with a top of its own. The regoliths and sands dig with a
   shovel and fall as sand does, the rocks and the Water Ice, frozen as hard as rock, drop themselves only under a
   pickaxe, and the Dry Ice and the Icy Regolith break with anything.
+- The ores of the Moon and of Mars, twelve in the rocks of those worlds: the Moon's ilmenite, its titanium and
+  its oxygen, in the Mare Basalt and the Mare Regolith, its armalcolite, tranquillityite and merrillite, the phosphate
+  of KREEP's rare earths, in the Mare Basalt, and the native iron of meteorites in the Highland Regolith; Mars'
+  hematite in the Martian Regolith and the Mudstone, its magnetite and olivine in the Martian Basalt, and its jarosite
+  and gypsum, the proofs of its old water, in the Mudstone, the gypsum in white veins. Each breaks under a pickaxe into
+  its raw mineral. Those six rocks are host rocks any mod can lay its own ores in.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

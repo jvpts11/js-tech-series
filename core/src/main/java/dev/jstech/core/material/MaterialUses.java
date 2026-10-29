@@ -229,7 +229,7 @@ public final class MaterialUses {
             });
             sharedThings = Set.copyOf(shared);
             for (final RegisteredThing thing : registered) {
-                if (thing.isBlock()) {
+                if (thing.isBlock() && !inAModsRock(thing)) {
                     helper.register(thing.id(), new MaterialFormBlock(blockProperties(thing.thing(), thing.rock()),
                             thing.thing(), thing.rock()));
                 }
@@ -238,8 +238,15 @@ public final class MaterialUses {
         event.register(Registries.ITEM, helper -> {
             /*
              * An ore in another mod's rock takes its hardness and its sound from the rock, so it is made once every mod
-             * has registered its blocks: when the game registers items, which comes after every mod's blocks.
+             * has registered its blocks: when the game registers items, which comes after every mod's blocks. So is
+             * an ore in a rock a mod declared, and one in a rock found by its tags.
              */
+            for (final RegisteredThing thing : registered) {
+                if (thing.isBlock() && inAModsRock(thing)) {
+                    Registry.register(BuiltInRegistries.BLOCK, thing.id(), new MaterialFormBlock(blockProperties(
+                            thing.thing(), thing.rock()), thing.thing(), thing.rock()));
+                }
+            }
             final List<RegisteredThing> found = oresInFoundRocks();
             for (final RegisteredThing thing : found) {
                 Registry.register(BuiltInRegistries.BLOCK, thing.id(), new MaterialFormBlock(blockProperties(
@@ -348,6 +355,11 @@ public final class MaterialUses {
             }
         }
         return new ArrayList<>(out);
+    }
+
+    /* Whether {@code thing} is an ore in a rock some mod declared, whose block may not be registered yet. */
+    private static boolean inAModsRock(final RegisteredThing thing) {
+        return thing.rock() != null && !ResourceLocation.DEFAULT_NAMESPACE.equals(thing.rock().id().getNamespace());
     }
 
     /* A block ores can sit in: a whole cube with no block entity, as rock is. */

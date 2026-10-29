@@ -139,7 +139,8 @@ class FormArtTest {
         final int[] specks = new int[FormArt.SIZE * FormArt.SIZE];
         specks[2 * FormArt.SIZE + 2] = grey(90);
         specks[9 * FormArt.SIZE + 7] = grey(200);
-        final int[] ore = FormArt.ore(rock, FormArt.SIZE, specks, COPPER, OptionalInt.empty(), 0, 0);
+        final int[] ore = FormArt.ore(rock, FormArt.SIZE, specks, COPPER, OptionalInt.empty(), OptionalInt.empty(), 0,
+                0);
         final int[] recoloured = FormArt.recolour(specks, FormArt.SIZE, COPPER);
         assertEquals(texel(recoloured, 2, 2), texel(ore, 2, 2));
         assertEquals(texel(recoloured, 7, 9), texel(ore, 7, 9));
@@ -153,9 +154,38 @@ class FormArtTest {
         specks[2 * FormArt.SIZE + 2] = 0xFF << 24 | 60 << 16 | 170 << 8 | 90;
         specks[4 * FormArt.SIZE + 4] = grey(150);
         final int second = 0x5B5BB8;
-        final int[] ore = FormArt.ore(diagonal(), FormArt.SIZE, specks, COPPER, OptionalInt.of(second), 0.25, 0.55);
+        final int[] ore = FormArt.ore(diagonal(), FormArt.SIZE, specks, COPPER, OptionalInt.empty(),
+                OptionalInt.of(second), 0.25, 0.55);
         assertEquals(texel(FormArt.recolour(specks, FormArt.SIZE, second), 2, 2), texel(ore, 2, 2));
         assertEquals(texel(FormArt.recolour(specks, FormArt.SIZE, COPPER), 4, 4), texel(ore, 4, 4));
+    }
+
+    @Test
+    void shine_outlinesTheSpecksDarkAndRaisesTheirLightsToTheSheen() {
+        final int[] specks = new int[FormArt.SIZE * FormArt.SIZE];
+        specks[1 * FormArt.SIZE + 1] = grey(40);
+        specks[2 * FormArt.SIZE + 2] = grey(120);
+        specks[3 * FormArt.SIZE + 3] = grey(200);
+        final int black = 0x1E1E22;
+        final int sheen = 0x8A8E98;
+        final int[] shone = FormArt.shine(specks, black, sheen);
+        assertEquals(0xFF << 24 | 0x0E0E0F, texel(shone, 1, 1), "the darkest speck is a little under half the colour");
+        assertEquals(0xFF << 24 | black, texel(shone, 2, 2), "the middle one is the colour itself");
+        assertEquals(0xFF << 24 | sheen, texel(shone, 3, 3), "and the brightest catches the sheen");
+        assertEquals(0, texel(shone, 5, 5), "an empty texel stays empty");
+    }
+
+    @Test
+    void ore_shinesWhenTheMineralHasASheen() {
+        final int[] specks = new int[FormArt.SIZE * FormArt.SIZE];
+        specks[2 * FormArt.SIZE + 2] = grey(60);
+        specks[6 * FormArt.SIZE + 6] = grey(220);
+        final int[] ore = FormArt.ore(diagonal(), FormArt.SIZE, specks, COPPER, OptionalInt.of(0xFFFFFF),
+                OptionalInt.empty(), 0, 0);
+        final int[] shone = FormArt.shine(specks, COPPER, 0xFFFFFF);
+        assertEquals(texel(shone, 2, 2), texel(ore, 2, 2));
+        assertEquals(texel(shone, 6, 6), texel(ore, 6, 6));
+        assertEquals(0xFFFFFFFF, texel(ore, 6, 6), "its brightest speck is the sheen");
     }
 
     private static int red(final int texel) {

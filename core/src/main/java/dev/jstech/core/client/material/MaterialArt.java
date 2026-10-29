@@ -169,8 +169,8 @@ public final class MaterialArt implements IRuntimeFiles {
                 "textures/" + look.pattern().rock(deepslate) + ".png"), read);
         final GameTexture host = picture(texture(rockTexture(rock, read)), read);
         final int[] specks = FormArt.specks(ore.texels(), ore.width(), gameRock.texels(), gameRock.width());
-        return FormArt.ore(host.texels(), host.width(), specks, look.speckColour(material.colour()), look.second(),
-                look.lowHue(), look.highHue());
+        return FormArt.ore(host.texels(), host.width(), specks, look.speckColour(material.colour()), look.sheen(),
+                look.second(), look.lowHue(), look.highHue());
     }
 
     /*

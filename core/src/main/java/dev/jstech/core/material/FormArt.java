@@ -105,6 +105,9 @@ public final class FormArt {
     private static final int SPECK_DIFFERENCE = 40;
     /* A speck greyer than this keeps the mineral's main colour, whatever its hue. */
     private static final double SECOND_SATURATION = 0.25;
+    /* A shining speck's darkest outline, as a share of the mineral's colour, which is at the specks' middle light. */
+    private static final double SHINE_OUTLINE = 0.45;
+    private static final double SHINE_MIDDLE = 0.5;
 
     private FormArt() {
     }
@@ -222,12 +225,14 @@ public final class FormArt {
 
     /**
      * An ore: the rock, {@code rockWidth} texels wide and read 16 by 16, with the specks laid on it in a mineral's
-     * colour. When the mineral has a second colour, the specks whose hue lies from {@code lowHue} to {@code highHue}
-     * (0 to 1) and that are not grey take it instead: the green of copper's patina.
+     * colour, or, when it has a {@code sheen}, shining with it ({@link #shine}). When the mineral has a second colour,
+     * the specks whose hue lies from {@code lowHue} to {@code highHue} (0 to 1) and that are not grey take it instead:
+     * the green of copper's patina.
      */
     public static int[] ore(final int[] rock, final int rockWidth, final int[] specks, final int colour,
-                            final OptionalInt second, final double lowHue, final double highHue) {
-        final int[] main = recolour(specks, SIZE, colour);
+                            final OptionalInt sheen, final OptionalInt second, final double lowHue,
+                            final double highHue) {
+        final int[] main = sheen.isPresent() ? shine(specks, colour, sheen.getAsInt()) : recolour(specks, SIZE, colour);
         final int[] alt = second.isPresent() ? recolour(specks, SIZE, second.getAsInt()) : main;
         final int[] out = new int[SIZE * SIZE];
         for (int y = 0; y < SIZE; y++) {
@@ -243,6 +248,36 @@ public final class FormArt {
                         && hsv[0] <= highHue;
                 out[i] = secondHue ? alt[i] : main[i];
             }
+        }
+        return out;
+    }
+
+    /**
+     * Specks, 16 by 16, drawn as a metallic or glassy mineral glints: each speck's light, taken between the specks'
+     * darkest and brightest, gives its dark outline at a little under half of {@code colour}, its body at the colour,
+     * and its highlights rising to {@code sheen}. A black mineral shows on a dark rock so, where the ramp of its colour
+     * alone keeps it dark. Empty texels stay empty.
+     */
+    public static int[] shine(final int[] specks, final int colour, final int sheen) {
+        double lowest = Double.MAX_VALUE;
+        double highest = -Double.MAX_VALUE;
+        for (final int speck : specks) {
+            if (alpha(speck) > 0) {
+                lowest = Math.min(lowest, light(speck));
+                highest = Math.max(highest, light(speck));
+            }
+        }
+        final double span = Math.max(1e-6, highest - lowest);
+        final int[] out = new int[SIZE * SIZE];
+        for (int i = 0; i < SIZE * SIZE; i++) {
+            final int speck = specks[i];
+            if (alpha(speck) == 0) {
+                continue;
+            }
+            final double t = Math.max(0.0, Math.min(1.0, (light(speck) - lowest) / span));
+            final int shone = t < SHINE_MIDDLE ? mix(scaled(colour, SHINE_OUTLINE), colour, t / SHINE_MIDDLE)
+                    : mix(colour, sheen, (t - SHINE_MIDDLE) / (1 - SHINE_MIDDLE));
+            out[i] = (alpha(speck) << 24) | (shone & 0xFFFFFF);
         }
         return out;
     }
@@ -356,6 +391,21 @@ public final class FormArt {
 
     private static int rgb(final int r, final int g, final int b) {
         return OPAQUE | r << 16 | g << 8 | b;
+    }
+
+    /* The colour {@code share} of the way from {@code from} to {@code to}, channel by channel. */
+    private static int mix(final int from, final int to, final double share) {
+        return rgb(channel(red(from) + (red(to) - red(from)) * share),
+                channel(green(from) + (green(to) - green(from)) * share),
+                channel(blue(from) + (blue(to) - blue(from)) * share));
+    }
+
+    private static int scaled(final int colour, final double share) {
+        return rgb(channel(red(colour) * share), channel(green(colour) * share), channel(blue(colour) * share));
+    }
+
+    private static int channel(final double value) {
+        return (int) Math.max(0, Math.min(255, Math.rint(value)));
     }
 
     private static int alpha(final int argb) {

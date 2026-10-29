@@ -315,6 +315,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   on any rock in the mineral's colour; experimental. The game's rock a pattern is taken off is asked of the pattern
   now, `pattern.rock(deepslate)`, where it was asked of `OreLook.Pattern` itself: a mod that called it calls it on
   its pattern.
+- (Core) Minerals that shine: J's Core's API is at version 17. An ore's look can have a sheen, `OreLook.withSheen`, the
+  colour the brightest texels of a metallic or glassy mineral's specks catch, so a black mineral shows on a dark rock;
+  `FormArt.shine` draws specks so, and `FormArt.ore` takes the sheen before the second colour. `OreLook` has a sixth
+  component, `sheen`: a mod that built one with its constructor gives it `OptionalInt.empty()`. Experimental.
 - (Space) The promise: J's Space's API is at version 1, in `dev.jstech.space.api`, experimental. For now it holds
   only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
   landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
@@ -1979,6 +1983,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lakebeds, the buff of Jezero's delta and dusted red, each with a top of its own. The regoliths and sands dig with a
   shovel and fall as sand does, the rocks and the Water Ice, frozen as hard as rock, drop themselves only under a
   pickaxe, and the Dry Ice and the Icy Regolith break with anything.
+- (Space) The ores of the Moon and of Mars, twelve in the rocks of those worlds: the Moon's ilmenite, its titanium and
+  its oxygen, in the Mare Basalt and the Mare Regolith, its armalcolite, tranquillityite and merrillite, the phosphate
+  of KREEP's rare earths, in the Mare Basalt, and the native iron of meteorites in the Highland Regolith; Mars'
+  hematite in the Martian Regolith and the Mudstone, its magnetite and olivine in the Martian Basalt, and its jarosite
+  and gypsum, the proofs of its old water, in the Mudstone, the gypsum in white veins. Each breaks under a pickaxe into
+  its raw mineral. Those six rocks are host rocks any mod can lay its own ores in.
+- (Core) Ores in the rocks a mod declares, each made once every mod has registered its blocks, as hard as its rock and
+  a little more, and sounding as it does. The series' minerals glint as they are: hematite and magnetite steel grey,
+  ilmenite black with a metal's sheen, native iron bright.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

@@ -421,6 +421,18 @@ ore itself with Silk Touch. `MaterialUses.item`, `block` and `oreBlock` reach a 
 says what material and form an item is, the game's own included. A use declared after the game registered its things,
 a form the material's kind cannot take, or an ore with no rock stops the game loading with a paragraph saying so.
 
+A mod declares rocks of its own the same way, and lays any material's ores in them, its own or another mod's:
+
+```java
+public static final TextKey MARE_BASALT_ORE = TextKey.of("jsspace.host_rock.mare_basalt", "Mare Basalt %s Ore");
+public static final HostRock MARE_BASALT = HostRocks.rock(rl("mare_basalt"), SpaceRocks.MARE_BASALT,
+        MARE_BASALT_ORE).declare();
+MaterialUses.ore(MODID, SeriesMinerals.ILMENITE, MARE_BASALT);   // jscore:mare_basalt_ilmenite_ore
+```
+
+An ore takes its hardness, a little over its rock's, and its sound from its rock, so an ore in a rock a mod declared is
+made once every mod has registered its blocks, when the game registers its items. *Added 2026-10-29.*
+
 Every thing is in its material's common tag and its form's (`c:plates/tin` in `c:plates`, `c:ores/tin` in `c:ores`,
 an ore in `c:ores_in_ground/<rock>`), every block is mined with a pickaxe, and every block has its drops: all this
 made as the server loads its data, in a data pack of the Core's own, which any data pack can override.
@@ -439,8 +451,11 @@ its light and shade kept (every ingot is the iron ingot in the material's colour
 rod the stick); the rest come from the Core's own templates. A material's colour gives a ramp: its shadows cooler and
 deeper, its lights warmer and paler. An ore is its rock's texture with the specks of one of the game's ores laid on it
 (`OreLook`: which ore's specks, a colour of the ore's own when it is not the metal's, and a second colour for the hues
-of a mineral of two). A mineral that fills cracks in its rock, as gypsum does, takes the veins of the Nether's quartz
-instead of specks (`OreLook.Pattern.QUARTZ`), taken off the netherrack and laid on any rock. A form a mod adds draws from a grey template of the mod's own:
+of a mineral of two). A metallic or glassy mineral has a sheen (`withSheen`): its specks' darkest texels a little under
+half its colour, their middle at the colour and their brightest rising to the sheen, which is what shows a black
+mineral, as ilmenite, on a dark rock, where the ramp of its colour alone would keep it dark. A mineral that fills cracks
+in its rock, as gypsum does, takes the veins of the Nether's quartz instead of specks (`OreLook.Pattern.QUARTZ`), taken
+off the netherrack and laid on any rock. A form a mod adds draws from a grey template of the mod's own:
 `Forms.form(...).art(rl("item/pellet"))`. The models and block states are made the same way, and a resource pack can
 replace any of them.
 
