@@ -16,6 +16,7 @@ import dev.jstech.core.heat.ThermalSight;
 import dev.jstech.core.moving.StructureEffectsPayload;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.physics.BlockPhysics;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.region.Box;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -287,7 +288,9 @@ public final class StructureEffectsClient {
                     continue;
                 }
                 final BlockPos pos = BlockPos.of(engine.pos());
-                final Direction back = BlockPhysics.wayOf(level.getBlockState(pos)).getOpposite();
+                // An engine merged into a formed structure's model burns the way the engine it was faces.
+                final Direction back = BlockPhysics.wayOf(FormedPartBlock.originalAt(level, pos,
+                        level.getBlockState(pos))).getOpposite();
                 final Burning now = new Burning(size, engine.look());
                 if (was != null) {
                     ClientEffects.release(was);

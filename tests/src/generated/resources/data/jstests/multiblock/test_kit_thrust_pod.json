@@ -1,0 +1,26 @@
+{
+  "key": {
+    "L": {
+      "blocks": [
+        "jstests:test_light_block"
+      ]
+    },
+    "T": {
+      "blocks": [
+        "jstests:test_thruster"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "T",
+      "L"
+    ],
+    [
+      "#",
+      "L"
+    ]
+  ],
+  "name": "test_kit_thrust_pod",
+  "terminal": "jstests:test_kit_thrust_pod"
+}

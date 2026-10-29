@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.moving.physics;
 
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.region.Box;
 import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
@@ -190,17 +191,23 @@ public final class StructureParts {
         return shape.toAabbs().toArray(new AABB[0]);
     }
 
+    /*
+     * Takes in the block {@code state} at {@code pos}. A block of a formed structure merged into its model weighs,
+     * floats, drags, grips and pushes as the block it was, an engine merged into a rocket's model still thrusting; it
+     * collides as it stands, as its part of the model.
+     */
     private void add(final Level level, final BlockPos pos, final BlockState state) {
         final long key = pos.asLong();
-        final double kilograms = BlockPhysics.massOf(level, pos, state);
+        final BlockState was = FormedPartBlock.originalAt(level, pos, state);
+        final double kilograms = BlockPhysics.massOf(level, pos, was);
         mass.add(pos.getX() + HALF, pos.getY() + HALF, pos.getZ() + HALF, kilograms, SIDE);
         masses.put(key, kilograms);
         filled.add(key);
-        final double displacement = BlockPhysics.displacementOf(level, pos, state);
+        final double displacement = BlockPhysics.displacementOf(level, pos, was);
         if (displacement > 0) {
             displaced.put(key, displacement);
         }
-        final BlockPhysics physics = BlockPhysics.of(state);
+        final BlockPhysics physics = BlockPhysics.of(was);
         final double drag = physics.drag().orElse(1.0);
         for (final Direction way : Direction.values()) {
             final long beside = BlockPos.offset(key, way);
@@ -216,14 +223,14 @@ public final class StructureParts {
         if (!shape.isEmpty() && physics.wheel().isEmpty()) {
             collides.add(key);
             shapes.put(key, boxesOf(shape));
-            grips.put(key, ContactMath.grip(state.getFriction(level, pos, null)));
+            grips.put(key, ContactMath.grip(was.getFriction(level, pos, null)));
             if (open.get(key) > 0) {
                 surface.add(key);
             }
         }
         if (physics.thrust().isPresent() || physics.wing().isPresent() || physics.levitation().isPresent()
                 || physics.magnet().isPresent() || physics.wheel().isPresent() || physics.burner().isPresent()) {
-            parts.put(key, new Part(pos, state, physics, BlockPhysics.wayOf(state)));
+            parts.put(key, new Part(pos, was, physics, BlockPhysics.wayOf(was)));
         }
         buriedAgain(key);
     }

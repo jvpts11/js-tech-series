@@ -11,6 +11,7 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.registry.CoreItems;
 import java.util.ArrayList;
@@ -96,6 +97,9 @@ public final class FormedParts {
             level.setBlock(at, BLOCK.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part) {
                 part.merged(was, terminal, shaped.apply(at).orElse(null));
+                // Aboard a moving structure, its physics reads it again, now that it knows the block it was.
+                final BlockState merged = level.getBlockState(at);
+                MovingStructures.noteChange(level, at, merged, merged);
                 out.add(place);
                 puff(level, at);
             }

@@ -11,6 +11,7 @@ import dev.jstech.core.moving.physics.BlockPhysics;
 import dev.jstech.core.moving.physics.ForceSum;
 import dev.jstech.core.moving.physics.PhysicsWorld;
 import dev.jstech.core.moving.physics.StructurePhysics;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.region.Box;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -159,7 +160,9 @@ final class StructureForceWatch {
                 if (state.isAir()) {
                     continue;
                 }
-                final double kilograms = BlockPhysics.massOf(structure.level(), at, state);
+                // A block merged into a formed structure's model weighs what the block it was weighs.
+                final double kilograms = BlockPhysics.massOf(structure.level(), at,
+                        FormedPartBlock.originalAt(structure.level(), at, state));
                 out[1] += kilograms;
                 out[2] += kilograms * (at.getX() + HALF);
                 out[3] += kilograms * (at.getY() + HALF);

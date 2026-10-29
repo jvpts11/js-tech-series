@@ -9,8 +9,17 @@ package dev.jstech.tests;
 
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.content.Device;
+import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineStatus;
+import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.moving.StructureReadings;
+import dev.jstech.core.multiblock.BlockMatch;
+import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.signal.Reading;
 import dev.jstech.core.signal.SensorBlock;
 import dev.jstech.core.signal.SensorBlockEntity;
@@ -20,6 +29,8 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DirectionalBlock;
@@ -65,6 +76,26 @@ public final class TestPhysics {
             "Test flight sensor", FlightSensorBlock::new);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FlightSensorBlockEntity>> FLIGHT_ENTITY =
             TestSounds.CONTENT.blockEntity("test_flight_sensor", FlightSensorBlockEntity::new, FLIGHT_SENSOR);
+    /**
+     * The thrust pod's pattern: a thruster with its terminal on top, and a light block beside each; once formed, the
+     * thruster and the light blocks merge into the pod.
+     */
+    public static final ResourceLocation POD_PATTERN_ID = ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+            "test_kit_thrust_pod");
+    public static final MultiblockPattern POD_PATTERN = MultiblockPatterns.declare(POD_PATTERN_ID,
+            MultiblockPattern.builder("test_kit_thrust_pod")
+                    .layer("T", "L")
+                    .layer("#", "L")
+                    .where('T', BlockMatch.blocks("jstests:test_thruster"))
+                    .where('L', BlockMatch.blocks("jstests:test_light_block"))
+                    .terminal("jstests:test_kit_thrust_pod")
+                    .build());
+    /** The thrust pod's terminal, of twenty kilograms, as the test mod's data map says. */
+    public static final BlockEntry<DeviceBlock> POD = TestSounds.CONTENT.block("test_kit_thrust_pod",
+                    Device.of(() -> TestPhysics.POD_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
+            .named("Test kit thrust pod").look(IBlockLook.cubeAll("test_kit_turbine")).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PodEntity>> POD_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_kit_thrust_pod", PodEntity::new, POD);
 
     private TestPhysics() {
     }
@@ -83,6 +114,20 @@ public final class TestPhysics {
                                                          final Function<BlockBehaviour.Properties, B> factory) {
         return TestSounds.CONTENT.block(id, factory).properties(STONE_STRONG).named(name)
                 .look(IBlockLook.cubeAll(id)).register();
+    }
+
+    /** The thrust pod: a structure that merges its thruster into it once formed, and does nothing else. */
+    public static final class PodEntity extends MachineBlockEntity {
+
+        public PodEntity(final BlockPos pos, final BlockState state) {
+            super(POD_ENTITY.get(), pos, state, 0, MachineEnergy.fe(0, 0, 0));
+            formsWith(MachineStructure.of(POD_PATTERN).merges());
+        }
+
+        @Override
+        protected MachineStatus work(final ServerLevel level) {
+            return MachineStatus.WORKING;
+        }
     }
 
     /** The flight sensor's block. */

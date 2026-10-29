@@ -1842,6 +1842,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A formed structure aboard a moving structure weighs, floats, drags and grips as the blocks merged into its
+  model were, and an engine merged into the model still thrusts, its flame facing the engine's way: they were weighed
+  and pushed as merged blocks, a thrust pod of 130 kilograms weighing six tonnes and its engine giving nothing.
 - A tall stack of moving structures set swaying comes still and falls asleep: each contact finds its grip
   against sliding afresh every step, where it started from the grip it gave the step before, which, given again a
   step late, pushed the stack on as it swung back, so a stack of twelve nudged by a hair of the solver's own swayed

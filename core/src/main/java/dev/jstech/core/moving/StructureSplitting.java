@@ -12,6 +12,7 @@ import dev.jstech.core.moving.joint.StructureJoints;
 import dev.jstech.core.moving.physics.BlockPhysics;
 import dev.jstech.core.moving.physics.PhysicsMotion;
 import dev.jstech.core.moving.physics.StructurePhysics;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.uuid.StructureUuid;
 import java.util.LinkedHashMap;
@@ -137,7 +138,8 @@ final class StructureSplitting {
                 continue;
             }
             moves.put(at, at.offset(piece.dx, 0, piece.dz));
-            final double kilograms = BlockPhysics.massOf(level, at, state);
+            // A block merged into a formed structure's model weighs what the block it was weighs.
+            final double kilograms = BlockPhysics.massOf(level, at, FormedPartBlock.originalAt(level, at, state));
             mass += kilograms;
             heavy.fma(kilograms, new Vector3d(at.getX() + HALF, at.getY() + HALF, at.getZ() + HALF));
         }
