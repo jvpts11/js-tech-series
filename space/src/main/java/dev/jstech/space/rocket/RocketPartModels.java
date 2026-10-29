@@ -112,12 +112,12 @@ public final class RocketPartModels {
                 final boolean foot = kit != null && kit.foot().isPresent() && onEngine && count > 1;
                 final int body = count - (foot ? 1 : 0);
                 if (foot) {
-                    placed.add(new Placed(id(name + "_foot"), y++, k));
+                    placed.add(new Placed(id(name + "_foot"), y++, k, here.turns()));
                 }
                 for (int layer = 0; layer < body; layer++) {
                     final String which = body == 1 ? "_alone" : layer == 0 ? "_bottom" : layer == body - 1 ? "_top"
                             : "_middle";
-                    placed.add(new Placed(id(name + which), y++, k));
+                    placed.add(new Placed(id(name + which), y++, k, here.turns()));
                 }
                 continue;
             }
@@ -132,7 +132,7 @@ public final class RocketPartModels {
                 model = name + "_stowed";
             }
             if (MODELS.containsKey(model)) {
-                placed.add(new Placed(id(model), y, k));
+                placed.add(new Placed(id(model), y, k, here.turns()));
             }
             y += part.height();
         }
@@ -154,7 +154,13 @@ public final class RocketPartModels {
      * @param model   the model's id
      * @param y       the height its foot stands at, in blocks from the rocket's foot
      * @param section the place of its part in the rocket's stack, from the bottom
+     * @param turns   the quarter turns its part was turned about the rocket's axis, clockwise seen from above
      */
-    public record Placed(ResourceLocation model, int y, int section) {
+    public record Placed(ResourceLocation model, int y, int section, int turns) {
+
+        /** A model of a part not turned. */
+        public Placed(final ResourceLocation model, final int y, final int section) {
+            this(model, y, section, 0);
+        }
     }
 }

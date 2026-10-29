@@ -1715,6 +1715,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   of the room it stands in.
 - Methane in the shared catalogue: the natural gas a rocket burns with liquid oxygen, liquid at -162 °C,
   flammable between 5% and 15% of the air.
+- A camera a screen turns round a point: an editor's screen holds the view, the camera circling what is built
+  at a distance the player turns, zooms and raises, kept inside a box such as a building's walls, the player's own body,
+  hands and HUD hidden while it holds it; it finds where a point of the world falls on the screen and which way into
+  the world the mouse looks, to pick what is under it. A model can be drawn see-through and tinted, as a hologram of a
+  part being placed.
 - Seats one lies on: a seat aboard a moving structure may lay its sitter on their back, as a capsule's crew lie
   on their couches, their eyes low over it, looking round as they like and drawn lying; and a formed structure's model
   may make a kind of its blocks do something else aboard, so the same seat is a couch in one model and a chair in

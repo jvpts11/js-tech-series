@@ -34,6 +34,10 @@ public final class HangarTexts {
             "No Crane Hoist hangs under the bridge");
     public static final TextKey NO_DOOR = TextKey.of("jsspace.hangar.no_door",
             "No Bay Door stands in a wall on the floor");
+    /** The design screen's name. */
+    public static final TextKey DESIGN = TextKey.of("jsspace.hangar.design", "Rocket Design");
+    public static final TextKey NO_HANGAR = TextKey.of("jsspace.hangar.no_hangar",
+            "This console stands in no formed Rocket Hangar's bay");
 
     private HangarTexts() {
     }

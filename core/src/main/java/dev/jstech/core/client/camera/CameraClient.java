@@ -28,7 +28,8 @@ import net.neoforged.neoforge.common.NeoForge;
 /**
  * The camera on a player's game: zoom through a lens, the view following what is ridden, looking about freely, views
  * from elsewhere the server starts, the views of cameras in the world drawn for the screens that show them, the view
- * shaken and leant, and the cameras mods put in the third person.
+ * shaken and leant, the cameras mods put in the third person, and the camera an editor's screen turns round what is
+ * built ({@link OrbitView}).
  */
 public final class CameraClient {
 
@@ -69,5 +70,6 @@ public final class CameraClient {
         NeoForge.EVENT_BUS.addListener(RenderHandEvent.class, CameraViewsClient::onHand);
         NeoForge.EVENT_BUS.addListener(RenderNameTagEvent.class, CameraViewsClient::onNameTag);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, CameraFeeds::onLeave);
+        OrbitView.listen();
     }
 }

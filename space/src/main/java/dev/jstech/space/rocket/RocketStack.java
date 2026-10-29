@@ -35,20 +35,31 @@ public record RocketStack(List<Section> sections) {
     }
 
     /**
-     * A part, as tall as it was built.
+     * A part, as tall as it was built, turned about the rocket's axis as it was set: a capsule's hatch, a lander's
+     * ladder, face the side they were turned to.
      *
      * @param id     the part's id in the registry
      * @param layers how many layers tall it was built, for a part built in layers; 1 otherwise
+     * @param turns  how many quarter turns it was turned, clockwise seen from above, 0 to 3
      */
-    public record Part(ResourceLocation id, int layers) {
+    public record Part(ResourceLocation id, int layers, int turns) {
 
+        /** The most quarter turns a part keeps: a fourth is the way it started. */
+        public static final int TURNS = 4;
         public static final Codec<Part> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ResourceLocation.CODEC.fieldOf("part").forGetter(Part::id),
-                Codec.intRange(1, 256).optionalFieldOf("layers", 1).forGetter(Part::layers)
+                Codec.intRange(1, 256).optionalFieldOf("layers", 1).forGetter(Part::layers),
+                Codec.intRange(0, TURNS - 1).optionalFieldOf("turns", 0).forGetter(Part::turns)
         ).apply(instance, Part::new));
 
         public Part {
             Objects.requireNonNull(id, "id");
+            turns = Math.floorMod(turns, TURNS);
+        }
+
+        /** A part as it was set, not turned. */
+        public Part(final ResourceLocation id, final int layers) {
+            this(id, layers, 0);
         }
     }
 

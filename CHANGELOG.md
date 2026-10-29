@@ -2167,10 +2167,34 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a line of Crane Rail runs along the top of two facing walls, a Crane Bridge spans the bay from rail to rail, a
   Crane Hoist hangs under the bridge and a Bay Door stands in a wall on the floor; its walls, floor and roof must be
   closed, and its bay no smaller and no larger than the server allows (new settings: the narrowest, widest, lowest
-  and tallest bay). Used, the terminal says how large its bay is, or what keeps it from forming. Formed, the crane
-  takes its own shapes, the runway girders with their rails, the bridge's box girder and walkway, the hoist's trolley
-  and hook block, and the work platforms their decks and rails. Its kit: the Hangar Terminal, the Assembly Console,
-  the Crane Rail, the Crane Bridge, the Crane Hoist, the Bay Door and the Work Platform.
+  and tallest bay). Used, the terminal opens the hangar's design screen once it is formed, or says what keeps it
+  from forming. Formed, the crane takes its own shapes, the runway girders with their rails, the bridge's box girder
+  and walkway, the hoist's trolley and hook block, and the work platforms their decks and rails. Its kit: the Hangar
+  Terminal, the Assembly Console, the Crane Rail, the Crane Bridge, the Crane Hoist, the Bay Door and the Work
+  Platform.
+- (Space) The Rocket Design, the Rocket Hangar's design screen, opened at its terminal or at an Assembly Console in
+  its bay: the hangar itself seen in 3D through its middle, the rocket standing on the middle of the bay's floor with
+  hazard stripes painted round it, and the hangar's own steel plates round it. A part is dragged from its bin, each
+  bin showing the part's own model and its label card, to a green node of the rocket, where it snaps, as in Kerbal
+  Space Program's editor; a part of the rocket is dragged off with those on its far side from the root, and dropped on
+  another node or back on the bins to throw it away. The tools turn a part a quarter turn (R turns one being placed),
+  build a tank taller or shorter, and choose the root; the mirror hangs one to four boosters round a part at once, and
+  the snap sets how near a node a part must be let go. The right mouse button turns the view round the rocket, the
+  wheel brings it nearer, the middle button raises and lowers it, never through the hangar's walls; Ctrl+Z and Ctrl+Y
+  undo and redo. The bins sort the parts into six tabs, command, tanks, engines, rings, landers and recovery, each
+  diameter shown or hidden, and the chosen part's spec sheet gives its figures. The right plate gives each stage's
+  delta-v and its thrust against its weight on the world it leaves, the rocket's delta-v on a display, whether it
+  lifts off, each destination with its globe, what it asks (from the Overworld: a low orbit 9,400 m/s, the Moon
+  15,200, Mars 13,000) and a bar of how far the rocket gets, short in red; and its checks: a stage with propellant and
+  no engine or an engine with nothing to burn, too weak to lift off, taller than the bay's crane or wider than the
+  bay, the crew's seats, the heat shield to come home through air, the tanks filled at the pad; its sign lit READY or
+  NOT READY. Every change is kept by the hangar; the design is named, saved as one of the hangar's sixteen plans,
+  loaded from them, and sent to the bay to be built once it is ready.
+- (Core) A camera a screen turns round a point: an editor's screen holds the view, the camera circling what is built
+  at a distance the player turns, zooms and raises, kept inside a box such as a building's walls, the player's own body,
+  hands and HUD hidden while it holds it; it finds where a point of the world falls on the screen and which way into
+  the world the mouse looks, to pick what is under it. A model can be drawn see-through and tinted, as a hologram of a
+  part being placed.
 - (Core) Seats one lies on: a seat aboard a moving structure may lay its sitter on their back, as a capsule's crew lie
   on their couches, their eyes low over it, looking round as they like and drawn lying; and a formed structure's model
   may make a kind of its blocks do something else aboard, so the same seat is a couch in one model and a chair in

@@ -8,6 +8,7 @@
 package dev.jstech.space.client.rocket;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitClock;
 import dev.jstech.core.client.model.kit.KitInstance;
@@ -34,6 +35,9 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class RocketPartsRenderer {
 
+    /* A part turned a quarter turn is turned this many degrees, clockwise seen from above. */
+    private static final float QUARTER = 90.0F;
+
     private RocketPartsRenderer() {
     }
 
@@ -54,6 +58,7 @@ public final class RocketPartsRenderer {
                     RocketCabinRenderer.driver(live), readings, IAnimationListener.NONE));
             poses.pushPose();
             poses.translate(0, part.y(), 0);
+            poses.mulPose(Axis.YN.rotationDegrees(QUARTER * part.turns()));
             KitRenderer.draw(instance, ModelDefinition.Variant.NONE, owner, poses, buffers, light, overlay, null,
                     owner.getLevel(), true);
             if (cabin.isPresent()) {

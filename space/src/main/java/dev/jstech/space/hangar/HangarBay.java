@@ -47,6 +47,15 @@ public record HangarBay(BlockPos low, BlockPos high, Direction.Axis span, BlockP
         return this.high.getY() - this.low.getY() + 1;
     }
 
+    /**
+     * Where a rocket stands in the bay: the block in the middle of its floor, the rocket's axis through it, so a
+     * rocket of any of the standard diameters, all odd, lies on the blocks round it.
+     */
+    public BlockPos pad() {
+        return new BlockPos(Math.floorDiv(this.low.getX() + this.high.getX(), 2), this.low.getY(),
+                Math.floorDiv(this.low.getZ() + this.high.getZ(), 2));
+    }
+
     /** Whether {@code pos} is inside the bay. */
     public boolean holds(final BlockPos pos) {
         return pos.getX() >= this.low.getX() && pos.getX() <= this.high.getX() && pos.getY() >= this.low.getY()

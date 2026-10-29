@@ -28,6 +28,7 @@ import dev.jstech.space.life.SuitSupplies;
 import dev.jstech.space.platform.LandingPlatform;
 import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketPartModels;
 import dev.jstech.space.rocket.SkeletonPropellants;
@@ -118,8 +119,10 @@ public final class JsSpace {
         RocketPartModels.declare();
         // The Flight Computer every rocket carries: its transfer and landing pages, and its landing maps.
         FlightComputer.declare();
-        // The Rocket Hangar a rocket is built in: its terminal, its crane, its doors and its platforms.
+        // The Rocket Hangar a rocket is built in: its terminal, its crane, its doors and its platforms; and its design
+        // screen, where a rocket is designed.
         HangarBlocks.declare();
+        RocketDesigner.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();

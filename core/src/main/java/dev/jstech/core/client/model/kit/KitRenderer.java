@@ -24,6 +24,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -108,6 +109,23 @@ public final class KitRenderer {
         if (held != null) {
             heldThings(instance, hidden, thing, held, poses, buffers, light, overlay, level, size);
         }
+        poses.popPose();
+    }
+
+    /**
+     * Draws {@code instance}'s model see-through, every face tinted {@code argb}, its alpha how solid it looks: a
+     * hologram of a thing, as an editor shows a part being placed. Its textures still show through the tint.
+     */
+    public static void drawTinted(final KitInstance instance, final PoseStack poses, final MultiBufferSource buffers,
+                                  final int argb, final int light) {
+        final KitModel model = instance.model();
+        final boolean[] hidden = hidden(instance, ModelDefinition.Variant.NONE);
+        final float size = PIXEL * model.scale();
+        final MultiBufferSource tinted = type -> new TintedVertices(buffers.getBuffer(type), argb);
+        poses.pushPose();
+        poses.scale(size, size, size);
+        lay(instance, model, hidden, null, poses, tinted, RenderType::entityTranslucent, light,
+                OverlayTexture.NO_OVERLAY, KitClock.tick(), null);
         poses.popPose();
     }
 

@@ -10,6 +10,8 @@ package dev.jstech.space;
 import dev.jstech.core.client.advancement.WideBackgrounds;
 import dev.jstech.space.client.flight.FlightComputerScreen;
 import dev.jstech.space.client.flight.LandingMapsClient;
+import dev.jstech.space.client.hangar.RocketDesignScene;
+import dev.jstech.space.client.hangar.RocketDesignScreen;
 import dev.jstech.space.client.life.LunarSuitClient;
 import dev.jstech.space.client.life.SuitControlsHud;
 import dev.jstech.space.client.life.SuitLamps;
@@ -17,6 +19,7 @@ import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import dev.jstech.space.flight.FlightComputer;
+import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.network.SpacePayloads;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -52,5 +55,9 @@ public final class JsSpaceClient {
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(FlightComputer.MENU.get(),
                 FlightComputerScreen::new));
         SpacePayloads.onLandingMap(LandingMapsClient::receive);
+        // The Rocket Hangar's design screen, and the rocket it draws in the hangar while it is open.
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(RocketDesigner.MENU.get(),
+                RocketDesignScreen::new));
+        RocketDesignScene.listen();
     }
 }

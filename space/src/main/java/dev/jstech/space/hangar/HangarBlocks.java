@@ -42,8 +42,8 @@ public final class HangarBlocks {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HangarTerminalBlockEntity>>
             TERMINAL_ENTITY = SpaceContent.CONTENT.blockEntity("hangar_terminal", HangarTerminalBlockEntity::new,
             TERMINAL);
-    public static final BlockEntry<Block> ASSEMBLY_CONSOLE = SpaceContent.CONTENT.block("assembly_console",
-                    Block::new).named("Assembly Console")
+    public static final BlockEntry<AssemblyConsoleBlock> ASSEMBLY_CONSOLE = SpaceContent.CONTENT.block(
+                    "assembly_console", AssemblyConsoleBlock::new).named("Assembly Console")
             .properties(HangarBlocks::metal)
             .look(IBlockLook.fixed(new IBlockModel.CubeAll("assembly_console", "block/hangar/assembly_console")))
             .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(HANGAR).register();

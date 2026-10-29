@@ -10,6 +10,7 @@ package dev.jstech.space.hangar;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.text.GameText;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -27,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The Rocket Hangar's terminal, set in a wall of the hangar facing into its bay, the way it faces whoever set it: from
- * it the hangar finds its bay ({@link HangarTerminalBlockEntity}). Used, it says whether the hangar is formed and how
- * large its bay is, or what keeps it from forming. Broken, the hangar is undone.
+ * it the hangar finds its bay ({@link HangarTerminalBlockEntity}). Used, it opens the hangar's design screen once the
+ * hangar is formed, or says what keeps it from forming. Broken, the hangar is undone.
  */
 public final class HangarTerminalBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
@@ -63,7 +64,11 @@ public final class HangarTerminalBlock extends HorizontalDirectionalBlock implem
                                                final Player player, final BlockHitResult hit) {
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof HangarTerminalBlockEntity terminal) {
             terminal.look();
-            player.displayClientMessage(GameText.component(terminal.reason()), true);
+            if (terminal.bay().isPresent() && player instanceof ServerPlayer designer) {
+                RocketDesigner.open(designer, terminal);
+            } else {
+                player.displayClientMessage(GameText.component(terminal.reason()), true);
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
