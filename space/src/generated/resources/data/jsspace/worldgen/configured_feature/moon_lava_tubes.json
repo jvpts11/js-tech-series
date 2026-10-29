@@ -1,0 +1,18 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 512,
+    "chance": 0.75,
+    "height": 0.03,
+    "kind": "lava_tube",
+    "largest": 320,
+    "salt": -1887509871,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 120,
+    "special": {
+      "Name": "jsspace:mare_basalt"
+    }
+  }
+}

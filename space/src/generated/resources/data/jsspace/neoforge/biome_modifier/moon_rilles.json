@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:moon_rilles",
+  "features": "jsspace:moon_rilles",
+  "step": "raw_generation"
+}

@@ -56,10 +56,11 @@ class HardcodedTextTest {
     private static final Set<String> TERMINAL_SINKS = Set.of("draw", "centred", "right");
 
     /**
-     * What a declaration chains on to say its English: a thing's name, what it does, a sound's subtitle, and what a
-     * manual's chapter, section, entry or manual says, each written to the language file under a key of its own.
+     * What a declaration chains on to say its English: a thing's name, a biome's, what it does, a sound's subtitle,
+     * and what a manual's chapter, section, entry or manual says, each written to the language file under a key of
+     * its own.
      */
-    private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle", "sectionNamed",
+    private static final Set<String> DECLARATIONS = Set.of("named", "name", "described", "subtitle", "sectionNamed",
             "titled", "whatItIs", "whatItIsFor", "howToGetIt", "howToUseIt", "whatCanGoWrong", "ifSomethingGoesWrong",
             "paragraph", "subheading", "figure", "picture", "drawing", "table", "tableFrom", "property", "amount",
             "fixed",
@@ -274,7 +275,7 @@ class HardcodedTextTest {
                     + "scripts with, and the comment that heads their file"),
             data(CORE + "developer/mcp/JsonRpc.java", 7, MCP),
             data(CORE + "developer/mcp/McpProtocol.java", 8, MCP),
-            data(CORE + "developer/mcp/McpServer.java", 3, "the names of the MCP server's threads, which only a "
+            data(CORE + "developer/mcp/McpServer.java", 2, "the name of the MCP server's thread, which only a "
                     + "thread dump shows, and a header's name"),
             data(CORE + "developer/mcp/WorldTools.java", 42, MCP_TOOLS),
             data(CORE + "developer/mcp/CoreTools.java", 39, MCP_TOOLS),

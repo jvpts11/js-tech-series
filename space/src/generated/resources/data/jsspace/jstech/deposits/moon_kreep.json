@@ -1,0 +1,17 @@
+{
+  "biomes": "jsspace:moon_maria",
+  "density": 0.4,
+  "frequency": 0.05,
+  "max_y": 60,
+  "min_y": 10,
+  "minerals": [
+    {
+      "material": "jscore:merrillite"
+    }
+  ],
+  "radius": 14.0,
+  "rocks": [
+    "jsspace:mare_basalt"
+  ],
+  "thickness": 4.0
+}

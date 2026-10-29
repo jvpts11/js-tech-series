@@ -1684,6 +1684,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lies open, how deep, how steep the ground is round it, its height and its biome; the feature
   `jscore:rock_variations` is laid after the rock in layers and before the ores, and written by the data generation
   for a data pack to change.
+- Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
+  `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
+  the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`
+  lays one great crater at its place, as wide as its sphere draws it. A terrain's biomes may be spread by any two
+  density functions in place of its own noises.
 - Water stays liquid only in air thicker than its triple point: the game's ice, melting by a torch or broken,
   turns to vapour where the air is thinner, as it does in the Nether's heat, and melts as before where it is thick.
   `Thawing` tells a mod's ice whether it is warmed and whether it melts into water where it lies.

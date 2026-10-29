@@ -8,6 +8,8 @@
 package dev.jstech.space.client.universe;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import dev.jstech.space.JsSpace;
+import dev.jstech.space.worldgen.MoonBiomes;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -72,6 +74,11 @@ final class GroundColours {
     private static final ResourceLocation WATER = texture("water_still");
     private static final ResourceLocation MYCELIUM = texture("mycelium_top");
     private static final ResourceLocation PODZOL = texture("podzol_top");
+    /* The Moon's grounds: the maria's dark regolith, and the highlands' bright one. */
+    private static final ResourceLocation MARE_REGOLITH = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
+            "textures/block/mare_regolith.png");
+    private static final ResourceLocation HIGHLAND_REGOLITH = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
+            "textures/block/highland_regolith.png");
     /* The leaves the game tints with fixed colours, not the biome's. */
     private static final int SPRUCE_TINT = 0x619961;
     private static final int BIRCH_TINT = 0x80A755;
@@ -146,6 +153,12 @@ final class GroundColours {
         final Biome value = biome.value();
         final int grass = multiply(mean(GRASS), value.getGrassColor(0, 0));
         final int foliage = value.getFoliageColor();
+        if (biome.is(MoonBiomes.MARIA)) {
+            return mean(MARE_REGOLITH);
+        }
+        if (biome.is(MoonBiomes.ANORTHOSITE)) {
+            return mean(HIGHLAND_REGOLITH);
+        }
         if (biome.is(Biomes.MUSHROOM_FIELDS)) {
             return mean(MYCELIUM);
         }

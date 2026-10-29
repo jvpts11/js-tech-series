@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:moon_anorthosite",
+  "features": "jsspace:anorthosite_stones",
+  "step": "vegetal_decoration"
+}

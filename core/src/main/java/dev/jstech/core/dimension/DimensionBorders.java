@@ -14,20 +14,25 @@ import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.DimensionState;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.network.protocol.game.ClientboundInitializeBorderPacket;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
@@ -54,6 +59,8 @@ public final class DimensionBorders {
     /* The game borders of the dimensions that keep their own, so the overworld's changes leave them alone. */
     private static final Set<WorldBorder> OWNED = Collections.synchronizedSet(Collections.newSetFromMap(
             new WeakHashMap<>()));
+    /* The bounds in force on the running server, by dimension, for what has no level at hand: its generator. */
+    private static final Map<ResourceKey<Level>, Bounds> IN_FORCE = new ConcurrentHashMap<>();
 
     private DimensionBorders() {
     }
@@ -67,6 +74,7 @@ public final class DimensionBorders {
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(ServerStartedEvent.class, event -> event.getServer().getAllLevels()
                 .forEach(DimensionBorders::apply));
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> IN_FORCE.clear());
         NeoForge.EVENT_BUS.addListener(LevelEvent.Load.class, event -> {
             if (event.getLevel() instanceof ServerLevel level && level.getServer().isReady()) {
                 apply(level);
@@ -101,6 +109,15 @@ public final class DimensionBorders {
         return STATE.get(level);
     }
 
+    /**
+     * The bounds in force in {@code dimension} on the running server, if it keeps any: what a world's generator, which
+     * has no level at hand, reads its size from. They are put in force as the dimension loads, before its ground is
+     * made.
+     */
+    public static Optional<Bounds> inForce(final ResourceKey<Level> dimension) {
+        return Optional.ofNullable(IN_FORCE.get(dimension));
+    }
+
     /** Whether {@code border} belongs to a dimension that keeps its own. */
     public static boolean owns(final WorldBorder border) {
         return OWNED.contains(border);
@@ -109,6 +126,7 @@ public final class DimensionBorders {
     /* Sets the dimension's game border across its width, and marks it as its own. */
     private static void apply(final ServerLevel level) {
         of(level).ifPresent(bounds -> {
+            IN_FORCE.put(level.dimension(), bounds);
             final WorldBorder border = level.getWorldBorder();
             OWNED.add(border);
             border.setCenter((bounds.minX() + bounds.maxX()) / 2, (bounds.minZ() + bounds.maxZ()) / 2);

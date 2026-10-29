@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:moon_maria",
+  "features": "jsspace:mare_basalt_stones",
+  "step": "vegetal_decoration"
+}

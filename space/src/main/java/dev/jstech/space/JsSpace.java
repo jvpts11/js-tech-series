@@ -26,6 +26,8 @@ import dev.jstech.space.universe.SpaceRespawns;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.space.universe.WorldSizes;
+import dev.jstech.space.worldgen.MoonBiomes;
+import dev.jstech.space.worldgen.MoonWorld;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -73,6 +75,9 @@ public final class JsSpace {
         SpaceRocks.declare();
         SpaceOres.declare();
         LooseStones.declare();
+        // The Moon's ground, its biomes and its landmarks, as its sphere shows them from orbit.
+        MoonBiomes.declare();
+        MoonWorld.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);
         // The world's settings: its consequences, each on unless a server turns it off, and its rules of balance.

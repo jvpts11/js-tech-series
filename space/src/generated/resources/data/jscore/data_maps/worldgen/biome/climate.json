@@ -1,0 +1,34 @@
+{
+  "values": {
+    "jsspace:moon_highlands": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -20.0
+    },
+    "jsspace:moon_lava_tube_skylight": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -20.0
+    },
+    "jsspace:moon_mare": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -20.0
+    },
+    "jsspace:moon_polar_craters": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -230.0
+    },
+    "jsspace:moon_rille": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -20.0
+    },
+    "jsspace:moon_young_crater": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -20.0
+    }
+  }
+}

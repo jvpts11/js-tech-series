@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:add",
+  "argument1": {
+    "type": "jscore:round_map",
+    "low": -0.20000000298023224,
+    "map": "jsspace:moon/maria",
+    "world": "jsspace:moon"
+  },
+  "argument2": {
+    "type": "jscore:round_map",
+    "high": -1.1999999284744263,
+    "map": "jsspace:moon/polar",
+    "world": "jsspace:moon"
+  }
+}

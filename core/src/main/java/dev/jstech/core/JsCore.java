@@ -262,6 +262,7 @@ import dev.jstech.core.worldgen.place.Landmarks;
 import dev.jstech.core.worldgen.retro.Retrogen;
 import dev.jstech.core.worldgen.structure.CoreStructures;
 import dev.jstech.core.worldgen.structure.OperatorStructures;
+import dev.jstech.core.worldgen.terrain.RoundMaps;
 import dev.jstech.core.worldgen.terrain.density.CoreDensities;
 import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.vein.Veins;
@@ -322,8 +323,10 @@ public final class JsCore {
         // The shapes of the land every mod's world generation lays (landforms, rock in layers, seas), and the
         // climates of biomes in real values, which heat meets where a biome has its own.
         CoreFeatures.register(modEventBus);
-        // More kinds of density function, the worldgen modifiers datapacks write and the operator's structures.
+        // More kinds of density function, the round worlds' maps they read, the worldgen modifiers datapacks write and
+        // the operator's structures.
         CoreDensities.register(modEventBus);
+        RoundMaps.listen();
         WorldgenModifiers.listen();
         OperatorStructures.register(modEventBus);
         BiomeClimates.listen(modEventBus);

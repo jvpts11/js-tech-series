@@ -622,6 +622,21 @@ another declared one, `OTHER.reference(densities)`. The test mod's ridged land i
 | `jscore:remap` | its input moved along a line from one range to another, held inside it when `clamped` | `input`, `from_low`, `from_high`, `to_low`, `to_high`, `clamped` |
 | `jscore:smooth_min`, `jscore:smooth_max` | the smaller or larger of two, the crease where they meet rounded off: two shapes as one | `argument1`, `argument2`, `smoothness` |
 | `jscore:distance` | how far a place is from a point, across, in radii: islands, craters | `x`, `z`, `radius` |
+| `jscore:round_map` | a round world's map read at each place by its longitude and latitude, from `low` where black to `high` where white (below) | `map`, `world`, `low` (0), `high` (1) |
+| `jscore:round_crater` | how far one great crater of a round world moves the ground, in blocks, at its longitude and latitude and as wide as its radius in degrees, so it lies where the world's sphere draws it | `world`, `longitude`, `latitude`, `radius`, `depth`, `rim` (0), `peak` (0) |
+
+*Added 2026-10-29.* **A round world's maps.** A round world lays its blocks on its sphere, X its longitude and Z its
+latitude, north towards -Z, the world half as long north to south as it is wide ([The world](WORLD.md)). A data pack
+holds its maps as grey pictures laid as its sphere's are, longitude from -180 at the left edge to 180 at the right and
+latitude from 90 at the top, `data/<namespace>/world_maps/<path>.png`, read as the server loads its data
+(`RoundMaps`, `RoundMap`). `jscore:round_map` reads one smoothly between its texels and across the edge where -180
+meets 180, at the size the world has on that server: its bounds in force (`DimensionBorders.inForce`), which a
+generator, with no level at hand, reads them by. So a world's ground lies where its sphere shows it from orbit, maria
+where its map has them, whatever size the server gave it. Where the map or the size is not known, it reads `low`.
+
+A terrain's biomes are spread by its own two noises, its warmth and its wetness, or by any two declared density
+functions given in their place, `biomesBy(warmth, wetness)`: biomes laid by a map, by latitude, by anything a
+function says.
 
 ### Worldgen modifiers
 

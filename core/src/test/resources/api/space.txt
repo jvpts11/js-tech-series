@@ -20,6 +20,17 @@ stable 0
 2 dev.jstech.space.api.SpaceAdvancementTab  ResourceLocation root()
 2 dev.jstech.space.api.SpaceAdvancementTab  String path()
 2 dev.jstech.space.api.SpaceAdvancementTab  THE_MOON
+5 dev.jstech.space.api.SpaceLandmark  type record(String name, ResourceLocation world, Kind kind, double longitude, double latitude, double radius)
+5 dev.jstech.space.api.SpaceLandmark  static final Codec<SpaceLandmark> CODEC
+5 dev.jstech.space.api.SpaceLandmark.Kind  type enum implements IStableName
+5 dev.jstech.space.api.SpaceLandmark.Kind  CRATER
+5 dev.jstech.space.api.SpaceLandmark.Kind  String serializedName()
+5 dev.jstech.space.api.SpaceLandmark.Kind  static final Codec<Kind> CODEC
+5 dev.jstech.space.api.SpaceLandmarks  type final class
+5 dev.jstech.space.api.SpaceLandmarks  static List<SpaceLandmark> declaredOn(ResourceLocation)
+5 dev.jstech.space.api.SpaceLandmarks  static Map<ResourceLocation, SpaceLandmark> all(Level)
+5 dev.jstech.space.api.SpaceLandmarks  static Map<ResourceLocation, SpaceLandmark> declared()
+5 dev.jstech.space.api.SpaceLandmarks  static SpaceLandmark declare(ResourceLocation, SpaceLandmark)
 3 dev.jstech.space.api.SpaceWorld  type record(String name, ResourceLocation system, ResourceKey<Level> dimension, Optional<ResourceLocation> generator, List<ResourceLocation> modifiers, double diameter)
 3 dev.jstech.space.api.SpaceWorld  static final Codec<SpaceWorld> CODEC
 3 dev.jstech.space.api.SpaceWorlds  type final class

@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:moon_lava_tubes",
+  "features": "jsspace:moon_lava_tubes",
+  "step": "raw_generation"
+}

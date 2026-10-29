@@ -1,0 +1,24 @@
+{
+  "biomes": "jsspace:moon_maria",
+  "frequency": 0.15,
+  "max_y": 72,
+  "min_y": 20,
+  "minerals": [
+    {
+      "material": "jscore:ilmenite",
+      "weight": 6.0
+    },
+    {
+      "material": "jscore:armalcolite"
+    },
+    {
+      "material": "jscore:tranquillityite"
+    }
+  ],
+  "radius": 18.0,
+  "rocks": [
+    "jsspace:mare_basalt",
+    "jsspace:mare_regolith"
+  ],
+  "thickness": 5.0
+}

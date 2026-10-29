@@ -1,0 +1,50 @@
+{
+  "type": "minecraft:add",
+  "argument1": {
+    "type": "minecraft:y_clamped_gradient",
+    "from_value": 8.0,
+    "from_y": -64,
+    "to_value": -16.0,
+    "to_y": 320
+  },
+  "argument2": {
+    "type": "minecraft:mul",
+    "argument1": 0.0625,
+    "argument2": {
+      "type": "minecraft:flat_cache",
+      "argument": {
+        "type": "minecraft:add",
+        "argument1": {
+          "type": "minecraft:add",
+          "argument1": {
+            "type": "jscore:round_map",
+            "high": 48.0,
+            "low": -48.0,
+            "map": "jsspace:moon/height",
+            "world": "jsspace:moon"
+          },
+          "argument2": {
+            "type": "minecraft:mul",
+            "argument1": 3.0,
+            "argument2": {
+              "type": "minecraft:noise",
+              "noise": "jsspace:cratered_bumps",
+              "xz_scale": 1.0,
+              "y_scale": 0.0
+            }
+          }
+        },
+        "argument2": {
+          "type": "jscore:round_crater",
+          "depth": 70.2,
+          "latitude": -43.3,
+          "longitude": -11.4,
+          "peak": 40.013999999999996,
+          "radius": 2.6,
+          "rim": 30.186,
+          "world": "jsspace:moon"
+        }
+      }
+    }
+  }
+}

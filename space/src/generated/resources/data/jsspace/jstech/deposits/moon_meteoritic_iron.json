@@ -1,0 +1,17 @@
+{
+  "biomes": "jsspace:moon_anorthosite",
+  "density": 0.4,
+  "frequency": 0.08,
+  "max_y": 80,
+  "min_y": 50,
+  "minerals": [
+    {
+      "material": "jscore:native_iron"
+    }
+  ],
+  "radius": 10.0,
+  "rocks": [
+    "jsspace:highland_regolith"
+  ],
+  "thickness": 3.0
+}

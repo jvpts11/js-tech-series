@@ -1,0 +1,84 @@
+{
+  "type": "jsspace:moon",
+  "generator": {
+    "type": "minecraft:noise",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        {
+          "biome": "jsspace:moon_mare",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 0.0,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:moon_highlands",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 0.0,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:moon_polar_craters",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 0.0,
+            "offset": 0.0,
+            "temperature": -1.4,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:moon_rille",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:moon_lava_tube_skylight",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": -0.7,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:moon_young_crater",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0,
+            "erosion": 0.0,
+            "humidity": 2.0,
+            "offset": 0.0,
+            "temperature": 0.4,
+            "weirdness": 0.0
+          }
+        }
+      ]
+    },
+    "settings": "jsspace:moon"
+  }
+}

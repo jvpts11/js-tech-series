@@ -11,6 +11,8 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.api.WorldGenerators;
+import dev.jstech.space.worldgen.CrateredGenerator;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.registries.Registries;
@@ -42,7 +44,8 @@ public final class SolarSystemWorlds {
 
     /** Declares the worlds, before the game has loaded. */
     public static void declare() {
-        // Loading the class declares them.
+        // Loading the class declares the worlds; the generators that shape their ground are registered here.
+        WorldGenerators.register(CRATERED, new CrateredGenerator());
     }
 
     /** The body the world {@code id} is drawn as in the Solar System's space, if it is one of these. */

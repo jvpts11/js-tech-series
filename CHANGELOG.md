@@ -336,6 +336,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   as a density function and its surface as rules, each `IWorldModifier` laid over them. Experimental.
 - (Space) What can be known of a world: J's Space's API is at version 4. `WorldProperties` registers the
   properties, each a `WorldProperty` with its name and whether a crew needs it known to land. Experimental.
+- (Space) Landmarks: J's Space's API is at version 5. `SpaceLandmark` is a world's landform of its own with its real
+  name, its kind, its place by longitude and latitude and its radius in degrees, and `SpaceLandmarks` registers them,
+  a data pack's files in `data/<namespace>/jsspace/landmarks/` winning over a declaration; a world's generator lays
+  those declared on it. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2001,6 +2005,19 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   gas wherever it lies, even in a sealed room, giving the room its carbon dioxide share by share, a cubic metre's
   worth, some 35,000 moles, until it is gone; the Icy Regolith never thaws by itself. Ice is warmed by air above
   freezing round it, a sealed room's, or by a bright light beside it.
+- (Space) The Moon's ground, as its sphere shows it from orbit: the maria low and dark where its map has them, mare
+  regolith over mare basalt, and the bright highlands of highland regolith over anorthosite round them; Tycho a great
+  crater at its place, its bowl, its rim and its central peak, in its young ejecta; the craters of eternal shadow
+  round its poles, their floors of icy regolith. Six biomes of its own: Mare, Highlands, Polar Craters, Rille, Young
+  Crater and Lava Tube Skylight, the rilles winding through the maria and the lava tubes running under them, craters
+  by the thousand, fresh ones bright, loose stones of basalt and of anorthosite strewn over the ground, and veins of
+  ilmenite with armalcolite and tranquillityite, of KREEP's merrillite and of the native iron of meteorites. Tycho is
+  the first landmark of the worlds. The far map seen climbing from the Moon is painted in its regoliths.
+- (Core) Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
+  `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
+  the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`
+  lays one great crater at its place, as wide as its sphere draws it. A terrain's biomes may be spread by any two
+  density functions in place of its own noises.
 - (Core) Water stays liquid only in air thicker than its triple point: the game's ice, melting by a torch or broken,
   turns to vapour where the air is thinner, as it does in the Nether's heat, and melts as before where it is thick.
   `Thawing` tells a mod's ice whether it is warmed and whether it melts into water where it lies.

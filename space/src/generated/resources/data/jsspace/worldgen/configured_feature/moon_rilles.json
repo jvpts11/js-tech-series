@@ -1,0 +1,18 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 768,
+    "chance": 0.8,
+    "height": 0.04,
+    "kind": "rille",
+    "largest": 420,
+    "salt": 953599526,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 160,
+    "surface": {
+      "Name": "jsspace:mare_regolith"
+    }
+  }
+}

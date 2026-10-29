@@ -150,11 +150,14 @@ public final class Terrains {
      * @param surfaces  its surfaces, a biome's own first and the one for every other biome last
      * @param density   the density function its ground is, or null for its hills
      * @param rules     its surface as rules, or null for its surfaces
+     * @param warmth    the density function its biomes' warmth is, or null for its own noise
+     * @param wetness   the density function its biomes' wetness is, or null for its own noise
      */
     public record TerrainSpec(ResourceLocation id, int minY, int height, int ground, double hills, int hillWidth,
                               double roughness, int sea, Supplier<? extends Block> stone,
                               Supplier<? extends Block> liquid, int bedrock, List<Surface> surfaces,
-                              @Nullable DensitySpec density, @Nullable SurfaceRuleBuilder rules) {
+                              @Nullable DensitySpec density, @Nullable SurfaceRuleBuilder rules,
+                              @Nullable DensitySpec warmth, @Nullable DensitySpec wetness) {
 
         public TerrainSpec {
             surfaces = List.copyOf(surfaces);
@@ -195,10 +198,12 @@ public final class Terrains {
         public NoiseGeneratorSettings settings(final HolderGetter<NormalNoise.NoiseParameters> noises,
                                                final HolderGetter<DensityFunction> densities) {
             final DensityFunction density = this.density != null ? this.density.reference(densities) : hills(noises);
-            final DensityFunction warmth = DensityFunctions.flatCache(DensityFunctions.noise(
-                    noises.getOrThrow(noise("warmth")), 1.0, 0.0));
-            final DensityFunction wetness = DensityFunctions.flatCache(DensityFunctions.noise(
-                    noises.getOrThrow(noise("wetness")), 1.0, 0.0));
+            final DensityFunction warmth = DensityFunctions.flatCache(this.warmth != null
+                    ? this.warmth.reference(densities)
+                    : DensityFunctions.noise(noises.getOrThrow(noise("warmth")), 1.0, 0.0));
+            final DensityFunction wetness = DensityFunctions.flatCache(this.wetness != null
+                    ? this.wetness.reference(densities)
+                    : DensityFunctions.noise(noises.getOrThrow(noise("wetness")), 1.0, 0.0));
             final DensityFunction none = DensityFunctions.zero();
             final NoiseRouter router = new NoiseRouter(none, none, none, none, warmth, wetness, none, none, none,
                     none, density, DensityFunctions.interpolated(density), none, none, none);
@@ -270,6 +275,8 @@ public final class Terrains {
         private Surface fallback = new Surface(null, () -> Blocks.GRASS_BLOCK, () -> Blocks.DIRT, 3);
         private @Nullable DensitySpec density;
         private @Nullable SurfaceRuleBuilder rules;
+        private @Nullable DensitySpec warmth;
+        private @Nullable DensitySpec wetness;
 
         private TerrainBuilder(final ResourceLocation id) {
             this.id = Objects.requireNonNull(id, "id");
@@ -349,6 +356,17 @@ public final class Terrains {
         }
 
         /**
+         * Its biomes are spread by {@code warmthBy} and {@code wetnessBy}, declared density functions read across
+         * the land, not by its own two noises: biomes laid by a map ({@code jscore:round_map}), by a world's latitude,
+         * or by anything else a function says.
+         */
+        public TerrainBuilder biomesBy(final DensitySpec warmthBy, final DensitySpec wetnessBy) {
+            this.warmth = Objects.requireNonNull(warmthBy, "warmthBy");
+            this.wetness = Objects.requireNonNull(wetnessBy, "wetnessBy");
+            return this;
+        }
+
+        /**
          * Declares the terrain.
          *
          * @throws IllegalStateException when its heights are not whole sections, or its ground or hills make no land
@@ -363,7 +381,7 @@ public final class Terrains {
             final List<Surface> all = new ArrayList<>(surfaces);
             all.add(fallback);
             final TerrainSpec spec = new TerrainSpec(id, minY, height, ground, hills, hillWidth, roughness, sea,
-                    stone, liquid, bedrock, all, density, rules);
+                    stone, liquid, bedrock, all, density, rules, warmth, wetness);
             TERRAINS.add(spec);
             return spec;
         }

@@ -21,6 +21,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   as a density function and its surface as rules, each `IWorldModifier` laid over them. Experimental.
 - What can be known of a world: J's Space's API is at version 4. `WorldProperties` registers the
   properties, each a `WorldProperty` with its name and whether a crew needs it known to land. Experimental.
+- Landmarks: J's Space's API is at version 5. `SpaceLandmark` is a world's landform of its own with its real
+  name, its kind, its place by longitude and latitude and its radius in degrees, and `SpaceLandmarks` registers them,
+  a data pack's files in `data/<namespace>/jsspace/landmarks/` winning over a declaration; a world's generator lays
+  those declared on it. Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -129,6 +133,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   gas wherever it lies, even in a sealed room, giving the room its carbon dioxide share by share, a cubic metre's
   worth, some 35,000 moles, until it is gone; the Icy Regolith never thaws by itself. Ice is warmed by air above
   freezing round it, a sealed room's, or by a bright light beside it.
+- The Moon's ground, as its sphere shows it from orbit: the maria low and dark where its map has them, mare
+  regolith over mare basalt, and the bright highlands of highland regolith over anorthosite round them; Tycho a great
+  crater at its place, its bowl, its rim and its central peak, in its young ejecta; the craters of eternal shadow
+  round its poles, their floors of icy regolith. Six biomes of its own: Mare, Highlands, Polar Craters, Rille, Young
+  Crater and Lava Tube Skylight, the rilles winding through the maria and the lava tubes running under them, craters
+  by the thousand, fresh ones bright, loose stones of basalt and of anorthosite strewn over the ground, and veins of
+  ilmenite with armalcolite and tranquillityite, of KREEP's merrillite and of the native iron of meteorites. Tycho is
+  the first landmark of the worlds. The far map seen climbing from the Moon is painted in its regoliths.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

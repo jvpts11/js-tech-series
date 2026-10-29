@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 320,
+    "chance": 0.9,
+    "fill": {
+      "Name": "jsspace:anorthosite"
+    },
+    "height": 0.4,
+    "kind": "crater",
+    "largest": 140,
+    "salt": 1859877048,
+    "scatter": {
+      "Name": "jsspace:highland_regolith"
+    },
+    "smallest": 24,
+    "surface": {
+      "Name": "jsspace:highland_regolith"
+    }
+  }
+}
