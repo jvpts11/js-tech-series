@@ -10,6 +10,7 @@ package dev.jstech.core.dimension;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.air.AirMix;
+import dev.jstech.core.air.Lungs;
 import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.RoomHazards;
 import dev.jstech.core.room.SealedRooms;
@@ -92,16 +93,18 @@ public final class DimensionEffects {
             return hazards;
         }
         final DimensionRules rules = DimensionRulesData.of(player.level());
-        // A sealed room's air is breathed in it; out of one, the place's, at the height of the eyes.
+        // A sealed room's air is breathed in it; out of one, the place's, at the height of the eyes; or, where a mod
+        // gives the player air of its own, a suit's tanks, that. The warmth is the room's or the place's either way.
         final Climate here = SealedRooms.climateAt(player.level(), BlockPos.containing(player.getEyePosition()));
-        final AirMix air = SealedRooms.airOf(here);
+        final Climate breathed = Lungs.supplied(player).orElse(here);
+        final AirMix air = SealedRooms.airOf(breathed);
         final double carbon = air.share(AirMix.CARBON_DIOXIDE);
-        consider(player, rules, !here.breathable() || GasMath.stifling(carbon), DimensionHazardEvent.Hazard.AIR,
+        consider(player, rules, !breathed.breathable() || GasMath.stifling(carbon), DimensionHazardEvent.Hazard.AIR,
                 hazards);
         consider(player, rules, here.scorching(), DimensionHazardEvent.Hazard.HEAT, hazards);
         consider(player, rules, here.freezing(), DimensionHazardEvent.Hazard.COLD, hazards);
         consider(player, rules, GasMath.headache(carbon), DimensionHazardEvent.Hazard.CARBON_DIOXIDE, hazards);
-        consider(player, rules, GasMath.poisons(air.partial(AirMix.OXYGEN, here.pressure())),
+        consider(player, rules, GasMath.poisons(air.partial(AirMix.OXYGEN, breathed.pressure())),
                 DimensionHazardEvent.Hazard.OXYGEN, hazards);
         return hazards;
     }

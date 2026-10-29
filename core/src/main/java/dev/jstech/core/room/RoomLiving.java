@@ -9,6 +9,7 @@ package dev.jstech.core.room;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.air.AirMix;
+import dev.jstech.core.air.Lungs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -90,8 +91,9 @@ public final class RoomLiving {
     }
 
     /*
-     * Whoever breathes takes from the air of the room they are in; a mob that breathes, out of the water, chokes in air
-     * it cannot breathe. A player's air is the dimension's hazards' to take.
+     * Whoever breathes takes from the air of the room they are in, unless they breathe air of their own, a suit's
+     * tanks; a mob that breathes, out of the water, chokes in air it cannot breathe. A player's air is the dimension's
+     * hazards' to take.
      */
     private static void onBreathe(final LivingBreatheEvent event) {
         final LivingEntity entity = event.getEntity();
@@ -99,7 +101,7 @@ public final class RoomLiving {
             return;
         }
         final boolean player = entity instanceof Player;
-        if (!player && !breathes(entity.getType())) {
+        if (!player && !breathes(entity.getType()) || Lungs.supplied(entity).isPresent()) {
             return;
         }
         final BlockPos eyes = BlockPos.containing(entity.getEyePosition());

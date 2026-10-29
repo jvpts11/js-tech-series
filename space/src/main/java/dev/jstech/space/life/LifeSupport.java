@@ -35,10 +35,10 @@ import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its tanks
- * hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat within
- * its range. The air left lives on the piece worn on the chest, which carries the tanks; only refilling them gives it
- * back. Modules fitted to the pieces add to the tanks, stop the sky's radiation, or light the way. And each world says
- * its dangers, and how much of the sky's radiation reaches its open ground.
+ * hold, each second of breathing spent from them, the only clock of a walk outside ({@link SuitAir}), and stand any
+ * cold or heat within its range. The air left lives on the piece worn on the chest, which carries the tanks; only
+ * refilling them gives it back. Modules fitted to the pieces add to the tanks, stop the sky's radiation, light the way
+ * or cut the Sun's glare. And each world says its dangers, and how much of the sky's radiation reaches its open ground.
  */
 public final class LifeSupport {
 
@@ -124,34 +124,17 @@ public final class LifeSupport {
         return true;
     }
 
-    /* A suit worn whole breathes from its tanks and stands the cold and heat of its range. */
+    /*
+     * A suit worn whole stands the cold and heat of its range. Its air is breathed through J's Core's lungs
+     * ({@link SuitAir}), so what the wearer breathes is weighed from the tanks themselves.
+     */
     private static void onHazard(final DimensionHazardEvent event) {
         final Player player = event.player();
         final Optional<SpaceSuit> suit = SpaceSuits.worn(player);
-        if (suit.isEmpty()) {
-            return;
-        }
-        final ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
-        switch (event.hazard()) {
-            case AIR -> {
-                // Weighed once a second: a second of breathing from the tanks, while they hold any.
-                final int left = air(player.level(), chest, suit.get());
-                if (left > 0) {
-                    setAir(player.level(), chest, suit.get(), left - 1);
-                    event.setCanceled(true);
-                }
-            }
-            case COLD, HEAT -> {
-                if (suit.get().stands(SealedRooms.climateAt(player.level(), player.blockPosition()).temperature())) {
-                    event.setCanceled(true);
-                }
-            }
-            default -> {
-                // Whoever breathes the tanks' air breathes nothing of the place's.
-                if (air(player.level(), chest, suit.get()) > 0) {
-                    event.setCanceled(true);
-                }
-            }
+        if (suit.isPresent() && (event.hazard() == DimensionHazardEvent.Hazard.COLD
+                || event.hazard() == DimensionHazardEvent.Hazard.HEAT)
+                && suit.get().stands(SealedRooms.climateAt(player.level(), player.blockPosition()).temperature())) {
+            event.setCanceled(true);
         }
     }
 

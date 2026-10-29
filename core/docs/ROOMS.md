@@ -127,6 +127,17 @@ rules. Each is weighed once a second, and each harm posts a `DimensionHazardEven
 | Carbon dioxide over 5% | Dangerous: it suffocates too (`AIR`). |
 | Oxygen over 50 kPa | Poisons, slowly: a point of harm every ten seconds, its damage the Core's `jscore:oxygen_toxicity` (`OXYGEN`). |
 
+A body may breathe air of its own instead, a suit's tanks or a mask's line, which a mod gives it through the Core's
+lungs: whether it can breathe, and whether the air poisons it, are then read from that air, and it takes nothing from
+the room it stands in. The warmth stays the room's or the place's. What the supply spends, the mod spends itself.
+*Added 2026-10-29.*
+
+```java
+Lungs.supply(body -> wearsMask(body)
+        ? Optional.of(new Climate(30, 20, Optional.of(PURE_OXYGEN), true)) : Optional.empty());
+Climate air = Lungs.breathed(player);   // the supply's, else the room's or the place's at the eyes
+```
+
 Fire needs oxygen: a fire goes out where there are less than 12 kPa of it, in a room or out in a dimension without
 it, and does not light there. In a room whose air is mostly oxygen any flame or lava sets alight at once everything
 round it that burns, an inferno, as in Apollo 1; pure oxygen at a third of an atmosphere is cheap to fill a room

@@ -19,6 +19,7 @@ import dev.jstech.space.api.SpaceSuits;
 import dev.jstech.space.api.WorldDanger;
 import dev.jstech.space.api.WorldDangers;
 import dev.jstech.space.life.LifeSupport;
+import dev.jstech.space.life.SuitAir;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.worldgen.MoonWorld;
 import dev.jstech.testkit.gametest.GameTestPlayers;
@@ -75,6 +76,8 @@ public final class LifeSupportGameTests {
         suit(player);
         final SpaceSuit suit = SpaceSuits.worn(player).orElse(null);
         final Set<DimensionHazardEvent.Hazard> suited = DimensionEffects.weigh(player);
+        // A second of breathing, as each second does.
+        SuitAir.second(player);
         final ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
         final int left = suit == null ? -1 : LifeSupport.air(moon, chest, suit);
         if (suit != null) {

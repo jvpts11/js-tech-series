@@ -178,6 +178,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   module for the helmet, is lowered gold over its visor. On the Moon and in space, where no air softens it, looking
   near the Sun whites out the view, the nearer the more; the gold visor cuts it, and the view through it is a little
   gold. It harms no one.
+- A suit's air is breathed for real: worn whole where the air round cannot be breathed, the suit gives its
+  wearer the pure oxygen of its tanks at the third of a bar the A7L held, and takes nothing from the room; where the air
+  can be breathed, the wearer breathes it and the tanks are spared, so the helmet comes off in a room with air. A hole
+  leaks the tanks four times faster and thins the suit, two leave too little oxygen to breathe, and the Suit Patch
+  mends one. The Oxygen Bottle holds half an hour of breathing and pours it into the suit's tanks, from the hand or
+  clicked onto the suit; it fills from a sealed room's air, taking the oxygen out of it, or from any gas tank or line
+  of oxygen.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

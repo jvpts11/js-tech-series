@@ -20,8 +20,10 @@ import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
 import dev.jstech.space.life.SpaceFlames;
+import dev.jstech.space.life.SuitAir;
 import dev.jstech.space.life.SuitData;
 import dev.jstech.space.life.SuitModuleItems;
+import dev.jstech.space.life.SuitSupplies;
 import dev.jstech.space.network.SpacePayloads;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.LandingCabins;
@@ -92,7 +94,9 @@ public final class JsSpace {
         LunarSuit.declare(modEventBus);
         SuitData.declare();
         SuitModuleItems.declare();
+        SuitSupplies.declare();
         LifeSupport.listen();
+        SuitAir.listen();
         SpaceFlames.declare();
         // Everything it declares registers at once: blocks, items, block entities and the rest.
         SpaceContent.CONTENT.register(modEventBus);

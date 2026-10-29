@@ -2061,6 +2061,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   before; a model may give the leggings a waist of their own, `armorWaist`, so leggings worn alone show no chest; and a
   bone may be shown only while the piece's stack says so (`KitArmorModel.shownWhile`), a visor lowered or a module
   fitted.
+- (Space) A suit's air is breathed for real: worn whole where the air round cannot be breathed, the suit gives its
+  wearer the pure oxygen of its tanks at the third of a bar the A7L held, and takes nothing from the room; where the air
+  can be breathed, the wearer breathes it and the tanks are spared, so the helmet comes off in a room with air. A hole
+  leaks the tanks four times faster and thins the suit, two leave too little oxygen to breathe, and the Suit Patch
+  mends one. The Oxygen Bottle holds half an hour of breathing and pours it into the suit's tanks, from the hand or
+  clicked onto the suit; it fills from a sealed room's air, taking the oxygen out of it, or from any gas tank or line
+  of oxygen.
+- (Core) Air of its own: a mod gives a body its own air to breathe, a suit's tanks or a mask's line (`Lungs`,
+  `IAirSupply`); whether it can breathe and whether the air poisons it are read from that air, and it breathes nothing
+  of the room it stands in.
 - (Core) Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`

@@ -1695,6 +1695,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   before; a model may give the leggings a waist of their own, `armorWaist`, so leggings worn alone show no chest; and a
   bone may be shown only while the piece's stack says so (`KitArmorModel.shownWhile`), a visor lowered or a module
   fitted.
+- Air of its own: a mod gives a body its own air to breathe, a suit's tanks or a mask's line (`Lungs`,
+  `IAirSupply`); whether it can breathe and whether the air poisons it are read from that air, and it breathes nothing
+  of the room it stands in.
 - Round worlds' maps: a data pack holds a round world's maps as grey pictures laid as its sphere's,
   `data/<namespace>/world_maps/`, and `jscore:round_map` reads one at each place by its longitude and latitude, at
   the size the world has on that server, so a world's ground lies where its sphere shows it; `jscore:round_crater`
