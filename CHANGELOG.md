@@ -2162,6 +2162,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the game's map item draws a world, from that world's own generator: zoom in and out, mark the spot to land on by
   clicking the map, clear it, lay the grid; the ellipse the rocket comes down in is drawn round the mark, with north,
   the scale and where the spot is.
+- (Space) The Rocket Hangar, where a rocket is stacked standing: walls and roof of any solid block a player likes,
+  its Hangar Terminal set in a wall facing into the bay. From the terminal the hangar measures its bay and forms once
+  a line of Crane Rail runs along the top of two facing walls, a Crane Bridge spans the bay from rail to rail, a
+  Crane Hoist hangs under the bridge and a Bay Door stands in a wall on the floor; its walls, floor and roof must be
+  closed, and its bay no smaller and no larger than the server allows (new settings: the narrowest, widest, lowest
+  and tallest bay). Used, the terminal says how large its bay is, or what keeps it from forming. Formed, the crane
+  takes its own shapes, the runway girders with their rails, the bridge's box girder and walkway, the hoist's trolley
+  and hook block, and the work platforms their decks and rails. Its kit: the Hangar Terminal, the Assembly Console,
+  the Crane Rail, the Crane Bridge, the Crane Hoist, the Bay Door and the Work Platform.
 - (Core) Seats one lies on: a seat aboard a moving structure may lay its sitter on their back, as a capsule's crew lie
   on their couches, their eyes low over it, looking round as they like and drawn lying; and a formed structure's model
   may make a kind of its blocks do something else aboard, so the same seat is a couch in one model and a chair in

@@ -57,9 +57,14 @@ public final class SpaceSettingsGameTests {
     @GameTest(template = ARENA)
     public static void file_holdsEverySettingAndIsReadByTheServer(final GameTestHelper helper) {
         helper.assertTrue(SpaceServerConfig.FILE.keys().size()
-                        == SpaceServerConfig.CONSEQUENCES.size() + STARTING_OFF.size(),
-                "the file holds the consequences and the rules of balance, and nothing else: "
+                        == SpaceServerConfig.CONSEQUENCES.size() + STARTING_OFF.size()
+                        + SpaceServerConfig.SIZES.size(),
+                "the file holds the consequences, the rules of balance and the sizes, and nothing else: "
                         + SpaceServerConfig.FILE.keys().size());
+        for (final ConfigKey<Integer> size : SpaceServerConfig.SIZES) {
+            helper.assertTrue(size.range().isPresent() && !size.title().isEmpty(),
+                    size.dottedPath() + " is held to its range and named for the settings screen");
+        }
         for (final ConfigKey<?> key : SpaceServerConfig.FILE.keys()) {
             helper.assertTrue(SpaceServerConfig.FILE.get(key).equals(key.defaultValue()),
                     "the server reads " + key.dottedPath() + " from the world's file, at its default");

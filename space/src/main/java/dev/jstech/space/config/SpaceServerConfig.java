@@ -32,6 +32,7 @@ public final class SpaceServerConfig {
     private static final String LIFE = "life_support";
     private static final String ORBIT = "orbit";
     private static final String SERIES = "series";
+    private static final String HANGAR = "hangar";
 
     /** Whether a pad with no flame trench and no deluge is damaged at launch. */
     public static final ConfigKey<Boolean> LAUNCH_DAMAGE = ConfigKey.flag(LAUNCH + ".launch_damage", true)
@@ -126,6 +127,28 @@ public final class SpaceServerConfig {
                     + "make.", "Off, what J's Space makes it makes its own way too.")
             .named("Industrial chain only");
 
+    /** The narrowest a Rocket Hangar's bay may be, across and deep, in blocks. */
+    public static final ConfigKey<Integer> HANGAR_NARROWEST = ConfigKey.whole(HANGAR + ".narrowest", 7)
+            .range(5, 33)
+            .comment("The narrowest a Rocket Hangar's bay may be, across and deep, inside its walls, in blocks.")
+            .named("Narrowest bay");
+    /** The widest a Rocket Hangar's bay may be, across and deep, in blocks. */
+    public static final ConfigKey<Integer> HANGAR_WIDEST = ConfigKey.whole(HANGAR + ".widest", 48)
+            .range(9, 96)
+            .comment("The widest a Rocket Hangar's bay may be, across and deep, inside its walls, in blocks.",
+                    "A wider one measures more of its walls each time it looks at itself.")
+            .named("Widest bay");
+    /** The lowest a Rocket Hangar's bay may be, in blocks. */
+    public static final ConfigKey<Integer> HANGAR_LOWEST = ConfigKey.whole(HANGAR + ".lowest", 12)
+            .range(8, 64)
+            .comment("The lowest a Rocket Hangar's bay may be, from its floor to its roof, in blocks.")
+            .named("Lowest bay");
+    /** The tallest a Rocket Hangar's bay may be, in blocks. */
+    public static final ConfigKey<Integer> HANGAR_TALLEST = ConfigKey.whole(HANGAR + ".tallest", 128)
+            .range(16, 256)
+            .comment("The tallest a Rocket Hangar's bay may be, from its floor to its roof, in blocks.")
+            .named("Tallest bay");
+
     public static final ConfigFile FILE = ConfigFile.builder("jsspace-server", ConfigSide.SERVER, ConfigFormats.TOML)
             .sectionNamed(LAUNCH, "Launch")
             .sectionComment(LAUNCH, "What a launch does to its pad, and the weather it waits for.")
@@ -133,6 +156,9 @@ public final class SpaceServerConfig {
             .sectionNamed(ROCKETS, "Rockets")
             .sectionComment(ROCKETS, "What a rocket's spent stages do where they fall.")
             .key(FALLING_STAGES_DO_DAMAGE)
+            .sectionNamed(HANGAR, "Rocket Hangar")
+            .sectionComment(HANGAR, "How small and how large a Rocket Hangar's bay may be.")
+            .key(HANGAR_NARROWEST).key(HANGAR_WIDEST).key(HANGAR_LOWEST).key(HANGAR_TALLEST)
             .sectionNamed(FAILURES, "Rocket failures")
             .sectionComment(FAILURES, "What a badly built or badly kept rocket does: always a consequence of a "
                     + "choice, never bad luck.")
@@ -155,6 +181,9 @@ public final class SpaceServerConfig {
             .key(INDUSTRIAL_CHAIN_ONLY)
             .build();
 
+    /** Its sizes, each held to its range: how small and how large a Rocket Hangar's bay may be. */
+    public static final List<ConfigKey<Integer>> SIZES = List.of(HANGAR_NARROWEST, HANGAR_WIDEST, HANGAR_LOWEST,
+            HANGAR_TALLEST);
     /** Its consequences, each on unless a server turns it off. */
     public static final List<ConfigKey<Boolean>> CONSEQUENCES = List.of(LAUNCH_DAMAGE, NO_LAUNCH_IN_THUNDERSTORMS,
             FALLING_STAGES_DO_DAMAGE, TOO_HEAVY_TO_LIFT, BURNING_UP, CRASH_LANDINGS, WORN_STAGES_FAIL,

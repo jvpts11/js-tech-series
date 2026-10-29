@@ -55,6 +55,13 @@
     "jsspace:thruster_quad",
     "jsspace:parachute_bay",
     "jsspace:docking_port",
+    "jsspace:hangar_terminal",
+    "jsspace:assembly_console",
+    "jsspace:crane_rail",
+    "jsspace:crane_bridge",
+    "jsspace:crane_hoist",
+    "jsspace:bay_door",
+    "jsspace:work_platform",
     "jsspace:landing_pad",
     "jsspace:landing_platform",
     "jsspace:rocket_wreckage"
