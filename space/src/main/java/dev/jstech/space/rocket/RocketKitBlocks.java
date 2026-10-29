@@ -10,15 +10,20 @@ package dev.jstech.space.rocket;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
+import dev.jstech.core.content.Device;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.space.SpaceContent;
+import dev.jstech.space.flight.FlightComputer;
+import dev.jstech.space.flight.FlightComputerMenu;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 
 /**
@@ -95,8 +100,10 @@ public final class RocketKitBlocks {
             .register());
     public static final BlockEntry<Block> CAPSULE_HATCH = add(kit("capsule_hatch").named("Capsule Hatch").register());
     public static final BlockEntry<Block> CREW_SEAT = add(kit("crew_seat").named("Crew Seat").register());
-    public static final BlockEntry<Block> FLIGHT_COMPUTER = add(kit("flight_computer").named("Flight Computer")
-            .register());
+    /** The Flight Computer, the one block of the kits with a screen of its own ({@code FlightComputer}). */
+    public static final BlockEntry<Block> FLIGHT_COMPUTER = add(kit("flight_computer", properties -> Device.of(
+            () -> FlightComputer.ENTITY.get()).opensMenu(FlightComputerMenu::new).block(properties))
+            .named("Flight Computer").register());
     public static final BlockEntry<Block> THRUSTER_QUAD = add(kit("thruster_quad").named("Thruster Quad").register());
     public static final BlockEntry<Block> PARACHUTE_BAY = add(kit("parachute_bay").named("Parachute Bay").register());
     public static final BlockEntry<Block> DOCKING_PORT = add(kit("docking_port").named("Docking Port").register());
@@ -116,7 +123,13 @@ public final class RocketKitBlocks {
 
     /* A block of a kit: metal, as hard as iron, its face {@code block/rocket/<id>} on all six sides. */
     private static BlockBuilder<Block> kit(final String id) {
-        return SpaceContent.CONTENT.block(id, Block::new)
+        return kit(id, Block::new);
+    }
+
+    /* A block of a kit made by {@code factory}, as {@link #kit(String)} makes one. */
+    private static BlockBuilder<Block> kit(final String id,
+                                           final Function<BlockBehaviour.Properties, Block> factory) {
+        return SpaceContent.CONTENT.block(id, factory)
                 .properties(properties -> properties.mapColor(MapColor.METAL).strength(3.0F, 6.0F)
                         .requiresCorrectToolForDrops().sound(SoundType.METAL))
                 .look(IBlockLook.fixed(new IBlockModel.CubeAll(id, "block/rocket/" + id)))

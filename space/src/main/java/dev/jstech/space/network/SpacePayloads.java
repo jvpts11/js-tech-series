@@ -19,7 +19,8 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 /**
  * The payloads J's Space sends between the server and a player's game, and when: the Overworld's map number as a
  * player joins, a far map on the way up ({@code FarMaps}), and the worlds under a system's space as a player arrives in
- * it ({@code SpaceClimbs}); and from a player's game, the light of their suit's controls pressed. What a player's game
+ * it ({@code SpaceClimbs}), and a Flight Computer's landing map once drawn ({@code LandingMaps}); and from a player's
+ * game, the light of their suit's controls pressed. What a player's game
  * does with each is given to it from its own side, so nothing of a player's game is loaded on a server.
  */
 public final class SpacePayloads {
@@ -32,6 +33,8 @@ public final class SpacePayloads {
     private static volatile IFarMapReceiver farMapReceiver = map -> {
     };
     private static volatile IClimbWorldsReceiver climbWorldsReceiver = worlds -> {
+    };
+    private static volatile ILandingMapReceiver landingMapReceiver = map -> {
     };
 
     private SpacePayloads() {
@@ -47,6 +50,8 @@ public final class SpacePayloads {
                     (payload, context) -> context.enqueueWork(() -> farMapReceiver.receive(payload)));
             registrar.playToClient(ClimbWorldsPayload.TYPE, ClimbWorldsPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> climbWorldsReceiver.receive(payload)));
+            registrar.playToClient(LandingMapPayload.TYPE, LandingMapPayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> landingMapReceiver.receive(payload)));
             registrar.playToServer(SuitLightPayload.TYPE, SuitLightPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> SuitControls.light(context.player(),
                             payload.on())));
@@ -67,6 +72,11 @@ public final class SpacePayloads {
     /** Gives what a player's game does with a far map, from its own side's entry point. */
     public static void onFarMap(final IFarMapReceiver receiver) {
         farMapReceiver = receiver;
+    }
+
+    /** Gives what a player's game does with a Flight Computer's landing map, from its own side's entry point. */
+    public static void onLandingMap(final ILandingMapReceiver receiver) {
+        landingMapReceiver = receiver;
     }
 
     /** Gives what a player's game does with the worlds under a system's space, from its own side's entry point. */
@@ -93,5 +103,12 @@ public final class SpacePayloads {
     public interface IClimbWorldsReceiver {
 
         void receive(ClimbWorldsPayload worlds);
+    }
+
+    /** What a player's game does with a Flight Computer's landing map. */
+    @FunctionalInterface
+    public interface ILandingMapReceiver {
+
+        void receive(LandingMapPayload map);
     }
 }

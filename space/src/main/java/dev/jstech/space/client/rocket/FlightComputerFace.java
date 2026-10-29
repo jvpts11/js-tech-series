@@ -15,9 +15,16 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.client.flight.LandingMapsClient;
+import dev.jstech.space.flight.FlightComputerBlockEntity;
+import dev.jstech.space.flight.FlightPage;
+import dev.jstech.space.flight.TransferPlan;
 import dev.jstech.space.rocket.CabinLamp;
 import dev.jstech.space.rocket.CabinReadings;
 import java.util.List;
+import java.util.Optional;
+import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -26,8 +33,9 @@ import net.minecraft.client.gui.GuiGraphics;
  * The Flight Computer's face as the approved display draws it, flat, in pixels of its own {@value #WIDTH} by
  * {@value #HEIGHT}: the bezel with its screws, the raised rim and gasket round the screen, the soft keys along the top
  * and both sides with their night lighting, the fail lamp and the light sensor, the brightness and contrast rockers,
- * the data plate and the night and day knob; on the screen, the pages' names along its top and the mission's clock.
- * The same face is shown on a capsule's panel and on the lander's cabin wall.
+ * the data plate and the night and day knob; on the screen, the pages' names along its top, the open page
+ * ({@link FlightComputerPages}) and its keys' legends. The face on a capsule's panel and on the lander's cabin wall
+ * shows the mission's clock until the rocket's own computer is joined to it.
  */
 @TextHolder
 @PaletteHolder
@@ -58,38 +66,96 @@ public final class FlightComputerFace {
     public static final Palette<Colours> PALETTE = Palettes.declare(JsSpace.MODID, "flight_computer", new Colours(
             0xFF030806, 0xFF38FF6A, 0xFF38E0FF, 0xFFEAF6F2, 0xFFFFB424, 0xFF2A2C30, 0xFF4A4D54, 0xFF141518,
             0xFF33363B, 0xFF3A3D43, 0xFF4F535A, 0xFF9EE8B0, 0xFF8A8D94, 0xFF5C5F66, 0xFF55585F, 0xFF6E727A,
-            0xFF08090A, 0xFF4A3214, 0xFF9A6A2A, 0xFF1A2230, 0xFF5A7090, 0xFF3E4147, 0xFF1C1D20));
+            0xFF08090A, 0xFF4A3214, 0xFF9A6A2A, 0xFF1A2230, 0xFF5A7090, 0xFF3E4147, 0xFF1C1D20, 0xFF0A0F17,
+            0xFF1A2636, 0xFFA8C8E8, 0xFFFFE070, 0xFF3A7AD0, 0xFFD05A30, 0xFFC8C8C8, 0xFFFF48DE, 0xFF4A5260,
+            0xFF5E6878, 0xFF24602A, 0xFF3AA040, 0xC80A0F17, 0xFF2A6070));
+    /** The screen inside the bezel. */
+    public static final int SX0 = 46;
+    public static final int SY0 = 36;
+    public static final int SX1 = WIDTH - 46;
+    public static final int SY1 = HEIGHT - 38;
 
-    /* The screen inside the bezel. */
-    private static final int SX0 = 46;
-    private static final int SY0 = 36;
-    private static final int SX1 = WIDTH - 46;
-    private static final int SY1 = HEIGHT - 38;
     private static final int SIDE_KEYS = 5;
     private static final int TOP_KEY_WIDTH = 24;
     private static final int KEY_WIDTH = 18;
     private static final int KEY_HEIGHT = 11;
     private static final int SIDE_KEY_STEP = 30;
     private static final int KNOB = 7;
+    /* A legend's line pointing at its key, and how far a click beside a legend still finds it. */
+    private static final int POINTER = 4;
+    private static final int LEGEND_FROM = 5;
 
     private FlightComputerFace() {
     }
 
     /** Draws the face across {@code w} by {@code h} as {@code readings} say, the face's pixels stretched to fit. */
     public static void paint(final GuiGraphics g, final int w, final int h, final CabinReadings readings) {
+        paint(g, w, h, View.cabin(readings));
+    }
+
+    /**
+     * Draws the face across {@code w} by {@code h} as {@code view} says, the face's pixels stretched to fit: its page,
+     * the pages' names along the top, the open one boxed, and its keys' legends.
+     */
+    public static void paint(final GuiGraphics g, final int w, final int h, final View view) {
         final Font font = Minecraft.getInstance().font;
         g.pose().pushPose();
         g.pose().scale(w / (float) WIDTH, h / (float) HEIGHT, 1);
         final Colours c = PALETTE.get();
-        bezel(g, font, c, readings.lit(CabinLamp.MASTER_ALARM));
+        bezel(g, font, c, view.readings().lit(CabinLamp.MASTER_ALARM));
         g.fill(SX0, SY0, SX1, SY1, c.screen());
-        for (int i = 0; i < PAGES.size(); i++) {
-            text(g, font, GameText.resolve(PAGES.get(i)), topKeyX(i) + TOP_KEY_WIDTH / 2, SY0 + 2, c.cyan(), true);
+        if (view.page() == FlightPage.TRANSFER) {
+            FlightComputerPages.transfer(g, font, view, c);
+        } else if (view.page() == FlightPage.LANDING) {
+            FlightComputerPages.landing(g, font, view, c);
+        } else {
+            final String clock = GameText.resolve(CLOCK);
+            text(g, font, clock, SX0 + 8, SY1 - 11, c.cyan(), false);
+            text(g, font, view.readings().timer(), SX0 + 14 + font.width(clock), SY1 - 11, c.white(), false);
         }
-        final String clock = GameText.resolve(CLOCK);
-        text(g, font, clock, SX0 + 8, SY1 - 11, c.cyan(), false);
-        text(g, font, readings.timer(), SX0 + 14 + font.width(clock), SY1 - 11, c.white(), false);
+        for (int i = 0; i < PAGES.size(); i++) {
+            final FlightPage page = FlightPage.KEYS.get(i);
+            final String name = GameText.resolve(PAGES.get(i));
+            final int x = topKeyX(i) + TOP_KEY_WIDTH / 2;
+            final boolean open = page == view.page();
+            if (open) {
+                frame(g, x - font.width(name) / 2 - 2, SY0 + 1, x + (font.width(name) + 1) / 2 + 2, SY0 + 11,
+                        c.white());
+            }
+            text(g, font, name, x, SY0 + 2, open ? c.white() : page.open() ? c.cyan() : c.legendOff(), true);
+        }
+        for (int i = 0; i < SIDE_KEYS; i++) {
+            legend(g, font, view.left(), i, true, c);
+            legend(g, font, view.right(), i, false, c);
+        }
         g.pose().popPose();
+    }
+
+    /**
+     * The key at {@code (x, y)} of the face, in its own pixels, or -1: a key's cap, or the legend beside it, by the
+     * numbers {@link FlightComputerBlockEntity#press} takes.
+     */
+    public static int keyAt(final Font font, final View view, final double x, final double y) {
+        for (int i = 0; i < PAGES.size(); i++) {
+            if (x >= topKeyX(i) - 1 && x < topKeyX(i) + TOP_KEY_WIDTH + 1 && y >= SY0 - 21 && y < SY0 + 12) {
+                return FlightComputerBlockEntity.TOP + i;
+            }
+        }
+        for (int i = 0; i < SIDE_KEYS; i++) {
+            final int top = sideKeyY(i) - 1;
+            if (y < top || y >= top + KEY_HEIGHT + 2) {
+                continue;
+            }
+            final int left = font.width(i < view.left().size() ? view.left().get(i).text() : "");
+            if (x >= SX0 - 29 && x < SX0 + LEGEND_FROM + left + 2) {
+                return FlightComputerBlockEntity.LEFT + i;
+            }
+            final int right = font.width(i < view.right().size() ? view.right().get(i).text() : "");
+            if (x >= SX1 - LEGEND_FROM - right - 2 && x < SX1 + 29) {
+                return FlightComputerBlockEntity.RIGHT + i;
+            }
+        }
+        return -1;
     }
 
     /* The bezel, flat, with more of a display's parts, and its fail lamp lit when {@code failing}. */
@@ -139,6 +205,43 @@ public final class FlightComputerFace {
         frame(g, SX0 + 92, SY1 + 16, SX0 + 200, SY1 + 28, c.bezelShade());
         text(g, font, GameText.resolve(PLATE), SX0 + 146, SY1 + 18, c.plateText(), true);
         knob(g, font, SX1 - 22, SY1 + 23, c);
+    }
+
+    /*
+     * The legend of side key {@code i}, on the left or the right, as the approved face writes them: its action with a
+     * short line pointing at the key, a chosen one white and boxed, one not in use dim; over the landing map, on its
+     * own dark ground.
+     */
+    private static void legend(final GuiGraphics g, final Font font, final List<Legend> legends, final int i,
+                               final boolean left, final Colours c) {
+        if (i >= legends.size() || legends.get(i).text().isEmpty()) {
+            return;
+        }
+        final Legend shown = legends.get(i);
+        final int y = sideKeyY(i) + 2;
+        final int colour = switch (shown.state()) {
+            case CHOSEN -> c.white();
+            case LIVE -> c.cyan();
+            case OFF -> c.legendOff();
+        };
+        final int width = font.width(shown.text());
+        final int x = left ? SX0 + LEGEND_FROM : SX1 - LEGEND_FROM - width;
+        if (shown.backed()) {
+            g.fill(x - 2, y - 1, x + width + 1, y + 9, c.backing());
+        }
+        if (left) {
+            hline(g, SX0, SX0 + POINTER, y + 3, colour);
+        } else {
+            hline(g, SX1 - POINTER, SX1, y + 3, colour);
+        }
+        text(g, font, shown.text(), x, y, colour, false);
+        if (shown.state() == Legend.State.CHOSEN) {
+            frame(g, x - 2, y - 1, x + width + 2, y + 9, c.white());
+        }
+    }
+
+    private static int sideKeyY(final int i) {
+        return SY0 + 24 + i * SIDE_KEY_STEP;
     }
 
     private static int topKeyX(final int i) {
@@ -210,21 +313,22 @@ public final class FlightComputerFace {
         }
     }
 
-    private static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
-                             final int colour, final boolean centred) {
+    /* Text at {@code (x, y)}, or centred on {@code x}; for the pages too. */
+    static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                     final int colour, final boolean centred) {
         Draw.text(g, font, text, centred ? x - font.width(text) / 2 : x, y, colour);
     }
 
-    private static void hline(final GuiGraphics g, final int x0, final int x1, final int y, final int colour) {
+    static void hline(final GuiGraphics g, final int x0, final int x1, final int y, final int colour) {
         g.fill(x0, y, x1, y + 1, colour);
     }
 
-    private static void vline(final GuiGraphics g, final int x, final int y0, final int y1, final int colour) {
+    static void vline(final GuiGraphics g, final int x, final int y0, final int y1, final int colour) {
         g.fill(x, y0, x + 1, y1, colour);
     }
 
-    private static void frame(final GuiGraphics g, final int x0, final int y0, final int x1, final int y1,
-                              final int colour) {
+    static void frame(final GuiGraphics g, final int x0, final int y0, final int x1, final int y1,
+                      final int colour) {
         hline(g, x0, x1, y0, colour);
         hline(g, x0, x1, y1 - 1, colour);
         vline(g, x0, y0, y1, colour);
@@ -257,10 +361,72 @@ public final class FlightComputerFace {
      * @param sensorShine the light sensor's shine
      * @param plate       the data plate
      * @param plateText   the data plate's words
+     * @param space       space behind the system's drawing, and behind the landing page
+     * @param ring        the rings of distance round the Sun, and a frame on the screen
+     * @param ink         a world's name and a mark drawn on the system
+     * @param sun         the Sun
+     * @param overworld   the Overworld and its orbit
+     * @param mars        Mars and its orbit
+     * @param moon        the Moon
+     * @param magenta     now, on the windows' tape
+     * @param track       the windows' tape
+     * @param trackTick   a tick of the windows' tape
+     * @param windowPast  a window gone by
+     * @param windowNext  the next window
+     * @param backing     the dark ground of words over the landing map
+     * @param legendOff   a legend of a key not in use, and a page not open
      */
     public record Colours(int screen, int green, int cyan, int white, int amber, int bezel, int bezelLit,
                           int bezelShade, int rim, int key, int keyLit, int nightLit, int engrave, int engraveDim,
                           int screw, int screwLit, int gasket, int failGlass, int failText, int sensor,
-                          int sensorShine, int plate, int plateText) {
+                          int sensorShine, int plate, int plateText, int space, int ring, int ink, int sun,
+                          int overworld, int mars, int moon, int magenta, int track, int trackTick, int windowPast,
+                          int windowNext, int backing, int legendOff) {
+    }
+
+    /**
+     * A legend beside a side key.
+     *
+     * @param text   what it says
+     * @param state  how it is shown
+     * @param backed whether it stands on its own dark ground, over a map
+     */
+    public record Legend(String text, State state, boolean backed) {
+
+        /** How a legend is shown: in use, chosen, or not in use. */
+        public enum State {
+            LIVE, CHOSEN, OFF
+        }
+    }
+
+    /**
+     * What the face shows.
+     *
+     * @param page        the page open; none for the face on a capsule's panel, which shows the clock
+     * @param left        the left keys' legends, from the top
+     * @param right       the right keys' legends, from the top
+     * @param target      the name of the world the transfer goes to
+     * @param plan        the transfer planned now, if one is
+     * @param tick        the game's time, for where the worlds stand
+     * @param mark        the spot marked to land on, if one is
+     * @param zoom        how near the landing map is drawn
+     * @param grid        whether the landing map has its grid
+     * @param map         the landing map, once it has come
+     * @param readings    what the cabin reads
+     */
+    public record View(@Nullable FlightPage page, List<Legend> left, List<Legend> right, String target,
+                       Optional<TransferPlan> plan, long tick, @Nullable BlockPos mark, int zoom, boolean grid,
+                       LandingMapsClient.@Nullable Shown map, CabinReadings readings) {
+
+        public View {
+            left = List.copyOf(left);
+            right = List.copyOf(right);
+        }
+
+        /** The face on a capsule's panel: the clock, no page open. */
+        public static View cabin(final CabinReadings readings) {
+            return new View(null, List.of(), List.of(), "", Optional.empty(), 0, null,
+                    FlightComputerBlockEntity.WIDE, false, null, readings);
+        }
     }
 }

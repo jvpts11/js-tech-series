@@ -250,6 +250,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the parachutes, the legs and the docking port. The Flight Computer's face shows on the panel, and on the lander's
   front wall, its fail lamp lit with the master alarm. A capsule's crew lie on their couches facing its nose, looking
   up at the panel; in the lander's cabin the crew seat is a chair facing the Flight Computer.
+- The Flight Computer: used, it opens its screen, the approved flat display, its keys pressed by clicking them
+  or their legends. Its transfer page draws the system round the Sun with the Overworld and Mars where they stand now,
+  going round as the game's time goes, the transfer's arc from where the world left will be at the next window, and
+  the plan's figures: the phase now and at the window, the delta-v now and in the window, the time of flight and
+  whether the rocket brakes in the air or with its engines; under it the windows' tape with now, the next window and
+  how long until it opens. To the Moon there is no window. Its landing page draws the map of the world it goes to as
+  the game's map item draws a world, from that world's own generator: zoom in and out, mark the spot to land on by
+  clicking the map, clear it, lay the grid; the ellipse the rocket comes down in is drawn round the mark, with north,
+  the scale and where the spot is.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

@@ -8,16 +8,21 @@
 package dev.jstech.space;
 
 import dev.jstech.core.client.advancement.WideBackgrounds;
+import dev.jstech.space.client.flight.FlightComputerScreen;
+import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.client.life.LunarSuitClient;
 import dev.jstech.space.client.life.SuitControlsHud;
 import dev.jstech.space.client.life.SuitLamps;
 import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
+import dev.jstech.space.flight.FlightComputer;
+import dev.jstech.space.network.SpacePayloads;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 /** The space mod's entry point on a player's game. */
 @Mod(value = JsSpace.MODID, dist = Dist.CLIENT)
@@ -43,5 +48,9 @@ public final class JsSpaceClient {
         SuitControlsHud.listen(modEventBus);
         // The target painted across a formed landing platform.
         LandingPlatformRenderer.listen(modEventBus);
+        // The Flight Computer's screen, and the landing maps it is sent.
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(FlightComputer.MENU.get(),
+                FlightComputerScreen::new));
+        SpacePayloads.onLandingMap(LandingMapsClient::receive);
     }
 }
