@@ -226,6 +226,7 @@ import dev.jstech.tests.clienttest.series.HeldModelsClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
 import dev.jstech.tests.clienttest.space.ClimbClientTests;
 import dev.jstech.tests.clienttest.space.GroundSkyClientTests;
+import dev.jstech.tests.clienttest.space.SpaceRocksClientTests;
 import dev.jstech.tests.clienttest.space.SystemSpaceClientTests;
 import dev.jstech.tests.testkit.TestSuites;
 import java.lang.reflect.Method;
@@ -457,7 +458,8 @@ public final class ClientTestSuite {
             UnixFreeBsdEditorsClientTests.class,
             SystemSpaceClientTests.class,
             GroundSkyClientTests.class,
-            ClimbClientTests.class);
+            ClimbClientTests.class,
+            SpaceRocksClientTests.class);
 
     private ClientTestSuite() {
     }

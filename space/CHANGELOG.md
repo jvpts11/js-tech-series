@@ -107,6 +107,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   spot of the low orbit, laid out like a map of the world, so a station built there stands over its base; going down
   through the floor of the low orbits shows the climb's own pictures on the way and comes back down over the same
   place, high over the ground.
+- The ground of the Moon and of Mars, in a row of its own in the mod's tab: the Moon's Highland and Mare
+  Regolith, its Anorthosite and Mare Basalt, and the Icy Regolith of its craters of eternal shadow; Mars' Martian and
+  Hematite Regolith, its dark Basalt Sand, the Water Ice of its polar caps and the Dry Ice over them. Martian Basalt
+  comes in three blocks, faceted, in columns and pocked by gas bubbles, and Mudstone in three, the grey of Gale's
+  lakebeds, the buff of Jezero's delta and dusted red, each with a top of its own. The regoliths and sands dig with a
+  shovel and fall as sand does, the rocks and the Water Ice, frozen as hard as rock, drop themselves only under a
+  pickaxe, and the Dry Ice and the Icy Regolith break with anything.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

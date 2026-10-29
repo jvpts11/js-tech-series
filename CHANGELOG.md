@@ -1972,6 +1972,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lies open, how deep, how steep the ground is round it, its height and its biome; the feature
   `jscore:rock_variations` is laid after the rock in layers and before the ores, and written by the data generation
   for a data pack to change.
+- (Space) The ground of the Moon and of Mars, in a row of its own in the mod's tab: the Moon's Highland and Mare
+  Regolith, its Anorthosite and Mare Basalt, and the Icy Regolith of its craters of eternal shadow; Mars' Martian and
+  Hematite Regolith, its dark Basalt Sand, the Water Ice of its polar caps and the Dry Ice over them. Martian Basalt
+  comes in three blocks, faceted, in columns and pocked by gas bubbles, and Mudstone in three, the grey of Gale's
+  lakebeds, the buff of Jezero's delta and dusted red, each with a top of its own. The regoliths and sands dig with a
+  shovel and fall as sand does, the rocks and the Water Ice, frozen as hard as rock, drop themselves only under a
+  pickaxe, and the Dry Ice and the Icy Regolith break with anything.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "jsspace:block/buff_mudstone_top",
+    "side": "jsspace:block/buff_mudstone"
+  }
+}

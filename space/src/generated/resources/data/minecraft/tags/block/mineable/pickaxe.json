@@ -1,0 +1,15 @@
+{
+  "values": [
+    "jsspace:anorthosite",
+    "jsspace:mare_basalt",
+    "jsspace:icy_regolith",
+    "jsspace:water_ice",
+    "jsspace:dry_ice",
+    "jsspace:martian_basalt",
+    "jsspace:columnar_martian_basalt",
+    "jsspace:vesicular_martian_basalt",
+    "jsspace:mudstone",
+    "jsspace:buff_mudstone",
+    "jsspace:dusted_mudstone"
+  ]
+}
