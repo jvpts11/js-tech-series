@@ -41,7 +41,8 @@ import org.jetbrains.annotations.Nullable;
  * it, but solid as it was, as hard to break, as loud, as bright, and dropping what the block it was drops. A structure
  * of a declared formed model gives it the shape of its own part of the model ({@code FormedShapes}); any other, a
  * whole block. Breaking it breaks the structure, which gives every other block back. It looks for its terminal now
- * and then, and a block whose terminal has gone, broken by any means, turns back into what it was by itself.
+ * and then, and a block whose terminal has gone, broken by any means, turns back into what it was by itself; a block
+ * a plan laid does not, its plan's owner giving it back itself.
  */
 public final class FormedPartBlock extends Block implements EntityBlock {
 
@@ -154,7 +155,8 @@ public final class FormedPartBlock extends Block implements EntityBlock {
     @Override
     protected void tick(final BlockState state, final ServerLevel level, final BlockPos pos,
                         final RandomSource random) {
-        if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part)) {
+        if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part) || part.planned()) {
+            // A block a plan laid never looks: its plan's owner gives it back itself.
             return;
         }
         final BlockPos terminal = part.terminal();

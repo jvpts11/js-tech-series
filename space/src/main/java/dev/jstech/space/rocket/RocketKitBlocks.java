@@ -16,6 +16,7 @@ import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.space.SpaceContent;
 import dev.jstech.space.flight.FlightComputer;
+import dev.jstech.space.flight.FlightComputerBlock;
 import dev.jstech.space.flight.FlightComputerMenu;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,9 +101,16 @@ public final class RocketKitBlocks {
             .register());
     public static final BlockEntry<Block> CAPSULE_HATCH = add(kit("capsule_hatch").named("Capsule Hatch").register());
     public static final BlockEntry<Block> CREW_SEAT = add(kit("crew_seat").named("Crew Seat").register());
-    /** The Flight Computer, the one block of the kits with a screen of its own ({@code FlightComputer}). */
-    public static final BlockEntry<Block> FLIGHT_COMPUTER = add(kit("flight_computer", properties -> Device.of(
-            () -> FlightComputer.ENTITY.get()).opensMenu(FlightComputerMenu::new).block(properties))
+    /**
+     * The Flight Computer, the one block of the kits with a screen of its own ({@code FlightComputer}); drawn by its
+     * part's model once its part is formed.
+     */
+    public static final BlockEntry<Block> FLIGHT_COMPUTER = add(kit("flight_computer", properties ->
+            new FlightComputerBlock(properties, Device.of(() -> FlightComputer.ENTITY.get())
+                    .opensMenu(FlightComputerMenu::new)))
+            .look(IBlockLook.facing(new IBlockModel.CubeAll("flight_computer", "block/rocket/flight_computer"))
+                    .whileOn(FlightComputerBlock.FORMED, new IBlockModel.ParticleOnly("flight_computer_formed",
+                            "jsspace:block/rocket/flight_computer")))
             .named("Flight Computer").register());
     public static final BlockEntry<Block> THRUSTER_QUAD = add(kit("thruster_quad").named("Thruster Quad").register());
     public static final BlockEntry<Block> PARACHUTE_BAY = add(kit("parachute_bay").named("Parachute Bay").register());

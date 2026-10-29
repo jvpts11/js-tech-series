@@ -9,6 +9,7 @@ package dev.jstech.core.multiblock.shape;
 
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,9 +50,9 @@ public final class FormedAim {
         final Vec3 to = context.getTo();
         return BlockGetter.traverseBlocks(from, to, context, (ray, pos) -> {
             final BlockState state = level.getBlockState(pos);
-            final Optional<FormedPlace> place = place(level, pos, state);
-            if (place.isPresent()) {
-                return hit(level, place.get(), from, to, pos);
+            final List<FormedPlace> places = places(level, pos, state);
+            if (!places.isEmpty()) {
+                return hit(level, places, from, to, pos);
             }
             final FluidState fluid = level.getFluidState(pos);
             final VoxelShape shape = ray.getBlockShape(state, level, pos);
@@ -68,13 +69,37 @@ public final class FormedAim {
 
     /** Which block of its model the block at {@code pos} is, when it is a merged block whose faces are known here. */
     public static Optional<FormedPlace> place(final Level level, final BlockPos pos, final BlockState state) {
+        final List<FormedPlace> places = places(level, pos, state);
+        return places.isEmpty() ? Optional.empty() : Optional.of(places.getFirst());
+    }
+
+    /**
+     * Every block of a formed model the block at {@code pos} is drawn with, its own and those of models reaching into
+     * it, when it is a merged block whose faces are known here; none otherwise.
+     */
+    public static List<FormedPlace> places(final Level level, final BlockPos pos, final BlockState state) {
         if (!level.isClientSide() || !(state.getBlock() instanceof FormedPartBlock)
                 || !(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part)) {
-            return Optional.empty();
+            return List.of();
         }
-        final FormedPlace place = part.place();
-        return place != null && FormedShapes.triangles(level, place).isPresent() ? Optional.of(place)
-                : Optional.empty();
+        return part.places().stream().filter(place -> FormedShapes.triangles(level, place).isPresent()).toList();
+    }
+
+    /**
+     * Where the line from {@code from} to {@code to} first meets the faces of any of the blocks {@code places} of the
+     * merged block at {@code pos}; none where it meets none.
+     */
+    public static @Nullable BlockHitResult hit(final Level level, final List<FormedPlace> places, final Vec3 from,
+                                               final Vec3 to, final BlockPos pos) {
+        BlockHitResult best = null;
+        for (final FormedPlace place : places) {
+            final BlockHitResult one = hit(level, place, from, to, pos);
+            if (one != null && (best == null
+                    || from.distanceToSqr(one.getLocation()) < from.distanceToSqr(best.getLocation()))) {
+                best = one;
+            }
+        }
+        return best;
     }
 
     /**

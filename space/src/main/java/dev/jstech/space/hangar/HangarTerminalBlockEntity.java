@@ -7,8 +7,12 @@
  */
 package dev.jstech.space.hangar;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.multiblock.plan.BuildPlan;
+import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.text.Text;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
@@ -22,6 +26,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -41,8 +46,14 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity {
     private final ValueField<RocketDesign> design;
     private final ValueField<List<RocketDesign>> plans;
     private final ValueField<RocketDesign> plan;
+    private final ValueField<BlockPos> planAt;
+    private final ValueField<List<Integer>> formedParts;
+    private final ValueField<List<Integer>> missingParts;
     private Text reason = HangarTexts.NOT_YET.text();
     private int wait;
+    /* The plan being built, on the server, while its chunk is loaded; and whether it is to start. */
+    private @Nullable PlannedBuild build;
+    private boolean pending;
 
     /** The most plans a hangar keeps. */
     public static final int MOST_PLANS = 16;
@@ -57,15 +68,31 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity {
         this.plans = fields().value("Plans", RocketDesign.CODEC.listOf(0, MOST_PLANS), List.<RocketDesign>of())
                 .save().toClient();
         this.plan = fields().nullable("Plan", RocketDesign.CODEC).save().toClient();
+        this.planAt = fields().nullable("PlanAt", BlockPos.CODEC).save().toClient();
+        // What its players see of the plan being built: the parts formed, and how much of each is missing.
+        this.formedParts = fields().value("FormedParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
+        this.missingParts = fields().value("MissingParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
+        // Loaded, it starts building again once the chunks its plan stands in are loaded too.
+        fields().whenLoaded(level -> this.pending = true);
     }
 
-    /** Looks at its bay when it is time to. */
+    /** Looks at its bay when it is time to, and starts building its plan once all of it is loaded. */
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final HangarTerminalBlockEntity terminal) {
+        if (terminal.pending) {
+            terminal.startBuild();
+        }
         if (--terminal.wait > 0) {
             return;
         }
         terminal.look();
+    }
+
+    /** Its plan's chunk unloads: it stops watching it, leaving its formed parts as they are for when it loads. */
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
+        stopBuild(false);
     }
 
     /** The bay it found, if it is formed. */
@@ -154,9 +181,35 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity {
             return false;
         }
         save();
+        // The plan it built before comes apart, and the new one is laid out on the bay's floor.
+        stopBuild(true);
         this.plan.set(now);
+        this.planAt.set(bay().get().pad());
         setChanged();
+        startBuild();
         return true;
+    }
+
+    /** Where the plan sent to its bay stands, the middle of the rocket's foot, if one was sent. */
+    public Optional<BlockPos> planAt() {
+        return Optional.ofNullable(this.planAt.get());
+    }
+
+    /** The plan being built, on the server, once it has started. */
+    public Optional<PlannedBuild> build() {
+        return Optional.ofNullable(this.build);
+    }
+
+    /** The parts of its plan formed, by their places in the plan's stack, as its players are told. */
+    public List<Integer> formedParts() {
+        final List<Integer> formed = this.formedParts.get();
+        return formed == null ? List.of() : formed;
+    }
+
+    /** How many blocks of each part of its plan are missing, as its players are told. */
+    public List<Integer> missingParts() {
+        final List<Integer> missing = this.missingParts.get();
+        return missing == null ? List.of() : missing;
     }
 
     /** Looks at its bay now, forming it or undoing it as it finds it. */
@@ -186,13 +239,71 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity {
         this.wait = now == null ? LOOK_UNFORMED : LOOK_FORMED;
     }
 
-    /** Undoes its bay, as it is broken: its pieces are blocks of the kit again. */
+    /** Undoes its bay, as it is broken: its pieces are blocks of the kit again, and its rocket's parts come apart. */
     public void undo() {
         final HangarBay was = this.bay.get();
         if (was != null && this.level != null) {
             shape(this.level, was, false);
             this.bay.set(null);
         }
+        stopBuild(true);
+    }
+
+    /* Starts building the plan sent to its bay, where its chunks are all loaded; it waits for them otherwise. */
+    private void startBuild() {
+        final RocketDesign building = this.plan.get();
+        final BlockPos at = this.planAt.get();
+        if (!(this.level instanceof ServerLevel server) || building == null || at == null) {
+            this.pending = false;
+            return;
+        }
+        final BuildPlan laid = RocketPlans.of(server, building.stack());
+        final PlannedBuild next = new PlannedBuild(laid, at);
+        if (!loaded(server, next)) {
+            this.pending = true;
+            return;
+        }
+        this.pending = false;
+        stopBuild(false);
+        this.build = next;
+        next.start(server, this.worldPosition, this::told);
+    }
+
+    /* Stops building, its formed parts given back when {@code giveBack}. */
+    private void stopBuild(final boolean giveBack) {
+        final PlannedBuild was = this.build;
+        this.build = null;
+        if (was != null) {
+            was.stop(giveBack);
+        }
+        if (giveBack) {
+            this.formedParts.set(List.of());
+            this.missingParts.set(List.of());
+        }
+    }
+
+    /* Its plan's counts changed: its players are told the parts formed and what each lacks. */
+    private void told() {
+        final PlannedBuild now = this.build;
+        if (now == null) {
+            return;
+        }
+        this.formedParts.set(now.formedParts());
+        final List<Integer> missing = new ArrayList<>();
+        for (int part = 0; part < now.plan().parts(); part++) {
+            missing.add(now.missing(part));
+        }
+        this.missingParts.set(List.copyOf(missing));
+    }
+
+    /* Whether every chunk the plan {@code laid} stands in is loaded. */
+    private static boolean loaded(final ServerLevel level, final PlannedBuild laid) {
+        for (final PlanSpot spot : laid.plan().spots()) {
+            if (!level.isLoaded(laid.where(spot))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /*

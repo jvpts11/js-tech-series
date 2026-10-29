@@ -71,30 +71,34 @@ public final class FormedMeshes implements IFormedMeshes {
     public static boolean outline(final Level level, final BlockPos pos, final BlockState state,
                                   final Shapes.DoubleLineConsumer sink) {
         if (!(state.getBlock() instanceof FormedPartBlock)
-                || !(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part) || part.place() == null) {
+                || !(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part) || part.places().isEmpty()) {
             return false;
         }
-        final FormedPlace place = part.place();
-        final Optional<float[]> lines = FormedShapes.lines(level, place);
-        if (lines.isEmpty()) {
-            return false;
-        }
-        final float[] all = lines.get();
+        boolean drawn = false;
         final double[] local = new double[AXES];
         final double[] from = new double[AXES];
         final double[] to = new double[AXES];
-        for (int at = 0; at + MeshOutline.LINE <= all.length; at += MeshOutline.LINE) {
-            local[0] = all[at];
-            local[1] = all[at + 1];
-            local[2] = all[at + 2];
-            CellSpace.toWorld(local, place.turn(), from);
-            local[0] = all[at + 3];
-            local[1] = all[at + 4];
-            local[2] = all[at + 5];
-            CellSpace.toWorld(local, place.turn(), to);
-            sink.consume(from[0], from[1], from[2], to[0], to[1], to[2]);
+        // Its own model's outline, and those of the models reaching into it, each turned as its model stands.
+        for (final FormedPlace place : part.places()) {
+            final Optional<float[]> lines = FormedShapes.lines(level, place);
+            if (lines.isEmpty()) {
+                continue;
+            }
+            final float[] all = lines.get();
+            for (int at = 0; at + MeshOutline.LINE <= all.length; at += MeshOutline.LINE) {
+                local[0] = all[at];
+                local[1] = all[at + 1];
+                local[2] = all[at + 2];
+                CellSpace.toWorld(local, place.turn(), from);
+                local[0] = all[at + 3];
+                local[1] = all[at + 4];
+                local[2] = all[at + 5];
+                CellSpace.toWorld(local, place.turn(), to);
+                sink.consume(from[0], from[1], from[2], to[0], to[1], to[2]);
+            }
+            drawn = true;
         }
-        return true;
+        return drawn;
     }
 
     @Override

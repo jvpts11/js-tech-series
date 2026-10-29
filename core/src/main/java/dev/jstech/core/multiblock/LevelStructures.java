@@ -90,7 +90,7 @@ public final class LevelStructures {
         }
         for (final Watch watch : List.copyOf(watches)) {
             if (watch.contains(pos)) {
-                watch.watcher().changed();
+                watch.watcher().changed(pos);
             }
         }
     }

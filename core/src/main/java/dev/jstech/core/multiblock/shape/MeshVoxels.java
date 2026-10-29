@@ -49,12 +49,8 @@ public final class MeshVoxels {
         if (fine.length / BOX <= MOST_BOXES) {
             return fine;
         }
-        final int[] coarse = boxes(triangles, COARSE);
-        final int scale = FINE / COARSE;
-        for (int i = 0; i < coarse.length; i++) {
-            coarse[i] *= scale;
-        }
-        return coarse;
+        // In eighths, each box already given in sixteenths by the grid's step.
+        return boxes(triangles, COARSE);
     }
 
     /** The boxes of a block with {@code triangles} in it, worked out in a grid of {@code grid} to a side. */

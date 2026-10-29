@@ -74,8 +74,11 @@ class MeshVoxelsTest {
         assertTrue(fine.length / MeshVoxels.BOX > MeshVoxels.MOST_BOXES, "a ball is more than the most in sixteenths");
         for (final int value : boxes) {
             assertEquals(0, value % (FINE / MeshVoxels.COARSE), "in eighths: " + value);
+            assertTrue(value >= 0 && value <= FINE, "still in sixteenths, within the block: " + value);
         }
         assertTrue(boxes.length < fine.length);
+        final boolean[][][] full = grid(boxes);
+        assertTrue(full[8][8][1] && !full[8][8][8], "the ball's shell, not its inside, as in sixteenths");
     }
 
     /* A square across the whole block at height {@code y}, facing up or down. */

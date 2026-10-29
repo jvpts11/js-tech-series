@@ -409,7 +409,7 @@ public static final DeclaredModel TURBINE = CONTENT.model("turbine")
   out among the blocks of the pattern, as the structure stands facing north round its terminal, and writes
   `data/<mod>/formed_shape/<model>.json`, each block's boxes in sixteenths of a block. A block whose faces would make
   more than 32 boxes is worked out in eighths, that block alone. The file is sent to the players, whose own collisions
-  read it.
+  read it. (Until 2026-10-29 a block worked out in eighths was written twice its size, and its file did not read.)
 - **The run stops when model and pattern have drifted apart**: a block of the pattern with no face of the model in
   it, or faces more than a block outside the pattern, each named by its place from the terminal. Faces less than a
   block outside, a lip or a rotor's tip, are carried by the nearest block of the pattern, pressed onto its side.
@@ -557,6 +557,45 @@ never evened out between them, as a one-block machine's are. Liquid and matter t
 `MachineStructure.parallel(formed -> ...)` says how many recipes the structure runs at once, from what was built.
 A processing machine works that many at once in each lane, more with its upgrades; `recipesAtOnce()` gives the exact
 number, and Jade shows it ("Runs 4 at once").
+
+## Built by a plan
+
+*Added 2026-10-29.*
+
+A pattern finds a structure round its terminal. A plan says ahead what goes where, part by part, as a hangar keeps the
+rocket it builds or a dock the ship: no part has a terminal of its own, and each forms by itself once every block of
+it is down. A `BuildPlan` is its places, each a `PlanSpot`: where it is from the plan's origin, the block wanted there,
+the part it belongs to, and which block of that part's formed model it merges as.
+
+```java
+final BuildPlan plan = new BuildPlan(2, List.of(
+        new PlanSpot(new BlockPos(0, 0, 0), IRON, 0, Optional.of(place(0, 0, 0)), List.of()),
+        new PlanSpot(new BlockPos(0, 1, 0), GOLD, 1, Optional.of(place(0, 1, 0)), List.of())));
+final PlannedBuild build = new PlannedBuild(plan, origin);
+build.start(serverLevel, ownerPos, () -> tellMyPlayers(build));   // counts once, then watches
+```
+
+- **Counted once, then one block at a time**: `start` counts what is in place; after that the world's index of
+  structures tells the plan of each of its places that changes, so a block put down or taken away changes its part's
+  count by one, in the same short time however large the plan. `missing(part)`, `present(spot)` and `formed(part)`
+  are there for whatever shows or builds the plan, a hologram of what is missing or a crane laying the next block.
+- **A part forms on its last block** and comes apart as soon as one goes, every block back as it was; the other parts
+  stay as they are. A part's blocks merge as a structure's do, but they never look for an owner: the plan gives them
+  back itself, when one goes or when its owner `stop(true)`s it. A block that keeps something of its own, a block
+  entity, does not merge; if it is an `IPlanMember` it is told as its part forms, to stop drawing itself, say.
+- **The owner draws the formed parts**, since a merged block draws nothing; it keeps the plan and its origin, starts it
+  again when its chunk loads (`stop(false)` as it unloads leaves the parts formed), and may hand it on
+  (`handTo(newOwner)`), as a rocket takes its own plan when it leaves its hangar.
+- **Models that reach into their neighbours**: declare a part's model laid, with its own blocks and the blocks of the
+  parts beside it its faces may reach into, from the block whose lowest corner is at `origin`, in blocks
+  (`FormedShapes.declareLaid(model, origin, own, reach, hollow)`). The data run writes its shape file as for a
+  pattern's model, its faces shared among all those blocks; it stops when one of its own blocks has no face of it, or
+  faces lie more than a block outside them all. The plan says, at each place, the blocks of other parts' models
+  reaching into it (`PlanReach`); a merged block takes those shapes too, only while those parts are formed, as an
+  engine's blocks take the skirt rising round them from the ring under it.
+- **Hollow blocks**: a round part on a square of blocks may leave the corners of a layer outside its hull. Declared
+  hollow, those blocks merge with no shape at all, as the model shows nothing there; any other block with no face
+  still stops the run.
 
 ## Showing a multiblock before it is built
 

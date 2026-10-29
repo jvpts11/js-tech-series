@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -32,7 +33,9 @@ import org.jetbrains.annotations.Nullable;
  * ({@code ModelBuilder.formedFrom}) has its shape file written by the data run, under
  * {@code data/<namespace>/formed_shape/}, and each block of its structure that merges into it takes the shape of its
  * own part of the model, as the structure stands: collided with, outlined and aimed at as it is drawn, on the ground
- * and aboard a moving structure. A structure of no declared model merges as before, each block whole.
+ * and aboard a moving structure. A structure of no declared model merges as before, each block whole. A model of blocks
+ * a plan lays ({@link #declareLaid}) is shaped the same way from the blocks it says, its faces free to reach into the
+ * blocks of the parts beside it.
  */
 public final class FormedShapes {
 
@@ -53,6 +56,8 @@ public final class FormedShapes {
     /* What a kind of block does aboard as a block of a formed model, by the model, then the block. */
     private static final Map<ResourceLocation, Map<ResourceLocation, BlockAboard>> ABOARD =
             Collections.synchronizedMap(new LinkedHashMap<>());
+    /* The models of blocks laid by a plan, with their own blocks and those of others their faces may reach into. */
+    private static final Map<ResourceLocation, Laid> LAID = Collections.synchronizedMap(new LinkedHashMap<>());
     /* Where the lowest corner of a pattern's terminal block is in its formed model's space. */
     private static final double[] PATTERN_ORIGIN = {-0.5, 0.0, -0.5};
     private static volatile @Nullable IFormedMeshes meshes;
@@ -91,6 +96,33 @@ public final class FormedShapes {
     public static void declareAboard(final ResourceLocation model, final ResourceLocation block,
                                      final BlockAboard aboard) {
         ABOARD.computeIfAbsent(model, any -> Collections.synchronizedMap(new LinkedHashMap<>())).put(block, aboard);
+    }
+
+    /**
+     * Declares the model {@code model} the formed model of blocks a plan lays, rather than ones a pattern finds: its
+     * own blocks {@code own}, and the blocks of other parts beside it its faces may reach into, {@code reach}, as a
+     * rocket's interstage skirt rises round the engine standing on it; each a key of {@link MeshCells#key}, from the
+     * block whose lowest corner is at {@code origin} in the model's space, in blocks. Of its own blocks, those in
+     * {@code hollow} are meant to have none of its faces, as the corners of a square of blocks round a round hull, and
+     * merge with no shape at all. Its data run writes the shapes of every block its faces fall in, and stops when any
+     * other of its own blocks has no face of it, or a face lies more than a block outside them all.
+     */
+    public static void declareLaid(final ResourceLocation model, final double[] origin, final Set<Long> own,
+                                   final Set<Long> reach, final Set<Long> hollow) {
+        LAID.put(model, new Laid(origin.clone(), Set.copyOf(own), Set.copyOf(reach), Set.copyOf(hollow)));
+    }
+
+    /** The models of laid blocks declared by the mod of that namespace, for its data run. */
+    public static Map<ResourceLocation, Laid> laidBy(final String namespace) {
+        final Map<ResourceLocation, Laid> out = new LinkedHashMap<>();
+        synchronized (LAID) {
+            LAID.forEach((model, laid) -> {
+                if (model.getNamespace().equals(namespace)) {
+                    out.put(model, laid);
+                }
+            });
+        }
+        return out;
     }
 
     /** What each kind of block does aboard as a block of the formed model {@code model}, as declared. */
@@ -179,5 +211,22 @@ public final class FormedShapes {
     @ApiStatus.Internal
     public static @Nullable IFormedMeshes meshes() {
         return meshes;
+    }
+
+    /**
+     * The blocks of a model a plan lays.
+     *
+     * @param origin where the lowest corner of the block {@code (0, 0, 0)} is in the model's space, in blocks
+     * @param own    its own blocks, each needing a face of it but the hollow ones
+     * @param reach  the blocks of other parts beside it its faces may fall in
+     * @param hollow its own blocks meant to have none of its faces, which merge with no shape
+     */
+    public record Laid(double[] origin, Set<Long> own, Set<Long> reach, Set<Long> hollow) {
+
+        /** Its origin, a copy. */
+        @Override
+        public double[] origin() {
+            return this.origin.clone();
+        }
     }
 }

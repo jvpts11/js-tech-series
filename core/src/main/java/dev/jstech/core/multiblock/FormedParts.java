@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredHolder;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The blocks of a formed structure merged into its terminal's model, and given back: a structure that merges turns
@@ -105,6 +106,45 @@ public final class FormedParts {
             }
         }
         return List.copyOf(out);
+    }
+
+    /**
+     * Merges the block at {@code at} as a block a plan laid, for the plan's owner at {@code owner}: shaped as the block
+     * {@code own} of its formed model, if it has one, and as the blocks {@code reaching} of the formed models beside
+     * it that reach into it; it never looks for its owner. A block that does not merge stays as it is.
+     *
+     * @return whether it merged
+     */
+    public static boolean lay(final ServerLevel level, final BlockPos owner, final BlockPos at,
+                              @Nullable final FormedPlace own, final List<FormedPlace> reaching) {
+        final BlockState was = level.getBlockState(at);
+        if (!merges(was)) {
+            return false;
+        }
+        level.setBlock(at, BLOCK.get().defaultBlockState(), Block.UPDATE_CLIENTS);
+        if (!(level.getBlockEntity(at) instanceof FormedPartBlockEntity part)) {
+            return false;
+        }
+        part.merged(was, owner, own);
+        part.laid(reaching);
+        final BlockState merged = level.getBlockState(at);
+        MovingStructures.noteChange(level, at, merged, merged);
+        puff(level, at);
+        return true;
+    }
+
+    /** Tells the block a plan laid at {@code at} that the plan's owner is at {@code owner} now. */
+    public static void ownedBy(final ServerLevel level, final BlockPos at, final BlockPos owner) {
+        if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part && part.planned()) {
+            part.owned(owner);
+        }
+    }
+
+    /** Tells the block a plan laid at {@code at} which blocks of the formed models beside it reach into it now. */
+    public static void reach(final ServerLevel level, final BlockPos at, final List<FormedPlace> reaching) {
+        if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part && part.planned()) {
+            part.reached(reaching);
+        }
     }
 
     /** Gives back the blocks merged at {@code places}, each the block it was. */

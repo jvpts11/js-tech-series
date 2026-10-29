@@ -317,6 +317,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   model says or else by the block it was, and `BlockAboard.wayAt` the way it looks. `ModelBuilder.aboard` says what a
   kind of block does as a block of the model, `FormedShapes.declareAboard`, `aboardDeclared` and `aboard` hold it, and
   `FormedShape.aboard` reads it from a shape file.
+- Building by a plan: J's Core's API is at version 21, and `dev.jstech.core.multiblock.plan` joins the promise,
+  experimental. `BuildPlan` is a plan's places, each a `PlanSpot` (where, the block wanted, its part, the block of its
+  part's model it merges as) with the `PlanReach`es of other parts' models into it; `PlannedBuild` builds it in a
+  world for an owner (`start`, `stop`, `handTo`, `missing`, `present`, `formed`, `formedParts`, `complete`, `where`,
+  `spotAt`), and `IPlanMember` is a block of it that keeps something of its own. `IStructureWatcher.changed(BlockPos)`
+  tells a watcher which place changed. `FormedShapes.declareLaid`, `laidBy` and `Laid` declare a model of blocks a
+  plan lays, with the blocks beside it it reaches into and its hollow ones. `FormedParts.lay`, `reach` and `ownedBy`
+  merge a block a plan laid and tell it what reaches into it and whose it is; `FormedPartBlockEntity.also`, `places`
+  and `planned` give a merged block's other shapes and whether a plan laid it; `FormedAim.places` and `hit` with
+  several places aim at all of a block's models.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1720,6 +1730,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   hands and HUD hidden while it holds it; it finds where a point of the world falls on the screen and which way into
   the world the mouse looks, to pick what is under it. A model can be drawn see-through and tinted, as a hologram of a
   part being placed.
+- Building by a plan: a structure laid out ahead, place by place, as a hangar keeps the rocket it builds; each
+  part forms by itself once its last block is down and comes apart when one goes, counted one block at a time however
+  large the plan, with no terminal of its own; its blocks never look for their owner, which may hand the plan on. A
+  part's model may reach into the blocks of the parts beside it, which take its shape while it is formed, and a round
+  part's corner blocks outside its hull may be hollow.
 - Seats one lies on: a seat aboard a moving structure may lay its sitter on their back, as a capsule's crew lie
   on their couches, their eyes low over it, looking round as they like and drawn lying; and a formed structure's model
   may make a kind of its blocks do something else aboard, so the same seat is a couch in one model and a chair in
@@ -1857,6 +1872,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A formed block whose faces would make more than 32 boxes, worked out in eighths, is written its true size:
+  it was written twice as large, so its shape file did not read and the block stood whole.
 - A formed structure aboard a moving structure weighs, floats, drags and grips as the blocks merged into its
   model were, and an engine merged into the model still thrusts, its flame facing the engine's way: they were weighed
   and pushed as merged blocks, a thrust pod of 130 kilograms weighing six tonnes and its engine giving nothing.

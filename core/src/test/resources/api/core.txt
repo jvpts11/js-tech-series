@@ -10736,16 +10736,22 @@ stable 4
 12 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockPos terminal()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockState original()
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  FormedPlace place()
+21 dev.jstech.core.multiblock.FormedPartBlockEntity  List<FormedPlace> also()
+21 dev.jstech.core.multiblock.FormedPartBlockEntity  List<FormedPlace> places()
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  VoxelShape shape()
+21 dev.jstech.core.multiblock.FormedPartBlockEntity  boolean planned()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  new(BlockPos, BlockState)
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  void moved(BlockPos, BlockMove)
 10 dev.jstech.core.multiblock.FormedParts  type final class
 10 dev.jstech.core.multiblock.FormedParts  static List<Long> merge(ServerLevel, BlockPos, Collection<Long>)
 19 dev.jstech.core.multiblock.FormedParts  static List<Long> merge(ServerLevel, BlockPos, Collection<Long>, Function<BlockPos, Optional<FormedPlace>>)
+21 dev.jstech.core.multiblock.FormedParts  static boolean lay(ServerLevel, BlockPos, BlockPos, FormedPlace, List<FormedPlace>)
 10 dev.jstech.core.multiblock.FormedParts  static boolean merges(BlockState)
 10 dev.jstech.core.multiblock.FormedParts  static final BlockEntry<FormedPartBlock> BLOCK
 10 dev.jstech.core.multiblock.FormedParts  static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FormedPartBlockEntity>> ENTITY
 10 dev.jstech.core.multiblock.FormedParts  static void declare()
+21 dev.jstech.core.multiblock.FormedParts  static void ownedBy(ServerLevel, BlockPos, BlockPos)
+21 dev.jstech.core.multiblock.FormedParts  static void reach(ServerLevel, BlockPos, List<FormedPlace>)
 10 dev.jstech.core.multiblock.FormedParts  static void restore(ServerLevel, Collection<Long>)
 10 dev.jstech.core.multiblock.FormedParts  static void restoreAt(ServerLevel, BlockPos)
 10 dev.jstech.core.multiblock.IBlockMatcher  type interface
@@ -10790,6 +10796,7 @@ stable 4
 10 dev.jstech.core.multiblock.IStructureWatcher  type interface
 10 dev.jstech.core.multiblock.IStructureWatcher  abstract boolean holds(long)
 10 dev.jstech.core.multiblock.IStructureWatcher  abstract void changed()
+21 dev.jstech.core.multiblock.IStructureWatcher  default void changed(BlockPos)
 10 dev.jstech.core.multiblock.InsidePart  type record(String name, IBlockMatcher which, Map<String, Double> gives, List<Bonus> bonuses, List<Need> needs)
 10 dev.jstech.core.multiblock.InsidePart  InsidePart bonus(String, Neighbour, double)
 10 dev.jstech.core.multiblock.InsidePart  InsidePart gives(String, double)
@@ -11223,6 +11230,35 @@ stable 4
 12 dev.jstech.core.multiblock.hands.StructureHands  void save(CompoundTag, HolderLookup.Provider)
 12 dev.jstech.core.multiblock.hands.StructureHands  void setOpen(int, boolean, long)
 12 dev.jstech.core.multiblock.hands.StructureHands  void writeClient(CompoundTag, HolderLookup.Provider)
+21 dev.jstech.core.multiblock.plan.BuildPlan  type record(int parts, List<PlanSpot> spots)
+21 dev.jstech.core.multiblock.plan.BuildPlan  List<List<Integer>> byPart()
+21 dev.jstech.core.multiblock.plan.BuildPlan  static final BuildPlan EMPTY
+21 dev.jstech.core.multiblock.plan.BuildPlan  static final Codec<BuildPlan> CODEC
+21 dev.jstech.core.multiblock.plan.IPlanMember  type interface
+21 dev.jstech.core.multiblock.plan.IPlanMember  abstract void partFormed(ServerLevel, BlockPos, boolean)
+21 dev.jstech.core.multiblock.plan.PlanReach  type record(int part, FormedPlace place)
+21 dev.jstech.core.multiblock.plan.PlanReach  static final Codec<PlanReach> CODEC
+21 dev.jstech.core.multiblock.plan.PlanSpot  type record(BlockPos at, ResourceLocation block, int part, Optional<FormedPlace> place, List<PlanReach> reaches)
+21 dev.jstech.core.multiblock.plan.PlanSpot  static final Codec<PlanSpot> CODEC
+21 dev.jstech.core.multiblock.plan.PlannedBuild  type final class implements IStructureWatcher
+21 dev.jstech.core.multiblock.plan.PlannedBuild  BlockPos origin()
+21 dev.jstech.core.multiblock.plan.PlannedBuild  BlockPos where(PlanSpot)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  BuildPlan plan()
+21 dev.jstech.core.multiblock.plan.PlannedBuild  List<Integer> formedParts()
+21 dev.jstech.core.multiblock.plan.PlannedBuild  Optional<BlockPos> owner()
+21 dev.jstech.core.multiblock.plan.PlannedBuild  Optional<PlanSpot> spotAt(BlockPos)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  boolean complete()
+21 dev.jstech.core.multiblock.plan.PlannedBuild  boolean formed(int)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  boolean holds(long)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  boolean present(int)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  int missing()
+21 dev.jstech.core.multiblock.plan.PlannedBuild  int missing(int)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  new(BuildPlan, BlockPos)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  void changed()
+21 dev.jstech.core.multiblock.plan.PlannedBuild  void changed(BlockPos)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  void handTo(BlockPos)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  void start(ServerLevel, BlockPos, Runnable)
+21 dev.jstech.core.multiblock.plan.PlannedBuild  void stop(boolean)
 19 dev.jstech.core.multiblock.shape.CellSpace  type final class
 19 dev.jstech.core.multiblock.shape.CellSpace  static int[] boxes(int[], Orientation)
 19 dev.jstech.core.multiblock.shape.CellSpace  static int[] cellOf(int, int, int, Orientation)
@@ -11231,6 +11267,8 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedAim  type final class
 19 dev.jstech.core.multiblock.shape.FormedAim  static BlockHitResult clip(Level, ClipContext, BlockHitResult)
 19 dev.jstech.core.multiblock.shape.FormedAim  static BlockHitResult hit(Level, FormedPlace, Vec3, Vec3, BlockPos)
+21 dev.jstech.core.multiblock.shape.FormedAim  static BlockHitResult hit(Level, List<FormedPlace>, Vec3, Vec3, BlockPos)
+21 dev.jstech.core.multiblock.shape.FormedAim  static List<FormedPlace> places(Level, BlockPos, BlockState)
 19 dev.jstech.core.multiblock.shape.FormedAim  static Optional<FormedPlace> place(Level, BlockPos, BlockState)
 19 dev.jstech.core.multiblock.shape.FormedPlace  type record(ResourceLocation model, int orientation, int x, int y, int z)
 19 dev.jstech.core.multiblock.shape.FormedPlace  FormedPlace turned(Rotation)
@@ -11250,6 +11288,7 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedShape  static final Codec<FormedShape> CODEC
 19 dev.jstech.core.multiblock.shape.FormedShapes  type final class
 20 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, BlockAboard> aboardDeclared(ResourceLocation)
+21 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, Laid> laidBy(String)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, ResourceLocation> declaredBy(String)
 20 dev.jstech.core.multiblock.shape.FormedShapes  static Optional<BlockAboard> aboard(Level, FormedPlace, Block)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static Optional<FormedPlace> place(IStructureShape, int, BlockPos, BlockPos)
@@ -11261,7 +11300,10 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedShapes  static final List<Orientation> ORIENTATIONS
 19 dev.jstech.core.multiblock.shape.FormedShapes  static void declare(ResourceLocation, ResourceLocation)
 20 dev.jstech.core.multiblock.shape.FormedShapes  static void declareAboard(ResourceLocation, ResourceLocation, BlockAboard)
+21 dev.jstech.core.multiblock.shape.FormedShapes  static void declareLaid(ResourceLocation, double[], Set<Long>, Set<Long>, Set<Long>)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static void register()
+21 dev.jstech.core.multiblock.shape.FormedShapes.Laid  type record(double[] origin, Set<Long> own, Set<Long> reach, Set<Long> hollow)
+21 dev.jstech.core.multiblock.shape.FormedShapes.Laid  double[] origin()
 19 dev.jstech.core.multiblock.shape.IFormedMeshes  type interface
 19 dev.jstech.core.multiblock.shape.IFormedMeshes  abstract float[] lines(FormedPlace, FormedShape)
 19 dev.jstech.core.multiblock.shape.IFormedMeshes  abstract float[] triangles(FormedPlace, FormedShape)

@@ -287,6 +287,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   bay, the crew's seats, the heat shield to come home through air, the tanks filled at the pad; its sign lit READY or
   NOT READY. Every change is kept by the hangar; the design is named, saved as one of the hangar's sixteen plans,
   loaded from them, and sent to the bay to be built once it is ready.
+- The rocket is built by its hangar's plan: once a design is sent to the bay, the hangar lays it out on the
+  bay's floor, every block of every part's kit where it goes, and counts each part's blocks as they go down. A part
+  forms by itself as its last block goes down, its blocks merging into its own model, round and shaped as it is drawn,
+  with no terminal of its own, and comes apart, every block back, as soon as one goes; the other parts stay formed. A
+  separation ring's skirt shapes the blocks of the engine standing on it, the instrument ring's adapter those of the
+  lunar lander, the folded landing legs those of the tank over them. The hangar draws the formed parts, a capsule's
+  cabin at rest; the Flight Computer stays a block of its own and is drawn by its capsule's panel once the capsule
+  forms. In a formed capsule the crew seat is a couch. A hangar broken, or a new design sent, gives the rocket's blocks
+  back.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

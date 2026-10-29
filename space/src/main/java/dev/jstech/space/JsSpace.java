@@ -31,6 +31,7 @@ import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketPartModels;
+import dev.jstech.space.rocket.RocketShapes;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketKits;
 import dev.jstech.space.rocket.SkeletonRocketParts;
@@ -117,6 +118,8 @@ public final class JsSpace {
         RocketKitBlocks.declare();
         SkeletonRocketKits.declare();
         RocketPartModels.declare();
+        // Their formed models' shapes, each in the stacks it stands in, its faces reaching into the parts beside it.
+        RocketShapes.declare();
         // The Flight Computer every rocket carries: its transfer and landing pages, and its landing maps.
         FlightComputer.declare();
         // The Rocket Hangar a rocket is built in: its terminal, its crane, its doors and its platforms; and its design
