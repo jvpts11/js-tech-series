@@ -290,6 +290,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Typed lines on a cover: J's Core's API is at version 15. `GuideStyle.PartKind` gains `CENTRED_CODE` and
   `RIGHT_CODE`, a cover line in the style's code font centred in its part or set against its right edge.
   Experimental.
+- Ores of veins: J's Core's API is at version 16. A mineral that fills cracks in its rock, as gypsum does, can
+  wear the veins of the Nether's quartz instead of specks, `OreLook.Pattern.QUARTZ`, taken off the netherrack and laid
+  on any rock in the mineral's colour; experimental. The game's rock a pattern is taken off is asked of the pattern
+  now, `pattern.rock(deepslate)`, where it was asked of `OreLook.Pattern` itself: a mod that called it calls it on
+  its pattern.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

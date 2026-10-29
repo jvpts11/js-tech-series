@@ -55,7 +55,7 @@ public final class TestMaterials {
             ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "testite"), MaterialKind.MINERAL, TESTITE_NAME)
             .colour(0x353735).mineral(MineralFamilies.OXIDE, HostRocks.STONE, HostRocks.GRANITE)
             .contains(Elements.of(Element.URANIUM), 0.7).contains(Elements.of(Element.THORIUM), 0.1)
-            .ore(OreLook.of(OreLook.Pattern.LAPIS)).declare();
+            .ore(OreLook.of(OreLook.Pattern.QUARTZ)).declare();
     /** A gas of the test mod's own, which the test gas fluid is, as another mod's gas kept as a fluid would be. */
     public static final Material TESTOGEN = Materials.material(
             ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "testogen"), MaterialKind.GAS, TESTOGEN_NAME)

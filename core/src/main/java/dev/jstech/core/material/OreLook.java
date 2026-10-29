@@ -9,6 +9,7 @@ package dev.jstech.core.material;
 
 import java.util.Objects;
 import java.util.OptionalInt;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * How a material's ores look: the specks of one of the game's ores, taken off the game's rock and laid on any rock in
@@ -53,34 +54,45 @@ public record OreLook(Pattern pattern, OptionalInt colour, OptionalInt second, d
         return this.colour.orElse(material);
     }
 
-    /** The game's ores whose specks an ore can be drawn in. */
+    /**
+     * The game's ores whose specks an ore can be drawn in: the specks of the ores of the stone, or the veins of the
+     * Nether's quartz, for a mineral that fills cracks in its rock, as gypsum does.
+     */
     public enum Pattern {
-        COAL("coal_ore"),
-        IRON("iron_ore"),
-        COPPER("copper_ore"),
-        GOLD("gold_ore"),
-        REDSTONE("redstone_ore"),
-        EMERALD("emerald_ore"),
-        LAPIS("lapis_ore"),
-        DIAMOND("diamond_ore");
+        COAL("coal_ore", null),
+        IRON("iron_ore", null),
+        COPPER("copper_ore", null),
+        GOLD("gold_ore", null),
+        REDSTONE("redstone_ore", null),
+        EMERALD("emerald_ore", null),
+        LAPIS("lapis_ore", null),
+        DIAMOND("diamond_ore", null),
+        /** Veins, not specks: the Nether quartz ore's, taken off the netherrack it alone is drawn on. */
+        QUARTZ("nether_quartz_ore", "netherrack");
 
         private final String texture;
+        /* The one rock the game draws the ore on, for an ore that has no deepslate kind; none for the stone's ores. */
+        private final @Nullable String ownRock;
 
-        Pattern(final String texture) {
+        Pattern(final String texture, @Nullable final String ownRock) {
             this.texture = texture;
+            this.ownRock = ownRock;
         }
 
         /** The game's rock that ore is drawn on, whose texels are not specks, in the game's namespace. */
-        public static String rock(final boolean deepslate) {
+        public String rock(final boolean deepslate) {
+            if (this.ownRock != null) {
+                return "block/" + this.ownRock;
+            }
             return deepslate ? "block/deepslate" : "block/stone";
         }
 
         /**
          * The game's texture of the ore, in its own namespace: the deepslate one for an ore drawn on deepslate, the
-         * stone one on every other rock.
+         * stone one on every other rock; an ore of one rock of its own, its one texture.
          */
         public String texture(final boolean deepslate) {
-            return "block/" + (deepslate ? "deepslate_" : "") + this.texture;
+            return "block/" + (deepslate && this.ownRock == null ? "deepslate_" : "") + this.texture;
         }
     }
 }

@@ -8923,9 +8923,10 @@ stable 4
 10 dev.jstech.core.material.OreLook.Pattern  GOLD
 10 dev.jstech.core.material.OreLook.Pattern  IRON
 10 dev.jstech.core.material.OreLook.Pattern  LAPIS
+16 dev.jstech.core.material.OreLook.Pattern  QUARTZ
 10 dev.jstech.core.material.OreLook.Pattern  REDSTONE
+16 dev.jstech.core.material.OreLook.Pattern  String rock(boolean)
 10 dev.jstech.core.material.OreLook.Pattern  String texture(boolean)
-10 dev.jstech.core.material.OreLook.Pattern  static String rock(boolean)
 10 dev.jstech.core.material.RegisteredThing  type record(MaterialThing thing, HostRock rock, ResourceLocation id)
 10 dev.jstech.core.material.RegisteredThing  Optional<HostRock> inRock()
 10 dev.jstech.core.material.RegisteredThing  boolean isBlock()

@@ -7,8 +7,10 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.material.MaterialTooltips;
 import dev.jstech.core.jstechseries.SeriesMaterials;
+import dev.jstech.core.material.FormArt;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.HostRocks;
@@ -19,6 +21,9 @@ import dev.jstech.core.material.RegisteredThing;
 import dev.jstech.tests.TestMaterials;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,6 +33,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -47,6 +55,7 @@ public final class MaterialsClientTests {
     /* In the ground before the wall, as the players stand at y 2. */
     private static final BlockPos POOL = new BlockPos(3, 1, 6);
     private static final BlockPos VIEW = new BlockPos(5, 2, 9);
+    private static final int MOST_TEXELS = FormArt.SIZE * FormArt.SIZE;
 
     private MaterialsClientTests() {
     }
@@ -97,6 +106,32 @@ public final class MaterialsClientTests {
                         + "-a-radioactive-mineral-and-molten-tin");
     }
 
+    @ClientTest(timeoutTicks = 100)
+    public static void ores_ofVeinsCarryTheVeinsOfTheGamesQuartz(final ClientTestContext ctx) {
+        ctx.then(0, () -> {
+            final ResourceLocation ore = BuiltInRegistries.BLOCK.getKey(
+                    MaterialUses.oreBlock(TestMaterials.TESTITE, HostRocks.STONE).get());
+            final int[] drawn = texels(ctx, ResourceLocation.fromNamespaceAndPath(ore.getNamespace(),
+                    "textures/block/" + ore.getPath() + ".png"));
+            final int[] stone = texels(ctx, ResourceLocation.withDefaultNamespace("textures/block/stone.png"));
+            final int[] veins = FormArt.specks(
+                    texels(ctx, ResourceLocation.withDefaultNamespace("textures/block/nether_quartz_ore.png")),
+                    FormArt.SIZE,
+                    texels(ctx, ResourceLocation.withDefaultNamespace("textures/block/netherrack.png")),
+                    FormArt.SIZE);
+            int veined = 0;
+            for (int i = 0; i < drawn.length; i++) {
+                if (veins[i] != 0) {
+                    veined++;
+                    ctx.assertTrue(drawn[i] != stone[i], "a texel of the quartz's veins is the mineral at " + i);
+                } else {
+                    ctx.assertTrue(drawn[i] == stone[i], "a texel off the veins is the stone's own at " + i);
+                }
+            }
+            ctx.assertTrue(veined > MOST_TEXELS / 8, "the quartz's veins run through it: " + veined + " texels");
+        });
+    }
+
     @ClientTest(timeoutTicks = 200)
     public static void tooltip_showsTheMaterialsLinesAndKeepsSomeForShift(final ClientTestContext ctx) {
         ctx.then(0, () -> {
@@ -124,6 +159,23 @@ public final class MaterialsClientTests {
         final List<String> out = new ArrayList<>();
         lines.forEach(line -> out.add(line.getString()));
         return out;
+    }
+
+    /* The texels of the texture {@code file} as the player's game reads it, ARGB, row by row, sixteen to a row. */
+    private static int[] texels(final ClientTestContext ctx, final ResourceLocation file) {
+        final Resource resource = ctx.mc().getResourceManager().getResource(file)
+                .orElseThrow(() -> new IllegalStateException("no texture " + file));
+        try (InputStream in = resource.open(); NativeImage image = NativeImage.read(NativeImage.Format.RGBA, in)) {
+            final int[] out = new int[FormArt.SIZE * FormArt.SIZE];
+            for (int y = 0; y < FormArt.SIZE; y++) {
+                for (int x = 0; x < FormArt.SIZE; x++) {
+                    out[y * FormArt.SIZE + x] = FastColor.ABGR32.fromArgb32(image.getPixelRGBA(x, y));
+                }
+            }
+            return out;
+        } catch (final IOException unreadable) {
+            throw new UncheckedIOException(unreadable);
+        }
     }
 
     /* The things side by side, each three times its size on a plain ground, for the art to be judged by eye. */

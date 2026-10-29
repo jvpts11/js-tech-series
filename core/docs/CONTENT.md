@@ -439,7 +439,8 @@ its light and shade kept (every ingot is the iron ingot in the material's colour
 rod the stick); the rest come from the Core's own templates. A material's colour gives a ramp: its shadows cooler and
 deeper, its lights warmer and paler. An ore is its rock's texture with the specks of one of the game's ores laid on it
 (`OreLook`: which ore's specks, a colour of the ore's own when it is not the metal's, and a second colour for the hues
-of a mineral of two). A form a mod adds draws from a grey template of the mod's own:
+of a mineral of two). A mineral that fills cracks in its rock, as gypsum does, takes the veins of the Nether's quartz
+instead of specks (`OreLook.Pattern.QUARTZ`), taken off the netherrack and laid on any rock. A form a mod adds draws from a grey template of the mod's own:
 `Forms.form(...).art(rl("item/pellet"))`. The models and block states are made the same way, and a resource pack can
 replace any of them.
 

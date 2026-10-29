@@ -310,6 +310,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Typed lines on a cover: J's Core's API is at version 15. `GuideStyle.PartKind` gains `CENTRED_CODE` and
   `RIGHT_CODE`, a cover line in the style's code font centred in its part or set against its right edge.
   Experimental.
+- (Core) Ores of veins: J's Core's API is at version 16. A mineral that fills cracks in its rock, as gypsum does, can
+  wear the veins of the Nether's quartz instead of specks, `OreLook.Pattern.QUARTZ`, taken off the netherrack and laid
+  on any rock in the mineral's colour; experimental. The game's rock a pattern is taken off is asked of the pattern
+  now, `pattern.rock(deepslate)`, where it was asked of `OreLook.Pattern` itself: a mod that called it calls it on
+  its pattern.
 - (Space) The promise: J's Space's API is at version 1, in `dev.jstech.space.api`, experimental. For now it holds
   only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
   landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
