@@ -494,6 +494,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   and the gear under it. A small ship's hull has room for one medium module or two or three small ones. A design
   flies with a cockpit, an airlock, a reactor, a main engine, the gear and a whole spine, its parts all where they go
   and of one class; what keeps one down is named.
+- The small starship's catalogue of 25 parts: the Orbiter, Cab and Greenhouse cockpits; the Airlock, the
+  Docking Module (its dorsal collar is an airlock too) and the Corridor; the Bay Doors, Ramp and Side Door holds, each
+  filling the small hull's room; the reactor with flush radiators or with radiator fins; the Twin Bells and the
+  four-bell Cluster at the tail, and the Magnetic Nozzle in a nacelle; the Side Intakes and the Nacelle Intake, both
+  turning their nozzles down to take off vertically; the Blended Delta, the Stub Wings that carry the nacelles and the
+  Swept Wings; the Twin Canted Fins and the Single Fin; the thruster Blisters and Quads; Wheels and Legs.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

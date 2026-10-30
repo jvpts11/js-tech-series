@@ -51,6 +51,7 @@ import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.rocket.StageFlights;
 import dev.jstech.space.rocket.StageLanding;
 import dev.jstech.space.network.SpacePayloads;
+import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.spacecraft.SkeletonSpacecraft;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.LandingCabins;
@@ -169,6 +170,8 @@ public final class JsSpace {
         StageFlights.listen();
         // The kinds of satellite and of probe a spacecraft is built as.
         SkeletonSpacecraft.declare();
+        // The small starship's catalogue of parts.
+        SmallShipParts.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();
