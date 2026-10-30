@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsspace:docking_guide"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsspace:blocks/docking_guide"
+}

@@ -420,6 +420,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   wings that carry nacelles, along the sides, round the ship or under it), its length along the spine, the room a
   module takes, and whether it holds an airlock or, for wings, carries nacelles; registered in `ShipParts` by id, which
   takes a data pack's files, `data/<namespace>/jsspace/ship_parts/`. Experimental.
+- (Space) Starship kits: J's Space's API is at version 13. `ShipKit` is the kit of blocks a starship part is built of
+  and where each goes on the ship: its pieces, each set from a place on the ship (`ShipKit.Anchor`: the part's own
+  section, the joint behind the cockpit, the wings' root or the spine's end), its layers drawn in letters with the
+  block each letter stands for, and mirrored to the ship's other side when it is a pair; registered in `ShipKits` by
+  the part's id, which takes a data pack's files, `data/<namespace>/jsspace/ship_kits/`. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2466,6 +2471,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   four-bell Cluster at the tail, and the Magnetic Nozzle in a nacelle; the Side Intakes and the Nacelle Intake, both
   turning their nozzles down to take off vertically; the Blended Delta, the Stub Wings that carry the nacelles and the
   Swept Wings; the Twin Canted Fins and the Single Fin; the thruster Blisters and Quads; Wheels and Legs.
+- (Space) The starship's block kit: 61 blocks, the same for every maker, in a row of their own in the J's Space tab.
+  The structure's 14 (hull frame and plating, access panel, livery and thermal plating, carbon edge, deck plate and
+  grating, bulkhead, pressure door, conduit, cable tray, viewport, light panel), the cockpit's 6, the airlock's and
+  docking port's 6, the reactor's 5, the main engines' 5 (the Ship Engine Mount among them), the air-breathing
+  engines' 5, the wings' and fins' 5, the thrusters' and landing gear's 6, and the modules' 9. Every part of the
+  catalogue is built of its kit: the sections of the spine as rings of the hull four blocks wide and three high, the
+  other parts set from their places on the ship, wings, nacelles, intakes and gear on both sides.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

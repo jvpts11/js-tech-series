@@ -97,6 +97,20 @@ stable 0
 12 dev.jstech.space.api.ShipClass  SMALL
 12 dev.jstech.space.api.ShipClass  String serializedName()
 12 dev.jstech.space.api.ShipClass  int room()
+13 dev.jstech.space.api.ShipKit  type record(List<Piece> pieces, Map<String, ResourceLocation> key)
+13 dev.jstech.space.api.ShipKit  static final Codec<ShipKit> CODEC
+13 dev.jstech.space.api.ShipKit.Anchor  type enum implements IStableName
+13 dev.jstech.space.api.ShipKit.Anchor  COCKPIT_JOINT
+13 dev.jstech.space.api.ShipKit.Anchor  SECTION
+13 dev.jstech.space.api.ShipKit.Anchor  SPINE_END
+13 dev.jstech.space.api.ShipKit.Anchor  String serializedName()
+13 dev.jstech.space.api.ShipKit.Anchor  WING_ROOT
+13 dev.jstech.space.api.ShipKit.Piece  type record(Anchor anchor, int x, int y, int z, List<List<String>> layers, boolean mirrored)
+13 dev.jstech.space.api.ShipKits  type final class
+13 dev.jstech.space.api.ShipKits  static Map<ResourceLocation, ShipKit> all(Level)
+13 dev.jstech.space.api.ShipKits  static Map<ResourceLocation, ShipKit> declared()
+13 dev.jstech.space.api.ShipKits  static Optional<ShipKit> get(Level, ResourceLocation)
+13 dev.jstech.space.api.ShipKits  static ShipKit declare(ResourceLocation, ShipKit)
 12 dev.jstech.space.api.ShipPart  type record(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room, boolean airlock, boolean carries)
 12 dev.jstech.space.api.ShipPart  static final Codec<ShipPart> CODEC
 12 dev.jstech.space.api.ShipPartKind  type enum implements IStableName

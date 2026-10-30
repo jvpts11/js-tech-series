@@ -18,9 +18,9 @@ import java.util.Set;
 /**
  * Whether a starship of its parts is whole and flies: a cockpit at the nose and at least one section behind it, every
  * section of the spine where it may go and of the same class, so the spine's joints all fit; every part hung on it in
- * its place (wings at the second section, nacelles on wings that carry them, the tail engine behind the spine's end
- * but never behind a ramp opening there); no more modules than the hull has room for; and the flight check: a
- * cockpit, an airlock, a reactor, a main engine and the gear.
+ * its place (wings at the second section behind the cockpit, nacelles on wings that carry them, the tail engine at
+ * the spine's end but never behind a ramp opening there); no more modules than the hull has room for; and the flight
+ * check: a cockpit, an airlock, a reactor, a main engine and the gear.
  *
  * <p>Pure: no game types.
  */
