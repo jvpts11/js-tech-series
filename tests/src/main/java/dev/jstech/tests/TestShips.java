@@ -12,6 +12,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.SmallShipFinishes;
 import java.util.List;
@@ -75,12 +76,26 @@ public final class TestShips {
 
         private final ValueField<ShipDesign> design;
         private final ValueField<ResourceLocation> finish;
+        private final ValueField<CabinReadings> readings;
 
         public DisplayEntity(final BlockPos pos, final BlockState state) {
             super(DISPLAY_ENTITY.get(), pos, state);
             this.design = fields().value("Design", ShipDesign.CODEC, NONE).save().toClient();
             this.finish = fields().value("Finish", ResourceLocation.CODEC, SmallShipFinishes.DEFAULT).save()
                     .toClient();
+            this.readings = fields().value("Readings", CabinReadings.CODEC, CabinReadings.AT_REST).save().toClient();
+        }
+
+        /** What its ship's cockpit reads. */
+        public CabinReadings readings() {
+            final CabinReadings shown = this.readings.get();
+            return shown == null ? CabinReadings.AT_REST : shown;
+        }
+
+        /** Has its ship's cockpit read {@code read}. */
+        public void read(final CabinReadings read) {
+            this.readings.set(read);
+            setChanged();
         }
 
         /** The ship it shows. */

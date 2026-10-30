@@ -60,8 +60,8 @@ public final class TestShipRenderers {
             poses.pushPose();
             poses.translate(0, GEAR, 0);
             ShipPartsRenderer.draw(stand, ShipPartModels.of(ShipParts.all(stand.getLevel()),
-                    ShipKits.all(stand.getLevel()), ship.spine(), ship.hung(), stand.finish()), poses, buffers, light,
-                    overlay);
+                    ShipKits.all(stand.getLevel()), ship.spine(), ship.hung(), stand.finish()), stand.readings(), poses,
+                    buffers, light, overlay);
             poses.popPose();
         }
 

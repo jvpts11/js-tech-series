@@ -2509,6 +2509,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   airlock's oxygen panel fills a worn suit's tanks from the cabin's air, and its suit locker keeps a crew's suits; the
   holds keep their cargo in vanilla barrels, strapped down by the hoist rail and the manifest terminal; the reactor
   room has its fusion drum. Fixtures the models draw stop drawing themselves once their part is formed.
+- (Space) The starship cockpits come alive: each maker's rich pilot's seat, and the flight shown as it goes. Meridian
+  Orbital's three displays follow the ship, the horizon banking and pitching, the map turning under the track, the
+  engines' bars taking their load, and its master caution lights amber with the master alarm; Ironside Yards' green
+  CRT runs and its needles move; Kosmozavod's black-faced needles move, its lamps light green, amber and red, its
+  guards lift while the engines run and its navigation globe turns with the heading. The side stick leans with the
+  pilot's hand and the throttle slides forward.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

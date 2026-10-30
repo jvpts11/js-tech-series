@@ -74,16 +74,19 @@ public final class RocketCabins {
      *
      * @param faces    the faces the flight is shown on
      * @param regions  where on its faces each live thing is drawn
-     * @param ball     the attitude ball, if it has one
+     * @param ball     the attitude ball, or a starship's navigation globe, if it has one
      * @param throttle the throttle, if it has one
+     * @param stick    a starship's side stick, if it has one
      */
-    public record Cabin(List<Face> faces, List<Region> regions, Optional<Ball> ball, Optional<Throttle> throttle) {
+    public record Cabin(List<Face> faces, List<Region> regions, Optional<Ball> ball, Optional<Throttle> throttle,
+                        Optional<Stick> stick) {
 
         public static final Codec<Cabin> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Face.CODEC.listOf().fieldOf("faces").forGetter(Cabin::faces),
                 Region.CODEC.listOf().fieldOf("regions").forGetter(Cabin::regions),
                 Ball.CODEC.optionalFieldOf("ball").forGetter(Cabin::ball),
-                Throttle.CODEC.optionalFieldOf("throttle").forGetter(Cabin::throttle)
+                Throttle.CODEC.optionalFieldOf("throttle").forGetter(Cabin::throttle),
+                Stick.CODEC.optionalFieldOf("stick").forGetter(Cabin::stick)
         ).apply(instance, Cabin::new));
 
         public Cabin {
@@ -200,5 +203,21 @@ public final class RocketCabins {
                 ExtraCodecs.VECTOR3F.fieldOf("travel").forGetter(Throttle::travel),
                 Codec.FLOAT.fieldOf("rest").forGetter(Throttle::rest)
         ).apply(instance, Throttle::new));
+    }
+
+    /**
+     * A side stick: a bone leaning about its foot, forward by the pitch asked and aside by the roll.
+     *
+     * @param bone  the bone, its pivot the stick's foot
+     * @param right the way across the cabin, which it leans forward about
+     * @param out   the way back along the cabin, which it leans aside about
+     */
+    public record Stick(String bone, Vector3f right, Vector3f out) {
+
+        public static final Codec<Stick> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.STRING.fieldOf("bone").forGetter(Stick::bone),
+                ExtraCodecs.VECTOR3F.fieldOf("right").forGetter(Stick::right),
+                ExtraCodecs.VECTOR3F.fieldOf("out").forGetter(Stick::out)
+        ).apply(instance, Stick::new));
     }
 }
