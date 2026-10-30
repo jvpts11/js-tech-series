@@ -378,7 +378,7 @@
   "jsspace.design.tanks": "Tanques: enche na base",
   "jsspace.hangar.design": "Projeto de Foguete",
   "jsspace.hangar.no_hangar": "Este console não está na baia de nenhum Hangar de Foguetes formado",
-  "jsspace.design.screen.hangar": "Hangar de Foguetes",
+  "jsspace.design.screen.hangar": "Hangar de Foguetes %s",
   "jsspace.design.screen.parts_bin": "Gavetas",
   "jsspace.design.screen.stages": "Estágios",
   "jsspace.design.screen.command": "Comando",
@@ -500,7 +500,7 @@
   "jsspace.launcher.tower": "Torre Umbilical",
   "jsspace.launcher.swing_arm": "Braço Giratório",
   "jsspace.launcher.crew_arm": "Braço de Acesso da Tripulação",
-  "jsspace.design.launcher": "Sobre uma plataforma móvel",
-  "jsspace.design.no_launcher": "Sem espaço para a plataforma móvel: no chão",
+  "jsspace.design.launcher": "Sobre plataforma móvel",
+  "jsspace.design.no_launcher": "Plataforma não cabe",
   "block.jsspace.pad_pedestal": "Pedestal da Plataforma"
 }

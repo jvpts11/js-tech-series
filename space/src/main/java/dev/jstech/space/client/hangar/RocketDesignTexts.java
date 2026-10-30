@@ -15,7 +15,7 @@ import java.util.List;
 @TextHolder
 public final class RocketDesignTexts {
 
-    public static final TextKey HANGAR = TextKey.of("jsspace.design.screen.hangar", "Rocket Hangar");
+    public static final TextKey HANGAR = TextKey.of("jsspace.design.screen.hangar", "Rocket Hangar %s");
     public static final TextKey PARTS_BIN = TextKey.of("jsspace.design.screen.parts_bin", "Parts Bin");
     public static final TextKey STAGES = TextKey.of("jsspace.design.screen.stages", "Stages");
     public static final TextKey COMMAND = TextKey.of("jsspace.design.screen.command", "Command");

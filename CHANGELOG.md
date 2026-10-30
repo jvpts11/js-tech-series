@@ -2209,7 +2209,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   no engine or an engine with nothing to burn, too weak to lift off, taller than the bay's crane or wider than the
   bay, the crew's seats, the heat shield to come home through air, the tanks filled at the pad; its sign lit READY or
   NOT READY. Every change is kept by the hangar; the design is named, saved as one of the hangar's sixteen plans,
-  loaded from them, and sent to the bay to be built once it is ready.
+  loaded from them, and sent to the bay to be built once it is ready. Each hangar takes a number of its own in the
+  world the first time it forms, and its screen's sign reads it: Rocket Hangar 1, Rocket Hangar 2.
 - (Core) A camera a screen turns round a point: an editor's screen holds the view, the camera circling what is built
   at a distance the player turns, zooms and raises, kept inside a box such as a building's walls, the player's own body,
   hands and HUD hidden while it holds it; it finds where a point of the world falls on the screen and which way into

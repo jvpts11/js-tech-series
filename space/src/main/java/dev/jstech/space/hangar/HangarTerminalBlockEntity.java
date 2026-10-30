@@ -80,6 +80,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     private final ValueField<List<Integer>> formedParts;
     private final ValueField<List<Integer>> missingParts;
     private final ValueField<List<BlockPos>> platforms;
+    private final ValueField<Integer> number;
     /* The crane, and what it holds of the blocks its rocket wants. */
     private final PlanAssembler crane;
     /* The ports of its shell it is bound to, on the server. */
@@ -118,6 +119,8 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         // The work platforms in its formed bay, which its players' games draw whole.
         this.platforms = fields().value("Platforms", BlockPos.CODEC.listOf(), List.<BlockPos>of()).save()
                 .toClient();
+        // Its number among the world's hangars, taken the first time it forms; none before.
+        this.number = fields().value("Number", Codec.INT, 0).save().toClient();
         this.crane = new PlanAssembler(pos, this::setChanged);
         fields().part(PlanAssembler.KEY, this.crane).save();
         // Loaded, it starts building again once the chunks its plan stands in are loaded too, unless it already is.
@@ -176,6 +179,12 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     /** The bay it found, if it is formed. */
     public Optional<HangarBay> bay() {
         return Optional.ofNullable(this.bay.get());
+    }
+
+    /** Its number among the world's hangars, or 0 before it has first formed. */
+    public int number() {
+        final Integer taken = this.number.get();
+        return taken == null ? 0 : taken;
     }
 
     /** The work platforms in its formed bay. */
@@ -319,6 +328,9 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
             }
             this.platforms.set(now != null ? shape(this.level, now, true) : List.of());
             this.bay.set(now);
+            if (now != null && number() == 0 && this.level.getServer() != null) {
+                this.number.set(HangarNumbers.take(this.level.getServer()));
+            }
             setChanged();
         }
         bind(found.ports());

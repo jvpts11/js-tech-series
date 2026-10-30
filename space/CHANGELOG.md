@@ -289,7 +289,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   no engine or an engine with nothing to burn, too weak to lift off, taller than the bay's crane or wider than the
   bay, the crew's seats, the heat shield to come home through air, the tanks filled at the pad; its sign lit READY or
   NOT READY. Every change is kept by the hangar; the design is named, saved as one of the hangar's sixteen plans,
-  loaded from them, and sent to the bay to be built once it is ready.
+  loaded from them, and sent to the bay to be built once it is ready. Each hangar takes a number of its own in the
+  world the first time it forms, and its screen's sign reads it: Rocket Hangar 1, Rocket Hangar 2.
 - The rocket is built by its hangar's plan: once a design is sent to the bay, the hangar lays it out on the
   bay's floor, every block of every part's kit where it goes, and counts each part's blocks as they go down. A part
   forms by itself as its last block goes down, its blocks merging into its own model, round and shaped as it is drawn,

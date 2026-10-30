@@ -160,6 +160,9 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
     private static final double VACUUM_NOZZLE = 0.7;
     private static final double KILO = 1_000;
     private static final int GLYPH_HEIGHT = 8;
+    /* The size of the sign, the plan's name and the spec sheet's title against the rest, and how far down they sit. */
+    private static final float TITLE = 4.0F / 3.0F;
+    private static final int TITLE_DROP = 3;
     /* The sign the game's text takes as its formatting mark, which a name must not hold. */
     private static final char FORMATTING_SIGN = (char) 0xA7;
 
@@ -432,8 +435,10 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         g.fill(RocketDesignLayout.SIGN_X0 + 14, y0, RocketDesignLayout.SIGN_X1 - 14, y1, c.yellow());
         RocketDesignArt.frame(g, RocketDesignLayout.SIGN_X0 + 14, y0, RocketDesignLayout.SIGN_X1 - 14, y1,
                 c.black());
-        Draw.textCentered(g, this.font, up(RocketDesignTexts.HANGAR), (RocketDesignLayout.SIGN_X0
-                + RocketDesignLayout.SIGN_X1) / 2, y0 + 4, c.black());
+        // The sign, the plan's name and the spec sheet's title stand a third larger than the rest, as approved.
+        final String sign = up(RocketDesignTexts.HANGAR.with(this.terminal.number()));
+        Draw.text(g, this.font, sign, Math.round((RocketDesignLayout.SIGN_X0 + RocketDesignLayout.SIGN_X1) / 2.0F
+                - this.font.width(sign) * TITLE / 2), y0 + TITLE_DROP, c.black(), c.yellow(), TITLE);
         RocketDesignArt.hazard(g, RocketDesignLayout.SIGN_X1 - 14, y0, RocketDesignLayout.SIGN_X1, y1);
         final int nameWidth = RocketDesignLayout.NAME_X1 - RocketDesignLayout.NAME_X0;
         if (this.naming != null) {
@@ -442,8 +447,8 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             final String typed = this.naming.toString().toUpperCase(Locale.ROOT) + (blink ? "_" : "");
             Draw.text(g, this.font, tail(typed, nameWidth - 2), RocketDesignLayout.NAME_X0, y0 + 4, c.yellow());
         } else {
-            Draw.text(g, this.font, fit(this.design.name().toUpperCase(Locale.ROOT), nameWidth),
-                    RocketDesignLayout.NAME_X0, y0 + 4, c.stencil());
+            Draw.text(g, this.font, fit(this.design.name().toUpperCase(Locale.ROOT), Math.round(nameWidth / TITLE)),
+                    RocketDesignLayout.NAME_X0, y0 + TITLE_DROP, c.stencil(), c.paint(), TITLE);
         }
         Draw.text(g, this.font, fit(up(counts(this.report.stages().size(), this.report.height())),
                 RocketDesignLayout.LAMP_X - RocketDesignLayout.COUNTS_X - 4),
@@ -581,8 +586,8 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         final RocketPart part = entry.part();
         final int left = x0 + 18;
         final int width = x1 - 6 - left;
-        Draw.text(g, this.font, fit(up(RocketDesignTexts.SPEC_SHEET.with(code(entry))), width), left, y0 + 6,
-                c.ink());
+        Draw.text(g, this.font, fit(up(RocketDesignTexts.SPEC_SHEET.with(code(entry))), Math.round(width / TITLE)),
+                left, y0 + 5, c.ink(), c.paper(), TITLE);
         Draw.text(g, this.font, fit(name(part).toUpperCase(Locale.ROOT) + " D" + part.diameter(), width), left,
                 y0 + 21, c.ink());
         Draw.text(g, this.font, fit(up(RocketDesignTexts.TIER_MASS.with(part.tier(), tonnes(part.mass()))), width),
@@ -624,10 +629,9 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         }
         RocketDesignArt.heading(g, this.font, x0, RocketDesignLayout.DELTA_V_Y, up(RocketDesignTexts.DELTA_V), x1);
         RocketDesignArt.well(g, x0, RocketDesignLayout.LED_Y0, x1, RocketDesignLayout.LED_Y1);
-        final String total = whole(this.report.deltaV());
+        // The delta-v and its unit at one size, twice the rest, as approved.
+        final String total = whole(this.report.deltaV()) + " " + up(RocketDesignTexts.UNIT_SPEED);
         Draw.text(g, this.font, total, x0 + 6, RocketDesignLayout.LED_Y0 + 4, c.led(), c.paintDeep(), 2.0F);
-        Draw.text(g, this.font, up(RocketDesignTexts.UNIT_SPEED), x0 + 12 + 2 * this.font.width(total),
-                RocketDesignLayout.LED_Y0 + 10, c.led());
         final boolean engines = stages.stream().anyMatch(stage -> stage.engine().isPresent());
         final String ratio = String.format(Locale.ROOT, "%.2f", this.report.liftOff());
         final Text lift = !engines ? RocketDesignTexts.NO_ENGINES.text() : this.report.liftOff() > 1
@@ -651,8 +655,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         for (int i = 0; i < shown; i++) {
             final DesignReport.Check check = checks.get(i);
             final int yy = RocketDesignLayout.CHECK_Y0 + i * RocketDesignLayout.CHECK_STEP;
-            RocketDesignArt.lamp(g, x0 + 1, yy, lampOf(check.severity()), check.severity()
-                    != DesignReport.Severity.NOTE);
+            RocketDesignArt.lamp(g, x0 + 1, yy, lampOf(check.severity()), true);
             Draw.text(g, this.font, fit(up(check.text()), x1 - x0 - 14), x0 + 14, yy, c.stencil());
         }
         if (more) {

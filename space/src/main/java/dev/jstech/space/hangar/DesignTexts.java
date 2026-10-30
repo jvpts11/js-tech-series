@@ -31,9 +31,8 @@ public final class DesignTexts {
     public static final TextKey NO_SHIELD = TextKey.of("jsspace.design.no_shield", "No heat shield for air");
     public static final TextKey SHIELD = TextKey.of("jsspace.design.shield", "Heat shield on board");
     public static final TextKey TANKS = TextKey.of("jsspace.design.tanks", "Tanks: fill at the pad");
-    public static final TextKey LAUNCHER = TextKey.of("jsspace.design.launcher", "Stands on a mobile launcher");
-    public static final TextKey NO_LAUNCHER = TextKey.of("jsspace.design.no_launcher",
-            "No room for a mobile launcher: on the floor");
+    public static final TextKey LAUNCHER = TextKey.of("jsspace.design.launcher", "On a mobile launcher");
+    public static final TextKey NO_LAUNCHER = TextKey.of("jsspace.design.no_launcher", "No room for a launcher");
 
     private DesignTexts() {
     }
