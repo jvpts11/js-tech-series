@@ -20,6 +20,7 @@ import dev.jstech.industrial.line.CompressedAir;
 import dev.jstech.industrial.line.IndustrialPipeMarks;
 import dev.jstech.industrial.line.PipeFailures;
 import dev.jstech.industrial.line.PneumaticPost;
+import dev.jstech.space.telemetry.TelemetryLine;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -212,6 +213,13 @@ public final class TestCableTypes {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/hbw"))
                     .build(() -> Items.TRIPWIRE_HOOK));
+    /** A cable of J's Space's telemetry line, as its devices will take it: its stretches are ground systems. */
+    public static final DeferredHolder<CableType, CableType> TELEMETRY = CABLES.register("telemetry_line",
+            () -> CableType.builder(TelemetryLine.LINE)
+                    .grid(TelemetryLine.GRID).alone()
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/hbw"))
+                    .build(() -> Items.SPYGLASS));
 
     private TestCableTypes() {
     }

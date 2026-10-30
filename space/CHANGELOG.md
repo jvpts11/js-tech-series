@@ -475,6 +475,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   core and the wide pale blue plume of a nozzle in a vacuum; a stage let go fires its retro rockets; the Moon's dust
   flies out flat in rays all round a touchdown. The plume burns for the whole climb now, and while the engines brake a
   landing, where before it showed only at lift-off.
+- The telemetry line's model, for the devices and satellites to come: a line of the series' cable block that
+  carries data only, every connected stretch of it one ground system of the antennas, receivers, decoders, data
+  recorders and ground stations it joins. A ground system works with an antenna, a receiver, a decoder and a ground
+  station, keeps what comes down with a data recorder, and its antennas add up. An antenna is small (the low orbits),
+  medium (the geostationary orbit and the Moon) or large (the other worlds). A geostationary satellite is heard by an
+  antenna under it that hears that far; one in a low or polar orbit only while it passes over one, the world turning
+  under its orbit pass by pass; a relay satellite passes the signal on all the time.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

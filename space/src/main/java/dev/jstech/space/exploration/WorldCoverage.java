@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class WorldCoverage {
 
-    /* How long a pass of a low orbit takes, in ticks, as the world slides under it in the window. */
-    public static final long PASS_TICKS = 1_500;
     /* What a team has seen of a world, and of every world, by its id. */
     private static final Codec<ReliefCoverage> COVERAGE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.DOUBLE.listOf().fieldOf("strips").forGetter(ReliefCoverage::strips),
@@ -84,7 +82,7 @@ public final class WorldCoverage {
      */
     public static void photographAt(final MinecraftServer server, final String team, final ResourceLocation world,
                                     final long tick) {
-        photograph(server, team, world, Math.floorMod(tick / PASS_TICKS, ReliefCoverage.PASSES)
+        photograph(server, team, world, Math.floorMod(tick / ReliefCoverage.PASS_TICKS, ReliefCoverage.PASSES)
                 * ReliefCoverage.PASS_SHIFT);
     }
 

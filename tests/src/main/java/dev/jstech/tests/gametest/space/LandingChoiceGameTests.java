@@ -100,10 +100,10 @@ public final class LandingChoiceGameTests {
         final ServerLevel level = helper.getLevel();
         final String team = "jstests:coverage_" + UUID.randomUUID();
         WorldCoverage.photographAt(level.getServer(), team, SolarSystemWorlds.MOON, 0);
-        WorldCoverage.photographAt(level.getServer(), team, SolarSystemWorlds.MOON, WorldCoverage.PASS_TICKS - 1);
+        WorldCoverage.photographAt(level.getServer(), team, SolarSystemWorlds.MOON, ReliefCoverage.PASS_TICKS - 1);
         helper.assertTrue(WorldCoverage.of(level.getServer(), team, SolarSystemWorlds.MOON).strips().size() == 1,
                 "a pass is photographed once");
-        WorldCoverage.photographAt(level.getServer(), team, SolarSystemWorlds.MOON, WorldCoverage.PASS_TICKS);
+        WorldCoverage.photographAt(level.getServer(), team, SolarSystemWorlds.MOON, ReliefCoverage.PASS_TICKS);
         WorldCoverage.visit(level.getServer(), team, SolarSystemWorlds.MOON, 300, 300);
         final ReliefCoverage seen = WorldCoverage.of(level.getServer(), team, SolarSystemWorlds.MOON);
         helper.assertTrue(seen.strips().size() == 2 && seen.strips().get(1) == ReliefCoverage.PASS_SHIFT

@@ -30,7 +30,11 @@ public record ReliefCoverage(List<Double> strips, Set<Long> visited) {
     /** How far north and south a low orbit's ground track swings, and how far either side of it its camera sees. */
     public static final double TRACK = 25;
     public static final double SWATH = 6;
-    /** How far the world turns under a low orbit between two passes, in degrees: sixteen passes go round it. */
+    /**
+     * How long a pass of a low orbit takes, in ticks, as the world slides under it in the window, and how far the world
+     * turns under it between two passes, in degrees: sixteen passes go round it.
+     */
+    public static final long PASS_TICKS = 1_500;
     public static final double PASS_SHIFT = 22.5;
     public static final int PASSES = 16;
     /** How wide a cell of the ground stood on is, in blocks: a crew sees about so far round where they stand. */

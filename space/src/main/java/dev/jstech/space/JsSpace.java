@@ -35,6 +35,7 @@ import dev.jstech.space.cruise.RocketCruise;
 import dev.jstech.space.cruise.SolarStorms;
 import dev.jstech.space.descent.DescentTexts;
 import dev.jstech.space.descent.RocketDescent;
+import dev.jstech.space.telemetry.TelemetryLine;
 import dev.jstech.space.depot.DepotBlocks;
 import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.launcher.LauncherBlocks;
@@ -162,6 +163,8 @@ public final class JsSpace {
         // A rocket's coming down to a world, saved with its structure, and what its crew is told of it.
         RocketDescent.declare();
         DescentTexts.declare();
+        // The telemetry line, whose stretches are the ground systems.
+        TelemetryLine.declare();
         StageLanding.declare();
         StageFlights.listen();
         // The kinds of satellite and of probe a spacecraft is built as.
