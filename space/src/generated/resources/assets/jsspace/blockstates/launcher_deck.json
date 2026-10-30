@@ -13,15 +13,15 @@
       "y": 90
     },
     "facing=east,formed=true,role=body": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 90
     },
     "facing=east,formed=true,role=end": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 90
     },
     "facing=east,formed=true,role=top": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 90
     },
     "facing=north,formed=false,role=body": {
@@ -34,13 +34,13 @@
       "model": "jsspace:block/launcher_deck"
     },
     "facing=north,formed=true,role=body": {
-      "model": "jsspace:block/launcher/launcher_deck_formed"
+      "model": "jsspace:block/launcher_deck_drawn"
     },
     "facing=north,formed=true,role=end": {
-      "model": "jsspace:block/launcher/launcher_deck_formed"
+      "model": "jsspace:block/launcher_deck_drawn"
     },
     "facing=north,formed=true,role=top": {
-      "model": "jsspace:block/launcher/launcher_deck_formed"
+      "model": "jsspace:block/launcher_deck_drawn"
     },
     "facing=south,formed=false,role=body": {
       "model": "jsspace:block/launcher_deck",
@@ -55,15 +55,15 @@
       "y": 180
     },
     "facing=south,formed=true,role=body": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 180
     },
     "facing=south,formed=true,role=end": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 180
     },
     "facing=south,formed=true,role=top": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 180
     },
     "facing=west,formed=false,role=body": {
@@ -79,15 +79,15 @@
       "y": 270
     },
     "facing=west,formed=true,role=body": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 270
     },
     "facing=west,formed=true,role=end": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 270
     },
     "facing=west,formed=true,role=top": {
-      "model": "jsspace:block/launcher/launcher_deck_formed",
+      "model": "jsspace:block/launcher_deck_drawn",
       "y": 270
     }
   }

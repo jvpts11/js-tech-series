@@ -12,7 +12,9 @@ import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.launcher.CraneBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
+import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.launcher.LauncherPieceBlock;
 import dev.jstech.space.launcher.TowerFrameBlock;
@@ -40,9 +42,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The mobile launcher a rocket stands on in its hangar: laid by the hangar's plan under the rocket where the bay has
- * room for it, sized by the rocket, its deck with the exhaust opening under the engines, its tower past the rocket's
- * top on the side of the capsule's hatch, its arms out to the tanks and the hatch; its parts forming as their last
- * blocks go down, each piece taking its formed shape from the pieces round it; and left out of a bay too small.
+ * room for it, sized by the rocket, its deck on six pedestals with the exhaust opening under the engines and three
+ * masts round it, its length pointing at the bay's door and its tower past the rocket's top at the far end, its arms
+ * out to the tanks and the hatch; its parts forming as their last blocks go down, each piece taking its formed shape
+ * from the pieces round it and one hold-down arm measuring the deck to draw it; and left out of a bay too small.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -59,6 +62,8 @@ public final class LauncherGameTests {
     private static final int SMALL_TOP = 13;
     /* The first bay of a corner of the tower, as TowerFrameBlock numbers them. */
     private static final int CORNER_SLOT = 24;
+    /* How far the test rocket's foot, an engine three blocks across, reaches each side of its axis. */
+    private static final int FOOT = 1;
 
     private LauncherGameTests() {
     }
@@ -70,9 +75,11 @@ public final class LauncherGameTests {
         terminal.design(new RocketDesign("LAUNCHER", rocket()));
         helper.assertTrue(terminal.confirm(), "a ready design is sent to the bay");
         final Direction side = terminal.launcherSide().orElseThrow();
+        helper.assertTrue(side == Direction.EAST, "the deck points at the bay's door in its west wall, the tower at"
+                + " its far end, so the crawler comes in under it: the tower to the " + side);
         final BlockPos pad = terminal.bay().orElseThrow().pad();
-        helper.assertTrue(terminal.planAt().orElseThrow().equals(pad.above(LauncherLayout.DECK)),
-                "the rocket stands on the launcher's deck, three blocks over the floor");
+        helper.assertTrue(terminal.planAt().orElseThrow().equals(pad.above(LauncherLayout.RAISE)),
+                "the rocket stands on the launcher's deck on its pedestals, six blocks over the floor");
         final PlannedBuild plan = terminal.build().orElseThrow();
         final List<PlanSpot> spots = plan.plan().spots();
         final List<PlanSpot> rocket = spots.stream().filter(spot -> spot.part() < rocket().sections().size())
@@ -83,10 +90,27 @@ public final class LauncherGameTests {
             helper.assertTrue(spots.stream().anyMatch(spot -> spot.block().equals(piece.getId())),
                     "the launcher has its " + piece.getId().getPath());
         }
-        // The opening under the engines is left empty, through the deck.
+        // The opening under the engines is as wide as the rocket's foot, through the deck, its lining round it.
         final Set<BlockPos> laid = spots.stream().map(PlanSpot::at).collect(Collectors.toSet());
+        final Direction across = side.getClockWise();
         for (int y = -LauncherLayout.DECK; y < 0; y++) {
-            helper.assertTrue(!laid.contains(new BlockPos(0, y, 0)), "nothing is laid under the rocket's axis");
+            for (int k = -FOOT - 1; k <= FOOT + 1; k++) {
+                final BlockPos at = new BlockPos(0, y, 0).relative(across, k);
+                helper.assertTrue(laid.contains(at) == (Math.abs(k) > FOOT), "the opening reaches the rocket's"
+                        + " foot and no further: " + at);
+            }
+        }
+        // Six pedestals three blocks tall, in two rows the crawler comes between; three masts a third of a turn apart.
+        final List<PlanSpot> pedestals = only(spots, LauncherBlocks.PAD_PEDESTAL.getId());
+        helper.assertTrue(pedestals.size() == 6 * LauncherLayout.PEDESTAL && pedestals.stream().allMatch(spot ->
+                spot.at().getY() < -LauncherLayout.DECK), "the deck stands on six pedestals under it: "
+                + pedestals.size());
+        final List<PlanSpot> masts = only(spots, LauncherBlocks.TAIL_SERVICE_MAST.getId());
+        for (final double degrees : LauncherLayout.MAST_ANGLES) {
+            final int[] mast = LauncherLayout.mast(FOOT, degrees);
+            final BlockPos foot = BlockPos.ZERO.relative(side, mast[0]).relative(across, mast[1]);
+            helper.assertTrue(masts.stream().anyMatch(spot -> spot.at().equals(foot)), "a mast stands at "
+                    + degrees + " degrees round the opening: " + foot);
         }
         final int rocketTop = rocket.stream().mapToInt(spot -> spot.at().getY()).max().orElseThrow();
         final int towerTop = top(spots, LauncherBlocks.TOWER_FRAME.getId());
@@ -97,8 +121,6 @@ public final class LauncherGameTests {
         final List<PlanSpot> crew = only(spots, LauncherBlocks.CREW_ACCESS_ARM.getId());
         helper.assertTrue(!crew.isEmpty() && crew.stream().allMatch(spot -> spot.at().getY() == hatch.getY()),
                 "the crew access arm runs out at the hatch's height");
-        final ToIntFunction<BlockPos> out = at -> at.getX() * side.getStepX() + at.getZ() * side.getStepZ();
-        helper.assertTrue(out.applyAsInt(hatch) > 0, "the tower stands on the side the hatch looks out of");
         helper.assertTrue(!only(spots, LauncherBlocks.SWING_ARM.getId()).isEmpty(), "a swing arm goes to the tank");
         terminal.undo();
         helper.succeed();
@@ -125,17 +147,33 @@ public final class LauncherGameTests {
                 + spot.at().getZ() * side.getStepZ();
         final BlockState deck = at(helper, plan, first(launcher, LauncherBlocks.LAUNCHER_DECK.getId()));
         helper.assertTrue(deck.getValue(LauncherPieceBlock.FORMED), "the deck takes its formed shape");
-        final int towerTop = top(launcher, LauncherBlocks.TOWER_FRAME.getId());
-        final PlanSpot boom = only(launcher, LauncherBlocks.TOWER_FRAME.getId()).stream()
-                .filter(spot -> spot.at().getY() == towerTop).min(Comparator.comparingInt(out)).orElseThrow();
-        helper.assertTrue(role(helper, plan, boom) == LauncherPieceBlock.Role.END
-                        && at(helper, plan, boom).getValue(HorizontalDirectionalBlock.FACING) == side.getOpposite(),
-                "the boom's end runs out from the tower over the rocket: " + at(helper, plan, boom) + " at "
-                        + boom.at() + ", the tower to the " + side);
-        final PlanSpot house = only(launcher, LauncherBlocks.TOWER_FRAME.getId()).stream()
-                .filter(spot -> spot.at().getY() == towerTop).max(Comparator.comparingInt(out)).orElseThrow();
-        helper.assertTrue(role(helper, plan, house) == LauncherPieceBlock.Role.TOP, "the tower's top is the crane"
-                + " house");
+        // The crane's boom is the row of frames on the house, its tip out over the rocket drawing the whole crane.
+        final int boomHeight = top(launcher, LauncherBlocks.TOWER_FRAME.getId());
+        final List<PlanSpot> boomRow = only(launcher, LauncherBlocks.TOWER_FRAME.getId()).stream()
+                .filter(spot -> spot.at().getY() == boomHeight).toList();
+        final PlanSpot boom = boomRow.stream().min(Comparator.comparingInt(out)).orElseThrow();
+        helper.assertTrue(boomRow.stream().allMatch(spot -> role(helper, plan, spot) == LauncherPieceBlock.Role.END
+                        && at(helper, plan, spot).getValue(HorizontalDirectionalBlock.FACING) == side.getOpposite())
+                        && TowerFrameBlock.tip(at(helper, plan, boom)),
+                "the boom runs from past the tower's back out over the rocket, its tip the far end: "
+                        + at(helper, plan, boom) + " at " + boom.at() + ", the tower to the " + side);
+        final List<PlanSpot> houseRow = only(launcher, LauncherBlocks.TOWER_FRAME.getId()).stream()
+                .filter(spot -> spot.at().getY() == boomHeight - 1).toList();
+        helper.assertTrue(houseRow.size() == 16 && houseRow.stream().allMatch(spot -> role(helper, plan, spot)
+                == LauncherPieceBlock.Role.TOP), "the tower's top is the crane's house, under the boom too");
+        final List<PlanSpot> under = only(launcher, LauncherBlocks.TOWER_FRAME.getId()).stream()
+                .filter(spot -> spot.at().getY() == boomHeight - 2).toList();
+        helper.assertTrue(under.stream().allMatch(spot -> role(helper, plan, spot) == LauncherPieceBlock.Role.BODY),
+                "under the house the truss goes on");
+        final PlanSpot house = houseRow.stream().max(Comparator.comparingInt(out)).orElseThrow();
+        final int tipAt = out.applyAsInt(boom);
+        final CraneBlockEntity.Crane crane = helper.getLevel().getBlockEntity(plan.where(boom),
+                LauncherBlocks.CRANE_ENTITY.get()).flatMap(CraneBlockEntity::crane).orElseThrow();
+        helper.assertTrue(crane.tower() == side
+                && crane.near() == houseRow.stream().mapToInt(out).min().orElseThrow() - tipAt
+                && crane.far() == houseRow.stream().mapToInt(out).max().orElseThrow() - tipAt
+                && crane.back() == boomRow.stream().mapToInt(out).max().orElseThrow() - tipAt,
+                "the tip measures the crane as it was laid: " + crane);
         // A layer of the tower is one great truss: its four corners are the columns, the rest stretches of its faces.
         final int layer = LauncherLayout.DECK + 1;
         final List<PlanSpot> ring = only(launcher, LauncherBlocks.TOWER_FRAME.getId()).stream()
@@ -160,6 +198,25 @@ public final class LauncherGameTests {
         final PlanSpot mastTop = only(launcher, LauncherBlocks.TAIL_SERVICE_MAST.getId()).stream()
                 .max(Comparator.comparingInt(spot -> spot.at().getY())).orElseThrow();
         helper.assertTrue(role(helper, plan, mastTop) == LauncherPieceBlock.Role.TOP, "a mast carries its hood on top");
+        // The hold-down arm behind the opening and left of the tower measures the deck, to draw it whole.
+        final ToIntFunction<PlanSpot> across = spot -> spot.at().getX() * side.getClockWise().getStepX()
+                + spot.at().getZ() * side.getClockWise().getStepZ();
+        final List<PlanSpot> deckSpots = launcher.stream().filter(spot -> spot.block().equals(LauncherBlocks
+                .LAUNCHER_DECK.getId())).toList();
+        for (final PlanSpot arm : only(launcher, LauncherBlocks.HOLD_DOWN_ARM.getId())) {
+            final LauncherDeckBlockEntity entity = helper.getLevel().getBlockEntity(plan.where(arm),
+                    LauncherBlocks.HOLD_DOWN_ENTITY.get()).orElseThrow();
+            final boolean draws = out.applyAsInt(arm) < 0 && across.applyAsInt(arm) < 0;
+            helper.assertTrue(entity.deck().isPresent() == draws, "only the arm behind and left of the opening draws"
+                    + " the deck: " + arm.at() + " " + entity.deck());
+            entity.deck().ifPresent(measured -> helper.assertTrue(measured.side() == side && measured.open() == FOOT
+                    && measured.back() == -deckSpots.stream().mapToInt(out).min().orElseThrow()
+                    && measured.front() == deckSpots.stream().mapToInt(out).max().orElseThrow()
+                    && measured.across() == deckSpots.stream().mapToInt(across).max().orElseThrow()
+                    && plan.where(arm).offset(measured.axis()).equals(plan.origin()), "the deck is measured as it"
+                    + " was laid: " + measured + " from " + plan.where(arm) + ", the rocket's foot at "
+                    + plan.origin()));
+        }
         helper.getLevel().setBlockAndUpdate(plan.where(boom), Blocks.AIR.defaultBlockState());
         helper.assertTrue(!plan.formed(first + 1) && !at(helper, plan, house).getValue(LauncherPieceBlock.FORMED),
                 "a block of the tower taken, the tower is a kit again");

@@ -28,8 +28,10 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * A mobile launcher built by its hangar's plan on a player's game: once its tower's last block is down the tower
- * takes its formed shape, the red truss round its shaft, and is seen red where the player looks at it.
+ * A mobile launcher built by its hangar's plan on a player's game: once its last blocks are down it takes its formed
+ * shape, as the approved launcher is drawn: the tower the red truss round its shaft, seen red where the player looks at
+ * it; the deck one piece round its opening, the hazard band's stripes round it; and the whole of it seen from high in
+ * the bay, to be put beside the approved pictures.
  */
 public final class LauncherClientTests {
 
@@ -51,22 +53,40 @@ public final class LauncherClientTests {
     private static final int CHANNEL = 0xFF;
     private static final int REDDER = 40;
     private static final double ENOUGH_RED = 0.2;
+    /*
+     * On the deck: where the player stands across from the rocket's foot, and where the hazard band round the opening
+     * is looked at, in blocks to the tower's left; high in the bay's corner, how far out, along and up.
+     */
+    private static final double ON_DECK = 3.0;
+    private static final double BAND = 1.75;
+    private static final double HIGH_OUT = 10.0;
+    private static final double HIGH_ALONG = -4.0;
+    private static final double HIGH_UP = 5.0;
+    private static final int BAND_WINDOW = 8;
+    private static final int YELLOWER = 70;
+    private static final int DARK = 60;
+    private static final double ENOUGH_STRIPES = 0.08;
 
     private LauncherClientTests() {
     }
 
     @ClientTest(timeoutTicks = 2400)
-    public static void tower_isDrawnAsItsRedTrussOnceItForms(final ClientTestContext ctx) {
+    public static void launcher_isDrawnAsTheApprovedOneOnceItForms(final ClientTestContext ctx) {
         final BlockPos[] tower = new BlockPos[1];
         final BlockPos[] eye = new BlockPos[1];
+        final Vec3[] deck = new Vec3[4];
         ctx.afterTest(() -> ctx.server().execute(() -> clear(ctx, ctx.serverLevel())));
         ctx.thenServer(0, level -> {
             build(ctx, level);
-            lay(ctx, level, tower, eye);
+            lay(ctx, level, tower, eye, deck);
         })
                 .thenWaitUntil(() -> eye[0] != null, SETTLE, "the launcher to be laid")
-                .thenServer(0, level -> level.players().getFirst().teleportTo(level, eye[0].getX() + 0.5,
-                        eye[0].getY(), eye[0].getZ() + 0.5, 0.0F, 0.0F))
+                .thenServer(0, level -> {
+                    // On a block no one sees, level with the deck, so the deck is not in the way.
+                    level.setBlockAndUpdate(eye[0].below(), Blocks.BARRIER.defaultBlockState());
+                    level.players().getFirst().teleportTo(level, eye[0].getX() + 0.5, eye[0].getY(),
+                            eye[0].getZ() + 0.5, 0.0F, 0.0F);
+                })
                 .thenWaitUntil(() -> ctx.mc().level.getBlockState(tower[0]).getBlock() instanceof LauncherPieceBlock
                         && ctx.mc().level.getBlockState(tower[0]).getValue(LauncherPieceBlock.FORMED), ARRIVE + FORM,
                         "the formed tower to reach the player")
@@ -77,7 +97,31 @@ public final class LauncherClientTests {
                     final double red = red(ctx);
                     ctx.assertTrue(red >= ENOUGH_RED, "the formed tower's truss is seen red round the crosshair: "
                             + Math.round(red * 100) + "% of it");
-                });
+                })
+                // Standing on the deck, looking down at the hazard band round the opening.
+                .thenServer(0, level -> level.players().getFirst().teleportTo(level, deck[0].x(), deck[0].y(),
+                        deck[0].z(), 0.0F, 0.0F))
+                .then(SETTLE, () -> ctx.lookAt(deck[1]))
+                .then(SETTLE, () -> { })
+                .thenScreenshot(0, "launcher-deck")
+                .then(0, () -> {
+                    final double[] band = band(ctx);
+                    ctx.assertTrue(band[0] >= ENOUGH_STRIPES && band[1] >= ENOUGH_STRIPES, "the deck is drawn"
+                            + " with the hazard band's yellow and black stripes round the opening: "
+                            + Math.round(band[0] * 100) + "% yellow, " + Math.round(band[1] * 100) + "% black");
+                })
+                // From high in the bay's corner, the whole launcher as the approved pictures show it.
+                .thenServer(0, level -> {
+                    level.setBlockAndUpdate(BlockPos.containing(deck[2]).below(), Blocks.BARRIER.defaultBlockState());
+                    level.players().getFirst().teleportTo(level, deck[2].x(), deck[2].y(), deck[2].z(), 0.0F, 0.0F);
+                })
+                .then(SETTLE, () -> ctx.lookAt(deck[1].add(0, 2, 0)))
+                .then(SETTLE, () -> { })
+                .thenScreenshot(0, "launcher-overview")
+                // And up at the crane on the tower's top, its boom over the rocket.
+                .then(SETTLE, () -> ctx.lookAt(deck[3]))
+                .then(SETTLE, () -> { })
+                .thenScreenshot(0, "launcher-crane");
     }
 
     /* The hangar, its walls and roof all lamps, its terminal in the south wall looking north, its crane, its door. */
@@ -113,10 +157,11 @@ public final class LauncherClientTests {
 
     /*
      * Its plan sent, an engine, a tank and a capsule on a launcher, and every block of it laid at once; the player to
-     * stand a few blocks off the tower's side and look at its middle.
+     * stand a few blocks off the tower's side and look at its middle; then on the deck beside the opening, looking at
+     * the hazard band round it; then high in the bay's corner over the deck's left, looking at it whole.
      */
     private static void lay(final ClientTestContext ctx, final ServerLevel level, final BlockPos[] tower,
-                            final BlockPos[] eye) {
+                            final BlockPos[] eye, final Vec3[] deck) {
         final HangarTerminalBlockEntity terminal = (HangarTerminalBlockEntity) level.getBlockEntity(ctx.abs(TERMINAL));
         terminal.design(new RocketDesign("LAUNCHER", RocketStack.of(part("sea_level_engine_3", 1),
                 part("tank_3", 2), part("capsule_3", 1))));
@@ -135,6 +180,15 @@ public final class LauncherClientTests {
                 .TOWER_FRAME.getId()) && spot.at().getY() == middle).max(Comparator.comparingInt(spot ->
                 spot.at().getX() * across.getStepX() + spot.at().getZ() * across.getStepZ())).orElseThrow();
         tower[0] = plan.where(seen);
+        final Vec3 foot = Vec3.atBottomCenterOf(plan.origin());
+        final Vec3 left = new Vec3(-across.getStepX(), 0, -across.getStepZ());
+        final Vec3 along = new Vec3(side.getStepX(), 0, side.getStepZ());
+        deck[0] = foot.add(left.scale(ON_DECK));
+        deck[1] = foot.add(left.scale(BAND));
+        deck[2] = foot.add(left.scale(HIGH_OUT)).add(along.scale(HIGH_ALONG)).add(0, HIGH_UP, 0);
+        final int boom = plan.plan().spots().stream().filter(spot -> spot.block().equals(LauncherBlocks.TOWER_FRAME
+                .getId())).mapToInt(spot -> spot.at().getY()).max().orElseThrow();
+        deck[3] = foot.add(along.scale(HIGH_ALONG / 2)).add(0, boom, 0);
         eye[0] = tower[0].relative(across, AWAY).atY(plan.origin().getY());
     }
 
@@ -154,6 +208,38 @@ public final class LauncherClientTests {
 
     private static RocketStack.Part part(final String path, final int layers) {
         return new RocketStack.Part(SkeletonRocketParts.id(path), layers);
+    }
+
+    /*
+     * How much of a window round the crosshair, its own white cross left out, is the hazard band's yellow, and how
+     * much its black.
+     */
+    private static double[] band(final ClientTestContext ctx) {
+        final int x = ctx.mc().getWindow().getGuiScaledWidth() / 2;
+        final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2;
+        int yellow = 0;
+        int black = 0;
+        int count = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int dx = -WINDOW; dx <= WINDOW; dx++) {
+                for (int dy = -BAND_WINDOW; dy <= BAND_WINDOW; dy++) {
+                    if (Math.abs(dx) <= CROSS && Math.abs(dy) <= CROSS) {
+                        continue;
+                    }
+                    final int argb = frame.pixel(x + dx, y + dy);
+                    final int r = argb >> 16 & CHANNEL;
+                    final int g = argb >> 8 & CHANNEL;
+                    final int b = argb & CHANNEL;
+                    if (r > b + YELLOWER && g > b + YELLOWER / 2) {
+                        yellow++;
+                    } else if (r < DARK && g < DARK && b < DARK) {
+                        black++;
+                    }
+                    count++;
+                }
+            }
+        }
+        return new double[] {(double) yellow / count, (double) black / count};
     }
 
     /*

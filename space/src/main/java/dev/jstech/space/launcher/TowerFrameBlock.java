@@ -12,13 +12,17 @@ import java.util.EnumSet;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A frame of the umbilical tower's red truss, as the approved tower stands: one great truss round a dark shaft, not a
@@ -26,9 +30,11 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
  * column there; a frame along a face the girder across the whole face every two blocks, its stretch of the face's one
  * long diagonal, which leans the other way each level as the approved tower's do, the dark wall of the shaft behind it
  * with its rails and lines, and every eight blocks the grated floor round the shaft. It faces into the shaft, a corner
- * along its face; its bay says the rest. The boom's last block hangs the crane's hook.
+ * along its face; its bay says the rest. On the tower's top the frames are the crane's house, and the row of frames
+ * over it, reaching out past the tower over the rocket and a little past its back, the crane's boom; the boom's tip
+ * over the rocket draws the whole crane, house, boom, cable and hook, as the approved launcher draws it.
  */
-public final class TowerFrameBlock extends LauncherPieceBlock {
+public final class TowerFrameBlock extends LauncherPieceBlock implements EntityBlock {
 
     private static final MapCodec<TowerFrameBlock> CODEC = simpleCodec(TowerFrameBlock::new);
 
@@ -38,7 +44,7 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
      * way its diagonal leans, and whether the grated floor is at its foot.
      */
     public static final IntegerProperty BAY = IntegerProperty.create("bay", 0, 39);
-    /** The bay of the boom's tip, which hangs the crane's hook. */
+    /** The bay of the boom's tip, which draws the crane. */
     public static final int TIP = 1;
     /* The tower's width between the outsides of its walls, so a wall finds the one across the shaft. */
     private static final int ACROSS = 4;
@@ -46,6 +52,8 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
     private static final int LEVEL = 2;
     private static final int FLOORS = 8;
     private static final int FACES = 3;
+    /* The longest row of frames walked along. */
+    private static final int LONGEST = 64;
 
     public TowerFrameBlock(final BlockBehaviour.Properties properties) {
         super(properties, Kind.TOWER);
@@ -61,6 +69,28 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
         return slot * 8 + (upper ? 4 : 0) + (lean ? 2 : 0) + (floor ? 1 : 0);
     }
 
+    /** Whether {@code state} is a formed boom's tip, which draws the crane. */
+    public static boolean tip(final BlockState state) {
+        return state.getValue(FORMED) && state.getValue(ROLE) == Role.END && state.getValue(BAY) == TIP;
+    }
+
+    /** Only the boom's tip keeps anything: the crane it draws. */
+    @Override
+    public @Nullable BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
+        return tip(state) ? new CraneBlockEntity(pos, state) : null;
+    }
+
+    /** Its tower formed or came apart: as the boom's tip it measures the crane, or forgets it. */
+    @Override
+    public void partFormed(final ServerLevel level, final BlockPos pos, final boolean formed) {
+        super.partFormed(level, pos, formed);
+        final BlockState now = level.getBlockState(pos);
+        if (level.getBlockEntity(pos) instanceof CraneBlockEntity entity) {
+            entity.crane(now.getBlock() == this && tip(now) ? measure(level, pos, now.getValue(FACING)
+                    .getOpposite()) : null);
+        }
+    }
+
     @Override
     protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
         return CODEC;
@@ -73,19 +103,21 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
     }
 
     /*
-     * A frame of the tower's walls: whether it is a corner or which of the three along its face, from its frames
-     * beside it; its level and the lean of its diagonals counted from the foot of its face's corner, which no doorway
-     * breaks.
+     * A frame of the tower: the crane's house on its top, under the boom or not; the boom, its tip the end away from
+     * the tower; or a frame of its walls: whether it is a corner or which of the three along its face, from its
+     * frames beside it, its level and the lean of its diagonals counted from the foot of its face's corner, which no
+     * doorway breaks.
      */
     @Override
     protected BlockState shaped(final BlockGetter level, final BlockPos pos, final BlockState state) {
-        if (state.getValue(ROLE) == Role.END) {
-            // The boom's last block, out over the rocket, hangs the hook.
-            return state.setValue(BAY, tower(level, pos.relative(state.getValue(FACING))) ? 0 : TIP);
+        final Role role = role(level, pos);
+        if (role == Role.END) {
+            return boom(level, pos, state.setValue(ROLE, role));
         }
-        if (state.getValue(ROLE) != Role.BODY) {
-            return state;
+        if (role == Role.TOP) {
+            return state.setValue(ROLE, role);
         }
+        final BlockState body = state.setValue(ROLE, role);
         final Set<Direction> along = EnumSet.noneOf(Direction.class);
         Direction inward = null;
         for (final Direction way : Direction.Plane.HORIZONTAL) {
@@ -104,7 +136,7 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
             }
         }
         if (facing == null) {
-            return state;
+            return body;
         }
         final boolean corner = inward == null;
         int place = 0;
@@ -121,7 +153,7 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
                 foot = right;
             }
             if (place < 1 || place > FACES) {
-                return state;
+                return body;
             }
         }
         int base = foot.getY();
@@ -132,8 +164,98 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
         final boolean odd = high / LEVEL % 2 == 1;
         final boolean lean = odd ^ leansBack(facing);
         final int slot = corner ? FACES + (odd ^ leansBack(facing.getClockWise()) ? 1 : 0) : place - 1;
-        return state.setValue(FACING, facing).setValue(BAY, bay(slot, high % LEVEL == 1, lean,
-                high % FLOORS == 0));
+        return body.setValue(FACING, facing).setValue(BAY, bay(slot, high % LEVEL == 1, lean, high % FLOORS == 0));
+    }
+
+    /*
+     * What a frame is in its tower: the boom, a row of frames on the tower's top that reaches out over nothing; the
+     * house, a frame with nothing over it but the boom; or a frame of its walls.
+     */
+    private static Role role(final BlockGetter level, final BlockPos pos) {
+        if (tower(level, pos.above())) {
+            return onBoom(level, pos.above()) ? Role.TOP : Role.BODY;
+        }
+        if (onBoom(level, pos) || kindOf(level, pos.below()) == null) {
+            return Role.END;
+        }
+        return Role.TOP;
+    }
+
+    /*
+     * Whether the frame at {@code pos} is in a row of frames, any way along, one of which stands over nothing of the
+     * launcher with nothing over it: a boom reaching out from the tower's top, not a wall over a doorway.
+     */
+    private static boolean onBoom(final BlockGetter level, final BlockPos pos) {
+        for (final Direction way : Direction.Plane.HORIZONTAL) {
+            BlockPos at = pos;
+            for (int step = 0; step < LONGEST && tower(level, at); step++) {
+                if (kindOf(level, at.below()) == null && !tower(level, at.above())) {
+                    return true;
+                }
+                at = at.relative(way);
+            }
+        }
+        return false;
+    }
+
+    /*
+     * A frame of the boom: it faces along the boom toward its tip, the end farther from the tower under it; the tip
+     * itself takes the tip's bay.
+     */
+    private static BlockState boom(final BlockGetter level, final BlockPos pos, final BlockState state) {
+        Direction axis = null;
+        for (final Direction way : Direction.Plane.HORIZONTAL) {
+            if (axis == null && tower(level, pos.relative(way))) {
+                axis = way;
+            }
+        }
+        if (axis == null) {
+            return state;
+        }
+        final int forward = steps(level, pos, axis);
+        final int backward = steps(level, pos, axis.getOpposite());
+        final BlockPos start = pos.relative(axis.getOpposite(), backward);
+        final int length = backward + forward + 1;
+        int lo = -1;
+        int hi = -1;
+        for (int i = 0; i < length; i++) {
+            if (tower(level, start.relative(axis, i).below())) {
+                lo = lo < 0 ? i : lo;
+                hi = i;
+            }
+        }
+        if (lo < 0) {
+            return state;
+        }
+        // The tip is the end farther from the tower the boom stands on.
+        final boolean tipAtStart = lo >= length - 1 - hi;
+        final Direction toTip = tipAtStart ? axis.getOpposite() : axis;
+        final int fromTip = tipAtStart ? backward : forward;
+        return state.setValue(FACING, toTip).setValue(BAY, fromTip == 0 ? TIP : 0);
+    }
+
+    /* The crane, as its boom's tip at {@code tip} measures it, the tower {@code toTower} along the boom. */
+    private static CraneBlockEntity.Crane measure(final BlockGetter level, final BlockPos tip,
+                                                  final Direction toTower) {
+        final int back = steps(level, tip, toTower);
+        int near = -1;
+        int far = -1;
+        for (int i = 0; i <= back; i++) {
+            if (tower(level, tip.relative(toTower, i).below())) {
+                near = near < 0 ? i : near;
+                far = i;
+            }
+        }
+        return new CraneBlockEntity.Crane(toTower, near, far, back);
+    }
+
+    /* How many frames follow {@code pos} toward {@code way} in a row. */
+    private static int steps(final BlockGetter level, final BlockPos pos, final Direction way) {
+        int count = 0;
+        while (count < LONGEST && tower(level, pos.relative(way, count + 1))) {
+            count++;
+        }
+        return count;
     }
 
     /*

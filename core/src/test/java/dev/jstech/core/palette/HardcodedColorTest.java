@@ -43,28 +43,31 @@ class HardcodedColorTest {
      * The files whose eight-digit numbers are data, not colours of the mod's look, and how many each holds. The count
      * is exact, so a colour added next to them is still caught.
      */
-    private static final Map<String, Data> DATA = Map.of(
-            "core/src/main/java/dev/jstech/core/gui/TextShadow.java", new Data(2,
-                    "the two ends of the grey scale, which an undeclared ground is taken to be; not a look"),
-            "core/src/main/java/dev/jstech/core/font/FontSheet.java", new Data(1,
-                    "the white of a lit pixel in a font's picture, which the game tints with the text's colour"),
-            "computers/src/main/java/dev/jstech/computers/os/fs/PixImage.java", new Data(16,
-                    "the colours the in-game image format stores its pixels as: a file's contents, not the look"),
-            "computers/src/main/java/dev/jstech/computers/program/install/voice/KernelVoices.java", new Data(2,
-                    "the multipliers of a hash that picks a kernel's boot line"),
-            "computers/src/main/java/dev/jstech/computers/program/install/voice/PortageVoices.java", new Data(1,
-                    "the multiplier of a hash that picks a build line"),
-            "core/src/main/java/dev/jstech/core/model/GltfReader.java", new Data(3,
-                    "the marks a binary glTF file and its two chunks start with, as the format writes them"),
-            "core/src/main/java/dev/jstech/core/model/CadLook.java", new Data(2,
+    private static final Map<String, Data> DATA = Map.ofEntries(
+            Map.entry("core/src/main/java/dev/jstech/core/gui/TextShadow.java", new Data(2,
+                    "the two ends of the grey scale, which an undeclared ground is taken to be; not a look")),
+            Map.entry("core/src/main/java/dev/jstech/core/font/FontSheet.java", new Data(1,
+                    "the white of a lit pixel in a font's picture, which the game tints with the text's colour")),
+            Map.entry("computers/src/main/java/dev/jstech/computers/os/fs/PixImage.java", new Data(16,
+                    "the colours the in-game image format stores its pixels as: a file's contents, not the look")),
+            Map.entry("computers/src/main/java/dev/jstech/computers/program/install/voice/KernelVoices.java",
+                    new Data(2, "the multipliers of a hash that picks a kernel's boot line")),
+            Map.entry("computers/src/main/java/dev/jstech/computers/program/install/voice/PortageVoices.java",
+                    new Data(1, "the multiplier of a hash that picks a build line")),
+            Map.entry("core/src/main/java/dev/jstech/core/model/GltfReader.java", new Data(3,
+                    "the marks a binary glTF file and its two chunks start with, as the format writes them")),
+            Map.entry("core/src/main/java/dev/jstech/core/model/CadLook.java", new Data(2,
                     "the steel a CAD part with no colour is given, as CAD programs show one, and the alpha of an "
-                            + "opaque colour read from a file"),
-            "core/src/main/java/dev/jstech/core/model/StepReader.java", new Data(8,
-                    "the eight colours ISO 10303 names, as a STEP file may name a colour instead of writing it"),
-            "core/src/main/java/dev/jstech/core/client/model/kit/KitRenderer.java", new Data(1,
-                    "the white a model's texture is multiplied by, which leaves the texture's own colours"),
-            "core/src/main/java/dev/jstech/core/client/developer/Pictures.java", new Data(1,
-                    "the pixel a difference is marked with in the picture of the differences, read back from it"));
+                            + "opaque colour read from a file")),
+            Map.entry("core/src/main/java/dev/jstech/core/model/StepReader.java", new Data(8,
+                    "the eight colours ISO 10303 names, as a STEP file may name a colour instead of writing it")),
+            Map.entry("core/src/main/java/dev/jstech/core/client/model/kit/KitRenderer.java", new Data(1,
+                    "the white a model's texture is multiplied by, which leaves the texture's own colours")),
+            Map.entry("core/src/main/java/dev/jstech/core/client/developer/Pictures.java", new Data(1,
+                    "the pixel a difference is marked with in the picture of the differences, read back from it")),
+            Map.entry("space/src/main/java/dev/jstech/space/client/launcher/LauncherAtlas.java", new Data(1,
+                    "the white texel a launcher's plain parts are drawn from, which leaves the colour they are tinted"
+                            + " with as it is")));
 
     /** An ARGB colour as a number: eight hexadecimal digits. */
     private static final Pattern ARGB = Pattern.compile("0[xX][0-9A-Fa-f]{8}");

@@ -140,6 +140,7 @@ public class LauncherPieceBlock extends HorizontalDirectionalBlock implements IP
         return switch (this.kind) {
             case TOWER -> above != Kind.TOWER ? below == null ? Role.END : Role.TOP : Role.BODY;
             case MAST -> above != Kind.MAST ? Role.TOP : Role.BODY;
+            case PEDESTAL -> above != Kind.PEDESTAL ? Role.TOP : below != Kind.PEDESTAL ? Role.END : Role.BODY;
             case ELEVATOR -> below != Kind.ELEVATOR ? Role.END : above != Kind.ELEVATOR ? Role.TOP : Role.BODY;
             case SWING_ARM, CREW_ARM -> {
                 // Its end is the block nearest the rocket; its top the one at the tower, on its hinge.
@@ -258,9 +259,12 @@ public class LauncherPieceBlock extends HorizontalDirectionalBlock implements IP
     public enum Role implements StringRepresentable {
         /** Its body: a plate of the deck, a bay of the tower, a length of an arm. */
         BODY("body"),
-        /** Its top: the tower's crane house, a mast's hood, the top of the elevator's rails, an arm's hinge. */
+        /**
+         * Its top: the tower's crane house, a mast's hood, the top of the elevator's rails, an arm's hinge, a
+         * pedestal's cap.
+         */
         TOP("top"),
-        /** Its end: the crane's boom, an arm's plug or white room, the elevator's car. */
+        /** Its end: the crane's boom, an arm's plug or white room, the elevator's car, a pedestal's foot. */
         END("end");
 
         private final String name;
@@ -282,16 +286,17 @@ public class LauncherPieceBlock extends HorizontalDirectionalBlock implements IP
     public enum Kind {
         DECK(new int[][] {{0, 0, 0, 16, 16, 16}}, null, null),
         EXHAUST(new int[][] {{0, 0, 0, 16, 16, 16}}, null, null),
-        HOLD_DOWN(new int[][] {{3, 0, 3, 15, 10, 15}, {0, 4, 0, 8, 9, 8}}, null, null),
-        MAST(new int[][] {{4, 0, 4, 12, 16, 12}}, new int[][] {{4, 0, 4, 12, 12, 12}, {4, 9, 0, 12, 14, 12}},
-                null),
-        TOWER(new int[][] {{0, 0, 0, 16, 16, 16}}, null, new int[][] {{3, 4, 0, 13, 13, 16}}),
+        HOLD_DOWN(new int[][] {{2, 0, 2, 16, 11, 16}, {0, 4, 0, 8, 9, 8}}, null, null),
+        MAST(new int[][] {{2, 0, 2, 14, 16, 14}}, new int[][] {{2, 0, 2, 14, 10, 14}}, null),
+        TOWER(new int[][] {{0, 0, 0, 16, 16, 16}}, null, new int[][] {{1, 10, 0, 15, 16, 16}}),
         SWING_ARM(new int[][] {{4, 5, 0, 12, 11, 16}}, null, new int[][] {{4, 5, 3, 12, 11, 16}, {5, 4, 0, 11, 12,
                 3}}),
         CREW_ARM(new int[][] {{0, 0, 0, 16, 2, 16}, {0, 2, 0, 1, 16, 16}, {15, 2, 0, 16, 16, 16}}, null,
                 new int[][] {{0, 0, 0, 16, 2, 16}, {0, 2, 0, 1, 16, 16}, {15, 2, 0, 16, 16, 16}}),
         ELEVATOR(new int[][] {{5, 0, 5, 11, 16, 11}}, new int[][] {{5, 0, 5, 11, 16, 11}},
-                new int[][] {{2, 0, 2, 14, 16, 14}});
+                new int[][] {{2, 0, 2, 14, 16, 14}}),
+        /** A pedestal the launcher stands on, in the hangar or on the pad; it stays when the launcher goes. */
+        PEDESTAL(new int[][] {{0, 0, 0, 16, 16, 16}}, null, null);
 
         private final int[][] body;
         private final int[][] top;

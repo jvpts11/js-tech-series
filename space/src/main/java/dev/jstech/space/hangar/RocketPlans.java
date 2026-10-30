@@ -112,27 +112,50 @@ public final class RocketPlans {
     }
 
     /**
-     * The side of a mobile launcher's tower for {@code stack} in {@code bay}, rocket and launcher whole inside the bay
-     * and under its hoist, the rocket on the deck: the side its hatch looks out of first, then the others; none when
-     * the bay has no room for a launcher, the rocket standing on its floor.
+     * The side of a mobile launcher's tower for {@code stack} in {@code bay}: its deck's length pointing at the bay's
+     * door, so the crawler comes in through the door and under it, the tower at the end away from the door; rocket
+     * and launcher whole inside the bay and under its hoist, the rocket on the deck on its pedestals. None when the
+     * bay has no door to come in by, or no room for a launcher: the rocket stands on its floor.
      */
     public static Optional<Direction> launcherSide(final Level level, final RocketStack stack, final HangarBay bay) {
         final BuildPlan rocket = of(level, stack);
-        if (rocket.spots().isEmpty()) {
+        final Optional<Direction> door = doorSide(level, bay);
+        if (rocket.spots().isEmpty() || door.isEmpty()) {
             return Optional.empty();
         }
-        final Direction first = LauncherLayout.side(rocket);
-        final List<Direction> sides = new ArrayList<>(List.of(first, first.getOpposite(), first.getClockWise(),
-                first.getCounterClockWise()));
-        final BlockPos origin = bay.pad().above(LauncherLayout.DECK);
-        for (final Direction side : sides) {
-            final List<PlanSpot> all = new ArrayList<>(rocket.spots());
-            all.addAll(launcher(level, stack, rocket, side).spots());
-            if (all.stream().allMatch(spot -> fits(bay, origin.offset(spot.at())))) {
-                return Optional.of(side);
+        final Direction side = door.get().getOpposite();
+        final BlockPos origin = bay.pad().above(LauncherLayout.RAISE);
+        final List<PlanSpot> all = new ArrayList<>(rocket.spots());
+        all.addAll(launcher(level, stack, rocket, side).spots());
+        return all.stream().allMatch(spot -> fits(bay, origin.offset(spot.at()))) ? Optional.of(side)
+                : Optional.empty();
+    }
+
+    /*
+     * The wall of {@code bay} its door stands in, as seen from the middle of its floor: of the walls with a Bay Door
+     * on the floor, the one whose door is nearest the line out from the middle.
+     */
+    private static Optional<Direction> doorSide(final Level level, final HangarBay bay) {
+        final BlockPos pad = bay.pad();
+        Direction best = null;
+        int nearest = Integer.MAX_VALUE;
+        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (final Direction wall : Direction.Plane.HORIZONTAL) {
+            final boolean alongX = wall.getAxis() == Direction.Axis.Z;
+            final int from = alongX ? bay.low().getX() : bay.low().getZ();
+            final int to = alongX ? bay.high().getX() : bay.high().getZ();
+            final int fixed = wall == Direction.NORTH ? bay.low().getZ() - 1 : wall == Direction.SOUTH
+                    ? bay.high().getZ() + 1 : wall == Direction.WEST ? bay.low().getX() - 1 : bay.high().getX() + 1;
+            for (int k = from; k <= to; k++) {
+                at.set(alongX ? k : fixed, bay.low().getY(), alongX ? fixed : k);
+                final int off = Math.abs(k - (alongX ? pad.getX() : pad.getZ()));
+                if (level.getBlockState(at).is(HangarBlocks.BAY_DOOR.get()) && off < nearest) {
+                    nearest = off;
+                    best = wall;
+                }
             }
         }
-        return Optional.empty();
+        return Optional.ofNullable(best);
     }
 
     /* The launcher under the rocket {@code rocket} of {@code stack}, its tower on {@code side}. */

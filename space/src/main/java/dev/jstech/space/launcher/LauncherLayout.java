@@ -21,26 +21,42 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * Where the blocks of a mobile launcher go under a rocket, as the approved launcher stands, sized by the rocket: its
- * deck three blocks thick, the rocket's foot on its top; the exhaust opening through it, as wide as the rocket's lowest
- * layer and a block more each side, lined with exhaust frame; a hold-down arm at each corner of the opening and a tail
- * service mast at the middle of each side but the tower's; the umbilical tower beside the rocket, five blocks square
- * and four blocks out from its widest point, a block taller than it, its crane's boom out over its nose, its elevator
+ * deck three blocks thick on six pedestals three blocks tall, in two rows along its length for the crawler to come
+ * between, the rocket's foot on its top; the exhaust opening through it, as wide as the rocket's lowest layer, lined
+ * with exhaust frame; a hold-down arm at each corner of the opening and three tail service masts round it a third of a
+ * turn apart, none on the tower's side; the umbilical tower beside the rocket, five blocks square
+ * and four blocks out from its widest point, a block taller than it, the crane's house on its top and the boom on the
+ * house, out over the rocket to just past its far side and a block past the tower's back, its elevator
  * up its shaft to the crew access arm, a doorway into the shaft at the deck and at that arm; a swing arm
- * out to each tank and each Umbilical Plate, and the crew access arm to the capsule's hatch.
+ * out to each tank and each Umbilical Plate, and the crew access arm at the height of the capsule's hatch, which the
+ * player turns to the tower.
  *
- * <p>Laid out from the middle of the rocket's foot, the tower on the side {@code side}; the deck is the launcher's
- * first part, the tower its second, then each arm.
+ * <p>Laid out from the middle of the rocket's foot, the tower on the side {@code side}, the deck's length along it; the
+ * deck with its pedestals is the launcher's first part, the tower its second, then each arm.
  */
 public final class LauncherLayout {
 
-    /** How thick the deck is, so how far above the launcher's foot the rocket stands. */
+    /** How thick the deck is. */
     public static final int DECK = 3;
+    /** How tall the pedestals it stands on are, so how high the crawler under it may be. */
+    public static final int PEDESTAL = 3;
+    /** How far above the floor the rocket's foot stands, on the deck on its pedestals. */
+    public static final int RAISE = DECK + PEDESTAL;
+    /**
+     * Where the tail service masts stand round the opening, in degrees from the tower's way toward its right, as the
+     * approved launcher has them; how far out past the opening's half-width, and how tall, in blocks.
+     */
+    public static final List<Double> MAST_ANGLES = List.of(90.0, 210.0, 330.0);
+    public static final double MAST_OUT = 2.0;
+    public static final double MAST_HIGH = 2.6;
+    /* The blocks a mast's column stands in. */
+    private static final int MAST_BLOCKS = 3;
     /* How far the deck reaches past the opening's lining, and the tower's side square and the gap before it. */
     private static final int MARGIN = 4;
     private static final int TOWER = 5;
     private static final int TOWER_GAP = 4;
-    /* How far past the rocket's axis the crane's boom reaches. */
-    private static final int BOOM_PAST = 3;
+    /* How far past the rocket's widest point the crane's boom reaches, its hook hanging just past it. */
+    private static final int BOOM_PAST = 2;
 
     private LauncherLayout() {
     }
@@ -67,7 +83,7 @@ public final class LauncherLayout {
             }
             widest = Math.max(widest, frame.u(spot.at()));
         }
-        final int open = base + 1;
+        final int open = base;
         final int near = widest + TOWER_GAP;
         final int far = near + TOWER - 1;
         // The elevator runs up the shaft just inside its doorways, so the crew steps off it onto the arm.
@@ -89,13 +105,23 @@ public final class LauncherLayout {
                 }
             }
         }
+        // The pedestals it stands on, in two rows along its length the crawler passes between.
+        for (final int u : new int[] {-reach + 1, (far - reach) / 2, far - 1}) {
+            for (final int v : new int[] {-reach, reach}) {
+                for (int y = -DECK - PEDESTAL; y < -DECK; y++) {
+                    spots.add(spot(frame.at(u, y, v), LauncherBlocks.PAD_PEDESTAL.getId(), deck));
+                }
+            }
+        }
         for (final int u : new int[] {-open - 1, open + 1}) {
             for (final int v : new int[] {-open - 1, open + 1}) {
                 spots.add(spot(frame.at(u, 0, v), LauncherBlocks.HOLD_DOWN_ARM.getId(), deck));
             }
         }
-        for (final int[] mast : new int[][] {{-open - 1, 0}, {0, open + 1}, {0, -open - 1}}) {
-            for (int y = 0; y < 2; y++) {
+        // The masts round the opening at a third of a turn from each other, one across from the tower's side.
+        for (final double degrees : MAST_ANGLES) {
+            final int[] mast = mast(open, degrees);
+            for (int y = 0; y < MAST_BLOCKS; y++) {
                 spots.add(spot(frame.at(mast[0], y, mast[1]), LauncherBlocks.TAIL_SERVICE_MAST.getId(), deck));
             }
         }
@@ -118,8 +144,9 @@ public final class LauncherLayout {
                 }
             }
         }
-        for (int u = -BOOM_PAST; u < near; u++) {
-            spots.add(spot(frame.at(u, towerTop, 0), LauncherBlocks.TOWER_FRAME.getId(), tower));
+        // The crane's boom on its house, from two blocks past the rocket's side to a block past the tower's back.
+        for (int u = -widest - BOOM_PAST; u <= far + 1; u++) {
+            spots.add(spot(frame.at(u, towerTop + 1, 0), LauncherBlocks.TOWER_FRAME.getId(), tower));
         }
         // An arm out to each tank and each Umbilical Plate, and the crew access arm to the hatch: a part each.
         final TreeSet<Integer> heights = new TreeSet<>();
@@ -152,22 +179,13 @@ public final class LauncherLayout {
     }
 
     /**
-     * The side the tower stands on for {@code rocket}: the side its capsule's hatch looks out of, so the crew access
-     * arm meets it; else the side of its Umbilical Plate; else east.
+     * Where the tail service mast at {@code degrees} stands round an opening reaching {@code open} blocks each side of
+     * the rocket's axis: its block along the deck from the axis toward the tower, and across it to the tower's right.
      */
-    public static Direction side(final BuildPlan rocket) {
-        for (final ResourceLocation block : List.of(RocketKitBlocks.CAPSULE_HATCH.getId(),
-                RocketKitBlocks.UMBILICAL_PLATE.getId())) {
-            for (final PlanSpot spot : rocket.spots()) {
-                if (spot.block().equals(block) && (spot.at().getX() != 0 || spot.at().getZ() != 0)) {
-                    final int x = spot.at().getX();
-                    final int z = spot.at().getZ();
-                    return Math.abs(x) >= Math.abs(z) ? x > 0 ? Direction.EAST : Direction.WEST
-                            : z > 0 ? Direction.SOUTH : Direction.NORTH;
-                }
-            }
-        }
-        return Direction.EAST;
+    public static int[] mast(final int open, final double degrees) {
+        final double out = open + MAST_OUT;
+        return new int[] {(int) Math.floor(0.5 + out * Math.cos(Math.toRadians(degrees))),
+                (int) Math.floor(0.5 + out * Math.sin(Math.toRadians(degrees)))};
     }
 
     /*

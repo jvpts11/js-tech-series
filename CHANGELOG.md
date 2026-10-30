@@ -2240,21 +2240,27 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   to the bay, or one of the hangar's plans by name (`WITH plan = 'Orbital I'`), and the request stays in flight until
   the rocket is whole. Broken, the terminal drops the blocks its crane held. New block: the Item Port.
 - (Space) The mobile launcher a rocket stands on in its hangar, Apollo's way: where the bay has room for one, the plan
-  sent to it lays the launcher under the rocket, sized by it, and the crane builds them together. Its deck stands three
-  blocks thick with the exhaust opening through it over the engines, lined with Exhaust Frames, a Hold-Down Arm at each
-  corner of the opening and a Tail Service Mast at the middle of three of its sides; beside the rocket rises the red
-  umbilical tower, a block past its top on the side its capsule's hatch looks out of, the crane house on its top and
-  the boom out over the rocket's nose; a Swing Arm reaches out to each tank and each Umbilical Plate, the Crew Access
-  Arm to the hatch with the white room at its end, and the Tower Elevator's rails, climbed like a ladder, run up the
-  shaft from the doorway at the deck to the doorway onto that arm. Each part forms as its last block goes down, every
-  piece taking its own shape as the approved launcher draws it (the deck's plates and panels, the scorched lining, the
-  clamps, the masts with their blue, orange and white lines and their hoods; the tower one great truss round its dark
-  shaft, a column at each corner, girders across each face every two blocks and a diagonal across it each level,
-  leaning the other way the next, the grated floor every eight blocks; the arms' beams, plugs and walkway), and comes
-  apart as one goes. The design screen draws the rocket on the launcher's deck, the launcher
-  under it, and says whether the bay has room for one; the hologram names the launcher's parts. New blocks: the Launcher
-  Deck, the Exhaust Frame, the Hold-Down Arm, the Tail Service Mast, the Tower Frame, the Swing Arm, the Crew Access Arm
-  and the Tower Elevator.
+  sent to it lays the launcher under the rocket, sized by it, and the crane builds them together. Its deck, three blocks
+  thick, stands on six Pad Pedestals three blocks tall, in two rows along its length so the crawler can come in under
+  it; its length points at the bay's door. The exhaust opening through it is as wide as the rocket's foot, lined with
+  Exhaust Frames, a Hold-Down Arm at each corner and three Tail Service Masts round it a third of a turn apart; at the
+  deck's far end from the door rises the red umbilical tower, a block past the rocket's top, the crane's house on its
+  top and the boom on the house, from just past the rocket's far side to a block past the tower's back, the hook
+  hanging from it; a Swing Arm reaches out to each tank and each Umbilical Plate, the Crew Access Arm to the hatch with
+  the white room at its end, and the Tower Elevator's rails, climbed like a ladder, run up the shaft from the doorway at
+  the deck to the doorway onto that arm. Each part forms as its last block goes down, and comes apart as one goes. The
+  deck is then drawn whole as the approved launcher is: its top and each side one picture over the whole of it (dark
+  plates two blocks square with their seams and bolts, the yellow walkway line round the edge, the hazard band round the
+  opening and the cleats at its corners; steel panels under a dark trim band, a stiffener every two blocks, access
+  doors, vents, stencils and lamps between them), the scorched lining, the trim lip, the grating at the opening's foot,
+  the clamps' housings with their jaws and chrome cylinders, the masts with their hoods and their blue, orange and white
+  lines; so is the crane, its red house with its louvres, the boom's girder, the cable and the yellow hook, the aviation
+  lamps on the house's corners. The tower is one great truss round its dark shaft, a column at each corner, girders
+  across each face every two blocks and a diagonal across it each level, leaning the other way the next, the grated
+  floor every eight blocks; the pedestals, the arms' beams, plugs and walkway take their own shapes. The design screen
+  draws the rocket on the launcher's deck, the launcher under it, and says whether the bay has room for one; the
+  hologram names the launcher's parts. New blocks: the Launcher Deck, the Exhaust Frame, the Hold-Down Arm, the Tail
+  Service Mast, the Tower Frame, the Swing Arm, the Crew Access Arm, the Tower Elevator and the Pad Pedestal.
 - (Core) A block a plan lays that keeps a formed shape of its own, a block entity or not, is told as its part forms and
   never merges into the part's model.
 - (Core) A plan laid by a machine: a crane, robot arms or any machine of a mod lays a plan's blocks by itself, one at

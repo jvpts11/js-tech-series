@@ -447,7 +447,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
                 : RocketPlans.launcherSide(this.level, design.stack(), at);
         this.plan.set(design);
         this.launcher.set(side.orElse(null));
-        this.planAt.set(side.isPresent() ? at.pad().above(LauncherLayout.DECK) : at.pad());
+        this.planAt.set(side.isPresent() ? at.pad().above(LauncherLayout.RAISE) : at.pad());
         setChanged();
         startBuild();
     }

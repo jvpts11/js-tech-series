@@ -501,5 +501,6 @@
   "jsspace.launcher.swing_arm": "Braço Giratório",
   "jsspace.launcher.crew_arm": "Braço de Acesso da Tripulação",
   "jsspace.design.launcher": "Sobre uma plataforma móvel",
-  "jsspace.design.no_launcher": "Sem espaço para a plataforma móvel: no chão"
+  "jsspace.design.no_launcher": "Sem espaço para a plataforma móvel: no chão",
+  "block.jsspace.pad_pedestal": "Pedestal da Plataforma"
 }

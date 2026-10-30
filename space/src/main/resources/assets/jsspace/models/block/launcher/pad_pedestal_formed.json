@@ -1,0 +1,60 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "pedestal_column": "jsspace:block/launcher/formed/pedestal_column",
+    "particle": "jsspace:block/launcher/formed/pedestal_column"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pedestal_column",
+          "uv": [
+            0,
+            4.2667,
+            16,
+            9.6
+          ]
+        },
+        "south": {
+          "texture": "#pedestal_column",
+          "uv": [
+            0,
+            4.2667,
+            16,
+            9.6
+          ]
+        },
+        "east": {
+          "texture": "#pedestal_column",
+          "uv": [
+            0,
+            4.2667,
+            16,
+            9.6
+          ]
+        },
+        "west": {
+          "texture": "#pedestal_column",
+          "uv": [
+            0,
+            4.2667,
+            16,
+            9.6
+          ]
+        }
+      }
+    }
+  ]
+}

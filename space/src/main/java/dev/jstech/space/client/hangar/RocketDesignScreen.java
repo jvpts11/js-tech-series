@@ -1211,7 +1211,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
 
     /* Where the rocket's foot stands in {@code bay}: on the deck of a mobile launcher, or on the floor. */
     private BlockPos foot(final HangarBay bay) {
-        return this.onLauncher ? bay.pad().above(LauncherLayout.DECK) : bay.pad();
+        return this.onLauncher ? bay.pad().above(LauncherLayout.RAISE) : bay.pad();
     }
 
     /* The part of the rocket under the mouse, and whether it is a booster hung at its side. */

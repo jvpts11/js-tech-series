@@ -71,6 +71,7 @@
     "jsspace:swing_arm",
     "jsspace:crew_access_arm",
     "jsspace:tower_elevator",
+    "jsspace:pad_pedestal",
     "jsspace:landing_pad",
     "jsspace:landing_platform",
     "jsspace:rocket_wreckage"

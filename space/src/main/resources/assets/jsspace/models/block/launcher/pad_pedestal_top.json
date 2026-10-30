@@ -1,0 +1,130 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "pedestal_cap": "jsspace:block/launcher/formed/pedestal_cap",
+    "pedestal_cap_top": "jsspace:block/launcher/formed/pedestal_cap_top",
+    "pedestal_column": "jsspace:block/launcher/formed/pedestal_column",
+    "particle": "jsspace:block/launcher/formed/pedestal_column"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        12.799999999999997,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pedestal_column",
+          "uv": [
+            0,
+            0.0,
+            16,
+            4.2667
+          ]
+        },
+        "south": {
+          "texture": "#pedestal_column",
+          "uv": [
+            0,
+            0.0,
+            16,
+            4.2667
+          ]
+        },
+        "east": {
+          "texture": "#pedestal_column",
+          "uv": [
+            0,
+            0.0,
+            16,
+            4.2667
+          ]
+        },
+        "west": {
+          "texture": "#pedestal_column",
+          "uv": [
+            0,
+            0.0,
+            16,
+            4.2667
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        -2.4,
+        12.799999999999997,
+        -2.4
+      ],
+      "to": [
+        18.4,
+        16,
+        18.4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pedestal_cap",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#pedestal_cap",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#pedestal_cap",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#pedestal_cap",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#pedestal_cap",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#pedestal_cap_top",
+          "uv": [
+            0,
+            0,
+            10.5,
+            10.5
+          ]
+        }
+      }
+    }
+  ]
+}
