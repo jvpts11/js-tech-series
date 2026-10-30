@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.moving.BlockAboard;
+import dev.jstech.core.multiblock.Orientation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -136,6 +137,14 @@ public final class FormedShape {
         }
         return this.turned.computeIfAbsent(new Turned(place.cell(), place.orientation()),
                 any -> voxels(CellSpace.boxes(boxes, place.turn())));
+    }
+
+    /**
+     * The shape of a block of {@code boxes}, in sixteenths as the model stands facing north, as it stands turned
+     * {@code turn}: the boxes of a block worked out anew, as damage re-shapes one.
+     */
+    public static VoxelShape shapeOf(final int[] boxes, final Orientation turn) {
+        return voxels(CellSpace.boxes(boxes, turn));
     }
 
     private static VoxelShape voxels(final int[] boxes) {

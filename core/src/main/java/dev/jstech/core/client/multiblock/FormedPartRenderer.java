@@ -10,6 +10,7 @@ package dev.jstech.core.client.multiblock;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
+import dev.jstech.core.client.model.kit.KitDamage;
 import dev.jstech.core.client.model.kit.KitInstance;
 import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
@@ -61,11 +62,19 @@ public final class FormedPartRenderer implements BlockEntityRenderer<FormedPartB
         }
         final double[] origin = originFrom(shape.get(), place);
         final KitInstance instance = KitAnimations.of(part, model.get());
+        // Drawn as the strikes laid on it left it, the instance moving on as it was.
+        final KitModel drawn = KitDamage.of(model.get(), KitDamage.strikes(level, part.getBlockPos(), place));
+        final int lit = KitBlockEntityRenderer.lightAround(level, part.getBlockPos(), light);
         poses.pushPose();
         poses.translate(origin[0], origin[1], origin[2]);
         poses.mulPose(turn(place.turn()));
-        KitRenderer.draw(instance, ModelDefinition.Variant.NONE, part, poses, buffers,
-                KitBlockEntityRenderer.lightAround(level, part.getBlockPos(), light), overlay, null, level, true);
+        if (drawn != model.get()) {
+            KitRenderer.draw(instance, drawn, ModelDefinition.Variant.NONE, part, poses, buffers, lit, overlay, null,
+                    level, true);
+        } else {
+            KitRenderer.draw(instance, ModelDefinition.Variant.NONE, part, poses, buffers, lit, overlay, null, level,
+                    true);
+        }
         poses.popPose();
     }
 

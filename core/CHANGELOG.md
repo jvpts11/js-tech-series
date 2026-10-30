@@ -334,6 +334,19 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   says what it waits for (`needs`, each an `ItemNeed`) and where it takes them (`inbox`). Outside the photo for now,
   `Assembly.ASSEMBLE` (`jscore:assemble`) is the kind of Operation that sets a machine building its plan, and
   `IAssembler` the machine that carries it out. Experimental.
+- Parting a moving structure and drawing a loose part: J's Core's API is at version 23.
+  `MovingStructure.partOff` parts chosen blocks off as a structure of their own, pushed apart;
+  `FormedParts.drawFrom` tells a merged block to draw its whole formed model itself, and
+  `FormedPartBlockEntity.drawsPart` says whether it does. Experimental.
+- Damage to formed models: J's Core's API is at version 24, and `dev.jstech.core.multiblock.damage` joins the
+  promise. `FormedDamage.strike` lays a stamp where it struck a formed model and `erase` takes every strike away;
+  `marks` and `strikes` read a model's strikes, `boxes`, `triangles` and `lines` a reached block's shape, faces and
+  outline as they were left, and `changes` counts the damage a player's game was told of. `DamageStamp` is a kind of
+  damage (its `Push` and its `Edge`), `DamageStamps` the declared ones (`IMPACT`, `EXPLOSION`, `MICROMETEOROID`,
+  `BURN`, `COLLISION`, `DENT`, and `declare`), `Strike` a stamp laid, `DamageMark` and `CellMark` the record a block
+  keeps, `MeshDamage` lays strikes on any faces (`apply`, `reaches`, `SKIN`, `Damaged`) and `DamageLook` paints a
+  strike's edge. `FormedShape.shapeOf` turns boxes worked out anew; `FormedPartBlockEntity.damage` gives the strikes
+  a block keeps. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1740,6 +1753,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The hologram of a plan being built, drawn as the Structure Projector draws its multiblock: the blocks still
   missing as ghosts, the next layer glowing, wrong blocks marked, each part's box and words, and a line across the top
   of the screen for the nearest plan.
+- Formed models damaged where struck: a mod lays a stamp of damage where it struck a formed structure's model,
+  on the ground or aboard a moving structure, and the model is holed, cratered, burnt or dented there. A stamp is made
+  once as geometry: its hole and how rough its rim is, the field that pushes the faces round it and the pixels of its
+  edge. The Core's six: an impact from outside (petals bent in and curled over the hole, bare metal torn along the
+  rim), an explosion from inside (a wider, rougher hole, petals bent out, soot round it), a micrometeoroid (a small
+  hole in a shallow crater), a burn (a melted, sagging rim, char and the last of the glow), a collision (a dent with
+  folds, nothing cut) and a blow that breaks nothing (a shallow dent); a mod declares more. Only the hull is struck,
+  never what stands behind it: a hole in a cabin's wall leaves the seats inside. Every block the stamp reaches keeps
+  the record of it, saved with the block and sent to the players, and the server and every player's game work its
+  faces out alike from the model's own file: the block collides, is aimed at and is outlined as the damage left it, and
+  is drawn so, the faces far from every strike as they were and the model's animations going on. Erasing the records
+  mends the model.
 - A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

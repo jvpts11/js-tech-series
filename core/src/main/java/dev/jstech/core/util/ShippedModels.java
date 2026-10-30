@@ -5,12 +5,12 @@
  *
  * This file is part of J's Core.
  */
-package dev.jstech.core.multiblock.hands;
+package dev.jstech.core.util;
 
 import dev.jstech.core.content.DeclaredModel;
+import dev.jstech.core.content.ModContent;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelReaders;
-import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -20,17 +20,34 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 
-/*
- * Reads the model a structure is worked by, from the mod that ships it: the server has no resource packs, so the
- * model's own file is what both it and the player's game measure the parts by.
+/**
+ * Reads a declared model from the mod that ships it: the server has no resource packs, so the model's own file is
+ * what both it and a player's game measure the model by, the parts a structure is worked by and the faces a formed
+ * model is damaged on alike.
  */
-final class HandModels {
+public final class ShippedModels {
 
-    private HandModels() {
+    private ShippedModels() {
     }
 
-    /* The model of {@code model} as its mod ships it. */
-    static ModelData read(final DeclaredModel model) {
+    /** The model declared {@code id} by any mod, if one declares it. */
+    public static Optional<DeclaredModel> declared(final ResourceLocation id) {
+        for (final ModContent content : ModContent.all()) {
+            for (final DeclaredModel model : content.declaredModels()) {
+                if (model.id().equals(id)) {
+                    return Optional.of(model);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * The model of {@code model} as its mod ships it.
+     *
+     * @throws DeclarationError when no mod ships its file
+     */
+    public static ModelData read(final DeclaredModel model) {
         final ResourceLocation file = ResourceLocation.parse(model.definition().model());
         final String folder = file.getPath().contains("/")
                 ? file.getPath().substring(0, file.getPath().lastIndexOf('/') + 1) : "";

@@ -9,6 +9,7 @@ package dev.jstech.core.multiblock.hands;
 
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.util.DeclarationError;
+import dev.jstech.core.util.ShippedModels;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -101,7 +102,7 @@ public final class InteractiveModel {
     public synchronized HandGeometry geometry() {
         if (this.geometry == null) {
             try {
-                this.geometry = new HandGeometry(HandModels.read(this.model), this.parts);
+                this.geometry = new HandGeometry(ShippedModels.read(this.model), this.parts);
             } catch (final IllegalArgumentException wrong) {
                 throw DeclarationError.of(this.model.id().getNamespace(), "the parts worked by hand of the model "
                         + this.model.id(), wrong.getMessage(), "name the bones its file has, and doors among the "

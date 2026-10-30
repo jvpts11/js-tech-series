@@ -9,6 +9,7 @@ package dev.jstech.core.multiblock.shape;
 
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import dev.jstech.core.multiblock.damage.FormedDamage;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -108,7 +109,9 @@ public final class FormedAim {
      */
     public static @Nullable BlockHitResult hit(final Level level, final FormedPlace place, final Vec3 from,
                                                final Vec3 to, final BlockPos pos) {
-        final Optional<float[]> faces = FormedShapes.triangles(level, place);
+        // A block a strike reached is aimed at by its faces as the strike left them.
+        final Optional<float[]> struck = FormedDamage.triangles(level, pos, place);
+        final Optional<float[]> faces = struck.isPresent() ? struck : FormedShapes.triangles(level, place);
         if (faces.isEmpty()) {
             return null;
         }

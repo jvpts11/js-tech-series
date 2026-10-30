@@ -10741,6 +10741,7 @@ stable 4
 12 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockPos terminal()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockState original()
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  FormedPlace place()
+24 dev.jstech.core.multiblock.FormedPartBlockEntity  List<CellMark> damage()
 21 dev.jstech.core.multiblock.FormedPartBlockEntity  List<FormedPlace> also()
 21 dev.jstech.core.multiblock.FormedPartBlockEntity  List<FormedPlace> places()
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  VoxelShape shape()
@@ -10748,6 +10749,8 @@ stable 4
 21 dev.jstech.core.multiblock.FormedPartBlockEntity  boolean planned()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  new(BlockPos, BlockState)
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  void moved(BlockPos, BlockMove)
+24 dev.jstech.core.multiblock.FormedPartBlockEntity  void onLoad()
+24 dev.jstech.core.multiblock.FormedPartBlockEntity  void setRemoved()
 10 dev.jstech.core.multiblock.FormedParts  type final class
 10 dev.jstech.core.multiblock.FormedParts  static List<Long> merge(ServerLevel, BlockPos, Collection<Long>)
 19 dev.jstech.core.multiblock.FormedParts  static List<Long> merge(ServerLevel, BlockPos, Collection<Long>, Function<BlockPos, Optional<FormedPlace>>)
@@ -11176,6 +11179,64 @@ stable 4
 10 dev.jstech.core.multiblock.WallsShape  WallsShape limit(String, int, int)
 10 dev.jstech.core.multiblock.WallsShape  int reach()
 10 dev.jstech.core.multiblock.WallsShape  static WallsShape of(Place, Place, InsideRule, Limit, Limit)
+24 dev.jstech.core.multiblock.damage.CellMark  type record(ResourceLocation model, int x, int y, int z, DamageMark mark)
+24 dev.jstech.core.multiblock.damage.CellMark  boolean on(FormedPlace)
+24 dev.jstech.core.multiblock.damage.CellMark  static final Codec<CellMark> CODEC
+24 dev.jstech.core.multiblock.damage.DamageLook  type final class
+24 dev.jstech.core.multiblock.damage.DamageLook  boolean glows()
+24 dev.jstech.core.multiblock.damage.DamageLook  int side()
+24 dev.jstech.core.multiblock.damage.DamageLook  int[] glow()
+24 dev.jstech.core.multiblock.damage.DamageLook  int[] pixels()
+24 dev.jstech.core.multiblock.damage.DamageLook  new(Strike, Colours)
+24 dev.jstech.core.multiblock.damage.DamageLook  static final int TEXELS
+24 dev.jstech.core.multiblock.damage.DamageLook  void uv(double, double, double, double[])
+24 dev.jstech.core.multiblock.damage.DamageLook.Colours  type record(int torn, int tornDark, int soot, int charred, int glow, int scrape)
+24 dev.jstech.core.multiblock.damage.DamageMark  type record(ResourceLocation stamp, double x, double y, double z, float nx, float ny, float nz, float size, long seed)
+24 dev.jstech.core.multiblock.damage.DamageMark  Optional<Strike> strike()
+24 dev.jstech.core.multiblock.damage.DamageMark  static final Codec<DamageMark> CODEC
+24 dev.jstech.core.multiblock.damage.DamageStamp  type record(double hole, double rough, Push push, double depth, boolean curl, Edge edge)
+24 dev.jstech.core.multiblock.damage.DamageStamp  boolean cuts()
+24 dev.jstech.core.multiblock.damage.DamageStamp.Edge  type enum
+24 dev.jstech.core.multiblock.damage.DamageStamp.Edge  SCORCHED
+24 dev.jstech.core.multiblock.damage.DamageStamp.Edge  SCUFFED
+24 dev.jstech.core.multiblock.damage.DamageStamp.Edge  SOOTED
+24 dev.jstech.core.multiblock.damage.DamageStamp.Edge  SPALL
+24 dev.jstech.core.multiblock.damage.DamageStamp.Edge  TORN
+24 dev.jstech.core.multiblock.damage.DamageStamp.Push  type enum
+24 dev.jstech.core.multiblock.damage.DamageStamp.Push  CRATER
+24 dev.jstech.core.multiblock.damage.DamageStamp.Push  DENT
+24 dev.jstech.core.multiblock.damage.DamageStamp.Push  FOLDS
+24 dev.jstech.core.multiblock.damage.DamageStamp.Push  PETALS_IN
+24 dev.jstech.core.multiblock.damage.DamageStamp.Push  PETALS_OUT
+24 dev.jstech.core.multiblock.damage.DamageStamp.Push  SAG
+24 dev.jstech.core.multiblock.damage.DamageStamps  type final class
+24 dev.jstech.core.multiblock.damage.DamageStamps  static Map<ResourceLocation, DamageStamp> all()
+24 dev.jstech.core.multiblock.damage.DamageStamps  static Optional<DamageStamp> get(ResourceLocation)
+24 dev.jstech.core.multiblock.damage.DamageStamps  static ResourceLocation declare(ResourceLocation, DamageStamp)
+24 dev.jstech.core.multiblock.damage.DamageStamps  static final ResourceLocation BURN
+24 dev.jstech.core.multiblock.damage.DamageStamps  static final ResourceLocation COLLISION
+24 dev.jstech.core.multiblock.damage.DamageStamps  static final ResourceLocation DENT
+24 dev.jstech.core.multiblock.damage.DamageStamps  static final ResourceLocation EXPLOSION
+24 dev.jstech.core.multiblock.damage.DamageStamps  static final ResourceLocation IMPACT
+24 dev.jstech.core.multiblock.damage.DamageStamps  static final ResourceLocation MICROMETEOROID
+24 dev.jstech.core.multiblock.damage.FormedDamage  type final class
+24 dev.jstech.core.multiblock.damage.FormedDamage  static List<DamageMark> marks(Level, BlockPos, FormedPlace)
+24 dev.jstech.core.multiblock.damage.FormedDamage  static List<Strike> strikes(Level, BlockPos, FormedPlace)
+24 dev.jstech.core.multiblock.damage.FormedDamage  static Optional<float[]> lines(Level, BlockPos, FormedPlace)
+24 dev.jstech.core.multiblock.damage.FormedDamage  static Optional<float[]> triangles(Level, BlockPos, FormedPlace)
+24 dev.jstech.core.multiblock.damage.FormedDamage  static Optional<int[]> boxes(Level, FormedPlace, List<CellMark>)
+24 dev.jstech.core.multiblock.damage.FormedDamage  static int changes()
+24 dev.jstech.core.multiblock.damage.FormedDamage  static int erase(Level, BlockPos)
+24 dev.jstech.core.multiblock.damage.FormedDamage  static int strike(Level, BlockPos, ResourceLocation, Vec3, Vec3, double, long)
+24 dev.jstech.core.multiblock.damage.MeshDamage  type final class
+24 dev.jstech.core.multiblock.damage.MeshDamage  static Damaged apply(float[], int, int[], List<Strike>)
+24 dev.jstech.core.multiblock.damage.MeshDamage  static boolean reaches(Strike, float[], int, int)
+24 dev.jstech.core.multiblock.damage.MeshDamage  static final double SKIN
+24 dev.jstech.core.multiblock.damage.MeshDamage.Damaged  type record(float[] corners, int stride, float[] rest, int[] tags, long[] struck)
+24 dev.jstech.core.multiblock.damage.MeshDamage.Damaged  int triangles()
+24 dev.jstech.core.multiblock.damage.Strike  type record(DamageStamp stamp, double x, double y, double z, double nx, double ny, double nz, double size, long seed)
+24 dev.jstech.core.multiblock.damage.Strike  double reach()
+24 dev.jstech.core.multiblock.damage.Strike  static final double REACH
 12 dev.jstech.core.multiblock.hands.HandGeometry  type final class
 12 dev.jstech.core.multiblock.hands.HandGeometry  Box outline(int, float[])
 12 dev.jstech.core.multiblock.hands.HandGeometry  IHandPart.Door door(int)
@@ -11310,6 +11371,7 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedShape  double[] origin()
 19 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>)
 20 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>, Map<ResourceLocation, BlockAboard>)
+24 dev.jstech.core.multiblock.shape.FormedShape  static VoxelShape shapeOf(int[], Orientation)
 19 dev.jstech.core.multiblock.shape.FormedShape  static final Codec<FormedShape> CODEC
 19 dev.jstech.core.multiblock.shape.FormedShapes  type final class
 20 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, BlockAboard> aboardDeclared(ResourceLocation)

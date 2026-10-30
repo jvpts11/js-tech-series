@@ -11,6 +11,8 @@ import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.multiblock.damage.CellMark;
+import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShape;
 import dev.jstech.core.multiblock.shape.FormedShapes;
@@ -18,12 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,7 +37,8 @@ import org.jetbrains.annotations.Nullable;
  * it, so it breaks, sounds and shows its particles as that block would, and stands as the model does there. A block a
  * plan laid ({@code BuildPlan}) may take its shape from more than one model, its own and those of formed parts beside
  * it whose faces reach into it, as a rocket's skirt rises round the engine on it; and it never looks for its plan's
- * owner, which gives it back itself.
+ * owner, which gives it back itself. It keeps, too, the strikes of damage that reached it ({@code FormedDamage}),
+ * and takes its shape from its faces as they left them.
  */
 public final class FormedPartBlockEntity extends SyncedBlockEntity {
 
@@ -43,9 +48,12 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
     private final ValueField<List<FormedPlace>> also;
     private final BoolField planned;
     private final BoolField drawsPart;
-    /* The shape last worked out, and from which shape files and places, so a new file or a turn works it again. */
+    private final ValueField<List<CellMark>> damage;
+    /* The shape last worked out, and from which shape files, places and damage, so any of them changing redoes it. */
     private @Nullable VoxelShape shape;
     private List<Object> shapeFrom = List.of();
+    /* The damage a player's game last saw it keep, to tell when the server sends another. */
+    private List<CellMark> damageSeen = List.of();
 
     public FormedPartBlockEntity(final BlockPos pos, final BlockState state) {
         super(FormedParts.ENTITY.get(), pos, state);
@@ -58,6 +66,8 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
         this.planned = fields().flag("Planned", false).save();
         // Whether it draws its whole formed model itself, no owner drawing it any more.
         this.drawsPart = fields().flag("DrawsPart", false).save().toClient();
+        // The strikes laid on the models it is a block of, which reached it: what it is re-shaped and drawn by.
+        this.damage = fields().value("Damage", CellMark.CODEC.listOf(), List.<CellMark>of()).save().toClient();
     }
 
     /** The block it was before its structure formed. */
@@ -102,6 +112,33 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
         return this.drawsPart.get();
     }
 
+    /** The strikes laid on the formed models it is a block of that reached it ({@link FormedDamage}). */
+    public List<CellMark> damage() {
+        final List<CellMark> kept = this.damage.get();
+        return kept == null ? List.of() : kept;
+    }
+
+    /** Keeps the strike {@code mark} too, re-shaped by it from now on. */
+    @ApiStatus.Internal
+    public void mark(final CellMark mark) {
+        final List<CellMark> more = new ArrayList<>(damage());
+        more.add(mark);
+        this.damage.set(List.copyOf(more));
+        setChanged();
+    }
+
+    /** Lets go of every strike laid on the model {@code model}; whether it kept any. */
+    @ApiStatus.Internal
+    public boolean unmark(final ResourceLocation model) {
+        final List<CellMark> left = damage().stream().filter(mark -> !mark.model().equals(model)).toList();
+        if (left.size() == damage().size()) {
+            return false;
+        }
+        this.damage.set(left);
+        setChanged();
+        return true;
+    }
+
     /* Draws its whole formed model itself from now on, or no longer. */
     void drawsPart(final boolean draws) {
         if (this.drawsPart.get() != draws) {
@@ -124,6 +161,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
             from.add(at);
             from.add(FormedShapes.get(this.level, at.model()).orElse(null));
         }
+        from.add(damage());
         if (this.shape != null && from.equals(this.shapeFrom)) {
             return this.shape;
         }
@@ -132,13 +170,35 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
         for (final FormedPlace at : all) {
             final Optional<FormedShape> file = FormedShapes.get(this.level, at.model());
             if (file.isPresent()) {
-                out = Shapes.joinUnoptimized(out, file.get().shape(at), BooleanOp.OR);
+                // A block a strike reached takes its shape from its faces as the strike left them.
+                final Optional<int[]> struck = FormedDamage.boxes(this.level, at, damage());
+                out = Shapes.joinUnoptimized(out, struck.isPresent() ? FormedShape.shapeOf(struck.get(), at.turn())
+                        : file.get().shape(at), BooleanOp.OR);
                 known = true;
             }
         }
         this.shape = known ? out.optimize() : Shapes.block();
         this.shapeFrom = from;
         return this.shape;
+    }
+
+    /* On a player's game, a block keeping damage that comes into sight has what is drawn from it redone. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (this.level != null && this.level.isClientSide() && !damage().isEmpty()) {
+            this.damageSeen = damage();
+            FormedDamage.changed();
+        }
+    }
+
+    /* On a player's game, a block keeping damage that goes has what is drawn from it redone. */
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (this.level != null && this.level.isClientSide() && !damage().isEmpty()) {
+            FormedDamage.changed();
+        }
     }
 
     /* Moved with a moving structure: its places in the models turn as the blocks turned. */
@@ -154,6 +214,16 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
         }
         if (!also().isEmpty()) {
             this.also.set(also().stream().map(reaching -> reaching.turned(move.rotation())).toList());
+        }
+    }
+
+    /* A player's game told of other damage redoes what it draws from it. */
+    @Override
+    protected void afterClientUpdate() {
+        super.afterClientUpdate();
+        if (!damage().equals(this.damageSeen)) {
+            this.damageSeen = damage();
+            FormedDamage.changed();
         }
     }
 

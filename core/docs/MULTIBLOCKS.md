@@ -437,6 +437,48 @@ CONTENT.model("capsule").file("jsmodels/capsule.gltf").formedFrom(rl("capsule"))
         .register();
 ```
 
+### Damaged where struck
+
+*Added 2026-10-30.*
+
+A formed model shaped as above can be struck: a hole, a crater, a burn or a dent is laid on its faces where the
+damage happened, and the blocks it reaches collide, are aimed at, are outlined and are drawn as the damage left them,
+on the ground and aboard a moving structure alike. The model's file never changes; the damage is a record kept by the
+blocks, and taking it away mends the model.
+
+```java
+// A grain from space holes the hull where it hit, a tenth of a block across.
+FormedDamage.strike(level, hit.getBlockPos(), DamageStamps.MICROMETEOROID, hit.getLocation(),
+        Vec3.atLowerCornerOf(hit.getDirection().getNormal()), 0.1, level.random.nextLong());
+
+// The hull mended: every strike on that model let go of.
+FormedDamage.erase(level, pos);
+```
+
+- **A stamp is a kind of damage made once as geometry** (`DamageStamp`): how far out its hole's rim is and how rough,
+  the field that pushes the faces round it (petals bent in or out, a crater, a sagging melt, a dent with folds or a
+  plain one), and the pixels its edge is drawn with (torn bare metal, soot, a ring of spall, char and the last of a
+  burn's glow, a few scrapes). The Core declares six in `DamageStamps`: `IMPACT`, `EXPLOSION`, `MICROMETEOROID`,
+  `BURN`, `COLLISION` and `DENT`. A mod declares more from its constructor with `DamageStamps.declare`.
+- **A strike lays a stamp where it struck**, turned by the way the surface faced there, at the damage's size, by a
+  seed that gives its rough rim and its petals. Every block of the model the stamp reaches keeps its record
+  (`CellMark`: the stamp's name, the point and the way in the model's space, the size, the seed), saved with the block,
+  carried with it aboard a moving structure and sent to the players who see it.
+- **Only the hull is struck**: a stamp moves and cuts the faces lying no more than `MeshDamage.SKIN`, 0.22 of a block,
+  under the outermost face right over them, looking down the way the surface faced; the skins of a hull, not what
+  stands behind them. A hole in a cabin's wall never cuts the seats inside, and a solid thing standing out of the hull,
+  a hub or a bracket, is holed round and keeps its own body.
+- **The same damage everywhere**: the server and every player's game work the reached blocks' faces out from the
+  model's own file as its mod ships it, so the same records make the same faces. Round each strike, and only within its
+  reach (1.8 times its size), the faces are cut finer, pushed by the stamp's field and cut away within its rim. Each
+  reached block then takes its boxes from its faces as they were left, by the same count as the shape file's, and is
+  aimed at and outlined by them.
+- **Drawn damaged**: the player's game draws the model with the struck faces as they were left and the pixels of each
+  strike's edge over them, sixteen to a block, dithered where they shade. The model's faces far from every strike stay
+  as they are, and its animations go on.
+- **Erasing** (`FormedDamage.erase`) lets every block of the model go of its strikes; `FormedDamage.marks` reads the
+  strikes laid on a model, gathered from all its blocks.
+
 ### Worked by hand
 
 *Added 2026-10-25.*

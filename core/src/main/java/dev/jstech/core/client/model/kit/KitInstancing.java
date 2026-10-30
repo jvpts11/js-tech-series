@@ -42,8 +42,8 @@ import org.lwjgl.opengl.GL31;
  * bones, and once the world's block entities are drawn each model is drawn in one call for each of its pictures, with
  * every thing's pose and light; a hidden bone is a place of nothing. From the sky being drawn until then, a thing
  * drawn as the world draws it is taken here; one drawn anywhere else, with the cracks of being broken or an outline,
- * see-through, bent or morphed by a mesh, or with layers laid over it, is drawn one by one as before, and so is all of
- * it while {@link Instancing#on} says no.
+ * see-through, bent or morphed by a mesh, with layers laid over it, or damaged ({@link KitDamage}), is drawn one by one
+ * as before, and so is all of it while {@link Instancing#on} says no.
  */
 public final class KitInstancing {
 
@@ -95,7 +95,7 @@ public final class KitInstancing {
                         final MultiBufferSource buffers, final int light, final int overlay,
                         @Nullable final Level glowsIn) {
         if (!collecting || buffers != Minecraft.getInstance().renderBuffers().bufferSource()
-                || model.definition().translucent() || !instance.deformers().isEmpty()
+                || model.definition().translucent() || !instance.deformers().isEmpty() || KitDamage.damaged(model)
                 || !KitLayers.of(model.id()).isEmpty()) {
             return false;
         }

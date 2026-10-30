@@ -17,6 +17,8 @@ import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.multiblock.IStructureTerminal;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.hands.StructureHands;
+import dev.jstech.core.multiblock.shape.FormedPlace;
+import dev.jstech.core.multiblock.shape.FormedShapes;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -147,7 +149,17 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         // surroundings' light.
         final int lit = standing.isPresent() || entity.getBlockState().canOcclude() ? lightAround(entity.getLevel(),
                 pos, light) : light;
-        KitRenderer.draw(instance, variant, entity, poses, buffers, lit, overlay, held(), entity.getLevel(), true);
+        // A formed structure's model is drawn as the strikes laid on it left it, its terminal its block (0, 0, 0),
+        // the instance moving on as it was, so its animations go on unbroken.
+        final KitModel damaged = standing.isPresent() && entity.getLevel() != null ? KitDamage.of(instance.model(),
+                KitDamage.strikes(entity.getLevel(), pos, new FormedPlace(this.formed,
+                        FormedShapes.ORIENTATIONS.indexOf(standing.get()), 0, 0, 0))) : instance.model();
+        if (damaged != instance.model()) {
+            KitRenderer.draw(instance, damaged, variant, entity, poses, buffers, lit, overlay, held(),
+                    entity.getLevel(), true);
+        } else {
+            KitRenderer.draw(instance, variant, entity, poses, buffers, lit, overlay, held(), entity.getLevel(), true);
+        }
         if (this.extras != null) {
             this.extras.draw(entity, instance, poses, buffers, lit, overlay, partialTick);
         }

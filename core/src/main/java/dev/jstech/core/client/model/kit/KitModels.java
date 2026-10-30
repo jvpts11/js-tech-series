@@ -200,6 +200,7 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
         KitAnimations.forgetModels();
         KitTextures.forget();
         KitInstancing.forget();
+        KitDamage.forget();
     }
 
     private static KitModel read(final ResourceManager manager, final ResourceLocation file,

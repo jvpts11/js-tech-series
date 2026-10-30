@@ -73,11 +73,12 @@ public final class KitRenderer {
         draw(instance, model, variant, thing, poses, buffers, light, overlay, held, level, world);
     }
 
-    /*
-     * Draws {@code instance} as {@code model}: its own model, or the one of fewer triangles it is drawn as far away,
-     * which has the same bones, so the instance's pose fits it.
+    /**
+     * Draws {@code instance} as {@code model}, a model of the same bones as its own, so the instance's pose fits it:
+     * the one of fewer triangles it is drawn as far away, or its own damaged ({@link KitDamage}), drawn so near or far
+     * while the instance moves on as it was.
      */
-    static <T> void draw(final KitInstance instance, final KitModel model, final ModelDefinition.Variant variant,
+    public static <T> void draw(final KitInstance instance, final KitModel model, final ModelDefinition.Variant variant,
                          final T thing, final PoseStack poses, final MultiBufferSource buffers, final int light,
                          final int overlay, @Nullable final IHeldThings<T> held, @Nullable final Level level,
                          final boolean world) {

@@ -14,6 +14,7 @@ import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.shape.CellSpace;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShape;
@@ -80,7 +81,9 @@ public final class FormedMeshes implements IFormedMeshes {
         final double[] to = new double[AXES];
         // Its own model's outline, and those of the models reaching into it, each turned as its model stands.
         for (final FormedPlace place : part.places()) {
-            final Optional<float[]> lines = FormedShapes.lines(level, place);
+            // A block a strike reached is outlined by its faces as the strike left them.
+            final Optional<float[]> struck = FormedDamage.lines(level, pos, place);
+            final Optional<float[]> lines = struck.isPresent() ? struck : FormedShapes.lines(level, place);
             if (lines.isEmpty()) {
                 continue;
             }
