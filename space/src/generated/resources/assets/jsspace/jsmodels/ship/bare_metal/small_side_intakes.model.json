@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_side_intakes.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_side_intakes_bare_metal.png"
+  ],
+  "triangles": 9000
+}

@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_airlock.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_airlock_enamel.png"
+  ],
+  "triangles": 9000
+}

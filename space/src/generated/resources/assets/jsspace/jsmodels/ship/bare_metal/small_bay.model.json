@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_bay.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_bay_bare_metal.png"
+  ],
+  "triangles": 9000
+}

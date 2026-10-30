@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_reactor_fins.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_reactor_fins_bare_metal.png"
+  ],
+  "triangles": 9000
+}

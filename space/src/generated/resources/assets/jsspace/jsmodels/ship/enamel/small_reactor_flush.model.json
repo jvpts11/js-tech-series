@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_reactor_flush.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_reactor_flush_enamel.png"
+  ],
+  "triangles": 9000
+}

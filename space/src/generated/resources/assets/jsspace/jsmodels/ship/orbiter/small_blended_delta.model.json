@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_blended_delta.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_blended_delta_orbiter.png"
+  ],
+  "triangles": 9000
+}

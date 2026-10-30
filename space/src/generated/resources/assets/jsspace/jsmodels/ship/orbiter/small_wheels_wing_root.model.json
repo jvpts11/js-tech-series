@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_wheels_wing_root.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_wheels_wing_root_orbiter.png"
+  ],
+  "triangles": 9000
+}

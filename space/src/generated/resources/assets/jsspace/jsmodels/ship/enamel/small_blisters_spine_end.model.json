@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_blisters_spine_end.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_blisters_spine_end_enamel.png"
+  ],
+  "triangles": 9000
+}

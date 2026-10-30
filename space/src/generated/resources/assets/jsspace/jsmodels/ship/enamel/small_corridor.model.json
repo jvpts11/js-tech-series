@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_corridor.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_corridor_enamel.png"
+  ],
+  "triangles": 9000
+}

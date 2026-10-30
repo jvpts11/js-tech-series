@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_single_fin.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_single_fin_orbiter.png"
+  ],
+  "triangles": 9000
+}

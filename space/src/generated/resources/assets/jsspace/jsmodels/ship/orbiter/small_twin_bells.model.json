@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_twin_bells.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_twin_bells_orbiter.png"
+  ],
+  "triangles": 9000
+}

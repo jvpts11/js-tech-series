@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_magnetic_nozzle.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_magnetic_nozzle_orbiter.png"
+  ],
+  "triangles": 9000
+}

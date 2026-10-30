@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_swept_wings.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_swept_wings_enamel.png"
+  ],
+  "triangles": 9000
+}

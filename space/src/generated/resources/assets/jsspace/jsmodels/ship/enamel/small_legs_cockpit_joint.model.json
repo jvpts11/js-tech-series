@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_legs_cockpit_joint.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_legs_cockpit_joint_enamel.png"
+  ],
+  "triangles": 9000
+}

@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_docking.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_docking_orbiter.png"
+  ],
+  "triangles": 9000
+}

@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_nacelle_intake.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_nacelle_intake_enamel.png"
+  ],
+  "triangles": 9000
+}

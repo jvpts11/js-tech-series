@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/ship/small_twin_canted_fins.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_twin_canted_fins_orbiter.png"
+  ],
+  "triangles": 9000
+}
