@@ -7,9 +7,12 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import com.mojang.logging.LogUtils;
+import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
+import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
@@ -19,6 +22,7 @@ import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardBlocks;
@@ -34,12 +38,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.slf4j.Logger;
 
 /**
  * The Small Shipyard: built whole, dug into the ground, it forms, its blocks merge into its model and take its shapes
@@ -74,6 +80,9 @@ public final class ShipyardGameTests {
     private static final long NANOS_A_MILLI = 1_000_000;
     /* Corridors enough to make a ship longer than the pit, which flies all the same. */
     private static final int LONG_SHIP = 6;
+    /* A tick, in milliseconds: what letting a ship go, and its blocks coming in, must each fit in. */
+    private static final long ONE_TICK = 50;
+    private static final Logger LOGGER = LogUtils.getLogger();
     /* A dock turned a quarter, in an arena as wide as the dock is long. */
     private static final String TURNED = "shipyard_turned";
     /* A ship ready to fly with a workshop, whose kit has blocks of the game in it. */
@@ -272,6 +281,25 @@ public final class ShipyardGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void shipyard_letsTheBuiltShipGoAsOneStructureOfItsPlansBlocks(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final GameTestSequence sequence = helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"));
+        // Twice over: the first ship goes as the game first does it, the second as it goes from then on.
+        final long[] first = new long[2];
+        final long[] then = new long[2];
+        letGo(helper, terminal, sequence, first);
+        letGo(helper, terminal, sequence, then);
+        sequence.thenExecute(() -> {
+            LOGGER.info("A ship let go in {} ms, its blocks in a tick of {} ms; the next in {} ms and {} ms",
+                    first[0], first[1], then[0], then[1]);
+            helper.assertTrue(then[0] < ONE_TICK && then[1] < ONE_TICK, "a ship goes within a tick: let go in "
+                    + then[0] + " ms, its blocks in a tick of " + then[1] + " ms");
+        }).thenSucceed();
+    }
+
     @GameTest(template = TURNED, batch = BATCH, timeoutTicks = 400)
     public static void shipyard_turnedLaysItsShipOverItsPitAsItStands(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
@@ -306,6 +334,54 @@ public final class ShipyardGameTests {
             }
         });
         helper.succeed();
+    }
+
+    /*
+     * Builds the workshop ship in the dock and lets it go, checking it goes whole as one structure of its plan's
+     * blocks, the dock staying; {@code millis} told how long letting it go took, and the tick its blocks came in.
+     */
+    private static void letGo(final GameTestHelper helper, final BlockPos terminal, final GameTestSequence sequence,
+                              final long[] millis) {
+        final ServerLevel level = helper.getLevel();
+        final List<BlockPos> places = new ArrayList<>();
+        final MovingStructure[] ship = new MovingStructure[1];
+        final long[] clock = new long[1];
+        sequence.thenExecute(() -> {
+            final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level.getBlockEntity(terminal);
+            dock.design(WORKSHOP_SHIP);
+            helper.assertTrue(dock.confirm(), "the ship is sent");
+            final PlannedBuild plan = dock.build().orElseThrow();
+            helper.assertTrue(dock.release(null).isEmpty(), "a ship not yet whole does not go");
+            for (final PlanSpot spot : plan.plan().spots()) {
+                lay(level, plan, spot);
+                places.add(plan.where(spot));
+            }
+            final BlockPos console = places.get(plan.plan().spots().indexOf(plan.plan().spots().stream()
+                    .filter(spot -> spot.block().equals(ShipKitBlocks.FLIGHT_CONSOLE.getId())).findFirst()
+                    .orElseThrow()));
+            helper.assertTrue(terminal.equals(LevelStructures.of(level).terminalHolding(console)),
+                    "its flight console knows the dock that holds it");
+            final long start = System.nanoTime();
+            ship[0] = dock.release(null).orElseThrow();
+            millis[0] = (System.nanoTime() - start) / NANOS_A_MILLI;
+            clock[0] = System.nanoTime();
+            helper.assertTrue(dock.plan().isEmpty() && ship[0].arriving(), "the whole ship goes, a structure from"
+                    + " now on, and the dock forgets it");
+        }).thenWaitUntil(() -> {
+            final long now = System.nanoTime();
+            if (ship[0].arriving()) {
+                clock[0] = now;
+                helper.fail("its blocks to come into the structure");
+            }
+            millis[1] = (now - clock[0]) / NANOS_A_MILLI;
+        }).thenExecute(() -> {
+            helper.assertTrue(ship[0].blocks() == places.size(), "every block of its plan went, and none other: "
+                    + ship[0].blocks() + " of " + places.size());
+            helper.assertTrue(places.stream().allMatch(place -> level.getBlockState(place).isAir()),
+                    "its places in the bay are empty");
+            helper.assertTrue(formed(level, terminal) && level.getBlockState(helper.absolutePos(TOWER))
+                    .is(FormedParts.BLOCK.get()), "the dock stays, formed, its blocks where they stood");
+        });
     }
 
     private static boolean formed(final ServerLevel level, final BlockPos terminal) {

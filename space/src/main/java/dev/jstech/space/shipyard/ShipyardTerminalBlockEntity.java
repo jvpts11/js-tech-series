@@ -26,6 +26,9 @@ import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineResource;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.MachineStructure;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.StructureAssembly;
+import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.multiblock.plan.PlanArms;
@@ -38,21 +41,27 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
+import dev.jstech.space.ship.AirReserveEntity;
+import dev.jstech.space.ship.ShipAboard;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipKitBlocks;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -263,6 +272,60 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
      */
     public boolean confirm() {
         return send(design());
+    }
+
+    /**
+     * Lets the ship built whole in its dock go, as its pilot starts it from its flight console: it becomes one moving
+     * structure, once, of the blocks at the places of its plan and no others, the dock's left where they stand, each
+     * block and its block entity as they are; it stays a structure from then on, standing still or flying. Its flight
+     * console takes its plan, to draw its parts aboard, and the dock forgets it. None while it is not whole, has no
+     * console, or its blocks cannot go.
+     */
+    public Optional<MovingStructure> release(final @Nullable UUID by) {
+        final PlannedBuild built = this.build;
+        final ShipDesign design = this.plan.get();
+        final BlockPos at = this.planAt.get();
+        if (!(this.level instanceof ServerLevel server) || built == null || design == null || at == null
+                || !built.complete()) {
+            return Optional.empty();
+        }
+        final ResourceLocation console = ShipKitBlocks.FLIGHT_CONSOLE.getId();
+        final Optional<BlockPos> seat = built.plan().spots().stream().filter(spot -> spot.block().equals(console))
+                .map(built::where).findFirst();
+        if (seat.isEmpty() || !(server.getBlockEntity(seat.get()) instanceof AirReserveEntity keeper)) {
+            return Optional.empty();
+        }
+        final List<BlockPos> places = new ArrayList<>();
+        int minX = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (final PlanSpot spot : built.plan().spots()) {
+            final BlockPos place = built.where(spot);
+            if (!server.getBlockState(place).isAir()) {
+                places.add(place);
+                minX = Math.min(minX, place.getX());
+                minZ = Math.min(minZ, place.getZ());
+                maxX = Math.max(maxX, place.getX());
+                maxZ = Math.max(maxZ, place.getZ());
+            }
+        }
+        final List<Integer> formed = formedParts();
+        // The plan stops watching before its blocks go, so their going takes no part apart.
+        stopBuild(false);
+        final StructureResult made = StructureAssembly.blocks(server, places, new Vec3((minX + maxX + 1) / 2.0,
+                at.getY(), (minZ + maxZ + 1) / 2.0), by);
+        if (!made.ok() || made.structure() == null) {
+            startBuild();
+            return Optional.empty();
+        }
+        keeper.carry(new ShipAboard(design, at.subtract(seat.get()), this.planTurn.get(), formed));
+        this.plan.set(null);
+        this.planAt.set(null);
+        this.formedParts.set(List.of());
+        this.missingParts.set(List.of());
+        setChanged();
+        return Optional.of(made.structure());
     }
 
     /** Whether {@code design} is ready to be built in a Small Shipyard: nothing keeps it down, and it fits the bay. */

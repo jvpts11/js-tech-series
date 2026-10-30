@@ -583,6 +583,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   is sent, and dropped when the terminal is broken. On a J's Computers network, by a data cable in through the gland
   in the control booth's outer wall beside the terminal, `RUN jscore:assemble WITH plan = '<name>'` sends a plan the
   dock keeps by name and sets the arms building, and the network brings the blocks.
+- A ship built whole in the Small Shipyard leaves the dock's hold when its pilot uses its flight console with
+  an empty hand: it becomes one moving structure, once, of the blocks at the places of its plan and no others, the
+  dock's left where they stand, each block and what it keeps as it was. It stays a structure from then on, standing
+  still or flying, its flight console keeping its plan and drawing its parts aboard; the dock is free for the next.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

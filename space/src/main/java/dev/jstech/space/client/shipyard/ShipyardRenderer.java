@@ -16,13 +16,9 @@ import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.KitRenderer;
 import dev.jstech.core.client.multiblock.PlanArmsRenderer;
 import dev.jstech.core.model.ModelDefinition;
-import dev.jstech.core.multiblock.Orientation;
-import dev.jstech.space.api.ShipKits;
-import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.client.ship.ShipPartsRenderer;
 import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.ship.ShipDesign;
-import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.shipyard.ShipyardBlocks;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import java.util.List;
@@ -34,7 +30,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import org.joml.Matrix4f;
 
 /**
  * Draws a formed Small Shipyard whole from its terminal: the dock's model, as its approved drawing has it, and with it
@@ -82,17 +77,9 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
         if (plan.isEmpty() || at.isEmpty() || formed.isEmpty() || terminal.getLevel() == null) {
             return;
         }
-        final List<ShipPartModels.Placed> placed = ShipPartModels.of(ShipParts.all(terminal.getLevel()),
-                ShipKits.all(terminal.getLevel()), plan.get(), formed::contains);
-        final BlockPos from = at.get().subtract(terminal.getBlockPos());
-        poses.pushPose();
-        // The ship's frame turned as the dock stood, about the middle of the block of its nose.
-        poses.translate(from.getX() + 0.5, from.getY() + 0.5, from.getZ() + 0.5);
-        poses.mulPose(turn(terminal.planTurn()));
-        poses.translate(-0.5, -0.5, -0.5);
-        ShipPartsRenderer.draw(terminal, placed, CabinReadings.AT_REST, poses, buffers,
+        ShipPartsRenderer.drawShip(terminal, plan.get(), formed::contains, at.get().subtract(terminal.getBlockPos()),
+                terminal.planTurn(), CabinReadings.AT_REST, poses, buffers,
                 KitBlockEntityRenderer.lightAround(terminal.getLevel(), at.get(), light), overlay);
-        poses.popPose();
     }
 
     @Override
@@ -125,15 +112,5 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
             KitRenderer.draw(instance, ModelDefinition.Variant.NONE, terminal, poses, buffers, light, overlay, null,
                     terminal.getLevel(), true);
         }
-    }
-
-    /* The turn {@code orientation} stands a structure in, each world axis taking one of the structure's. */
-    private static Matrix4f turn(final Orientation orientation) {
-        final Matrix4f turn = new Matrix4f().zero();
-        turn.set(orientation.xFrom(), 0, orientation.xSign());
-        turn.set(orientation.yFrom(), 1, orientation.ySign());
-        turn.set(orientation.zFrom(), 2, orientation.zSign());
-        turn.m33(1);
-        return turn;
     }
 }

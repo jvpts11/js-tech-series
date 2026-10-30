@@ -24,12 +24,14 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * A small ship's air reserve, kept by its cockpit's flight console: a small ship has no life support section, its
  * pressurised cabin topped up from this for its short trips, oxygen and nitrogen each back to the sea's pressure as
- * the crew breathe and the hull leaks, while the reserve lasts. An oxygen bottle pours into it.
+ * the crew breathe and the hull leaks, while the reserve lasts. An oxygen bottle pours into it. Once the ship has left
+ * its dock, the console keeps the ship too ({@link ShipAboard}), and draws its parts aboard.
  */
 public final class AirReserveEntity extends SyncedBlockEntity {
 
     private final ValueField<Double> oxygen;
     private final ValueField<Double> nitrogen;
+    private final ValueField<ShipAboard> ship;
     /** The oxygen a full reserve holds, in moles: two hours of one crew member's breathing. */
     public static final double OXYGEN = 2 * 3600 * RoomLiving.PLAYER_BREATH;
     /** The nitrogen a full reserve holds, in moles, to make good what leaks. */
@@ -43,6 +45,18 @@ public final class AirReserveEntity extends SyncedBlockEntity {
         super(ShipKitBlocks.AIR_RESERVE_ENTITY.get(), pos, state);
         this.oxygen = fields().value("Oxygen", Codec.DOUBLE, OXYGEN).save().toClient();
         this.nitrogen = fields().value("Nitrogen", Codec.DOUBLE, NITROGEN).save().toClient();
+        this.ship = fields().nullable("Ship", ShipAboard.CODEC).save().toClient();
+    }
+
+    /** The ship it is the console of, once it has left its dock. */
+    public Optional<ShipAboard> ship() {
+        return Optional.ofNullable(this.ship.get());
+    }
+
+    /** Keeps {@code aboard}, the ship it is the console of, as the ship leaves its dock. */
+    public void carry(final ShipAboard aboard) {
+        this.ship.set(aboard);
+        setChanged();
     }
 
     /** The oxygen left in it, in moles. */

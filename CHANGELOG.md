@@ -2562,6 +2562,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   dock keeps by name and sets the arms building, and the network brings the blocks.
 - (Core) The arms a plan is laid by, drawn on the player's game, each with its own model's bones turned to put its
   grip on its block, the block it carries in its grip or waiting in its feeder, and the sparks of its weld.
+- (Space) A ship built whole in the Small Shipyard leaves the dock's hold when its pilot uses its flight console with
+  an empty hand: it becomes one moving structure, once, of the blocks at the places of its plan and no others, the
+  dock's left where they stand, each block and what it keeps as it was. It stays a structure from then on, standing
+  still or flying, its flight console keeping its plan and drawing its parts aboard; the dock is free for the next.
 - (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.

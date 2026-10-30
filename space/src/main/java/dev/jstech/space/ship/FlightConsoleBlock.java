@@ -7,10 +7,14 @@
  */
 package dev.jstech.space.ship;
 
+import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.room.RoomLiving;
 import dev.jstech.space.life.OxygenBottleItem;
+import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -24,12 +28,28 @@ import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * The cockpit's flight console, which keeps the small ship's air reserve ({@link AirReserveEntity}) and tops up the
- * pressurised cabin from it; an oxygen bottle used on it pours into the reserve.
+ * pressurised cabin from it; an oxygen bottle used on it pours into the reserve. Used with an empty hand in a ship
+ * built whole in its dock, it starts the ship: the ship leaves the dock's hold, a moving structure from then on.
  */
 public final class FlightConsoleBlock extends ShipFixtureBlock implements EntityBlock {
 
     public FlightConsoleBlock(final Properties properties) {
         super(properties);
+    }
+
+    /* Starts the ship it is the console of, while the ship stands whole in the dock that built it. */
+    @Override
+    protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
+                                               final Player player, final BlockHitResult hit) {
+        if (!(level instanceof ServerLevel server)) {
+            return InteractionResult.SUCCESS;
+        }
+        final BlockPos dock = LevelStructures.of(server).terminalHolding(pos);
+        if (dock != null && server.getBlockEntity(dock) instanceof ShipyardTerminalBlockEntity terminal
+                && terminal.release(player.getUUID()).isPresent()) {
+            return InteractionResult.CONSUME;
+        }
+        return InteractionResult.PASS;
     }
 
     @Override
