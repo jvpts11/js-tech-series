@@ -112,6 +112,7 @@ public final class FlightComputerScreen extends AbstractContainerScreen<FlightCo
     private FlightComputerFace.View view() {
         final long tick = this.minecraft == null || this.minecraft.level == null ? 0
                 : this.minecraft.level.getGameTime();
-        return FlightComputerPages.view(this.menu.computer(), CabinReadings.AT_REST, tick);
+        return FlightComputerPages.view(this.menu.computer(), CabinReadings.AT_REST.clocked(
+                this.menu.computer().clock()), tick);
     }
 }

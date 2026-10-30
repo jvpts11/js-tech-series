@@ -95,6 +95,12 @@ public record CabinReadings(int clock, float fuel, float oxidiser, float climb, 
                 turned.roll(), turned.heading(), this.air, this.propellant, this.lit);
     }
 
+    /** The same readings, the mission's clock at {@code seconds}: below nought, counting down to lift-off. */
+    public CabinReadings clocked(final int seconds) {
+        return new CabinReadings(seconds, this.fuel, this.oxidiser, this.climb, this.throttle, this.pitch,
+                this.roll, this.heading, this.air, this.propellant, this.lit);
+    }
+
     /** Whether the lamp {@code lamp} is lit. */
     public boolean lit(final CabinLamp lamp) {
         return this.lit.contains(lamp);

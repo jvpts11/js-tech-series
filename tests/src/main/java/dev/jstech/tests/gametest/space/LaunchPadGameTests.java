@@ -108,6 +108,9 @@ public final class LaunchPadGameTests {
     @GameTest(template = TALL, batch = BATCH)
     public static void pad_holdsTheCountdownInAThunderstorm(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
+        level.setWeatherParameters(6000, 0, false, false);
+        level.setThunderLevel(0.0F);
+        level.setRainLevel(0.0F);
         helper.assertFalse(LaunchPads.stormHolds(level), "in fair weather the countdown goes on");
         // The storm set at its height at once, and cleared again in the same tick, so no other test sees it.
         level.setWeatherParameters(0, 6000, true, true);

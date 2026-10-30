@@ -47,6 +47,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<BlockPos> foot;
     private final ValueField<List<Integer>> formed;
     private final ValueField<Map<Integer, TankLoad>> tanks;
+    private final IntField clock;
 
     /** The keys: those along the top, then those down the left and down the right, five of each from the top. */
     public static final int TOP = 0;
@@ -89,6 +90,21 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         // What its rocket's tanks hold while it stands on the ground, by their places in its stack, from the bottom.
         this.tanks = fields().value("Tanks", Codec.unboundedMap(SECTION, TankLoad.CODEC), Map.<Integer, TankLoad>of())
                 .save().toClient();
+        // The mission's clock as the launch panel counts it, in seconds: below nought, counting down to lift-off.
+        this.clock = fields().integer("Clock", 0).save().toClient();
+    }
+
+    /** The mission's clock as the launch panel counts it, in seconds: below nought, counting down to lift-off. */
+    public int clock() {
+        return this.clock.get();
+    }
+
+    /** Sets the mission's clock to {@code seconds}, as the launch panel counts. */
+    public void clock(final int seconds) {
+        if (this.clock.get() != seconds) {
+            this.clock.set(seconds);
+            setChanged();
+        }
     }
 
     /** What its rocket's tanks hold while it stands on the ground, by their places in its stack from the bottom. */

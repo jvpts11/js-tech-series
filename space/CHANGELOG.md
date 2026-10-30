@@ -377,6 +377,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   propellant's mix, its pumps spending energy for every kilogram; the rocket's flight computer keeps what its tanks hold
   until it flies. A depot of liquid oxygen fills an Oxygen Bottle held to its pump. New blocks: the Sphere Shell, the
   Tank Leg, the Vent Stack and the Transfer Pump.
+- The Launch Panel by the pad, its console the approved LCC-1: the count in seven segments with the mission's
+  clock and the holds, the sequence on its screen, the HOLD and ABORT lamps, the go and no-go board (vehicle,
+  propellant, tower arms, deluge, weather, crew, range, clamps), the tanks' bars, the DELUGE and CLAMPS toggles, the
+  IGNITION toggle under its red guard, the brass MASTER key, the LAUNCH button in its striped well under its cover,
+  and the HOLD COUNT, SCRUB, RECYCLE T-10 and COUNT RUNNING buttons. It finds the launcher on its pad and its rocket;
+  with its key and its ignition armed and all go, COUNT RUNNING starts the count at T-60: the tower's arms swing back
+  from T-42, the cover lifts at T-10, and with LAUNCH pressed the engines light at T-6, the deluge poured by the pad's
+  rules, and the rocket is released at T-0; without it the count holds at T-6. It holds by itself on a no-go or in a
+  thunderstorm. The count runs on the rocket's flight computer too. New block: the Launch Panel.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

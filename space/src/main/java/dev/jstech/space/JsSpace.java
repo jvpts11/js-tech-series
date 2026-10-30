@@ -30,6 +30,7 @@ import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.crawler.CrawlerBlocks;
 import dev.jstech.space.depot.DepotBlocks;
+import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.pad.PadBlocks;
 import dev.jstech.space.hangar.RocketDesigner;
@@ -138,6 +139,8 @@ public final class JsSpace {
         PadBlocks.declare(modEventBus);
         // The propellant depot that feeds the pad: its welded sphere on its legs, its vent stack and transfer pump.
         DepotBlocks.declare(modEventBus);
+        // The Launch Panel by the pad, where a launch is counted down.
+        LaunchPanel.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();

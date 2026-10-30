@@ -19,7 +19,6 @@ import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
-import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.TankLoad;
@@ -61,12 +60,10 @@ public final class PadServicePortBlockEntity extends SyncedBlockEntity {
     /** How fast it fuels a rocket, in kilograms of each liquid a tick, and the energy its pumps spend on a kilogram. */
     public static final double FUEL_RATE = 10.0;
     public static final int JOULES_A_KILOGRAM = 20;
-    /** How far round it, and how far over it, a launcher's deck is looked for; how far up its rocket's computer. */
+    /** How far round it, and how far over it, a launcher's deck is looked for. */
     public static final int REACH = 16;
     public static final int OVER = 12;
-    public static final int TALLEST = 96;
-    /* How far from the rocket's axis its flight computer may be; how many ticks between looks for a rocket. */
-    private static final int AXIS_ROUND = 4;
+    /* How many ticks between looks for a rocket. */
     private static final int LOOK = 40;
     /* How fast its pumps' store fills, in joules a tick. */
     private static final int ENERGY_IN = 20_000;
@@ -234,36 +231,8 @@ public final class PadServicePortBlockEntity extends SyncedBlockEntity {
 
     /* The flight computer of the rocket on the launcher over the pad by it, if one stands there. */
     private @Nullable BlockPos find(final ServerLevel server) {
-        final BlockPos here = getBlockPos();
-        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int dy = 0; dy <= OVER; dy++) {
-            for (int dx = -REACH; dx <= REACH; dx++) {
-                for (int dz = -REACH; dz <= REACH; dz++) {
-                    at.set(here.getX() + dx, here.getY() + dy, here.getZ() + dz);
-                    if (server.getBlockEntity(at) instanceof LauncherDeckBlockEntity arm && arm.deck().isPresent()) {
-                        return computerOver(server, arm.getBlockPos().offset(arm.deck().get().axis()));
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /* The flight computer keeping a rocket's plan round the axis rising from {@code axis}. */
-    private static @Nullable BlockPos computerOver(final ServerLevel server, final BlockPos axis) {
-        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int dy = 0; dy <= TALLEST; dy++) {
-            for (int dx = -AXIS_ROUND; dx <= AXIS_ROUND; dx++) {
-                for (int dz = -AXIS_ROUND; dz <= AXIS_ROUND; dz++) {
-                    at.set(axis.getX() + dx, axis.getY() + dy, axis.getZ() + dz);
-                    if (server.getBlockEntity(at) instanceof FlightComputerBlockEntity rocket
-                            && rocket.rocket().isPresent()) {
-                        return at.immutable();
-                    }
-                }
-            }
-        }
-        return null;
+        return LaunchPads.standBy(server, getBlockPos(), REACH, 0, OVER).flatMap(LaunchPads.Stand::computer)
+                .orElse(null);
     }
 
     /* Its lines as pipes reach them: each liquid into its own, nothing out. */

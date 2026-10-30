@@ -63,7 +63,9 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
                 .filter(model -> formed.contains(model.section())).toList();
         poses.pushPose();
         poses.translate(foot.get().getX() + 0.5, foot.get().getY(), foot.get().getZ() + 0.5);
-        RocketPartsRenderer.draw(computer, placed, CabinReadings.AT_REST, poses, buffers, light, overlay);
+        // The cabin's live panels show the count as the launch panel runs it.
+        RocketPartsRenderer.draw(computer, placed, CabinReadings.AT_REST.clocked(computer.clock()), poses, buffers,
+                light, overlay);
         poses.popPose();
     }
 

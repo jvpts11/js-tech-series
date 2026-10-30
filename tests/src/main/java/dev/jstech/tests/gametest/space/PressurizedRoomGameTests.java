@@ -122,7 +122,11 @@ public final class PressurizedRoomGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    /*
+     * The test server runs its ticks as fast as it can, so the twenty seconds the Moon's entities may take to load
+     * while many tests read and write the disk can pass in far more ticks than a test usually waits.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 12_000)
     public static void torch_fallsInTheMoonsVacuumAndBurnsInARoomOfAirUntilItRunsOut(final GameTestHelper helper) {
         final ResourceKey<Level> key = key("rooms_torch");
         final ServerLevel moon = moon(helper, key);

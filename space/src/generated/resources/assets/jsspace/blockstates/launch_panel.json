@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jsspace:block/launch_panel",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsspace:block/launch_panel"
+    },
+    "facing=south": {
+      "model": "jsspace:block/launch_panel",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsspace:block/launch_panel",
+      "y": 270
+    }
+  }
+}

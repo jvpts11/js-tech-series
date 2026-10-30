@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "jsspace:block/launch/launch_panel_front",
+    "side": "jsspace:block/launch/launch_panel_side",
+    "top": "jsspace:block/launch/launch_panel_top"
+  }
+}

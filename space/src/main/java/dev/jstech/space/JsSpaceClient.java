@@ -11,6 +11,7 @@ import dev.jstech.core.client.advancement.WideBackgrounds;
 import dev.jstech.core.client.multiblock.PlanHologram;
 import dev.jstech.space.client.crawler.CrawlerRenderer;
 import dev.jstech.space.client.depot.DepotRenderer;
+import dev.jstech.space.client.launch.LaunchPanelScreen;
 import dev.jstech.space.client.flight.FlightComputerScreen;
 import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.client.hangar.HangarTerminalRenderer;
@@ -29,6 +30,7 @@ import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.RocketDesigner;
+import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.network.SpacePayloads;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -80,5 +82,8 @@ public final class JsSpaceClient {
         CrawlerRenderer.listen(modEventBus);
         // A formed propellant depot, its sphere on its legs, drawn whole as the approved one.
         DepotRenderer.listen(modEventBus);
+        // The Launch Panel's console, the approved LCC-1.
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(LaunchPanel.MENU.get(),
+                LaunchPanelScreen::new));
     }
 }

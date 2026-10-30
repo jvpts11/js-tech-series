@@ -232,6 +232,7 @@ import dev.jstech.tests.clienttest.space.FlightComputerClientTests;
 import dev.jstech.tests.clienttest.space.GroundSkyClientTests;
 import dev.jstech.tests.clienttest.space.LandingGroundClientTests;
 import dev.jstech.tests.clienttest.space.LaunchPadClientTests;
+import dev.jstech.tests.clienttest.space.LaunchPanelClientTests;
 import dev.jstech.tests.clienttest.space.LauncherClientTests;
 import dev.jstech.tests.clienttest.space.LooseStonesClientTests;
 import dev.jstech.tests.clienttest.space.LunarSuitClientTests;
@@ -497,7 +498,8 @@ public final class ClientTestSuite {
             LauncherClientTests.class,
             CrawlerClientTests.class,
             LaunchPadClientTests.class,
-            DepotClientTests.class);
+            DepotClientTests.class,
+            LaunchPanelClientTests.class);
 
     private ClientTestSuite() {
     }
