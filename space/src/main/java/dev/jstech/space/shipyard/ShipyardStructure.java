@@ -11,9 +11,11 @@ import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.InsideRule;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.space.JsSpace;
 import java.util.Set;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -127,6 +129,16 @@ public final class ShipyardStructure {
      */
     public static int[] dockOf(final int x, final int y, final int z) {
         return new int[] {x, y + SHIP_FLOOR, z + SHIP_NOSE};
+    }
+
+    /**
+     * Where the block of a ship's nose on its centre line at its hull's floor, its frame's block (0, 0, 0), stands in
+     * the world, in a dock whose terminal is at {@code terminal}, standing as {@code dock} says.
+     */
+    public static BlockPos shipAt(final BlockPos terminal, final Orientation dock) {
+        final int[] at = dockOf(0, 0, 0);
+        final int[] off = dock.apply(at[0] - TERMINAL_X, at[1] - BOOTH_FLOOR, at[2] - TERMINAL_Z);
+        return terminal.offset(off[0], off[1], off[2]);
     }
 
     /**

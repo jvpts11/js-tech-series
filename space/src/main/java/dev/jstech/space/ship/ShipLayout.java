@@ -8,6 +8,7 @@
 package dev.jstech.space.ship;
 
 import dev.jstech.space.api.ShipKit;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,23 +28,40 @@ public final class ShipLayout {
 
     /** The blocks of a ship of the spine {@code spine} and the parts {@code hung}, each hung part its pieces. */
     public static Laid lay(final List<Section> spine, final List<List<ShipKit.Piece>> hung) {
-        final int[] fronts = fronts(spine.stream().map(Section::length).toList());
         final Map<Cell, Spot> cells = new LinkedHashMap<>();
         final Set<Cell> clashes = new HashSet<>();
+        for (final Block block : blocks(spine, hung)) {
+            final Spot spot = new Spot(block.part(), block.letter());
+            final Spot was = cells.putIfAbsent(block.cell(), spot);
+            if (was != null && !was.equals(spot)) {
+                clashes.add(block.cell());
+            }
+        }
+        return new Laid(cells, clashes, fronts(spine.stream().map(Section::length).toList())[spine.size()]);
+    }
+
+    /**
+     * Every block of a ship of the spine {@code spine} and the parts {@code hung}, part by part, each with the piece
+     * of its part's kit it is of and its place in that piece's model; two parts wanting one place each have a block
+     * there.
+     */
+    public static List<Block> blocks(final List<Section> spine, final List<List<ShipKit.Piece>> hung) {
+        final int[] fronts = fronts(spine.stream().map(Section::length).toList());
+        final List<Block> out = new ArrayList<>();
         int part = 0;
         for (int k = 0; k < spine.size(); k++) {
             for (final ShipKit.Piece piece : spine.get(k).pieces()) {
-                set(piece, anchor(piece.anchor(), fronts, k), part, spine.get(k).flipped(), cells, clashes);
+                set(piece, anchor(piece.anchor(), fronts, k), part, spine.get(k).flipped(), out);
             }
             part++;
         }
         for (final List<ShipKit.Piece> pieces : hung) {
             for (final ShipKit.Piece piece : pieces) {
-                set(piece, anchor(piece.anchor(), fronts, 0), part, false, cells, clashes);
+                set(piece, anchor(piece.anchor(), fronts, 0), part, false, out);
             }
             part++;
         }
-        return new Laid(cells, clashes, fronts[spine.size()]);
+        return List.copyOf(out);
     }
 
     /** Where each section of a spine of {@code lengths} begins from the nose, and last where the spine ends. */
@@ -71,10 +89,10 @@ public final class ShipLayout {
 
     /*
      * Sets the blocks of {@code piece} from {@code z0} along the spine, on both sides if it is mirrored, and from the
-     * other side of the centre line for a section flipped left for right.
+     * other side of the centre line for a section flipped left for right, whose model is drawn mirrored.
      */
     private static void set(final ShipKit.Piece piece, final int z0, final int part, final boolean flipped,
-                            final Map<Cell, Spot> cells, final Set<Cell> clashes) {
+                            final List<Block> out) {
         for (int y = 0; y < piece.layers().size(); y++) {
             final List<String> layer = piece.layers().get(y);
             for (int z = 0; z < layer.size(); z++) {
@@ -84,22 +102,21 @@ public final class ShipLayout {
                     if (letter == ' ') {
                         continue;
                     }
-                    final int at = flipped ? -1 - (piece.x() + x) : piece.x() + x;
-                    put(new Cell(at, piece.y() + y, z0 + piece.z() + z), new Spot(part, letter), cells, clashes);
+                    final Cell own = new Cell(piece.x() + x, piece.y() + y, piece.z() + z);
+                    put(own, z0, part, piece, letter, flipped, out);
                     if (piece.mirrored()) {
-                        put(new Cell(-1 - at, piece.y() + y, z0 + piece.z() + z), new Spot(part, letter), cells,
-                                clashes);
+                        put(new Cell(-1 - own.x(), own.y(), own.z()), z0, part, piece, letter, flipped, out);
                     }
                 }
             }
         }
     }
 
-    private static void put(final Cell cell, final Spot spot, final Map<Cell, Spot> cells, final Set<Cell> clashes) {
-        final Spot was = cells.putIfAbsent(cell, spot);
-        if (was != null && !was.equals(spot)) {
-            clashes.add(cell);
-        }
+    /* Puts the block at {@code model} of its piece's model where it goes on the ship. */
+    private static void put(final Cell model, final int z0, final int part, final ShipKit.Piece piece,
+                            final char letter, final boolean flipped, final List<Block> out) {
+        out.add(new Block(new Cell(flipped ? -1 - model.x() : model.x(), model.y(), z0 + model.z()), part, piece,
+                letter, model, flipped));
     }
 
     /**
@@ -132,6 +149,19 @@ public final class ShipLayout {
      * @param letter its letter in the part's kit
      */
     public record Spot(int part, char letter) {
+    }
+
+    /**
+     * A block of a ship, with where it is in its piece's model.
+     *
+     * @param cell    its place on the ship
+     * @param part    the part it is of, the spine's from the nose first, then the hung ones
+     * @param piece   the piece of the part's kit it is of
+     * @param letter  its letter in the part's kit
+     * @param model   its place in its piece's model, from the piece's anchor, as the model is made
+     * @param flipped whether its section is flipped left for right, its model drawn mirrored
+     */
+    public record Block(Cell cell, int part, ShipKit.Piece piece, char letter, Cell model, boolean flipped) {
     }
 
     /**

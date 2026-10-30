@@ -7,11 +7,19 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.multiblock.FormedPartBlock;
+import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
+import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.FormedShapes;
+import dev.jstech.space.api.ShipKit;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardBlocks;
 import dev.jstech.space.shipyard.ShipyardLayout;
@@ -21,6 +29,7 @@ import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -36,7 +45,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * The Small Shipyard: built whole, dug into the ground, it forms, its blocks merge into its model and take its shapes
  * (a walkway its grating, a tower its lattice), its item port staying itself; a block in its pit undoes it, and
  * clearing the pit forms it again; a block of it taken away undoes it and its other blocks come back as they were;
- * and cleared all at once, as a blast or a fill clears it, it is gone in a moment.
+ * and cleared all at once, as a blast or a fill clears it, it is gone in a moment. A ship sent to it is laid out over
+ * its pit as the dock stands, and built by hand: each part forms by itself as its last block goes in, shaped as its
+ * model, and comes apart as one is taken away.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -63,6 +74,12 @@ public final class ShipyardGameTests {
     private static final long NANOS_A_MILLI = 1_000_000;
     /* Corridors enough to make a ship longer than the pit, which flies all the same. */
     private static final int LONG_SHIP = 6;
+    /* A dock turned a quarter, in an arena as wide as the dock is long. */
+    private static final String TURNED = "shipyard_turned";
+    /* A ship ready to fly with a workshop, whose kit has blocks of the game in it. */
+    private static final ShipDesign WORKSHOP_SHIP = new ShipDesign("JS-02", List.of(part("orbiter_cockpit"),
+            part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
+            part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
 
     private ShipyardGameTests() {
     }
@@ -172,8 +189,108 @@ public final class ShipyardGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void shipyard_buildsTheShipSentByHandEachPartFormingAsItsLastBlockGoesIn(
+            final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"))
+                .thenExecute(() -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal);
+                    dock.design(WORKSHOP_SHIP);
+                    helper.assertTrue(dock.confirm(), "a ready ship that fits is sent to the dock");
+                    final PlannedBuild plan = dock.build().orElseThrow();
+                    helper.assertTrue(plan.plan().parts() == WORKSHOP_SHIP.spine().size()
+                            + WORKSHOP_SHIP.hung().size() && dock.formedParts().isEmpty(), "its plan counts every part"
+                            + " of the ship, none formed");
+                    for (final PlanSpot spot : plan.plan().spots()) {
+                        helper.assertTrue(level.getBlockState(plan.where(spot)).isAir(), "each of its blocks goes"
+                                + " in the bay's clear room: " + plan.where(spot));
+                    }
+                    final List<PlanSpot> cockpit = spots(plan, 0);
+                    for (int i = 0; i < cockpit.size() - 1; i++) {
+                        lay(level, plan, cockpit.get(i));
+                    }
+                    helper.assertTrue(!plan.formed(0) && plan.missing(0) == 1, "a block short, the cockpit waits");
+                    lay(level, plan, cockpit.getLast());
+                    helper.assertTrue(plan.formed(0) && dock.formedParts().equals(List.of(0))
+                            && dock.missingParts().getFirst() == 0, "its last block in, the cockpit forms by itself,"
+                            + " and the dock's players are told: " + dock.formedParts());
+                    helper.assertTrue(cockpit.stream().anyMatch(spot -> level.getBlockEntity(plan.where(spot))
+                            instanceof FormedPartBlockEntity merged && merged.place() != null
+                            && !Block.isShapeFullBlock(merged.shape())), "its blocks merged into its model, shaped as"
+                            + " their parts of it");
+                    final PlanSpot taken = cockpit.stream().filter(spot -> spot.place().isPresent()).findFirst()
+                            .orElseThrow();
+                    level.setBlockAndUpdate(plan.where(taken), Blocks.AIR.defaultBlockState());
+                    helper.assertTrue(!plan.formed(0) && cockpit.stream().noneMatch(spot -> level.getBlockState(
+                            plan.where(spot)).getBlock() instanceof FormedPartBlock), "a block taken away, the"
+                            + " cockpit comes apart, its blocks back as they were");
+                    for (final PlanSpot spot : plan.plan().spots()) {
+                        lay(level, plan, spot);
+                    }
+                    helper.assertTrue(plan.complete() && dock.built(), "every block in, the whole ship is formed");
+                    final PlanSpot table = plan.plan().spots().stream().filter(spot -> spot.place().isEmpty())
+                            .findFirst().orElseThrow();
+                    helper.assertTrue(level.getBlockState(plan.where(table)).is(BuiltInRegistries.BLOCK.get(
+                            table.block())), "a block of the game in the workshop's kit keeps itself");
+                    level.destroyBlock(terminal, false);
+                    helper.assertTrue(cockpit.stream().noneMatch(spot -> level.getBlockState(plan.where(spot))
+                            .getBlock() instanceof FormedPartBlock), "the terminal broken, the ship comes apart");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = TURNED, batch = BATCH, timeoutTicks = 400)
+    public static void shipyard_turnedLaysItsShipOverItsPitAsItStands(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER), Orientation.EAST);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock turned forms"))
+                .thenExecute(() -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal);
+                    dock.design(WORKSHOP_SHIP);
+                    helper.assertTrue(dock.confirm() && dock.planTurn().equals(Orientation.EAST),
+                            "a ship sent to a dock turned is turned as it stands");
+                    final PlannedBuild plan = dock.build().orElseThrow();
+                    for (final PlanSpot spot : plan.plan().spots()) {
+                        helper.assertTrue(level.getBlockState(plan.where(spot)).isAir(), "each of its blocks goes"
+                                + " in the bay's clear room: " + plan.where(spot));
+                    }
+                    for (final PlanSpot spot : spots(plan, 0)) {
+                        lay(level, plan, spot);
+                    }
+                    helper.assertTrue(plan.formed(0), "its cockpit forms as in a dock facing north");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = "empty")
+    public static void shapes_everyPieceOfTheShipsKitsHasItsShapeFile(final GameTestHelper helper) {
+        ShipKits.all(helper.getLevel()).forEach((part, kit) -> {
+            for (final ShipKit.Piece piece : kit.pieces()) {
+                helper.assertTrue(FormedShapes.get(helper.getLevel(), ShipPartModels.shape(part, kit, piece))
+                        .isPresent(), "the piece " + ShipPartModels.shape(part, kit, piece) + " has its shapes");
+            }
+        });
+        helper.succeed();
+    }
+
     private static boolean formed(final ServerLevel level, final BlockPos terminal) {
         return level.getBlockEntity(terminal) instanceof ShipyardTerminalBlockEntity dock && dock.formed();
+    }
+
+    /* The places of the part {@code part} of {@code plan}. */
+    private static List<PlanSpot> spots(final PlannedBuild plan, final int part) {
+        return plan.plan().spots().stream().filter(spot -> spot.part() == part).toList();
+    }
+
+    /* Lays the block {@code plan} wants at {@code spot}. */
+    private static void lay(final ServerLevel level, final PlannedBuild plan, final PlanSpot spot) {
+        level.setBlockAndUpdate(plan.where(spot), BuiltInRegistries.BLOCK.get(spot.block()).defaultBlockState());
     }
 
     private static ResourceLocation part(final String path) {

@@ -15,7 +15,6 @@ import dev.jstech.core.content.Device;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
-import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.space.SpaceContent;
 import java.util.List;
@@ -42,7 +41,7 @@ public final class ShipyardBlocks {
     /** The terminal in the control booth, which the dock is worked from. */
     public static final BlockEntry<ShipyardTerminalBlock> TERMINAL = SpaceContent.CONTENT.block("shipyard_terminal",
                     properties -> new ShipyardTerminalBlock(properties, Device.of(() -> ShipyardBlocks.TERMINAL_ENTITY
-                            .get()).ticks(MachineBlockEntity::serverTick).opensMenu(MachineMenu::new)))
+                            .get()).ticks(ShipyardTerminalBlockEntity::serverTick).opensMenu(MachineMenu::new)))
             .named("Shipyard Terminal")
             .properties(ShipyardBlocks::metal)
             .look(IBlockLook.facing(new IBlockModel.Orientable("shipyard_terminal", "block/shipyard/terminal_side",

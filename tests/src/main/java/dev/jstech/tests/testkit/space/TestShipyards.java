@@ -8,6 +8,7 @@
 package dev.jstech.tests.testkit.space;
 
 import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.shipyard.ShipyardBlocks;
 import dev.jstech.space.shipyard.ShipyardStructure;
@@ -52,12 +53,32 @@ public final class TestShipyards {
      * and returns where its terminal stands.
      */
     public static BlockPos build(final ServerLevel level, final BlockPos corner) {
+        return build(level, corner, Orientation.NORTH);
+    }
+
+    /**
+     * Builds the dock standing as {@code turn} says, the lowest corner of the box it stands in at {@code corner}, and
+     * returns where its terminal stands.
+     */
+    public static BlockPos build(final ServerLevel level, final BlockPos corner, final Orientation turn) {
         final MultiblockPattern pattern = ShipyardStructure.PATTERN;
-        final BlockPos terminal = corner.offset(pattern.terminalX(), pattern.terminalY(), pattern.terminalZ());
-        for (int x = -MARGIN; x < pattern.sizeX() + MARGIN; x++) {
-            for (int z = -MARGIN; z < pattern.sizeZ() + MARGIN; z++) {
+        // The box the dock stands in, from its terminal: each corner of the pattern turned.
+        final int[] low = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE};
+        final int[] high = {Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};
+        for (final int x : new int[] {0, pattern.sizeX() - 1}) {
+            for (final int z : new int[] {0, pattern.sizeZ() - 1}) {
+                final int[] off = offset(pattern, turn, x, 0, z);
+                for (int axis = 0; axis < low.length; axis++) {
+                    low[axis] = Math.min(low[axis], off[axis]);
+                    high[axis] = Math.max(high[axis], off[axis]);
+                }
+            }
+        }
+        final BlockPos terminal = corner.offset(-low[0], pattern.terminalY(), -low[2]);
+        for (int x = low[0] - MARGIN; x <= high[0] + MARGIN; x++) {
+            for (int z = low[2] - MARGIN; z <= high[2] + MARGIN; z++) {
                 for (int y = corner.getY() - 1; y < corner.getY() + GROUND_DEPTH - 1; y++) {
-                    level.setBlock(new BlockPos(corner.getX() + x, y, corner.getZ() + z), Blocks.STONE
+                    level.setBlock(new BlockPos(terminal.getX() + x, y, terminal.getZ() + z), Blocks.STONE
                             .defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
             }
@@ -66,7 +87,8 @@ public final class TestShipyards {
             for (int z = 0; z < pattern.sizeZ(); z++) {
                 for (int x = 0; x < pattern.sizeX(); x++) {
                     final char letter = pattern.charAt(x, y, z);
-                    final BlockPos at = corner.offset(x, y, z);
+                    final int[] off = offset(pattern, turn, x, y, z);
+                    final BlockPos at = terminal.offset(off[0], off[1], off[2]);
                     if (letter == PIT) {
                         level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                     } else if (BLOCKS.containsKey(letter)) {
@@ -75,9 +97,17 @@ public final class TestShipyards {
                 }
             }
         }
+        // As drawn the terminal faces east, to the booth's back.
+        final int[] east = turn.apply(1, 0, 0);
         final BlockState console = ShipyardBlocks.TERMINAL.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST);
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.fromDelta(east[0], east[1], east[2]));
         level.setBlock(terminal, console, Block.UPDATE_ALL);
         return terminal;
+    }
+
+    /* Where the pattern's place ({@code x}, {@code y}, {@code z}) stands from its terminal, turned. */
+    private static int[] offset(final MultiblockPattern pattern, final Orientation turn, final int x, final int y,
+                                final int z) {
+        return turn.apply(x - pattern.terminalX(), y - pattern.terminalY(), z - pattern.terminalZ());
     }
 }

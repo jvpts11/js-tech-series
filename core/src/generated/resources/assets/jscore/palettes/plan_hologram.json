@@ -5,6 +5,10 @@
   "ground": "#D81A1E24",
   "next": "#FFFFB43C",
   "scan": "#1C000000",
+  "tagGround": "#D70E1218",
+  "tagLine": "#FFE8B52A",
+  "tagName": "#FFEEF2F6",
+  "tagWords": "#FFA0ACB6",
   "words": "#FFE6E6E6",
   "wrong": "#FFF0564A"
 }

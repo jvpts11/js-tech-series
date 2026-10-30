@@ -29,20 +29,13 @@ public final class ShipyardLayout {
     /** The blocks of the ship of {@code design}, its parts and their kits read from {@code parts} and {@code kits}. */
     public static ShipLayout.Laid laid(final Map<ResourceLocation, ShipPart> parts,
                                        final Map<ResourceLocation, ShipKit> kits, final ShipDesign design) {
-        final List<ShipLayout.Section> spine = new ArrayList<>();
-        for (int k = 0; k < design.spine().size(); k++) {
-            final ResourceLocation id = design.spine().get(k);
-            final ShipPart part = parts.get(id);
-            final ShipKit kit = kits.get(id);
-            spine.add(new ShipLayout.Section(part == null ? 0 : (int) part.length(),
-                    kit == null ? List.of() : kit.pieces(), design.flips(k)));
-        }
-        final List<List<ShipKit.Piece>> hung = new ArrayList<>();
-        for (final ResourceLocation id : design.hung()) {
-            final ShipKit kit = kits.get(id);
-            hung.add(kit == null ? List.of() : kit.pieces());
-        }
-        return ShipLayout.lay(spine, hung);
+        return ShipLayout.lay(spine(parts, kits, design), hung(kits, design));
+    }
+
+    /** Every block of the ship of {@code design}, part by part, with its piece and its place in the piece's model. */
+    public static List<ShipLayout.Block> blocks(final Map<ResourceLocation, ShipPart> parts,
+                                                final Map<ResourceLocation, ShipKit> kits, final ShipDesign design) {
+        return ShipLayout.blocks(spine(parts, kits, design), hung(kits, design));
     }
 
     /** Whether the ship laid as {@code laid} fits the bay: none of its parts clashing, each block where room is. */
@@ -75,5 +68,30 @@ public final class ShipyardLayout {
             count += piece.mirrored() ? one * 2 : one;
         }
         return count;
+    }
+
+    /* The design's spine, each section as long as its part, its kit's pieces, flipped as the design says. */
+    private static List<ShipLayout.Section> spine(final Map<ResourceLocation, ShipPart> parts,
+                                                  final Map<ResourceLocation, ShipKit> kits, final ShipDesign design) {
+        final List<ShipLayout.Section> spine = new ArrayList<>();
+        for (int k = 0; k < design.spine().size(); k++) {
+            final ResourceLocation id = design.spine().get(k);
+            final ShipPart part = parts.get(id);
+            final ShipKit kit = kits.get(id);
+            spine.add(new ShipLayout.Section(part == null ? 0 : (int) part.length(),
+                    kit == null ? List.of() : kit.pieces(), design.flips(k)));
+        }
+        return spine;
+    }
+
+    /* The pieces of each part the design hangs on its spine. */
+    private static List<List<ShipKit.Piece>> hung(final Map<ResourceLocation, ShipKit> kits,
+                                                  final ShipDesign design) {
+        final List<List<ShipKit.Piece>> hung = new ArrayList<>();
+        for (final ResourceLocation id : design.hung()) {
+            final ShipKit kit = kits.get(id);
+            hung.add(kit == null ? List.of() : kit.pieces());
+        }
+        return hung;
     }
 }

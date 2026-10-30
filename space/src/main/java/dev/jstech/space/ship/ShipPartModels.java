@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.IntPredicate;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -92,6 +93,16 @@ public final class ShipPartModels {
     /** The models the ship of {@code design} is drawn with, its flipped sections drawn flipped. */
     public static List<Placed> of(final Map<ResourceLocation, ShipPart> parts,
                                   final Map<ResourceLocation, ShipKit> kits, final ShipDesign design) {
+        return of(parts, kits, design, part -> true);
+    }
+
+    /**
+     * The models of the parts of the ship of {@code design} that {@code drawn} says, by their numbers, the spine's
+     * from the nose first, then the hung ones: those a shipyard has formed.
+     */
+    public static List<Placed> of(final Map<ResourceLocation, ShipPart> parts,
+                                  final Map<ResourceLocation, ShipKit> kits, final ShipDesign design,
+                                  final IntPredicate drawn) {
         final List<Integer> lengths = new ArrayList<>();
         for (final ResourceLocation id : design.spine()) {
             final ShipPart part = parts.get(id);
@@ -100,13 +111,31 @@ public final class ShipPartModels {
         final int[] fronts = ShipLayout.fronts(lengths);
         final List<Placed> placed = new ArrayList<>();
         for (int k = 0; k < design.spine().size(); k++) {
-            add(design.spine().get(k), kits.get(design.spine().get(k)), fronts, k, design.flips(k), design.finish(),
-                    placed);
+            if (drawn.test(k)) {
+                add(design.spine().get(k), kits.get(design.spine().get(k)), fronts, k, design.flips(k),
+                        design.finish(), placed);
+            }
         }
-        for (final ResourceLocation id : design.hung()) {
-            add(id, kits.get(id), fronts, 0, false, design.finish(), placed);
+        for (int k = 0; k < design.hung().size(); k++) {
+            if (drawn.test(design.spine().size() + k)) {
+                add(design.hung().get(k), kits.get(design.hung().get(k)), fronts, 0, false, design.finish(), placed);
+            }
         }
         return List.copyOf(placed);
+    }
+
+    /** The model of {@code piece} of the kit {@code kit} of the part {@code part}, in the finish {@code finish}. */
+    public static ResourceLocation model(final ResourceLocation finish, final ResourceLocation part,
+                                         final ShipKit kit, final ShipKit.Piece piece) {
+        return id(finish.getPath(), name(part, kit, piece));
+    }
+
+    /**
+     * The model the blocks of {@code piece} take their shapes from once formed: its finishes share one geometry, so
+     * its blocks are shaped by the first finish's model whatever the ship is painted in.
+     */
+    public static ResourceLocation shape(final ResourceLocation part, final ShipKit kit, final ShipKit.Piece piece) {
+        return id(FINISHES.getFirst(), name(part, kit, piece));
     }
 
     private static void add(final ResourceLocation part, final ShipKit kit, final int[] fronts, final int section,

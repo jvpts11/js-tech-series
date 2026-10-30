@@ -1,0 +1,13 @@
+{
+  "cockpit": "#FF5AC8FF",
+  "engines": "#FFF06EC8",
+  "fins": "#FFFFA078",
+  "gear": "#FFC8C8C8",
+  "hold": "#FFFFC43C",
+  "hull": "#FF78E68C",
+  "intakes": "#FFA0A0FF",
+  "module": "#FFAA6EFF",
+  "reactor": "#FFFF7850",
+  "thrusters": "#FFDCDC78",
+  "wings": "#FF6EF0DC"
+}

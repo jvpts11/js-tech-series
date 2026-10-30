@@ -570,6 +570,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its hull; its finish; the blocks the dock needs; the ship's footprint on the floor with its length and span. Flip
   turns a section's door and fittings to the other side. S saves it among the dock's plans by its name, E sends it to
   the dock once it is ready to fly and fits the bay.
+- A ship sent to the Small Shipyard is built by hand from its hologram: laid out over the pit as the dock
+  stands, every block still to place shows where it goes, the layer being built glowing amber, and each part still to
+  form has its box with a tag lifted over it, its name, its size, how many of its blocks are in place and whether it is
+  the one being built. Each part of the ship forms by itself into its model as its last block goes in, and its blocks
+  take the model's shapes, the hull's floor and ceiling leaving room to walk inside; a block taken away undoes it. The
+  terminal draws the parts formed, and breaking it gives their blocks back.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

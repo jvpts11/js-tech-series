@@ -20,6 +20,8 @@ import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -56,12 +58,14 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 
 /**
  * The hologram of a plan being built ({@code PlannedBuild}), drawn as the Structure Projector draws its multiblock:
  * every block still missing stands where it goes as a ghost of itself, pale and see-through, the layer being built
  * next glowing amber; a wrong block is outlined in red; each part has its box drawn round it in a colour of its own,
- * its name, its size and how far it stands written beside it, facing the player; and a line across the top of the
+ * its name, its size and how far it stands written beside it or over it, facing the player, a leader running from the
+ * box to the words; and a line across the top of the
  * screen says what is being built now and what it needs. Whoever keeps a plan says what to show, every frame
  * ({@link #show}); a part that forms draws its own model, and leaves the hologram.
  */
@@ -71,7 +75,8 @@ public final class PlanHologram {
     /** The hologram's own colours: the next layer's glow, a wrong block's mark, the ground under the words. */
     public static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "plan_hologram", new Colours(
             0xFF << 24 | 0xFFB43C, 0xFF << 24 | 0xF0564A, 0xD8 << 24 | 0x1A1E24, 0xFF << 24 | 0xE6E6E6,
-            0xFF << 24 | 0xFFD278, 0x20 << 24 | 0xFFFFFF, 0xF0 << 24 | 0x18191B, 0x1C << 24));
+            0xFF << 24 | 0xFFD278, 0x20 << 24 | 0xFFFFFF, 0xF0 << 24 | 0x18191B, 0x1C << 24,
+            0xD7 << 24 | 0x0E1218, 0xFF << 24 | 0xE8B52A, 0xFF << 24 | 0xEEF2F6, 0xFF << 24 | 0xA0ACB6));
     /** How far from the player a plan's hologram is drawn, in blocks. */
     public static final double RANGE = 64.0;
     private static final ResourceLocation BANNER = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "plan_banner");
@@ -98,9 +103,28 @@ public final class PlanHologram {
     private static final int BANNER_TOP = 6;
     private static final int BANNER_PAD = 3;
     private static final float CHANNEL = 255.0F;
+    private static final ResourceLocation TAG_LAYER = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "plan_tags");
+    /*
+     * A part's tag on the screen, as the approved drawings lay tags out on a screen 540 of their pixels high: the
+     * heights it is tried at over its part, the nearest first, then under it, and the other way round for a part in
+     * the screen's lower half; its padding, its size and state written smaller under its name, the room kept round it
+     * from other tags, and the gap kept from the screen's edges, in the screen's scaled pixels.
+     */
+    private static final int[] TAG_UPS = {150, 185, 220, 255, 115, 80, 45};
+    private static final int[] TAG_DOWNS = {-110, -145, -180, -75, -40};
+    private static final float TAG_SCREEN = 540F;
+    private static final float TAG_UPPER = 280F;
+    private static final int TAG_PAD = 5;
+    private static final int TAG_TOP = 2;
+    private static final float TAG_SMALL = 0.75F;
+    private static final int TAG_ROOM = 3;
+    private static final int TAG_EDGE = 2;
 
     private static final List<Supplier<List<Shown>>> SOURCES = new CopyOnWriteArrayList<>();
     private static volatile @Nullable Text banner;
+    /* The tags of the parts of the holograms drawn in the last frame. */
+    private static volatile List<Tag> tags = List.of();
     /* The picture of a ghost's lines, made the first time a ghost is drawn. */
     private static @Nullable ResourceLocation scanLines;
 
@@ -110,8 +134,10 @@ public final class PlanHologram {
     /** Hands the mod's bus and the game's what this answers, once, from the Core's client. */
     public static void listen(final IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, PlanHologram::onRender);
-        modBus.addListener(RegisterGuiLayersEvent.class, event -> event.registerAbove(VanillaGuiLayers.CHAT, BANNER,
-                PlanHologram::drawBanner));
+        modBus.addListener(RegisterGuiLayersEvent.class, event -> {
+            event.registerAbove(VanillaGuiLayers.CHAT, TAG_LAYER, PlanHologram::drawTags);
+            event.registerAbove(TAG_LAYER, BANNER, PlanHologram::drawBanner);
+        });
     }
 
     /** Shows what {@code source} gives each frame: the holograms of the plans it keeps near the player. */
@@ -132,11 +158,15 @@ public final class PlanHologram {
         final Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) {
             banner = null;
+            tags = List.of();
             return;
         }
         final Camera camera = event.getCamera();
         final PoseStack pose = event.getPoseStack();
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
+        final Matrix4f view = new Matrix4f(event.getModelViewMatrix());
+        final Matrix4f projection = new Matrix4f(event.getProjectionMatrix());
+        final List<Tag> frameTags = new ArrayList<>();
         Text nearest = null;
         double nearestDistance = Double.MAX_VALUE;
         for (final Supplier<List<Shown>> source : SOURCES) {
@@ -147,6 +177,9 @@ public final class PlanHologram {
                 }
                 ghosts(pose, camera.getPosition(), buffers, minecraft.getBlockRenderer(), shown);
                 parts(pose, camera, minecraft.font, buffers, shown);
+                if (shown.labels() == Labels.TAGS) {
+                    tagsOf(shown, camera.getPosition(), view, projection, frameTags);
+                }
                 if (shown.banner().isPresent() && distance < nearestDistance) {
                     nearest = shown.banner().get();
                     nearestDistance = distance;
@@ -154,6 +187,7 @@ public final class PlanHologram {
             }
         }
         banner = nearest;
+        tags = List.copyOf(frameTags);
         buffers.endBatch(Sheets.translucentCullBlockSheet());
         buffers.endBatch(RenderType.lines());
         buffers.endBatch();
@@ -320,6 +354,11 @@ public final class PlanHologram {
             pose.pushPose();
             pose.translate(-eye.x, -eye.y, -eye.z);
             box(pose, lines, box.inflate(GROW * 2), part.colour());
+            if (shown.labels() == Labels.TAGS) {
+                // Its words are a tag on the screen, laid out over the frame drawn.
+                pose.popPose();
+                continue;
+            }
             // A leader from the box's side out to its words.
             final Vec3 middle = box.getCenter();
             final double half = Math.max(box.getXsize(), box.getZsize()) / 2;
@@ -367,6 +406,88 @@ public final class PlanHologram {
         to.addVertex(at, x0, y1, PLATE_DEPTH).setColor(colour).setLight(LightTexture.FULL_BRIGHT);
         to.addVertex(at, x1, y1, PLATE_DEPTH).setColor(colour).setLight(LightTexture.FULL_BRIGHT);
         to.addVertex(at, x1, y0, PLATE_DEPTH).setColor(colour).setLight(LightTexture.FULL_BRIGHT);
+    }
+
+    /* The tags of the parts of {@code shown}: where the top of each one's box falls on the screen, as drawn now. */
+    private static void tagsOf(final Shown shown, final Vec3 eye, final Matrix4f view, final Matrix4f projection,
+                               final List<Tag> out) {
+        final Minecraft minecraft = Minecraft.getInstance();
+        for (final Part part : shown.parts()) {
+            final Vec3 top = new Vec3(part.box().getCenter().x, part.box().maxY, part.box().getCenter().z);
+            final Vector4f at = new Vector4f((float) (top.x - eye.x), (float) (top.y - eye.y),
+                    (float) (top.z - eye.z), 1F);
+            view.transform(at);
+            projection.transform(at);
+            if (at.w <= 0) {
+                continue;
+            }
+            out.add(new Tag((at.x / at.w + 1) / 2 * minecraft.getWindow().getGuiScaledWidth(),
+                    (1 - at.y / at.w) / 2 * minecraft.getWindow().getGuiScaledHeight(), part.name(), part.state()));
+        }
+    }
+
+    /*
+     * The parts' tags on the screen, each lifted over its part, or hung under it, at the first height where it meets
+     * no tag laid before it and stays on the screen; its name over its size and state on a dark ground, a line along
+     * its top, a leader down to the top of its part's box.
+     */
+    private static void drawTags(final GuiGraphics g, final DeltaTracker delta) {
+        final List<Tag> now = tags;
+        final Minecraft minecraft = Minecraft.getInstance();
+        if (now.isEmpty() || minecraft.screen != null || minecraft.options.hideGui) {
+            return;
+        }
+        final Colours c = PALETTE.get();
+        final Font font = minecraft.font;
+        final float scale = g.guiHeight() / TAG_SCREEN;
+        final int high = TAG_TOP * 2 + font.lineHeight + Math.round(font.lineHeight * TAG_SMALL);
+        final List<int[]> laid = new ArrayList<>();
+        for (final Tag tag : now) {
+            final String name = GameText.resolve(tag.name()).toUpperCase(Locale.ROOT);
+            final String state = GameText.resolve(tag.state());
+            final int wide = Math.max(font.width(name), Math.round(font.width(state) * TAG_SMALL)) + TAG_PAD * 2;
+            final int x = Math.round(tag.x());
+            final int y = Math.round(tag.y());
+            final boolean upper = tag.y() < TAG_UPPER * scale;
+            int top = Integer.MIN_VALUE;
+            for (final int[] heights : upper ? new int[][] {TAG_UPS, TAG_DOWNS} : new int[][] {TAG_DOWNS, TAG_UPS}) {
+                for (int k = 0; k < heights.length && top == Integer.MIN_VALUE; k++) {
+                    final int lift = Math.round(heights[k] * scale);
+                    final int tried = lift >= 0 ? y - lift - high : y - lift;
+                    if (clear(g, laid, x - wide / 2, tried, wide, high)) {
+                        top = tried;
+                    }
+                }
+            }
+            if (top == Integer.MIN_VALUE) {
+                final int lift = Math.round((upper ? TAG_UPS[0] : TAG_DOWNS[0]) * scale);
+                top = lift >= 0 ? y - lift - high : y - lift;
+            }
+            final int x0 = x - wide / 2;
+            laid.add(new int[] {x0 - TAG_ROOM, top - TAG_ROOM, x0 + wide + TAG_ROOM, top + high + TAG_ROOM});
+            g.fill(x0, top, x0 + wide, top + high, c.tagGround());
+            g.hLine(x0, x0 + wide - 1, top, c.tagLine());
+            if (top + high <= y) {
+                g.vLine(x, top + high - 1, y, c.tagLine());
+            } else {
+                g.vLine(x, y, top, c.tagLine());
+            }
+            g.fill(x - 1, y - 1, x + 2, y + 2, c.tagLine());
+            Draw.text(g, font, name, x0 + TAG_PAD, top + TAG_TOP, c.tagName(), c.tagGround());
+            Draw.textScaled(g, font, state, x0 + TAG_PAD, top + TAG_TOP + font.lineHeight, c.tagWords(), TAG_SMALL);
+        }
+    }
+
+    /* Whether a tag at {@code x, y}, {@code wide} by {@code high}, stays on the screen and meets none laid. */
+    private static boolean clear(final GuiGraphics g, final List<int[]> laid, final int x, final int y,
+                                 final int wide, final int high) {
+        final int[] box = {x - TAG_ROOM, y - TAG_ROOM, x + wide + TAG_ROOM, y + high + TAG_ROOM};
+        if (box[0] < TAG_EDGE || box[2] > g.guiWidth() - TAG_EDGE || box[1] < TAG_EDGE
+                || box[3] > g.guiHeight() - TAG_EDGE) {
+            return false;
+        }
+        return laid.stream().allMatch(other -> box[2] <= other[0] || box[0] >= other[2] || box[3] <= other[1]
+                || box[1] >= other[3]);
     }
 
     /* The line across the top of the screen: what is being built now, of the nearest plan. */
@@ -428,12 +549,20 @@ public final class PlanHologram {
      * @param places the places shown, those not yet right
      * @param parts  its parts, each with its box and words
      * @param banner the line across the top of the screen while it is the nearest; none for no line
+     * @param labels how its parts' words are written
      */
-    public record Shown(Vec3 middle, List<Place> places, List<Part> parts, Optional<Text> banner) {
+    public record Shown(Vec3 middle, List<Place> places, List<Part> parts, Optional<Text> banner, Labels labels) {
 
         public Shown {
             places = List.copyOf(places);
             parts = List.copyOf(parts);
+            Objects.requireNonNull(labels, "labels");
+        }
+
+        /** A hologram whose parts' words stand beside them. */
+        public Shown(final Vec3 middle, final List<Place> places, final List<Part> parts,
+                     final Optional<Text> banner) {
+            this(middle, places, parts, banner, Labels.BESIDE);
         }
     }
 
@@ -459,6 +588,22 @@ public final class PlanHologram {
     public record Part(Text name, Text state, int colour, AABB box) {
     }
 
+    /** How a hologram writes its parts' words. */
+    public enum Labels {
+        /** Beside each part's box, in the world, facing the player, a leader from its side: as up a stack of parts. */
+        BESIDE,
+        /**
+         * As name tags on the screen, each lifted over its part or hung under it on a leader from the top of its box,
+         * at the first height where it meets no other tag and stays on the screen: as over parts laid side by side.
+         * Its name is written in capitals; its size and state as they are given.
+         */
+        TAGS
+    }
+
+    /* A part's tag, where the top of its box falls on the screen, in its scaled pixels. */
+    private record Tag(float x, float y, Text name, Text state) {
+    }
+
     /**
      * The hologram's colours.
      *
@@ -470,8 +615,12 @@ public final class PlanHologram {
      * @param faint        the words as they show through what stands between, faint
      * @param bannerGround the dark ground under the banner
      * @param scan         the dark of every other line drawn across a ghost
+     * @param tagGround    the dark ground of a part's tag on the screen
+     * @param tagLine      the line along a tag's top, and its leader
+     * @param tagName      a tag's name
+     * @param tagWords     a tag's size and state
      */
     public record Colours(int next, int wrong, int ground, int words, int banner, int faint, int bannerGround,
-                          int scan) {
+                          int scan, int tagGround, int tagLine, int tagName, int tagWords) {
     }
 }

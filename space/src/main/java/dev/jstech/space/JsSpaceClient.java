@@ -28,6 +28,7 @@ import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
+import dev.jstech.space.client.shipyard.ShipHolograms;
 import dev.jstech.space.client.shipyard.ShipyardRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import dev.jstech.space.flight.FlightComputer;
@@ -65,10 +66,12 @@ public final class JsSpaceClient {
         SuitControlsHud.listen(modEventBus);
         // The target painted across a formed landing platform.
         LandingPlatformRenderer.listen(modEventBus);
-        // A formed Small Shipyard, drawn whole as the approved dock, and its builder's screen.
+        // A formed Small Shipyard, drawn whole as the approved dock, its builder's screen, and the ship it builds, each
+        // part drawn with its model once it has formed, and its hologram till then.
         ShipyardRenderer.listen(modEventBus);
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipDesigner.MENU.get(),
                 ShipDesignScreen::new));
+        PlanHologram.show(ShipHolograms::shown);
         // The Flight Computer's screen, and the landing maps it is sent.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(FlightComputer.MENU.get(),
                 FlightComputerScreen::new));
