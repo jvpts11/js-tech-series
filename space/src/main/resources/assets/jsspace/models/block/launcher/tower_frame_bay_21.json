@@ -11,13 +11,13 @@
   "elements": [
     {
       "from": [
-        0,
-        2.695205479452053,
+        -0.6,
+        5.763698630136986,
         13.5
       ],
       "to": [
-        2,
-        5.195205479452053,
+        16.6,
+        8.263698630136986,
         15.5
       ],
       "faces": {
@@ -39,230 +39,15 @@
         "down": {
           "texture": "#truss"
         }
-      }
-    },
-    {
-      "from": [
-        2,
-        3.571917808219176,
-        13.5
-      ],
-      "to": [
-        4,
-        6.071917808219176,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      }
-    },
-    {
-      "from": [
-        4,
-        4.448630136986299,
-        13.5
-      ],
-      "to": [
-        6,
-        6.948630136986299,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      }
-    },
-    {
-      "from": [
-        6,
-        5.3253424657534225,
-        13.5
-      ],
-      "to": [
-        8,
-        7.8253424657534225,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      }
-    },
-    {
-      "from": [
-        8,
-        6.202054794520546,
-        13.5
-      ],
-      "to": [
-        10,
-        8.702054794520546,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      }
-    },
-    {
-      "from": [
-        10,
-        7.078767123287669,
-        13.5
-      ],
-      "to": [
-        12,
-        9.578767123287669,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      }
-    },
-    {
-      "from": [
-        12,
-        7.955479452054792,
-        13.5
-      ],
-      "to": [
-        14,
-        10.455479452054792,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      }
-    },
-    {
-      "from": [
-        14,
-        8.832191780821915,
-        13.5
-      ],
-      "to": [
-        16,
-        11.332191780821915,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          7.013698630136986,
+          14.5
+        ],
+        "axis": "z",
+        "angle": 22.5
       }
     },
     {

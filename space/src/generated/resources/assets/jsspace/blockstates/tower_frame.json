@@ -107,7 +107,7 @@
       "y": 90
     },
     "bay=1,facing=east,formed=true,role=end": {
-      "model": "jsspace:block/launcher/tower_frame_end",
+      "model": "jsspace:block/launcher/tower_frame_end_tip",
       "y": 90
     },
     "bay=1,facing=east,formed=true,role=top": {
@@ -127,7 +127,7 @@
       "model": "jsspace:block/launcher/tower_frame_bay_1"
     },
     "bay=1,facing=north,formed=true,role=end": {
-      "model": "jsspace:block/launcher/tower_frame_end"
+      "model": "jsspace:block/launcher/tower_frame_end_tip"
     },
     "bay=1,facing=north,formed=true,role=top": {
       "model": "jsspace:block/launcher/tower_frame_top"
@@ -149,7 +149,7 @@
       "y": 180
     },
     "bay=1,facing=south,formed=true,role=end": {
-      "model": "jsspace:block/launcher/tower_frame_end",
+      "model": "jsspace:block/launcher/tower_frame_end_tip",
       "y": 180
     },
     "bay=1,facing=south,formed=true,role=top": {
@@ -173,7 +173,7 @@
       "y": 270
     },
     "bay=1,facing=west,formed=true,role=end": {
-      "model": "jsspace:block/launcher/tower_frame_end",
+      "model": "jsspace:block/launcher/tower_frame_end_tip",
       "y": 270
     },
     "bay=1,facing=west,formed=true,role=top": {

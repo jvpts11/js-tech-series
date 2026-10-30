@@ -48,7 +48,7 @@ public final class LauncherBlocks {
             .look(IBlockLook.facingByState(LauncherBlocks::towerModel)).item().drops(Drops.SELF)
             .tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(LAUNCHER).named("Tower Frame").register();
     public static final BlockEntry<Block> SWING_ARM = piece("swing_arm", LauncherPieceBlock.Kind.SWING_ARM,
-            Set.of(LauncherPieceBlock.Role.END)).named("Swing Arm").register();
+            Set.of(LauncherPieceBlock.Role.TOP, LauncherPieceBlock.Role.END)).named("Swing Arm").register();
     public static final BlockEntry<Block> CREW_ACCESS_ARM = piece("crew_access_arm", LauncherPieceBlock.Kind.CREW_ARM,
             Set.of(LauncherPieceBlock.Role.END)).named("Crew Access Arm").register();
     public static final BlockEntry<Block> TOWER_ELEVATOR = piece("tower_elevator", LauncherPieceBlock.Kind.ELEVATOR,
@@ -99,7 +99,8 @@ public final class LauncherBlocks {
         }
         return new IBlockModel.Handmade(switch (state.getValue(LauncherPieceBlock.ROLE)) {
             case TOP -> "launcher/tower_frame_top";
-            case END -> "launcher/tower_frame_end";
+            case END -> state.getValue(TowerFrameBlock.BAY) == TowerFrameBlock.TIP ? "launcher/tower_frame_end_tip"
+                    : "launcher/tower_frame_end";
             case BODY -> "launcher/tower_frame_bay_" + state.getValue(TowerFrameBlock.BAY);
         });
     }

@@ -142,8 +142,10 @@ public class LauncherPieceBlock extends HorizontalDirectionalBlock implements IP
             case MAST -> above != Kind.MAST ? Role.TOP : Role.BODY;
             case ELEVATOR -> below != Kind.ELEVATOR ? Role.END : above != Kind.ELEVATOR ? Role.TOP : Role.BODY;
             case SWING_ARM, CREW_ARM -> {
+                // Its end is the block nearest the rocket; its top the one at the tower, on its hinge.
                 final Direction out = armOut(level, pos);
-                yield out != null && kindAt(level, pos.relative(out)) != this.kind ? Role.END : Role.BODY;
+                yield out == null ? Role.BODY : kindAt(level, pos.relative(out)) != this.kind ? Role.END
+                        : kindAt(level, pos.relative(out.getOpposite())) != this.kind ? Role.TOP : Role.BODY;
             }
             default -> Role.BODY;
         };
@@ -256,7 +258,7 @@ public class LauncherPieceBlock extends HorizontalDirectionalBlock implements IP
     public enum Role implements StringRepresentable {
         /** Its body: a plate of the deck, a bay of the tower, a length of an arm. */
         BODY("body"),
-        /** Its top: the tower's crane house, a mast's hood, the top of the elevator's rails. */
+        /** Its top: the tower's crane house, a mast's hood, the top of the elevator's rails, an arm's hinge. */
         TOP("top"),
         /** Its end: the crane's boom, an arm's plug or white room, the elevator's car. */
         END("end");

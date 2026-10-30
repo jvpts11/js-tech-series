@@ -11,13 +11,13 @@
   "elements": [
     {
       "from": [
-        0,
-        1.8184931506849296,
+        -0.6,
+        -1.25,
         13.5
       ],
       "to": [
-        2,
-        4.31849315068493,
+        16.6,
+        1.25,
         15.5
       ],
       "faces": {
@@ -39,102 +39,15 @@
         "down": {
           "texture": "#truss"
         }
-      }
-    },
-    {
-      "from": [
-        2,
-        0.9417808219178063,
-        13.5
-      ],
-      "to": [
-        4,
-        3.4417808219178063,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      }
-    },
-    {
-      "from": [
-        4,
-        0.06506849315068308,
-        13.5
-      ],
-      "to": [
-        6,
-        2.565068493150683,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      }
-    },
-    {
-      "from": [
-        6,
-        0.0,
-        13.5
-      ],
-      "to": [
-        8,
-        1.6883561643835598,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          0.0,
+          14.5
+        ],
+        "axis": "z",
+        "angle": -22.5
       }
     },
     {

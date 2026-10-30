@@ -26,7 +26,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
  * column there; a frame along a face the girder across the whole face every two blocks, its stretch of the face's one
  * long diagonal, which leans the other way each level as the approved tower's do, the dark wall of the shaft behind it
  * with its rails and lines, and every eight blocks the grated floor round the shaft. It faces into the shaft, a corner
- * along its face; its bay says the rest.
+ * along its face; its bay says the rest. The boom's last block hangs the crane's hook.
  */
 public final class TowerFrameBlock extends LauncherPieceBlock {
 
@@ -38,6 +38,8 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
      * way its diagonal leans, and whether the grated floor is at its foot.
      */
     public static final IntegerProperty BAY = IntegerProperty.create("bay", 0, 39);
+    /** The bay of the boom's tip, which hangs the crane's hook. */
+    public static final int TIP = 1;
     /* The tower's width between the outsides of its walls, so a wall finds the one across the shaft. */
     private static final int ACROSS = 4;
     /* How many blocks a level of the truss is, and how many between the grated floors. */
@@ -77,6 +79,10 @@ public final class TowerFrameBlock extends LauncherPieceBlock {
      */
     @Override
     protected BlockState shaped(final BlockGetter level, final BlockPos pos, final BlockState state) {
+        if (state.getValue(ROLE) == Role.END) {
+            // The boom's last block, out over the rocket, hangs the hook.
+            return state.setValue(BAY, tower(level, pos.relative(state.getValue(FACING))) ? 0 : TIP);
+        }
         if (state.getValue(ROLE) != Role.BODY) {
             return state;
         }
