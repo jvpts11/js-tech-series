@@ -75,6 +75,10 @@ public final class DescentGameTests {
     /* What the test's rockets carry, in kilograms, and where it is in each stack. */
     private static final double FULL = 5_000;
     private static final double SOME = 2_000;
+    /*
+     * As long as a rocket takes to reach its orbit and come down: the orbit's far chunks load in real time while the
+     * test server's ticks run unbounded, so a shorter wait runs out under a busy battery.
+     */
     private static final int LONG = 6_000;
     /* The spot marked on each world, at its middle, and how far past its ellipse it may stand. */
     private static final int MARKED = 0;
@@ -105,7 +109,7 @@ public final class DescentGameTests {
                 SolarBody.OVERWORLD, false);
     }
 
-    @GameTest(template = ARENA, batch = "jsspace_descent_held", timeoutTicks = 1_200)
+    @GameTest(template = ARENA, batch = "jsspace_descent_held", timeoutTicks = LONG)
     public static void descent_heldWithNoLegsWhenCrashesAreOff(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final FlightComputerBlockEntity computer = build(helper, RocketStack.of(part("sea_level_engine_3"),
