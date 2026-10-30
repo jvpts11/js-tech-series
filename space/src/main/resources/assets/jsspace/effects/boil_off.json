@@ -1,0 +1,13 @@
+{
+  "reach": 128,
+  "emitters": [
+    {
+      "name": "vapour",
+      "emission": {"shape": {"type": "disc", "radius": 0.6}, "bursts": [{"at": 0, "count": 5}], "life": [2, 4],
+                   "speed": [0.3, 0.7]},
+      "look": {"sprite": "jscore:steam", "frames": 12, "size": [0.6, 2.4], "colour": ["#F4F8FCB4", "#F4F8FC00"],
+               "spin": 8},
+      "motion": {"buoyancy": -0.4, "drag": 1.6, "expands": true, "medium": "air"}
+    }
+  ]
+}

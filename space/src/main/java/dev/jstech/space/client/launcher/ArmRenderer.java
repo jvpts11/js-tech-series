@@ -68,6 +68,8 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
     private static final float PLUG_TO = 0.02F;
     private static final float PLUG = 0.24F;
     private static final int PLUG_ROUND = 16;
+    /* How far the dropped lines hang below the arm. */
+    private static final float HANG = 1.2F;
     /* The crew access arm: its walkway, its rails and posts, and the white room at its end. */
     private static final float WALK_FROM = 1.0F;
     private static final float WALK_DEEP = 0.25F;
@@ -114,12 +116,14 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
                     end.getBlockPos(), back);
             crew(drawing, walkFrom, walkTo, face);
         } else {
-            final int[] lines = lines(level, end.getBlockPos().relative(arm.out()));
+            final BlockPos tip = end.getBlockPos().relative(arm.out());
+            final int[] lines = lines(level, tip);
             final SkinAtlas atlas = SkinAtlas.of(new Size(false, arm.length(), lines.length),
                     () -> swingSkins(face - TIP, lines));
             final SkinDrawing drawing = SkinDrawing.in(pose, buffers, atlas, level, end.getBlockPos(),
                     end.getBlockPos(), back);
-            swing(drawing, face, lines);
+            // The rocket gone, its hoses have dropped away: they hang from the arm's end, the plug with them.
+            swing(drawing, face, lines, level.getBlockState(tip).isAir());
         }
         pose.popPose();
     }
@@ -131,7 +135,8 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
             return new AABB(end.getBlockPos());
         }
         final BlockPos tower = end.getBlockPos().relative(found.get().out().getOpposite(), found.get().length());
-        return new AABB(end.getBlockPos()).minmax(new AABB(tower)).inflate(1, 1, 1);
+        // Two blocks down, for the lines hanging once the rocket has gone.
+        return new AABB(end.getBlockPos()).minmax(new AABB(tower)).inflate(1, 2, 1);
     }
 
     @Override
@@ -139,8 +144,12 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
         return SEEN_FROM;
     }
 
-    /* A swing arm from the rocket's side to the tower's {@code face}, carrying {@code lines}. */
-    private static void swing(final SkinDrawing drawing, final float face, final int[] lines) {
+    /*
+     * A swing arm from the rocket's side to the tower's {@code face}, carrying {@code lines}; {@code dropped}, the
+     * rocket gone, its lines hang down from its end with the plug.
+     */
+    private static void swing(final SkinDrawing drawing, final float face, final int[] lines,
+                              final boolean dropped) {
         final LauncherSkins.Colours c = LauncherSkins.PALETTE.get();
         final float[] min = {TIP + BEAM_FROM, MIDDLE - BEAM_HALF, -BEAM_ACROSS};
         final float[] max = {face + BEAM_PAST, MIDDLE + BEAM_HALF, BEAM_ACROSS};
@@ -149,13 +158,24 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
                 || each == SkinDrawing.Face.MINUS_Z ? SIDE : PLATE, min, max));
         drawing.rod(new Vector3f(face + BEAM_PAST, MIDDLE - HINGE_HALF, HINGE_ACROSS),
                 new Vector3f(face + BEAM_PAST, MIDDLE + HINGE_HALF, HINGE_ACROSS), HINGE, HINGE_ROUND, c.hinge());
+        final float end = dropped ? TIP + PLUG_TO : TIP + LINE_TO;
         for (int k = 0; k < lines.length; k++) {
             final float across = -LINE_APART + k * LINE_APART;
             drawing.rod(new Vector3f(face, MIDDLE + LINES_OVER, across),
-                    new Vector3f(TIP + LINE_TO, MIDDLE + LINES_OVER, across), LINE, LINE_ROUND, lines[k]);
+                    new Vector3f(end, MIDDLE + LINES_OVER, across), LINE, LINE_ROUND, lines[k]);
+            if (dropped) {
+                drawing.rod(new Vector3f(end, MIDDLE + LINES_OVER, across),
+                        new Vector3f(end, MIDDLE - HANG, across), LINE, LINE_ROUND, lines[k]);
+            }
         }
-        drawing.capped(new Vector3f(TIP + PLUG_FROM, MIDDLE, 0), new Vector3f(TIP + PLUG_TO, MIDDLE, 0), PLUG,
-                PLUG_ROUND, c.armLit(), c.yellow());
+        if (dropped) {
+            final float plug = MIDDLE - HANG;
+            drawing.capped(new Vector3f(end, plug, 0), new Vector3f(end, plug - (PLUG_FROM - PLUG_TO), 0), PLUG,
+                    PLUG_ROUND, c.armLit(), c.yellow());
+        } else {
+            drawing.capped(new Vector3f(TIP + PLUG_FROM, MIDDLE, 0), new Vector3f(TIP + PLUG_TO, MIDDLE, 0), PLUG,
+                    PLUG_ROUND, c.armLit(), c.yellow());
+        }
     }
 
     /* The crew access arm: its walkway from {@code from} to {@code to}, its rails to the tower's {@code face}. */

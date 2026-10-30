@@ -34,6 +34,7 @@ import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.pad.PadBlocks;
 import dev.jstech.space.hangar.RocketDesigner;
+import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketPartModels;
 import dev.jstech.space.rocket.RocketShapes;
@@ -141,6 +142,8 @@ public final class JsSpace {
         DepotBlocks.declare(modEventBus);
         // The Launch Panel by the pad, where a launch is counted down.
         LaunchPanel.declare();
+        // A rocket's climb off its pad, saved with its structure.
+        RocketAscent.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();

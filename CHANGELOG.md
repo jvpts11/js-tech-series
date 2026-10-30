@@ -2314,6 +2314,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   from T-42, the cover lifts at T-10, and with LAUNCH pressed the engines light at T-6, the deluge poured by the pad's
   rules, and the rocket is released at T-0; without it the count holds at T-6. It holds by itself on a no-go or in a
   thunderstorm. The count runs on the rocket's flight computer too. New block: the Launch Panel.
+- (Space) The launch. On the pad, the loaded tanks' cold propellant boils off their sides as white vapour. At
+  ignition the screen shakes for everyone near, the pad steams and smoke rolls out of the trench. At T-0 the rocket
+  becomes one moving structure by the exact places of its plan, each block as it is, its parts still formed and nothing
+  checked again; its flight computer goes with it, keeping its plan and the propellant in its tanks. The swing arms'
+  hoses drop away and hang from the arms. It then climbs on its engines' thrust, by the air of the world, its mass
+  falling as they burn by the rocket equation, each burnt-out stage handing the climb to the next; a rocket with
+  thrust to spare climbs fast, one too heavy for its engines sits on the pad burning. The climb is seen by every player
+  within sight of the pad, through the clouds and as far as the game draws, its plume following it, and it passes into
+  space whole. The capsule's live panels read the flight: the mission's clock since lift-off, the burning stage's
+  propellant and the whole rocket's, the climb, the throttle, the attitude, the cabin's air and the lamps. The parts a
+  flight computer draws are now lit as their capsule is, where before they were drawn dark.
 - (Core) A block a plan lays that keeps a formed shape of its own, a block entity or not, is told as its part forms and
   never merges into the part's model.
 - (Core) A plan laid by a machine: a crane, robot arms or any machine of a mod lays a plan's blocks by itself, one at

@@ -1,0 +1,26 @@
+{
+  "reach": 256,
+  "emitters": [
+    {
+      "name": "shake",
+      "kind": "screen",
+      "extra": {"radius": 96, "flash": 0.0, "shake": 0.6, "fade": 4.0}
+    },
+    {
+      "name": "steam",
+      "emission": {"shape": {"type": "disc", "radius": 4}, "bursts": [{"at": 0, "count": 120}], "life": [4, 8],
+                   "speed": [2, 5]},
+      "look": {"sprite": "jscore:steam", "frames": 12, "size": [1.0, 5.0], "colour": ["#F4F8FCC8", "#F4F8FC00"],
+               "spin": 20},
+      "motion": {"buoyancy": 1.2, "drag": 1.0, "expands": true, "medium": "air"}
+    },
+    {
+      "name": "smoke",
+      "emission": {"shape": {"type": "disc", "radius": 3}, "bursts": [{"at": 0, "count": 80}], "life": [5, 9],
+                   "speed": [3, 6]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [1.0, 5.0],
+               "colour": ["#B0B0B0C8", "#90909000"], "spin": 12},
+      "motion": {"buoyancy": 0.6, "drag": 1.0, "expands": true, "medium": "air"}
+    }
+  ]
+}

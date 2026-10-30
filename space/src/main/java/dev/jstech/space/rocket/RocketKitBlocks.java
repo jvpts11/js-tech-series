@@ -107,7 +107,7 @@ public final class RocketKitBlocks {
      */
     public static final BlockEntry<Block> FLIGHT_COMPUTER = add(kit("flight_computer", properties ->
             new FlightComputerBlock(properties, Device.of(() -> FlightComputer.ENTITY.get())
-                    .opensMenu(FlightComputerMenu::new)))
+                    .ticks((level, pos, state, computer) -> computer.tick()).opensMenu(FlightComputerMenu::new)))
             .look(IBlockLook.facing(new IBlockModel.CubeAll("flight_computer", "block/rocket/flight_computer"))
                     .whileOn(FlightComputerBlock.FORMED, new IBlockModel.ParticleOnly("flight_computer_formed",
                             "jsspace:block/rocket/flight_computer")))

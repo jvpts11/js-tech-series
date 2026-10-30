@@ -8,14 +8,25 @@
 package dev.jstech.space.flight;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.core.air.AirMath;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.IntField;
+import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.YardLayout;
+import dev.jstech.core.room.Room;
+import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.rocket.BoilOff;
+import dev.jstech.space.rocket.CabinReadings;
+import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
@@ -26,8 +37,10 @@ import java.util.Optional;
 import java.util.TreeMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -48,6 +61,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<List<Integer>> formed;
     private final ValueField<Map<Integer, TankLoad>> tanks;
     private final IntField clock;
+    private final LongField liftOff;
+    private final ValueField<CabinReadings> readings;
+    private int wait;
 
     /** The keys: those along the top, then those down the left and down the right, five of each from the top. */
     public static final int TOP = 0;
@@ -71,8 +87,14 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private static final int MARK = LEFT + 2;
     private static final int CLEAR = LEFT + 3;
     private static final int GRID = RIGHT + 2;
+    /** The lift-off of a rocket that has not left the ground ({@link #liftOff}). */
+    public static final long NOT_LIFTED = -1;
     /* A tank's place in the stack, written as its number. */
     private static final Codec<Integer> SECTION = Codec.STRING.xmap(Integer::parseInt, String::valueOf);
+    /* Ticks in a second; between reading the flight for the cabins, and between the vapour off the tanks. */
+    private static final int SECOND = 20;
+    private static final int READ_EVERY = 5;
+    private static final int VAPOUR_EVERY = 20;
 
     public FlightComputerBlockEntity(final BlockPos pos, final BlockState state) {
         super(FlightComputer.ENTITY.get(), pos, state);
@@ -92,6 +114,55 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                 .save().toClient();
         // The mission's clock as the launch panel counts it, in seconds: below nought, counting down to lift-off.
         this.clock = fields().integer("Clock", 0).save().toClient();
+        // When its rocket left the ground, the game's tick; and what its cabins read of the flight since.
+        this.liftOff = fields().longInteger("LiftOff", NOT_LIFTED).save();
+        this.readings = fields().nullable("Readings", CabinReadings.CODEC).toClient();
+    }
+
+    /**
+     * On the server, a few times a second: aboard its rocket climbing, it reads the flight for the cabins; on the
+     * ground, its rocket's loaded tanks give off their vapour.
+     */
+    public void tick() {
+        if (!(this.level instanceof ServerLevel server) || --this.wait > 0) {
+            return;
+        }
+        if (!YardLayout.isYardBlock(this.worldPosition.getX())) {
+            this.wait = VAPOUR_EVERY;
+            BoilOff.rise(server, this);
+            return;
+        }
+        this.wait = READ_EVERY;
+        if (this.liftOff.get() == NOT_LIFTED) {
+            return;
+        }
+        final int seconds = (int) ((server.getGameTime() - this.liftOff.get()) / SECOND);
+        clock(seconds);
+        final CabinReadings was = this.readings.get();
+        if (MovingStructures.at(server, this.worldPosition) instanceof MovingStructure body
+                && body.motion() instanceof RocketAscent ascent) {
+            final Optional<Room> room = SealedRooms.roomBeside(server, this.worldPosition);
+            final Climate air = room.map(found -> found.air().climate()).orElseGet(() ->
+                    SealedRooms.placeClimate(server, Vec3.atCenterOf(this.worldPosition)));
+            this.readings.set(ascent.readings(server, body, seconds, (float) (air.pressure() / AirMath.SEA_LEVEL),
+                    room.isPresent()));
+        } else if (was != null) {
+            this.readings.set(was.clocked(seconds));
+        }
+    }
+
+    /** What its cabins read of its rocket's flight, once it has left the ground. */
+    public Optional<CabinReadings> readings() {
+        return Optional.ofNullable(this.readings.get());
+    }
+
+    /**
+     * Its rocket leaves the ground at the game's tick {@code gameTime}, its clock counting from it; or, at
+     * {@link #NOT_LIFTED}, it has not.
+     */
+    public void liftOff(final long gameTime) {
+        this.liftOff.set(gameTime);
+        setChanged();
     }
 
     /** The mission's clock as the launch panel counts it, in seconds: below nought, counting down to lift-off. */

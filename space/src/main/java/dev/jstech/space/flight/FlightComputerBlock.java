@@ -57,6 +57,15 @@ public final class FlightComputerBlock extends DeviceBlock implements IPlanMembe
         return state.getValue(FORMED) ? Shapes.empty() : super.getCollisionShape(state, level, pos, context);
     }
 
+    /*
+     * Formed, it hides nothing and lets the light through as its capsule's merged blocks do, so the light where it
+     * stands, which its rocket's parts are drawn by, is the capsule's and not the dark inside a solid block.
+     */
+    @Override
+    protected VoxelShape getOcclusionShape(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        return state.getValue(FORMED) ? Shapes.empty() : super.getOcclusionShape(state, level, pos);
+    }
+
     @Override
     protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
         return this.codec;

@@ -17,6 +17,7 @@ import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.rocket.RocketPartModels;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -37,6 +38,7 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
     private static final int SEEN_FROM = 256;
     private static final double REACH = 16;
     private static final double TALLEST = 256;
+    private static final int CHUNK = 16;
 
     public FlightComputerRenderer(final BlockEntityRendererProvider.Context context) {
         // Nothing to keep: the models are drawn as they are.
@@ -63,9 +65,9 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
                 .filter(model -> formed.contains(model.section())).toList();
         poses.pushPose();
         poses.translate(foot.get().getX() + 0.5, foot.get().getY(), foot.get().getZ() + 0.5);
-        // The cabin's live panels show the count as the launch panel runs it.
-        RocketPartsRenderer.draw(computer, placed, CabinReadings.AT_REST.clocked(computer.clock()), poses, buffers,
-                light, overlay);
+        // The cabin's live panels show the flight as the computer reads it, and on the ground the launch panel's count.
+        RocketPartsRenderer.draw(computer, placed, computer.readings().orElseGet(() ->
+                CabinReadings.AT_REST.clocked(computer.clock())), poses, buffers, light, overlay);
         poses.popPose();
     }
 
@@ -82,8 +84,9 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
                 .inflate(REACH, 0, REACH).expandTowards(0, TALLEST, 0))).orElse(self);
     }
 
+    /* As far as the game draws anything: a rocket climbing to space is seen from its pad all the way up. */
     @Override
     public int getViewDistance() {
-        return SEEN_FROM;
+        return Math.max(SEEN_FROM, Minecraft.getInstance().options.getEffectiveRenderDistance() * CHUNK);
     }
 }

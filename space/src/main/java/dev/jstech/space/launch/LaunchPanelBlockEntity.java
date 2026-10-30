@@ -16,6 +16,9 @@ import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialLiquids;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.uuid.StructureUuid;
 import dev.jstech.space.api.Propellant;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketPart;
@@ -29,7 +32,9 @@ import dev.jstech.space.rocket.TankLoad;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
@@ -63,6 +68,9 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
     private final BoolField delugeReady;
     private final BoolField storm;
     private final ValueField<String> name;
+    private final ValueField<UUID> pilot;
+    private final ValueField<StructureUuid> flight;
+    private final BoolField lifted;
     private @Nullable LaunchPads.Stand stand;
     private int wait;
 
@@ -111,6 +119,10 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         this.delugeReady = fields().flag("DelugeReady", false).toClient();
         this.storm = fields().flag("Storm", false).toClient();
         this.name = fields().value("Name", Codec.STRING, "").toClient();
+        // Who pressed LAUNCH, whose rocket it is in flight; the rocket released, and whether it has begun to climb.
+        this.pilot = fields().nullable("Pilot", UUIDUtil.CODEC).save();
+        this.flight = fields().nullable("Flight", StructureUuid.CODEC).save();
+        this.lifted = fields().flag("Lifted", false).save();
     }
 
     /** Where its count is. */
@@ -201,6 +213,11 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
 
     /** A control of its face pressed, by its number, as its rules allow. */
     public void press(final int control) {
+        press(control, null);
+    }
+
+    /** A control of its face pressed by {@code by}, whose rocket it is once they press LAUNCH. */
+    public void press(final int control, @Nullable final UUID by) {
         final Phase now = this.phase.get();
         if (now == Phase.RELEASED) {
             return;
@@ -223,6 +240,7 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
             case LAUNCH -> {
                 if (coverUp()) {
                     this.launched.set(true);
+                    this.pilot.set(by);
                     if (now == Phase.HOLDING && this.left.get() == LIGHT * SECOND && go()) {
                         this.phase.set(Phase.COUNTING);
                     }
@@ -265,6 +283,7 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         final Phase now = this.phase.get();
         if (now == Phase.RELEASED) {
             this.met.set(this.met.get() + 1);
+            climb(server);
             return;
         }
         if (now != Phase.COUNTING) {
@@ -282,15 +301,45 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
             }
             if (this.stand != null) {
                 LaunchPads.ignite(server, this.stand.axis(), this.stand.side(), deluge());
+                RocketLaunch.ignite(server, this.stand.axis());
             }
         }
         final int next = this.left.get() - 1;
         this.left.set(next);
         if (next <= 0) {
-            this.phase.set(Phase.RELEASED);
-            this.met.set(0);
+            release(server);
         }
         setChanged();
+    }
+
+    /* T-0: the rocket on the pad becomes one body and is let go; where it cannot be, the launch is scrubbed. */
+    private void release(final ServerLevel server) {
+        final Optional<MovingStructure> body = this.stand == null ? Optional.empty() : this.stand.computer()
+                .flatMap(computer -> RocketLaunch.release(server, computer, this.pilot.get()));
+        if (body.isEmpty()) {
+            this.phase.set(Phase.SCRUBBED);
+            this.left.set(START * SECOND);
+            this.launched.set(false);
+            return;
+        }
+        this.flight.set(body.get().id());
+        this.lifted.set(false);
+        this.phase.set(Phase.RELEASED);
+        this.met.set(0);
+    }
+
+    /* Once the released rocket's body stands ready, it climbs. */
+    private void climb(final ServerLevel server) {
+        final StructureUuid id = this.flight.get();
+        if (id == null || this.lifted.get()) {
+            return;
+        }
+        final MovingStructure body = MovingStructures.byId(server, id);
+        if (body != null && body.ready()) {
+            RocketLaunch.lift(server, body);
+            this.lifted.set(true);
+            setChanged();
+        }
     }
 
     /* Starts the count, or runs it on from a hold, if its key and its ignition are armed and all is go. */

@@ -49,7 +49,8 @@ public final class LaunchPanel {
             SpaceContent.CONTENT.menu("launch_panel", LaunchPanelMenu::new);
     /** A control of its console pressed, by its number ({@link LaunchPanelBlockEntity#press}). */
     public static final MenuCall<LaunchPanelMenu, Integer> PRESS = MenuCalls.declare(id("launch_panel_press"),
-            LaunchPanelMenu.class, ByteBufCodecs.VAR_INT, (menu, player, control) -> menu.panel().press(control));
+            LaunchPanelMenu.class, ByteBufCodecs.VAR_INT, (menu, player, control) -> menu.panel().press(control,
+                    player.getUUID()));
 
     private LaunchPanel() {
     }
