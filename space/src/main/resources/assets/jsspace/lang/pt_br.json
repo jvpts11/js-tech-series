@@ -514,5 +514,8 @@
   "jsspace.crawler.blocked": "O caminho está bloqueado em %s, %s, %s.",
   "jsspace.crawler.not_built": "O foguete na plataforma ainda não está pronto.",
   "jsspace.crawler.no_computer": "O foguete na plataforma não tem computador de voo para levar o seu plano.",
-  "jsspace.crawler.too_big": "A plataforma e o seu foguete são mais do que o transportador consegue carregar."
+  "jsspace.crawler.too_big": "A plataforma e o seu foguete são mais do que o transportador consegue carregar.",
+  "block.jsspace.flame_deflector": "Defletor de Chamas",
+  "block.jsspace.trench_lining": "Revestimento da Vala",
+  "block.jsspace.pad_service_port": "Porta de Serviço da Plataforma"
 }

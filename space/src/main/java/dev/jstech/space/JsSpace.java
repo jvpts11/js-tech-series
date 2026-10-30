@@ -30,6 +30,7 @@ import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.crawler.CrawlerBlocks;
 import dev.jstech.space.launcher.LauncherBlocks;
+import dev.jstech.space.pad.PadBlocks;
 import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketPartModels;
@@ -132,6 +133,8 @@ public final class JsSpace {
         LauncherBlocks.declare();
         // The crawler-transporter that carries the launcher, its tower and its rocket along the crawlerway.
         CrawlerBlocks.declare();
+        // The launch pad the crawler brings the launcher to: its flame trench, its deflector and its service port.
+        PadBlocks.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();

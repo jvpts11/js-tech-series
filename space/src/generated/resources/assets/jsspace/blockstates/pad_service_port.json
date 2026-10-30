@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsspace:block/pad_service_port"
+    }
+  }
+}

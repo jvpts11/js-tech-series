@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -95,6 +96,28 @@ public class LauncherPieceBlock extends HorizontalDirectionalBlock implements IP
         if (to != now) {
             level.setBlock(pos, to, Block.UPDATE_CLIENTS);
         }
+    }
+
+    /**
+     * A pedestal takes its shape by itself once it stands in a column of as many as a launcher stands on, as on a pad
+     * built by hand, and leaves it when the column breaks; the other pieces wait for their part of a plan.
+     */
+    @Override
+    protected BlockState updateShape(final BlockState state, final Direction from, final BlockState neighbour,
+                                     final LevelAccessor level, final BlockPos pos, final BlockPos neighbourPos) {
+        if (this.kind != Kind.PEDESTAL || from.getAxis() != Direction.Axis.Y) {
+            return state;
+        }
+        int low = 0;
+        while (low < LauncherLayout.PEDESTAL && kindAt(level, pos.below(low + 1)) == Kind.PEDESTAL) {
+            low++;
+        }
+        int high = 0;
+        while (high < LauncherLayout.PEDESTAL && kindAt(level, pos.above(high + 1)) == Kind.PEDESTAL) {
+            high++;
+        }
+        final boolean column = low + high + 1 == LauncherLayout.PEDESTAL;
+        return column ? state.setValue(FORMED, true).setValue(ROLE, role(level, pos)) : state.setValue(FORMED, false);
     }
 
     @Override

@@ -2288,6 +2288,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   blocked, and will not take an unfinished rocket. Leaving the hangar, the rocket's plan goes to its flight computer,
   which draws its formed parts from then on. New blocks: the Crawler Track, the Crawler Deck, the Crawler Cab, the
   Leveling Jack and the Crawler Engine.
+- (Space) The launch pad the crawler sets the launcher down on, with the real pads' rules. Its flame trench runs
+  under the launcher's exhaust opening: a row of Flame Deflectors below the ground, a ridge that splits the flame both
+  ways along the trench, spanning it from one wall of Trench Lining to the other. Its Pad Service Port takes water by
+  pipe and J's Energy by cable, and holding a whole deluge (64 buckets, and 400 kJ for its pumps) pours it over the pad
+  at ignition. A pad with neither trench nor deluge is blown apart at ignition, as Starship's first flight tore up its
+  pad, unless the launch damage setting is off; and in a thunderstorm the launch panel holds the countdown. Pad
+  Pedestals take their shape by themselves when three stand in a column, as on a pad built by hand. New blocks: the
+  Flame Deflector, the Trench Lining and the Pad Service Port.
 - (Core) A block a plan lays that keeps a formed shape of its own, a block entity or not, is told as its part forms and
   never merges into the part's model.
 - (Core) A plan laid by a machine: a crane, robot arms or any machine of a mod lays a plan's blocks by itself, one at

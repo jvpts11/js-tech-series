@@ -77,6 +77,9 @@
     "jsspace:crawler_cab",
     "jsspace:leveling_jack",
     "jsspace:crawler_engine",
+    "jsspace:flame_deflector",
+    "jsspace:trench_lining",
+    "jsspace:pad_service_port",
     "jsspace:landing_pad",
     "jsspace:landing_platform",
     "jsspace:rocket_wreckage"
