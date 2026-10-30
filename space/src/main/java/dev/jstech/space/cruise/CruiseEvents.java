@@ -136,18 +136,18 @@ public final class CruiseEvents {
         }
     }
 
+    /** Tells everyone aboard {@code body} {@code notification}. */
+    public static void tell(final ServerLevel level, final MovingStructure body, final Notification notification) {
+        for (final ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
+                body.worldBox().inflate(ABOARD))) {
+            Notifications.send(player, notification);
+        }
+    }
+
     /* Out of the rocket at {@code pos}: away from the line up its middle, level. */
     private static Vec3 outward(final FlightComputerBlockEntity computer, final BlockPos pos) {
         final BlockPos foot = computer.getBlockPos().offset(computer.foot().orElse(BlockPos.ZERO));
         final Vec3 out = new Vec3(pos.getX() + 0.5 - (foot.getX() + 0.5), 0, pos.getZ() + 0.5 - (foot.getZ() + 0.5));
         return out.lengthSqr() < 1.0e-6 ? new Vec3(1, 0, 0) : out.normalize();
-    }
-
-    /* Tells everyone aboard {@code body}. */
-    static void tell(final ServerLevel level, final MovingStructure body, final Notification notification) {
-        for (final ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
-                body.worldBox().inflate(ABOARD))) {
-            Notifications.send(player, notification);
-        }
     }
 }

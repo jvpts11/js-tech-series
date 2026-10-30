@@ -460,6 +460,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   ellipse; in its corner, the whole world's small map with what is known of it, and how much. The ellipse comes from
   the guidance: an instrument ring's guidance platform, formed and not let go, lands within Perseverance's 7.7 by 6.6
   km, the flight computer alone within twice that. SET fixes the landing where the spot is marked, for the descent.
+- Coming down to a world: a rocket resting in the orbit of the world its landing is set on leaves its orbit
+  for the spot over the landing, sinks into the world's sky and comes down somewhere in its guidance's ellipse round
+  the spot marked. Where there is air it glows as it enters, its heat shield taking the heat, and opens its three
+  orange and white parachutes; in thick air they set the capsule down, in thin air (Mars) its engines brake it the last
+  of the way to its legs, and where there is none (the Moon) its engines brake it all the way down, the dust rising at
+  touchdown, the propellant spent. With no legs, or no propellant left to brake, it crashes; with no heat shield for
+  the air it burns up as it enters. Off, those rules hold the landing instead, the rocket staying in its orbit, and a
+  crew whose team does not know what kills there may not land. Landed with a transfer set and its window come, a rocket
+  lifts off from the ground with no pad; a lunar lander's ascent stage leaves its descent stage standing on the ground
+  as its launch platform.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

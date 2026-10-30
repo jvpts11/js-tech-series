@@ -33,6 +33,9 @@ import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.cruise.CruiseEvents;
 import dev.jstech.space.cruise.CruiseFlight;
+import dev.jstech.space.descent.DescentFlight;
+import dev.jstech.space.descent.DescentPhase;
+import dev.jstech.space.descent.SurfaceLaunch;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.orbit.Rocketry;
@@ -103,6 +106,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final BoolField hazards;
     private final ValueField<PlannedLanding> landing;
     private final IntField guidance;
+    private final ValueField<DescentPhase> descent;
     private int wait;
     /* Ticks till its rocket's lost blocks are counted again, and the plan they are counted by, for its design. */
     private int countWait;
@@ -207,6 +211,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         this.hazards = fields().flag("Hazards", true).save().toClient();
         this.landing = fields().nullable("Landing", PlannedLanding.CODEC).save().toClient();
         this.guidance = fields().integer("Guidance", COMPUTER_GUIDANCE).toClient();
+        // Where its rocket is in coming down to a world, for its crew and for its parachutes to be drawn.
+        this.descent = fields().value("Descent", StableCodecs.byName(DescentPhase.class), DescentPhase.NONE).save()
+                .toClient();
     }
 
     /** How long the ellipse its rocket comes down in is by {@code guidance}, in blocks. */
@@ -243,6 +250,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             followTanks(server, carried);
             CruiseEvents.leak(server, formedPlaces(server));
             CruiseFlight.second(server, carried, this);
+            DescentFlight.second(server, carried, this);
+            SurfaceLaunch.second(server, carried, this);
         }
         if (this.liftOff.get() == NOT_LIFTED) {
             return;
@@ -424,6 +433,46 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     /** The guidance its rocket comes down by: {@link #COMPUTER_GUIDANCE} or {@link #PLATFORM_GUIDANCE}. */
     public int guidance() {
         return this.guidance.get();
+    }
+
+    /** Where its rocket is in coming down to a world. */
+    public DescentPhase descent() {
+        final DescentPhase now = this.descent.get();
+        return now == null ? DescentPhase.NONE : now;
+    }
+
+    /** Its rocket is now {@code phase} in coming down to a world. */
+    public void descent(final DescentPhase phase) {
+        if (phase != descent()) {
+            this.descent.set(phase);
+            setChanged();
+        }
+    }
+
+    /** Its rocket landed where its landing was set: the landing is flown. */
+    public void landed() {
+        this.landing.set(null);
+        this.mark.set(null);
+        this.descent.set(DescentPhase.LANDED);
+        setChanged();
+    }
+
+    /** Whether its rocket carries a part of the kind {@code kind} in a stage it has not let go. */
+    public boolean carries(final ServerLevel server, final RocketPart.Kind kind) {
+        final Optional<RocketDesign> design = rocket();
+        if (design.isEmpty()) {
+            return false;
+        }
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(server);
+        final Set<Integer> gone = separatedSections(server);
+        final List<RocketStack.Section> sections = design.get().stack().sections();
+        for (int section = 0; section < sections.size(); section++) {
+            final RocketPart part = parts.get(sections.get(section).part().id());
+            if (part != null && part.kind() == kind && !gone.contains(section)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The worlds it can plan a transfer to from the world it stands in, in the order of its left keys. */

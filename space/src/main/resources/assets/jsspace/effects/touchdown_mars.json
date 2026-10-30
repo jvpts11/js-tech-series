@@ -1,0 +1,13 @@
+{
+  "reach": 192,
+  "emitters": [
+    {
+      "name": "cloud",
+      "emission": {"shape": {"type": "disc", "radius": 3}, "bursts": [{"at": 0, "count": 90}], "life": [3, 6],
+                   "speed": [2, 5]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [1.5, 4.0], "colour": ["#B8653CC0", "#9A503000"],
+               "spin": 15},
+      "motion": {"buoyancy": 0.2, "drag": 1.2, "expands": true, "medium": "air"}
+    }
+  ]
+}

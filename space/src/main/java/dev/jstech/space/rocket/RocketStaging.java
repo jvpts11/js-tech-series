@@ -72,18 +72,48 @@ public final class RocketStaging {
         final int count = RocketStages.stages(parts, stack).size();
         final int spent = ascent.burn() < burns.size() ? burns.get(ascent.burn()).stage() - 1 : count - 1;
         for (int stage = computer.separated() + 1; stage <= spent; stage++) {
-            separate(level, body, computer, parts, stack, computer.getBlockPos().offset(foot.get()), stage);
+            separate(level, body, computer, parts, stack, computer.getBlockPos().offset(foot.get()), stage, false);
+        }
+    }
+
+    /**
+     * Leaves on the ground every stage of the rocket {@code body}, not let go yet, holding a part of the kind
+     * {@code kind}, with those under it: as a lander's ascent stage leaves its descent stage behind as its launch
+     * platform. They part off unpushed and stand where they are.
+     */
+    public static void leave(final ServerLevel level, final MovingStructure body,
+                             final FlightComputerBlockEntity computer, final RocketPart.Kind kind) {
+        final Optional<RocketDesign> design = computer.rocket();
+        final Optional<BlockPos> foot = computer.foot();
+        if (design.isEmpty() || foot.isEmpty()) {
+            return;
+        }
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
+        final RocketStack stack = design.get().stack();
+        final int count = RocketStages.stages(parts, stack).size();
+        int last = 0;
+        for (int stage = computer.separated() + 1; stage <= count; stage++) {
+            for (final int section : RocketStages.stage(parts, stack, stage)) {
+                final RocketPart part = parts.get(stack.sections().get(section).part().id());
+                if (part != null && part.kind() == kind) {
+                    last = stage;
+                }
+            }
+        }
+        for (int stage = computer.separated() + 1; stage <= last; stage++) {
+            separate(level, body, computer, parts, stack, computer.getBlockPos().offset(foot.get()), stage, true);
         }
     }
 
     /*
      * Lets the stage {@code stage} of the rocket {@code body} go, its foot at {@code foot} in the yard: its blocks part
-     * off, one block of each of its parts drawing the part, pushed down and away; where it goes is decided now.
+     * off, one block of each of its parts drawing the part, pushed down and away, where it goes decided now; or, when
+     * {@code left} on the ground, unpushed, standing where it stands.
      */
     private static void separate(final ServerLevel level, final MovingStructure body,
                                  final FlightComputerBlockEntity computer,
                                  final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
-                                 final BlockPos foot, final int stage) {
+                                 final BlockPos foot, final int stage, final boolean left) {
         final List<Integer> sections = RocketStages.stage(parts, stack, stage);
         final BuildPlan plan = RocketPlans.of(level, stack);
         for (final PlanSpot spot : plan.spots()) {
@@ -124,11 +154,11 @@ public final class RocketStaging {
         if (places.isEmpty()) {
             return;
         }
-        final Optional<StructureUuid> piece = body.partOff(level, places, Direction.DOWN, mass * KICK);
+        final Optional<StructureUuid> piece = body.partOff(level, places, Direction.DOWN, left ? 0 : mass * KICK);
         final Vec3 ring = MovingStructures.toWorld(body, Vec3.atBottomCenterOf(foot.above(top + 1)));
         Effects.at(level, SEPARATION, ring).reach(SEEN).send();
         final Vec3 under = MovingStructures.toWorld(body, Vec3.atBottomCenterOf(foot.above(bottom)));
-        if (piece.isPresent()) {
+        if (piece.isPresent() && !left) {
             StageFlights.parting(level, body, piece.get(), stage, RocketStages.dryMass(parts, stack, stage), bottom,
                     under);
         }

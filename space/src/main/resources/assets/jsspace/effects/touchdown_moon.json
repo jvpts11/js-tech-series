@@ -1,0 +1,13 @@
+{
+  "reach": 192,
+  "emitters": [
+    {
+      "name": "rays",
+      "emission": {"shape": {"type": "disc", "radius": 2}, "bursts": [{"at": 0, "count": 120}], "life": [1.5, 3],
+                   "speed": [6, 12]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.6, 1.6], "colour": ["#9A9A98D0", "#7E7E7C00"],
+               "spin": 20},
+      "motion": {"drag": 0.2, "expands": true}
+    }
+  ]
+}

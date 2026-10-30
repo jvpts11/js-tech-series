@@ -9,19 +9,24 @@ package dev.jstech.space.client.rocket;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.jstech.space.api.RocketKits;
+import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.descent.DescentPhase;
 import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.rocket.RocketPartModels;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.IEventBus;
@@ -30,7 +35,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 /**
  * Draws the formed parts of a rocket whose plan its flight computer keeps, once its hangar let the rocket go: from the
  * computer, wherever the rocket is carried, aboard a crawler or set down on the pad, as the hangar's terminal drew them
- * in the bay.
+ * in the bay; and its parachutes, open over it as it comes down through air.
  */
 public final class FlightComputerRenderer implements BlockEntityRenderer<FlightComputerBlockEntity> {
 
@@ -39,6 +44,8 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
     private static final double REACH = 16;
     private static final double TALLEST = 256;
     private static final int CHUNK = 16;
+    /* How dark the game's sky gets at midnight, as its brightness says it. */
+    private static final float SKY_DARKEST = 0.2F;
 
     public FlightComputerRenderer(final BlockEntityRendererProvider.Context context) {
         // Nothing to keep: the models are drawn as they are.
@@ -68,6 +75,23 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
         // The cabin's live panels show the flight as the computer reads it, and on the ground the launch panel's count.
         RocketPartsRenderer.draw(computer, placed, computer.readings().orElseGet(() ->
                 CabinReadings.AT_REST.clocked(computer.clock())), poses, buffers, light, overlay);
+        if (computer.descent() == DescentPhase.PARACHUTES) {
+            // Its parachutes open over the top of what is left of it, as wide as its widest part.
+            final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
+            double top = 0;
+            double width = 0;
+            for (final RocketPartModels.Placed model : placed) {
+                final RocketPart part = parts.get(rocket.get().stack().sections().get(model.section()).part().id());
+                if (part != null) {
+                    top = Math.max(top, model.y() + part.height());
+                    width = Math.max(width, part.diameter());
+                }
+            }
+            // The sky's brightness, from its darkest at midnight to noon's.
+            final float daylight = level instanceof ClientLevel client ? (client.getSkyDarken(partialTick)
+                    - SKY_DARKEST) / (1 - SKY_DARKEST) : 1F;
+            ParachuteArt.draw(poses, buffers, top, width, daylight);
+        }
         poses.popPose();
     }
 

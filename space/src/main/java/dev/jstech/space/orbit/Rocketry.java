@@ -29,6 +29,11 @@ public final class Rocketry {
     public static final double MARS_CAPTURE = 2_000;
     /** The capture burn into the Overworld's low orbit, coming home, for a rocket that does not aerobrake. */
     public static final double OVERWORLD_CAPTURE = 3_100;
+    /**
+     * Landing on Mars from its orbit once its thin air and the parachutes have slowed the rocket: the last burn down
+     * to the ground on its legs. An estimate, to be set by playing.
+     */
+    public static final double MARS_LANDING = 600;
 
     private Rocketry() {
     }

@@ -111,6 +111,19 @@ public final class CruiseFlight {
         return true;
     }
 
+    /** The players aboard {@code body}: on it or in it. */
+    public static List<ServerPlayer> aboard(final ServerLevel level, final MovingStructure body) {
+        return level.getEntitiesOfClass(ServerPlayer.class, body.worldBox().inflate(ABOARD));
+    }
+
+    /** The world {@code world}'s name, as its crew is told it. */
+    public static Text nameOf(final ResourceLocation world) {
+        final TextKey name = world.equals(SolarSystemWorlds.MOON) ? UniverseTexts.MOON_WORLD
+                : world.equals(SolarSystemWorlds.MARS) ? UniverseTexts.MARS_WORLD
+                : world.equals(SolarSystemWorlds.OVERWORLD) ? UniverseTexts.OVERWORLD_WORLD : null;
+        return name == null ? Text.literal(world.getPath()) : name.text();
+    }
+
     /*
      * {@code body} came to rest at the end of its cruise, its plan flown: it is captured into the other world's orbit,
      * by its capture burn or by aerobraking where its plan meant to and its heat shield is whole, photographing the
@@ -158,17 +171,6 @@ public final class CruiseFlight {
         return !crew.isEmpty() && crew.stream().allMatch(ServerPlayer::isSleepingLongEnough);
     }
 
-    private static List<ServerPlayer> aboard(final ServerLevel level, final MovingStructure body) {
-        return level.getEntitiesOfClass(ServerPlayer.class, body.worldBox().inflate(ABOARD));
-    }
-
-    /* The world {@code world}'s name. */
-    private static Text nameOf(final ResourceLocation world) {
-        final TextKey name = world.equals(SolarSystemWorlds.MOON) ? UniverseTexts.MOON_WORLD
-                : world.equals(SolarSystemWorlds.MARS) ? UniverseTexts.MARS_WORLD
-                : world.equals(SolarSystemWorlds.OVERWORLD) ? UniverseTexts.OVERWORLD_WORLD : null;
-        return name == null ? Text.literal(world.getPath()) : name.text();
-    }
 
     /* {@code ticks} as minutes and seconds, as a clock shows them. */
     private static Text duration(final long ticks) {

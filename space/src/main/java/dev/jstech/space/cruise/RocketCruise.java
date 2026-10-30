@@ -14,12 +14,11 @@ import dev.jstech.core.moving.IStructureMotion;
 import dev.jstech.core.moving.StructureMotions;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.space.JsSpace;
-import java.util.Comparator;
+import dev.jstech.space.rocket.SpaceAhead;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 
 /**
@@ -57,13 +56,6 @@ public record RocketCruise(double fromX, double fromY, double fromZ, double toX,
     private static final double BULGE = 0.12;
     /* How many ticks ahead the space on its way is kept loaded, every chunk it will pass through till then. */
     private static final int LOOK_AHEAD = 40;
-    /*
-     * The ticket a cruise holds the space on its way by: going by itself a little after it was last taken, and making
-     * its chunk tick as the land round a player does.
-     */
-    private static final TicketType<ChunkPos> PASSING = TicketType.create("jsspace_cruise",
-            Comparator.comparingLong(ChunkPos::toLong), 200);
-    private static final int TICKET_REACH = 2;
 
     public RocketCruise {
         Objects.requireNonNull(to, "to");
@@ -87,22 +79,21 @@ public record RocketCruise(double fromX, double fromY, double fromZ, double toX,
             return new Step(now, this);
         }
         final long tick = level.getGameTime();
-        // It keeps the space it stands in loaded and going a while, and the space ahead loading before it gets there,
-        // so it never outruns the space it flies into, fast as it goes. Like any moving structure it freezes with its
-        // space when no player is in it and no chunk loader holds it, and goes on when someone comes.
-        hold(level, ChunkPos.asLong(BlockPos.containing(now.x(), now.y(), now.z())));
+        // It keeps the space it stands in and every chunk it passes through soon loading, so it never outruns the
+        // space it flies into, fast as it goes.
+        SpaceAhead.hold(level, now.x(), now.y(), now.z());
         long last = Long.MIN_VALUE;
         for (int ahead = 0; ahead <= LOOK_AHEAD; ahead++) {
             final double[] there = along(progress(tick + ahead));
             final long chunk = ChunkPos.asLong(BlockPos.containing(there[0], there[1], there[2]));
             if (chunk != last) {
-                hold(level, chunk);
+                SpaceAhead.hold(level, chunk);
                 last = chunk;
             }
         }
         final double done = progress(tick);
         final double[] at = along(done);
-        if (!level.isPositionEntityTicking(BlockPos.containing(at[0], at[1], at[2]))) {
+        if (!SpaceAhead.ready(level, at[0], at[1], at[2])) {
             // The space ahead is not going yet: flown into, it would stop there. It waits, its cruise a tick longer.
             return new Step(now, new RocketCruise(this.fromX, this.fromY, this.fromZ, this.toX, this.toY, this.toZ,
                     this.start + 1, this.travel, this.to));
@@ -134,12 +125,6 @@ public record RocketCruise(double fromX, double fromY, double fromZ, double toX,
     @Override
     public boolean readsWorld() {
         return true;
-    }
-
-    /* Keeps the chunk {@code at} of the space loaded and going a while. */
-    private static void hold(final ServerLevel level, final long at) {
-        final ChunkPos chunk = new ChunkPos(at);
-        level.getChunkSource().addRegionTicket(PASSING, chunk, TICKET_REACH, chunk, true);
     }
 
     /*

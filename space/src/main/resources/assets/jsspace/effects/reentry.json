@@ -1,0 +1,37 @@
+{
+  "reach": 256,
+  "emitters": [
+    {
+      "name": "glow",
+      "emission": {"shape": {"type": "disc", "radius": 1.6}, "rate": 140, "duration": 1.1, "life": [0.2, 0.4],
+                   "speed": [0.5, 1.5]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.6, 1.4], "colour": ["#FFF8E0FF", "#FFC05000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 1.0, "expands": true}
+    },
+    {
+      "name": "shoulder",
+      "emission": {"shape": {"type": "cone", "angle": 30}, "rate": 90, "duration": 1.1, "life": [0.5, 0.9],
+                   "speed": [4, 8]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.5, 1.6], "colour": ["#FFB040E0", "#FF602000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.6, "expands": true}
+    },
+    {
+      "name": "trail",
+      "emission": {"shape": {"type": "cone", "angle": 10}, "rate": 60, "duration": 1.1, "life": [1.5, 2.5],
+                   "speed": [10, 16]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [1.0, 3.0], "colour": ["#F07030C0", "#A0302000"],
+               "blend": "additive", "light": 12},
+      "motion": {"drag": 0.4, "expands": true}
+    },
+    {
+      "name": "sparks",
+      "emission": {"shape": {"type": "cone", "angle": 20}, "rate": 20, "duration": 1.1, "life": [0.6, 1.2],
+                   "speed": [8, 14]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.15, 0.25], "colour": ["#FFE8A0FF", "#FF804000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.2}
+    }
+  ]
+}
