@@ -2226,9 +2226,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   forms. In a formed capsule the crew seat is a couch. A hangar broken, or a new design sent, gives the rocket's blocks
   back.
 - (Space) The hologram of the rocket being built: once a design is sent to the bay, every block still to place stands
-  where it goes as a see-through ghost of itself, the layer to build next glowing amber and a wrong block outlined in
-  red; each part, a multiblock, has its box drawn round it in the colour of its kind, with its name, its size and how
-  far it stands (to build, the layer it is at, or formed) written beside it; and a line across the top of the screen
+  where it goes as a see-through ghost of itself, each part's ghosts one pale shell a little of its colour, each
+  block's edges in that colour and fine lines across them as a screen has, the layer to build next glowing amber and a
+  wrong block outlined in red; each part, a multiblock, has its box drawn round it in the colour of its kind, with its
+  name large in that colour over its size and how far it stands (to build, the layer it is at, or formed) on a dark
+  plate beside it, a leader to it from the box; and a line across the top of the screen
   names the rocket, the part and layer being built and the block that layer needs most, as "Orbital I - Tank, layer 7
   of 9 - 9 x Tank Wall". A part that forms draws its own model and leaves the hologram, which goes once the rocket is
   whole.

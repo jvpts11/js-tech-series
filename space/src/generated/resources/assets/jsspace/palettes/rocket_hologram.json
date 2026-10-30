@@ -1,11 +1,11 @@
 {
-  "command": "#FF78E66E",
-  "engine": "#FFFF963C",
-  "instrument": "#FFBE82FF",
+  "command": "#FF8CFF8C",
+  "engine": "#FFFF8C33",
+  "instrument": "#FFBF8CFF",
   "lander": "#FFE6E6E6",
   "launcher": "#FFA8B0BA",
   "legs": "#FFF08CC8",
-  "separation": "#FFFAD246",
-  "tank": "#FF5AC8F0",
+  "separation": "#FFFFD84C",
+  "tank": "#FF66D8FF",
   "tower": "#FFF0503C"
 }

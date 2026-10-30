@@ -64,8 +64,8 @@ public final class RocketHolograms {
     public static final TextKey BANNER = TextKey.of("jsspace.hologram.banner", "%s  -  %s, layer %s of %s  -  %s x %s");
     /** The colours of the parts' boxes, by what they are. */
     public static final Palette<Colours> PALETTE = Palettes.declare(JsSpace.MODID, "rocket_hologram", new Colours(
-            0xFF << 24 | 0x78E66E, 0xFF << 24 | 0xBE82FF, 0xFF << 24 | 0xFAD246, 0xFF << 24 | 0x5AC8F0,
-            0xFF << 24 | 0xFF963C, 0xFF << 24 | 0xF08CC8, 0xFF << 24 | 0xE6E6E6, 0xFF << 24 | 0xA8B0BA,
+            0xFF << 24 | 0x8CFF8C, 0xFF << 24 | 0xBF8CFF, 0xFF << 24 | 0xFFD84C, 0xFF << 24 | 0x66D8FF,
+            0xFF << 24 | 0xFF8C33, 0xFF << 24 | 0xF08CC8, 0xFF << 24 | 0xE6E6E6, 0xFF << 24 | 0xA8B0BA,
             0xFF << 24 | 0xF0503C));
     /* How often a hologram looks at the world again, in ticks. */
     private static final int LOOK_EVERY = 5;
@@ -156,6 +156,10 @@ public final class RocketHolograms {
                 building = part;
             }
         }
+        final List<RocketPart> kinds = new ArrayList<>();
+        for (final RocketStack.Section section : kept.design().stack().sections()) {
+            kinds.add(parts.get(section.part().id()));
+        }
         final List<PlanHologram.Place> places = new ArrayList<>();
         final Map<Block, Integer> needed = new LinkedHashMap<>();
         for (int i = 0; i < plan.spots().size(); i++) {
@@ -172,11 +176,8 @@ public final class RocketHolograms {
                 needed.merge(wanted, 1, Integer::sum);
             }
             places.add(new PlanHologram.Place(pos, wanted.defaultBlockState(), !empty ? PlanHologram.Look.WRONG
-                    : next ? PlanHologram.Look.NEXT : PlanHologram.Look.MISSING));
-        }
-        final List<RocketPart> kinds = new ArrayList<>();
-        for (final RocketStack.Section section : kept.design().stack().sections()) {
-            kinds.add(parts.get(section.part().id()));
+                    : next ? PlanHologram.Look.NEXT : PlanHologram.Look.MISSING, colour(kinds, kept.pieces(),
+                    spot.part())));
         }
         final List<PlanHologram.Part> shownParts = new ArrayList<>();
         for (int part = 0; part < count; part++) {

@@ -1,8 +1,10 @@
 {
-  "banner": "#FFFFC850",
+  "banner": "#FFFFD278",
+  "bannerGround": "#F018191B",
   "faint": "#20FFFFFF",
-  "ground": "#C01A1E24",
+  "ground": "#D81A1E24",
   "next": "#FFFFB43C",
-  "words": "#FFC8CCD2",
+  "scan": "#1C000000",
+  "words": "#FFE6E6E6",
   "wrong": "#FFF0564A"
 }
