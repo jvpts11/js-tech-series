@@ -112,16 +112,23 @@ public final class ShipPartModels {
         final List<Placed> placed = new ArrayList<>();
         for (int k = 0; k < design.spine().size(); k++) {
             if (drawn.test(k)) {
-                add(design.spine().get(k), kits.get(design.spine().get(k)), fronts, k, design.flips(k),
+                add(design.spine().get(k), kits.get(design.spine().get(k)), fronts, k, k, design.flips(k),
                         design.finish(), placed);
             }
         }
         for (int k = 0; k < design.hung().size(); k++) {
-            if (drawn.test(design.spine().size() + k)) {
-                add(design.hung().get(k), kits.get(design.hung().get(k)), fronts, 0, false, design.finish(), placed);
+            final int part = design.spine().size() + k;
+            if (drawn.test(part)) {
+                add(design.hung().get(k), kits.get(design.hung().get(k)), fronts, 0, part, false, design.finish(),
+                        placed);
             }
         }
         return List.copyOf(placed);
+    }
+
+    /** A piece's model's name, the same in every finish: the last of its id's path. */
+    public static String name(final ResourceLocation model) {
+        return model.getPath().substring(model.getPath().lastIndexOf('/') + 1);
     }
 
     /** The model of {@code piece} of the kit {@code kit} of the part {@code part}, in the finish {@code finish}. */
@@ -139,14 +146,15 @@ public final class ShipPartModels {
     }
 
     private static void add(final ResourceLocation part, final ShipKit kit, final int[] fronts, final int section,
-                            final boolean flipped, final ResourceLocation finish, final List<Placed> placed) {
+                            final int number, final boolean flipped, final ResourceLocation finish,
+                            final List<Placed> placed) {
         if (kit == null) {
             return;
         }
         for (final ShipKit.Piece piece : kit.pieces()) {
             final ResourceLocation model = id(finish.getPath(), name(part, kit, piece));
             if (MODELS.containsKey(model)) {
-                placed.add(new Placed(model, ShipLayout.anchor(piece.anchor(), fronts, section), flipped));
+                placed.add(new Placed(model, ShipLayout.anchor(piece.anchor(), fronts, section), flipped, number));
             }
         }
     }
@@ -166,12 +174,13 @@ public final class ShipPartModels {
      * @param model   the model's id
      * @param z       where its anchor stands along the spine, in blocks from the nose
      * @param flipped whether it is drawn flipped left for right, about the ship's centre line
+     * @param part    the part of the ship it is of, by its number, the spine's from the nose first; none below nought
      */
-    public record Placed(ResourceLocation model, int z, boolean flipped) {
+    public record Placed(ResourceLocation model, int z, boolean flipped, int part) {
 
-        /** A model drawn as it is made. */
+        /** A model drawn as it is made, of no part numbered. */
         public Placed(final ResourceLocation model, final int z) {
-            this(model, z, false);
+            this(model, z, false, -1);
         }
     }
 }

@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.space;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
@@ -21,12 +22,16 @@ import dev.jstech.space.api.ShipKit;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPartModels;
+import dev.jstech.space.ship.SmallShipFinishes;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardBlocks;
 import dev.jstech.space.shipyard.ShipyardLayout;
+import dev.jstech.space.shipyard.ShipyardPlans;
+import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
@@ -42,6 +47,9 @@ import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -53,7 +61,9 @@ import org.slf4j.Logger;
  * clearing the pit forms it again; a block of it taken away undoes it and its other blocks come back as they were;
  * and cleared all at once, as a blast or a fill clears it, it is gone in a moment. A ship sent to it is laid out over
  * its pit as the dock stands, and built by hand: each part forms by itself as its last block goes in, shaped as its
- * model, and comes apart as one is taken away.
+ * model, and holds round a hole where one is taken away, mended as it is put back. Built, it goes as one structure;
+ * the dock takes it back onto the grid to change it, and lets it go again; and aboard, wherever it is, a hole is
+ * mended the same way.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -82,6 +92,8 @@ public final class ShipyardGameTests {
     private static final int LONG_SHIP = 6;
     /* A tick, in milliseconds: what letting a ship go, and its blocks coming in, must each fit in. */
     private static final long ONE_TICK = 50;
+    /* How far from its dock's terminal a ship let go stands, at most, in blocks. */
+    private static final double SHIP_REACH = 32;
     private static final Logger LOGGER = LogUtils.getLogger();
     /* A dock turned a quarter, in an arena as wide as the dock is long. */
     private static final String TURNED = "shipyard_turned";
@@ -234,9 +246,12 @@ public final class ShipyardGameTests {
                     final PlanSpot taken = cockpit.stream().filter(spot -> spot.place().isPresent()).findFirst()
                             .orElseThrow();
                     level.setBlockAndUpdate(plan.where(taken), Blocks.AIR.defaultBlockState());
-                    helper.assertTrue(!plan.formed(0) && cockpit.stream().noneMatch(spot -> level.getBlockState(
-                            plan.where(spot)).getBlock() instanceof FormedPartBlock), "a block taken away, the"
-                            + " cockpit comes apart, its blocks back as they were");
+                    final int hole = plan.plan().spots().indexOf(taken);
+                    helper.assertTrue(plan.formed(0) && dock.holes().equals(List.of(hole)), "a block taken away,"
+                            + " the cockpit holds round the hole: " + dock.holes());
+                    lay(level, plan, taken);
+                    helper.assertTrue(plan.formed(0) && dock.holes().isEmpty() && level.getBlockState(plan.where(
+                            taken)).getBlock() instanceof FormedPartBlock, "the block put back merges and mends it");
                     for (final PlanSpot spot : plan.plan().spots()) {
                         lay(level, plan, spot);
                     }
@@ -298,6 +313,51 @@ public final class ShipyardGameTests {
             helper.assertTrue(then[0] < ONE_TICK && then[1] < ONE_TICK, "a ship goes within a tick: let go in "
                     + then[0] + " ms, its blocks in a tick of " + then[1] + " ms");
         }).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void shipyard_takesItsShipBackToChangeItAndAHoleAboardIsMended(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final GameTestSequence sequence = helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"));
+        letGo(helper, terminal, sequence, new long[2]);
+        final MovingStructure[] ship = new MovingStructure[1];
+        final BlockPos[] hull = new BlockPos[1];
+        final BlockState[] block = new BlockState[1];
+        sequence.thenExecute(() -> {
+            ship[0] = (MovingStructure) MovingStructures.near(level, new AABB(terminal).inflate(SHIP_REACH)).stream()
+                    .filter(MovingStructure.class::isInstance).findFirst().orElseThrow();
+            // A hull block of the cockpit broken aboard, where the ship's blocks stand in its structure.
+            final PlannedBuild laid = new PlannedBuild(ShipyardPlans.of(level, WORKSHOP_SHIP, Orientation.NORTH),
+                    ShipyardStructure.shipAt(terminal, Orientation.NORTH));
+            final PlanSpot spot = laid.plan().spots().stream().filter(each -> each.part() == 0
+                    && each.place().isPresent()).findFirst().orElseThrow();
+            hull[0] = BlockPos.containing(MovingStructures.toYard(ship[0], Vec3.atCenterOf(laid.where(spot))));
+            block[0] = FormedPartBlock.originalAt(level, hull[0], level.getBlockState(hull[0]));
+        }).thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().isEmpty()
+                && console(level, ship[0]).ship().isPresent(), "the ship's console watches its plan aboard"))
+                .thenExecute(() -> level.setBlockAndUpdate(hull[0], Blocks.AIR.defaultBlockState()))
+                .thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().size() == 1
+                        && console(level, ship[0]).ship().orElseThrow().formed().contains(0), "a block broken"
+                        + " aboard, its part holds round the hole"))
+                .thenExecute(() -> level.setBlockAndUpdate(hull[0], block[0]))
+                .thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().isEmpty(), "the block put"
+                        + " back aboard mends it"))
+                .thenExecute(() -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal);
+                    helper.assertTrue(dock.seat(ship[0]), "the dock takes its ship back onto the grid");
+                    final PlannedBuild plan = dock.build().orElseThrow();
+                    helper.assertTrue(dock.plan().orElseThrow().equals(WORKSHOP_SHIP) && plan.complete()
+                            && dock.built(), "set down where its plan goes, the ship stands whole, its plan the"
+                            + " dock's again");
+                    dock.design(WORKSHOP_SHIP.painted(SmallShipFinishes.id("enamel")));
+                    helper.assertTrue(dock.confirm() && dock.built(), "changed, its parts form again over its"
+                            + " blocks");
+                    helper.assertTrue(dock.release(null).isPresent(), "and it goes again, a structure once more");
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = TURNED, batch = BATCH, timeoutTicks = 400)
@@ -382,6 +442,17 @@ public final class ShipyardGameTests {
             helper.assertTrue(formed(level, terminal) && level.getBlockState(helper.absolutePos(TOWER))
                     .is(FormedParts.BLOCK.get()), "the dock stays, formed, its blocks where they stood");
         });
+    }
+
+    /* The flight console of {@code ship}, which keeps its plan aboard. */
+    private static AirReserveEntity console(final ServerLevel level, final MovingStructure ship) {
+        for (final BlockPos at : BlockPos.betweenClosed(ship.bounds().minX(), ship.bounds().minY(),
+                ship.bounds().minZ(), ship.bounds().maxX(), ship.bounds().maxY(), ship.bounds().maxZ())) {
+            if (level.getBlockEntity(at) instanceof AirReserveEntity keeper) {
+                return keeper;
+            }
+        }
+        throw new IllegalStateException("a ship with no flight console");
     }
 
     private static boolean formed(final ServerLevel level, final BlockPos terminal) {

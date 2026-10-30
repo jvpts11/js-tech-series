@@ -16,6 +16,7 @@ import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.KitRenderer;
 import dev.jstech.core.client.multiblock.PlanArmsRenderer;
 import dev.jstech.core.model.ModelDefinition;
+import dev.jstech.space.client.ship.ShipHoles;
 import dev.jstech.space.client.ship.ShipPartsRenderer;
 import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.ship.ShipDesign;
@@ -77,7 +78,8 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
         if (plan.isEmpty() || at.isEmpty() || formed.isEmpty() || terminal.getLevel() == null) {
             return;
         }
-        ShipPartsRenderer.drawShip(terminal, plan.get(), formed::contains, at.get().subtract(terminal.getBlockPos()),
+        ShipPartsRenderer.drawShip(terminal, plan.get(), formed::contains, ShipHoles.of(terminal, plan.get(),
+                terminal.planTurn(), terminal.holes()), at.get().subtract(terminal.getBlockPos()),
                 terminal.planTurn(), CabinReadings.AT_REST, poses, buffers,
                 KitBlockEntityRenderer.lightAround(terminal.getLevel(), at.get(), light), overlay);
     }

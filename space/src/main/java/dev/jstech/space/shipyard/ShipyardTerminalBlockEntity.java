@@ -28,6 +28,9 @@ import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.StructureAssembly;
+import dev.jstech.core.moving.StructureDisassembly;
+import dev.jstech.core.moving.StructureFrame;
+import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
@@ -36,6 +39,7 @@ import dev.jstech.core.multiblock.plan.PlanAssembler;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedShapes;
+import dev.jstech.core.region.Box;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
@@ -47,6 +51,7 @@ import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipKitBlocks;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,6 +97,7 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
     private final ValueField<Integer> planTurn;
     private final ValueField<List<Integer>> formedParts;
     private final ValueField<List<Integer>> missingParts;
+    private final ValueField<List<Integer>> holes;
     /* Its robot arms, sent to the players who see them; and what lays through them, with what it holds. */
     private final PlanArms arms;
     private final PartField armsField;
@@ -106,9 +112,14 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
     public static final int MOST_PLANS = 16;
     /** The design a shipyard's builder starts from: no parts, no name. */
     public static final ShipDesign EMPTY = new ShipDesign("", List.of(), List.of());
+    private static final double HALF = 0.5;
+    /* How near two points are to be the same, in blocks. */
+    private static final double CLOSE = 1.0e-6;
 
-    /* The terminals loaded on a player's game, forgotten as they go. */
+    /* The terminals loaded on a player's game, and on the server, forgotten as they go. */
     private static final Set<ShipyardTerminalBlockEntity> LOADED_ON_CLIENT = Collections.newSetFromMap(
+            new WeakHashMap<>());
+    private static final Set<ShipyardTerminalBlockEntity> LOADED_ON_SERVER = Collections.newSetFromMap(
             new WeakHashMap<>());
 
     public ShipyardTerminalBlockEntity(final BlockPos pos, final BlockState state) {
@@ -125,6 +136,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         // What its players see of the plan being built: the parts formed, and how much of each is missing.
         this.formedParts = fields().value("FormedParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
         this.missingParts = fields().value("MissingParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
+        // The places of its plan missing a block in a formed part: holes the part holds round, drawn as holes.
+        this.holes = fields().value("Holes", Codec.INT.listOf(), List.<Integer>of()).toClient();
         // Told only once it is built, after the field it changes is declared.
         this.arms = new PlanArms(this::armsChanged);
         this.armsField = fields().part("Arms", this.arms).save().toClient();
@@ -159,14 +172,18 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         super.onChunkUnloaded();
         stopBuild(false);
         LOADED_ON_CLIENT.remove(this);
+        LOADED_ON_SERVER.remove(this);
     }
 
-    /** On a player's game it is known among the terminals loaded there, whose plans are shown as holograms. */
+    /**
+     * It is known among the terminals loaded: on a player's game, whose plans are shown as holograms; on the server,
+     * whose docks a ship coming in is seated by.
+     */
     @Override
     public void onLoad() {
         super.onLoad();
-        if (this.level != null && this.level.isClientSide()) {
-            LOADED_ON_CLIENT.add(this);
+        if (this.level != null) {
+            (this.level.isClientSide() ? LOADED_ON_CLIENT : LOADED_ON_SERVER).add(this);
         }
     }
 
@@ -174,6 +191,15 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
     public void setRemoved() {
         super.setRemoved();
         LOADED_ON_CLIENT.remove(this);
+        LOADED_ON_SERVER.remove(this);
+    }
+
+    /** The terminals loaded on the server in {@code level} within {@code reach} blocks of {@code at}, nearest first. */
+    public static List<ShipyardTerminalBlockEntity> near(final ServerLevel level, final Vec3 at, final double reach) {
+        return LOADED_ON_SERVER.stream().filter(terminal -> terminal.getLevel() == level && !terminal.isRemoved()
+                && Vec3.atCenterOf(terminal.getBlockPos()).distanceTo(at) <= reach)
+                .sorted(Comparator.comparingDouble(terminal -> Vec3.atCenterOf(terminal.getBlockPos())
+                        .distanceTo(at))).toList();
     }
 
     /** The terminals loaded on this player's game. */
@@ -240,6 +266,12 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         return missing == null ? List.of() : missing;
     }
 
+    /** The places of its plan missing a block in a formed part, by their numbers, as its players are told. */
+    public List<Integer> holes() {
+        final List<Integer> kept = this.holes.get();
+        return kept == null ? List.of() : kept;
+    }
+
     /** Whether the ship of its plan is built whole, every part formed. */
     public boolean built() {
         final List<Integer> missing = missingParts();
@@ -285,8 +317,9 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         final PlannedBuild built = this.build;
         final ShipDesign design = this.plan.get();
         final BlockPos at = this.planAt.get();
+        // Every part formed: a hole in one goes with it, mended wherever a block is put back.
         if (!(this.level instanceof ServerLevel server) || built == null || design == null || at == null
-                || !built.complete()) {
+                || built.formedParts().size() < built.plan().parts()) {
             return Optional.empty();
         }
         final ResourceLocation console = ShipKitBlocks.FLIGHT_CONSOLE.getId();
@@ -324,8 +357,56 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         this.planAt.set(null);
         this.formedParts.set(List.of());
         this.missingParts.set(List.of());
+        this.holes.set(List.of());
         setChanged();
         return Optional.of(made.structure());
+    }
+
+    /**
+     * Takes the ship {@code ship} back onto the grid, a moving structure come into its bay: set down where its plan
+     * goes in this dock, as the dock stands, each block and what it keeps as it was; the dock keeps its plan again,
+     * to change by its arms or by hand, and to let go once more. Whether it did: not while the dock is not formed or
+     * builds another ship, nor for a structure with no console keeping a ship's plan, or that cannot be set down.
+     */
+    public boolean seat(final MovingStructure ship) {
+        final Optional<Orientation> dock = this.structure.orientation();
+        if (!(this.level instanceof ServerLevel server) || !formed() || dock.isEmpty() || this.plan.get() != null
+                || !Orientation.turns().contains(dock.get())) {
+            return false;
+        }
+        final Optional<BlockPos> console = consoleIn(server, ship);
+        if (console.isEmpty() || !(server.getBlockEntity(console.get()) instanceof AirReserveEntity keeper)
+                || keeper.ship().isEmpty() || !Orientation.turns().contains(keeper.ship().get().orientation())) {
+            return false;
+        }
+        final ShipAboard aboard = keeper.ship().get();
+        final BlockPos at = ShipyardStructure.shipAt(this.worldPosition, dock.get());
+        final Optional<StructurePose> pose = seated(ship, console.get().offset(aboard.nose()), at,
+                Math.floorMod(Orientation.turns().indexOf(dock.get())
+                        - Orientation.turns().indexOf(aboard.orientation()), Orientation.turns().size()));
+        if (pose.isEmpty()) {
+            return false;
+        }
+        final StructurePose was = ship.pose();
+        ship.teleport(pose.get());
+        final BlockPos landed = BlockPos.containing(ship.frame().worldX(console.get().getX() + HALF,
+                console.get().getY() + HALF, console.get().getZ() + HALF), ship.frame().worldY(console.get().getX()
+                + HALF, console.get().getY() + HALF, console.get().getZ() + HALF), ship.frame().worldZ(
+                console.get().getX() + HALF, console.get().getY() + HALF, console.get().getZ() + HALF));
+        if (!StructureDisassembly.setDown(ship).ok()) {
+            ship.teleport(was);
+            return false;
+        }
+        if (server.getBlockEntity(landed) instanceof AirReserveEntity set) {
+            set.land();
+        }
+        this.design.set(aboard.design());
+        this.plan.set(aboard.design());
+        this.planAt.set(at);
+        this.planTurn.set(FormedShapes.ORIENTATIONS.indexOf(dock.get()));
+        setChanged();
+        startBuild();
+        return true;
     }
 
     /** Whether {@code design} is ready to be built in a Small Shipyard: nothing keeps it down, and it fits the bay. */
@@ -499,6 +580,53 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         return now;
     }
 
+    /* Where in {@code ship}'s blocks the flight console keeping a ship's plan stands, if one does. */
+    private static Optional<BlockPos> consoleIn(final ServerLevel level, final MovingStructure ship) {
+        final Box bounds = ship.bounds();
+        for (final BlockPos at : BlockPos.betweenClosed(bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(),
+                bounds.maxY(), bounds.maxZ())) {
+            if (level.getBlockEntity(at) instanceof AirReserveEntity keeper && keeper.ship().isPresent()) {
+                return Optional.of(at.immutable());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /*
+     * The pose that sets {@code ship} down with the block of its nose, {@code nose} among its blocks, on {@code at},
+     * turned {@code quarters} quarter turns clockwise from how it stands among its blocks; none when no pose does.
+     */
+    private static Optional<StructurePose> seated(final MovingStructure ship, final BlockPos nose, final BlockPos at,
+                                                  final int quarters) {
+        final int[] along = Orientation.turns().get(quarters).apply(0, 0, 1);
+        final int[] across = Orientation.turns().get(quarters).apply(1, 0, 0);
+        final double nx = nose.getX() + HALF;
+        final double ny = nose.getY() + HALF;
+        final double nz = nose.getZ() + HALF;
+        for (final double angle : new double[] {quarters * Math.PI / 2, -quarters * Math.PI / 2}) {
+            final StructureFrame turned = new StructureFrame(StructurePose.turned(0, 0, 0, 0, 1, 0, angle),
+                    ship.pivotX(), ship.pivotY(), ship.pivotZ());
+            final double wx = turned.worldX(nx, ny, nz);
+            final double wy = turned.worldY(nx, ny, nz);
+            final double wz = turned.worldZ(nx, ny, nz);
+            if (same(turned, nx, ny, nz + 1, wx, wy, wz, along) && same(turned, nx + 1, ny, nz, wx, wy, wz, across)) {
+                return Optional.of(StructurePose.turned(at.getX() + HALF - wx, at.getY() + HALF - wy,
+                        at.getZ() + HALF - wz, 0, 1, 0, angle));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /*
+     * Whether {@code frame} takes the point ({@code x}, {@code y}, {@code z}) {@code way} from where it takes the
+     * nose, at ({@code wx}, {@code wy}, {@code wz}).
+     */
+    private static boolean same(final StructureFrame frame, final double x, final double y, final double z,
+                                final double wx, final double wy, final double wz, final int[] way) {
+        return Math.abs(frame.worldX(x, y, z) - wx - way[0]) < CLOSE && Math.abs(frame.worldY(x, y, z) - wy - way[1])
+                < CLOSE && Math.abs(frame.worldZ(x, y, z) - wz - way[2]) < CLOSE;
+    }
+
     /* Why it will not build what {@code args} asks, or null when it will. */
     private @Nullable Refusal refusal(final IOperationArgs args) {
         if (!formed()) {
@@ -529,7 +657,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
             this.pending = false;
             return;
         }
-        final PlannedBuild next = new PlannedBuild(ShipyardPlans.of(server, building, planTurn()), at);
+        // A ship's parts hold when a block of theirs is broken, holed there, as they do aboard wherever it goes.
+        final PlannedBuild next = new PlannedBuild(ShipyardPlans.of(server, building, planTurn()), at).holed();
         for (final PlanSpot spot : next.plan().spots()) {
             if (!Loaded.at(server, next.where(spot))) {
                 this.pending = true;
@@ -556,6 +685,7 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         if (giveBack) {
             this.formedParts.set(List.of());
             this.missingParts.set(List.of());
+            this.holes.set(List.of());
         }
     }
 
@@ -577,6 +707,7 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
             missing.add(now.missing(part));
         }
         this.missingParts.set(List.copyOf(missing));
+        this.holes.set(ShipyardPlans.holesIn(now));
         setChanged();
     }
 

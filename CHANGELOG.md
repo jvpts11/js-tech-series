@@ -2566,6 +2566,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an empty hand: it becomes one moving structure, once, of the blocks at the places of its plan and no others, the
   dock's left where they stand, each block and what it keeps as it was. It stays a structure from then on, standing
   still or flying, its flight console keeping its plan and drawing its parts aboard; the dock is free for the next.
+- (Space) A ship is changed only in a dock: its pilot using the flight console of a ship come into a free dock's bay
+  has the dock take it back onto the grid, set down where its plan goes as the dock stands, the dock keeping its plan
+  again to change by its arms or by hand and let it go once more. A block broken from a ship's formed part, in the
+  dock or aboard wherever the ship is, leaves a hole the part holds round, drawn as that block of its model gone and
+  shown in the dock's hologram; the right block put back merges and mends it.
 - (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.

@@ -187,7 +187,8 @@ public final class ShipHolograms {
         final BuildPlan plan = kept.laid();
         final List<Integer> formed = terminal.formedParts();
         final int count = plan.parts();
-        if (formed.size() >= count) {
+        // A whole ship with no hole in it needs no hologram; one holed shows the blocks to put back.
+        if (formed.size() >= count && terminal.holes().isEmpty()) {
             return Optional.empty();
         }
         final boolean[] present = new boolean[plan.spots().size()];

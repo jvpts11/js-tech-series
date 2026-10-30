@@ -47,7 +47,8 @@ public final class FlightConsoleRenderer implements BlockEntityRenderer<AirReser
         if (ship.isEmpty()) {
             return;
         }
-        ShipPartsRenderer.drawShip(console, ship.get().design(), ship.get().formed()::contains, ship.get().nose(),
+        ShipPartsRenderer.drawShip(console, ship.get().design(), ship.get().formed()::contains, ShipHoles.of(console,
+                ship.get().design(), ship.get().orientation(), console.holes()), ship.get().nose(),
                 ship.get().orientation(), CabinReadings.AT_REST, poses, buffers, light, overlay);
     }
 

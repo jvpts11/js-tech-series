@@ -10,6 +10,7 @@ package dev.jstech.space.shipyard;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.space.JsSpace;
@@ -21,9 +22,13 @@ import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipLayout;
 import dev.jstech.space.ship.ShipPartModels;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -66,6 +71,35 @@ public final class ShipyardPlans {
             spots.add(new PlanSpot(new BlockPos(at[0], at[1], at[2]), wanted, block.part(), place, List.of()));
         }
         return new BuildPlan(design.spine().size() + design.hung().size(), spots);
+    }
+
+    /**
+     * The bones of the parts' models a hole at each of the places numbered {@code holes} of {@code plan} hides, a block
+     * missing from a formed part being its bone hidden: by the part's number, then its piece's model's name.
+     */
+    public static Map<Integer, Map<String, Set<String>>> holes(final BuildPlan plan, final Collection<Integer> holes) {
+        final Map<Integer, Map<String, Set<String>>> out = new HashMap<>();
+        for (final int hole : holes) {
+            if (hole < 0 || hole >= plan.spots().size()) {
+                continue;
+            }
+            final PlanSpot spot = plan.spots().get(hole);
+            spot.place().ifPresent(place -> out.computeIfAbsent(spot.part(), any -> new HashMap<>())
+                    .computeIfAbsent(ShipPartModels.name(place.model()), any -> new HashSet<>())
+                    .add(ShipPartModels.bone(place.x(), place.y(), place.z())));
+        }
+        return out;
+    }
+
+    /** The places of {@code build} missing a block in a part formed, holed there, by their numbers. */
+    public static List<Integer> holesIn(final PlannedBuild build) {
+        final List<Integer> out = new ArrayList<>();
+        for (int i = 0; i < build.plan().spots().size(); i++) {
+            if (!build.present(i) && build.formed(build.plan().spots().get(i).part())) {
+                out.add(i);
+            }
+        }
+        return List.copyOf(out);
     }
 
     /** The part numbered {@code part} of {@code design}: the spine's from the nose first, then the hung ones. */

@@ -587,6 +587,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   an empty hand: it becomes one moving structure, once, of the blocks at the places of its plan and no others, the
   dock's left where they stand, each block and what it keeps as it was. It stays a structure from then on, standing
   still or flying, its flight console keeping its plan and drawing its parts aboard; the dock is free for the next.
+- A ship is changed only in a dock: its pilot using the flight console of a ship come into a free dock's bay
+  has the dock take it back onto the grid, set down where its plan goes as the dock stands, the dock keeping its plan
+  again to change by its arms or by hand and let it go once more. A block broken from a ship's formed part, in the
+  dock or aboard wherever the ship is, leaves a hole the part holds round, drawn as that block of its model gone and
+  shown in the dock's hologram; the right block put back merges and mends it.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
