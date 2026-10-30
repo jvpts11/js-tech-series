@@ -122,9 +122,9 @@ public final class JsSpace {
         RocketShapes.declare();
         // The Flight Computer every rocket carries: its transfer and landing pages, and its landing maps.
         FlightComputer.declare();
-        // The Rocket Hangar a rocket is built in: its terminal, its crane, its doors and its platforms; and its design
-        // screen, where a rocket is designed.
-        HangarBlocks.declare();
+        // The Rocket Hangar a rocket is built in: its terminal, its crane, its doors, its platforms and its item ports;
+        // and its design screen, where a rocket is designed.
+        HangarBlocks.declare(modEventBus);
         RocketDesigner.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.

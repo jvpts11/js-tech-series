@@ -603,6 +603,50 @@ build.start(serverLevel, ownerPos, () -> tellMyPlayers(build));   // counts once
   the player; and, for the nearest plan, a line across the top of the screen saying what is being built and what it
   needs.
 
+### Laid by a machine
+
+*Added 2026-10-30.*
+
+A machine may lay a plan's blocks by itself, as a hangar's crane builds its rocket: a `PlanAssembler`, declared among
+the owner's fields so what it holds is saved, ticked on the server and told which build to lay.
+
+```java
+private final PlanAssembler crane = new PlanAssembler(pos, this::setChanged);
+
+public CraneBlockEntity(final BlockPos pos, final BlockState state) {
+    super(TYPE.get(), pos, state);
+    fields().part(PlanAssembler.KEY, this.crane).save();
+}
+
+// when its build starts or stops
+this.crane.build(planned);          // or null
+
+// in its server tick
+this.crane.tick(serverLevel);
+
+// a port of its multiblock passes the inbox on
+public IItemHandler itemPort(final PortKind kind, final BlockPos part, final Direction side) {
+    return kind == PortKind.ITEM_INPUT ? this.crane.inbox() : null;
+}
+```
+
+- **What goes in**: its `inbox()` takes only the blocks the plan still wants, and no more of each than it wants
+  (`PlannedBuild.wanted`), from whatever puts items in: a hopper, a pipe, another mod's exporter, a network. What the
+  plan stops wanting, as a player lays a block by hand or a new plan takes the old one's place, comes back out of the
+  same inbox to whatever pulls from it; without a build, everything it holds does. `needs()` says what it waits for,
+  the blocks laid first first.
+- **What it lays**: at the pace of the multiblock builder (`multiblock.blocks_per_second`), the lowest missing block it
+  holds, layer by layer and in a layer in the plan's order (`PlannedBuild.next`), where the place is free, nothing
+  stands in the way and no protection stops the world's own machine; each is heard as a player placing it, and the
+  plan counts it as any block put down, its part forming with its last block.
+- **Waiting**: with nothing it can lay, it says so (`waiting()`) and sleeps until blocks come in or the plan's counts
+  change (`wake()`, which an owner calls from the plan's `onChange`), looking again once a second for a place
+  something stood in.
+- **Broken**: `spill` drops what it holds where its machine stood.
+
+On a network, the kind of Operation `jscore:assemble` sets such a machine building
+([Operations](OPERATIONS.md#machines-that-build-and-machines-that-wait-on-items)).
+
 ## Showing a multiblock before it is built
 
 *Added 2026-10-16.*

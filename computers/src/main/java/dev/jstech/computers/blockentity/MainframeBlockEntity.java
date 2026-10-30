@@ -810,7 +810,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null) {
             return null;
         }
-        final MemberOperation operation = new MemberOperation(serverLevel, networkUuid(), request, machinePos,
+        final MemberOperation operation = new MemberOperation(this, serverLevel, networkUuid(), request, machinePos,
                 machineName, asked);
         operation.setPriority(priority);
         track(operation);

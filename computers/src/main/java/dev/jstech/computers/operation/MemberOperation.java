@@ -7,12 +7,14 @@
  */
 package dev.jstech.computers.operation;
 
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.network.INetworkMember;
 import dev.jstech.core.jstechseries.network.NetworkMembers;
 import dev.jstech.core.jstechseries.network.NetworkMembership;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.operation.IItemNeeds;
 import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.jstechseries.operation.OperationRequest;
@@ -34,7 +36,8 @@ import net.minecraft.world.item.Items;
  * <p>It waits for a queue as any Operation does, by its priority, and on the tick a queue is its it hands the request
  * to the kind's handler and lets the queue go: the Mainframe's queues measure the Mainframe's own work, and an
  * accelerator's run of minutes is the accelerator's. From then on it stays in flight, as the machine says it is
- * going, until it is over, the machine leaves the network, or somebody calls it off, which the machine is told.
+ * going, until it is over, the machine leaves the network, or somebody calls it off, which the machine is told. While
+ * the machine waits on items and says which, the network brings them ({@link MemberSupply}).
  */
 @TextHolder
 public final class MemberOperation implements INetworkOperation {
@@ -47,6 +50,7 @@ public final class MemberOperation implements INetworkOperation {
     private final String machineName;
     private final String asked;
     private final StorageKey icon;
+    private final MemberSupply supply;
     private OperationPriority priority = OperationPriority.DEFAULT;
     private boolean handedOff;
 
@@ -55,19 +59,22 @@ public final class MemberOperation implements INetworkOperation {
             "%s left the network before it was done");
 
     /**
-     * A request for the machine at {@code machinePos} on {@code network}.
+     * A request for the machine at {@code machinePos} on the network of {@code mainframe}, which brings the machine
+     * what it waits for when it waits on items.
      *
      * @param machineName the name the machine answers to on the network, for the log
      * @param asked       what was asked of it, as the network's language writes it, for the log
      */
-    public MemberOperation(final ServerLevel level, final NetworkUuid network, final OperationRequest<?> request,
-                           final long machinePos, final String machineName, final String asked) {
+    public MemberOperation(final MainframeBlockEntity mainframe, final ServerLevel level, final NetworkUuid network,
+                           final OperationRequest<?> request, final long machinePos, final String machineName,
+                           final String asked) {
         this.level = level;
         this.network = network;
         this.request = request;
         this.machinePos = machinePos;
         this.machineName = machineName;
         this.asked = asked;
+        this.supply = new MemberSupply(mainframe, level, network, machineName);
         // The machine's block is the row's icon; a block with no item of its own shows what a lost subject shows.
         final Item block = level.getBlockState(BlockPos.of(machinePos)).getBlock().asItem();
         this.icon = StorageKey.of(block == Items.AIR ? Items.BARRIER : block);
@@ -110,6 +117,9 @@ public final class MemberOperation implements INetworkOperation {
         if (!this.handedOff) {
             this.handedOff = true;
             this.request.start();
+        } else if (isWaiting() && this.request.machine().orElse(null) instanceof IItemNeeds needs) {
+            // A machine waiting on items is brought them from the network's storage, made first where they can be.
+            this.supply.tick(needs);
         }
     }
 

@@ -168,6 +168,7 @@ import dev.jstech.core.jstechseries.SeriesDeposits;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SeriesMods;
 import dev.jstech.core.jstechseries.SimplePath;
+import dev.jstech.core.jstechseries.builder.Assembly;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
 import dev.jstech.core.jstechseries.containment.SharedContainment;
 import dev.jstech.core.jstechseries.projector.StructureProjector;
@@ -619,6 +620,8 @@ public final class JsCore {
         SignalProbe.listen(modEventBus);
         PhysicsTool.listen(modEventBus);
         MultiblockBuilder.listen(modEventBus);
+        // A machine that builds a plan by itself is set to it by the network through this kind of Operation.
+        Assembly.listen(modEventBus);
         SharedEnergy.listen(modEventBus);
         EnergyConverters.listen(modEventBus);
         SharedContainment.listen(modEventBus);

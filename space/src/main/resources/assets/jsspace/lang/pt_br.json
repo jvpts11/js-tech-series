@@ -480,5 +480,12 @@
   "jsspace.hologram.to_build": "a construir",
   "jsspace.hologram.layer": "camada %s de %s",
   "jsspace.hologram.formed": "formada",
-  "jsspace.hologram.banner": "%s  -  %s, camada %s de %s  -  %s x %s"
+  "jsspace.hologram.banner": "%s  -  %s, camada %s de %s  -  %s x %s",
+  "block.jsspace.item_port": "Porta de Itens",
+  "jsspace.hangar.not_formed": "A baia do hangar não está formada",
+  "jsspace.hangar.no_plan_named": "O hangar não guarda nenhum plano chamado %s",
+  "jsspace.hangar.nothing_sent": "Nenhum plano foi enviado à baia do hangar, e nenhum foi nomeado",
+  "jsspace.hangar.not_ready": "O plano %s não está pronto para voar desta baia",
+  "jsspace.hangar.stopped": "O hangar parou de construir: a baia se desfez, ou o plano foi retirado",
+  "jsspace.hangar.taken": "Outro pedido ficou com a ponte rolante do hangar"
 }

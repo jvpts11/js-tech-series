@@ -8,10 +8,13 @@
 package dev.jstech.space.hangar;
 
 import dev.jstech.core.multiblock.FormedPartBlock;
+import dev.jstech.core.multiblock.MultiblockPortBlock;
 import dev.jstech.core.text.Text;
 import dev.jstech.space.rocket.RocketKitBlocks;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -27,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
  * is not its shell. From the block in front of the terminal it measures down to the floor, up to the roof, along its
  * wall to the walls each side and across to the far wall; the bay must be no smaller and no larger than the server
  * allows, closed on every side, with a line of crane rail along the top of two facing walls, the crane bridge spanning
- * the bay from one to the other, the hoist hanging under it, and a bay door from the floor up.
+ * the bay from one to the other, the hoist hanging under it, and a bay door from the floor up. The item ports set in
+ * its shell are found as the shell is looked at.
  */
 public final class HangarBays {
 
@@ -72,11 +76,12 @@ public final class HangarBays {
         if (Math.max(width, depth) > limits.widest() || height > limits.tallest()) {
             return Result.refused(HangarTexts.TOO_LARGE.with(limits.widest(), limits.tallest()));
         }
-        final BlockPos open = opening(level, low, high);
+        final List<BlockPos> ports = new ArrayList<>();
+        final BlockPos open = opening(level, low, high, ports);
         if (open != null) {
             return Result.refused(HangarTexts.OPEN.with(open.getX(), open.getY(), open.getZ()));
         }
-        return crane(level, low, high);
+        return crane(level, low, high).withPorts(ports);
     }
 
     /** Whether the block at {@code pos} is a piece of a hangar's shell: a bay door, or any solid block not in a bay. */
@@ -113,8 +118,12 @@ public final class HangarBays {
         return -1;
     }
 
-    /* The first place of the bay's shell that is not shell: its walls, its floor and its roof; or none. */
-    private static @Nullable BlockPos opening(final Level level, final BlockPos low, final BlockPos high) {
+    /*
+     * The first place of the bay's shell that is not shell: its walls, its floor and its roof; or none. The ports
+     * found in the shell on the way are put in {@code ports}.
+     */
+    private static @Nullable BlockPos opening(final Level level, final BlockPos low, final BlockPos high,
+                                              final List<BlockPos> ports) {
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = low.getX() - 1; x <= high.getX() + 1; x++) {
             for (int z = low.getZ() - 1; z <= high.getZ() + 1; z++) {
@@ -123,8 +132,14 @@ public final class HangarBays {
                     final boolean cap = y < low.getY() || y > high.getY();
                     // The corners where two walls meet are no one's to close.
                     final boolean corner = (x < low.getX() || x > high.getX()) && (z < low.getZ() || z > high.getZ());
-                    if ((edge || cap) && !corner && !shell(level, at.set(x, y, z))) {
+                    if (!(edge || cap) || corner) {
+                        continue;
+                    }
+                    if (!shell(level, at.set(x, y, z))) {
                         return at.immutable();
+                    }
+                    if (level.getBlockState(at).getBlock() instanceof MultiblockPortBlock) {
+                        ports.add(at.immutable());
                     }
                 }
             }
@@ -221,15 +236,26 @@ public final class HangarBays {
      *
      * @param bay    the bay, if it formed
      * @param reason what the terminal says: the bay's size, or what is missing
+     * @param ports  the ports set in its shell, where it formed
      */
-    public record Result(Optional<HangarBay> bay, Text reason) {
+    public record Result(Optional<HangarBay> bay, Text reason, List<BlockPos> ports) {
+
+        public Result {
+            ports = List.copyOf(ports);
+        }
 
         static Result refused(final Text why) {
-            return new Result(Optional.empty(), why);
+            return new Result(Optional.empty(), why, List.of());
         }
 
         static Result formed(final HangarBay bay) {
-            return new Result(Optional.of(bay), HangarTexts.FORMED.with(bay.width(), bay.depth(), bay.height()));
+            return new Result(Optional.of(bay), HangarTexts.FORMED.with(bay.width(), bay.depth(), bay.height()),
+                    List.of());
+        }
+
+        /* The same, with the ports of its shell where it formed. */
+        Result withPorts(final List<BlockPos> found) {
+            return this.bay.isPresent() ? new Result(this.bay, this.reason, found) : this;
         }
     }
 }

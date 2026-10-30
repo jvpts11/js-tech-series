@@ -3287,5 +3287,6 @@
   "jscore.valve.flow": "Vazão",
   "jscore.valve.open": "Aberta",
   "jscore.valve.per_tick": "mB por tick",
-  "jscore.machine.screen.tip.recipes": "Ver receitas"
+  "jscore.machine.screen.tip.recipes": "Ver receitas",
+  "jscore.operation.assemble": "Montar"
 }

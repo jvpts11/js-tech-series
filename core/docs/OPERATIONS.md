@@ -103,6 +103,31 @@ In J's Computers, the Mainframe gives these requests out: it queues each by its 
 to the machine when a queue is free and lets the queue go at once, and keeps it in the log as running until the
 machine says it is over. A test gives one to a member with the test kit's `NetworkScenes.request(...)`.
 
+## Machines that build, and machines that wait on items
+
+*Added 2026-10-30.*
+
+The Core registers one kind of its own, `Assembly.ASSEMBLE` (`jscore:assemble`): it sets a machine building a plan by
+itself, as a hangar's crane builds a rocket from the blocks that come in through its ports
+([Multiblocks](MULTIBLOCKS.md#laid-by-a-machine)). Its request carries the name of one of the machine's plans, or none
+for the plan the machine was given already:
+
+```
+RUN jscore:assemble ON 'Hangar Terminal-3fa2c1'
+RUN jscore:assemble WITH plan = 'Orbital I'
+```
+
+The machine's block entity is an `IAssembler`, a member of category C that lists the kind in `carriesOut()`, and
+reports on the request as it builds: `PROCESSING` while it lays blocks, `WAITING` while it has none it can lay, and
+`COMPLETED` once the plan is whole; it says why it will not take one (no such plan, a plan not ready) in
+`refuses(...)`.
+
+A machine whose work waits on items, a builder or any other, may say which: its block entity is an `IItemNeeds`,
+giving what it waits for (`needs()`, each item with how many more it takes, the first needed first) and where those go
+in (`inbox()`, which takes no more of each than it needs). Whatever runs the network may bring them while the request
+waits; in J's Computers, the Mainframe sends the machine, once a second, the first item it needs that the network
+stores, as an export its log shows, and has those the network lacks crafted, where its patterns make them.
+
 ## The eight states
 
 | State | Means |

@@ -15,15 +15,20 @@ import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +39,10 @@ import org.jetbrains.annotations.Nullable;
  * one of its places changes its part's count by one, told by the world's index of structures, in the same short time
  * however large the plan. A part forms once nothing of it is missing, its blocks merging into its formed model with no
  * terminal of its own, and comes apart, every block back as it was, as soon as one goes. What it counts is read by
- * whatever shows or builds the plan, a hologram of what is missing, a crane laying the next block. Its owner, the
- * block that keeps the plan, draws its formed parts, and may hand the plan on, as a rocket takes its own plan with it
- * when it leaves its hangar.
+ * whatever shows or builds the plan, a hologram of what is missing, a crane laying the next block: how many of each
+ * block it still wants, and which missing place comes next, the lowest first, layer by layer. Its owner, the block
+ * that keeps the plan, draws its formed parts, and may hand the plan on, as a rocket takes its own plan with it when it
+ * leaves its hangar.
  */
 public final class PlannedBuild implements IStructureWatcher {
 
@@ -48,6 +54,12 @@ public final class PlannedBuild implements IStructureWatcher {
     private final boolean[] present;
     private final int[] missing;
     private final boolean[] formed;
+    /* The places in the order they are laid, the lowest first, and where each is in that order. */
+    private final int[] order;
+    private final int[] rank;
+    /* How many of each block the missing places want, and where in the order the first missing place is. */
+    private final Map<ResourceLocation, Integer> wanted = new HashMap<>();
+    private int first;
     private @Nullable ServerLevel level;
     private @Nullable BlockPos owner;
     private Runnable told = () -> { };
@@ -71,6 +83,15 @@ public final class PlannedBuild implements IStructureWatcher {
         this.present = new boolean[plan.spots().size()];
         this.missing = new int[plan.parts()];
         this.formed = new boolean[plan.parts()];
+        // Layer by layer from the ground, and in a layer in the plan's own order.
+        this.order = IntStream.range(0, plan.spots().size()).boxed()
+                .sorted(Comparator.<Integer>comparingInt(i -> plan.spots().get(i).at().getY())
+                        .thenComparingInt(i -> i))
+                .mapToInt(Integer::intValue).toArray();
+        this.rank = new int[this.order.length];
+        for (int at = 0; at < this.order.length; at++) {
+            this.rank[this.order[at]] = at;
+        }
     }
 
     /**
@@ -83,12 +104,17 @@ public final class PlannedBuild implements IStructureWatcher {
         this.owner = by.immutable();
         this.told = Objects.requireNonNull(onChange, "onChange");
         Arrays.fill(this.missing, 0);
+        this.wanted.clear();
         for (int i = 0; i < this.plan.spots().size(); i++) {
-            this.present[i] = matches(this.plan.spots().get(i));
+            final PlanSpot spot = this.plan.spots().get(i);
+            this.present[i] = matches(spot);
             if (!this.present[i]) {
-                this.missing[this.plan.spots().get(i).part()]++;
+                this.missing[spot.part()]++;
+                this.wanted.merge(spot.block(), 1, Integer::sum);
             }
         }
+        this.first = 0;
+        skipPresent();
         for (int part = 0; part < this.plan.parts(); part++) {
             if (this.missing[part] == 0) {
                 form(part);
@@ -160,11 +186,15 @@ public final class PlannedBuild implements IStructureWatcher {
         final int part = spot.part();
         if (now) {
             this.missing[part]--;
+            this.wanted.computeIfPresent(spot.block(), (block, count) -> count > 1 ? count - 1 : null);
+            skipPresent();
             if (this.missing[part] == 0) {
                 form(part);
             }
         } else {
             this.missing[part]++;
+            this.wanted.merge(spot.block(), 1, Integer::sum);
+            this.first = Math.min(this.first, this.rank[index]);
             comeApart(part);
         }
         this.told.run();
@@ -240,6 +270,48 @@ public final class PlannedBuild implements IStructureWatcher {
     /** Whether the whole plan is built, every part formed. */
     public boolean complete() {
         return missing() == 0;
+    }
+
+    /** How many places of the plan still want the block {@code block}, as last counted. */
+    public int wanted(final ResourceLocation block) {
+        return this.wanted.getOrDefault(block, 0);
+    }
+
+    /**
+     * Every block the plan still wants and how many of each, as last counted, in the order the places wanting them
+     * come to be laid: what a crane waits for first comes first.
+     */
+    public Map<ResourceLocation, Integer> wanted() {
+        final Map<ResourceLocation, Integer> out = new LinkedHashMap<>();
+        for (int at = this.first; at < this.order.length && out.size() < this.wanted.size(); at++) {
+            final int index = this.order[at];
+            if (!this.present[index]) {
+                final ResourceLocation block = this.plan.spots().get(index).block();
+                out.putIfAbsent(block, this.wanted.getOrDefault(block, 0));
+            }
+        }
+        return out;
+    }
+
+    /**
+     * The first missing place, the lowest first and layer by layer, that {@code can} lay now (it holds the block, and
+     * nothing stands in the way), if there is one.
+     */
+    public Optional<PlanSpot> next(final Predicate<PlanSpot> can) {
+        for (int at = this.first; at < this.order.length; at++) {
+            final int index = this.order[at];
+            if (!this.present[index] && can.test(this.plan.spots().get(index))) {
+                return Optional.of(this.plan.spots().get(index));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /* Moves the first missing place on past the places that are present. */
+    private void skipPresent() {
+        while (this.first < this.order.length && this.present[this.order[this.first]]) {
+            this.first++;
+        }
     }
 
     /* Watches its places, under its owner, in the world's index of structures. */

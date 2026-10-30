@@ -327,6 +327,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   merge a block a plan laid and tell it what reaches into it and whose it is; `FormedPartBlockEntity.also`, `places`
   and `planned` give a merged block's other shapes and whether a plan laid it; `FormedAim.places` and `hit` with
   several places aim at all of a block's models.
+- A plan laid by a machine: J's Core's API is at version 22. `PlanAssembler` lays a `PlannedBuild` by itself
+  from the blocks it holds (`build`, `tick`, `inbox`, `held`, `needs`, `waiting`, `wake`, `spill`), saved among its
+  owner's fields; `PlannedBuild.wanted` says how many of each block the plan still wants, the first wanted first, and
+  `next` the lowest missing place a machine can lay. `IItemNeeds` is a machine of the network waiting on items, which
+  says what it waits for (`needs`, each an `ItemNeed`) and where it takes them (`inbox`). Outside the photo for now,
+  `Assembly.ASSEMBLE` (`jscore:assemble`) is the kind of Operation that sets a machine building its plan, and
+  `IAssembler` the machine that carries it out. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1733,6 +1740,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The hologram of a plan being built, drawn as the Structure Projector draws its multiblock: the blocks still
   missing as ghosts, the next layer glowing, wrong blocks marked, each part's box and words, and a line across the top
   of the screen for the nearest plan.
+- A plan laid by a machine: a crane, robot arms or any machine of a mod lays a plan's blocks by itself, one at
+  a time at the multiblock builder's pace, the lowest missing block it holds first, where nothing stands in the way and
+  no protection stops it, from what comes in through its ports, which take only what the plan still wants. A new kind
+  of Operation, `jscore:assemble`, sets such a machine building through the network; a machine waiting on items says
+  which, for the network to bring them.
 - Building by a plan: a structure laid out ahead, place by place, as a hangar keeps the rocket it builds; each
   part forms by itself once its last block is down and comes apart when one goes, counted one block at a time however
   large the plan, with no terminal of its own; its blocks never look for their owner, which may hand the plan on. A

@@ -8,6 +8,11 @@
 package dev.jstech.space.hangar;
 
 import com.mojang.serialization.MapCodec;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.jstechseries.network.DataLine;
+import dev.jstech.core.jstechseries.network.DataLines;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.GameText;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,11 +34,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The Rocket Hangar's terminal, set in a wall of the hangar facing into its bay, the way it faces whoever set it: from
  * it the hangar finds its bay ({@link HangarTerminalBlockEntity}). Used, it opens the hangar's design screen once the
- * hangar is formed, or says what keeps it from forming. Broken, the hangar is undone.
+ * hangar is formed, or says what keeps it from forming. A data cable on any face puts it on a network, which may set
+ * its crane building. Broken, the hangar is undone, and the blocks its crane held drop.
  */
-public final class HangarTerminalBlock extends HorizontalDirectionalBlock implements EntityBlock {
+public final class HangarTerminalBlock extends HorizontalDirectionalBlock implements EntityBlock, IFaceConnector {
 
     private static final MapCodec<HangarTerminalBlock> CODEC = simpleCodec(HangarTerminalBlock::new);
+    /* A machine on the network, as a server's access and backbone lines reach it, of every era. */
+    private static final FacePorts DATA = FacePorts.everyFace(DataLines.upTo(HardwareEra.SINGULARITY,
+            DataLine.ACCESS, DataLine.BACKBONE));
 
     public HangarTerminalBlock(final Properties properties) {
         super(properties);
@@ -77,9 +86,14 @@ public final class HangarTerminalBlock extends HorizontalDirectionalBlock implem
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState after,
                             final boolean moved) {
         if (!state.is(after.getBlock()) && level.getBlockEntity(pos) instanceof HangarTerminalBlockEntity terminal) {
-            terminal.undo();
+            terminal.broken();
         }
         super.onRemove(state, level, pos, after, moved);
+    }
+
+    @Override
+    public FacePorts ports() {
+        return DATA;
     }
 
     @Override

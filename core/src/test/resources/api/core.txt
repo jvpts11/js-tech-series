@@ -6903,6 +6903,10 @@ stable 4
 12 dev.jstech.core.jstechseries.network.SubframeNode  new(NodeUuid, NetworkUuid, long, Optional<NodeUuid>, int)
 12 dev.jstech.core.jstechseries.network.SubframeNode  static final String ANY_SOFTWARE
 12 dev.jstech.core.jstechseries.network.SubframeNode  static final double CONTRIBUTION_FACTOR
+22 dev.jstech.core.jstechseries.operation.IItemNeeds  type interface
+22 dev.jstech.core.jstechseries.operation.IItemNeeds  abstract List<ItemNeed> needs()
+22 dev.jstech.core.jstechseries.operation.IItemNeeds  abstract Optional<IItemHandler> inbox()
+22 dev.jstech.core.jstechseries.operation.IItemNeeds.ItemNeed  type record(Item item, int count)
 12 dev.jstech.core.jstechseries.operation.ILatencyScheduler  type interface
 12 dev.jstech.core.jstechseries.operation.ILatencyScheduler  abstract void afterTicks(int, Runnable)
 12 dev.jstech.core.jstechseries.operation.IOperationArgs  type interface
@@ -11236,6 +11240,21 @@ stable 4
 21 dev.jstech.core.multiblock.plan.BuildPlan  static final Codec<BuildPlan> CODEC
 21 dev.jstech.core.multiblock.plan.IPlanMember  type interface
 21 dev.jstech.core.multiblock.plan.IPlanMember  abstract void partFormed(ServerLevel, BlockPos, boolean)
+22 dev.jstech.core.multiblock.plan.PlanAssembler  type final class implements IFieldPart
+22 dev.jstech.core.multiblock.plan.PlanAssembler  IItemHandler inbox()
+22 dev.jstech.core.multiblock.plan.PlanAssembler  Map<Item, Integer> held()
+22 dev.jstech.core.multiblock.plan.PlanAssembler  Map<Item, Integer> needs()
+22 dev.jstech.core.multiblock.plan.PlanAssembler  Optional<PlannedBuild> build()
+22 dev.jstech.core.multiblock.plan.PlanAssembler  boolean waiting()
+22 dev.jstech.core.multiblock.plan.PlanAssembler  int held(Item)
+22 dev.jstech.core.multiblock.plan.PlanAssembler  int tick(ServerLevel)
+22 dev.jstech.core.multiblock.plan.PlanAssembler  new(BlockPos, Runnable)
+22 dev.jstech.core.multiblock.plan.PlanAssembler  static final String KEY
+22 dev.jstech.core.multiblock.plan.PlanAssembler  void build(PlannedBuild)
+22 dev.jstech.core.multiblock.plan.PlanAssembler  void load(CompoundTag, HolderLookup.Provider)
+22 dev.jstech.core.multiblock.plan.PlanAssembler  void save(CompoundTag, HolderLookup.Provider)
+22 dev.jstech.core.multiblock.plan.PlanAssembler  void spill(Level, BlockPos)
+22 dev.jstech.core.multiblock.plan.PlanAssembler  void wake()
 21 dev.jstech.core.multiblock.plan.PlanReach  type record(int part, FormedPlace place)
 21 dev.jstech.core.multiblock.plan.PlanReach  static final Codec<PlanReach> CODEC
 21 dev.jstech.core.multiblock.plan.PlanSpot  type record(BlockPos at, ResourceLocation block, int part, Optional<FormedPlace> place, List<PlanReach> reaches)
@@ -11245,7 +11264,9 @@ stable 4
 21 dev.jstech.core.multiblock.plan.PlannedBuild  BlockPos where(PlanSpot)
 21 dev.jstech.core.multiblock.plan.PlannedBuild  BuildPlan plan()
 21 dev.jstech.core.multiblock.plan.PlannedBuild  List<Integer> formedParts()
+22 dev.jstech.core.multiblock.plan.PlannedBuild  Map<ResourceLocation, Integer> wanted()
 21 dev.jstech.core.multiblock.plan.PlannedBuild  Optional<BlockPos> owner()
+22 dev.jstech.core.multiblock.plan.PlannedBuild  Optional<PlanSpot> next(Predicate<PlanSpot>)
 21 dev.jstech.core.multiblock.plan.PlannedBuild  Optional<PlanSpot> spotAt(BlockPos)
 21 dev.jstech.core.multiblock.plan.PlannedBuild  boolean complete()
 21 dev.jstech.core.multiblock.plan.PlannedBuild  boolean formed(int)
@@ -11253,6 +11274,7 @@ stable 4
 21 dev.jstech.core.multiblock.plan.PlannedBuild  boolean present(int)
 21 dev.jstech.core.multiblock.plan.PlannedBuild  int missing()
 21 dev.jstech.core.multiblock.plan.PlannedBuild  int missing(int)
+22 dev.jstech.core.multiblock.plan.PlannedBuild  int wanted(ResourceLocation)
 21 dev.jstech.core.multiblock.plan.PlannedBuild  new(BuildPlan, BlockPos)
 21 dev.jstech.core.multiblock.plan.PlannedBuild  void changed()
 21 dev.jstech.core.multiblock.plan.PlannedBuild  void changed(BlockPos)

@@ -303,6 +303,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   names the rocket, the part and layer being built and the block that layer needs most, as "Orbital I - Tank, layer 7
   of 9 - 9 x Tank Wall". A part that forms draws its own model and leaves the hologram, which goes once the rocket is
   whole.
+- The Rocket Hangar's crane builds the rocket by itself: once a design is sent to the bay, whatever the hangar
+  waits for that comes in through an Item Port in its shell (from a chest, a hopper, a pipe, a conveyor or another
+  mod's exporter) the crane lays where it goes, block by block at the pace of the multiblock builder, the lowest first,
+  layer by layer; the port takes only the blocks the rocket still wants and no more of each, and gives back out what
+  it no longer wants, as when a player lays a block by hand. A part forms as its last block goes down. The Hangar
+  Terminal takes a data cable on any face: on a network, `RUN jscore:assemble` sets the crane building the plan sent
+  to the bay, or one of the hangar's plans by name (`WITH plan = 'Orbital I'`), and the request stays in flight until
+  the rocket is whole. Broken, the terminal drops the blocks its crane held. New block: the Item Port.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

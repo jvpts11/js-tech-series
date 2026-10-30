@@ -13,6 +13,8 @@ import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.multiblock.MultiblockPortBlock;
+import dev.jstech.core.multiblock.MultiblockPorts;
 import dev.jstech.space.SpaceContent;
 import java.util.function.Function;
 import net.minecraft.tags.BlockTags;
@@ -21,14 +23,16 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * The Rocket Hangar's kit of blocks, the faces of the approved kit: its terminal, set in a wall, from which the hangar
  * finds its bay; the Assembly Console, where a rocket is designed; the crane, its rails along the tops of two facing
- * walls, its bridge across the bay and its hoist under the bridge; the bay doors, set in the walls; and the work
- * platforms round the rocket. Its walls and roof are any solid blocks a player likes. Formed, the crane's pieces, the
- * doors and the platforms take their own shapes.
+ * walls, its bridge across the bay and its hoist under the bridge; the bay doors, set in the walls; the work platforms
+ * round the rocket; and the item ports, set in its shell, through which the crane's blocks come in. Its walls and roof
+ * are any solid blocks a player likes. Formed, the crane's pieces, the doors and the platforms take their own shapes.
  */
 public final class HangarBlocks {
 
@@ -57,13 +61,26 @@ public final class HangarBlocks {
             .named("Bay Door").register();
     public static final BlockEntry<Block> WORK_PLATFORM = piece("work_platform", HangarPieceBlock.Kind.PLATFORM)
             .named("Work Platform").register();
+    /** The port in a wall the blocks of the rocket the crane builds come in through. */
+    public static final BlockEntry<MultiblockPortBlock> ITEM_PORT = SpaceContent.CONTENT.block("item_port",
+                    properties -> new MultiblockPortBlock(properties, () -> HangarBlocks.ITEM_PORT_ENTITY.get()))
+            .named("Item Port").properties(HangarBlocks::metal)
+            .look(IBlockLook.fixed(new IBlockModel.CubeAll("item_port", "block/hangar/item_port")))
+            .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tag(MultiblockPorts.PORTS).tab(HANGAR)
+            .register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ItemPortBlockEntity>> ITEM_PORT_ENTITY =
+            SpaceContent.CONTENT.blockEntity("item_port", ItemPortBlockEntity::new, ITEM_PORT);
 
     private HangarBlocks() {
     }
 
-    /** Declares the blocks, once, from the mod's constructor, before its content registers. */
-    public static void declare() {
-        // Loading the class declares them.
+    /**
+     * Declares the blocks, once, from the mod's constructor, before its content registers; their ports pass what
+     * reaches them on to their hangar's terminal.
+     */
+    public static void declare(final IEventBus modBus) {
+        modBus.addListener(RegisterCapabilitiesEvent.class,
+                event -> MultiblockPorts.register(event, ITEM_PORT_ENTITY.get()));
     }
 
     /* A piece of the kit: the kit's face on all six sides, its own shape once its hangar is formed (but a door's). */
