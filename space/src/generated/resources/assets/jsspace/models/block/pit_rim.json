@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "jsspace:block/shipyard/pit_rim_side",
+    "side": "jsspace:block/shipyard/pit_rim_side",
+    "top": "jsspace:block/shipyard/pit_rim"
+  }
+}

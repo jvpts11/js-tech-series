@@ -550,6 +550,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   with no life support section its flight console keeps a small air reserve, two hours of one crew member's oxygen,
   topping the cabin back up to the sea's air as the crew breathe and the hull leaks; an oxygen bottle used on the
   console pours into it. Inside, the helmet comes off.
+- The Small Shipyard, the dry dock a small starship is built in: a pit sixteen blocks wide and twenty-four
+  long dug three deep into the ground, its rim of hazard concrete and a cradle of hydraulic clamps rising from its floor
+  at four stations; down both sides four lattice towers, eleven blocks to the rails of a gantry crane, with walkways at
+  two heights and a stair up to both; a floodlight on each corner tower; at the back the control booth on the first
+  walkway with the Shipyard Terminal inside, at its foot the Item Port and a conveyor into the bay, and a block feeder
+  on each first walkway. Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
+  its shapes: the walkways their gratings, the towers their lattice, the stair its steps.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

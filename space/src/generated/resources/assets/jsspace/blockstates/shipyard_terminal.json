@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jsspace:block/shipyard_terminal",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsspace:block/shipyard_terminal"
+    },
+    "facing=south": {
+      "model": "jsspace:block/shipyard_terminal",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsspace:block/shipyard_terminal",
+      "y": 270
+    }
+  }
+}

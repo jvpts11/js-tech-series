@@ -2519,6 +2519,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   with no life support section its flight console keeps a small air reserve, two hours of one crew member's oxygen,
   topping the cabin back up to the sea's air as the crew breathe and the hull leaks; an oxygen bottle used on the
   console pours into it. Inside, the helmet comes off.
+- (Space) The Small Shipyard, the dry dock a small starship is built in: a pit sixteen blocks wide and twenty-four
+  long dug three deep into the ground, its rim of hazard concrete and a cradle of hydraulic clamps rising from its floor
+  at four stations; down both sides four lattice towers, eleven blocks to the rails of a gantry crane, with walkways at
+  two heights and a stair up to both; a floodlight on each corner tower; at the back the control booth on the first
+  walkway with the Shipyard Terminal inside, at its foot the Item Port and a conveyor into the bay, and a block feeder
+  on each first walkway. Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
+  its shapes: the walkways their gratings, the towers their lattice, the stair its steps.
 - (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
@@ -2731,6 +2738,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A large formed structure losing many blocks at once, blown away or cleared, no longer holds the server for
+  minutes: each lost block marks the blocks beside it, and the world asked each of them, for redstone and for light,
+  its shape as the strikes had left it, working its struck model out again every time. It answers both by its
+  model's shape before any strike.
 - (Core) A formed block whose faces would make more than 32 boxes, worked out in eighths, is written its true size:
   it was written twice as large, so its shape file did not read and the block stood whole.
 - (Core) A formed structure aboard a moving structure weighs, floats, drags and grips as the blocks merged into its

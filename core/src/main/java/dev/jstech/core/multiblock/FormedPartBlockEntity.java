@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
@@ -53,6 +54,9 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
     /* The shape last worked out, and from which shape files, places and damage, so any of them changing redoes it. */
     private @Nullable VoxelShape shape;
     private List<Object> shapeFrom = List.of();
+    /* Whether it stands as a whole block before any strike, and from which shape files and places that was found. */
+    private boolean wholeBlock = true;
+    private List<Object> wholeFrom = List.of();
     /* The damage a player's game last saw it keep, to tell when the server sends another. */
     private List<CellMark> damageSeen = List.of();
 
@@ -238,6 +242,38 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
             this.damageSeen = damage();
             FormedDamage.changed();
         }
+    }
+
+    /*
+     * Whether it stands as a whole block as its models are drawn, before any strike: what redstone asks of every block
+     * beside one that changes, and the light of a block that changes. Answered from its shape files alone, so the
+     * asking never works a struck model out again, which would redo the strikes' faces for each block a strike
+     * reaches, each time a block of it is lost.
+     */
+    boolean wholeBeforeStrikes() {
+        final List<FormedPlace> all = places();
+        if (all.isEmpty() || this.level == null) {
+            return true;
+        }
+        final List<Object> from = new ArrayList<>();
+        for (final FormedPlace at : all) {
+            from.add(at);
+            from.add(FormedShapes.get(this.level, at.model()).orElse(null));
+        }
+        if (!from.equals(this.wholeFrom)) {
+            VoxelShape out = Shapes.empty();
+            boolean known = false;
+            for (final FormedPlace at : all) {
+                final Optional<FormedShape> file = FormedShapes.get(this.level, at.model());
+                if (file.isPresent()) {
+                    out = Shapes.joinUnoptimized(out, file.get().shape(at), BooleanOp.OR);
+                    known = true;
+                }
+            }
+            this.wholeBlock = !known || Block.isShapeFullBlock(out);
+            this.wholeFrom = from;
+        }
+        return this.wholeBlock;
     }
 
     /* Told what it was, whose it is and which block of the model it is, as it merges. */

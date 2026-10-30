@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "jsspace:block/shipyard/terminal_front",
+    "side": "jsspace:block/shipyard/terminal_side",
+    "top": "jsspace:block/shipyard/terminal_top"
+  }
+}

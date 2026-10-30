@@ -27,6 +27,7 @@ import dev.jstech.space.client.life.SuitLamps;
 import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.rocket.FlightComputerRenderer;
+import dev.jstech.space.client.shipyard.ShipyardRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.RocketDesigner;
@@ -62,6 +63,8 @@ public final class JsSpaceClient {
         SuitControlsHud.listen(modEventBus);
         // The target painted across a formed landing platform.
         LandingPlatformRenderer.listen(modEventBus);
+        // A formed Small Shipyard, drawn whole as the approved dock.
+        ShipyardRenderer.listen(modEventBus);
         // The Flight Computer's screen, and the landing maps it is sent.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(FlightComputer.MENU.get(),
                 FlightComputerScreen::new));

@@ -56,6 +56,8 @@ public final class JsTests {
         Arenas.declare(MODID, "hangar", 29, 44, 29);
         // A crawlerway long enough for a crawler-transporter to go along with a launcher on it.
         Arenas.declare(MODID, "crawlerway", 44, 10, 15);
+        // A Small Shipyard dug into its ground, with room round it for its crane and its floodlights.
+        Arenas.declare(MODID, "shipyard", 26, 20, 30);
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
         // A thruster, a wheel, a burner, a light block, a levitator and a magnet, to prove the structures' physics.

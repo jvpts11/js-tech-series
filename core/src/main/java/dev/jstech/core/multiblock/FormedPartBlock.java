@@ -81,6 +81,15 @@ public final class FormedPartBlock extends Block implements EntityBlock {
         return level.getBlockEntity(pos) instanceof FormedPartBlockEntity part ? part.shape() : Shapes.block();
     }
 
+    /*
+     * Lets the sky's light down as its model stands there before any strike. The world asks it of a block as it
+     * changes, and a model losing many blocks at once would otherwise work its struck shape out again for each.
+     */
+    @Override
+    protected boolean propagatesSkylightDown(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof FormedPartBlockEntity part && !part.wholeBeforeStrikes();
+    }
+
     @Override
     protected float getDestroyProgress(final BlockState state, final Player player, final BlockGetter level,
                                        final BlockPos pos) {
@@ -188,6 +197,15 @@ public final class FormedPartBlock extends Block implements EntityBlock {
             return;
         }
         level.scheduleTick(pos, this, LOOKS_EVERY);
+    }
+
+    /*
+     * Whether it carries redstone power on as a solid block does: as its model stands before any strike. Redstone asks
+     * it of every block beside one that changes, and a model losing many blocks at once, blown away or cleared, would
+     * otherwise work its struck shape out again for each block each loss reaches.
+     */
+    static boolean conducts(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        return !(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part) || part.wholeBeforeStrikes();
     }
 
     /* The way a structure standing as {@code orientation} faces: its drawing's north, where its terminal looks. */

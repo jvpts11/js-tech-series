@@ -42,7 +42,7 @@ public final class FormedParts {
     public static final BlockEntry<FormedPartBlock> BLOCK = CoreItems.CONTENT.block("formed_part",
                     FormedPartBlock::new)
             .properties(properties -> properties.mapColor(MapColor.METAL).strength(2.0F).noOcclusion()
-                    .pushReaction(PushReaction.BLOCK).dynamicShape())
+                    .pushReaction(PushReaction.BLOCK).dynamicShape().isRedstoneConductor(FormedPartBlock::conducts))
             .named("Formed structure")
             .look(IBlockLook.fixed(new IBlockModel.ParticleOnly("formed_part", "minecraft:block/iron_block")))
             .drops(Drops.NONE)

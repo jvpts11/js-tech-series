@@ -1,0 +1,7 @@
+{
+  "model": "jsspace:jsmodels/shipyard/booth_glass.gltf",
+  "textures": [
+    "jsspace:textures/models/shipyard/booth_glass.png"
+  ],
+  "translucent": true
+}

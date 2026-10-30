@@ -1935,6 +1935,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A large formed structure losing many blocks at once, blown away or cleared, no longer holds the server for
+  minutes: each lost block marks the blocks beside it, and the world asked each of them, for redstone and for light,
+  its shape as the strikes had left it, working its struck model out again every time. It answers both by its
+  model's shape before any strike.
 - A formed block whose faces would make more than 32 boxes, worked out in eighths, is written its true size:
   it was written twice as large, so its shape file did not read and the block stood whole.
 - A formed structure aboard a moving structure weighs, floats, drags and grips as the blocks merged into its
