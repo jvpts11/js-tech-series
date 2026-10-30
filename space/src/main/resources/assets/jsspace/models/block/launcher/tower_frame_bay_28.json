@@ -2,81 +2,73 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "truss": "jsspace:block/launcher/formed/truss",
-    "particle": "jsspace:block/launcher/formed/truss"
+    "red": "jsspace:block/launcher/formed/red",
+    "shaft_1": "jsspace:block/launcher/formed/shaft_1",
+    "particle": "jsspace:block/launcher/formed/red"
   },
   "elements": [
     {
       "from": [
         0,
-        0,
-        9
+        13.92,
+        10.88
       ],
       "to": [
-        7,
         16,
-        16
+        16,
+        14.08
       ],
       "faces": {
         "north": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "south": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "east": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "west": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "up": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "down": {
-          "texture": "#truss"
+          "texture": "#red"
         }
       }
     },
     {
       "from": [
-        0.5,
-        12.777397260273972,
-        -0.6
+        0,
+        0,
+        0
       ],
       "to": [
-        2.5,
-        15.277397260273972,
-        16.6
+        16,
+        16,
+        0.5
       ],
       "faces": {
-        "north": {
-          "texture": "#truss"
-        },
         "south": {
-          "texture": "#truss"
+          "texture": "#shaft_1",
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ]
         },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
+        "north": {
+          "texture": "#shaft_1",
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ]
         }
-      },
-      "rotation": {
-        "origin": [
-          1.5,
-          14.027397260273972,
-          8
-        ],
-        "axis": "x",
-        "angle": -22.5
       }
     }
   ]

@@ -327,9 +327,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   doors, vents, stencils and lamps between them), the scorched lining, the trim lip, the grating at the opening's foot,
   the clamps' housings with their jaws and chrome cylinders, the masts with their hoods and their blue, orange and white
   lines; so is the crane, its red house with its louvres, the boom's girder, the cable and the yellow hook, the aviation
-  lamps on the house's corners. The tower is one great truss round its dark shaft, a column at each corner, girders
-  across each face every two blocks and a diagonal across it each level, leaning the other way the next, the grated
-  floor every eight blocks; the pedestals, the arms' beams, plugs and walkway take their own shapes. The design screen
+  lamps on the house's corners. The tower is one great truss round its dark shaft, a banded, riveted column at each
+  corner, deep girders across each face every two blocks and a dark red diagonal across it each level, leaning the
+  other way the next, the grated floor every eight blocks; the shaft's wall shows its two rails, the cable tray with
+  its blue, orange and white lines down the middle and a lamp every four blocks; the pedestals, the arms' beams, plugs
+  and walkway take their own shapes. The design screen
   draws the rocket on the launcher's deck, the launcher under it, and says whether the bay has room for one; the
   hologram names the launcher's parts. New blocks: the Launcher Deck, the Exhaust Frame, the Hold-Down Arm, the Tail
   Service Mast, the Tower Frame, the Swing Arm, the Crew Access Arm, the Tower Elevator and the Pad Pedestal.

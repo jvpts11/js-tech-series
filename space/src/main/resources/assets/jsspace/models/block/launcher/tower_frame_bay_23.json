@@ -2,12 +2,45 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "shaft": "jsspace:block/launcher/formed/shaft",
-    "steel": "jsspace:block/launcher/formed/steel",
-    "walkway": "jsspace:block/launcher/formed/walkway",
-    "particle": "jsspace:block/launcher/formed/truss"
+    "floor_edge": "jsspace:block/launcher/formed/floor_edge",
+    "floor_grating": "jsspace:block/launcher/formed/floor_grating",
+    "red": "jsspace:block/launcher/formed/red",
+    "shaft_1": "jsspace:block/launcher/formed/shaft_1",
+    "particle": "jsspace:block/launcher/formed/red"
   },
   "elements": [
+    {
+      "from": [
+        0,
+        13.92,
+        10.88
+      ],
+      "to": [
+        16,
+        16,
+        14.08
+      ],
+      "faces": {
+        "north": {
+          "texture": "#red"
+        },
+        "south": {
+          "texture": "#red"
+        },
+        "east": {
+          "texture": "#red"
+        },
+        "west": {
+          "texture": "#red"
+        },
+        "up": {
+          "texture": "#red"
+        },
+        "down": {
+          "texture": "#red"
+        }
+      }
+    },
     {
       "from": [
         0,
@@ -17,58 +50,58 @@
       "to": [
         16,
         16,
-        1
+        0.5
       ],
       "faces": {
-        "north": {
-          "texture": "#shaft"
-        },
         "south": {
-          "texture": "#shaft"
+          "texture": "#shaft_1",
+          "uv": [
+            0,
+            8,
+            16,
+            12
+          ]
         },
-        "east": {
-          "texture": "#shaft"
-        },
-        "west": {
-          "texture": "#shaft"
-        },
-        "up": {
-          "texture": "#shaft"
-        },
-        "down": {
-          "texture": "#shaft"
+        "north": {
+          "texture": "#shaft_1",
+          "uv": [
+            0,
+            8,
+            16,
+            12
+          ]
         }
       }
     },
     {
       "from": [
         0,
-        0,
-        1
+        14.08,
+        0.5
       ],
       "to": [
         16,
-        1,
-        13
+        16,
+        12.8
       ],
       "faces": {
         "north": {
-          "texture": "#steel"
+          "texture": "#floor_edge"
         },
         "south": {
-          "texture": "#steel"
+          "texture": "#floor_edge"
         },
         "east": {
-          "texture": "#steel"
+          "texture": "#floor_edge"
         },
         "west": {
-          "texture": "#steel"
-        },
-        "up": {
-          "texture": "#walkway"
+          "texture": "#floor_edge"
         },
         "down": {
-          "texture": "#steel"
+          "texture": "#floor_edge"
+        },
+        "up": {
+          "texture": "#floor_grating"
         }
       }
     }

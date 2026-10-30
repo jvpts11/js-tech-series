@@ -1,0 +1,153 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "red": "jsspace:block/launcher/formed/red",
+    "red_dark": "jsspace:block/launcher/formed/red_dark",
+    "shaft_2": "jsspace:block/launcher/formed/shaft_2",
+    "particle": "jsspace:block/launcher/formed/red"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        13.92,
+        10.88
+      ],
+      "to": [
+        16,
+        16,
+        14.08
+      ],
+      "faces": {
+        "north": {
+          "texture": "#red"
+        },
+        "south": {
+          "texture": "#red"
+        },
+        "east": {
+          "texture": "#red"
+        },
+        "west": {
+          "texture": "#red"
+        },
+        "up": {
+          "texture": "#red"
+        },
+        "down": {
+          "texture": "#red"
+        }
+      }
+    },
+    {
+      "from": [
+        -0.6,
+        5.9649,
+        11.44
+      ],
+      "to": [
+        16.6,
+        8.0449,
+        13.52
+      ],
+      "faces": {
+        "north": {
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          7.0049,
+          12.48
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        0.5
+      ],
+      "faces": {
+        "south": {
+          "texture": "#shaft_2",
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ]
+        },
+        "north": {
+          "texture": "#shaft_2",
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -3150,6 +3150,906 @@
       "model": "jsspace:block/tower_frame_drawn",
       "y": 270
     },
+    "bay=40,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=40,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=40,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=40,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_40",
+      "y": 90
+    },
+    "bay=40,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=40,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=40,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=40,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=40,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=40,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_40"
+    },
+    "bay=40,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=40,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=40,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=40,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=40,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=40,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_40",
+      "y": 180
+    },
+    "bay=40,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=40,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=40,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=40,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=40,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=40,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_40",
+      "y": 270
+    },
+    "bay=40,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=40,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=41,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=41,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=41,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=41,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_41",
+      "y": 90
+    },
+    "bay=41,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=41,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=41,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=41,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=41,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=41,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_41"
+    },
+    "bay=41,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=41,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=41,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=41,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=41,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=41,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_41",
+      "y": 180
+    },
+    "bay=41,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=41,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=41,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=41,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=41,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=41,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_41",
+      "y": 270
+    },
+    "bay=41,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=41,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=42,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=42,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=42,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=42,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_42",
+      "y": 90
+    },
+    "bay=42,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=42,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=42,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=42,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=42,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=42,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_42"
+    },
+    "bay=42,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=42,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=42,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=42,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=42,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=42,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_42",
+      "y": 180
+    },
+    "bay=42,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=42,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=42,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=42,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=42,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=42,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_42",
+      "y": 270
+    },
+    "bay=42,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=42,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=43,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=43,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=43,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=43,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_43",
+      "y": 90
+    },
+    "bay=43,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=43,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=43,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=43,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=43,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=43,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_43"
+    },
+    "bay=43,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=43,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=43,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=43,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=43,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=43,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_43",
+      "y": 180
+    },
+    "bay=43,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=43,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=43,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=43,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=43,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=43,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_43",
+      "y": 270
+    },
+    "bay=43,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=43,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=44,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=44,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=44,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=44,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_44",
+      "y": 90
+    },
+    "bay=44,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=44,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=44,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=44,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=44,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=44,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_44"
+    },
+    "bay=44,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=44,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=44,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=44,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=44,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=44,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_44",
+      "y": 180
+    },
+    "bay=44,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=44,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=44,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=44,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=44,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=44,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_44",
+      "y": 270
+    },
+    "bay=44,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=44,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=45,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=45,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=45,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=45,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_45",
+      "y": 90
+    },
+    "bay=45,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=45,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=45,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=45,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=45,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=45,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_45"
+    },
+    "bay=45,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=45,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=45,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=45,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=45,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=45,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_45",
+      "y": 180
+    },
+    "bay=45,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=45,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=45,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=45,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=45,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=45,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_45",
+      "y": 270
+    },
+    "bay=45,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=45,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=46,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=46,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=46,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=46,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_46",
+      "y": 90
+    },
+    "bay=46,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=46,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=46,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=46,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=46,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=46,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_46"
+    },
+    "bay=46,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=46,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=46,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=46,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=46,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=46,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_46",
+      "y": 180
+    },
+    "bay=46,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=46,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=46,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=46,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=46,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=46,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_46",
+      "y": 270
+    },
+    "bay=46,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=46,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=47,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=47,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=47,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=47,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_47",
+      "y": 90
+    },
+    "bay=47,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=47,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=47,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=47,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=47,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=47,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_47"
+    },
+    "bay=47,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=47,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=47,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=47,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=47,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=47,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_47",
+      "y": 180
+    },
+    "bay=47,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=47,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=47,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=47,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=47,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=47,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_47",
+      "y": 270
+    },
+    "bay=47,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=47,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=48,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=48,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=48,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=48,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_48",
+      "y": 90
+    },
+    "bay=48,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=48,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=48,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=48,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=48,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=48,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_48"
+    },
+    "bay=48,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=48,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=48,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=48,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=48,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=48,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_48",
+      "y": 180
+    },
+    "bay=48,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=48,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=48,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=48,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=48,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=48,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_48",
+      "y": 270
+    },
+    "bay=48,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=48,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=49,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=49,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=49,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=49,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_49",
+      "y": 90
+    },
+    "bay=49,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=49,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=49,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=49,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=49,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=49,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_49"
+    },
+    "bay=49,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=49,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=49,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=49,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=49,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=49,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_49",
+      "y": 180
+    },
+    "bay=49,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=49,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=49,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=49,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=49,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=49,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_49",
+      "y": 270
+    },
+    "bay=49,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=49,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
     "bay=5,facing=east,formed=false,role=body": {
       "model": "jsspace:block/tower_frame",
       "y": 90
@@ -3237,6 +4137,906 @@
       "y": 270
     },
     "bay=5,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=50,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=50,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=50,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=50,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_50",
+      "y": 90
+    },
+    "bay=50,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=50,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=50,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=50,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=50,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=50,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_50"
+    },
+    "bay=50,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=50,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=50,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=50,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=50,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=50,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_50",
+      "y": 180
+    },
+    "bay=50,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=50,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=50,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=50,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=50,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=50,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_50",
+      "y": 270
+    },
+    "bay=50,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=50,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=51,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=51,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=51,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=51,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_51",
+      "y": 90
+    },
+    "bay=51,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=51,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=51,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=51,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=51,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=51,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_51"
+    },
+    "bay=51,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=51,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=51,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=51,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=51,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=51,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_51",
+      "y": 180
+    },
+    "bay=51,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=51,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=51,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=51,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=51,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=51,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_51",
+      "y": 270
+    },
+    "bay=51,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=51,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=52,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=52,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=52,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=52,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_52",
+      "y": 90
+    },
+    "bay=52,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=52,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=52,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=52,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=52,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=52,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_52"
+    },
+    "bay=52,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=52,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=52,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=52,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=52,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=52,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_52",
+      "y": 180
+    },
+    "bay=52,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=52,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=52,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=52,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=52,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=52,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_52",
+      "y": 270
+    },
+    "bay=52,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=52,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=53,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=53,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=53,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=53,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_53",
+      "y": 90
+    },
+    "bay=53,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=53,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=53,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=53,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=53,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=53,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_53"
+    },
+    "bay=53,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=53,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=53,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=53,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=53,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=53,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_53",
+      "y": 180
+    },
+    "bay=53,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=53,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=53,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=53,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=53,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=53,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_53",
+      "y": 270
+    },
+    "bay=53,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=53,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=54,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=54,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=54,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=54,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_54",
+      "y": 90
+    },
+    "bay=54,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=54,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=54,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=54,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=54,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=54,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_54"
+    },
+    "bay=54,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=54,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=54,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=54,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=54,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=54,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_54",
+      "y": 180
+    },
+    "bay=54,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=54,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=54,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=54,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=54,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=54,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_54",
+      "y": 270
+    },
+    "bay=54,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=54,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=55,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=55,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=55,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=55,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_55",
+      "y": 90
+    },
+    "bay=55,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=55,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=55,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=55,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=55,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=55,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_55"
+    },
+    "bay=55,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=55,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=55,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=55,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=55,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=55,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_55",
+      "y": 180
+    },
+    "bay=55,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=55,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=55,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=55,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=55,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=55,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_55",
+      "y": 270
+    },
+    "bay=55,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=55,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=56,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=56,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=56,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=56,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_56",
+      "y": 90
+    },
+    "bay=56,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=56,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=56,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=56,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=56,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=56,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_56"
+    },
+    "bay=56,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=56,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=56,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=56,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=56,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=56,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_56",
+      "y": 180
+    },
+    "bay=56,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=56,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=56,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=56,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=56,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=56,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_56",
+      "y": 270
+    },
+    "bay=56,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=56,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=57,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=57,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=57,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=57,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_57",
+      "y": 90
+    },
+    "bay=57,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=57,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=57,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=57,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=57,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=57,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_57"
+    },
+    "bay=57,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=57,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=57,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=57,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=57,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=57,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_57",
+      "y": 180
+    },
+    "bay=57,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=57,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=57,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=57,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=57,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=57,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_57",
+      "y": 270
+    },
+    "bay=57,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=57,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=58,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=58,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=58,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=58,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_58",
+      "y": 90
+    },
+    "bay=58,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=58,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=58,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=58,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=58,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=58,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_58"
+    },
+    "bay=58,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=58,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=58,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=58,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=58,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=58,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_58",
+      "y": 180
+    },
+    "bay=58,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=58,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=58,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=58,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=58,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=58,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_58",
+      "y": 270
+    },
+    "bay=58,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=58,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=59,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=59,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=59,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=59,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_59",
+      "y": 90
+    },
+    "bay=59,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=59,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=59,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=59,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=59,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=59,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_59"
+    },
+    "bay=59,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=59,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=59,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=59,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=59,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=59,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_59",
+      "y": 180
+    },
+    "bay=59,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=59,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=59,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=59,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=59,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=59,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_59",
+      "y": 270
+    },
+    "bay=59,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=59,facing=west,formed=true,role=top": {
       "model": "jsspace:block/tower_frame_drawn",
       "y": 270
     },
@@ -3330,6 +5130,906 @@
       "model": "jsspace:block/tower_frame_drawn",
       "y": 270
     },
+    "bay=60,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=60,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=60,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=60,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_60",
+      "y": 90
+    },
+    "bay=60,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=60,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=60,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=60,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=60,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=60,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_60"
+    },
+    "bay=60,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=60,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=60,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=60,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=60,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=60,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_60",
+      "y": 180
+    },
+    "bay=60,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=60,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=60,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=60,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=60,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=60,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_60",
+      "y": 270
+    },
+    "bay=60,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=60,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=61,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=61,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=61,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=61,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_61",
+      "y": 90
+    },
+    "bay=61,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=61,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=61,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=61,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=61,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=61,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_61"
+    },
+    "bay=61,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=61,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=61,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=61,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=61,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=61,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_61",
+      "y": 180
+    },
+    "bay=61,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=61,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=61,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=61,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=61,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=61,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_61",
+      "y": 270
+    },
+    "bay=61,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=61,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=62,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=62,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=62,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=62,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_62",
+      "y": 90
+    },
+    "bay=62,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=62,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=62,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=62,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=62,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=62,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_62"
+    },
+    "bay=62,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=62,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=62,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=62,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=62,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=62,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_62",
+      "y": 180
+    },
+    "bay=62,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=62,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=62,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=62,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=62,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=62,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_62",
+      "y": 270
+    },
+    "bay=62,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=62,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=63,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=63,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=63,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=63,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_63",
+      "y": 90
+    },
+    "bay=63,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=63,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=63,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=63,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=63,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=63,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_63"
+    },
+    "bay=63,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=63,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=63,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=63,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=63,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=63,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_63",
+      "y": 180
+    },
+    "bay=63,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=63,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=63,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=63,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=63,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=63,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_63",
+      "y": 270
+    },
+    "bay=63,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=63,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=64,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=64,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=64,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=64,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_64",
+      "y": 90
+    },
+    "bay=64,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=64,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=64,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=64,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=64,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=64,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_64"
+    },
+    "bay=64,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=64,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=64,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=64,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=64,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=64,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_64",
+      "y": 180
+    },
+    "bay=64,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=64,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=64,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=64,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=64,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=64,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_64",
+      "y": 270
+    },
+    "bay=64,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=64,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=65,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=65,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=65,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=65,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_65",
+      "y": 90
+    },
+    "bay=65,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=65,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=65,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=65,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=65,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=65,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_65"
+    },
+    "bay=65,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=65,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=65,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=65,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=65,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=65,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_65",
+      "y": 180
+    },
+    "bay=65,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=65,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=65,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=65,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=65,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=65,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_65",
+      "y": 270
+    },
+    "bay=65,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=65,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=66,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=66,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=66,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=66,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_66",
+      "y": 90
+    },
+    "bay=66,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=66,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=66,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=66,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=66,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=66,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_66"
+    },
+    "bay=66,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=66,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=66,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=66,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=66,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=66,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_66",
+      "y": 180
+    },
+    "bay=66,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=66,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=66,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=66,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=66,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=66,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_66",
+      "y": 270
+    },
+    "bay=66,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=66,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=67,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=67,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=67,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=67,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_67",
+      "y": 90
+    },
+    "bay=67,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=67,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=67,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=67,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=67,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=67,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_67"
+    },
+    "bay=67,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=67,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=67,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=67,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=67,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=67,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_67",
+      "y": 180
+    },
+    "bay=67,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=67,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=67,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=67,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=67,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=67,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_67",
+      "y": 270
+    },
+    "bay=67,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=67,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=68,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=68,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=68,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=68,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_68",
+      "y": 90
+    },
+    "bay=68,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=68,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=68,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=68,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=68,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=68,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_68"
+    },
+    "bay=68,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=68,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=68,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=68,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=68,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=68,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_68",
+      "y": 180
+    },
+    "bay=68,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=68,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=68,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=68,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=68,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=68,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_68",
+      "y": 270
+    },
+    "bay=68,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=68,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=69,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=69,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=69,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=69,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_69",
+      "y": 90
+    },
+    "bay=69,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=69,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=69,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=69,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=69,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=69,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_69"
+    },
+    "bay=69,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=69,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=69,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=69,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=69,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=69,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_69",
+      "y": 180
+    },
+    "bay=69,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=69,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=69,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=69,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=69,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=69,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_69",
+      "y": 270
+    },
+    "bay=69,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=69,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
     "bay=7,facing=east,formed=false,role=body": {
       "model": "jsspace:block/tower_frame",
       "y": 90
@@ -3417,6 +6117,906 @@
       "y": 270
     },
     "bay=7,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=70,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=70,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=70,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=70,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_70",
+      "y": 90
+    },
+    "bay=70,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=70,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=70,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=70,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=70,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=70,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_70"
+    },
+    "bay=70,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=70,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=70,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=70,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=70,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=70,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_70",
+      "y": 180
+    },
+    "bay=70,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=70,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=70,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=70,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=70,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=70,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_70",
+      "y": 270
+    },
+    "bay=70,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=70,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=71,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=71,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=71,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=71,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_71",
+      "y": 90
+    },
+    "bay=71,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=71,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=71,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=71,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=71,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=71,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_71"
+    },
+    "bay=71,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=71,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=71,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=71,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=71,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=71,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_71",
+      "y": 180
+    },
+    "bay=71,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=71,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=71,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=71,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=71,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=71,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_71",
+      "y": 270
+    },
+    "bay=71,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=71,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=72,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=72,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=72,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=72,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_72",
+      "y": 90
+    },
+    "bay=72,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=72,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=72,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=72,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=72,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=72,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_72"
+    },
+    "bay=72,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=72,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=72,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=72,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=72,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=72,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_72",
+      "y": 180
+    },
+    "bay=72,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=72,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=72,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=72,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=72,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=72,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_72",
+      "y": 270
+    },
+    "bay=72,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=72,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=73,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=73,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=73,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=73,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_73",
+      "y": 90
+    },
+    "bay=73,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=73,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=73,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=73,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=73,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=73,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_73"
+    },
+    "bay=73,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=73,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=73,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=73,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=73,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=73,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_73",
+      "y": 180
+    },
+    "bay=73,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=73,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=73,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=73,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=73,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=73,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_73",
+      "y": 270
+    },
+    "bay=73,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=73,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=74,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=74,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=74,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=74,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_74",
+      "y": 90
+    },
+    "bay=74,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=74,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=74,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=74,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=74,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=74,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_74"
+    },
+    "bay=74,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=74,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=74,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=74,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=74,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=74,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_74",
+      "y": 180
+    },
+    "bay=74,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=74,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=74,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=74,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=74,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=74,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_74",
+      "y": 270
+    },
+    "bay=74,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=74,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=75,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=75,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=75,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=75,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_75",
+      "y": 90
+    },
+    "bay=75,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=75,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=75,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=75,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=75,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=75,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_75"
+    },
+    "bay=75,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=75,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=75,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=75,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=75,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=75,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_75",
+      "y": 180
+    },
+    "bay=75,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=75,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=75,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=75,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=75,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=75,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_75",
+      "y": 270
+    },
+    "bay=75,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=75,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=76,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=76,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=76,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=76,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_76",
+      "y": 90
+    },
+    "bay=76,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=76,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=76,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=76,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=76,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=76,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_76"
+    },
+    "bay=76,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=76,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=76,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=76,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=76,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=76,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_76",
+      "y": 180
+    },
+    "bay=76,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=76,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=76,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=76,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=76,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=76,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_76",
+      "y": 270
+    },
+    "bay=76,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=76,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=77,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=77,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=77,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=77,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_77",
+      "y": 90
+    },
+    "bay=77,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=77,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=77,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=77,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=77,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=77,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_77"
+    },
+    "bay=77,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=77,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=77,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=77,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=77,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=77,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_77",
+      "y": 180
+    },
+    "bay=77,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=77,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=77,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=77,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=77,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=77,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_77",
+      "y": 270
+    },
+    "bay=77,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=77,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=78,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=78,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=78,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=78,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_78",
+      "y": 90
+    },
+    "bay=78,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=78,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=78,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=78,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=78,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=78,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_78"
+    },
+    "bay=78,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=78,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=78,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=78,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=78,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=78,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_78",
+      "y": 180
+    },
+    "bay=78,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=78,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=78,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=78,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=78,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=78,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_78",
+      "y": 270
+    },
+    "bay=78,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=78,facing=west,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=79,facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=79,facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=79,facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 90
+    },
+    "bay=79,facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_79",
+      "y": 90
+    },
+    "bay=79,facing=east,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=79,facing=east,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 90
+    },
+    "bay=79,facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=79,facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=79,facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame"
+    },
+    "bay=79,facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_79"
+    },
+    "bay=79,facing=north,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=79,facing=north,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn"
+    },
+    "bay=79,facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=79,facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=79,facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 180
+    },
+    "bay=79,facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_79",
+      "y": 180
+    },
+    "bay=79,facing=south,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=79,facing=south,formed=true,role=top": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 180
+    },
+    "bay=79,facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=79,facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=79,facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tower_frame",
+      "y": 270
+    },
+    "bay=79,facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tower_frame_bay_79",
+      "y": 270
+    },
+    "bay=79,facing=west,formed=true,role=end": {
+      "model": "jsspace:block/tower_frame_drawn",
+      "y": 270
+    },
+    "bay=79,facing=west,formed=true,role=top": {
       "model": "jsspace:block/tower_frame_drawn",
       "y": 270
     },

@@ -2,72 +2,119 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "truss": "jsspace:block/launcher/formed/truss",
-    "particle": "jsspace:block/launcher/formed/truss"
+    "red": "jsspace:block/launcher/formed/red",
+    "red_dark": "jsspace:block/launcher/formed/red_dark",
+    "shaft_1": "jsspace:block/launcher/formed/shaft_1",
+    "particle": "jsspace:block/launcher/formed/red"
   },
   "elements": [
     {
       "from": [
         0,
         0,
-        9
+        10.88
       ],
       "to": [
-        7,
         16,
-        16
+        2.08,
+        14.08
       ],
       "faces": {
         "north": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "south": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "east": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "west": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "up": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "down": {
-          "texture": "#truss"
+          "texture": "#red"
         }
       }
     },
     {
       "from": [
-        7,
-        0,
-        13
+        -0.6,
+        14.9512,
+        11.44
       ],
       "to": [
-        16,
-        2,
-        16
+        16.6,
+        17.0312,
+        13.52
       ],
       "faces": {
         "north": {
-          "texture": "#truss"
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "south": {
-          "texture": "#truss"
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "east": {
-          "texture": "#truss"
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "west": {
-          "texture": "#truss"
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "up": {
-          "texture": "#truss"
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "down": {
-          "texture": "#truss"
+          "texture": "#red_dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          15.9912,
+          12.48
+        ],
+        "axis": "z",
+        "angle": -22.5
       }
     },
     {
@@ -77,28 +124,28 @@
         0
       ],
       "to": [
-        3,
-        2,
-        9
+        16,
+        16,
+        0.5
       ],
       "faces": {
-        "north": {
-          "texture": "#truss"
-        },
         "south": {
-          "texture": "#truss"
+          "texture": "#shaft_1",
+          "uv": [
+            0,
+            4,
+            16,
+            8
+          ]
         },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
+        "north": {
+          "texture": "#shaft_1",
+          "uv": [
+            0,
+            4,
+            16,
+            8
+          ]
         }
       }
     }

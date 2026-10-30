@@ -40,10 +40,11 @@ public final class TowerFrameBlock extends LauncherPieceBlock implements EntityB
 
     /**
      * Where a formed frame stands in its truss: its place along its face (the three between the corners, then a
-     * corner, which leans its other face's diagonal either way), whether it is the upper block of its level, which
-     * way its diagonal leans, and whether the grated floor is at its foot.
+     * corner, which leans its other face's diagonal either way), whether its level is an odd one from the tower's
+     * foot, whether it is the upper block of its level, which way its diagonal leans, and whether the grated floor
+     * crosses it.
      */
-    public static final IntegerProperty BAY = IntegerProperty.create("bay", 0, 39);
+    public static final IntegerProperty BAY = IntegerProperty.create("bay", 0, 79);
     /** The bay of the boom's tip, which draws the crane. */
     public static final int TIP = 1;
     /* The tower's width between the outsides of its walls, so a wall finds the one across the shaft. */
@@ -61,12 +62,14 @@ public final class TowerFrameBlock extends LauncherPieceBlock implements EntityB
 
     /**
      * The bay of a frame: {@code slot} its place, 0 to 2 the three along its face between the corners, 3 a corner
-     * whose other face's diagonal leans as it would and 4 one whose leans back; {@code upper} whether it is the upper
-     * block of its level; {@code lean} whether its face's diagonal leans back; {@code floor} whether the grated floor
-     * is at its foot.
+     * whose other face's diagonal leans as it would and 4 one whose leans back; {@code odd} whether its level is an
+     * odd one from the tower's foot, so with {@code upper} which of four blocks it is, the shaft's lamps every fourth;
+     * {@code upper} whether it is the upper block of its level; {@code lean} whether its face's diagonal leans back;
+     * {@code floor} whether the grated floor crosses it, at the foot of a lower block or the head of an upper one.
      */
-    public static int bay(final int slot, final boolean upper, final boolean lean, final boolean floor) {
-        return slot * 8 + (upper ? 4 : 0) + (lean ? 2 : 0) + (floor ? 1 : 0);
+    public static int bay(final int slot, final boolean odd, final boolean upper, final boolean lean,
+                          final boolean floor) {
+        return slot * 16 + (odd ? 8 : 0) + (upper ? 4 : 0) + (lean ? 2 : 0) + (floor ? 1 : 0);
     }
 
     /** Whether {@code state} is a formed boom's tip, which draws the crane. */
@@ -162,9 +165,12 @@ public final class TowerFrameBlock extends LauncherPieceBlock implements EntityB
         }
         final int high = pos.getY() - base;
         final boolean odd = high / LEVEL % 2 == 1;
+        final boolean upper = high % LEVEL == 1;
         final boolean lean = odd ^ leansBack(facing);
         final int slot = corner ? FACES + (odd ^ leansBack(facing.getClockWise()) ? 1 : 0) : place - 1;
-        return body.setValue(FACING, facing).setValue(BAY, bay(slot, high % LEVEL == 1, lean, high % FLOORS == 0));
+        // The floor lies on a level's line every eight blocks, a little of it in the block under the line.
+        final boolean floor = upper ? high % FLOORS == FLOORS - 1 : high % FLOORS == 0;
+        return body.setValue(FACING, facing).setValue(BAY, bay(slot, odd, upper, lean, floor));
     }
 
     /*

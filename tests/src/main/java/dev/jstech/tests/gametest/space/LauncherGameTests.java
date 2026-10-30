@@ -61,7 +61,7 @@ public final class LauncherGameTests {
     private static final int SMALL_HIGH = 8;
     private static final int SMALL_TOP = 13;
     /* The first bay of a corner of the tower, as TowerFrameBlock numbers them. */
-    private static final int CORNER_SLOT = 24;
+    private static final int CORNER_SLOT = 48;
     /* How far the test rocket's foot, an engine three blocks across, reaches each side of its axis. */
     private static final int FOOT = 1;
 

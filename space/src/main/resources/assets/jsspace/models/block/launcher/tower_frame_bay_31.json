@@ -2,124 +2,43 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "steel": "jsspace:block/launcher/formed/steel",
-    "truss": "jsspace:block/launcher/formed/truss",
-    "walkway": "jsspace:block/launcher/formed/walkway",
-    "particle": "jsspace:block/launcher/formed/truss"
+    "floor_edge": "jsspace:block/launcher/formed/floor_edge",
+    "floor_grating": "jsspace:block/launcher/formed/floor_grating",
+    "red": "jsspace:block/launcher/formed/red",
+    "shaft_1": "jsspace:block/launcher/formed/shaft_1",
+    "particle": "jsspace:block/launcher/formed/red"
   },
   "elements": [
     {
       "from": [
         0,
-        0,
-        9
+        13.92,
+        10.88
       ],
       "to": [
-        7,
         16,
-        16
+        16,
+        14.08
       ],
       "faces": {
         "north": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "south": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "east": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "west": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "up": {
-          "texture": "#truss"
+          "texture": "#red"
         },
         "down": {
-          "texture": "#truss"
+          "texture": "#red"
         }
-      }
-    },
-    {
-      "from": [
-        -0.6,
-        12.777397260273972,
-        13.5
-      ],
-      "to": [
-        16.6,
-        15.277397260273972,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          14.027397260273972,
-          14.5
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "from": [
-        0.5,
-        12.777397260273972,
-        -0.6
-      ],
-      "to": [
-        2.5,
-        15.277397260273972,
-        16.6
-      ],
-      "faces": {
-        "north": {
-          "texture": "#truss"
-        },
-        "south": {
-          "texture": "#truss"
-        },
-        "east": {
-          "texture": "#truss"
-        },
-        "west": {
-          "texture": "#truss"
-        },
-        "up": {
-          "texture": "#truss"
-        },
-        "down": {
-          "texture": "#truss"
-        }
-      },
-      "rotation": {
-        "origin": [
-          1.5,
-          14.027397260273972,
-          8
-        ],
-        "axis": "x",
-        "angle": -22.5
       }
     },
     {
@@ -130,27 +49,59 @@
       ],
       "to": [
         16,
-        1,
-        16
+        16,
+        0.5
+      ],
+      "faces": {
+        "south": {
+          "texture": "#shaft_1",
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ]
+        },
+        "north": {
+          "texture": "#shaft_1",
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        14.08,
+        0.5
+      ],
+      "to": [
+        16,
+        16,
+        12.8
       ],
       "faces": {
         "north": {
-          "texture": "#steel"
+          "texture": "#floor_edge"
         },
         "south": {
-          "texture": "#steel"
+          "texture": "#floor_edge"
         },
         "east": {
-          "texture": "#steel"
+          "texture": "#floor_edge"
         },
         "west": {
-          "texture": "#steel"
-        },
-        "up": {
-          "texture": "#walkway"
+          "texture": "#floor_edge"
         },
         "down": {
-          "texture": "#steel"
+          "texture": "#floor_edge"
+        },
+        "up": {
+          "texture": "#floor_grating"
         }
       }
     }
