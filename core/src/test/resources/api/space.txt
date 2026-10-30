@@ -97,6 +97,13 @@ stable 0
 12 dev.jstech.space.api.ShipClass  SMALL
 12 dev.jstech.space.api.ShipClass  String serializedName()
 12 dev.jstech.space.api.ShipClass  int room()
+14 dev.jstech.space.api.ShipFinish  type record(String name)
+14 dev.jstech.space.api.ShipFinish  static final Codec<ShipFinish> CODEC
+14 dev.jstech.space.api.ShipFinishes  type final class
+14 dev.jstech.space.api.ShipFinishes  static Map<ResourceLocation, ShipFinish> all(Level)
+14 dev.jstech.space.api.ShipFinishes  static Map<ResourceLocation, ShipFinish> declared()
+14 dev.jstech.space.api.ShipFinishes  static Optional<ShipFinish> get(Level, ResourceLocation)
+14 dev.jstech.space.api.ShipFinishes  static ShipFinish declare(ResourceLocation, ShipFinish)
 13 dev.jstech.space.api.ShipKit  type record(List<Piece> pieces, Map<String, ResourceLocation> key)
 13 dev.jstech.space.api.ShipKit  static final Codec<ShipKit> CODEC
 13 dev.jstech.space.api.ShipKit.Anchor  type enum implements IStableName

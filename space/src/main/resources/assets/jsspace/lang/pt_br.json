@@ -751,5 +751,8 @@
   "block.jsspace.cargo_rack": "Prateleira de Carga",
   "block.jsspace.tie_down_deck": "Piso de Amarração",
   "block.jsspace.ramp_hinge": "Dobradiça da Rampa",
-  "block.jsspace.ramp_plate": "Chapa da Rampa"
+  "block.jsspace.ramp_plate": "Chapa da Rampa",
+  "jsspace.ship_finish.orbiter": "Orbitador",
+  "jsspace.ship_finish.bare_metal": "Metal Nu",
+  "jsspace.ship_finish.enamel": "Esmalte"
 }

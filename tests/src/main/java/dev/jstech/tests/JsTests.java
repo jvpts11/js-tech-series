@@ -150,6 +150,7 @@ public final class JsTests {
         // A press, a crate, a walker and a helmet drawn with the Core's models, from files of four formats.
         TestModels.declare();
         TestRockets.declare();
+        TestShips.declare();
         // Blocks a resource pack in the test mod draws with connected textures, in both formats packs write.
         TestConnected.declare();
         // An alarm lamp, a powered lamp, a floodlight, a beam and a lamp that breaks, to prove the lighting kit.

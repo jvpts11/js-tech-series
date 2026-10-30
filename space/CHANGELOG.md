@@ -57,6 +57,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   section, the joint behind the cockpit, the wings' root or the spine's end), its layers drawn in letters with the
   block each letter stands for, and mirrored to the ship's other side when it is a pair; registered in `ShipKits` by
   the part's id, which takes a data pack's files, `data/<namespace>/jsspace/ship_kits/`. Experimental.
+- Starship finishes: J's Space's API is at version 14. `ShipFinish` is a finish a starship is painted in,
+  chosen apart from its parts, a part's model in it painted by the finish's own texture of that model; registered in
+  `ShipFinishes` by id, which takes a data pack's files, `data/<namespace>/jsspace/ship_finishes/`. Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -512,6 +515,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   engines' 5, the wings' and fins' 5, the thrusters' and landing gear's 6, and the modules' 9. Every part of the
   catalogue is built of its kit: the sections of the spine as rings of the hull four blocks wide and three high, the
   other parts set from their places on the ship, wings, nacelles, intakes and gear on both sides.
+- The starship parts' formed models, as the approved catalogue drew them, the joints drawn on the hull where a
+  section meets the next: the cockpits with their windows, the airlock's door, the docking collar, the holds' doors and
+  the ramp lowered at the tail, the reactors' radiators, the tail engines' bells, the nacelles with their swivelling
+  nozzles and magnetic nozzles, the wings, fins, thrusters and gear. Each in three finishes chosen apart from the
+  parts: the Orbiter's white blankets over black heat tiles with the red band, Bare Metal's patched plates with the
+  crimson band and hazard stripes, and Enamel's crimson over cream with a gold line. The gear reaches down two blocks
+  to the ground, the kits' gear and thrusters set where the models draw them.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

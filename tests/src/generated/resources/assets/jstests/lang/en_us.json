@@ -109,6 +109,7 @@
   "block.jstests.test_seat": "Test seat",
   "block.jstests.test_shaft": "Test shaft",
   "block.jstests.test_shear_pin": "Test shear pin",
+  "block.jstests.test_ship_display": "Test ship display",
   "block.jstests.test_signal_valve": "Test signal valve",
   "block.jstests.test_small_gear": "Test small gear",
   "block.jstests.test_small_pulley": "Test small pulley",

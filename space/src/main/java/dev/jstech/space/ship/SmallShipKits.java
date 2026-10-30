@@ -99,11 +99,11 @@ public final class SmallShipKits {
         final Map<String, ResourceLocation> air = keys(entry("L", ShipKitBlocks.INTAKE_LIP),
                 entry("F", ShipKitBlocks.INTAKE_FAN), entry("C", ShipKitBlocks.COMPRESSOR_STAGE),
                 entry("S", ShipKitBlocks.SWIVEL_DUCT), entry("V", ShipKitBlocks.NOZZLE_VANE),
-                entry("E", ShipKitBlocks.CARBON_EDGE), entry("P", ShipKitBlocks.LIVERY_PLATING));
+                entry("P", ShipKitBlocks.LIVERY_PLATING));
         hung("nacelle_intake", air, piece(ShipKit.Anchor.WING_ROOT, 3, 0, -1, true,
                 List.of("LL", "SS", "SS", "VV"), List.of("LL", "FF", "CC", "CC")));
         hung("side_intakes", air, piece(ShipKit.Anchor.COCKPIT_JOINT, -3, 0, -2, true,
-                List.of("E", "S", "S", "V"), List.of("L", "F", "C", "P")));
+                List.of(" ", "S", "S", "V"), List.of("L", "F", "C", "P")));
         final Map<String, ResourceLocation> wing = keys(entry("E", ShipKitBlocks.CARBON_EDGE),
                 entry("P", ShipKitBlocks.WING_SPAR), entry("K", ShipKitBlocks.WING_SKIN),
                 entry("A", ShipKitBlocks.FLAP_ACTUATOR), entry("T", ShipKitBlocks.WING_TIP_LIGHT),
@@ -111,25 +111,25 @@ public final class SmallShipKits {
         hung("blended_delta", wing, piece(ShipKit.Anchor.WING_ROOT, 2, 0, -1, true, List.of("E    ", "P    ",
                 "PE   ", "PKE  ", "PKK  ", "PKKE ", "PKKKE", "PKAAA", "AA   ")));
         hung("stub_wings", wing, piece(ShipKit.Anchor.WING_ROOT, 2, 1, 0, true,
-                List.of("E    ", "P  EE", "P  KT", "P  AA", "A    ")));
+                List.of("E    ", "P  E ", "P  KE", "P  AT", "A    ")));
         hung("swept_wings", wing, piece(ShipKit.Anchor.WING_ROOT, 2, 1, 1, true,
                 List.of("EE   ", "PKE T", "PKKET", "AAA T")));
-        hung("twin_canted_fins", wing, piece(ShipKit.Anchor.SPINE_END, -2, 3, -2, true,
+        hung("twin_canted_fins", wing, piece(ShipKit.Anchor.SPINE_END, -2, 3, -3, true,
                 List.of("E", "S", "S", "S"), List.of(" ", "E", "S", "S")));
         hung("single_fin", wing, piece(ShipKit.Anchor.SPINE_END, -1, 3, -4, false,
-                List.of("EE", "SS", "SS", "SS", "SS"), List.of("  ", "EE", "SS", "SS", "SS"),
+                List.of("EE", "SS", "SS", "SS", "  "), List.of("  ", "EE", "SS", "SS", "  "),
                 List.of("  ", "  ", "EE", "SS", "SS")));
         final Map<String, ResourceLocation> thrusters = keys(entry("R", ShipKitBlocks.THRUSTER_BLOCK),
                 entry("V", ShipKitBlocks.VALVE_PACK));
         hung("blisters", thrusters, piece(ShipKit.Anchor.COCKPIT_JOINT, -3, 2, -1, true, List.of("V", "R")),
                 piece(ShipKit.Anchor.SPINE_END, -3, 2, -2, true, List.of("R", "V")));
-        hung("quads", thrusters, piece(ShipKit.Anchor.COCKPIT_JOINT, -3, 2, 0, true, List.of("R"), List.of("V")),
-                piece(ShipKit.Anchor.SPINE_END, -3, 2, -1, true, List.of("R"), List.of("V")));
+        hung("quads", thrusters, piece(ShipKit.Anchor.COCKPIT_JOINT, -3, 2, -1, true, List.of("R")),
+                piece(ShipKit.Anchor.SPINE_END, -3, 2, -1, true, List.of("R")));
         final Map<String, ResourceLocation> gear = keys(entry("G", ShipKitBlocks.GEAR_BAY_DOOR),
                 entry("S", ShipKitBlocks.LANDING_STRUT), entry("W", ShipKitBlocks.WHEEL),
                 entry("F", ShipKitBlocks.LANDING_FOOT));
-        hung("wheels", gear, piece(ShipKit.Anchor.COCKPIT_JOINT, -1, -1, -4, false, List.of("GG", "SW")),
-                piece(ShipKit.Anchor.WING_ROOT, -2, -1, 1, true, List.of("G", "S", "W")));
+        hung("wheels", gear, piece(ShipKit.Anchor.COCKPIT_JOINT, -1, -2, -3, false, List.of("WW"), List.of("GS")),
+                piece(ShipKit.Anchor.WING_ROOT, -2, -2, 2, true, List.of("W"), List.of("S")));
         hung("legs", gear, piece(ShipKit.Anchor.COCKPIT_JOINT, -1, -2, -3, false, List.of("FF"), List.of("SS")),
                 piece(ShipKit.Anchor.SPINE_END, -2, -2, -2, true, List.of("F"), List.of("S")));
     }

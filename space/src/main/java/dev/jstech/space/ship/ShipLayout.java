@@ -27,16 +27,13 @@ public final class ShipLayout {
 
     /** The blocks of a ship of the spine {@code spine} and the parts {@code hung}, each hung part its pieces. */
     public static Laid lay(final List<Section> spine, final List<List<ShipKit.Piece>> hung) {
-        final int[] fronts = new int[spine.size() + 1];
-        for (int k = 0; k < spine.size(); k++) {
-            fronts[k + 1] = fronts[k] + spine.get(k).length();
-        }
+        final int[] fronts = fronts(spine.stream().map(Section::length).toList());
         final Map<Cell, Spot> cells = new LinkedHashMap<>();
         final Set<Cell> clashes = new HashSet<>();
         int part = 0;
         for (int k = 0; k < spine.size(); k++) {
             for (final ShipKit.Piece piece : spine.get(k).pieces()) {
-                set(piece, anchor(piece.anchor(), fronts, fronts[k]), part, cells, clashes);
+                set(piece, anchor(piece.anchor(), fronts, k), part, cells, clashes);
             }
             part++;
         }
@@ -49,11 +46,23 @@ public final class ShipLayout {
         return new Laid(cells, clashes, fronts[spine.size()]);
     }
 
-    /* Where along the spine the anchor {@code anchor} stands; a section's own front is {@code own}. */
-    private static int anchor(final ShipKit.Anchor anchor, final int[] fronts, final int own) {
+    /** Where each section of a spine of {@code lengths} begins from the nose, and last where the spine ends. */
+    public static int[] fronts(final List<Integer> lengths) {
+        final int[] fronts = new int[lengths.size() + 1];
+        for (int k = 0; k < lengths.size(); k++) {
+            fronts[k + 1] = fronts[k] + lengths.get(k);
+        }
+        return fronts;
+    }
+
+    /**
+     * Where along a spine whose sections begin at {@code fronts} the anchor {@code anchor} stands; a section's own
+     * front is that of its section {@code section}, the nose for a part hung on the spine.
+     */
+    public static int anchor(final ShipKit.Anchor anchor, final int[] fronts, final int section) {
         final int sections = fronts.length - 1;
         return switch (anchor) {
-            case SECTION -> own;
+            case SECTION -> fronts[Math.min(section, sections)];
             case COCKPIT_JOINT -> fronts[Math.min(1, sections)];
             case WING_ROOT -> fronts[sections > 2 ? 2 : Math.min(1, sections)];
             case SPINE_END -> fronts[sections];
