@@ -71,7 +71,8 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
         }
         final DimensionRules rules = DimensionRulesData.of(level);
         if (rules.gravity() <= 0) {
-            // Passed into space, where nothing pulls it: the climb is over.
+            // Passed into space, where nothing pulls it: the climb is over, and what it burnt is gone from its tanks.
+            RocketBurns.climbed(level, context.structure(), this.burn, this.mass);
             return new Step(now, null);
         }
         final List<StageMath.Burn> burns = burns(level, context.structure());

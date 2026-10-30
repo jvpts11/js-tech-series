@@ -31,6 +31,8 @@ import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.config.SpaceServerConfig;
+import dev.jstech.space.cruise.CruiseEvents;
+import dev.jstech.space.cruise.CruiseFlight;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.orbit.Rocketry;
@@ -96,6 +98,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<TransferChoice> choice;
     private final ValueField<PlannedTransfer> executed;
     private final ValueField<Map<Integer, Integer>> lost;
+    private final BoolField cruising;
     private int wait;
     /* Ticks till its rocket's lost blocks are counted again, and the plan they are counted by, for its design. */
     private int countWait;
@@ -183,6 +186,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         // How many blocks each part of its rocket has lost in flight, by the part's place in the stack.
         this.lost = fields().value("Lost", Codec.unboundedMap(SECTION, Codec.INT), Map.<Integer, Integer>of()).save()
                 .toClient();
+        // Whether its rocket is on its cruise to the world its plan goes to.
+        this.cruising = fields().flag("Cruising", false).save().toClient();
     }
 
     /**
@@ -204,6 +209,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         if (this.countWait <= 0 && MovingStructures.at(server, this.worldPosition) instanceof MovingStructure carried) {
             this.countWait = SECOND;
             countLost(server, carried);
+            followTanks(server, carried);
+            CruiseEvents.leak(server, formedPlaces(server));
+            CruiseFlight.second(server, carried, this);
         }
         if (this.liftOff.get() == NOT_LIFTED) {
             return;
@@ -431,6 +439,52 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return false;
     }
 
+    /** Sets {@code plan} for its rocket to fly: it sets out once its window comes, in a world's orbit. */
+    public void execute(final PlannedTransfer plan) {
+        this.executed.set(plan);
+        setChanged();
+    }
+
+    /** Whether its rocket is on its cruise to the world its plan goes to. */
+    public boolean cruising() {
+        return this.cruising.get();
+    }
+
+    /** Its rocket set out on its cruise, or no longer cruises. */
+    public void cruising(final boolean now) {
+        this.cruising.set(now);
+        setChanged();
+    }
+
+    /** Its rocket arrived in the orbit its plan went to: the plan is flown. */
+    public void arrived() {
+        this.cruising.set(false);
+        this.executed.set(null);
+        setChanged();
+    }
+
+    /**
+     * Where the merged blocks of its rocket's formed parts stand now, in its yard, those of its stages let go aside;
+     * none before it keeps a rocket's plan.
+     */
+    public List<BlockPos> formedPlaces(final ServerLevel server) {
+        final List<BlockPos> out = new ArrayList<>();
+        final Optional<BlockPos> stands = foot();
+        if (stands.isEmpty() || plan(server) == null) {
+            return out;
+        }
+        final Set<Integer> gone = separatedSections(server);
+        final BlockPos base = this.worldPosition.offset(stands.get());
+        for (final PlanSpot spot : this.counted.spots()) {
+            final BlockPos at = base.offset(spot.at());
+            if (spot.place().isPresent() && !gone.contains(spot.part())
+                    && server.getBlockState(at).getBlock() instanceof FormedPartBlock) {
+                out.add(at);
+            }
+        }
+        return out;
+    }
+
     /** How many blocks its rocket's part at {@code section} has lost, counted in flight. */
     public int lost(final int section) {
         final Map<Integer, Integer> kept = this.lost.get();
@@ -493,8 +547,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                 case ASSIST -> this.choice.set(now.assisted(!now.assist()));
                 case AEROBRAKE -> this.choice.set(now.aerobraking(!now.aero()));
                 // Set to fly; with the server's fast travel, it skips its cruise.
-                case EXECUTE -> this.executed.set(planned().map(plan -> SpaceServerConfig.fastTravel()
-                        ? plan.atOnce() : plan).orElse(null));
+                case EXECUTE -> planned().ifPresent(plan -> execute(SpaceServerConfig.fastTravel() ? plan.atOnce()
+                        : plan));
                 default -> {
                     // A key the transfer page does not use.
                 }
@@ -608,21 +662,11 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
      * rocket's record when it changes, holed tanks leaking and holed engines giving no thrust till they are mended.
      */
     private void countLost(final ServerLevel server, final MovingStructure body) {
-        final Optional<RocketDesign> design = rocket();
         final Optional<BlockPos> stands = foot();
-        if (design.isEmpty() || stands.isEmpty()) {
+        if (stands.isEmpty() || plan(server) == null) {
             return;
         }
-        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(server);
-        final RocketStack stack = design.get().stack();
-        if (this.counted == null || !design.get().equals(this.countedFor)) {
-            this.counted = RocketPlans.of(server, stack);
-            this.countedFor = design.get();
-        }
-        final Set<Integer> gone = new HashSet<>();
-        for (int stage = 1; stage <= separated(); stage++) {
-            gone.addAll(RocketStages.stage(parts, stack, stage));
-        }
+        final Set<Integer> gone = separatedSections(server);
         final BlockPos base = this.worldPosition.offset(stands.get());
         final Map<Integer, Integer> now = new TreeMap<>();
         for (final PlanSpot spot : this.counted.spots()) {
@@ -641,6 +685,42 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             Rockets.lost(server.getServer(), body.id(), counted);
             setChanged();
         }
+    }
+
+    /* The plan its rocket was built by, made once for its design; none before it keeps a rocket's plan. */
+    private @Nullable BuildPlan plan(final ServerLevel server) {
+        final Optional<RocketDesign> design = rocket();
+        if (design.isEmpty()) {
+            return null;
+        }
+        if (this.counted == null || !design.get().equals(this.countedFor)) {
+            this.counted = RocketPlans.of(server, design.get().stack());
+            this.countedFor = design.get();
+        }
+        return this.counted;
+    }
+
+    /* The places in its rocket's stack of the parts its stages let go carried away. */
+    private Set<Integer> separatedSections(final ServerLevel server) {
+        final Set<Integer> gone = new HashSet<>();
+        final Optional<RocketDesign> design = rocket();
+        if (design.isPresent()) {
+            final Map<ResourceLocation, RocketPart> parts = RocketParts.all(server);
+            for (int stage = 1; stage <= separated(); stage++) {
+                gone.addAll(RocketStages.stage(parts, design.get().stack(), stage));
+            }
+        }
+        return gone;
+    }
+
+    /* Keeps what its rocket's tanks hold in flight as its record reckons it, for its pages to read. */
+    private void followTanks(final ServerLevel server, final MovingStructure body) {
+        Rockets.settle(server.getServer(), body.id()).ifPresent(record -> {
+            if (!record.tanks().equals(tanks())) {
+                this.tanks.set(record.tanks());
+                setChanged();
+            }
+        });
     }
 
     /* Shows its players the platforms its stages are set to: each one's number, width, distance and whether free. */

@@ -272,6 +272,33 @@ public final class FormedDamage {
     }
 
     /**
+     * Takes away the strikes of the stamp {@code stamp} that reached the merged block at {@code pos}, from every block
+     * of its model, as a patch put on a small hole mends it; lost blocks are mended only by being put back. On the
+     * server.
+     *
+     * @return how many strikes it took away
+     */
+    public static int erase(final Level level, final BlockPos pos, final ResourceLocation stamp) {
+        final Struck struck = struck(level, pos);
+        if (struck == null || !(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part)) {
+            return 0;
+        }
+        final Set<DamageMark> taken = new LinkedHashSet<>();
+        for (final CellMark kept : part.damage()) {
+            if (kept.model().equals(struck.place().model()) && kept.mark().stamp().equals(stamp)
+                    && kept.mark().lost().isEmpty()) {
+                taken.add(kept.mark());
+            }
+        }
+        for (final long key : struck.shape().cells().keySet()) {
+            if (level.getBlockEntity(blockOf(pos, struck.place(), key)) instanceof FormedPartBlockEntity reached) {
+                taken.forEach(reached::forget);
+            }
+        }
+        return taken.size();
+    }
+
+    /**
      * Every strike laid on the formed model the block at {@code pos} is drawn as {@code place} of, gathered from all
      * its blocks, in one order however they are gathered.
      */

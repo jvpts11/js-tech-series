@@ -213,6 +213,11 @@ public final class SpaceServerConfig {
         return FILE.get(FAST_TRAVEL);
     }
 
+    /** Whether solar storms, micrometeoroids and failures come on the way between worlds. */
+    public static boolean cruiseEvents() {
+        return FILE.get(CRUISE_EVENTS);
+    }
+
     /** Whether a destroyed satellite leaves debris in orbit. */
     public static boolean debris() {
         return FILE.get(DEBRIS);

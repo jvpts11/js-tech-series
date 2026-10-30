@@ -11228,6 +11228,7 @@ stable 4
 25 dev.jstech.core.multiblock.damage.FormedDamage  static boolean mend(Level, BlockPos)
 24 dev.jstech.core.multiblock.damage.FormedDamage  static int changes()
 24 dev.jstech.core.multiblock.damage.FormedDamage  static int erase(Level, BlockPos)
+26 dev.jstech.core.multiblock.damage.FormedDamage  static int erase(Level, BlockPos, ResourceLocation)
 25 dev.jstech.core.multiblock.damage.FormedDamage  static int lost(Level, BlockPos, FormedPlace)
 24 dev.jstech.core.multiblock.damage.FormedDamage  static int strike(Level, BlockPos, ResourceLocation, Vec3, Vec3, double, long)
 25 dev.jstech.core.multiblock.damage.FormedDamage  static void blame(Level, BlockPos, ResourceLocation, double)

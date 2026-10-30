@@ -352,6 +352,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   block, `mend` merges the block put back where one was lost, and `lost` counts what a model has lost.
   `PlannedBuild.holed` has a plan's formed parts, all or those it names, hold, holed, when a block of theirs goes.
   Experimental.
+- Mending one kind of damage: J's Core's API is at version 26. `FormedDamage.erase` given a stamp takes away
+  only that kind's strikes from a formed model, as a patch mends a micrometeoroid's hole and leaves the dents round it.
+  Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

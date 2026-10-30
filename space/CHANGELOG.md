@@ -437,6 +437,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   holds, two hundredths each second for each block it lost; a holed engine does not light, giving no thrust and none
   of its delta-v; a holed capsule's heat shield is breached and it cannot aerobrake. Putting the right block back in
   its place mends the part wherever the rocket is.
+- The cruise between worlds: a rocket resting in a world's orbit in its system's space, its transfer set and
+  its window come, burns its transfer burn, its stages' propellant spent as the rocket equation says, and sets out, its
+  crew told where it goes and for how long. It flies a gentle arc, slow to leave and slow to arrive, the world left
+  behind shrinking in the window and the one ahead growing, and keeps the space ahead loading before it gets there;
+  space not loaded yet it waits for, its cruise a little longer. It comes to rest at the spot of the other world's low
+  orbit, told as a thing in that orbit, its plan flown and its crew told. When everyone aboard sleeps, the cruise
+  passes at once. With nobody aboard and no chunk loader, it freezes with its space as any moving structure does. On
+  the way, unless the server turns them off: a micrometeoroid holes the hull now and then, and the air of the room
+  behind rushes out, a twentieth each second through each hole, till a suit patch put on the hole mends it; a solar
+  storm is told twenty seconds ahead and fills the open space with radiation for half a minute, the crew sheltering
+  behind the water and the cargo; a part burns through and loses a block. The climb to orbit now spends the propellant
+  it burnt from the rocket's tanks.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
