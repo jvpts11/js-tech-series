@@ -546,6 +546,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   CRT runs and its needles move; Kosmozavod's black-faced needles move, its lamps light green, amber and red, its
   guards lift while the engines run and its navigation globe turns with the heading. The side stick leans with the
   pilot's hand and the throttle slides forward.
+- The small ship's cabin is pressurised: every block of its kit holds a crew's air against the vacuum, and
+  with no life support section its flight console keeps a small air reserve, two hours of one crew member's oxygen,
+  topping the cabin back up to the sea's air as the crew breathe and the hull leaks; an oxygen bottle used on the
+  console pours into it. Inside, the helmet comes off.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

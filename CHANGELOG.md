@@ -2515,6 +2515,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   CRT runs and its needles move; Kosmozavod's black-faced needles move, its lamps light green, amber and red, its
   guards lift while the engines run and its navigation globe turns with the heading. The side stick leans with the
   pilot's hand and the throttle slides forward.
+- (Space) The small ship's cabin is pressurised: every block of its kit holds a crew's air against the vacuum, and
+  with no life support section its flight console keeps a small air reserve, two hours of one crew member's oxygen,
+  topping the cabin back up to the sea's air as the crew breathe and the hull leaks; an oxygen bottle used on the
+  console pours into it. Inside, the helmet comes off.
+- (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

@@ -1781,6 +1781,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   outside or a plain blow inward. The block of the same kind put back merges again and mends it. A plan can have its
   formed parts hold when a block of theirs goes, holed, rather than come apart. A moving structure that strikes
   something hard is dented where they met, folded past a crash's speed; one touching down gently is not.
+- A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

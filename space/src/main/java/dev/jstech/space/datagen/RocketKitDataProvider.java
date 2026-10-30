@@ -18,6 +18,7 @@ import dev.jstech.space.api.RocketKits;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.rocket.RocketKitBlocks;
+import dev.jstech.space.ship.ShipKitBlocks;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,9 +35,9 @@ import net.neoforged.neoforge.common.data.DataMapProvider;
 
 /**
  * What the rocket parts' blocks are in J's Core's rooms, physics and moving structures. The crew seat is a seat aboard.
- * The capsules' and the lander cabin's pressure
- * shell holds a crew's air against the vacuum, its windows and hatch as well as its hull, whatever a world's rules say
- * of glass and doors. Each block weighs its share of the parts it is built into: a part's mass empty spread over its
+ * The capsules' and the lander cabin's pressure shell holds a crew's air against the vacuum, its windows and hatch as
+ * well as its hull, whatever a world's rules say of glass and doors; so does every block of a starship's kit, its
+ * pressurised hull. Each block weighs its share of the parts it is built into: a part's mass empty spread over its
  * blocks, and a block used in several parts the mean of its shares, so a structure of them weighs what the rockets'
  * sums say.
  */
@@ -97,6 +98,10 @@ public final class RocketKitDataProvider extends DataMapProvider {
     protected void gather() {
         final Builder<Seal, Block> seals = builder(Seals.SEALS);
         for (final BlockEntry<Block> block : SHELL) {
+            seals.add(block, Seal.wall(0.0, SHELL_RATING), false);
+        }
+        // A starship's kit is its pressurised hull, every block of it a wall that holds its crew's air.
+        for (final BlockEntry<Block> block : ShipKitBlocks.all()) {
             seals.add(block, Seal.wall(0.0, SHELL_RATING), false);
         }
         // A crew seat is sat on upright, as in the lander's cabin; a capsule's model lays its crew down on it.

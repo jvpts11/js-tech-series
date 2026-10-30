@@ -59,8 +59,10 @@ public final class ShipKitBlocks {
     // The cockpit.
     public static final BlockEntry<Block> CANOPY_GLASS = add(kit("canopy_glass").named("Canopy Glass").register());
     public static final BlockEntry<Block> CANOPY_FRAME = add(kit("canopy_frame").named("Canopy Frame").register());
-    public static final BlockEntry<Block> FLIGHT_CONSOLE = add(kit("flight_console").named("Flight Console")
-            .register());
+    public static final BlockEntry<Block> FLIGHT_CONSOLE = add(fixture("flight_console", FlightConsoleBlock::new)
+            .named("Flight Console").register());
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AirReserveEntity>> AIR_RESERVE_ENTITY =
+            SpaceContent.CONTENT.blockEntity("air_reserve", AirReserveEntity::new, FLIGHT_CONSOLE);
     public static final BlockEntry<Block> OVERHEAD_PANEL = add(kit("overhead_panel").named("Overhead Panel")
             .register());
     public static final BlockEntry<Block> PILOT_SEAT = add(kit("pilot_seat").named("Pilot Seat").register());

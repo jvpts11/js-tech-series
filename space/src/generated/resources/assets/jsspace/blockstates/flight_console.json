@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "formed=false": {
       "model": "jsspace:block/flight_console"
+    },
+    "formed=true": {
+      "model": "jsspace:block/flight_console_formed"
     }
   }
 }

@@ -9,6 +9,8 @@ package dev.jstech.core.room;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.multiblock.FormedPartBlock;
+import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -29,7 +31,8 @@ import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
  * not leak and stands as hard as it is to blow up (stone a great deal, dirt little); anything else, air, water, a slab
  * or a fence, lets air through and is part of the room it stands in. The game's glass leaks a little and stands
  * little, its doors, trapdoors and fence gates leak a little more while shut and let everything through while open. A
- * dimension's rules may say some blocks seal otherwise there ({@link DimensionSeal}).
+ * dimension's rules may say some blocks seal otherwise there ({@link DimensionSeal}). A block merged into a formed
+ * part seals as the block it was, so a formed hull keeps the room its blocks closed.
  */
 public final class Seals {
 
@@ -71,6 +74,12 @@ public final class Seals {
         final Seal declared = state.getBlockHolder().getData(SEALS);
         if (declared != null) {
             return declared;
+        }
+        // A block merged into a formed part seals as the block it was, a solid wall while that is not known yet as
+        // it merges: a formed hull holds its crew's air.
+        if (state.getBlock() instanceof FormedPartBlock) {
+            return level.getBlockEntity(pos) instanceof FormedPartBlockEntity merged && !merged.original().isAir()
+                    ? of(here, level, pos, merged.original()) : Seal.SOLID;
         }
         if (state.isAir() || state.getBlock() instanceof LiquidBlock) {
             return Seal.PASSES;

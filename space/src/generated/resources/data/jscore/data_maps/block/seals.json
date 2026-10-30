@@ -1,9 +1,39 @@
 {
   "values": {
+    "jsspace:access_panel": {
+      "rating": 300.0
+    },
+    "jsspace:airlock_cycler": {
+      "rating": 300.0
+    },
+    "jsspace:airlock_door": {
+      "rating": 300.0
+    },
+    "jsspace:antenna_feed": {
+      "rating": 300.0
+    },
+    "jsspace:bell_segment": {
+      "rating": 300.0
+    },
+    "jsspace:bulkhead": {
+      "rating": 300.0
+    },
+    "jsspace:bunk_frame": {
+      "rating": 300.0
+    },
     "jsspace:cabin_wall": {
       "rating": 300.0
     },
     "jsspace:cabin_window": {
+      "rating": 300.0
+    },
+    "jsspace:cable_tray": {
+      "rating": 300.0
+    },
+    "jsspace:canopy_frame": {
+      "rating": 300.0
+    },
+    "jsspace:canopy_glass": {
       "rating": 300.0
     },
     "jsspace:capsule_hatch": {
@@ -15,13 +45,166 @@
     "jsspace:capsule_window": {
       "rating": 300.0
     },
+    "jsspace:carbon_edge": {
+      "rating": 300.0
+    },
+    "jsspace:cargo_rack": {
+      "rating": 300.0
+    },
+    "jsspace:compressor_stage": {
+      "rating": 300.0
+    },
+    "jsspace:conduit": {
+      "rating": 300.0
+    },
+    "jsspace:control_surface": {
+      "rating": 300.0
+    },
+    "jsspace:coolant_pump": {
+      "rating": 300.0
+    },
+    "jsspace:deck_grating": {
+      "rating": 300.0
+    },
+    "jsspace:deck_plate": {
+      "rating": 300.0
+    },
+    "jsspace:docking_collar": {
+      "rating": 300.0
+    },
+    "jsspace:docking_guide": {
+      "rating": 300.0
+    },
     "jsspace:docking_port": {
+      "rating": 300.0
+    },
+    "jsspace:flap_actuator": {
       "rating": 300.0
     },
     "jsspace:flight_computer": {
       "rating": 300.0
     },
+    "jsspace:flight_console": {
+      "rating": 300.0
+    },
+    "jsspace:fuel_tank": {
+      "rating": 300.0
+    },
+    "jsspace:fusion_core": {
+      "rating": 300.0
+    },
+    "jsspace:gear_bay_door": {
+      "rating": 300.0
+    },
     "jsspace:heat_shield": {
+      "rating": 300.0
+    },
+    "jsspace:hull_frame": {
+      "rating": 300.0
+    },
+    "jsspace:hull_plating": {
+      "rating": 300.0
+    },
+    "jsspace:intake_fan": {
+      "rating": 300.0
+    },
+    "jsspace:intake_lip": {
+      "rating": 300.0
+    },
+    "jsspace:lab_panel": {
+      "rating": 300.0
+    },
+    "jsspace:landing_foot": {
+      "rating": 300.0
+    },
+    "jsspace:landing_strut": {
+      "rating": 300.0
+    },
+    "jsspace:light_panel": {
+      "rating": 300.0
+    },
+    "jsspace:livery_plating": {
+      "rating": 300.0
+    },
+    "jsspace:magnetic_coil": {
+      "rating": 300.0
+    },
+    "jsspace:nose_sensor": {
+      "rating": 300.0
+    },
+    "jsspace:nozzle_vane": {
+      "rating": 300.0
+    },
+    "jsspace:overhead_panel": {
+      "rating": 300.0
+    },
+    "jsspace:oxygen_panel": {
+      "rating": 300.0
+    },
+    "jsspace:pilot_seat": {
+      "rating": 300.0
+    },
+    "jsspace:pressure_door": {
+      "rating": 300.0
+    },
+    "jsspace:propellant_feed": {
+      "rating": 300.0
+    },
+    "jsspace:radiator_panel": {
+      "rating": 300.0
+    },
+    "jsspace:ramp_hinge": {
+      "rating": 300.0
+    },
+    "jsspace:ramp_plate": {
+      "rating": 300.0
+    },
+    "jsspace:reactor_shield": {
+      "rating": 300.0
+    },
+    "jsspace:sample_rack": {
+      "rating": 300.0
+    },
+    "jsspace:server_panel": {
+      "rating": 300.0
+    },
+    "jsspace:ship_engine_mount": {
+      "rating": 300.0
+    },
+    "jsspace:suit_locker": {
+      "rating": 300.0
+    },
+    "jsspace:swivel_duct": {
+      "rating": 300.0
+    },
+    "jsspace:thermal_plating": {
+      "rating": 300.0
+    },
+    "jsspace:thrust_chamber": {
+      "rating": 300.0
+    },
+    "jsspace:thruster_block": {
+      "rating": 300.0
+    },
+    "jsspace:tie_down_deck": {
+      "rating": 300.0
+    },
+    "jsspace:valve_pack": {
+      "rating": 300.0
+    },
+    "jsspace:viewport": {
+      "rating": 300.0
+    },
+    "jsspace:wheel": {
+      "rating": 300.0
+    },
+    "jsspace:wing_skin": {
+      "rating": 300.0
+    },
+    "jsspace:wing_spar": {
+      "rating": 300.0
+    },
+    "jsspace:wing_tip_light": {
       "rating": 300.0
     }
   }
