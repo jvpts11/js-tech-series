@@ -20,6 +20,9 @@ import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
+import dev.jstech.core.multiblock.FormedPartBlock;
+import dev.jstech.core.multiblock.plan.BuildPlan;
+import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.Propellants;
@@ -29,13 +32,16 @@ import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.platform.LandingPlatforms;
 import dev.jstech.space.rocket.BoilOff;
 import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.rocket.RocketAscent;
+import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.RocketStaging;
+import dev.jstech.space.rocket.Rockets;
 import dev.jstech.space.rocket.StageFate;
 import dev.jstech.space.rocket.StageMath;
 import dev.jstech.space.rocket.TankLoad;
@@ -44,13 +50,16 @@ import dev.jstech.space.universe.SolarSystemWorlds;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -86,7 +95,12 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final IntField separated;
     private final ValueField<TransferChoice> choice;
     private final ValueField<PlannedTransfer> executed;
+    private final ValueField<Map<Integer, Integer>> lost;
     private int wait;
+    /* Ticks till its rocket's lost blocks are counted again, and the plan they are counted by, for its design. */
+    private int countWait;
+    private @Nullable BuildPlan counted;
+    private @Nullable RocketDesign countedFor;
 
     /** The keys: those along the top, then those down the left and down the right, five of each from the top. */
     public static final int TOP = 0;
@@ -166,6 +180,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         // How the transfer is planned on its transfer page, and the plan it is set to fly.
         this.choice = fields().value("Choice", TransferChoice.CODEC, TransferChoice.CHEAPEST).save().toClient();
         this.executed = fields().nullable("Executed", PlannedTransfer.CODEC).save().toClient();
+        // How many blocks each part of its rocket has lost in flight, by the part's place in the stack.
+        this.lost = fields().value("Lost", Codec.unboundedMap(SECTION, Codec.INT), Map.<Integer, Integer>of()).save()
+                .toClient();
     }
 
     /**
@@ -183,6 +200,11 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             return;
         }
         this.wait = READ_EVERY;
+        this.countWait -= READ_EVERY;
+        if (this.countWait <= 0 && MovingStructures.at(server, this.worldPosition) instanceof MovingStructure carried) {
+            this.countWait = SECOND;
+            countLost(server, carried);
+        }
         if (this.liftOff.get() == NOT_LIFTED) {
             return;
         }
@@ -392,15 +414,27 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return Optional.ofNullable(this.executed.get());
     }
 
-    /** Whether its rocket carries a heat shield, its capsule's, to aerobrake with. */
+    /** Whether its rocket carries a heat shield, its capsule's, to aerobrake with: one not holed. */
     public boolean shield() {
         final Optional<RocketDesign> design = rocket();
         if (this.level == null || design.isEmpty()) {
             return false;
         }
         final Map<ResourceLocation, RocketPart> parts = RocketParts.all(this.level);
-        return design.get().stack().sections().stream().map(section -> parts.get(section.part().id()))
-                .anyMatch(part -> part != null && part.kind() == RocketPart.Kind.CAPSULE);
+        final List<RocketStack.Section> sections = design.get().stack().sections();
+        for (int section = 0; section < sections.size(); section++) {
+            final RocketPart part = parts.get(sections.get(section).part().id());
+            if (part != null && part.kind() == RocketPart.Kind.CAPSULE && lost(section) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** How many blocks its rocket's part at {@code section} has lost, counted in flight. */
+    public int lost(final int section) {
+        final Map<Integer, Integer> kept = this.lost.get();
+        return kept == null ? 0 : kept.getOrDefault(section, 0);
     }
 
     /**
@@ -413,8 +447,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         if (this.level == null || design.isEmpty()) {
             return OptionalDouble.empty();
         }
+        final Map<Integer, Integer> holed = this.lost.get();
         final Optional<List<StageMath.Burn>> burns = RocketStages.burns(RocketParts.all(this.level),
-                design.get().stack(), Propellants.all(this.level), tanks());
+                design.get().stack(), Propellants.all(this.level), tanks(), holed == null ? Set.of() : holed.keySet());
         if (burns.isEmpty()) {
             return OptionalDouble.empty();
         }
@@ -565,6 +600,47 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         }
         final int at = after.map(fit::indexOf).orElse(-1);
         return Optional.of(fit.get((at + 1) % fit.size()));
+    }
+
+    /*
+     * Counts the blocks its rocket {@code body} has lost, by the part of its stack each was of, its stages let go
+     * aside: a block of a formed part not standing in its place any more. The count goes to its players and to the
+     * rocket's record when it changes, holed tanks leaking and holed engines giving no thrust till they are mended.
+     */
+    private void countLost(final ServerLevel server, final MovingStructure body) {
+        final Optional<RocketDesign> design = rocket();
+        final Optional<BlockPos> stands = foot();
+        if (design.isEmpty() || stands.isEmpty()) {
+            return;
+        }
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(server);
+        final RocketStack stack = design.get().stack();
+        if (this.counted == null || !design.get().equals(this.countedFor)) {
+            this.counted = RocketPlans.of(server, stack);
+            this.countedFor = design.get();
+        }
+        final Set<Integer> gone = new HashSet<>();
+        for (int stage = 1; stage <= separated(); stage++) {
+            gone.addAll(RocketStages.stage(parts, stack, stage));
+        }
+        final BlockPos base = this.worldPosition.offset(stands.get());
+        final Map<Integer, Integer> now = new TreeMap<>();
+        for (final PlanSpot spot : this.counted.spots()) {
+            if (spot.place().isEmpty() || gone.contains(spot.part())) {
+                continue;
+            }
+            final BlockPos at = base.offset(spot.at());
+            final BlockState there = FormedPartBlock.originalAt(server, at, server.getBlockState(at));
+            if (!BuiltInRegistries.BLOCK.getKey(there.getBlock()).equals(spot.block())) {
+                now.merge(spot.part(), 1, Integer::sum);
+            }
+        }
+        final Map<Integer, Integer> counted = Map.copyOf(now);
+        if (!counted.equals(this.lost.get())) {
+            this.lost.set(counted);
+            Rockets.lost(server.getServer(), body.id(), counted);
+            setChanged();
+        }
     }
 
     /* Shows its players the platforms its stages are set to: each one's number, width, distance and whether free. */

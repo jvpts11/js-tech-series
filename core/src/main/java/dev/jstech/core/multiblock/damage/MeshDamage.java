@@ -57,6 +57,8 @@ public final class MeshDamage {
     private static final double FOLD_FADE = 1.2;
     private static final double FOLD_WAVES = 8;
     private static final double FOLD_TWIST = 1.3;
+    /* Half a block, and a hair more, so a face on a lost block's wall goes with it. */
+    private static final double HALF_BLOCK = 0.5 + 1.0e-6;
     /* The most strikes a triangle tells it lies under, one to a bit. */
     private static final int MOST_TOLD = Long.SIZE;
     private static final int CORNERS = 3;
@@ -114,7 +116,9 @@ public final class MeshDamage {
         final Strike strike = frame.strike;
         final DamageStamp stamp = strike.stamp();
         final double size = strike.size();
-        final Soup soup = finer(given, frame, size * Strike.FINE_REACH, size * FINEST);
+        // A lost block's faces go first, all that lie within it; the stamp then tears the hole round where it was.
+        final Soup kept = strike.lost() ? given.without(given.within(frame, HALF_BLOCK)) : given;
+        final Soup soup = finer(kept, frame, size * Strike.FINE_REACH, size * FINEST);
         final int corners = soup.count * CORNERS;
         final double[] a = new double[corners];
         final double[] b = new double[corners];
@@ -407,6 +411,20 @@ public final class MeshDamage {
             final int a = t * TRIANGLE;
             return distanceSquared(frame.px, frame.py, frame.pz, r[a], r[a + 1], r[a + 2], r[a + 3], r[a + 4],
                     r[a + 5], r[a + 6], r[a + 7], r[a + 8]) < reach * reach;
+        }
+
+        /* Which triangles had their middles, as they lay, within {@code half} of the strike's point along each axis. */
+        boolean[] within(final StrikeFrame frame, final double half) {
+            final boolean[] out = new boolean[this.count];
+            for (int t = 0; t < this.count; t++) {
+                final int a = t * TRIANGLE;
+                final double x = (this.rest[a] + this.rest[a + 3] + this.rest[a + 6]) / CORNERS;
+                final double y = (this.rest[a + 1] + this.rest[a + 4] + this.rest[a + 7]) / CORNERS;
+                final double z = (this.rest[a + 2] + this.rest[a + 5] + this.rest[a + 8]) / CORNERS;
+                out[t] = Math.abs(x - frame.px) <= half && Math.abs(y - frame.py) <= half
+                        && Math.abs(z - frame.pz) <= half;
+            }
+            return out;
         }
 
         /* The longest side of triangle {@code t}, as it lay. */

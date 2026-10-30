@@ -7,12 +7,17 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import dev.jstech.core.multiblock.FormedParts;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.damage.DamageStamps;
 import dev.jstech.core.multiblock.damage.FormedDamage;
+import dev.jstech.core.multiblock.shape.FormedPlace;
+import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.TestModels;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -25,7 +30,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 /**
  * Damage to a formed structure's model on a player's game: an impact laid on the test turbine's top on the server is
  * drawn there, the faces round it pushed in and holed and its rim torn bare, and once erased the turbine is drawn
- * whole again, as it was.
+ * whole again, as it was. A block lost from the turbine laid as a loose piece is drawn gone, the hole torn round it,
+ * and the block put back is drawn whole again.
  */
 public final class FormedDamageClientTests {
 
@@ -36,6 +42,9 @@ public final class FormedDamageClientTests {
     private static final BlockPos TERMINAL = new BlockPos(0, 2, 0);
     private static final BlockPos STRUCK = TERMINAL.offset(-1, 1, -2);
     private static final BlockPos STAND = new BlockPos(0, 5, 1);
+    /* Laid loose, the block lost, its north-west top corner, and the block it is drawn from, at its south-east foot. */
+    private static final BlockPos LOST = TERMINAL.offset(-1, 1, -2);
+    private static final BlockPos DRAWER = TERMINAL.offset(1, 0, 0);
     private static final int WAIT = 300;
     private static final int PUFFS_CLEAR = 40;
     /* Ticks for the server's word of the damage to reach the player's game and be drawn. */
@@ -96,6 +105,62 @@ public final class FormedDamageClientTests {
                             + " flickering by " + flicker);
                 })
                 .thenServer(0, level -> clear(ctx, level));
+    }
+
+    @ClientTest(timeoutTicks = 1200)
+    public static void loosePart_isDrawnHoledWhereABlockIsLostAndWholeOncePutBack(final ClientTestContext ctx) {
+        final int[][][] seen = new int[4][][];
+        ctx.afterTest(() -> ctx.mc().gameRenderer.setRenderBlockOutline(true));
+        ctx.thenServer(0, level -> layLoose(ctx, level))
+                .thenTeleport(0, STAND, Direction.NORTH)
+                .then(PUFFS_CLEAR, () -> {
+                    ctx.mc().gameRenderer.setRenderBlockOutline(false);
+                    ctx.lookAt(Vec3.atCenterOf(ctx.abs(LOST)).add(0, 0.5, 0));
+                })
+                .then(3, () -> seen[0] = window(ctx))
+                .then(SENT, () -> seen[3] = window(ctx))
+                .thenScreenshot(0, "formed-loss-whole")
+                .thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(LOST), Blocks.AIR.defaultBlockState()))
+                .then(SENT, () -> seen[1] = window(ctx))
+                .thenScreenshot(3, "formed-loss-holed")
+                .thenServer(0, level -> {
+                    level.setBlockAndUpdate(ctx.abs(LOST), Blocks.IRON_BLOCK.defaultBlockState());
+                    ctx.assertTrue(FormedDamage.mend(level, ctx.abs(LOST)), "the iron put back merges again");
+                })
+                // The puff of its merging cleared first.
+                .then(PUFFS_CLEAR, () -> {
+                    seen[2] = window(ctx);
+                    final int flicker = differing(seen[0], seen[3]);
+                    ctx.assertTrue(differing(seen[0], seen[1]) >= HOLED + flicker, "the lost block's place is drawn"
+                            + " empty and torn round: " + differing(seen[0], seen[1]) + " pixels changed, the picture"
+                            + " flickering by " + flicker);
+                    ctx.assertTrue(differing(seen[0], seen[2]) <= MENDED + flicker, "and once it is put back the part"
+                            + " is drawn whole: " + differing(seen[0], seen[2]) + " pixels still apart");
+                })
+                .thenServer(0, level -> clear(ctx, level));
+    }
+
+    /*
+     * The turbine's blocks laid on their own, no terminal nor plan watching them, as a piece gone its own way: drawn
+     * whole from one of its bottom blocks, its model not moving; and a barrier for the player to stand on.
+     */
+    private static void layLoose(final ClientTestContext ctx, final ServerLevel level) {
+        final int north = FormedShapes.ORIENTATIONS.indexOf(Orientation.NORTH);
+        for (int y = 0; y < 2; y++) {
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -2; z <= 0; z++) {
+                    final BlockPos at = TERMINAL.offset(x, y, z);
+                    if (at.equals(TERMINAL)) {
+                        continue;
+                    }
+                    level.setBlockAndUpdate(ctx.abs(at), Blocks.IRON_BLOCK.defaultBlockState());
+                    FormedParts.lay(level, ctx.abs(STAND), ctx.abs(at), new FormedPlace(TestModels.TURBINE.id(), north,
+                            x, y, z), List.of());
+                }
+            }
+        }
+        FormedParts.drawFrom(level, ctx.abs(DRAWER));
+        level.setBlockAndUpdate(ctx.abs(STAND.below()), Blocks.BARRIER.defaultBlockState());
     }
 
     /* The turbine facing north with its terminal at {@link #TERMINAL}, and a barrier for the player to stand on. */

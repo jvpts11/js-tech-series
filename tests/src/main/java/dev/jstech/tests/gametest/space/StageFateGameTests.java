@@ -142,7 +142,7 @@ public final class StageFateGameTests {
     /* A rocket of {@code stack} whose first stage goes as {@code fate} says, or nowhere set. */
     private static Rockets.Rocket rocket(final RocketStack stack, final StageFate fate) {
         return new Rockets.Rocket(stack, Ownership.of(UUID.randomUUID()), Map.of(),
-                fate == null ? Map.of() : Map.of(1, fate), 0L);
+                fate == null ? Map.of() : Map.of(1, fate), 0L, Map.of());
     }
 
     /* A rocket of three whose first stage has legs. */

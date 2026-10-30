@@ -12,6 +12,7 @@ import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.IStructureWatcher;
 import dev.jstech.core.multiblock.LevelStructures;
+import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
@@ -63,6 +65,8 @@ public final class PlannedBuild implements IStructureWatcher {
     private @Nullable ServerLevel level;
     private @Nullable BlockPos owner;
     private Runnable told = () -> { };
+    /* Which of its formed parts hold when one of their blocks goes, holed there, rather than coming apart. */
+    private IntPredicate holed = part -> false;
 
     public PlannedBuild(final BuildPlan plan, final BlockPos origin) {
         this.plan = Objects.requireNonNull(plan, "plan");
@@ -95,9 +99,32 @@ public final class PlannedBuild implements IStructureWatcher {
     }
 
     /**
+     * Has its formed parts hold when one of their blocks goes, as a hull does, rather than come apart: the block's
+     * place leaves its model and its shape and the hole is torn round it ({@code FormedDamage}), and the block of the
+     * right kind put back there merges again and mends it. Before it starts.
+     *
+     * @return this
+     */
+    public PlannedBuild holed() {
+        return holed(part -> true);
+    }
+
+    /**
+     * Has the formed parts {@code which} says hold when holed, as {@link #holed()} has every part, the others coming
+     * apart as ever: a rocket's parts on the launcher that came apart for its kit. Before it starts.
+     *
+     * @return this
+     */
+    public PlannedBuild holed(final IntPredicate which) {
+        this.holed = Objects.requireNonNull(which, "which");
+        return this;
+    }
+
+    /**
      * Starts building in {@code in} for the owner at {@code by}: counts what is in place, forms the parts already
      * whole and gives back the blocks of any part that is not, then watches its places; {@code onChange} runs each
-     * time a count changes, for the owner to tell its players.
+     * time a count changes, for the owner to tell its players. A part that holds when holed and stands formed still,
+     * missing blocks or not, stays formed.
      */
     public void start(final ServerLevel in, final BlockPos by, final Runnable onChange) {
         this.level = in;
@@ -118,6 +145,8 @@ public final class PlannedBuild implements IStructureWatcher {
         for (int part = 0; part < this.plan.parts(); part++) {
             if (this.missing[part] == 0) {
                 form(part);
+            } else if (this.holed.test(part) && standsFormed(part)) {
+                this.formed[part] = true;
             } else {
                 this.formed[part] = true;
                 comeApart(part);
@@ -188,14 +217,19 @@ public final class PlannedBuild implements IStructureWatcher {
             this.missing[part]--;
             this.wanted.computeIfPresent(spot.block(), (block, count) -> count > 1 ? count - 1 : null);
             skipPresent();
-            if (this.missing[part] == 0) {
+            if (this.holed.test(part) && this.formed[part]) {
+                // A block put back into a part that held: it merges again, and the hole is mended.
+                FormedDamage.mend(this.level, pos);
+            } else if (this.missing[part] == 0) {
                 form(part);
             }
         } else {
             this.missing[part]++;
             this.wanted.merge(spot.block(), 1, Integer::sum);
             this.first = Math.min(this.first, this.rank[index]);
-            comeApart(part);
+            if (!this.holed.test(part)) {
+                comeApart(part);
+            }
         }
         this.told.run();
     }
@@ -375,6 +409,24 @@ public final class PlannedBuild implements IStructureWatcher {
             }
         }
         reshape(part);
+    }
+
+    /* Whether the blocks of the part {@code part} standing in their places have merged, as a formed part's have. */
+    private boolean standsFormed(final int part) {
+        final ServerLevel in = this.level;
+        boolean any = false;
+        for (final int index : this.spotsOf.get(part)) {
+            if (!this.present[index] || in == null) {
+                continue;
+            }
+            final BlockPos at = where(this.plan.spots().get(index));
+            if (in.getBlockState(at).getBlock() instanceof FormedPartBlock) {
+                any = true;
+            } else if (!(in.getBlockState(at).getBlock() instanceof IPlanMember)) {
+                return false;
+            }
+        }
+        return any;
     }
 
     /* The part {@code part} comes apart: its merged blocks are given back, and the parts it reached into lose it. */

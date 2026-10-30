@@ -52,6 +52,8 @@ public final class Rockets extends SavedData {
     private static final Codec<Map<UUID, Rocket>> MAP = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Rocket.CODEC);
     /* A tick of the game, in seconds. */
     private static final double TICK_SECONDS = 0.05;
+    /* How much of what a holed tank holds leaks out each second, for each block it has lost. */
+    private static final double LEAK_EACH_SECOND = 0.02;
 
     private Rockets() {
     }
@@ -63,7 +65,7 @@ public final class Rockets extends SavedData {
     public static Rocket register(final MinecraftServer server, final StructureUuid structure, final RocketStack stack,
                                   final UUID builder) {
         final Rocket rocket = new Rocket(stack, Ownership.of(builder).withAccess(Access.TEAM), Map.of(), Map.of(),
-                server.overworld().getGameTime());
+                server.overworld().getGameTime(), Map.of());
         put(server, structure, rocket);
         return rocket;
     }
@@ -87,7 +89,18 @@ public final class Rockets extends SavedData {
     public static boolean own(final MinecraftServer server, final StructureUuid structure,
                               final Ownership ownership) {
         return change(server, structure, rocket -> new Rocket(rocket.stack(), ownership, rocket.tanks(),
-                rocket.fates(), rocket.settled()));
+                rocket.fates(), rocket.settled(), rocket.lost()));
+    }
+
+    /**
+     * Tells how many blocks each part of {@code structure}'s rocket has lost now, after reckoning what its tanks lost
+     * till now at the old count; whether it is a rocket.
+     */
+    public static boolean lost(final MinecraftServer server, final StructureUuid structure,
+                               final Map<Integer, Integer> lost) {
+        settle(server, structure);
+        return change(server, structure, rocket -> new Rocket(rocket.stack(), rocket.ownership(), rocket.tanks(),
+                rocket.fates(), rocket.settled(), lost));
     }
 
     /**
@@ -103,7 +116,8 @@ public final class Rockets extends SavedData {
             }
             final Map<Integer, TankLoad> tanks = new LinkedHashMap<>(rocket.tanks());
             tanks.put(section, load);
-            return new Rocket(rocket.stack(), rocket.ownership(), tanks, rocket.fates(), rocket.settled());
+            return new Rocket(rocket.stack(), rocket.ownership(), tanks, rocket.fates(), rocket.settled(),
+                    rocket.lost());
         }) && get(server, structure).map(rocket -> load.equals(rocket.tanks().get(section))).orElse(false);
     }
 
@@ -117,7 +131,8 @@ public final class Rockets extends SavedData {
             } else {
                 fates.put(stage, fate);
             }
-            return new Rocket(rocket.stack(), rocket.ownership(), rocket.tanks(), fates, rocket.settled());
+            return new Rocket(rocket.stack(), rocket.ownership(), rocket.tanks(), fates, rocket.settled(),
+                    rocket.lost());
         });
     }
 
@@ -188,16 +203,19 @@ public final class Rockets extends SavedData {
     }
 
     /**
-     * A rocket: its parts, whose it is, what its tanks hold, where its stages go and when its tanks were last reckoned.
+     * A rocket: its parts, whose it is, what its tanks hold, where its stages go, when its tanks were last reckoned,
+     * and how many blocks each of its parts has lost.
      *
      * @param stack     its parts, from the bottom up
      * @param ownership whose it is, and who may use it
      * @param tanks     what each of its tanks holds, by the tank's place in its stack from the bottom
      * @param fates     where each of its stages goes, by the stage's number from the bottom, from one
      * @param settled   the game's time its tanks were last reckoned at, in ticks
+     * @param lost      how many blocks each of its parts has lost and not had put back, by the part's place in its
+     *                  stack from the bottom; a part not named has lost none
      */
     public record Rocket(RocketStack stack, Ownership ownership, Map<Integer, TankLoad> tanks,
-                         Map<Integer, StageFate> fates, long settled) {
+                         Map<Integer, StageFate> fates, long settled, Map<Integer, Integer> lost) {
 
         private static final Codec<Integer> INDEX = Codec.STRING.comapFlatMap(text -> {
             try {
@@ -212,12 +230,19 @@ public final class Rockets extends SavedData {
                 Codec.unboundedMap(INDEX, TankLoad.CODEC).optionalFieldOf("tanks", Map.of()).forGetter(Rocket::tanks),
                 Codec.unboundedMap(INDEX, StageFate.CODEC).optionalFieldOf("fates", Map.of())
                         .forGetter(Rocket::fates),
-                Codec.LONG.optionalFieldOf("settled", 0L).forGetter(Rocket::settled)
+                Codec.LONG.optionalFieldOf("settled", 0L).forGetter(Rocket::settled),
+                Codec.unboundedMap(INDEX, Codec.INT).optionalFieldOf("lost", Map.of()).forGetter(Rocket::lost)
         ).apply(instance, Rocket::new));
 
         public Rocket {
             tanks = Map.copyOf(tanks);
             fates = Map.copyOf(fates);
+            lost = Map.copyOf(lost);
+        }
+
+        /** How many blocks its part at {@code section} has lost. */
+        public int lost(final int section) {
+            return this.lost.getOrDefault(section, 0);
         }
 
         /** Where its stage {@code stage} is set to go, if it is set. */
@@ -239,10 +264,13 @@ public final class Rockets extends SavedData {
                     continue;
                 }
                 final int height = part.height() * (part.stretches() ? placed.layers() : 1);
-                left.put(section, RocketBoilOff.boil(tank.getValue(), RocketBoilOff.surface(part.diameter(), height),
-                        kelvin, seconds));
+                final TankLoad boiled = RocketBoilOff.boil(tank.getValue(), RocketBoilOff.surface(part.diameter(),
+                        height), kelvin, seconds);
+                // A tank holed where it lost blocks leaks, the more holes the faster, till it is mended.
+                left.put(section, lost(section) == 0 ? boiled
+                        : boiled.scaled(Math.pow(1 - LEAK_EACH_SECOND, lost(section) * seconds)));
             }
-            return new Rocket(this.stack, this.ownership, left, this.fates, now);
+            return new Rocket(this.stack, this.ownership, left, this.fates, now, this.lost);
         }
     }
 }

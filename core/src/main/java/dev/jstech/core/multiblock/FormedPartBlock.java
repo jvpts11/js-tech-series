@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multiblock;
 
+import dev.jstech.core.multiblock.damage.FormedDamage;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -42,7 +43,8 @@ import org.jetbrains.annotations.Nullable;
  * of a declared formed model gives it the shape of its own part of the model ({@code FormedShapes}); any other, a
  * whole block. Breaking it breaks the structure, which gives every other block back. It looks for its terminal now
  * and then, and a block whose terminal has gone, broken by any means, turns back into what it was by itself; a block
- * a plan laid does not, its plan's owner giving it back itself.
+ * a plan laid does not, its plan's owner giving it back itself. A block lost from a formed model that stays whole,
+ * a part whose plan holds it or a piece no owner watches, tears a hole in the model where it stood.
  */
 public final class FormedPartBlock extends Block implements EntityBlock {
 
@@ -149,6 +151,21 @@ public final class FormedPartBlock extends Block implements EntityBlock {
                            final boolean movedByPiston) {
         super.onPlace(state, level, pos, old, movedByPiston);
         level.scheduleTick(pos, this, LOOKS_EVERY);
+    }
+
+    /*
+     * Gone some other way than carried with its structure or given back as the block it was, broken or blown away, a
+     * block of a formed model is lost: the model tears the hole where it stood ({@code FormedDamage}).
+     */
+    @Override
+    protected void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState now,
+                            final boolean movedByPiston) {
+        if (!level.isClientSide() && !movedByPiston && !now.is(this)
+                && level.getBlockEntity(pos) instanceof FormedPartBlockEntity part && !part.places().isEmpty()
+                && !now.equals(part.original())) {
+            FormedDamage.lose(level, pos, part);
+        }
+        super.onRemove(state, level, pos, now, movedByPiston);
     }
 
     /* It looks for its terminal; one that does not hold it any more, broken or undone, gives it back. */

@@ -7,7 +7,12 @@
  */
 package dev.jstech.core.multiblock.damage;
 
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructureEvent;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.shape.CellSpace;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShape;
@@ -27,12 +32,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +84,28 @@ public final class FormedDamage {
             .thenComparingDouble(DamageMark::size);
     private static final int AXES = 3;
     private static final double HALF = 0.5;
+    /* The most strikes a model keeps that lose no block, so a long rough ride does not pile them up. */
+    private static final int MOST_MARKS = 32;
+    /*
+     * A lost block, as nothing else is blamed: struck from outside, the block's own faces gone with it and its stamp
+     * tearing the edges round it; and one an explosion breaks, torn wider.
+     */
+    private static final double LOST_SIZE = 0.8;
+    private static final double BLOWN_SIZE = 1.0;
+    /* How many ticks a blame waits for the block it names to be lost, and how many a world keeps before sweeping. */
+    private static final int BLAMED_FOR = 2;
+    private static final int STALE_AFTER = 256;
+    /*
+     * A moving structure's blow: from how fast it dents, and folds as a crash does, in metres a second; how big the
+     * dent is at the least and the most, in blocks, and how much it grows with each metre a second over the least.
+     */
+    private static final double DENTING_SPEED = 4;
+    private static final double FOLDING_SPEED = 10;
+    private static final double DENT_LEAST = 0.3;
+    private static final double DENT_MOST = 1.2;
+    private static final double DENT_PER_SPEED = 0.04;
+    /* What each world was told of the blocks about to be lost, by place. */
+    private static final Map<Level, Map<Long, Blame>> BLAMED = Collections.synchronizedMap(new WeakHashMap<>());
 
     private FormedDamage() {
     }
@@ -85,7 +120,8 @@ public final class FormedDamage {
     public static int strike(final Level level, final BlockPos pos, final ResourceLocation stamp, final Vec3 at,
                              final Vec3 facing, final double size, final long seed) {
         final Struck struck = struck(level, pos);
-        if (struck == null || DamageStamps.get(stamp).isEmpty() || !(size > 0) || facing.lengthSqr() == 0) {
+        if (struck == null || DamageStamps.get(stamp).isEmpty() || !(size > 0) || facing.lengthSqr() == 0
+                || marks(level, pos, struck.place()).size() >= MOST_MARKS) {
             return 0;
         }
         final FormedPlace place = struck.place();
@@ -97,23 +133,121 @@ public final class FormedDamage {
         final double[] origin = struck.shape().origin();
         final DamageMark mark = new DamageMark(stamp, origin[0] + place.x() + local[0],
                 origin[1] + place.y() + local[1], origin[2] + place.z() + local[2], (float) (way[0] - HALF),
-                (float) (way[1] - HALF), (float) (way[2] - HALF), (float) size, seed);
-        final Optional<Strike> strike = mark.strike();
-        if (strike.isEmpty()) {
-            return 0;
+                (float) (way[1] - HALF), (float) (way[2] - HALF), (float) size, seed, Optional.empty());
+        return lay(level, pos, struck, mark);
+    }
+
+    /**
+     * Tells what is about to break the merged block at {@code pos}, so its loss tears the hole of {@code stamp},
+     * {@code size} blocks across, rather than a plain impact's: as an explosion tells the blocks it is breaking. Heard
+     * only by a loss within the next two ticks; on the server.
+     */
+    public static void blame(final Level level, final BlockPos pos, final ResourceLocation stamp, final double size) {
+        if (level.isClientSide()) {
+            return;
         }
-        int marked = 0;
-        for (final Map.Entry<Long, float[]> cell : struck.rest().entrySet()) {
-            final long key = cell.getKey();
-            if (reaches(strike.get(), cell.getValue(), corner(origin, key))
-                    && level.getBlockEntity(blockOf(pos, place, key)) instanceof FormedPartBlockEntity reached
-                    && holds(reached, place.model(), key)) {
-                reached.mark(new CellMark(place.model(), MeshCells.x(key), MeshCells.y(key), MeshCells.z(key),
-                        mark));
-                marked++;
+        final Map<Long, Blame> told = BLAMED.computeIfAbsent(level, any -> new HashMap<>());
+        if (told.size() > STALE_AFTER) {
+            // Blames of blocks that were not lost after all go, now and then.
+            told.values().removeIf(old -> level.getGameTime() - old.at() > BLAMED_FOR);
+        }
+        told.put(pos.asLong(), new Blame(stamp, size, level.getGameTime()));
+    }
+
+    /**
+     * The merged block at {@code pos}, {@code part}, is lost, broken or blown away: its place leaves its model and
+     * its shape, and the hole is torn round it, in the blocks beside it, by what was blamed for it, a plain impact
+     * otherwise, a little wider than the block. Told by the block as it goes, on the server; a block carried with its
+     * structure, or given back as its structure comes apart, is not lost.
+     */
+    @ApiStatus.Internal
+    public static void lose(final Level level, final BlockPos pos, final FormedPartBlockEntity part) {
+        final Struck struck = struck(level, pos);
+        if (struck == null) {
+            return;
+        }
+        final FormedPlace place = struck.place();
+        final double[] origin = struck.shape().origin();
+        final double[] middle = middle(struck.shape());
+        final double x = origin[0] + place.x() + HALF;
+        final double y = origin[1] + place.y() + HALF;
+        final double z = origin[2] + place.z() + HALF;
+        // Out of the model, from its middle through the lost block: the way its hull faced there.
+        double[] out = {x - middle[0], y - middle[1], z - middle[2]};
+        if (out[0] * out[0] + out[1] * out[1] + out[2] * out[2] < 1.0e-6) {
+            out = new double[] {0, 1, 0};
+        }
+        final Blame blame = blamed(level, pos);
+        final DamageMark mark = new DamageMark(blame.stamp(), x, y, z, (float) out[0], (float) out[1], (float) out[2],
+                (float) blame.size(), pos.asLong() ^ level.getGameTime(), Optional.of(part.original()));
+        lay(level, pos, struck, mark);
+    }
+
+    /**
+     * Puts the block at {@code pos} back into the formed model it was lost from, when it is a block of the kind lost
+     * there: it merges again, as the block of the model it was, and the loss is taken away from every block of the
+     * model, which stands mended there. On the server; whether it did.
+     */
+    public static boolean mend(final Level level, final BlockPos pos) {
+        final BlockState here = level.getBlockState(pos);
+        if (!(level instanceof ServerLevel server) || here.getBlock() instanceof FormedPartBlock) {
+            return false;
+        }
+        for (final Direction way : Direction.values()) {
+            final BlockPos beside = pos.relative(way);
+            if (!(level.getBlockEntity(beside) instanceof FormedPartBlockEntity part)) {
+                continue;
+            }
+            for (final CellMark kept : part.damage()) {
+                final Optional<BlockState> was = kept.mark().lost();
+                final FormedPlace from = placeOf(part, kept.model());
+                if (was.isEmpty() || was.get().getBlock() != here.getBlock() || from == null) {
+                    continue;
+                }
+                final Optional<FormedShape> shape = FormedShapes.get(level, kept.model());
+                if (shape.isEmpty()) {
+                    continue;
+                }
+                final double[] origin = shape.get().origin();
+                final DamageMark mark = kept.mark();
+                final long cell = MeshCells.key((int) Math.floor(mark.x() - origin[0]),
+                        (int) Math.floor(mark.y() - origin[1]), (int) Math.floor(mark.z() - origin[2]));
+                if (!blockOf(beside, from, cell).equals(pos)) {
+                    continue;
+                }
+                final FormedPlace back = new FormedPlace(kept.model(), from.orientation(), MeshCells.x(cell),
+                        MeshCells.y(cell), MeshCells.z(cell));
+                final BlockPos owner = part.terminal() == null ? beside : part.terminal();
+                if (!FormedParts.lay(server, owner, pos, back, List.of())) {
+                    return false;
+                }
+                for (final long key : shape.get().cells().keySet()) {
+                    if (level.getBlockEntity(blockOf(pos, back, key)) instanceof FormedPartBlockEntity mended) {
+                        mended.forget(mark);
+                    }
+                }
+                return true;
             }
         }
-        return marked;
+        return false;
+    }
+
+    /** How many of its blocks the formed model the block at {@code pos} is drawn as {@code place} of has lost. */
+    public static int lost(final Level level, final BlockPos pos, final FormedPlace place) {
+        return (int) marks(level, pos, place).stream().filter(mark -> mark.lost().isPresent()).count();
+    }
+
+    /** Listens for what breaks and dents formed models: explosions, and blows of moving structures. */
+    @ApiStatus.Internal
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ExplosionEvent.Detonate.class, FormedDamage::onExplosion);
+        NeoForge.EVENT_BUS.addListener(MovingStructureEvent.Collision.class, FormedDamage::onCollision);
+        // Last, so a placing that something else refuses is never merged.
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, BlockEvent.EntityPlaceEvent.class, event -> {
+            if (event.getLevel() instanceof Level level) {
+                mend(level, event.getPos());
+            }
+        });
     }
 
     /**
@@ -218,6 +352,136 @@ public final class FormedDamage {
         CHANGES.incrementAndGet();
     }
 
+    /* Gives the record {@code mark} to every block of the struck model it reaches but a lost one; how many. */
+    private static int lay(final Level level, final BlockPos pos, final Struck struck, final DamageMark mark) {
+        final Optional<Strike> strike = mark.strike();
+        if (strike.isEmpty()) {
+            return 0;
+        }
+        final FormedPlace place = struck.place();
+        final double[] origin = struck.shape().origin();
+        int marked = 0;
+        for (final Map.Entry<Long, float[]> cell : struck.rest().entrySet()) {
+            final long key = cell.getKey();
+            // A lost block keeps nothing: it is gone, and its blocks beside it keep its loss.
+            if (mark.lost().isPresent() && key == place.cell()) {
+                continue;
+            }
+            if (reaches(strike.get(), cell.getValue(), corner(origin, key))
+                    && level.getBlockEntity(blockOf(pos, place, key)) instanceof FormedPartBlockEntity reached
+                    && holds(reached, place.model(), key)) {
+                reached.mark(new CellMark(place.model(), MeshCells.x(key), MeshCells.y(key), MeshCells.z(key),
+                        mark));
+                marked++;
+            }
+        }
+        return marked;
+    }
+
+    /* An explosion breaking merged blocks blames it: from inside their model, or from outside it. */
+    private static void onExplosion(final ExplosionEvent.Detonate event) {
+        final Level level = event.getLevel();
+        if (level.isClientSide()) {
+            return;
+        }
+        final Vec3 blast = event.getExplosion().center();
+        for (final BlockPos pos : event.getAffectedBlocks()) {
+            final Struck struck = level.getBlockEntity(pos) instanceof FormedPartBlockEntity ? struck(level, pos)
+                    : null;
+            if (struck == null) {
+                continue;
+            }
+            // From inside when the blast is nearer the model's middle than the block is.
+            final Vec3 middle = middleInWorld(pos, struck);
+            final boolean inside = blast.distanceToSqr(middle) < Vec3.atCenterOf(pos).distanceToSqr(middle);
+            blame(level, pos, inside ? DamageStamps.EXPLOSION : DamageStamps.IMPACT, BLOWN_SIZE);
+        }
+    }
+
+    /*
+     * A moving structure struck something hard: the merged block of its own nearest where they met is dented there,
+     * with folds past a crash's speed; a structure settling or touching down gently is not.
+     */
+    private static void onCollision(final MovingStructureEvent.Collision event) {
+        final MovingStructure structure = event.structure();
+        if (!(structure.level() instanceof ServerLevel level) || event.speed() < DENTING_SPEED) {
+            return;
+        }
+        final Vec3 yard = MovingStructures.toYard(structure, event.at());
+        final BlockPos centre = BlockPos.containing(yard);
+        BlockPos nearest = null;
+        double best = Double.MAX_VALUE;
+        for (final BlockPos at : BlockPos.betweenClosed(centre.offset(-1, -1, -1), centre.offset(1, 1, 1))) {
+            final double away = Vec3.atCenterOf(at).distanceToSqr(yard);
+            if (away < best && level.getBlockEntity(at) instanceof FormedPartBlockEntity part
+                    && !part.places().isEmpty()) {
+                best = away;
+                nearest = at.immutable();
+            }
+        }
+        if (nearest == null) {
+            return;
+        }
+        final Vec3 out = yard.subtract(Vec3.atCenterOf(nearest));
+        final double size = Math.clamp(DENT_LEAST + (event.speed() - DENTING_SPEED) * DENT_PER_SPEED, DENT_LEAST,
+                DENT_MOST);
+        strike(level, nearest, event.speed() >= FOLDING_SPEED ? DamageStamps.COLLISION : DamageStamps.DENT, yard,
+                out.lengthSqr() < 1.0e-6 ? new Vec3(0, 1, 0) : out, size, level.getGameTime() ^ nearest.asLong());
+    }
+
+    /* What was blamed for losing the block at {@code pos} just now, taken; a plain impact for nothing. */
+    private static Blame blamed(final Level level, final BlockPos pos) {
+        final Map<Long, Blame> told = BLAMED.get(level);
+        final Blame blame = told == null ? null : told.remove(pos.asLong());
+        if (blame != null && level.getGameTime() - blame.at() <= BLAMED_FOR
+                && DamageStamps.get(blame.stamp()).isPresent()) {
+            return blame;
+        }
+        return new Blame(DamageStamps.IMPACT, LOST_SIZE, level.getGameTime());
+    }
+
+    /* The block of the model {@code model} {@code part} is; none for one it is not a block of. */
+    private static @Nullable FormedPlace placeOf(final FormedPartBlockEntity part, final ResourceLocation model) {
+        for (final FormedPlace place : part.places()) {
+            if (place.model().equals(model)) {
+                return place;
+            }
+        }
+        return null;
+    }
+
+    /* The middle of a model's blocks, in its space. */
+    private static double[] middle(final FormedShape shape) {
+        final double[] origin = shape.origin();
+        final double[] sum = new double[AXES];
+        int count = 0;
+        final List<Long> keys = new ArrayList<>(shape.cells().keySet());
+        keys.addAll(shape.apart());
+        for (final long key : keys) {
+            sum[0] += MeshCells.x(key);
+            sum[1] += MeshCells.y(key);
+            sum[2] += MeshCells.z(key);
+            count++;
+        }
+        if (count == 0) {
+            return origin.clone();
+        }
+        return new double[] {origin[0] + sum[0] / count + HALF, origin[1] + sum[1] / count + HALF,
+                origin[2] + sum[2] / count + HALF};
+    }
+
+    /* Where the middle of the struck block's model is in the world. */
+    private static Vec3 middleInWorld(final BlockPos pos, final Struck struck) {
+        final double[] middle = middle(struck.shape());
+        final double[] origin = struck.shape().origin();
+        final FormedPlace place = struck.place();
+        final double[] local = {middle[0] - origin[0] - place.x(), middle[1] - origin[1] - place.y(),
+                middle[2] - origin[2] - place.z()};
+        final double[] world = new double[AXES];
+        CellSpace.toWorld(local, place.turn(), world);
+        return new Vec3(pos.getX() + world[0], pos.getY() + world[1], pos.getZ() + world[2]);
+    }
+
     /* The strikes {@code kept} by a block laid on the block {@code place}, worked out; none for none. */
     private static @Nullable Result result(final Level level, final FormedPlace place, final List<CellMark> kept) {
         final List<DamageMark> marks = new ArrayList<>();
@@ -303,7 +567,8 @@ public final class FormedDamage {
     private static boolean reaches(final Strike strike, final float[] pieces, final double[] corner) {
         // The strike taken into the block's own space, where its faces are.
         final Strike local = new Strike(strike.stamp(), strike.x() - corner[0], strike.y() - corner[1],
-                strike.z() - corner[2], strike.nx(), strike.ny(), strike.nz(), strike.size(), strike.seed());
+                strike.z() - corner[2], strike.nx(), strike.ny(), strike.nz(), strike.size(), strike.seed(),
+                strike.lost());
         for (int first = 0; first + AXES * AXES <= pieces.length; first += AXES * AXES) {
             if (MeshDamage.reaches(local, pieces, AXES, first)) {
                 return true;
@@ -362,6 +627,10 @@ public final class FormedDamage {
         Struck {
             rest = Map.copyOf(rest);
         }
+    }
+
+    /* What was blamed for a block about to be lost, and when. */
+    private record Blame(ResourceLocation stamp, double size, long at) {
     }
 
     /* A model, its shape file and a set of marks laid on it, in order. */

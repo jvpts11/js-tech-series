@@ -70,6 +70,13 @@ public record TankLoad(ResourceLocation propellant, Map<ResourceLocation, Double
         return Double.isFinite(most) ? most : 0;
     }
 
+    /** The same tank, holding {@code share} of all it holds, each material alike, as a holed tank leaks. */
+    public TankLoad scaled(final double share) {
+        final Map<ResourceLocation, Double> each = new LinkedHashMap<>();
+        this.kilograms.forEach((material, held) -> each.put(material, held * Math.clamp(share, 0, 1)));
+        return new TankLoad(this.propellant, each);
+    }
+
     /** The same tank, holding {@code kilograms} of {@code material}. */
     public TankLoad with(final ResourceLocation material, final double kilograms) {
         final Map<ResourceLocation, Double> each = new LinkedHashMap<>(this.kilograms);

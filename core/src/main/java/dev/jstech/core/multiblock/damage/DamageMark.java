@@ -12,6 +12,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * The record of a strike on a formed model, as the blocks it reached keep it and send it to the players: the stamp
@@ -28,9 +29,12 @@ import net.minecraft.resources.ResourceLocation;
  * @param nz    the way the surface faced there
  * @param size  how big the damage is, in blocks
  * @param seed  what its rough rim and its petals fall by
+ * @param lost  the block that stood where its point is the middle of, when that block was lost: its place leaves the
+ *              model and its shape until a block of the same kind is put back there; none for a strike that loses
+ *              none
  */
 public record DamageMark(ResourceLocation stamp, double x, double y, double z, float nx, float ny, float nz,
-                         float size, long seed) {
+                         float size, long seed, Optional<BlockState> lost) {
 
     /** How a block keeps it and sends it. */
     public static final Codec<DamageMark> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -42,10 +46,12 @@ public record DamageMark(ResourceLocation stamp, double x, double y, double z, f
             Codec.FLOAT.fieldOf("ny").forGetter(DamageMark::ny),
             Codec.FLOAT.fieldOf("nz").forGetter(DamageMark::nz),
             Codec.FLOAT.fieldOf("size").forGetter(DamageMark::size),
-            Codec.LONG.fieldOf("seed").forGetter(DamageMark::seed)).apply(instance, DamageMark::new));
+            Codec.LONG.fieldOf("seed").forGetter(DamageMark::seed),
+            BlockState.CODEC.optionalFieldOf("lost").forGetter(DamageMark::lost)).apply(instance, DamageMark::new));
 
     public DamageMark {
         Objects.requireNonNull(stamp, "stamp");
+        Objects.requireNonNull(lost, "lost");
     }
 
     /** The strike it records, if its stamp is declared and it is whole; none for one that is not. */
@@ -55,6 +61,6 @@ public record DamageMark(ResourceLocation stamp, double x, double y, double z, f
             return Optional.empty();
         }
         return Optional.of(new Strike(declared.get(), this.x, this.y, this.z, this.nx, this.ny, this.nz, this.size,
-                this.seed));
+                this.seed, this.lost.isPresent()));
     }
 }

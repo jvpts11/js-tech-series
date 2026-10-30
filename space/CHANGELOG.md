@@ -431,6 +431,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - API 11: the kinds of satellite and of probe, by id, declared in code or by a data pack's files
   (`SatelliteTypes`, `ProbeTypes`), each with its orbits or whether it lands, and the orbits and sizes they come in
   (`OrbitKind`, `SpacecraftSize`).
+- Damage in flight: a rocket's formed parts hold when a block of theirs is lost, in flight and in the hangar
+  alike, the hole torn round it, and its flight computer counts what each part has lost; its mobile launcher's still
+  come apart into their kit. A holed tank leaks what it
+  holds, two hundredths each second for each block it lost; a holed engine does not light, giving no thrust and none
+  of its delta-v; a holed capsule's heat shield is breached and it cannot aerobrake. Putting the right block back in
+  its place mends the part wherever the rocket is.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

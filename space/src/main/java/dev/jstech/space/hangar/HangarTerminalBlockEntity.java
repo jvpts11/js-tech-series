@@ -564,7 +564,10 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
             return;
         }
         final BuildPlan laid = RocketPlans.of(server, building.stack(), this.launcher.get());
-        final PlannedBuild next = new PlannedBuild(laid, at);
+        // A rocket's formed parts hold when a block of theirs is broken, holed there, as they do in flight; its
+        // launcher's, after them in the plan, come apart into their kit as ever.
+        final int rocketParts = building.stack().sections().size();
+        final PlannedBuild next = new PlannedBuild(laid, at).holed(part -> part < rocketParts);
         if (!loaded(server, next)) {
             this.pending = true;
             return;

@@ -161,14 +161,17 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
         return true;
     }
 
-    /* The burns of the rocket the structure is, with its tanks as they hold now; none for one not a rocket. */
+    /*
+     * The burns of the rocket the structure is, with its tanks as they hold now and the engines of its holed parts
+     * giving no thrust; none for one not a rocket.
+     */
     static List<StageMath.Burn> burns(final ServerLevel level, final MovingStructure structure) {
         final Optional<Rockets.Rocket> rocket = Rockets.get(level.getServer(), structure.id());
         if (rocket.isEmpty()) {
             return List.of();
         }
         return RocketStages.burns(RocketParts.all(level), rocket.get().stack(), Propellants.all(level),
-                rocket.get().tanks()).orElse(List.of());
+                rocket.get().tanks(), rocket.get().lost().keySet()).orElse(List.of());
     }
 
     /* The speed of a burn's exhaust, in metres a second, from the speed it gives and the mass it burns. */

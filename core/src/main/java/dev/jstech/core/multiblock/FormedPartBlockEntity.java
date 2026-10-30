@@ -12,6 +12,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multiblock.damage.CellMark;
+import dev.jstech.core.multiblock.damage.DamageMark;
 import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShape;
@@ -125,6 +126,18 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
         more.add(mark);
         this.damage.set(List.copyOf(more));
         setChanged();
+    }
+
+    /** Lets go of the strike {@code mark}, as the block it lost is put back; whether it kept it. */
+    @ApiStatus.Internal
+    public boolean forget(final DamageMark mark) {
+        final List<CellMark> left = damage().stream().filter(kept -> !kept.mark().equals(mark)).toList();
+        if (left.size() == damage().size()) {
+            return false;
+        }
+        this.damage.set(left);
+        setChanged();
+        return true;
     }
 
     /** Lets go of every strike laid on the model {@code model}; whether it kept any. */

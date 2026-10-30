@@ -22,9 +22,11 @@ import java.util.Objects;
  * @param nz    the way the surface faced there
  * @param size  how big the damage is, in blocks: the stamp's lengths are shares of it
  * @param seed  what its rough rim and its petals fall by
+ * @param lost  whether the block its point is the middle of is lost: every face within that block goes first, and the
+ *              stamp tears the hole round where it was
  */
 public record Strike(DamageStamp stamp, double x, double y, double z, double nx, double ny, double nz, double size,
-                     long seed) {
+                     long seed, boolean lost) {
 
     /** How far out from its point, in shares of its size, a stamp moves, cuts or draws over any face. */
     public static final double REACH = 1.8;
@@ -44,6 +46,12 @@ public record Strike(DamageStamp stamp, double x, double y, double z, double nx,
         nx /= length;
         ny /= length;
         nz /= length;
+    }
+
+    /** A strike that loses no block. */
+    public Strike(final DamageStamp stamp, final double x, final double y, final double z, final double nx,
+                  final double ny, final double nz, final double size, final long seed) {
+        this(stamp, x, y, z, nx, ny, nz, size, seed, false);
     }
 
     /** How far out from its point it reaches, in blocks: no face farther is moved, cut or drawn over. */

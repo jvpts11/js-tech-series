@@ -52,6 +52,23 @@ class MeshDamageTest {
     }
 
     @Test
+    void apply_losesEveryFaceOfALostBlockAndTearsTheHoleRoundIt() {
+        // A wall two sixteenths thick, its outer face at 0.5; the block from -0.5 to 0.5 every way is lost.
+        final float[] wall = join(plate(0.5F), plate(0.375F));
+        final Strike lost = new Strike(IMPACT, 0, 0, 0, 0, 0, 1, 0.8, 5, true);
+
+        final MeshDamage.Damaged damaged = MeshDamage.apply(wall, 3, null, List.of(lost));
+
+        boolean bent = false;
+        for (int t = 0; t < damaged.triangles(); t++) {
+            final double[] middle = middle(damaged.rest(), 3, t);
+            assertTrue(Math.abs(middle[0]) > 0.5 || Math.abs(middle[1]) > 0.5, "no face of the lost block is left");
+            bent |= damaged.corners()[t * 9 + 2] < 0.375 - 0.05;
+        }
+        assertTrue(bent, "and the edges round where it was are bent in");
+    }
+
+    @Test
     void reaches_aFaceAcrossTheStrikeThoughItsCornersAreFar() {
         final float[] wide = {-5, -5, 0, 5, -5, 0, 0, 5, 0};
         final float[] far = {-5, -5, 3, 5, -5, 3, 0, 5, 3};

@@ -478,6 +478,26 @@ FormedDamage.erase(level, pos);
   as they are, and its animations go on.
 - **Erasing** (`FormedDamage.erase`) lets every block of the model go of its strikes; `FormedDamage.marks` reads the
   strikes laid on a model, gathered from all its blocks.
+- **A lost block** (*added 2026-10-30*): a merged block broken or blown away, not carried with its structure nor given
+  back as the block it was, is lost from a model that stays whole: its place leaves the model and its shape, every
+  face within it goes, and a stamp tears the edges round it in the blocks beside it, which keep the record of the
+  loss and of the block that stood there. The stamp is the cause's: a mod about to break a merged block says what
+  breaks it with `FormedDamage.blame`, and explosions already do (an explosion from inside the model tears it outward,
+  one from outside like an impact); a loss nothing is blamed for is a plain impact. A block of the kind lost put back
+  there merges again and mends it: by a player's hand at once, by any other means with `FormedDamage.mend`.
+  `FormedDamage.lost` counts what a model has lost. A pattern's structure still comes apart when a block goes, and so
+  does a plan's part unless the plan holds (`PlannedBuild.holed()`, below).
+- **Blows of moving structures** dent them (*added 2026-10-30*): a moving structure that strikes something at 4 metres
+  a second or more is dented where they met, its folds deeper past 10, the dent bigger the harder the blow.
+
+```java
+// A rocket's parts hold when a block of theirs is broken, as a hull does; the launcher's, after them, come apart.
+PlannedBuild build = new PlannedBuild(plan, origin).holed(part -> part < rocketParts);
+
+// About to break a merged block by a laser: its hole is the laser's.
+FormedDamage.blame(level, pos, LASER, 0.6);
+level.destroyBlock(pos, false);
+```
 
 ### Worked by hand
 
@@ -622,7 +642,10 @@ build.start(serverLevel, ownerPos, () -> tellMyPlayers(build));   // counts once
   count by one, in the same short time however large the plan. `missing(part)`, `present(spot)` and `formed(part)`
   are there for whatever shows or builds the plan, a hologram of what is missing or a crane laying the next block.
 - **A part forms on its last block** and comes apart as soon as one goes, every block back as it was; the other parts
-  stay as they are. A part's blocks merge as a structure's do, but they never look for an owner: the plan gives them
+  stay as they are. A plan that holds (`holed()` for every part, `holed(which)` for some, *added 2026-10-30*) keeps
+  a formed part formed when one of its blocks goes, holed there ("Damaged where struck", above), still counting the
+  block missing; the block of the right kind put back in its place merges and mends it. A part's blocks merge as a structure's do, but they never look for
+  an owner: the plan gives them
   back itself, when one goes or when its owner `stop(true)`s it. A block that keeps something of its own, a block
   entity, does not merge; an `IPlanMember`, with a block entity or without (changed 2026-10-30), never merges and is
   told as its part forms, to stop drawing itself, say, or to take a formed shape of its own.

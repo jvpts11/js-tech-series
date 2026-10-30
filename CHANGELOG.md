@@ -367,6 +367,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   keeps, `MeshDamage` lays strikes on any faces (`apply`, `reaches`, `SKIN`, `Damaged`) and `DamageLook` paints a
   strike's edge. `FormedShape.shapeOf` turns boxes worked out anew; `FormedPartBlockEntity.damage` gives the strikes
   a block keeps. Experimental.
+- (Core) Blocks lost from formed models: J's Core's API is at version 25. `DamageMark.lost` and `Strike.lost` say a
+  strike's block was lost, and which block stood there; `FormedDamage.blame` tells what is about to break a merged
+  block, `mend` merges the block put back where one was lost, and `lost` counts what a model has lost.
+  `PlannedBuild.holed` has a plan's formed parts, all or those it names, hold, holed, when a block of theirs goes.
+  Experimental.
 - (Space) The promise: J's Space's API is at version 1, in `dev.jstech.space.api`, experimental. For now it holds
   only its number, `JsSpaceApi.VERSION`; each registry an add-on adds to (worlds and their generators and modifiers,
   landmarks, rocket parts, starship sections, kinds of satellite and probe, what can be discovered of a world) joins
@@ -2384,6 +2389,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   faces out alike from the model's own file: the block collides, is aimed at and is outlined as the damage left it, and
   is drawn so, the faces far from every strike as they were and the model's animations going on. Erasing the records
   mends the model.
+- (Core) A block lost from a formed model that stays whole, broken or blown away, leaves the model and its shape, and
+  the edges round where it stood are torn by what broke it: an explosion from inside tears them outward, one from
+  outside or a plain blow inward. The block of the same kind put back merges again and mends it. A plan can have its
+  formed parts hold when a block of theirs goes, holed, rather than come apart. A moving structure that strikes
+  something hard is dented where they met, folded past a crash's speed; one touching down gently is not.
+- (Space) Damage in flight: a rocket's formed parts hold when a block of theirs is lost, in flight and in the hangar
+  alike, the hole torn round it, and its flight computer counts what each part has lost; its mobile launcher's still
+  come apart into their kit. A holed tank leaks what it
+  holds, two hundredths each second for each block it lost; a holed engine does not light, giving no thrust and none
+  of its delta-v; a holed capsule's heat shield is breached and it cannot aerobrake. Putting the right block back in
+  its place mends the part wherever the rocket is.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

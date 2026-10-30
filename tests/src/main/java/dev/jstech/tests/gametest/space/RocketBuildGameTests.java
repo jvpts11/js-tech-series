@@ -43,8 +43,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * A rocket built by its hangar's plan: every built model of a part has its shape, the capsule's laying its crew on
- * couches; the plan sent to the bay counts each part's blocks, a part forming as its last block goes down and coming
- * apart as one goes, the others staying formed, its merged blocks taking their model's shape; the Flight Computer,
+ * couches; the plan sent to the bay counts each part's blocks, a part forming as its last block goes down and holding,
+ * holed, as one goes, mended by the block put back, its merged blocks taking their model's shape; the Flight Computer,
  * which keeps its state, stays a block of its own and stops drawing itself once its capsule forms; and a separation
  * ring's skirt shapes the blocks of the engine standing on it while the ring is formed.
  */
@@ -115,11 +115,16 @@ public final class RocketBuildGameTests {
         final BlockPos seat = where(plan, RocketKitBlocks.CREW_SEAT.getId());
         helper.assertTrue(BlockAboard.at(helper.getLevel(), seat).seat().orElseThrow().lying(),
                 "its crew seat is a couch in the formed capsule");
-        final BlockPos tank = plan.where(plan.plan().spots().stream().filter(spot -> spot.part() == 1).findFirst()
-                .orElseThrow());
+        final BlockPos tank = plan.where(plan.plan().spots().stream().filter(spot -> spot.part() == 1
+                && spot.place().isPresent()).findFirst().orElseThrow());
+        final BlockState tankBlock = FormedPartBlock.originalAt(helper.getLevel(), tank,
+                helper.getLevel().getBlockState(tank));
         helper.getLevel().setBlockAndUpdate(tank, Blocks.AIR.defaultBlockState());
-        helper.assertTrue(!plan.formed(1) && plan.formed(0) && plan.formed(2)
-                && terminal.formedParts().equals(List.of(0, 2)), "a tank block taken, the tank comes apart alone");
+        helper.assertTrue(plan.formed(1) && plan.missing(1) == 1 && terminal.formedParts().equals(List.of(0, 1, 2)),
+                "a tank block taken, the tank holds, formed and holed there, the block missing");
+        helper.getLevel().setBlockAndUpdate(tank, tankBlock);
+        helper.assertTrue(plan.missing(1) == 0 && helper.getLevel().getBlockState(tank).getBlock()
+                instanceof FormedPartBlock, "the tank block put back merges again and mends it");
         terminal.undo();
         helper.assertTrue(!(helper.getLevel().getBlockState(nozzle).getBlock() instanceof FormedPartBlock)
                 && !helper.getLevel().getBlockState(computer).getValue(FlightComputerBlock.FORMED),

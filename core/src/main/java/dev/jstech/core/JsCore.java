@@ -217,6 +217,7 @@ import dev.jstech.core.moving.physics.BlockPhysics;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
+import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.hands.HandUse;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.notification.NotificationSettings;
@@ -593,6 +594,8 @@ public final class JsCore {
         // The multiblock patterns of every mod, read from data and declared in code, and their formed blocks' shapes.
         MultiblockPatterns.register();
         FormedShapes.register();
+        // What breaks and dents formed models, and a lost block put back.
+        FormedDamage.listen();
         DataMachines.register();
         // What each dimension is like to stand in, and what its sky holds, read from data.
         DimensionRulesData.register();
