@@ -128,10 +128,10 @@ public final class RocketHologramClientTests {
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         final BlockState rail = HangarBlocks.CRANE_RAIL.get().defaultBlockState();
         for (int x = X0; x <= X1; x++) {
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP, Z0)), rail);
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP, Z1)), rail);
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP - 1, Z0)), rail);
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP - 1, Z1)), rail);
         }
-        for (int z = Z0 + 1; z < Z1; z++) {
+        for (int z = Z0; z <= Z1; z++) {
             level.setBlockAndUpdate(ctx.abs(new BlockPos(X1 - 1, TOP, z)), HangarBlocks.CRANE_BRIDGE.get()
                     .defaultBlockState());
         }

@@ -8,6 +8,9 @@
 package dev.jstech.space.client.launcher;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.jstech.space.client.skin.Picture;
+import dev.jstech.space.client.skin.SkinAtlas;
+import dev.jstech.space.client.skin.SkinDrawing;
 import dev.jstech.space.launcher.CraneBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
 import java.util.HashMap;
@@ -90,7 +93,7 @@ public final class CraneRenderer implements BlockEntityRenderer<CraneBlockEntity
         final float houseTo = crane.far() + HALF + HOUSE_OVER;
         final float houseHalf = TOWER_HALF + HOUSE_OVER;
         final float boomTo = crane.back() + BOOM_PAST;
-        final LauncherAtlas atlas = LauncherAtlas.of(new Size(crane.near(), crane.far(), crane.back()),
+        final SkinAtlas atlas = SkinAtlas.of(new Size(crane.near(), crane.far(), crane.back()),
                 () -> skins(houseTo - houseFrom, 2 * houseHalf, boomTo - BOOM_FROM));
         final SkinDrawing drawing = SkinDrawing.in(pose, buffers, atlas, level, tip.getBlockPos(), tip.getBlockPos(),
                 crane.tower());
@@ -141,9 +144,9 @@ public final class CraneRenderer implements BlockEntityRenderer<CraneBlockEntity
     }
 
     /* The crane's skins: its house {@code long} along the boom and {@code wide} across, its boom {@code boom} long. */
-    private static Map<String, LauncherSkins.Picture> skins(final double houseLong, final double wide,
+    private static Map<String, Picture> skins(final double houseLong, final double wide,
                                                             final double boom) {
-        final Map<String, LauncherSkins.Picture> skins = new HashMap<>();
+        final Map<String, Picture> skins = new HashMap<>();
         skins.put(HOUSE_END, LauncherSkins.craneHouse(wide, HOUSE_HIGH));
         skins.put(HOUSE_SIDE, LauncherSkins.craneHouse(houseLong, HOUSE_HIGH));
         skins.put(HOUSE_TOP, LauncherSkins.craneHouse(houseLong, wide));

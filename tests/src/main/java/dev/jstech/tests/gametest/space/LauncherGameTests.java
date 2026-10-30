@@ -296,10 +296,10 @@ public final class LauncherGameTests {
         helper.setBlock(terminal, HangarBlocks.TERMINAL.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         for (int x = LOW; x <= high; x++) {
-            helper.setBlock(new BlockPos(x, top, LOW), HangarBlocks.CRANE_RAIL.get());
-            helper.setBlock(new BlockPos(x, top, high), HangarBlocks.CRANE_RAIL.get());
+            helper.setBlock(new BlockPos(x, top - 1, LOW), HangarBlocks.CRANE_RAIL.get());
+            helper.setBlock(new BlockPos(x, top - 1, high), HangarBlocks.CRANE_RAIL.get());
         }
-        for (int z = LOW + 1; z < high; z++) {
+        for (int z = LOW; z <= high; z++) {
             helper.setBlock(new BlockPos(middle, top, z), HangarBlocks.CRANE_BRIDGE.get());
         }
         helper.setBlock(new BlockPos(middle, top - 1, middle), HangarBlocks.CRANE_HOIST.get());

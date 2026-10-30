@@ -1,33 +1,63 @@
 {
   "variants": {
-    "facing=east,formed=false": {
+    "edge=false,facing=east,formed=false": {
       "model": "jsspace:block/crane_bridge",
       "y": 90
     },
-    "facing=east,formed=true": {
-      "model": "jsspace:block/hangar/crane_bridge_formed",
+    "edge=false,facing=east,formed=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
       "y": 90
     },
-    "facing=north,formed=false": {
+    "edge=false,facing=north,formed=false": {
       "model": "jsspace:block/crane_bridge"
     },
-    "facing=north,formed=true": {
-      "model": "jsspace:block/hangar/crane_bridge_formed"
+    "edge=false,facing=north,formed=true": {
+      "model": "jsspace:block/crane_bridge_drawn"
     },
-    "facing=south,formed=false": {
+    "edge=false,facing=south,formed=false": {
       "model": "jsspace:block/crane_bridge",
       "y": 180
     },
-    "facing=south,formed=true": {
-      "model": "jsspace:block/hangar/crane_bridge_formed",
+    "edge=false,facing=south,formed=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
       "y": 180
     },
-    "facing=west,formed=false": {
+    "edge=false,facing=west,formed=false": {
       "model": "jsspace:block/crane_bridge",
       "y": 270
     },
-    "facing=west,formed=true": {
-      "model": "jsspace:block/hangar/crane_bridge_formed",
+    "edge=false,facing=west,formed=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 270
+    },
+    "edge=true,facing=east,formed=false": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 90
+    },
+    "edge=true,facing=north,formed=false": {
+      "model": "jsspace:block/crane_bridge"
+    },
+    "edge=true,facing=north,formed=true": {
+      "model": "jsspace:block/crane_bridge_drawn"
+    },
+    "edge=true,facing=south,formed=false": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 180
+    },
+    "edge=true,facing=west,formed=false": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
       "y": 270
     }
   }

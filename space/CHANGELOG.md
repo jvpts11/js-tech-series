@@ -261,14 +261,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the scale and where the spot is.
 - The Rocket Hangar, where a rocket is stacked standing: walls and roof of any solid block a player likes,
   its Hangar Terminal set in a wall facing into the bay. From the terminal the hangar measures its bay and forms once
-  a line of Crane Rail runs along the top of two facing walls, a Crane Bridge spans the bay from rail to rail, a
-  Crane Hoist hangs under the bridge and a Bay Door stands in a wall on the floor; its walls, floor and roof must be
-  closed, and its bay no smaller and no larger than the server allows (new settings: the narrowest, widest, lowest
-  and tallest bay). Used, the terminal opens the hangar's design screen once it is formed, or says what keeps it
-  from forming. Formed, the crane takes its own shapes, the runway girders with their rails, the bridge's box girder
-  and walkway, the hoist's trolley and hook block, and the work platforms their decks and rails. Its kit: the Hangar
-  Terminal, the Assembly Console, the Crane Rail, the Crane Bridge, the Crane Hoist, the Bay Door and the Work
-  Platform.
+  a line of Crane Rail runs along two facing walls a block under the roof, a Crane Bridge lies on them from wall to
+  wall, a Crane Hoist hangs under the bridge and a Bay Door stands in a wall on the floor; its walls, floor and roof
+  must be closed, and its bay no smaller and no larger than the server allows (new settings: the narrowest, widest,
+  lowest and tallest bay). Used, the terminal opens the hangar's design screen once it is formed, or says what keeps
+  it from forming. Formed, the crane and the work platforms are drawn whole as the approved hangar has them: each
+  rail a yellow box girder with its stiffeners and stencil, its steel rail on top and a bracket under it every eight
+  blocks; the bridge's taller girder on the rails, two blocks wide; the hoist's trolley of riveted steel plates with
+  its drum; each deck of work platforms a grated plate over an underframe of I-beams, hazard stripes round its edge, a
+  hazard band, the yellow posts and rail along the edge it faces, and two struts down to the side away from it, the
+  deck at its blocks' tops. Its kit: the Hangar Terminal, the Assembly Console, the Crane Rail, the Crane Bridge, the
+  Crane Hoist, the Bay Door and the Work Platform.
 - The Rocket Design, the Rocket Hangar's design screen, opened at its terminal or at an Assembly Console in
   its bay: the hangar itself seen in 3D through its middle, the rocket standing on the middle of the bay's floor with
   hazard stripes painted round it, and the hangar's own steel plates round it. A part is dragged from its bin, each

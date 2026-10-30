@@ -47,7 +47,7 @@ public final class RocketHangarGameTests {
     private static final BlockPos DOOR = new BlockPos(1, 2, 5);
     private static final BlockPos HOIST = new BlockPos(5, 12, 5);
     private static final BlockPos BRIDGE = new BlockPos(5, TOP, 5);
-    private static final BlockPos RAIL = new BlockPos(3, TOP, LOW);
+    private static final BlockPos RAIL = new BlockPos(3, TOP - 1, LOW);
     private static final BlockPos WALL = new BlockPos(9, 6, 5);
 
     private RocketHangarGameTests() {
@@ -96,7 +96,7 @@ public final class RocketHangarGameTests {
     public static void hangar_withoutItsCraneSaysSo(final GameTestHelper helper) {
         build(helper);
         for (int x = LOW; x <= HIGH_XZ; x++) {
-            helper.setBlock(new BlockPos(x, TOP, LOW), Blocks.AIR);
+            helper.setBlock(new BlockPos(x, TOP - 1, LOW), Blocks.AIR);
         }
         final HangarTerminalBlockEntity terminal = helper.getBlockEntity(TERMINAL);
         terminal.look();
@@ -129,10 +129,10 @@ public final class RocketHangarGameTests {
         helper.setBlock(TERMINAL, HangarBlocks.TERMINAL.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         for (int x = LOW; x <= HIGH_XZ; x++) {
-            helper.setBlock(new BlockPos(x, TOP, LOW), HangarBlocks.CRANE_RAIL.get());
-            helper.setBlock(new BlockPos(x, TOP, HIGH_XZ), HangarBlocks.CRANE_RAIL.get());
+            helper.setBlock(new BlockPos(x, TOP - 1, LOW), HangarBlocks.CRANE_RAIL.get());
+            helper.setBlock(new BlockPos(x, TOP - 1, HIGH_XZ), HangarBlocks.CRANE_RAIL.get());
         }
-        for (int z = LOW + 1; z < HIGH_XZ; z++) {
+        for (int z = LOW; z <= HIGH_XZ; z++) {
             helper.setBlock(new BlockPos(5, TOP, z), HangarBlocks.CRANE_BRIDGE.get());
         }
         helper.setBlock(HOIST, HangarBlocks.CRANE_HOIST.get());

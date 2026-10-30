@@ -65,9 +65,9 @@ class HardcodedColorTest {
                     "the white a model's texture is multiplied by, which leaves the texture's own colours")),
             Map.entry("core/src/main/java/dev/jstech/core/client/developer/Pictures.java", new Data(1,
                     "the pixel a difference is marked with in the picture of the differences, read back from it")),
-            Map.entry("space/src/main/java/dev/jstech/space/client/launcher/LauncherAtlas.java", new Data(1,
-                    "the white texel a launcher's plain parts are drawn from, which leaves the colour they are tinted"
-                            + " with as it is")));
+            Map.entry("space/src/main/java/dev/jstech/space/client/skin/SkinAtlas.java", new Data(1,
+                    "the white texel a structure's plain parts are drawn from, which leaves the colour they are"
+                            + " tinted with as it is")));
 
     /** An ARGB colour as a number: eight hexadecimal digits. */
     private static final Pattern ARGB = Pattern.compile("0[xX][0-9A-Fa-f]{8}");

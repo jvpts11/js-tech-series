@@ -14,13 +14,15 @@ import net.minecraft.core.Direction;
 
 /**
  * A formed Rocket Hangar's bay: the box inside its walls, from its lowest corner to its highest, and its crane: the
- * walls its rails run along the tops of, which way its bridge spans the bay and where, and where its hoist hangs.
+ * walls its rails run along a block under the roof, which way its bridge spans the bay on them and where, and where
+ * its hoist hangs.
  *
  * @param low    the bay's lowest corner, inside the walls, on the floor
  * @param high   the bay's highest corner, inside the walls, under the roof
- * @param span   the way the bridge spans the bay, from rail to rail
- * @param bridge where along the rails the bridge stands, a block of the bay's top row
- * @param hoist  where the hoist hangs, under the bridge
+ * @param span   the way the bridge spans the bay, from wall to wall over the rails
+ * @param bridge where along the rails the bridge stands: its first block, over the near wall's rail, in the bay's top
+ *               row
+ * @param hoist  where the hoist hangs, under the bridge, level with the rails
  */
 public record HangarBay(BlockPos low, BlockPos high, Direction.Axis span, BlockPos bridge, BlockPos hoist) {
 

@@ -11,6 +11,8 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.client.skin.PaintedSkin;
+import dev.jstech.space.client.skin.Picture;
 
 /**
  * The skins of a formed mobile launcher's deck, painted to the size of their faces as the approved launcher has them:
@@ -64,7 +66,7 @@ public final class LauncherSkins {
      */
     static Picture deckTop(final double across, final double down, final double[] hole) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.deck(), DECK_GRAIN, 1);
+        final PaintedSkin s =new PaintedSkin(across, down, c.deck(), DECK_GRAIN, 1);
         final int w = s.width();
         final int h = s.height();
         for (int y = 0; y < h; y += PLATE) {
@@ -86,10 +88,10 @@ public final class LauncherSkins {
         s.rect(WALKWAY, h - WALKWAY - 2, w - WALKWAY, h - WALKWAY, c.yellow());
         s.rect(WALKWAY, WALKWAY, WALKWAY + 2, h - WALKWAY, c.yellow());
         s.rect(w - WALKWAY - 2, WALKWAY, w - WALKWAY, h - WALKWAY, c.yellow());
-        final int hx0 = (int) (hole[0] * LauncherSkin.TEXELS);
-        final int hz0 = (int) (hole[1] * LauncherSkin.TEXELS);
-        final int hx1 = (int) (hole[2] * LauncherSkin.TEXELS);
-        final int hz1 = (int) (hole[3] * LauncherSkin.TEXELS);
+        final int hx0 = (int) (hole[0] * PaintedSkin.TEXELS);
+        final int hz0 = (int) (hole[1] * PaintedSkin.TEXELS);
+        final int hx1 = (int) (hole[2] * PaintedSkin.TEXELS);
+        final int hz1 = (int) (hole[3] * PaintedSkin.TEXELS);
         s.hazard(hx0 - HAZARD_WIDE, hz0 - HAZARD_WIDE, hx1 + HAZARD_WIDE, hz1 + HAZARD_WIDE, c.yellow(), c.black());
         s.rect(hx0, hz0, hx1, hz1, c.opening());
         for (final int[] cleat : new int[][] {{hx0 - CLEAT_OUT, hz0 - CLEAT_OUT}, {hx1 + CLEAT_IN, hz0 - CLEAT_OUT},
@@ -97,13 +99,13 @@ public final class LauncherSkins {
             s.bevel(cleat[0], cleat[1], cleat[0] + CLEAT, cleat[1] + CLEAT, c.steel(), c.steelLit(), c.steelDeep(),
                     true);
         }
-        return new Picture(w, h, s.finish());
+        return s.finish();
     }
 
     /** A side of the deck, {@code across} by {@code down} blocks, its panels laid by {@code seed}. */
     static Picture deckSide(final double across, final double down, final int seed) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.steel(), SIDE_GRAIN, seed);
+        final PaintedSkin s =new PaintedSkin(across, down, c.steel(), SIDE_GRAIN, seed);
         final int w = s.width();
         final int h = s.height();
         s.rect(0, 0, w, DECK_TRIM, c.steelDeep());
@@ -141,37 +143,37 @@ public final class LauncherSkins {
         }
         s.hazard(0, h - 12, 12, h - DECK_FOOT, c.yellow(), c.black());
         s.hazard(w - 12, h - 12, w, h - DECK_FOOT, c.yellow(), c.black());
-        return new Picture(w, h, s.finish());
+        return s.finish();
     }
 
     /** The exhaust opening's scorched lining, {@code across} by {@code down} blocks. */
     static Picture lining(final double across, final double down) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.lining(), LINING_GRAIN, 3);
+        final PaintedSkin s =new PaintedSkin(across, down, c.lining(), LINING_GRAIN, 3);
         for (int y = 0; y < s.height(); y += LINING_SEAMS) {
             s.hline(y, c.liningSeam());
         }
         s.rect(0, 0, s.width(), 3, c.steelLit());
-        return new Picture(s.width(), s.height(), s.finish());
+        return s.finish();
     }
 
     /** The grating across the opening's foot, {@code across} by {@code down} blocks. */
     static Picture grating(final double across, final double down) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.grating(), 0, 4);
+        final PaintedSkin s =new PaintedSkin(across, down, c.grating(), 0, 4);
         for (int y = 0; y < s.height(); y += GRATING_BARS) {
             s.hline(y, c.steelDark());
         }
         for (int x = 0; x < s.width(); x += GRATING_BARS) {
             s.vline(x, c.steel());
         }
-        return new Picture(s.width(), s.height(), s.finish());
+        return s.finish();
     }
 
     /** A panel of a housing or a column, {@code across} by {@code down} blocks: its hazard band, a seam, its rivets. */
     static Picture panel(final double across, final double down) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.steel(), PLATE_GRAIN, 5);
+        final PaintedSkin s =new PaintedSkin(across, down, c.steel(), PLATE_GRAIN, 5);
         final int w = s.width();
         final int h = s.height();
         s.bevel(0, 0, w, h, c.steel(), c.steelLit(), c.steelDark(), true);
@@ -181,7 +183,7 @@ public final class LauncherSkins {
             s.rivet(3, y, c.steelLit(), c.steelDeep());
             s.rivet(w - 5, y, c.steelLit(), c.steelDeep());
         }
-        return new Picture(w, h, s.finish());
+        return s.finish();
     }
 
     /** A plate on a housing's or a column's top, {@code across} by {@code down} blocks, a rivet at each corner. */
@@ -192,20 +194,20 @@ public final class LauncherSkins {
     /** A plate of {@code colour}, {@code across} by {@code down} blocks, a rivet at each corner. */
     static Picture plate(final double across, final double down, final int colour) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, colour, PLATE_GRAIN, 6);
+        final PaintedSkin s =new PaintedSkin(across, down, colour, PLATE_GRAIN, 6);
         final int w = s.width();
         final int h = s.height();
         s.bevel(0, 0, w, h, colour, c.steelLit(), c.steelDeep(), true);
         for (final int[] bolt : new int[][] {{2, 2}, {w - 4, 2}, {2, h - 4}, {w - 4, h - 4}}) {
             s.rivet(bolt[0], bolt[1], c.steelLit(), c.steelDeep());
         }
-        return new Picture(w, h, s.finish());
+        return s.finish();
     }
 
     /** A face of the crane's house on the tower's top, {@code across} by {@code down} blocks: red, its louvres. */
     static Picture craneHouse(final double across, final double down) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.red(), RED_GRAIN, 32);
+        final PaintedSkin s =new PaintedSkin(across, down, c.red(), RED_GRAIN, 32);
         final int w = s.width();
         final int h = s.height();
         s.bevel(0, 0, w, h, c.red(), c.redLit(), c.redDark(), true);
@@ -214,13 +216,13 @@ public final class LauncherSkins {
                 s.rect(x, y, x + 6, y + 1, c.redDark());
             }
         }
-        return new Picture(w, h, s.finish());
+        return s.finish();
     }
 
     /** A face of the crane's boom, {@code across} by {@code down} blocks: its red girder, its web's members. */
     static Picture boom(final double across, final double down) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.red(), RED_GRAIN, 33);
+        final PaintedSkin s =new PaintedSkin(across, down, c.red(), RED_GRAIN, 33);
         final int w = s.width();
         final int h = s.height();
         s.bevel(0, 0, w, h, c.red(), c.redLit(), c.redDark(), true);
@@ -234,7 +236,7 @@ public final class LauncherSkins {
                 }
             }
         }
-        return new Picture(w, h, s.finish());
+        return s.finish();
     }
 
     /**
@@ -243,7 +245,7 @@ public final class LauncherSkins {
      */
     static Picture armSide(final double across, final double down, final int[] lines) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.armGrey(), SIDE_GRAIN, 8);
+        final PaintedSkin s =new PaintedSkin(across, down, c.armGrey(), SIDE_GRAIN, 8);
         final int w = s.width();
         final int h = s.height();
         s.bevel(0, 0, w, h, c.armGrey(), c.armLit(), c.steelDark(), true);
@@ -255,13 +257,13 @@ public final class LauncherSkins {
         for (int k = 0; k < lines.length; k++) {
             s.rect(2, h - 3 - k * 2, w - 12, h - 2 - k * 2, lines[k]);
         }
-        return new Picture(w, h, s.finish());
+        return s.finish();
     }
 
     /** A face of the white room at the crew access arm's end, {@code across} by {@code down} blocks: its door. */
     static Picture whiteRoom(final double across, final double down) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.white(), WHITE_GRAIN, 34);
+        final PaintedSkin s =new PaintedSkin(across, down, c.white(), WHITE_GRAIN, 34);
         final int w = s.width();
         final int h = s.height();
         s.bevel(0, 0, w, h, c.white(), c.whiteLit(), c.whiteDark(), true);
@@ -269,11 +271,7 @@ public final class LauncherSkins {
             s.bevel(w / 2 - 6, 6, w / 2 + 6, h - 2, c.door(), c.white(), c.armLit(), false);
         }
         s.rect(3, 3, w - 3, 5, c.roomBand());
-        return new Picture(w, h, s.finish());
-    }
-
-    /** A painted skin: its size in texels and its colours, row by row. */
-    record Picture(int width, int height, int[] argb) {
+        return s.finish();
     }
 
     /**

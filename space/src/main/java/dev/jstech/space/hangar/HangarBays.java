@@ -29,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
  * of any solid block, its bay doors in them; what stands in the bay, the hangar's own pieces and the rocket it builds,
  * is not its shell. From the block in front of the terminal it measures down to the floor, up to the roof, along its
  * wall to the walls each side and across to the far wall; the bay must be no smaller and no larger than the server
- * allows, closed on every side, with a line of crane rail along the top of two facing walls, the crane bridge spanning
- * the bay from one to the other, the hoist hanging under it, and a bay door from the floor up. The item ports set in
- * its shell are found as the shell is looked at.
+ * allows, closed on every side, with a line of crane rail along two facing walls a block under the roof, the crane
+ * bridge on them spanning the bay from one wall to the other, the hoist hanging under it, and a bay door from the floor
+ * up. The item ports set in its shell are found as the shell is looked at.
  */
 public final class HangarBays {
 
@@ -147,9 +147,13 @@ public final class HangarBays {
         return null;
     }
 
-    /* The crane: rails along the top of two facing walls, the bridge from one to the other, the hoist under it. */
+    /*
+     * The crane, as the approved hangar has it: rails along two facing walls a block under the roof, the bridge on
+     * them from one wall to the other, the hoist hanging under it between the rails.
+     */
     private static Result crane(final Level level, final BlockPos low, final BlockPos high) {
         final int top = high.getY();
+        final int rails = top - 1;
         for (final Direction.Axis span : new Direction.Axis[] {Direction.Axis.Z, Direction.Axis.X}) {
             // Spanning north to south, the rails run along the north and south walls, east to west; and so on.
             final boolean alongX = span == Direction.Axis.Z;
@@ -157,19 +161,19 @@ public final class HangarBays {
             final int railTo = alongX ? high.getX() : high.getZ();
             final int nearWall = alongX ? low.getZ() : low.getX();
             final int farWall = alongX ? high.getZ() : high.getX();
-            if (!line(level, top, alongX, railFrom, railTo, nearWall, HangarBlocks.CRANE_RAIL.get())
-                    || !line(level, top, alongX, railFrom, railTo, farWall, HangarBlocks.CRANE_RAIL.get())) {
+            if (!line(level, rails, alongX, railFrom, railTo, nearWall, HangarBlocks.CRANE_RAIL.get())
+                    || !line(level, rails, alongX, railFrom, railTo, farWall, HangarBlocks.CRANE_RAIL.get())) {
                 continue;
             }
             for (int along = railFrom; along <= railTo; along++) {
-                if (!line(level, top, !alongX, nearWall + 1, farWall - 1, along, HangarBlocks.CRANE_BRIDGE.get())) {
+                if (!line(level, top, !alongX, nearWall, farWall, along, HangarBlocks.CRANE_BRIDGE.get())) {
                     continue;
                 }
-                final BlockPos bridge = alongX ? new BlockPos(along, top, nearWall + 1)
-                        : new BlockPos(nearWall + 1, top, along);
+                final BlockPos bridge = alongX ? new BlockPos(along, top, nearWall)
+                        : new BlockPos(nearWall, top, along);
                 for (int across = nearWall + 1; across <= farWall - 1; across++) {
-                    final BlockPos under = alongX ? new BlockPos(along, top - 1, across)
-                            : new BlockPos(across, top - 1, along);
+                    final BlockPos under = alongX ? new BlockPos(along, rails, across)
+                            : new BlockPos(across, rails, along);
                     if (level.getBlockState(under).is(HangarBlocks.CRANE_HOIST.get())) {
                         return door(level, low, high) ? Result.formed(new HangarBay(low, high, span, bridge, under))
                                 : Result.refused(HangarTexts.NO_DOOR.text());

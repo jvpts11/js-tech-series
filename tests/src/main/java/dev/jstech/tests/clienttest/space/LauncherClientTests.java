@@ -139,12 +139,12 @@ public final class LauncherClientTests {
         level.setBlockAndUpdate(ctx.abs(TERMINAL), HangarBlocks.TERMINAL.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         for (int x = X0; x <= X1; x++) {
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP, Z0)), HangarBlocks.CRANE_RAIL.get()
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP - 1, Z0)), HangarBlocks.CRANE_RAIL.get()
                     .defaultBlockState());
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP, Z1)), HangarBlocks.CRANE_RAIL.get()
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP - 1, Z1)), HangarBlocks.CRANE_RAIL.get()
                     .defaultBlockState());
         }
-        for (int z = Z0 + 1; z < Z1; z++) {
+        for (int z = Z0; z <= Z1; z++) {
             level.setBlockAndUpdate(ctx.abs(new BlockPos(MIDDLE, TOP, z)), HangarBlocks.CRANE_BRIDGE.get()
                     .defaultBlockState());
         }

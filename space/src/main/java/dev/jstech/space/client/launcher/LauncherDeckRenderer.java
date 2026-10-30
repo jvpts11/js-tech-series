@@ -8,6 +8,9 @@
 package dev.jstech.space.client.launcher;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.jstech.space.client.skin.Picture;
+import dev.jstech.space.client.skin.SkinAtlas;
+import dev.jstech.space.client.skin.SkinDrawing;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.launcher.LauncherLayout;
@@ -109,7 +112,7 @@ public final class LauncherDeckRenderer implements BlockEntityRenderer<LauncherD
             return;
         }
         final LauncherDeckBlockEntity.Deck deck = found.get();
-        final LauncherAtlas atlas = LauncherAtlas.of(new Size(deck.open(), deck.back(), deck.front(), deck.across()),
+        final SkinAtlas atlas = SkinAtlas.of(new Size(deck.open(), deck.back(), deck.front(), deck.across()),
                 () -> skins(deck));
         final SkinDrawing drawing = SkinDrawing.in(pose, buffers, atlas, level, arm.getBlockPos(),
                 arm.getBlockPos().offset(deck.axis()), deck.side());
@@ -255,13 +258,13 @@ public final class LauncherDeckRenderer implements BlockEntityRenderer<LauncherD
     }
 
     /* Every skin of {@code deck}, painted to the size of its faces. */
-    private static Map<String, LauncherSkins.Picture> skins(final LauncherDeckBlockEntity.Deck deck) {
+    private static Map<String, Picture> skins(final LauncherDeckBlockEntity.Deck deck) {
         final double length = deck.back() + deck.front() + 1;
         final double wide = 2 * deck.across() + 1;
         final double opening = 2 * deck.open() + 1;
         final double[] hole = {deck.back() - deck.open(), deck.across() - deck.open(),
                 deck.back() + deck.open() + 1, deck.across() + deck.open() + 1};
-        final Map<String, LauncherSkins.Picture> skins = new HashMap<>();
+        final Map<String, Picture> skins = new HashMap<>();
         skins.put(TOP, LauncherSkins.deckTop(length, wide, hole));
         skins.put(FRONT, LauncherSkins.deckSide(wide, LauncherLayout.DECK, SEED_FRONT));
         skins.put(BACK, LauncherSkins.deckSide(wide, LauncherLayout.DECK, SEED_BACK));

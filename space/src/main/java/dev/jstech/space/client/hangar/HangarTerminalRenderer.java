@@ -30,9 +30,10 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 /**
- * Draws the rocket a Rocket Hangar builds, as far as it is built: each part of its plan that has formed, its blocks
- * merged and drawn as nothing, is drawn with its own model where it stands on the bay's floor, its cabin at rest. The
- * parts not yet formed are their kit's blocks, drawn by the world as any block is.
+ * Draws a formed Rocket Hangar's crane and work platforms whole, as the approved hangar has them, and the rocket it
+ * builds, as far as it is built: each part of its plan that has formed, its blocks merged and drawn as nothing, is
+ * drawn with its own model where it stands on the bay's floor, its cabin at rest. The parts not yet formed are their
+ * kit's blocks, drawn by the world as any block is.
  */
 public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarTerminalBlockEntity> {
 
@@ -56,10 +57,14 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
     public void render(final HangarTerminalBlockEntity terminal, final float partialTick, final PoseStack poses,
                        final MultiBufferSource buffers, final int light, final int overlay) {
         final Level level = terminal.getLevel();
+        if (level == null) {
+            return;
+        }
+        HangarPieces.draw(terminal, level, poses, buffers);
         final Optional<RocketDesign> plan = terminal.plan();
         final Optional<BlockPos> at = terminal.planAt();
         final List<Integer> formed = terminal.formedParts();
-        if (level == null || plan.isEmpty() || at.isEmpty() || formed.isEmpty()) {
+        if (plan.isEmpty() || at.isEmpty() || formed.isEmpty()) {
             return;
         }
         final List<RocketPartModels.Placed> placed = RocketPartModels.of(RocketParts.all(level),

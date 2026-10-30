@@ -83,13 +83,16 @@ public final class HangarBlocks {
                 event -> MultiblockPorts.register(event, ITEM_PORT_ENTITY.get()));
     }
 
-    /* A piece of the kit: the kit's face on all six sides, its own shape once its hangar is formed (but a door's). */
+    /*
+     * A piece of the kit: the kit's face on all six sides; once its hangar is formed (but a door) nothing of its own,
+     * its terminal drawing the crane and the platforms whole.
+     */
     private static BlockBuilder<Block> piece(final String id, final HangarPieceBlock.Kind kind) {
         final Function<BlockBehaviour.Properties, Block> made = properties -> new HangarPieceBlock(properties, kind);
         final IBlockModel.CubeAll face = new IBlockModel.CubeAll(id, "block/hangar/" + id);
         final IBlockLook look = kind == HangarPieceBlock.Kind.DOOR ? IBlockLook.facing(face)
-                : IBlockLook.facing(face).whileOn(HangarPieceBlock.FORMED, new IBlockModel.Handmade(
-                        "hangar/" + id + "_formed"));
+                : IBlockLook.facing(face).whileOn(HangarPieceBlock.FORMED, new IBlockModel.ParticleOnly(
+                        id + "_drawn", "block/hangar/" + id));
         return SpaceContent.CONTENT.block(id, made).properties(HangarBlocks::metal).look(look).item()
                 .drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(HANGAR);
     }

@@ -9,6 +9,9 @@ package dev.jstech.space.client.launcher;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.jstech.core.multiblock.FormedPartBlock;
+import dev.jstech.space.client.skin.Picture;
+import dev.jstech.space.client.skin.SkinAtlas;
+import dev.jstech.space.client.skin.SkinDrawing;
 import dev.jstech.space.launcher.ArmBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.rocket.RocketKitBlocks;
@@ -105,14 +108,14 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
         if (end.getBlockState().is(LauncherBlocks.CREW_ACCESS_ARM.get())) {
             final float walkFrom = TIP + WALK_FROM;
             final float walkTo = face + BEAM_PAST;
-            final LauncherAtlas atlas = LauncherAtlas.of(new Size(true, arm.length(), 0),
+            final SkinAtlas atlas = SkinAtlas.of(new Size(true, arm.length(), 0),
                     () -> crewSkins(walkTo - walkFrom));
             final SkinDrawing drawing = SkinDrawing.in(pose, buffers, atlas, level, end.getBlockPos(),
                     end.getBlockPos(), back);
             crew(drawing, walkFrom, walkTo, face);
         } else {
             final int[] lines = lines(level, end.getBlockPos().relative(arm.out()));
-            final LauncherAtlas atlas = LauncherAtlas.of(new Size(false, arm.length(), lines.length),
+            final SkinAtlas atlas = SkinAtlas.of(new Size(false, arm.length(), lines.length),
                     () -> swingSkins(face - TIP, lines));
             final SkinDrawing drawing = SkinDrawing.in(pose, buffers, atlas, level, end.getBlockPos(),
                     end.getBlockPos(), back);
@@ -191,16 +194,16 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
     }
 
     /* A swing arm's skins, {@code length} from the rocket's side to the tower's face, carrying {@code lines}. */
-    private static Map<String, LauncherSkins.Picture> swingSkins(final double length, final int[] lines) {
-        final Map<String, LauncherSkins.Picture> skins = new HashMap<>();
+    private static Map<String, Picture> swingSkins(final double length, final int[] lines) {
+        final Map<String, Picture> skins = new HashMap<>();
         skins.put(SIDE, LauncherSkins.armSide(length, 2 * BEAM_HALF, lines));
         skins.put(PLATE, LauncherSkins.plate(length, PLATE_ACROSS, LauncherSkins.PALETTE.get().armGrey()));
         return skins;
     }
 
     /* The crew access arm's skins, its walkway {@code walk} long. */
-    private static Map<String, LauncherSkins.Picture> crewSkins(final double walk) {
-        final Map<String, LauncherSkins.Picture> skins = new HashMap<>();
+    private static Map<String, Picture> crewSkins(final double walk) {
+        final Map<String, Picture> skins = new HashMap<>();
         skins.put(WALKWAY, LauncherSkins.grating(walk, 2 * WALK_HALF));
         skins.put(ROOM_END, LauncherSkins.whiteRoom(2 * ROOM_HALF, ROOM_HIGH));
         skins.put(ROOM_SIDE, LauncherSkins.whiteRoom(ROOM_LONG, ROOM_HIGH));

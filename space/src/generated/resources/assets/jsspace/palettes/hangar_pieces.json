@@ -1,0 +1,16 @@
+{
+  "beam": "#FF60646A",
+  "beamLit": "#FFB0B4BA",
+  "black": "#FF1E1E20",
+  "grating": "#FF141416",
+  "steel": "#FF686D74",
+  "steelDark": "#FF464A50",
+  "steelDeep": "#FF2E3136",
+  "steelLit": "#FF8C929A",
+  "underBeam": "#FF6E7278",
+  "underBeamLit": "#FFBABEC4",
+  "underside": "#FF969AA0",
+  "yellow": "#FFD6A828",
+  "yellowDark": "#FF967014",
+  "yellowLit": "#FFF0C85A"
+}

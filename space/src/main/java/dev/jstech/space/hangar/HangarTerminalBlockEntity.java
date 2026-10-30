@@ -79,6 +79,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     private final ValueField<Direction> launcher;
     private final ValueField<List<Integer>> formedParts;
     private final ValueField<List<Integer>> missingParts;
+    private final ValueField<List<BlockPos>> platforms;
     /* The crane, and what it holds of the blocks its rocket wants. */
     private final PlanAssembler crane;
     /* The ports of its shell it is bound to, on the server. */
@@ -114,6 +115,9 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         // What its players see of the plan being built: the parts formed, and how much of each is missing.
         this.formedParts = fields().value("FormedParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
         this.missingParts = fields().value("MissingParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
+        // The work platforms in its formed bay, which its players' games draw whole.
+        this.platforms = fields().value("Platforms", BlockPos.CODEC.listOf(), List.<BlockPos>of()).save()
+                .toClient();
         this.crane = new PlanAssembler(pos, this::setChanged);
         fields().part(PlanAssembler.KEY, this.crane).save();
         // Loaded, it starts building again once the chunks its plan stands in are loaded too, unless it already is.
@@ -172,6 +176,12 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     /** The bay it found, if it is formed. */
     public Optional<HangarBay> bay() {
         return Optional.ofNullable(this.bay.get());
+    }
+
+    /** The work platforms in its formed bay. */
+    public List<BlockPos> platforms() {
+        final List<BlockPos> found = this.platforms.get();
+        return found == null ? List.of() : found;
     }
 
     /** What it says to the player who uses it: its bay's size, or what keeps it from forming. */
@@ -307,9 +317,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
             if (was != null) {
                 shape(this.level, was, false);
             }
-            if (now != null) {
-                shape(this.level, now, true);
-            }
+            this.platforms.set(now != null ? shape(this.level, now, true) : List.of());
             this.bay.set(now);
             setChanged();
         }
@@ -326,6 +334,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         if (was != null && this.level != null) {
             shape(this.level, was, false);
             this.bay.set(null);
+            this.platforms.set(List.of());
         }
         bind(List.of());
         stopBuild(true);
@@ -569,9 +578,11 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
 
     /*
      * Gives the pieces of {@code bay} their own shapes, or takes them back: each piece in the bay, and each door in its
-     * walls; a formed bay's rails turned to look into the bay, its bridge and its hoist to run the way it spans.
+     * walls; a formed bay's rails turned to look into the bay, its bridge and its hoist to run the way it spans, each
+     * work platform told whether it is at the edge it faces. The work platforms it formed.
      */
-    private static void shape(final Level level, final HangarBay bay, final boolean formed) {
+    private static List<BlockPos> shape(final Level level, final HangarBay bay, final boolean formed) {
+        final List<BlockPos> platforms = new ArrayList<>();
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         final BlockPos low = bay.low();
         final BlockPos high = bay.high();
@@ -591,12 +602,21 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
                     if (way != null) {
                         shaped = shaped.setValue(HorizontalDirectionalBlock.FACING, way);
                     }
+                    if (piece.kind() == HangarPieceBlock.Kind.PLATFORM) {
+                        final boolean edge = formed && !level.getBlockState(at.relative(state.getValue(
+                                HorizontalDirectionalBlock.FACING))).is(HangarBlocks.WORK_PLATFORM.get());
+                        shaped = shaped.setValue(HangarPieceBlock.EDGE, edge);
+                        if (formed) {
+                            platforms.add(at.immutable());
+                        }
+                    }
                     if (shaped != state) {
                         level.setBlock(at, shaped, Block.UPDATE_CLIENTS);
                     }
                 }
             }
         }
+        return platforms;
     }
 
     /* Whether every part of {@code design}, its boosters' with them, is one {@code level} knows. */

@@ -183,10 +183,10 @@ public final class RocketBuildGameTests {
         helper.setBlock(TERMINAL, HangarBlocks.TERMINAL.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         for (int x = LOW; x <= HIGH_XZ; x++) {
-            helper.setBlock(new BlockPos(x, TOP, LOW), HangarBlocks.CRANE_RAIL.get());
-            helper.setBlock(new BlockPos(x, TOP, HIGH_XZ), HangarBlocks.CRANE_RAIL.get());
+            helper.setBlock(new BlockPos(x, TOP - 1, LOW), HangarBlocks.CRANE_RAIL.get());
+            helper.setBlock(new BlockPos(x, TOP - 1, HIGH_XZ), HangarBlocks.CRANE_RAIL.get());
         }
-        for (int z = LOW + 1; z < HIGH_XZ; z++) {
+        for (int z = LOW; z <= HIGH_XZ; z++) {
             helper.setBlock(new BlockPos(5, TOP, z), HangarBlocks.CRANE_BRIDGE.get());
         }
         helper.setBlock(HOIST, HangarBlocks.CRANE_HOIST.get());
