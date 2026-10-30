@@ -31,8 +31,8 @@ import net.minecraft.world.item.ItemStack;
 /**
  * The suit's controls on a player's game, as the approved device: worn, the lunar suit's controls show in the
  * dosimeter's corner, the white case with its black face; holed, the PSI lamp lights red and the screen's rim reddens;
- * with little air left, the O2 lamp lights amber; on their key, they are held up twice the size, and their light's
- * button lights the face.
+ * with little air left, the O2 lamp lights amber; on their key, they are held up twice the size over the dimmed world,
+ * the HUD put away until they are put down, and their light's button lights the face.
  */
 public final class SuitControlsClientTests {
 
@@ -49,6 +49,8 @@ public final class SuitControlsClientTests {
     private static final int WHITE = 180;
     private static final int BLACK = 40;
     private static final int LIT = 150;
+    /* The bright sky under the game's dark gradient. */
+    private static final int DIMMED = 90;
 
     private SuitControlsClientTests() {
     }
@@ -115,6 +117,12 @@ public final class SuitControlsClientTests {
                 .then(0, () -> ctx.mc().setScreen(new SuitControlsScreen()))
                 .thenAwaitScreen(SuitControlsScreen.class, 40)
                 .then(SETTLE, () -> {
+                    final int[] world = pixel(ctx, 2, 2);
+                    ctx.assertTrue(ctx.mc().options.hideGui, "held up, the HUD and the hand are put away");
+                    ctx.assertTrue(max(world) < DIMMED, "and the world is dimmed behind them: " + str(world));
+                })
+                .thenScreenshot(0, "suit-controls-up-close")
+                .then(0, () -> {
                     final SuitControlsScreen screen = ctx.screen(SuitControlsScreen.class);
                     copy(pixel(ctx, screen.left() + FACE[0] * SuitControlsScreen.UNIT,
                             screen.top() + FACE[1] * SuitControlsScreen.UNIT), faceDark);
@@ -128,7 +136,9 @@ public final class SuitControlsClientTests {
                     ctx.assertTrue(face[1] > faceDark[1] + 10, "held up, the light's button lights the face: "
                             + str(face) + " from " + str(faceDark));
                 })
-                .thenScreenshot(0, "suit-controls-up-close");
+                .thenScreenshot(0, "suit-controls-lit")
+                .then(0, () -> ctx.mc().setScreen(null))
+                .then(SETTLE, () -> ctx.assertTrue(!ctx.mc().options.hideGui, "put down, the HUD comes back"));
     }
 
     /* The colour of the place {@code at} of the controls' case as the HUD shows it, at a unit of 1. */

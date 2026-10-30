@@ -47,9 +47,8 @@ public final class SuitControlsHud implements IHudElement {
     /* A pound an inch in kilopascals, and the carbon dioxide the suit's scrubbers keep, as a share of the bar. */
     private static final double KILOPASCALS_A_PSI = 6.894757;
     private static final double SCRUBBED = 0.1;
-    /* The rim's tint: how many bands deep, each how thick, and the alpha at the edge. */
-    private static final int RIM_BANDS = 12;
-    private static final int RIM_BAND = 3;
+    /* The rim's tint: a twelfth of the screen's width deep, and its alpha at the edge. */
+    private static final int RIM_DEPTH = 12;
     private static final int RIM_ALPHA_LOW = 90;
     private static final int RIM_ALPHA_HOLED = 120;
     private static final int RIM_AMBER = 0xFF9628;
@@ -123,15 +122,19 @@ public final class SuitControlsHud implements IHudElement {
         final int edge = holed ? RIM_ALPHA_HOLED : RIM_ALPHA_LOW;
         final int w = g.guiWidth();
         final int h = g.guiHeight();
-        for (int band = 0; band < RIM_BANDS; band++) {
-            final int alpha = edge * (RIM_BANDS - band) / RIM_BANDS / 2;
+        final int depth = Math.max(1, w / RIM_DEPTH);
+        // One ring a pixel wide at a time, fading with the cube of the way in, as the hazards' vignette does.
+        for (int ring = 0; ring < depth; ring++) {
+            final double left = 1 - (double) ring / depth;
+            final int alpha = (int) (edge * left * left * left);
+            if (alpha == 0) {
+                break;
+            }
             final int argb = alpha << ALPHA_SHIFT | colour;
-            final int in = band * RIM_BAND;
-            final int out = in + RIM_BAND;
-            g.fill(in, in, w - in, out, argb);
-            g.fill(in, h - out, w - in, h - in, argb);
-            g.fill(in, out, out, h - out, argb);
-            g.fill(w - out, out, w - in, h - out, argb);
+            g.fill(ring, ring, w - ring, ring + 1, argb);
+            g.fill(ring, h - ring - 1, w - ring, h - ring, argb);
+            g.fill(ring, ring + 1, ring + 1, h - ring - 1, argb);
+            g.fill(w - ring - 1, ring + 1, w - ring, h - ring - 1, argb);
         }
     }
 

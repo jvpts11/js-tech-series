@@ -11,18 +11,23 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.space.life.SuitControls;
 import dev.jstech.space.network.SuitLightPayload;
 import java.util.Optional;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * The suit's controls looked at up close, full size and live, as the hazard devices are held up: the light's button
- * pressed with the mouse lights the face, kept on the suit. The game goes on behind it.
+ * pressed with the mouse lights the face, kept on the suit. The game goes on behind it, dimmed, with the HUD and the
+ * hand put away while the controls are looked at.
  */
 public final class SuitControlsScreen extends Screen {
 
     private int left;
     private int top;
+    /* Whether the player had the HUD hidden already, to leave it so when the controls are put down. */
+    private boolean hudHidden;
 
     /** Up close, the controls are drawn at twice their HUD size. */
     public static final int UNIT = 2;
@@ -45,6 +50,25 @@ public final class SuitControlsScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public void added() {
+        // Held up, the controls are all the player looks at: the HUD and the hand go until they are put down.
+        final Options options = Minecraft.getInstance().options;
+        this.hudHidden = options.hideGui;
+        options.hideGui = true;
+    }
+
+    @Override
+    public void removed() {
+        Minecraft.getInstance().options.hideGui = this.hudHidden;
+    }
+
+    @Override
+    public void renderBackground(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
+        // The world dimmed by the game's gradient, as behind an open container, and not blurred.
+        this.renderTransparentBackground(g);
     }
 
     @Override

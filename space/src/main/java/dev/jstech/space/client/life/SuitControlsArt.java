@@ -7,6 +7,7 @@
  */
 package dev.jstech.space.client.life;
 
+import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -57,7 +58,11 @@ public final class SuitControlsArt {
     private static final int LAMP_WIDTH = 16;
     private static final int LAMP_STEP = 18;
     private static final int BUTTONS_Y = 67;
-    private static final float SMALL = 0.5F;
+    /* The carbon dioxide's segments lit past the fourth turn amber. */
+    private static final int CO2_AMBER_FROM = 4;
+    /* The small words, the game's font at three quarters of its size; the buttons' words, moulded on the case, keep
+     * that size held up too, where the face's words are drawn at the font's own. */
+    private static final float SMALL = 0.75F;
 
     private SuitControlsArt() {
     }
@@ -78,12 +83,13 @@ public final class SuitControlsArt {
         final String left = clock(reading.secondsLeft());
         Draw.textScaled(g, font, left, tx, ty, c.white(), s);
         Draw.textScaled(g, font, GameText.resolve(SuitControls.LEFT), tx + font.width(left) * s + 3 * s, ty + 2 * s,
-                c.unit(), SMALL * s);
+                c.unit(), words(s));
         Draw.textScaled(g, font, GameText.resolve(stateWord(reading.state())), tx, y + (FACE_Y0 + 14) * s,
-                stateColour(reading.state(), c), SMALL * s);
-        bar(g, font, tx, y + (FACE_Y0 + 22) * s, s, SuitControls.OXYGEN, reading.oxygen(),
-                reading.state() == SuitControlsHud.State.LOW ? c.amber() : c.green(), c);
-        bar(g, font, tx, y + (FACE_Y0 + 30) * s, s, SuitControls.CARBON_DIOXIDE, reading.carbonDioxide(), c.green(), c);
+                stateColour(reading.state(), c), words(s));
+        final int o2 = reading.state() == SuitControlsHud.State.LOW ? c.amber() : c.green();
+        bar(g, font, tx, y + (FACE_Y0 + 22) * s, s, SuitControls.OXYGEN, reading.oxygen(), o2, SEGMENTS, c);
+        bar(g, font, tx, y + (FACE_Y0 + 30) * s, s, SuitControls.CARBON_DIOXIDE, reading.carbonDioxide(), c.green(),
+                CO2_AMBER_FROM, c);
         lamp(g, font, tx, y, s, 0, SuitControls.OXYGEN, reading.state() == SuitControlsHud.State.LOW
                 || reading.state() == SuitControlsHud.State.HOLED ? c.amber() : 0, c);
         lamp(g, font, tx, y, s, 1, SuitControls.PSI, reading.state() == SuitControlsHud.State.HOLED ? c.red() : 0, c);
@@ -112,22 +118,25 @@ public final class SuitControlsArt {
             g.fill(px, py, px + s, py + 1, c.needle());
         }
         g.fill(cx - s, cy - s, cx + 2 * s, cy + 2 * s, c.pivot());
-        Draw.textScaled(g, font, String.format("%.1f", psi), cx - 5 * s, cy + 2 * s, c.white(), SMALL * s);
-        Draw.textScaled(g, font, "0", cx - r - s, cy + 2 * s, c.dim(), SMALL * s);
-        Draw.textScaled(g, font, "5", cx + r - 2 * s, cy + 2 * s, c.dim(), SMALL * s);
+        Draw.textScaled(g, font, String.format(GameLocale.locale(), "%.1f", psi), cx - 5 * s, cy + 2 * s, c.white(),
+                words(s));
+        Draw.textScaled(g, font, "0", cx - r - s, cy + 2 * s, c.dim(), words(s));
+        Draw.textScaled(g, font, "5", cx + r - 2 * s, cy + 2 * s, c.dim(), words(s));
         Draw.textScaled(g, font, GameText.resolve(SuitControls.SUIT_PSI), x + (FACE_X0 + 3) * s,
-                y + (FACE_Y0 + 3) * s, c.dim(), SMALL * s);
+                y + (FACE_Y0 + 3) * s, c.dim(), words(s));
     }
 
-    /* A reading on ten segments, its name before them. */
+    /* A reading on ten segments, its name before them, those lit from {@code amberFrom} on in amber. */
     private static void bar(final GuiGraphics g, final Font font, final int x, final int y, final int s,
-                            final TextKey name, final double share, final int lit, final Colours c) {
-        Draw.textScaled(g, font, GameText.resolve(name), x, y, c.dim(), SMALL * s);
+                            final TextKey name, final double share, final int lit, final int amberFrom,
+                            final Colours c) {
+        Draw.textScaled(g, font, GameText.resolve(name), x, y, c.dim(), words(s));
         // Any of it at all lights a segment, so the last of the air still shows.
-        final int on = (int) Math.ceil(Math.clamp(share, 0, 1) * SEGMENTS);
+        final double held = Math.clamp(share, 0, 1);
+        final int on = held > 0 ? Math.max(1, (int) Math.round(held * SEGMENTS)) : 0;
         for (int k = 0; k < SEGMENTS; k++) {
             final int sx = x + (18 + k * 5) * s;
-            g.fill(sx, y + s, sx + 3 * s, y + 5 * s, k < on ? lit : c.segmentOff());
+            g.fill(sx, y + s, sx + 3 * s, y + 5 * s, k >= on ? c.segmentOff() : k < amberFrom ? lit : c.amber());
         }
     }
 
@@ -139,16 +148,23 @@ public final class SuitControlsArt {
         final boolean lit = colour != 0;
         g.fill(lx, ly, lx + LAMP_WIDTH * s, ly + 7 * s, lit ? colour : c.lampOff());
         final String word = GameText.resolve(name);
-        final int w = (int) Math.ceil(font.width(word) * SMALL * s);
-        Draw.textScaled(g, font, word, lx + (LAMP_WIDTH * s - w) / 2, ly + 2 * s, lit ? c.lampLit() : c.lampLabel(),
-                SMALL * s);
+        // A longer word in another language shrinks to stay on its lamp.
+        final float size = Math.min(words(s), (float) LAMP_WIDTH * s / Math.max(1, font.width(word)));
+        final int w = (int) Math.ceil(font.width(word) * size);
+        Draw.textScaled(g, font, word, lx + (LAMP_WIDTH * s - w) / 2, ly + s, lit ? c.lampLit() : c.lampLabel(),
+                size);
     }
 
     /* A button's word, moulded on the case after the button. */
     private static void button(final GuiGraphics g, final Font font, final int x, final int y, final int s,
                                final int after, final TextKey word, final Colours c) {
         Draw.textScaled(g, font, GameText.resolve(word), x + after * s, y + BUTTONS_Y * s - (s == 1 ? 1 : 0),
-                c.mould(), SMALL * s);
+                c.mould(), SMALL);
+    }
+
+    /* The face's words in units of {@code s}: small on the HUD, the game's font held up. */
+    private static float words(final int s) {
+        return s == 1 ? SMALL : s / 2F;
     }
 
     private static TextKey stateWord(final SuitControlsHud.State state) {

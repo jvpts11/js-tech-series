@@ -204,8 +204,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the black face with the suit's pressure on a needle from 0 to 5 pounds an inch, the time of air left, the state
   (sealed, oxygen low, holed and leaking, or open), the oxygen and carbon dioxide on bars, the O2, PSI, CO2 and FAN
   lamps, and the purge, fan and light buttons. With little oxygen left the screen's rim turns amber, holed it turns
-  red. O, until the player changes it, holds the controls up close, twice the size, where the light's button lights
-  the face.
+  red, deepest at the very edge. O, until the player changes it, holds the controls up close, twice the size, over the
+  world dimmed as behind an open container and with the HUD and the hand put away until they are put down, where the
+  light's button lights the face. The pressure's figure is written the way the game's language writes numbers.
 - Rockets of parts and stages: a rocket is a moving structure whose blocks are its parts stacked from the
   bottom up, and its stages are split at its separation rings, each carrying what is above it; boosters strapped on
   burn beside the core and drop first. Its delta-v is summed from its parts by Tsiolkovsky's equation and its
