@@ -7,13 +7,13 @@
  */
 package dev.jstech.space.descent;
 
-import dev.jstech.core.effect.Effects;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.cruise.CruiseEvents;
 import dev.jstech.space.cruise.CruiseFlight;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.PlannedTransfer;
+import dev.jstech.space.launch.ClimbEffects;
 import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketStaging;
 import dev.jstech.space.rocket.StageMath;
@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.phys.Vec3;
 
 /**
  * A rocket leaving the ground of a world it landed on, with no pad: with a transfer set on its flight computer and its
@@ -33,9 +32,6 @@ import net.minecraft.world.phys.Vec3;
  * modules did: theirs are still on the Moon.
  */
 public final class SurfaceLaunch {
-
-    /* How far the plume is seen, in blocks. */
-    private static final int SEEN = 256;
 
     private SurfaceLaunch() {
     }
@@ -64,8 +60,7 @@ public final class SurfaceLaunch {
                 body.move(new RocketAscent(burn, burns.get(burn).startMass(), 0, body.pose().y()));
                 computer.liftOff(level.getGameTime());
                 computer.descent(DescentPhase.NONE);
-                Effects.at(level, DescentFlight.BRAKING, new Vec3(body.pose().x(), body.pose().y(), body.pose().z()))
-                        .facing(new Vec3(0, -1, 0)).following(body.entity()).reach(SEEN).send();
+                ClimbEffects.burning(level, body);
                 CruiseEvents.tell(level, body, DescentTexts.LIFT_OFF.of(DescentTexts.LIFTED_NAME.text(),
                         DescentTexts.LIFTED.with(CruiseFlight.nameOf(worldOf(level)))));
                 return true;

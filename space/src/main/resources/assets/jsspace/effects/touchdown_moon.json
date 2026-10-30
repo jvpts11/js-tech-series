@@ -3,11 +3,19 @@
   "emitters": [
     {
       "name": "rays",
-      "emission": {"shape": {"type": "disc", "radius": 2}, "bursts": [{"at": 0, "count": 120}], "life": [1.5, 3],
-                   "speed": [6, 12]},
-      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.6, 1.6], "colour": ["#9A9A98D0", "#7E7E7C00"],
+      "emission": {"shape": {"type": "cone", "angle": 16}, "bursts": [{"at": 0, "count": 40}], "life": [1.2, 2.2],
+                   "speed": [8, 16]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.4, 1.2], "colour": ["#A2A2A0D8", "#80807E00"],
                "spin": 20},
-      "motion": {"drag": 0.2, "expands": true}
+      "motion": {"drag": 0.15, "expands": true}
+    },
+    {
+      "name": "floor",
+      "emission": {"shape": {"type": "disc", "radius": 1.5}, "bursts": [{"at": 0, "count": 6}], "life": [0.8, 1.5],
+                   "speed": [0.1, 0.4]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [1.0, 2.5], "colour": ["#B4B4B0B0", "#9A9A9800"],
+               "spin": 10},
+      "motion": {"drag": 1.0, "expands": true}
     }
   ]
 }

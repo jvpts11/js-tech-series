@@ -1,0 +1,29 @@
+{
+  "reach": 256,
+  "emitters": [
+    {
+      "name": "core",
+      "emission": {"shape": {"type": "cone", "angle": 10}, "rate": 120, "duration": 1.1, "life": [0.2, 0.4],
+                   "speed": [10, 14]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.5, 1.4], "colour": ["#FFF4C8FF", "#FFC06000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.4, "expands": true}
+    },
+    {
+      "name": "flame",
+      "emission": {"shape": {"type": "cone", "angle": 18}, "rate": 110, "duration": 1.1, "life": [0.4, 0.8],
+                   "speed": [8, 12]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.8, 2.4], "colour": ["#FFC448F0", "#E0501800"],
+               "light": 15},
+      "motion": {"drag": 0.6, "expands": true}
+    },
+    {
+      "name": "smoke",
+      "emission": {"shape": {"type": "cone", "angle": 26}, "rate": 30, "duration": 1.1, "life": [3, 5],
+                   "speed": [5, 8]},
+      "look": {"sprite": "jscore:steam", "frames": 12, "size": [1.2, 4.5], "colour": ["#ECE8E0C8", "#D8D4CC00"],
+               "spin": 10},
+      "motion": {"buoyancy": 0.4, "drag": 0.9, "expands": true, "medium": "air"}
+    }
+  ]
+}

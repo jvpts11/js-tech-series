@@ -2436,6 +2436,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   crew whose team does not know what kills there may not land. Landed with a transfer set and its window come, a rocket
   lifts off from the ground with no pad; a lunar lander's ascent stage leaves its descent stage standing on the ground
   as its launch platform.
+- (Space) The rocket's effects as approved: its engines burn with a bright flame and pouring smoke in air, leaving a
+  white trail that thins as the air does on the way up; where the air is nearly gone, any engine shows the short hot
+  core and the wide pale blue plume of a nozzle in a vacuum; a stage let go fires its retro rockets; the Moon's dust
+  flies out flat in rays all round a touchdown. The plume burns for the whole climb now, and while the engines brake a
+  landing, where before it showed only at lift-off.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

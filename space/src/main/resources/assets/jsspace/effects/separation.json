@@ -13,6 +13,14 @@
       "look": {"sprite": "jscore:steam", "frames": 12, "size": [0.6, 2.0], "colour": ["#E8ECF0C0", "#E8ECF000"],
                "spin": 30},
       "motion": {"drag": 2.0, "expands": true, "medium": "air"}
+    },
+    {
+      "name": "retro",
+      "emission": {"shape": {"type": "disc", "radius": 1.6}, "rate": 160, "duration": 1.5, "life": [0.5, 1.0],
+                   "speed": [3, 6]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [1.0, 2.4], "colour": ["#FFB848FF", "#E0601C00"],
+               "light": 15},
+      "motion": {"drag": 0.5, "expands": true}
     }
   ]
 }

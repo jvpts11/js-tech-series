@@ -1,0 +1,13 @@
+{
+  "reach": 384,
+  "emitters": [
+    {
+      "name": "trail",
+      "emission": {"shape": {"type": "disc", "radius": 1.2}, "rate": 40, "duration": 1.1, "life": [6, 10],
+                   "speed": [0.2, 0.6]},
+      "look": {"sprite": "jscore:steam", "frames": 12, "size": [2.0, 6.0], "colour": ["#F6F4F0D8", "#ECEAE600"],
+               "spin": 6},
+      "motion": {"buoyancy": 0.05, "drag": 1.5, "expands": true, "medium": "air"}
+    }
+  ]
+}

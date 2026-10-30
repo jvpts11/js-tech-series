@@ -24,6 +24,7 @@ import dev.jstech.space.cruise.CruiseFlight;
 import dev.jstech.space.exploration.WorldDiscovery;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.PlannedLanding;
+import dev.jstech.space.launch.ClimbEffects;
 import dev.jstech.space.orbit.OrbitObject;
 import dev.jstech.space.orbit.OrbitObjects;
 import dev.jstech.space.orbit.Rocketry;
@@ -59,16 +60,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DescentFlight {
 
-    /* The effects of coming down: the air glowing at the shield, the engines braking, the dust at touchdown. */
+    /* The effects of coming down: the air glowing at the shield, the dust at touchdown. */
     public static final ResourceLocation REENTRY = id("reentry");
-    public static final ResourceLocation BRAKING = ResourceLocation.fromNamespaceAndPath("jscore", "rocket_plume");
     public static final ResourceLocation MOON_DUST = id("touchdown_moon");
     public static final ResourceLocation MARS_DUST = id("touchdown_mars");
     public static final ResourceLocation DUST = id("touchdown");
     /* How thick a world's air must be, in kilopascals, for parachutes alone to set a capsule down gently. */
     private static final double THICK = 30;
-    /* How far the effects are seen, in blocks. */
+    /* How far the effects are seen, in blocks; the Moon's dust's rays, and how little they rise. */
     private static final int SEEN = 256;
+    private static final int RAYS = 8;
+    private static final double RAY_RISE = 0.06;
     /* The blast of a crash and of burning up, and how many of its blocks each takes. */
     private static final float CRASH_BLAST = 4F;
     private static final float BURN_BLAST = 2F;
@@ -174,8 +176,8 @@ public final class DescentFlight {
         if (now == DescentPhase.ENTRY && descent.air() != RocketDescent.NO_AIR) {
             Effects.at(level, REENTRY, foot).facing(new Vec3(0, 1, 0)).following(body.entity()).reach(SEEN).send();
         } else if (now == DescentPhase.BRAKING) {
-            Effects.at(level, BRAKING, foot).facing(new Vec3(0, -1, 0)).following(body.entity()).reach(SEEN)
-                    .send();
+            Effects.at(level, ClimbEffects.plumeIn(ClimbEffects.airAt(level, foot.y)), foot)
+                    .facing(new Vec3(0, -1, 0)).following(body.entity()).reach(SEEN).send();
         }
     }
 
@@ -195,7 +197,7 @@ public final class DescentFlight {
                 : CruiseFlight.nameOf(world);
         computer.landed();
         if (underChutes || braked) {
-            Effects.at(level, solar.map(DescentFlight::dustOf).orElse(DUST), foot).reach(SEEN).send();
+            dust(level, solar.orElse(SolarBody.OVERWORLD), foot);
             CruiseEvents.tell(level, body, DescentTexts.LANDING.of(DescentTexts.LANDED_NAME.text(),
                     DescentTexts.LANDED.with(name)));
             return;
@@ -258,13 +260,20 @@ public final class DescentFlight {
         return new double[] {Math.clamp(x, -half, half), Math.clamp(z, -half / 2, half / 2)};
     }
 
-    /* The dust a touchdown on {@code body} raises. */
-    private static ResourceLocation dustOf(final SolarBody body) {
-        return switch (body) {
-            case MOON -> MOON_DUST;
-            case MARS -> MARS_DUST;
-            default -> DUST;
-        };
+    /*
+     * The dust a touchdown on {@code body} raises at {@code foot}: on the Moon, with no air to hold it, it flies out
+     * flat in rays all round; elsewhere it rises in a cloud.
+     */
+    private static void dust(final ServerLevel level, final SolarBody body, final Vec3 foot) {
+        if (body != SolarBody.MOON) {
+            Effects.at(level, body == SolarBody.MARS ? MARS_DUST : DUST, foot).reach(SEEN).send();
+            return;
+        }
+        for (int ray = 0; ray < RAYS; ray++) {
+            final double turn = 2 * Math.PI * ray / RAYS;
+            Effects.at(level, MOON_DUST, foot).facing(new Vec3(Math.cos(turn), RAY_RISE, Math.sin(turn)))
+                    .reach(SEEN).send();
+        }
     }
 
     /* The level of the world {@code world}, on {@code level}'s server; none if it is not there. */

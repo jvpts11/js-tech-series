@@ -38,6 +38,7 @@ import dev.jstech.space.descent.DescentPhase;
 import dev.jstech.space.descent.SurfaceLaunch;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
+import dev.jstech.space.launch.ClimbEffects;
 import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.platform.LandingPlatforms;
 import dev.jstech.space.rocket.BoilOff;
@@ -252,6 +253,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             CruiseFlight.second(server, carried, this);
             DescentFlight.second(server, carried, this);
             SurfaceLaunch.second(server, carried, this);
+            if (carried.motion() instanceof RocketAscent) {
+                ClimbEffects.burning(server, carried);
+            }
         }
         if (this.liftOff.get() == NOT_LIFTED) {
             return;

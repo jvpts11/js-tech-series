@@ -43,9 +43,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class RocketLaunch {
 
-    /** The pad's ignition, the rocket's plume as it climbs. */
+    /** The pad's ignition. */
     public static final ResourceLocation IGNITION = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "launch");
-    public static final ResourceLocation PLUME = ResourceLocation.fromNamespaceAndPath("jscore", "rocket_plume");
     /* How far the launch is seen and felt, in blocks. */
     private static final int SEEN = 256;
     private static final UUID NOBODY = new UUID(0, 0);
@@ -103,8 +102,8 @@ public final class RocketLaunch {
                 .filter(burns -> !burns.isEmpty()).map(burns -> burns.get(0).startMass()).orElse(0.0);
         body.move(RocketAscent.lift(mass, body.pose().y()));
         if (body.entity() != null) {
-            Effects.at(level, PLUME, new Vec3(body.pose().x(), body.pose().y(), body.pose().z()))
-                    .facing(new Vec3(0, -1, 0)).following(body.entity()).reach(SEEN).send();
+            // Its plume from the first second; its flight computer keeps it burning every second after.
+            ClimbEffects.burning(level, body);
         }
     }
 }

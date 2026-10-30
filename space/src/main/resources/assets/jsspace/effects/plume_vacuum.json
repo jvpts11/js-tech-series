@@ -1,0 +1,21 @@
+{
+  "reach": 256,
+  "emitters": [
+    {
+      "name": "core",
+      "emission": {"shape": {"type": "cone", "angle": 12}, "rate": 120, "duration": 1.1, "life": [0.15, 0.3],
+                   "speed": [8, 12]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.5, 1.2], "colour": ["#FFF6E0FF", "#FFD8A000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.3}
+    },
+    {
+      "name": "plume",
+      "emission": {"shape": {"type": "cone", "angle": 70}, "rate": 240, "duration": 1.1, "life": [0.6, 1.1],
+                   "speed": [10, 16]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [1.0, 3.6], "colour": ["#D4E2FFB8", "#9CB4F000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.1, "expands": true}
+    }
+  ]
+}
