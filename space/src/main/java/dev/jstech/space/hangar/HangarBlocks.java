@@ -90,9 +90,11 @@ public final class HangarBlocks {
     private static BlockBuilder<Block> piece(final String id, final HangarPieceBlock.Kind kind) {
         final Function<BlockBehaviour.Properties, Block> made = properties -> new HangarPieceBlock(properties, kind);
         final IBlockModel.CubeAll face = new IBlockModel.CubeAll(id, "block/hangar/" + id);
-        final IBlockLook look = kind == HangarPieceBlock.Kind.DOOR ? IBlockLook.facing(face)
-                : IBlockLook.facing(face).whileOn(HangarPieceBlock.FORMED, new IBlockModel.ParticleOnly(
-                        id + "_drawn", "block/hangar/" + id));
+        final IBlockModel drawn = new IBlockModel.ParticleOnly(id + "_drawn", "block/hangar/" + id);
+        // A door open is drawn back out of the way, showing nothing; the other pieces once their hangar is formed.
+        final IBlockLook look = kind == HangarPieceBlock.Kind.DOOR
+                ? IBlockLook.facing(face).whileOn(HangarPieceBlock.OPEN, drawn)
+                : IBlockLook.facing(face).whileOn(HangarPieceBlock.FORMED, drawn);
         return SpaceContent.CONTENT.block(id, made).properties(HangarBlocks::metal).look(look).item()
                 .drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(HANGAR);
     }

@@ -502,5 +502,17 @@
   "jsspace.launcher.crew_arm": "Braço de Acesso da Tripulação",
   "jsspace.design.launcher": "Sobre plataforma móvel",
   "jsspace.design.no_launcher": "Plataforma não cabe",
-  "block.jsspace.pad_pedestal": "Pedestal da Plataforma"
+  "block.jsspace.pad_pedestal": "Pedestal da Plataforma",
+  "block.jsspace.crawler_track": "Esteira do Transportador",
+  "block.jsspace.crawler_deck": "Convés do Transportador",
+  "block.jsspace.crawler_cab": "Cabine do Transportador",
+  "block.jsspace.leveling_jack": "Macaco de Nivelamento",
+  "block.jsspace.crawler_engine": "Motor do Transportador",
+  "jsspace.crawler.not_whole": "O transportador não está inteiro: cada esteira, macaco, chapa do convés e cabine precisa estar no seu lugar ao redor do motor.",
+  "jsspace.crawler.moving": "O transportador já está em viagem.",
+  "jsspace.crawler.no_way": "Não há caminho do transportador a seguir: uma faixa de cascalho sob os caminhões de cada lado, ao longo do transportador.",
+  "jsspace.crawler.blocked": "O caminho está bloqueado em %s, %s, %s.",
+  "jsspace.crawler.not_built": "O foguete na plataforma ainda não está pronto.",
+  "jsspace.crawler.no_computer": "O foguete na plataforma não tem computador de voo para levar o seu plano.",
+  "jsspace.crawler.too_big": "A plataforma e o seu foguete são mais do que o transportador consegue carregar."
 }

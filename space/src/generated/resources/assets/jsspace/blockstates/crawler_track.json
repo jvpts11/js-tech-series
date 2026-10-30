@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "jsspace:block/crawler_track"
+    },
+    "formed=true": {
+      "model": "jsspace:block/crawler_track_drawn"
+    }
+  }
+}

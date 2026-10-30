@@ -308,6 +308,33 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return missing == null ? List.of() : missing;
     }
 
+    /** Whether the rocket of its plan and its launcher are built whole, every part formed. */
+    public boolean finished() {
+        final List<Integer> missing = missingParts();
+        return this.plan.get() != null && !missing.isEmpty() && missing.stream().allMatch(count -> count == 0);
+    }
+
+    /**
+     * Lets its plan go with the rocket, as a crawler takes the rocket and its launcher out of the bay: it stops
+     * building, its formed parts left as they are, and gives what the rocket's new keeper needs to draw them.
+     */
+    public Optional<Released> release() {
+        final RocketDesign design = this.plan.get();
+        final BlockPos foot = this.planAt.get();
+        if (design == null || foot == null) {
+            return Optional.empty();
+        }
+        final List<Integer> formed = formedParts();
+        stopBuild(false);
+        this.plan.set(null);
+        this.planAt.set(null);
+        this.launcher.set(null);
+        this.formedParts.set(List.of());
+        this.missingParts.set(List.of());
+        setChanged();
+        return Optional.of(new Released(design, foot, formed));
+    }
+
     /** Looks at its bay now, forming it or undoing it as it finds it. */
     public void look() {
         if (this.level == null || this.level.isClientSide()) {
@@ -658,6 +685,16 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
             case BRIDGE, HOIST -> bay.span() == Direction.Axis.Z ? Direction.NORTH : Direction.EAST;
             default -> null;
         };
+    }
+
+    /**
+     * A plan let go with its rocket.
+     *
+     * @param design the rocket's design
+     * @param foot   where the middle of the rocket's foot stands
+     * @param formed the parts of the plan formed, by their places in its stack
+     */
+    public record Released(RocketDesign design, BlockPos foot, List<Integer> formed) {
     }
 
     /* Why it will not build: a sentence, and what fills it, if anything. */

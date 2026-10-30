@@ -72,6 +72,11 @@
     "jsspace:crew_access_arm",
     "jsspace:tower_elevator",
     "jsspace:pad_pedestal",
+    "jsspace:crawler_track",
+    "jsspace:crawler_deck",
+    "jsspace:crawler_cab",
+    "jsspace:leveling_jack",
+    "jsspace:crawler_engine",
     "jsspace:landing_pad",
     "jsspace:landing_platform",
     "jsspace:rocket_wreckage"

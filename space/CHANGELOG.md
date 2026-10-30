@@ -343,8 +343,23 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   crew access arm's grated walkway, its yellow rails and posts, and the white room at its end. The pedestals take their
   own shapes. The design screen
   draws the rocket on the launcher's deck, the launcher under it, and says whether the bay has room for one; the
-  hologram names the launcher's parts. New blocks: the Launcher Deck, the Exhaust Frame, the Hold-Down Arm, the Tail
-  Service Mast, the Tower Frame, the Swing Arm, the Crew Access Arm, the Tower Elevator and the Pad Pedestal.
+  hologram names the launcher's parts. The deck is always wide enough for the crawler to come between its pedestals.
+  New blocks: the Launcher Deck, the Exhaust Frame, the Hold-Down Arm, the Tail Service Mast, the Tower Frame, the
+  Swing Arm, the Crew Access Arm, the Tower Elevator and the Pad Pedestal.
+- The crawler-transporter that carries a mobile launcher, its tower and its rocket out of the hangar. Built
+  of its kit round its Crawler Engine, as the approved crawler is (the hull fifteen blocks long and eleven wide, a
+  truck four blocks long under each corner, its tracks on the ground and its leveling jacks over them, a cab two
+  blocks square at two opposite corners), it forms and is drawn whole: each truck's two tracks a loop of separate
+  shoes round the sprocket and the idler, the road wheels and return rollers, the frame with its guide tube and four
+  jacks; the grey hull with its panels, louvres, doors, stencils, lamps and hazard band; the deck with its yellow line,
+  the four jack pins in their hazard squares and the railing round it; the cabs with their glass and beacons, the
+  exhaust stacks either side and a ladder. Its crawlerway is a lane of gravel under each side's trucks. A cab used, it
+  goes along the crawlerway to its farther end: with a launcher centred over it, it lifts the launcher off its
+  pedestals, carries it slowly to the end, sets it down there on the grid and comes back by itself; empty, it just goes
+  to the other end. The bay doors in its way open while it passes and close once it is back; it says where the way is
+  blocked, and will not take an unfinished rocket. Leaving the hangar, the rocket's plan goes to its flight computer,
+  which draws its formed parts from then on. New blocks: the Crawler Track, the Crawler Deck, the Crawler Cab, the
+  Leveling Jack and the Crawler Engine.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

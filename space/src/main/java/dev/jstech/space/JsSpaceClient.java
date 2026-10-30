@@ -9,6 +9,7 @@ package dev.jstech.space;
 
 import dev.jstech.core.client.advancement.WideBackgrounds;
 import dev.jstech.core.client.multiblock.PlanHologram;
+import dev.jstech.space.client.crawler.CrawlerRenderer;
 import dev.jstech.space.client.flight.FlightComputerScreen;
 import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.client.hangar.HangarTerminalRenderer;
@@ -23,6 +24,7 @@ import dev.jstech.space.client.life.SuitControlsHud;
 import dev.jstech.space.client.life.SuitLamps;
 import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
+import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.RocketDesigner;
@@ -72,5 +74,8 @@ public final class JsSpaceClient {
         LauncherDeckRenderer.listen(modEventBus);
         CraneRenderer.listen(modEventBus);
         ArmRenderer.listen(modEventBus);
+        // The rocket's formed parts drawn by its flight computer once the hangar lets it go, and a formed crawler.
+        FlightComputerRenderer.listen(modEventBus);
+        CrawlerRenderer.listen(modEventBus);
     }
 }

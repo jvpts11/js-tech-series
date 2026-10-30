@@ -9,6 +9,7 @@ package dev.jstech.space.launcher;
 
 import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.space.crawler.CrawlerLayout;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +89,8 @@ public final class LauncherLayout {
         final int far = near + TOWER - 1;
         // The elevator runs up the shaft just inside its doorways, so the crew steps off it onto the arm.
         final int lane = near + 1;
-        final int reach = open + 1 + MARGIN - 1;
+        // The deck is wide enough for the crawler to come between its rows of pedestals, under any rocket.
+        final int reach = Math.max(open + 1 + MARGIN - 1, CrawlerLayout.HALF_WIDTH + 1);
         final int crew = hatch(rocket);
         // The deck, the opening's lining, the hold-down arms and the masts: the launcher's first part.
         final int deck = firstPart;

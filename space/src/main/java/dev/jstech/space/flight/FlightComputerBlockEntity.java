@@ -7,6 +7,7 @@
  */
 package dev.jstech.space.flight;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
@@ -14,6 +15,7 @@ import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import java.util.ArrayList;
@@ -39,6 +41,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<BlockPos> mark;
     private final IntField zoom;
     private final BoolField grid;
+    private final ValueField<RocketDesign> rocket;
+    private final ValueField<BlockPos> foot;
+    private final ValueField<List<Integer>> formed;
 
     /** The keys: those along the top, then those down the left and down the right, five of each from the top. */
     public static final int TOP = 0;
@@ -71,6 +76,35 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         this.mark = fields().nullable("Mark", BlockPos.CODEC).save().toClient();
         this.zoom = fields().integer("Zoom", WIDE).save().toClient();
         this.grid = fields().flag("Grid", false).save().toClient();
+        // The plan of the rocket it is in, once its hangar has let it go: the design, where its foot is from here,
+        // and the parts formed, which it draws from then on.
+        this.rocket = fields().nullable("Rocket", RocketDesign.CODEC).save().toClient();
+        this.foot = fields().nullable("Foot", BlockPos.CODEC).save().toClient();
+        this.formed = fields().value("Formed", Codec.INT.listOf(), List.<Integer>of()).save().toClient();
+    }
+
+    /** Takes the plan of the rocket it is in: {@code design}, its foot {@code foot} from here, {@code parts} formed. */
+    public void carry(final RocketDesign design, final BlockPos foot, final List<Integer> parts) {
+        this.rocket.set(design);
+        this.foot.set(foot.immutable());
+        this.formed.set(List.copyOf(parts));
+        setChanged();
+    }
+
+    /** The design of the rocket it is in, once it keeps its plan. */
+    public Optional<RocketDesign> rocket() {
+        return Optional.ofNullable(this.rocket.get());
+    }
+
+    /** Where the middle of its rocket's foot is from it, once it keeps the plan. */
+    public Optional<BlockPos> foot() {
+        return Optional.ofNullable(this.foot.get());
+    }
+
+    /** The parts of its rocket's plan formed, which it draws. */
+    public List<Integer> formed() {
+        final List<Integer> parts = this.formed.get();
+        return parts == null ? List.of() : parts;
     }
 
     /** The page its screen shows. */

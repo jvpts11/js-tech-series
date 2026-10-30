@@ -1,62 +1,122 @@
 {
   "variants": {
-    "edge=false,facing=east,formed=false": {
+    "edge=false,facing=east,formed=false,open=false": {
       "model": "jsspace:block/crane_bridge",
       "y": 90
     },
-    "edge=false,facing=east,formed=true": {
+    "edge=false,facing=east,formed=false,open=true": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 90
+    },
+    "edge=false,facing=east,formed=true,open=false": {
       "model": "jsspace:block/crane_bridge_drawn",
       "y": 90
     },
-    "edge=false,facing=north,formed=false": {
+    "edge=false,facing=east,formed=true,open=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 90
+    },
+    "edge=false,facing=north,formed=false,open=false": {
       "model": "jsspace:block/crane_bridge"
     },
-    "edge=false,facing=north,formed=true": {
-      "model": "jsspace:block/crane_bridge_drawn"
-    },
-    "edge=false,facing=south,formed=false": {
-      "model": "jsspace:block/crane_bridge",
-      "y": 180
-    },
-    "edge=false,facing=south,formed=true": {
-      "model": "jsspace:block/crane_bridge_drawn",
-      "y": 180
-    },
-    "edge=false,facing=west,formed=false": {
-      "model": "jsspace:block/crane_bridge",
-      "y": 270
-    },
-    "edge=false,facing=west,formed=true": {
-      "model": "jsspace:block/crane_bridge_drawn",
-      "y": 270
-    },
-    "edge=true,facing=east,formed=false": {
-      "model": "jsspace:block/crane_bridge",
-      "y": 90
-    },
-    "edge=true,facing=east,formed=true": {
-      "model": "jsspace:block/crane_bridge_drawn",
-      "y": 90
-    },
-    "edge=true,facing=north,formed=false": {
+    "edge=false,facing=north,formed=false,open=true": {
       "model": "jsspace:block/crane_bridge"
     },
-    "edge=true,facing=north,formed=true": {
+    "edge=false,facing=north,formed=true,open=false": {
       "model": "jsspace:block/crane_bridge_drawn"
     },
-    "edge=true,facing=south,formed=false": {
+    "edge=false,facing=north,formed=true,open=true": {
+      "model": "jsspace:block/crane_bridge_drawn"
+    },
+    "edge=false,facing=south,formed=false,open=false": {
       "model": "jsspace:block/crane_bridge",
       "y": 180
     },
-    "edge=true,facing=south,formed=true": {
+    "edge=false,facing=south,formed=false,open=true": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 180
+    },
+    "edge=false,facing=south,formed=true,open=false": {
       "model": "jsspace:block/crane_bridge_drawn",
       "y": 180
     },
-    "edge=true,facing=west,formed=false": {
+    "edge=false,facing=south,formed=true,open=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 180
+    },
+    "edge=false,facing=west,formed=false,open=false": {
       "model": "jsspace:block/crane_bridge",
       "y": 270
     },
-    "edge=true,facing=west,formed=true": {
+    "edge=false,facing=west,formed=false,open=true": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 270
+    },
+    "edge=false,facing=west,formed=true,open=false": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 270
+    },
+    "edge=false,facing=west,formed=true,open=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 270
+    },
+    "edge=true,facing=east,formed=false,open=false": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=false,open=true": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=true,open=false": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 90
+    },
+    "edge=true,facing=east,formed=true,open=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 90
+    },
+    "edge=true,facing=north,formed=false,open=false": {
+      "model": "jsspace:block/crane_bridge"
+    },
+    "edge=true,facing=north,formed=false,open=true": {
+      "model": "jsspace:block/crane_bridge"
+    },
+    "edge=true,facing=north,formed=true,open=false": {
+      "model": "jsspace:block/crane_bridge_drawn"
+    },
+    "edge=true,facing=north,formed=true,open=true": {
+      "model": "jsspace:block/crane_bridge_drawn"
+    },
+    "edge=true,facing=south,formed=false,open=false": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=false,open=true": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=true,open=false": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 180
+    },
+    "edge=true,facing=south,formed=true,open=true": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 180
+    },
+    "edge=true,facing=west,formed=false,open=false": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=false,open=true": {
+      "model": "jsspace:block/crane_bridge",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=true,open=false": {
+      "model": "jsspace:block/crane_bridge_drawn",
+      "y": 270
+    },
+    "edge=true,facing=west,formed=true,open=true": {
       "model": "jsspace:block/crane_bridge_drawn",
       "y": 270
     }

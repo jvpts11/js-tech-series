@@ -43,6 +43,8 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
     public static final BooleanProperty FORMED = BooleanProperty.create("formed");
     /** Whether a work platform is at the edge of its deck it faces, so its railing stands there. */
     public static final BooleanProperty EDGE = BooleanProperty.create("edge");
+    /** Whether a bay door stands open, drawn back out of the way of what passes through it. */
+    public static final BooleanProperty OPEN = BooleanProperty.create("open");
     private static final double PIXEL = 1.0 / 16;
 
     public HangarPieceBlock(final BlockBehaviour.Properties properties, final Kind kind) {
@@ -62,7 +64,7 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
             this.edged.put(way, edge.optimize());
         }
         registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FORMED, false)
-                .setValue(EDGE, false));
+                .setValue(EDGE, false).setValue(OPEN, false));
     }
 
     /** What piece of the hangar it is. */
@@ -78,6 +80,9 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
     @Override
     protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos,
                                   final CollisionContext context) {
+        if (state.getValue(OPEN)) {
+            return Shapes.empty();
+        }
         if (!state.getValue(FORMED)) {
             return Shapes.block();
         }
@@ -91,7 +96,7 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, FORMED, EDGE);
+        builder.add(FACING, FORMED, EDGE, OPEN);
     }
 
     /* A box of the piece, in sixteenths as it faces north, turned to face {@code way}. */
