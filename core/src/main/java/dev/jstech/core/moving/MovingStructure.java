@@ -13,6 +13,7 @@ import dev.jstech.core.moving.physics.StructurePhysics;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.uuid.StructureUuid;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -343,6 +344,23 @@ public final class MovingStructure implements IStructureBody {
         if (next == null) {
             settle();
         }
+    }
+
+    /**
+     * Parts {@code places} of its yard off as a structure of their own at a mod's word, joined to the rest or not, as a
+     * rocket lets a spent stage go: once their plot has loaded they go on from where they are, at the speed they had
+     * there, by their physics, pushed {@code way}, as it stands, by {@code push} newton seconds, and it the other way
+     * when it moves by its physics. It keeps its name, its rule and its other blocks. The name the piece is made with,
+     * which {@link MovingStructureEvent.Parted} tells once it is; none when none of {@code places} is a block of its
+     * own or the yard has no plot left. A piece still waiting for its plot when the world is saved stays part of it.
+     */
+    public Optional<StructureUuid> partOff(final ServerLevel level, final Collection<BlockPos> places,
+                                           final Direction way, final double push) {
+        final Set<Long> keys = new HashSet<>();
+        for (final BlockPos place : places) {
+            keys.add(place.asLong());
+        }
+        return Optional.ofNullable(StructureSplitting.choose(level, this, keys, way, push, splitting));
     }
 
     /** Its physics while it moves by them ({@link PhysicsMotion}), or null. */

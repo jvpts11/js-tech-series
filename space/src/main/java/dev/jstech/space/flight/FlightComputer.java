@@ -36,7 +36,8 @@ public final class FlightComputer {
             SpaceContent.CONTENT.menu("flight_computer", FlightComputerMenu::new);
     /** A key of its screen pressed, by its number ({@link FlightComputerBlockEntity#press}). */
     public static final MenuCall<FlightComputerMenu, Integer> PRESS = MenuCalls.declare(id("flight_computer_press"),
-            FlightComputerMenu.class, ByteBufCodecs.VAR_INT, (menu, player, key) -> menu.computer().press(key));
+            FlightComputerMenu.class, ByteBufCodecs.VAR_INT, (menu, player, key) -> menu.computer().press(key,
+                    player instanceof ServerPlayer pressing ? pressing : null));
     /** A spot of its landing map clicked, marked to land on. */
     public static final MenuCall<FlightComputerMenu, BlockPos> MARK = MenuCalls.declare(id("flight_computer_mark"),
             FlightComputerMenu.class, BlockPos.STREAM_CODEC, (menu, player, at) -> menu.computer().markAt(at.getX(),

@@ -13,15 +13,15 @@ import java.util.List;
 
 /**
  * The pages of the Flight Computer, one under each key along the top of its screen, as {@link #KEYS} orders them: the
- * system, the transfer, the landing, the stages and the radio. The transfer and the landing are open; the others name
- * their keys and are for the computer's later work.
+ * system, the transfer, the landing, the stages and the radio. The transfer, the landing and the stages are open; the
+ * others name their keys and are for the computer's later work.
  */
 public enum FlightPage implements IStableName, IStableId {
 
     SYSTEM("sys", 0, false),
     TRANSFER("xfer", 1, true),
     LANDING("land", 2, true),
-    STAGES("stg", 3, false),
+    STAGES("stg", 3, true),
     RADIO("comm", 4, false);
 
     /** The pages in the order of their keys along the top. */

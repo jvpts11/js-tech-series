@@ -2325,6 +2325,21 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   space whole. The capsule's live panels read the flight: the mission's clock since lift-off, the burning stage's
   propellant and the whole rocket's, the climb, the throttle, the attitude, the cabin's air and the lamps. The parts a
   flight computer draws are now lit as their capsule is, where before they were drawn dark.
+- (Space) Stages. As a rocket climbs, each stage whose engines have burnt out below the one burning is let go: its
+  blocks and its separation ring part off with a jolt and a puff round the ring, the ring's retro rockets pushing it
+  away, and it goes on as a body of its own, its formed parts still drawn whole; the rocket climbs on as it was. The
+  Flight Computer's STG page, as the approved one: the stack drawn with its stages bracketed, the chosen stage's
+  figures (its dry mass, legs, engine, whether it can come back, where it goes) and where every stage goes along the
+  bottom. Its left keys choose a stage and its right keys set where it goes before launch: anywhere, a fall zone round
+  the pad with its radius, or a landing platform of the world, the nearest first, for a stage with legs and an engine.
+  A stage set to a platform flies back over it and comes straight down on its engine, landing on its middle; one
+  falling near where it came loose falls by its physics and strikes the ground where it meets it, its blast and its
+  wreckage; one sent to its fall zone or anywhere round a player falls out of sight and strikes its column there. A
+  stage's wreckage now holds the blocks its formed parts were made of.
+- (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
+  pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
+- (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own
+  merged blocks, its model standing and turned as the part does, lit by the light round it.
 - (Core) A block a plan lays that keeps a formed shape of its own, a block entity or not, is told as its part forms and
   never merges into the part's model.
 - (Core) A plan laid by a machine: a crane, robot arms or any machine of a mod lays a plan's blocks by itself, one at

@@ -12,6 +12,7 @@ import dev.jstech.core.explosion.Explosions;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.region.Box;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.config.SpaceServerConfig;
@@ -117,7 +118,8 @@ public final class StageImpacts {
         final Level level = structure.level();
         for (final BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(),
                 box.maxZ())) {
-            final BlockState state = level.getBlockState(pos);
+            // A block merged into a formed part counts as the block it was.
+            final BlockState state = FormedPartBlock.originalAt(level, pos, level.getBlockState(pos));
             final Item item = state.getBlock().asItem();
             if (!state.isAir() && item != Items.AIR) {
                 counted.merge(item, 1, Integer::sum);

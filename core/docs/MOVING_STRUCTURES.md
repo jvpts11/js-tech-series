@@ -296,7 +296,19 @@ its physics, going on at the speed its place had. With the setting `moving_struc
 holds together.
 
 A **decoupler** parts the structure at itself when its signal comes on, as a rocket's stages part: it is gone, the
-structure parts there, and the two sides are pushed apart along the way it faced. Two structures square to each other
+structure parts there, and the two sides are pushed apart along the way it faced.
+
+*Added 2026-10-30.* A mod may part blocks it chooses itself, joined to the rest or not, with no block lost: they go
+once their plot has loaded, by their physics, pushed `way` (as the structure stands) by `push` newton seconds, and the
+structure keeps its name, its rule and the rest, whichever part is larger. The piece's name comes at once, and
+`MovingStructureEvent.Parted` tells when it is made. A piece still waiting for its plot when the world is saved stays
+part of the structure.
+
+```java
+Optional<StructureUuid> stage = rocket.partOff(level, stageBlocks, Direction.DOWN, 6_000);
+```
+
+Two structures square to each other
 can be **joined** for good, the visitor's blocks moved into the host where they stand on it:
 
 ```java

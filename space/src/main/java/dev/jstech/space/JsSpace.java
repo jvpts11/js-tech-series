@@ -41,6 +41,8 @@ import dev.jstech.space.rocket.RocketShapes;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketKits;
 import dev.jstech.space.rocket.SkeletonRocketParts;
+import dev.jstech.space.rocket.StageFlights;
+import dev.jstech.space.rocket.StageLanding;
 import dev.jstech.space.network.SpacePayloads;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.LandingCabins;
@@ -142,8 +144,11 @@ public final class JsSpace {
         DepotBlocks.declare(modEventBus);
         // The Launch Panel by the pad, where a launch is counted down.
         LaunchPanel.declare();
-        // A rocket's climb off its pad, saved with its structure.
+        // A rocket's climb off its pad, saved with its structure; its spent stages let go on their way, falling or
+        // flying back to land on their platforms.
         RocketAscent.declare();
+        StageLanding.declare();
+        StageFlights.listen();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();

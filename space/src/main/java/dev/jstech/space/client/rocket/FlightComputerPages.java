@@ -170,10 +170,16 @@ public final class FlightComputerPages {
             right.add(off(NORTH, true));
             right.add(off(SET, true));
         }
+        final FlightComputerStages.Shown stages = page == FlightPage.STAGES ? FlightComputerStages.shown(computer)
+                : FlightComputerStages.Shown.NONE;
+        if (page == FlightPage.STAGES) {
+            left.addAll(FlightComputerStages.left(stages));
+            right.addAll(FlightComputerStages.right(stages));
+        }
         final LandingMapsClient.Shown map = LandingMapsClient.shown();
         return new FlightComputerFace.View(page, left, right, name(computer.target()), computer.plan(), tick,
                 computer.mark(), computer.zoom(), computer.grid(),
-                map != null && map.world().equals(computer.target()) ? map : null, readings);
+                map != null && map.world().equals(computer.target()) ? map : null, stages, readings);
     }
 
     /**

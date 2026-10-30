@@ -162,7 +162,7 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
     }
 
     /* The burns of the rocket the structure is, with its tanks as they hold now; none for one not a rocket. */
-    private static List<StageMath.Burn> burns(final ServerLevel level, final MovingStructure structure) {
+    static List<StageMath.Burn> burns(final ServerLevel level, final MovingStructure structure) {
         final Optional<Rockets.Rocket> rocket = Rockets.get(level.getServer(), structure.id());
         if (rocket.isEmpty()) {
             return List.of();

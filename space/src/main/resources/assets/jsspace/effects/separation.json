@@ -1,0 +1,18 @@
+{
+  "reach": 128,
+  "emitters": [
+    {
+      "name": "jolt",
+      "kind": "screen",
+      "extra": {"radius": 24, "flash": 0.0, "shake": 0.35, "fade": 1.5}
+    },
+    {
+      "name": "puff",
+      "emission": {"shape": {"type": "disc", "radius": 2}, "bursts": [{"at": 0, "count": 40}], "life": [1, 3],
+                   "speed": [2, 5]},
+      "look": {"sprite": "jscore:steam", "frames": 12, "size": [0.6, 2.0], "colour": ["#E8ECF0C0", "#E8ECF000"],
+               "spin": 30},
+      "motion": {"drag": 2.0, "expands": true, "medium": "air"}
+    }
+  ]
+}

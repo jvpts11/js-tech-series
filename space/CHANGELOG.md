@@ -397,6 +397,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   space whole. The capsule's live panels read the flight: the mission's clock since lift-off, the burning stage's
   propellant and the whole rocket's, the climb, the throttle, the attitude, the cabin's air and the lamps. The parts a
   flight computer draws are now lit as their capsule is, where before they were drawn dark.
+- Stages. As a rocket climbs, each stage whose engines have burnt out below the one burning is let go: its
+  blocks and its separation ring part off with a jolt and a puff round the ring, the ring's retro rockets pushing it
+  away, and it goes on as a body of its own, its formed parts still drawn whole; the rocket climbs on as it was. The
+  Flight Computer's STG page, as the approved one: the stack drawn with its stages bracketed, the chosen stage's
+  figures (its dry mass, legs, engine, whether it can come back, where it goes) and where every stage goes along the
+  bottom. Its left keys choose a stage and its right keys set where it goes before launch: anywhere, a fall zone round
+  the pad with its radius, or a landing platform of the world, the nearest first, for a stage with legs and an engine.
+  A stage set to a platform flies back over it and comes straight down on its engine, landing on its middle; one
+  falling near where it came loose falls by its physics and strikes the ground where it meets it, its blast and its
+  wreckage; one sent to its fall zone or anywhere round a player falls out of sight and strikes its column there. A
+  stage's wreckage now holds the blocks its formed parts were made of.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

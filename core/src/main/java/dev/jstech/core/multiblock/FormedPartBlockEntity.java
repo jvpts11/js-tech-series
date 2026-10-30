@@ -42,6 +42,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
     private final ValueField<FormedPlace> place;
     private final ValueField<List<FormedPlace>> also;
     private final BoolField planned;
+    private final BoolField drawsPart;
     /* The shape last worked out, and from which shape files and places, so a new file or a turn works it again. */
     private @Nullable VoxelShape shape;
     private List<Object> shapeFrom = List.of();
@@ -55,6 +56,8 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
         this.place = fields().nullable("Place", FormedPlace.CODEC).save().toClient();
         this.also = fields().value("Also", FormedPlace.CODEC.listOf(), List.<FormedPlace>of()).save().toClient();
         this.planned = fields().flag("Planned", false).save();
+        // Whether it draws its whole formed model itself, no owner drawing it any more.
+        this.drawsPart = fields().flag("DrawsPart", false).save().toClient();
     }
 
     /** The block it was before its structure formed. */
@@ -92,6 +95,19 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
     /** Whether a plan laid it, which gives it back itself, so it never looks for its owner. */
     public boolean planned() {
         return this.planned.get();
+    }
+
+    /** Whether it draws its whole formed model itself ({@link FormedParts#drawFrom}). */
+    public boolean drawsPart() {
+        return this.drawsPart.get();
+    }
+
+    /* Draws its whole formed model itself from now on, or no longer. */
+    void drawsPart(final boolean draws) {
+        if (this.drawsPart.get() != draws) {
+            this.drawsPart.set(draws);
+            setChanged();
+        }
     }
 
     /**

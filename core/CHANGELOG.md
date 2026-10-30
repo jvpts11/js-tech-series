@@ -1740,6 +1740,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The hologram of a plan being built, drawn as the Structure Projector draws its multiblock: the blocks still
   missing as ghosts, the next layer glowing, wrong blocks marked, each part's box and words, and a line across the top
   of the screen for the nearest plan.
+- A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
+  pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
+- A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own
+  merged blocks, its model standing and turned as the part does, lit by the light round it.
 - A block a plan lays that keeps a formed shape of its own, a block entity or not, is told as its part forms and
   never merges into the part's model.
 - A plan laid by a machine: a crane, robot arms or any machine of a mod lays a plan's blocks by itself, one at

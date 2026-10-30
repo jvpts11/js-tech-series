@@ -15,12 +15,14 @@ import dev.jstech.core.moving.physics.StructurePhysics;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.uuid.StructureUuid;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,7 +37,8 @@ import org.joml.Vector3d;
  * joined to the rest is given a plot of its own, its blocks are moved there whole, and it goes on as a structure of its
  * own from where it was, at the speed it had there, by its physics: falling, flying on, or left in orbit. The part
  * that goes on as the structure keeps its name, its rule and what it holds; what stood on a piece, the joints tied to
- * it and what it held go with the piece. A setting turns it off ({@link StructureBalance#split()}).
+ * it and what it held go with the piece. A setting turns it off ({@link StructureBalance#split()}). A mod may also
+ * choose the blocks of a piece itself, joined or not ({@link MovingStructure#partOff}).
  */
 final class StructureSplitting {
 
@@ -74,6 +77,36 @@ final class StructureSplitting {
             }
         }
         return partWaiting(level, structure, waiting);
+    }
+
+    /*
+     * Takes a plot for {@code places} of {@code structure}, chosen by a mod, to part off once it has loaded whether
+     * they are joined to the rest or not, pushed {@code way} by {@code push}; the piece's name, or null when none of
+     * them is a block of its own or the yard has no plot left.
+     */
+    static @Nullable StructureUuid choose(final ServerLevel level, final MovingStructure structure,
+                                          final Set<Long> places, final Direction way, final double push,
+                                          final List<Waiting> waiting) {
+        final Box bounds = structure.bounds();
+        final Set<Long> own = new HashSet<>();
+        for (final long place : places) {
+            final BlockPos at = BlockPos.of(place);
+            if (bounds.contains(at.getX(), at.getY(), at.getZ()) && !level.getBlockState(at).isAir()) {
+                own.add(place);
+            }
+        }
+        if (own.isEmpty()) {
+            return null;
+        }
+        final Waiting piece = take(level, own, Set.of());
+        if (piece == null) {
+            return null;
+        }
+        waiting.add(piece);
+        // Pushed as a decoupler behind its first block, looking its way, would push it.
+        final BlockPos first = BlockPos.of(own.iterator().next());
+        structure.aboard().pushes().add(new StructureAboard.Push(first.relative(way.getOpposite()), way, push));
+        return piece.id();
     }
 
     /* Parts the pieces waiting whose plots have loaded; whether one is still waiting. */

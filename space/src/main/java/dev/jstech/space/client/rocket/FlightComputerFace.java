@@ -108,6 +108,8 @@ public final class FlightComputerFace {
             FlightComputerPages.transfer(g, font, view, c);
         } else if (view.page() == FlightPage.LANDING) {
             FlightComputerPages.landing(g, font, view, c);
+        } else if (view.page() == FlightPage.STAGES) {
+            FlightComputerStages.stages(g, font, view, c);
         } else {
             final String clock = GameText.resolve(CLOCK);
             text(g, font, clock, SX0 + 8, SY1 - 11, c.cyan(), false);
@@ -412,11 +414,13 @@ public final class FlightComputerFace {
      * @param zoom        how near the landing map is drawn
      * @param grid        whether the landing map has its grid
      * @param map         the landing map, once it has come
+     * @param stages      the rocket's stages, where each goes and the one chosen
      * @param readings    what the cabin reads
      */
     public record View(@Nullable FlightPage page, List<Legend> left, List<Legend> right, String target,
                        Optional<TransferPlan> plan, long tick, @Nullable BlockPos mark, int zoom, boolean grid,
-                       LandingMapsClient.@Nullable Shown map, CabinReadings readings) {
+                       LandingMapsClient.@Nullable Shown map, FlightComputerStages.Shown stages,
+                       CabinReadings readings) {
 
         public View {
             left = List.copyOf(left);
@@ -426,7 +430,7 @@ public final class FlightComputerFace {
         /** The face on a capsule's panel: the clock, no page open. */
         public static View cabin(final CabinReadings readings) {
             return new View(null, List.of(), List.of(), "", Optional.empty(), 0, null,
-                    FlightComputerBlockEntity.WIDE, false, null, readings);
+                    FlightComputerBlockEntity.WIDE, false, null, FlightComputerStages.Shown.NONE, readings);
         }
     }
 }

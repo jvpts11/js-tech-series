@@ -12,16 +12,22 @@ import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.client.rocket.FlightComputerFace;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
+import dev.jstech.space.flight.StageChoice;
+import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.rocket.RocketKitBlocks;
+import dev.jstech.space.rocket.RocketStack;
+import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
 /**
  * The Flight Computer on a player's game: used, it opens its screen on the transfer page, the Sun drawn in its yellow
  * in the middle of the system; its landing key, clicked, opens the landing page, and the map of Mars comes and is
- * drawn where the page was dark.
+ * drawn where the page was dark. On its stages page, the rocket's stack is drawn with its separation ring in amber,
+ * and its ZONE key sets the chosen stage to fall in a zone round the pad.
  */
 public final class FlightComputerClientTests {
 
@@ -38,6 +44,16 @@ public final class FlightComputerClientTests {
     private static final int CHANNEL = 0xFF;
     private static final int YELLOW = 180;
     private static final int APART = 40;
+    /*
+     * A rocket of two stages, its first with legs: twelve blocks tall, drawn four pixels a block from the floor of the
+     * stack's schematic; its first stage's ring, five blocks up, and the ZONE key's cap, in the face's pixels.
+     */
+    private static final RocketStack STAGED = RocketStack.of(part("sea_level_engine_3"), part("landing_legs_3"),
+            part("tank_3"), part("separation_ring_3"), part("vacuum_engine_3"), part("tank_3"), part("capsule_3"));
+    private static final int[] RING = {FlightComputerFace.SX0 + 42, FlightComputerFace.SY1 - 34 - 18};
+    private static final int[] ZONE_KEY = {FlightComputerFace.SX1 + 19, FlightComputerFace.SY0 + 24 + 30 + 5};
+    private static final int AMBER_RED = 200;
+    private static final int AMBER_GREEN = 140;
 
     private FlightComputerClientTests() {
     }
@@ -76,6 +92,42 @@ public final class FlightComputerClientTests {
                 });
     }
 
+    @ClientTest(timeoutTicks = 1500)
+    public static void computer_stagesPageDrawsTheStackAndSetsAFate(final ClientTestContext ctx) {
+        final int[][] seen = new int[1][];
+        ctx.afterTest(() -> ctx.server().execute(() -> ctx.serverLevel().removeBlock(ctx.abs(COMPUTER), false)));
+        ctx.thenTeleport(0, EYE, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    level.setBlockAndUpdate(ctx.abs(COMPUTER),
+                            RocketKitBlocks.FLIGHT_COMPUTER.get().defaultBlockState());
+                    if (level.getBlockEntity(ctx.abs(COMPUTER)) instanceof FlightComputerBlockEntity computer) {
+                        computer.carry(new RocketDesign("STAGES", STAGED), BlockPos.ZERO, List.of());
+                        computer.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.STAGES));
+                    }
+                })
+                .thenRightClick(SETTLE, COMPUTER)
+                .thenAwaitScreen(FlightComputerScreen.class, OPEN)
+                .then(SETTLE, () -> seen[0] = sample(ctx, RING))
+                .then(0, () -> {
+                    final int[] at = screenOf(ctx, ZONE_KEY);
+                    ctx.click(at[0], at[1]);
+                })
+                .thenWaitUntil(() -> ctx.screen(FlightComputerScreen.class) != null && ctx.screen(
+                        FlightComputerScreen.class).getMenu().computer().choices().containsKey(1), OPEN,
+                        "the first stage set to fall in a zone")
+                .then(SETTLE, () -> { })
+                .thenScreenshot(0, "flight-computer-stages")
+                .then(0, () -> {
+                    ctx.assertTrue(seen[0][0] > AMBER_RED && seen[0][1] > AMBER_GREEN && seen[0][2] < seen[0][1],
+                            "the first stage's separation ring is drawn amber in the stack: " + str(seen[0]));
+                    final StageChoice set = ctx.screen(FlightComputerScreen.class).getMenu().computer().choices()
+                            .get(1);
+                    ctx.assertTrue(!set.lands() && set.radius() == StageChoice.FIRST_RADIUS,
+                            "ZONE sets a fall zone round the pad: " + set);
+                    ctx.mc().setScreen(null);
+                });
+    }
+
     /* Where the face's pixel {@code at} is on the window, in the screen's own scaled units. */
     private static int[] screenOf(final ClientTestContext ctx, final int[] at) {
         final FlightComputerScreen screen = ctx.screen(FlightComputerScreen.class);
@@ -94,5 +146,9 @@ public final class FlightComputerClientTests {
 
     private static String str(final int[] colour) {
         return "(" + colour[0] + ", " + colour[1] + ", " + colour[2] + ")";
+    }
+
+    private static RocketStack.Part part(final String path) {
+        return new RocketStack.Part(SkeletonRocketParts.id(path), 1);
     }
 }

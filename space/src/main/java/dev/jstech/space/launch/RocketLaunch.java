@@ -22,6 +22,7 @@ import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.Rockets;
+import dev.jstech.space.rocket.StageFate;
 import dev.jstech.space.rocket.TankLoad;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +72,8 @@ public final class RocketLaunch {
         final RocketDesign design = rocket.rocket().get();
         final BlockPos foot = computer.offset(rocket.foot().get());
         final Map<Integer, TankLoad> tanks = rocket.tanks();
+        // Where its stages go, as its STG page set them: a fall zone round where it stands now.
+        final Map<Integer, StageFate> fates = rocket.fates(level.dimension(), foot);
         final BuildPlan plan = RocketPlans.of(level, design.stack());
         final List<BlockPos> places = new ArrayList<>();
         for (final PlanSpot spot : plan.spots()) {
@@ -89,6 +92,7 @@ public final class RocketLaunch {
         final MovingStructure body = made.structure();
         Rockets.register(level.getServer(), body.id(), design.stack(), by == null ? NOBODY : by);
         tanks.forEach((section, load) -> Rockets.load(level.getServer(), body.id(), section, load));
+        fates.forEach((stage, fate) -> Rockets.fate(level.getServer(), body.id(), stage, fate));
         return Optional.of(body);
     }
 

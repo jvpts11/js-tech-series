@@ -8,6 +8,7 @@
 package dev.jstech.space.flight;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.air.AirMath;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.IntField;
@@ -21,23 +22,34 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.SealedRooms;
+import dev.jstech.space.api.RocketPart;
+import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.platform.LandingPlatforms;
 import dev.jstech.space.rocket.BoilOff;
 import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.rocket.RocketAscent;
+import dev.jstech.space.rocket.RocketStages;
+import dev.jstech.space.rocket.RocketStaging;
+import dev.jstech.space.rocket.StageFate;
 import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -63,6 +75,10 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final IntField clock;
     private final LongField liftOff;
     private final ValueField<CabinReadings> readings;
+    private final IntField stage;
+    private final ValueField<Map<Integer, StageChoice>> choices;
+    private final ValueField<Map<Integer, ShownPlatform>> shown;
+    private final IntField separated;
     private int wait;
 
     /** The keys: those along the top, then those down the left and down the right, five of each from the top. */
@@ -87,6 +103,12 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private static final int MARK = LEFT + 2;
     private static final int CLEAR = LEFT + 3;
     private static final int GRID = RIGHT + 2;
+    /* The stages page's keys on the right: anywhere, a fall zone, a platform, the next platform, the next radius. */
+    private static final int ANY = RIGHT;
+    private static final int ZONE = RIGHT + 1;
+    private static final int PLATFORM = RIGHT + 2;
+    private static final int NEXT_PLATFORM = RIGHT + 3;
+    private static final int NEXT_RADIUS = RIGHT + 4;
     /** The lift-off of a rocket that has not left the ground ({@link #liftOff}). */
     public static final long NOT_LIFTED = -1;
     /* A tank's place in the stack, written as its number. */
@@ -117,6 +139,14 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         // When its rocket left the ground, the game's tick; and what its cabins read of the flight since.
         this.liftOff = fields().longInteger("LiftOff", NOT_LIFTED).save();
         this.readings = fields().nullable("Readings", CabinReadings.CODEC).toClient();
+        // Its stages page: the stage chosen, where each stage is set to go and the platforms set as its players are
+        // shown them; and how many stages its rocket has let go in flight.
+        this.stage = fields().integer("Stage", 1).save().toClient();
+        this.choices = fields().value("Choices", Codec.unboundedMap(SECTION, StageChoice.CODEC),
+                Map.<Integer, StageChoice>of()).save().toClient();
+        this.shown = fields().value("Shown", Codec.unboundedMap(SECTION, ShownPlatform.CODEC),
+                Map.<Integer, ShownPlatform>of()).toClient();
+        this.separated = fields().integer("Separated", 0).save();
     }
 
     /**
@@ -130,6 +160,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         if (!YardLayout.isYardBlock(this.worldPosition.getX())) {
             this.wait = VAPOUR_EVERY;
             BoilOff.rise(server, this);
+            showPlatforms(server);
             return;
         }
         this.wait = READ_EVERY;
@@ -146,6 +177,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                     SealedRooms.placeClimate(server, Vec3.atCenterOf(this.worldPosition)));
             this.readings.set(ascent.readings(server, body, seconds, (float) (air.pressure() / AirMath.SEA_LEVEL),
                     room.isPresent()));
+            // Each stage burnt out below the one burning is let go.
+            RocketStaging.letGo(server, body, this, ascent);
         } else if (was != null) {
             this.readings.set(was.clocked(seconds));
         }
@@ -192,11 +225,66 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         setChanged();
     }
 
-    /** Takes the plan of the rocket it is in: {@code design}, its foot {@code foot} from here, {@code parts} formed. */
+    /**
+     * Takes the plan of the rocket it is in: {@code design}, its foot {@code foot} from here, {@code parts} formed; its
+     * stages set to go nowhere yet.
+     */
     public void carry(final RocketDesign design, final BlockPos foot, final List<Integer> parts) {
         this.rocket.set(design);
         this.foot.set(foot.immutable());
         this.formed.set(List.copyOf(parts));
+        this.stage.set(1);
+        this.choices.set(Map.of());
+        this.shown.set(Map.of());
+        this.separated.set(0);
+        setChanged();
+    }
+
+    /** How many stages its rocket has; none before it keeps a rocket's plan. */
+    public int stages() {
+        final Optional<RocketDesign> design = rocket();
+        return this.level == null || design.isEmpty() ? 0
+                : RocketStages.stages(RocketParts.all(this.level), design.get().stack()).size();
+    }
+
+    /** The stage its stages page shows, numbered from one at the bottom. */
+    public int stage() {
+        return Math.max(1, this.stage.get());
+    }
+
+    /** Where each stage of its rocket is set to go, by the stage's number; a stage not in it falls anywhere. */
+    public Map<Integer, StageChoice> choices() {
+        final Map<Integer, StageChoice> set = this.choices.get();
+        return set == null ? Map.of() : set;
+    }
+
+    /** The platforms its stages are set to land on, as its players are shown them, by the stage's number. */
+    public Map<Integer, ShownPlatform> shownPlatforms() {
+        final Map<Integer, ShownPlatform> set = this.shown.get();
+        return set == null ? Map.of() : set;
+    }
+
+    /** Where each stage of its rocket goes once it flies from {@code dimension}, standing at {@code at}. */
+    public Map<Integer, StageFate> fates(final ResourceKey<Level> dimension, final BlockPos at) {
+        final Map<Integer, StageFate> out = new TreeMap<>();
+        choices().forEach((stageNumber, choice) -> out.put(stageNumber, choice.fate(dimension, at)));
+        return Map.copyOf(out);
+    }
+
+    /** How many of its rocket's stages it has let go in flight, from the bottom. */
+    public int separated() {
+        return this.separated.get();
+    }
+
+    /**
+     * Its rocket has let go its stage {@code stageNumber}, whose places in the stack are {@code sections}: it draws
+     * them no more.
+     */
+    public void letGo(final int stageNumber, final Collection<Integer> sections) {
+        final List<Integer> left = new ArrayList<>(formed());
+        left.removeAll(sections);
+        this.formed.set(List.copyOf(left));
+        this.separated.set(Math.max(this.separated.get(), stageNumber));
         setChanged();
     }
 
@@ -304,6 +392,46 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         setChanged();
     }
 
+    /**
+     * Its key {@code key} is pressed by {@code by}: on the stages page a stage is chosen on the left and where it goes
+     * set on the right, a platform only one {@code by} may use; any other key as {@link #press(int)} has it.
+     */
+    public void press(final int key, @Nullable final ServerPlayer by) {
+        if (page() != FlightPage.STAGES || key < LEFT || !(this.level instanceof ServerLevel server)) {
+            press(key);
+            return;
+        }
+        final int count = stages();
+        if (key < LEFT + KEYS) {
+            // The top stage holds this computer and goes with it: it has nowhere to be set to go.
+            if (key - LEFT + 1 < count) {
+                this.stage.set(key - LEFT + 1);
+            }
+        } else if (stage() < count) {
+            final int chosen = stage();
+            final Map<Integer, StageChoice> set = new TreeMap<>(choices());
+            final StageChoice now = set.get(chosen);
+            switch (key) {
+                case ANY -> set.remove(chosen);
+                case ZONE -> set.put(chosen, StageChoice.zone(StageChoice.FIRST_RADIUS));
+                case NEXT_RADIUS -> {
+                    if (now != null && !now.lands()) {
+                        set.put(chosen, now.nextRadius());
+                    }
+                }
+                case PLATFORM, NEXT_PLATFORM -> nextPlatform(server, by, chosen,
+                        key == NEXT_PLATFORM && now != null ? now.platform() : Optional.empty())
+                        .ifPresent(platform -> set.put(chosen, StageChoice.landing(platform)));
+                default -> {
+                    // A key the stages page does not use.
+                }
+            }
+            this.choices.set(Map.copyOf(set));
+            showPlatforms(server);
+        }
+        setChanged();
+    }
+
     /** Marks the spot at {@code x}, {@code z} of its target world to land on. */
     public void markAt(final int x, final int z) {
         this.mark.set(new BlockPos(x, 0, z));
@@ -321,5 +449,78 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             }
         }
         return Optional.empty();
+    }
+
+    /*
+     * The platform after {@code after} for the stage {@code stageNumber}, or the nearest with none: one of this world
+     * {@code by} may use, wide enough for the stage; none for a stage that cannot come back.
+     */
+    private Optional<UUID> nextPlatform(final ServerLevel server, @Nullable final ServerPlayer by,
+                                        final int stageNumber, final Optional<UUID> after) {
+        final Optional<RocketDesign> design = rocket();
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(server);
+        if (design.isEmpty() || !RocketStages.canComeBack(parts, design.get().stack(), stageNumber)) {
+            return Optional.empty();
+        }
+        final int wide = RocketStages.diameter(parts, design.get().stack(), stageNumber);
+        final List<UUID> fit = new ArrayList<>();
+        for (final Map.Entry<UUID, LandingPlatforms.Entry> platform : numbered(server)) {
+            if (platform.getValue().takes(wide) && (by == null || platform.getValue().ownership().mayUse(by))) {
+                fit.add(platform.getKey());
+            }
+        }
+        if (fit.isEmpty()) {
+            return Optional.empty();
+        }
+        final int at = after.map(fit::indexOf).orElse(-1);
+        return Optional.of(fit.get((at + 1) % fit.size()));
+    }
+
+    /* Shows its players the platforms its stages are set to: each one's number, width, distance and whether free. */
+    private void showPlatforms(final ServerLevel server) {
+        final Map<Integer, ShownPlatform> out = new TreeMap<>();
+        final List<Map.Entry<UUID, LandingPlatforms.Entry>> all = numbered(server);
+        choices().forEach((stageNumber, choice) -> choice.platform().ifPresent(id -> {
+            for (int k = 0; k < all.size(); k++) {
+                final LandingPlatforms.Entry platform = all.get(k).getValue();
+                if (all.get(k).getKey().equals(id)) {
+                    out.put(stageNumber, new ShownPlatform(k + 1, platform.side(), (int) Math.round(Math.sqrt(
+                            platform.terminal().distSqr(this.worldPosition))), platform.free()));
+                }
+            }
+        }));
+        final Map<Integer, ShownPlatform> shownNow = Map.copyOf(out);
+        if (!shownNow.equals(shownPlatforms())) {
+            this.shown.set(shownNow);
+        }
+    }
+
+    /* The platforms of the world it stands in, the nearest first, numbered so from one. */
+    private List<Map.Entry<UUID, LandingPlatforms.Entry>> numbered(final ServerLevel server) {
+        final List<Map.Entry<UUID, LandingPlatforms.Entry>> out = new ArrayList<>();
+        for (final UUID id : LandingPlatforms.all(server.getServer())) {
+            LandingPlatforms.get(server.getServer(), id).filter(platform -> platform.dimension()
+                    .equals(server.dimension())).ifPresent(platform -> out.add(Map.entry(id, platform)));
+        }
+        out.sort(Comparator.comparingDouble(platform -> platform.getValue().terminal().distSqr(this.worldPosition)));
+        return out;
+    }
+
+    /**
+     * A platform a stage is set to land on, as the stages page shows it.
+     *
+     * @param number   its number among the world's platforms, the nearest first, from one; 0 for one gone
+     * @param side     how wide it is, in blocks
+     * @param distance how far it is from the rocket, in blocks
+     * @param free     whether it holds no stage
+     */
+    public record ShownPlatform(int number, int side, int distance, boolean free) {
+
+        public static final Codec<ShownPlatform> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.INT.fieldOf("number").forGetter(ShownPlatform::number),
+                Codec.INT.fieldOf("side").forGetter(ShownPlatform::side),
+                Codec.INT.fieldOf("distance").forGetter(ShownPlatform::distance),
+                Codec.BOOL.fieldOf("free").forGetter(ShownPlatform::free)
+        ).apply(instance, ShownPlatform::new));
     }
 }

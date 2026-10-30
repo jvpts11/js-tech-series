@@ -587,6 +587,10 @@ build.start(serverLevel, ownerPos, () -> tellMyPlayers(build));   // counts once
 - **The owner draws the formed parts**, since a merged block draws nothing; it keeps the plan and its origin, starts it
   again when its chunk loads (`stop(false)` as it unloads leaves the parts formed), and may hand it on
   (`handTo(newOwner)`), as a rocket takes its own plan when it leaves its hangar.
+- **A part no owner draws** (added 2026-10-30), a piece gone its own way as a rocket's spent stage, is drawn whole
+  from one of its own merged blocks: `FormedParts.drawFrom(level, pos)` tells that block to draw its part's model
+  from then on, wherever it goes, standing where its shape file and its place in the model put it, turned as the part
+  stands. One block of each part is enough; more draws the model again over itself.
 - **Models that reach into their neighbours**: declare a part's model laid, with its own blocks and the blocks of the
   parts beside it its faces may reach into, from the block whose lowest corner is at `origin`, in blocks
   (`FormedShapes.declareLaid(model, origin, own, reach, hollow)`). The data run writes its shape file as for a

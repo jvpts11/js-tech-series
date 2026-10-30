@@ -9870,6 +9870,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructure  IStructureMotion motion()
 10 dev.jstech.core.moving.MovingStructure  Level level()
 10 dev.jstech.core.moving.MovingStructure  MovingStructureEntity entity()
+23 dev.jstech.core.moving.MovingStructure  Optional<StructureUuid> partOff(ServerLevel, Collection<BlockPos>, Direction, double)
 11 dev.jstech.core.moving.MovingStructure  Optional<UUID> maker()
 10 dev.jstech.core.moving.MovingStructure  StructureAboard aboard()
 10 dev.jstech.core.moving.MovingStructure  StructureAutopilot autopilot()
@@ -10743,12 +10744,14 @@ stable 4
 21 dev.jstech.core.multiblock.FormedPartBlockEntity  List<FormedPlace> also()
 21 dev.jstech.core.multiblock.FormedPartBlockEntity  List<FormedPlace> places()
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  VoxelShape shape()
+23 dev.jstech.core.multiblock.FormedPartBlockEntity  boolean drawsPart()
 21 dev.jstech.core.multiblock.FormedPartBlockEntity  boolean planned()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  new(BlockPos, BlockState)
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  void moved(BlockPos, BlockMove)
 10 dev.jstech.core.multiblock.FormedParts  type final class
 10 dev.jstech.core.multiblock.FormedParts  static List<Long> merge(ServerLevel, BlockPos, Collection<Long>)
 19 dev.jstech.core.multiblock.FormedParts  static List<Long> merge(ServerLevel, BlockPos, Collection<Long>, Function<BlockPos, Optional<FormedPlace>>)
+23 dev.jstech.core.multiblock.FormedParts  static boolean drawFrom(ServerLevel, BlockPos)
 21 dev.jstech.core.multiblock.FormedParts  static boolean lay(ServerLevel, BlockPos, BlockPos, FormedPlace, List<FormedPlace>)
 10 dev.jstech.core.multiblock.FormedParts  static boolean merges(BlockState)
 10 dev.jstech.core.multiblock.FormedParts  static final BlockEntry<FormedPartBlock> BLOCK

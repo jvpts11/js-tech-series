@@ -140,6 +140,19 @@ public final class FormedParts {
         }
     }
 
+    /**
+     * Has the merged block at {@code at} draw its whole formed model itself from now on, wherever it goes, as a piece
+     * no owner draws any more does, a rocket's spent stage falling on its own; whether one of a declared model stands
+     * there to do it. One block of each such part is enough, and more draws the model again over itself.
+     */
+    public static boolean drawFrom(final ServerLevel level, final BlockPos at) {
+        if (!(level.getBlockEntity(at) instanceof FormedPartBlockEntity part) || part.place() == null) {
+            return false;
+        }
+        part.drawsPart(true);
+        return true;
+    }
+
     /** Tells the block a plan laid at {@code at} which blocks of the formed models beside it reach into it now. */
     public static void reach(final ServerLevel level, final BlockPos at, final List<FormedPlace> reaching) {
         if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part && part.planned()) {
