@@ -46,6 +46,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   part built in layers repeats, the one layer it is when built a single layer tall, and the foot it stands on over an
   engine; registered in `RocketKits` by the part's id, which takes a data pack's files,
   `data/<namespace>/jsspace/rocket_kits/`. Experimental.
+- Starship parts: J's Space's API is at version 12. `ShipPart` is a part or a module of a starship: what kind
+  it is (`ShipPartKind`), the class of ship it is for (`ShipClass`, which gives the room its hull has for modules),
+  where it goes (`ShipPlace`: the nose, along the spine, the tail only, behind the spine's end, at the wings' root, on
+  wings that carry nacelles, along the sides, round the ship or under it), its length along the spine, the room a
+  module takes, and whether it holds an airlock or, for wings, carries nacelles; registered in `ShipParts` by id, which
+  takes a data pack's files, `data/<namespace>/jsspace/ship_parts/`. Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -482,6 +488,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   medium (the geostationary orbit and the Moon) or large (the other worlds). A geostationary satellite is heard by an
   antenna under it that hears that far; one in a low or polar orbit only while it passes over one, the world turning
   under its orbit pass by pass; a relay satellite passes the signal on all the time.
+- The starship's section model: every ship is built of modules, a spine of sections from the nose to the tail
+  joined by its class's standard joint, with the wings at the second section, nacelles on wings that carry them, the
+  fins and the tail engine at the spine's end (never behind a ramp opening there), side intakes, thrusters round it
+  and the gear under it. A small ship's hull has room for one medium module or two or three small ones. A design
+  flies with a cockpit, an airlock, a reactor, a main engine, the gear and a whole spine, its parts all where they go
+  and of one class; what keeps one down is named.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

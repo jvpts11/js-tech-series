@@ -93,6 +93,41 @@ stable 0
 11 dev.jstech.space.api.SatelliteTypes  static Map<ResourceLocation, SatelliteType> declared()
 11 dev.jstech.space.api.SatelliteTypes  static Optional<SatelliteType> get(Level, ResourceLocation)
 11 dev.jstech.space.api.SatelliteTypes  static SatelliteType declare(ResourceLocation, SatelliteType)
+12 dev.jstech.space.api.ShipClass  type enum implements IStableName
+12 dev.jstech.space.api.ShipClass  SMALL
+12 dev.jstech.space.api.ShipClass  String serializedName()
+12 dev.jstech.space.api.ShipClass  int room()
+12 dev.jstech.space.api.ShipPart  type record(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room, boolean airlock, boolean carries)
+12 dev.jstech.space.api.ShipPart  static final Codec<ShipPart> CODEC
+12 dev.jstech.space.api.ShipPartKind  type enum implements IStableName
+12 dev.jstech.space.api.ShipPartKind  AIR_ENGINE
+12 dev.jstech.space.api.ShipPartKind  COCKPIT
+12 dev.jstech.space.api.ShipPartKind  FINS
+12 dev.jstech.space.api.ShipPartKind  GEAR
+12 dev.jstech.space.api.ShipPartKind  HOLD
+12 dev.jstech.space.api.ShipPartKind  HULL
+12 dev.jstech.space.api.ShipPartKind  MAIN_ENGINE
+12 dev.jstech.space.api.ShipPartKind  MODULE
+12 dev.jstech.space.api.ShipPartKind  REACTOR
+12 dev.jstech.space.api.ShipPartKind  String serializedName()
+12 dev.jstech.space.api.ShipPartKind  THRUSTERS
+12 dev.jstech.space.api.ShipPartKind  WINGS
+12 dev.jstech.space.api.ShipParts  type final class
+12 dev.jstech.space.api.ShipParts  static Map<ResourceLocation, ShipPart> all(Level)
+12 dev.jstech.space.api.ShipParts  static Map<ResourceLocation, ShipPart> declared()
+12 dev.jstech.space.api.ShipParts  static Optional<ShipPart> get(Level, ResourceLocation)
+12 dev.jstech.space.api.ShipParts  static ShipPart declare(ResourceLocation, ShipPart)
+12 dev.jstech.space.api.ShipPlace  type enum implements IStableName
+12 dev.jstech.space.api.ShipPlace  AROUND
+12 dev.jstech.space.api.ShipPlace  NOSE
+12 dev.jstech.space.api.ShipPlace  ON_WINGS
+12 dev.jstech.space.api.ShipPlace  SIDES
+12 dev.jstech.space.api.ShipPlace  SPINE
+12 dev.jstech.space.api.ShipPlace  SPINE_END
+12 dev.jstech.space.api.ShipPlace  String serializedName()
+12 dev.jstech.space.api.ShipPlace  TAIL
+12 dev.jstech.space.api.ShipPlace  UNDER
+12 dev.jstech.space.api.ShipPlace  WING_ROOT
 2 dev.jstech.space.api.SpaceAdvancementTab  type enum
 2 dev.jstech.space.api.SpaceAdvancementTab  LEAVING_THE_EARTH
 2 dev.jstech.space.api.SpaceAdvancementTab  MARS

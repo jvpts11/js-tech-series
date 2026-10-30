@@ -29,7 +29,7 @@ public final class JsSpaceApi {
      * }
      * }</pre>
      */
-    public static final int VERSION = 11;
+    public static final int VERSION = 12;
 
     private JsSpaceApi() {
     }
