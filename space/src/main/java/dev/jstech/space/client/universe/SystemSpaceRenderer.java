@@ -59,9 +59,18 @@ public final class SystemSpaceRenderer {
     private static final float TEXEL_PIXELS = 1F;
     /* The worlds under the space as their climbs draw them, by their sphere's name, as the server last told. */
     private static final Map<String, ClimbWorldsPayload.ClimbWorld> WORLDS_BELOW = new ConcurrentHashMap<>();
+    /*
+     * How long a low orbit takes, in ticks: sixteen a day at the Overworld's pace, as the International Space Station
+     * sees sixteen sunrises a day, a little over a minute each.
+     */
+    private static final double ORBIT_TICKS = 24_000.0 / 16;
 
     @Nullable
     private static VertexBuffer sunSquare;
+    /* The world whose orbit the eye is in, and the tick it came into it at, from which its world slides by below. */
+    @Nullable
+    private static SolarBody orbiting;
+    private static double orbitingSince;
 
     private SystemSpaceRenderer() {
     }
@@ -93,6 +102,17 @@ public final class SystemSpaceRenderer {
     static void drawScene(final Vec3 eye, final double tick, @Nullable final SolarBody home, final float homeFade,
                           final SphereDrawing.Veil homeVeil, final float fade, final float sunFade,
                           final Matrix4f view, final Matrix4f projection) {
+        drawScene(eye, tick, home, homeFade, homeVeil, fade, sunFade, null, 0, view, projection);
+    }
+
+    /*
+     * As above, the world {@code slid}, the one whose orbit the eye is in, turned {@code slide} radians further about
+     * its poles, as it slides by below one going round it.
+     */
+    private static void drawScene(final Vec3 eye, final double tick, @Nullable final SolarBody home,
+                                  final float homeFade, final SphereDrawing.Veil homeVeil, final float fade,
+                                  final float sunFade, @Nullable final SolarBody slid, final double slide,
+                                  final Matrix4f view, final Matrix4f projection) {
         final double[] sun = SystemLayout.sun();
         final List<Drawn> drawn = new ArrayList<>();
         drawn.add(new Drawn(null, distance(sun, eye) - SystemLayout.SUN_RADIUS));
@@ -107,8 +127,8 @@ public final class SystemSpaceRenderer {
             } else {
                 final float shown = body == home ? homeFade : fade;
                 if (shown > 0) {
-                    drawWorld(body, tick, eye, shown, body == home ? homeVeil : SphereDrawing.Veil.NONE, view,
-                            projection);
+                    drawWorld(body, tick, body == slid ? slide : 0, eye, shown, body == home ? homeVeil
+                            : SphereDrawing.Veil.NONE, view, projection);
                 }
             }
         }
@@ -121,9 +141,32 @@ public final class SystemSpaceRenderer {
             return;
         }
         SphereDrawing.begin();
-        drawScene(eyeOf(event.getCamera().getPosition()), SphereDrawing.time(level, event), null, 1F,
-                SphereDrawing.Veil.NONE, 1F, 1F, event.getModelViewMatrix(), event.getProjectionMatrix());
+        final Vec3 camera = event.getCamera().getPosition();
+        final double tick = SphereDrawing.time(level, event);
+        drawScene(eyeOf(camera), tick, null, 1F, SphereDrawing.Veil.NONE, 1F, 1F, orbiting, orbitSlide(camera, tick),
+                event.getModelViewMatrix(), event.getProjectionMatrix());
         SphereDrawing.end();
+    }
+
+    /*
+     * How far the world whose orbit the eye at {@code camera} is in has slid by below it since it came there, in
+     * radians, at {@code tick}: a turn every {@link #ORBIT_TICKS}; on the way down to the floor of the orbits, under
+     * them, wound back to nothing as it comes to the floor, so the way down shows the place it comes down over.
+     */
+    private static double orbitSlide(final Vec3 camera, final double tick) {
+        final double floor = SystemLayout.ORBIT_Y - SpaceClimbs.UNDER_THE_FLOOR;
+        final SolarBody body = camera.y >= floor ? SystemLayout.over(camera.x, camera.z) : null;
+        if (body == null || body != orbiting) {
+            orbiting = body;
+            orbitingSince = tick;
+            return 0;
+        }
+        final double slide = 2 * Math.PI * (tick - orbitingSince) / ORBIT_TICKS;
+        if (camera.y >= SystemLayout.ORBIT_Y) {
+            return slide;
+        }
+        final double wound = Math.IEEEremainder(slide, 2 * Math.PI);
+        return wound * (camera.y - floor) / (SystemLayout.ORBIT_Y - floor);
     }
 
     /*
@@ -143,16 +186,23 @@ public final class SystemSpaceRenderer {
         return new Vec3(eye[0], eye[1], eye[2]);
     }
 
-    /* A world where it stands, brought within reach of the eye. */
-    private static void drawWorld(final SolarBody body, final double tick, final Vec3 eye, final float fade,
-                                  final SphereDrawing.Veil veil, final Matrix4f view, final Matrix4f projection) {
+    /* A world where it stands, brought within reach of the eye, turned {@code slide} radians more about its poles. */
+    private static void drawWorld(final SolarBody body, final double tick, final double slide, final Vec3 eye,
+                                  final float fade, final SphereDrawing.Veil veil, final Matrix4f view,
+                                  final Matrix4f projection) {
         final double[] centre = SystemLayout.centre(body);
         final Vector3d at = new Vector3d(centre[0] - eye.x, centre[1] - eye.y, centre[2] - eye.z);
         final double radius = SystemLayout.radius(body);
         final double shrink = SphereDrawing.DRAWN_WITHIN / (at.length() + radius);
-        SphereDrawing.draw(body, tick, at.mul(shrink), radius * shrink, SystemLayout.north(body),
-                SystemLayout.middle(body, tick), SystemLayout.sunward(body), TEXEL_PIXELS, fade, veil, view,
-                projection);
+        final double[] north = SystemLayout.north(body);
+        final double[] middle = SystemLayout.middle(body, tick);
+        // Turned about its poles: the middle of its map goes round, its clouds with it, square to its north.
+        final double[] east = SystemLayout.cross(north, middle);
+        final double c = Math.cos(slide);
+        final double s = Math.sin(slide);
+        final double[] turned = {c * middle[0] + s * east[0], c * middle[1] + s * east[1], c * middle[2] + s * east[2]};
+        SphereDrawing.draw(body, tick, at.mul(shrink), radius * shrink, north, turned, SystemLayout.sunward(body),
+                TEXEL_PIXELS, fade, veil, view, projection);
     }
 
     /* The Sun, the game's square, as big as a sphere of the Sun's radius looks from here, added to what is behind. */

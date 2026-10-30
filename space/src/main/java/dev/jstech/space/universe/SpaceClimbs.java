@@ -15,6 +15,7 @@ import dev.jstech.core.moving.StructureFooting;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.network.ClimbWorldsPayload;
+import dev.jstech.space.orbit.OrbitObjects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -115,6 +116,8 @@ public final class SpaceClimbs {
                 final double[] spot = SystemLayout.orbitSpot(body, SphereMap.longitude(structure.pose().x(), width),
                         SphereMap.latitude(structure.pose().z(), width));
                 announceAboard(entity);
+                // Told as a thing in the world's orbit, its blocks still here to be looked over.
+                OrbitObjects.arrived(level, structure, body);
                 MovingStructures.travel(structure, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]));
                 PASSED.put(entity, level.getGameTime());
             }
@@ -140,6 +143,7 @@ public final class SpaceClimbs {
             final Below below = below(space, structure.pose().x(), structure.pose().z());
             if (below != null) {
                 announceAboard(entity);
+                OrbitObjects.forget(space.getServer(), structure.id().value());
                 MovingStructures.travel(structure, below.level(), below.at());
                 PASSED.put(entity, space.getGameTime());
             }

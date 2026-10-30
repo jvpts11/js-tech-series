@@ -61,6 +61,16 @@ public final class SystemSpaceClientTests {
     private static final float NORTH = 180F;
     private static final float DOWN = 90F;
     private static final int CHANNEL = 0xFF;
+    /*
+     * The world below slid by in orbit: read along a line across the screen, under the crosshair, twice, a second
+     * apart; in a second it slides by some 84 blocks, against some 5 it turns by itself, so the line's picture moves
+     * this many points or more, sought this far either way.
+     */
+    private static final int SLIDING = 20;
+    private static final int LINE = 120;
+    private static final int LINE_DOWN = 24;
+    private static final int MOST_SHIFT = 80;
+    private static final int SLID = 20;
 
     private SystemSpaceClientTests() {
     }
@@ -144,6 +154,34 @@ public final class SystemSpaceClientTests {
                 .thenScreenshot(0, "mars_day");
     }
 
+    @ClientTest(timeoutTicks = 2400)
+    public static void orbit_slidesTheWorldByBelow(final ClientTestContext ctx) {
+        final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
+        final int[][] lines = new int[2][];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            final BlockPos origin = ctx.origin().above(2);
+            ctx.serverPlayer().teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(),
+                    origin.getZ() + 0.5, 0F, 0F);
+            RuntimeDimensions.remove(ctx.server(), SPACE);
+        }));
+        ctx.thenServer(0, level -> look(ctx, SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM),
+                        home[0] - ASIDE, home[2], NORTH, DOWN))
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(SPACE), ARRIVE,
+                        "the player's game to reach the Solar System's space")
+                .thenWaitUntil(() -> bright(ctx, 0, OFF_CROSSHAIR) > LIT, DRAWN,
+                        "the Overworld's day side to be drawn lit below")
+                .then(SETTLE, () -> lines[0] = line(ctx))
+                .thenScreenshot(0, "orbit_before")
+                .then(SLIDING, () -> lines[1] = line(ctx))
+                .thenScreenshot(0, "orbit_after")
+                .then(0, () -> {
+                    final int moved = shift(lines[0], lines[1]);
+                    ctx.assertTrue(Math.abs(moved) >= SLID, "in orbit the world slides by below, a turn a little over "
+                            + "a minute, far faster than it turns by itself: moved " + moved + " points in "
+                            + SLIDING + " ticks");
+                });
+    }
+
     /* Puts the player flying in the space over ({@code x}, {@code z}), at the height of the low orbits. */
     private static void look(final ClientTestContext ctx, final ServerLevel space, final double x, final double z,
                              final float yaw, final float pitch) {
@@ -168,6 +206,43 @@ public final class SystemSpaceClientTests {
     }
 
     /* The mean red, green and blue of three by three of the GUI's points, {@code dx} and {@code dy} off the middle. */
+    /* How bright the screen is along a line across it, under the crosshair, point by point. */
+    private static int[] line(final ClientTestContext ctx) {
+        final int middle = ctx.mc().getWindow().getGuiScaledWidth() / 2;
+        final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2 + LINE_DOWN;
+        final int[] out = new int[2 * LINE + 1];
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int i = 0; i < out.length; i++) {
+                final int argb = frame.pixel(middle - LINE + i, y);
+                out[i] = (argb >> 16 & CHANNEL) + (argb >> 8 & CHANNEL) + (argb & CHANNEL);
+            }
+        }
+        return out;
+    }
+
+    /* How far along the line {@code after} has moved from {@code before}: the shift by which they differ least. */
+    private static int shift(final int[] before, final int[] after) {
+        int best = 0;
+        double least = Double.MAX_VALUE;
+        for (int k = -MOST_SHIFT; k <= MOST_SHIFT; k++) {
+            long sum = 0;
+            int count = 0;
+            for (int i = 0; i < before.length; i++) {
+                final int j = i + k;
+                if (j >= 0 && j < after.length) {
+                    sum += Math.abs(before[i] - after[j]);
+                    count++;
+                }
+            }
+            final double mean = (double) sum / count;
+            if (mean < least) {
+                least = mean;
+                best = k;
+            }
+        }
+        return best;
+    }
+
     private static int[] colour(final ClientTestContext ctx, final int dx, final int dy) {
         final int x = ctx.mc().getWindow().getGuiScaledWidth() / 2 + dx;
         final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2 + dy;

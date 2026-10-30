@@ -207,4 +207,9 @@ public final class SpaceServerConfig {
     public static boolean fallingStagesDoDamage() {
         return FILE.get(FALLING_STAGES_DO_DAMAGE);
     }
+
+    /** Whether a destroyed satellite leaves debris in orbit. */
+    public static boolean debris() {
+        return FILE.get(DEBRIS);
+    }
 }

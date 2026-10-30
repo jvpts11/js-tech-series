@@ -13,6 +13,21 @@ stable 0
 3 dev.jstech.space.api.IWorldModifier  default SurfaceRules.RuleSource surface(SpaceWorld, SurfaceRules.RuleSource)
 1 dev.jstech.space.api.JsSpaceApi  type final class
 1 dev.jstech.space.api.JsSpaceApi  static final int VERSION
+11 dev.jstech.space.api.OrbitKind  type enum implements IStableName
+11 dev.jstech.space.api.OrbitKind  DEEP_SPACE
+11 dev.jstech.space.api.OrbitKind  GEOSTATIONARY
+11 dev.jstech.space.api.OrbitKind  LOW
+11 dev.jstech.space.api.OrbitKind  POLAR
+11 dev.jstech.space.api.OrbitKind  RADIATION_BELT
+11 dev.jstech.space.api.OrbitKind  String serializedName()
+11 dev.jstech.space.api.OrbitKind  static final Codec<OrbitKind> CODEC
+11 dev.jstech.space.api.ProbeType  type record(String name, boolean lands)
+11 dev.jstech.space.api.ProbeType  static final Codec<ProbeType> CODEC
+11 dev.jstech.space.api.ProbeTypes  type final class
+11 dev.jstech.space.api.ProbeTypes  static Map<ResourceLocation, ProbeType> all(Level)
+11 dev.jstech.space.api.ProbeTypes  static Map<ResourceLocation, ProbeType> declared()
+11 dev.jstech.space.api.ProbeTypes  static Optional<ProbeType> get(Level, ResourceLocation)
+11 dev.jstech.space.api.ProbeTypes  static ProbeType declare(ResourceLocation, ProbeType)
 9 dev.jstech.space.api.Propellant  type record(String name, List<Component> components, double vacuumIsp, boolean hypergolic)
 9 dev.jstech.space.api.Propellant  boolean solid()
 9 dev.jstech.space.api.Propellant  double share(ResourceLocation)
@@ -71,6 +86,13 @@ stable 0
 8 dev.jstech.space.api.RocketParts  static Map<ResourceLocation, RocketPart> declared()
 8 dev.jstech.space.api.RocketParts  static Optional<RocketPart> get(Level, ResourceLocation)
 8 dev.jstech.space.api.RocketParts  static RocketPart declare(ResourceLocation, RocketPart)
+11 dev.jstech.space.api.SatelliteType  type record(String name, List<OrbitKind> orbits)
+11 dev.jstech.space.api.SatelliteType  static final Codec<SatelliteType> CODEC
+11 dev.jstech.space.api.SatelliteTypes  type final class
+11 dev.jstech.space.api.SatelliteTypes  static Map<ResourceLocation, SatelliteType> all(Level)
+11 dev.jstech.space.api.SatelliteTypes  static Map<ResourceLocation, SatelliteType> declared()
+11 dev.jstech.space.api.SatelliteTypes  static Optional<SatelliteType> get(Level, ResourceLocation)
+11 dev.jstech.space.api.SatelliteTypes  static SatelliteType declare(ResourceLocation, SatelliteType)
 2 dev.jstech.space.api.SpaceAdvancementTab  type enum
 2 dev.jstech.space.api.SpaceAdvancementTab  LEAVING_THE_EARTH
 2 dev.jstech.space.api.SpaceAdvancementTab  MARS
@@ -105,6 +127,12 @@ stable 0
 3 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> get(Level, ResourceLocation)
 3 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> ofDimension(Level, ResourceKey<Level>)
 3 dev.jstech.space.api.SpaceWorlds  static SpaceWorld declare(ResourceLocation, SpaceWorld)
+11 dev.jstech.space.api.SpacecraftSize  type enum implements IStableName
+11 dev.jstech.space.api.SpacecraftSize  CUBESAT
+11 dev.jstech.space.api.SpacecraftSize  LARGE
+11 dev.jstech.space.api.SpacecraftSize  MEDIUM
+11 dev.jstech.space.api.SpacecraftSize  String serializedName()
+11 dev.jstech.space.api.SpacecraftSize  static final Codec<SpacecraftSize> CODEC
 6 dev.jstech.space.api.SuitModule  type record(String name, Kind kind, EquipmentSlot piece, double amount)
 6 dev.jstech.space.api.SuitModule  static final Codec<SuitModule> CODEC
 6 dev.jstech.space.api.SuitModule.Kind  type enum implements IStableName

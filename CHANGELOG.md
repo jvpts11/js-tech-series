@@ -2336,6 +2336,21 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   falling near where it came loose falls by its physics and strikes the ground where it meets it, its blast and its
   wreckage; one sent to its fall zone or anywhere round a player falls out of sight and strikes its column there. A
   stage's wreckage now holds the blocks its formed parts were made of.
+- (Space) In orbit. Seen from a world's orbit, the world slides by below, an orbit a little over a minute at the
+  Overworld's pace, sixteen sunrises to its day, its clouds going round with it; coming down, it winds back to the
+  place below. In the system's space there is no air and no gravity: no sound carries, and a loose thing floats where it
+  is let go. The world keeps everything in its worlds' orbits: the rockets that pass into one are told there as they
+  arrive, whose they are, kept loaded when a Space Persistor stands aboard, and forgotten as they go back down; a
+  satellite or a probe let go by its owner works no more and any team may take it; a destroyed one becomes debris in
+  its orbit, in pieces, unless the server turns debris off. The kinds of satellite (communication, relay, navigation,
+  mapping, weather, observation, the space telescope, solar power, antiproton and debris collectors, the laser and the
+  planetary climate satellite) and of probe (flyby, orbiter, lander, rover, drone, sample return, aeroprobe, mining
+  probe, impactor, solar, interstellar and solar gravitational lens probes), and how a satellite or a probe is built:
+  its size, a CubeSat, medium or large; its bus, its power, solar panels or an RTG, its battery, its antenna, its
+  propulsion, cold gas, hydrazine or ion, its onboard computer, and the mission module that sets its kind.
+- (Space) API 11: the kinds of satellite and of probe, by id, declared in code or by a data pack's files
+  (`SatelliteTypes`, `ProbeTypes`), each with its orbits or whether it lands, and the orbits and sizes they come in
+  (`OrbitKind`, `SpacecraftSize`).
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own
