@@ -93,13 +93,13 @@ public final class ShipPartsGameTests {
                 makers.merge(maker, 1, Integer::sum);
             }
         }
-        helper.assertTrue(small == 25, "the small ship has 25 parts: " + small);
-        helper.assertTrue(makers.equals(Map.of(SmallShipMakers.MERIDIAN_ORBITAL, 10, SmallShipMakers.IRONSIDE_YARDS, 9,
-                SmallShipMakers.KOSMOZAVOD_ID, 6)), "the three makers own their families: " + makers);
+        helper.assertTrue(small == 30, "the small ship has 25 parts and 5 modules: " + small);
+        helper.assertTrue(makers.equals(Map.of(SmallShipMakers.MERIDIAN_ORBITAL, 11, SmallShipMakers.IRONSIDE_YARDS,
+                11, SmallShipMakers.KOSMOZAVOD_ID, 8)), "the three makers own their families: " + makers);
         helper.assertTrue(parts.get(SmallShipParts.id("small_greenhouse_cockpit")).maker().orElseThrow()
                 .equals(SmallShipMakers.KOSMOZAVOD_ID), "the glazed navigator's nose is Kosmozavod's");
-        helper.assertTrue(kinds.size() == 10 && !kinds.containsKey(ShipPartKind.MODULE),
-                "in ten kinds, the functional modules apart: " + kinds);
+        helper.assertTrue(kinds.size() == 11 && kinds.get(ShipPartKind.MODULE) == 5,
+                "in ten kinds, and the five functional modules: " + kinds);
         final ShipDesign orbiter = new ShipDesign("ORBITER", catalogue("orbiter_cockpit", "airlock", "bay",
                 "reactor_flush"), catalogue("twin_bells", "side_intakes", "blended_delta", "twin_canted_fins",
                 "blisters", "wheels"));

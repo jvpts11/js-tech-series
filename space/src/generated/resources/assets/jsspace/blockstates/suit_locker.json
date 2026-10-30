@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "formed=false": {
       "model": "jsspace:block/suit_locker"
+    },
+    "formed=true": {
+      "model": "jsspace:block/suit_locker_formed"
     }
   }
 }

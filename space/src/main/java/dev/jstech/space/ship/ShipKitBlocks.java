@@ -16,10 +16,14 @@ import dev.jstech.core.content.IBlockModel;
 import dev.jstech.space.SpaceContent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * The blocks the starship parts are built of, a kind for each real thing a part has, grouped by the section that places
@@ -65,8 +69,12 @@ public final class ShipKitBlocks {
     public static final BlockEntry<Block> AIRLOCK_DOOR = add(kit("airlock_door").named("Airlock Door").register());
     public static final BlockEntry<Block> AIRLOCK_CYCLER = add(kit("airlock_cycler").named("Airlock Cycler")
             .register());
-    public static final BlockEntry<Block> SUIT_LOCKER = add(kit("suit_locker").named("Suit Locker").register());
-    public static final BlockEntry<Block> OXYGEN_PANEL = add(kit("oxygen_panel").named("Oxygen Panel").register());
+    public static final BlockEntry<Block> SUIT_LOCKER = add(fixture("suit_locker", SuitLockerBlock::new)
+            .named("Suit Locker").register());
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SuitLockerEntity>> SUIT_LOCKER_ENTITY =
+            SpaceContent.CONTENT.blockEntity("suit_locker", SuitLockerEntity::new, SUIT_LOCKER);
+    public static final BlockEntry<Block> OXYGEN_PANEL = add(fixture("oxygen_panel", OxygenPanelBlock::new)
+            .named("Oxygen Panel").register());
     public static final BlockEntry<Block> DOCKING_COLLAR = add(kit("docking_collar").named("Docking Collar")
             .register());
     public static final BlockEntry<Block> DOCKING_GUIDE = add(kit("docking_guide").named("Docking Guide").register());
@@ -115,7 +123,8 @@ public final class ShipKitBlocks {
     public static final BlockEntry<Block> SAMPLE_RACK = add(kit("sample_rack").named("Sample Rack").register());
     public static final BlockEntry<Block> SERVER_PANEL = add(kit("server_panel").named("Server Panel").register());
     public static final BlockEntry<Block> ANTENNA_FEED = add(kit("antenna_feed").named("Antenna Feed").register());
-    public static final BlockEntry<Block> BUNK_FRAME = add(kit("bunk_frame").named("Bunk Frame").register());
+    public static final BlockEntry<Block> BUNK_FRAME = add(fixture("bunk_frame", BunkBlock::new).named("Bunk Frame")
+            .register());
     public static final BlockEntry<Block> CARGO_RACK = add(kit("cargo_rack").named("Cargo Rack").register());
     public static final BlockEntry<Block> TIE_DOWN_DECK = add(kit("tie_down_deck").named("Tie-Down Deck").register());
     public static final BlockEntry<Block> RAMP_HINGE = add(kit("ramp_hinge").named("Ramp Hinge").register());
@@ -136,10 +145,23 @@ public final class ShipKitBlocks {
 
     /* A block of the kit: metal, as hard as iron, its face {@code block/ship/<id>} on all six sides. */
     private static BlockBuilder<Block> kit(final String id) {
-        return SpaceContent.CONTENT.block(id, Block::new)
-                .properties(properties -> properties.mapColor(MapColor.METAL).strength(3.0F, 6.0F)
+        return metal(SpaceContent.CONTENT.block(id, Block::new))
+                .look(IBlockLook.fixed(new IBlockModel.CubeAll(id, "block/ship/" + id)));
+    }
+
+    /* A block of the kit that works aboard, made by {@code factory}: drawn by its part's model once that is formed. */
+    private static BlockBuilder<Block> fixture(final String id,
+                                               final Function<BlockBehaviour.Properties, Block> factory) {
+        final IBlockModel cube = new IBlockModel.CubeAll(id, "block/ship/" + id);
+        final IBlockModel formed = new IBlockModel.ParticleOnly(id + "_formed", "jsspace:block/ship/" + id);
+        return metal(SpaceContent.CONTENT.block(id, factory))
+                .look(IBlockLook.byState(state -> state.getValue(ShipFixtureBlock.FORMED) ? formed : cube));
+    }
+
+    /* Metal, as hard as iron, dropping itself, in the tab's row. */
+    private static BlockBuilder<Block> metal(final BlockBuilder<Block> block) {
+        return block.properties(properties -> properties.mapColor(MapColor.METAL).strength(3.0F, 6.0F)
                         .requiresCorrectToolForDrops().sound(SoundType.METAL))
-                .look(IBlockLook.fixed(new IBlockModel.CubeAll(id, "block/ship/" + id)))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(SHIP_PARTS);
     }
 

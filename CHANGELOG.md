@@ -432,6 +432,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   each of its parts its shape and, to one a player goes into, its interior; registered in `ShipMakers` by id, which
   takes a data pack's files, `data/<namespace>/jsspace/ship_makers/`. `ShipPart` gains its `maker`, by id, written in
   a part's file as `maker`. Experimental.
+- (Core) Blocks that keep themselves in a plan: J's Core's API is at version 27. A block in the tag
+  `jscore:keeps_itself_in_plans` keeps itself when its plan's part forms, as an `IPlanMember` does, drawing and working
+  as it is, for a vanilla block a mod cannot make a member; `IPlanMember.keepsItself` says whether a block does.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2499,6 +2502,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Kosmozavod's turquoise panels over beige quilted padding on a wooden floor; each module's bulkhead with its doorway,
   and in the cockpits the flight deck with its displays and switch panels. The windows are glass the world is seen
   through, from inside and out.
+- (Space) The small ship's functional modules, a third of its hull's room each: the Workshop, whose vanilla crafting
+  table, smithing table, furnace and barrel stand in it and work aboard; the Laboratory, with its bench, sample racks,
+  microscope and analyser; the Quarters, whose bunk is a respawn point in a sealed cabin of breathable air and wakes
+  no one where the air is gone; Computing, with its desk and server rack; and Small Cargo, its racks and a barrel. The
+  airlock's oxygen panel fills a worn suit's tanks from the cabin's air, and its suit locker keeps a crew's suits; the
+  holds keep their cargo in vanilla barrels, strapped down by the hoist rail and the manifest terminal; the reactor
+  room has its fusion drum. Fixtures the models draw stop drawing themselves once their part is formed.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

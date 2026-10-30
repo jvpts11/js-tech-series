@@ -51,7 +51,7 @@ public final class ShipPartModels {
             }
             final ShipPart declared = ShipParts.declared().get(part);
             final boolean glazed = declared != null && (declared.kind() == ShipPartKind.COCKPIT
-                    || declared.kind() == ShipPartKind.HULL);
+                    || declared.kind() == ShipPartKind.HULL || declared.kind() == ShipPartKind.MODULE);
             for (final ShipKit.Piece piece : kit.pieces()) {
                 final String name = name(part, kit, piece);
                 for (final String finish : FINISHES) {

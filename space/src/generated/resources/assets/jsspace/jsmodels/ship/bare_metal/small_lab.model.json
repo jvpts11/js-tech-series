@@ -1,0 +1,8 @@
+{
+  "model": "jsspace:jsmodels/ship/small_lab.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_lab_bare_metal.png"
+  ],
+  "translucent": true,
+  "triangles": 9000
+}

@@ -1,0 +1,8 @@
+{
+  "model": "jsspace:jsmodels/ship/small_computing.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_computing_orbiter.png"
+  ],
+  "translucent": true,
+  "triangles": 9000
+}

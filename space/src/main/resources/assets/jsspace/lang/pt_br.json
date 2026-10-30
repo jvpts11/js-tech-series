@@ -757,5 +757,17 @@
   "jsspace.ship_finish.enamel": "Esmalte",
   "jsspace.ship_maker.meridian_orbital": "Meridian Orbital",
   "jsspace.ship_maker.ironside_yards": "Ironside Yards",
-  "jsspace.ship_maker.kosmozavod": "Kosmozavod"
+  "jsspace.ship_maker.kosmozavod": "Kosmozavod",
+  "jsspace.ship_part.workshop": "Oficina",
+  "jsspace.ship_part.lab": "Laboratório",
+  "jsspace.ship_part.quarters": "Alojamento",
+  "jsspace.ship_part.computing": "Computação",
+  "jsspace.ship_part.small_cargo": "Carga Pequena",
+  "jsspace.ship_fixture.suit_locker": "Armário de Trajes",
+  "jsspace.ship_fixture.no_suit": "Vista um traje para encher os tanques",
+  "jsspace.ship_fixture.filled": "%s segundos de oxigênio nos tanques do traje",
+  "jsspace.ship_fixture.full": "Os tanques do traje estão cheios",
+  "jsspace.ship_fixture.no_oxygen": "Não há oxigênio no ar da cabine para encher",
+  "jsspace.ship_fixture.respawn_set": "Você vai acordar neste beliche",
+  "jsspace.ship_fixture.no_air": "Não há ar para respirar aqui: o beliche precisa de uma cabine selada"
 }

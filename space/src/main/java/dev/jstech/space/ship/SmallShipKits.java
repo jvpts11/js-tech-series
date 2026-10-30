@@ -15,8 +15,10 @@ import dev.jstech.space.api.ShipKits;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 /**
  * The kits of the small starship's parts, where each block goes in the ship's frame ({@link ShipKit}). Every section
@@ -66,18 +68,35 @@ public final class SmallShipKits {
         section("docking", airlock, List.of("TDDT", "TGGT", "TDDT"), List.of("QPBA", "V  V", "V  V"),
                 List.of("FCYF", "HNNH", "FUUF"));
         section("corridor", hull, List.of("TDDT", "TGGT"), List.of("APBA", "V  V"), List.of("FCYF", "HIIH"));
-        final Map<String, ResourceLocation> hold = with(hull, entry("W", ShipKitBlocks.TIE_DOWN_DECK),
-                entry("R", ShipKitBlocks.CARGO_RACK), entry("J", ShipKitBlocks.RAMP_HINGE),
-                entry("M", ShipKitBlocks.RAMP_PLATE));
+        // The holds keep their cargo in vanilla barrels, strapped down in the middle, working as they are.
+        final Map<String, ResourceLocation> hold = plus(with(hull, entry("W", ShipKitBlocks.TIE_DOWN_DECK),
+                entry("J", ShipKitBlocks.RAMP_HINGE), entry("M", ShipKitBlocks.RAMP_PLATE)),
+                entry("b", vanilla(Blocks.BARREL)));
         section("bay", hold, List.of("TWWT", "TWWT", "TWWT", "TWWT", "TWWT"),
-                List.of("APBA", "L  L", "L  L", "ARRA", "LRRL"),
+                List.of("APBA", "L  L", "L  L", "AbbA", "LbbL"),
                 List.of("FHHF", "HHHH", "FHHF", "HHHH", "FHHF"));
         section("ramp", hold, List.of("TWWT", "TWWT", "TWWT", "TWWT", "TJJT"),
-                List.of("APBA", "L  L", "LRRL", "ARRA", "LMML"),
+                List.of("APBA", "L  L", "LbbL", "AbbA", "LMML"),
                 List.of("FCYF", "HIIH", "FCYF", "HCYH", "FMMF"));
         section("side_door", hold, List.of("TWWT", "TWWT", "TWWT", "TWWT", "TWWT"),
-                List.of("APBA", "LR M", "LR M", "AR M", "L  L"),
+                List.of("APBA", "Lb M", "Lb M", "Ab M", "L  L"),
                 List.of("FCYF", "HIIH", "FCYF", "HCYH", "FIIF"));
+        // The small functional modules: the workshop's vanilla crafting table, smithing table, furnace and barrel in
+        // its middle, working as they are; the lab's panels and sample racks along its walls; the quarters' bunk; the
+        // computing module's server panels and its antenna feed; small cargo's racks and a barrel.
+        final List<String> floor = List.of("TDDT", "TGGT");
+        final List<String> ceiling = List.of("FCYF", "HIIH");
+        section("workshop", plus(hull, entry("c", vanilla(Blocks.CRAFTING_TABLE)),
+                entry("s", vanilla(Blocks.SMITHING_TABLE)), entry("f", vanilla(Blocks.FURNACE)),
+                entry("b", vanilla(Blocks.BARREL))), floor, List.of("AcsA", "LfbL"), ceiling);
+        section("lab", with(hull, entry("N", ShipKitBlocks.LAB_PANEL), entry("S", ShipKitBlocks.SAMPLE_RACK)), floor,
+                List.of("NPBS", "N  S"), ceiling);
+        section("quarters", with(hull, entry("U", ShipKitBlocks.BUNK_FRAME)), floor, List.of("UPBA", "U  L"),
+                ceiling);
+        section("computing", with(hull, entry("V", ShipKitBlocks.SERVER_PANEL), entry("W", ShipKitBlocks.ANTENNA_FEED)),
+                floor, List.of("VPBV", "V  V"), List.of("FCYW", "HIIW"));
+        section("small_cargo", plus(with(hull, entry("R", ShipKitBlocks.CARGO_RACK)), entry("b",
+                vanilla(Blocks.BARREL))), floor, List.of("RPBR", "Rb R"), ceiling);
         final Map<String, ResourceLocation> reactor = with(hull, entry("E", ShipKitBlocks.FUSION_CORE),
                 entry("Z", ShipKitBlocks.MAGNETIC_COIL), entry("S", ShipKitBlocks.REACTOR_SHIELD),
                 entry("Q", ShipKitBlocks.COOLANT_PUMP), entry("R", ShipKitBlocks.RADIATOR_PANEL));
@@ -150,6 +169,20 @@ public final class SmallShipKits {
     private static ShipKit.Piece piece(final ShipKit.Anchor anchor, final int x, final int y, final int z,
                                        final boolean mirrored, final List<String>... layers) {
         return new ShipKit.Piece(anchor, x, y, z, List.of(layers), mirrored);
+    }
+
+    @SafeVarargs
+    private static Map<String, ResourceLocation> plus(final Map<String, ResourceLocation> base,
+                                                      final Map.Entry<String, ResourceLocation>... entries) {
+        final Map<String, ResourceLocation> key = new LinkedHashMap<>(base);
+        for (final Map.Entry<String, ResourceLocation> each : entries) {
+            key.put(each.getKey(), each.getValue());
+        }
+        return Map.copyOf(key);
+    }
+
+    private static ResourceLocation vanilla(final Block block) {
+        return BuiltInRegistries.BLOCK.getKey(block);
     }
 
     @SafeVarargs

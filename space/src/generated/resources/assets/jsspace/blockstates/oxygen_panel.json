@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "formed=false": {
       "model": "jsspace:block/oxygen_panel"
+    },
+    "formed=true": {
+      "model": "jsspace:block/oxygen_panel_formed"
     }
   }
 }

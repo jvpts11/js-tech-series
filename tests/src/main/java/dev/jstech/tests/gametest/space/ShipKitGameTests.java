@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.multiblock.plan.IPlanMember;
 import dev.jstech.space.api.ShipClass;
 import dev.jstech.space.api.ShipKit;
 import dev.jstech.space.api.ShipKits;
@@ -24,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.locale.Language;
@@ -37,8 +39,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The small starship's block kit: its 61 blocks, each with its item, its name, its place in the mod's tab and its
  * drop; every part of the catalogue built of its kit, a spine section as wide as the hull and as long as it is, the
- * hung parts set from their places on the ship; the kits using the blocks of the kit only and every block but the
- * functional modules' own; and the example ships laid whole, no two of their parts wanting one place.
+ * hung parts set from their places on the ship; the kits using the blocks of the kit, or the vanilla blocks that work
+ * aboard, and every block of the kit; and the example ships laid whole, no two of their parts wanting one place.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -79,7 +81,11 @@ public final class ShipKitGameTests {
             final ShipPart part = entry.getValue();
             final ShipKit kit = kits.get(entry.getKey());
             helper.assertTrue(kit != null, "a kit for " + entry.getKey());
-            helper.assertTrue(blocks.containsAll(kit.key().values()), entry.getKey() + "'s blocks are the kit's");
+            for (final ResourceLocation block : kit.key().values()) {
+                helper.assertTrue(blocks.contains(block) || IPlanMember.keepsItself(BuiltInRegistries.BLOCK
+                        .get(block).defaultBlockState()), entry.getKey() + "'s " + block + " is the kit's, or a "
+                        + "vanilla block working aboard");
+            }
             used.addAll(kit.key().values());
             final boolean spine = part.place() == ShipPlace.NOSE || part.place() == ShipPlace.SPINE
                     || part.place() == ShipPlace.TAIL;
@@ -97,12 +103,9 @@ public final class ShipKitGameTests {
                 }
             }
         }
-        final Set<ResourceLocation> modules = Set.of(ShipKitBlocks.LAB_PANEL.getId(),
-                ShipKitBlocks.SAMPLE_RACK.getId(), ShipKitBlocks.SERVER_PANEL.getId(),
-                ShipKitBlocks.ANTENNA_FEED.getId(), ShipKitBlocks.BUNK_FRAME.getId());
         final Set<ResourceLocation> unused = new HashSet<>(blocks);
         unused.removeAll(used);
-        helper.assertTrue(unused.equals(modules), "every block in a kit but the functional modules' own: " + unused);
+        helper.assertTrue(unused.isEmpty(), "every block of the kit is in a part's kit: " + unused);
         helper.succeed();
     }
 

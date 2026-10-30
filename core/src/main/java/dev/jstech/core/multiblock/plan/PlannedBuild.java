@@ -402,8 +402,11 @@ public final class PlannedBuild implements IStructureWatcher {
             final PlanSpot spot = this.plan.spots().get(index);
             final BlockPos at = where(spot);
             // A block that keeps itself is told, whether or not it keeps a block entity; the others merge.
-            if (in.getBlockState(at).getBlock() instanceof IPlanMember member) {
+            final BlockState state = in.getBlockState(at);
+            if (state.getBlock() instanceof IPlanMember member) {
                 member.partFormed(in, at, true);
+            } else if (state.is(IPlanMember.KEEPS_ITSELF)) {
+                continue;
             } else if (!FormedParts.lay(in, this.owner, at, spot.place().orElse(null), reaching(spot))) {
                 FormedParts.reach(in, at, reaching(spot));
             }
@@ -422,7 +425,7 @@ public final class PlannedBuild implements IStructureWatcher {
             final BlockPos at = where(this.plan.spots().get(index));
             if (in.getBlockState(at).getBlock() instanceof FormedPartBlock) {
                 any = true;
-            } else if (!(in.getBlockState(at).getBlock() instanceof IPlanMember)) {
+            } else if (!IPlanMember.keepsItself(in.getBlockState(at))) {
                 return false;
             }
         }

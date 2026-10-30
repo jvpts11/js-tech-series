@@ -11309,6 +11309,8 @@ stable 4
 21 dev.jstech.core.multiblock.plan.BuildPlan  static final Codec<BuildPlan> CODEC
 21 dev.jstech.core.multiblock.plan.IPlanMember  type interface
 21 dev.jstech.core.multiblock.plan.IPlanMember  abstract void partFormed(ServerLevel, BlockPos, boolean)
+27 dev.jstech.core.multiblock.plan.IPlanMember  static boolean keepsItself(BlockState)
+27 dev.jstech.core.multiblock.plan.IPlanMember  static final TagKey<Block> KEEPS_ITSELF
 22 dev.jstech.core.multiblock.plan.PlanAssembler  type final class implements IFieldPart
 22 dev.jstech.core.multiblock.plan.PlanAssembler  IItemHandler inbox()
 22 dev.jstech.core.multiblock.plan.PlanAssembler  Map<Item, Integer> held()

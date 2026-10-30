@@ -1,0 +1,8 @@
+{
+  "model": "jsspace:jsmodels/ship/small_small_cargo.gltf",
+  "textures": [
+    "jsspace:textures/models/ship/small_small_cargo_enamel.png"
+  ],
+  "translucent": true,
+  "triangles": 9000
+}

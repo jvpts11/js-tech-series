@@ -59,7 +59,7 @@ public final class ShipPartModelGameTests {
                         + "piece in " + finish);
             }
         }
-        helper.assertTrue(pieces == 29, "the catalogue's kits have 29 pieces: " + pieces);
+        helper.assertTrue(pieces == 34, "the catalogue's kits have 34 pieces: " + pieces);
         final List<ShipPartModels.Placed> orbiter = ShipPartModels.of(ShipParts.all(helper.getLevel()), kits,
                 List.of(part("orbiter_cockpit"), part("airlock"), part("bay"), part("reactor_flush")),
                 List.of(part("twin_bells"), part("side_intakes"), part("blended_delta"), part("twin_canted_fins"),

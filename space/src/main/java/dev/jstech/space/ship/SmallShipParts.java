@@ -24,8 +24,9 @@ import net.minecraft.resources.ResourceLocation;
  * airlock, docking and corridor hull modules (the docking module's dorsal collar is an airlock too); three holds of the
  * medium size, one of them opening its ramp at the tail; two fusion reactors; a twin-bell and a four-bell tail engine
  * and a magnetic nozzle in a nacelle; side intakes and a nacelle intake, both turning their nozzles down for a vertical
- * take-off; three wings, the stub wings carrying the nacelles; two fins; two thrusters; wheels and legs. The lengths
- * along the spine are those of the parts on the block grid.
+ * take-off; three wings, the stub wings carrying the nacelles; two fins; two thrusters; wheels and legs. Then its five
+ * small functional modules, a third of the small hull's room each: the workshop, the laboratory, the quarters,
+ * computing and small cargo. The lengths along the spine are those of the parts on the block grid.
  */
 @TextHolder
 public final class SmallShipParts {
@@ -61,6 +62,15 @@ public final class SmallShipParts {
     public static final TextKey QUADS = TextKey.of("jsspace.ship_part.quads", "Thruster Quads");
     public static final TextKey WHEELS = TextKey.of("jsspace.ship_part.wheels", "Wheels");
     public static final TextKey LEGS = TextKey.of("jsspace.ship_part.legs", "Legs");
+    public static final TextKey WORKSHOP = TextKey.of("jsspace.ship_part.workshop", "Workshop");
+    public static final TextKey LAB = TextKey.of("jsspace.ship_part.lab", "Laboratory");
+    public static final TextKey QUARTERS = TextKey.of("jsspace.ship_part.quarters", "Quarters");
+    public static final TextKey COMPUTING = TextKey.of("jsspace.ship_part.computing", "Computing");
+    public static final TextKey SMALL_CARGO = TextKey.of("jsspace.ship_part.small_cargo", "Small Cargo");
+    /* The room a small module takes in the hull: three fit a small ship. */
+    private static final int SMALL = 1;
+    /* A small module's length along the spine. */
+    private static final int MODULE_LENGTH = 2;
     /* The room a medium module takes in the hull: all of a small ship's. */
     private static final int MEDIUM = 3;
 
@@ -102,11 +112,21 @@ public final class SmallShipParts {
         hung("small_quads", QUADS, ShipPartKind.THRUSTERS, ShipPlace.AROUND, false, ironside);
         hung("small_wheels", WHEELS, ShipPartKind.GEAR, ShipPlace.UNDER, false, meridian);
         hung("small_legs", LEGS, ShipPartKind.GEAR, ShipPlace.UNDER, false, ironside);
+        // The small functional modules, each a section of the spine taking a third of the small hull's room.
+        module("small_workshop", WORKSHOP, ironside);
+        module("small_lab", LAB, meridian);
+        module("small_quarters", QUARTERS, kosmozavod);
+        module("small_computing", COMPUTING, kosmozavod);
+        module("small_small_cargo", SMALL_CARGO, ironside);
     }
 
     /** The id of the catalogue's part {@code path}. */
     public static ResourceLocation id(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, path);
+    }
+
+    private static void module(final String path, final TextKey name, final ResourceLocation maker) {
+        spine(path, name, ShipPartKind.MODULE, ShipPlace.SPINE, MODULE_LENGTH, SMALL, false, maker);
     }
 
     private static void spine(final String path, final TextKey name, final ShipPartKind kind, final ShipPlace place,

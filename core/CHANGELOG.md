@@ -355,6 +355,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Mending one kind of damage: J's Core's API is at version 26. `FormedDamage.erase` given a stamp takes away
   only that kind's strikes from a formed model, as a patch mends a micrometeoroid's hole and leaves the dents round it.
   Experimental.
+- Blocks that keep themselves in a plan: J's Core's API is at version 27. A block in the tag
+  `jscore:keeps_itself_in_plans` keeps itself when its plan's part forms, as an `IPlanMember` does, drawing and working
+  as it is, for a vanilla block a mod cannot make a member; `IPlanMember.keepsItself` says whether a block does.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

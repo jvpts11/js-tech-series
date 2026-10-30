@@ -23,8 +23,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The starship parts' interiors on a player's game, each in its maker's style: the Orbiter's airlock in Meridian
- * Orbital's padded white panels, the world seen through its door's window; the Hauler's hold in Ironside Yards' bare
- * metal; the Courier's docking module in Kosmozavod's turquoise.
+ * Orbital's padded white panels, the world seen through its door's window; the Hauler's reactor room in Ironside
+ * Yards' bare metal; the Courier's docking module in Kosmozavod's turquoise.
  */
 public final class ShipInteriorsClientTests {
 
@@ -38,8 +38,9 @@ public final class ShipInteriorsClientTests {
     /* Where the Orbiter's pilot sits, on the raised flight deck, and what is ahead through the windscreen. */
     private static final Vec3 PILOT_EYES = new Vec3(0, HULL + 2.1, 4.2);
     private static final Vec3 AHEAD = new Vec3(0, HULL + 2.0, -2);
-    private static final Vec3 HOLD_EYES = new Vec3(0, HULL + 1.65, 12.5);
-    private static final Vec3 HOLD_WALL = new Vec3(1.84, HULL + 1.05, 12.5);
+    /* In the Hauler's reactor room, beside its fusion drum, the bare wall clear of the hold's fittings. */
+    private static final Vec3 HOLD_EYES = new Vec3(1.0, HULL + 1.65, 9);
+    private static final Vec3 HOLD_WALL = new Vec3(1.84, HULL + 1.05, 9);
     private static final Vec3 DOCKING_EYES = new Vec3(0, HULL + 1.65, 6.5);
     private static final Vec3 DOCKING_WALL = new Vec3(1.84, HULL + 2.3, 6.5);
     /* The red wall outside the airlock's door, west of the ship. */

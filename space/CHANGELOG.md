@@ -533,6 +533,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Kosmozavod's turquoise panels over beige quilted padding on a wooden floor; each module's bulkhead with its doorway,
   and in the cockpits the flight deck with its displays and switch panels. The windows are glass the world is seen
   through, from inside and out.
+- The small ship's functional modules, a third of its hull's room each: the Workshop, whose vanilla crafting
+  table, smithing table, furnace and barrel stand in it and work aboard; the Laboratory, with its bench, sample racks,
+  microscope and analyser; the Quarters, whose bunk is a respawn point in a sealed cabin of breathable air and wakes
+  no one where the air is gone; Computing, with its desk and server rack; and Small Cargo, its racks and a barrel. The
+  airlock's oxygen panel fills a worn suit's tanks from the cabin's air, and its suit locker keeps a crew's suits; the
+  holds keep their cargo in vanilla barrels, strapped down by the hoist rail and the manifest terminal; the reactor
+  room has its fusion drum. Fixtures the models draw stop drawing themselves once their part is formed.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
