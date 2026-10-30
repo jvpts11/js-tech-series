@@ -118,7 +118,14 @@ stable 0
 13 dev.jstech.space.api.ShipKits  static Map<ResourceLocation, ShipKit> declared()
 13 dev.jstech.space.api.ShipKits  static Optional<ShipKit> get(Level, ResourceLocation)
 13 dev.jstech.space.api.ShipKits  static ShipKit declare(ResourceLocation, ShipKit)
-12 dev.jstech.space.api.ShipPart  type record(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room, boolean airlock, boolean carries)
+15 dev.jstech.space.api.ShipMaker  type record(String name)
+15 dev.jstech.space.api.ShipMaker  static final Codec<ShipMaker> CODEC
+15 dev.jstech.space.api.ShipMakers  type final class
+15 dev.jstech.space.api.ShipMakers  static Map<ResourceLocation, ShipMaker> all(Level)
+15 dev.jstech.space.api.ShipMakers  static Map<ResourceLocation, ShipMaker> declared()
+15 dev.jstech.space.api.ShipMakers  static Optional<ShipMaker> get(Level, ResourceLocation)
+15 dev.jstech.space.api.ShipMakers  static ShipMaker declare(ResourceLocation, ShipMaker)
+15 dev.jstech.space.api.ShipPart  type record(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room, boolean airlock, boolean carries, Optional<ResourceLocation> maker)
 12 dev.jstech.space.api.ShipPart  static final Codec<ShipPart> CODEC
 12 dev.jstech.space.api.ShipPartKind  type enum implements IStableName
 12 dev.jstech.space.api.ShipPartKind  AIR_ENGINE

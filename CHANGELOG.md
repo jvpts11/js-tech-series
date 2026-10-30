@@ -428,6 +428,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) Starship finishes: J's Space's API is at version 14. `ShipFinish` is a finish a starship is painted in,
   chosen apart from its parts, a part's model in it painted by the finish's own texture of that model; registered in
   `ShipFinishes` by id, which takes a data pack's files, `data/<namespace>/jsspace/ship_finishes/`. Experimental.
+- (Space) Starship makers: J's Space's API is at version 15. `ShipMaker` is a maker of starship parts, which gives
+  each of its parts its shape and, to one a player goes into, its interior; registered in `ShipMakers` by id, which
+  takes a data pack's files, `data/<namespace>/jsspace/ship_makers/`. `ShipPart` gains its `maker`, by id, written in
+  a part's file as `maker`. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2488,6 +2492,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   parts: the Orbiter's white blankets over black heat tiles with the red band, Bare Metal's patched plates with the
   crimson band and hazard stripes, and Enamel's crimson over cream with a gold line. The gear reaches down two blocks
   to the ground, the kits' gear and thrusters set where the models draw them.
+- (Space) Three makers of starship parts, each owning a family of the catalogue: Meridian Orbital (the Orbiter line),
+  Ironside Yards (the working line) and Kosmozavod (the glazed navigator's nose, the docking module, the side door
+  hold). A ship mixes makers from module to module, and every part a player goes into has its maker's interior:
+  Meridian's padded white panels with a red line at hand height, Ironside's bare plates on ribs over grating floors,
+  Kosmozavod's turquoise panels over beige quilted padding on a wooden floor; each module's bulkhead with its doorway,
+  and in the cockpits the flight deck with its displays and switch panels. The windows are glass the world is seen
+  through, from inside and out.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
 - (Core) A formed part that no owner draws any more, a piece gone its own way, can be drawn whole from one of its own

@@ -15,6 +15,7 @@ import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.api.ShipPlace;
+import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -66,33 +67,41 @@ public final class SmallShipParts {
     private SmallShipParts() {
     }
 
-    /** Declares the parts, once, from the mod's constructor. */
+    /**
+     * Declares the parts, once, from the mod's constructor: each of the maker of its family in the catalogue, the
+     * orbiter line Meridian Orbital's, the working line Ironside Yards', the enamel line Kosmozavod's.
+     */
     public static void declare() {
-        spine("small_orbiter_cockpit", ORBITER_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false);
-        spine("small_cab_cockpit", CAB_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false);
-        spine("small_greenhouse_cockpit", GREENHOUSE_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false);
-        spine("small_airlock", AIRLOCK, ShipPartKind.HULL, ShipPlace.SPINE, 3, 0, true);
-        spine("small_docking", DOCKING, ShipPartKind.HULL, ShipPlace.SPINE, 3, 0, true);
-        spine("small_corridor", CORRIDOR, ShipPartKind.HULL, ShipPlace.SPINE, 2, 0, false);
-        spine("small_bay", BAY, ShipPartKind.HOLD, ShipPlace.SPINE, 5, MEDIUM, false);
-        spine("small_ramp", RAMP, ShipPartKind.HOLD, ShipPlace.TAIL, 5, MEDIUM, false);
-        spine("small_side_door", SIDE_DOOR, ShipPartKind.HOLD, ShipPlace.SPINE, 5, MEDIUM, false);
-        spine("small_reactor_flush", REACTOR_FLUSH, ShipPartKind.REACTOR, ShipPlace.SPINE, 2, 0, false);
-        spine("small_reactor_fins", REACTOR_FINS, ShipPartKind.REACTOR, ShipPlace.SPINE, 2, 0, false);
-        hung("small_twin_bells", TWIN_BELLS, ShipPartKind.MAIN_ENGINE, ShipPlace.SPINE_END, false);
-        hung("small_cluster", CLUSTER, ShipPartKind.MAIN_ENGINE, ShipPlace.SPINE_END, false);
-        hung("small_magnetic_nozzle", MAGNETIC_NOZZLE, ShipPartKind.MAIN_ENGINE, ShipPlace.ON_WINGS, false);
-        hung("small_side_intakes", SIDE_INTAKES, ShipPartKind.AIR_ENGINE, ShipPlace.SIDES, false);
-        hung("small_nacelle_intake", NACELLE_INTAKE, ShipPartKind.AIR_ENGINE, ShipPlace.ON_WINGS, false);
-        hung("small_blended_delta", BLENDED_DELTA, ShipPartKind.WINGS, ShipPlace.WING_ROOT, false);
-        hung("small_stub_wings", STUB_WINGS, ShipPartKind.WINGS, ShipPlace.WING_ROOT, true);
-        hung("small_swept_wings", SWEPT_WINGS, ShipPartKind.WINGS, ShipPlace.WING_ROOT, false);
-        hung("small_twin_canted_fins", TWIN_CANTED_FINS, ShipPartKind.FINS, ShipPlace.SPINE_END, false);
-        hung("small_single_fin", SINGLE_FIN, ShipPartKind.FINS, ShipPlace.SPINE_END, false);
-        hung("small_blisters", BLISTERS, ShipPartKind.THRUSTERS, ShipPlace.AROUND, false);
-        hung("small_quads", QUADS, ShipPartKind.THRUSTERS, ShipPlace.AROUND, false);
-        hung("small_wheels", WHEELS, ShipPartKind.GEAR, ShipPlace.UNDER, false);
-        hung("small_legs", LEGS, ShipPartKind.GEAR, ShipPlace.UNDER, false);
+        final ResourceLocation meridian = SmallShipMakers.MERIDIAN_ORBITAL;
+        final ResourceLocation ironside = SmallShipMakers.IRONSIDE_YARDS;
+        final ResourceLocation kosmozavod = SmallShipMakers.KOSMOZAVOD_ID;
+        spine("small_orbiter_cockpit", ORBITER_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false, meridian);
+        spine("small_cab_cockpit", CAB_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false, ironside);
+        spine("small_greenhouse_cockpit", GREENHOUSE_COCKPIT, ShipPartKind.COCKPIT, ShipPlace.NOSE, 5, 0, false,
+                kosmozavod);
+        spine("small_airlock", AIRLOCK, ShipPartKind.HULL, ShipPlace.SPINE, 3, 0, true, meridian);
+        spine("small_docking", DOCKING, ShipPartKind.HULL, ShipPlace.SPINE, 3, 0, true, kosmozavod);
+        spine("small_corridor", CORRIDOR, ShipPartKind.HULL, ShipPlace.SPINE, 2, 0, false, ironside);
+        spine("small_bay", BAY, ShipPartKind.HOLD, ShipPlace.SPINE, 5, MEDIUM, false, meridian);
+        spine("small_ramp", RAMP, ShipPartKind.HOLD, ShipPlace.TAIL, 5, MEDIUM, false, ironside);
+        spine("small_side_door", SIDE_DOOR, ShipPartKind.HOLD, ShipPlace.SPINE, 5, MEDIUM, false, kosmozavod);
+        spine("small_reactor_flush", REACTOR_FLUSH, ShipPartKind.REACTOR, ShipPlace.SPINE, 2, 0, false, meridian);
+        spine("small_reactor_fins", REACTOR_FINS, ShipPartKind.REACTOR, ShipPlace.SPINE, 2, 0, false, ironside);
+        hung("small_twin_bells", TWIN_BELLS, ShipPartKind.MAIN_ENGINE, ShipPlace.SPINE_END, false, meridian);
+        hung("small_cluster", CLUSTER, ShipPartKind.MAIN_ENGINE, ShipPlace.SPINE_END, false, kosmozavod);
+        hung("small_magnetic_nozzle", MAGNETIC_NOZZLE, ShipPartKind.MAIN_ENGINE, ShipPlace.ON_WINGS, false,
+                ironside);
+        hung("small_side_intakes", SIDE_INTAKES, ShipPartKind.AIR_ENGINE, ShipPlace.SIDES, false, meridian);
+        hung("small_nacelle_intake", NACELLE_INTAKE, ShipPartKind.AIR_ENGINE, ShipPlace.ON_WINGS, false, ironside);
+        hung("small_blended_delta", BLENDED_DELTA, ShipPartKind.WINGS, ShipPlace.WING_ROOT, false, meridian);
+        hung("small_stub_wings", STUB_WINGS, ShipPartKind.WINGS, ShipPlace.WING_ROOT, true, ironside);
+        hung("small_swept_wings", SWEPT_WINGS, ShipPartKind.WINGS, ShipPlace.WING_ROOT, false, kosmozavod);
+        hung("small_twin_canted_fins", TWIN_CANTED_FINS, ShipPartKind.FINS, ShipPlace.SPINE_END, false, meridian);
+        hung("small_single_fin", SINGLE_FIN, ShipPartKind.FINS, ShipPlace.SPINE_END, false, kosmozavod);
+        hung("small_blisters", BLISTERS, ShipPartKind.THRUSTERS, ShipPlace.AROUND, false, meridian);
+        hung("small_quads", QUADS, ShipPartKind.THRUSTERS, ShipPlace.AROUND, false, ironside);
+        hung("small_wheels", WHEELS, ShipPartKind.GEAR, ShipPlace.UNDER, false, meridian);
+        hung("small_legs", LEGS, ShipPartKind.GEAR, ShipPlace.UNDER, false, ironside);
     }
 
     /** The id of the catalogue's part {@code path}. */
@@ -101,13 +110,14 @@ public final class SmallShipParts {
     }
 
     private static void spine(final String path, final TextKey name, final ShipPartKind kind, final ShipPlace place,
-                              final int length, final int room, final boolean airlock) {
+                              final int length, final int room, final boolean airlock, final ResourceLocation maker) {
         ShipParts.declare(id(path), new ShipPart(name.key(), kind, ShipClass.SMALL, place, length, room, airlock,
-                false));
+                false, Optional.of(maker)));
     }
 
     private static void hung(final String path, final TextKey name, final ShipPartKind kind, final ShipPlace place,
-                             final boolean carries) {
-        ShipParts.declare(id(path), new ShipPart(name.key(), kind, ShipClass.SMALL, place, 0, 0, false, carries));
+                             final boolean carries, final ResourceLocation maker) {
+        ShipParts.declare(id(path), new ShipPart(name.key(), kind, ShipClass.SMALL, place, 0, 0, false, carries,
+                Optional.of(maker)));
     }
 }

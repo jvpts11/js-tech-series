@@ -55,6 +55,7 @@ import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.SmallShipFinishes;
 import dev.jstech.space.ship.SmallShipKits;
+import dev.jstech.space.ship.SmallShipMakers;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.spacecraft.SkeletonSpacecraft;
 import dev.jstech.space.universe.FarMaps;
@@ -174,8 +175,9 @@ public final class JsSpace {
         StageFlights.listen();
         // The kinds of satellite and of probe a spacecraft is built as.
         SkeletonSpacecraft.declare();
-        // The small starship's catalogue of parts, the blocks they are built of and where each goes, the finishes a
-        // ship is painted in and the parts' formed models.
+        // The small starship's makers and catalogue of parts, the blocks they are built of and where each goes, the
+        // finishes a ship is painted in and the parts' formed models.
+        SmallShipMakers.declare();
         SmallShipParts.declare();
         ShipKitBlocks.declare();
         SmallShipKits.declare();

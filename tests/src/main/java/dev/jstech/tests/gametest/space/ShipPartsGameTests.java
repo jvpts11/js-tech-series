@@ -10,18 +10,22 @@ package dev.jstech.tests.gametest.space;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.space.api.ShipClass;
+import dev.jstech.space.api.ShipMakers;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.api.ShipPlace;
 import dev.jstech.space.ship.ShipChecks;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.SmallShipMakers;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -49,9 +53,10 @@ public final class ShipPartsGameTests {
     public static void part_readFromItsFileAndADesignOfThemFlies(final GameTestHelper helper) {
         final ShipPart hold = ShipPart.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("{\"name\":"
                 + "\"jstests.ship.bay\",\"kind\":\"hold\",\"class\":\"small\",\"place\":\"spine\",\"length\":4.8,"
-                + "\"room\":3}")).getOrThrow();
+                + "\"room\":3,\"maker\":\"jsspace:ironside_yards\"}")).getOrThrow();
         helper.assertTrue(hold.equals(new ShipPart("jstests.ship.bay", ShipPartKind.HOLD, ShipClass.SMALL,
-                ShipPlace.SPINE, 4.8, 3, false, false)), "a part read from its file is the part: " + hold);
+                ShipPlace.SPINE, 4.8, 3, false, false, Optional.of(SmallShipMakers.IRONSIDE_YARDS))),
+                "a part read from its file is the part: " + hold);
         final Map<ResourceLocation, ShipPart> parts = Map.of(
                 id("cockpit"), part(ShipPartKind.COCKPIT, ShipPlace.NOSE, false),
                 id("airlock"), part(ShipPartKind.HULL, ShipPlace.SPINE, true),
@@ -75,15 +80,24 @@ public final class ShipPartsGameTests {
     public static void catalogue_twentyFivePartsNamedAndItsExampleShipsFly(final GameTestHelper helper) {
         final Map<ResourceLocation, ShipPart> parts = ShipParts.declared();
         final Map<ShipPartKind, Integer> kinds = new EnumMap<>(ShipPartKind.class);
+        final Map<ResourceLocation, Integer> makers = new HashMap<>();
         int small = 0;
         for (final ShipPart part : parts.values()) {
             if (part.shipClass() == ShipClass.SMALL) {
                 small++;
                 kinds.merge(part.kind(), 1, Integer::sum);
                 helper.assertTrue(Language.getInstance().has(part.name()), "the part is named: " + part.name());
+                final ResourceLocation maker = part.maker().orElseThrow();
+                helper.assertTrue(ShipMakers.get(helper.getLevel(), maker).map(known -> Language.getInstance()
+                        .has(known.name())).orElse(false), part.name() + " is of a named maker: " + maker);
+                makers.merge(maker, 1, Integer::sum);
             }
         }
         helper.assertTrue(small == 25, "the small ship has 25 parts: " + small);
+        helper.assertTrue(makers.equals(Map.of(SmallShipMakers.MERIDIAN_ORBITAL, 10, SmallShipMakers.IRONSIDE_YARDS, 9,
+                SmallShipMakers.KOSMOZAVOD_ID, 6)), "the three makers own their families: " + makers);
+        helper.assertTrue(parts.get(SmallShipParts.id("small_greenhouse_cockpit")).maker().orElseThrow()
+                .equals(SmallShipMakers.KOSMOZAVOD_ID), "the glazed navigator's nose is Kosmozavod's");
         helper.assertTrue(kinds.size() == 10 && !kinds.containsKey(ShipPartKind.MODULE),
                 "in ten kinds, the functional modules apart: " + kinds);
         final ShipDesign orbiter = new ShipDesign("ORBITER", catalogue("orbiter_cockpit", "airlock", "bay",
@@ -120,7 +134,7 @@ public final class ShipPartsGameTests {
 
     private static ShipPart part(final ShipPartKind kind, final ShipPlace place, final boolean airlock) {
         return new ShipPart("jstests.ship." + kind.serializedName(), kind, ShipClass.SMALL, place, 0, 0, airlock,
-                false);
+                false, Optional.empty());
     }
 
     private static ResourceLocation id(final String path) {

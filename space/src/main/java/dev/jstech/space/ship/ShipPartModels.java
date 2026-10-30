@@ -8,11 +8,14 @@
 package dev.jstech.space.ship;
 
 import dev.jstech.core.content.DeclaredModel;
+import dev.jstech.core.content.ModelBuilder;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
 import dev.jstech.space.api.ShipKit;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipPart;
+import dev.jstech.space.api.ShipPartKind;
+import dev.jstech.space.api.ShipParts;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,10 +25,11 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * The formed models of the small starship's parts, as the approved catalogue drew them, with the joints drawn on the
- * hull where a section meets the next: each block of a part's kit is a bone of its own, named
- * {@code c_<x>_<y>_<z>} by its place in the kit from the piece's anchor, so a block missing is a bone hidden. A part is
- * a model a piece of its kit, set from the piece's anchor on the ship; and a model in each finish, the same geometry
- * painted by the finish's texture.
+ * hull where a section meets the next, and inside a part one goes into its maker's interior: each block of a part's
+ * kit is a bone of its own, named {@code c_<x>_<y>_<z>} by its place in the kit from the piece's anchor, so a block
+ * missing is a bone hidden. A part is a model a piece of its kit, set from the piece's anchor on the ship; and a model
+ * in each finish, the same geometry painted by the finish's texture. A cockpit's and a hull module's glass lets the
+ * world be seen through it, so their models are drawn translucent.
  */
 public final class ShipPartModels {
 
@@ -45,13 +49,20 @@ public final class ShipPartModels {
             if (!JsSpace.MODID.equals(part.getNamespace())) {
                 return;
             }
+            final ShipPart declared = ShipParts.declared().get(part);
+            final boolean glazed = declared != null && (declared.kind() == ShipPartKind.COCKPIT
+                    || declared.kind() == ShipPartKind.HULL);
             for (final ShipKit.Piece piece : kit.pieces()) {
                 final String name = name(part, kit, piece);
                 for (final String finish : FINISHES) {
-                    MODELS.put(id(finish, name), SpaceContent.CONTENT.model("ship/" + finish + "/" + name)
+                    final ModelBuilder model = SpaceContent.CONTENT.model("ship/" + finish + "/" + name)
                             .file("jsmodels/ship/" + name + ".gltf")
                             .texture("textures/models/ship/" + name + "_" + finish + ".png")
-                            .triangles(MOST_TRIANGLES).register());
+                            .triangles(MOST_TRIANGLES);
+                    if (glazed) {
+                        model.translucent();
+                    }
+                    MODELS.put(id(finish, name), model.register());
                 }
             }
         });

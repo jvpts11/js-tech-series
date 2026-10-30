@@ -3,5 +3,6 @@
   "textures": [
     "jsspace:textures/models/ship/small_greenhouse_cockpit_orbiter.png"
   ],
+  "translucent": true,
   "triangles": 9000
 }

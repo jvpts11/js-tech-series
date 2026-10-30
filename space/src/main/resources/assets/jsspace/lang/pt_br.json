@@ -754,5 +754,8 @@
   "block.jsspace.ramp_plate": "Chapa da Rampa",
   "jsspace.ship_finish.orbiter": "Orbitador",
   "jsspace.ship_finish.bare_metal": "Metal Nu",
-  "jsspace.ship_finish.enamel": "Esmalte"
+  "jsspace.ship_finish.enamel": "Esmalte",
+  "jsspace.ship_maker.meridian_orbital": "Meridian Orbital",
+  "jsspace.ship_maker.ironside_yards": "Ironside Yards",
+  "jsspace.ship_maker.kosmozavod": "Kosmozavod"
 }
