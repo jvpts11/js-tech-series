@@ -349,7 +349,7 @@ public final class PlanHologram {
         }
     }
 
-    /* Words of a part's label at {@code y}: faint where something stands between, as the projector writes, then whole. */
+    /* Words of a part's label at {@code y}: faint where something stands between, as the projector writes; whole. */
     private static void words(final Font font, final Component text, final float y, final int colour,
                               final PoseStack pose, final MultiBufferSource buffers) {
         final Colours c = PALETTE.get();

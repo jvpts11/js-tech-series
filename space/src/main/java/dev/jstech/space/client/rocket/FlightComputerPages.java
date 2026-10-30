@@ -106,6 +106,9 @@ public final class FlightComputerPages {
     /* The system: the Sun's place, the rings of distance, and the Overworld's and Mars' orbits, in pixels. */
     private static final int SUN_X = SX0 + 96;
     private static final int SUN_Y = SY0 + 86;
+    /* How far round the Sun the worlds' names keep clear of it; how many rows the plan's figures take. */
+    private static final int SUN_CLEAR = 6;
+    private static final int FIGURE_ROWS = 9;
     private static final int RING_STEP = 18;
     private static final int RING_MOST = 160;
     private static final int OVERWORLD_RING = 32;
@@ -201,20 +204,27 @@ public final class FlightComputerPages {
         final double mars = Math.toDegrees(SolarSystemOrbits.MARS.angleAt(tick));
         final Optional<TransferPlan> plan = view.plan();
         if (plan.isPresent() && plan.get().windowed()) {
-            arc(g, plan.get(), tick, c);
+            arc(g, font, plan.get(), view.target(), tick, c);
         }
         final int ox = (int) Math.round(atX(OVERWORLD_RING, overworld));
         final int oy = (int) Math.round(atY(OVERWORLD_RING, overworld));
         final int mx = (int) Math.round(atX(MARS_RING, mars));
         final int my = (int) Math.round(atY(MARS_RING, mars));
-        // The worlds' names first, so the Sun and the worlds stand over them: the Overworld's and the Moon's beside
-        // it, on its left where its right would run into the figures.
+        // The worlds' names first, so the Sun and the worlds stand over them: the Overworld's and the Moon's over it
+        // beside it, on its left where its right would run into the figures, and lifted clear of the Sun.
         final String overworldName = name(SolarSystemWorlds.OVERWORLD);
         final String moonName = name(SolarSystemWorlds.MOON);
-        final boolean room = ox + 10 + Math.max(font.width(overworldName), font.width(moonName)) < DATA_X0 - 6;
-        backed(g, font, overworldName, room ? ox + 10 : ox - 10 - font.width(overworldName), oy - 2, c.ink(),
+        final int widest = Math.max(font.width(overworldName), font.width(moonName));
+        final boolean room = ox + 10 + widest < DATA_X0 - 6;
+        final int left = room ? ox + 10 : ox - 10 - widest;
+        int top = oy - 13;
+        if (left < SUN_X + SUN_CLEAR && left + widest > SUN_X - SUN_CLEAR && top < SUN_Y + SUN_CLEAR
+                && top + 20 > SUN_Y - SUN_CLEAR) {
+            top = SUN_Y - SUN_CLEAR - 20;
+        }
+        backed(g, font, overworldName, room ? left : ox - 10 - font.width(overworldName), top + 11, c.ink(),
                 c.space());
-        backed(g, font, moonName, room ? ox + 10 : ox - 10 - font.width(moonName), oy - 13, c.moon(), c.space());
+        backed(g, font, moonName, room ? left : ox - 10 - font.width(moonName), top, c.moon(), c.space());
         FlightComputerFace.text(g, font, name(SolarSystemWorlds.MARS), mx - 2 - font.width(
                 name(SolarSystemWorlds.MARS)), my + 2, c.mars(), false);
         g.fill(SUN_X - 2, SUN_Y - 2, SUN_X + 3, SUN_Y + 3, c.sun());
@@ -360,11 +370,12 @@ public final class FlightComputerPages {
     }
 
     /*
-     * The transfer's arc, dotted: from where the world left will be when the window opens to where the destination
-     * will be on arrival, half an ellipse round the Sun; the departure and the arrival ringed with dashes.
+     * The transfer's arc, dotted: from where the world left will be when the window opens to where the destination,
+     * {@code target}, will be on arrival, half an ellipse round the Sun; the departure and the arrival ringed with
+     * dashes, DEP written by the one and the destination AT ARR by the other.
      */
-    private static void arc(final GuiGraphics g, final TransferPlan plan, final long tick,
-                            final FlightComputerFace.Colours c) {
+    private static void arc(final GuiGraphics g, final Font font, final TransferPlan plan, final String target,
+                            final long tick, final FlightComputerFace.Colours c) {
         final Orbit leaving = plan.from() == SolarBody.MARS ? SolarSystemOrbits.MARS : SolarSystemOrbits.EARTH;
         final int from = leaving == SolarSystemOrbits.MARS ? MARS_RING : OVERWORLD_RING;
         final int to = from == MARS_RING ? OVERWORLD_RING : MARS_RING;
@@ -380,10 +391,42 @@ public final class FlightComputerPages {
             final double angle = departure + Math.toDegrees(nu);
             dot(g, (int) Math.round(atX(r, angle)), (int) Math.round(atY(r, angle)), c.white());
         }
-        circle(g, (int) Math.round(atX(from, departure)), (int) Math.round(atY(from, departure)), 4,
-                mix(c.ink(), c.space(), 0.2), true);
-        circle(g, (int) Math.round(atX(to, departure + 180)), (int) Math.round(atY(to, departure + 180)), 3,
-                colourOf(plan.to(), c), true);
+        final int dx = (int) Math.round(atX(from, departure));
+        final int dy = (int) Math.round(atY(from, departure));
+        final int ax = (int) Math.round(atX(to, departure + 180));
+        final int ay = (int) Math.round(atY(to, departure + 180));
+        circle(g, dx, dy, 4, mix(c.ink(), c.space(), 0.2), true);
+        circle(g, ax, ay, 3, colourOf(plan.to(), c), true);
+        final String leaves = GameText.resolve(DEPARTURE);
+        final int[] at = clear(font, leaves, dx, dy, 6);
+        backed(g, font, leaves, at[0], at[1], c.ink(), c.space());
+        final String arrives = GameText.resolve(AT_ARRIVAL.with(target));
+        final int[] there = clear(font, arrives, ax, ay, 7);
+        backed(g, font, arrives, there[0], there[1], colourOf(plan.to(), c), c.space());
+    }
+
+    /*
+     * Where words for the point {@code x}, {@code y} go, {@code gap} from it: beside it away from the Sun, else over
+     * it, else under it, wherever they keep off the Sun, the plan's figures and the screen's edges.
+     */
+    private static int[] clear(final Font font, final String words, final int x, final int y, final int gap) {
+        final int wide = font.width(words);
+        final boolean right = x >= SUN_X;
+        final int out = right ? x + gap : x - gap - wide;
+        final int in = right ? x - gap - wide : x + gap;
+        final int[][] tries = {{out, y - 4}, {x - wide / 2, y - gap - 9}, {x - wide / 2, y + gap},
+            {out, y - gap - 9}, {out, y + gap}, {in, y + gap}, {in, y - gap - 9}, {in, y - 4}};
+        for (final int[] at : tries) {
+            final boolean sun = at[0] < SUN_X + SUN_CLEAR && at[0] + wide > SUN_X - SUN_CLEAR
+                    && at[1] < SUN_Y + SUN_CLEAR && at[1] + 9 > SUN_Y - SUN_CLEAR;
+            final boolean figures = at[0] + wide > DATA_X0 - 6 && at[1] < SY0 + 21 + FIGURE_ROWS * ROW;
+            final boolean inside = at[0] > SX0 + 2 && at[0] + wide < SX1 - 2 && at[1] > SY0 + 14
+                    && at[1] + 9 < TAPE_Y - 18;
+            if (!sun && !figures && inside) {
+                return at;
+            }
+        }
+        return tries[0];
     }
 
     /* North's arrow over the map's corner. */
