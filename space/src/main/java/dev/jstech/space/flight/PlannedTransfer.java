@@ -88,6 +88,17 @@ public record PlannedTransfer(ResourceLocation to, long leaves, double burn, dou
         return this.burn + this.capture;
     }
 
+    /**
+     * The capture burn it takes on arriving, its rocket's heat shield whole or not, {@code shield}: aerobraking with a
+     * shield takes none; one breached on the way cannot, and it burns the capture it meant to save.
+     */
+    public double captureBurn(final boolean shield) {
+        if (!this.aerobraking || shield) {
+            return this.capture;
+        }
+        return SolarSystemWorlds.bodyOf(this.to).map(PlannedTransfer::captureAt).orElse(0.0);
+    }
+
     /* The capture burn into {@code to}'s orbit with no aerobraking: the Moon's is in its transfer burn already. */
     private static double captureAt(final SolarBody to) {
         return switch (to) {

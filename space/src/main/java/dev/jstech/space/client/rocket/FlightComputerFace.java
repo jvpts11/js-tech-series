@@ -71,7 +71,8 @@ public final class FlightComputerFace {
             0xFF33363B, 0xFF3A3D43, 0xFF4F535A, 0xFF9EE8B0, 0xFF8A8D94, 0xFF5C5F66, 0xFF55585F, 0xFF6E727A,
             0xFF08090A, 0xFF4A3214, 0xFF9A6A2A, 0xFF1A2230, 0xFF5A7090, 0xFF3E4147, 0xFF1C1D20, 0xFF0A0F17,
             0xFF1A2636, 0xFFA8C8E8, 0xFFFFE070, 0xFF3A7AD0, 0xFFD05A30, 0xFFC8C8C8, 0xFFFF48DE, 0xFF4A5260,
-            0xFF5E6878, 0xFF24602A, 0xFF3AA040, 0xC80A0F17, 0xFF2A6070));
+            0xFF5E6878, 0xFF24602A, 0xFF3AA040, 0xC80A0F17, 0xFF2A6070, 0xFFFF5040, 0xFF6B6B70, 0xFF78787D,
+            0xFF7A8290));
     /** The screen inside the bezel. */
     public static final int SX0 = 46;
     public static final int SY0 = 36;
@@ -380,13 +381,18 @@ public final class FlightComputerFace {
      * @param windowNext  the next window
      * @param backing     the dark ground of words over the landing map
      * @param legendOff   a legend of a key not in use, and a page not open
+     * @param hazard      the ground too steep to land on, on the landing map
+     * @param fog         the ground not known, on the landing map
+     * @param fogLight    every fourth pixel of the ground not known
+     * @param coverFrame  the frame of the world's coverage in the landing map's corner
      */
     public record Colours(int screen, int green, int cyan, int white, int amber, int bezel, int bezelLit,
                           int bezelShade, int rim, int key, int keyLit, int nightLit, int engrave, int engraveDim,
                           int screw, int screwLit, int gasket, int failGlass, int failText, int sensor,
                           int sensorShine, int plate, int plateText, int space, int ring, int ink, int sun,
                           int overworld, int mars, int moon, int magenta, int track, int trackTick, int windowPast,
-                          int windowNext, int backing, int legendOff) {
+                          int windowNext, int backing, int legendOff, int hazard, int fog, int fogLight,
+                          int coverFrame) {
     }
 
     /**
@@ -424,7 +430,7 @@ public final class FlightComputerFace {
     public record View(@Nullable FlightPage page, List<Legend> left, List<Legend> right, String target,
                        Optional<TransferPlan> plan, long tick, @Nullable BlockPos mark, int zoom, boolean grid,
                        LandingMapsClient.@Nullable Shown map, Plotted plotted, FlightComputerStages.Shown stages,
-                       CabinReadings readings) {
+                       CabinReadings readings, Landing landing) {
 
         public View {
             left = List.copyOf(left);
@@ -435,8 +441,20 @@ public final class FlightComputerFace {
         public static View cabin(final CabinReadings readings) {
             return new View(null, List.of(), List.of(), "", Optional.empty(), 0, null,
                     FlightComputerBlockEntity.WIDE, false, null, Plotted.NONE, FlightComputerStages.Shown.NONE,
-                    readings);
+                    readings, Landing.NONE);
         }
+    }
+
+    /**
+     * What the landing page shows beside its map.
+     *
+     * @param guidance the guidance the rocket comes down by ({@link FlightComputerBlockEntity#PLATFORM_GUIDANCE})
+     * @param hazards  whether the ground too steep to land on is shown
+     * @param set      whether the landing is set where the spot is marked
+     */
+    public record Landing(int guidance, boolean hazards, boolean set) {
+
+        public static final Landing NONE = new Landing(FlightComputerBlockEntity.COMPUTER_GUIDANCE, false, false);
     }
 
     /**

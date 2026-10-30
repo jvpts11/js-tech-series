@@ -17,18 +17,21 @@ import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.region.Box;
+import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.uuid.StructureUuid;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.cruise.CruiseEvents;
 import dev.jstech.space.cruise.CruiseFlight;
 import dev.jstech.space.cruise.RocketCruise;
 import dev.jstech.space.cruise.SolarStorms;
+import dev.jstech.space.exploration.WorldCoverage;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.PlannedTransfer;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.launch.RocketLaunch;
 import dev.jstech.space.orbit.OrbitObjects;
+import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.Rockets;
@@ -58,7 +61,9 @@ import org.jetbrains.annotations.Nullable;
  * The cruise between worlds: a rocket in the Overworld's orbit with a transfer set burns its transfer burn and sets
  * out, and comes to rest in the Moon's orbit, told there; its crew sleeping, the cruise passes at once; on the way a
  * micrometeoroid holes the hull, and a patch put on mends it, and a solar storm is told ahead and then fills the space
- * with radiation.
+ * with radiation. Arriving, its capture burn puts it into the orbit, photographing the ground under its way in for its
+ * team, or, its tank emptied on the way, it flies past, not captured; aerobraking saves the capture only with its heat
+ * shield whole.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -67,6 +72,10 @@ public final class CruiseGameTests {
     private static final String ARENA = "bench";
     private static final String BATCH = "jsspace_cruise";
     private static final String SLEEP_BATCH = "jsspace_cruise_slept";
+    private static final String CAPTURE_BATCH = "jsspace_cruise_captured";
+    private static final String MISSED_BATCH = "jsspace_cruise_missed";
+    /* A capture burn on arriving, in metres a second: little, as the test's rocket can spare. */
+    private static final double CAPTURE = 30;
     private static final BlockPos FOOT = new BlockPos(8, 1, 8);
     private static final BlockPos OWNER = new BlockPos(1, 1, 1);
     private static final double LOAD = 2_000;
@@ -87,13 +96,36 @@ public final class CruiseGameTests {
     // Its cruise waits for the space ahead to load, and a test server runs its ticks faster than it loads: long ticks.
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 12_000)
     public static void cruise_burnsSetsOutAndArrivesInTheMoonsOrbit(final GameTestHelper helper) {
-        fly(helper, TRAVEL, false);
+        fly(helper, new Flight(TRAVEL, false, 0, false));
     }
 
-    // A batch of its own: two rockets set at the same orbit spot at once would stand in each other.
+    // Each flight a batch of its own: two rockets set at the same orbit spot at once would stand in each other.
     @GameTest(template = ARENA, batch = SLEEP_BATCH, timeoutTicks = 1200)
     public static void cruise_passesAtOnceAsTheCrewSleeps(final GameTestHelper helper) {
-        fly(helper, LONG_WAY, true);
+        fly(helper, new Flight(LONG_WAY, true, 0, false));
+    }
+
+    @GameTest(template = ARENA, batch = CAPTURE_BATCH, timeoutTicks = 1200)
+    public static void cruise_capturedByItsBurnPhotographsTheGroundOnTheWayIn(final GameTestHelper helper) {
+        fly(helper, new Flight(LONG_WAY, true, CAPTURE, false));
+    }
+
+    @GameTest(template = ARENA, batch = MISSED_BATCH, timeoutTicks = 1200)
+    public static void cruise_shortOfTheCaptureBurnFliesPast(final GameTestHelper helper) {
+        fly(helper, new Flight(LONG_WAY, true, CAPTURE, true));
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void cruise_aerobrakingSavesTheCaptureOnlyWithAWholeShield(final GameTestHelper helper) {
+        final PlannedTransfer braking = new PlannedTransfer(SolarSystemWorlds.MARS, 0, BURN, 0, TRAVEL, false, true);
+        helper.assertTrue(braking.captureBurn(true) == 0, "with its heat shield whole it dips into the air, burning"
+                + " nothing");
+        helper.assertTrue(braking.captureBurn(false) == Rocketry.MARS_CAPTURE, "its shield breached on the way, it"
+                + " burns the capture it meant to save");
+        final PlannedTransfer burning = new PlannedTransfer(SolarSystemWorlds.MARS, 0, BURN, Rocketry.MARS_CAPTURE,
+                TRAVEL, false, false);
+        helper.assertTrue(burning.captureBurn(true) == Rocketry.MARS_CAPTURE, "a plan to burn burns");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
@@ -129,17 +161,17 @@ public final class CruiseGameTests {
     }
 
     /*
-     * Builds a rocket, lets it go into the Overworld's orbit, sets a transfer to the Moon taking {@code travel} ticks
-     * and watches it fly there, its crew sleeping through it when {@code slept}.
+     * Builds a rocket, lets it go into the Overworld's orbit, sets a transfer to the Moon as {@code flight} says and
+     * watches it fly there and be captured, or fly past short of its capture burn.
      */
-    private static void fly(final GameTestHelper helper, final long travel, final boolean slept) {
+    private static void fly(final GameTestHelper helper, final Flight flight) {
         final ServerLevel level = helper.getLevel();
         final FlightComputerBlockEntity computer = build(helper);
         final MovingStructure released = RocketLaunch.release(level, computer.getBlockPos(), null).orElseThrow();
         final StructureUuid id = released.id();
         final ServerLevel space = SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM);
         final FlightComputerBlockEntity[] aboard = new FlightComputerBlockEntity[1];
-        final double[] before = new double[1];
+        final double[] before = new double[2];
         final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 0, 0);
         final int chunkX = SectionPos.blockToSectionCoord(spot[0]);
         final int chunkZ = SectionPos.blockToSectionCoord(spot[1]);
@@ -156,15 +188,21 @@ public final class CruiseGameTests {
                 .thenExecute(() -> {
                     aboard[0] = computerOf(space, body(space, id));
                     before[0] = held(space, id);
-                    aboard[0].execute(new PlannedTransfer(SolarSystemWorlds.MOON, space.getGameTime(), BURN, 0, travel,
-                            false, false));
+                    aboard[0].execute(new PlannedTransfer(SolarSystemWorlds.MOON, space.getGameTime(), BURN,
+                            flight.capture(), flight.travel(), false, false));
                 })
                 .thenWaitUntil(() -> helper.assertTrue(body(space, id).motion() instanceof RocketCruise
                         && aboard[0].cruising(), "its window come, it sets out"))
                 .thenExecute(() -> {
                     helper.assertTrue(held(space, id) < before[0], "its transfer burn burnt propellant: "
                             + before[0] + " kg to " + held(space, id) + " kg");
-                    if (slept) {
+                    if (flight.drained()) {
+                        // Its tank emptied on the way, as a holed one leaks: nothing left to slow down with.
+                        Rockets.settle(level.getServer(), id).map(rocket -> rocket.tanks().get(TANK)).ifPresent(
+                                load -> Rockets.load(level.getServer(), id, TANK, load.scaled(0)));
+                    }
+                    before[1] = held(space, id);
+                    if (flight.slept()) {
                         helper.assertTrue(CruiseFlight.skip(space, body(space, id)), "the crew asleep, it passes");
                     }
                 })
@@ -177,9 +215,20 @@ public final class CruiseGameTests {
                     helper.assertTrue(Math.abs(there.pose().x() - moon[0]) < THERE
                             && Math.abs(there.pose().z() - moon[1]) < THERE, "over the Moon's orbit spot: "
                             + there.pose());
-                    helper.assertTrue(OrbitObjects.around(level.getServer(), SolarSystemWorlds.MOON)
-                            .containsKey(id.value()) && aboard[0].executed().isEmpty(),
-                            "told in the Moon's orbit, its plan flown");
+                    final boolean captured = OrbitObjects.around(level.getServer(), SolarSystemWorlds.MOON)
+                            .containsKey(id.value());
+                    helper.assertTrue(aboard[0].executed().isEmpty(), "its plan flown");
+                    if (flight.drained()) {
+                        helper.assertTrue(!captured, "short of its capture burn, it is not captured");
+                    } else {
+                        helper.assertTrue(captured, "told in the Moon's orbit");
+                        helper.assertTrue(flight.capture() == 0 || held(space, id) < before[1],
+                                "its capture burn burnt propellant: " + before[1] + " kg to " + held(space, id));
+                        final String team = CoreTeams.teamOf(level.getServer(), Rockets.get(level.getServer(), id)
+                                .orElseThrow().ownership().owner());
+                        helper.assertTrue(!WorldCoverage.of(level.getServer(), team, SolarSystemWorlds.MOON).strips()
+                                .isEmpty(), "the ground under its way in photographed for its team");
+                    }
                     MovingStructures.takeAway(there);
                 })
                 .thenSucceed();
@@ -237,5 +286,12 @@ public final class CruiseGameTests {
 
     private static RocketStack.Part part(final String path) {
         return new RocketStack.Part(SkeletonRocketParts.id(path), 1);
+    }
+
+    /*
+     * A flight to the Moon: how long its cruise takes, whether its crew sleeps through it, the capture burn it plans on
+     * arriving, and whether its tank is emptied on the way.
+     */
+    private record Flight(long travel, boolean slept, double capture, boolean drained) {
     }
 }

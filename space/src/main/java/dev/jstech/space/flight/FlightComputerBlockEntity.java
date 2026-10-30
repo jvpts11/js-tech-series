@@ -40,6 +40,7 @@ import dev.jstech.space.platform.LandingPlatforms;
 import dev.jstech.space.rocket.BoilOff;
 import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.rocket.RocketAscent;
+import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.RocketStaging;
@@ -99,6 +100,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<PlannedTransfer> executed;
     private final ValueField<Map<Integer, Integer>> lost;
     private final BoolField cruising;
+    private final BoolField hazards;
+    private final ValueField<PlannedLanding> landing;
+    private final IntField guidance;
     private int wait;
     /* Ticks till its rocket's lost blocks are counted again, and the plan they are counted by, for its design. */
     private int countWait;
@@ -116,17 +120,28 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     /** How many blocks wide a pixel of the wider landing map is. */
     public static final int WIDE_BLOCKS = 128;
     /**
-     * The ellipse a rocket comes down in round the spot marked, in blocks, as this computer's guidance lands it: the
-     * size Perseverance's had, 7.7 by 6.6 kilometres. A better guidance shrinks it.
+     * The guidance a rocket comes down by: the flight computer's own, or an instrument ring's guidance platform, which
+     * lands it nearer the spot marked.
      */
-    public static final int ELLIPSE_LENGTH = 7_700;
-    public static final int ELLIPSE_WIDTH = 6_600;
-    /* The landing page's keys: the zoom in and out, the mark and its clearing; the grid on the right. */
+    public static final int COMPUTER_GUIDANCE = 1;
+    public static final int PLATFORM_GUIDANCE = 2;
+    /*
+     * The ellipse a rocket comes down in round the spot marked, in blocks, length and width, by its guidance: a
+     * guidance platform's the size Perseverance's had, 7.7 by 6.6 kilometres, the computer alone's twice that.
+     * Estimates, to be set by playing.
+     */
+    private static final int[][] ELLIPSES = {{15_400, 13_200}, {7_700, 6_600}};
+    /*
+     * The landing page's keys: the zoom in and out, the mark and its clearing; the hazards, the grid and setting the
+     * landing on the right.
+     */
     private static final int ZOOM_IN = LEFT;
     private static final int ZOOM_OUT = LEFT + 1;
     private static final int MARK = LEFT + 2;
     private static final int CLEAR = LEFT + 3;
+    private static final int HAZARD = RIGHT + 1;
     private static final int GRID = RIGHT + 2;
+    private static final int SET = RIGHT + 4;
     /* The stages page's keys on the right: anywhere, a fall zone, a platform, the next platform, the next radius. */
     private static final int ANY = RIGHT;
     private static final int ZONE = RIGHT + 1;
@@ -188,6 +203,20 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                 .toClient();
         // Whether its rocket is on its cruise to the world its plan goes to.
         this.cruising = fields().flag("Cruising", false).save().toClient();
+        // Its landing page: whether the hazards are shown, the landing set, and the guidance its rocket comes down by.
+        this.hazards = fields().flag("Hazards", true).save().toClient();
+        this.landing = fields().nullable("Landing", PlannedLanding.CODEC).save().toClient();
+        this.guidance = fields().integer("Guidance", COMPUTER_GUIDANCE).toClient();
+    }
+
+    /** How long the ellipse its rocket comes down in is by {@code guidance}, in blocks. */
+    public static int ellipseLength(final int guidance) {
+        return ELLIPSES[Math.clamp(guidance - 1, 0, ELLIPSES.length - 1)][0];
+    }
+
+    /** How wide the ellipse its rocket comes down in is by {@code guidance}, in blocks. */
+    public static int ellipseWidth(final int guidance) {
+        return ELLIPSES[Math.clamp(guidance - 1, 0, ELLIPSES.length - 1)][1];
     }
 
     /**
@@ -202,6 +231,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             this.wait = VAPOUR_EVERY;
             BoilOff.rise(server, this);
             showPlatforms(server);
+            followGuidance(server);
             return;
         }
         this.wait = READ_EVERY;
@@ -209,6 +239,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         if (this.countWait <= 0 && MovingStructures.at(server, this.worldPosition) instanceof MovingStructure carried) {
             this.countWait = SECOND;
             countLost(server, carried);
+            followGuidance(server);
             followTanks(server, carried);
             CruiseEvents.leak(server, formedPlaces(server));
             CruiseFlight.second(server, carried, this);
@@ -380,6 +411,21 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return this.grid.get();
     }
 
+    /** Whether its landing map shows the hazards: the ground too steep to land on. */
+    public boolean hazards() {
+        return this.hazards.get();
+    }
+
+    /** The landing set for its rocket's descent, once its SET key has set one where the spot is marked. */
+    public Optional<PlannedLanding> landing() {
+        return Optional.ofNullable(this.landing.get());
+    }
+
+    /** The guidance its rocket comes down by: {@link #COMPUTER_GUIDANCE} or {@link #PLATFORM_GUIDANCE}. */
+    public int guidance() {
+        return this.guidance.get();
+    }
+
     /** The worlds it can plan a transfer to from the world it stands in, in the order of its left keys. */
     public List<ResourceLocation> destinations() {
         final List<ResourceLocation> out = new ArrayList<>();
@@ -531,6 +577,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             if (key - LEFT < worlds.size() && !worlds.get(key - LEFT).equals(target())) {
                 this.target.set(worlds.get(key - LEFT));
                 this.mark.set(null);
+                this.landing.set(null);
                 this.executed.set(null);
             } else if (key - LEFT == worlds.size()) {
                 this.choice.set(choice().windowBy(-1));
@@ -562,10 +609,21 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                         this.mark.set(BlockPos.ZERO);
                     }
                 }
-                case CLEAR -> this.mark.set(null);
+                case CLEAR -> {
+                    this.mark.set(null);
+                    this.landing.set(null);
+                }
+                case HAZARD -> this.hazards.set(!hazards());
                 case GRID -> this.grid.set(!grid());
+                // The landing set where the spot is marked, for the descent.
+                case SET -> {
+                    final BlockPos marked = mark();
+                    if (marked != null) {
+                        this.landing.set(new PlannedLanding(target(), marked.getX(), marked.getZ()));
+                    }
+                }
                 default -> {
-                    // A key the landing page does not use yet.
+                    // A key the landing page does not use: its guidance only shows which guides the rocket.
                 }
             }
         }
@@ -615,6 +673,11 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     /** Marks the spot at {@code x}, {@code z} of its target world to land on. */
     public void markAt(final int x, final int z) {
         this.mark.set(new BlockPos(x, 0, z));
+        final PlannedLanding set = this.landing.get();
+        if (set != null && (set.x() != x || set.z() != z)) {
+            // A spot marked anew is not where the landing was set: it is set again there, or not at all.
+            this.landing.set(null);
+        }
         setChanged();
     }
 
@@ -711,6 +774,30 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             }
         }
         return gone;
+    }
+
+    /*
+     * Keeps the guidance its rocket comes down by, for its landing page: an instrument ring's guidance platform, formed
+     * in its place, its stage not let go; else the computer's own.
+     */
+    private void followGuidance(final ServerLevel server) {
+        int now = COMPUTER_GUIDANCE;
+        final Optional<BlockPos> stands = foot();
+        if (stands.isPresent() && plan(server) != null) {
+            final Set<Integer> gone = separatedSections(server);
+            final BlockPos base = this.worldPosition.offset(stands.get());
+            for (final PlanSpot spot : this.counted.spots()) {
+                if (spot.block().equals(RocketKitBlocks.GUIDANCE_PLATFORM.getId()) && !gone.contains(spot.part())
+                        && server.getBlockState(base.offset(spot.at())).getBlock() instanceof FormedPartBlock) {
+                    now = PLATFORM_GUIDANCE;
+                    break;
+                }
+            }
+        }
+        if (now != guidance()) {
+            this.guidance.set(now);
+            setChanged();
+        }
     }
 
     /* Keeps what its rocket's tanks hold in flight as its record reckons it, for its pages to read. */

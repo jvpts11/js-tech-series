@@ -449,6 +449,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   storm is told twenty seconds ahead and fills the open space with radiation for half a minute, the crew sheltering
   behind the water and the cargo; a part burns through and loses a block. The climb to orbit now spends the propellant
   it burnt from the rocket's tanks.
+- Arriving and choosing where to land: at the end of its cruise a rocket is captured into the other world's
+  orbit by its capture burn, or by aerobraking where its plan meant to and its heat shield is still whole (one breached
+  on the way burns the capture instead); short of the delta-v it burns what it has and flies past, not captured, its
+  crew told. A transfer sets out only with the delta-v for its capture too. Arriving, and on every pass of the orbit
+  after, the crew photographs a strip of the ground under the orbit for its team, the world turning a little under it
+  each pass, and a team knows the ground round where its players have stood on a world. The landing map shows only what
+  the team knows, from its instruments, those passes and its visits, the rest under the grey of the unknown; the known
+  ground too steep to land on is marked in red (HAZARD shows or hides it), with how many such places lie in the
+  ellipse; in its corner, the whole world's small map with what is known of it, and how much. The ellipse comes from
+  the guidance: an instrument ring's guidance platform, formed and not let go, lands within Perseverance's 7.7 by 6.6
+  km, the flight computer alone within twice that. SET fixes the landing where the spot is marked, for the descent.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

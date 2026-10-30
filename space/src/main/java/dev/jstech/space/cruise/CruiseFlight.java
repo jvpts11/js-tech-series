@@ -9,13 +9,17 @@ package dev.jstech.space.cruise;
 
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.space.config.SpaceServerConfig;
+import dev.jstech.space.exploration.WorldCoverage;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.PlannedTransfer;
+import dev.jstech.space.orbit.OrbitObject;
 import dev.jstech.space.orbit.OrbitObjects;
 import dev.jstech.space.rocket.RocketBurns;
+import dev.jstech.space.rocket.Rockets;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SystemLayout;
@@ -62,12 +66,14 @@ public final class CruiseFlight {
             arrive(level, body, computer);
             return;
         }
+        photograph(level, body);
         computer.executed().ifPresent(plan -> setOut(level, body, computer, plan));
     }
 
     /**
      * Sets {@code body} out on its cruise as {@code plan} says, if its window has come, it rests in the orbit of
-     * another world and its stages have the delta-v: its transfer burn burnt, it leaves its orbit; whether it set out.
+     * another world and its stages have the delta-v for its transfer and its capture: its transfer burn burnt, it
+     * leaves its orbit; whether it set out.
      */
     public static boolean setOut(final ServerLevel level, final MovingStructure body,
                                  final FlightComputerBlockEntity computer, final PlannedTransfer plan) {
@@ -75,7 +81,7 @@ public final class CruiseFlight {
         final SolarBody here = SystemLayout.over(body.pose().x(), body.pose().z());
         final OptionalDouble available = computer.available();
         if (level.getGameTime() < plan.leaves() || body.motion() != null || there.isEmpty() || here == null
-                || here == there.get() || available.isEmpty() || available.getAsDouble() < plan.burn()) {
+                || here == there.get() || available.isEmpty() || available.getAsDouble() < plan.needed()) {
             return false;
         }
         RocketBurns.burn(level, body, computer.separated(), plan.burn());
@@ -105,15 +111,45 @@ public final class CruiseFlight {
         return true;
     }
 
-    /* {@code body} came to rest at the end of its cruise: it is in the other world's orbit, its plan flown. */
+    /*
+     * {@code body} came to rest at the end of its cruise, its plan flown: it is captured into the other world's orbit,
+     * by its capture burn or by aerobraking where its plan meant to and its heat shield is whole, photographing the
+     * ground under it on the way in; short of the delta-v, it burns what it has and is not captured.
+     */
     private static void arrive(final ServerLevel level, final MovingStructure body,
                                final FlightComputerBlockEntity computer) {
-        final ResourceLocation to = computer.executed().map(PlannedTransfer::to).orElse(null);
+        final Optional<PlannedTransfer> flown = computer.executed();
         computer.arrived();
-        if (to != null) {
-            CruiseEvents.tell(level, body, CruiseTexts.ARRIVAL.of(CruiseTexts.ARRIVED_NAME.text(),
-                    CruiseTexts.ARRIVED.with(nameOf(to))));
+        final Optional<SolarBody> there = flown.flatMap(plan -> SolarSystemWorlds.bodyOf(plan.to()));
+        if (flown.isEmpty() || there.isEmpty()) {
+            return;
         }
+        final PlannedTransfer plan = flown.get();
+        final double capture = plan.captureBurn(computer.shield());
+        if (capture > 0 && !RocketBurns.burn(level, body, computer.separated(), capture)) {
+            CruiseEvents.tell(level, body, CruiseTexts.MISSED.of(CruiseTexts.MISSED_NAME.text(),
+                    CruiseTexts.NOT_CAPTURED.with(nameOf(plan.to()))));
+            return;
+        }
+        OrbitObjects.arrived(level, body, there.get());
+        Rockets.get(level.getServer(), body.id()).ifPresent(rocket -> WorldCoverage.photographAt(level.getServer(),
+                CoreTeams.teamOf(level.getServer(), rocket.ownership().owner()), plan.to(), level.getGameTime()));
+        CruiseEvents.tell(level, body, CruiseTexts.ARRIVAL.of(CruiseTexts.ARRIVED_NAME.text(), (capture > 0
+                ? CruiseTexts.ARRIVED : CruiseTexts.AEROBRAKED).with(nameOf(plan.to()))));
+    }
+
+    /*
+     * {@code body} resting in a world's orbit: its crew photographs the ground under each pass, the world turning a
+     * little under the orbit with every one, for its team's maps.
+     */
+    private static void photograph(final ServerLevel level, final MovingStructure body) {
+        if (body.motion() != null) {
+            return;
+        }
+        OrbitObjects.get(level.getServer(), body.id().value())
+                .filter(found -> found.kind() == OrbitObject.Kind.ROCKET)
+                .ifPresent(found -> WorldCoverage.photographAt(level.getServer(), CoreTeams.teamOf(level.getServer(),
+                        found.ownership().owner()), found.world(), level.getGameTime()));
     }
 
     /* Whether everyone aboard {@code body} sleeps, and anyone is aboard. */

@@ -12,6 +12,7 @@ import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.datagen.JsSpaceDataGenerators;
 import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.exploration.SpaceProperties;
+import dev.jstech.space.exploration.WorldCoverage;
 import dev.jstech.space.exploration.WorldDiscovery;
 import dev.jstech.space.geology.LooseStones;
 import dev.jstech.space.geology.SpaceOres;
@@ -88,6 +89,7 @@ public final class JsSpace {
         // What can be known of a world, and what each team knows of each.
         SpaceProperties.declare();
         WorldDiscovery.register();
+        WorldCoverage.register();
         // The star systems of the three galaxies, and the template every system's space is made from on its first
         // visit.
         StarSystems.declare();

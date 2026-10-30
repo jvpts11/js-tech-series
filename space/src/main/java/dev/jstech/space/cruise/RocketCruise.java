@@ -14,8 +14,6 @@ import dev.jstech.core.moving.IStructureMotion;
 import dev.jstech.core.moving.StructureMotions;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.space.JsSpace;
-import dev.jstech.space.orbit.OrbitObjects;
-import dev.jstech.space.universe.SolarSystemWorlds;
 import java.util.Comparator;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
@@ -27,8 +25,8 @@ import net.minecraft.world.level.ChunkPos;
 /**
  * A rocket's cruise between worlds through its system's space, as its flight computer flies it: from where it left
  * its low orbit to the spot of the low orbit of the world it goes to, in the time its planned transfer takes, along a
- * gentle arc, slow to leave and slow to arrive. Its crew sees the world left behind shrink and the one ahead grow. On
- * arriving it is told as a thing in that world's orbit and comes to rest there.
+ * gentle arc, slow to leave and slow to arrive. Its crew sees the world left behind shrink and the one ahead grow. It
+ * comes to rest at the spot, where its flight computer captures it into that world's orbit.
  *
  * @param fromX  where it set out
  * @param fromY  where it set out
@@ -111,9 +109,7 @@ public record RocketCruise(double fromX, double fromY, double fromZ, double toX,
         }
         final StructurePose next = now.movedTo(at[0], at[1], at[2]);
         if (done >= 1) {
-            // Arrived: a thing in the orbit of the world it went to, resting there.
-            SolarSystemWorlds.bodyOf(this.to).ifPresent(body -> OrbitObjects.arrived(level, context.structure(),
-                    body));
+            // Arrived at the spot of the other world's orbit, resting there: its flight computer captures it.
             return new Step(next, null);
         }
         return new Step(next, this);

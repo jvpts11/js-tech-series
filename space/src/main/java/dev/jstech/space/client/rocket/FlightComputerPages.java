@@ -11,11 +11,13 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.space.client.flight.LandingMapsClient;
+import dev.jstech.space.client.universe.WorldThumbnails;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.PlannedTransfer;
 import dev.jstech.space.flight.TransferChoice;
 import dev.jstech.space.flight.TransferPlan;
+import dev.jstech.space.network.LandingSight;
 import dev.jstech.space.orbit.Orbit;
 import dev.jstech.space.orbit.SolarSystemOrbits;
 import dev.jstech.space.orbit.Transfers;
@@ -93,7 +95,10 @@ public final class FlightComputerPages {
     public static final TextKey NORTH = TextKey.of("jsspace.flight_computer.north", "NORTH");
     public static final TextKey SET = TextKey.of("jsspace.flight_computer.set", "SET");
     public static final TextKey ELLIPSE = TextKey.of("jsspace.flight_computer.ellipse", "ELLIPSE %s X %s KM");
-    public static final TextKey GUIDANCE = TextKey.of("jsspace.flight_computer.guidance", "GUIDE T1");
+    public static final TextKey GUIDANCE = TextKey.of("jsspace.flight_computer.guidance", "GUIDE T%s");
+    public static final TextKey HAZARDS_IN = TextKey.of("jsspace.flight_computer.hazards_in", "HAZARD IN ELLIPSE %s");
+    public static final TextKey KNOWN = TextKey.of("jsspace.flight_computer.known", "KNOWN %s%%");
+    public static final TextKey STEEP = TextKey.of("jsspace.flight_computer.steep", "STEEP");
     public static final TextKey PLACE = TextKey.of("jsspace.flight_computer.place", "X %s  Z %s");
     public static final TextKey NORTH_LETTER = TextKey.of("jsspace.flight_computer.north_letter", "N");
     public static final TextKey BLOCKS = TextKey.of("jsspace.flight_computer.blocks", "%s BLK");
@@ -141,6 +146,11 @@ public final class FlightComputerPages {
     private static final int MAP_X1 = SX1;
     private static final int MAP_Y1 = SY1 - 28;
     private static final int GRID_STEP = 32;
+    /* The world's coverage in the map's corner: its left edge from the screen's right, its top from the map's foot. */
+    private static final int COVER_RIGHT = 104;
+    private static final int COVER_BOTTOM = 38;
+    /* Where the scale's bar and the hazards' key start, near the map's left edge, clear of the coverage. */
+    private static final int SCALE_X = MAP_X0 + 8;
     private static final int METRES_A_KILOMETRE = 1000;
     private static final int TICKS_A_SECOND = 20;
     private static final int SECONDS_A_MINUTE = 60;
@@ -180,11 +190,12 @@ public final class FlightComputerPages {
             left.add(live(ZOOM_OUT, computer.zoom() == FlightComputerBlockEntity.WIDE));
             left.add(live(MARK, computer.mark() != null));
             left.add(live(CLEAR, false));
-            right.add(off(GUIDE, true));
-            right.add(off(HAZARD, true));
+            // The guidance key shows which guides the rocket down: lit, an instrument ring's platform.
+            right.add(live(GUIDE, computer.guidance() == FlightComputerBlockEntity.PLATFORM_GUIDANCE));
+            right.add(live(HAZARD, computer.hazards()));
             right.add(live(GRID, computer.grid()));
             right.add(off(NORTH, true));
-            right.add(off(SET, true));
+            right.add(computer.mark() == null ? off(SET, true) : live(SET, landingSet(computer)));
         }
         final FlightComputerStages.Shown stages = page == FlightPage.STAGES ? FlightComputerStages.shown(computer)
                 : FlightComputerStages.Shown.NONE;
@@ -197,7 +208,8 @@ public final class FlightComputerPages {
                 setFor(computer, planned), computer.shield(), computer.available());
         return new FlightComputerFace.View(page, left, right, name(computer.target()), plan, tick, computer.mark(),
                 computer.zoom(), computer.grid(), map != null && map.world().equals(computer.target()) ? map : null,
-                plotted, stages, readings);
+                plotted, stages, readings, new FlightComputerFace.Landing(computer.guidance(), computer.hazards(),
+                        landingSet(computer)));
     }
 
     /**
@@ -286,6 +298,16 @@ public final class FlightComputerPages {
         final double u = map.size() / 2.0 + (double) (centre.getX() - map.centreX()) / map.blocks() - wide / 2.0;
         final double v = map.size() / 2.0 + (double) (centre.getZ() - map.centreZ()) / map.blocks() - tall / 2.0;
         g.blit(map.texture(), MAP_X0, MAP_Y0, wide, tall, (float) u, (float) v, wide, tall, map.size(), map.size());
+        final FlightComputerFace.Landing landing = view.landing();
+        if (landing.hazards()) {
+            for (int at = map.steep().nextSetBit(0); at >= 0; at = map.steep().nextSetBit(at + 1)) {
+                final int x = MAP_X0 + (int) Math.floor(at % map.size() - u);
+                final int y = MAP_Y0 + (int) Math.floor(at / map.size() - v);
+                if (x >= MAP_X0 && x < MAP_X1 - 1 && y >= MAP_Y0 && y < MAP_Y1 - 1) {
+                    g.fill(x, y, x + 2, y + 2, c.hazard());
+                }
+            }
+        }
         if (view.grid()) {
             for (int x = MAP_X0 + GRID_STEP; x < MAP_X1; x += GRID_STEP) {
                 FlightComputerFace.vline(g, x, MAP_Y0, MAP_Y1, c.backing());
@@ -296,9 +318,11 @@ public final class FlightComputerPages {
         }
         final int kx = (MAP_X0 + MAP_X1) / 2;
         final int ky = (MAP_Y0 + MAP_Y1) / 2;
+        final int length = FlightComputerBlockEntity.ellipseLength(landing.guidance());
+        final int width = FlightComputerBlockEntity.ellipseWidth(landing.guidance());
         if (view.mark() != null) {
-            final double a = FlightComputerBlockEntity.ELLIPSE_LENGTH / 2.0 / map.blocks();
-            final double b = FlightComputerBlockEntity.ELLIPSE_WIDTH / 2.0 / map.blocks();
+            final double a = length / 2.0 / map.blocks();
+            final double b = width / 2.0 / map.blocks();
             for (int i = 0; i < RING_MOST; i++) {
                 if ((i / 4) % 2 == 1) {
                     continue;
@@ -314,13 +338,83 @@ public final class FlightComputerPages {
                 MAP_X0 + 44, MAP_Y0 + 4, c.white(), c.backing());
         north(g, font, c);
         scale(g, font, map, c);
+        if (landing.hazards()) {
+            steepKey(g, font, c);
+        }
+        cover(g, font, view, map, c);
         final int rows = SY1 - 24;
-        FlightComputerFace.text(g, font, GameText.resolve(ELLIPSE.with(kilometres(
-                FlightComputerBlockEntity.ELLIPSE_LENGTH), kilometres(FlightComputerBlockEntity.ELLIPSE_WIDTH))),
+        FlightComputerFace.text(g, font, GameText.resolve(ELLIPSE.with(kilometres(length), kilometres(width))),
                 SX0 + 6, rows, c.cyan(), false);
-        FlightComputerFace.text(g, font, GameText.resolve(GUIDANCE), SX0 + 6, rows + 11, c.cyan(), false);
+        if (view.mark() != null) {
+            final int inside = steepIn(map, view.mark(), length, width);
+            final String hazards = GameText.resolve(HAZARDS_IN.with(inside));
+            FlightComputerFace.text(g, font, hazards, SX1 - 6 - font.width(hazards), rows, inside == 0 ? c.green()
+                    : c.amber(), false);
+        }
+        FlightComputerFace.text(g, font, GameText.resolve(GUIDANCE.with(landing.guidance())), SX0 + 6, rows + 11,
+                c.cyan(), false);
         final String place = GameText.resolve(PLACE.with(centre.getX(), centre.getZ()));
         FlightComputerFace.text(g, font, place, SX1 - 6 - font.width(place), rows + 11, c.white(), false);
+    }
+
+    /* The key to the hazards, over the scale's bar: their mark and what they are. */
+    private static void steepKey(final GuiGraphics g, final Font font, final FlightComputerFace.Colours c) {
+        final int sx = SCALE_X;
+        final int sy = MAP_Y1 - 21;
+        final String label = GameText.resolve(STEEP);
+        g.fill(sx - 3, sy - 2, sx + 8 + font.width(label), sy + 9, c.backing());
+        g.fill(sx, sy + 2, sx + 2, sy + 4, c.hazard());
+        FlightComputerFace.text(g, font, label, sx + 5, sy, c.white(), false);
+    }
+
+    /*
+     * The whole world's coverage in the map's corner: its small map, the ground the team has not seen under grey, the
+     * spot the map looks at boxed, and how much of the world is known.
+     */
+    private static void cover(final GuiGraphics g, final Font font, final FlightComputerFace.View view,
+                              final LandingMapsClient.Shown map, final FlightComputerFace.Colours c) {
+        final int wide = LandingSight.COVER_WIDE;
+        final int tall = LandingSight.COVER_TALL;
+        final int gx = SX1 - COVER_RIGHT;
+        final int gy = MAP_Y1 - COVER_BOTTOM;
+        g.fill(gx - 2, gy - 12, gx + wide + 2, gy + tall + 2, c.backing());
+        final Optional<SolarBody> body = SolarSystemWorlds.bodyOf(map.world());
+        final ResourceLocation small = body.map(WorldThumbnails::of).orElse(null);
+        if (small != null) {
+            g.blit(small, gx, gy, 0, 0, wide, tall, WorldThumbnails.WIDE, WorldThumbnails.TALL);
+        } else {
+            g.fill(gx, gy, gx + wide, gy + tall, c.space());
+        }
+        for (int cell = map.cover().nextClearBit(0); cell < wide * tall; cell = map.cover().nextClearBit(cell + 1)) {
+            final int x = gx + cell % wide;
+            final int y = gy + cell / wide;
+            g.fill(x, y, x + 1, y + 1, (x + y) % 4 == 0 ? c.fogLight() : c.fog());
+        }
+        FlightComputerFace.frame(g, gx - 1, gy - 1, gx + wide + 1, gy + tall + 1, c.coverFrame());
+        final BlockPos centre = centreOf(view);
+        final int tx = gx + (int) ((SphereMap.longitude(centre.getX(), map.width()) + 180) / 360 * wide);
+        final int ty = gy + (int) ((90 - SphereMap.latitude(centre.getZ(), map.width())) / 180 * tall);
+        FlightComputerFace.frame(g, tx - 3, ty - 3, tx + 4, ty + 4, c.cyan());
+        FlightComputerFace.text(g, font, GameText.resolve(KNOWN.with(Math.round(map.share() * 100))), gx, gy - 11,
+                c.green(), false);
+    }
+
+    /* How many of the pixels of {@code map} too steep to land on lie in the ellipse round {@code mark}. */
+    private static int steepIn(final LandingMapsClient.Shown map, final BlockPos mark, final int length,
+                               final int width) {
+        final double a = length / 2.0;
+        final double b = width / 2.0;
+        int inside = 0;
+        for (int at = map.steep().nextSetBit(0); at >= 0; at = map.steep().nextSetBit(at + 1)) {
+            final double dx = (map.centreX() + (at % map.size() - map.size() / 2.0 + 0.5) * map.blocks()
+                    - mark.getX()) / a;
+            final double dz = (map.centreZ() + (at / map.size() - map.size() / 2.0 + 0.5) * map.blocks()
+                    - mark.getZ()) / b;
+            if (dx * dx + dz * dz <= 1) {
+                inside++;
+            }
+        }
+        return inside;
     }
 
     /* The plan's figures in their block beside the system. */
@@ -490,7 +584,7 @@ public final class FlightComputerPages {
                               final FlightComputerFace.Colours c) {
         final int blocks = map.blocks() >= FlightComputerBlockEntity.WIDE_BLOCKS ? 10_000 : 1_000;
         final int bar = blocks / map.blocks();
-        final int sx = MAP_X0 + 44;
+        final int sx = SCALE_X;
         final int sy = MAP_Y1 - 8;
         final String label = GameText.resolve(BLOCKS.with(blocks));
         g.fill(sx - 3, sy - 4, sx + bar + 8 + font.width(label), sy + 5, c.backing());
@@ -552,6 +646,13 @@ public final class FlightComputerPages {
     private static FlightComputerFace.Legend live(final TextKey key, final boolean chosen) {
         return new FlightComputerFace.Legend(GameText.resolve(key), chosen ? FlightComputerFace.Legend.State.CHOSEN
                 : FlightComputerFace.Legend.State.LIVE, true);
+    }
+
+    /* Whether {@code computer}'s landing is set where its spot is marked, in the world it goes to. */
+    private static boolean landingSet(final FlightComputerBlockEntity computer) {
+        final BlockPos marked = computer.mark();
+        return marked != null && computer.landing().filter(set -> set.world().equals(computer.target())
+                && set.x() == marked.getX() && set.z() == marked.getZ()).isPresent();
     }
 
     /* Whether {@code computer} is set to fly a transfer to the world {@code planned} goes to. */

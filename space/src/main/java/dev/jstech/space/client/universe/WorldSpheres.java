@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import net.minecraft.Util;
@@ -64,6 +65,7 @@ final class WorldSpheres {
             return;
         }
         dropOverworld();
+        WorldThumbnails.clear();
         seeded = true;
         mapSeed = seed;
     }
@@ -71,6 +73,7 @@ final class WorldSpheres {
     /** Everything on the card is let go, as the player leaves the world. */
     static void clear() {
         dropOverworld();
+        WorldThumbnails.clear();
         seeded = false;
         failed = false;
         MAPS.values().forEach(Maps::release);
@@ -92,6 +95,11 @@ final class WorldSpheres {
             read(body);
         }
         return MAPS.get(body);
+    }
+
+    /** The Overworld's map number, once it has come from the server. */
+    static OptionalLong seed() {
+        return seeded ? OptionalLong.of(mapSeed) : OptionalLong.empty();
     }
 
     /** The Overworld's clouds, laid once with its maps; none until then. */

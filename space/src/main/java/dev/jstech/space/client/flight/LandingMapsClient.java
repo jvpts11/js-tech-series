@@ -9,9 +9,12 @@ package dev.jstech.space.client.flight;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.client.rocket.FlightComputerFace;
 import dev.jstech.space.client.universe.MapGround;
 import dev.jstech.space.network.FarMapPayload;
 import dev.jstech.space.network.LandingMapPayload;
+import dev.jstech.space.network.LandingSight;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +44,8 @@ public final class LandingMapsClient {
     private static final double SHALLOW = 0.5;
     private static final double DEEP = 0.9;
     private static final int CHANNEL = 0xFF;
+    /* How much of the grey of the unknown a pixel of ground not known is, the rest how light its ground is. */
+    private static final double FOG = 0.75;
     private static @Nullable Shown shown;
     private static @Nullable DynamicTexture texture;
 
@@ -65,6 +70,8 @@ public final class LandingMapsClient {
                 .registryAccess().registryOrThrow(Registries.BIOME).getHolder(ResourceKey.create(Registries.BIOME,
                         id)).orElse(null)).toList();
         final int scale = Math.max(1, Math.min(16, map.blocks() / 8));
+        final BitSet known = BitSet.valueOf(payload.sight().known());
+        final FlightComputerFace.Colours c = FlightComputerFace.PALETTE.get();
         // A map has few colours of ground among its many pixels: each is matched to its map colour once.
         final Map<Integer, MapColor> matched = new HashMap<>();
         for (int row = 0; row < size; row++) {
@@ -86,7 +93,9 @@ public final class LandingMapsClient {
                     light = slope > SLOPE ? MapColor.Brightness.HIGH : slope < -SLOPE ? MapColor.Brightness.LOW
                             : MapColor.Brightness.NORMAL;
                 }
-                image.setPixelRGBA(column, row, colour.calculateRGBColor(light));
+                final int drawn = colour.calculateRGBColor(light);
+                image.setPixelRGBA(column, row, known.get(at) ? drawn : unknown(drawn, (row + column) % 4 == 0
+                        ? c.fogLight() : c.fog()));
             }
         }
         if (texture == null) {
@@ -97,7 +106,20 @@ public final class LandingMapsClient {
         }
         texture.upload();
         shown = new Shown(payload.world(), payload.width(), map.centreX(), map.centreZ(), map.blocks(), size,
-                TEXTURE);
+                TEXTURE, BitSet.valueOf(payload.sight().steep()), payload.sight().share(),
+                BitSet.valueOf(payload.sight().cover()));
+    }
+
+    /*
+     * A pixel of ground not known: the grey of the unknown, {@code fog} as ARGB, with a little of how light the ground
+     * {@code drawn} is, as the image keeps it (ABGR), so its shapes only just show.
+     */
+    private static int unknown(final int drawn, final int fog) {
+        final int light = ((drawn & CHANNEL) + (drawn >> 8 & CHANNEL) + (drawn >> 16 & CHANNEL)) / 3;
+        final int red = (int) ((fog >> 16 & CHANNEL) * FOG + light * (1 - FOG));
+        final int green = (int) ((fog >> 8 & CHANNEL) * FOG + light * (1 - FOG));
+        final int blue = (int) ((fog & CHANNEL) * FOG + light * (1 - FOG));
+        return 0xFF00_0000 | blue << 16 | green << 8 | red;
     }
 
     /* The map colour nearest {@code rgb}. */
@@ -131,8 +153,16 @@ public final class LandingMapsClient {
      * @param blocks  how many blocks wide each pixel is
      * @param size    how many pixels it is each way
      * @param texture its texture
+     * @param steep   its pixels known and too steep to land on, each at its row times its size plus its column
+     * @param share   how much of the whole world the team knows, from 0 to 1
+     * @param cover   the whole world's cells known ({@link LandingSight#COVER_WIDE} round)
      */
     public record Shown(ResourceLocation world, double width, int centreX, int centreZ, int blocks, int size,
-                        ResourceLocation texture) {
+                        ResourceLocation texture, BitSet steep, double share, BitSet cover) {
+
+        public Shown {
+            steep = (BitSet) steep.clone();
+            cover = (BitSet) cover.clone();
+        }
     }
 }

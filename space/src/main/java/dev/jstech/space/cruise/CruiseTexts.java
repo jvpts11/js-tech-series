@@ -24,6 +24,11 @@ public final class CruiseTexts {
             "On the way to %s, arriving in %s.");
     public static final TextKey ARRIVED_NAME = TextKey.of("jsspace.cruise.arrived", "Arrived");
     public static final TextKey ARRIVED = TextKey.of("jsspace.cruise.arrived.body", "In the orbit of %s.");
+    public static final TextKey AEROBRAKED = TextKey.of("jsspace.cruise.aerobraked",
+            "Aerobraked into the orbit of %s.");
+    public static final TextKey MISSED_NAME = TextKey.of("jsspace.cruise.missed", "Not captured");
+    public static final TextKey NOT_CAPTURED = TextKey.of("jsspace.cruise.missed.body",
+            "Too little delta-v to slow into the orbit of %s: the rocket flew past it.");
     public static final TextKey SLEPT = TextKey.of("jsspace.cruise.slept", "You slept through the cruise.");
     public static final TextKey STORM_NAME = TextKey.of("jsspace.cruise.storm", "Solar storm");
     public static final TextKey STORM_COMING = TextKey.of("jsspace.cruise.storm.coming",
@@ -39,6 +44,9 @@ public final class CruiseTexts {
             DEPARTED_NAME).declare();
     public static final NotificationKind ARRIVAL = Notifications.kind(id("arrival"), NotificationLevel.INFO,
             ARRIVED_NAME).declare();
+    /** Arriving without the delta-v to be captured. */
+    public static final NotificationKind MISSED = Notifications.kind(id("missed"), NotificationLevel.ALERT,
+            MISSED_NAME).declare();
     /** A solar storm coming, and past. */
     public static final NotificationKind STORM = Notifications.kind(id("solar_storm"), NotificationLevel.ALERT,
             STORM_NAME).declare();
