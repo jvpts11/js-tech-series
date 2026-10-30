@@ -25,6 +25,10 @@ public final class Rocketry {
     public static final double LOW_ORBIT_TO_MARS_TRANSFER = 3_600;
     /** From Mars' surface to its orbit. */
     public static final double MARS_SURFACE_TO_ORBIT = 4_100;
+    /** The capture burn into Mars' orbit, arriving from a transfer, for a rocket that does not aerobrake. */
+    public static final double MARS_CAPTURE = 2_000;
+    /** The capture burn into the Overworld's low orbit, coming home, for a rocket that does not aerobrake. */
+    public static final double OVERWORLD_CAPTURE = 3_100;
 
     private Rocketry() {
     }

@@ -208,6 +208,11 @@ public final class SpaceServerConfig {
         return FILE.get(FALLING_STAGES_DO_DAMAGE);
     }
 
+    /** Whether a rocket or a starship skips its cruise and arrives at once. */
+    public static boolean fastTravel() {
+        return FILE.get(FAST_TRAVEL);
+    }
+
     /** Whether a destroyed satellite leaves debris in orbit. */
     public static boolean debris() {
         return FILE.get(DEBRIS);

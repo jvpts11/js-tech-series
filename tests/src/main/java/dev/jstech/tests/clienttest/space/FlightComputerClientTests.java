@@ -54,6 +54,10 @@ public final class FlightComputerClientTests {
     private static final int[] ZONE_KEY = {FlightComputerFace.SX1 + 19, FlightComputerFace.SY0 + 24 + 30 + 5};
     private static final int AMBER_RED = 200;
     private static final int AMBER_GREEN = 140;
+    /* Where the transfer page writes its status, bottom right, in the face's pixels, and the least amber seen there. */
+    private static final int[] STATUS = {FlightComputerFace.SX1 - 90, FlightComputerFace.SY1 - 11,
+        FlightComputerFace.SX1 - 8, FlightComputerFace.SY1 - 2};
+    private static final int LEAST_AMBER = 6;
 
     private FlightComputerClientTests() {
     }
@@ -126,6 +130,48 @@ public final class FlightComputerClientTests {
                             "ZONE sets a fall zone round the pad: " + set);
                     ctx.mc().setScreen(null);
                 });
+    }
+
+    @ClientTest(timeoutTicks = 1500)
+    public static void computer_xferTellsAPlanShortOfDeltaV(final ClientTestContext ctx) {
+        final int[] amber = new int[1];
+        ctx.afterTest(() -> ctx.server().execute(() -> ctx.serverLevel().removeBlock(ctx.abs(COMPUTER), false)));
+        ctx.thenTeleport(0, EYE, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    level.setBlockAndUpdate(ctx.abs(COMPUTER),
+                            RocketKitBlocks.FLIGHT_COMPUTER.get().defaultBlockState());
+                    if (level.getBlockEntity(ctx.abs(COMPUTER)) instanceof FlightComputerBlockEntity computer) {
+                        // A rocket with empty tanks: it has no delta-v for the transfer.
+                        computer.carry(new RocketDesign("DRY", STAGED), BlockPos.ZERO, List.of());
+                    }
+                })
+                .thenRightClick(SETTLE, COMPUTER)
+                .thenAwaitScreen(FlightComputerScreen.class, OPEN)
+                .then(SETTLE, () -> amber[0] = amberIn(ctx, STATUS))
+                .thenScreenshot(0, "flight-computer-xfer-short")
+                .then(0, () -> {
+                    ctx.assertTrue(amber[0] >= LEAST_AMBER, "the plan is told short of delta-v, in amber, where its"
+                            + " status is written: " + amber[0] + " amber points");
+                    ctx.mc().setScreen(null);
+                });
+    }
+
+    /* How many points of the face's box {@code box}, x0, y0, x1, y1 in its own pixels, are amber. */
+    private static int amberIn(final ClientTestContext ctx, final int[] box) {
+        int count = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int x = box[0]; x < box[2]; x++) {
+                for (int y = box[1]; y < box[3]; y++) {
+                    final int[] point = screenOf(ctx, new int[] {x, y});
+                    final int argb = frame.pixel(point[0], point[1]);
+                    if ((argb >> 16 & CHANNEL) > AMBER_RED && (argb >> 8 & CHANNEL) > AMBER_GREEN
+                            && (argb & CHANNEL) < (argb >> 8 & CHANNEL) / 2) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     /* Where the face's pixel {@code at} is on the window, in the screen's own scaled units. */

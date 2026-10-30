@@ -13,6 +13,8 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
+import dev.jstech.space.flight.PlannedTransfer;
+import dev.jstech.space.flight.TransferChoice;
 import dev.jstech.space.flight.TransferPlan;
 import dev.jstech.space.orbit.Orbit;
 import dev.jstech.space.orbit.SolarSystemOrbits;
@@ -67,6 +69,13 @@ public final class FlightComputerPages {
     public static final TextKey PLAN_ANY_TIME = TextKey.of("jsspace.flight_computer.plan_any_time",
             "PLAN OK  ANY TIME");
     public static final TextKey NO_PLAN = TextKey.of("jsspace.flight_computer.no_plan", "NO TRANSFER FROM HERE");
+    public static final TextKey PLAN_SET = TextKey.of("jsspace.flight_computer.plan_set", "PLAN SET");
+    public static final TextKey SHORT_OF_DELTA_V = TextKey.of("jsspace.flight_computer.short_of_delta_v",
+            "NOT ENOUGH DV");
+    public static final TextKey LEAVE_NOW = TextKey.of("jsspace.flight_computer.leave_now", "LEAVE NOW");
+    public static final TextKey WINDOW_NUMBER = TextKey.of("jsspace.flight_computer.window_number", "WIN %s");
+    public static final TextKey ASSIST_ON = TextKey.of("jsspace.flight_computer.assist_on", "SWING-BY");
+    public static final TextKey SHIELD_OK = TextKey.of("jsspace.flight_computer.shield_ok", "OK");
     public static final TextKey WINDOW_EARLIER = TextKey.of("jsspace.flight_computer.window_earlier", "WIN -");
     public static final TextKey WINDOW_LATER = TextKey.of("jsspace.flight_computer.window_later", "WIN +");
     public static final TextKey KEY_DELTA_V = TextKey.of("jsspace.flight_computer.key_delta_v", "DV");
@@ -149,16 +158,23 @@ public final class FlightComputerPages {
         final List<FlightComputerFace.Legend> left = new ArrayList<>();
         final List<FlightComputerFace.Legend> right = new ArrayList<>();
         final FlightPage page = computer.page();
+        final Optional<TransferPlan> plan = computer.plan();
+        final Optional<PlannedTransfer> planned = computer.planned();
+        final TransferChoice choice = computer.choice();
         if (page == FlightPage.TRANSFER) {
             for (final ResourceLocation world : computer.destinations()) {
                 left.add(new FlightComputerFace.Legend(name(world), world.equals(computer.target())
                         ? FlightComputerFace.Legend.State.CHOSEN : FlightComputerFace.Legend.State.LIVE, false));
             }
-            left.add(off(WINDOW_EARLIER, false));
-            left.add(off(WINDOW_LATER, false));
-            for (final TextKey key : List.of(KEY_DELTA_V, KEY_TIME_OF_FLIGHT, KEY_ASSIST, KEY_AEROBRAKE, EXECUTE)) {
-                right.add(off(key, false));
-            }
+            final boolean windowed = plan.map(TransferPlan::windowed).orElse(false);
+            final boolean airAhead = plan.map(TransferPlan::aerobraking).orElse(false) && computer.shield();
+            left.add(state(WINDOW_EARLIER, windowed && choice.window() > 0, false));
+            left.add(state(WINDOW_LATER, windowed && choice.window() < TransferChoice.FARTHEST_WINDOW, false));
+            right.add(state(KEY_DELTA_V, plan.isPresent(), false));
+            right.add(state(KEY_TIME_OF_FLIGHT, plan.isPresent(), false));
+            right.add(state(KEY_ASSIST, windowed, choice.assist()));
+            right.add(state(KEY_AEROBRAKE, airAhead, choice.aero()));
+            right.add(state(EXECUTE, plan.isPresent(), setFor(computer, planned)));
         } else if (page == FlightPage.LANDING) {
             left.add(live(ZOOM_IN, computer.zoom() == FlightComputerBlockEntity.NEAR));
             left.add(live(ZOOM_OUT, computer.zoom() == FlightComputerBlockEntity.WIDE));
@@ -177,9 +193,11 @@ public final class FlightComputerPages {
             right.addAll(FlightComputerStages.right(stages));
         }
         final LandingMapsClient.Shown map = LandingMapsClient.shown();
-        return new FlightComputerFace.View(page, left, right, name(computer.target()), computer.plan(), tick,
-                computer.mark(), computer.zoom(), computer.grid(),
-                map != null && map.world().equals(computer.target()) ? map : null, stages, readings);
+        final FlightComputerFace.Plotted plotted = new FlightComputerFace.Plotted(planned, choice,
+                setFor(computer, planned), computer.shield(), computer.available());
+        return new FlightComputerFace.View(page, left, right, name(computer.target()), plan, tick, computer.mark(),
+                computer.zoom(), computer.grid(), map != null && map.world().equals(computer.target()) ? map : null,
+                plotted, stages, readings);
     }
 
     /**
@@ -248,7 +266,7 @@ public final class FlightComputerPages {
             return;
         }
         figures(g, font, view, plan.get(), c);
-        tape(g, font, plan.get(), c);
+        tape(g, font, plan.get(), view.plotted(), view.tick(), c);
     }
 
     /* The landing page. */
@@ -309,20 +327,26 @@ public final class FlightComputerPages {
     private static void figures(final GuiGraphics g, final Font font, final FlightComputerFace.View view,
                                 final TransferPlan plan, final FlightComputerFace.Colours c) {
         final String unknown = GameText.resolve(NO_READING);
+        final FlightComputerFace.Plotted plotted = view.plotted();
+        final boolean assisted = plotted.planned().map(PlannedTransfer::assisted).orElse(false);
+        final long travel = plotted.planned().map(PlannedTransfer::travel).orElse(plan.travel());
+        final boolean aerobraking = plotted.planned().map(PlannedTransfer::aerobraking).orElse(plan.aerobraking());
+        final double needed = plotted.planned().map(PlannedTransfer::needed).orElse(plan.deltaVWindow());
+        final boolean enough = plotted.available().isPresent() && plotted.available().getAsDouble() >= needed;
         final String[][] rows = {
             {GameText.resolve(TARGET), view.target()},
             {GameText.resolve(PHASE), plan.windowed() ? GameText.resolve(PHASES.with(Math.round(plan.phase()),
                 Math.round(plan.lead()))) : unknown},
             {GameText.resolve(DELTA_V_NOW), GameText.resolve(SPEED.with(Math.round(plan.deltaVNow())))},
             {GameText.resolve(DELTA_V_WINDOW), GameText.resolve(SPEED.with(Math.round(plan.deltaVWindow())))},
-            {GameText.resolve(ASSIST), GameText.resolve(NONE)},
-            {GameText.resolve(TIME_OF_FLIGHT), GameText.resolve(MINUTES.with(Math.max(1, plan.travel()
-                / TICKS_A_MINUTE)))},
-            {GameText.resolve(ARRIVE), GameText.resolve(plan.aerobraking() ? AEROBRAKE : BURN)},
-            {GameText.resolve(SHIELD), unknown},
-            {GameText.resolve(AVAILABLE), unknown}};
+            {GameText.resolve(ASSIST), GameText.resolve(assisted ? ASSIST_ON : NONE)},
+            {GameText.resolve(TIME_OF_FLIGHT), GameText.resolve(MINUTES.with(Math.max(1, travel / TICKS_A_MINUTE)))},
+            {GameText.resolve(ARRIVE), GameText.resolve(aerobraking ? AEROBRAKE : BURN)},
+            {GameText.resolve(SHIELD), GameText.resolve(plotted.shield() ? SHIELD_OK : NONE)},
+            {GameText.resolve(AVAILABLE), plotted.available().isPresent() ? GameText.resolve(SPEED.with(
+                Math.round(plotted.available().getAsDouble()))) : unknown}};
         final int[] colours = {colourOf(plan.to(), c), c.white(), c.white(), c.green(), c.white(), c.white(),
-            c.white(), c.white(), c.white()};
+            c.white(), plotted.shield() ? c.green() : c.amber(), enough ? c.green() : c.amber()};
         final int bottom = SY0 + 21 + rows.length * ROW;
         g.fill(DATA_X0 - 4, SY0 + 14, DATA_X1 + 3, bottom, c.space());
         FlightComputerFace.frame(g, DATA_X0 - 4, SY0 + 14, DATA_X1 + 3, bottom, c.ring());
@@ -338,11 +362,18 @@ public final class FlightComputerPages {
         g.pose().popPose();
     }
 
-    /* The windows' tape, now and the windows on it, how long to the next and what the plan says. */
+    /*
+     * The windows' tape, now and the windows on it, the one chosen lit, how long until the planned departure and what
+     * the plan says: set to fly, short of delta-v, or when it can go.
+     */
     private static void tape(final GuiGraphics g, final Font font, final TransferPlan plan,
+                             final FlightComputerFace.Plotted plotted, final long tick,
                              final FlightComputerFace.Colours c) {
         g.fill(SX0, TAPE_Y - 18, SX1, SY1, c.space());
-        final String status;
+        final int chosen = plotted.choice().window();
+        final double needed = plotted.planned().map(PlannedTransfer::needed).orElse(plan.deltaVWindow());
+        final boolean lacking = plotted.available().isPresent() && plotted.available().getAsDouble() < needed;
+        String status;
         if (plan.windowed()) {
             final int span = TAPE_X1 - TAPE_X0;
             g.fill(TAPE_X0, TAPE_Y, TAPE_X1, TAPE_Y + 5, c.track());
@@ -359,20 +390,28 @@ public final class FlightComputerPages {
                 }
                 final int x = TAPE_X0 + (int) Math.round(at * span);
                 g.fill(x, TAPE_Y, Math.min(TAPE_X1, x + Math.max(2, (int) Math.round(open))), TAPE_Y + 5,
-                        k == 0 ? c.windowNext() : c.windowPast());
+                        k == chosen - 1 ? c.windowNext() : c.windowPast());
             }
             final int now = TAPE_X0 + (int) Math.round(TAPE_NOW * span);
             FlightComputerFace.vline(g, now, TAPE_Y - 2, TAPE_Y + 8, c.magenta());
             FlightComputerFace.text(g, font, GameText.resolve(NOW), now - 22, TAPE_Y + 7, c.magenta(), false);
-            final String next = GameText.resolve(NEXT_WINDOW);
-            FlightComputerFace.text(g, font, next, TAPE_X0, TAPE_Y - 14, c.cyan(), false);
-            FlightComputerFace.text(g, font, clock(plan.toWindow()), TAPE_X0 + font.width(next) + 6, TAPE_Y - 14,
+            final String which = chosen == 0 ? GameText.resolve(LEAVE_NOW) : chosen == 1
+                    ? GameText.resolve(NEXT_WINDOW) : GameText.resolve(WINDOW_NUMBER.with(chosen));
+            final long leaves = plotted.planned().map(found -> Math.max(0, found.leaves() - tick))
+                    .orElse(plan.toWindow());
+            FlightComputerFace.text(g, font, which, TAPE_X0, TAPE_Y - 14, c.cyan(), false);
+            FlightComputerFace.text(g, font, clock(leaves), TAPE_X0 + font.width(which) + 6, TAPE_Y - 14,
                     c.white(), false);
-            status = GameText.resolve(plan.inWindow() ? PLAN_IN_WINDOW : PLAN_WAIT);
+            status = GameText.resolve(plan.inWindow() || chosen == 0 ? PLAN_IN_WINDOW : PLAN_WAIT);
         } else {
             status = GameText.resolve(PLAN_ANY_TIME);
         }
-        FlightComputerFace.text(g, font, status, SX1 - 8 - font.width(status), SY1 - 10, c.green(), false);
+        if (plotted.executed()) {
+            status = GameText.resolve(PLAN_SET);
+        }
+        final String shown = lacking ? GameText.resolve(SHORT_OF_DELTA_V) : status;
+        FlightComputerFace.text(g, font, shown, SX1 - 8 - font.width(shown), SY1 - 10,
+                lacking ? c.amber() : c.green(), false);
     }
 
     /*
@@ -513,6 +552,18 @@ public final class FlightComputerPages {
     private static FlightComputerFace.Legend live(final TextKey key, final boolean chosen) {
         return new FlightComputerFace.Legend(GameText.resolve(key), chosen ? FlightComputerFace.Legend.State.CHOSEN
                 : FlightComputerFace.Legend.State.LIVE, true);
+    }
+
+    /* Whether {@code computer} is set to fly a transfer to the world {@code planned} goes to. */
+    private static boolean setFor(final FlightComputerBlockEntity computer, final Optional<PlannedTransfer> planned) {
+        return planned.isPresent() && computer.executed().map(PlannedTransfer::to).equals(planned.map(
+                PlannedTransfer::to));
+    }
+
+    /* A key's legend: chosen, in use, or, when it does nothing now, not in use. */
+    private static FlightComputerFace.Legend state(final TextKey key, final boolean live, final boolean chosen) {
+        return new FlightComputerFace.Legend(GameText.resolve(key), !live ? FlightComputerFace.Legend.State.OFF
+                : chosen ? FlightComputerFace.Legend.State.CHOSEN : FlightComputerFace.Legend.State.LIVE, false);
     }
 
     private static FlightComputerFace.Legend off(final TextKey key, final boolean backed) {

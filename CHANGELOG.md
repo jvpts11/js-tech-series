@@ -2348,6 +2348,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   probe, impactor, solar, interstellar and solar gravitational lens probes), and how a satellite or a probe is built:
   its size, a CubeSat, medium or large; its bus, its power, solar panels or an RTG, its battery, its antenna, its
   propulsion, cold gas, hydrazine or ion, its onboard computer, and the mission module that sets its kind.
+- (Space) Planning a transfer on the Flight Computer's XFER page: its keys now choose the window to leave in (now, the
+  next or one up to four ahead, the countdown to it written over the windows' tape and the chosen window lit on it),
+  the delta-v to spend (more than the least, up to twice, shortens the cruise), a gravity assist (it spends less and
+  takes longer) and aerobraking where the destination has air and the rocket a heat shield (it saves the capture
+  burn); EXEC sets the plan for the rocket to fly, and choosing another destination lets it go. The page now tells
+  whether the rocket carries a heat shield and what delta-v it has for the transfer, less the climb to orbit while it
+  stands on the ground, and says when that is not enough. With the server's fast travel on, the plan set skips its
+  cruise.
 - (Space) API 11: the kinds of satellite and of probe, by id, declared in code or by a data pack's files
   (`SatelliteTypes`, `ProbeTypes`), each with its orbits or whether it lands, and the orbits and sizes they come in
   (`OrbitKind`, `SpacecraftSize`).

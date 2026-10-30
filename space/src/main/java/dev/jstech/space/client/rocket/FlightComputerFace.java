@@ -18,11 +18,14 @@ import dev.jstech.space.JsSpace;
 import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
+import dev.jstech.space.flight.PlannedTransfer;
+import dev.jstech.space.flight.TransferChoice;
 import dev.jstech.space.flight.TransferPlan;
 import dev.jstech.space.rocket.CabinLamp;
 import dev.jstech.space.rocket.CabinReadings;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.client.Minecraft;
@@ -414,12 +417,13 @@ public final class FlightComputerFace {
      * @param zoom        how near the landing map is drawn
      * @param grid        whether the landing map has its grid
      * @param map         the landing map, once it has come
+     * @param plotted     the transfer as the transfer page plans it, and what the rocket has for it
      * @param stages      the rocket's stages, where each goes and the one chosen
      * @param readings    what the cabin reads
      */
     public record View(@Nullable FlightPage page, List<Legend> left, List<Legend> right, String target,
                        Optional<TransferPlan> plan, long tick, @Nullable BlockPos mark, int zoom, boolean grid,
-                       LandingMapsClient.@Nullable Shown map, FlightComputerStages.Shown stages,
+                       LandingMapsClient.@Nullable Shown map, Plotted plotted, FlightComputerStages.Shown stages,
                        CabinReadings readings) {
 
         public View {
@@ -430,7 +434,25 @@ public final class FlightComputerFace {
         /** The face on a capsule's panel: the clock, no page open. */
         public static View cabin(final CabinReadings readings) {
             return new View(null, List.of(), List.of(), "", Optional.empty(), 0, null,
-                    FlightComputerBlockEntity.WIDE, false, null, FlightComputerStages.Shown.NONE, readings);
+                    FlightComputerBlockEntity.WIDE, false, null, Plotted.NONE, FlightComputerStages.Shown.NONE,
+                    readings);
         }
+    }
+
+    /**
+     * The transfer as the transfer page plans it, and what the rocket has for it.
+     *
+     * @param planned   the transfer planned now, if one is
+     * @param choice    how it is planned
+     * @param executed  whether it is the one set to fly
+     * @param shield    whether the rocket carries a heat shield
+     * @param available the delta-v the rocket has for it, if it is known
+     */
+    public record Plotted(Optional<PlannedTransfer> planned, TransferChoice choice, boolean executed, boolean shield,
+                          OptionalDouble available) {
+
+        /** Nothing planned. */
+        public static final Plotted NONE = new Plotted(Optional.empty(), TransferChoice.CHEAPEST, false, false,
+                OptionalDouble.empty());
     }
 }

@@ -22,11 +22,14 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.SealedRooms;
+import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.platform.LandingPlatforms;
 import dev.jstech.space.rocket.BoilOff;
 import dev.jstech.space.rocket.CabinReadings;
@@ -34,6 +37,7 @@ import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.RocketStaging;
 import dev.jstech.space.rocket.StageFate;
+import dev.jstech.space.rocket.StageMath;
 import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
@@ -43,6 +47,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.TreeMap;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -79,6 +84,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<Map<Integer, StageChoice>> choices;
     private final ValueField<Map<Integer, ShownPlatform>> shown;
     private final IntField separated;
+    private final ValueField<TransferChoice> choice;
+    private final ValueField<PlannedTransfer> executed;
     private int wait;
 
     /** The keys: those along the top, then those down the left and down the right, five of each from the top. */
@@ -109,6 +116,15 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private static final int PLATFORM = RIGHT + 2;
     private static final int NEXT_PLATFORM = RIGHT + 3;
     private static final int NEXT_RADIUS = RIGHT + 4;
+    /* The transfer page's keys on the right: more delta-v, less, the gravity assist, aerobraking, and to set it. */
+    private static final int MORE_DELTA_V = RIGHT;
+    private static final int LESS_DELTA_V = RIGHT + 1;
+    private static final int ASSIST = RIGHT + 2;
+    private static final int AEROBRAKE = RIGHT + 3;
+    private static final int EXECUTE = RIGHT + 4;
+    /* The delta-v the climb from each world's ground to its low orbit takes, before a transfer. */
+    private static final Map<SolarBody, Double> CLIMBS = Map.of(SolarBody.OVERWORLD, Rocketry.SURFACE_TO_LOW_ORBIT,
+            SolarBody.MOON, Rocketry.MOON_ORBIT_TO_SURFACE, SolarBody.MARS, Rocketry.MARS_SURFACE_TO_ORBIT);
     /** The lift-off of a rocket that has not left the ground ({@link #liftOff}). */
     public static final long NOT_LIFTED = -1;
     /* A tank's place in the stack, written as its number. */
@@ -147,6 +163,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         this.shown = fields().value("Shown", Codec.unboundedMap(SECTION, ShownPlatform.CODEC),
                 Map.<Integer, ShownPlatform>of()).toClient();
         this.separated = fields().integer("Separated", 0).save();
+        // How the transfer is planned on its transfer page, and the plan it is set to fly.
+        this.choice = fields().value("Choice", TransferChoice.CODEC, TransferChoice.CHEAPEST).save().toClient();
+        this.executed = fields().nullable("Executed", PlannedTransfer.CODEC).save().toClient();
     }
 
     /**
@@ -356,6 +375,57 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return TransferPlan.of(from.get(), to.get(), this.level.getGameTime());
     }
 
+    /** How the transfer is planned on its transfer page. */
+    public TransferChoice choice() {
+        final TransferChoice set = this.choice.get();
+        return set == null ? TransferChoice.CHEAPEST : set;
+    }
+
+    /** The transfer planned now, as its transfer page plans it, if it plans one from here. */
+    public Optional<PlannedTransfer> planned() {
+        return this.level == null ? Optional.empty() : plan().map(found -> PlannedTransfer.of(found, choice(),
+                shield(), this.level.getGameTime()));
+    }
+
+    /** The transfer it is set to fly, once its EXEC key has set one. */
+    public Optional<PlannedTransfer> executed() {
+        return Optional.ofNullable(this.executed.get());
+    }
+
+    /** Whether its rocket carries a heat shield, its capsule's, to aerobrake with. */
+    public boolean shield() {
+        final Optional<RocketDesign> design = rocket();
+        if (this.level == null || design.isEmpty()) {
+            return false;
+        }
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(this.level);
+        return design.get().stack().sections().stream().map(section -> parts.get(section.part().id()))
+                .anyMatch(part -> part != null && part.kind() == RocketPart.Kind.CAPSULE);
+    }
+
+    /**
+     * The delta-v its rocket has for a transfer, in metres a second: what the stages it has not let go can give in a
+     * vacuum with its tanks as they hold, less, on the ground, the climb to the low orbit; none before it keeps a
+     * rocket's plan.
+     */
+    public OptionalDouble available() {
+        final Optional<RocketDesign> design = rocket();
+        if (this.level == null || design.isEmpty()) {
+            return OptionalDouble.empty();
+        }
+        final Optional<List<StageMath.Burn>> burns = RocketStages.burns(RocketParts.all(this.level),
+                design.get().stack(), Propellants.all(this.level), tanks());
+        if (burns.isEmpty()) {
+            return OptionalDouble.empty();
+        }
+        final int gone = separated();
+        double left = StageMath.deltaV(burns.get().stream().filter(burn -> burn.stage() > gone).toList(), 0);
+        if (!YardLayout.isYardBlock(this.worldPosition.getX())) {
+            left -= here(this.level).map(body -> CLIMBS.getOrDefault(body, 0.0)).orElse(0.0);
+        }
+        return OptionalDouble.of(Math.max(0, left));
+    }
+
     /**
      * Its key {@code key} is pressed: a page opened, a world chosen to go to, the map drawn nearer or wider, the mark
      * set where the map is centred or cleared, the grid laid or lifted. A key with nothing to do on its page does
@@ -372,6 +442,27 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             if (key - LEFT < worlds.size() && !worlds.get(key - LEFT).equals(target())) {
                 this.target.set(worlds.get(key - LEFT));
                 this.mark.set(null);
+                this.executed.set(null);
+            } else if (key - LEFT == worlds.size()) {
+                this.choice.set(choice().windowBy(-1));
+            } else if (key - LEFT == worlds.size() + 1) {
+                this.choice.set(choice().windowBy(1));
+            }
+        } else if (page() == FlightPage.TRANSFER && key >= RIGHT && key < RIGHT + KEYS) {
+            final TransferChoice now = choice();
+            switch (key) {
+                case MORE_DELTA_V -> this.choice.set(now.spendBy(now.spend() == TransferChoice.SPENDS.length - 1
+                        ? -now.spend() : 1));
+                case LESS_DELTA_V -> this.choice.set(now.spendBy(now.spend() == 0
+                        ? TransferChoice.SPENDS.length - 1 : -1));
+                case ASSIST -> this.choice.set(now.assisted(!now.assist()));
+                case AEROBRAKE -> this.choice.set(now.aerobraking(!now.aero()));
+                // Set to fly; with the server's fast travel, it skips its cruise.
+                case EXECUTE -> this.executed.set(planned().map(plan -> SpaceServerConfig.fastTravel()
+                        ? plan.atOnce() : plan).orElse(null));
+                default -> {
+                    // A key the transfer page does not use.
+                }
             }
         } else if (page() == FlightPage.LANDING) {
             switch (key) {
