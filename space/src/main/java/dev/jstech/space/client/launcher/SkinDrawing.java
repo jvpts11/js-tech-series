@@ -142,6 +142,12 @@ final class SkinDrawing {
 
     /** A round rod from {@code from} to {@code to}, {@code radius} thick, of {@code facets} faces, its ends closed. */
     void rod(final Vector3f from, final Vector3f to, final float radius, final int facets, final int colour) {
+        capped(from, to, radius, facets, colour, colour);
+    }
+
+    /** A round rod as {@link #rod}, its ends closed in {@code caps}. */
+    void capped(final Vector3f from, final Vector3f to, final float radius, final int facets, final int colour,
+                final int caps) {
         final Vector3f along = new Vector3f(to).sub(from).normalize();
         final Vector3f reference = Math.abs(along.y()) < UPRIGHT ? new Vector3f(0, 1, 0) : new Vector3f(1, 0, 0);
         final Vector3f e1 = new Vector3f(along).cross(reference).normalize();
@@ -158,9 +164,9 @@ final class SkinDrawing {
             plain(new Vector3f(from).add(round[i]), new Vector3f(from).add(round[i + 1]),
                     new Vector3f(to).add(round[i + 1]), new Vector3f(to).add(round[i]), out, colour);
             plain(new Vector3f(to), new Vector3f(to).add(round[i]), new Vector3f(to).add(round[i + 1]),
-                    new Vector3f(to).add(round[i + 1]), along, colour);
+                    new Vector3f(to).add(round[i + 1]), along, caps);
             plain(new Vector3f(from), new Vector3f(from).add(round[i + 1]), new Vector3f(from).add(round[i]),
-                    new Vector3f(from).add(round[i]), back, colour);
+                    new Vector3f(from).add(round[i]), back, caps);
         }
     }
 

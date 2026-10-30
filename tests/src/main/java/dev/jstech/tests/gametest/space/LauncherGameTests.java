@@ -12,6 +12,7 @@ import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.launcher.ArmBlockEntity;
 import dev.jstech.space.launcher.CraneBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
@@ -190,6 +191,15 @@ public final class LauncherGameTests {
         final PlanSpot plug = only(launcher, LauncherBlocks.SWING_ARM.getId()).stream()
                 .min(Comparator.comparingInt(out)).orElseThrow();
         helper.assertTrue(role(helper, plan, plug) == LauncherPieceBlock.Role.END, "a swing arm ends in its plug");
+        // Each arm's end at the rocket measures its arm, to draw it whole.
+        for (final PlanSpot end : List.of(plug, hatchEnd)) {
+            final int lengths = (int) launcher.stream().filter(spot -> spot.block().equals(end.block())
+                    && spot.at().getY() == end.at().getY()).count();
+            final ArmBlockEntity.Arm arm = helper.getLevel().getBlockEntity(plan.where(end),
+                    LauncherBlocks.ARM_ENTITY.get()).flatMap(ArmBlockEntity::arm).orElseThrow();
+            helper.assertTrue(arm.out() == side.getOpposite() && arm.length() == lengths, "an arm's end measures "
+                    + "it, out from the tower and " + lengths + " blocks long: " + arm);
+        }
         final List<PlanSpot> lift = only(launcher, LauncherBlocks.TOWER_ELEVATOR.getId());
         final PlanSpot car = lift.stream().min(Comparator.comparingInt(spot -> spot.at().getY())).orElseThrow();
         helper.assertTrue(role(helper, plan, car) == LauncherPieceBlock.Role.END

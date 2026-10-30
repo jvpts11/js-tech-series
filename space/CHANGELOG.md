@@ -330,8 +330,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lamps on the house's corners. The tower is one great truss round its dark shaft, a banded, riveted column at each
   corner, deep girders across each face every two blocks and a dark red diagonal across it each level, leaning the
   other way the next, the grated floor every eight blocks; the shaft's wall shows its two rails, the cable tray with
-  its blue, orange and white lines down the middle and a lamp every four blocks; the pedestals, the arms' beams, plugs
-  and walkway take their own shapes. The design screen
+  its blue, orange and white lines down the middle and a lamp every four blocks. Each arm is drawn whole from its end at
+  the rocket: a swing arm's grey beam with its stiffeners and the hazard band by the tower, the hinge's column, its blue
+  and orange lines along its top (and the white one to an Umbilical Plate) and the round plug with its yellow face; the
+  crew access arm's grated walkway, its yellow rails and posts, and the white room at its end. The pedestals take their
+  own shapes. The design screen
   draws the rocket on the launcher's deck, the launcher under it, and says whether the bay has room for one; the
   hologram names the launcher's parts. New blocks: the Launcher Deck, the Exhaust Frame, the Hold-Down Arm, the Tail
   Service Mast, the Tower Frame, the Swing Arm, the Crew Access Arm, the Tower Elevator and the Pad Pedestal.

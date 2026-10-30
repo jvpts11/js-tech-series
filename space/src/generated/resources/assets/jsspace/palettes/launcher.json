@@ -1,4 +1,8 @@
 {
+  "armGrey": "#FF6E7278",
+  "armLit": "#FF969AA0",
+  "armStiffener": "#FF585C62",
+  "armStiffenerLit": "#FF8C9096",
   "aviation": "#FFFF3C28",
   "black": "#FF1E1E20",
   "cable": "#FF28282A",
@@ -6,8 +10,10 @@
   "deck": "#FF464A50",
   "deckDark": "#FF303338",
   "deckLit": "#FF62676E",
+  "door": "#FFBEC2C8",
   "grating": "#FF141416",
   "gratingFrame": "#FF1E1E20",
+  "hinge": "#FF5A5E64",
   "hood": "#FF60646A",
   "jaw": "#FF787C82",
   "lamp": "#FFFF9632",
@@ -22,6 +28,7 @@
   "red": "#FFA22C20",
   "redDark": "#FF6C1C14",
   "redLit": "#FFC84E3A",
+  "roomBand": "#FF1E5AAA",
   "steel": "#FF686D74",
   "steelDark": "#FF464A50",
   "steelDeep": "#FF2E3136",
@@ -29,5 +36,8 @@
   "stencil": "#FFE6E6DE",
   "stiffener": "#FFAAB0B8",
   "underside": "#FF282A2E",
+  "white": "#FFE2E4E6",
+  "whiteDark": "#FFAAAEB4",
+  "whiteLit": "#FFF6F7F8",
   "yellow": "#FFD6A828"
 }

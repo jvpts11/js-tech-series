@@ -38,9 +38,10 @@ public final class LauncherBlocks {
 
     /** Its row of the mod's tab. */
     public static final ContentTab.Section LAUNCHER = SpaceContent.TAB.section();
-    /* The pieces the deck's drawing hold-down arm draws once formed. */
+    /* The pieces drawn whole once formed: the deck's by its measuring hold-down arm, an arm's by its end. */
     private static final Set<LauncherPieceBlock.Kind> DRAWN = EnumSet.of(LauncherPieceBlock.Kind.DECK,
-            LauncherPieceBlock.Kind.EXHAUST, LauncherPieceBlock.Kind.HOLD_DOWN, LauncherPieceBlock.Kind.MAST);
+            LauncherPieceBlock.Kind.EXHAUST, LauncherPieceBlock.Kind.HOLD_DOWN, LauncherPieceBlock.Kind.MAST,
+            LauncherPieceBlock.Kind.SWING_ARM, LauncherPieceBlock.Kind.CREW_ARM);
     public static final BlockEntry<Block> LAUNCHER_DECK = piece("launcher_deck", LauncherPieceBlock.Kind.DECK,
             Set.of()).named("Launcher Deck").register();
     public static final BlockEntry<Block> EXHAUST_FRAME = piece("exhaust_frame", LauncherPieceBlock.Kind.EXHAUST,
@@ -58,10 +59,14 @@ public final class LauncherBlocks {
             .tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(LAUNCHER).named("Tower Frame").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CraneBlockEntity>> CRANE_ENTITY =
             SpaceContent.CONTENT.blockEntity("crane", CraneBlockEntity::new, TOWER_FRAME);
-    public static final BlockEntry<Block> SWING_ARM = piece("swing_arm", LauncherPieceBlock.Kind.SWING_ARM,
-            Set.of(LauncherPieceBlock.Role.TOP, LauncherPieceBlock.Role.END)).named("Swing Arm").register();
-    public static final BlockEntry<Block> CREW_ACCESS_ARM = piece("crew_access_arm", LauncherPieceBlock.Kind.CREW_ARM,
-            Set.of(LauncherPieceBlock.Role.END)).named("Crew Access Arm").register();
+    public static final BlockEntry<ArmBlock> SWING_ARM = piece("swing_arm", LauncherPieceBlock.Kind.SWING_ARM,
+            Set.of(), properties -> new ArmBlock(properties, LauncherPieceBlock.Kind.SWING_ARM)).named("Swing Arm")
+            .register();
+    public static final BlockEntry<ArmBlock> CREW_ACCESS_ARM = piece("crew_access_arm",
+            LauncherPieceBlock.Kind.CREW_ARM, Set.of(), properties -> new ArmBlock(properties,
+                    LauncherPieceBlock.Kind.CREW_ARM)).named("Crew Access Arm").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ArmBlockEntity>> ARM_ENTITY =
+            SpaceContent.CONTENT.blockEntity("arm", ArmBlockEntity::new, SWING_ARM, CREW_ACCESS_ARM);
     public static final BlockEntry<Block> TOWER_ELEVATOR = piece("tower_elevator", LauncherPieceBlock.Kind.ELEVATOR,
             Set.of(LauncherPieceBlock.Role.TOP, LauncherPieceBlock.Role.END)).named("Tower Elevator")
             .tag(BlockTags.CLIMBABLE).register();
@@ -94,7 +99,8 @@ public final class LauncherBlocks {
 
     /*
      * A piece made by {@code made}. The deck's own pieces, its plates, the opening's frame, the clamps and the masts,
-     * show nothing of their own once formed: the deck is drawn whole, as the approved launcher draws it.
+     * and the arms' lengths show nothing of their own once formed: the deck and each arm are drawn whole, as the
+     * approved launcher draws them.
      */
     private static <B extends Block> BlockBuilder<B> piece(final String id, final LauncherPieceBlock.Kind kind,
                                                            final Set<LauncherPieceBlock.Role> shaped,

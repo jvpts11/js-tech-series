@@ -289,10 +289,9 @@ public class LauncherPieceBlock extends HorizontalDirectionalBlock implements IP
         HOLD_DOWN(new int[][] {{2, 0, 2, 16, 11, 16}, {0, 4, 0, 8, 9, 8}}, null, null),
         MAST(new int[][] {{2, 0, 2, 14, 16, 14}}, new int[][] {{2, 0, 2, 14, 10, 14}}, null),
         TOWER(new int[][] {{0, 0, 0, 16, 16, 16}}, null, new int[][] {{1, 10, 0, 15, 16, 16}}),
-        SWING_ARM(new int[][] {{4, 5, 0, 12, 11, 16}}, null, new int[][] {{4, 5, 3, 12, 11, 16}, {5, 4, 0, 11, 12,
-                3}}),
-        CREW_ARM(new int[][] {{0, 0, 0, 16, 2, 16}, {0, 2, 0, 1, 16, 16}, {15, 2, 0, 16, 16, 16}}, null,
-                new int[][] {{0, 0, 0, 16, 2, 16}, {0, 2, 0, 1, 16, 16}, {15, 2, 0, 16, 16, 16}}),
+        SWING_ARM(new int[][] {{2, 3, 0, 14, 13, 16}}, null, new int[][] {{2, 3, 6, 14, 13, 16}, {4, 4, 0, 12, 12,
+                6}}),
+        CREW_ARM(new int[][] {{0, 0, 0, 16, 4, 16}, {0, 4, 0, 1, 16, 16}, {15, 4, 0, 16, 16, 16}}, null, null),
         ELEVATOR(new int[][] {{5, 0, 5, 11, 16, 11}}, new int[][] {{5, 0, 5, 11, 16, 11}},
                 new int[][] {{2, 0, 2, 14, 16, 14}}),
         /** A pedestal the launcher stands on, in the hangar or on the pad; it stays when the launcher goes. */

@@ -28,7 +28,9 @@ public final class LauncherSkins {
             0xFF686D74, 0xFF8C929A, 0xFF464A50, 0xFF2E3136, 0xFFAAB0B8, 0xFF464A50, 0xFF62676E, 0xFF303338,
             0xFFD6A828, 0xFF1E1E20, 0xFFE6E6DE, 0xFFFF9632, 0xFF242426, 0xFF18181A, 0xFF3C342E, 0xFF28221E,
             0xFF141416, 0xFF282A2E, 0xFF3A3D42, 0xFF1E1E20, 0xFF787C82, 0xFFD2D6DC, 0xFF60646A, 0xFF285AB4,
-            0xFFDC7828, 0xFFDCDEE0, 0xFFA22C20, 0xFFC84E3A, 0xFF6C1C14, 0xFF28282A, 0xFFFF3C28));
+            0xFFDC7828, 0xFFDCDEE0, 0xFFA22C20, 0xFFC84E3A, 0xFF6C1C14, 0xFF28282A, 0xFFFF3C28, 0xFF6E7278,
+            0xFF969AA0, 0xFF585C62, 0xFF8C9096, 0xFF5A5E64, 0xFFE2E4E6, 0xFFF6F7F8, 0xFFAAAEB4, 0xFFBEC2C8,
+            0xFF1E5AAA));
     /* Two blocks: a deck plate's side, the spacing of the side panels' stiffeners. */
     private static final int PLATE = 32;
     private static final int DECK_TRIM = 5;
@@ -46,6 +48,10 @@ public final class LauncherSkins {
     private static final float LINING_GRAIN = 0.06F;
     private static final float PLATE_GRAIN = 0.03F;
     private static final float RED_GRAIN = 0.02F;
+    private static final float WHITE_GRAIN = 0.015F;
+    /* A swing arm's stiffeners, ten texels apart; the narrowest face of the white room that still shows its door. */
+    private static final int ARM_STIFFENERS = 10;
+    private static final int ROOM_DOOR = 14;
     /* The boom's web, a member every half block, a diagonal in every other panel. */
     private static final int BOOM_PANEL = 8;
 
@@ -180,11 +186,16 @@ public final class LauncherSkins {
 
     /** A plate on a housing's or a column's top, {@code across} by {@code down} blocks, a rivet at each corner. */
     static Picture plate(final double across, final double down) {
+        return plate(across, down, PALETTE.get().steelDark());
+    }
+
+    /** A plate of {@code colour}, {@code across} by {@code down} blocks, a rivet at each corner. */
+    static Picture plate(final double across, final double down, final int colour) {
         final Colours c = PALETTE.get();
-        final LauncherSkin s = new LauncherSkin(across, down, c.steelDark(), PLATE_GRAIN, 6);
+        final LauncherSkin s = new LauncherSkin(across, down, colour, PLATE_GRAIN, 6);
         final int w = s.width();
         final int h = s.height();
-        s.bevel(0, 0, w, h, c.steelDark(), c.steelLit(), c.steelDeep(), true);
+        s.bevel(0, 0, w, h, colour, c.steelLit(), c.steelDeep(), true);
         for (final int[] bolt : new int[][] {{2, 2}, {w - 4, 2}, {2, h - 4}, {w - 4, h - 4}}) {
             s.rivet(bolt[0], bolt[1], c.steelLit(), c.steelDeep());
         }
@@ -226,6 +237,41 @@ public final class LauncherSkins {
         return new Picture(w, h, s.finish());
     }
 
+    /**
+     * A side of a swing arm's beam, {@code across} by {@code down} blocks: grey panels with their stiffeners, the
+     * hazard band near the tower, and along its foot the colours of the {@code lines} it carries.
+     */
+    static Picture armSide(final double across, final double down, final int[] lines) {
+        final Colours c = PALETTE.get();
+        final LauncherSkin s = new LauncherSkin(across, down, c.armGrey(), SIDE_GRAIN, 8);
+        final int w = s.width();
+        final int h = s.height();
+        s.bevel(0, 0, w, h, c.armGrey(), c.armLit(), c.steelDark(), true);
+        for (int x = 8; x < w - 4; x += ARM_STIFFENERS) {
+            s.vline(x, c.armStiffener());
+            s.vline(x + 1, c.armStiffenerLit());
+        }
+        s.hazard(w - 10, 2, w - 2, h - 2, c.yellow(), c.black());
+        for (int k = 0; k < lines.length; k++) {
+            s.rect(2, h - 3 - k * 2, w - 12, h - 2 - k * 2, lines[k]);
+        }
+        return new Picture(w, h, s.finish());
+    }
+
+    /** A face of the white room at the crew access arm's end, {@code across} by {@code down} blocks: its door. */
+    static Picture whiteRoom(final double across, final double down) {
+        final Colours c = PALETTE.get();
+        final LauncherSkin s = new LauncherSkin(across, down, c.white(), WHITE_GRAIN, 34);
+        final int w = s.width();
+        final int h = s.height();
+        s.bevel(0, 0, w, h, c.white(), c.whiteLit(), c.whiteDark(), true);
+        if (w > ROOM_DOOR) {
+            s.bevel(w / 2 - 6, 6, w / 2 + 6, h - 2, c.door(), c.white(), c.armLit(), false);
+        }
+        s.rect(3, 3, w - 3, 5, c.roomBand());
+        return new Picture(w, h, s.finish());
+    }
+
     /** A painted skin: its size in texels and its colours, row by row. */
     record Picture(int width, int height, int[] argb) {
     }
@@ -235,12 +281,15 @@ public final class LauncherSkins {
      * and dark; the hazard stripes' yellow and black; the stencils, a lamp and its housing; the opening's darkness, its
      * lining and the lining's seams, the grating; the deck's underside and its trim lip, the grating's frame; a
      * hold-down arm's jaw and its cylinder's chrome; a mast's hood and its blue, orange and white lines; the tower's
-     * red, lit and dark, the crane's cable and the aviation lamps on the tower's top.
+     * red, lit and dark, the crane's cable and the aviation lamps on the tower's top; a swing arm's grey, lit, its
+     * stiffeners dark and lit, its hinge's column; the white room's white, lit and dark, its door and its blue band.
      */
     public record Colours(int steel, int steelLit, int steelDark, int steelDeep, int stiffener, int deck, int deckLit,
                           int deckDark, int yellow, int black, int stencil, int lamp, int lampHousing, int opening,
                           int lining, int liningSeam, int grating, int underside, int lip, int gratingFrame, int jaw,
                           int chrome, int hood, int lineBlue, int lineOrange, int lineWhite, int red, int redLit,
-                          int redDark, int cable, int aviation) {
+                          int redDark, int cable, int aviation, int armGrey, int armLit, int armStiffener,
+                          int armStiffenerLit, int hinge, int white, int whiteLit, int whiteDark, int door,
+                          int roomBand) {
     }
 }
