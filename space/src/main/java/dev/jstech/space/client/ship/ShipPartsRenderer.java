@@ -59,6 +59,10 @@ public final class ShipPartsRenderer {
                     ShipCabinRenderer.driver(live), readings, IAnimationListener.NONE));
             poses.pushPose();
             poses.translate(0, 0, part.z());
+            if (part.flipped()) {
+                // Flipped left for right about the ship's centre line; its faces are drawn from both sides.
+                poses.scale(-1, 1, 1);
+            }
             KitRenderer.draw(instance, ModelDefinition.Variant.NONE, owner, poses, buffers, light, overlay, null,
                     owner.getLevel(), true);
             if (cabin.isPresent()) {

@@ -8,12 +8,20 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.core.multiblock.FormedParts;
+import dev.jstech.space.api.ShipKits;
+import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardBlocks;
+import dev.jstech.space.shipyard.ShipyardLayout;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -53,6 +61,8 @@ public final class ShipyardGameTests {
      */
     private static final long CLEARED_WITHIN = 10_000;
     private static final long NANOS_A_MILLI = 1_000_000;
+    /* Corridors enough to make a ship longer than the pit, which flies all the same. */
+    private static final int LONG_SHIP = 6;
 
     private ShipyardGameTests() {
     }
@@ -124,8 +134,50 @@ public final class ShipyardGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void shipyard_keepsItsDesignSavesItByNameAndSendsOnlyAReadyShipThatFits(
+            final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final ShipDesign ready = new ShipDesign("JS-01", List.of(part("orbiter_cockpit"), part("airlock"),
+                part("quarters"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
+                part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"))
+                .thenExecute(() -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal);
+                    dock.design(ready.withHung(List.of()));
+                    helper.assertTrue(!dock.confirm() && dock.plan().isEmpty(),
+                            "a ship with no engines, wings or gear is not sent");
+                    dock.design(ready);
+                    helper.assertTrue(dock.design().equals(ready), "it keeps the design on its screen");
+                    helper.assertTrue(dock.save() && dock.plans().size() == 1 && dock.save()
+                            && dock.plans().size() == 1, "saved twice by its name, it is one plan");
+                    final List<ResourceLocation> longer = new ArrayList<>(ready.spine());
+                    for (int k = 0; k < LONG_SHIP; k++) {
+                        longer.add(1, part("corridor"));
+                    }
+                    final ShipDesign tooLong = ready.withSpine(longer, List.of());
+                    helper.assertTrue(tooLong.problems(ShipParts.all(level)).isEmpty()
+                            && !ShipyardTerminalBlockEntity.ready(level, tooLong), "a ship longer than the pit"
+                            + " flies but does not fit the dock");
+                    helper.assertTrue(dock.confirm() && dock.plan().orElseThrow().equals(ready),
+                            "the ready ship that fits is sent to the dock");
+                    final ShipDesign flipped = ready.withSpine(ready.spine(), List.of(1));
+                    helper.assertTrue(ShipyardLayout.laid(ShipParts.all(level), ShipKits.all(level), flipped)
+                            .cells().size() == ShipyardLayout.laid(ShipParts.all(level), ShipKits.all(level), ready)
+                            .cells().size(), "a section flipped left for right lays as many blocks");
+                })
+                .thenSucceed();
+    }
+
     private static boolean formed(final ServerLevel level, final BlockPos terminal) {
         return level.getBlockEntity(terminal) instanceof ShipyardTerminalBlockEntity dock && dock.formed();
+    }
+
+    private static ResourceLocation part(final String path) {
+        return SmallShipParts.id("small_" + path);
     }
 
     /* A place of the dock in its own blocks, across from the bay's middle, up from the ground, along from the front. */

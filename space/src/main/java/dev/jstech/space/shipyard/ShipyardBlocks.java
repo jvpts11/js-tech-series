@@ -12,7 +12,6 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.content.Device;
-import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
@@ -41,9 +40,10 @@ public final class ShipyardBlocks {
     /* How bright a floodlight's lamp is, as a block: a work light over the bay. */
     private static final int FLOODLIGHT_LIGHT = 15;
     /** The terminal in the control booth, which the dock is worked from. */
-    public static final BlockEntry<DeviceBlock> TERMINAL = SpaceContent.CONTENT.block("shipyard_terminal",
-                    Device.of(() -> ShipyardBlocks.TERMINAL_ENTITY.get()).ticks(MachineBlockEntity::serverTick)
-                            .opensMenu(MachineMenu::new)::block).named("Shipyard Terminal")
+    public static final BlockEntry<ShipyardTerminalBlock> TERMINAL = SpaceContent.CONTENT.block("shipyard_terminal",
+                    properties -> new ShipyardTerminalBlock(properties, Device.of(() -> ShipyardBlocks.TERMINAL_ENTITY
+                            .get()).ticks(MachineBlockEntity::serverTick).opensMenu(MachineMenu::new)))
+            .named("Shipyard Terminal")
             .properties(ShipyardBlocks::metal)
             .look(IBlockLook.facing(new IBlockModel.Orientable("shipyard_terminal", "block/shipyard/terminal_side",
                     "block/shipyard/terminal_front", "block/shipyard/terminal_top")))

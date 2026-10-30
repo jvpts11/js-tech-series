@@ -16,15 +16,26 @@ import java.util.Objects;
  * style, the paint chosen apart. A ship mixes makers from module to module.
  *
  * @param name its name's key
+ * @param mark the key of its mark, three letters a builder's filters and cards show; its name's for none
  */
-public record ShipMaker(String name) {
+public record ShipMaker(String name, String mark) {
 
     /** As a data pack's file writes one. */
     public static final Codec<ShipMaker> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.STRING.fieldOf("name").forGetter(ShipMaker::name)
+            Codec.STRING.fieldOf("name").forGetter(ShipMaker::name),
+            Codec.STRING.optionalFieldOf("mark", "").forGetter(ShipMaker::mark)
     ).apply(instance, ShipMaker::new));
 
     public ShipMaker {
         Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(mark, "mark");
+        if (mark.isEmpty()) {
+            mark = name;
+        }
+    }
+
+    /** A maker known by its name alone. */
+    public ShipMaker(final String name) {
+        this(name, "");
     }
 }

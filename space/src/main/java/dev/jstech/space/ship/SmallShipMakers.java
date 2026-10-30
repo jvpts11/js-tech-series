@@ -27,6 +27,10 @@ public final class SmallShipMakers {
     public static final TextKey MERIDIAN = TextKey.of("jsspace.ship_maker.meridian_orbital", "Meridian Orbital");
     public static final TextKey IRONSIDE = TextKey.of("jsspace.ship_maker.ironside_yards", "Ironside Yards");
     public static final TextKey KOSMOZAVOD = TextKey.of("jsspace.ship_maker.kosmozavod", "Kosmozavod");
+    /** Their marks, three letters each. */
+    public static final TextKey MERIDIAN_MARK = TextKey.of("jsspace.ship_maker.meridian_orbital.mark", "MER");
+    public static final TextKey IRONSIDE_MARK = TextKey.of("jsspace.ship_maker.ironside_yards.mark", "IRN");
+    public static final TextKey KOSMOZAVOD_MARK = TextKey.of("jsspace.ship_maker.kosmozavod.mark", "KZV");
     /** Meridian Orbital's id. */
     public static final ResourceLocation MERIDIAN_ORBITAL = id("meridian_orbital");
     /** Ironside Yards' id. */
@@ -39,9 +43,9 @@ public final class SmallShipMakers {
 
     /** Declares the makers, once, from the mod's constructor. */
     public static void declare() {
-        ShipMakers.declare(MERIDIAN_ORBITAL, new ShipMaker(MERIDIAN.key()));
-        ShipMakers.declare(IRONSIDE_YARDS, new ShipMaker(IRONSIDE.key()));
-        ShipMakers.declare(KOSMOZAVOD_ID, new ShipMaker(KOSMOZAVOD.key()));
+        ShipMakers.declare(MERIDIAN_ORBITAL, new ShipMaker(MERIDIAN.key(), MERIDIAN_MARK.key()));
+        ShipMakers.declare(IRONSIDE_YARDS, new ShipMaker(IRONSIDE.key(), IRONSIDE_MARK.key()));
+        ShipMakers.declare(KOSMOZAVOD_ID, new ShipMaker(KOSMOZAVOD.key(), KOSMOZAVOD_MARK.key()));
     }
 
     private static ResourceLocation id(final String path) {

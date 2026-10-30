@@ -432,6 +432,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   each of its parts its shape and, to one a player goes into, its interior; registered in `ShipMakers` by id, which
   takes a data pack's files, `data/<namespace>/jsspace/ship_makers/`. `ShipPart` gains its `maker`, by id, written in
   a part's file as `maker`. Experimental.
+- (Space) Starship parts' figures: J's Space's API is at version 16. `ShipPart` gains its `figures`, a
+  `ShipPart.Figures` of its mass, the thrust of its main engines, the lift of its air engines, the power it makes or
+  takes and the crew it seats and beds, written in a part's file as `figures`; `ShipMaker` gains its `mark`, the key of
+  three letters a builder shows of it. Experimental.
 - (Core) Blocks that keep themselves in a plan: J's Core's API is at version 27. A block in the tag
   `jscore:keeps_itself_in_plans` keeps itself when its plan's part forms, as an `IPlanMember` does, drawing and working
   as it is, for a vanilla block a mod cannot make a member; `IPlanMember.keepsItself` says whether a block does.
@@ -2526,6 +2530,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   walkway with the Shipyard Terminal inside, at its foot the Item Port and a conveyor into the bay, and a block feeder
   on each first walkway. Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
   its shapes: the walkways their gratings, the towers their lattice, the stair its steps.
+- (Space) The Starship Design, the Small Shipyard's builder, opened at its terminal once the dock is formed: the ship
+  on a dotted floor in a dark void, turned with the right mouse button and brought nearer with the wheel, panels of
+  dark glass round it. A part is dragged from its card, or off the ship, to the green node of a joint and snaps there,
+  held over the ship in cyan till it is let go; a section taken off the spine leaves its gap till it is set down. The
+  parts by kind and by maker, each card with its own model; the chosen part's length, mass, blocks, power and note;
+  the flight check; the ship's mass, thrust, vertical take-off thrust against weight, power and crew; the room left in
+  its hull; its finish; the blocks the dock needs; the ship's footprint on the floor with its length and span. Flip
+  turns a section's door and fittings to the other side. S saves it among the dock's plans by its name, E sends it to
+  the dock once it is ready to fly and fits the bay.
 - (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.

@@ -17,8 +17,8 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * A part of a starship, as a data pack's file or a declaration says it: a multiblock of its own, of one class, going in
  * one place on the ship; a fuselage section's length along the spine; how much of the hull's room a module takes;
- * whether it holds an airlock, or, for wings, whether they carry nacelles; and its maker, which gives it its shape and
- * its interior.
+ * whether it holds an airlock, or, for wings, whether they carry nacelles; its maker, which gives it its shape and its
+ * interior; and its figures, what it weighs, pushes, lifts, makes or takes of power, and whom it seats and beds.
  *
  * @param name      its name's key
  * @param kind      what it is
@@ -29,9 +29,10 @@ import net.minecraft.resources.ResourceLocation;
  * @param airlock   whether it holds an airlock
  * @param carries   for wings, whether they carry nacelles
  * @param maker     its maker's id among the ship makers, if it has one
+ * @param figures   its figures
  */
 public record ShipPart(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room,
-                       boolean airlock, boolean carries, Optional<ResourceLocation> maker) {
+                       boolean airlock, boolean carries, Optional<ResourceLocation> maker, Figures figures) {
 
     /** As a data pack's file writes one. */
     public static final Codec<ShipPart> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -43,7 +44,8 @@ public record ShipPart(String name, ShipPartKind kind, ShipClass shipClass, Ship
             Codec.intRange(0, 64).optionalFieldOf("room", 0).forGetter(ShipPart::room),
             Codec.BOOL.optionalFieldOf("airlock", false).forGetter(ShipPart::airlock),
             Codec.BOOL.optionalFieldOf("carries", false).forGetter(ShipPart::carries),
-            ResourceLocation.CODEC.optionalFieldOf("maker").forGetter(ShipPart::maker)
+            ResourceLocation.CODEC.optionalFieldOf("maker").forGetter(ShipPart::maker),
+            Figures.CODEC.optionalFieldOf("figures", Figures.NONE).forGetter(ShipPart::figures)
     ).apply(instance, ShipPart::new));
 
     public ShipPart {
@@ -52,5 +54,37 @@ public record ShipPart(String name, ShipPartKind kind, ShipClass shipClass, Ship
         Objects.requireNonNull(shipClass, "shipClass");
         Objects.requireNonNull(place, "place");
         Objects.requireNonNull(maker, "maker");
+        Objects.requireNonNull(figures, "figures");
+    }
+
+    /** A part that says no figures. */
+    public ShipPart(final String name, final ShipPartKind kind, final ShipClass shipClass, final ShipPlace place,
+                    final double length, final int room, final boolean airlock, final boolean carries,
+                    final Optional<ResourceLocation> maker) {
+        this(name, kind, shipClass, place, length, room, airlock, carries, maker, Figures.NONE);
+    }
+
+    /**
+     * What a part weighs, pushes, lifts, makes or takes of power, and whom it seats and beds; the shipyard's builder
+     * adds them up into the ship's.
+     *
+     * @param mass   its mass empty, in kilograms
+     * @param thrust what its main engines push forward, in newtons
+     * @param lift   what its air engines lift, their nozzles turned down, in newtons
+     * @param power  the power it makes, in watts, or, below nought, the power it takes
+     * @param seats  the crew it seats
+     * @param beds   the crew it beds
+     */
+    public record Figures(double mass, double thrust, double lift, double power, int seats, int beds) {
+
+        public static final Figures NONE = new Figures(0, 0, 0, 0, 0, 0);
+        public static final Codec<Figures> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.doubleRange(0, Double.MAX_VALUE).optionalFieldOf("mass", 0.0).forGetter(Figures::mass),
+                Codec.doubleRange(0, Double.MAX_VALUE).optionalFieldOf("thrust", 0.0).forGetter(Figures::thrust),
+                Codec.doubleRange(0, Double.MAX_VALUE).optionalFieldOf("lift", 0.0).forGetter(Figures::lift),
+                Codec.DOUBLE.optionalFieldOf("power", 0.0).forGetter(Figures::power),
+                Codec.intRange(0, 64).optionalFieldOf("seats", 0).forGetter(Figures::seats),
+                Codec.intRange(0, 64).optionalFieldOf("beds", 0).forGetter(Figures::beds)
+        ).apply(instance, Figures::new));
     }
 }

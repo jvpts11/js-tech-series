@@ -118,15 +118,20 @@ stable 0
 13 dev.jstech.space.api.ShipKits  static Map<ResourceLocation, ShipKit> declared()
 13 dev.jstech.space.api.ShipKits  static Optional<ShipKit> get(Level, ResourceLocation)
 13 dev.jstech.space.api.ShipKits  static ShipKit declare(ResourceLocation, ShipKit)
-15 dev.jstech.space.api.ShipMaker  type record(String name)
+16 dev.jstech.space.api.ShipMaker  type record(String name, String mark)
+16 dev.jstech.space.api.ShipMaker  new(String)
 15 dev.jstech.space.api.ShipMaker  static final Codec<ShipMaker> CODEC
 15 dev.jstech.space.api.ShipMakers  type final class
 15 dev.jstech.space.api.ShipMakers  static Map<ResourceLocation, ShipMaker> all(Level)
 15 dev.jstech.space.api.ShipMakers  static Map<ResourceLocation, ShipMaker> declared()
 15 dev.jstech.space.api.ShipMakers  static Optional<ShipMaker> get(Level, ResourceLocation)
 15 dev.jstech.space.api.ShipMakers  static ShipMaker declare(ResourceLocation, ShipMaker)
-15 dev.jstech.space.api.ShipPart  type record(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room, boolean airlock, boolean carries, Optional<ResourceLocation> maker)
+16 dev.jstech.space.api.ShipPart  type record(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room, boolean airlock, boolean carries, Optional<ResourceLocation> maker, Figures figures)
+16 dev.jstech.space.api.ShipPart  new(String, ShipPartKind, ShipClass, ShipPlace, double, int, boolean, boolean, Optional<ResourceLocation>)
 12 dev.jstech.space.api.ShipPart  static final Codec<ShipPart> CODEC
+16 dev.jstech.space.api.ShipPart.Figures  type record(double mass, double thrust, double lift, double power, int seats, int beds)
+16 dev.jstech.space.api.ShipPart.Figures  static final Codec<Figures> CODEC
+16 dev.jstech.space.api.ShipPart.Figures  static final Figures NONE
 12 dev.jstech.space.api.ShipPartKind  type enum implements IStableName
 12 dev.jstech.space.api.ShipPartKind  AIR_ENGINE
 12 dev.jstech.space.api.ShipPartKind  COCKPIT

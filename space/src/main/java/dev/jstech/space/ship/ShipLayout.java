@@ -33,13 +33,13 @@ public final class ShipLayout {
         int part = 0;
         for (int k = 0; k < spine.size(); k++) {
             for (final ShipKit.Piece piece : spine.get(k).pieces()) {
-                set(piece, anchor(piece.anchor(), fronts, k), part, cells, clashes);
+                set(piece, anchor(piece.anchor(), fronts, k), part, spine.get(k).flipped(), cells, clashes);
             }
             part++;
         }
         for (final List<ShipKit.Piece> pieces : hung) {
             for (final ShipKit.Piece piece : pieces) {
-                set(piece, anchor(piece.anchor(), fronts, 0), part, cells, clashes);
+                set(piece, anchor(piece.anchor(), fronts, 0), part, false, cells, clashes);
             }
             part++;
         }
@@ -69,9 +69,12 @@ public final class ShipLayout {
         };
     }
 
-    /* Sets the blocks of {@code piece} from {@code z0} along the spine, on both sides if it is mirrored. */
-    private static void set(final ShipKit.Piece piece, final int z0, final int part, final Map<Cell, Spot> cells,
-                            final Set<Cell> clashes) {
+    /*
+     * Sets the blocks of {@code piece} from {@code z0} along the spine, on both sides if it is mirrored, and from the
+     * other side of the centre line for a section flipped left for right.
+     */
+    private static void set(final ShipKit.Piece piece, final int z0, final int part, final boolean flipped,
+                            final Map<Cell, Spot> cells, final Set<Cell> clashes) {
         for (int y = 0; y < piece.layers().size(); y++) {
             final List<String> layer = piece.layers().get(y);
             for (int z = 0; z < layer.size(); z++) {
@@ -81,7 +84,7 @@ public final class ShipLayout {
                     if (letter == ' ') {
                         continue;
                     }
-                    final int at = piece.x() + x;
+                    final int at = flipped ? -1 - (piece.x() + x) : piece.x() + x;
                     put(new Cell(at, piece.y() + y, z0 + piece.z() + z), new Spot(part, letter), cells, clashes);
                     if (piece.mirrored()) {
                         put(new Cell(-1 - at, piece.y() + y, z0 + piece.z() + z), new Spot(part, letter), cells,
@@ -102,13 +105,19 @@ public final class ShipLayout {
     /**
      * A section of the spine.
      *
-     * @param length its length along the spine, in blocks
-     * @param pieces its kit's pieces
+     * @param length  its length along the spine, in blocks
+     * @param pieces  its kit's pieces
+     * @param flipped whether it is flipped left for right
      */
-    public record Section(int length, List<ShipKit.Piece> pieces) {
+    public record Section(int length, List<ShipKit.Piece> pieces, boolean flipped) {
 
         public Section {
             pieces = List.copyOf(pieces);
+        }
+
+        /** A section as its kit lays it. */
+        public Section(final int length, final List<ShipKit.Piece> pieces) {
+            this(length, pieces, false);
         }
     }
 

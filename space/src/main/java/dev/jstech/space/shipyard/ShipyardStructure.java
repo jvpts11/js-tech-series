@@ -101,6 +101,13 @@ public final class ShipyardStructure {
     private static final int BEAM_EAST = 2;
     private static final Set<Integer> JAWS = Set.of(BEAM_WEST, BEAM_EAST);
     private static final int CRADLE_TOP = 1;
+    /*
+     * Where a ship stands in the bay: its nose a few blocks in from the open front, its hull's floor two blocks over
+     * the ground, its gear stowed over the pit; and the room it may fill, over the pit and under the crane's trolley.
+     */
+    private static final int SHIP_NOSE = -10;
+    private static final int SHIP_FLOOR = 2;
+    private static final int ROOM_TOP = 9;
     private static final char NONE = MultiblockPattern.IGNORE_CHAR;
     private static final char PIT = 'x';
 
@@ -112,6 +119,23 @@ public final class ShipyardStructure {
     /** Declares the pattern, from the mod's constructor. */
     public static void declare() {
         // Loading the class declares it.
+    }
+
+    /**
+     * Where the block ({@code x}, {@code y}, {@code z}) of a ship, in the ship's own frame (across from its centre
+     * line, up from its hull's floor, along from its nose), stands in the dock, in the dock's own blocks.
+     */
+    public static int[] dockOf(final int x, final int y, final int z) {
+        return new int[] {x, y + SHIP_FLOOR, z + SHIP_NOSE};
+    }
+
+    /**
+     * Whether the dock has room for a ship's block at ({@code x}, {@code y}, {@code z}) of the ship's frame: over the
+     * pit, under the crane's trolley, and clear of the cradle and of every block of the dock.
+     */
+    public static boolean holds(final int x, final int y, final int z) {
+        final int[] at = dockOf(x, y, z);
+        return pit(at[0], at[2]) && at[1] >= 0 && at[1] <= ROOM_TOP && letter(at[0], at[1], at[2]) == NONE;
     }
 
     /* The pattern, layer by layer from the pit's floor, each letter where the layout puts it. */
