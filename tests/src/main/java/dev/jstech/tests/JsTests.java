@@ -60,6 +60,8 @@ public final class JsTests {
         Arenas.declare(MODID, "shipyard", 26, 20, 30);
         // The same dock turned a quarter, its length across.
         Arenas.declare(MODID, "shipyard_turned", 30, 20, 26);
+        // The dock with room east of it for a network.
+        Arenas.declare(MODID, "shipyard_network", 36, 20, 30);
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
         // A thruster, a wheel, a burner, a light block, a levitator and a magnet, to prove the structures' physics.

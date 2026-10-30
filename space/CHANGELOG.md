@@ -576,6 +576,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the one being built. Each part of the ship forms by itself into its model as its last block goes in, and its blocks
   take the model's shapes, the hull's floor and ceiling leaving room to walk inside; a block taken away undoes it. The
   terminal draws the parts formed, and breaking it gives their blocks back.
+- The Small Shipyard's robot arms build the ship sent to it: four orange arms, two on each side of the bay,
+  each running on its rail along the bay's edge. What the ship wants goes in through the dock's item port, and no more;
+  each arm takes a block from the feeder of its side, swings it over to its place, sets it down and welds it with
+  sparks, and a part glows round its box for a moment as it forms. The arms' blocks are handed back when another ship
+  is sent, and dropped when the terminal is broken. On a J's Computers network, by a data cable in through the gland
+  in the control booth's outer wall beside the terminal, `RUN jscore:assemble WITH plan = '<name>'` sends a plan the
+  dock keeps by name and sets the arms building, and the network brings the blocks.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

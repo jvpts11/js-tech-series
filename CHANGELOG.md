@@ -439,6 +439,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Blocks that keep themselves in a plan: J's Core's API is at version 27. A block in the tag
   `jscore:keeps_itself_in_plans` keeps itself when its plan's part forms, as an `IPlanMember` does, drawing and working
   as it is, for a vanilla block a mod cannot make a member; `IPlanMember.keepsItself` says whether a block does.
+- (Core) Robot arms that lay a plan: J's Core's API is at version 28. `PlanArms`, a field part, are arms on rails that
+  a `PlanAssembler` lays its blocks through (`PlanAssembler.arms`): each block to the free arm that reaches its place,
+  taken from its feeder, swung over and set down as the swing ends, then welded. `ArmMotion` says where an arm is each
+  moment of its work and `ArmReach` how its two links stand to reach a point, both pure. A terminal may watch its
+  multiblock and a plan it builds at once: `LevelStructures.forget(terminal, watcher)` stops one watcher, a watcher
+  filed again taking only its own place. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2547,6 +2553,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   terminal draws the parts formed, and breaking it gives their blocks back.
 - (Core) A plan's hologram can write its parts' words as name tags on the screen, each lifted over its part on a
   leader at the first height where it meets no other tag, for parts laid side by side.
+- (Space) The Small Shipyard's robot arms build the ship sent to it: four orange arms, two on each side of the bay,
+  each running on its rail along the bay's edge. What the ship wants goes in through the dock's item port, and no more;
+  each arm takes a block from the feeder of its side, swings it over to its place, sets it down and welds it with
+  sparks, and a part glows round its box for a moment as it forms. The arms' blocks are handed back when another ship
+  is sent, and dropped when the terminal is broken. On a J's Computers network, by a data cable in through the gland
+  in the control booth's outer wall beside the terminal, `RUN jscore:assemble WITH plan = '<name>'` sends a plan the
+  dock keeps by name and sets the arms building, and the network brings the blocks.
+- (Core) The arms a plan is laid by, drawn on the player's game, each with its own model's bones turned to put its
+  grip on its block, the block it carries in its grip or waiting in its feeder, and the sparks of its weld.
 - (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.

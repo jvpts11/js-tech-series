@@ -14,6 +14,7 @@ import dev.jstech.core.client.model.kit.KitInstance;
 import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.KitRenderer;
+import dev.jstech.core.client.multiblock.PlanArmsRenderer;
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.space.api.ShipKits;
@@ -38,8 +39,9 @@ import org.joml.Matrix4f;
 /**
  * Draws a formed Small Shipyard whole from its terminal: the dock's model, as its approved drawing has it, and with it
  * the gantry crane's hook hanging over the bay and the control booth's glass, which shape none of its blocks. Nothing
- * of the dock is drawn while it is not formed: its blocks show. And the ship its plan builds, each part formed into
- * its model where the plan lays it, painted as the plan says, whether or not the dock stands whole.
+ * of the dock is drawn while it is not formed: its blocks show. Formed, its robot arms at work on their rails. And the
+ * ship its plan builds, each part formed into its model where the plan lays it, painted as the plan says, whether or
+ * not the dock stands whole, a part just formed glowing round its box for a moment.
  */
 public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTerminalBlockEntity> {
 
@@ -69,6 +71,11 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
     public void render(final ShipyardTerminalBlockEntity terminal, final float partialTick, final PoseStack poses,
                        final MultiBufferSource buffers, final int light, final int overlay) {
         this.dock.render(terminal, partialTick, poses, buffers, light, overlay);
+        if (terminal.formed()) {
+            PlanArmsRenderer.draw(terminal, terminal.arms(), ShipyardBlocks.ARM.id(), poses, buffers, overlay,
+                    partialTick);
+        }
+        ShipHolograms.drawFormed(terminal, poses, buffers);
         final Optional<ShipDesign> plan = terminal.plan();
         final Optional<BlockPos> at = terminal.planAt();
         final List<Integer> formed = terminal.formedParts();

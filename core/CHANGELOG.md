@@ -358,6 +358,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Blocks that keep themselves in a plan: J's Core's API is at version 27. A block in the tag
   `jscore:keeps_itself_in_plans` keeps itself when its plan's part forms, as an `IPlanMember` does, drawing and working
   as it is, for a vanilla block a mod cannot make a member; `IPlanMember.keepsItself` says whether a block does.
+- Robot arms that lay a plan: J's Core's API is at version 28. `PlanArms`, a field part, are arms on rails that
+  a `PlanAssembler` lays its blocks through (`PlanAssembler.arms`): each block to the free arm that reaches its place,
+  taken from its feeder, swung over and set down as the swing ends, then welded. `ArmMotion` says where an arm is each
+  moment of its work and `ArmReach` how its two links stand to reach a point, both pure. A terminal may watch its
+  multiblock and a plan it builds at once: `LevelStructures.forget(terminal, watcher)` stops one watcher, a watcher
+  filed again taking only its own place. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1783,6 +1789,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   something hard is dented where they met, folded past a crash's speed; one touching down gently is not.
 - A plan's hologram can write its parts' words as name tags on the screen, each lifted over its part on a
   leader at the first height where it meets no other tag, for parts laid side by side.
+- The arms a plan is laid by, drawn on the player's game, each with its own model's bones turned to put its
+  grip on its block, the block it carries in its grip or waiting in its feeder, and the sparks of its weld.
 - A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.

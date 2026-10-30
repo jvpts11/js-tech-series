@@ -13,10 +13,14 @@ import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.multiblock.plan.PlanArms;
 import dev.jstech.space.JsSpace;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * The shape of the Small Shipyard, a dry dock as its approved drawing has it: the ship's space sunk three blocks into
@@ -112,6 +116,20 @@ public final class ShipyardStructure {
     private static final int ROOM_TOP = 9;
     private static final char NONE = MultiblockPattern.IGNORE_CHAR;
     private static final char PIT = 'x';
+    /*
+     * The robot arms' rails, each across from the bay's middle and from one end to the other along it, where the
+     * arm's base may stand: the feeder of each side between its two; the west back one short of the stair. Each
+     * base stands on its rail level with the first walkway's deck; at rest its tool's block stands over the bay's
+     * edge; its links' lengths, in blocks.
+     */
+    private static final double[][] ARM_RAILS = {{-8.5, -11.5, 1.4}, {-8.5, 3.6, 7.4}, {8.5, -11.5, -3.6},
+        {8.5, -1.4, 11.5}};
+    private static final double ARM_BASE = 4.08;
+    private static final double ARM_REST_IN = 1.5;
+    private static final double ARM_REST_UP = 4.0;
+    private static final double ARM_UPPER = 5.0;
+    private static final double ARM_FORE = 4.6;
+    private static final double HALF = 0.5;
 
     public static final MultiblockPattern PATTERN = MultiblockPatterns.declare(ID, pattern());
 
@@ -142,12 +160,47 @@ public final class ShipyardStructure {
     }
 
     /**
+     * The dock's robot arms, standing in the world as a dock whose terminal is at {@code terminal} stands as
+     * {@code dock} says: two on each side, each running on its rail along the bay's edge beside the first walkway, the
+     * feeder of its side between them, its links long enough to reach the hull's middle from there; at rest each folds
+     * up over the bay's edge.
+     */
+    public static List<PlanArms.Arm> arms(final BlockPos terminal, final Orientation dock) {
+        final List<PlanArms.Arm> out = new ArrayList<>();
+        for (final double[] rail : ARM_RAILS) {
+            final double x = rail[0];
+            final double inward = -Math.signum(x) * ARM_REST_IN;
+            final double feederZ = x < 0 ? WEST_FEEDER_Z + HALF : EAST_FEEDER_Z + HALF;
+            final double feederX = x < 0 ? WEST_RIM + HALF : EAST_RIM + HALF;
+            out.add(new PlanArms.Arm(world(terminal, dock, x, ARM_BASE, rail[1]),
+                    world(terminal, dock, x, ARM_BASE, rail[2]),
+                    world(terminal, dock, feederX, FEEDER_Y + 1 + HALF, feederZ),
+                    turned(dock, inward, ARM_REST_UP, 0), ARM_UPPER, ARM_FORE));
+        }
+        return out;
+    }
+
+    /**
      * Whether the dock has room for a ship's block at ({@code x}, {@code y}, {@code z}) of the ship's frame: over the
      * pit, under the crane's trolley, and clear of the cradle and of every block of the dock.
      */
     public static boolean holds(final int x, final int y, final int z) {
         final int[] at = dockOf(x, y, z);
         return pit(at[0], at[2]) && at[1] >= 0 && at[1] <= ROOM_TOP && letter(at[0], at[1], at[2]) == NONE;
+    }
+
+    /* The point ({@code x}, {@code y}, {@code z}) of the dock in the world, turning about its terminal's block. */
+    private static Vec3 world(final BlockPos terminal, final Orientation dock, final double x, final double y,
+                              final double z) {
+        final Vec3 off = turned(dock, x - TERMINAL_X - HALF, y - BOOTH_FLOOR - HALF, z - TERMINAL_Z - HALF);
+        return Vec3.atCenterOf(terminal).add(off);
+    }
+
+    /* The way ({@code x}, {@code y}, {@code z}) of the dock points in the world. */
+    private static Vec3 turned(final Orientation dock, final double x, final double y, final double z) {
+        final double[] in = {x, y, z};
+        return new Vec3(dock.xSign() * in[dock.xFrom()], dock.ySign() * in[dock.yFrom()],
+                dock.zSign() * in[dock.zFrom()]);
     }
 
     /* The pattern, layer by layer from the pit's floor, each letter where the layout puts it. */
@@ -262,6 +315,10 @@ public final class ShipyardStructure {
             return x == BOOTH_EAST;
         }
         if (y < BOOTH_FLOOR || y > BOOTH_ROOF) {
+            return false;
+        }
+        // The outer wall's place beside the terminal is a gland a data cable may come in by, the panel drawn over it.
+        if (x == BOOTH_EAST && y == BOOTH_FLOOR && z == TERMINAL_Z) {
             return false;
         }
         final boolean inside = x > BOOTH_WEST && x < BOOTH_EAST && z > BOOTH_FRONT && z < BOOTH_BACK

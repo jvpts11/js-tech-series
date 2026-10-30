@@ -53,7 +53,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Its owner declares it among its fields, which saves what it holds, ticks it on the server, and tells it which
  * build to lay ({@link #build}). With nothing it can lay, it sleeps until blocks come in or the plan changes
- * ({@link #wake}), looking again once a second for a place something stood in.
+ * ({@link #wake}), looking again once a second for a place something stood in. Given robot arms ({@link #arms}), it
+ * hands each block to a free arm that reaches its place, which sets it down once it has swung it there; a block an arm
+ * carries is still the assembler's, and comes back to it if its place is taken meanwhile.
  */
 public final class PlanAssembler implements IFieldPart {
 
@@ -64,6 +66,7 @@ public final class PlanAssembler implements IFieldPart {
     private final List<Item> kinds = new ArrayList<>();
     private final Inbox inbox = new Inbox();
     private @Nullable PlannedBuild build;
+    private @Nullable PlanArms arms;
     private int credit;
     private int sleep;
     private boolean waiting;
@@ -90,9 +93,24 @@ public final class PlanAssembler implements IFieldPart {
      * not want may be pulled out of the inbox.
      */
     public void build(final @Nullable PlannedBuild to) {
+        if (this.arms != null && to != this.build) {
+            // The blocks carried to the old build's places come back to be laid again.
+            this.arms.giveBack(this::takeBack);
+        }
         this.build = to;
         this.waiting = false;
         wake();
+    }
+
+    /**
+     * Lays its blocks through the robot arms {@code hands} from now on, each set down as its arm's swing ends, rather
+     * than at once; before it is ticked.
+     *
+     * @return this
+     */
+    public PlanAssembler arms(final PlanArms hands) {
+        this.arms = Objects.requireNonNull(hands, "hands");
+        return this;
     }
 
     /** The build it lays, if it has one. */
@@ -132,7 +150,7 @@ public final class PlanAssembler implements IFieldPart {
         }
         for (final Map.Entry<ResourceLocation, Integer> wanted : now.wanted().entrySet()) {
             final Item item = BuiltInRegistries.BLOCK.get(wanted.getKey()).asItem();
-            final int more = wanted.getValue() - held(item);
+            final int more = wanted.getValue() - held(item) - carried(wanted.getKey());
             if (item != Items.AIR && more > 0) {
                 out.put(item, more);
             }
@@ -148,12 +166,16 @@ public final class PlanAssembler implements IFieldPart {
 
     /**
      * Lays as many blocks as the pace gives this tick, on the server, each the lowest missing one of its build it
-     * holds and can set down.
+     * holds and can set down; with arms, hands them to its free arms, and sets down those whose swing is over.
      *
-     * @return how many it laid
+     * @return how many it laid, or handed to its arms
      */
     public int tick(final ServerLevel level) {
         final PlannedBuild now = this.build;
+        final long time = level.getGameTime();
+        if (this.arms != null) {
+            this.arms.tick(time, job -> setDown(level, job));
+        }
         if (now == null || now.complete()) {
             this.credit = 0;
             return 0;
@@ -166,22 +188,38 @@ public final class PlanAssembler implements IFieldPart {
         this.credit = Math.min(this.credit + pace, Math.max(TICKS_PER_SECOND, pace));
         int laid = 0;
         while (this.credit >= TICKS_PER_SECOND) {
-            final Optional<PlanSpot> next = now.next(spot -> canLay(level, now, spot));
+            final PlanArms hands = this.arms;
+            if (hands != null && !hands.anyFree(time)) {
+                // Every arm is at work: it looks again next tick, waiting for none of its blocks.
+                this.waiting = false;
+                return laid;
+            }
+            final Optional<PlanSpot> next = now.next(spot -> canLay(level, now, spot)
+                    && (hands == null || hands.free(now.where(spot), time).isPresent()));
             if (next.isEmpty()) {
-                this.waiting = true;
-                this.sleep = SLEEP;
+                this.waiting = hands == null || !hands.working(time);
+                this.sleep = hands != null && hands.working(time) ? 0 : SLEEP;
                 return laid;
             }
             this.waiting = false;
             this.credit -= TICKS_PER_SECOND;
-            lay(level, now, next.get());
+            if (hands == null) {
+                lay(level, now, next.get());
+            } else {
+                final BlockPos at = now.where(next.get());
+                take(BuiltInRegistries.BLOCK.get(next.get().block()).asItem());
+                hands.start(hands.free(at, time).orElseThrow(), at, next.get().block(), time);
+            }
             laid++;
         }
         return laid;
     }
 
-    /** Drops everything it holds at {@code at}, as its machine is broken. */
+    /** Drops everything it holds at {@code at}, as its machine is broken, the blocks its arms carry too. */
     public void spill(final Level level, final BlockPos at) {
+        if (this.arms != null) {
+            this.arms.giveBack(this::takeBack);
+        }
         for (final Map.Entry<Item, Integer> kept : this.held.entrySet()) {
             int left = kept.getValue();
             final int most = new ItemStack(kept.getKey()).getMaxStackSize();
@@ -217,7 +255,38 @@ public final class PlanAssembler implements IFieldPart {
         if (now == null || block == Blocks.AIR) {
             return 0;
         }
-        return Math.max(0, now.wanted(BuiltInRegistries.BLOCK.getKey(block)) - held(item));
+        final ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+        return Math.max(0, now.wanted(id) - held(item) - carried(id));
+    }
+
+    /* How many of the block {@code block} its arms carry and have not set down. */
+    private int carried(final ResourceLocation block) {
+        return this.arms == null ? 0 : this.arms.carried(block);
+    }
+
+    /* The block of {@code job}, which an arm carried and did not set down, held again. */
+    private void takeBack(final PlanArms.Job job) {
+        final Item item = BuiltInRegistries.BLOCK.get(job.block()).asItem();
+        if (item != Items.AIR) {
+            add(item, 1);
+            this.onChange.run();
+        }
+    }
+
+    /*
+     * An arm's swing is over: it sets its block down where it carried it, as a player placing it would be heard, if
+     * its build still wants that block there and nothing keeps it from going there; else the block is held again.
+     */
+    private void setDown(final ServerLevel level, final PlanArms.Job job) {
+        final PlannedBuild now = this.build;
+        final Block block = BuiltInRegistries.BLOCK.get(job.block());
+        final Optional<PlanSpot> spot = now == null ? Optional.empty() : now.spotAt(job.at());
+        if (spot.isEmpty() || !spot.get().block().equals(job.block()) || !free(level, job.at(), block)) {
+            takeBack(job);
+            wake();
+            return;
+        }
+        place(level, job.at(), block);
     }
 
     /* How many of {@code item} it holds that its build does not want: all of them, without a build. */
@@ -227,7 +296,8 @@ public final class PlanAssembler implements IFieldPart {
         if (now == null) {
             return has;
         }
-        return Math.max(0, has - now.wanted(BuiltInRegistries.BLOCK.getKey(Block.byItem(item))));
+        final ResourceLocation id = BuiltInRegistries.BLOCK.getKey(Block.byItem(item));
+        return Math.max(0, has + carried(id) - now.wanted(id));
     }
 
     /* Whether it can lay the block wanted at {@code spot} now: it holds one, and nothing keeps it from going there. */
@@ -237,6 +307,11 @@ public final class PlanAssembler implements IFieldPart {
             return false;
         }
         final BlockPos at = now.where(spot);
+        return (this.arms == null || !this.arms.carrying(at)) && free(level, at, block);
+    }
+
+    /* Whether nothing keeps {@code block} from going at {@code at} now. */
+    private boolean free(final ServerLevel level, final BlockPos at, final Block block) {
         if (!level.isLoaded(at) || !level.getBlockState(at).canBeReplaced()) {
             return false;
         }
@@ -248,9 +323,13 @@ public final class PlanAssembler implements IFieldPart {
     /* Sets the block wanted at {@code spot} down, as a player placing it would be heard, and takes it from the hold. */
     private void lay(final ServerLevel level, final PlannedBuild now, final PlanSpot spot) {
         final Block block = BuiltInRegistries.BLOCK.get(spot.block());
-        final BlockPos at = now.where(spot);
-        final BlockState placing = block.defaultBlockState();
         take(block.asItem());
+        place(level, now.where(spot), block);
+    }
+
+    /* Sets {@code block} down at {@code at}, as a player placing it would be heard. */
+    private void place(final ServerLevel level, final BlockPos at, final Block block) {
+        final BlockState placing = block.defaultBlockState();
         // Its neighbours told, the world's index of structures tells the build its place is filled.
         level.setBlock(at, placing, Block.UPDATE_ALL);
         final SoundType sound = placing.getSoundType(level, at, null);

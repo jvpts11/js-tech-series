@@ -166,7 +166,7 @@ public final class PlannedBuild implements IStructureWatcher {
         if (in == null || this.owner == null) {
             return;
         }
-        LevelStructures.of(in).forget(this.owner);
+        LevelStructures.of(in).forget(this.owner, this);
         if (giveBack) {
             for (int part = 0; part < this.plan.parts(); part++) {
                 comeApart(part);
@@ -184,7 +184,7 @@ public final class PlannedBuild implements IStructureWatcher {
         if (in == null || this.owner == null) {
             return;
         }
-        LevelStructures.of(in).forget(this.owner);
+        LevelStructures.of(in).forget(this.owner, this);
         this.owner = by.immutable();
         for (final PlanSpot spot : this.plan.spots()) {
             if (in.getBlockEntity(where(spot)) instanceof FormedPartBlockEntity part && part.planned()) {

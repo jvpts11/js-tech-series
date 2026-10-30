@@ -7,6 +7,8 @@
  */
 package dev.jstech.space.client.shipyard;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.jstech.core.client.multiblock.PlanHologram;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.Orientation;
@@ -27,6 +29,7 @@ import dev.jstech.space.shipyard.ShipyardPlans;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,10 +38,15 @@ import java.util.Optional;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -65,14 +73,72 @@ public final class ShipHolograms {
     public static final Palette<Colours> PALETTE = Palettes.declare(JsSpace.MODID, "ship_hologram", new Colours(
             0xFF << 24 | 0x5AC8FF, 0xFF << 24 | 0x78E68C, 0xFF << 24 | 0xFFC43C, 0xFF << 24 | 0xFF7850,
             0xFF << 24 | 0xAA6EFF, 0xFF << 24 | 0xF06EC8, 0xFF << 24 | 0xA0A0FF, 0xFF << 24 | 0x6EF0DC,
-            0xFF << 24 | 0xFFA078, 0xFF << 24 | 0xDCDC78, 0xFF << 24 | 0xC8C8C8));
+            0xFF << 24 | 0xFFA078, 0xFF << 24 | 0xDCDC78, 0xFF << 24 | 0xC8C8C8, 0xFF << 24 | 0xFFF2A6));
     /* How often a hologram looks at the world again, in ticks. */
     private static final int LOOK_EVERY = 5;
 
+    /* How long a part just formed glows round its box, in ticks, and the lines of its glow, grown out from it. */
+    private static final int GLOW = 30;
+    private static final double[] GLOW_LINES = {0.02, 0.06, 0.1};
+    private static final float CHANNEL = 255F;
+
     /* What each terminal's hologram last was: its plan laid out, and what it showed, and when. */
     private static final Map<ShipyardTerminalBlockEntity, Kept> KEPT = new WeakHashMap<>();
+    /* The parts of each terminal's ship seen formed last frame, and when each part formed lately did. */
+    private static final Map<ShipyardTerminalBlockEntity, List<Integer>> SEEN = new WeakHashMap<>();
+    private static final Map<ShipyardTerminalBlockEntity, Map<Integer, Long>> FORMED_AT = new WeakHashMap<>();
 
     private ShipHolograms() {
+    }
+
+    /**
+     * Draws round each part of {@code terminal}'s ship that has just formed a glow, for a moment, as the approved
+     * storyboard has a section forming into its model; its block entity renderer's pose stack on the terminal.
+     */
+    public static void drawFormed(final ShipyardTerminalBlockEntity terminal, final PoseStack poses,
+                                  final MultiBufferSource buffers) {
+        final Level level = terminal.getLevel();
+        final Optional<ShipDesign> plan = terminal.plan();
+        final Optional<BlockPos> at = terminal.planAt();
+        if (level == null || plan.isEmpty() || at.isEmpty()) {
+            return;
+        }
+        final long now = level.getGameTime();
+        final List<Integer> formed = terminal.formedParts();
+        final List<Integer> seen = SEEN.put(terminal, formed);
+        final Map<Integer, Long> since = FORMED_AT.computeIfAbsent(terminal, any -> new HashMap<>());
+        if (seen != null) {
+            formed.stream().filter(part -> !seen.contains(part)).forEach(part -> since.put(part, now));
+        }
+        since.values().removeIf(when -> now - when > GLOW);
+        if (since.isEmpty()) {
+            return;
+        }
+        // The plan its hologram laid out, while it is the one sent; laid out again otherwise.
+        final Kept kept = KEPT.get(terminal);
+        final BuildPlan laid = kept != null && kept.design().equals(plan.get()) && kept.at().equals(at.get())
+                && kept.turn().equals(terminal.planTurn()) ? kept.laid()
+                : ShipyardPlans.of(level, plan.get(), terminal.planTurn());
+        final int colour = PALETTE.get().formed();
+        final VertexConsumer lines = buffers.getBuffer(RenderType.lines());
+        for (final int part : since.keySet()) {
+            AABB box = null;
+            for (final PlanSpot spot : laid.spots()) {
+                if (spot.part() == part) {
+                    final AABB one = new AABB(at.get().offset(spot.at()));
+                    box = box == null ? one : box.minmax(one);
+                }
+            }
+            if (box == null) {
+                continue;
+            }
+            final AABB here = box.move(-terminal.getBlockPos().getX(), -terminal.getBlockPos().getY(),
+                    -terminal.getBlockPos().getZ());
+            for (final double grow : GLOW_LINES) {
+                LevelRenderer.renderLineBox(poses, lines, here.inflate(grow), FastColor.ARGB32.red(colour) / CHANNEL,
+                        FastColor.ARGB32.green(colour) / CHANNEL, FastColor.ARGB32.blue(colour) / CHANNEL, 1F);
+            }
+        }
     }
 
     /** The holograms of the ships being built in the shipyards loaded on this player's game. */
@@ -267,9 +333,10 @@ public final class ShipHolograms {
      * @param fins      the fins
      * @param thrusters the manoeuvring thrusters
      * @param gear      the landing gear
+     * @param formed    the glow round a part just formed
      */
     public record Colours(int cockpit, int hull, int hold, int reactor, int module, int engines, int intakes,
-                          int wings, int fins, int thrusters, int gear) {
+                          int wings, int fins, int thrusters, int gear, int formed) {
     }
 
     /* A terminal's hologram as last looked at: its plan laid out, what it showed, and when. */

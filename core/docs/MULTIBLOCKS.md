@@ -717,6 +717,38 @@ public IItemHandler itemPort(final PortKind kind, final BlockPos part, final Dir
 On a network, the kind of Operation `jscore:assemble` sets such a machine building
 ([Operations](OPERATIONS.md#machines-that-build-and-machines-that-wait-on-items)).
 
+### Laid by robot arms
+
+*Added 2026-10-30.*
+
+A `PlanAssembler` may lay its blocks through robot arms, as a shipyard's welding robots build a ship: `PlanArms`, a
+field part of the owner, saved and sent to its players, and handed to the assembler with `arms(...)`. Each arm runs on
+a rail, between two points, and has a feeder its blocks wait in and two links of its own lengths; the owner says where
+they stand with `layout(...)`, in the world, as its multiblock stands.
+
+```java
+private final PlanArms arms = new PlanArms(this::armsChanged);   // armsChanged calls the PartField's changed()
+private final PartField armsField = fields().part("Arms", this.arms).save().toClient();
+private final PlanAssembler assembler = new PlanAssembler(pos, this::setChanged).arms(this.arms);
+
+// once its multiblock forms, or a build starts
+this.arms.layout(List.of(new PlanArms.Arm(railFrom, railTo, feeder, rest, 5.0, 4.6)), job -> { });
+
+// on the player's game, in its block entity renderer, its arms with a model of the bones turret, upper, fore, tool
+PlanArmsRenderer.draw(entity, entity.arms(), ARM_MODEL, poses, buffers, overlay, partialTick);
+```
+
+- **Which arm**: each block goes to the free arm whose rail comes nearest its place, among those that reach it
+  (`free`); an arm is free again once it has welded its last block.
+- **In its own time** (`ArmMotion`): the arm runs along its rail to its feeder while it reaches into it, grips the
+  block, swings it over to its place running on along its rail, sets it down as the swing ends, and welds it; it waits
+  there with its tool lifted, then folds up to rest. The server sets the block down at that moment, and only if the
+  plan still wants it there and nothing stands in the way; otherwise the block goes back to what the assembler holds.
+  A block an arm carries counts as held: the assembler waits for no more of it.
+- **Drawn** (`PlanArmsRenderer`): the arm's model stands straight up at rest; its bones turn to put its tool's grip on
+  the block, elbow up (`ArmReach`), the block carried in its grip or waiting in its feeder, the weld throwing the
+  Core's sparks.
+
 ## Showing a multiblock before it is built
 
 *Added 2026-10-16.*

@@ -243,6 +243,35 @@ public final class ShipyardGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void shipyard_keepsCountingItsShipAfterTheDockChecksItselfAgain(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final PlannedBuild[] plan = new PlannedBuild[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"))
+                .thenExecute(() -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal);
+                    dock.design(WORKSHOP_SHIP);
+                    helper.assertTrue(dock.confirm(), "the ship is sent");
+                    plan[0] = dock.build().orElseThrow();
+                    // A block of the dock taken and put back: the dock comes apart and checks itself again.
+                    helper.setBlock(TOWER, Blocks.AIR);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(!formed(level, terminal), "the dock comes apart"))
+                .thenExecute(() -> helper.setBlock(TOWER, ShipyardBlocks.TOWER.get()))
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "and forms again"))
+                .thenExecute(() -> {
+                    for (final PlanSpot spot : spots(plan[0], 0)) {
+                        lay(level, plan[0], spot);
+                    }
+                    helper.assertTrue(plan[0].formed(0), "the ship's plan still counts what goes in: its cockpit"
+                            + " forms as its last block goes in");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = TURNED, batch = BATCH, timeoutTicks = 400)
     public static void shipyard_turnedLaysItsShipOverItsPitAsItStands(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();

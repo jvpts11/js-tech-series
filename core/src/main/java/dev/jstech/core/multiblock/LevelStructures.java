@@ -23,13 +23,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A dimension's structures, by the places they watch: each terminal watches a box round itself (the farthest its
  * shape reaches, or its formed structure and the places beside it), filed by the chunks the box touches, so a block
- * that changes anywhere finds the few structures it concerns at once and tells them to check again. Never saved: each
- * terminal files itself again as it loads.
+ * that changes anywhere finds the few structures it concerns at once and tells them to check again. A terminal may
+ * watch through more than one watcher, each its own box, as a dock watches its own blocks and the ship it builds: a
+ * watcher filed again takes the place of what that watcher watched before, and leaves the others be. Never saved:
+ * each terminal files itself again as it loads.
  */
 public final class LevelStructures {
 
     private final Map<Long, List<Watch>> byChunk = new HashMap<>();
-    private final Map<BlockPos, Watch> byTerminal = new HashMap<>();
+    private final Map<BlockPos, List<Watch>> byTerminal = new HashMap<>();
 
     /** The structures of {@code level}. */
     public static LevelStructures of(final ServerLevel level) {
@@ -47,14 +49,14 @@ public final class LevelStructures {
     }
 
     /**
-     * Files the terminal at {@code terminal} as watching the box from {@code min} to {@code max}, both counted
-     * in, in place of what it watched before.
+     * Files the terminal at {@code terminal} as watching, through {@code watcher}, the box from {@code min} to
+     * {@code max}, both counted in, in place of what that watcher watched before.
      */
     public void watch(final BlockPos terminal, final BlockPos min, final BlockPos max,
                       final IStructureWatcher watcher) {
-        forget(terminal);
+        forget(terminal, watcher);
         final Watch watch = new Watch(terminal.immutable(), min.immutable(), max.immutable(), watcher);
-        this.byTerminal.put(watch.terminal(), watch);
+        this.byTerminal.computeIfAbsent(watch.terminal(), key -> new ArrayList<>(1)).add(watch);
         for (int cx = min.getX() >> 4; cx <= max.getX() >> 4; cx++) {
             for (int cz = min.getZ() >> 4; cz <= max.getZ() >> 4; cz++) {
                 this.byChunk.computeIfAbsent(ChunkPos.asLong(cx, cz), key -> new ArrayList<>(1)).add(watch);
@@ -62,23 +64,28 @@ public final class LevelStructures {
         }
     }
 
-    /** Stops watching for the terminal at {@code terminal}: broken, or its chunk gone. */
+    /** Stops watching for the terminal at {@code terminal}, through every watcher: broken, or its chunk gone. */
     public void forget(final BlockPos terminal) {
-        final Watch gone = this.byTerminal.remove(terminal);
-        if (gone == null) {
+        final List<Watch> gone = this.byTerminal.remove(terminal);
+        if (gone != null) {
+            gone.forEach(this::unfile);
+        }
+    }
+
+    /** Stops watching for the terminal at {@code terminal} through {@code watcher}, its other watchers watching on. */
+    public void forget(final BlockPos terminal, final IStructureWatcher watcher) {
+        final List<Watch> watches = this.byTerminal.get(terminal);
+        if (watches == null) {
             return;
         }
-        for (int cx = gone.min().getX() >> 4; cx <= gone.max().getX() >> 4; cx++) {
-            for (int cz = gone.min().getZ() >> 4; cz <= gone.max().getZ() >> 4; cz++) {
-                final long key = ChunkPos.asLong(cx, cz);
-                final List<Watch> watches = this.byChunk.get(key);
-                if (watches != null) {
-                    watches.remove(gone);
-                    if (watches.isEmpty()) {
-                        this.byChunk.remove(key);
-                    }
-                }
+        for (final Watch watch : List.copyOf(watches)) {
+            if (watch.watcher() == watcher) {
+                watches.remove(watch);
+                unfile(watch);
             }
+        }
+        if (watches.isEmpty()) {
+            this.byTerminal.remove(terminal);
         }
     }
 
@@ -114,6 +121,22 @@ public final class LevelStructures {
     /** How many terminals watch, for the diagnostics. */
     public int watching() {
         return this.byTerminal.size();
+    }
+
+    /* Takes {@code gone} off the chunks it is filed by. */
+    private void unfile(final Watch gone) {
+        for (int cx = gone.min().getX() >> 4; cx <= gone.max().getX() >> 4; cx++) {
+            for (int cz = gone.min().getZ() >> 4; cz <= gone.max().getZ() >> 4; cz++) {
+                final long key = ChunkPos.asLong(cx, cz);
+                final List<Watch> watches = this.byChunk.get(key);
+                if (watches != null) {
+                    watches.remove(gone);
+                    if (watches.isEmpty()) {
+                        this.byChunk.remove(key);
+                    }
+                }
+            }
+        }
     }
 
     /** What one terminal watches. */

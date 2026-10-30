@@ -10831,6 +10831,7 @@ stable 4
 10 dev.jstech.core.multiblock.LevelStructures  static LevelStructures of(ServerLevel)
 10 dev.jstech.core.multiblock.LevelStructures  void changed(BlockPos)
 10 dev.jstech.core.multiblock.LevelStructures  void forget(BlockPos)
+28 dev.jstech.core.multiblock.LevelStructures  void forget(BlockPos, IStructureWatcher)
 10 dev.jstech.core.multiblock.LevelStructures  void watch(BlockPos, BlockPos, BlockPos, IStructureWatcher)
 10 dev.jstech.core.multiblock.Limit  type record(int least, int most)
 10 dev.jstech.core.multiblock.Limit  boolean contains(int)
@@ -11303,6 +11304,30 @@ stable 4
 12 dev.jstech.core.multiblock.hands.StructureHands  void save(CompoundTag, HolderLookup.Provider)
 12 dev.jstech.core.multiblock.hands.StructureHands  void setOpen(int, boolean, long)
 12 dev.jstech.core.multiblock.hands.StructureHands  void writeClient(CompoundTag, HolderLookup.Provider)
+28 dev.jstech.core.multiblock.plan.ArmMotion  type final class
+28 dev.jstech.core.multiblock.plan.ArmMotion  static State idle(Rig)
+28 dev.jstech.core.multiblock.plan.ArmMotion  static State of(Rig, double, double[], double[], double)
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final double SHOULDER
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final double WRIST
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final int END
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final int FETCH
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final int FOLD
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final int GRIP
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final int REST
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final int SET
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final int SWING
+28 dev.jstech.core.multiblock.plan.ArmMotion  static final int WELD
+28 dev.jstech.core.multiblock.plan.ArmMotion.Rig  type record(double[] from, double[] to, double[] feeder, double[] rest, double upper, double fore)
+28 dev.jstech.core.multiblock.plan.ArmMotion.Rig  boolean reaches(double[])
+28 dev.jstech.core.multiblock.plan.ArmMotion.Rig  double along(double[])
+28 dev.jstech.core.multiblock.plan.ArmMotion.Rig  double[] base(double)
+28 dev.jstech.core.multiblock.plan.ArmMotion.Rig  double[] restAt(double)
+28 dev.jstech.core.multiblock.plan.ArmMotion.Rig  double[] shoulder(double)
+28 dev.jstech.core.multiblock.plan.ArmMotion.State  type record(double rail, double[] tool, boolean holding, boolean welding)
+28 dev.jstech.core.multiblock.plan.ArmReach  type final class
+28 dev.jstech.core.multiblock.plan.ArmReach  static Pose solve(double[], double[], double, double)
+28 dev.jstech.core.multiblock.plan.ArmReach  static boolean reaches(double[], double[], double, double)
+28 dev.jstech.core.multiblock.plan.ArmReach.Pose  type record(double yaw, double upper, double fore, double tool, double[] elbow, double[] wrist)
 21 dev.jstech.core.multiblock.plan.BuildPlan  type record(int parts, List<PlanSpot> spots)
 21 dev.jstech.core.multiblock.plan.BuildPlan  List<List<Integer>> byPart()
 21 dev.jstech.core.multiblock.plan.BuildPlan  static final BuildPlan EMPTY
@@ -11311,11 +11336,36 @@ stable 4
 21 dev.jstech.core.multiblock.plan.IPlanMember  abstract void partFormed(ServerLevel, BlockPos, boolean)
 27 dev.jstech.core.multiblock.plan.IPlanMember  static boolean keepsItself(BlockState)
 27 dev.jstech.core.multiblock.plan.IPlanMember  static final TagKey<Block> KEEPS_ITSELF
+28 dev.jstech.core.multiblock.plan.PlanArms  type final class implements IFieldPart
+28 dev.jstech.core.multiblock.plan.PlanArms  ArmMotion.State state(int, double)
+28 dev.jstech.core.multiblock.plan.PlanArms  List<Arm> arms()
+28 dev.jstech.core.multiblock.plan.PlanArms  Optional<Integer> free(BlockPos, long)
+28 dev.jstech.core.multiblock.plan.PlanArms  Optional<Job> job(int)
+28 dev.jstech.core.multiblock.plan.PlanArms  boolean anyFree(long)
+28 dev.jstech.core.multiblock.plan.PlanArms  boolean carrying(BlockPos)
+28 dev.jstech.core.multiblock.plan.PlanArms  boolean working(long)
+28 dev.jstech.core.multiblock.plan.PlanArms  int carried(ResourceLocation)
+28 dev.jstech.core.multiblock.plan.PlanArms  new(Runnable)
+28 dev.jstech.core.multiblock.plan.PlanArms  void giveBack(Consumer<Job>)
+28 dev.jstech.core.multiblock.plan.PlanArms  void layout(List<Arm>, Consumer<Job>)
+28 dev.jstech.core.multiblock.plan.PlanArms  void load(CompoundTag, HolderLookup.Provider)
+28 dev.jstech.core.multiblock.plan.PlanArms  void readClient(CompoundTag, HolderLookup.Provider)
+28 dev.jstech.core.multiblock.plan.PlanArms  void save(CompoundTag, HolderLookup.Provider)
+28 dev.jstech.core.multiblock.plan.PlanArms  void start(int, BlockPos, ResourceLocation, long)
+28 dev.jstech.core.multiblock.plan.PlanArms  void tick(long, Consumer<Job>)
+28 dev.jstech.core.multiblock.plan.PlanArms  void writeClient(CompoundTag, HolderLookup.Provider)
+28 dev.jstech.core.multiblock.plan.PlanArms.Arm  type record(Vec3 from, Vec3 to, Vec3 feeder, Vec3 rest, double upper, double fore)
+28 dev.jstech.core.multiblock.plan.PlanArms.Arm  ArmMotion.Rig rig()
+28 dev.jstech.core.multiblock.plan.PlanArms.Arm  static final Codec<Arm> CODEC
+28 dev.jstech.core.multiblock.plan.PlanArms.Job  type record(BlockPos at, ResourceLocation block, long start, double rail, Vec3 tool, boolean set)
+28 dev.jstech.core.multiblock.plan.PlanArms.Job  Job laid()
+28 dev.jstech.core.multiblock.plan.PlanArms.Job  static final Codec<Job> CODEC
 22 dev.jstech.core.multiblock.plan.PlanAssembler  type final class implements IFieldPart
 22 dev.jstech.core.multiblock.plan.PlanAssembler  IItemHandler inbox()
 22 dev.jstech.core.multiblock.plan.PlanAssembler  Map<Item, Integer> held()
 22 dev.jstech.core.multiblock.plan.PlanAssembler  Map<Item, Integer> needs()
 22 dev.jstech.core.multiblock.plan.PlanAssembler  Optional<PlannedBuild> build()
+28 dev.jstech.core.multiblock.plan.PlanAssembler  PlanAssembler arms(PlanArms)
 22 dev.jstech.core.multiblock.plan.PlanAssembler  boolean waiting()
 22 dev.jstech.core.multiblock.plan.PlanAssembler  int held(Item)
 22 dev.jstech.core.multiblock.plan.PlanAssembler  int tick(ServerLevel)

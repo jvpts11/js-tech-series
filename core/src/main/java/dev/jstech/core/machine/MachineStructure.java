@@ -423,7 +423,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
 
     /* The machine left the level, broken or its chunk unloaded: it watches nothing more. */
     void removed(final ServerLevel level, final BlockPos pos) {
-        LevelStructures.of(level).forget(pos);
+        LevelStructures.of(level).forget(pos, this);
         this.filed = false;
     }
 

@@ -1,0 +1,6 @@
+{
+  "model": "jsspace:jsmodels/shipyard/robot_arm.gltf",
+  "textures": [
+    "jsspace:textures/models/shipyard/robot_arm.png"
+  ]
+}
