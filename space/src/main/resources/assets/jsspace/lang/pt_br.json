@@ -517,5 +517,9 @@
   "jsspace.crawler.too_big": "A plataforma e o seu foguete são mais do que o transportador consegue carregar.",
   "block.jsspace.flame_deflector": "Defletor de Chamas",
   "block.jsspace.trench_lining": "Revestimento da Vala",
-  "block.jsspace.pad_service_port": "Porta de Serviço da Plataforma"
+  "block.jsspace.pad_service_port": "Porta de Serviço da Plataforma",
+  "block.jsspace.sphere_shell": "Casco da Esfera",
+  "block.jsspace.tank_leg": "Perna do Tanque",
+  "block.jsspace.vent_stack": "Chaminé de Respiro",
+  "block.jsspace.transfer_pump": "Bomba de Transferência"
 }

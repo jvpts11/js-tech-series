@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "jsspace:block/tank_leg"
+    },
+    "formed=true": {
+      "model": "jsspace:block/tank_leg_drawn"
+    }
+  }
+}

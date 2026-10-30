@@ -170,6 +170,42 @@ public final class SkinDrawing {
         }
     }
 
+    /**
+     * A band round the upright line through {@code centre}, from {@code y0} over it at a radius of {@code r0} up to
+     * {@code y1} at {@code r1}, of {@code facets} faces, its skin {@code skin} laid once round it: a ring of a lathed
+     * shape, as the approved pictures turn their spheres and domes.
+     */
+    public void band(final Vector3f centre, final float y0, final float y1, final float r0, final float r1,
+                     final int facets, final String skin) {
+        final SkinAtlas.Region region = this.atlas.region(skin);
+        final float slope = (r0 - r1) / Math.max(1e-4F, y1 - y0);
+        for (int i = 0; i < facets; i++) {
+            final double t0 = 2 * Math.PI * i / facets;
+            final double t1 = 2 * Math.PI * (i + 1) / facets;
+            final Vector3f a = round(centre, t0, r0, y0);
+            final Vector3f b = round(centre, t1, r0, y0);
+            final Vector3f c = round(centre, t1, r1, y1);
+            final Vector3f d = round(centre, t0, r1, y1);
+            final double mid = (t0 + t1) / 2;
+            final Vector3f out = new Vector3f((float) -Math.sin(mid), slope, (float) -Math.cos(mid)).normalize();
+            final float s0 = (float) i / facets * region.width();
+            final float s1 = (float) (i + 1) / facets * region.width();
+            final int lit = this.light.applyAsInt(new Vector3f(a).add(c).mul(HALF).add(new Vector3f(out)
+                    .mul(LIGHT_OUT)));
+            final int white = OPAQUE << 24 | 0xFFFFFF;
+            vertex(a, this.atlas.u(region, s0), this.atlas.v(region, region.height()), out, white, lit);
+            vertex(b, this.atlas.u(region, s1), this.atlas.v(region, region.height()), out, white, lit);
+            vertex(c, this.atlas.u(region, s1), this.atlas.v(region, 0), out, white, lit);
+            vertex(d, this.atlas.u(region, s0), this.atlas.v(region, 0), out, white, lit);
+        }
+    }
+
+    /* The point {@code radius} out from the upright line through {@code centre} at the turn {@code turn}, so high. */
+    private static Vector3f round(final Vector3f centre, final double turn, final float radius, final float high) {
+        return new Vector3f(centre.x() - (float) Math.sin(turn) * radius, centre.y() + high,
+                centre.z() - (float) Math.cos(turn) * radius);
+    }
+
     /* The distance from {@code from} to {@code at} along {@code way}. */
     private static float dot(final float[] at, final float[] from, final Vector3f way) {
         return (at[0] - from[0]) * way.x() + (at[1] - from[1]) * way.y() + (at[2] - from[2]) * way.z();

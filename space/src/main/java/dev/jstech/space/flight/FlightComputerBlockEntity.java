@@ -16,12 +16,14 @@ import dev.jstech.core.id.StableCodecs;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -44,6 +46,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<RocketDesign> rocket;
     private final ValueField<BlockPos> foot;
     private final ValueField<List<Integer>> formed;
+    private final ValueField<Map<Integer, TankLoad>> tanks;
 
     /** The keys: those along the top, then those down the left and down the right, five of each from the top. */
     public static final int TOP = 0;
@@ -67,6 +70,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private static final int MARK = LEFT + 2;
     private static final int CLEAR = LEFT + 3;
     private static final int GRID = RIGHT + 2;
+    /* A tank's place in the stack, written as its number. */
+    private static final Codec<Integer> SECTION = Codec.STRING.xmap(Integer::parseInt, String::valueOf);
 
     public FlightComputerBlockEntity(final BlockPos pos, final BlockState state) {
         super(FlightComputer.ENTITY.get(), pos, state);
@@ -81,6 +86,23 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         this.rocket = fields().nullable("Rocket", RocketDesign.CODEC).save().toClient();
         this.foot = fields().nullable("Foot", BlockPos.CODEC).save().toClient();
         this.formed = fields().value("Formed", Codec.INT.listOf(), List.<Integer>of()).save().toClient();
+        // What its rocket's tanks hold while it stands on the ground, by their places in its stack, from the bottom.
+        this.tanks = fields().value("Tanks", Codec.unboundedMap(SECTION, TankLoad.CODEC), Map.<Integer, TankLoad>of())
+                .save().toClient();
+    }
+
+    /** What its rocket's tanks hold while it stands on the ground, by their places in its stack from the bottom. */
+    public Map<Integer, TankLoad> tanks() {
+        final Map<Integer, TankLoad> held = this.tanks.get();
+        return held == null ? Map.of() : held;
+    }
+
+    /** Keeps {@code load} as what its rocket's tank at {@code section} holds. */
+    public void load(final int section, final TankLoad load) {
+        final Map<Integer, TankLoad> held = new TreeMap<>(tanks());
+        held.put(section, load);
+        this.tanks.set(Map.copyOf(held));
+        setChanged();
     }
 
     /** Takes the plan of the rocket it is in: {@code design}, its foot {@code foot} from here, {@code parts} formed. */

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "jsspace:block/vent_stack"
+    },
+    "formed=true": {
+      "model": "jsspace:block/vent_stack_drawn"
+    }
+  }
+}

@@ -20,6 +20,9 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
@@ -50,9 +53,13 @@ public final class PadBlocks {
     private PadBlocks() {
     }
 
-    /** Declares the blocks, once, from the mod's constructor, before its content registers. */
-    public static void declare() {
-        // Loading the class declares them.
+    /**
+     * Declares the blocks, once, from the mod's constructor, before its content registers; a service port's lines,
+     * which only take, are what pipes reach on its faces.
+     */
+    public static void declare(final IEventBus modBus) {
+        modBus.addListener(RegisterCapabilitiesEvent.class, event -> event.registerBlockEntity(
+                Capabilities.FluidHandler.BLOCK, PORT_ENTITY.get(), (port, side) -> port.lines()));
     }
 
     /** Every block of the kit but the pedestal, which the launcher's kit holds, in its order. */

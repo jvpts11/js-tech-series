@@ -10,6 +10,7 @@ package dev.jstech.space;
 import dev.jstech.core.client.advancement.WideBackgrounds;
 import dev.jstech.core.client.multiblock.PlanHologram;
 import dev.jstech.space.client.crawler.CrawlerRenderer;
+import dev.jstech.space.client.depot.DepotRenderer;
 import dev.jstech.space.client.flight.FlightComputerScreen;
 import dev.jstech.space.client.flight.LandingMapsClient;
 import dev.jstech.space.client.hangar.HangarTerminalRenderer;
@@ -77,5 +78,7 @@ public final class JsSpaceClient {
         // The rocket's formed parts drawn by its flight computer once the hangar lets it go, and a formed crawler.
         FlightComputerRenderer.listen(modEventBus);
         CrawlerRenderer.listen(modEventBus);
+        // A formed propellant depot, its sphere on its legs, drawn whole as the approved one.
+        DepotRenderer.listen(modEventBus);
     }
 }

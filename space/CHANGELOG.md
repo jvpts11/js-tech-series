@@ -368,6 +368,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   pad, unless the launch damage setting is off; and in a thunderstorm the launch panel holds the countdown. Pad
   Pedestals take their shape by themselves when three stand in a column, as on a pad built by hand. New blocks: the
   Flame Deflector, the Trench Lining and the Pad Service Port.
+- The propellant depot that feeds the pad. A sphere built as a cube of Sphere Shell of odd edge from three to
+  nine blocks, on a column of Tank Leg under each bottom corner, a Vent Stack on its top and a Transfer Pump on the
+  ground against a leg, forms and is drawn whole as the approved one: the welded sphere in rings of white plates, eight
+  legs from its equator and their braces, the vent stack. It holds as much liquid oxygen or liquid methane as a ball
+  that wide, by pipe through its pump, and lets it boil away when it falls apart. The pad's service port now also takes
+  liquid oxygen and liquid methane by pipe and fuels the rocket standing on the launcher over it, each tank to its
+  propellant's mix, its pumps spending energy for every kilogram; the rocket's flight computer keeps what its tanks hold
+  until it flies. A depot of liquid oxygen fills an Oxygen Bottle held to its pump. New blocks: the Sphere Shell, the
+  Tank Leg, the Vent Stack and the Transfer Pump.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

@@ -80,6 +80,10 @@
     "jsspace:flame_deflector",
     "jsspace:trench_lining",
     "jsspace:pad_service_port",
+    "jsspace:sphere_shell",
+    "jsspace:tank_leg",
+    "jsspace:vent_stack",
+    "jsspace:transfer_pump",
     "jsspace:landing_pad",
     "jsspace:landing_platform",
     "jsspace:rocket_wreckage"

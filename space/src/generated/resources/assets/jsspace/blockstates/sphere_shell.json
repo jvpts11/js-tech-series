@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "jsspace:block/sphere_shell"
+    },
+    "formed=true": {
+      "model": "jsspace:block/sphere_shell_drawn"
+    }
+  }
+}
