@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsspace:swing_arm"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsspace:blocks/swing_arm"
+}

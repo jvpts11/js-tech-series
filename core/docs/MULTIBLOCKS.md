@@ -582,7 +582,8 @@ build.start(serverLevel, ownerPos, () -> tellMyPlayers(build));   // counts once
 - **A part forms on its last block** and comes apart as soon as one goes, every block back as it was; the other parts
   stay as they are. A part's blocks merge as a structure's do, but they never look for an owner: the plan gives them
   back itself, when one goes or when its owner `stop(true)`s it. A block that keeps something of its own, a block
-  entity, does not merge; if it is an `IPlanMember` it is told as its part forms, to stop drawing itself, say.
+  entity, does not merge; an `IPlanMember`, with a block entity or without (changed 2026-10-30), never merges and is
+  told as its part forms, to stop drawing itself, say, or to take a formed shape of its own.
 - **The owner draws the formed parts**, since a merged block draws nothing; it keeps the plan and its origin, starts it
   again when its chunk loads (`stop(false)` as it unloads leaves the parts formed), and may hand it on
   (`handTo(newOwner)`), as a rocket takes its own plan when it leaves its hangar.

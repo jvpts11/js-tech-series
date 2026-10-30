@@ -1,0 +1,50 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "deck_side": "jsspace:block/launcher/formed/deck_side",
+    "deck_top": "jsspace:block/launcher/formed/deck_top",
+    "deck_under": "jsspace:block/launcher/formed/deck_under",
+    "particle": "jsspace:block/launcher/formed/deck_top"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#deck_side",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#deck_side",
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#deck_side",
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#deck_side",
+          "cullface": "west"
+        },
+        "up": {
+          "texture": "#deck_top",
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#deck_under",
+          "cullface": "down"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "variants": {
+    "facing=east,formed=false,role=body": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 90
+    },
+    "facing=east,formed=false,role=end": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 90
+    },
+    "facing=east,formed=false,role=top": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 90
+    },
+    "facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tail_service_mast_formed",
+      "y": 90
+    },
+    "facing=east,formed=true,role=end": {
+      "model": "jsspace:block/launcher/tail_service_mast_formed",
+      "y": 90
+    },
+    "facing=east,formed=true,role=top": {
+      "model": "jsspace:block/launcher/tail_service_mast_top",
+      "y": 90
+    },
+    "facing=north,formed=false,role=body": {
+      "model": "jsspace:block/tail_service_mast"
+    },
+    "facing=north,formed=false,role=end": {
+      "model": "jsspace:block/tail_service_mast"
+    },
+    "facing=north,formed=false,role=top": {
+      "model": "jsspace:block/tail_service_mast"
+    },
+    "facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tail_service_mast_formed"
+    },
+    "facing=north,formed=true,role=end": {
+      "model": "jsspace:block/launcher/tail_service_mast_formed"
+    },
+    "facing=north,formed=true,role=top": {
+      "model": "jsspace:block/launcher/tail_service_mast_top"
+    },
+    "facing=south,formed=false,role=body": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 180
+    },
+    "facing=south,formed=false,role=end": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 180
+    },
+    "facing=south,formed=false,role=top": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 180
+    },
+    "facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tail_service_mast_formed",
+      "y": 180
+    },
+    "facing=south,formed=true,role=end": {
+      "model": "jsspace:block/launcher/tail_service_mast_formed",
+      "y": 180
+    },
+    "facing=south,formed=true,role=top": {
+      "model": "jsspace:block/launcher/tail_service_mast_top",
+      "y": 180
+    },
+    "facing=west,formed=false,role=body": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 270
+    },
+    "facing=west,formed=false,role=end": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 270
+    },
+    "facing=west,formed=false,role=top": {
+      "model": "jsspace:block/tail_service_mast",
+      "y": 270
+    },
+    "facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/tail_service_mast_formed",
+      "y": 270
+    },
+    "facing=west,formed=true,role=end": {
+      "model": "jsspace:block/launcher/tail_service_mast_formed",
+      "y": 270
+    },
+    "facing=west,formed=true,role=top": {
+      "model": "jsspace:block/launcher/tail_service_mast_top",
+      "y": 270
+    }
+  }
+}

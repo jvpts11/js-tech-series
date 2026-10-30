@@ -1,0 +1,75 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "shaft": "jsspace:block/launcher/formed/shaft",
+    "truss": "jsspace:block/launcher/formed/truss",
+    "particle": "jsspace:block/launcher/formed/truss"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        13
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#shaft"
+        },
+        "south": {
+          "texture": "#shaft"
+        },
+        "east": {
+          "texture": "#shaft"
+        },
+        "west": {
+          "texture": "#shaft"
+        },
+        "up": {
+          "texture": "#shaft"
+        },
+        "down": {
+          "texture": "#shaft"
+        }
+      }
+    }
+  ]
+}

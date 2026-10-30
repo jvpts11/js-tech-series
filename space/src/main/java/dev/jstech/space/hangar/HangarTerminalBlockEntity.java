@@ -33,6 +33,7 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.config.SpaceServerConfig;
+import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,6 +76,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     private final ValueField<List<RocketDesign>> plans;
     private final ValueField<RocketDesign> plan;
     private final ValueField<BlockPos> planAt;
+    private final ValueField<Direction> launcher;
     private final ValueField<List<Integer>> formedParts;
     private final ValueField<List<Integer>> missingParts;
     /* The crane, and what it holds of the blocks its rocket wants. */
@@ -107,6 +109,8 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
                 .save().toClient();
         this.plan = fields().nullable("Plan", RocketDesign.CODEC).save().toClient();
         this.planAt = fields().nullable("PlanAt", BlockPos.CODEC).save().toClient();
+        // The side of the tower of the mobile launcher the rocket stands on, where the bay has room for one.
+        this.launcher = fields().nullable("Launcher", Direction.CODEC).save().toClient();
         // What its players see of the plan being built: the parts formed, and how much of each is missing.
         this.formedParts = fields().value("FormedParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
         this.missingParts = fields().value("MissingParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
@@ -255,9 +259,17 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return true;
     }
 
-    /** Where the plan sent to its bay stands, the middle of the rocket's foot, if one was sent. */
+    /**
+     * Where the plan sent to its bay stands, the middle of the rocket's foot, if one was sent: on the floor, or on the
+     * deck of its mobile launcher.
+     */
     public Optional<BlockPos> planAt() {
         return Optional.ofNullable(this.planAt.get());
+    }
+
+    /** The side of the tower of the mobile launcher the rocket sent stands on; none when it stands on the floor. */
+    public Optional<Direction> launcherSide() {
+        return Optional.ofNullable(this.launcher.get());
     }
 
     /** The plan being built, on the server, once it has started. */
@@ -424,11 +436,18 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return this.level != null && bay().isPresent() && DesignReport.in(this.level, design.stack(), bay()).ready();
     }
 
-    /* Sends {@code design} to its bay: the plan it built before comes apart, and this one is laid out on the floor. */
+    /*
+     * Sends {@code design} to its bay: the plan it built before comes apart, and this one is laid out, on the deck of
+     * a mobile launcher where the bay has room for one, on the floor where it has not.
+     */
     private void send(final RocketDesign design) {
         stopBuild(true);
+        final HangarBay at = bay().orElseThrow();
+        final Optional<Direction> side = this.level == null ? Optional.empty()
+                : RocketPlans.launcherSide(this.level, design.stack(), at);
         this.plan.set(design);
-        this.planAt.set(bay().orElseThrow().pad());
+        this.launcher.set(side.orElse(null));
+        this.planAt.set(side.isPresent() ? at.pad().above(LauncherLayout.DECK) : at.pad());
         setChanged();
         startBuild();
     }
@@ -496,7 +515,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
             this.pending = false;
             return;
         }
-        final BuildPlan laid = RocketPlans.of(server, building.stack());
+        final BuildPlan laid = RocketPlans.of(server, building.stack(), this.launcher.get());
         final PlannedBuild next = new PlannedBuild(laid, at);
         if (!loaded(server, next)) {
             this.pending = true;

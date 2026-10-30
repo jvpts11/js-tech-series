@@ -52,6 +52,8 @@ public final class JsTests {
         Arenas.declare(MODID, "empty", 9, 6, 9);
         Arenas.declare(MODID, "bench", 48, 8, 48);
         Arenas.declare(MODID, "tall", 12, 32, 12);
+        // A Rocket Hangar with room for a mobile launcher under its rocket.
+        Arenas.declare(MODID, "hangar", 29, 44, 29);
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
         // A thruster, a wheel, a burner, a light block, a levitator and a magnet, to prove the structures' physics.

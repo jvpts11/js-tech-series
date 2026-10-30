@@ -16,6 +16,7 @@ import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.KitRenderer;
 import dev.jstech.core.model.ModelDefinition;
+import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.RocketKit;
 import dev.jstech.space.api.RocketPart;
@@ -32,8 +33,10 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.phys.AABB;
@@ -140,6 +143,7 @@ public final class RocketDesignScene {
         final RocketDesignArt.Colours c = RocketDesignArt.PALETTE.get();
         poses.pushPose();
         poses.translate(-camera.x, -camera.y, -camera.z);
+        launcher(poses, buffers, scene, level, minecraft.getBlockRenderer());
         stripes(poses, buffers, scene, level);
         final Vec3 foot = Vec3.atBottomCenterOf(scene.pad());
         rocket(poses, buffers, scene, level, scene.stack(), foot, scene.ghosts(), "design");
@@ -160,6 +164,25 @@ public final class RocketDesignScene {
                 boxes.get(k).inflate(0.05), c.yellow()));
         poses.popPose();
         buffers.endBatch();
+    }
+
+    /*
+     * Draws the mobile launcher the rocket stands on, each of its blocks where it goes, of its kit; those the world
+     * holds already show themselves.
+     */
+    private static void launcher(final PoseStack poses, final MultiBufferSource buffers, final Shown scene,
+                                 final ClientLevel level, final BlockRenderDispatcher blocks) {
+        for (final PlanSpot spot : scene.launcher()) {
+            final BlockPos at = scene.pad().offset(spot.at());
+            if (!level.getBlockState(at).isAir()) {
+                continue;
+            }
+            poses.pushPose();
+            poses.translate(at.getX(), at.getY(), at.getZ());
+            blocks.renderSingleBlock(BuiltInRegistries.BLOCK.get(spot.block()).defaultBlockState(), poses, buffers,
+                    LevelRenderer.getLightColor(level, at), OverlayTexture.NO_OVERLAY);
+            poses.popPose();
+        }
     }
 
     /*
@@ -267,10 +290,11 @@ public final class RocketDesignScene {
      * @param loose    a part being placed away from any node, drawn see-through where the mouse is
      * @param outlined the place of the part under the mouse, outlined
      * @param width    how wide the rocket stands, its boosters with it, in blocks
+     * @param launcher the blocks of the mobile launcher it stands on, from its foot; none when it stands on the floor
      */
     public record Shown(HangarTerminalBlockEntity terminal, BlockPos pad, Map<ResourceLocation, RocketPart> parts,
                         Map<ResourceLocation, RocketKit> kits, RocketStack stack, Set<Integer> ghosts,
-                        Optional<Loose> loose, Optional<Integer> outlined, int width) {
+                        Optional<Loose> loose, Optional<Integer> outlined, int width, List<PlanSpot> launcher) {
     }
 
     /**

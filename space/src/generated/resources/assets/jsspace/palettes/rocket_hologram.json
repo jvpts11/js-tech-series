@@ -3,7 +3,9 @@
   "engine": "#FFFF963C",
   "instrument": "#FFBE82FF",
   "lander": "#FFE6E6E6",
+  "launcher": "#FFA8B0BA",
   "legs": "#FFF08CC8",
   "separation": "#FFFAD246",
-  "tank": "#FF5AC8F0"
+  "tank": "#FF5AC8F0",
+  "tower": "#FFF0503C"
 }

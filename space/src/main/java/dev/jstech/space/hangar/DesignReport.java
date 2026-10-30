@@ -76,8 +76,20 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
      */
     public static DesignReport in(final Level level, final RocketStack stack, final Optional<HangarBay> bay) {
         final DimensionRules rules = DimensionRulesData.of(level);
-        return of(RocketParts.all(level), stack, rules.gravity(), StageMath.air(rules.pressure()),
+        final DesignReport report = of(RocketParts.all(level), stack, rules.gravity(), StageMath.air(rules.pressure()),
                 FlightComputerBlockEntity.here(level), bay);
+        if (bay.isEmpty() || stack.sections().isEmpty()) {
+            return report;
+        }
+        return report.withLauncher(RocketPlans.launcherSide(level, stack, bay.get()).isPresent());
+    }
+
+    /** The same report, saying last whether the rocket will stand on a mobile launcher in its bay, or on its floor. */
+    public DesignReport withLauncher(final boolean onLauncher) {
+        final List<Check> all = new ArrayList<>(this.checks);
+        all.add(new Check(Severity.NOTE, onLauncher ? DesignTexts.LAUNCHER.text() : DesignTexts.NO_LAUNCHER.text()));
+        return new DesignReport(this.stages, this.deltaV, this.liftOff, this.height, this.width, this.seats,
+                this.destinations, List.copyOf(all));
     }
 
     /**

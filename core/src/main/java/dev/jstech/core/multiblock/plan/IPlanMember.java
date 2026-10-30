@@ -11,9 +11,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
 /**
- * A block of a plan that keeps something of its own, as a computer keeps its state, so does not merge into its part's
- * formed model: told as its part forms and comes apart, it may change how it looks, as one drawn by the model once its
- * part is formed stops drawing itself.
+ * A block of a plan that keeps something of its own, as a computer keeps its state or a piece keeps a formed look of
+ * its own, so does not merge into its part's formed model, with a block entity or without: told as its part forms and
+ * comes apart, it may change how it looks, as one drawn by the model once its part is formed stops drawing itself, or
+ * one takes its own formed shape.
  */
 public interface IPlanMember {
 

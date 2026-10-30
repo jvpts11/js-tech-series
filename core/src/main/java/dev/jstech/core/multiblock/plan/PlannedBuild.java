@@ -367,11 +367,11 @@ public final class PlannedBuild implements IStructureWatcher {
         for (final int index : this.spotsOf.get(part)) {
             final PlanSpot spot = this.plan.spots().get(index);
             final BlockPos at = where(spot);
-            if (!FormedParts.lay(in, this.owner, at, spot.place().orElse(null), reaching(spot))) {
+            // A block that keeps itself is told, whether or not it keeps a block entity; the others merge.
+            if (in.getBlockState(at).getBlock() instanceof IPlanMember member) {
+                member.partFormed(in, at, true);
+            } else if (!FormedParts.lay(in, this.owner, at, spot.place().orElse(null), reaching(spot))) {
                 FormedParts.reach(in, at, reaching(spot));
-                if (in.getBlockState(at).getBlock() instanceof IPlanMember member) {
-                    member.partFormed(in, at, true);
-                }
             }
         }
         reshape(part);

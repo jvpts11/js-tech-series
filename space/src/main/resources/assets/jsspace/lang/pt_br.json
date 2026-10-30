@@ -487,5 +487,19 @@
   "jsspace.hangar.nothing_sent": "Nenhum plano foi enviado à baia do hangar, e nenhum foi nomeado",
   "jsspace.hangar.not_ready": "O plano %s não está pronto para voar desta baia",
   "jsspace.hangar.stopped": "O hangar parou de construir: a baia se desfez, ou o plano foi retirado",
-  "jsspace.hangar.taken": "Outro pedido ficou com a ponte rolante do hangar"
+  "jsspace.hangar.taken": "Outro pedido ficou com a ponte rolante do hangar",
+  "block.jsspace.launcher_deck": "Deck da Plataforma Móvel",
+  "block.jsspace.exhaust_frame": "Moldura de Escape",
+  "block.jsspace.hold_down_arm": "Braço de Fixação",
+  "block.jsspace.tail_service_mast": "Mastro de Serviço da Cauda",
+  "block.jsspace.tower_frame": "Estrutura da Torre",
+  "block.jsspace.swing_arm": "Braço Giratório",
+  "block.jsspace.crew_access_arm": "Braço de Acesso da Tripulação",
+  "block.jsspace.tower_elevator": "Elevador da Torre",
+  "jsspace.launcher.launcher": "Plataforma Móvel",
+  "jsspace.launcher.tower": "Torre Umbilical",
+  "jsspace.launcher.swing_arm": "Braço Giratório",
+  "jsspace.launcher.crew_arm": "Braço de Acesso da Tripulação",
+  "jsspace.design.launcher": "Sobre uma plataforma móvel",
+  "jsspace.design.no_launcher": "Sem espaço para a plataforma móvel: no chão"
 }

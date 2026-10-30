@@ -28,6 +28,7 @@ import dev.jstech.space.life.SuitSupplies;
 import dev.jstech.space.platform.LandingPlatform;
 import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketPartModels;
@@ -126,6 +127,8 @@ public final class JsSpace {
         // and its design screen, where a rocket is designed.
         HangarBlocks.declare(modEventBus);
         RocketDesigner.declare();
+        // The mobile launcher a rocket stands on in its hangar: its deck, its umbilical tower and their arms.
+        LauncherBlocks.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();

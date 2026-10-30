@@ -1740,6 +1740,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The hologram of a plan being built, drawn as the Structure Projector draws its multiblock: the blocks still
   missing as ghosts, the next layer glowing, wrong blocks marked, each part's box and words, and a line across the top
   of the screen for the nearest plan.
+- A block a plan lays that keeps a formed shape of its own, a block entity or not, is told as its part forms and
+  never merges into the part's model.
 - A plan laid by a machine: a crane, robot arms or any machine of a mod lays a plan's blocks by itself, one at
   a time at the multiblock builder's pace, the lowest missing block it holds first, where nothing stands in the way and
   no protection stops it, from what comes in through its ports, which take only what the plan still wants. A new kind

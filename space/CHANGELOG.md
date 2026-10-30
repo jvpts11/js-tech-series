@@ -311,6 +311,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Terminal takes a data cable on any face: on a network, `RUN jscore:assemble` sets the crane building the plan sent
   to the bay, or one of the hangar's plans by name (`WITH plan = 'Orbital I'`), and the request stays in flight until
   the rocket is whole. Broken, the terminal drops the blocks its crane held. New block: the Item Port.
+- The mobile launcher a rocket stands on in its hangar, Apollo's way: where the bay has room for one, the plan
+  sent to it lays the launcher under the rocket, sized by it, and the crane builds them together. Its deck stands three
+  blocks thick with the exhaust opening through it over the engines, lined with Exhaust Frames, a Hold-Down Arm at each
+  corner of the opening and a Tail Service Mast at the middle of three of its sides; beside the rocket rises the red
+  umbilical tower, a block past its top on the side its capsule's hatch looks out of, the crane house on its top and
+  the boom out over the rocket's nose; a Swing Arm reaches out to each tank and each Umbilical Plate, the Crew Access
+  Arm to the hatch with the white room at its end, and the Tower Elevator's rails, climbed like a ladder, run up the
+  shaft from the doorway at the deck to the doorway onto that arm. Each part forms as its last block goes down, every
+  piece taking its own shape as the approved launcher draws it (the deck's plates and panels, the scorched lining, the
+  clamps, the masts with their blue, orange and white lines and their hoods; the tower one great truss round its dark
+  shaft, a column at each corner, girders across each face every two blocks and a diagonal across it each level,
+  leaning the other way the next, the grated floor every eight blocks; the arms' beams, plugs and walkway), and comes
+  apart as one goes. The design screen draws the rocket on the launcher's deck, the launcher
+  under it, and says whether the bay has room for one; the hologram names the launcher's parts. New blocks: the Launcher
+  Deck, the Exhaust Frame, the Hold-Down Arm, the Tail Service Mast, the Tower Frame, the Swing Arm, the Crew Access Arm
+  and the Tower Elevator.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

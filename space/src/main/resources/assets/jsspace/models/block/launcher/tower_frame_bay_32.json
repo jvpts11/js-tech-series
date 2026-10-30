@@ -1,0 +1,490 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "truss": "jsspace:block/launcher/formed/truss",
+    "particle": "jsspace:block/launcher/formed/truss"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        9
+      ],
+      "to": [
+        7,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        0,
+        13
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        3,
+        2,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        0.0,
+        13.5
+      ],
+      "to": [
+        6,
+        1.9075342465753424,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        0.28424657534246567,
+        13.5
+      ],
+      "to": [
+        8,
+        2.7842465753424657,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        1.160958904109589,
+        13.5
+      ],
+      "to": [
+        10,
+        3.660958904109589,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        10,
+        2.037671232876712,
+        13.5
+      ],
+      "to": [
+        12,
+        4.537671232876712,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        12,
+        2.9143835616438354,
+        13.5
+      ],
+      "to": [
+        14,
+        5.414383561643835,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        14,
+        3.7910958904109586,
+        13.5
+      ],
+      "to": [
+        16,
+        6.291095890410959,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        3.7910958904109586,
+        0
+      ],
+      "to": [
+        2.5,
+        6.291095890410959,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        2.9143835616438354,
+        2
+      ],
+      "to": [
+        2.5,
+        5.414383561643835,
+        4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        2.037671232876712,
+        4
+      ],
+      "to": [
+        2.5,
+        4.537671232876712,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        1.160958904109589,
+        6
+      ],
+      "to": [
+        2.5,
+        3.660958904109589,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        0.28424657534246567,
+        8
+      ],
+      "to": [
+        2.5,
+        2.7842465753424657,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0.5,
+        0.0,
+        10
+      ],
+      "to": [
+        2.5,
+        1.9075342465753424,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    }
+  ]
+}

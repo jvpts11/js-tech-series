@@ -24,6 +24,8 @@ import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
+import dev.jstech.space.launcher.LauncherLayout;
+import dev.jstech.space.launcher.LauncherTexts;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +37,7 @@ import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -62,7 +65,8 @@ public final class RocketHolograms {
     /** The colours of the parts' boxes, by what they are. */
     public static final Palette<Colours> PALETTE = Palettes.declare(JsSpace.MODID, "rocket_hologram", new Colours(
             0xFF << 24 | 0x78E66E, 0xFF << 24 | 0xBE82FF, 0xFF << 24 | 0xFAD246, 0xFF << 24 | 0x5AC8F0,
-            0xFF << 24 | 0xFF963C, 0xFF << 24 | 0xF08CC8, 0xFF << 24 | 0xE6E6E6));
+            0xFF << 24 | 0xFF963C, 0xFF << 24 | 0xF08CC8, 0xFF << 24 | 0xE6E6E6, 0xFF << 24 | 0xA8B0BA,
+            0xFF << 24 | 0xF0503C));
     /* How often a hologram looks at the world again, in ticks. */
     private static final int LOOK_EVERY = 5;
 
@@ -97,14 +101,19 @@ public final class RocketHolograms {
             return Optional.empty();
         }
         final long now = level.getGameTime();
+        final Optional<Direction> side = terminal.launcherSide();
         Kept kept = KEPT.get(terminal);
-        if (kept == null || !kept.design().equals(plan.get()) || !kept.at().equals(at.get())) {
+        if (kept == null || !kept.design().equals(plan.get()) || !kept.at().equals(at.get())
+                || !kept.side().equals(side)) {
             // Made now, it looks at the world at once.
-            kept = new Kept(plan.get(), at.get(), RocketPlans.of(level, plan.get().stack()), now - LOOK_EVERY,
-                    Optional.empty());
+            final RocketStack stack = plan.get().stack();
+            kept = new Kept(plan.get(), at.get(), side, RocketPlans.of(level, stack, side.orElse(null)),
+                    side.map(tower -> RocketPlans.launcherPieces(level, stack, tower)).orElse(List.of()),
+                    now - LOOK_EVERY, Optional.empty());
         }
         if (now - kept.when() >= LOOK_EVERY) {
-            kept = new Kept(kept.design(), kept.at(), kept.laid(), now, look(level, terminal, kept));
+            kept = new Kept(kept.design(), kept.at(), kept.side(), kept.laid(), kept.pieces(), now,
+                    look(level, terminal, kept));
             KEPT.put(terminal, kept);
         }
         return kept.shown();
@@ -139,10 +148,11 @@ public final class RocketHolograms {
                 lowestMissing[part] = Math.min(lowestMissing[part], pos.getY());
             }
         }
-        // The part being built now: the lowest of the rocket not yet formed.
+        // The part being built now: of those not yet formed, the one whose lowest missing block is lowest.
         int building = -1;
-        for (int part = 0; part < count && building < 0; part++) {
-            if (!formed.contains(part) && boxes[part] != null) {
+        for (int part = 0; part < count; part++) {
+            if (!formed.contains(part) && boxes[part] != null
+                    && (building < 0 || lowestMissing[part] < lowestMissing[building])) {
                 building = part;
             }
         }
@@ -171,35 +181,56 @@ public final class RocketHolograms {
         final List<PlanHologram.Part> shownParts = new ArrayList<>();
         for (int part = 0; part < count; part++) {
             final AABB box = boxes[part];
-            final RocketPart kind = part < kinds.size() ? kinds.get(part) : null;
-            if (box == null || kind == null) {
+            final Optional<Text> name = name(kinds, kept.pieces(), part);
+            if (box == null || name.isEmpty()) {
                 continue;
             }
             final int tall = (int) Math.round(box.getYsize());
             final Text state = formed.contains(part) ? FORMED.text() : placed[part] == 0 ? TO_BUILD.text()
                     : LAYER.with(lowestMissing[part] - (int) box.minY + 1, tall);
-            shownParts.add(new PlanHologram.Part(GameText.of(Component.translatable(kind.name())), SIZE.with(
-                    (int) Math.round(box.getXsize()), (int) Math.round(box.getZsize()), tall, state), colour(kind),
-                    box));
+            shownParts.add(new PlanHologram.Part(name.get(), SIZE.with((int) Math.round(box.getXsize()),
+                    (int) Math.round(box.getZsize()), tall, state), colour(kinds, kept.pieces(), part), box));
         }
         final Vec3 middle = Vec3.atBottomCenterOf(kept.at()).add(0, rocketHeight(boxes) / 2, 0);
-        return Optional.of(new PlanHologram.Shown(middle, places, shownParts, banner(kept.design(), kinds, boxes,
+        return Optional.of(new PlanHologram.Shown(middle, places, shownParts, banner(kept, kinds, boxes,
                 building, lowestMissing, needed)));
     }
 
     /* The line across the top: the rocket, the part and layer being built, the block it needs most. */
-    private static Optional<Text> banner(final RocketDesign design, final List<RocketPart> kinds, final AABB[] boxes,
+    private static Optional<Text> banner(final Kept kept, final List<RocketPart> kinds, final AABB[] boxes,
                                          final int building, final int[] lowestMissing,
                                          final Map<Block, Integer> needed) {
-        if (building < 0 || building >= kinds.size() || kinds.get(building) == null || needed.isEmpty()) {
+        final Optional<Text> name = building < 0 ? Optional.empty() : name(kinds, kept.pieces(), building);
+        if (name.isEmpty() || needed.isEmpty()) {
             return Optional.empty();
         }
         final Map.Entry<Block, Integer> most = needed.entrySet().stream().max(Map.Entry.comparingByValue())
                 .orElseThrow();
         final AABB box = boxes[building];
-        return Optional.of(BANNER.with(Text.literal(design.name()), GameText.of(Component.translatable(
-                kinds.get(building).name())), lowestMissing[building] - (int) box.minY + 1,
-                (int) Math.round(box.getYsize()), most.getValue(), GameText.of(most.getKey().getName())));
+        return Optional.of(BANNER.with(Text.literal(kept.design().name()), name.get(), lowestMissing[building]
+                - (int) box.minY + 1, (int) Math.round(box.getYsize()), most.getValue(),
+                GameText.of(most.getKey().getName())));
+    }
+
+    /* What the part {@code part} of the plan is called: a part of the rocket, or of its launcher after them. */
+    private static Optional<Text> name(final List<RocketPart> kinds, final List<LauncherLayout.Piece> pieces,
+                                       final int part) {
+        if (part < kinds.size()) {
+            return Optional.ofNullable(kinds.get(part)).map(kind -> GameText.of(Component.translatable(kind.name())));
+        }
+        final int piece = part - kinds.size();
+        return piece < pieces.size() ? Optional.of(LauncherTexts.of(pieces.get(piece)).text()) : Optional.empty();
+    }
+
+    /* The colour of the box of the part {@code part}: by what it is, the launcher grey and its tower red. */
+    private static int colour(final List<RocketPart> kinds, final List<LauncherLayout.Piece> pieces, final int part) {
+        if (part < kinds.size()) {
+            return colour(kinds.get(part));
+        }
+        final Colours c = PALETTE.get();
+        final int piece = part - kinds.size();
+        return piece < pieces.size() && pieces.get(piece) != LauncherLayout.Piece.LAUNCHER ? c.tower()
+                : c.launcher();
     }
 
     private static double rocketHeight(final AABB[] boxes) {
@@ -239,12 +270,15 @@ public final class RocketHolograms {
      * @param engine     an engine
      * @param legs       landing legs
      * @param lander     a lunar lander's stage
+     * @param launcher   the mobile launcher's deck
+     * @param tower      its umbilical tower and arms
      */
-    public record Colours(int command, int instrument, int separation, int tank, int engine, int legs, int lander) {
+    public record Colours(int command, int instrument, int separation, int tank, int engine, int legs, int lander,
+                          int launcher, int tower) {
     }
 
-    /* A terminal's hologram as last looked at. */
-    private record Kept(RocketDesign design, BlockPos at, BuildPlan laid, long when,
-                        Optional<PlanHologram.Shown> shown) {
+    /* A terminal's hologram as last looked at: its plan laid out, its launcher's parts, what it showed, and when. */
+    private record Kept(RocketDesign design, BlockPos at, Optional<Direction> side, BuildPlan laid,
+                        List<LauncherLayout.Piece> pieces, long when, Optional<PlanHologram.Shown> shown) {
     }
 }

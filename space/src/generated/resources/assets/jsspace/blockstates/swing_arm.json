@@ -1,0 +1,94 @@
+{
+  "variants": {
+    "facing=east,formed=false,role=body": {
+      "model": "jsspace:block/swing_arm",
+      "y": 90
+    },
+    "facing=east,formed=false,role=end": {
+      "model": "jsspace:block/swing_arm",
+      "y": 90
+    },
+    "facing=east,formed=false,role=top": {
+      "model": "jsspace:block/swing_arm",
+      "y": 90
+    },
+    "facing=east,formed=true,role=body": {
+      "model": "jsspace:block/launcher/swing_arm_formed",
+      "y": 90
+    },
+    "facing=east,formed=true,role=end": {
+      "model": "jsspace:block/launcher/swing_arm_end",
+      "y": 90
+    },
+    "facing=east,formed=true,role=top": {
+      "model": "jsspace:block/launcher/swing_arm_formed",
+      "y": 90
+    },
+    "facing=north,formed=false,role=body": {
+      "model": "jsspace:block/swing_arm"
+    },
+    "facing=north,formed=false,role=end": {
+      "model": "jsspace:block/swing_arm"
+    },
+    "facing=north,formed=false,role=top": {
+      "model": "jsspace:block/swing_arm"
+    },
+    "facing=north,formed=true,role=body": {
+      "model": "jsspace:block/launcher/swing_arm_formed"
+    },
+    "facing=north,formed=true,role=end": {
+      "model": "jsspace:block/launcher/swing_arm_end"
+    },
+    "facing=north,formed=true,role=top": {
+      "model": "jsspace:block/launcher/swing_arm_formed"
+    },
+    "facing=south,formed=false,role=body": {
+      "model": "jsspace:block/swing_arm",
+      "y": 180
+    },
+    "facing=south,formed=false,role=end": {
+      "model": "jsspace:block/swing_arm",
+      "y": 180
+    },
+    "facing=south,formed=false,role=top": {
+      "model": "jsspace:block/swing_arm",
+      "y": 180
+    },
+    "facing=south,formed=true,role=body": {
+      "model": "jsspace:block/launcher/swing_arm_formed",
+      "y": 180
+    },
+    "facing=south,formed=true,role=end": {
+      "model": "jsspace:block/launcher/swing_arm_end",
+      "y": 180
+    },
+    "facing=south,formed=true,role=top": {
+      "model": "jsspace:block/launcher/swing_arm_formed",
+      "y": 180
+    },
+    "facing=west,formed=false,role=body": {
+      "model": "jsspace:block/swing_arm",
+      "y": 270
+    },
+    "facing=west,formed=false,role=end": {
+      "model": "jsspace:block/swing_arm",
+      "y": 270
+    },
+    "facing=west,formed=false,role=top": {
+      "model": "jsspace:block/swing_arm",
+      "y": 270
+    },
+    "facing=west,formed=true,role=body": {
+      "model": "jsspace:block/launcher/swing_arm_formed",
+      "y": 270
+    },
+    "facing=west,formed=true,role=end": {
+      "model": "jsspace:block/launcher/swing_arm_end",
+      "y": 270
+    },
+    "facing=west,formed=true,role=top": {
+      "model": "jsspace:block/launcher/swing_arm_formed",
+      "y": 270
+    }
+  }
+}

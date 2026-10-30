@@ -1,0 +1,140 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "steel": "jsspace:block/launcher/formed/steel",
+    "walkway": "jsspace:block/launcher/formed/walkway",
+    "white_room": "jsspace:block/launcher/formed/white_room",
+    "particle": "jsspace:block/launcher/formed/white_room"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel"
+        },
+        "south": {
+          "texture": "#steel"
+        },
+        "east": {
+          "texture": "#steel"
+        },
+        "west": {
+          "texture": "#steel"
+        },
+        "up": {
+          "texture": "#walkway"
+        },
+        "down": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        2,
+        0
+      ],
+      "to": [
+        1,
+        27,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#white_room"
+        },
+        "south": {
+          "texture": "#white_room"
+        },
+        "east": {
+          "texture": "#white_room"
+        },
+        "west": {
+          "texture": "#white_room"
+        },
+        "up": {
+          "texture": "#white_room"
+        },
+        "down": {
+          "texture": "#white_room"
+        }
+      }
+    },
+    {
+      "from": [
+        15,
+        2,
+        0
+      ],
+      "to": [
+        16,
+        27,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#white_room"
+        },
+        "south": {
+          "texture": "#white_room"
+        },
+        "east": {
+          "texture": "#white_room"
+        },
+        "west": {
+          "texture": "#white_room"
+        },
+        "up": {
+          "texture": "#white_room"
+        },
+        "down": {
+          "texture": "#white_room"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        27,
+        0
+      ],
+      "to": [
+        16,
+        28,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#white_room"
+        },
+        "south": {
+          "texture": "#white_room"
+        },
+        "east": {
+          "texture": "#white_room"
+        },
+        "west": {
+          "texture": "#white_room"
+        },
+        "up": {
+          "texture": "#white_room"
+        },
+        "down": {
+          "texture": "#white_room"
+        }
+      }
+    }
+  ]
+}

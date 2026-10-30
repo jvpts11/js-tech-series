@@ -21,6 +21,7 @@ import dev.jstech.core.client.model.kit.KitRenderer;
 import dev.jstech.core.dimension.DimensionRules;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.model.ModelDefinition;
+import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -40,6 +41,8 @@ import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketDesignMenu;
 import dev.jstech.space.hangar.RocketDesigner;
+import dev.jstech.space.hangar.RocketPlans;
+import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.rocket.RocketPartModels;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.RocketStages;
@@ -93,6 +96,9 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
     private final Set<Integer> hiddenDiameters = new HashSet<>();
     private RocketDesign design;
     private DesignReport report;
+    /* Whether the rocket stands on a mobile launcher in the bay, and the launcher's blocks from its foot. */
+    private boolean onLauncher;
+    private List<PlanSpot> launcher = List.of();
     private Map<ResourceLocation, RocketPart> parts = Map.of();
     private Map<ResourceLocation, RocketKit> kits = Map.of();
     private List<PartCatalogue.Entry> catalogue = List.of();
@@ -370,7 +376,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         recount();
         final Optional<HangarBay> bay = this.terminal.bay();
         if (this.view == null && bay.isPresent()) {
-            final BlockPos pad = bay.get().pad();
+            final BlockPos pad = foot(bay.get());
             final Direction into = this.terminal.getBlockState().getValue(HorizontalDirectionalBlock.FACING);
             final double tall = Math.max(LEAST_HEIGHT, this.report.height());
             this.view = OrbitView.hold(Vec3.atBottomCenterOf(pad).add(0, tall / 2, 0), new AABB(
@@ -1132,7 +1138,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         final Optional<HangarBay> bay = this.terminal.bay();
         if (this.view != null && bay.isPresent()) {
             this.framed = this.report.height();
-            this.view.aim(Vec3.atBottomCenterOf(bay.get().pad()).add(0, Math.max(LEAST_HEIGHT, this.framed) / 2.0,
+            this.view.aim(Vec3.atBottomCenterOf(foot(bay.get())).add(0, Math.max(LEAST_HEIGHT, this.framed) / 2.0,
                     0));
         }
     }
@@ -1144,8 +1150,18 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         }
         final DimensionRules rules = DimensionRulesData.of(this.minecraft.level);
         final Optional<SolarBody> from = FlightComputerBlockEntity.here(this.minecraft.level);
-        this.report = DesignReport.of(this.parts, this.design.stack(), rules.gravity(),
-                StageMath.air(rules.pressure()), from, this.terminal.bay());
+        final RocketStack stack = this.design.stack();
+        final Optional<HangarBay> bay = this.terminal.bay();
+        this.report = DesignReport.of(this.parts, stack, rules.gravity(), StageMath.air(rules.pressure()), from, bay);
+        // Where the bay has room for one, the rocket stands on a mobile launcher, drawn under it.
+        final Optional<Direction> side = bay.isEmpty() || stack.sections().isEmpty() ? Optional.empty()
+                : RocketPlans.launcherSide(this.minecraft.level, stack, bay.get());
+        this.onLauncher = side.isPresent();
+        this.launcher = side.map(tower -> RocketPlans.of(this.minecraft.level, stack, tower).spots().stream()
+                .filter(spot -> spot.part() >= stack.sections().size()).toList()).orElse(List.of());
+        if (bay.isPresent() && !stack.sections().isEmpty()) {
+            this.report = this.report.withLauncher(this.onLauncher);
+        }
         this.stageScroll = Math.min(this.stageScroll, Math.max(0, this.report.stages().size()
                 - RocketDesignLayout.STAGE_ROWS));
     }
@@ -1189,8 +1205,13 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
                 loose = free(mouseX, mouseY, now.run()).map(foot -> new RocketDesignScene.Loose(now.run(), foot));
             }
         }
-        RocketDesignScene.show(new RocketDesignScene.Shown(this.terminal, bay.get().pad(), this.parts, this.kits,
-                stack, ghosts, loose, outlined, Math.max(this.report.width(), 1)));
+        RocketDesignScene.show(new RocketDesignScene.Shown(this.terminal, foot(bay.get()), this.parts, this.kits,
+                stack, ghosts, loose, outlined, Math.max(this.report.width(), 1), this.launcher));
+    }
+
+    /* Where the rocket's foot stands in {@code bay}: on the deck of a mobile launcher, or on the floor. */
+    private BlockPos foot(final HangarBay bay) {
+        return this.onLauncher ? bay.pad().above(LauncherLayout.DECK) : bay.pad();
     }
 
     /* The part of the rocket under the mouse, and whether it is a booster hung at its side. */
@@ -1268,7 +1289,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         if (bay.isEmpty()) {
             return points;
         }
-        final Vec3 axis = Vec3.atBottomCenterOf(bay.get().pad());
+        final Vec3 axis = Vec3.atBottomCenterOf(foot(bay.get()));
         if (hangs()) {
             final Vec3 eye = this.view == null ? axis : this.view.eye();
             final Vec3 toward = new Vec3(eye.x - axis.x, 0, eye.z - axis.z);
@@ -1315,7 +1336,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         if (ray.isEmpty()) {
             return Optional.empty();
         }
-        final Vec3 axis = Vec3.atBottomCenterOf(bay.get().pad());
+        final Vec3 axis = Vec3.atBottomCenterOf(foot(bay.get()));
         final Vec3 facing = new Vec3(seen.eye().x - axis.x, 0, seen.eye().z - axis.z);
         if (facing.lengthSqr() < 1e-6) {
             return Optional.empty();
@@ -1332,7 +1353,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
     private List<AABB> boxes() {
         final Optional<HangarBay> bay = this.terminal.bay();
         return bay.isEmpty() ? List.of() : RocketDesignScene.boxes(this.parts, this.design.stack(),
-                bay.get().pad());
+                foot(bay.get()));
     }
 
     /* ---------------------------------------------------------------------------------------------- the words */

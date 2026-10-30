@@ -1,0 +1,237 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "shaft": "jsspace:block/launcher/formed/shaft",
+    "steel": "jsspace:block/launcher/formed/steel",
+    "truss": "jsspace:block/launcher/formed/truss",
+    "walkway": "jsspace:block/launcher/formed/walkway",
+    "particle": "jsspace:block/launcher/formed/truss"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        13
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        11.681506849315067,
+        13.5
+      ],
+      "to": [
+        2,
+        14.181506849315067,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        12.55821917808219,
+        13.5
+      ],
+      "to": [
+        4,
+        15.05821917808219,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        13.434931506849313,
+        13.5
+      ],
+      "to": [
+        6,
+        15.934931506849313,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        14.311643835616437,
+        13.5
+      ],
+      "to": [
+        8,
+        16.0,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#truss"
+        },
+        "south": {
+          "texture": "#truss"
+        },
+        "east": {
+          "texture": "#truss"
+        },
+        "west": {
+          "texture": "#truss"
+        },
+        "up": {
+          "texture": "#truss"
+        },
+        "down": {
+          "texture": "#truss"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#shaft"
+        },
+        "south": {
+          "texture": "#shaft"
+        },
+        "east": {
+          "texture": "#shaft"
+        },
+        "west": {
+          "texture": "#shaft"
+        },
+        "up": {
+          "texture": "#shaft"
+        },
+        "down": {
+          "texture": "#shaft"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        1
+      ],
+      "to": [
+        16,
+        1,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel"
+        },
+        "south": {
+          "texture": "#steel"
+        },
+        "east": {
+          "texture": "#steel"
+        },
+        "west": {
+          "texture": "#steel"
+        },
+        "up": {
+          "texture": "#walkway"
+        },
+        "down": {
+          "texture": "#steel"
+        }
+      }
+    }
+  ]
+}

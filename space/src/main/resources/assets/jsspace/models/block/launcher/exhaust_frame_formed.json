@@ -1,0 +1,51 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "deck_side": "jsspace:block/launcher/formed/deck_side",
+    "deck_under": "jsspace:block/launcher/formed/deck_under",
+    "exhaust_lining": "jsspace:block/launcher/formed/exhaust_lining",
+    "exhaust_top": "jsspace:block/launcher/formed/exhaust_top",
+    "particle": "jsspace:block/launcher/formed/exhaust_top"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#exhaust_lining",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#deck_side",
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#deck_side",
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#deck_side",
+          "cullface": "west"
+        },
+        "up": {
+          "texture": "#exhaust_top",
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#deck_under",
+          "cullface": "down"
+        }
+      }
+    }
+  ]
+}
