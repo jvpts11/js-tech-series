@@ -452,6 +452,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
   wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
   speed and less in thinner air; written in a part's file as `wing`. Experimental.
+- (Space) Gear that rolls: J's Space's API is at version 18. `ShipPart` gains `rolls`, whether a part of gear rolls
+  on wheels, on the land and a runway, where feet stand where they come down; written in a part's file as `rolls`.
+  Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2591,6 +2594,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   needs more of it to stay up. Its boost, on its own key (B until changed), takes it faster across an empty stretch,
   well clear of the land, from a store its reactor's spare power fills. It rests on the land under it, steps up what
   is low, and is stopped by the land it would fly into or that is not loaded yet.
+- (Space) A ship takes off straight up and comes down where it means to: its air engines' nozzles turn down just as
+  far as its wings leave weight to hold, so below flying speed it hovers on them, its nose kept level, and its pilot
+  takes it up and down with the keys they pitch with, as fast as its engines can lift it; too heavy for them, it only
+  sinks. With nobody at the helm it comes down gently and settles. On the land its gear decides: on wheels it rolls
+  on as down a runway, and on feet it stands where it comes down. Its gear is down on the land, hovering and near the
+  ground, and goes up, drawn stowed, once it flies on its wings well clear. Hovering, each nozzle blows a jet of flame
+  down and the dust under it is blown out round the ship. Its flight console keeps its readings, shown on every
+  player's game: speed, climb, throttle, boost, its nozzles' angle, and whether its gear is down.
 - (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.

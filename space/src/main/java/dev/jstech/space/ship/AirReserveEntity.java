@@ -33,7 +33,8 @@ import org.jetbrains.annotations.Nullable;
  * pressurised cabin topped up from this for its short trips, oxygen and nitrogen each back to the sea's pressure as
  * the crew breathe and the hull leaks, while the reserve lasts. An oxygen bottle pours into it. Once the ship has left
  * its dock, the console keeps the ship too ({@link ShipAboard}), and draws its parts aboard; and watches its plan
- * there, so a block broken aboard leaves a hole its part holds round, and the right block put back mends it.
+ * there, so a block broken aboard leaves a hole its part holds round, and the right block put back mends it. It shows
+ * the ship's flight as it flies ({@link ShipReadings}).
  */
 public final class AirReserveEntity extends SyncedBlockEntity {
 
@@ -41,6 +42,7 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     private final ValueField<Double> nitrogen;
     private final ValueField<ShipAboard> ship;
     private final ValueField<List<Integer>> holes;
+    private final ValueField<ShipReadings> flight;
     /* The ship's plan, watched aboard once the ship is a structure; on the server. */
     private @Nullable PlannedBuild aboard;
     /** The oxygen a full reserve holds, in moles: two hours of one crew member's breathing. */
@@ -58,6 +60,20 @@ public final class AirReserveEntity extends SyncedBlockEntity {
         this.nitrogen = fields().value("Nitrogen", Codec.DOUBLE, NITROGEN).save().toClient();
         this.ship = fields().nullable("Ship", ShipAboard.CODEC).save().toClient();
         this.holes = fields().value("Holes", Codec.INT.listOf(), List.<Integer>of()).toClient();
+        this.flight = fields().value("Flight", ShipReadings.CODEC, ShipReadings.PARKED).toClient();
+    }
+
+    /** What its ship's flight shows, as its players are told. */
+    public ShipReadings flight() {
+        final ShipReadings kept = this.flight.get();
+        return kept == null ? ShipReadings.PARKED : kept;
+    }
+
+    /** Its ship flew a tick, showing {@code readings}: its players are told when they change. */
+    public void flew(final ShipReadings readings) {
+        if (!readings.equals(this.flight.get())) {
+            this.flight.set(readings);
+        }
     }
 
     /** The ship it is the console of, once it has left its dock. */

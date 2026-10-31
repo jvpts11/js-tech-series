@@ -24,7 +24,9 @@ import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -35,37 +37,50 @@ import net.minecraft.world.level.levelgen.Heightmap;
  * {@link ShipFlightModel}: its blocks fly as they stand, its machines work, its crew walk about inside. Its pilot at
  * the helm, the cockpit's pilot seat, opens and closes its throttle, turns it and pitches its nose, and it goes where
  * its nose points; its wings hold it up in the air of the world it flies in, as thick as that world's air is at its
- * height, and its boost takes it faster across the empty stretches. With nobody at the helm its throttle closes. It
- * rests on the land under it and is stopped by the land it would fly into ({@link ShipGround}). Its rule goes on
- * through a save, as the structure does.
+ * height, slower its nozzles turn down and it hovers, rising and coming down as its pilot holds, and its boost takes
+ * it faster across the empty stretches. With nobody at the helm its throttle closes and it comes down gently. It rests
+ * on the land under it, rolling on wheels or standing on feet, and is stopped by the land it would fly into
+ * ({@link ShipGround}). Its console shows its flight ({@link ShipReadings}). Its rule goes on through a save, as the
+ * structure does.
  *
- * @param state  where its flight stands
- * @param noseX  which way its nose points among its blocks, across, as its plan laid it
- * @param noseZ  which way its nose points among its blocks, along
- * @param ship   what it weighs and pushes
+ * @param state    where its flight stands
+ * @param noseX    which way its nose points among its blocks, across, as its plan laid it
+ * @param noseZ    which way its nose points among its blocks, along
+ * @param ship     what it weighs and pushes, and what it stands on
+ * @param grounded whether it stood on the land the tick before
+ * @param console  where its flight console stands in its yard, if it has one
  */
-public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, ShipFlightModel.Performance ship)
-        implements IStructureMotion {
+public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, ShipFlightModel.Performance ship,
+                         boolean grounded, Optional<BlockPos> console) implements IStructureMotion {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship_flight");
     private static final MapCodec<ShipFlightModel.State> STATE = RecordCodecBuilder.mapCodec(instance -> instance
             .group(Codec.DOUBLE.fieldOf("speed").forGetter(ShipFlightModel.State::speed),
                     Codec.DOUBLE.fieldOf("sink").forGetter(ShipFlightModel.State::sink),
                     Codec.DOUBLE.fieldOf("throttle").forGetter(ShipFlightModel.State::throttle),
-                    Codec.DOUBLE.fieldOf("charge").forGetter(ShipFlightModel.State::charge))
+                    Codec.DOUBLE.fieldOf("charge").forGetter(ShipFlightModel.State::charge),
+                    Codec.DOUBLE.optionalFieldOf("rise", 0.0).forGetter(ShipFlightModel.State::rise),
+                    Codec.DOUBLE.optionalFieldOf("nozzles", 0.0).forGetter(ShipFlightModel.State::nozzles))
             .apply(instance, ShipFlightModel.State::new));
+    private static final Codec<ShipFlightModel.Gear> GEAR = Codec.STRING.xmap(
+            name -> ShipFlightModel.Gear.valueOf(name.toUpperCase(Locale.ROOT)),
+            gear -> gear.name().toLowerCase(Locale.ROOT));
     private static final MapCodec<ShipFlightModel.Performance> PERFORMANCE = RecordCodecBuilder.mapCodec(
             instance -> instance.group(Codec.DOUBLE.fieldOf("mass").forGetter(ShipFlightModel.Performance::mass),
                     Codec.DOUBLE.fieldOf("air_thrust").forGetter(ShipFlightModel.Performance::airThrust),
                     Codec.DOUBLE.fieldOf("bell_thrust").forGetter(ShipFlightModel.Performance::bellThrust),
                     Codec.DOUBLE.fieldOf("wing").forGetter(ShipFlightModel.Performance::wing),
-                    Codec.DOUBLE.fieldOf("power").forGetter(ShipFlightModel.Performance::power))
+                    Codec.DOUBLE.fieldOf("power").forGetter(ShipFlightModel.Performance::power),
+                    GEAR.optionalFieldOf("gear", ShipFlightModel.Gear.NONE)
+                            .forGetter(ShipFlightModel.Performance::gear))
                     .apply(instance, ShipFlightModel.Performance::new));
     public static final MapCodec<ShipFlight> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             STATE.forGetter(ShipFlight::state),
             Codec.INT.fieldOf("nose_x").forGetter(ShipFlight::noseX),
             Codec.INT.fieldOf("nose_z").forGetter(ShipFlight::noseZ),
-            PERFORMANCE.fieldOf("ship").forGetter(ShipFlight::ship)
+            PERFORMANCE.fieldOf("ship").forGetter(ShipFlight::ship),
+            Codec.BOOL.optionalFieldOf("grounded", false).forGetter(ShipFlight::grounded),
+            BlockPos.CODEC.optionalFieldOf("console").forGetter(ShipFlight::console)
     ).apply(instance, ShipFlight::new));
     /* The overworld's air at sea level, in kilopascals, what its air's thickness is told against. */
     private static final double SEA_PRESSURE = 101.3;
@@ -73,20 +88,27 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     private static final int EMPTY_OVER = 24;
     /* Below this, in metres a second or blocks, nothing moves. */
     private static final double STILL = 1.0e-4;
+    /* How high over the land a ship over land not loaded is taken to be, in blocks: far. */
+    private static final double FAR = 1000;
 
     /** Registers the rule's kind, once, from the mod's constructor. */
     public static void declare() {
         StructureMotions.register(TYPE, CODEC);
     }
 
-    /** A ship of {@code ship} at rest, its nose pointing {@code noseX}, {@code noseZ} among its blocks. */
-    public static ShipFlight resting(final int noseX, final int noseZ, final ShipFlightModel.Performance ship) {
-        return new ShipFlight(ShipFlightModel.State.RESTING, noseX, noseZ, ship);
+    /**
+     * A ship of {@code ship} at rest, its nose pointing {@code noseX}, {@code noseZ} among its blocks, its console at
+     * {@code console} in its yard.
+     */
+    public static ShipFlight resting(final int noseX, final int noseZ, final ShipFlightModel.Performance ship,
+                                     final Optional<BlockPos> console) {
+        return new ShipFlight(ShipFlightModel.State.RESTING, noseX, noseZ, ship, true, console);
     }
 
     /**
-     * What a ship of {@code design} weighs and pushes, by its parts' figures in {@code parts}: its air engines push
-     * what they lift, its reactor's power beyond what its parts take fills its boost.
+     * What a ship of {@code design} weighs and pushes, by its parts' figures in {@code parts}, and what it stands on:
+     * its air engines push what they lift, its reactor's power beyond what its parts take fills its boost, its gear
+     * rolls or stands.
      */
     public static ShipFlightModel.Performance performance(final ShipDesign design,
                                                           final Map<ResourceLocation, ShipPart> parts) {
@@ -97,6 +119,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         double bells = 0;
         double wing = 0;
         double power = 0;
+        ShipFlightModel.Gear gear = ShipFlightModel.Gear.NONE;
         for (final ResourceLocation id : all) {
             final ShipPart part = parts.get(id);
             if (part == null) {
@@ -108,13 +131,16 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             bells += figures.thrust();
             wing += figures.wing();
             power += figures.power();
+            if (part.kind() == ShipPartKind.GEAR) {
+                gear = part.rolls() ? ShipFlightModel.Gear.WHEELS : ShipFlightModel.Gear.LEGS;
+            }
         }
-        return new ShipFlightModel.Performance(mass, air, bells, wing, power);
+        return new ShipFlightModel.Performance(mass, air, bells, wing, power, gear);
     }
 
     /** Its flight as it stands, another way. */
     public ShipFlight with(final ShipFlightModel.State next) {
-        return new ShipFlight(next, this.noseX, this.noseZ, this.ship);
+        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, this.grounded, this.console);
     }
 
     @Override
@@ -137,6 +163,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final double pitch = Math.toDegrees(Math.asin(Math.clamp(nose[1], -1.0, 1.0)));
         final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, held, air(level, now, body), this.ship,
                 pitch);
+        show(level, next);
         StructurePose turned = next.turn() == 0 ? now : now.turnedBy(0, 1, 0, Math.toRadians(next.turn()));
         if (next.pitch() != 0) {
             final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
@@ -147,8 +174,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         }
         final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
         final double ahead = next.state().speed() * ShipFlightModel.TICK;
-        final double down = next.state().sink() * ShipFlightModel.TICK;
-        return flown(level, body, now, turned, way[0] * ahead, way[1] * ahead - down, way[2] * ahead, next.state());
+        final double up = (next.state().rise() - next.state().sink()) * ShipFlightModel.TICK;
+        return flown(level, body, now, turned, way[0] * ahead, way[1] * ahead + up, way[2] * ahead, next.state());
     }
 
     @Override
@@ -174,50 +201,67 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final StructurePose moved = turned.movedTo(now.x() + dx, now.y() + dy, now.z() + dz);
         final ShipGround.Contact meets = ShipGround.meet(level, body, frameOf(body, moved), most);
         if (!meets.blocked()) {
-            final ShipFlightModel.State landed = meets.touching() ? stood(next) : next;
-            return still(now, moved.movedTo(moved.x(), moved.y() + meets.rise(), moved.z()), landed);
+            return still(now, moved.movedTo(moved.x(), moved.y() + meets.rise(), moved.z()),
+                    meets.touching() ? stood(next) : next, meets.touching());
         }
         if (dy >= 0 && ShipGround.meet(level, body, frameOf(body, now)).blocked()) {
             // Already in the land where it stands, built into it or set there: it flies on out of it, never deeper.
-            return still(now, moved, next);
+            return still(now, moved, next, false);
         }
         // Run into land: it stops where it was, only coming down onto what is under it, or not at all.
         final ShipFlightModel.State stopped = new ShipFlightModel.State(0, next.sink(), next.throttle(),
-                next.charge());
+                next.charge(), next.rise(), next.nozzles());
         final StructurePose dropped = turned.movedTo(now.x(), now.y() + Math.min(0, dy), now.z());
         final ShipGround.Contact under = ShipGround.meet(level, body, frameOf(body, dropped), most);
         if (!under.blocked()) {
             return still(now, dropped.movedTo(dropped.x(), dropped.y() + under.rise(), dropped.z()),
-                    under.touching() ? stood(stopped) : stopped);
+                    under.touching() ? stood(stopped) : stopped, under.touching());
         }
-        return new Step(now, with(stood(stopped)));
+        return new Step(now, flying(stood(stopped), true));
     }
 
     /* The step to {@code to}, or none where it barely moved: a ship at rest sends nothing. */
-    private Step still(final StructurePose now, final StructurePose to, final ShipFlightModel.State next) {
+    private Step still(final StructurePose now, final StructurePose to, final ShipFlightModel.State next,
+                       final boolean landed) {
         if (to.distanceTo(now) < STILL && to.angleTo(now) < STILL) {
-            return new Step(now, with(next));
+            return new Step(now, flying(next, landed));
         }
-        return new Step(to, with(next));
+        return new Step(to, flying(next, landed));
     }
 
-    /* Its flight standing on the land: it sinks no more. */
+    /* Its flight standing as {@code next}, on the land or not. */
+    private ShipFlight flying(final ShipFlightModel.State next, final boolean landed) {
+        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, landed, this.console);
+    }
+
+    /* Its console shows the tick's flight, where its yard's land is loaded. */
+    private void show(final ServerLevel level, final ShipFlightModel.Tick tick) {
+        if (this.console.isPresent() && level.isLoaded(this.console.get())
+                && level.getBlockEntity(this.console.get()) instanceof AirReserveEntity keeper) {
+            keeper.flew(ShipReadings.of(tick));
+        }
+    }
+
+    /* Its flight standing on the land: it sinks no more and comes down no further. */
     private static ShipFlightModel.State stood(final ShipFlightModel.State next) {
-        return new ShipFlightModel.State(next.speed(), 0, next.throttle(), next.charge());
+        return new ShipFlightModel.State(next.speed(), 0, next.throttle(), next.charge(), Math.max(0, next.rise()),
+                next.nozzles());
     }
 
-    /* The air round {@code body} standing at {@code now}: its world's at that height, and whether it is empty. */
-    private static ShipFlightModel.Air air(final ServerLevel level, final StructurePose now,
-                                           final MovingStructure body) {
+    /*
+     * The air round {@code body} standing at {@code now}: its world's at that height, whether it is empty, whether it
+     * stood on the land, and how high over the land it is.
+     */
+    private ShipFlightModel.Air air(final ServerLevel level, final StructurePose now, final MovingStructure body) {
         final DimensionRules rules = DimensionRulesData.of(level);
         final Climate climate = rules.at(now.y());
         final double gravity = rules.gravityAt(now.y());
         final double density = climate.pressure() / SEA_PRESSURE;
         final BlockPos under = BlockPos.containing(now.x(), now.y(), now.z());
-        final boolean empty = density <= 0 || gravity <= 0 || !level.isLoaded(under)
-                || body.worldBox().minY - level.getHeight(Heightmap.Types.MOTION_BLOCKING, under.getX(),
-                under.getZ()) >= EMPTY_OVER;
-        return new ShipFlightModel.Air(density, gravity, empty);
+        final double height = level.isLoaded(under) ? body.worldBox().minY - level.getHeight(
+                Heightmap.Types.MOTION_BLOCKING, under.getX(), under.getZ()) : FAR;
+        final boolean empty = density <= 0 || gravity <= 0 || height >= EMPTY_OVER;
+        return new ShipFlightModel.Air(density, gravity, empty, this.grounded, height);
     }
 
     /* Which way its nose points in the world, standing as {@code frame}. */

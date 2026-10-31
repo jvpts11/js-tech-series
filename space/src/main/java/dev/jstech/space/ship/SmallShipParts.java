@@ -139,8 +139,10 @@ public final class SmallShipParts {
                 figures(0.6, 0, 0, -1.4, 0, 0));
         hung("small_quads", QUADS, ShipPartKind.THRUSTERS, ShipPlace.AROUND, false, ironside,
                 figures(0.5, 0, 0, -1.2, 0, 0));
-        hung("small_wheels", WHEELS, ShipPartKind.GEAR, ShipPlace.UNDER, false, meridian,
-                figures(1.5, 0, 0, 0, 0, 0));
+        // The wheels roll, on the land and a runway; the legs' feet stand where they come down.
+        ShipParts.declare(id("small_wheels"), new ShipPart(WHEELS.key(), ShipPartKind.GEAR, ShipClass.SMALL,
+                ShipPlace.UNDER, 0, 0, false, false, Optional.of(meridian), figures(1.5, 0, 0, 0, 0, 0), true));
+        ORDER.add(id("small_wheels"));
         hung("small_legs", LEGS, ShipPartKind.GEAR, ShipPlace.UNDER, false, ironside, figures(1.2, 0, 0, 0, 0, 0));
         // The small functional modules, each a section of the spine taking a third of the small hull's room.
         module("small_workshop", WORKSHOP, ironside, figures(1.4, 0, 0, -0.6, 0, 0));

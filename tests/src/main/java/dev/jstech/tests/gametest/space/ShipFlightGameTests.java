@@ -19,11 +19,13 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.space.api.ShipParts;
+import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipBoost;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipGround;
+import dev.jstech.space.ship.ShipReadings;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardPlans;
@@ -85,8 +87,11 @@ public final class ShipFlightGameTests {
     /* The tickets each test keeps its land by, and how far each reaches: two keeps its chunk ticking. */
     private static final TicketType<BlockPos> LAND = TicketType.create("jstests_ship_flight", Vec3i::compareTo);
     private static final int TICKING = 2;
-    /* How far a ship goes along its nose with its throttle held that long, at least, in blocks. */
-    private static final double FLOWN = 10;
+    /*
+     * How far a ship goes along its nose with its throttle held that long, at least, in blocks: from a hover, its
+     * nozzles holding it up take part of its thrust.
+     */
+    private static final double FLOWN = 6;
     private static final double STILL = 1.0e-6;
     /*
      * How high a ship is taken up to fly, clear of any test's blocks round it, and let go over its cradle to sink,
@@ -100,6 +105,17 @@ public final class ShipFlightGameTests {
     /* The test ship's mass, its eleven parts' sum, in kilograms; what its delta wings hold, in newtons. */
     private static final double SHIP_KILOGRAMS = 39_600;
     private static final double DELTA_NEWTONS = 400_000;
+    /* How long its pilot holds up to rise, and it hovers, and holds forward on the land, in ticks. */
+    private static final int RISING = 50;
+    private static final int HOVERED = 20;
+    private static final int ROLLED = 10;
+    /* How far a hovering ship may drift up or down, and roll on wheels at least, in blocks; its nozzles, in degrees. */
+    private static final double HOVER_DRIFT = 0.05;
+    private static final double ROLLS = 0.3;
+    private static final int HOVER_NOZZLES = 45;
+    private static final ShipDesign LEGS_SHIP = new ShipDesign("JS-04", List.of(part("orbiter_cockpit"),
+            part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
+            part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("legs")));
     private static final ShipDesign SHIP = new ShipDesign("JS-02", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
             part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
@@ -152,10 +168,16 @@ public final class ShipFlightGameTests {
             from[0] = ship[0].pose();
             aloft(ship[0], HIGH);
             // Flying at 30 m/s, half again its stall in this air, its throttle where its pilot left it.
-            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISE, 0, CRUISE / CRUISING, 1)));
+            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISE, 0, CRUISE / CRUISING, 1, 0,
+                    0)));
         });
-        cruise(helper, sequence, ship, HELD).thenExecute(() -> helper.assertTrue(ship[0].pose().y() > from[0].y()
-                + HIGH - 1, "fast enough, its wings hold it up: " + (ship[0].pose().y() - from[0].y())))
+        cruise(helper, sequence, ship, HELD).thenExecute(() -> {
+            helper.assertTrue(ship[0].pose().y() > from[0].y() + HIGH - 1, "fast enough, its wings hold it up: "
+                    + (ship[0].pose().y() - from[0].y()));
+            final ShipReadings shown = console(helper, ship[0]).flight();
+            helper.assertTrue(!shown.gearDown() && !shown.lifting() && shown.nozzles() == 0 && shown.speed() > 1,
+                    "its console shows it flying on its wings, high, its gear up and its nozzles back: " + shown);
+        })
                 .thenExecute(() -> {
                     // Back over its dock, a little over its cradle, nobody at the helm, at rest: it sinks onto it.
                     final StructurePose now = ship[0].pose();
@@ -185,7 +207,7 @@ public final class ShipFlightGameTests {
         final GameTestSequence sequence = flying(helper, ship, STRAIGHT_WEST).thenExecute(() -> {
             aloft(ship[0], HIGH);
             final ShipFlight flight = (ShipFlight) ship[0].motion();
-            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISING, 0, 1, 1)));
+            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISING, 0, 1, 1, 0, 0)));
         });
         for (int tick = 0; tick < BOOSTED; tick++) {
             sequence.thenExecuteAfter(1, () -> {
@@ -200,6 +222,60 @@ public final class ShipFlightGameTests {
         }).thenExecute(() -> {
             MovingStructures.takeAway(ship[0]);
             keep(helper, false, STRAIGHT_WEST);
+        }).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void flight_itRisesStraightOffItsCradleHoversAndComesBackDown(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final StructurePose[] from = new StructurePose[2];
+        final GameTestSequence sequence = letGo(helper, ship, SHIP).thenExecute(() -> from[0] = ship[0].pose());
+        hold(helper, sequence, ship, StructureControls.ControlAxis.UP, RISING).thenExecute(() -> {
+            final StructurePose now = ship[0].pose();
+            helper.assertTrue(now.y() > from[0].y() + 1 && Math.abs(now.x() - from[0].x()) < STILL
+                    && Math.abs(now.z() - from[0].z()) < STILL && now.angleTo(from[0]) < STILL, "held up, it rises"
+                    + " straight off its cradle, level: " + (now.y() - from[0].y()) + " blocks");
+        });
+        cruise(helper, sequence, ship, HOVERED).thenExecute(() -> from[1] = ship[0].pose());
+        cruise(helper, sequence, ship, HOVERED).thenExecute(() -> {
+            helper.assertTrue(Math.abs(ship[0].pose().y() - from[1].y()) < HOVER_DRIFT, "let go of up, it hovers"
+                    + " where it is: " + (ship[0].pose().y() - from[1].y()));
+            final ShipReadings shown = console(helper, ship[0]).flight();
+            helper.assertTrue(shown.lifting() && shown.gearDown() && shown.nozzles() > HOVER_NOZZLES, "its"
+                    + " console shows its nozzles turned down holding it, its gear down: " + shown);
+        });
+        hold(helper, sequence, ship, StructureControls.ControlAxis.DOWN, RISING * 2).thenWaitUntil(() -> {
+            pilot(helper, ship[0], Map.of(StructureControls.ControlAxis.DOWN, 1F));
+            helper.assertTrue(((ShipFlight) ship[0].motion()).grounded() && ship[0].pose().y() < from[1].y() - 1,
+                    "held down, it comes back down onto its cradle");
+        }).thenExecute(() -> MovingStructures.takeAway(ship[0])).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void flight_onTheLandItRollsOnWheels(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final StructurePose[] from = new StructurePose[1];
+        final GameTestSequence sequence = letGo(helper, ship, SHIP).thenExecute(() -> from[0] = ship[0].pose());
+        hold(helper, sequence, ship, StructureControls.ControlAxis.FORWARD, ROLLED).thenExecute(() -> {
+            helper.assertTrue(from[0].z() - ship[0].pose().z() > ROLLS, "on wheels, it rolls forward on its cradle:"
+                    + " " + (from[0].z() - ship[0].pose().z()) + " blocks");
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void flight_onTheLandItStandsOnFeet(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final StructurePose[] from = new StructurePose[1];
+        final GameTestSequence sequence = letGo(helper, ship, LEGS_SHIP).thenExecute(() -> {
+            from[0] = ship[0].pose();
+            helper.assertTrue(((ShipFlight) ship[0].motion()).ship().gear() == ShipFlightModel.Gear.LEGS, "it stands"
+                    + " on feet");
+        });
+        hold(helper, sequence, ship, StructureControls.ControlAxis.FORWARD, ROLLED).thenExecute(() -> {
+            helper.assertTrue(ship[0].pose().distanceTo(from[0]) < STILL, "on feet, it stands where it is with its"
+                    + " throttle open: " + ship[0].pose().distanceTo(from[0]));
+            MovingStructures.takeAway(ship[0]);
         }).thenSucceed();
     }
 
@@ -239,8 +315,14 @@ public final class ShipFlightGameTests {
         }).thenExecute(() -> MovingStructures.takeAway(ship[0])).thenSucceed();
     }
 
-    /* The dock built, the ship built in it and let go, {@code ship} told it once its blocks came in. */
+    /* The dock built, the test's ship built in it and let go, {@code ship} told it once its blocks came in. */
     private static GameTestSequence letGo(final GameTestHelper helper, final MovingStructure[] ship) {
+        return letGo(helper, ship, SHIP);
+    }
+
+    /* The dock built, a ship of {@code design} built in it and let go, {@code ship} told it once it came in. */
+    private static GameTestSequence letGo(final GameTestHelper helper, final MovingStructure[] ship,
+                                          final ShipDesign design) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         return helper.startSequence()
@@ -249,7 +331,7 @@ public final class ShipFlightGameTests {
                 .thenExecute(() -> {
                     final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
                             .getBlockEntity(terminal);
-                    dock.design(SHIP);
+                    dock.design(design);
                     helper.assertTrue(dock.confirm(), "the ship is sent");
                     final PlannedBuild plan = dock.build().orElseThrow();
                     for (final PlanSpot spot : plan.plan().spots()) {
@@ -281,7 +363,14 @@ public final class ShipFlightGameTests {
     /* Its pilot holds {@code axis} a while, as their helm tells the structure each tick, then lets go. */
     private static GameTestSequence hold(final GameTestHelper helper, final GameTestSequence sequence,
                                          final MovingStructure[] ship, final StructureControls.ControlAxis axis) {
-        for (int tick = 0; tick < HELD; tick++) {
+        return hold(helper, sequence, ship, axis, HELD);
+    }
+
+    /* Its pilot holds {@code axis} {@code ticks} ticks, as their helm tells the structure each tick, then lets go. */
+    private static GameTestSequence hold(final GameTestHelper helper, final GameTestSequence sequence,
+                                         final MovingStructure[] ship, final StructureControls.ControlAxis axis,
+                                         final int ticks) {
+        for (int tick = 0; tick < ticks; tick++) {
             sequence.thenExecuteAfter(1, () -> {
                 final Map<StructureControls.ControlAxis, Float> held = new EnumMap<>(
                         StructureControls.ControlAxis.class);
@@ -330,6 +419,12 @@ public final class ShipFlightGameTests {
                 }
             }
         }
+    }
+
+    /* {@code ship}'s flight console, which shows its flight. */
+    private static AirReserveEntity console(final GameTestHelper helper, final MovingStructure ship) {
+        return (AirReserveEntity) helper.getLevel().getBlockEntity(((ShipFlight) ship.motion()).console()
+                .orElseThrow());
     }
 
     /* Where the block that stood at {@code built} in the dock is aboard {@code ship} now, in its yard. */

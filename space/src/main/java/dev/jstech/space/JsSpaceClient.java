@@ -29,6 +29,7 @@ import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.ship.FlightConsoleRenderer;
 import dev.jstech.space.client.ship.ShipBoostClient;
+import dev.jstech.space.client.ship.ShipExhaust;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
 import dev.jstech.space.client.shipyard.ShipHolograms;
 import dev.jstech.space.client.shipyard.ShipyardRenderer;
@@ -74,6 +75,7 @@ public final class JsSpaceClient {
         // A ship that has left its dock, drawn from its flight console wherever it goes, and its boost's key.
         FlightConsoleRenderer.listen(modEventBus);
         ShipBoostClient.listen();
+        ShipExhaust.listen();
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipDesigner.MENU.get(),
                 ShipDesignScreen::new));
         PlanHologram.show(ShipHolograms::shown);

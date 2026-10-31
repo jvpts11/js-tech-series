@@ -71,6 +71,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
   wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
   speed and less in thinner air; written in a part's file as `wing`. Experimental.
+- Gear that rolls: J's Space's API is at version 18. `ShipPart` gains `rolls`, whether a part of gear rolls
+  on wheels, on the land and a runway, where feet stand where they come down; written in a part's file as `rolls`.
+  Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -608,6 +611,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   needs more of it to stay up. Its boost, on its own key (B until changed), takes it faster across an empty stretch,
   well clear of the land, from a store its reactor's spare power fills. It rests on the land under it, steps up what
   is low, and is stopped by the land it would fly into or that is not loaded yet.
+- A ship takes off straight up and comes down where it means to: its air engines' nozzles turn down just as
+  far as its wings leave weight to hold, so below flying speed it hovers on them, its nose kept level, and its pilot
+  takes it up and down with the keys they pitch with, as fast as its engines can lift it; too heavy for them, it only
+  sinks. With nobody at the helm it comes down gently and settles. On the land its gear decides: on wheels it rolls
+  on as down a runway, and on feet it stands where it comes down. Its gear is down on the land, hovering and near the
+  ground, and goes up, drawn stowed, once it flies on its wings well clear. Hovering, each nozzle blows a jet of flame
+  down and the dust under it is blown out round the ship. Its flight console keeps its readings, shown on every
+  player's game: speed, climb, throttle, boost, its nozzles' angle, and whether its gear is down.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
