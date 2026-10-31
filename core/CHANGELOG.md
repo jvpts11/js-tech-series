@@ -1795,6 +1795,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   leader at the first height where it meets no other tag, for parts laid side by side.
 - The arms a plan is laid by, drawn on the player's game, each with its own model's bones turned to put its
   grip on its block, the block it carries in its grip or waiting in its feeder, and the sparks of its weld.
+- A moving structure crossing to another dimension takes whoever sits on its seats along still sitting on
+  them, and its pilot's hold on the controls goes with it.
+- A room among a moving structure's blocks is the room of the place of the world they fill now: whoever is
+  aboard a flying craft breathes its cabin's air, and fire, gas and sound find that room there too. Whoever sits on
+  one of its seats breathes the seat's room, and a body whose eyes are in a block of a room's wall, as a cockpit's
+  seat puts its pilot's head into the canopy, breathes the room beside it.
+- A sealed room goes with the blocks that close it in when they move together, as a moving structure is made or
+  taken to another dimension: it is found again at once where they arrive, keeping its air, so a cabin taken into space
+  stays full and its crew never breathes the vacuum between. A structure taken away takes its rooms with it, none left
+  behind in its yard for the next one there.
+- A block's seal, written as data, may say it is no wall at all (`"wall": false`), as furniture standing in a
+  room is: the room's air fills round it.
 - A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
@@ -1949,6 +1961,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A chunk loader aboard a moving structure taken away, such as a Space Persistor in a ship's airlock, lets go
+  of the chunks it kept; before, they stayed loaded for good, the world saved and loaded again.
 - A player or a mob walking a moving structure steps over a sill under a low lintel, as a doorway's: where the
   room overhead is too low for a whole step, it steps as high as what stands in its way, as on the ground, and no
   longer stops at the sill.

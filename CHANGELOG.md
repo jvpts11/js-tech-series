@@ -2602,6 +2602,25 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   ground, and goes up, drawn stowed, once it flies on its wings well clear. Hovering, each nozzle blows a jet of flame
   down and the dust under it is blown out round the ship. Its flight console keeps its readings, shown on every
   player's game: speed, climb, throttle, boost, its nozzles' angle, and whether its gear is down.
+- (Space) A ship climbs to space without stopping, through the same passage as a rocket: over the build limit it
+  flies on through the open sky, the land ahead of it loading as it goes, and over the line it crosses into the Solar
+  System's space whole, with no loading screen, its pilot still at its helm and its flight going on as it went. Fast,
+  its nose stays where its pilot points it in any air, so it climbs out of thin air on its bells; slow, it hovers.
+- (Space) A small ship's cabin is a sealed room wherever it flies, in space too: its flight console asks for it, and
+  the furniture standing in it, its seats, consoles, bunks, suit lockers and racks, lets its air round them, so its
+  crew breathes it, kept warm, with the vacuum outside.
+- (Core) A moving structure crossing to another dimension takes whoever sits on its seats along still sitting on
+  them, and its pilot's hold on the controls goes with it.
+- (Core) A room among a moving structure's blocks is the room of the place of the world they fill now: whoever is
+  aboard a flying craft breathes its cabin's air, and fire, gas and sound find that room there too. Whoever sits on
+  one of its seats breathes the seat's room, and a body whose eyes are in a block of a room's wall, as a cockpit's
+  seat puts its pilot's head into the canopy, breathes the room beside it.
+- (Core) A sealed room goes with the blocks that close it in when they move together, as a moving structure is made or
+  taken to another dimension: it is found again at once where they arrive, keeping its air, so a cabin taken into space
+  stays full and its crew never breathes the vacuum between. A structure taken away takes its rooms with it, none left
+  behind in its yard for the next one there.
+- (Core) A block's seal, written as data, may say it is no wall at all (`"wall": false`), as furniture standing in a
+  room is: the room's air fills round it.
 - (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
@@ -2814,6 +2833,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A chunk loader aboard a moving structure taken away, such as a Space Persistor in a ship's airlock, lets go
+  of the chunks it kept; before, they stayed loaded for good, the world saved and loaded again.
 - (Core) A player or a mob walking a moving structure steps over a sill under a low lintel, as a doorway's: where the
   room overhead is too low for a whole step, it steps as high as what stands in its way, as on the ground, and no
   longer stops at the sill.

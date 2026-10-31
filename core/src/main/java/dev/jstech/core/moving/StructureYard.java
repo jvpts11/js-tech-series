@@ -9,6 +9,8 @@ package dev.jstech.core.moving;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.region.Box;
+import dev.jstech.core.region.ChunkLoaders;
+import dev.jstech.core.room.SealedRooms;
 import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.DimensionState;
@@ -25,6 +27,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
@@ -173,6 +176,10 @@ public final class StructureYard {
                 for (int y = bounds.minY(); y <= bounds.maxY(); y++) {
                     at.set(x, y, z);
                     if (!level.getBlockState(at).isAir()) {
+                        // A chunk loader taken away quietly with it lets go of what it kept, never told otherwise.
+                        if (level.getBlockEntity(at) != null) {
+                            ChunkLoaders.releaseAll(level, at.immutable());
+                        }
                         // Taken from its chunk, not through the level, which would tell the comparators round it.
                         level.getChunkAt(at).removeBlockEntity(at);
                         level.setBlock(at, Blocks.AIR.defaultBlockState(), QUIETLY);
@@ -180,6 +187,9 @@ public final class StructureYard {
                 }
             }
         }
+        // Its rooms go with it, not left in the yard for the next structure there to find.
+        SealedRooms.forget(level, new AABB(bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX() + 1,
+                bounds.maxY() + 1, bounds.maxZ() + 1));
     }
 
     /** Changes a block of the yard quietly: no neighbour told, nothing dropped, the light kept right. */

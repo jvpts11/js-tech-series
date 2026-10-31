@@ -361,7 +361,7 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         final BlockPos keeps = BlockPos.containing(MovingStructures.toYard(made.structure(),
                 Vec3.atCenterOf(seat.get())));
         MovingStructures.move(made.structure(), ShipFlight.resting(nose[0], nose[2], ShipFlight.performance(design,
-                ShipParts.all(server)), Optional.of(keeps)));
+                ShipParts.all(server)), Optional.of(ShipFlight.fromPivot(made.structure(), keeps))));
         this.plan.set(null);
         this.planAt.set(null);
         this.formedParts.set(List.of());

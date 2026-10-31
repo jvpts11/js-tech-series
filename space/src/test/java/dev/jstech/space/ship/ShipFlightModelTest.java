@@ -30,6 +30,11 @@ class ShipFlightModelTest {
     private static final ShipFlightModel.Held BOOSTING = new ShipFlightModel.Held(0, 0, 0, 0, 0, 0, true, true);
     private static final ShipFlightModel.Held UP = new ShipFlightModel.Held(0, 0, 0, 0, 1, 0, false, true);
     private static final ShipFlightModel.Held DOWN = new ShipFlightModel.Held(0, 0, 0, 0, 0, 1, false, true);
+    /* Mars's air at its ground, as a share of the overworld's, and its pull. */
+    private static final ShipFlightModel.Air THIN = new ShipFlightModel.Air(0.006, 0.38, true, false, 1000);
+    /* How high the air of a climb thins to none, in metres, and how far its pilot holds its nose up. */
+    private static final double TOP = 2000;
+    private static final double CLIMBING = 60;
     private static final int SECONDS = 20;
 
     @Test
@@ -94,6 +99,35 @@ class ShipFlightModelTest {
         assertTrue(fly(SHIP, DOWN, SEA, SECONDS, hovered).rise() < 0, "held down, it comes down");
         assertEquals(-1.5, ShipFlightModel.step(hovered, UP, SEA, SHIP, 10).pitch(), CLOSE,
                 "its nose comes back level");
+    }
+
+    @Test
+    void step_fastInThinAirItsNoseStaysWhereItsPilotPointsIt() {
+        final ShipFlightModel.Tick fast = ShipFlightModel.step(new ShipFlightModel.State(100, 0, 1, 1, 0, 0), UP,
+                THIN, SHIP, 20);
+        assertEquals(30.0 * ShipFlightModel.TICK, fast.pitch(), CLOSE, "held up, its nose goes up: " + fast);
+        final ShipFlightModel.Tick slow = ShipFlightModel.step(new ShipFlightModel.State(5, 0, 0, 1, 0, 0), UP, THIN,
+                SHIP, 20);
+        assertTrue(slow.pitch() < 0, "slow, it hovers, its nose coming back level: " + slow);
+    }
+
+    @Test
+    void step_pitchedUpItClimbsOutOfThinningAirOnItsBellsWithoutStopping() {
+        ShipFlightModel.State now = new ShipFlightModel.State(40, 0, 1, 1, 0, 0);
+        double pitch = CLIMBING;
+        double height = 0;
+        for (int tick = 0; tick < 200 * SECONDS && height < TOP; tick++) {
+            final ShipFlightModel.Air air = new ShipFlightModel.Air(Math.max(0, 1 - height / TOP), 1.0, true, false,
+                    height);
+            final ShipFlightModel.Tick next = ShipFlightModel.step(now, CRUISING, air, SHIP, pitch);
+            pitch += next.pitch();
+            now = next.state();
+            final double climb = now.speed() * Math.sin(Math.toRadians(pitch)) + now.rise() - now.sink();
+            assertTrue(climb > 0, "it climbs all the way: " + climb + " m/s at " + height + " m, " + now);
+            height += climb * ShipFlightModel.TICK;
+        }
+        assertTrue(height >= TOP, "out of the air: " + height + " m");
+        assertEquals(CLIMBING, pitch, CLOSE, "its nose where its pilot held it");
     }
 
     @Test

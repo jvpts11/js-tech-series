@@ -10,13 +10,17 @@ package dev.jstech.core.room;
 import dev.jstech.core.air.AirMix;
 import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureSeatEntity;
+import dev.jstech.core.moving.YardLayout;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
@@ -42,10 +46,29 @@ public final class SealedRooms {
     private SealedRooms() {
     }
 
-    /** The room at {@code pos}, if a sealed room holds it. */
+    /**
+     * The room at {@code pos}, if a sealed room holds it: a place of the world a moving structure's blocks fill now
+     * is in the room among them, in its yard, so whoever is aboard a flying ship breathes its cabin's air.
+     */
     public static Optional<Room> roomAt(final ServerLevel level, final BlockPos pos) {
         final RoomStore store = Rooms.of(level).store();
-        return store == null ? Optional.empty() : Optional.ofNullable(store.roomAt(pos.asLong()));
+        if (store == null) {
+            return Optional.empty();
+        }
+        final Room here = store.roomAt(pos.asLong());
+        if (here != null || YardLayout.isYardBlock(pos.getX())) {
+            return Optional.ofNullable(here);
+        }
+        final Vec3 at = Vec3.atCenterOf(pos);
+        for (final IStructureBody body : MovingStructures.near(level, new AABB(at, at))) {
+            if (body.worldBox().contains(at)) {
+                final Room aboard = store.roomAt(BlockPos.containing(MovingStructures.toYard(body, at)).asLong());
+                if (aboard != null) {
+                    return Optional.of(aboard);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /**
@@ -75,6 +98,30 @@ public final class SealedRooms {
             }
         }
         return placeClimate(level, Vec3.atCenterOf(pos));
+    }
+
+    /**
+     * The room {@code body} breathes: sitting on a moving structure's seat, its seat's, wherever the structure has gone
+     * since the body was last set on it; else the room at its eyes or, its eyes in a block of a room's wall, as a
+     * cockpit's seat puts its pilot's head into the canopy over it, the room beside them.
+     */
+    public static Optional<Room> roomOf(final Entity body) {
+        if (!(body.level() instanceof ServerLevel level)) {
+            return Optional.empty();
+        }
+        if (body.getVehicle() instanceof StructureSeatEntity seat) {
+            final Optional<Room> seated = roomBeside(level, seat.seat());
+            if (seated.isPresent()) {
+                return seated;
+            }
+        }
+        return roomBeside(level, BlockPos.containing(body.getEyePosition()));
+    }
+
+    /** The air {@code body} breathes and is warmed by: its room's ({@link #roomOf}), else the place's at its eyes. */
+    public static Climate climateOf(final Entity body) {
+        return roomOf(body).map(room -> room.air().climate()).orElseGet(() -> placeClimate(body.level(),
+                body.getEyePosition()));
     }
 
     /**

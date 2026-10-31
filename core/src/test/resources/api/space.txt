@@ -126,12 +126,15 @@ stable 0
 15 dev.jstech.space.api.ShipMakers  static Map<ResourceLocation, ShipMaker> declared()
 15 dev.jstech.space.api.ShipMakers  static Optional<ShipMaker> get(Level, ResourceLocation)
 15 dev.jstech.space.api.ShipMakers  static ShipMaker declare(ResourceLocation, ShipMaker)
-16 dev.jstech.space.api.ShipPart  type record(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room, boolean airlock, boolean carries, Optional<ResourceLocation> maker, Figures figures)
+18 dev.jstech.space.api.ShipPart  type record(String name, ShipPartKind kind, ShipClass shipClass, ShipPlace place, double length, int room, boolean airlock, boolean carries, Optional<ResourceLocation> maker, Figures figures, boolean rolls)
 16 dev.jstech.space.api.ShipPart  new(String, ShipPartKind, ShipClass, ShipPlace, double, int, boolean, boolean, Optional<ResourceLocation>)
+18 dev.jstech.space.api.ShipPart  new(String, ShipPartKind, ShipClass, ShipPlace, double, int, boolean, boolean, Optional<ResourceLocation>, Figures)
 12 dev.jstech.space.api.ShipPart  static final Codec<ShipPart> CODEC
-16 dev.jstech.space.api.ShipPart.Figures  type record(double mass, double thrust, double lift, double power, int seats, int beds)
+17 dev.jstech.space.api.ShipPart.Figures  type record(double mass, double thrust, double lift, double power, int seats, int beds, double wing)
+17 dev.jstech.space.api.ShipPart.Figures  new(double, double, double, double, int, int)
 16 dev.jstech.space.api.ShipPart.Figures  static final Codec<Figures> CODEC
 16 dev.jstech.space.api.ShipPart.Figures  static final Figures NONE
+17 dev.jstech.space.api.ShipPart.Figures  static final double WING_SPEED
 12 dev.jstech.space.api.ShipPartKind  type enum implements IStableName
 12 dev.jstech.space.api.ShipPartKind  AIR_ENGINE
 12 dev.jstech.space.api.ShipPartKind  COCKPIT

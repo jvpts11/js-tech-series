@@ -13,12 +13,17 @@ import dev.jstech.core.dimension.Wind;
 import dev.jstech.core.dimension.Winds;
 import dev.jstech.core.heat.HeatClimate;
 import dev.jstech.core.log.CoreLogs;
+import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.moving.StructureBlocksMovedEvent;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
@@ -79,6 +84,7 @@ public final class Rooms {
                 tick(level);
             }
         });
+        NeoForge.EVENT_BUS.addListener(StructureBlocksMovedEvent.class, event -> carry(event.move()));
     }
 
     /**
@@ -103,6 +109,69 @@ public final class Rooms {
         final LevelRooms rooms = LEVELS.get(level);
         final RoomStore store = rooms == null ? null : rooms.store();
         return store == null ? 0 : store.rooms().size();
+    }
+
+    /*
+     * Blocks moved together, as a moving structure is made, set down or taken to another dimension: each room their
+     * blocks closed in leaves where they were at once, not left behind as a room of nothing for the next blocks there
+     * to find; and, the blocks each moved as far as the others and not turned, its air goes with them, to where its
+     * blocks of air are now, so a ship's cabin keeps its air in space.
+     */
+    private static void carry(final BlockMove move) {
+        if (!(move.from() instanceof ServerLevel from) || !(move.to() instanceof ServerLevel to)
+                || move.moved().isEmpty()) {
+            return;
+        }
+        final LevelRooms rooms = LEVELS.get(from);
+        final RoomStore store = rooms == null ? null : rooms.store();
+        if (store == null || store.rooms().isEmpty()) {
+            return;
+        }
+        BlockPos shift = null;
+        boolean together = move.rotation() == Rotation.NONE;
+        final BlockPos.MutableBlockPos low = new BlockPos.MutableBlockPos(Integer.MAX_VALUE, Integer.MAX_VALUE,
+                Integer.MAX_VALUE);
+        final BlockPos.MutableBlockPos high = new BlockPos.MutableBlockPos(Integer.MIN_VALUE, Integer.MIN_VALUE,
+                Integer.MIN_VALUE);
+        for (final Map.Entry<BlockPos, BlockPos> each : move.moved().entrySet()) {
+            final BlockPos by = each.getValue().subtract(each.getKey());
+            if (shift == null) {
+                shift = by;
+            } else if (!shift.equals(by)) {
+                together = false;
+            }
+            final BlockPos at = each.getKey();
+            low.set(Math.min(low.getX(), at.getX()), Math.min(low.getY(), at.getY()),
+                    Math.min(low.getZ(), at.getZ()));
+            high.set(Math.max(high.getX(), at.getX()), Math.max(high.getY(), at.getY()),
+                    Math.max(high.getZ(), at.getZ()));
+        }
+        final LevelRooms there = of(to);
+        for (final Room room : List.copyOf(store.rooms())) {
+            if (room.cells().isEmpty() || !within(room, low, high)) {
+                continue;
+            }
+            if (together) {
+                there.carry(BlockPos.of(room.cells().iterator().nextLong()).offset(shift).asLong(), room.gases());
+            }
+            rooms.drop(room);
+        }
+    }
+
+    /* Whether every block of {@code room} lies in the box from {@code low} to {@code high}. */
+    private static boolean within(final Room room, final BlockPos low, final BlockPos high) {
+        final LongIterator each = room.cells().iterator();
+        while (each.hasNext()) {
+            final long cell = each.nextLong();
+            final int x = BlockPos.getX(cell);
+            final int y = BlockPos.getY(cell);
+            final int z = BlockPos.getZ(cell);
+            if (x < low.getX() || x > high.getX() || y < low.getY() || y > high.getY() || z < low.getZ()
+                    || z > high.getZ()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static void tick(final ServerLevel level) {

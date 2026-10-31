@@ -55,6 +55,8 @@ final class LevelRooms {
     private long searchingSeed = -1;
     private final Long2DoubleOpenHashMap breath = new Long2DoubleOpenHashMap();
     private final LongArrayList fireChecks = new LongArrayList();
+    /* Air carried in with the blocks round it, by a cell of the room it filled: the room found there holds it. */
+    private final Long2ObjectOpenHashMap<Carried> carried = new Long2ObjectOpenHashMap<>();
     private @Nullable RoomFinder search;
     /* Whether the kit itself is changing blocks, so its own changes do not send rooms to be worked out again. */
     private boolean changing;
@@ -67,6 +69,8 @@ final class LevelRooms {
     /* How long the kit may work rooms out in a tick, in nanoseconds, and how many blocks it reads between looks. */
     private static final long WORK_NANOS = 1_500_000;
     private static final int WORK_STEP = 512;
+    /* How long air carried in waits for its room to be found, in ticks, before it is let go. */
+    private static final long CARRIED_FOR = 1_200;
 
     LevelRooms(final ServerLevel level) {
         this.level = level;
@@ -109,6 +113,40 @@ final class LevelRooms {
         } finally {
             this.changing = false;
         }
+    }
+
+    /**
+     * Air {@code gases} carried to {@code cell} with the blocks round it, as a ship's cabin taken to another dimension:
+     * its room is found there at once, holding it, not the place's, so whoever came with it never breathes the place's
+     * air between; where its blocks are not all loaded yet, the room found there later holds it.
+     */
+    void carry(final long cell, final Map<ResourceLocation, Double> gases) {
+        this.carried.put(cell, new Carried(Map.copyOf(gases), this.level.getGameTime()));
+        final RoomStore rooms = storeMade();
+        if (rooms.roomAt(cell) != null) {
+            return;
+        }
+        final LongArrayList start = new LongArrayList();
+        start.add(cell);
+        final RoomFinder found = new RoomFinder(this.level, -1, start, new LongOpenHashSet(),
+                RoomBalance.largestRoom());
+        while (!found.done() && !found.waiting()) {
+            found.work(WORK_STEP);
+        }
+        if (found.done()) {
+            for (final RoomFinder.Part part : found.parts()) {
+                if (!part.open() && !part.cells().isEmpty()
+                        && rooms.roomAt(part.cells().iterator().nextLong()) == null) {
+                    form(rooms, part);
+                }
+            }
+        }
+    }
+
+    /** Lets go of {@code room}, gone with the blocks that closed it in. */
+    void drop(final Room room) {
+        storeMade().remove(room);
+        NeoForge.EVENT_BUS.post(new RoomEvent.Removed(this.level, room));
     }
 
     /** Asks for the room at {@code cell} to be known, and looked for now. */
@@ -203,6 +241,10 @@ final class LevelRooms {
      * is looked for again.
      */
     void second() {
+        if (!this.carried.isEmpty()) {
+            final long now = this.level.getGameTime();
+            this.carried.values().removeIf(air -> now - air.at() > CARRIED_FOR);
+        }
         final RoomStore rooms = this.store;
         if (rooms == null || this.changedSections.isEmpty()) {
             this.changedSections.clear();
@@ -377,7 +419,7 @@ final class LevelRooms {
         reshape(rooms, room, parts);
     }
 
-    /* A new room from a closed part: dry if it stands under water, and full of the place's air. */
+    /* A new room from a closed part: dry if it stands under water, and full of the air carried in, or the place's. */
     private void form(final RoomStore rooms, final RoomFinder.Part part) {
         final Room room = rooms.create();
         room.shape(part.cells(), part.faces(), part.water(), part.lava(), part.plants(), part.fires(), false);
@@ -385,8 +427,26 @@ final class LevelRooms {
         if (room.underWater()) {
             pump(room, room.cells());
         }
-        fill(room);
+        if (!fillCarried(room)) {
+            fill(room);
+        }
         NeoForge.EVENT_BUS.post(new RoomEvent.Formed(this.level, room));
+    }
+
+    /* Fills a new room with the air carried in to a cell of it, if any was; whether it was. */
+    private boolean fillCarried(final Room room) {
+        if (this.carried.isEmpty()) {
+            return false;
+        }
+        final LongIterator each = room.cells().iterator();
+        while (each.hasNext()) {
+            final Carried air = this.carried.remove(each.nextLong());
+            if (air != null) {
+                air.gases().forEach(room::add);
+                return true;
+            }
+        }
+        return false;
     }
 
     /*
@@ -547,5 +607,9 @@ final class LevelRooms {
                 flame.putOut(this.level, pos, state);
             }
         }
+    }
+
+    /* Air carried in, and the tick it came. */
+    private record Carried(Map<ResourceLocation, Double> gases, long at) {
     }
 }

@@ -142,7 +142,7 @@ public final class ShipHoverClientTests {
 
     /* What {@code ship}'s console shows on the player's game. */
     private static ShipReadings shown(final ClientTestContext ctx, final MovingStructure ship) {
-        final BlockPos console = ((ShipFlight) ship.motion()).console().orElseThrow();
+        final BlockPos console = ((ShipFlight) ship.motion()).consoleIn(ship).orElseThrow();
         return ctx.mc().level.getBlockEntity(console) instanceof AirReserveEntity keeper ? keeper.flight()
                 : ShipReadings.PARKED;
     }

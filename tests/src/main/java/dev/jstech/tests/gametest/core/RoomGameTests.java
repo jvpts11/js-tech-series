@@ -20,6 +20,10 @@ import dev.jstech.core.jstechseries.atmosphere.AtmosphereReadings;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.RoomBalance;
@@ -62,13 +66,15 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The sealed rooms kit at work in the world: a closed hut found as a room holding the place's air, worked out again
- * when a block of it changes by any means; air rushing out of a hole and pulling things after it, a crack leaking
+ * The sealed rooms kit at work in the world: a closed hut found as a room holding the place's air, and, made a moving
+ * structure, keeping its air and, carried off, the room of the place it fills; worked out again when a block of it
+ * changes by any means; air rushing out of a hole and pulling things after it, a crack leaking
  * slowly and glass holding; doors keeping rooms apart and their airs mixing over time once open; a room's air breathed
  * on the Moon, carbon dioxide and too much oxygen harming whoever breathes them; fire out without oxygen and an inferno
  * in pure oxygen; a room under water kept dry and flooding through a broken window; a weak block bursting; mobs
@@ -90,6 +96,8 @@ public final class RoomGameTests {
     private static final BlockPos INSIDE = new BlockPos(3, 2, 3);
     private static final BlockPos EAST_WALL = new BlockPos(5, 2, 4);
     private static final double ATMOSPHERE = 101.3;
+    /* How far a hut made a moving structure is carried, across and up, in blocks. */
+    private static final double CARRIED = 7;
     private static final Map<ResourceLocation, Double> NITROGEN = Map.of(AirMix.NITROGEN, 1.0);
     private static final Map<ResourceLocation, Double> OXYGEN = Map.of(AirMix.OXYGEN, 1.0);
 
@@ -111,6 +119,84 @@ public final class RoomGameTests {
                             "full of the overworld's air; " + room.air());
                     final Climate inside = SealedRooms.climateAt(helper.getLevel(), helper.absolutePos(INSIDE));
                     helper.assertTrue(inside.temperature() == 20, "kept at 20 °C; " + inside);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void room_aboardAMovingStructureIsTheRoomOfThePlaceItFillsInTheWorld(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        hut(helper, LOW, HIGH, Blocks.STONE);
+        final StructureResult made = MovingStructures.assemble(level, helper.absolutePos(LOW),
+                helper.absolutePos(HIGH));
+        helper.assertTrue(made.ok(), "the hut is made a moving structure");
+        final MovingStructure hut = made.structure();
+        final BlockPos[] inside = new BlockPos[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(hut.ready(), "its blocks come into its yard"))
+                .thenExecute(() -> {
+                    inside[0] = BlockPos.containing(MovingStructures.toYard(hut, Vec3.atCenterOf(helper.absolutePos(
+                            INSIDE))));
+                    SealedRooms.track(level, inside[0]);
+                    // Carried off to one side and up, its inside no longer where it was built.
+                    final StructurePose now = hut.pose();
+                    hut.teleport(now.movedTo(now.x() + CARRIED, now.y() + CARRIED, now.z()));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(SealedRooms.roomAt(level, inside[0]).isPresent(),
+                        "its inside is a room, in its yard"))
+                .thenExecute(() -> {
+                    final Room room = SealedRooms.roomAt(level, inside[0]).orElseThrow();
+                    final BlockPos world = BlockPos.containing(MovingStructures.toWorld(hut, Vec3.atCenterOf(
+                            inside[0])));
+                    helper.assertTrue(SealedRooms.roomAt(level, world).filter(found -> found == room).isPresent(),
+                            "the place of the world it fills now is in that room");
+                    helper.assertTrue(SealedRooms.climateAt(level, world).temperature() == 20,
+                            "its air, kept at 20 °C, is the air there");
+                    helper.assertTrue(SealedRooms.roomAt(level, helper.absolutePos(INSIDE)).isEmpty(),
+                            "and where it was built is open air");
+                    SealedRooms.untrack(level, inside[0]);
+                    MovingStructures.takeAway(hut);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void room_madeAMovingStructureKeepsItsAir(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        hut(helper, LOW, HIGH, Blocks.STONE);
+        track(helper, INSIDE);
+        final MovingStructure[] hut = new MovingStructure[1];
+        final BlockPos[] inside = new BlockPos[1];
+        final double[] nitrogen = new double[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(room(helper, INSIDE).isPresent(), "the closed hut is a room"))
+                .thenExecute(() -> {
+                    // Its air made pure nitrogen, unlike any place's.
+                    final Room room = room(helper, INSIDE).orElseThrow();
+                    nitrogen[0] = room.gases().values().stream().mapToDouble(Double::doubleValue).sum();
+                    room.empty();
+                    room.add(AirMix.NITROGEN, nitrogen[0]);
+                    untrack(helper, INSIDE);
+                    final StructureResult made = MovingStructures.assemble(level, helper.absolutePos(LOW),
+                            helper.absolutePos(HIGH));
+                    helper.assertTrue(made.ok(), "the hut is made a moving structure");
+                    hut[0] = made.structure();
+                })
+                .thenWaitUntil(() -> helper.assertTrue(hut[0].ready(), "its blocks come into its yard"))
+                .thenExecute(() -> {
+                    inside[0] = BlockPos.containing(MovingStructures.toYard(hut[0], Vec3.atCenterOf(
+                            helper.absolutePos(INSIDE))));
+                    SealedRooms.track(level, inside[0]);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(SealedRooms.roomAt(level, inside[0]).isPresent(),
+                        "its inside is a room in its yard"))
+                .thenExecute(() -> {
+                    final Room room = SealedRooms.roomAt(level, inside[0]).orElseThrow();
+                    helper.assertTrue(Math.abs(room.moles(AirMix.NITROGEN) - nitrogen[0]) < 1e-6
+                            && room.moles(AirMix.OXYGEN) == 0, "it holds the air it had, carried with its blocks, not"
+                            + " the place's: " + room.gases());
+                    SealedRooms.untrack(level, inside[0]);
+                    MovingStructures.takeAway(hut[0]);
                 })
                 .thenSucceed();
     }

@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
@@ -101,9 +102,13 @@ public final class RocketKitDataProvider extends DataMapProvider {
         for (final BlockEntry<Block> block : SHELL) {
             seals.add(block, Seal.wall(0.0, SHELL_RATING), false);
         }
-        // A starship's kit is its pressurised hull, every block of it a wall that holds its crew's air.
+        // A starship's kit is its pressurised hull, every block of it a wall that holds its crew's air; but for the
+        // furniture standing in its cabin, which the cabin's air fills round, as a crew member's head over a seat.
+        final Set<BlockEntry<Block>> furniture = Set.of(ShipKitBlocks.PILOT_SEAT, ShipKitBlocks.FLIGHT_CONSOLE,
+                ShipKitBlocks.BUNK_FRAME, ShipKitBlocks.SUIT_LOCKER, ShipKitBlocks.SAMPLE_RACK,
+                ShipKitBlocks.CARGO_RACK);
         for (final BlockEntry<Block> block : ShipKitBlocks.all()) {
-            seals.add(block, Seal.wall(0.0, SHELL_RATING), false);
+            seals.add(block, furniture.contains(block) ? Seal.PASSES : Seal.wall(0.0, SHELL_RATING), false);
         }
         // A crew seat is sat on upright, as in the lander's cabin; a capsule's model lays its crew down on it.
         builder(BlockAboard.ABOARD).add(RocketKitBlocks.CREW_SEAT, new BlockAboard(Optional.of(

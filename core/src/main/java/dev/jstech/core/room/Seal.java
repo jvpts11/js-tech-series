@@ -36,12 +36,16 @@ public record Seal(boolean wall, double leak, Optional<Double> rating, boolean d
     public static final Seal SOLID = new Seal(true, 0.0, Optional.empty(), false);
     /** The most any block stands, in kilopascals. */
     public static final double STRONGEST = 1_000_000.0;
-    /** A seal's fields, to be written beside others: always a wall, its leak none unless said. */
+    /**
+     * A seal's fields, to be written beside others: a wall unless said it is none, as furniture standing in a room is,
+     * its leak none unless said.
+     */
     public static final MapCodec<Seal> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.BOOL.optionalFieldOf("wall", true).forGetter(Seal::wall),
             Codec.doubleRange(0, 1).optionalFieldOf("leak", 0.0).forGetter(Seal::leak),
             Codec.doubleRange(0, STRONGEST).optionalFieldOf("rating").forGetter(Seal::rating),
             Codec.BOOL.optionalFieldOf("door", false).forGetter(Seal::door))
-            .apply(instance, (leak, rating, door) -> new Seal(true, leak, rating, door)));
+            .apply(instance, Seal::new));
     /** How a block's seal is written in the data map. */
     public static final Codec<Seal> CODEC = MAP_CODEC.codec();
 

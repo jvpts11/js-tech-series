@@ -106,21 +106,20 @@ final class StructureSeating {
     }
 
     /**
-     * {@code player} sits on the seat at the yard's block {@code pos} of a structure, as using it does, unless they
+     * {@code sitter} sits on the seat at the yard's block {@code pos} of a structure, as using it does, unless they
      * ride something, or someone sits there already; whether they sit.
      */
-    static boolean sit(final ServerPlayer player, final BlockPos pos) {
-        if (player.isPassenger()) {
+    static boolean sit(final Entity sitter, final BlockPos pos) {
+        if (sitter.isPassenger() || !(sitter.level() instanceof ServerLevel level)) {
             return false;
         }
-        final ServerLevel level = player.serverLevel();
         final Optional<BlockAboard.Seat> seat = BlockAboard.at(level, pos).seat();
         if (seat.isEmpty() || MovingStructures.at(level, pos) == null || taken(level, pos) != null) {
             return false;
         }
         final StructureSeatEntity sitting = StructureSeatEntity.made(level, pos, seat.get());
         level.addFreshEntity(sitting);
-        return player.startRiding(sitting, true);
+        return sitter.startRiding(sitting, true);
     }
 
     /* A player uses a block of a structure that is a seat: they sit on it, unless crouching, or it is taken. */

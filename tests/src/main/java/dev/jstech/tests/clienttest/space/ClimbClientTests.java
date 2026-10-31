@@ -110,7 +110,11 @@ public final class ClimbClientTests {
                 .thenServer(0, level -> look(ctx, level.getServer().overworld(),
                         SpaceClimbs.ceiling(level.getServer().overworld()) + OVER, DOWN))
                 .thenWaitUntil(() -> arrived(ctx, SPACE, screen), ARRIVE, "the climber to cross into space")
-                .then(SETTLE, () -> {
+                // Read as the line is crossed: in its low orbit the world below slides on from the moment one comes
+                // there, a turn every 1,500 ticks, so a second later it is no longer the picture of the passage.
+                .thenWaitUntil(() -> bright(colour(ctx, GROUND[0][0], GROUND[0][1])) > SEEN, DRAWN,
+                        "the world's sphere to be drawn below in space")
+                .then(0, () -> {
                     ctx.assertTrue(!screen[0] && TravelScreens.seamlessPassages() > passages[0],
                             "the passage up opened no loading screen: a screen seen " + screen[0] + ", seamless "
                                     + "passages " + passages[0] + " to " + TravelScreens.seamlessPassages()

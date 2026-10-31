@@ -12,7 +12,6 @@ import dev.jstech.core.room.SealedRooms;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
@@ -51,7 +50,6 @@ public final class Lungs {
 
     /** The air {@code body} breathes now: a supply's, else its room's or the place's at its eyes. */
     public static Climate breathed(final LivingEntity body) {
-        return supplied(body).orElseGet(() -> SealedRooms.climateAt(body.level(),
-                BlockPos.containing(body.getEyePosition())));
+        return supplied(body).orElseGet(() -> SealedRooms.climateOf(body));
     }
 }

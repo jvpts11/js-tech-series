@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.jstechseries.persistor.SpacePersistor;
 import dev.jstech.core.jstechseries.persistor.SpacePersistorBlockEntity;
 import dev.jstech.core.moving.BlockAboard;
@@ -14,9 +15,11 @@ import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.ship.AirReserveEntity;
@@ -31,6 +34,10 @@ import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardPlans;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
+import dev.jstech.space.universe.SpaceClimbs;
+import dev.jstech.space.universe.StarSystems;
+import dev.jstech.space.universe.SystemSpaces;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.Comparator;
@@ -46,10 +53,12 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.phys.Vec3;
@@ -61,8 +70,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * its nose as its pilot opens its throttle, and turns and pitches its nose up to climb as they hold those controls; it
  * weighs what its parts weigh; fast enough, its wings hold it up, and too slow, nobody at the helm, it sinks onto the
  * land under it and rests there; its boost takes it past its cruise across an empty stretch; parked, it stays where it
- * is; what works on the ground works aboard, a furnace set down in its quarters smelting; and a Space Persistor set
- * down aboard keeps it loaded.
+ * is; what works on the ground works aboard, a furnace set down in its quarters smelting; a Space Persistor set
+ * down aboard keeps it loaded; and pitched up over the build limit it climbs on into space, its pilot at its helm
+ * across the line, breathing its cockpit's air there.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -113,6 +123,14 @@ public final class ShipFlightGameTests {
     private static final double HOVER_DRIFT = 0.05;
     private static final double ROLLS = 0.3;
     private static final int HOVER_NOZZLES = 45;
+    /*
+     * How far under the line to space a climbing ship is put, in blocks; how far its nose is pitched up, in degrees;
+     * how long it is watched across the line, in ticks; how far open its throttle stays, its pilot's hold carried.
+     */
+    private static final int UNDER_THE_LINE = 80;
+    private static final double CLIMBING_PITCH = 60;
+    private static final int CROSSED = 10;
+    private static final double HELD_OPEN = 0.95;
     private static final ShipDesign LEGS_SHIP = new ShipDesign("JS-04", List.of(part("orbiter_cockpit"),
             part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
             part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("legs")));
@@ -279,12 +297,62 @@ public final class ShipFlightGameTests {
         }).thenSucceed();
     }
 
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    public static void flight_itClimbsOverTheBuildLimitAndIntoSpaceWithItsPilotAtTheHelm(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerPlayer[] pilot = new ServerPlayer[1];
+        final ServerLevel overworld = helper.getLevel();
+        final ServerLevel space = SystemSpaces.spaceOf(overworld.getServer(), StarSystems.SOLAR_SYSTEM);
+        final GameTestSequence sequence = letGo(helper, ship).thenExecute(() -> {
+            final BlockPos seat = aboard(helper, ship[0], plan(helper).where(spot(helper,
+                    ShipKitBlocks.PILOT_SEAT.getId())));
+            // High over the build limit, under where the Overworld becomes its space, its nose pitched up, its
+            // throttle open at its cruise.
+            final StructurePose now = ship[0].pose();
+            ship[0].teleport(now.movedTo(now.x(), SpaceClimbs.ceiling(overworld) - UNDER_THE_LINE, now.z())
+                    .turnedBy(1, 0, 0, Math.toRadians(CLIMBING_PITCH)));
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(CRUISING,
+                    0, 1, 1, 0, 0)));
+            pilot[0] = GameTestPlayers.connected(helper, "pilot");
+            pilot[0].setGameMode(GameType.SURVIVAL);
+            helper.assertTrue(MovingStructures.sit(pilot[0], seat), "the pilot sits at its helm");
+        });
+        sequence.thenWaitUntil(() -> {
+            // Its pilot sits at the helm holding nothing, its throttle where they left it, open.
+            final MovingStructure there = MovingStructures.byId(space, ship[0].id());
+            if (there == null) {
+                pilot(helper, ship[0], Map.of());
+            }
+            helper.assertTrue(there != null && there.ready(), "it climbs on, over the build limit and over the line,"
+                    + " into the Solar System's space; at " + ship[0].pose().y());
+        }).thenExecuteAfter(CROSSED, () -> {
+            final MovingStructure there = MovingStructures.byId(space, ship[0].id());
+            final ShipFlightModel.State state = ((ShipFlight) there.motion()).state();
+            helper.assertTrue(state.speed() > CRUISE && state.throttle() > HELD_OPEN, "it flies on as it went, its"
+                    + " pilot's hold carried across: " + state);
+            helper.assertTrue(pilot[0].level() == space && pilot[0].getVehicle() instanceof StructureSeatEntity seat
+                    && seat.structure() == there, "its pilot crossed with it, at its helm still");
+            helper.assertTrue(console(helper, there).flight().speed() > CRUISE, "its console shows its flight");
+        }).thenWaitUntil(() -> {
+            // Its pilot at the helm still, the ship flying on: in space they breathe the cockpit's air.
+            final MovingStructure there = MovingStructures.byId(space, ship[0].id());
+            pilot(helper, there, Map.of());
+            helper.assertTrue(DimensionEffects.weigh(pilot[0]).isEmpty(), "in space its pilot breathes its"
+                    + " cockpit's air, kept warm, not the vacuum round it: " + DimensionEffects.weigh(pilot[0]));
+        })
+                .thenExecute(() -> {
+                    GameTestPlayers.leave(pilot[0]);
+                    MovingStructures.takeAway(MovingStructures.byId(space, ship[0].id()));
+                }).thenSucceed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
     public static void flight_aParkedShipStaysWhereItIsWhatWorksAboardWorksAndAPersistorKeepsIt(
             final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] parked = new StructurePose[1];
         final BlockPos[] furnace = new BlockPos[1];
+        final BlockPos[] keeper = new BlockPos[1];
         letGo(helper, ship).thenExecute(() -> {
             parked[0] = ship[0].pose();
             // The quarters' bunk stands along their west side, the floor beside its foot free: a furnace goes there.
@@ -298,11 +366,11 @@ public final class ShipFlightGameTests {
             oven.setItem(0, new ItemStack(Items.RAW_IRON));
             oven.setItem(1, new ItemStack(Items.COAL));
             // The airlock's floor beside its cycler is free: a Space Persistor goes there, its owner's, charged.
-            final BlockPos keeper = aboard(helper, ship[0], plan(helper).where(spot(helper,
+            keeper[0] = aboard(helper, ship[0], plan(helper).where(spot(helper,
                     ShipKitBlocks.AIRLOCK_CYCLER.getId())).south().east());
-            helper.getLevel().setBlockAndUpdate(keeper, SpacePersistor.BLOCK.get().defaultBlockState());
+            helper.getLevel().setBlockAndUpdate(keeper[0], SpacePersistor.BLOCK.get().defaultBlockState());
             final SpacePersistorBlockEntity persistor = (SpacePersistorBlockEntity) helper.getLevel()
-                    .getBlockEntity(keeper);
+                    .getBlockEntity(keeper[0]);
             persistor.own(Ownership.of(UUID.randomUUID()));
             persistor.power().generate(SpacePersistorBlockEntity.CAPACITY);
         }).thenIdle(PARKED).thenWaitUntil(() -> {
@@ -312,7 +380,11 @@ public final class ShipFlightGameTests {
                     .getBlockEntity(furnace[0]);
             helper.assertTrue(oven.getItem(2).is(Items.IRON_INGOT), "a furnace set down in its quarters smelts"
                     + " aboard");
-        }).thenExecute(() -> MovingStructures.takeAway(ship[0])).thenSucceed();
+        }).thenExecute(() -> {
+            MovingStructures.takeAway(ship[0]);
+            helper.assertTrue(ChunkLoaders.loadedFrom(helper.getLevel(), keeper[0]).isEmpty(), "taken away with its"
+                    + " ship, the Space Persistor keeps no chunk loaded any more");
+        }).thenSucceed();
     }
 
     /* The dock built, the test's ship built in it and let go, {@code ship} told it once its blocks came in. */
@@ -423,7 +495,7 @@ public final class ShipFlightGameTests {
 
     /* {@code ship}'s flight console, which shows its flight. */
     private static AirReserveEntity console(final GameTestHelper helper, final MovingStructure ship) {
-        return (AirReserveEntity) helper.getLevel().getBlockEntity(((ShipFlight) ship.motion()).console()
+        return (AirReserveEntity) ship.level().getBlockEntity(((ShipFlight) ship.motion()).consoleIn(ship)
                 .orElseThrow());
     }
 

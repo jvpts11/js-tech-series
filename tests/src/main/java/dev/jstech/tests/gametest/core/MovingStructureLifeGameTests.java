@@ -38,6 +38,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -52,10 +53,12 @@ import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirectionalBlock;
@@ -75,7 +78,8 @@ import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 /**
  * Living aboard moving structures, in a real world: a player sits on a seat aboard and is carried with it, and a seat
- * taken is refused to another and gone once left; on a seat a formed model makes a couch, they lie as a sleeper does,
+ * taken is refused to another and gone once left; a sitter crosses with it to another dimension still sitting, the
+ * pilot's hold carried too; on a seat a formed model makes a couch, they lie as a sleeper does,
  * their head to the model's head side as it is turned, and stand once up; at a helm, the controls they hold fire the
  * engines pushing the way they ask, and are let go a second after they stop; an autopilot flies a hovering craft to a place and holds it
  * there; an arrow loosed from a moving deck flies on with it; a villager sleeps in a bed aboard where the bed is in the
@@ -98,6 +102,9 @@ public final class MovingStructureLifeGameTests {
     /* The couch pod's terminal, in the middle of the west side of a pod built facing east, and its seat. */
     private static final BlockPos COUCH_POD = new BlockPos(4, 1, 5);
     private static final BlockPos COUCH = COUCH_POD.offset(1, 1, 0);
+    /* Where in the Nether a structure is sent, in blocks up, and how far round it the land is loaded, in chunks. */
+    private static final double NETHER_HEIGHT = 180;
+    private static final int NETHER_LAND = 3;
 
     private MovingStructureLifeGameTests() {
     }
@@ -148,6 +155,52 @@ public final class MovingStructureLifeGameTests {
                     leave(first);
                     leave(second);
                     MovingStructures.takeAway(bench);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 6000)
+    public static void seats_aSitterCrossesToAnotherDimensionStillSittingThePilotsHoldCarried(
+            final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final ServerLevel nether = level.getServer().getLevel(Level.NETHER);
+        helper.assertTrue(nether != null, "there is a Nether");
+        helper.setBlock(new BlockPos(2, 2, 4), Blocks.STONE);
+        helper.setBlock(new BlockPos(3, 2, 4), TestAboard.SEAT.get());
+        final MovingStructure cart = assembled(helper, new BlockPos(2, 2, 4), new BlockPos(3, 2, 4));
+        final BlockPos seat = find(level, cart, state -> state.is(TestAboard.SEAT.get()));
+        final ServerPlayer rider = rider(helper, new Vec3(3.5, 3, 4.5));
+        helper.assertTrue(MovingStructures.sit(rider, seat), "the player sits on the seat aboard");
+        // The land it goes to loaded first, as the test's own doing: the game's generation takes real seconds.
+        final Vec3 there = new Vec3(helper.absolutePos(BlockPos.ZERO).getX() + 0.5, NETHER_HEIGHT,
+                helper.absolutePos(BlockPos.ZERO).getZ() + 0.5);
+        for (int dx = -NETHER_LAND; dx <= NETHER_LAND; dx++) {
+            for (int dz = -NETHER_LAND; dz <= NETHER_LAND; dz++) {
+                nether.getChunk((Mth.floor(there.x) >> 4) + dx, (Mth.floor(there.z) >> 4) + dz);
+            }
+        }
+        helper.startSequence()
+                .thenExecute(() -> helper.assertTrue(MovingStructures.travel(cart, nether, there).ok(),
+                        "the structure is sent to the Nether"))
+                .thenWaitUntil(() -> {
+                    final MovingStructure arrived = MovingStructures.byId(nether, cart.id());
+                    if (arrived == null) {
+                        // Its pilot holds it forward all the while.
+                        cart.controls().pilot(level.getGameTime(), Map.of(StructureControls.ControlAxis.FORWARD, 1F),
+                                new Vec3(0, 0, -1), new Vec3(0, 1, 0));
+                    }
+                    helper.assertTrue(arrived != null && arrived.ready(), "the structure arrives in the Nether");
+                })
+                .thenExecute(() -> {
+                    final MovingStructure arrived = MovingStructures.byId(nether, cart.id());
+                    helper.assertTrue(rider.level() == nether && rider.getVehicle() instanceof StructureSeatEntity
+                            sitting && sitting.structure() == arrived && nether.getBlockState(sitting.seat())
+                            .is(TestAboard.SEAT.get()), "the player crossed with it, sitting on the same seat: in "
+                            + rider.level().dimension().location() + " riding " + rider.getVehicle());
+                    helper.assertTrue(arrived.controls().value(StructureControls.ControlAxis.FORWARD,
+                            nether.getGameTime()) == 1F, "and the pilot's hold went with it");
+                    leave(rider);
+                    MovingStructures.takeAway(arrived);
                 })
                 .thenSucceed();
     }

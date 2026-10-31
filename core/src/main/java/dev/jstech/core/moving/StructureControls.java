@@ -145,6 +145,20 @@ public final class StructureControls {
         return value(ControlAxis.LEFT, now) - value(ControlAxis.RIGHT, now);
     }
 
+    /*
+     * Takes over what {@code before} was last told, as a structure made anew in another dimension goes on from itself:
+     * the pilot's hold carries across, not dropped for the second until they are heard again.
+     */
+    void takeOver(final StructureControls before) {
+        values.clear();
+        values.putAll(before.values);
+        this.forward = before.forward;
+        this.up = before.up;
+        this.toldAt = before.toldAt;
+        this.pilotAt = before.pilotAt;
+        this.docking = before.docking;
+    }
+
     /** One control of a structure. */
     public enum ControlAxis implements IStableName {
         FORWARD("forward"),

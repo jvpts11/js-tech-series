@@ -19,7 +19,8 @@
       "rating": 300.0
     },
     "jsspace:bunk_frame": {
-      "rating": 300.0
+      "leak": 1.0,
+      "wall": false
     },
     "jsspace:cabin_wall": {
       "rating": 300.0
@@ -49,7 +50,8 @@
       "rating": 300.0
     },
     "jsspace:cargo_rack": {
-      "rating": 300.0
+      "leak": 1.0,
+      "wall": false
     },
     "jsspace:compressor_stage": {
       "rating": 300.0
@@ -85,7 +87,8 @@
       "rating": 300.0
     },
     "jsspace:flight_console": {
-      "rating": 300.0
+      "leak": 1.0,
+      "wall": false
     },
     "jsspace:fuel_tank": {
       "rating": 300.0
@@ -142,7 +145,8 @@
       "rating": 300.0
     },
     "jsspace:pilot_seat": {
-      "rating": 300.0
+      "leak": 1.0,
+      "wall": false
     },
     "jsspace:pressure_door": {
       "rating": 300.0
@@ -163,7 +167,8 @@
       "rating": 300.0
     },
     "jsspace:sample_rack": {
-      "rating": 300.0
+      "leak": 1.0,
+      "wall": false
     },
     "jsspace:server_panel": {
       "rating": 300.0
@@ -172,7 +177,8 @@
       "rating": 300.0
     },
     "jsspace:suit_locker": {
-      "rating": 300.0
+      "leak": 1.0,
+      "wall": false
     },
     "jsspace:swivel_duct": {
       "rating": 300.0

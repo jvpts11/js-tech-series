@@ -105,7 +105,7 @@ public final class RoomLiving {
             return;
         }
         final BlockPos eyes = BlockPos.containing(entity.getEyePosition());
-        final Room room = SealedRooms.roomAt(level, eyes).orElse(null);
+        final Room room = SealedRooms.roomOf(entity).orElse(null);
         if (room != null) {
             Rooms.of(level).breathe(room.id(), (player ? PLAYER_BREATH : MOB_BREATH) / TICKS_A_SECOND);
         }

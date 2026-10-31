@@ -50,7 +50,8 @@ public final class ShipCabinAirGameTests {
     private static final BlockPos LOW = new BlockPos(2, 1, 2);
     private static final BlockPos HIGH_CORNER = new BlockPos(6, 4, 6);
     private static final BlockPos INSIDE = new BlockPos(4, 2, 4);
-    private static final BlockPos CONSOLE = new BlockPos(2, 2, 4);
+    /* The flight console, furniture standing in the cabin against its west wall, the cabin's air round it. */
+    private static final BlockPos CONSOLE = new BlockPos(3, 2, 4);
     private static final double SEA_OXYGEN = 21.2;
     /* What the crew breathe and the hull leaks before the reserve makes it good, in moles. */
     private static final double BREATHED = 20;

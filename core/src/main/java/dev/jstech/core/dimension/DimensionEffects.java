@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -95,7 +94,7 @@ public final class DimensionEffects {
         final DimensionRules rules = DimensionRulesData.of(player.level());
         // A sealed room's air is breathed in it; out of one, the place's, at the height of the eyes; or, where a mod
         // gives the player air of its own, a suit's tanks, that. The warmth is the room's or the place's either way.
-        final Climate here = SealedRooms.climateAt(player.level(), BlockPos.containing(player.getEyePosition()));
+        final Climate here = SealedRooms.climateOf(player);
         final Climate breathed = Lungs.supplied(player).orElse(here);
         final AirMix air = SealedRooms.airOf(breathed);
         final double carbon = air.share(AirMix.CARBON_DIOXIDE);

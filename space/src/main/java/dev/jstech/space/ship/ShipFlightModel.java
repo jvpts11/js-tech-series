@@ -7,6 +7,7 @@
  */
 package dev.jstech.space.ship;
 
+import dev.jstech.core.id.IStableName;
 import dev.jstech.space.api.ShipPart;
 
 /**
@@ -14,8 +15,9 @@ import dev.jstech.space.api.ShipPart;
  * drift, at a speed its pilot's throttle sets and its engines reach. In the air its air engines push and its wings
  * hold it up, more as the square of its speed and less in thinner air; in the thin air of the climb and in space its
  * bells push, and in space it flies free. Slower than its wings hold it, its air engines' nozzles turn down as the
- * Harrier's do, just far enough to hold what its wings do not, the rest of their thrust still pushing it on: it hovers,
- * rises and comes down straight, its nose kept level; where they cannot hold it, in thin air or too heavy, it sinks.
+ * Harrier's do, just far enough to hold what its wings do not, the rest of their thrust still pushing it on; where they
+ * cannot hold it, in thin air or too heavy, it sinks. Slow, it hovers on them, rising and coming down straight, its
+ * nose kept level; fast, its nose stays where its pilot points it, so it climbs out of any air on its bells.
  * Its weight counts: a heavier ship gathers speed more slowly and needs more of it to stay up. Its boost, a store its
  * reactor fills, takes it faster across the empty stretches. On the land, wheels roll it as on a runway, and feet hold
  * it where it stands. The numbers are the game's, not a real ship's: its speeds are kept to what the world can be
@@ -53,10 +55,11 @@ public final class ShipFlightModel {
     /* The fastest it sinks, in metres a second. */
     private static final double MOST_SINK = 40.0;
     /*
-     * Hovering, the fastest it rises or comes down as its pilot holds, and comes down with nobody at the helm, in
-     * metres a second; how fast it gathers that, in metres a second squared; how fast its nozzles turn, in degrees a
-     * second.
+     * The speed it hovers below, in metres a second. Hovering, the fastest it rises or comes down as its pilot holds,
+     * and comes down with nobody at the helm, in metres a second; how fast it gathers that, in metres a second squared;
+     * how fast its nozzles turn, in degrees a second.
      */
+    private static final double HOVER_BELOW = 10.0;
     private static final double HOVER_RATE = 6.0;
     private static final double SETTLES = 2.0;
     private static final double HOVER_GATHERS = 4.0;
@@ -87,8 +90,10 @@ public final class ShipFlightModel {
         final double breathing = ship.airThrust() * thick;
         final double bells = ship.bellThrust() * (1.0 - thick);
         final double wings = held(ship, now.speed(), thick, pull);
-        // Below what its wings hold, it hovers on its nozzles: the pilot's up and down rise and come down straight.
-        final boolean hovering = pull > 0 && breathing > 0 && wings < 1.0;
+        // Its wings falling short, its nozzles hold the rest; slow, it hovers on them, its pilot's up and down rising
+        // and coming down straight, where fast they pitch its nose.
+        final boolean wanting = pull > 0 && breathing > 0 && wings < 1.0;
+        final boolean hovering = wanting && now.speed() < HOVER_BELOW;
         final double throttle = held.piloted()
                 ? Math.clamp(now.throttle() + held.forward() * OPENS - held.back() * CLOSES, 0.0, 1.0)
                 : Math.max(0.0, now.throttle() - CLOSES);
@@ -99,7 +104,7 @@ public final class ShipFlightModel {
                 : Math.max(wantedRise, now.rise() - HOVER_GATHERS * TICK);
         final boolean resting = air.grounded() && rise <= 0;
         // What its nozzles hold up: what its wings do not, and what its rising asks; on the land, nothing.
-        final double lifting = resting || !hovering ? 0
+        final double lifting = resting || !wanting ? 0
                 : Math.max(0, weight * (1.0 - wings) + ship.mass() * (rise - now.rise()) / TICK);
         final double angle = Math.toDegrees(Math.asin(breathing > 0 ? Math.clamp(lifting / breathing, 0.0, 1.0)
                 : 0.0));
@@ -173,13 +178,24 @@ public final class ShipFlightModel {
     }
 
     /** What a ship stands on, on the land. */
-    public enum Gear {
+    public enum Gear implements IStableName {
         /** Nothing: its hull rests on the land and does not roll. */
-        NONE,
+        NONE("none"),
         /** Wheels: it rolls on the land and takes a runway. */
-        WHEELS,
+        WHEELS("wheels"),
         /** Feet: it stands on rough land where it comes down, and does not roll. */
-        LEGS
+        LEGS("legs");
+
+        private final String serializedName;
+
+        Gear(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return serializedName;
+        }
     }
 
     /**

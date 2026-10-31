@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import dev.jstech.core.air.AirMix;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
@@ -31,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A small ship's air reserve, kept by its cockpit's flight console: a small ship has no life support section, its
  * pressurised cabin topped up from this for its short trips, oxygen and nitrogen each back to the sea's pressure as
- * the crew breathe and the hull leaks, while the reserve lasts. An oxygen bottle pours into it. Once the ship has left
+ * the crew breathe and the hull leaks, while the reserve lasts; it asks for its cabin to be found as a room, wherever
+ * its ship goes. An oxygen bottle pours into it. Once the ship has left
  * its dock, the console keeps the ship too ({@link ShipAboard}), and draws its parts aboard; and watches its plan
  * there, so a block broken aboard leaves a hole its part holds round, and the right block put back mends it. It shows
  * the ship's flight as it flies ({@link ShipReadings}).
@@ -101,6 +103,15 @@ public final class AirReserveEntity extends SyncedBlockEntity {
         return kept == null ? List.of() : kept;
     }
 
+    /** Loaded, on the server: it asks for its cabin to be found, as a room is only where a block asks for one. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (getLevel() instanceof ServerLevel level) {
+            SealedRooms.track(level, getBlockPos());
+        }
+    }
+
     /** Its chunk unloads: it stops watching its ship's plan, for when it loads again. */
     @Override
     public void onChunkUnloaded() {
@@ -112,6 +123,20 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     public void setRemoved() {
         super.setRemoved();
         stopWatching();
+        // Taken away, not unloaded: its cabin is no longer asked for.
+        if (getLevel() instanceof ServerLevel level && level.isLoaded(getBlockPos())
+                && !(level.getBlockEntity(getBlockPos()) instanceof AirReserveEntity)) {
+            SealedRooms.untrack(level, getBlockPos());
+        }
+    }
+
+    /* Moved with its ship, into its yard or another dimension's: where it stood, its cabin is no longer asked for. */
+    @Override
+    public void moved(final BlockPos was, final BlockMove move) {
+        super.moved(was, move);
+        if (move.from() instanceof ServerLevel left) {
+            SealedRooms.untrack(left, was);
+        }
     }
 
     /** The oxygen left in it, in moles. */

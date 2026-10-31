@@ -12,6 +12,7 @@ import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructureEntity;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureFooting;
+import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.network.ClimbWorldsPayload;
@@ -201,9 +202,10 @@ public final class SpaceClimbs {
         }
     }
 
-    /* Whether a player rides or stands on a structure, which takes them across with it. */
+    /* Whether a player rides, sits in or stands on a structure, which takes them across with it. */
     private static boolean aboard(final ServerPlayer player) {
-        return StructureFooting.standingOn(player) != null || player.getRootVehicle() instanceof MovingStructureEntity;
+        return StructureFooting.standingOn(player) != null || player.getRootVehicle() instanceof MovingStructureEntity
+                || player.getVehicle() instanceof StructureSeatEntity;
     }
 
     /* Whether {@code entity} has rested long enough since it last passed, here or in another level. */

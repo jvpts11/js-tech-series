@@ -13,6 +13,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.dimension.DimensionRules;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.moving.IStructureMotion;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.StructureControls;
@@ -22,9 +23,9 @@ import dev.jstech.core.moving.StructurePose;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
+import dev.jstech.space.rocket.SpaceAhead;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -40,15 +41,17 @@ import net.minecraft.world.level.levelgen.Heightmap;
  * height, slower its nozzles turn down and it hovers, rising and coming down as its pilot holds, and its boost takes
  * it faster across the empty stretches. With nobody at the helm its throttle closes and it comes down gently. It rests
  * on the land under it, rolling on wheels or standing on feet, and is stopped by the land it would fly into
- * ({@link ShipGround}). Its console shows its flight ({@link ShipReadings}). Its rule goes on through a save, as the
- * structure does.
+ * ({@link ShipGround}); the land ahead of it is loaded as it goes, as a rocket's is, so it climbs to space and crosses
+ * into it without stopping. Its console shows its flight ({@link ShipReadings}). Its rule goes on through a save and
+ * into another dimension, as the structure does.
  *
  * @param state    where its flight stands
  * @param noseX    which way its nose points among its blocks, across, as its plan laid it
  * @param noseZ    which way its nose points among its blocks, along
  * @param ship     what it weighs and pushes, and what it stands on
  * @param grounded whether it stood on the land the tick before
- * @param console  where its flight console stands in its yard, if it has one
+ * @param console  where its flight console stands from its pivot's block, if it has one: so wherever a yard puts its
+ *                 blocks, in this dimension or another
  */
 public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, ShipFlightModel.Performance ship,
                          boolean grounded, Optional<BlockPos> console) implements IStructureMotion {
@@ -62,9 +65,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                     Codec.DOUBLE.optionalFieldOf("rise", 0.0).forGetter(ShipFlightModel.State::rise),
                     Codec.DOUBLE.optionalFieldOf("nozzles", 0.0).forGetter(ShipFlightModel.State::nozzles))
             .apply(instance, ShipFlightModel.State::new));
-    private static final Codec<ShipFlightModel.Gear> GEAR = Codec.STRING.xmap(
-            name -> ShipFlightModel.Gear.valueOf(name.toUpperCase(Locale.ROOT)),
-            gear -> gear.name().toLowerCase(Locale.ROOT));
+    private static final Codec<ShipFlightModel.Gear> GEAR = StableCodecs.byName(ShipFlightModel.Gear.class);
     private static final MapCodec<ShipFlightModel.Performance> PERFORMANCE = RecordCodecBuilder.mapCodec(
             instance -> instance.group(Codec.DOUBLE.fieldOf("mass").forGetter(ShipFlightModel.Performance::mass),
                     Codec.DOUBLE.fieldOf("air_thrust").forGetter(ShipFlightModel.Performance::airThrust),
@@ -90,6 +91,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     private static final double STILL = 1.0e-4;
     /* How high over the land a ship over land not loaded is taken to be, in blocks: far. */
     private static final double FAR = 1000;
+    /* How far ahead the land is loaded, in ticks of its flight, and from what speed, in metres a second. */
+    private static final int AHEAD = 40;
+    private static final double LOADS_FROM = 1.0;
+    /* How often along its way the land is held, in blocks: half a chunk, so no chunk the way crosses is missed. */
+    private static final double HELD_EVERY = 8;
 
     /** Registers the rule's kind, once, from the mod's constructor. */
     public static void declare() {
@@ -98,7 +104,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /**
      * A ship of {@code ship} at rest, its nose pointing {@code noseX}, {@code noseZ} among its blocks, its console at
-     * {@code console} in its yard.
+     * {@code console} from its pivot's block ({@link #fromPivot}).
      */
     public static ShipFlight resting(final int noseX, final int noseZ, final ShipFlightModel.Performance ship,
                                      final Optional<BlockPos> console) {
@@ -138,9 +144,19 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         return new ShipFlightModel.Performance(mass, air, bells, wing, power, gear);
     }
 
+    /** Where the block {@code yard} of {@code body}'s yard stands from its pivot's block, as its console is kept. */
+    public static BlockPos fromPivot(final MovingStructure body, final BlockPos yard) {
+        return yard.subtract(pivot(body));
+    }
+
     /** Its flight as it stands, another way. */
     public ShipFlight with(final ShipFlightModel.State next) {
         return new ShipFlight(next, this.noseX, this.noseZ, this.ship, this.grounded, this.console);
+    }
+
+    /** Where its console stands in {@code body}'s yard now, if it has one. */
+    public Optional<BlockPos> consoleIn(final MovingStructure body) {
+        return this.console.map(from -> pivot(body).offset(from));
     }
 
     @Override
@@ -163,7 +179,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final double pitch = Math.toDegrees(Math.asin(Math.clamp(nose[1], -1.0, 1.0)));
         final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, held, air(level, now, body), this.ship,
                 pitch);
-        show(level, next);
+        show(level, body, next);
         StructurePose turned = next.turn() == 0 ? now : now.turnedBy(0, 1, 0, Math.toRadians(next.turn()));
         if (next.pitch() != 0) {
             final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
@@ -175,6 +191,13 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
         final double ahead = next.state().speed() * ShipFlightModel.TICK;
         final double up = (next.state().rise() - next.state().sink()) * ShipFlightModel.TICK;
+        if (next.state().speed() > LOADS_FROM) {
+            holdAhead(level, now, way, ahead * AHEAD);
+        }
+        if (!SpaceAhead.ready(level, now.x() + way[0] * ahead, now.y(), now.z() + way[2] * ahead)) {
+            // Land not going yet would freeze it there: it waits on its way, as it flew, till the land goes.
+            return new Step(now, flying(next.state(), this.grounded));
+        }
         return flown(level, body, now, turned, way[0] * ahead, way[1] * ahead + up, way[2] * ahead, next.state());
     }
 
@@ -235,10 +258,24 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     }
 
     /* Its console shows the tick's flight, where its yard's land is loaded. */
-    private void show(final ServerLevel level, final ShipFlightModel.Tick tick) {
-        if (this.console.isPresent() && level.isLoaded(this.console.get())
-                && level.getBlockEntity(this.console.get()) instanceof AirReserveEntity keeper) {
+    private void show(final ServerLevel level, final MovingStructure body, final ShipFlightModel.Tick tick) {
+        final Optional<BlockPos> at = consoleIn(body);
+        if (at.isPresent() && level.isLoaded(at.get())
+                && level.getBlockEntity(at.get()) instanceof AirReserveEntity keeper) {
             keeper.flew(ShipReadings.of(tick));
+        }
+    }
+
+    /*
+     * The land on its way loads before it gets there, and stays going while it passes: the chunks round each one from
+     * where it stands {@code far} blocks on along {@code way}, so every block and seat of it keeps going, not only its
+     * middle; a seat in a chunk not going would stop there, its sitter left behind.
+     */
+    private static void holdAhead(final ServerLevel level, final StructurePose now, final double[] way,
+                                  final double far) {
+        for (double along = 0; along < far + HELD_EVERY; along += HELD_EVERY) {
+            final double at = Math.min(far, along);
+            SpaceAhead.holdAround(level, now.x() + way[0] * at, now.y(), now.z() + way[2] * at);
         }
     }
 
@@ -275,5 +312,10 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     private static StructureFrame frameOf(final MovingStructure body, final StructurePose pose) {
         return new StructureFrame(pose, body.pivotX(), body.pivotY(), body.pivotZ());
+    }
+
+    /* The block of {@code body}'s yard its pivot is in: a yard moves it with its blocks, whole blocks at a time. */
+    private static BlockPos pivot(final MovingStructure body) {
+        return BlockPos.containing(body.pivotX(), body.pivotY(), body.pivotZ());
     }
 }

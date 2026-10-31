@@ -14,10 +14,10 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 
 /**
- * The space a rocket flies into, faster than the land round a player loads: it keeps the chunks it stands in and those
- * ahead of it loaded and going a while, and waits at one not going yet rather than fly into it, since a structure that
- * moves into a chunk whose entities do not tick stops there. Like any moving structure it freezes with its space when
- * no player is in it and no chunk loader holds it, and goes on when someone comes.
+ * The space a rocket or a ship flies into, faster than the land round a player loads: it keeps the chunks it stands in
+ * and those ahead of it loaded and going a while, and waits at one not going yet rather than fly into it, since a
+ * structure that moves into a chunk whose entities do not tick stops there. Like any moving structure it freezes with
+ * its space when no player is in it and no chunk loader holds it, and goes on when someone comes.
  */
 public final class SpaceAhead {
 
@@ -28,8 +28,19 @@ public final class SpaceAhead {
     private static final TicketType<ChunkPos> PASSING = TicketType.create("jsspace_passing",
             Comparator.comparingLong(ChunkPos::toLong), 200);
     private static final int REACH = 2;
+    /* A chunk further: the chunks round the one held go too, as wide as a small ship either side of its way. */
+    private static final int WIDE_REACH = 3;
 
     private SpaceAhead() {
+    }
+
+    /**
+     * Keeps the chunk of the place {@code x}, {@code y}, {@code z} of {@code level} and the chunks round it loaded and
+     * going a while: a ship's way, where every block and seat of it goes, not only its middle.
+     */
+    public static void holdAround(final ServerLevel level, final double x, final double y, final double z) {
+        final ChunkPos at = new ChunkPos(BlockPos.containing(x, y, z));
+        level.getChunkSource().addRegionTicket(PASSING, at, WIDE_REACH, at, true);
     }
 
     /** Keeps the chunk {@code chunk} of {@code level}, packed, loaded and going a while. */

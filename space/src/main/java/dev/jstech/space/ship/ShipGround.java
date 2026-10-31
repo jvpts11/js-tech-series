@@ -26,7 +26,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * What a ship flying as a moving structure meets of the world's land: it rests on what stands under its lowest blocks,
  * stepping up what is low enough, and it is stopped by land its blocks would go into, as a hill flown into. Each ship's
  * blocks are read once from its yard, its lowest of each column and every block's middle, and again when they change.
- * Land not loaded stops it, as it stops a player.
+ * Land not loaded stops it, as it stops a player. Over the world's build limit, and under its floor, there is no land,
+ * only the sky it climbs through to space: there only the world under it must be loaded.
  */
 public final class ShipGround {
 
@@ -67,7 +68,7 @@ public final class ShipGround {
             final double y = frame.worldY(feet[0], feet[1], feet[2]);
             final double z = frame.worldZ(feet[0], feet[1], feet[2]);
             at.set(x, y, z);
-            if (!Loaded.at(level, at)) {
+            if (!loaded(level, at)) {
                 return BLOCKED;
             }
             final double top = top(level, at, x, y, z);
@@ -84,7 +85,7 @@ public final class ShipGround {
             final double y = frame.worldY(middle[0], middle[1], middle[2]) + rise;
             final double z = frame.worldZ(middle[0], middle[1], middle[2]);
             at.set(x, y, z);
-            if (!Loaded.at(level, at)) {
+            if (!loaded(level, at)) {
                 return BLOCKED;
             }
             if (top(level, at, x, y, z) > y) {
@@ -111,6 +112,12 @@ public final class ShipGround {
             }
         }
         return top;
+    }
+
+    /* Whether the world at {@code at} is loaded: over the build limit or under the floor, the column under it. */
+    private static boolean loaded(final ServerLevel level, final BlockPos at) {
+        return level.isOutsideBuildHeight(at) ? Loaded.chunk(level, at.getX() >> 4, at.getZ() >> 4)
+                : Loaded.at(level, at);
     }
 
     /* {@code ship}'s blocks, read again when its box or its count of blocks changed. */

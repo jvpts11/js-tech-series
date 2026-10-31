@@ -20,20 +20,23 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * Taking a moving structure to another dimension with everyone aboard, as a rocket reaching orbit: its blocks go whole
  * from this dimension's yard to that one's, the structure arrives at the place asked turned as it was, still moving by
- * its rule, and whatever stood on it or was inside it arrives where it was on it. It goes once the plot it takes in
- * that dimension's yard and the land it arrives at have loaded, a few ticks after it is sent, working on where it is
- * until then. A structure taller than the dimension it goes to has room for stays where it is.
+ * its rule and as its pilot holds it, whatever stood on it or was inside it arrives where it was on it, and whoever sat
+ * on its seats sits on them still. It goes once the plot it takes in that dimension's yard and the land it arrives at
+ * have loaded, a few ticks after it is sent, working on where it is until then. A structure taller than the dimension
+ * it goes to has room for stays where it is.
  */
 public final class StructureTravel {
 
     /* How far round its box, in blocks, what goes with a structure may stand: the reach it is gathered in, and one. */
     private static final double ABOARD_REACH = 3;
+    private static final double HALF = 0.5;
 
     private StructureTravel() {
     }
@@ -129,6 +132,7 @@ public final class StructureTravel {
         final int dy = going.dy();
         final int dz = arriving.minZ() - bounds.minZ();
         final List<Aboard> aboard = aboard(structure, from);
+        final List<Seated> seated = seated(structure, from);
         final Map<BlockPos, BlockPos> moves = new LinkedHashMap<>();
         final BlockPos.MutableBlockPos block = new BlockPos.MutableBlockPos();
         for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
@@ -154,6 +158,7 @@ public final class StructureTravel {
             StructureMounts.file(there);
         }
         there.move(motion);
+        there.controls().takeOver(structure.controls());
         structure.handMakerTo(there);
         // What it holds stands where it stood on it, here and there, its blocks now in another plot.
         StructureMounts.shift(from, structure.id(), dx, dy, dz);
@@ -166,6 +171,9 @@ public final class StructureTravel {
             StructureYard.releaseChunk(to, chunk);
         }
         for (final Aboard one : aboard) {
+            one.arrive(there, dx, dy, dz);
+        }
+        for (final Seated one : seated) {
             one.arrive(there, dx, dy, dz);
         }
         return true;
@@ -210,12 +218,13 @@ public final class StructureTravel {
                 bounds.maxY() + going.dy(), bounds.maxZ() + dz);
     }
 
-    /* What stands on the structure or is inside its box, and where each is on it. */
+    /* What stands on the structure or is inside its box, and where each is on it; its seats are made anew there. */
     private static List<Aboard> aboard(final MovingStructure structure, final ServerLevel level) {
         final List<Aboard> found = new ArrayList<>();
         final StructureFrame frame = structure.frame();
         for (final Entity entity : level.getEntities((Entity) null, structure.worldBox().inflate(2), any -> true)) {
-            if (entity instanceof MovingStructureEntity || entity.isPassenger()) {
+            if (entity instanceof MovingStructureEntity || entity instanceof StructureSeatEntity
+                    || entity.isPassenger()) {
                 continue;
             }
             final boolean on = StructureFooting.standingOn(entity) == structure;
@@ -226,6 +235,20 @@ public final class StructureTravel {
                     frame.yardY(entity.getX(), entity.getY(), entity.getZ()),
                     frame.yardZ(entity.getX(), entity.getY(), entity.getZ()),
                     (float) Mth.wrapDegrees(entity.getYRot() - frame.pose().yawDegrees())));
+        }
+        return found;
+    }
+
+    /* Who sits on the structure's own seats, each with the seat they sit on. */
+    private static List<Seated> seated(final MovingStructure structure, final ServerLevel level) {
+        final List<Seated> found = new ArrayList<>();
+        for (final StructureSeatEntity seat : level.getEntitiesOfClass(StructureSeatEntity.class,
+                structure.worldBox().inflate(ABOARD_REACH))) {
+            if (seat.structure() == structure) {
+                for (final Entity sitter : seat.getPassengers()) {
+                    found.add(new Seated(sitter, seat));
+                }
+            }
         }
         return found;
     }
@@ -249,6 +272,36 @@ public final class StructureTravel {
                 player.teleportTo(level, wx, wy, wz, turned, player.getXRot());
             } else {
                 entity.teleportTo(level, wx, wy, wz, Set.of(), turned, entity.getXRot());
+            }
+        }
+    }
+
+    /* One sitting on a seat of the structure: they cross with it and sit on the same seat where it arrives. */
+    private record Seated(Entity sitter, StructureSeatEntity seat) {
+
+        void arrive(final MovingStructure structure, final int dx, final int dy, final int dz) {
+            if (!(structure.level() instanceof ServerLevel level)) {
+                return;
+            }
+            final BlockPos there = seat.seat().offset(dx, dy, dz);
+            sitter.stopRiding();
+            seat.discard();
+            final StructureFrame frame = structure.frame();
+            final double x = there.getX() + HALF;
+            final double y = there.getY() + HALF;
+            final double z = there.getZ() + HALF;
+            final Vec3 place = new Vec3(frame.worldX(x, y, z), frame.worldY(x, y, z), frame.worldZ(x, y, z));
+            final Entity arrived;
+            if (sitter instanceof ServerPlayer player) {
+                player.teleportTo(level, place.x, place.y, place.z, player.getYRot(), player.getXRot());
+                arrived = player;
+            } else {
+                // Another kind is made anew in the dimension it goes to: that one sits.
+                arrived = sitter.changeDimension(new DimensionTransition(level, place, Vec3.ZERO, sitter.getYRot(),
+                        sitter.getXRot(), DimensionTransition.DO_NOTHING));
+            }
+            if (arrived != null) {
+                StructureSeating.sit(arrived, there);
             }
         }
     }

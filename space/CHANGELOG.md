@@ -619,6 +619,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   ground, and goes up, drawn stowed, once it flies on its wings well clear. Hovering, each nozzle blows a jet of flame
   down and the dust under it is blown out round the ship. Its flight console keeps its readings, shown on every
   player's game: speed, climb, throttle, boost, its nozzles' angle, and whether its gear is down.
+- A ship climbs to space without stopping, through the same passage as a rocket: over the build limit it
+  flies on through the open sky, the land ahead of it loading as it goes, and over the line it crosses into the Solar
+  System's space whole, with no loading screen, its pilot still at its helm and its flight going on as it went. Fast,
+  its nose stays where its pilot points it in any air, so it climbs out of thin air on its bells; slow, it hovers.
+- A small ship's cabin is a sealed room wherever it flies, in space too: its flight console asks for it, and
+  the furniture standing in it, its seats, consoles, bunks, suit lockers and racks, lets its air round them, so its
+  crew breathes it, kept warm, with the vacuum outside.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
