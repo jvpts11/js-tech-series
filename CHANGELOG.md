@@ -2913,6 +2913,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) A landing platform is free again a few seconds after the stage it holds is taken away or moved off it;
+  before, it held that stage for good, and no other stage could land on it.
 - (Core) A player getting up from a seat aboard a structure in flight stands where they got up from the first frame:
   the server's own placing of them, worked out a tick ahead of the structure their game draws, carried them a tick
   along the deck into its wall, and they were drawn there for a frame or two before being pushed back out.

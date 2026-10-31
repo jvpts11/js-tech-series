@@ -27,7 +27,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The landing platform: a slab of landing pads with its terminal in the middle forms at nine blocks and at fifteen,
  * three times the diameter of the stages it takes; formed, it is noted in the world's platforms with its owner, holds
- * one stage at a time and is found where its terminal stands; a pad taken away undoes it and lets it go.
+ * one stage at a time and is found where its terminal stands; a pad taken away undoes it and lets it go; and once the
+ * stage it holds has been gone from it a while, it is free again.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -90,6 +91,20 @@ public final class LandingPlatformGameTests {
                 terminal.id()).isEmpty(), "a corner missing: not formed")).thenExecute(() -> helper.setBlock(
                 MIDDLE.offset(-4, 0, -4), LandingPlatform.PAD.get())).thenWaitUntil(() -> helper.assertTrue(
                 LandingPlatforms.get(server, terminal.id()).isPresent(), "the corner laid, it forms")).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    public static void platform_isFreeAgainOnceItsStageIsGone(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final LandingPlatformBlockEntity terminal = build(helper, 9);
+        final UUID id = terminal.id();
+        final StructureUuid gone = new StructureUuid(UUID.randomUUID());
+        helper.startSequence().thenWaitUntil(() -> helper.assertTrue(LandingPlatforms.get(server, id).isPresent(),
+                "it forms and is noted")).thenExecute(() -> helper.assertTrue(LandingPlatforms.reserve(server, id,
+                gone), "a stage keeps it")).thenIdle(20).thenExecute(() -> helper.assertTrue(terminal.holding(
+                helper.getLevel()), "it still holds the stage a moment after, in case it is only not loaded yet"))
+                .thenWaitUntil(() -> helper.assertTrue(LandingPlatforms.get(server, id).orElseThrow().free(),
+                        "its stage nowhere and its flight over, it is free again")).thenSucceed();
     }
 
     /* Lays a platform {@code side} blocks wide round the middle of the arena, its terminal owned and its team's. */

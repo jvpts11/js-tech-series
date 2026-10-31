@@ -697,6 +697,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   burning its propellant.
 
 ### Fixed
+- A landing platform is free again a few seconds after the stage it holds is taken away or moved off it;
+  before, it held that stage for good, and no other stage could land on it.
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
   a little, as their cover was drawn anew, and the world turned a tick at a time.
 

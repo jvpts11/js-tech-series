@@ -33,7 +33,7 @@ Built on a raft or a barge afloat, it is a floating platform: the stage finds it
 > The stage has no landing legs or no engine, or no platform you may use here is wide enough: its side must be three times the stage's width.
 
 > [!PROBLEM] The stage fell instead of landing.
-> The platform held a stage already, was not formed, or stood in another world. A platform holds one stage at a time.
+> The platform held a stage already, was not formed, or stood in another world. A platform holds one stage at a time, and is free again a few seconds after that stage is taken away or moved off it.
 
 > [!PROBLEM] STG shows the platform GONE.
 > It has been undone or broken. Make it whole again, or set the stage to another one.

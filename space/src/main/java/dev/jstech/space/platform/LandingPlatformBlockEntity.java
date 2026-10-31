@@ -38,6 +38,13 @@ public final class LandingPlatformBlockEntity extends MachineBlockEntity {
     private final ValueField<UUID> platform;
     private final ValueField<Integer> shown;
     private final MachineStructure structure;
+    /* Since when, in game ticks, the stage it holds has been gone from it; below nought while it is there. */
+    private long goneSince = -1;
+    /*
+     * How long its stage must be gone, in ticks, before it is free again: a world just opened has its blocks working
+     * before the structures standing on them are loaded.
+     */
+    private static final long GONE_FOR = 100;
 
     public LandingPlatformBlockEntity(final BlockPos pos, final BlockState state) {
         super(LandingPlatform.ENTITY.get(), pos, state, 0, MachineEnergy.fe(0, 0, 0));
@@ -114,8 +121,17 @@ public final class LandingPlatformBlockEntity extends MachineBlockEntity {
         }
     }
 
+    /* It works while it holds a stage, and is free again once the stage has been gone from it a while. */
     @Override
     protected MachineStatus work(final ServerLevel level) {
+        if (!LandingPlatforms.stageGone(level, id())) {
+            this.goneSince = -1;
+        } else if (this.goneSince < 0) {
+            this.goneSince = level.getGameTime();
+        } else if (level.getGameTime() - this.goneSince >= GONE_FOR) {
+            LandingPlatforms.release(level.getServer(), id());
+            this.goneSince = -1;
+        }
         return holding(level) ? MachineStatus.WORKING : MachineStatus.WAITING;
     }
 

@@ -9,10 +9,12 @@ package dev.jstech.space.platform;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.uuid.StructureUuid;
+import dev.jstech.space.rocket.StageFlights;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +122,25 @@ public final class LandingPlatforms extends SavedData {
             all.platforms.put(id, platform.holding(null));
             all.setDirty();
         }
+    }
+
+    /**
+     * Whether the stage the platform {@code id} of {@code level} holds is gone from it: its flight over, and taken
+     * away or no longer standing over it; false for a platform that holds none, or whose stage is still on its way.
+     */
+    public static boolean stageGone(final ServerLevel level, final UUID id) {
+        final Entry platform = of(level.getServer()).platforms.get(id);
+        if (platform == null || platform.holding().isEmpty()) {
+            return false;
+        }
+        final StructureUuid held = new StructureUuid(platform.holding().get());
+        if (StageFlights.get(level.getServer(), held).isPresent()) {
+            return false;
+        }
+        final MovingStructure stage = MovingStructures.byId(level, held);
+        final Optional<Vec3> spot = landingSpot(level.getServer(), platform);
+        return stage == null || spot.isEmpty() || Math.hypot(stage.pose().x() - spot.get().x,
+                stage.pose().z() - spot.get().z) > platform.side() / 2.0;
     }
 
     /**

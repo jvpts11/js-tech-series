@@ -33,7 +33,7 @@ Construída numa balsa ou numa barcaça flutuando, ela é uma plataforma flutuan
 > O estágio não tem pernas de pouso ou motor, ou nenhuma plataforma que você pode usar aqui é larga o bastante: o lado dela tem que ser três vezes a largura do estágio.
 
 > [!PROBLEM] O estágio caiu em vez de pousar.
-> A plataforma já segurava um estágio, não estava formada ou ficava em outro mundo. Uma plataforma segura um estágio de cada vez.
+> A plataforma já segurava um estágio, não estava formada ou ficava em outro mundo. Uma plataforma segura um estágio de cada vez, e fica livre de novo alguns segundos depois que esse estágio é tirado dela ou sai de cima dela.
 
 > [!PROBLEM] EST mostra a plataforma como SUMIU.
 > Ela foi desfeita ou quebrada. Complete-a de novo ou mande o estágio para outra.
