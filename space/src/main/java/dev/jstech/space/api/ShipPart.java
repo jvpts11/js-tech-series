@@ -66,25 +66,36 @@ public record ShipPart(String name, ShipPartKind kind, ShipClass shipClass, Ship
 
     /**
      * What a part weighs, pushes, lifts, makes or takes of power, and whom it seats and beds; the shipyard's builder
-     * adds them up into the ship's.
+     * adds them up into the ship's, and the ship flies by them.
      *
      * @param mass   its mass empty, in kilograms
      * @param thrust what its main engines push forward, in newtons
-     * @param lift   what its air engines lift, their nozzles turned down, in newtons
+     * @param lift   what its air engines lift, their nozzles turned down, in newtons; they push as hard forward
      * @param power  the power it makes, in watts, or, below nought, the power it takes
      * @param seats  the crew it seats
      * @param beds   the crew it beds
+     * @param wing   the weight its wings hold up at {@link #WING_SPEED} in the overworld's air at sea level, in
+     *               newtons: more as the square of the speed, less in thinner air
      */
-    public record Figures(double mass, double thrust, double lift, double power, int seats, int beds) {
+    public record Figures(double mass, double thrust, double lift, double power, int seats, int beds, double wing) {
 
-        public static final Figures NONE = new Figures(0, 0, 0, 0, 0, 0);
+        /** The speed a wing's figure is given at, in metres a second. */
+        public static final double WING_SPEED = 20.0;
+        public static final Figures NONE = new Figures(0, 0, 0, 0, 0, 0, 0);
         public static final Codec<Figures> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.doubleRange(0, Double.MAX_VALUE).optionalFieldOf("mass", 0.0).forGetter(Figures::mass),
                 Codec.doubleRange(0, Double.MAX_VALUE).optionalFieldOf("thrust", 0.0).forGetter(Figures::thrust),
                 Codec.doubleRange(0, Double.MAX_VALUE).optionalFieldOf("lift", 0.0).forGetter(Figures::lift),
                 Codec.DOUBLE.optionalFieldOf("power", 0.0).forGetter(Figures::power),
                 Codec.intRange(0, 64).optionalFieldOf("seats", 0).forGetter(Figures::seats),
-                Codec.intRange(0, 64).optionalFieldOf("beds", 0).forGetter(Figures::beds)
+                Codec.intRange(0, 64).optionalFieldOf("beds", 0).forGetter(Figures::beds),
+                Codec.doubleRange(0, Double.MAX_VALUE).optionalFieldOf("wing", 0.0).forGetter(Figures::wing)
         ).apply(instance, Figures::new));
+
+        /** The figures of a part with no wings. */
+        public Figures(final double mass, final double thrust, final double lift, final double power,
+                       final int seats, final int beds) {
+            this(mass, thrust, lift, power, seats, beds, 0);
+        }
     }
 }

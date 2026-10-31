@@ -326,14 +326,17 @@ public final class ShipyardGameTests {
         final BlockPos[] hull = new BlockPos[1];
         final BlockState[] block = new BlockState[1];
         sequence.thenExecute(() -> {
-            ship[0] = (MovingStructure) MovingStructures.near(level, new AABB(terminal).inflate(SHIP_REACH)).stream()
-                    .filter(MovingStructure.class::isInstance).findFirst().orElseThrow();
             // A hull block of the cockpit broken aboard, where the ship's blocks stand in its structure.
             final PlannedBuild laid = new PlannedBuild(ShipyardPlans.of(level, WORKSHOP_SHIP, Orientation.NORTH),
                     ShipyardStructure.shipAt(terminal, Orientation.NORTH));
             final PlanSpot spot = laid.plan().spots().stream().filter(each -> each.part() == 0
                     && each.place().isPresent()).findFirst().orElseThrow();
-            hull[0] = BlockPos.containing(MovingStructures.toYard(ship[0], Vec3.atCenterOf(laid.where(spot))));
+            // This dock's ship, the one standing where its cockpit was built, not a ship of a test beside it.
+            final Vec3 built = Vec3.atCenterOf(laid.where(spot));
+            ship[0] = (MovingStructure) MovingStructures.near(level, new AABB(terminal).inflate(SHIP_REACH)).stream()
+                    .filter(each -> each instanceof MovingStructure && each.worldBox().inflate(1).contains(built))
+                    .findFirst().orElseThrow();
+            hull[0] = BlockPos.containing(MovingStructures.toYard(ship[0], built));
             block[0] = FormedPartBlock.originalAt(level, hull[0], level.getBlockState(hull[0]));
         }).thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().isEmpty()
                 && console(level, ship[0]).ship().isPresent(), "the ship's console watches its plan aboard"))
@@ -425,8 +428,9 @@ public final class ShipyardGameTests {
             ship[0] = dock.release(null).orElseThrow();
             millis[0] = (System.nanoTime() - start) / NANOS_A_MILLI;
             clock[0] = System.nanoTime();
-            helper.assertTrue(dock.plan().isEmpty() && ship[0].arriving(), "the whole ship goes, a structure from"
-                    + " now on, and the dock forgets it");
+            // Its blocks come in at once where its plot's land is already loaded, a plot another ship gave back.
+            helper.assertTrue(dock.plan().isEmpty() && (ship[0].arriving() || ship[0].ready()), "the whole ship"
+                    + " goes, a structure from now on, and the dock forgets it");
         }).thenWaitUntil(() -> {
             final long now = System.nanoTime();
             if (ship[0].arriving()) {

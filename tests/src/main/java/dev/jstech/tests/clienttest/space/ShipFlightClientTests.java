@@ -17,6 +17,7 @@ import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
@@ -64,8 +65,11 @@ public final class ShipFlightClientTests {
     private static final double WALKED = 2;
     /* How high over its floor layer's bottom a ship's floor is, and a little more, where a player is stood. */
     private static final double FLOOR = 0.45;
-    /* How hard a crew member at the helm holds the throttle while the player walks aft. */
-    private static final float CRUISE = 0.4F;
+    /* How hard a crew member at the helm holds the throttle open while the player walks aft. */
+    private static final float CRUISE = 1F;
+    /* How high the ship is taken up before it flies, in blocks; how slow it is braked to, in metres a second. */
+    private static final double ALOFT = 30;
+    private static final double SLOW = 1;
     /* The way a player faces to walk south, aft along a ship flying north. */
     private static final float AFT = 0F;
     /*
@@ -88,16 +92,18 @@ public final class ShipFlightClientTests {
         final Vec3[] airlock = new Vec3[1];
         final Vec3[] from = new Vec3[2];
         final boolean[] cruising = new boolean[1];
+        final boolean[] braking = new boolean[1];
         final StandingWatch[] standing = new StandingWatch[1];
         final ShipDesign design = new ShipDesign("JS-03", List.of(part("orbiter_cockpit"), part("airlock"),
                 part("quarters"), part("lab"), part("reactor_flush")), List.of(part("twin_bells"),
                 part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"),
                 part("wheels")));
-        // A crew member at the helm, holding the throttle while the player is up and about.
+        // A crew member at the helm, braking it, then holding the throttle open while the player is up and about.
         final Consumer<ServerTickEvent.Post> helm = event -> {
-            if (cruising[0] && ship[0] != null) {
-                ship[0].controls().pilot(ctx.serverLevel().getGameTime(), Map.of(StructureControls.ControlAxis.FORWARD,
-                        CRUISE), new Vec3(0, 0, -1), new Vec3(0, 1, 0));
+            if ((cruising[0] || braking[0]) && ship[0] != null) {
+                ship[0].controls().pilot(ctx.serverLevel().getGameTime(), Map.of(braking[0]
+                        ? StructureControls.ControlAxis.BACK : StructureControls.ControlAxis.FORWARD, CRUISE),
+                        new Vec3(0, 0, -1), new Vec3(0, 1, 0));
             }
         };
         NeoForge.EVENT_BUS.addListener(helm);
@@ -146,6 +152,9 @@ public final class ShipFlightClientTests {
                     final BlockPos cycler = plan[0].where(first(plan[0], ShipKitBlocks.AIRLOCK_CYCLER.getId()));
                     airlock[0] = MovingStructures.toYard(ship[0], new Vec3(cycler.getX() + 2.0,
                             cycler.getY() - 1 + FLOOR, cycler.getZ() + 1.5));
+                    // Taken straight up, as its taking off will, to fly clear of its dock.
+                    ship[0].teleport(ship[0].pose().movedTo(ship[0].pose().x(), ship[0].pose().y() + ALOFT,
+                            ship[0].pose().z()));
                     ctx.serverPlayer().setGameMode(GameType.SURVIVAL);
                     ctx.assertTrue(MovingStructures.sit(ctx.serverPlayer(), seat[0]), "the player sits in the pilot"
                             + " seat");
@@ -161,11 +170,17 @@ public final class ShipFlightClientTests {
                         "held forward, the ship to fly north along its nose", level -> ship[0].pose().toString())
                 .thenScreenshot(0, "ship-flight-helm")
                 .then(0, () -> ctx.mc().options.keyUp.setDown(false))
+                // The crew member at the helm brakes the ship nearly to a stop, so the player put in its airlock
+                // lands where their game has it, then opens the throttle again with them aboard.
+                .then(0, () -> braking[0] = true)
+                .thenWaitUntilServer(level -> ((ShipFlight) ship[0].motion()).state().speed() < SLOW, ARRIVE,
+                        "the ship to slow", level -> String.valueOf(((ShipFlight) ship[0].motion()).state()))
                 .thenServer(0, level -> {
-                    cruising[0] = true;
                     ctx.serverPlayer().stopRiding();
                     final Vec3 stand = MovingStructures.inWorld(level, airlock[0]);
                     ctx.serverPlayer().teleportTo(level, stand.x, stand.y, stand.z, AFT, 0);
+                    braking[0] = false;
+                    cruising[0] = true;
                 })
                 .thenWaitUntil(() -> ctx.player().getVehicle() == null, ARRIVE, "the player to be up from the seat")
                 .then(SETTLE, () -> standing[0] = StandingWatch.of(ship[0], ctx))

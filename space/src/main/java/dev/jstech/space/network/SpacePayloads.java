@@ -8,6 +8,7 @@
 package dev.jstech.space.network;
 
 import dev.jstech.space.life.SuitControls;
+import dev.jstech.space.ship.ShipBoost;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
@@ -20,7 +21,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  * The payloads J's Space sends between the server and a player's game, and when: the Overworld's map number as a
  * player joins, a far map on the way up ({@code FarMaps}), and the worlds under a system's space as a player arrives in
  * it ({@code SpaceClimbs}), and a Flight Computer's landing map once drawn ({@code LandingMaps}); and from a player's
- * game, the light of their suit's controls pressed. What a player's game
+ * game, the light of their suit's controls pressed, and a ship's boost held at its helm. What a player's game
  * does with each is given to it from its own side, so nothing of a player's game is loaded on a server.
  */
 public final class SpacePayloads {
@@ -55,6 +56,12 @@ public final class SpacePayloads {
             registrar.playToServer(SuitLightPayload.TYPE, SuitLightPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> SuitControls.light(context.player(),
                             payload.on())));
+            registrar.playToServer(ShipBoostPayload.TYPE, ShipBoostPayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> {
+                        if (context.player() instanceof ServerPlayer player) {
+                            ShipBoost.told(player, payload.held());
+                        }
+                    }));
         });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, event -> {
             if (event.getEntity() instanceof ServerPlayer player) {

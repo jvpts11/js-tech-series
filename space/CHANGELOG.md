@@ -68,6 +68,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `ShipPart.Figures` of its mass, the thrust of its main engines, the lift of its air engines, the power it makes or
   takes and the crew it seats and beds, written in a part's file as `figures`; `ShipMaker` gains its `mark`, the key of
   three letters a builder shows of it. Experimental.
+- Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
+  wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
+  speed and less in thinner air; written in a part's file as `wing`. Experimental.
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
@@ -593,9 +596,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   dock or aboard wherever the ship is, leaves a hole the part holds round, drawn as that block of its model gone and
   shown in the dock's hologram; the right block put back merges and mends it.
 - A ship let go from its dock flies: its cockpit's pilot seat is its helm, and the pilot sitting in it sends
-  it on along its nose with the key they walk forward with, slows it with the one they walk back with, turns it with
-  left and right and takes it up and down. With nobody at the helm it slows to a stop and stays where it is, parked;
-  its blocks fly as they stand, what works on the ground works aboard, and its crew walks about inside in flight.
+  it on along its nose with the key they walk forward with, slows it with the one they walk back with and turns it
+  with left and right. With nobody at the helm its throttle closes and, at rest on the land, it stays where it is,
+  parked; its blocks fly as they stand, what works on the ground works aboard, and its crew walks about inside in
+  flight.
+- A ship flies in the spirit of No Man's Sky: it goes where its nose points, with no drift. Its pilot opens
+  and closes its throttle, which stays where they leave it, turns it, and pitches its nose up and down with the keys
+  they jump and sprint with. In the air its air engines push, and in the thin air of the climb and in space its bells;
+  its wings hold it up, more the faster it goes and less in thinner air, and flying too slowly it sinks. In space it
+  flies free, faster. Its weight counts: it is what its parts weigh, and a heavier ship gathers speed more slowly and
+  needs more of it to stay up. Its boost, on its own key (B until changed), takes it faster across an empty stretch,
+  well clear of the land, from a store its reactor's spare power fills. It rests on the land under it, steps up what
+  is low, and is stopped by the land it would fly into or that is not loaded yet.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

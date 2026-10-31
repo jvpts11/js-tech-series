@@ -124,12 +124,13 @@ public final class SmallShipParts {
                 figures(3.0, 0, 420, -12.8, 0, 0));
         hung("small_nacelle_intake", NACELLE_INTAKE, ShipPartKind.AIR_ENGINE, ShipPlace.ON_WINGS, false, ironside,
                 figures(3.6, 0, 480, -14.0, 0, 0));
+        // The wings: tonnes, and kilonewtons held up at the wing's speed in the air at sea level.
         hung("small_blended_delta", BLENDED_DELTA, ShipPartKind.WINGS, ShipPlace.WING_ROOT, false, meridian,
-                figures(3.5, 0, 0, 0, 0, 0));
+                wings(3.5, 400));
         hung("small_stub_wings", STUB_WINGS, ShipPartKind.WINGS, ShipPlace.WING_ROOT, true, ironside,
-                figures(2.0, 0, 0, 0, 0, 0));
+                wings(2.0, 260));
         hung("small_swept_wings", SWEPT_WINGS, ShipPartKind.WINGS, ShipPlace.WING_ROOT, false, kosmozavod,
-                figures(3.0, 0, 0, 0, 0, 0));
+                wings(3.0, 360));
         hung("small_twin_canted_fins", TWIN_CANTED_FINS, ShipPartKind.FINS, ShipPlace.SPINE_END, false, meridian,
                 figures(0.8, 0, 0, -0.2, 0, 0));
         hung("small_single_fin", SINGLE_FIN, ShipPartKind.FINS, ShipPlace.SPINE_END, false, kosmozavod,
@@ -185,5 +186,10 @@ public final class SmallShipParts {
                                             final int beds) {
         return new ShipPart.Figures(tonnes * KILO, thrustKilonewtons * KILO, liftKilonewtons * KILO,
                 megawatts * MEGA, seats, beds);
+    }
+
+    /* A pair of wings' figures in the catalogue's units: tonnes, and kilonewtons held up at the wing's speed. */
+    private static ShipPart.Figures wings(final double tonnes, final double heldKilonewtons) {
+        return new ShipPart.Figures(tonnes * KILO, 0, 0, 0, 0, 0, heldKilonewtons * KILO);
     }
 }

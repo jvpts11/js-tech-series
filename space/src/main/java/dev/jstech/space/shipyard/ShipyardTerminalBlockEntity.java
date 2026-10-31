@@ -355,9 +355,11 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
             return Optional.empty();
         }
         keeper.carry(new ShipAboard(design, at.subtract(seat.get()), this.planTurn.get(), formed));
-        // It flies from now on as its pilot sends it, its nose the way its plan laid it, at rest until then.
+        // It flies from now on as its pilot sends it, its nose the way its plan laid it, by what its parts weigh and
+        // push, at rest until then.
         final int[] nose = planTurn().apply(0, 0, -1);
-        MovingStructures.move(made.structure(), ShipFlight.resting(nose[0], nose[2]));
+        MovingStructures.move(made.structure(), ShipFlight.resting(nose[0], nose[2], ShipFlight.performance(design,
+                ShipParts.all(server))));
         this.plan.set(null);
         this.planAt.set(null);
         this.formedParts.set(List.of());

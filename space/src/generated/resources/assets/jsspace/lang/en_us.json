@@ -908,5 +908,6 @@
   "jsspace.world.mars": "Mars",
   "jsspace.world.moon": "The Moon",
   "jsspace.world.overworld": "The Overworld",
+  "key.jsspace.ship_boost": "Boost the ship",
   "key.jsspace.suit_controls": "Look at the suit's controls"
 }

@@ -28,6 +28,7 @@ import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.ship.FlightConsoleRenderer;
+import dev.jstech.space.client.ship.ShipBoostClient;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
 import dev.jstech.space.client.shipyard.ShipHolograms;
 import dev.jstech.space.client.shipyard.ShipyardRenderer;
@@ -70,8 +71,9 @@ public final class JsSpaceClient {
         // A formed Small Shipyard, drawn whole as the approved dock, its builder's screen, and the ship it builds, each
         // part drawn with its model once it has formed, and its hologram till then.
         ShipyardRenderer.listen(modEventBus);
-        // A ship that has left its dock, drawn from its flight console wherever it goes.
+        // A ship that has left its dock, drawn from its flight console wherever it goes, and its boost's key.
         FlightConsoleRenderer.listen(modEventBus);
+        ShipBoostClient.listen();
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipDesigner.MENU.get(),
                 ShipDesignScreen::new));
         PlanHologram.show(ShipHolograms::shown);

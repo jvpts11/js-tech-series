@@ -18,7 +18,12 @@ import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.team.Ownership;
+import dev.jstech.space.api.ShipParts;
+import dev.jstech.space.ship.ShipBoost;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipFlight;
+import dev.jstech.space.ship.ShipFlightModel;
+import dev.jstech.space.ship.ShipGround;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardPlans;
@@ -32,12 +37,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
@@ -48,10 +55,12 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * A small ship let go from its dock flies as a moving structure: its pilot seat is its helm; while its pilot holds the
- * throttle it goes along its nose, and turns and climbs as they hold those controls; with nobody at the helm it slows
- * to a stop and stays where it is; what works on the ground works aboard, a furnace set down in its quarters
- * smelting; and a Space Persistor set down aboard keeps it loaded.
+ * A small ship let go from its dock flies as a moving structure: its pilot seat is its helm; taken up, it goes along
+ * its nose as its pilot opens its throttle, and turns and pitches its nose up to climb as they hold those controls; it
+ * weighs what its parts weigh; fast enough, its wings hold it up, and too slow, nobody at the helm, it sinks onto the
+ * land under it and rests there; its boost takes it past its cruise across an empty stretch; parked, it stays where it
+ * is; what works on the ground works aboard, a furnace set down in its quarters smelting; and a Space Persistor set
+ * down aboard keeps it loaded.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -61,17 +70,36 @@ public final class ShipFlightGameTests {
     private static final String BATCH = "jsspace_ship_flight";
     /* The pattern's lowest corner, the pit floor's west front corner, a ground of stone under it. */
     private static final BlockPos CORNER = new BlockPos(1, 2, 1);
-    /* How long the pilot holds a control, and how long a ship is watched at rest, in ticks. */
-    private static final int HELD = 40;
+    /* How long the pilot holds a control, how long a ship is watched at rest and boosted, in ticks. */
+    private static final int HELD = 30;
     private static final int PARKED = 100;
+    private static final int BOOSTED = 20;
     /*
-     * How far round the dock the land is kept loaded, in chunks, as a pilot aboard keeps the land round them: the
-     * ship flies north out of the arena, which alone is kept loaded for a test.
+     * How far north of the dock the land is kept loaded, in chunks, as a pilot aboard keeps the land round them, and
+     * how far west for a ship that turns and for one that flies straight: the ship flies out of the arena, which alone
+     * is kept loaded for a test.
      */
-    private static final int FLOWN_CHUNKS = 4;
+    private static final int FLOWN_CHUNKS = 5;
+    private static final int TURNING_WEST = 5;
+    private static final int STRAIGHT_WEST = 1;
+    /* The tickets each test keeps its land by, and how far each reaches: two keeps its chunk ticking. */
+    private static final TicketType<BlockPos> LAND = TicketType.create("jstests_ship_flight", Vec3i::compareTo);
+    private static final int TICKING = 2;
     /* How far a ship goes along its nose with its throttle held that long, at least, in blocks. */
     private static final double FLOWN = 10;
     private static final double STILL = 1.0e-6;
+    /*
+     * How high a ship is taken up to fly, clear of any test's blocks round it, and let go over its cradle to sink,
+     * below its dock's crane, in blocks.
+     */
+    private static final double HIGH = 80;
+    private static final double LOW = 2;
+    /* A cruise at half again its stall at sea level, and its full cruise in the air, in metres a second. */
+    private static final double CRUISE = 30;
+    private static final double CRUISING = 40;
+    /* The test ship's mass, its eleven parts' sum, in kilograms; what its delta wings hold, in newtons. */
+    private static final double SHIP_KILOGRAMS = 39_600;
+    private static final double DELTA_NEWTONS = 400_000;
     private static final ShipDesign SHIP = new ShipDesign("JS-02", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
             part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
@@ -83,13 +111,13 @@ public final class ShipFlightGameTests {
     public static void flight_theShipFliesAlongItsNoseTurnsAndClimbsAsItsPilotHolds(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final StructurePose[] from = new StructurePose[1];
-        keep(helper, true);
-        final GameTestSequence sequence = letGo(helper, ship).thenExecute(() -> {
-            from[0] = ship[0].pose();
+        final GameTestSequence sequence = flying(helper, ship, TURNING_WEST).thenExecute(() -> {
             final BlockPos seat = aboard(helper, ship[0], plan(helper).where(spot(helper,
                     ShipKitBlocks.PILOT_SEAT.getId())));
             helper.assertTrue(BlockAboard.at(helper.getLevel(), seat).seat().orElseThrow().helm(), "its pilot"
                     + " seat is its helm");
+            aloft(ship[0], HIGH);
+            from[0] = ship[0].pose();
         });
         hold(helper, sequence, ship, StructureControls.ControlAxis.FORWARD).thenExecute(() -> {
             final StructurePose now = ship[0].pose();
@@ -103,12 +131,76 @@ public final class ShipFlightGameTests {
             from[0] = ship[0].pose();
         });
         hold(helper, sequence, ship, StructureControls.ControlAxis.UP).thenExecute(() -> helper.assertTrue(
-                ship[0].pose().y() > from[0].y() + 1, "it climbs as its pilot holds up"))
+                ship[0].pose().y() > from[0].y() + 1, "it pitches its nose up and climbs as its pilot holds up"))
                 .thenExecute(() -> {
                     MovingStructures.takeAway(ship[0]);
-                    keep(helper, false);
+                    keep(helper, false, TURNING_WEST);
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void flight_fastItsWingsHoldItUpAndTooSlowItSinksOntoTheLand(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final StructurePose[] from = new StructurePose[2];
+        final GameTestSequence sequence = flying(helper, ship, STRAIGHT_WEST).thenExecute(() -> {
+            final ShipFlight flight = (ShipFlight) ship[0].motion();
+            helper.assertTrue(flight.ship().equals(ShipFlight.performance(SHIP, ShipParts.all(helper.getLevel())))
+                            && Math.abs(flight.ship().mass() - SHIP_KILOGRAMS) < 1
+                            && flight.ship().wing() == DELTA_NEWTONS,
+                    "it weighs what its parts weigh and its delta wings hold what theirs do: " + flight.ship());
+            from[0] = ship[0].pose();
+            aloft(ship[0], HIGH);
+            // Flying at 30 m/s, half again its stall in this air, its throttle where its pilot left it.
+            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISE, 0, CRUISE / CRUISING, 1)));
+        });
+        cruise(helper, sequence, ship, HELD).thenExecute(() -> helper.assertTrue(ship[0].pose().y() > from[0].y()
+                + HIGH - 1, "fast enough, its wings hold it up: " + (ship[0].pose().y() - from[0].y())))
+                .thenExecute(() -> {
+                    // Back over its dock, a little over its cradle, nobody at the helm, at rest: it sinks onto it.
+                    final StructurePose now = ship[0].pose();
+                    ship[0].teleport(now.movedTo(from[0].x(), from[0].y() + LOW, from[0].z()));
+                    final ShipFlight flight = (ShipFlight) ship[0].motion();
+                    MovingStructures.move(ship[0], flight.with(ShipFlightModel.State.RESTING));
+                })
+                .thenWaitUntil(() -> {
+                    final StructurePose now = ship[0].pose();
+                    final boolean resting = now.distanceTo(from[1] == null ? now : from[1]) < STILL
+                            && ((ShipFlight) ship[0].motion()).state().sink() == 0
+                            && ShipGround.meet(helper.getLevel(), ship[0], ship[0].frame()).touching();
+                    from[1] = now;
+                    helper.assertTrue(resting && now.y() < from[0].y() + LOW - 1, "too slow, it sinks onto its"
+                            + " dock's cradle and rests there: " + (now.y() - from[0].y()) + " over where it stood");
+                })
+                .thenExecute(() -> {
+                    MovingStructures.takeAway(ship[0]);
+                    keep(helper, false, STRAIGHT_WEST);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void flight_theBoostTakesItPastItsCruiseAcrossAnEmptyStretch(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final GameTestSequence sequence = flying(helper, ship, STRAIGHT_WEST).thenExecute(() -> {
+            aloft(ship[0], HIGH);
+            final ShipFlight flight = (ShipFlight) ship[0].motion();
+            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISING, 0, 1, 1)));
+        });
+        for (int tick = 0; tick < BOOSTED; tick++) {
+            sequence.thenExecuteAfter(1, () -> {
+                pilot(helper, ship[0], Map.of());
+                ShipBoost.hold(ship[0], helper.getLevel().getGameTime());
+            });
+        }
+        sequence.thenExecute(() -> {
+            final ShipFlightModel.State now = ((ShipFlight) ship[0].motion()).state();
+            helper.assertTrue(now.speed() > CRUISING + 1 && now.charge() < 1, "boosted over an empty stretch, it"
+                    + " goes past its cruise and spends its boost: " + now);
+        }).thenExecute(() -> {
+            MovingStructures.takeAway(ship[0]);
+            keep(helper, false, STRAIGHT_WEST);
+        }).thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
@@ -169,6 +261,23 @@ public final class ShipFlightGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(ship[0].ready(), "its blocks come into the structure"));
     }
 
+    /*
+     * The ship let go as {@link #letGo} lets it go, then the land it flies over kept loaded: asked for only once the
+     * ship stands, so its own blocks are not kept waiting behind it.
+     */
+    private static GameTestSequence flying(final GameTestHelper helper, final MovingStructure[] ship,
+                                           final int west) {
+        return letGo(helper, ship).thenExecute(() -> keep(helper, true, west)).thenWaitUntil(() -> {
+            final ChunkPos dock = new ChunkPos(helper.absolutePos(CORNER));
+            for (int x = dock.x - west; x <= dock.x + 1; x++) {
+                for (int z = dock.z - FLOWN_CHUNKS; z <= dock.z + 1; z++) {
+                    helper.assertTrue(helper.getLevel().getChunkSource().getChunkNow(x, z) != null, "the land it"
+                            + " flies over loads");
+                }
+            }
+        });
+    }
+
     /* Its pilot holds {@code axis} a while, as their helm tells the structure each tick, then lets go. */
     private static GameTestSequence hold(final GameTestHelper helper, final GameTestSequence sequence,
                                          final MovingStructure[] ship, final StructureControls.ControlAxis axis) {
@@ -177,19 +286,48 @@ public final class ShipFlightGameTests {
                 final Map<StructureControls.ControlAxis, Float> held = new EnumMap<>(
                         StructureControls.ControlAxis.class);
                 held.put(axis, 1F);
-                ship[0].controls().pilot(helper.getLevel().getGameTime(), held, new Vec3(0, 0, -1),
-                        new Vec3(0, 1, 0));
+                pilot(helper, ship[0], held);
             });
         }
         return sequence;
     }
 
-    /* Keeps the land round the dock and north of it loaded, or lets it go. */
-    private static void keep(final GameTestHelper helper, final boolean kept) {
+    /* Its pilot sits at the helm {@code ticks} ticks holding nothing, its throttle where they left it. */
+    private static GameTestSequence cruise(final GameTestHelper helper, final GameTestSequence sequence,
+                                           final MovingStructure[] ship, final int ticks) {
+        for (int tick = 0; tick < ticks; tick++) {
+            sequence.thenExecuteAfter(1, () -> pilot(helper, ship[0], Map.of()));
+        }
+        return sequence;
+    }
+
+    /* The helm tells {@code ship} its pilot holds {@code held} now. */
+    private static void pilot(final GameTestHelper helper, final MovingStructure ship,
+                              final Map<StructureControls.ControlAxis, Float> held) {
+        ship.controls().pilot(helper.getLevel().getGameTime(), held, new Vec3(0, 0, -1), new Vec3(0, 1, 0));
+    }
+
+    /* Takes {@code ship} straight up by {@code blocks}, as its taking off will. */
+    private static void aloft(final MovingStructure ship, final double blocks) {
+        final StructurePose now = ship.pose();
+        ship.teleport(now.movedTo(now.x(), now.y() + blocks, now.z()));
+    }
+
+    /*
+     * Keeps the land round the dock and on to its north, and {@code west} chunks to its west, loaded and ticking by
+     * this test's own tickets, or lets it go: a test beside it letting its own land go leaves this one's.
+     */
+    private static void keep(final GameTestHelper helper, final boolean kept, final int west) {
         final ChunkPos dock = new ChunkPos(helper.absolutePos(CORNER));
-        for (int x = dock.x - 1; x <= dock.x + 2; x++) {
-            for (int z = dock.z - FLOWN_CHUNKS; z <= dock.z + 2; z++) {
-                helper.getLevel().setChunkForced(x, z, kept);
+        final BlockPos own = helper.absolutePos(CORNER);
+        for (int x = dock.x - west; x <= dock.x + 1; x++) {
+            for (int z = dock.z - FLOWN_CHUNKS; z <= dock.z + 1; z++) {
+                final ChunkPos chunk = new ChunkPos(x, z);
+                if (kept) {
+                    helper.getLevel().getChunkSource().addRegionTicket(LAND, chunk, TICKING, own);
+                } else {
+                    helper.getLevel().getChunkSource().removeRegionTicket(LAND, chunk, TICKING, own);
+                }
             }
         }
     }
