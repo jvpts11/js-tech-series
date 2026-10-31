@@ -34,6 +34,15 @@ public interface IStructureBody {
     /** How its blocks stood in the world the tick before, so what stood on it is carried by how it moved. */
     StructureFrame previousFrame();
 
+    /**
+     * How its blocks stand for a ray of the world to meet them ({@link StructureRays}): as they stand this tick; on a
+     * player's game, while the player's aim is found for a frame, as that frame draws them, so the block under the
+     * crosshair, and outlined, is the block drawn there, frame after frame, however fast it goes.
+     */
+    default StructureFrame aimFrame() {
+        return frame();
+    }
+
     /** The box of the yard its blocks lie in, both corners included. */
     Box bounds();
 

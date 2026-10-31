@@ -62,11 +62,11 @@ public final class StructureRays {
             if (!body.ready()) {
                 continue;
             }
-            final BlockHitResult hit = clipYard(level, context, body.frame());
+            final StructureFrame frame = body.aimFrame();
+            final BlockHitResult hit = clipYard(level, context, frame);
             if (hit == null) {
                 continue;
             }
-            final StructureFrame frame = body.frame();
             final Vec3 at = hit.getLocation();
             final Vec3 inWorld = new Vec3(frame.worldX(at.x, at.y, at.z), frame.worldY(at.x, at.y, at.z),
                     frame.worldZ(at.x, at.y, at.z));

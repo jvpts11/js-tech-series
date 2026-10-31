@@ -48,6 +48,8 @@ public final class StructureFooting {
     /* On a player's game, what waits for the game to keep where it stood before this tick, and what is done then. */
     private static WeakReference<Entity> waiting = new WeakReference<>(null);
     private static @Nullable Consumer<Entity> waitingAction;
+    /* On a player's game, who got up from a structure's seat this tick, set on its deck as the tick ends. */
+    private static WeakReference<Entity> gotUp = new WeakReference<>(null);
 
     private StructureFooting() {
     }
@@ -61,6 +63,50 @@ public final class StructureFooting {
     public static void onceOldPositionKept(final Entity entity, final Consumer<Entity> action) {
         waiting = new WeakReference<>(entity);
         waitingAction = action;
+    }
+
+    /**
+     * On a player's game, {@code entity} got up from a seat of a structure this tick, on it: as the tick ends, where it
+     * stood before is set from where it stands on the structure now, as the structure stood the tick before
+     * ({@link #settleGotUp()}). Got up after the game kept where it stood, that would be a tick older than the deck as
+     * drawn, and it would be drawn sliding along the deck through the tick.
+     */
+    static void gotUp(final Entity entity) {
+        if (entity.level().isClientSide()) {
+            gotUp = new WeakReference<>(entity);
+        }
+    }
+
+    /** The tick ended on a player's game: who got up in it is drawn from now on with the deck under them. */
+    public static void settleGotUp() {
+        holdGotUp();
+        gotUp = new WeakReference<>(null);
+    }
+
+    /**
+     * A frame is about to be drawn on a player's game: who got up from a seat since the last tick ended is drawn on
+     * the deck in it, where they stood before set again from where they stand on it now, whatever set it since.
+     */
+    public static void holdGotUp() {
+        final Entity entity = gotUp.get();
+        if (entity == null || entity.isRemoved() || entity.isPassenger()) {
+            return;
+        }
+        final IStructureBody body = standingOn(entity);
+        if (body == null) {
+            return;
+        }
+        final StructureFrame now = body.frame();
+        final StructureFrame before = body.previousFrame();
+        final double x = now.yardX(entity.getX(), entity.getY(), entity.getZ());
+        final double y = now.yardY(entity.getX(), entity.getY(), entity.getZ());
+        final double z = now.yardZ(entity.getX(), entity.getY(), entity.getZ());
+        entity.xo = before.worldX(x, y, z);
+        entity.yo = before.worldY(x, y, z);
+        entity.zo = before.worldZ(x, y, z);
+        entity.xOld = entity.xo;
+        entity.yOld = entity.yo;
+        entity.zOld = entity.zo;
     }
 
     /** The game kept where {@code entity} stood before its tick: what waited for that is done now. */
@@ -309,6 +355,30 @@ public final class StructureFooting {
         }
         final float yaw = (float) Mth.wrapDegrees(player.getYRot() - structure.pose().yawDegrees());
         player.setData(CoreAttachments.FOOTING.get(), Footing.on(structure.id(), place[0], place[1], place[2], yaw));
+    }
+
+    /*
+     * {@code player} got up from a seat of {@code structure} at {@code place} of its yard, on the server: their game
+     * stands them there too, on the structure as it draws it, so their next move is taken from there before their
+     * game first says where they stand; taken from the world instead, a deck their game draws a moment behind would
+     * read as a wrong move, and the server would send them back where it has them, off the deck as they see it.
+     */
+    static void gotUpAt(final ServerPlayer player, final MovingStructure structure, final Vec3 place) {
+        final double[] at = {place.x, place.y, place.z};
+        REPORTED.put(player, new Reported(structure, at));
+        final float yaw = (float) Mth.wrapDegrees(player.getYRot() - structure.pose().yawDegrees());
+        player.setData(CoreAttachments.FOOTING.get(), Footing.on(structure.id(), at[0], at[1], at[2], yaw));
+        // Their next move is checked from where they got up, not from the seat: the game keeps that till its tick.
+        final ServerGamePacketListenerImpl connection = player.connection;
+        if (connection != null) {
+            final StructureFrame frame = structure.frame();
+            connection.firstGoodX = frame.worldX(at[0], at[1], at[2]);
+            connection.firstGoodY = frame.worldY(at[0], at[1], at[2]);
+            connection.firstGoodZ = frame.worldZ(at[0], at[1], at[2]);
+            connection.lastGoodX = connection.firstGoodX;
+            connection.lastGoodY = connection.firstGoodY;
+            connection.lastGoodZ = connection.firstGoodZ;
+        }
     }
 
     private static Map<Entity, Stand> side(final Level level) {

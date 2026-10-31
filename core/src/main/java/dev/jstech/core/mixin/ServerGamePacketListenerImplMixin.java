@@ -16,6 +16,7 @@ import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -84,6 +85,20 @@ public abstract class ServerGamePacketListenerImplMixin {
                                           final Operation<Double> original) {
         final Vec3 deck = StructureFooting.reportedVehiclePlace(player);
         return deck != null ? deck.z : original.call(packet);
+    }
+
+    /*
+     * A player standing on a deck is put where their game says they stand on it: the game's check that their move
+     * met no block it had not met already compares the deck's blocks as the server has them with a move their game
+     * made against the deck as it drew it a moment apart, and would send them back for a hair's difference.
+     */
+    @Inject(method = "isPlayerCollidingWithAnythingNew", at = @At("HEAD"), cancellable = true)
+    private void jscore$deckMovesAreTheirGames(final LevelReader level, final AABB box, final double x,
+                                               final double y, final double z,
+                                               final CallbackInfoReturnable<Boolean> info) {
+        if (StructureFooting.reportedPlace(player) != null) {
+            info.setReturnValue(false);
+        }
     }
 
     @Inject(method = "noBlocksAround", at = @At("RETURN"), cancellable = true)

@@ -38,12 +38,28 @@ public final class StructureAim {
 
     /* The outline's colour, as the game's own: black, less than half seen. */
     private static final float OUTLINE_ALPHA = 0.4F;
+    /* How far into its tick the frame whose aim is being found is drawn; none while no aim is being found. */
+    private static float aiming = Float.NaN;
 
     private StructureAim() {
     }
 
     static void listen() {
         NeoForge.EVENT_BUS.addListener(RenderHighlightEvent.Block.class, StructureAim::onHighlight);
+    }
+
+    /**
+     * The game is about to find the player's aim for a frame drawn {@code partialTick} into its tick: the rays meet
+     * the structures as that frame draws them ({@code IStructureBody#aimFrame}), not as they stand at its tick's end,
+     * which, going, would put the crosshair on another block than the one drawn under it.
+     */
+    public static void beforePick(final float partialTick) {
+        aiming = partialTick;
+    }
+
+    /** The game found the player's aim for the frame. */
+    public static void aimed() {
+        aiming = Float.NaN;
     }
 
     /** After the game aimed: an aim at a structure's block names the place on it in the yard's places. */
@@ -61,10 +77,15 @@ public final class StructureAim {
         if (structure == null) {
             return;
         }
-        final StructureFrame frame = structure.frame();
+        final StructureFrame frame = structure.aimFrame();
         final Vec3 onBlock = new Vec3(frame.yardX(at.x, at.y, at.z), frame.yardY(at.x, at.y, at.z),
                 frame.yardZ(at.x, at.y, at.z));
         game.hitResult = new BlockHitResult(onBlock, hit.getDirection(), block, hit.isInside());
+    }
+
+    /* How far into its tick the frame whose aim is being found is drawn; not a number while none is. */
+    static float aimingAt() {
+        return aiming;
     }
 
     private static void onHighlight(final RenderHighlightEvent.Block event) {

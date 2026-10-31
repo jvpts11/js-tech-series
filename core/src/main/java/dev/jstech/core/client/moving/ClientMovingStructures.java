@@ -44,6 +44,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -76,6 +77,7 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         DynamicLightsClient.provide(ClientMovingStructures::lamps);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Pre.class, ClientMovingStructures::beforeTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ClientMovingStructures::afterTick);
+        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Pre.class, event -> StructureFooting.holdGotUp());
         NeoForge.EVENT_BUS.addListener(PlayerTickEvent.Post.class, ClientMovingStructures::afterPlayer);
         NeoForge.EVENT_BUS.addListener(LevelEvent.Unload.class, ClientMovingStructures::onUnload);
     }
@@ -373,6 +375,7 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
      * player, and is let be.
      */
     private static void afterTick(final ClientTickEvent.Post event) {
+        StructureFooting.settleGotUp();
         final ClientLevel level = Minecraft.getInstance().level;
         if (level == null || BY_ENTITY.isEmpty()) {
             return;

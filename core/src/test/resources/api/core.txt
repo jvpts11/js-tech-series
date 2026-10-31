@@ -9837,6 +9837,7 @@ stable 4
 10 dev.jstech.core.moving.IStructureBody  abstract StructureUuid id()
 10 dev.jstech.core.moving.IStructureBody  abstract boolean ready()
 10 dev.jstech.core.moving.IStructureBody  abstract int plot()
+30 dev.jstech.core.moving.IStructureBody  default StructureFrame aimFrame()
 10 dev.jstech.core.moving.IStructureMotion  type interface
 10 dev.jstech.core.moving.IStructureMotion  abstract ResourceLocation type()
 10 dev.jstech.core.moving.IStructureMotion  abstract Step step(StructurePose, Context)
@@ -10163,9 +10164,11 @@ stable 4
 10 dev.jstech.core.moving.StructureFooting  static Vec3 speedAt(IStructureBody, Vec3)
 10 dev.jstech.core.moving.StructureFooting  static void carry(Entity, IStructureBody)
 10 dev.jstech.core.moving.StructureFooting  static void carry(IStructureBody)
+30 dev.jstech.core.moving.StructureFooting  static void holdGotUp()
 10 dev.jstech.core.moving.StructureFooting  static void moved(IStructureBody, IStructureBody, Map<BlockPos, BlockPos>)
 29 dev.jstech.core.moving.StructureFooting  static void oldPositionKept(Entity)
 29 dev.jstech.core.moving.StructureFooting  static void onceOldPositionKept(Entity, Consumer<Entity>)
+30 dev.jstech.core.moving.StructureFooting  static void settleGotUp()
 10 dev.jstech.core.moving.StructureFooting  static void stood(Entity, IStructureBody, BlockPos)
 10 dev.jstech.core.moving.StructureFooting  static void tick(Level)
 10 dev.jstech.core.moving.StructureFootingPayload  type record(int entity, double[] place, boolean vehicle) implements CustomPacketPayload

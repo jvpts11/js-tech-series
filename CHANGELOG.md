@@ -449,6 +449,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `StructureFooting.onceOldPositionKept` has something done to an entity once the game has kept where it stood before
   the tick, as it does just before ticking it, and `StructureFooting.oldPositionKept` is what the game calls then: the
   player and what they drive are carried by the deck under them so, and drawn going with it. Experimental.
+- (Core) Aimed at as drawn: J's Core's API is at version 30. `IStructureBody.aimFrame` is how a structure's blocks
+  stand for a ray to meet them: as they stand this tick, and, on a player's game while the player's aim is found for
+  a frame, as that frame draws them. `StructureFooting.holdGotUp` and `settleGotUp` are what a player's game calls
+  before each frame is drawn and as each tick ends, so a player who got up from a seat aboard is drawn on the deck
+  from the first frame. Experimental.
 - (Space) Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
   wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
   speed and less in thinner air; written in a part's file as `wing`. Experimental.
@@ -2952,6 +2957,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A controller keeps the machines on its industrial control cable: a computer's check of the screens and
   devices it holds ports for let them go every five seconds, as a machine keeps nothing of its controller, and they
   came back a second later; in between, the network read none of them and refused a request for any.
+- (Core) Getting up from a seat aboard a moving structure in flight no longer leaves the player behind: they were
+  stood where the seat had been in the world, the structure went on from under them, and they slid back through it
+  and fell out. They now get up in the nearest place round the seat they stand in, found among its own blocks, through
+  its doorways and along its floor, crouching or crawling where there is no more room, never on what stands higher
+  than the seat's floor nor up through a roof; the deck carries them from the first tick, their game stands them
+  there on the structure as it draws it, and the server takes their next moves from there.
+- (Core) The outline of a block aboard a moving structure no longer flickers: the player's aim met its blocks as they
+  stood at the end of the tick, not as the frame drew them, so with the structure going, the crosshair fell on the
+  block beside the one drawn under it, frame after frame. The aim now meets them as the frame draws them.
 
 ## [0.5.2a] - 2026-10-14
 

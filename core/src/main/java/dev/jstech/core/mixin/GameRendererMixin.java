@@ -32,10 +32,16 @@ public abstract class GameRendererMixin {
     @Final
     private Minecraft minecraft;
 
+    @Inject(method = "pick(F)V", at = @At("HEAD"))
+    private void jscore$aimAtStructuresAsDrawn(final float partialTicks, final CallbackInfo info) {
+        StructureAim.beforePick(partialTicks);
+    }
+
     @Inject(method = "pick(F)V", at = @At("TAIL"))
     private void jscore$aimAtStandingParts(final float partialTicks, final CallbackInfo info) {
         StructureAim.afterPick(minecraft);
         StandingPartsAim.afterPick(minecraft, partialTicks);
         HandsAim.afterPick(minecraft, partialTicks);
+        StructureAim.aimed();
     }
 }

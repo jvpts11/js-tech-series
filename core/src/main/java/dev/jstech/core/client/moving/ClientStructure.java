@@ -106,6 +106,13 @@ public final class ClientStructure implements IStructureBody {
         return previousFrame;
     }
 
+    /* While the player's aim is found for a frame, the structure as that frame draws it. */
+    @Override
+    public StructureFrame aimFrame() {
+        final float partial = StructureAim.aimingAt();
+        return Float.isNaN(partial) ? frame : new StructureFrame(drawnAt(partial), pivotX, pivotY, pivotZ);
+    }
+
     @Override
     public Box bounds() {
         return bounds;

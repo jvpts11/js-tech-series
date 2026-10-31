@@ -68,6 +68,8 @@ public final class StructureSync {
                         StructureSync::onEffects)
                 .playToClient(StructureForcesPayload.TYPE, StructureForcesPayload.STREAM_CODEC,
                         StructureSync::onForces)
+                .playToClient(StructureGotUpPayload.TYPE, StructureGotUpPayload.STREAM_CODEC,
+                        StructureSync::onGotUp)
                 .playToServer(StructureForcesWatchPayload.TYPE, StructureForcesWatchPayload.STREAM_CODEC,
                         StructureSync::onForcesWatch)
                 .playToServer(StructureFootingPayload.TYPE, StructureFootingPayload.STREAM_CODEC,
@@ -416,6 +418,11 @@ public final class StructureSync {
     /* Runs on a client only: the payload is only ever sent to one. */
     private static void onForces(final StructureForcesPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> StructureClientHooks.get().forces(payload));
+    }
+
+    /* Runs on a client only: the payload is only ever sent to one. */
+    private static void onGotUp(final StructureGotUpPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> StructureSeatEntity.toldGotUp(context.player(), payload));
     }
 
     private static void onForcesWatch(final StructureForcesWatchPayload payload, final IPayloadContext context) {
