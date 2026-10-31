@@ -54,11 +54,17 @@ public final class ShipAutopilotControl {
         // Loading the class declares it.
     }
 
-    /** {@code player} pressed the key: the ship whose helm they sit at goes on to its autopilot's next mode. */
+    /**
+     * {@code player} pressed the key: the ship whose helm they sit at goes on to its autopilot's next mode; docked to
+     * another ship, it lets go of it ({@link ShipDocks#undock}).
+     */
     public static void pressed(final ServerPlayer player) {
         if (!(player.getVehicle() instanceof StructureSeatEntity seat) || !seat.helm()
                 || !(seat.structure() instanceof MovingStructure ship) || !(ship.motion() instanceof ShipFlight flight)
                 || !(ship.level() instanceof ServerLevel level)) {
+            return;
+        }
+        if (ShipDocks.undock(ship)) {
             return;
         }
         MovingStructures.move(ship, flight.engaged(next(player, level, ship, flight.autopilot())));

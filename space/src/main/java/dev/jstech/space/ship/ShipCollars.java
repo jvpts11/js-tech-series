@@ -46,20 +46,31 @@ public final class ShipCollars {
 
     /** The mouth of {@code ship}'s collar in its yard; none with no collar. */
     public static Optional<Vec3> inYard(final ServerLevel level, final MovingStructure ship) {
-        final Read known = READ.get(ship);
-        if (known != null && known.bounds().equals(ship.bounds()) && known.blocks() == ship.blocks()) {
-            return known.mouth();
-        }
-        final Read read = new Read(ship.bounds(), ship.blocks(), read(level, ship.bounds()));
-        READ.put(ship, read);
-        return read.mouth();
+        return known(level, ship).mouth();
     }
 
-    private static Optional<Vec3> read(final ServerLevel level, final Box bounds) {
+    /** A block of {@code ship}'s collar, in its yard: what holds a ship docked to it; none with no collar. */
+    public static Optional<BlockPos> collarBlock(final ServerLevel level, final MovingStructure ship) {
+        return known(level, ship).block();
+    }
+
+    /* What {@code ship}'s blocks say of its collar, read again only when they change. */
+    private static Read known(final ServerLevel level, final MovingStructure ship) {
+        final Read known = READ.get(ship);
+        if (known != null && known.bounds().equals(ship.bounds()) && known.blocks() == ship.blocks()) {
+            return known;
+        }
+        final Read read = read(level, ship.bounds(), ship.blocks());
+        READ.put(ship, read);
+        return read;
+    }
+
+    private static Read read(final ServerLevel level, final Box bounds, final int blocks) {
         double x = 0;
         double z = 0;
         int top = Integer.MIN_VALUE;
         int found = 0;
+        BlockPos first = null;
         for (final BlockPos at : BlockPos.betweenClosed(bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(),
                 bounds.maxY(), bounds.maxZ())) {
             if (FormedPartBlock.originalAt(level, at, level.getBlockState(at)).is(
@@ -68,12 +79,14 @@ public final class ShipCollars {
                 z += at.getZ() + HALF;
                 top = Math.max(top, at.getY() + 1);
                 found++;
+                first = first == null ? at.immutable() : first;
             }
         }
-        return found == 0 ? Optional.empty() : Optional.of(new Vec3(x / found, top, z / found));
+        return found == 0 ? new Read(bounds, blocks, Optional.empty(), Optional.empty())
+                : new Read(bounds, blocks, Optional.of(new Vec3(x / found, top, z / found)), Optional.of(first));
     }
 
-    /* A ship's mouth as read from its blocks in {@code bounds}, {@code blocks} of them. */
-    private record Read(Box bounds, int blocks, Optional<Vec3> mouth) {
+    /* A ship's collar as read from its blocks in {@code bounds}, {@code blocks} of them: its mouth and a block. */
+    private record Read(Box bounds, int blocks, Optional<Vec3> mouth, Optional<BlockPos> block) {
     }
 }

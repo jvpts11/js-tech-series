@@ -194,6 +194,10 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         if (!(context.world() instanceof ServerLevel level) || !(context.structure() instanceof MovingStructure body)) {
             return new Step(now, this);
         }
+        if (ShipDocks.docked(body)) {
+            // Docked, it goes where the ship it is docked to goes, held where it stands on it: its own flight still.
+            return new Step(now, this);
+        }
         final StructureControls controls = body.controls();
         final long tick = level.getGameTime();
         final boolean piloted = controls.piloted(tick) && controls.live(tick);
@@ -315,6 +319,10 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final boolean stopped = this.state.speed() < LANDED_SPEED;
         final ShipAutopilots.Docking docking = ShipAutopilots.dock(new double[] {offset.x, offset.y, offset.z}, axis,
                 Math.toDegrees(off), new double[] {was.x, was.y, was.z});
+        if (docking.touching() && docking.aligned()) {
+            // Collar to collar, in line: the two are made one, its autopilot done ({@link ShipDocks}).
+            ShipDocks.join(level, body, other);
+        }
         final Vec3 drift = stopped ? new Vec3(docking.drift()[0], docking.drift()[1], docking.drift()[2]) : was;
         final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, BRAKING, air(level, now, body), running,
                 pitch);

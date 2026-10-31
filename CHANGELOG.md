@@ -2632,6 +2632,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   The HUD lights the mode engaged and draws its symbol where its target stands in the world: LAND's diamond on the
   spot, with how far off it is; ORBIT's caret on the climb ahead, with how high the climb tops out and how long till
   then; DOCK's cross on the other ship's collar, with the range, how fast it closes and, in line, ALIGNED.
+- (Space) Ships dock collar to collar: once DOCK brings a ship's collar to touch another's, in line, the two are made
+  one, the ship docking held by the other where it stands and going wherever it goes. Whoever is inside either uses
+  the collar over their head and goes through it into the other ship, standing under its collar, neither cabin's air
+  let out. The docking ship's autopilot key lets it go, set a block clear of the other and flying by its own flight.
 - (Core) A moving structure crossing to another dimension takes whoever sits on its seats along still sitting on
   them, and its pilot's hold on the controls goes with it.
 - (Core) A room among a moving structure's blocks is the room of the place of the world they fill now: whoever is

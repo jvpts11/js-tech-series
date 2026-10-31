@@ -14,12 +14,14 @@ import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.region.Box;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.space.platform.LandingPlatforms;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAutopilot;
 import dev.jstech.space.ship.ShipAutopilotControl;
 import dev.jstech.space.ship.ShipCollars;
+import dev.jstech.space.ship.ShipDocks;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
@@ -63,7 +65,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * pilot may use, and LAND flies it there and sets it down on the platform, letting go once it stands; ORBIT pitches
  * its nose up to the climb's angle, its throttle open, its console showing how high the climb tops out, and its pilot
  * taking the helm lets it go; in space its key engages DOCK with the nearest ship with a collar, and DOCK turns it to
- * face the other's collar and brings the two collars together till they touch.
+ * face the other's collar and brings the two collars together till they touch; touching, the two are made one, held
+ * collar to collar, its pilot goes through the collars into the other ship and back, and let go, it is clear of the
+ * other and flies by its own flight again.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -106,6 +110,9 @@ public final class ShipAutopilotGameTests {
     /* How near the two collars come, in blocks, and how far round the space's land is kept loaded, in chunks. */
     private static final double TOUCHING = 0.3;
     private static final int SPACE_CHUNKS = 3;
+    /* How long the two docked ships are watched, in ticks; how near under its collar one passing through stands. */
+    private static final int HELD = 20;
+    private static final double UNDER = 1.5;
     private static final ShipDesign LEGS_SHIP = new ShipDesign("JS-04", List.of(part("orbiter_cockpit"),
             part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
             part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("legs")));
@@ -248,11 +255,45 @@ public final class ShipAutopilotGameTests {
             final ShipReadings.Pilot shown = console(ours[0]).flight().pilot();
             helper.assertTrue(shown.mode().equals("dock") && shown.aligned() && shown.range() < 1, "its console"
                     + " shows the docking cross, in line: " + shown);
-            GameTestPlayers.leave(pilot[0]);
-            MovingStructures.takeAway(ours[0]);
-            MovingStructures.takeAway(theirs[0]);
-            keepSpace(helper, space, far, false);
-        }).thenSucceed();
+        }).thenWaitUntil(() -> helper.assertTrue(ShipDocks.docked(ours[0]), "collar to collar, the two are made"
+                + " one"))
+                .thenExecuteAfter(HELD, () -> {
+                    helper.assertTrue(flight(ours[0]).autopilot().isEmpty(), "docked, its autopilot is done");
+                    helper.assertTrue(ShipCollars.mouth(space, ours[0]).orElseThrow().distanceTo(ShipCollars.mouth(
+                            space, theirs[0]).orElseThrow()) < TOUCHING, "and held collar to collar");
+                    // Its pilot gets up and goes through the two collars into the other ship, and back.
+                    pilot[0].stopRiding();
+                    helper.assertTrue(ShipDocks.passThrough(pilot[0], ours[0]), "its pilot goes through the collars");
+                    helper.assertTrue(underCollar(space, theirs[0], pilot[0]), "into the other ship, under its"
+                            + " collar: " + MovingStructures.toYard(theirs[0], pilot[0].position()));
+                    helper.assertTrue(ShipDocks.passThrough(pilot[0], theirs[0]), "and back through them");
+                    helper.assertTrue(underCollar(space, ours[0], pilot[0]), "into their own ship, under its collar: "
+                            + MovingStructures.toYard(ours[0], pilot[0].position()));
+                    helper.assertTrue(ShipDocks.undock(ours[0]) && !ShipDocks.docked(ours[0]), "let go, it is its"
+                            + " own again");
+                })
+                .thenExecuteAfter(HELD, () -> {
+                    helper.assertTrue(ShipCollars.mouth(space, ours[0]).orElseThrow().distanceTo(ShipCollars.mouth(
+                            space, theirs[0]).orElseThrow()) > TOUCHING, "and clear of the other");
+                    helper.assertTrue(ours[0].motion() instanceof ShipFlight flown && flown.autopilot().isEmpty(),
+                            "flying by its own flight again: " + ours[0].motion());
+                    GameTestPlayers.leave(pilot[0]);
+                    MovingStructures.takeAway(ours[0]);
+                    MovingStructures.takeAway(theirs[0]);
+                    keepSpace(helper, space, far, false);
+                })
+                .thenSucceed();
+    }
+
+    /* Whether {@code player} stands inside {@code ship}, in its yard, under its collar. */
+    private static boolean underCollar(final ServerLevel level, final MovingStructure ship,
+                                       final ServerPlayer player) {
+        final Vec3 at = MovingStructures.toYard(ship, player.position());
+        final Vec3 mouth = ShipCollars.inYard(level, ship).orElseThrow();
+        final Box bounds = ship.bounds();
+        return at.x >= bounds.minX() && at.x <= bounds.maxX() + 1 && at.z >= bounds.minZ()
+                && at.z <= bounds.maxZ() + 1 && at.y >= bounds.minY() && at.y < mouth.y
+                && Math.hypot(at.x - mouth.x, at.z - mouth.z) < UNDER;
     }
 
     /* The dock built, a ship of {@code design} built in it and let go, {@code ship} told it once it came in. */

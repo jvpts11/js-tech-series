@@ -128,7 +128,9 @@ public final class StandingWatch {
                 ? hit.getBlockPos() : null);
         when.add("tick " + ctx.player().tickCount + " partial " + String.format(Locale.ROOT, "%.2f", partial)
                 + " ship z " + String.format(Locale.ROOT, "%.2f>%.2f", seen.previousFrame().pose().z(),
-                seen.frame().pose().z()) + " player z " + String.format(Locale.ROOT, "%.2f>%.2f", ctx.player().zo,
-                ctx.player().getZ()));
+                seen.frame().pose().z()) + " tipped " + String.format(Locale.ROOT, "%.1f", Math.toDegrees(Math.acos(
+                Math.min(1, seen.frame().turnY(0, 1, 0))))) + " yaw " + String.format(Locale.ROOT, "%.1f",
+                seen.frame().pose().yawDegrees()) + " player z " + String.format(Locale.ROOT, "%.2f>%.2f",
+                ctx.player().zo, ctx.player().getZ()));
     }
 }
