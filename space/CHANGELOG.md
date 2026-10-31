@@ -634,6 +634,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A small ship's cabin is a sealed room wherever it flies, in space too: its flight console asks for it, and
   the furniture standing in it, its seats, consoles, bunks, suit lockers and racks, lets its air round them, so its
   crew breathes it, kept warm, with the vacuum outside.
+- A ship's autopilots, changed at its helm by their key, J: LAND flies it to the nearest landing platform its
+  pilot may use and sets it down on it, high enough on its way, slowing as it nears and coming down hovering over it,
+  and lets go once it stands there; ORBIT opens its throttle, pitches its nose up to the climb's 55 degrees and boosts,
+  up and over the line into its system's space, and lets go there; DOCK, in space, turns it to face the nearest ship
+  with a docking collar, collar to collar and nose by nose, slows it, and drifts it on its thrusters till its collar
+  stands off the other's, in line with it, then closes slowly till they touch, and holds there. Its pilot taking the
+  helm, holding any of its keys, lets the autopilot go, and a ship docking rolled over rights itself as it flies on.
+  The HUD lights the mode engaged and draws its symbol where its target stands in the world: LAND's diamond on the
+  spot, with how far off it is; ORBIT's caret on the climb ahead, with how high the climb tops out and how long till
+  then; DOCK's cross on the other ship's collar, with the range, how fast it closes and, in line, ALIGNED.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

@@ -35,8 +35,12 @@ public final class ShipFlightModel {
     public static final double DOWN = 90.0;
     /** How near the land its gear comes down, in blocks. */
     public static final double GEAR_HEIGHT = 10.0;
-    /* The fastest it goes at full throttle in the air and in space, in metres a second, and boosted. */
-    private static final double CRUISE_AIR = 40.0;
+    /** The fastest it goes at full throttle in the overworld's air, in metres a second. */
+    public static final double CRUISE_AIR = 40.0;
+    /** How far its throttle opens a tick with its pilot's key held whole, and closes. */
+    public static final double OPENS = 0.025;
+    public static final double CLOSES = 0.04;
+    /* The fastest it goes at full throttle in space, in metres a second, and boosted, in the air and in space. */
     private static final double CRUISE_SPACE = 120.0;
     private static final double BOOSTED_AIR = 60.0;
     private static final double BOOSTED_SPACE = 300.0;
@@ -45,9 +49,6 @@ public final class ShipFlightModel {
     private static final double SLOWING_SPACE = 3.0;
     /* How fast feet, or a hull with no gear, stop it on the land, in metres a second squared. */
     private static final double BRAKES = 12.0;
-    /* How fast the throttle opens and closes with its pilot's keys, and closes with nobody at the helm, a tick. */
-    private static final double OPENS = 0.025;
-    private static final double CLOSES = 0.04;
     /* How fast it turns and pitches, in degrees a second, and how far its nose goes up or down. */
     private static final double TURNS = 45.0;
     private static final double PITCHES = 30.0;

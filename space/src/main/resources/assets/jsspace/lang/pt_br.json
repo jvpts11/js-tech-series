@@ -926,5 +926,11 @@
   "jsspace.ship_fixture.no_oxygen": "Não há oxigênio no ar da cabine para encher",
   "jsspace.ship_fixture.respawn_set": "Você vai acordar neste beliche",
   "jsspace.ship_fixture.no_air": "Não há ar para respirar aqui: o beliche precisa de uma cabine selada",
-  "key.jsspace.ship_boost": "Impulsionar a nave"
+  "key.jsspace.ship_boost": "Impulsionar a nave",
+  "key.jsspace.ship_autopilot": "Trocar o piloto automático da nave",
+  "jsspace.ship_hud.pad": "PLAT %s M",
+  "jsspace.ship_hud.range": "DIST %s",
+  "jsspace.ship_hud.close": "APROX %s M/S",
+  "jsspace.ship_hud.aligned": "ALINHADA",
+  "jsspace.ship_hud.apogee": "APO %s  %s"
 }

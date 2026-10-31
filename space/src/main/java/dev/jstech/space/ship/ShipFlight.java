@@ -16,6 +16,7 @@ import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.moving.IStructureMotion;
 import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureMotions;
@@ -24,6 +25,9 @@ import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
 import dev.jstech.space.rocket.SpaceAhead;
+import dev.jstech.space.universe.FarMaps;
+import dev.jstech.space.universe.SpaceClimbs;
+import dev.jstech.space.universe.SystemSpaces;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +36,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -54,9 +59,11 @@ import org.jetbrains.annotations.Nullable;
  * @param grounded whether it stood on the land the tick before
  * @param console  where its flight console stands from its pivot's block, if it has one: so wherever a yard puts its
  *                 blocks, in this dimension or another
+ * @param autopilot its autopilot engaged, if one is ({@link ShipAutopilots})
  */
 public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, ShipFlightModel.Performance ship,
-                         boolean grounded, Optional<BlockPos> console) implements IStructureMotion {
+                         boolean grounded, Optional<BlockPos> console, Optional<ShipAutopilot> autopilot)
+        implements IStructureMotion {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship_flight");
     private static final MapCodec<ShipFlightModel.State> STATE = RecordCodecBuilder.mapCodec(instance -> instance
@@ -83,7 +90,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             Codec.INT.fieldOf("nose_z").forGetter(ShipFlight::noseZ),
             PERFORMANCE.fieldOf("ship").forGetter(ShipFlight::ship),
             Codec.BOOL.optionalFieldOf("grounded", false).forGetter(ShipFlight::grounded),
-            BlockPos.CODEC.optionalFieldOf("console").forGetter(ShipFlight::console)
+            BlockPos.CODEC.optionalFieldOf("console").forGetter(ShipFlight::console),
+            ShipAutopilot.CODEC.optionalFieldOf("autopilot").forGetter(ShipFlight::autopilot)
     ).apply(instance, ShipFlight::new));
     /* The overworld's air at sea level, in kilopascals, what its air's thickness is told against. */
     private static final double SEA_PRESSURE = 101.3;
@@ -100,6 +108,19 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     private static final double HELD_EVERY = 8;
     /* How long a full load of deuterium keeps its reactor going in flight, in seconds: four hours. */
     private static final double REACTOR_LOAD_SECONDS = 4 * 3600;
+    /* What the autopilot holds docking: its throttle closing. */
+    private static final ShipFlightModel.Held BRAKING = new ShipFlightModel.Held(0, 1, 0, 0, 0, 0, false, true);
+    /* Below this, in metres a second, a ship has set down, or stopped to dock; how near its spot LAND sets it down. */
+    private static final double LANDED_SPEED = 0.5;
+    private static final double ARRIVED = 3;
+    /* How far ahead along the climb ORBIT's caret stands, in blocks. */
+    private static final double CARET_AHEAD = 60;
+    /* How fast it turns docking, and rolls back level, in degrees a second; within what of level it is left be. */
+    private static final double DOCK_TURNS = 20;
+    private static final double LEVELS = 20;
+    private static final double LEVEL_WITHIN = 0.2;
+    /* Below this, its nose straight up or down, which way is level is not told, and it is left be. */
+    private static final double UPRIGHT_NOSE = 0.05;
 
     /** Registers the rule's kind, once, from the mod's constructor. */
     public static void declare() {
@@ -112,7 +133,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
      */
     public static ShipFlight resting(final int noseX, final int noseZ, final ShipFlightModel.Performance ship,
                                      final Optional<BlockPos> console) {
-        return new ShipFlight(ShipFlightModel.State.RESTING, noseX, noseZ, ship, true, console);
+        return new ShipFlight(ShipFlightModel.State.RESTING, noseX, noseZ, ship, true, console, Optional.empty());
     }
 
     /**
@@ -155,7 +176,12 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /** Its flight as it stands, another way. */
     public ShipFlight with(final ShipFlightModel.State next) {
-        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, this.grounded, this.console);
+        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, this.grounded, this.console, this.autopilot);
+    }
+
+    /** Its flight with {@code pilot} engaged, or none. */
+    public ShipFlight engaged(final Optional<ShipAutopilot> pilot) {
+        return new ShipFlight(this.state, this.noseX, this.noseZ, this.ship, this.grounded, this.console, pilot);
     }
 
     /** Where its console stands in {@code body}'s yard now, if it has one. */
@@ -171,7 +197,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final StructureControls controls = body.controls();
         final long tick = level.getGameTime();
         final boolean piloted = controls.piloted(tick) && controls.live(tick);
-        final ShipFlightModel.Held held = !piloted ? ShipFlightModel.Held.NOBODY : new ShipFlightModel.Held(
+        final ShipFlightModel.Held helm = !piloted ? ShipFlightModel.Held.NOBODY : new ShipFlightModel.Held(
                 controls.value(StructureControls.ControlAxis.FORWARD, tick),
                 controls.value(StructureControls.ControlAxis.BACK, tick),
                 controls.value(StructureControls.ControlAxis.LEFT, tick),
@@ -181,6 +207,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final StructureFrame frame = context.frame();
         final double[] nose = nose(frame);
         final double pitch = Math.toDegrees(Math.asin(Math.clamp(nose[1], -1.0, 1.0)));
+        final double heading = heading(nose);
         // Its reactor burns its deuterium as it flies; with none left it makes nothing, its boost filling no more.
         final AirReserveEntity keeper = keeper(level, body);
         final boolean fuelled = keeper == null || (this.grounded ? keeper.deuterium() > 0
@@ -188,11 +215,58 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final ShipFlightModel.Performance running = fuelled ? this.ship : new ShipFlightModel.Performance(
                 this.ship.mass(), this.ship.airThrust(), this.ship.bellThrust(), this.ship.wing(),
                 Math.min(0, this.ship.power()), this.ship.gear());
+        // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done.
+        final Optional<ShipAutopilot> pilot = this.autopilot.filter(engaged -> !holding(helm)
+                && !done(level, now, engaged));
+        final ShipFlight self = pilot.equals(this.autopilot) ? this : engaged(pilot);
+        final int altitude = ShipAltitude.of(level, now.x(), body.worldBox().minY, now.z());
+        if (pilot.isPresent() && pilot.get().mode() == ShipAutopilot.Mode.DOCK) {
+            return self.docking(level, body, now, pilot.get(), pitch, running, keeper, altitude);
+        }
+        ShipFlightModel.Held held = helm;
+        ShipReadings.Pilot shown = ShipReadings.Pilot.NONE;
+        if (pilot.isPresent() && pilot.get().mode() == ShipAutopilot.Mode.LAND) {
+            final Vec3 spot = pilot.get().spot().orElseThrow();
+            held = ShipAutopilots.land(this.state, heading, pitch, spot.x - now.x(), spot.y - body.worldBox().minY,
+                    spot.z - now.z());
+            shown = ShipReadings.Pilot.of(ShipAutopilot.Mode.LAND, spot, Math.hypot(spot.x - now.x(),
+                    spot.z - now.z()), this.state.speed(), false, 0, 0);
+        } else if (pilot.isPresent()) {
+            held = ShipAutopilots.orbit(this.state, pitch);
+            shown = climbing(level, now, nose, altitude, this.state.speed() * nose[1]);
+        }
         final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, held, air(level, now, body), running,
                 pitch);
         if (keeper != null) {
-            keeper.flew(ShipReadings.of(next, ShipAltitude.of(level, now.x(), body.worldBox().minY, now.z())));
+            keeper.flew(ShipReadings.of(next, altitude, shown));
         }
+        return self.flownOn(level, body, now, frame, next);
+    }
+
+    /** Which way {@code nose} points, in degrees east of north, as a compass reads it. */
+    public static double heading(final double[] nose) {
+        return Math.floorMod(Math.round(Math.toDegrees(Math.atan2(nose[0], -nose[2])) * 1000), 360_000) / 1000.0;
+    }
+
+    /** Which way its nose points in the world, standing as {@code frame}, as a unit vector. */
+    public double[] noseIn(final StructureFrame frame) {
+        return nose(frame);
+    }
+
+    @Override
+    public ResourceLocation type() {
+        return TYPE;
+    }
+
+    /* The rule reads its pilot's controls, which only the structure itself holds, and the land and air round it. */
+    @Override
+    public boolean readsWorld() {
+        return true;
+    }
+
+    /* Its tick on from {@code now}, as {@code next} turns, pitches and flies it, the land ahead loaded first. */
+    private Step flownOn(final ServerLevel level, final MovingStructure body, final StructurePose now,
+                         final StructureFrame frame, final ShipFlightModel.Tick next) {
         StructurePose turned = next.turn() == 0 ? now : now.turnedBy(0, 1, 0, Math.toRadians(next.turn()));
         if (next.pitch() != 0) {
             final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
@@ -201,6 +275,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 turned = turned.turnedBy(-way[2] / across, 0, way[0] / across, Math.toRadians(next.pitch()));
             }
         }
+        turned = levelled(turned, frame);
         final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
         final double ahead = next.state().speed() * ShipFlightModel.TICK;
         final double up = (next.state().rise() - next.state().sink()) * ShipFlightModel.TICK;
@@ -214,15 +289,126 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         return flown(level, body, now, turned, way[0] * ahead, way[1] * ahead + up, way[2] * ahead, next.state());
     }
 
-    @Override
-    public ResourceLocation type() {
-        return TYPE;
+    /*
+     * A tick of DOCK: its throttle closed, it slows along its nose; stopped, it drifts on its thrusters till its
+     * collar stands off the other ship's, in line with it, then closes till they touch, and holds there, turning all
+     * the while to face the other's collar, collar to collar, nose by nose; the other gone, or either with no collar,
+     * it lets the autopilot go.
+     */
+    private Step docking(final ServerLevel level, final MovingStructure body, final StructurePose now,
+                         final ShipAutopilot pilot, final double pitch, final ShipFlightModel.Performance running,
+                         final @Nullable AirReserveEntity keeper, final int altitude) {
+        final MovingStructure other = pilot.other().map(id -> MovingStructures.byId(level, id)).orElse(null);
+        final Optional<Vec3> ours = ShipCollars.mouth(level, body);
+        final Optional<Vec3> theirs = other == null || !(other.motion() instanceof ShipFlight)
+                ? Optional.empty() : ShipCollars.mouth(level, other);
+        if (ours.isEmpty() || theirs.isEmpty()) {
+            return new Step(now, engaged(Optional.empty()));
+        }
+        final ShipFlight them = (ShipFlight) other.motion();
+        final StructureFrame their = other.frame();
+        final double[] axis = {their.turnX(0, 1, 0), their.turnY(0, 1, 0), their.turnZ(0, 1, 0)};
+        final StructurePose facing = facing(now, them, their);
+        final double off = now.angleTo(facing);
+        final Vec3 offset = theirs.get().subtract(ours.get());
+        final Vec3 was = pilot.drift();
+        final boolean stopped = this.state.speed() < LANDED_SPEED;
+        final ShipAutopilots.Docking docking = ShipAutopilots.dock(new double[] {offset.x, offset.y, offset.z}, axis,
+                Math.toDegrees(off), new double[] {was.x, was.y, was.z});
+        final Vec3 drift = stopped ? new Vec3(docking.drift()[0], docking.drift()[1], docking.drift()[2]) : was;
+        final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, BRAKING, air(level, now, body), running,
+                pitch);
+        if (keeper != null) {
+            final double closing = offset.length() < STILL ? 0 : drift.dot(offset.normalize());
+            keeper.flew(ShipReadings.of(next, altitude, ShipReadings.Pilot.of(ShipAutopilot.Mode.DOCK,
+                    theirs.get(), offset.length(), closing, docking.aligned(), 0, 0)));
+        }
+        final StructurePose turned = off < STILL ? now
+                : StructurePose.between(now, facing, Math.min(1, Math.toRadians(DOCK_TURNS) * ShipFlightModel.TICK
+                / off));
+        final double[] nose = nose(frameOf(body, now));
+        final double ahead = next.state().speed() * ShipFlightModel.TICK;
+        final StructurePose moved = turned.movedTo(now.x() + nose[0] * ahead + drift.x * ShipFlightModel.TICK,
+                now.y() + nose[1] * ahead + drift.y * ShipFlightModel.TICK,
+                now.z() + nose[2] * ahead + drift.z * ShipFlightModel.TICK);
+        return engaged(Optional.of(pilot.drifting(drift))).still(now, moved, next.state(), false);
     }
 
-    /* The rule reads its pilot's controls, which only the structure itself holds, and the land and air round it. */
-    @Override
-    public boolean readsWorld() {
-        return true;
+    /*
+     * How it stands, where it stands {@code now}, facing {@code them}, standing as {@code their}: its collar's top
+     * turned to the other's, so the two face each other, and its nose the way the other's points.
+     */
+    private StructurePose facing(final StructurePose now, final ShipFlight them, final StructureFrame their) {
+        final double yaw = Math.atan2(them.noseX, them.noseZ) - Math.atan2(this.noseX, this.noseZ);
+        final StructurePose over = StructurePose.turned(now.x(), now.y(), now.z(), 0, 1, 0, yaw)
+                .then(StructurePose.turned(0, 0, 0, them.noseX, 0, them.noseZ, Math.PI));
+        final StructurePose at = their.pose();
+        return over.then(new StructurePose(0, 0, 0, at.qx(), at.qy(), at.qz(), at.qw()));
+    }
+
+    /*
+     * Its flight turned {@code turned}, rolled back towards level about its nose: only docking rolls it, and once it
+     * flies on its own it comes back upright, as a pilot rights a ship before setting it down.
+     */
+    private StructurePose levelled(final StructurePose turned, final StructureFrame frame) {
+        final StructureFrame at = new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ());
+        final double[] n = nose(at);
+        final double[] level = {-n[1] * n[0], 1 - n[1] * n[1], -n[1] * n[2]};
+        final double length = Math.sqrt(level[0] * level[0] + level[1] * level[1] + level[2] * level[2]);
+        if (length < UPRIGHT_NOSE) {
+            return turned;
+        }
+        final double ux = at.turnX(0, 1, 0);
+        final double uy = at.turnY(0, 1, 0);
+        final double uz = at.turnZ(0, 1, 0);
+        final double lx = level[0] / length;
+        final double ly = level[1] / length;
+        final double lz = level[2] / length;
+        final double sin = (uy * lz - uz * ly) * n[0] + (uz * lx - ux * lz) * n[1] + (ux * ly - uy * lx) * n[2];
+        final double roll = Math.atan2(sin, ux * lx + uy * ly + uz * lz);
+        if (Math.abs(roll) < Math.toRadians(LEVEL_WITHIN)) {
+            return turned;
+        }
+        final double by = Math.copySign(Math.min(Math.abs(roll), Math.toRadians(LEVELS) * ShipFlightModel.TICK),
+                roll);
+        return turned.turnedBy(n[0], n[1], n[2], by);
+    }
+
+    /*
+     * Whether the autopilot {@code pilot} is done, the ship standing at {@code now}: LAND set down on its spot, not
+     * only on the land, as it stood before it took off; ORBIT over the line in space.
+     */
+    private boolean done(final ServerLevel level, final StructurePose now, final ShipAutopilot pilot) {
+        return switch (pilot.mode()) {
+            case LAND -> this.grounded && this.state.speed() < LANDED_SPEED && pilot.spot().map(spot -> Math.hypot(
+                    spot.x - now.x(), spot.z - now.z()) <= ARRIVED).orElse(true);
+            case ORBIT -> SystemSpaces.systemOf(level.dimension()).isPresent();
+            case DOCK -> false;
+        };
+    }
+
+    /*
+     * What ORBIT shows: its caret on the climb ahead, how high the climb tops out over the sea, where its world
+     * becomes its space, and how long till then at the rate it climbs.
+     */
+    private static ShipReadings.Pilot climbing(final ServerLevel level, final StructurePose now, final double[] nose,
+                                               final int altitude, final double climb) {
+        final double across = Math.hypot(nose[0], nose[2]);
+        final double up = Math.sin(Math.toRadians(ShipAutopilots.CLIMB_PITCH));
+        final double flat = Math.cos(Math.toRadians(ShipAutopilots.CLIMB_PITCH));
+        final Vec3 ahead = across < STILL ? new Vec3(now.x(), now.y() + CARET_AHEAD, now.z()) : new Vec3(now.x()
+                + nose[0] / across * flat * CARET_AHEAD, now.y() + up * CARET_AHEAD, now.z() + nose[2] / across
+                * flat * CARET_AHEAD);
+        final int apogee = SpaceClimbs.ceiling(level) - FarMaps.seaOf(level);
+        final int seconds = climb > STILL && altitude != ShipAltitude.NONE
+                ? (int) Math.round(Math.max(0, apogee - altitude) / climb) : 0;
+        return ShipReadings.Pilot.of(ShipAutopilot.Mode.ORBIT, ahead, 0, climb, false, apogee, seconds);
+    }
+
+    /* Whether its pilot holds any of the helm's keys, taking the helm back from the autopilot. */
+    private static boolean holding(final ShipFlightModel.Held held) {
+        return held.forward() > 0 || held.back() > 0 || held.left() > 0 || held.right() > 0 || held.up() > 0
+                || held.down() > 0 || held.boost();
     }
 
     /*
@@ -267,7 +453,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /* Its flight standing as {@code next}, on the land or not. */
     private ShipFlight flying(final ShipFlightModel.State next, final boolean landed) {
-        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, landed, this.console);
+        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, landed, this.console, this.autopilot);
     }
 
     /* Its console, which shows its flight and keeps its reactor's deuterium, where its yard's land is loaded. */

@@ -8,6 +8,7 @@
 package dev.jstech.space.network;
 
 import dev.jstech.space.life.SuitControls;
+import dev.jstech.space.ship.ShipAutopilotControl;
 import dev.jstech.space.ship.ShipBoost;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
@@ -60,6 +61,12 @@ public final class SpacePayloads {
                     (payload, context) -> context.enqueueWork(() -> {
                         if (context.player() instanceof ServerPlayer player) {
                             ShipBoost.told(player, payload.held());
+                        }
+                    }));
+            registrar.playToServer(ShipAutopilotPayload.TYPE, ShipAutopilotPayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> {
+                        if (context.player() instanceof ServerPlayer player) {
+                            ShipAutopilotControl.pressed(player);
                         }
                     }));
         });

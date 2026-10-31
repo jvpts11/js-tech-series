@@ -51,6 +51,7 @@ import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.rocket.StageFlights;
 import dev.jstech.space.rocket.StageLanding;
 import dev.jstech.space.network.SpacePayloads;
+import dev.jstech.space.ship.ShipAutopilotControl;
 import dev.jstech.space.ship.ShipBoost;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipFlight;
@@ -192,6 +193,7 @@ public final class JsSpace {
         ShipShapes.declare();
         ShipFlight.declare();
         ShipBoost.declare();
+        ShipAutopilotControl.declare();
         // The Small Shipyard, the dry dock a small starship is built in: its shape, its blocks and its formed model.
         ShipyardStructure.declare();
         ShipyardBlocks.declare();

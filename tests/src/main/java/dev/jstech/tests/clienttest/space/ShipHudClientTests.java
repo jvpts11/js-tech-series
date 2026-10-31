@@ -9,9 +9,13 @@ package dev.jstech.tests.clienttest.space;
 
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.space.client.ship.ShipHud;
+import dev.jstech.space.ship.AirReserveEntity;
+import dev.jstech.space.ship.ShipAutopilot;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
@@ -23,6 +27,7 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import dev.jstech.testkit.client.ClientTestHelper;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.client.CameraType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,12 +36,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A ship's HUD on a player's game, as the approved flight draws it: projected on the canopy for the pilot at its helm,
  * in green, its speed boxed on the left and its heading's mark across the top; seen from behind the ship it spreads
- * over the screen; up from the helm, it is gone.
+ * over the screen; up from the helm, it is gone. The autopilot engaged, its mode is lit along the bottom and its
+ * symbol stands where its target falls on the screen: ORBIT's caret on the climb ahead, LAND's diamond on its spot.
  */
 public final class ShipHudClientTests {
 
@@ -63,6 +72,17 @@ public final class ShipHudClientTests {
     private static final int[] SEAT_SPEED = {306, 182};
     private static final int[] BEHIND_SPEED = {106, 272};
     private static final int[] SEAT_HEADING = {480, 54};
+    /* Inside the boxes of LAND and ORBIT along the bottom seen from the seat, under their words, clear of the frame. */
+    private static final int[] SEAT_LAND = {420, 322};
+    private static final int[] SEAT_ORBIT = {470, 322};
+    /*
+     * Dots of the autopilot's symbols, from their middles, all but one of which are drawn, the screen's pixels not
+     * always falling on every one: the climb's caret, a chevron over its line; the landing spot's diamond.
+     */
+    private static final int[][] CARET = {{-4, -5}, {4, -5}, {-6, -7}, {6, -7}};
+    private static final int[][] DIAMOND = {{-4, -5}, {4, -5}, {-4, 5}, {4, 5}};
+    /* How far ahead of the ship the spot LAND is sent to stands, in blocks. */
+    private static final int LAND_AHEAD = 50;
     /* What reads as the HUD's green: its green high, its blue middling, its red low. */
     private static final int GREEN_AT_LEAST = 200;
     private static final int BLUE_AT_LEAST = 110;
@@ -77,10 +97,62 @@ public final class ShipHudClientTests {
 
     @ClientTest(timeoutTicks = 2400)
     public static void hud_onTheCanopyAtTheHelmOverTheScreenFromBehindAndGoneUpFromIt(final ClientTestContext ctx) {
+        atTheHelm(ctx, new MovingStructure[1])
+                .then(0, () -> ctx.mc().options.setCameraType(CameraType.FIRST_PERSON))
+                .thenWaitUntil(() -> green(ctx, SEAT_SPEED) && green(ctx, SEAT_HEADING), ARRIVE,
+                        "the HUD on the canopy: the speed's box and the heading's mark in green")
+                .thenScreenshot(SETTLE, "ship-hud")
+                .then(0, () -> ctx.mc().options.setCameraType(CameraType.THIRD_PERSON_BACK))
+                .thenWaitUntil(() -> green(ctx, BEHIND_SPEED), ARRIVE,
+                        "from behind the ship, the HUD spread over the screen")
+                .thenScreenshot(SETTLE, "ship-hud-behind")
+                .then(0, () -> ctx.mc().options.setCameraType(CameraType.FIRST_PERSON))
+                .thenServer(0, level -> ctx.serverPlayer().stopRiding())
+                .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,
+                        "the player to get up from the helm on their game")
+                .then(SETTLE, () -> ctx.assertTrue(!green(ctx, SEAT_SPEED) && !green(ctx, SEAT_HEADING),
+                        "up from the helm, the HUD is gone"));
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void hud_theEngagedAutopilotIsLitAndItsSymbolStandsOnItsTarget(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        atTheHelm(ctx, ship)
+                .then(0, () -> ctx.mc().options.setCameraType(CameraType.FIRST_PERSON))
+                .thenWaitUntil(() -> green(ctx, SEAT_SPEED), ARRIVE, "the HUD on the canopy")
+                .then(0, () -> ctx.assertTrue(!green(ctx, SEAT_ORBIT), "no autopilot engaged, ORBIT is not lit"))
+                .thenServer(0, level -> MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).engaged(
+                        Optional.of(ShipAutopilot.orbit()))))
+                .thenWaitUntil(() -> engaged(ctx).equals("orbit"), ARRIVE, "its console to show ORBIT on the"
+                        + " player's game")
+                // The pilot looks at the climb ahead, where ORBIT's caret stands.
+                .thenWaitUntil(() -> look(ctx) && green(ctx, SEAT_ORBIT) && !green(ctx, SEAT_LAND)
+                        && symbol(ctx, CARET), ARRIVE, "ORBIT lit along the bottom, LAND not, and the climb's caret"
+                        + " on the climb ahead")
+                .thenScreenshot(SETTLE, "ship-hud-orbit")
+                // LAND onto a spot on the land ahead of it.
+                .thenServer(0, level -> {
+                    final StructurePose at = ship[0].pose();
+                    final BlockPos ground = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING,
+                            BlockPos.containing(at.x(), at.y(), at.z() - LAND_AHEAD));
+                    MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).engaged(Optional.of(
+                            ShipAutopilot.land(Vec3.atBottomCenterOf(ground)))));
+                })
+                .thenWaitUntil(() -> engaged(ctx).equals("land"), ARRIVE, "its console to show LAND")
+                .thenWaitUntil(() -> look(ctx) && green(ctx, SEAT_LAND) && !green(ctx, SEAT_ORBIT)
+                        && symbol(ctx, DIAMOND), ARRIVE, "LAND lit, ORBIT not, and the diamond on the spot it sets"
+                        + " down on")
+                .thenScreenshot(SETTLE, "ship-hud-land");
+    }
+
+    /*
+     * The dock built where the test stands, a ship built in it and let go, {@code ship} told it, taken up and flying
+     * on at a cruise, the player at its helm.
+     */
+    private static ClientTestContext atTheHelm(final ClientTestContext ctx, final MovingStructure[] ship) {
         final ServerLevel[] built = new ServerLevel[1];
         final BlockPos[] terminal = new BlockPos[1];
         final PlannedBuild[] plan = new PlannedBuild[1];
-        final MovingStructure[] ship = new MovingStructure[1];
         ctx.afterTest(() -> {
             ctx.mc().options.setCameraType(CameraType.FIRST_PERSON);
             ctx.server().execute(() -> {
@@ -94,7 +166,7 @@ public final class ShipHudClientTests {
                 ctx.serverPlayer().setGameMode(GameType.CREATIVE);
             });
         });
-        ctx.thenServer(0, level -> {
+        return ctx.thenServer(0, level -> {
             built[0] = level;
             clear(ctx, level);
             terminal[0] = TestShipyards.build(level, ctx.abs(CORNER));
@@ -127,21 +199,63 @@ public final class ShipHudClientTests {
                     ctx.assertTrue(MovingStructures.sit(ctx.serverPlayer(), seat), "the player sits at its helm");
                 })
                 .thenWaitUntil(() -> ctx.player().getVehicle() instanceof StructureSeatEntity, ARRIVE,
-                        "the player to sit at its helm on their game")
-                .then(0, () -> ctx.mc().options.setCameraType(CameraType.FIRST_PERSON))
-                .thenWaitUntil(() -> green(ctx, SEAT_SPEED) && green(ctx, SEAT_HEADING), ARRIVE,
-                        "the HUD on the canopy: the speed's box and the heading's mark in green")
-                .thenScreenshot(SETTLE, "ship-hud")
-                .then(0, () -> ctx.mc().options.setCameraType(CameraType.THIRD_PERSON_BACK))
-                .thenWaitUntil(() -> green(ctx, BEHIND_SPEED), ARRIVE,
-                        "from behind the ship, the HUD spread over the screen")
-                .thenScreenshot(SETTLE, "ship-hud-behind")
-                .then(0, () -> ctx.mc().options.setCameraType(CameraType.FIRST_PERSON))
-                .thenServer(0, level -> ctx.serverPlayer().stopRiding())
-                .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,
-                        "the player to get up from the helm on their game")
-                .then(SETTLE, () -> ctx.assertTrue(!green(ctx, SEAT_SPEED) && !green(ctx, SEAT_HEADING),
-                        "up from the helm, the HUD is gone"));
+                        "the player to sit at its helm on their game");
+    }
+
+    /* The mode the console of the ship whose helm the player sits at shows engaged, by its name; empty with none. */
+    private static String engaged(final ClientTestContext ctx) {
+        final AirReserveEntity console = ShipHud.atTheHelm(ctx.mc());
+        return console == null ? "" : console.flight().pilot().mode();
+    }
+
+    /* Where the engaged autopilot's symbol stands, as the console the player sits at shows it; none away from it. */
+    private static @Nullable Vec3 target(final ClientTestContext ctx) {
+        final AirReserveEntity console = ShipHud.atTheHelm(ctx.mc());
+        return console == null ? null : console.flight().pilot().target();
+    }
+
+    /* Turns the player's look to the autopilot's target, from their eyes; whether there is one. */
+    private static boolean look(final ClientTestContext ctx) {
+        final Vec3 target = target(ctx);
+        if (target == null) {
+            return false;
+        }
+        final Vec3 way = target.subtract(ctx.player().getEyePosition());
+        final float yaw = (float) Math.toDegrees(Math.atan2(-way.x, way.z));
+        final float pitch = (float) -Math.toDegrees(Math.atan2(way.y, Math.hypot(way.x, way.z)));
+        ctx.player().setYRot(yaw);
+        ctx.player().yRotO = yaw;
+        ctx.player().setXRot(pitch);
+        ctx.player().xRotO = pitch;
+        return true;
+    }
+
+    /*
+     * Whether the engaged mode's symbol is drawn where its target falls on the screen: the dots {@code dots} of it,
+     * from its middle, in the approved screen's points, in the HUD's green, each within a point of where it falls.
+     */
+    private static boolean symbol(final ClientTestContext ctx, final int[][] dots) {
+        final Vec3 target = target(ctx);
+        final Vec2 at = target == null ? null : ShipHud.onScreen(target);
+        if (at == null) {
+            return false;
+        }
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        final double scale = Math.min(width / (double) SCREEN_WIDTH, height / (double) SCREEN_HEIGHT);
+        final int tx = (int) ((at.x - (width - SCREEN_WIDTH * scale) / 2) / scale);
+        final int ty = (int) ((at.y - (height - SCREEN_HEIGHT * scale) / 2) / scale);
+        int lit = 0;
+        for (final int[] dot : dots) {
+            boolean near = false;
+            for (int dx = -1; dx <= 1 && !near; dx++) {
+                for (int dy = -1; dy <= 1 && !near; dy++) {
+                    near = green(ctx, new int[] {tx + dot[0] + dx, ty + dot[1] + dy});
+                }
+            }
+            lit += near ? 1 : 0;
+        }
+        return lit >= dots.length - 1;
     }
 
     /* Whether the screen at the approved screen's point {@code at}, as the HUD is scaled, is the HUD's green. */
@@ -151,6 +265,10 @@ public final class ShipHudClientTests {
         final double scale = Math.min(width / (double) SCREEN_WIDTH, height / (double) SCREEN_HEIGHT);
         final int x = (int) Math.round((width - SCREEN_WIDTH * scale) / 2 + at[0] * scale);
         final int y = (int) Math.round((height - SCREEN_HEIGHT * scale) / 2 + at[1] * scale);
+        if (x < 0 || y < 0 || x >= width || y >= height) {
+            // Off the screen, as a symbol whose target the last frame drew behind the player's look is.
+            return false;
+        }
         try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
             final int argb = frame.pixel(x, y);
             final int red = argb >> 16 & CHANNEL;

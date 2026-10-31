@@ -23,30 +23,38 @@ import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAboard;
 import dev.jstech.space.ship.ShipAltitude;
+import dev.jstech.space.ship.ShipAutopilot;
 import dev.jstech.space.ship.ShipHudTexts;
 import dev.jstech.space.ship.ShipReadings;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Vector4f;
 
 /**
  * A ship's HUD, as the approved flight draws it: green symbols projected on its canopy for the pilot at its helm, flat
  * and in pixels. The heading tape across the top; the pitch ladder with the flight path marker in the middle; the speed
  * and the boost's bar on the left, amber while it boosts; the altitude and the climb on the right; the reactor's power
  * and its deuterium above; the nozzles' angle and the gear below, amber with the gear down; and the autopilot's three
- * modes along the bottom. Laid out on the approved screen's 960 by 540 points, scaled to the player's; seen from behind
- * the ship it spreads over the screen.
+ * modes along the bottom, the one engaged lit, its own symbol standing on its target in the world. Laid out on the
+ * approved screen's 960 by 540 points, scaled to the player's; seen from behind the ship it spreads over the screen.
  */
 public final class ShipHud {
 
@@ -74,10 +82,15 @@ public final class ShipHud {
     private static final int SCALE_STEP = 12;
     private static final int BOOST_CELLS = 10;
     /* The autopilot's modes, and how far apart they stand. */
-    private static final List<TextKey> MODES = List.of(ShipHudTexts.LAND, ShipHudTexts.ORBIT, ShipHudTexts.DOCK);
+    private static final Map<ShipAutopilot.Mode, TextKey> MODES = new EnumMap<>(Map.of(
+            ShipAutopilot.Mode.LAND, ShipHudTexts.LAND, ShipAutopilot.Mode.ORBIT, ShipHudTexts.ORBIT,
+            ShipAutopilot.Mode.DOCK, ShipHudTexts.DOCK));
     private static final int MODE_STEP = 50;
     private static final double WATTS_A_MEGAWATT = 1.0e6;
     private static final int PERCENT = 100;
+    private static final int THOUSAND = 1000;
+    /* How the last frame drew the world, for the autopilot's symbol; none before one was drawn. */
+    private static @Nullable Seen seen;
 
     private ShipHud() {
     }
@@ -94,6 +107,34 @@ public final class ShipHud {
                 event.setCanceled(true);
             }
         });
+        // The autopilot's symbol stands on a place of the world: the frame's own view finds it on the screen.
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, event -> {
+            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
+                seen = new Seen(new Matrix4f(event.getModelViewMatrix()), new Matrix4f(event.getProjectionMatrix()),
+                        event.getCamera().getPosition());
+            }
+        });
+    }
+
+    /**
+     * Where the world's {@code point} falls on the screen, in the screen's scaled pixels, as the last frame drew the
+     * world: none before a frame was drawn, or behind the camera.
+     */
+    public static @Nullable Vec2 onScreen(final Vec3 point) {
+        final Seen last = seen;
+        if (last == null) {
+            return null;
+        }
+        final Vector4f at = new Vector4f((float) (point.x - last.eye().x), (float) (point.y - last.eye().y),
+                (float) (point.z - last.eye().z), 1.0F);
+        last.view().transform(at);
+        last.projection().transform(at);
+        if (at.w <= 0) {
+            return null;
+        }
+        final Minecraft minecraft = Minecraft.getInstance();
+        return new Vec2((at.x / at.w + 1) / 2 * minecraft.getWindow().getGuiScaledWidth(),
+                (1 - at.y / at.w) / 2 * minecraft.getWindow().getGuiScaledHeight());
     }
 
     /** The console of the ship whose helm the player sits at, or none. */
@@ -123,17 +164,30 @@ public final class ShipHud {
             return;
         }
         final float scale = Math.min(g.guiWidth() / WIDTH, g.guiHeight() / HEIGHT);
+        final float left = (g.guiWidth() - WIDTH * scale) / 2;
+        final float top = (g.guiHeight() - HEIGHT * scale) / 2;
         g.pose().pushPose();
-        g.pose().translate((g.guiWidth() - WIDTH * scale) / 2, (g.guiHeight() - HEIGHT * scale) / 2, 0);
+        g.pose().translate(left, top, 0);
         g.pose().scale(scale, scale, 1);
         final Box box = minecraft.options.getCameraType().isFirstPerson() ? SEAT : BEHIND;
-        new Painter(g, minecraft.font, box, ShipHudArt.PALETTE.get()).paint(Flown.of(minecraft, console, ship,
-                structure.frame()));
+        final Flown flown = Flown.of(minecraft, console, ship, structure.frame());
+        final ShipReadings.Pilot pilot = flown.readings().pilot();
+        final Vec2 target = pilot.mode().isEmpty() ? null : onScreen(pilot.target());
+        new Painter(g, minecraft.font, box, ShipHudArt.PALETTE.get()).paint(flown, target == null ? null
+                : new Vec2((target.x - left) / scale, (target.y - top) / scale));
         g.pose().popPose();
     }
 
     /* The box on the approved screen the HUD is projected in, in points. */
     private record Box(int x0, int y0, int x1, int y1) {
+
+        boolean holds(final Vec2 point) {
+            return point.x >= x0 && point.x <= x1 && point.y >= y0 && point.y <= y1;
+        }
+    }
+
+    /* How the last frame drew the world: its view, its projection, and where its eye stood. */
+    private record Seen(Matrix4f view, Matrix4f projection, Vec3 eye) {
     }
 
     /*
@@ -189,7 +243,7 @@ public final class ShipHud {
     /* Paints the HUD in its box, in the approved screen's points, as the approved flight's own drawing lays it. */
     private record Painter(GuiGraphics g, Font font, Box box, ShipHudArt.Colours colours) {
 
-        void paint(final Flown flown) {
+        void paint(final Flown flown, final @Nullable Vec2 target) {
             final int cx = (box.x0() + box.x1()) / 2;
             final int cy = (box.y0() + box.y1()) / 2 + 10;
             tape(flown.heading(), cx);
@@ -198,7 +252,62 @@ public final class ShipHud {
             speed(flown.readings(), cy);
             altitude(flown, cy);
             corners(flown);
-            modes(cx);
+            final ShipReadings.Pilot pilot = flown.readings().pilot();
+            modes(cx, pilot.mode());
+            if (target != null && box.holds(target)) {
+                symbol(pilot, (int) target.x, (int) target.y);
+            }
+        }
+
+        /*
+         * The engaged mode's own symbol where its target is: LAND's diamond on the landing spot with how far off it
+         * is; ORBIT's caret on the climb ahead with how high it tops out and how long till then; DOCK's cross on the
+         * other's collar, with how far off it is, how fast it closes and, in line, ALIGNED.
+         */
+        private void symbol(final ShipReadings.Pilot pilot, final int tx, final int ty) {
+            final int c = colours.symbol();
+            switch (pilot.mode()) {
+                case "land" -> {
+                    for (int k = 0; k < 9; k++) {
+                        dot(tx - k, ty - 9 + k, c);
+                        dot(tx + k, ty - 9 + k, c);
+                        dot(tx - k, ty + 9 - k, c);
+                        dot(tx + k, ty + 9 - k, c);
+                    }
+                    small(GameText.resolve(ShipHudTexts.PAD.with(Text.literal(Long.toString(Math.round(
+                            pilot.range()))))), tx + 14, ty - 4, c, Align.LEFT);
+                }
+                case "dock" -> {
+                    for (final int r : new int[] {10, 18}) {
+                        for (int a = 0; a < 360; a += 8) {
+                            dot((int) (tx + r * Math.cos(Math.toRadians(a))), (int) (ty + r * Math.sin(
+                                    Math.toRadians(a))), c);
+                        }
+                    }
+                    hline(tx - 26, tx - 12, ty, c);
+                    hline(tx + 13, tx + 27, ty, c);
+                    vline(tx, ty - 26, ty - 12, c);
+                    vline(tx, ty + 13, ty + 27, c);
+                    small(GameText.resolve(ShipHudTexts.RANGE.with(Text.literal(tenths(pilot.range())))), tx + 30,
+                            ty - 12, c, Align.LEFT);
+                    small(GameText.resolve(ShipHudTexts.CLOSE.with(Text.literal(tenths(pilot.closing())))), tx + 30,
+                            ty - 2, c, Align.LEFT);
+                    if (pilot.aligned()) {
+                        small(GameText.resolve(ShipHudTexts.ALIGNED), tx + 30, ty + 8, colours.hot(), Align.LEFT);
+                    }
+                }
+                case "orbit" -> {
+                    hline(tx - 10, tx + 11, ty, c);
+                    for (int k = 0; k < 7; k++) {
+                        dot(tx - k, ty - k - 1, c);
+                        dot(tx + k, ty - k - 1, c);
+                    }
+                    small(GameText.resolve(ShipHudTexts.APOGEE.with(Text.literal(metres(pilot.apogee())),
+                            Text.literal(clock(pilot.seconds())))), tx + 16, ty - 4, c, Align.LEFT);
+                }
+                default -> {
+                }
+            }
         }
 
         /* The heading tape across the top, a tick each five degrees, a figure each ten, and the nose's mark. */
@@ -322,16 +431,22 @@ public final class ShipHud {
                     down ? colours.hot() : colours.symbol(), Align.LEFT);
         }
 
-        /* The autopilot's three modes along the bottom, none engaged: each mode's own flight lights its word. */
-        private void modes(final int cx) {
+        /* The autopilot's three modes along the bottom, the one engaged, {@code engaged} by its name, lit. */
+        private void modes(final int cx, final String engaged) {
             final int mx = cx - 70;
             small(GameText.resolve(ShipHudTexts.AUTOPILOT), mx - 18, box.y1() - 15, colours.dim(), Align.LEFT);
-            for (int k = 0; k < MODES.size(); k++) {
-                final String mode = GameText.resolve(MODES.get(k));
+            int k = 0;
+            for (final Map.Entry<ShipAutopilot.Mode, TextKey> each : MODES.entrySet()) {
+                final String mode = GameText.resolve(each.getValue());
                 final int w = Math.round(font.width(mode) * SMALL) + 8;
-                final int bx = mx + k * MODE_STEP;
-                frame(bx, box.y1() - 18, bx + w, box.y1() - 6, colours.dim());
-                small(mode, bx + 4, box.y1() - 16, colours.dim(), Align.LEFT);
+                final int bx = mx + k++ * MODE_STEP;
+                if (each.getKey().serializedName().equals(engaged)) {
+                    fill(bx, box.y1() - 18, bx + w, box.y1() - 6, colours.symbol());
+                    small(mode, bx + 4, box.y1() - 16, colours.lit(), Align.LEFT);
+                } else {
+                    frame(bx, box.y1() - 18, bx + w, box.y1() - 6, colours.dim());
+                    small(mode, bx + 4, box.y1() - 16, colours.dim(), Align.LEFT);
+                }
             }
         }
 
@@ -347,6 +462,22 @@ public final class ShipHud {
 
         private static String megawatts(final double watts) {
             return Long.toString(Math.round(watts / WATTS_A_MEGAWATT));
+        }
+
+        /* A figure to a tenth, as the docking cross reads it. */
+        private static String tenths(final double value) {
+            return String.format(Locale.ROOT, "%.1f", value);
+        }
+
+        /* A height as the climb's caret reads it: in metres, or in thousands of them from a thousand. */
+        private static String metres(final int metres) {
+            return metres < THOUSAND ? Integer.toString(metres)
+                    : String.format(Locale.ROOT, "%.1fK", metres / (double) THOUSAND);
+        }
+
+        /* A time in minutes and seconds. */
+        private static String clock(final int seconds) {
+            return String.format(Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60);
         }
 
         private void small(final String text, final int x, final int y, final int colour, final Align align) {

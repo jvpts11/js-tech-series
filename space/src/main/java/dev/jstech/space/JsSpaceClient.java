@@ -28,6 +28,7 @@ import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.ship.FlightConsoleRenderer;
+import dev.jstech.space.client.ship.ShipAutopilotClient;
 import dev.jstech.space.client.ship.ShipBoostClient;
 import dev.jstech.space.client.ship.ShipChaseCamera;
 import dev.jstech.space.client.ship.ShipExhaust;
@@ -77,6 +78,7 @@ public final class JsSpaceClient {
         // A ship that has left its dock, drawn from its flight console wherever it goes, and its boost's key.
         FlightConsoleRenderer.listen(modEventBus);
         ShipBoostClient.listen();
+        ShipAutopilotClient.listen();
         ShipExhaust.listen();
         // The HUD on its canopy, for the pilot at its helm, and the camera behind it in the third person.
         ShipHud.listen(modEventBus);

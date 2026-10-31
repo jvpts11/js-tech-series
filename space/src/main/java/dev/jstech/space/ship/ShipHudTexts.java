@@ -31,6 +31,11 @@ public final class ShipHudTexts {
     public static final TextKey LAND = TextKey.of("jsspace.ship_hud.land", "LAND");
     public static final TextKey ORBIT = TextKey.of("jsspace.ship_hud.orbit", "ORBIT");
     public static final TextKey DOCK = TextKey.of("jsspace.ship_hud.dock", "DOCK");
+    public static final TextKey PAD = TextKey.of("jsspace.ship_hud.pad", "PAD %s M");
+    public static final TextKey RANGE = TextKey.of("jsspace.ship_hud.range", "RANGE %s");
+    public static final TextKey CLOSE = TextKey.of("jsspace.ship_hud.close", "CLOSE %s M/S");
+    public static final TextKey ALIGNED = TextKey.of("jsspace.ship_hud.aligned", "ALIGNED");
+    public static final TextKey APOGEE = TextKey.of("jsspace.ship_hud.apogee", "APO %s  %s");
 
     private ShipHudTexts() {
     }
