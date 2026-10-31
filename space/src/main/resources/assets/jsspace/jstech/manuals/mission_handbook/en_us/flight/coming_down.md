@@ -7,7 +7,7 @@ icon: jsspace:heat_shield
 
 ## What it is
 
-How a [capsule](jsspace:capsule) or a [lander](jsspace:lander) comes down from a world's orbit to its ground, flown by its [flight computer](jsspace:flight_computer). It lands somewhere in an ellipse round the spot marked: 15.4 by 13.2 km with the computer alone, half that with a guidance platform in its instrument ring.
+How a [capsule](jsspace:capsule) or a [lander](jsspace:lander) comes down from a world's orbit to its ground, flown by its [flight computer](jsspace:flight_computer). It lands somewhere in an ellipse round the spot marked: 15,400 by 13,200 blocks with the computer alone, half that with a guidance platform in its instrument ring.
 
 ## What it is for
 

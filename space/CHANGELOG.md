@@ -134,9 +134,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   kept still so whatever is built in its orbit stays over it, drawn at the screen's own resolution with a smooth
   outline and the texels of their maps, read from a smaller copy the farther they are. The Sun lights them smoothly
   from where it stands: relief from their height maps, a soft line of dawn, a warm dusk and a glow of air on the limb
-  where there is air, and the night side in the deep tone of its night. A planet's poles lie level and square to the
-  Sun, so its equator runs under its orbit with the day towards the Sun and the night away from it, and it turns once
-  a day; the Moon keeps its near side to the Overworld a quarter round from the Sun, so it sees the Overworld half lit
+  where there is air, and the night side in the deep tone of its night. A planet's poles stand square to the Sun, its
+  north leaning up from the level, so what is over it looks on its northern middle latitudes, with the day towards the
+  Sun and the night away from it, and it turns once a day; the Moon keeps its near side to the Overworld a quarter round from the Sun, so it sees the Overworld half lit
   and the Overworld sees it gibbous.
   The Overworld is never the Earth: its continents, biomes, mountain ranges and polar caps come from the world's seed,
   of which the server sends only a number made from it, and the game's own clouds wrap round it in bands that drift at
@@ -220,7 +220,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   near the Sun whites out the view, the nearer the more; the gold visor cuts it, and the view through it is a little
   gold. It harms no one.
 - A suit's air is breathed for real: worn whole where the air round cannot be breathed, the suit gives its
-  wearer the pure oxygen of its tanks at the third of a bar the A7L held, and takes nothing from the room; where the air
+  wearer the pure oxygen of its tanks at the quarter of a bar the A7L held, and takes nothing from the room; where the air
   can be breathed, the wearer breathes it and the tanks are spared, so the helmet comes off in a room with air. A hole
   leaks the tanks four times faster and thins the suit, two leave too little oxygen to breathe, and the Suit Patch
   mends one. The Oxygen Bottle holds half an hour of breathing and pours it into the suit's tanks, from the hand or
@@ -692,6 +692,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Step for a Player, a Giant Leap for Players, for the first landing on the Moon; and Seven Minutes of Terror, for the
   first landing on Mars, which is also the first person on another planet. A launch, the arrival at the Moon and a
   landing on a world earn their events of the tabs as they happen.
+- A rocket too heavy for its engines, where the server's "Too heavy to lift" is off, has its launch scrubbed at
+  ignition: its engines never light and nothing is spent. With it on, as it is by default, the rocket stays on the pad
+  burning its propellant.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

@@ -32,10 +32,13 @@ public final class SpaceEffectsClientTests {
     private static final int SETTLE = 20;
     private static final int GROWN = 8;
     private static final int CHANNEL = 0xFF;
-    /* How far round the middle of the window it is looked for, every few pixels; the least of it there. */
+    /*
+     * How far round the middle of the window it is looked for, at every point, and the least of it there: every point,
+     * since a narrow column of particles read every few points counts a few more or less each time it is fired.
+     */
     private static final int SAMPLE = 140;
-    private static final int STEP = 3;
-    private static final int LEAST = 25;
+    private static final int STEP = 1;
+    private static final int LEAST = 100;
     private static final Vec3 DOWN = new Vec3(0, -1, 0);
     private static final Vec3 UP = new Vec3(0, 1, 0);
     private static final long NOON = 6_000;

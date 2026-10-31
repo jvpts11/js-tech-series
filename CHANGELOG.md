@@ -2060,9 +2060,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   kept still so whatever is built in its orbit stays over it, drawn at the screen's own resolution with a smooth
   outline and the texels of their maps, read from a smaller copy the farther they are. The Sun lights them smoothly
   from where it stands: relief from their height maps, a soft line of dawn, a warm dusk and a glow of air on the limb
-  where there is air, and the night side in the deep tone of its night. A planet's poles lie level and square to the
-  Sun, so its equator runs under its orbit with the day towards the Sun and the night away from it, and it turns once
-  a day; the Moon keeps its near side to the Overworld a quarter round from the Sun, so it sees the Overworld half lit
+  where there is air, and the night side in the deep tone of its night. A planet's poles stand square to the Sun, its
+  north leaning up from the level, so what is over it looks on its northern middle latitudes, with the day towards the
+  Sun and the night away from it, and it turns once a day; the Moon keeps its near side to the Overworld a quarter round from the Sun, so it sees the Overworld half lit
   and the Overworld sees it gibbous.
   The Overworld is never the Earth: its continents, biomes, mountain ranges and polar caps come from the world's seed,
   of which the server sends only a number made from it, and the game's own clouds wrap round it in bands that drift at
@@ -2177,7 +2177,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   bone may be shown only while the piece's stack says so (`KitArmorModel.shownWhile`), a visor lowered or a module
   fitted.
 - (Space) A suit's air is breathed for real: worn whole where the air round cannot be breathed, the suit gives its
-  wearer the pure oxygen of its tanks at the third of a bar the A7L held, and takes nothing from the room; where the air
+  wearer the pure oxygen of its tanks at the quarter of a bar the A7L held, and takes nothing from the room; where the air
   can be breathed, the wearer breathes it and the tanks are spared, so the helmet comes off in a room with air. A hole
   leaks the tanks four times faster and thins the suit, two leave too little oxygen to breathe, and the Suit Patch
   mends one. The Oxygen Bottle holds half an hour of breathing and pours it into the suit's tanks, from the hand or
@@ -2743,6 +2743,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A dimension's rules read away from it: `DimensionRulesData.known` gives a dimension's rules wherever it is
   asked, the server's where the server runs, else those it sent to the player, so a manual's page shows the Moon's air
   to a reader standing in the Overworld.
+- (Space) A rocket too heavy for its engines, where the server's "Too heavy to lift" is off, has its launch scrubbed at
+  ignition: its engines never light and nothing is spent. With it on, as it is by default, the rocket stays on the pad
+  burning its propellant.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
@@ -2910,6 +2913,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A player getting up from a seat aboard a structure in flight stands where they got up from the first frame:
+  the server's own placing of them, worked out a tick ahead of the structure their game draws, carried them a tick
+  along the deck into its wall, and they were drawn there for a frame or two before being pushed back out.
 - (Core) A chunk loader aboard a moving structure taken away, such as a Space Persistor in a ship's airlock, lets go
   of the chunks it kept; before, they stayed loaded for good, the world saved and loaded again.
 - (Core) A player or a mob walking a moving structure steps over a sill under a low lintel, as a doorway's: where the

@@ -7,7 +7,7 @@ icon: jsspace:heat_shield
 
 ## O que é
 
-Como uma [cápsula](jsspace:capsule) ou um [módulo lunar](jsspace:lander) desce da órbita de um mundo até o chão, pilotado pelo seu [computador de voo](jsspace:flight_computer). Ele pousa em algum lugar de uma elipse em volta do ponto marcado: 15,4 por 13,2 km só com o computador, metade disso com uma plataforma de guiagem no anel de instrumentos.
+Como uma [cápsula](jsspace:capsule) ou um [módulo lunar](jsspace:lander) desce da órbita de um mundo até o chão, pilotado pelo seu [computador de voo](jsspace:flight_computer). Ele pousa em algum lugar de uma elipse em volta do ponto marcado: 15.400 por 13.200 blocos só com o computador, metade disso com uma plataforma de guiagem no anel de instrumentos.
 
 ## Para que serve
 

@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.space.api.Propellants;
+import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.launch.LaunchPanel;
@@ -32,7 +33,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The Launch Panel: with no rocket on the pad, or in a thunderstorm, its count will not start; with its key and its
  * ignition armed and all go, the count runs from T-60 on the panel and on the rocket's clock, holds at T-6 while the
- * LAUNCH button has not been pressed, runs on once it is, and releases the rocket at T-0.
+ * LAUNCH button has not been pressed, runs on once it is, and releases the rocket at T-0; and a rocket too heavy for
+ * its engines, with the server keeping such engines unlit, is scrubbed at ignition with its tank still full.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -45,6 +47,14 @@ public final class LaunchPanelGameTests {
     private static final BlockPos ARM = new BlockPos(27, 3, 27);
     private static final BlockPos COMPUTER = new BlockPos(28, 7, 28);
     private static final int SECOND = 20;
+    /*
+     * What a layer of the small tank holds, in kilograms; and a tank so tall that, full, the rocket outweighs what its
+     * one sea-level engine pushes.
+     */
+    private static final double FULL_LAYER = 5_800.0;
+    private static final int HEAVY_LAYERS = 40;
+    /* Of what a tank held at LAUNCH, the least it holds a few ticks on with nothing burnt, its boil-off aside. */
+    private static final double KEPT = 0.999;
 
     private LaunchPanelGameTests() {
     }
@@ -122,6 +132,42 @@ public final class LaunchPanelGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = WIDE, batch = BATCH + "_heavy", timeoutTicks = 1700)
+    public static void panel_scrubsATooHeavyRocketUnlitWhenTheServerKeepsItsEnginesOff(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        level.setWeatherParameters(6000, 0, false, false);
+        level.setThunderLevel(0.0F);
+        level.setRainLevel(0.0F);
+        helper.setBlock(PANEL, LaunchPanel.BLOCK.get());
+        rocket(helper, HEAVY_LAYERS);
+        final BlockPos panel = helper.absolutePos(PANEL);
+        final BlockPos computer = helper.absolutePos(COMPUTER);
+        final double[] held = new double[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(panel(level, panel).go(), "a fuelled rocket on the pad is go"))
+                .thenExecute(() -> {
+                    final LaunchPanelBlockEntity console = panel(level, panel);
+                    arm(console);
+                    console.press(LaunchPanelBlockEntity.RUN);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(panel(level, panel).phase()
+                        == LaunchPanelBlockEntity.Phase.HOLDING, "the count holds at T-6 for LAUNCH"))
+                .thenExecute(() -> {
+                    held[0] = tank(level, computer);
+                    SpaceServerConfig.FILE.set(SpaceServerConfig.TOO_HEAVY_TO_LIFT, false);
+                    panel(level, panel).press(LaunchPanelBlockEntity.LAUNCH);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(panel(level, panel).phase()
+                        == LaunchPanelBlockEntity.Phase.SCRUBBED, "too heavy to lift, the launch is scrubbed"))
+                .thenExecute(() -> {
+                    SpaceServerConfig.FILE.set(SpaceServerConfig.TOO_HEAVY_TO_LIFT, true);
+                    final double left = tank(level, computer);
+                    helper.assertTrue(left >= held[0] * KEPT, "its engines never lit: the rocket stands on the pad "
+                            + "and its tank holds what it held, but for what boils off: " + left + " of " + held[0]);
+                })
+                .thenSucceed();
+    }
+
     /* Turns the key and arms the ignition under its guard. */
     private static void arm(final LaunchPanelBlockEntity console) {
         console.press(LaunchPanelBlockEntity.MASTER);
@@ -131,6 +177,11 @@ public final class LaunchPanelGameTests {
 
     /* A launcher's measuring arm by the panel and, up its axis, a rocket's flight computer, its tank full. */
     private static void rocket(final GameTestHelper helper) {
+        rocket(helper, 1);
+    }
+
+    /* The same, its tank {@code layers} layers tall. */
+    private static void rocket(final GameTestHelper helper, final int layers) {
         final ServerLevel level = helper.getLevel();
         helper.setBlock(ARM, LauncherBlocks.HOLD_DOWN_ARM.get());
         helper.setBlock(COMPUTER, RocketKitBlocks.FLIGHT_COMPUTER.get());
@@ -138,13 +189,19 @@ public final class LaunchPanelGameTests {
             arm.deck(new LauncherDeckBlockEntity.Deck(Direction.EAST, 1, new BlockPos(1, 0, 1), 6, 8, 6));
         }
         final RocketStack stack = RocketStack.of(new RocketStack.Part(SkeletonRocketParts.id("sea_level_engine_3"), 1),
-                new RocketStack.Part(SkeletonRocketParts.id("tank_3"), 1),
+                new RocketStack.Part(SkeletonRocketParts.id("tank_3"), layers),
                 new RocketStack.Part(SkeletonRocketParts.id("capsule_3"), 1));
         if (level.getBlockEntity(helper.absolutePos(COMPUTER)) instanceof FlightComputerBlockEntity rocket) {
             rocket.carry(new RocketDesign("PANEL", stack), new BlockPos(0, -4, 0), List.of());
             Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> rocket.load(1,
-                    TankLoad.filled(SkeletonPropellants.METHALOX, methalox, 5_800.0)));
+                    TankLoad.filled(SkeletonPropellants.METHALOX, methalox, FULL_LAYER * layers)));
         }
+    }
+
+    /* What the rocket's tank holds, in kilograms; nought with no rocket's flight computer there. */
+    private static double tank(final ServerLevel level, final BlockPos computer) {
+        return level.getBlockEntity(computer) instanceof FlightComputerBlockEntity rocket
+                && rocket.tanks().get(1) != null ? rocket.tanks().get(1).total() : 0;
     }
 
     private static LaunchPanelBlockEntity panel(final ServerLevel level, final BlockPos at) {

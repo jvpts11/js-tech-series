@@ -1972,6 +1972,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A player getting up from a seat aboard a structure in flight stands where they got up from the first frame:
+  the server's own placing of them, worked out a tick ahead of the structure their game draws, carried them a tick
+  along the deck into its wall, and they were drawn there for a frame or two before being pushed back out.
 - A chunk loader aboard a moving structure taken away, such as a Space Persistor in a ship's airlock, lets go
   of the chunks it kept; before, they stayed loaded for good, the world saved and loaded again.
 - A player or a mob walking a moving structure steps over a sill under a low lintel, as a doorway's: where the

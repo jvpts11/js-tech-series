@@ -52,6 +52,11 @@ public final class SystemSpaceClientTests {
     /* The sum of red, green and blue over which a pixel is lit, under which it is night. */
     private static final int LIT = 120;
     private static final int DARK = 45;
+    /*
+     * Near the line of dawn the day is dimmed, and what lies there turns with the world, a dark forest as well as
+     * bright plains: the day side is told from the night by being this many times brighter than it.
+     */
+    private static final int DAY_OVER_NIGHT = 3;
     private static final int SUN = 400;
     /* White concrete's top in full daylight, and how far under the player it is put. */
     private static final int DAYLIT = 450;
@@ -62,14 +67,14 @@ public final class SystemSpaceClientTests {
     private static final float DOWN = 90F;
     private static final int CHANNEL = 0xFF;
     /*
-     * The world below slid by in orbit: read along a line across the screen, under the crosshair, twice, a second
-     * apart; in a second it slides by some 84 blocks, against some 5 it turns by itself, so the line's picture moves
-     * this many points or more, sought this far either way.
+     * The world below slid by in orbit: a patch of the screen under the crosshair read twice, a second apart; in a
+     * second it slides by some 84 blocks, against some 5 it turns by itself, so the patch's picture moves this many
+     * points or more, across and down at once since the world turns about its leaning poles, sought this far each way.
      */
     private static final int SLIDING = 20;
-    private static final int LINE = 120;
-    private static final int LINE_DOWN = 24;
-    private static final int MOST_SHIFT = 80;
+    private static final int PATCH = 30;
+    private static final int PATCH_DOWN = 24;
+    private static final int MOST_SHIFT = 60;
     private static final int SLID = 20;
 
     private SystemSpaceClientTests() {
@@ -106,8 +111,8 @@ public final class SystemSpaceClientTests {
                     // Looking down with the north up the screen, the Sun's side, the west, is on the left.
                     final int west = bright(ctx, -WIDE, OFF_CROSSHAIR);
                     final int east = bright(ctx, WIDE, OFF_CROSSHAIR);
-                    ctx.assertTrue(west > LIT && east < DARK, "the line of dawn runs below, day west and night east: "
-                            + west + " against " + east);
+                    ctx.assertTrue(east < DARK && west > DARK && west > DAY_OVER_NIGHT * east,
+                            "the line of dawn runs below, day west and night east: " + west + " against " + east);
                 })
                 .thenScreenshot(0, "overworld_dawn")
                 .thenServer(0, level -> {
@@ -157,7 +162,7 @@ public final class SystemSpaceClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void orbit_slidesTheWorldByBelow(final ClientTestContext ctx) {
         final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
-        final int[][] lines = new int[2][];
+        final int[][][] patches = new int[2][][];
         ctx.afterTest(() -> ctx.server().execute(() -> {
             final BlockPos origin = ctx.origin().above(2);
             ctx.serverPlayer().teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(),
@@ -170,15 +175,15 @@ public final class SystemSpaceClientTests {
                         "the player's game to reach the Solar System's space")
                 .thenWaitUntil(() -> bright(ctx, 0, OFF_CROSSHAIR) > LIT, DRAWN,
                         "the Overworld's day side to be drawn lit below")
-                .then(SETTLE, () -> lines[0] = line(ctx))
+                .then(SETTLE, () -> patches[0] = patch(ctx, 0))
                 .thenScreenshot(0, "orbit_before")
-                .then(SLIDING, () -> lines[1] = line(ctx))
+                .then(SLIDING, () -> patches[1] = patch(ctx, MOST_SHIFT))
                 .thenScreenshot(0, "orbit_after")
                 .then(0, () -> {
-                    final int moved = shift(lines[0], lines[1]);
-                    ctx.assertTrue(Math.abs(moved) >= SLID, "in orbit the world slides by below, a turn a little over "
-                            + "a minute, far faster than it turns by itself: moved " + moved + " points in "
-                            + SLIDING + " ticks");
+                    final long moved = Math.round(shift(patches[0], patches[1]));
+                    ctx.assertTrue(moved >= SLID, "in orbit the world slides by below, a turn a little over a "
+                            + "minute, far faster than it turns by itself: moved " + moved + " points in " + SLIDING
+                            + " ticks");
                 });
     }
 
@@ -205,44 +210,55 @@ public final class SystemSpaceClientTests {
         return colour[0] + colour[1] + colour[2];
     }
 
-    /* The mean red, green and blue of three by three of the GUI's points, {@code dx} and {@code dy} off the middle. */
-    /* How bright the screen is along a line across it, under the crosshair, point by point. */
-    private static int[] line(final ClientTestContext ctx) {
-        final int middle = ctx.mc().getWindow().getGuiScaledWidth() / 2;
-        final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2 + LINE_DOWN;
-        final int[] out = new int[2 * LINE + 1];
+    /*
+     * How bright the screen is over a square under the crosshair, point by point, row by row, {@code margin} points
+     * wider than the patch all round.
+     */
+    private static int[][] patch(final ClientTestContext ctx, final int margin) {
+        final int side = 2 * (PATCH + margin) + 1;
+        final int left = ctx.mc().getWindow().getGuiScaledWidth() / 2 - PATCH - margin;
+        final int top = ctx.mc().getWindow().getGuiScaledHeight() / 2 + PATCH_DOWN - PATCH - margin;
+        final int[][] out = new int[side][side];
         try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
-            for (int i = 0; i < out.length; i++) {
-                final int argb = frame.pixel(middle - LINE + i, y);
-                out[i] = (argb >> 16 & CHANNEL) + (argb >> 8 & CHANNEL) + (argb & CHANNEL);
+            for (int y = 0; y < side; y++) {
+                for (int x = 0; x < side; x++) {
+                    final int argb = frame.pixel(left + x, top + y);
+                    out[y][x] = (argb >> 16 & CHANNEL) + (argb >> 8 & CHANNEL) + (argb & CHANNEL);
+                }
             }
         }
         return out;
     }
 
-    /* How far along the line {@code after} has moved from {@code before}: the shift by which they differ least. */
-    private static int shift(final int[] before, final int[] after) {
-        int best = 0;
-        double least = Double.MAX_VALUE;
-        for (int k = -MOST_SHIFT; k <= MOST_SHIFT; k++) {
-            long sum = 0;
-            int count = 0;
-            for (int i = 0; i < before.length; i++) {
-                final int j = i + k;
-                if (j >= 0 && j < after.length) {
-                    sum += Math.abs(before[i] - after[j]);
-                    count++;
+    /*
+     * How far the patch {@code before} has moved in {@code after}, read {@link #MOST_SHIFT} points wider all round: the
+     * length of the shift, across and down, by which they differ least.
+     */
+    private static double shift(final int[][] before, final int[][] after) {
+        int bestX = 0;
+        int bestY = 0;
+        long least = Long.MAX_VALUE;
+        for (int dy = -MOST_SHIFT; dy <= MOST_SHIFT; dy++) {
+            for (int dx = -MOST_SHIFT; dx <= MOST_SHIFT; dx++) {
+                long sum = 0;
+                for (int y = 0; y < before.length; y++) {
+                    final int[] was = before[y];
+                    final int[] now = after[y + MOST_SHIFT + dy];
+                    for (int x = 0; x < was.length; x++) {
+                        sum += Math.abs(was[x] - now[x + MOST_SHIFT + dx]);
+                    }
+                }
+                if (sum < least) {
+                    least = sum;
+                    bestX = dx;
+                    bestY = dy;
                 }
             }
-            final double mean = (double) sum / count;
-            if (mean < least) {
-                least = mean;
-                best = k;
-            }
         }
-        return best;
+        return Math.hypot(bestX, bestY);
     }
 
+    /* The mean red, green and blue of three by three of the GUI's points, {@code dx} and {@code dy} off the middle. */
     private static int[] colour(final ClientTestContext ctx, final int dx, final int dy) {
         final int x = ctx.mc().getWindow().getGuiScaledWidth() / 2 + dx;
         final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2 + dy;

@@ -16,6 +16,7 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
@@ -55,6 +56,21 @@ public final class RocketLaunch {
     /** The engines light over the pad whose rocket's axis meets the deck at {@code axis}: the pad shakes and steams. */
     public static void ignite(final ServerLevel level, final BlockPos axis) {
         Effects.at(level, IGNITION, Vec3.atBottomCenterOf(axis)).reach(SEEN).send();
+    }
+
+    /**
+     * Whether the rocket whose flight computer stands at {@code computer} lights its engines at ignition: always,
+     * unless the server keeps a rocket too heavy to lift unlit, so nothing is spent, and this one pushes no more than
+     * it weighs on this world.
+     */
+    public static boolean lights(final ServerLevel level, final BlockPos computer) {
+        if (SpaceServerConfig.FILE.get(SpaceServerConfig.TOO_HEAVY_TO_LIFT)
+                || !(level.getBlockEntity(computer) instanceof FlightComputerBlockEntity rocket)
+                || rocket.rocket().isEmpty()) {
+            return true;
+        }
+        return RocketStages.burns(RocketParts.all(level), rocket.rocket().get().stack(), Propellants.all(level),
+                rocket.tanks()).map(burns -> RocketAscent.liftsOff(level, burns)).orElse(true);
     }
 
     /**

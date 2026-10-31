@@ -50,6 +50,8 @@ public final class StructureFooting {
     private static @Nullable Consumer<Entity> waitingAction;
     /* On a player's game, who got up from a structure's seat this tick, set on its deck as the tick ends. */
     private static WeakReference<Entity> gotUp = new WeakReference<>(null);
+    /* Where on the deck, in the yard, they got up, kept till the deck first carries them; null once it has. */
+    private static @Nullable Vec3 gotUpPlace;
 
     private StructureFooting() {
     }
@@ -66,14 +68,18 @@ public final class StructureFooting {
     }
 
     /**
-     * On a player's game, {@code entity} got up from a seat of a structure this tick, on it: as the tick ends, where it
-     * stood before is set from where it stands on the structure now, as the structure stood the tick before
-     * ({@link #settleGotUp()}). Got up after the game kept where it stood, that would be a tick older than the deck as
-     * drawn, and it would be drawn sliding along the deck through the tick.
+     * On a player's game, {@code entity} got up from a seat of a structure this tick, on it, at {@code place} of its
+     * yard: as the tick ends, where it stood before is set from where it stands on the structure now, as the structure
+     * stood the tick before ({@link #settleGotUp()}). Got up after the game kept where it stood, that would be a tick
+     * older than the deck as drawn, and it would be drawn sliding along the deck through the tick. Till the deck first
+     * carries them they are kept at that place: the server sets a player who gets up where the place is in its own
+     * frame, a tick or so ahead of the structure drawn here, and carried from there they would be a tick further along
+     * the deck than they stood, through its wall.
      */
-    static void gotUp(final Entity entity) {
+    static void gotUp(final Entity entity, final Vec3 place) {
         if (entity.level().isClientSide()) {
             gotUp = new WeakReference<>(entity);
+            gotUpPlace = place;
         }
     }
 
@@ -81,6 +87,7 @@ public final class StructureFooting {
     public static void settleGotUp() {
         holdGotUp();
         gotUp = new WeakReference<>(null);
+        gotUpPlace = null;
     }
 
     /**
@@ -98,6 +105,7 @@ public final class StructureFooting {
         }
         final StructureFrame now = body.frame();
         final StructureFrame before = body.previousFrame();
+        keepGotUpPlace(entity, now);
         final double x = now.yardX(entity.getX(), entity.getY(), entity.getZ());
         final double y = now.yardY(entity.getX(), entity.getY(), entity.getZ());
         final double z = now.yardZ(entity.getX(), entity.getY(), entity.getZ());
@@ -196,6 +204,12 @@ public final class StructureFooting {
     public static void carry(final Entity rider, final IStructureBody body) {
         final StructureFrame before = body.previousFrame();
         final StructureFrame now = body.frame();
+        if (rider.level().isClientSide()) {
+            keepGotUpPlace(rider, before);
+            if (rider == gotUp.get()) {
+                gotUpPlace = null;
+            }
+        }
         if (before == now) {
             return;
         }
@@ -379,6 +393,16 @@ public final class StructureFooting {
             connection.lastGoodY = connection.firstGoodY;
             connection.lastGoodZ = connection.firstGoodZ;
         }
+    }
+
+    /* Sets who got up back at the place of the deck they got up at, the structure standing as {@code frame}. */
+    private static void keepGotUpPlace(final Entity entity, final StructureFrame frame) {
+        final Vec3 place = gotUpPlace;
+        if (place == null || entity != gotUp.get()) {
+            return;
+        }
+        entity.setPos(frame.worldX(place.x, place.y, place.z), frame.worldY(place.x, place.y, place.z),
+                frame.worldZ(place.x, place.y, place.z));
     }
 
     private static Map<Entity, Stand> side(final Level level) {

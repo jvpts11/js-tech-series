@@ -71,5 +71,8 @@ title: Deixar um mundo 4/4
 > [!PROBLEM] A contagem fica em ESPERA sozinha.
 > Um sistema ficou NO-GO, uma tempestade de raios chegou sobre a base, ou a chave MESTRE foi para SEGURO. Aperte CONTAGEM CORRENDO quando tudo estiver GO de novo. VOLTAR T-10 leva uma espera abaixo de T-10 de volta a T-10; CANCELAR recomeça de T-60 e põe a chave MESTRE em SEGURO.
 
+> [!PROBLEM] O lançamento é cancelado em T-6, com os motores apagados.
+> O foguete pesa mais neste mundo do que o primeiro estágio empurra, e o servidor mantém desligados os motores de um foguete assim, para nada ser gasto. Use um motor maior, ou deixe o foguete mais leve. Onde o servidor deixa os motores acenderem, um foguete pesado demais fica na base queimando o propelente.
+
 > [!PROBLEM] ABORTAR acende em T-0.
 > O foguete não pôde ser solto, e o lançamento foi cancelado.

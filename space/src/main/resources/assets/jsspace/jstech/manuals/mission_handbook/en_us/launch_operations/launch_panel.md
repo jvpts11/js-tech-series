@@ -71,5 +71,8 @@ title: Leaving a world 4/4
 > [!PROBLEM] The count holds by itself.
 > A system went no-go, a thunderstorm came over the pad, or MASTER was turned to SAFE. Press COUNT RUNNING once all is go again. RECYCLE T-10 takes a hold under T-10 back to T-10; SCRUB starts again from T-60 and turns MASTER to SAFE.
 
+> [!PROBLEM] The launch is scrubbed at T-6, its engines unlit.
+> The rocket weighs more on this world than its first stage pushes, and the server keeps such a rocket's engines off, so nothing is spent. Fit a larger engine, or make the rocket lighter. Where the server lets them light, a rocket too heavy stays on the pad burning its propellant.
+
 > [!PROBLEM] ABORT lights at T-0.
 > The rocket could not be released, and the launch is scrubbed.

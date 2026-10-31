@@ -257,9 +257,7 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
                 }
             }
             case SCRUB -> {
-                this.phase.set(Phase.SCRUBBED);
-                this.left.set(START * SECOND);
-                this.launched.set(false);
+                scrub();
                 this.master.set(false);
             }
             case RECYCLE -> {
@@ -305,6 +303,11 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
                 return;
             }
             if (this.stand != null) {
+                if (!this.stand.computer().map(computer -> RocketLaunch.lights(server, computer)).orElse(true)) {
+                    // Too heavy for its engines, which the server keeps unlit: scrubbed, nothing spent.
+                    scrub();
+                    return;
+                }
                 LaunchPads.ignite(server, this.stand.axis(), this.stand.side(), deluge());
                 RocketLaunch.ignite(server, this.stand.axis());
             }
@@ -322,9 +325,7 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         final Optional<MovingStructure> body = this.stand == null ? Optional.empty() : this.stand.computer()
                 .flatMap(computer -> RocketLaunch.release(server, computer, this.pilot.get()));
         if (body.isEmpty()) {
-            this.phase.set(Phase.SCRUBBED);
-            this.left.set(START * SECOND);
-            this.launched.set(false);
+            scrub();
             return;
         }
         this.flight.set(body.get().id());
@@ -372,6 +373,14 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
     private void hold() {
         this.phase.set(Phase.HOLDING);
         this.holds.set(this.holds.get() + 1);
+        setChanged();
+    }
+
+    /* The launch called off: the count back to T-60, LAUNCH to press again. */
+    private void scrub() {
+        this.phase.set(Phase.SCRUBBED);
+        this.left.set(START * SECOND);
+        this.launched.set(false);
         setChanged();
     }
 

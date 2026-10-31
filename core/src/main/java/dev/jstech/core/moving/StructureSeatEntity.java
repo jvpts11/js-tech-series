@@ -324,7 +324,7 @@ public final class StructureSeatEntity extends Entity {
         rider.yOld = before.y;
         rider.zOld = before.z;
         rider.setDeltaMovement(Vec3.ZERO);
-        StructureFooting.gotUp(rider);
+        StructureFooting.gotUp(rider, stands);
     }
 
     /* The place of the world {@code at} of the yard stands at, the structure standing as {@code frame}. */

@@ -31,7 +31,8 @@ import org.joml.Quaternionf;
  * A rocket's climb off its pad, as the rule that moves its structure: straight up, a block a metre, its stages' engines
  * pushing it by their thrust at the air the world has, its mass falling as they burn their propellant by the rocket
  * equation, the world's pull drawing it back. A rocket with thrust to spare climbs fast, a weak one slowly, one too
- * heavy for its engines sits on the pad burning; each stage that burns out hands the climb to the next. It goes on till
+ * heavy for its engines sits on the pad burning, unless the server keeps such a rocket's engines unlit
+ * ({@link #liftsOff}); each stage that burns out hands the climb to the next. It goes on till
  * the rocket passes into space, which takes it there whole, or falls back to where it rose from.
  *
  * @param burn    which of its rocket's burns is lit, from the first
@@ -64,6 +65,20 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
         return new RocketAscent(0, mass, 0, from);
     }
 
+    /**
+     * Whether a rocket of {@code burns} leaves the ground of {@code level}: its first burn pushes more than it weighs
+     * there.
+     */
+    public static boolean liftsOff(final ServerLevel level, final List<StageMath.Burn> burns) {
+        if (burns.isEmpty()) {
+            return false;
+        }
+        final DimensionRules rules = DimensionRulesData.of(level);
+        final StageMath.Burn first = burns.get(0);
+        return thrust(first, StageMath.air(rules.pressure()))
+                > first.startMass() * rules.gravity() * OrbitScale.STANDARD_GRAVITY;
+    }
+
     @Override
     public Step step(final StructurePose now, final Context context) {
         if (!(context.world() instanceof ServerLevel level) || context.structure() == null) {
@@ -82,8 +97,7 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
         int lit = this.burn;
         if (lit < burns.size()) {
             final StageMath.Burn burning = burns.get(lit);
-            final double air = StageMath.air(rules.pressure());
-            thrust = Math.max(0, burning.thrust() - (burning.thrust() - burning.seaLevelThrust()) * Math.max(0, air));
+            thrust = thrust(burning, StageMath.air(rules.pressure()));
             // Its engines burn as much a second whatever the air: their sea-level thrust over their exhaust's speed.
             final double exhaust = exhaust(burning);
             if (exhaust > 0) {
@@ -173,6 +187,14 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
         }
         return RocketStages.burns(RocketParts.all(level), rocket.get().stack(), Propellants.all(level),
                 rocket.get().tanks(), rocket.get().lost().keySet()).orElse(List.of());
+    }
+
+    /*
+     * A burn's thrust in {@code air}, the share of sea-level air round it: its vacuum thrust, less as the air
+     * thickens.
+     */
+    private static double thrust(final StageMath.Burn burn, final double air) {
+        return Math.max(0, burn.thrust() - (burn.thrust() - burn.seaLevelThrust()) * Math.max(0, air));
     }
 
     /* The speed of a burn's exhaust, in metres a second, from the speed it gives and the mass it burns. */
