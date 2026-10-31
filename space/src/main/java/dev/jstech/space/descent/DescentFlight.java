@@ -15,6 +15,7 @@ import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.text.Text;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
@@ -200,6 +201,9 @@ public final class DescentFlight {
             dust(level, solar.orElse(SolarBody.OVERWORLD), foot);
             CruiseEvents.tell(level, body, DescentTexts.LANDING.of(DescentTexts.LANDED_NAME.text(),
                     DescentTexts.LANDED.with(name)));
+            if (world != null) {
+                CruiseFlight.aboard(level, body).forEach(player -> SpaceFirsts.landed(player, world));
+            }
             return;
         }
         level.explode(null, foot.x, foot.y + 1, foot.z, CRASH_BLAST, Level.ExplosionInteraction.BLOCK);

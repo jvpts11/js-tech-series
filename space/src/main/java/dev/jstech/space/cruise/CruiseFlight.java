@@ -12,6 +12,7 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.exploration.WorldCoverage;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
@@ -145,6 +146,7 @@ public final class CruiseFlight {
             return;
         }
         OrbitObjects.arrived(level, body, there.get());
+        aboard(level, body).forEach(player -> SpaceFirsts.arrived(player, plan.to()));
         Rockets.get(level.getServer(), body.id()).ifPresent(rocket -> WorldCoverage.photographAt(level.getServer(),
                 CoreTeams.teamOf(level.getServer(), rocket.ownership().owner()), plan.to(), level.getGameTime()));
         CruiseEvents.tell(level, body, CruiseTexts.ARRIVAL.of(CruiseTexts.ARRIVED_NAME.text(), (capture > 0

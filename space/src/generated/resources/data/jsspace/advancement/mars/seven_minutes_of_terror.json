@@ -1,0 +1,30 @@
+{
+  "parent": "jsspace:mars/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "milestone": "jsspace:planet_landing"
+      },
+      "trigger": "jscore:milestone"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsspace.mars.seven_minutes_of_terror.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsspace:heat_shield"
+    },
+    "title": {
+      "translate": "advancements.jsspace.mars.seven_minutes_of_terror.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

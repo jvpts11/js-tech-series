@@ -13,11 +13,16 @@ import dev.jstech.core.advancement.MilestoneTrigger;
 import dev.jstech.core.progression.Knowledges;
 import dev.jstech.core.progression.Milestone;
 import dev.jstech.core.progression.Milestones;
+import dev.jstech.core.progression.TeamProgress;
+import dev.jstech.core.team.CoreTeams;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.advancement.SpaceEvents;
+import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.SpaceAdvancementTab;
 import dev.jstech.space.datagen.advancement.SpaceAdvancementTabs;
 import dev.jstech.space.exploration.SpaceMilestones;
+import dev.jstech.space.universe.SolarSystemWorlds;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -30,6 +35,8 @@ import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -93,6 +100,43 @@ public final class SpaceAdvancementsGameTests {
         helper.succeed();
     }
 
+    /*
+     * Each first, told where it happens, earns its advancement: a launch opens Leaving the Earth, orbit and a starship
+     * are the team's firsts there; coming round the Moon opens the Moon's tab and landing on it is the team's first
+     * landing; landing on Mars opens Mars's and is the team's first landing on another planet.
+     */
+    @GameTest(template = ARENA)
+    public static void firsts_earnTheirAdvancementsWhereTheyHappen(final GameTestHelper helper) {
+        final ServerPlayer player = GameTestPlayers.join(helper, "jst-firsts");
+        final MinecraftServer server = player.server;
+        final String team = CoreTeams.teamOf(server, player.getUUID());
+        try {
+            SpaceFirsts.launched(player);
+            helper.assertTrue(done(player, "leaving_the_earth/root"), "a rocket launched opens Leaving the Earth");
+            SpaceFirsts.inOrbit(player);
+            helper.assertTrue(TeamProgress.reached(server, team, SpaceMilestones.PERSON_IN_ORBIT)
+                    && done(player, "leaving_the_earth/the_overworld_is_blue"), "up in orbit, the team's first person"
+                    + " in orbit");
+            SpaceFirsts.starship(server, player.getUUID());
+            helper.assertTrue(TeamProgress.reached(server, team, SpaceMilestones.STARSHIP)
+                    && done(player, "leaving_the_earth/enterprise"), "a starship out of its dock, the team's first");
+            helper.assertFalse(done(player, "the_moon/root"), "the Moon's tab waits for the Moon");
+            SpaceFirsts.arrived(player, SolarSystemWorlds.MOON);
+            helper.assertTrue(done(player, "the_moon/root"), "coming round the Moon, the Earth rises");
+            SpaceFirsts.landed(player, SolarSystemWorlds.MOON);
+            helper.assertTrue(TeamProgress.reached(server, team, SpaceMilestones.MOON_LANDING)
+                    && done(player, "the_moon/a_small_step"), "landed on the Moon, the team's first landing there");
+            helper.assertFalse(done(player, "mars/root"), "landing on the Moon is no landing on Mars");
+            SpaceFirsts.landed(player, SolarSystemWorlds.MARS);
+            helper.assertTrue(done(player, "mars/root") && done(player, "mars/seven_minutes_of_terror")
+                    && TeamProgress.reached(server, team, SpaceMilestones.PERSON_ON_ANOTHER_PLANET),
+                    "landed on Mars, the team's first landing on another planet, its first person there");
+        } finally {
+            GameTestPlayers.leave(player);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void milestones_areTheFirstsInOrderEachAlsoKnowledge(final GameTestHelper helper) {
         helper.assertTrue(Milestones.of(ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "firsts"))
@@ -105,6 +149,16 @@ public final class SpaceAdvancementsGameTests {
             helper.assertTrue(Knowledges.byId(milestone.id()).isPresent(), milestone.id() + " is knowledge too");
         }
         helper.succeed();
+    }
+
+    /* Whether {@code player} has earned J's Space's advancement {@code path}. */
+    private static boolean done(final ServerPlayer player, final String path) {
+        final AdvancementHolder holder = player.server.getAdvancements()
+                .get(ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, path));
+        if (holder == null) {
+            throw new IllegalStateException("no advancement " + path);
+        }
+        return player.getAdvancements().getOrStartProgress(holder).isDone();
     }
 
     /** Whether the mod of a texture's namespace ships it, its whole path given. */

@@ -1854,6 +1854,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Ores in the rocks a mod declares, each made once every mod has registered its blocks, as hard as its rock and
   a little more, and sounding as it does. The series' minerals glint as they are: hematite and magnetite steel grey,
   ilmenite black with a metal's sheen, native iron bright.
+- A dimension's rules read away from it: `DimensionRulesData.known` gives a dimension's rules wherever it is
+  asked, the server's where the server runs, else those it sent to the player, so a manual's page shows the Moon's air
+  to a reader standing in the Overworld.
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

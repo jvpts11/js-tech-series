@@ -2001,10 +2001,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   across a 400 by 200 sky drawn once and wide, with a 16-pixel tile of it.
 - (Space) The Mission Handbook, the mod's own manual and the first thing in its tab, dressed as a crew's flight
   documents were: an off-white ring binder with the mission's emblem and its typed lines on the cover, cream pages
-  typed in capitals, a tab at the edge for each section (Launch Operations, Flight, Suits and World Data) in its
-  colour and lettered with its code, and the pages numbered by section (LO 2-3). It is written in Markdown, in English
-  and Brazilian Portuguese, and its chapter is in the Technical Reference too. For now it holds the page that says
-  how to read it; the other sections show as their pages are written.
+  typed in capitals, a tab at the edge for each section (Launch Operations, Flight, Suits, World Data and Starships)
+  in its colour and lettered with its code, and the pages numbered by section (LO 2-3). It is written in Markdown, in
+  English and Brazilian Portuguese, and its chapter is in the Technical Reference too.
 - (Core) Advancements of a team's milestones: the trigger `jscore:milestone` is met once the player's team reaches a
   milestone, by whichever of its members, so every member online earns it at once and one who was away as they log
   in; a tab writes it as `reached(milestone)`. And an advancement's icon may be a picture rather than an item
@@ -2726,6 +2725,24 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Ores in the rocks a mod declares, each made once every mod has registered its blocks, as hard as its rock and
   a little more, and sounding as it does. The series' minerals glint as they are: hematite and magnetite steel grey,
   ilmenite black with a metal's sheen, native iron bright.
+- (Space) The Mission Handbook's pages: every one of J's Space's items has its entry, in English and Brazilian
+  Portuguese, each in the five parts. Launch Operations holds the rocket hangar, the tanks, the engines, the capsule,
+  the lander, the mobile launcher, the crawler, the launch pad, the propellant depot and the launch panel; Flight the
+  flight computer, coming down, the landing platform and rocket wreckage; Suits the Lunar Suit, its modules and its
+  supplies; and a new section, Starships, the Small Shipyard, the hull, the engines, the wings and gear, the fittings,
+  flying a ship, the crew, the ship landing pad and the runway beacon. Each drill is on cuff cards, three steps a card.
+- (Space) The world sheets: World Data has a sheet for the Moon and one for Mars, each painted as seen from orbit, with
+  its ground, its ores, how a crew gets there and back, its landmarks, its biomes and what kills there. Its figures,
+  the diameter, gravity, air, temperature, day and year, the usual trip and the delta-v to land, are read from the
+  world's own data as the manual is read, so a data pack's change shows on the page.
+- (Space) The advancements of the firsts, each earned where it happens and reaching its milestone for the team: The
+  Overworld Is Blue, for the team's first crew in orbit; Enterprise, for its first starship out of the shipyard; A Small
+  Step for a Player, a Giant Leap for Players, for the first landing on the Moon; and Seven Minutes of Terror, for the
+  first landing on Mars, which is also the first person on another planet. A launch, the arrival at the Moon and a
+  landing on a world earn their events of the tabs as they happen.
+- (Core) A dimension's rules read away from it: `DimensionRulesData.known` gives a dimension's rules wherever it is
+  asked, the server's where the server runs, else those it sent to the player, so a manual's page shows the Moon's air
+  to a reader standing in the Overworld.
 
 ### Changed
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger

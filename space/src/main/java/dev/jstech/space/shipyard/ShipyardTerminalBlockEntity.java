@@ -45,6 +45,7 @@ import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
+import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.crew.ShipCrew;
@@ -360,6 +361,9 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         // Its pilot who started it owns it, their team its crew; a ship back from a dock keeps its crew.
         if (by != null && keeper.crew().isEmpty()) {
             keeper.crew(ShipCrew.of(by, CoreTeams.nameOf(server.getServer(), by).orElse("")));
+        }
+        if (by != null) {
+            SpaceFirsts.starship(server.getServer(), by);
         }
         // It flies from now on as its pilot sends it, its nose the way its plan laid it, by what its parts weigh and
         // push, at rest until then, its console showing its flight.

@@ -13,12 +13,15 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.progression.TeamProgress;
+import dev.jstech.core.team.CoreTeams;
 import dev.jstech.space.crew.CrewRole;
 import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.crew.ShipConsoleMenu;
 import dev.jstech.space.crew.ShipCrew;
 import dev.jstech.space.crew.ShipCrews;
 import dev.jstech.space.crew.ShipHatches;
+import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
@@ -170,6 +173,8 @@ public final class ShipCrewGameTests {
                     helper.assertTrue(crew.owner().equals(owner.getUUID()) && crew.team() == CrewRole.CREW
                             && crew.others() == CrewRole.NONE, "started, it is its pilot's, their team its crew,"
                             + " everyone else outside: " + crew);
+                    helper.assertTrue(TeamProgress.reached(level.getServer(), CoreTeams.teamOf(level.getServer(),
+                            owner.getUUID()), SpaceMilestones.STARSHIP), "and their team has its first starship");
                     final ShipConsoleMenu menu = new ShipConsoleMenu(0, owner.getInventory(), console,
                             CrewRole.PILOT, true, "");
                     menu.add(stranger, rider.getScoreboardName());

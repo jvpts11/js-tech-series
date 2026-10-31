@@ -1,0 +1,30 @@
+{
+  "parent": "jsspace:the_moon/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "milestone": "jsspace:moon_landing"
+      },
+      "trigger": "jscore:milestone"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsspace.the_moon.a_small_step.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsspace:lunar_boots"
+    },
+    "title": {
+      "translate": "advancements.jsspace.the_moon.a_small_step.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

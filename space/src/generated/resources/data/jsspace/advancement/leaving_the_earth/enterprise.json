@@ -1,0 +1,30 @@
+{
+  "parent": "jsspace:leaving_the_earth/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "milestone": "jsspace:starship"
+      },
+      "trigger": "jscore:milestone"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsspace.leaving_the_earth.enterprise.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsspace:flight_console"
+    },
+    "title": {
+      "translate": "advancements.jsspace.leaving_the_earth.enterprise.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

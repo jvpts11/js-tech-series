@@ -13,6 +13,7 @@ import dev.jstech.core.moving.MovingStructureEntity;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureFooting;
 import dev.jstech.core.moving.StructureSeatEntity;
+import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.network.ClimbWorldsPayload;
@@ -117,6 +118,8 @@ public final class SpaceClimbs {
                 final double[] spot = SystemLayout.orbitSpot(body, SphereMap.longitude(structure.pose().x(), width),
                         SphereMap.latitude(structure.pose().z(), width));
                 announceAboard(entity);
+                level.getEntitiesOfClass(ServerPlayer.class, structure.worldBox().inflate(ABOARD))
+                        .forEach(SpaceFirsts::inOrbit);
                 // Told as a thing in the world's orbit, its blocks still here to be looked over.
                 OrbitObjects.arrived(level, structure, body);
                 MovingStructures.travel(structure, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]));
@@ -128,6 +131,7 @@ public final class SpaceClimbs {
                 space = space != null ? space : SystemSpaces.spaceOf(level.getServer(), world.system());
                 final double[] spot = SystemLayout.orbitSpot(body, SphereMap.longitude(player.getX(), width),
                         SphereMap.latitude(player.getZ(), width));
+                SpaceFirsts.inOrbit(player);
                 pass(player, space, new Vec3(spot[0], roomAt(space, spot[0], spot[1]), spot[1]));
             }
         }

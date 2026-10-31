@@ -10,6 +10,9 @@ package dev.jstech.tests.gametest.space;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureResult;
+import dev.jstech.core.progression.TeamProgress;
+import dev.jstech.core.team.CoreTeams;
+import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.network.FarMapPayload;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.FarRings;
@@ -72,6 +75,9 @@ public final class SpaceClimbGameTests {
                             && Math.abs(player.getZ() - spot[1]) < CLOSE && player.getY() >= SystemLayout.ORBIT_Y,
                             "over the spot their place is laid under: " + player.position() + " for "
                                     + spot[0] + ", " + spot[1]);
+                    helper.assertTrue(TeamProgress.reached(player.server, CoreTeams.teamOf(player.server,
+                            player.getUUID()), SpaceMilestones.PERSON_IN_ORBIT), "up in orbit, their team has its"
+                            + " first person in orbit");
                     player.teleportTo(space(helper), player.getX(), SpaceClimbs.floor() - OVER, player.getZ(), 0,
                             0);
                 })

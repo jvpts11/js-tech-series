@@ -12,7 +12,9 @@ import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.guide.ManualScreen;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
+import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.gui.layout.ManualScreenLayout;
 import dev.jstech.industrial.guide.IndustrialGuide;
@@ -22,6 +24,8 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
@@ -60,6 +64,17 @@ public final class SeriesManualsClientTests {
     private static final String THIS_HANDBOOK = "jsspace:this_handbook";
     private static final String LAUNCH_DRILL = "jstests:launch_drill";
     private static final int LAUNCH_OPERATIONS_TAB = 1;
+    /* The first page of Launch Operations, and the sheets of the worlds with the paintings they are seen by. */
+    private static final String HANGAR = "jsspace:hangar";
+    private static final String THE_MOON = "jsspace:the_moon";
+    private static final String MARS = "jsspace:mars";
+    private static final ResourceLocation MOON_PAINTING = ResourceLocation.parse("jsspace:textures/gui/guide/moon.png");
+    private static final ResourceLocation MARS_PAINTING = ResourceLocation.parse("jsspace:textures/gui/guide/mars.png");
+    /* How far a channel of a painting's pixel may be from its texture's, drawn on the page; and one channel's bits. */
+    private static final int CHANNEL_SLACK = 8;
+    private static final int CHANNEL = 0xFF;
+    private static final int CHANNEL_BITS = 8;
+    private static final int COLOUR_BITS = 24;
 
     private SeriesManualsClientTests() {
     }
@@ -306,16 +321,88 @@ public final class SeriesManualsClientTests {
                     ctx.assertTrue(tab != null, "Launch Operations has its tab, holding the test mod's page");
                     ctx.click(tab[0], tab[1]);
                 })
-                .thenAssert(SETTLE, () -> shows(LAUNCH_DRILL) && page(LAUNCH_DRILL).folio().startsWith("LO 2-"),
-                        "its tab opens Launch Operations, section 2, its pages numbered LO 2-")
-                .thenScreenshot(2, "space_handbook_launch_drill")
+                .thenAssert(SETTLE, () -> shows(HANGAR) && page(HANGAR).folio().startsWith("LO 2-"),
+                        "its tab opens Launch Operations, section 2, at its first page, the hangar's")
+                .thenScreenshot(2, "space_handbook_hangar")
+                .thenAssert(0, () -> manual().goTo(LAUNCH_DRILL) && shows(LAUNCH_DRILL)
+                        && page(LAUNCH_DRILL).folio().startsWith("LO 2-"),
+                        "the test mod's page follows the handbook's own, its pages numbered LO 2-")
+                .thenScreenshot(SETTLE, "space_handbook_launch_drill")
                 .then(0, () -> manual().turn(1))
                 .thenScreenshot(SETTLE, "space_handbook_launch_drill_2")
                 .thenAssert(0, () -> manual().goTo(LAUNCH_DRILL) && manual().turn(1) && manual().turn(1),
                         "the cards on rings follow, on the next spread")
                 .thenScreenshot(SETTLE, "space_handbook_launch_drill_3")
+                .thenAssert(0, () -> manual().goTo(THE_MOON) && shows(THE_MOON), "the Moon has its sheet")
+                .thenScreenshot(SETTLE, "space_handbook_the_moon")
+                .then(0, () -> turnUnlessPainted(ctx, MOON_PAINTING))
+                .thenAssert(SETTLE, () -> showsPicture(ctx, MOON_PAINTING), "the Moon's sheet paints it from orbit")
+                .thenScreenshot(0, "space_handbook_the_moon_2")
+                .thenAssert(0, () -> manual().goTo(MARS) && shows(MARS), "and Mars its own")
+                .thenScreenshot(SETTLE, "space_handbook_mars")
+                .then(0, () -> turnUnlessPainted(ctx, MARS_PAINTING))
+                .thenAssert(SETTLE, () -> showsPicture(ctx, MARS_PAINTING), "Mars' sheet paints it from orbit")
+                .thenScreenshot(0, "space_handbook_mars_2")
+                .thenAssert(0, SeriesManualsClientTests::figuresAreEachWorldsOwn,
+                        "the sheets' figures are read from each world's own rules")
                 .then(0, SeriesManualsClientTests::close)
                 .thenAwaitNoScreen(OPEN);
+    }
+
+    /* An entry may start on a right page and its picture fall on the next spread, where it is looked for then. */
+    private static void turnUnlessPainted(final ClientTestContext ctx, final ResourceLocation texture) {
+        if (!showsPicture(ctx, texture)) {
+            manual().turn(1);
+        }
+    }
+
+    /* Whether the picture is drawn on the spread shown at its own size: every opaque pixel of it, somewhere. */
+    private static boolean showsPicture(final ClientTestContext ctx, final ResourceLocation texture) {
+        final ManualScreen screen = manual();
+        try (NativeImage drawn = ctx.captureGuiPixels(0, 0, screen.width, screen.height);
+             NativeImage picture = read(ctx, texture)) {
+            for (int y = 0; y + picture.getHeight() <= drawn.getHeight(); y++) {
+                for (int x = 0; x + picture.getWidth() <= drawn.getWidth(); x++) {
+                    if (drawnAt(drawn, picture, x, y)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    private static boolean drawnAt(final NativeImage drawn, final NativeImage picture, final int x, final int y) {
+        for (int py = 0; py < picture.getHeight(); py++) {
+            for (int px = 0; px < picture.getWidth(); px++) {
+                final int wanted = picture.getPixelRGBA(px, py);
+                if ((wanted >>> COLOUR_BITS) == OPAQUE && !near(wanted, drawn.getPixelRGBA(x + px, y + py))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean near(final int one, final int other) {
+        for (int shift = 0; shift < COLOUR_BITS; shift += CHANNEL_BITS) {
+            if (Math.abs((one >>> shift & CHANNEL) - (other >>> shift & CHANNEL)) > CHANNEL_SLACK) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*
+     * The Moon's and Mars' gravity and air are not alike, as they would be if the figures were read from the
+     * Overworld's rules, which a world's rules fall back to where they are not known.
+     */
+    private static boolean figuresAreEachWorldsOwn() {
+        return Stream.of("gravity", "pressure").allMatch(figure -> {
+            final Optional<GuideBlock.GuideValue> moon = GuideFacts.valueFor("jsspace:moon_" + figure);
+            final Optional<GuideBlock.GuideValue> mars = GuideFacts.valueFor("jsspace:mars_" + figure);
+            return moon.isPresent() && mars.isPresent() && !moon.equals(mars);
+        });
     }
 
     private static NativeImage read(final ClientTestContext ctx, final ResourceLocation texture) {

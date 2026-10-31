@@ -91,10 +91,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   across a 400 by 200 sky drawn once and wide, with a 16-pixel tile of it.
 - The Mission Handbook, the mod's own manual and the first thing in its tab, dressed as a crew's flight
   documents were: an off-white ring binder with the mission's emblem and its typed lines on the cover, cream pages
-  typed in capitals, a tab at the edge for each section (Launch Operations, Flight, Suits and World Data) in its
-  colour and lettered with its code, and the pages numbered by section (LO 2-3). It is written in Markdown, in English
-  and Brazilian Portuguese, and its chapter is in the Technical Reference too. For now it holds the page that says
-  how to read it; the other sections show as their pages are written.
+  typed in capitals, a tab at the edge for each section (Launch Operations, Flight, Suits, World Data and Starships)
+  in its colour and lettered with its code, and the pages numbered by section (LO 2-3). It is written in Markdown, in
+  English and Brazilian Portuguese, and its chapter is in the Technical Reference too.
 - Its milestones: the firsts of spaceflight, in the order they happened, from the first suborbital flight,
   satellite, person in orbit, spacewalk and docking to the first starship, star and galaxy, nineteen in all. They
   belong to the team, any mod can read them, and each is knowledge a recipe can ask for; each is reached by what does
@@ -678,6 +677,21 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lines and the yellow cross in the middle, the rim with its flush cyan lights, the truss with its braces, the stair's
   railings and the masts' floodlights and red lamps, the lamps lit in the dark. Ships set down on the deck's middle,
   whichever way the pad was built.
+- The Mission Handbook's pages: every one of J's Space's items has its entry, in English and Brazilian
+  Portuguese, each in the five parts. Launch Operations holds the rocket hangar, the tanks, the engines, the capsule,
+  the lander, the mobile launcher, the crawler, the launch pad, the propellant depot and the launch panel; Flight the
+  flight computer, coming down, the landing platform and rocket wreckage; Suits the Lunar Suit, its modules and its
+  supplies; and a new section, Starships, the Small Shipyard, the hull, the engines, the wings and gear, the fittings,
+  flying a ship, the crew, the ship landing pad and the runway beacon. Each drill is on cuff cards, three steps a card.
+- The world sheets: World Data has a sheet for the Moon and one for Mars, each painted as seen from orbit, with
+  its ground, its ores, how a crew gets there and back, its landmarks, its biomes and what kills there. Its figures,
+  the diameter, gravity, air, temperature, day and year, the usual trip and the delta-v to land, are read from the
+  world's own data as the manual is read, so a data pack's change shows on the page.
+- The advancements of the firsts, each earned where it happens and reaching its milestone for the team: The
+  Overworld Is Blue, for the team's first crew in orbit; Enterprise, for its first starship out of the shipyard; A Small
+  Step for a Player, a Giant Leap for Players, for the first landing on the Moon; and Seven Minutes of Terror, for the
+  first landing on Mars, which is also the first person on another planet. A launch, the arrival at the Moon and a
+  landing on a world earn their events of the tabs as they happen.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

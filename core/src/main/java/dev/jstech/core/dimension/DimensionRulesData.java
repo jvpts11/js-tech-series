@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.data.DataRegistry;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -42,6 +43,17 @@ public final class DimensionRulesData {
     public static DimensionRules of(final ResourceKey<Level> dimension) {
         return FILES.get(dimension.location())
                 .or(() -> RuntimeDimensions.templateOf(dimension.location()).flatMap(FILES::get))
+                .orElse(DimensionRules.OVERWORLD);
+    }
+
+    /**
+     * The rules of {@code dimension} as this game knows them, wherever it is asked: the server's where the server
+     * runs, else those the server sent to the player, whichever dimension the player stands in; the overworld's when it
+     * knows none. For what shows a dimension's rules away from it, as a manual's page does.
+     */
+    public static DimensionRules known(final ResourceKey<Level> dimension) {
+        return FILES.get(dimension.location())
+                .or(() -> Optional.ofNullable(FILES.clientEntries().get(dimension.location())))
                 .orElse(DimensionRules.OVERWORLD);
     }
 

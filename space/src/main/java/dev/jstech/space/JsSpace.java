@@ -18,6 +18,7 @@ import dev.jstech.space.geology.LooseStones;
 import dev.jstech.space.geology.SpaceOres;
 import dev.jstech.space.geology.SpaceRocks;
 import dev.jstech.space.guide.MissionHandbook;
+import dev.jstech.space.guide.WorldFacts;
 import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.crew.ShipCrews;
 import dev.jstech.space.landing.ShipLandingBlocks;
@@ -104,6 +105,7 @@ public final class JsSpace {
         LOGGER.info("J's Space {} loaded.", modContainer.getModInfo().getVersion());
         // The Mission Handbook's item and the style it is drawn in; the handbook itself is written in Markdown.
         MissionHandbook.declare();
+        WorldFacts.declare();
         // The firsts of spaceflight a team reaches, which any mod reads and the advancements of the same firsts follow.
         SpaceMilestones.declare();
         // What can be known of a world, and what each team knows of each.

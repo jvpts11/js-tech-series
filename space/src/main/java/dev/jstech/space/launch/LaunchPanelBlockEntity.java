@@ -19,24 +19,29 @@ import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.uuid.StructureUuid;
+import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.Propellant;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.cruise.CruiseFlight;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.pad.LaunchPads;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.TankLoad;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -326,6 +331,14 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         this.lifted.set(false);
         this.phase.set(Phase.RELEASED);
         this.met.set(0);
+        // Its crew aboard and whoever pressed LAUNCH have launched a rocket.
+        final Set<ServerPlayer> launched = new HashSet<>(CruiseFlight.aboard(server, body.get()));
+        final UUID pressed = this.pilot.get();
+        final ServerPlayer launcher = pressed == null ? null : server.getServer().getPlayerList().getPlayer(pressed);
+        if (launcher != null) {
+            launched.add(launcher);
+        }
+        launched.forEach(SpaceFirsts::launched);
     }
 
     /* Once the released rocket's body stands ready, it climbs. */
