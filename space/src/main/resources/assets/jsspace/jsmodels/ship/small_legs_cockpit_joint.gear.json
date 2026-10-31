@@ -1,0 +1,44 @@
+{
+  "bones": [
+    {
+      "bone": "front_door_l",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "front_door_r",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "front_leg",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "front_foot",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": 90.0
+    }
+  ]
+}

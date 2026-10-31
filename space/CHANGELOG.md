@@ -663,9 +663,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   aboard; everyone else stays outside till the owner names them. A pilot flies it from its helm and changes its blocks;
   its crew works its fittings and the machines aboard; a passenger comes aboard, sits and sleeps. The owner sets the
   roles of the team, shown by its name, of everyone else and of each player named on the crew page of the ship's
-  flight console, drawn as the flight computer's display; everyone else aboard reads it there. The airlock door takes whoever may come
-  aboard in and out, and a player refused is told whose the ship is; a docking collar asks for a place aboard the other
-  ship too.
+  flight console, drawn as the flight computer's display; everyone else aboard reads it there. The airlock door takes
+  whoever may come aboard in and out, and a player refused is told whose the ship is; a docking collar asks for a place
+  aboard the other ship too.
+- Landing gear that moves: a small ship's gear folds flat into its floor as it climbs away, in about two
+  seconds, the struts first and the bays' doors shutting after them, and comes down the same way back as it nears the
+  land; its wheels turn as it rolls. Each leg has one wheel on a fork, which turns the wheel flat as it folds, and a
+  leg's foot stays flat as it folds; the main legs and the rear feet stand a block from the ship's middle, where the
+  belly is flat.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

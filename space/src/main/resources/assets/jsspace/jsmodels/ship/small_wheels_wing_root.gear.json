@@ -1,0 +1,104 @@
+{
+  "bones": [
+    {
+      "bone": "main_l_door_l",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "main_l_door_r",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "main_l_leg",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "main_r_door_l",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "main_r_door_r",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "main_r_leg",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "main_l_turn",
+      "kind": "fold",
+      "axis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "main_r_turn",
+      "kind": "fold",
+      "axis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "main_l_wheel",
+      "kind": "spin",
+      "axis": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "radius": 0.42
+    },
+    {
+      "bone": "main_r_wheel",
+      "kind": "spin",
+      "axis": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "radius": 0.42
+    }
+  ]
+}

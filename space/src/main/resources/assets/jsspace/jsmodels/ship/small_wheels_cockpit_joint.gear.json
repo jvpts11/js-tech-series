@@ -1,0 +1,54 @@
+{
+  "bones": [
+    {
+      "bone": "nose_door_l",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "nose_door_r",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "nose_leg",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "nose_turn",
+      "kind": "fold",
+      "axis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "nose_wheel",
+      "kind": "spin",
+      "axis": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "radius": 0.42
+    }
+  ]
+}

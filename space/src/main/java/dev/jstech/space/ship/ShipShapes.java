@@ -23,9 +23,10 @@ import org.jetbrains.annotations.Nullable;
  * The shapes of the starship parts' formed models, each worked out by the data run from the blocks of its piece of the
  * kit: once a part is built and formed, each of its blocks is collided with, outlined and aimed at as its model is
  * drawn there, so a hull's floor and ceiling leave room to walk inside it. A block of the kit that stands for a block
- * of the game, a furnace in a workshop, keeps itself and has no face of the model; it is left out. Two models stand
- * out of their kits' blocks further than a block: the ramp lowered from the tail, and the twin bells' nozzles; what
- * lies out there is seen, and stands in no block.
+ * of the game, a furnace in a workshop, keeps itself and has no face of the model; it is left out. Some models stand
+ * out of their kits' blocks further than a block: the ramp lowered from the tail, the twin bells' nozzles, and the
+ * gear's bays under the belly, as long as their legs folded into the floor; what lies out there is seen, and stands
+ * in no block.
  */
 public final class ShipShapes {
 
@@ -34,7 +35,11 @@ public final class ShipShapes {
     /* The places out of their blocks the models reach into, by their names: from one corner to the other. */
     private static final Map<String, int[]> REACH = Map.of(
             "small_ramp", new int[] {-2, -3, 6, 1, -1, 7},
-            "small_twin_bells", new int[] {-2, 0, 3, 1, 2, 3});
+            "small_twin_bells", new int[] {-2, 0, 3, 1, 2, 3},
+            "small_wheels_cockpit_joint", new int[] {-1, -1, -2, 0, -1, -1},
+            "small_wheels_wing_root", new int[] {-2, -1, 0, 1, -1, 1},
+            "small_legs_cockpit_joint", new int[] {-1, -1, -2, 0, -1, 0},
+            "small_legs_spine_end", new int[] {-2, -1, -5, 1, -1, -3});
 
     private ShipShapes() {
     }

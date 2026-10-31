@@ -255,7 +255,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, held, air(level, now, body), running,
                 pitch);
         if (keeper != null) {
-            keeper.flew(ShipReadings.of(next, altitude, shown));
+            keeper.flew(ShipReadings.of(next, this.grounded, altitude, shown));
         }
         return self.flownOn(level, body, now, frame, next);
     }
@@ -341,7 +341,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 pitch);
         if (keeper != null) {
             final double closing = offset.length() < STILL ? 0 : drift.dot(offset.normalize());
-            keeper.flew(ShipReadings.of(next, altitude, ShipReadings.Pilot.of(ShipAutopilot.Mode.DOCK,
+            keeper.flew(ShipReadings.of(next, this.grounded, altitude, ShipReadings.Pilot.of(ShipAutopilot.Mode.DOCK,
                     theirs.get(), offset.length(), closing, docking.aligned(), 0, 0)));
         }
         final StructurePose turned = off < STILL ? now

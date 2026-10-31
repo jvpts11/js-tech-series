@@ -1,0 +1,84 @@
+{
+  "bones": [
+    {
+      "bone": "side_l_door_l",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "side_l_door_r",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "side_l_leg",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "side_r_door_l",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "side_r_door_r",
+      "kind": "door",
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "side_r_leg",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": 90.0
+    },
+    {
+      "bone": "side_l_foot",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": -90.0
+    },
+    {
+      "bone": "side_r_foot",
+      "kind": "fold",
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "degrees": -90.0
+    }
+  ]
+}

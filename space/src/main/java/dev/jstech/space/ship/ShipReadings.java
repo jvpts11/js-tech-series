@@ -26,13 +26,15 @@ import net.minecraft.world.phys.Vec3;
  * @param gearDown whether its gear is down
  * @param stalled  whether it flies too slowly to be held up
  * @param altitude how high it flies, in metres ({@link ShipAltitude}), or {@link ShipAltitude#NONE}
+ * @param grounded whether it stands on the land, where its wheels roll
  * @param pilot    its autopilot, as its HUD shows it
  */
 public record ShipReadings(double speed, double climb, int throttle, int charge, boolean boosting, int nozzles,
-                           boolean lifting, boolean gearDown, boolean stalled, int altitude, Pilot pilot) {
+                           boolean lifting, boolean gearDown, boolean stalled, int altitude, boolean grounded,
+                           Pilot pilot) {
 
     /** A ship at rest on the land. */
-    public static final ShipReadings PARKED = new ShipReadings(0, 0, 0, 100, false, 0, false, true, false, 0,
+    public static final ShipReadings PARKED = new ShipReadings(0, 0, 0, 100, false, 0, false, true, false, 0, true,
             Pilot.NONE);
     public static final Codec<ShipReadings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.DOUBLE.fieldOf("speed").forGetter(ShipReadings::speed),
@@ -45,6 +47,7 @@ public record ShipReadings(double speed, double climb, int throttle, int charge,
             Codec.BOOL.fieldOf("gear_down").forGetter(ShipReadings::gearDown),
             Codec.BOOL.fieldOf("stalled").forGetter(ShipReadings::stalled),
             Codec.INT.optionalFieldOf("altitude", 0).forGetter(ShipReadings::altitude),
+            Codec.BOOL.optionalFieldOf("grounded", false).forGetter(ShipReadings::grounded),
             Pilot.CODEC.optionalFieldOf("pilot", Pilot.NONE).forGetter(ShipReadings::pilot)
     ).apply(instance, ShipReadings::new));
     /* Tenths and hundredths, as the readings are kept. */
@@ -52,16 +55,17 @@ public record ShipReadings(double speed, double climb, int throttle, int charge,
     private static final double HUNDREDTHS = 100.0;
 
     /**
-     * The readings of a tick of a ship's flight flying {@code altitude} metres high, its autopilot showing
-     * {@code pilot}, rounded as they are shown.
+     * The readings of a tick of a ship's flight flying {@code altitude} metres high, or standing on the land
+     * ({@code grounded}), its autopilot showing {@code pilot}, rounded as they are shown.
      */
-    public static ShipReadings of(final ShipFlightModel.Tick tick, final int altitude, final Pilot pilot) {
+    public static ShipReadings of(final ShipFlightModel.Tick tick, final boolean grounded, final int altitude,
+                                  final Pilot pilot) {
         final ShipFlightModel.State state = tick.state();
         return new ShipReadings(Math.round(state.speed() * TENTHS) / TENTHS,
                 Math.round((state.rise() - state.sink()) * TENTHS) / TENTHS,
                 (int) Math.round(state.throttle() * HUNDREDTHS), (int) Math.round(state.charge() * HUNDREDTHS),
                 tick.boosting(), (int) Math.round(state.nozzles()), tick.lifting(), tick.gearDown(), tick.stalled(),
-                altitude, pilot);
+                altitude, grounded, pilot);
     }
 
     /**

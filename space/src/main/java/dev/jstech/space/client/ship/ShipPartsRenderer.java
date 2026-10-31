@@ -22,8 +22,10 @@ import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.client.rocket.RocketCabins;
 import dev.jstech.space.rocket.CabinReadings;
+import dev.jstech.space.ship.GearMotion;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipPartModels;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,12 +69,24 @@ public final class ShipPartsRenderer {
     /**
      * Draws {@code placed} as {@link #draw(BlockEntity, List, CabinReadings, PoseStack, MultiBufferSource, int, int)}
      * does, a block missing from a formed part shown as a hole, its bone hidden: {@code holes} the bones hidden, by
-     * the part's number, then its piece's model's name ({@code ShipyardPlans.holes}).
+     * the part's number, then its piece's model's name ({@code ShipyardPlans.holes}). Its gear stands all the way
+     * down.
      */
     public static void draw(final BlockEntity owner, final List<ShipPartModels.Placed> placed,
                             final Map<Integer, Map<String, Set<String>>> holes, final CabinReadings readings,
                             final PoseStack poses, final MultiBufferSource buffers, final int light,
                             final int overlay) {
+        draw(owner, placed, holes, GearMotion.standing(true), readings, poses, buffers, light, overlay);
+    }
+
+    /**
+     * Draws {@code placed} as {@link #draw(BlockEntity, List, Map, CabinReadings, PoseStack, MultiBufferSource, int,
+     * int)} does, its gear standing as {@code gear} has it ({@link ShipGears}).
+     */
+    public static void draw(final BlockEntity owner, final List<ShipPartModels.Placed> placed,
+                            final Map<Integer, Map<String, Set<String>>> holes, final GearMotion gear,
+                            final CabinReadings readings, final PoseStack poses, final MultiBufferSource buffers,
+                            final int light, final int overlay) {
         final Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         for (final ShipPartModels.Placed part : placed) {
             final Optional<KitModel> model = KitModels.get(part.model());
@@ -84,8 +98,10 @@ public final class ShipPartsRenderer {
             final Optional<RocketCabins.Cabin> cabin = RocketCabins.of(cabinOf(part.model()));
             cabin.ifPresent(live -> instance.animate(KitClock.frame(), KitClock.now(),
                     ShipCabinRenderer.driver(live), readings, IAnimationListener.NONE));
-            hide(instance, holes.getOrDefault(part.part(), Map.of()).getOrDefault(ShipPartModels.name(part.model()),
-                    Set.of()));
+            final Set<String> hidden = new HashSet<>(holes.getOrDefault(part.part(), Map.of())
+                    .getOrDefault(ShipPartModels.name(part.model()), Set.of()));
+            ShipGears.rigOf(cabinOf(part.model())).ifPresent(rig -> ShipGears.pose(instance, rig, gear, hidden));
+            hide(instance, hidden);
             poses.pushPose();
             poses.translate(0, 0, part.z());
             if (part.flipped()) {
@@ -106,12 +122,26 @@ public final class ShipPartsRenderer {
     /**
      * Draws the parts of the ship of {@code design} that {@code drawn} says, by their numbers, for {@code owner}, the
      * pose stack on the owner's block: the block of the ship's nose on its centre line at its hull's floor
-     * {@code nose} from it, the ship's frame turned as {@code turn} says about that block's middle.
+     * {@code nose} from it, the ship's frame turned as {@code turn} says about that block's middle. Its gear stands
+     * all the way down.
      */
     public static void drawShip(final BlockEntity owner, final ShipDesign design, final IntPredicate drawn,
                                 final Map<Integer, Map<String, Set<String>>> holes, final BlockPos nose,
                                 final Orientation turn, final CabinReadings readings, final PoseStack poses,
                                 final MultiBufferSource buffers, final int light, final int overlay) {
+        drawShip(owner, design, drawn, holes, GearMotion.standing(true), nose, turn, readings, poses, buffers, light,
+                overlay);
+    }
+
+    /**
+     * Draws the ship as {@link #drawShip(BlockEntity, ShipDesign, IntPredicate, Map, BlockPos, Orientation,
+     * CabinReadings, PoseStack, MultiBufferSource, int, int)} does, its gear standing as {@code gear} has it.
+     */
+    public static void drawShip(final BlockEntity owner, final ShipDesign design, final IntPredicate drawn,
+                                final Map<Integer, Map<String, Set<String>>> holes, final GearMotion gear,
+                                final BlockPos nose, final Orientation turn, final CabinReadings readings,
+                                final PoseStack poses, final MultiBufferSource buffers, final int light,
+                                final int overlay) {
         final Level level = owner.getLevel();
         if (level == null) {
             return;
@@ -122,7 +152,7 @@ public final class ShipPartsRenderer {
         poses.translate(nose.getX() + HALF, nose.getY() + HALF, nose.getZ() + HALF);
         poses.mulPose(turned(turn));
         poses.translate(-HALF, -HALF, -HALF);
-        draw(owner, placed, holes, readings, poses, buffers, light, overlay);
+        draw(owner, placed, holes, gear, readings, poses, buffers, light, overlay);
         poses.popPose();
     }
 
