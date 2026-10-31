@@ -1,0 +1,36 @@
+{
+  "key": {
+    "P": {
+      "blocks": [
+        "jsspace:ship_pad_plate"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "      PPPPPPPPP      ",
+      "     PPPPPPPPPPP     ",
+      "    PPPPPPPPPPPPP    ",
+      "   PPPPPPPPPPPPPPP   ",
+      "  PPPPPPPPPPPPPPPPP  ",
+      " PPPPPPPPPPPPPPPPPPP ",
+      "PPPPPPPPPPPPPPPPPPPPP",
+      "PPPPPPPPPPPPPPPPPPPPP",
+      "PPPPPPPPPPPPPPPPPPPPP",
+      "PPPPPPPPPPPPPPPPPPPPP",
+      "PPPPPPPPPP#PPPPPPPPPP",
+      "PPPPPPPPPPPPPPPPPPPPP",
+      "PPPPPPPPPPPPPPPPPPPPP",
+      "PPPPPPPPPPPPPPPPPPPPP",
+      "PPPPPPPPPPPPPPPPPPPPP",
+      " PPPPPPPPPPPPPPPPPPP ",
+      "  PPPPPPPPPPPPPPPPP  ",
+      "   PPPPPPPPPPPPPPP   ",
+      "    PPPPPPPPPPPPP    ",
+      "     PPPPPPPPPPP     ",
+      "      PPPPPPPPP      "
+    ]
+  ],
+  "name": "ship_pad",
+  "terminal": "jsspace:ship_pad"
+}

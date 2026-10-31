@@ -9,15 +9,22 @@ package dev.jstech.space.ship;
 
 /**
  * How a ship's autopilot flies it, a tick at a time, by what it holds at the helm as a pilot would: LAND turns it to a
- * landing spot, flies there high enough and slowing as it nears, comes over it hovering and sets it down; ORBIT opens
- * its throttle, pitches its nose up to the climb's angle and boosts where it may, up and over the line to space; DOCK,
- * in space, drifts it on its thrusters till its collar stands off the other ship's, in line with it, then closes
- * slowly till they touch, its flight turning it meanwhile to face the other's collar. Pure, as the flight is.
+ * landing spot, flies there high enough and slowing as it nears, comes over it hovering and sets it down; LAND onto a
+ * runway flies it to a gate a way back along the runway's line, then down a shallow glide lined up on the runway's
+ * middle, to touch down past the beacon and roll on along the runway, its throttle shut, till it stops, as an airliner
+ * lands; ORBIT opens its throttle, pitches its nose up to the climb's angle and boosts where it may, up and over the
+ * line to space; DOCK, in space, drifts it on its thrusters till its collar stands off the other ship's, in line with
+ * it, then closes slowly till they touch, its flight turning it meanwhile to face the other's collar. Pure, as the
+ * flight is.
  */
 public final class ShipAutopilots {
 
     /** The pitch ORBIT climbs at, in degrees, as the approved climb shows it. */
     public static final double CLIMB_PITCH = 55;
+    /** How far past its beacon a ship landing on a runway touches down, in metres: well clear over the beacon. */
+    public static final double RUNWAY_TOUCH = 20;
+    /** How long a runway's stretch is, from its beacon, in blocks: room to touch down and roll to a stop. */
+    public static final int RUNWAY_LENGTH = 64;
     /* How near the spot LAND slows to come over it, in metres; how high over it it flies till then. */
     private static final double NEAR = 40;
     private static final double CRUISE_HEIGHT = 30;
@@ -53,6 +60,48 @@ public final class ShipAutopilots {
     private static final double ATTITUDE_IN_LINE = 2;
     private static final double TOUCHING = 0.15;
     private static final double DRIFT_GAIN = 0.3;
+    /*
+     * A runway: how far before the touch its gate stands, in metres; the glide down from it, in degrees; how fast it
+     * flies its final, in metres a second.
+     */
+    private static final double RUNWAY_FINAL = 100;
+    private static final double GLIDE = 6;
+    private static final double RUNWAY_SPEED = 16;
+    /*
+     * Which flight is on its final: within a few metres of the runway's line at the touch, and a cone widening back
+     * from it; its nose within a few degrees of the runway's way at the touch, more further back, and at most a wide
+     * angle; and not far over the glide. Past the touch it may float a way on before it comes round again.
+     */
+    private static final double CAPTURE_WIDTH = 3;
+    private static final double CAPTURE_CONE = 0.4;
+    private static final double CAPTURE_TURN = 20;
+    private static final double CAPTURE_TURN_BACK = 0.6;
+    private static final double CAPTURE_HEADING = 75;
+    private static final double CAPTURE_ABOVE = 15;
+    private static final double FLOAT = 25;
+    /* How far off the runway's way it turns to come back to its line, in degrees for each metre off, and at most. */
+    private static final double INTERCEPT_GAIN = 4;
+    private static final double INTERCEPT = 40;
+    private static final double ROLL_INTERCEPT = 10;
+    /* How far it pitches off the glide for each metre off it, in degrees, and at most down and up. */
+    private static final double GLIDE_GAIN = 1.5;
+    private static final double MOST_DIVE = 15;
+    private static final double MOST_CLIMB = 10;
+    /* Within this of the touch it keeps coming down at least this pitch, never levelling over the runway. */
+    private static final double SETTLE_FROM = 10;
+    private static final double SETTLE = 2;
+    /* How high over the runway it flares, in metres. */
+    private static final double FLARE = 1.5;
+    /*
+     * To the gate: how its height over the runway falls toward the gate's, in metres for each metre nearer; how far
+     * it pitches for each metre off that height, in degrees, and at most climbing.
+     */
+    private static final double GATE_SLOPE = 0.25;
+    private static final double HEIGHT_GAIN = 0.5;
+    private static final double MOST_CLIMB_TO_GATE = 20;
+    /* On its stretch: how far behind its beacon, and how far across its line, in metres. */
+    private static final double STRETCH_BEHIND = 8;
+    private static final double STRETCH_ACROSS = 4;
 
     private ShipAutopilots() {
     }
@@ -87,6 +136,75 @@ public final class ShipAutopilots {
         return held(throttle, turn, up, down, false);
     }
 
+    /**
+     * What LAND holds onto a runway, the ship's flight at {@code state}, its nose at {@code heading} and {@code pitch},
+     * in degrees, the foot of the runway's beacon {@code dx}, {@code dy}, {@code dz} metres from the middle of its
+     * hull's floor, the runway running {@code runway} degrees east of north from it; {@code grounded} whether it stands
+     * on the land. Off its final it flies to the gate; on it, down the glide; on the runway's stretch, it rolls out;
+     * on the land elsewhere, it lifts off to come round again.
+     */
+    public static ShipFlightModel.Held runway(final ShipFlightModel.State state, final double heading,
+                                              final double pitch, final double dx, final double dy, final double dz,
+                                              final double runway, final boolean grounded) {
+        final double[] way = way(runway);
+        // Where it is from the beacon: along the runway, and across it, to its right.
+        final double along = -dx * way[0] - dz * way[1];
+        final double across = dx * way[1] - dz * way[0];
+        final double height = -dy;
+        if (grounded) {
+            if (onStretch(along, across)) {
+                // Rolling out: its throttle shut, its nose along the runway, kept on its line; never up nor down, which
+                // slow would lift it off again.
+                final double[] turn = turn(heading, runway - cap(across * INTERCEPT_GAIN, ROLL_INTERCEPT), true);
+                return held(throttle(state, 0), turn, 0, 0, false);
+            }
+            // On the land off its stretch, short of it or beside it: up off the land, to come round again.
+            return held(throttle(state, 0), new double[] {0, 0}, 1, 0, false);
+        }
+        final double before = RUNWAY_TOUCH - along;
+        final double off = Math.abs(Math.IEEEremainder(heading - runway, 360));
+        final double glide = Math.max(0, before) * Math.tan(Math.toRadians(GLIDE));
+        final boolean onFinal = before > -FLOAT
+                && Math.abs(across) <= CAPTURE_WIDTH + Math.max(0, before) * CAPTURE_CONE
+                && off < Math.min(CAPTURE_HEADING, CAPTURE_TURN + Math.max(0, before) * CAPTURE_TURN_BACK)
+                && height < glide + CAPTURE_ABOVE;
+        if (onFinal) {
+            // On its final: lined up on the runway's middle, down the glide to touch down past the beacon. Low over
+            // the runway past the beacon, or past the touch, it flares: its throttle shuts, it slows till its nozzles
+            // hold it, its nose comes level, and it settles onto the runway level, rolling on.
+            final double[] turn = turn(heading, runway - cap(across * INTERCEPT_GAIN, INTERCEPT), true);
+            final boolean flaring = before < 0 || height < FLARE && along > 0;
+            double wanted = Math.clamp(-GLIDE + (glide - height) * GLIDE_GAIN, -MOST_DIVE, MOST_CLIMB);
+            if (flaring) {
+                wanted = -SETTLE;
+            } else if (before < SETTLE_FROM) {
+                wanted = Math.min(wanted, -SETTLE);
+            }
+            return held(throttle(state, flaring ? 0 : RUNWAY_SPEED / CRUISE), turn,
+                    pitch < wanted - PITCH_OFF ? 1 : 0, pitch > wanted + PITCH_OFF ? 1 : 0, false);
+        }
+        // Off its final: to the gate, a way back along the runway's line, coming down to the glide's height there.
+        final double back = RUNWAY_FINAL - RUNWAY_TOUCH;
+        final double gx = dx - way[0] * back;
+        final double gz = dz - way[1] * back;
+        final double toGate = Math.hypot(gx, gz);
+        final double gateHeight = RUNWAY_FINAL * Math.tan(Math.toRadians(GLIDE));
+        final double high = gateHeight + Math.min(CRUISE_HEIGHT - gateHeight, toGate * GATE_SLOPE);
+        final double wanted = Math.clamp((high - height) * HEIGHT_GAIN, -MOST_DIVE, MOST_CLIMB_TO_GATE);
+        final double speed = Math.max(RUNWAY_SPEED, Math.min(CRUISE, toGate * APPROACH * 2));
+        return held(throttle(state, speed / CRUISE), turn(heading, Math.toDegrees(Math.atan2(gx, -gz)), toGate > OVER),
+                pitch < wanted - PITCH_OFF ? 1 : 0, pitch > wanted + PITCH_OFF ? 1 : 0, false);
+    }
+
+    /**
+     * Whether a ship whose runway's beacon's foot is {@code dx}, {@code dz} metres from the middle of its hull's floor,
+     * the runway running {@code runway} degrees east of north, stands on the runway's stretch, where it rolls out.
+     */
+    public static boolean onRunway(final double dx, final double dz, final double runway) {
+        final double[] way = way(runway);
+        return onStretch(-dx * way[0] - dz * way[1], dx * way[1] - dz * way[0]);
+    }
+
     /** What ORBIT holds, the ship's flight at {@code state}, its nose at {@code pitch} degrees: up and away. */
     public static ShipFlightModel.Held orbit(final ShipFlightModel.State state, final double pitch) {
         final double up = pitch < CLIMB_PITCH - PITCH_OFF ? 1 : 0;
@@ -118,6 +236,17 @@ public final class ShipAutopilots {
             next[i] = toward(drift[i], wanted, THRUSTERS * ShipFlightModel.TICK);
         }
         return new Docking(next, inLine, touching);
+    }
+
+    /* The way {@code heading} degrees east of north points along the land, as x and z. */
+    private static double[] way(final double heading) {
+        final double r = Math.toRadians(heading);
+        return new double[] {Math.sin(r), -Math.cos(r)};
+    }
+
+    /* Whether {@code along} and {@code across} its runway, in metres from its beacon, is on the runway's stretch. */
+    private static boolean onStretch(final double along, final double across) {
+        return along >= -STRETCH_BEHIND && along <= RUNWAY_LENGTH && Math.abs(across) <= STRETCH_ACROSS;
     }
 
     /* The left and right held to turn from {@code heading} to {@code wanted}, in degrees; none when not to turn. */

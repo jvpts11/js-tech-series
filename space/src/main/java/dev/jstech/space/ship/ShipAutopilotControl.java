@@ -13,13 +13,14 @@ import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureSeatEntity;
+import dev.jstech.core.text.GameText;
 import dev.jstech.space.JsSpace;
-import dev.jstech.space.platform.LandingPlatforms;
+import dev.jstech.space.landing.Runways;
+import dev.jstech.space.landing.ShipLandingTexts;
+import dev.jstech.space.landing.ShipLandings;
 import dev.jstech.space.universe.SystemSpaces;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,9 +30,9 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * A ship's autopilot, changed at its helm: its key, J until the player changes it, takes it on to its next mode the
- * ship can fly, LAND, ORBIT and DOCK in turn, and off after the last: LAND to the nearest landing platform the pilot
- * may use, ORBIT from a world up to its space, DOCK in space to the nearest ship with a collar. Taking the helm,
- * holding any of its keys, lets the autopilot go.
+ * ship can fly, LAND, ORBIT and DOCK in turn, and off after the last: LAND to the nearest ship landing pad the pilot
+ * may use, or, on wheels, the nearest runway whose stretch is clear; ORBIT from a world up to its space; DOCK in space
+ * to the nearest ship with a collar. Taking the helm, holding any of its keys, lets the autopilot go.
  */
 public final class ShipAutopilotControl {
 
@@ -39,7 +40,7 @@ public final class ShipAutopilotControl {
     public static final KeyAction KEY = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship_autopilot"), ShipFlightTexts.AUTOPILOT_KEY)
             .key(GLFW.GLFW_KEY_J));
-    /* How far a landing platform, and another ship to dock with, may be, in metres. */
+    /* How far a landing pad or a runway, and another ship to dock with, may be, in metres. */
     private static final double LAND_RANGE = 512;
     private static final double DOCK_RANGE = 200;
     /* The modes in the order the key goes through them. */
@@ -75,7 +76,8 @@ public final class ShipAutopilotControl {
                                                final MovingStructure ship, final Optional<ShipAutopilot> now) {
         for (int i = now.map(engaged -> ORDER.indexOf(engaged.mode()) + 1).orElse(0); i < ORDER.size(); i++) {
             final Optional<ShipAutopilot> offered = switch (ORDER.get(i)) {
-                case LAND -> landing(pilot, level, ship);
+                case LAND -> ship.motion() instanceof ShipFlight flight ? landing(pilot, level, ship, flight)
+                        : Optional.empty();
                 case ORBIT -> SystemSpaces.systemOf(level.dimension()).isEmpty() ? Optional.of(ShipAutopilot.orbit())
                         : Optional.empty();
                 case DOCK -> docking(level, ship);
@@ -87,22 +89,45 @@ public final class ShipAutopilotControl {
         return Optional.empty();
     }
 
-    /* LAND onto the nearest landing platform {@code pilot} may use in the ship's world, within range. */
+    /*
+     * LAND onto the nearest of the ship landing pads {@code pilot} may use in the ship's world, another ship standing
+     * on none, and, for a ship on wheels, the runways whose stretch is clear, within range. A runway nearer than where
+     * it lands whose stretch is not clear, its pilot is told of.
+     */
     private static Optional<ShipAutopilot> landing(final ServerPlayer pilot, final ServerLevel level,
-                                                   final MovingStructure ship) {
+                                                   final MovingStructure ship, final ShipFlight flight) {
         final Vec3 at = new Vec3(ship.pose().x(), ship.pose().y(), ship.pose().z());
-        Vec3 nearest = null;
-        for (final Map.Entry<UUID, LandingPlatforms.Entry> platform : LandingPlatforms.usableBy(pilot).entrySet()) {
-            if (!platform.getValue().dimension().equals(level.dimension())) {
-                continue;
-            }
-            final Optional<Vec3> spot = LandingPlatforms.landingSpot(level.getServer(), platform.getValue());
-            if (spot.isPresent() && spot.get().distanceTo(at) <= LAND_RANGE
-                    && (nearest == null || spot.get().distanceTo(at) < nearest.distanceTo(at))) {
-                nearest = spot.get();
+        Optional<ShipAutopilot> best = Optional.empty();
+        double nearest = LAND_RANGE;
+        for (final ShipLandings.Pad pad : ShipLandings.padsUsableBy(pilot, level)) {
+            final Vec3 spot = ShipLandings.padSpot(level, pad);
+            if (spot.distanceTo(at) <= nearest && !ShipLandings.taken(level, spot, ship)) {
+                nearest = spot.distanceTo(at);
+                best = Optional.of(ShipAutopilot.land(spot));
             }
         }
-        return nearest == null ? Optional.empty() : Optional.of(ShipAutopilot.land(nearest));
+        if (flight.ship().gear() != ShipFlightModel.Gear.WHEELS) {
+            return best;
+        }
+        double blocked = Double.POSITIVE_INFINITY;
+        for (final ShipLandings.Beacon beacon : ShipLandings.beacons(level)) {
+            final double away = beacon.foot().distanceTo(at);
+            if (away > nearest) {
+                continue;
+            }
+            // Its stretch looked at now where its land is loaded, else as the ship comes near.
+            final Optional<Boolean> clear = Runways.clear(level, beacon, ship);
+            if (clear.isPresent() && !clear.get()) {
+                blocked = Math.min(blocked, away);
+                continue;
+            }
+            nearest = away;
+            best = Optional.of(ShipAutopilot.runway(beacon.foot(), beacon.heading(), clear.isPresent()));
+        }
+        if (blocked < nearest) {
+            pilot.displayClientMessage(GameText.component(ShipLandingTexts.RUNWAY_BLOCKED), true);
+        }
+        return best;
     }
 
     /* DOCK, in space, with the nearest other ship with a collar, its own having one too. */

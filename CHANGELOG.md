@@ -2622,7 +2622,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) A small ship's cabin is a sealed room wherever it flies, in space too: its flight console asks for it, and
   the furniture standing in it, its seats, consoles, bunks, suit lockers and racks, lets its air round them, so its
   crew breathes it, kept warm, with the vacuum outside.
-- (Space) A ship's autopilots, changed at its helm by their key, J: LAND flies it to the nearest landing platform its
+- (Space) A ship's autopilots, changed at its helm by their key, J: LAND flies it to the nearest ship landing pad its
   pilot may use and sets it down on it, high enough on its way, slowing as it nears and coming down hovering over it,
   and lets go once it stands there; ORBIT opens its throttle, pitches its nose up to the climb's 55 degrees and boosts,
   up and over the line into its system's space, and lets go there; DOCK, in space, turns it to face the nearest ship
@@ -2636,6 +2636,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   one, the ship docking held by the other where it stands and going wherever it goes. Whoever is inside either uses
   the collar over their head and goes through it into the other ship, standing under its collar, neither cabin's air
   let out. The docking ship's autopilot key lets it go, set a block clear of the other and flying by its own flight.
+- (Space) The Ship Landing Pad, where a starship sets down at a base: an octagon of Ship Pad Plates twenty-one blocks
+  across round its terminal, the corners cut off it. Formed, it is painted with its yellow ring, its touchdown circle
+  and the chevrons of the way in, and lit round its edge by flush cyan lights. Its owner's ships and their team's find
+  it from 512 blocks away: LAND sets a ship down on the nearest, passing one another ship already stands on.
+- (Space) The Runway Beacon, put down at the start of a flat stretch facing the way it runs: a yellow post with a
+  green lens to the ship coming in and a white lamp on top. A ship on wheels may land on its runway: LAND flies it to a
+  gate a hundred metres back along the runway's line, down a six-degree glide lined up on its middle, flares low over
+  it and settles past the beacon, then rolls on along it, its throttle shut, till it stops. LAND takes a runway only
+  when its stretch is long and free, sixty-four blocks of firm level land thirteen wide with six of headroom and no
+  other ship on it, looked at as the ship comes near when its land is not loaded yet; its pilot is told when it is not.
+  Ships on wheels set down on landing pads too.
 - (Core) A moving structure crossing to another dimension takes whoever sits on its seats along still sitting on
   them, and its pilot's hold on the controls goes with it.
 - (Core) A room among a moving structure's blocks is the room of the place of the world they fill now: whoever is

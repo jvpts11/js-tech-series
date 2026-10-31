@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jsspace:block/runway_beacon",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsspace:block/runway_beacon"
+    },
+    "facing=south": {
+      "model": "jsspace:block/runway_beacon",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsspace:block/runway_beacon",
+      "y": 270
+    }
+  }
+}

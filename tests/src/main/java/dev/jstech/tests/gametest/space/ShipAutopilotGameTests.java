@@ -16,10 +16,14 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.team.Ownership;
-import dev.jstech.space.platform.LandingPlatforms;
+import dev.jstech.space.landing.RunwayBeaconBlock;
+import dev.jstech.space.landing.Runways;
+import dev.jstech.space.landing.ShipLandingBlocks;
+import dev.jstech.space.landing.ShipLandings;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAutopilot;
 import dev.jstech.space.ship.ShipAutopilotControl;
+import dev.jstech.space.ship.ShipAutopilots;
 import dev.jstech.space.ship.ShipCollars;
 import dev.jstech.space.ship.ShipDocks;
 import dev.jstech.space.ship.ShipDesign;
@@ -43,6 +47,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -55,14 +60,17 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * A ship's autopilot flies it as a pilot would: its key at the helm engages LAND to the nearest landing platform its
- * pilot may use, and LAND flies it there and sets it down on the platform, letting go once it stands; ORBIT pitches
+ * A ship's autopilot flies it as a pilot would: its key at the helm engages LAND to the nearest ship landing pad its
+ * pilot may use, and LAND flies it there and sets it down on the pad, letting go once it stands; on wheels, LAND lines
+ * it up on a runway whose stretch is clear, sets it down past the beacon and rolls it to a stop on the stretch, and
+ * passes a runway whose stretch is not clear; ORBIT pitches
  * its nose up to the climb's angle, its throttle open, its console showing how high the climb tops out, and its pilot
  * taking the helm lets it go; in space its key engages DOCK with the nearest ship with a collar, and DOCK turns it to
  * face the other's collar and brings the two collars together till they touch; touching, the two are made one, held
@@ -91,9 +99,18 @@ public final class ShipAutopilotGameTests {
     private static final int PLATFORM_NORTH = 56;
     private static final int PLATFORM_FARTHEST = 112;
     private static final int PLATFORM_STEP = 8;
-    private static final int PLATFORM_SIDE = 9;
     private static final int BARE_ACROSS = 6;
     private static final int BARE_ALONG = 11;
+    /*
+     * How far north of the ship a runway's beacon stands, and how far its floor reaches behind it; how far north the
+     * land is kept loaded for it, in chunks; how far along its stretch a block stands in its way.
+     */
+    private static final int RUNWAY_NORTH = 150;
+    private static final int RUNWAY_BEHIND = 8;
+    private static final int RUNWAY_CHUNKS = 15;
+    private static final int BLOCKED_AT = 30;
+    /* How high over the runway a ship rolling out may be, at the most, in blocks: no hop off it. */
+    private static final double NO_HOP = 0.1;
     /* How near the platform's middle the ship sets down, in blocks across, and over its top. */
     private static final double ON_THE_SPOT = 3;
     private static final double ON_THE_TOP = 1.5;
@@ -116,6 +133,9 @@ public final class ShipAutopilotGameTests {
     private static final ShipDesign LEGS_SHIP = new ShipDesign("JS-04", List.of(part("orbiter_cockpit"),
             part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
             part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("legs")));
+    private static final ShipDesign WHEELS_SHIP = new ShipDesign("JS-07", List.of(part("orbiter_cockpit"),
+            part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
+            part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
     private static final ShipDesign DOCKING_SHIP = new ShipDesign("JS-06", List.of(part("orbiter_cockpit"),
             part("docking"), part("quarters"), part("reactor_flush")), List.of(part("twin_bells"),
             part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("legs")));
@@ -124,29 +144,30 @@ public final class ShipAutopilotGameTests {
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 3000)
-    public static void autopilot_landSetsItDownOnTheNearestPlatformItsPilotMayUse(final GameTestHelper helper) {
+    public static void autopilot_landSetsItDownOnTheNearestPadItsPilotMayUse(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final MovingStructure[] ship = new MovingStructure[1];
         final ServerPlayer[] pilot = new ServerPlayer[1];
-        final UUID platform = UUID.randomUUID();
+        final UUID pad = UUID.randomUUID();
         final Vec3[] spot = new Vec3[1];
-        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> keep(helper, true)).thenWaitUntil(() -> loaded(helper))
+        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> keep(helper, true, NORTH_CHUNKS))
+                .thenWaitUntil(() -> loaded(helper, NORTH_CHUNKS))
                 .thenExecute(() -> {
                     final BlockPos seat = aboard(ship[0], plan(helper, LEGS_SHIP).where(spot(helper, LEGS_SHIP,
                             ShipKitBlocks.PILOT_SEAT.getId())));
                     aloft(ship[0], HIGH);
                     pilot[0] = seated(helper, seat);
-                    // A landing platform of its pilot's on the land to the north, its top level with the land, where
+                    // A ship landing pad of its pilot's on the land to the north, its top level with the land, where
                     // the land is bare round it: the tests beside this one stand on the land too.
                     final BlockPos terminal = bareNorthOf(helper, ship[0].pose());
-                    LandingPlatforms.note(level, platform, terminal, PLATFORM_SIDE, Ownership.of(pilot[0].getUUID()));
-                    spot[0] = LandingPlatforms.landingSpot(level.getServer(), LandingPlatforms.get(level.getServer(),
-                            platform).orElseThrow()).orElseThrow();
+                    ShipLandings.notePad(level, pad, terminal, Ownership.of(pilot[0].getUUID()));
+                    spot[0] = ShipLandings.padSpot(level, ShipLandings.pad(level.getServer(), pad).orElseThrow());
                     ShipAutopilotControl.pressed(pilot[0]);
                     final Optional<ShipAutopilot> engaged = flight(ship[0]).autopilot();
                     helper.assertTrue(engaged.isPresent() && engaged.get().mode() == ShipAutopilot.Mode.LAND
-                            && engaged.get().spot().orElseThrow().equals(spot[0]), "its key at the helm engages"
-                            + " LAND to its pilot's platform: " + engaged);
+                            && engaged.get().spot().orElseThrow().equals(spot[0])
+                            && engaged.get().runway().isEmpty(), "its key at the helm engages LAND to its pilot's"
+                            + " pad: " + engaged);
                 })
                 .thenExecuteAfter(2, () -> {
                     final ShipReadings.Pilot shown = console(ship[0]).flight().pilot();
@@ -154,20 +175,115 @@ public final class ShipAutopilotGameTests {
                             "its console shows LAND and where it sets down: " + shown);
                 })
                 .thenWaitUntil(() -> helper.assertTrue(flight(ship[0]).autopilot().isEmpty()
-                        && flight(ship[0]).grounded(), "it flies to the platform and sets down on it, letting go"
-                        + " once it stands: at " + ship[0].pose().x() + " " + ship[0].worldBox().minY + " "
+                        && flight(ship[0]).grounded(), "it flies to the pad and sets down on it, letting go once it"
+                        + " stands: at " + ship[0].pose().x() + " " + ship[0].worldBox().minY + " "
                         + ship[0].pose().z() + " for " + spot[0] + ", " + flight(ship[0]).state() + ", grounded "
                         + flight(ship[0]).grounded() + ", " + flight(ship[0]).autopilot()))
                 .thenExecute(() -> {
                     final StructurePose at = ship[0].pose();
                     helper.assertTrue(Math.hypot(at.x() - spot[0].x, at.z() - spot[0].z) < ON_THE_SPOT, "on the"
-                            + " platform's middle: " + at + " for " + spot[0]);
+                            + " pad's middle: " + at + " for " + spot[0]);
                     helper.assertTrue(Math.abs(ship[0].worldBox().minY - spot[0].y) < ON_THE_TOP, "standing on its"
                             + " top: " + ship[0].worldBox().minY + " for " + spot[0].y);
-                    LandingPlatforms.drop(level.getServer(), platform);
+                    ShipLandings.dropPad(level.getServer(), pad);
                     GameTestPlayers.leave(pilot[0]);
                     MovingStructures.takeAway(ship[0]);
-                    keep(helper, false);
+                    keep(helper, false, NORTH_CHUNKS);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 4000)
+    public static void autopilot_landOnWheelsLinesUpOnARunwayAndRollsToAStopOnIt(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerPlayer[] pilot = new ServerPlayer[1];
+        final BlockPos[] beacon = new BlockPos[1];
+        final double[] touched = {Double.NaN};
+        final boolean[] flew = {false};
+        final double[] hop = {0};
+        letGo(helper, ship, WHEELS_SHIP).thenExecute(() -> keep(helper, true, RUNWAY_CHUNKS))
+                .thenWaitUntil(() -> loaded(helper, RUNWAY_CHUNKS))
+                .thenExecute(() -> {
+                    final BlockPos seat = aboard(ship[0], plan(helper, WHEELS_SHIP).where(spot(helper, WHEELS_SHIP,
+                            ShipKitBlocks.PILOT_SEAT.getId())));
+                    aloft(ship[0], HIGH);
+                    pilot[0] = seated(helper, seat);
+                    // A runway laid far to the north in the sky, its beacon facing north, the way it runs.
+                    beacon[0] = skyRunwayNorthOf(level, ship[0].pose());
+                    ShipAutopilotControl.pressed(pilot[0]);
+                    final Optional<ShipAutopilot> engaged = flight(ship[0]).autopilot();
+                    helper.assertTrue(engaged.isPresent() && engaged.get().mode() == ShipAutopilot.Mode.LAND
+                            && engaged.get().runway().orElse(-1.0) == 0 && engaged.get().cleared()
+                            && engaged.get().spot().orElseThrow().equals(Vec3.atBottomCenterOf(beacon[0])),
+                            "on wheels, its key at the helm engages LAND onto the runway, its stretch found clear: "
+                            + engaged);
+                })
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(beacon[0] != null, "a runway was laid");
+                    // Where it first stands on the land once it has flown, along the runway from its beacon.
+                    flew[0] |= !flight(ship[0]).grounded();
+                    if (flew[0] && Double.isNaN(touched[0]) && flight(ship[0]).grounded()) {
+                        touched[0] = beacon[0].getZ() + 0.5 - ship[0].pose().z();
+                    }
+                    if (!Double.isNaN(touched[0])) {
+                        hop[0] = Math.max(hop[0], ship[0].worldBox().minY - beacon[0].getY());
+                    }
+                    helper.assertTrue(flight(ship[0]).autopilot().isEmpty() && flight(ship[0]).grounded(),
+                            "it lines up on the runway, sets down past the beacon and rolls to a stop, letting go:"
+                            + " at " + ship[0].pose().x() + " " + ship[0].worldBox().minY + " " + ship[0].pose().z()
+                            + " for the beacon at " + beacon[0] + ", " + flight(ship[0]).state() + ", "
+                            + flight(ship[0]).autopilot());
+                })
+                .thenExecute(() -> {
+                    final StructurePose at = ship[0].pose();
+                    final double along = beacon[0].getZ() + 0.5 - at.z();
+                    helper.assertTrue(touched[0] > 0, "it touched down past the beacon: " + touched[0]
+                            + " along the runway");
+                    helper.assertTrue(hop[0] < NO_HOP, "and rolled out on the runway, never lifting off it: up to "
+                            + hop[0] + " over it");
+                    helper.assertTrue(along > 0 && along <= ShipAutopilots.RUNWAY_LENGTH
+                            && Math.abs(at.x() - beacon[0].getX() - 0.5) < ON_THE_SPOT, "and stopped on its stretch,"
+                            + " on its line: " + along + " along, " + (at.x() - beacon[0].getX() - 0.5) + " across");
+                    helper.assertTrue(Math.abs(ship[0].worldBox().minY - beacon[0].getY()) < ON_THE_TOP, "standing"
+                            + " on the land: " + ship[0].worldBox().minY + " for " + beacon[0].getY());
+                    helper.assertTrue(level.getBlockState(beacon[0]).is(ShipLandingBlocks.BEACON.get()), "the"
+                            + " beacon still standing");
+                    takeAwayRunway(level, beacon[0]);
+                    GameTestPlayers.leave(pilot[0]);
+                    MovingStructures.takeAway(ship[0]);
+                    keep(helper, false, RUNWAY_CHUNKS);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void autopilot_landOnWheelsPassesARunwayWhoseStretchIsNotClear(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerPlayer[] pilot = new ServerPlayer[1];
+        final BlockPos[] beacon = new BlockPos[1];
+        letGo(helper, ship, WHEELS_SHIP).thenExecute(() -> keep(helper, true, RUNWAY_CHUNKS))
+                .thenWaitUntil(() -> loaded(helper, RUNWAY_CHUNKS))
+                .thenExecute(() -> {
+                    final BlockPos seat = aboard(ship[0], plan(helper, WHEELS_SHIP).where(spot(helper, WHEELS_SHIP,
+                            ShipKitBlocks.PILOT_SEAT.getId())));
+                    aloft(ship[0], HIGH);
+                    pilot[0] = seated(helper, seat);
+                    // A runway laid in the sky to the north, and a block across its stretch, where the ship would roll.
+                    beacon[0] = skyRunwayNorthOf(level, ship[0].pose());
+                    level.setBlockAndUpdate(beacon[0].north(BLOCKED_AT), Blocks.STONE.defaultBlockState());
+                    ShipAutopilotControl.pressed(pilot[0]);
+                    final Optional<ShipAutopilot> engaged = flight(ship[0]).autopilot();
+                    // Another test's runway may be in range, clear: only this one's is to be passed.
+                    helper.assertTrue(engaged.isEmpty() || engaged.get().spot().isEmpty()
+                            || !engaged.get().spot().get().equals(Vec3.atBottomCenterOf(beacon[0])), "LAND is not"
+                            + " offered onto a runway whose stretch is not clear: " + engaged);
+                    level.removeBlock(beacon[0].north(BLOCKED_AT), false);
+                    takeAwayRunway(level, beacon[0]);
+                    GameTestPlayers.leave(pilot[0]);
+                    MovingStructures.takeAway(ship[0]);
+                    keep(helper, false, RUNWAY_CHUNKS);
                 })
                 .thenSucceed();
     }
@@ -177,7 +293,8 @@ public final class ShipAutopilotGameTests {
             final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final MovingStructure[] ship = new MovingStructure[1];
-        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> keep(helper, true)).thenWaitUntil(() -> loaded(helper))
+        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> keep(helper, true, NORTH_CHUNKS))
+                .thenWaitUntil(() -> loaded(helper, NORTH_CHUNKS))
                 .thenExecute(() -> {
                     aloft(ship[0], HIGH);
                     MovingStructures.move(ship[0], flight(ship[0]).with(new ShipFlightModel.State(CRUISING, 0, 0.75,
@@ -203,7 +320,7 @@ public final class ShipAutopilotGameTests {
                     helper.assertTrue(flight(ship[0]).autopilot().isEmpty(), "its pilot taking the helm lets the"
                             + " autopilot go");
                     MovingStructures.takeAway(ship[0]);
-                    keep(helper, false);
+                    keep(helper, false, NORTH_CHUNKS);
                 })
                 .thenSucceed();
     }
@@ -345,7 +462,34 @@ public final class ShipAutopilotGameTests {
                 return new BlockPos(x, ground - 1, z);
             }
         }
-        throw new IllegalStateException("no bare land north of the dock to set the platform on");
+        throw new IllegalStateException("no bare land north of the dock to set the pad on");
+    }
+
+    /*
+     * A runway laid in the sky a way north of {@code at}, as high as the ship flies there, clear of whatever the tests
+     * beside this one stand on the land: a floor of stone from a little behind its beacon to the end of its stretch,
+     * as wide as the stretch, its beacon on it facing north, the way it runs; where the beacon stands.
+     */
+    private static BlockPos skyRunwayNorthOf(final ServerLevel level, final StructurePose at) {
+        final BlockPos beacon = new BlockPos(Mth.floor(at.x()), Mth.floor(at.y()), Mth.floor(at.z()) - RUNWAY_NORTH);
+        for (int along = -RUNWAY_BEHIND; along <= ShipAutopilots.RUNWAY_LENGTH; along++) {
+            for (int across = -Runways.HALF_WIDTH; across <= Runways.HALF_WIDTH; across++) {
+                level.setBlockAndUpdate(beacon.offset(across, -1, -along), Blocks.STONE.defaultBlockState());
+            }
+        }
+        level.setBlockAndUpdate(beacon, ShipLandingBlocks.BEACON.get().defaultBlockState()
+                .setValue(RunwayBeaconBlock.FACING, Direction.NORTH));
+        return beacon;
+    }
+
+    /* Takes the sky runway whose beacon stands at {@code beacon} away. */
+    private static void takeAwayRunway(final ServerLevel level, final BlockPos beacon) {
+        level.removeBlock(beacon, false);
+        for (int along = -RUNWAY_BEHIND; along <= ShipAutopilots.RUNWAY_LENGTH; along++) {
+            for (int across = -Runways.HALF_WIDTH; across <= Runways.HALF_WIDTH; across++) {
+                level.removeBlock(beacon.offset(across, -1, -along), false);
+            }
+        }
     }
 
     /* A player connected and sat at the seat {@code seat} of a ship's yard, playing as a survivor. */
@@ -371,23 +515,26 @@ public final class ShipAutopilotGameTests {
         ship.teleport(now.movedTo(now.x(), now.y() + blocks, now.z()));
     }
 
-    /* Whether the land round the dock and on to its north has loaded. */
-    private static void loaded(final GameTestHelper helper) {
+    /* Whether the land round the dock and on {@code north} chunks to its north has loaded. */
+    private static void loaded(final GameTestHelper helper, final int north) {
         final ChunkPos dock = new ChunkPos(helper.absolutePos(CORNER));
         for (int x = dock.x - WEST_CHUNKS; x <= dock.x + 1; x++) {
-            for (int z = dock.z - NORTH_CHUNKS; z <= dock.z + 1; z++) {
+            for (int z = dock.z - north; z <= dock.z + 1; z++) {
                 helper.assertTrue(helper.getLevel().getChunkSource().getChunkNow(x, z) != null, "the land it flies"
                         + " over loads");
             }
         }
     }
 
-    /* Keeps the land round the dock and on to its north loaded and ticking by this test's own tickets, or lets go. */
-    private static void keep(final GameTestHelper helper, final boolean kept) {
+    /*
+     * Keeps the land round the dock and on {@code north} chunks to its north loaded and ticking by this test's own
+     * tickets, or lets go.
+     */
+    private static void keep(final GameTestHelper helper, final boolean kept, final int north) {
         final ChunkPos dock = new ChunkPos(helper.absolutePos(CORNER));
         final BlockPos own = helper.absolutePos(CORNER);
         for (int x = dock.x - WEST_CHUNKS; x <= dock.x + 1; x++) {
-            for (int z = dock.z - NORTH_CHUNKS; z <= dock.z + 1; z++) {
+            for (int z = dock.z - north; z <= dock.z + 1; z++) {
                 ticket(helper.getLevel(), new ChunkPos(x, z), own, kept);
             }
         }

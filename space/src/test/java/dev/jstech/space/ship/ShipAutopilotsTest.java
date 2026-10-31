@@ -18,6 +18,17 @@ class ShipAutopilotsTest {
     /* A ship of 40 tonnes on feet: 420 kN of air engines, 420 kN of bells, delta wings holding 400 kN. */
     private static final ShipFlightModel.Performance SHIP = new ShipFlightModel.Performance(40_000, 420_000,
             420_000, 400_000, 4.0e6, ShipFlightModel.Gear.LEGS);
+    /* The same ship on wheels. */
+    private static final ShipFlightModel.Performance WHEELED = new ShipFlightModel.Performance(40_000, 420_000,
+            420_000, 400_000, 4.0e6, ShipFlightModel.Gear.WHEELS);
+    /* The land under a runway, and how high over it a ship flies when its autopilot is engaged. */
+    private static final double GROUND = 64;
+    private static final double ALOFT = 40;
+    /* How high over its beacon a ship landing on a runway passes, at the least, and how far off its line it stops. */
+    private static final double OVER_THE_BEACON = 1.2;
+    private static final double ON_THE_LINE = 4;
+    /* How far off level its nose is, at the most, as it settles onto a runway, in degrees. */
+    private static final double LEVEL = 2;
     private static final ShipFlightModel.State CRUISING = new ShipFlightModel.State(30, 0, 0.75, 1, 0, 0);
     private static final double[] UP = {0, 1, 0};
     private static final double[] STILL = {0, 0, 0};
@@ -115,6 +126,84 @@ class ShipAutopilotsTest {
     }
 
     @Test
+    void runway_flownFromBehindTouchesDownPastTheBeaconAndStopsOnTheStretch() {
+        final Landing landing = runwayLanding(new Flight(CRUISING, 0, GROUND + ALOFT, 400, 0, 0, false, WHEELED), 0);
+        landing.assertLanded();
+    }
+
+    @Test
+    void runway_flownFromBeyondItsEndComesRoundToTheGate() {
+        final Landing landing = runwayLanding(new Flight(CRUISING, 30, GROUND + ALOFT, -300, 180, 0, false, WHEELED),
+                0);
+        landing.assertLanded();
+    }
+
+    @Test
+    void runway_flownFromTheSideLinesUpOnItsMiddle() {
+        final Landing landing = runwayLanding(new Flight(CRUISING, 300, GROUND + ALOFT, -50, 270, 0, false, WHEELED),
+                0);
+        landing.assertLanded();
+    }
+
+    @Test
+    void runway_flownOntoARunwayRunningAnyWayLandsAlongIt() {
+        // A runway running south-east, the ship coming from the north-east.
+        final Landing landing = runwayLanding(new Flight(CRUISING, 250, GROUND + ALOFT, -250, 200, 0, false,
+                WHEELED), 135);
+        landing.assertLanded();
+    }
+
+    @Test
+    void runway_flownFromStandingOffItsStretchLiftsOffAndComesRound() {
+        final Landing landing = runwayLanding(new Flight(ShipFlightModel.State.RESTING, -120, GROUND, 60, 90, 0, true,
+                WHEELED), 0);
+        landing.assertLanded();
+    }
+
+    @Test
+    void runway_rollingOutShutsItsThrottleAndKeepsItsNoseAlong() {
+        final ShipFlightModel.State rolling = new ShipFlightModel.State(8, 0, 0.4, 1, 0, 0);
+        // On the runway 30 metres past its beacon, slow, its nose a little off the runway's way and down.
+        final ShipFlightModel.Held held = ShipAutopilots.runway(rolling, 5, -3, 0, 0, 30, 0, true);
+        assertTrue(held.back() > 0 && held.forward() == 0, "its throttle shuts");
+        assertTrue(held.left() > 0, "its nose turns back along the runway");
+        assertEquals(0, held.up() + held.down(), "never up nor down, which slow would lift it off");
+    }
+
+    @Test
+    void runway_rollingOutSlowWithItsNoseDownStaysOnTheLand() {
+        // Touched down nose down, as the glide leaves it, and slowed below the speed it hovers at, its nose still down
+        // as the land holds it in the game.
+        final Flight flight = new Flight(new ShipFlightModel.State(9.7, 0, 0.2, 1, 0, 0), 0, GROUND, -40, 0, -3, true,
+                WHEELED);
+        for (int tick = 0; tick < 10 * TICKS_A_SECOND; tick++) {
+            flight.fly(ShipAutopilots.runway(flight.state, flight.heading, flight.pitch, -flight.x,
+                    GROUND - flight.y, -flight.z, 0, flight.landed), GROUND);
+            assertTrue(flight.landed, "it stays on the land as it slows: " + flight);
+        }
+        assertTrue(flight.state.speed() < 0.5, "and stops: " + flight);
+    }
+
+    @Test
+    void runway_onTheLandOffItsStretchLiftsOff() {
+        final ShipFlightModel.Held held = ShipAutopilots.runway(ShipFlightModel.State.RESTING, 0, 0, 200, 0, 200, 0,
+                true);
+        assertEquals(1, held.up());
+        assertEquals(0, held.down());
+    }
+
+    @Test
+    void onRunway_holdsTheStretchFromJustBehindItsBeaconToItsEnd() {
+        // A runway running north from its beacon: the ship's beacon south of it is the runway behind it.
+        assertTrue(ShipAutopilots.onRunway(0, 30, 0), "30 metres along");
+        assertTrue(ShipAutopilots.onRunway(3, 30, 0), "a little off its line");
+        assertFalse(ShipAutopilots.onRunway(10, 30, 0), "well off its line");
+        assertFalse(ShipAutopilots.onRunway(0, -20, 0), "short of the beacon");
+        assertFalse(ShipAutopilots.onRunway(0, ShipAutopilots.RUNWAY_LENGTH + 5, 0), "past its end");
+        assertTrue(ShipAutopilots.onRunway(-30, 0, 90), "a runway running east");
+    }
+
+    @Test
     void dock_closesOnTheOtherCollarAndTouches() {
         double[] offset = {6, -9, 4};
         double[] drift = STILL;
@@ -156,9 +245,61 @@ class ShipAutopilotsTest {
         }
     }
 
+    /*
+     * {@code flight} flown onto a runway whose beacon stands at the middle of the land, running {@code runway} degrees
+     * east of north, till it stands still on the runway's stretch, or four minutes pass.
+     */
+    private static Landing runwayLanding(final Flight flight, final double runway) {
+        final double r = Math.toRadians(runway);
+        Double touched = null;
+        double touchPitch = Double.NaN;
+        double lowestOver = Double.POSITIVE_INFINITY;
+        boolean stopped = false;
+        for (int tick = 0; tick < 240 * TICKS_A_SECOND && !stopped; tick++) {
+            final boolean wasLanded = flight.landed;
+            flight.fly(ShipAutopilots.runway(flight.state, flight.heading, flight.pitch, -flight.x, GROUND - flight.y,
+                    -flight.z, runway, flight.landed), GROUND);
+            final double along = flight.x * Math.sin(r) - flight.z * Math.cos(r);
+            if (Math.abs(along) < 1.5 && Math.abs(flight.x * Math.cos(r) + flight.z * Math.sin(r)) < ON_THE_LINE) {
+                lowestOver = Math.min(lowestOver, flight.y - GROUND);
+            }
+            if (flight.landed && !wasLanded && tick > 0) {
+                touched = along;
+                touchPitch = flight.pitch;
+            }
+            stopped = flight.landed && flight.state.speed() < 0.5 && ShipAutopilots.onRunway(-flight.x, -flight.z,
+                    runway) && tick > TICKS_A_SECOND;
+        }
+        return new Landing(flight, runway, touched, touchPitch, lowestOver, stopped);
+    }
+
+    /*
+     * How a ship landed on a runway: the flight as it ended, the runway's way, where along it it last touched down and
+     * its pitch then, how low it passed over its beacon, and whether it came to a stop on its stretch.
+     */
+    private record Landing(Flight flight, double runway, Double touched, double touchPitch, double lowestOver,
+                           boolean stopped) {
+
+        void assertLanded() {
+            final double r = Math.toRadians(this.runway);
+            final double along = flight.x * Math.sin(r) - flight.z * Math.cos(r);
+            final double across = flight.x * Math.cos(r) + flight.z * Math.sin(r);
+            assertTrue(this.stopped, "stopped on the runway's stretch: " + flight + ", along " + along + ", across "
+                    + across);
+            assertTrue(this.touched != null && this.touched >= 0, "touched down past its beacon: " + this.touched);
+            assertTrue(Math.abs(this.touchPitch) <= LEVEL, "flared, settling onto the runway level: "
+                    + this.touchPitch);
+            assertTrue(this.lowestOver >= OVER_THE_BEACON, "passed well over its beacon: " + this.lowestOver);
+            assertTrue(Math.abs(across) < ON_THE_LINE, "on the runway's line: " + across);
+            final double off = Math.abs(Math.IEEEremainder(flight.heading - this.runway, 360));
+            assertTrue(off < 10, "its nose along the runway: " + flight.heading);
+        }
+    }
+
     /* A ship flown a tick at a time over flat land at a height, as its structure would fly it, its nose turned. */
     private static final class Flight {
 
+        private final ShipFlightModel.Performance ship;
         private ShipFlightModel.State state;
         private double x;
         private double y;
@@ -169,6 +310,13 @@ class ShipAutopilotsTest {
 
         Flight(final ShipFlightModel.State state, final double x, final double y, final double z,
                final double heading, final double pitch, final boolean landed) {
+            this(state, x, y, z, heading, pitch, landed, SHIP);
+        }
+
+        Flight(final ShipFlightModel.State state, final double x, final double y, final double z,
+               final double heading, final double pitch, final boolean landed,
+               final ShipFlightModel.Performance ship) {
+            this.ship = ship;
             this.state = state;
             this.x = x;
             this.y = y;
@@ -181,16 +329,21 @@ class ShipAutopilotsTest {
         void fly(final ShipFlightModel.Held held, final double ground) {
             final ShipFlightModel.Air air = new ShipFlightModel.Air(1.0, 1.0, this.y - ground >= 24, this.landed,
                     this.y - ground);
-            final ShipFlightModel.Tick tick = ShipFlightModel.step(this.state, held, air, SHIP, this.pitch);
+            final ShipFlightModel.Tick tick = ShipFlightModel.step(this.state, held, air, this.ship, this.pitch);
             // A turn to the left above nought: its heading, east of north, falls.
             this.heading -= tick.turn();
-            this.pitch += tick.pitch();
+            // On the land its nose stays as the land holds it: pitching would put its tail or nose into the land.
+            if (!this.landed) {
+                this.pitch += tick.pitch();
+            }
             final double h = Math.toRadians(this.heading);
             final double p = Math.toRadians(this.pitch);
             final double ahead = tick.state().speed() * ShipFlightModel.TICK;
             this.x += Math.sin(h) * Math.cos(p) * ahead;
             this.z -= Math.cos(h) * Math.cos(p) * ahead;
-            this.y += Math.sin(p) * ahead + (tick.state().rise() - tick.state().sink()) * ShipFlightModel.TICK;
+            // On the land its nose may point down, the land holding it up as it rolls, as the game's ground does.
+            final double along = this.landed ? Math.max(0, Math.sin(p) * ahead) : Math.sin(p) * ahead;
+            this.y += along + (tick.state().rise() - tick.state().sink()) * ShipFlightModel.TICK;
             this.state = tick.state();
             this.landed = this.y <= ground;
             if (this.landed) {

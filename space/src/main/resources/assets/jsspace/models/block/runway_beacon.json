@@ -1,0 +1,365 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "jsspace:block/runway_beacon",
+    "beacon": "jsspace:block/runway_beacon"
+  },
+  "elements": [
+    {
+      "name": "base",
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        2,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            12,
+            2
+          ],
+          "texture": "#beacon"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            12,
+            2
+          ],
+          "texture": "#beacon"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            12,
+            2
+          ],
+          "texture": "#beacon"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            12,
+            2
+          ],
+          "texture": "#beacon"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            12,
+            4
+          ],
+          "texture": "#beacon"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            12,
+            4
+          ],
+          "texture": "#beacon"
+        }
+      }
+    },
+    {
+      "name": "stem",
+      "from": [
+        6,
+        2,
+        6
+      ],
+      "to": [
+        10,
+        9,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ],
+          "texture": "#beacon"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ],
+          "texture": "#beacon"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ],
+          "texture": "#beacon"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ],
+          "texture": "#beacon"
+        },
+        "up": {
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ],
+          "texture": "#beacon"
+        },
+        "down": {
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ],
+          "texture": "#beacon"
+        }
+      }
+    },
+    {
+      "name": "head",
+      "from": [
+        4,
+        9,
+        4
+      ],
+      "to": [
+        12,
+        13,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            8,
+            8,
+            12
+          ],
+          "texture": "#beacon"
+        },
+        "south": {
+          "uv": [
+            0,
+            8,
+            8,
+            12
+          ],
+          "texture": "#beacon"
+        },
+        "east": {
+          "uv": [
+            0,
+            8,
+            8,
+            12
+          ],
+          "texture": "#beacon"
+        },
+        "west": {
+          "uv": [
+            0,
+            8,
+            8,
+            12
+          ],
+          "texture": "#beacon"
+        },
+        "up": {
+          "uv": [
+            0,
+            8,
+            8,
+            12
+          ],
+          "texture": "#beacon"
+        },
+        "down": {
+          "uv": [
+            0,
+            8,
+            8,
+            12
+          ],
+          "texture": "#beacon"
+        }
+      }
+    },
+    {
+      "name": "lens",
+      "from": [
+        5,
+        10,
+        12
+      ],
+      "to": [
+        11,
+        12,
+        12.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            12,
+            6,
+            14
+          ],
+          "texture": "#beacon"
+        },
+        "south": {
+          "uv": [
+            0,
+            12,
+            6,
+            14
+          ],
+          "texture": "#beacon"
+        },
+        "east": {
+          "uv": [
+            0,
+            12,
+            1,
+            14
+          ],
+          "texture": "#beacon"
+        },
+        "west": {
+          "uv": [
+            0,
+            12,
+            1,
+            14
+          ],
+          "texture": "#beacon"
+        },
+        "up": {
+          "uv": [
+            0,
+            12,
+            6,
+            13
+          ],
+          "texture": "#beacon"
+        },
+        "down": {
+          "uv": [
+            0,
+            12,
+            6,
+            13
+          ],
+          "texture": "#beacon"
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    },
+    {
+      "name": "lamp",
+      "from": [
+        6.5,
+        13,
+        6.5
+      ],
+      "to": [
+        9.5,
+        15,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            14,
+            3.0,
+            16
+          ],
+          "texture": "#beacon"
+        },
+        "south": {
+          "uv": [
+            0,
+            14,
+            3.0,
+            16
+          ],
+          "texture": "#beacon"
+        },
+        "east": {
+          "uv": [
+            0,
+            14,
+            3.0,
+            16
+          ],
+          "texture": "#beacon"
+        },
+        "west": {
+          "uv": [
+            0,
+            14,
+            3.0,
+            16
+          ],
+          "texture": "#beacon"
+        },
+        "up": {
+          "uv": [
+            0,
+            14,
+            3.0,
+            16
+          ],
+          "texture": "#beacon"
+        },
+        "down": {
+          "uv": [
+            0,
+            14,
+            3.0,
+            16
+          ],
+          "texture": "#beacon"
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    }
+  ]
+}

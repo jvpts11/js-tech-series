@@ -21,9 +21,14 @@ import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureMotions;
 import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.StructureSeatEntity;
+import dev.jstech.core.text.GameText;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
+import dev.jstech.space.landing.Runways;
+import dev.jstech.space.landing.ShipLandingTexts;
+import dev.jstech.space.landing.ShipLandings;
 import dev.jstech.space.rocket.SpaceAhead;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.SpaceClimbs;
@@ -33,8 +38,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -113,6 +120,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     /* Below this, in metres a second, a ship has set down, or stopped to dock; how near its spot LAND sets it down. */
     private static final double LANDED_SPEED = 0.5;
     private static final double ARRIVED = 3;
+    /* How near its beacon, in metres, a runway not yet found clear is looked at, its land loaded by then. */
+    private static final double RUNWAY_LOOKED_AT = 200;
     /* How far ahead along the climb ORBIT's caret stands, in blocks. */
     private static final double CARET_AHEAD = 60;
     /* How fast it turns docking, and rolls back level, in degrees a second; within what of level it is left be. */
@@ -219,9 +228,10 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final ShipFlightModel.Performance running = fuelled ? this.ship : new ShipFlightModel.Performance(
                 this.ship.mass(), this.ship.airThrust(), this.ship.bellThrust(), this.ship.wing(),
                 Math.min(0, this.ship.power()), this.ship.gear());
-        // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done.
+        // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done, and a
+        // runway whose stretch is found not clear as the ship comes near.
         final Optional<ShipAutopilot> pilot = this.autopilot.filter(engaged -> !holding(helm)
-                && !done(level, now, engaged));
+                && !done(level, now, engaged)).flatMap(engaged -> runwayLookedAt(level, body, now, engaged));
         final ShipFlight self = pilot.equals(this.autopilot) ? this : engaged(pilot);
         final int altitude = ShipAltitude.of(level, now.x(), body.worldBox().minY, now.z());
         if (pilot.isPresent() && pilot.get().mode() == ShipAutopilot.Mode.DOCK) {
@@ -231,8 +241,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         ShipReadings.Pilot shown = ShipReadings.Pilot.NONE;
         if (pilot.isPresent() && pilot.get().mode() == ShipAutopilot.Mode.LAND) {
             final Vec3 spot = pilot.get().spot().orElseThrow();
-            held = ShipAutopilots.land(this.state, heading, pitch, spot.x - now.x(), spot.y - body.worldBox().minY,
-                    spot.z - now.z());
+            final double dy = spot.y - body.worldBox().minY;
+            held = pilot.get().runway().isPresent()
+                    ? ShipAutopilots.runway(this.state, heading, pitch, spot.x - now.x(), dy, spot.z - now.z(),
+                    pilot.get().runway().get(), this.grounded)
+                    : ShipAutopilots.land(this.state, heading, pitch, spot.x - now.x(), dy, spot.z - now.z());
             shown = ShipReadings.Pilot.of(ShipAutopilot.Mode.LAND, spot, Math.hypot(spot.x - now.x(),
                     spot.z - now.z()), this.state.speed(), false, 0, 0);
         } else if (pilot.isPresent()) {
@@ -383,13 +396,42 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     }
 
     /*
+     * The autopilot {@code pilot}, landing on a runway whose stretch was not yet found clear, its stretch looked at
+     * once the ship comes near and its land is loaded: clear, it flies on; not clear, its pilot is told and it lets go.
+     */
+    private Optional<ShipAutopilot> runwayLookedAt(final ServerLevel level, final MovingStructure body,
+                                                   final StructurePose now, final ShipAutopilot pilot) {
+        if (pilot.runway().isEmpty() || pilot.cleared() || pilot.spot().isEmpty()
+                || Math.hypot(pilot.spot().get().x - now.x(), pilot.spot().get().z - now.z()) > RUNWAY_LOOKED_AT) {
+            return Optional.of(pilot);
+        }
+        final ShipLandings.Beacon beacon = new ShipLandings.Beacon(level.dimension(),
+                BlockPos.containing(pilot.spot().get()), Direction.fromYRot(pilot.runway().get() + 180));
+        final Optional<Boolean> clear = Runways.clear(level, beacon, body);
+        if (clear.isEmpty()) {
+            return Optional.of(pilot);
+        }
+        if (clear.get()) {
+            return Optional.of(pilot.clearedRunway());
+        }
+        for (final ServerPlayer player : level.players()) {
+            if (player.getVehicle() instanceof StructureSeatEntity seat && seat.helm() && seat.structure() == body) {
+                player.displayClientMessage(GameText.component(ShipLandingTexts.RUNWAY_BLOCKED), true);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /*
      * Whether the autopilot {@code pilot} is done, the ship standing at {@code now}: LAND set down on its spot, not
-     * only on the land, as it stood before it took off; ORBIT over the line in space.
+     * only on the land, as it stood before it took off, or, onto a runway, stopped on its stretch; ORBIT over the line
+     * in space.
      */
     private boolean done(final ServerLevel level, final StructurePose now, final ShipAutopilot pilot) {
         return switch (pilot.mode()) {
-            case LAND -> this.grounded && this.state.speed() < LANDED_SPEED && pilot.spot().map(spot -> Math.hypot(
-                    spot.x - now.x(), spot.z - now.z()) <= ARRIVED).orElse(true);
+            case LAND -> this.grounded && this.state.speed() < LANDED_SPEED && pilot.spot().map(spot -> pilot.runway()
+                    .map(runway -> ShipAutopilots.onRunway(spot.x - now.x(), spot.z - now.z(), runway))
+                    .orElse(Math.hypot(spot.x - now.x(), spot.z - now.z()) <= ARRIVED)).orElse(true);
             case ORBIT -> SystemSpaces.systemOf(level.dimension()).isPresent();
             case DOCK -> false;
         };

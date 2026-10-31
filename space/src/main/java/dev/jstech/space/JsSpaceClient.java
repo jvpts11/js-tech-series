@@ -20,6 +20,7 @@ import dev.jstech.space.client.hangar.RocketHolograms;
 import dev.jstech.space.client.hangar.RocketDesignScreen;
 import dev.jstech.space.client.launcher.ArmRenderer;
 import dev.jstech.space.client.launcher.CraneRenderer;
+import dev.jstech.space.client.landing.ShipPadRenderer;
 import dev.jstech.space.client.launcher.LauncherDeckRenderer;
 import dev.jstech.space.client.life.LunarSuitClient;
 import dev.jstech.space.client.life.SuitControlsHud;
@@ -72,6 +73,7 @@ public final class JsSpaceClient {
         SuitControlsHud.listen(modEventBus);
         // The target painted across a formed landing platform.
         LandingPlatformRenderer.listen(modEventBus);
+        ShipPadRenderer.listen(modEventBus);
         // A formed Small Shipyard, drawn whole as the approved dock, its builder's screen, and the ship it builds, each
         // part drawn with its model once it has formed, and its hologram till then.
         ShipyardRenderer.listen(modEventBus);
