@@ -18,27 +18,34 @@ import java.util.UUID;
 import java.util.function.IntPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Where a ship sets down, on a player's game, as the approved mock draws it: a ship landing pad's plates are bare
- * until it forms, and then its yellow ring is painted across them and its flush cyan lights shine round its edge; a
- * runway beacon shows its green lens to the ship coming in, and none to the runway behind it.
+ * Where a ship sets down, on a player's game, as the approved mocks draw it: a ship landing pad's blocks show bare
+ * until it forms, and then it is drawn whole, the raised pad, its hazard band painted round its deck and its flush cyan
+ * lights shining round its rim; a runway beacon shows its green lens to the ship coming in, and none to the runway
+ * behind it.
  */
 public final class ShipLandingClientTests {
 
-    /* The pad's terminal, and where its player looks down on it from. */
+    /* The block under the pad's deck's middle, on the ground, and where its player looks down on it from. */
     private static final BlockPos MIDDLE = new BlockPos(0, 2, 18);
     private static final BlockPos ABOVE = new BlockPos(0, 16, 4);
+    /* The pattern's bounds round its middle: across, up, and along, north to south. */
+    private static final int REACH = ShipLandingBlocks.DECK_RADIUS;
+    private static final int TOP_LAYER = 8;
+    private static final int SOUTH = 15;
     /* The beacon, facing north; where its player stands to the south of it, coming in, and to the north, behind. */
     private static final BlockPos BEACON = new BlockPos(0, 2, 6);
     private static final BlockPos COMING_IN = new BlockPos(0, 2, 8);
     private static final BlockPos BEHIND = new BlockPos(0, 2, 4);
-    /* A point of the ring, in blocks east of the pad's middle. */
-    private static final double RING = 8.0;
-    /* Just over the plates' tops, where the paint lies. */
-    private static final double TOP = 1.0;
+    /* A point of the hazard band round the deck, in blocks east of its middle. */
+    private static final double RING = 8.6;
+    /* The deck's top over the ground, where the paint lies. */
+    private static final double TOP = ShipLandingBlocks.DECK + 1.0;
     /* The lens's middle in its block, in sixteenths: over its stem, on the south face of its head. */
     private static final double LENS_UP = 11.0 / 16;
     private static final double LENS_OUT = 12.25 / 16;
@@ -59,13 +66,18 @@ public final class ShipLandingClientTests {
     }
 
     @ClientTest(timeoutTicks = 1600)
-    public static void shipPad_isPaintedWithItsRingAndItsLightsOnceItForms(final ClientTestContext ctx) {
+    public static void shipPad_isDrawnWholeWithItsBandAndItsLightsOnceItForms(final ClientTestContext ctx) {
         final int[] counts = new int[4];
-        final BlockPos missing = MIDDLE.offset(ShipLandingBlocks.PAD_REACH, 0, 0);
+        final BlockPos missing = MIDDLE.offset(REACH, ShipLandingBlocks.DECK, 0);
         ctx.afterTest(() -> ctx.server().execute(() -> {
-            for (int x = -ShipLandingBlocks.PAD_REACH; x <= ShipLandingBlocks.PAD_REACH; x++) {
-                for (int z = -ShipLandingBlocks.PAD_REACH; z <= ShipLandingBlocks.PAD_REACH; z++) {
-                    ctx.serverLevel().removeBlock(ctx.abs(MIDDLE.offset(x, 0, z)), false);
+            // The terminal first, so its merged blocks are given back, then every block of the pad.
+            ctx.serverLevel().removeBlock(ctx.abs(MIDDLE.offset(ShipLandingBlocks.TERMINAL_X,
+                    ShipLandingBlocks.TERMINAL_Y, ShipLandingBlocks.TERMINAL_Z)), false);
+            for (int x = -REACH; x <= REACH; x++) {
+                for (int y = 0; y <= TOP_LAYER; y++) {
+                    for (int z = -REACH; z <= SOUTH; z++) {
+                        ctx.serverLevel().removeBlock(ctx.abs(MIDDLE.offset(x, y, z)), false);
+                    }
                 }
             }
             fly(ctx, false);
@@ -82,19 +94,19 @@ public final class ShipLandingClientTests {
             ctx.serverPlayer().teleportTo(level, above.getX() + 0.5, above.getY(), above.getZ() + 0.5, 0F, LOOK_DOWN);
         })
                 .thenServer(0, level -> {
-                    level.setBlockAndUpdate(ctx.abs(MIDDLE), ShipLandingBlocks.TERMINAL.get().defaultBlockState());
-                    ((ShipPadBlockEntity) level.getBlockEntity(ctx.abs(MIDDLE))).own(Ownership.of(UUID.randomUUID())
-                            .withAccess(Access.TEAM));
-                    for (int x = -ShipLandingBlocks.PAD_REACH; x <= ShipLandingBlocks.PAD_REACH; x++) {
-                        for (int z = -ShipLandingBlocks.PAD_REACH; z <= ShipLandingBlocks.PAD_REACH; z++) {
-                            final BlockPos at = MIDDLE.offset(x, 0, z);
-                            // One plate left out, so the pad stands bare until it is laid.
-                            if ((x != 0 || z != 0) && ShipLandingBlocks.onPad(x, z) && !at.equals(missing)) {
-                                level.setBlockAndUpdate(ctx.abs(at), ShipLandingBlocks.PLATE.get()
-                                        .defaultBlockState());
+                    for (int x = -REACH; x <= REACH; x++) {
+                        for (int y = 0; y <= TOP_LAYER; y++) {
+                            for (int z = -REACH; z <= SOUTH; z++) {
+                                final BlockPos at = MIDDLE.offset(x, y, z);
+                                // One plate left out, so the pad stands bare until it is laid.
+                                if (!at.equals(missing)) {
+                                    place(level, ctx.abs(at), ShipLandingBlocks.letterAt(x, y, z));
+                                }
                             }
                         }
                     }
+                    ((ShipPadBlockEntity) level.getBlockEntity(ctx.abs(terminal()))).own(Ownership.of(
+                            UUID.randomUUID()).withAccess(Access.TEAM));
                 })
                 .then(SETTLE, () -> ctx.lookAt(ring(ctx)))
                 .then(SETTLE, () -> counts[0] = count(ctx, ShipLandingClientTests::yellow))
@@ -103,21 +115,41 @@ public final class ShipLandingClientTests {
                 .thenScreenshot(0, "ship-pad-bare")
                 .thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(missing), ShipLandingBlocks.PLATE.get()
                         .defaultBlockState()))
-                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(MIDDLE)) instanceof ShipPadBlockEntity pad
-                        && pad.shownFormed(), ARRIVE, "the formed pad to reach the player")
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(terminal())) instanceof ShipPadBlockEntity
+                        pad && pad.shownFormed(), ARRIVE, "the formed pad to reach the player")
                 .then(SETTLE, () -> counts[3] = countAll(ctx, ShipLandingClientTests::cyan))
                 .thenScreenshot(0, "ship-pad-formed")
                 .then(0, () -> ctx.lookAt(ring(ctx)))
                 .then(SETTLE, () -> counts[2] = count(ctx, ShipLandingClientTests::yellow))
                 .thenScreenshot(0, "ship-pad-ring")
                 .then(0, () -> {
-                    ctx.assertTrue(counts[0] <= NONE && counts[1] <= NONE, "bare, it shows no ring and no lights: "
+                    ctx.assertTrue(counts[0] <= NONE && counts[1] <= NONE, "bare, it shows no band and no lights: "
                             + counts[0] + " yellow, " + counts[1] + " cyan");
-                    ctx.assertTrue(counts[2] >= SEEN, "formed, its yellow ring is painted where the mock has it: "
+                    ctx.assertTrue(counts[2] >= SEEN, "formed, its hazard band is painted where the mock has it: "
                             + counts[2] + " yellow");
-                    ctx.assertTrue(counts[3] >= LIGHTS_SEEN, "and its cyan lights shine round its edge: " + counts[3]
+                    ctx.assertTrue(counts[3] >= LIGHTS_SEEN, "and its cyan lights shine round its rim: " + counts[3]
                             + " cyan");
                 });
+    }
+
+    /* The pad's terminal, on its deck by the stair's head. */
+    private static BlockPos terminal() {
+        return MIDDLE.offset(ShipLandingBlocks.TERMINAL_X, ShipLandingBlocks.TERMINAL_Y, ShipLandingBlocks.TERMINAL_Z);
+    }
+
+    /* Puts the block of the pad's pattern {@code letter} at {@code at}, facing north as the pattern does. */
+    private static void place(final ServerLevel level, final BlockPos at, final char letter) {
+        final Block block = switch (letter) {
+            case '#' -> ShipLandingBlocks.TERMINAL.get();
+            case 'P' -> ShipLandingBlocks.PLATE.get();
+            case 'T' -> ShipLandingBlocks.TRUSS.get();
+            case 'S' -> ShipLandingBlocks.STEP.get();
+            case 'M' -> ShipLandingBlocks.MAST_BLOCK.get();
+            default -> null;
+        };
+        if (block != null) {
+            level.setBlockAndUpdate(at, block.defaultBlockState());
+        }
     }
 
     @ClientTest(timeoutTicks = 800)
@@ -147,12 +179,12 @@ public final class ShipLandingClientTests {
         player.onUpdateAbilities();
     }
 
-    /* A point of the pad's ring, east of its middle, on its top. */
+    /* A point of the pad's hazard band, east of its middle, on its deck. */
     private static Vec3 ring(final ClientTestContext ctx) {
         return Vec3.atBottomCenterOf(ctx.abs(MIDDLE)).add(RING, TOP, 0);
     }
 
-    /* The middle of the pad's top, the whole pad in sight round it. */
+    /* The middle of the pad's deck, the whole pad in sight round it. */
     private static Vec3 middle(final ClientTestContext ctx) {
         return Vec3.atBottomCenterOf(ctx.abs(MIDDLE)).add(0, TOP, 0);
     }

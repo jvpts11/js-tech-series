@@ -63,11 +63,23 @@ public final class ShipLandings extends SavedData {
     private ShipLandings() {
     }
 
-    /** Notes the pad {@code id}, formed with its terminal at {@code terminal} of {@code level}, {@code ownership}'s. */
+    /**
+     * Notes the pad {@code id}, formed with its terminal at {@code terminal} of {@code level}, {@code ownership}'s, its
+     * ships setting down on top of the terminal itself.
+     */
     public static void notePad(final ServerLevel level, final UUID id, final BlockPos terminal,
                                final Ownership ownership) {
+        notePad(level, id, terminal, terminal, ownership);
+    }
+
+    /**
+     * Notes the pad {@code id}, formed with its terminal at {@code terminal} of {@code level}, {@code ownership}'s, its
+     * ships setting down on top of the block {@code middle}, its deck's middle.
+     */
+    public static void notePad(final ServerLevel level, final UUID id, final BlockPos terminal, final BlockPos middle,
+                               final Ownership ownership) {
         final ShipLandings all = of(level.getServer());
-        final Pad now = new Pad(level.dimension(), terminal.immutable(), ownership);
+        final Pad now = new Pad(level.dimension(), terminal.immutable(), middle.immutable(), ownership);
         if (!now.equals(all.pads.get(id))) {
             all.pads.put(id, now);
             all.setDirty();
@@ -99,20 +111,20 @@ public final class ShipLandings extends SavedData {
     }
 
     /**
-     * The middle of the top of {@code pad}, where a ship sets down: over its terminal, or, for a pad afloat on a
+     * The middle of the top of {@code pad}, where a ship sets down: over its deck's middle, or, for a pad afloat on a
      * moving structure, wherever the structure has it now.
      */
     public static Vec3 padSpot(final ServerLevel level, final Pad pad) {
-        return over(level, pad.terminal());
+        return over(level, pad.middle());
     }
 
     /**
-     * The middle of the top of the pad whose terminal stands at {@code terminal}: over it, or, afloat on a moving
+     * The middle of the top of the pad whose deck's middle is the block {@code middle}: over it, or, afloat on a moving
      * structure, wherever the structure has it now.
      */
-    public static Vec3 over(final ServerLevel level, final BlockPos terminal) {
-        final Vec3 top = Vec3.atBottomCenterOf(terminal.above());
-        return YardLayout.isYardBlock(terminal.getX()) ? MovingStructures.inWorld(level, top) : top;
+    public static Vec3 over(final ServerLevel level, final BlockPos middle) {
+        final Vec3 top = Vec3.atBottomCenterOf(middle.above());
+        return YardLayout.isYardBlock(middle.getX()) ? MovingStructures.inWorld(level, top) : top;
     }
 
     /** Whether a moving structure other than {@code ours} stands on the pad whose middle is {@code spot}. */
@@ -204,15 +216,18 @@ public final class ShipLandings extends SavedData {
      *
      * @param dimension the world its terminal is in
      * @param terminal  where its terminal stands, in the world or, afloat, in its structure's yard
+     * @param middle    its deck's middle block, a ship setting down on top of it, where its terminal is kept
      * @param ownership whose it is, and who may set a ship down on it
      */
-    public record Pad(ResourceKey<Level> dimension, BlockPos terminal, Ownership ownership) {
+    public record Pad(ResourceKey<Level> dimension, BlockPos terminal, BlockPos middle, Ownership ownership) {
 
         public static final Codec<Pad> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ResourceKey.codec(Registries.DIMENSION).fieldOf("dimension").forGetter(Pad::dimension),
                 BlockPos.CODEC.fieldOf("terminal").forGetter(Pad::terminal),
+                BlockPos.CODEC.optionalFieldOf("middle").forGetter(pad -> Optional.of(pad.middle())),
                 Ownership.CODEC.fieldOf("ownership").forGetter(Pad::ownership)
-        ).apply(instance, Pad::new));
+        ).apply(instance, (dimension, terminal, middle, ownership) -> new Pad(dimension, terminal,
+                middle.orElse(terminal), ownership)));
     }
 
     /**

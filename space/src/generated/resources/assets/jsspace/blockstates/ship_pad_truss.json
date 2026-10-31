@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsspace:block/ship_pad_truss"
+    }
+  }
+}

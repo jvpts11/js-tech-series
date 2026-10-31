@@ -1,0 +1,296 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "jsspace:block/ship_pad/terminal",
+    "terminal": "jsspace:block/ship_pad/terminal"
+  },
+  "elements": [
+    {
+      "name": "base",
+      "from": [
+        1.5,
+        0,
+        2.5
+      ],
+      "to": [
+        14.5,
+        1,
+        13.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            6,
+            13.0,
+            7
+          ],
+          "texture": "#terminal"
+        },
+        "south": {
+          "uv": [
+            0,
+            6,
+            13.0,
+            7
+          ],
+          "texture": "#terminal"
+        },
+        "east": {
+          "uv": [
+            0,
+            6,
+            11.0,
+            7
+          ],
+          "texture": "#terminal"
+        },
+        "west": {
+          "uv": [
+            0,
+            6,
+            11.0,
+            7
+          ],
+          "texture": "#terminal"
+        },
+        "up": {
+          "uv": [
+            0,
+            6,
+            13.0,
+            9
+          ],
+          "texture": "#terminal"
+        },
+        "down": {
+          "uv": [
+            0,
+            6,
+            13.0,
+            9
+          ],
+          "texture": "#terminal"
+        }
+      }
+    },
+    {
+      "name": "body",
+      "from": [
+        2.4,
+        1,
+        4
+      ],
+      "to": [
+        13.6,
+        18.4,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            11.2,
+            6
+          ],
+          "texture": "#terminal"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            11.2,
+            6
+          ],
+          "texture": "#terminal"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            8,
+            6
+          ],
+          "texture": "#terminal"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            8,
+            6
+          ],
+          "texture": "#terminal"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            11.2,
+            6
+          ],
+          "texture": "#terminal"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            11.2,
+            6
+          ],
+          "texture": "#terminal"
+        }
+      }
+    },
+    {
+      "name": "screen",
+      "from": [
+        3.7,
+        9.9,
+        3.6
+      ],
+      "to": [
+        12.3,
+        16.3,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            9,
+            8.600000000000001,
+            13
+          ],
+          "texture": "#terminal"
+        },
+        "south": {
+          "uv": [
+            0,
+            9,
+            8.600000000000001,
+            13
+          ],
+          "texture": "#terminal"
+        },
+        "east": {
+          "uv": [
+            0,
+            9,
+            1,
+            13
+          ],
+          "texture": "#terminal"
+        },
+        "west": {
+          "uv": [
+            0,
+            9,
+            1,
+            13
+          ],
+          "texture": "#terminal"
+        },
+        "up": {
+          "uv": [
+            0,
+            9,
+            8.600000000000001,
+            10
+          ],
+          "texture": "#terminal"
+        },
+        "down": {
+          "uv": [
+            0,
+            9,
+            8.600000000000001,
+            10
+          ],
+          "texture": "#terminal"
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    },
+    {
+      "name": "lamp",
+      "from": [
+        6.7,
+        18.4,
+        6.7
+      ],
+      "to": [
+        9.3,
+        20.3,
+        9.3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            13,
+            2.6000000000000005,
+            14.900000000000002
+          ],
+          "texture": "#terminal"
+        },
+        "south": {
+          "uv": [
+            0,
+            13,
+            2.6000000000000005,
+            14.900000000000002
+          ],
+          "texture": "#terminal"
+        },
+        "east": {
+          "uv": [
+            0,
+            13,
+            2.6000000000000005,
+            14.900000000000002
+          ],
+          "texture": "#terminal"
+        },
+        "west": {
+          "uv": [
+            0,
+            13,
+            2.6000000000000005,
+            14.900000000000002
+          ],
+          "texture": "#terminal"
+        },
+        "up": {
+          "uv": [
+            0,
+            13,
+            2.6000000000000005,
+            15.600000000000001
+          ],
+          "texture": "#terminal"
+        },
+        "down": {
+          "uv": [
+            0,
+            13,
+            2.6000000000000005,
+            15.600000000000001
+          ],
+          "texture": "#terminal"
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    }
+  ]
+}

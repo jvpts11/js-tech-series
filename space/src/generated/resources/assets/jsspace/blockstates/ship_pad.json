@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=east": {
+      "model": "jsspace:block/ship_pad",
+      "y": 90
+    },
+    "facing=north": {
       "model": "jsspace:block/ship_pad"
+    },
+    "facing=south": {
+      "model": "jsspace:block/ship_pad",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsspace:block/ship_pad",
+      "y": 270
     }
   }
 }

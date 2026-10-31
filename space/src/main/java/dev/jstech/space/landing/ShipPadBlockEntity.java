@@ -28,10 +28,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A ship landing pad's terminal: the multiblock of its plates, a machine of J's Core's kit that spends nothing and
- * makes nothing, with its owner and their team, and its id the ships' autopilots know it by. Formed, it is noted in the
- * world's landings and painted; undone or broken, it is let go. It waits while it stands bare, and works while a ship
- * stands on it.
+ * A ship landing pad's terminal: the multiblock of its deck, its truss, its stair and its masts, a machine of J's
+ * Core's kit that spends nothing and makes nothing, with its owner and their team, and its id the ships' autopilots
+ * know it by. Formed, its blocks merge into the pad drawn whole, and it is noted in the world's landings, its ships
+ * setting down on its deck's middle; undone or broken, it is let go. It waits while it stands bare, and works while a
+ * ship stands on it.
  */
 public final class ShipPadBlockEntity extends MachineBlockEntity {
 
@@ -43,7 +44,8 @@ public final class ShipPadBlockEntity extends MachineBlockEntity {
         super(ShipLandingBlocks.ENTITY.get(), pos, state, 0, MachineEnergy.fe(0, 0, 0));
         this.pad = fields().value("Pad", UUIDUtil.STRING_CODEC, UUID.randomUUID()).save().toClient();
         this.shown = fields().value("Formed", Codec.BOOL, false).save().toClient();
-        this.structure = MachineStructure.of(ShipLandingBlocks.PAD);
+        // Formed, its blocks merge into the pad drawn whole.
+        this.structure = MachineStructure.of(ShipLandingBlocks.PAD).merges();
         formsWith(this.structure);
         fields().whenBroken((level, at) -> ShipLandings.dropPad(level.getServer(), id()));
     }
@@ -57,6 +59,12 @@ public final class ShipPadBlockEntity extends MachineBlockEntity {
     /** Whether it stands formed, as its players' games are told. */
     public boolean shownFormed() {
         return Boolean.TRUE.equals(this.shown.get());
+    }
+
+    /** Its deck's middle block, a ship setting down on top of it, as the pad stands formed; itself unformed. */
+    public BlockPos middle() {
+        return formedOrientation().map(turned -> ShipLandingBlocks.middle(this.worldPosition, turned))
+                .orElse(this.worldPosition);
     }
 
     /* It spends no energy. */
@@ -105,8 +113,8 @@ public final class ShipPadBlockEntity extends MachineBlockEntity {
 
     @Override
     protected MachineStatus work(final ServerLevel level) {
-        return this.structure.formed() && ShipLandings.taken(level, ShipLandings.over(level, this.worldPosition),
-                null) ? MachineStatus.WORKING : MachineStatus.WAITING;
+        return this.structure.formed() && ShipLandings.taken(level, ShipLandings.over(level, middle()), null)
+                ? MachineStatus.WORKING : MachineStatus.WAITING;
     }
 
     @Override
@@ -127,7 +135,7 @@ public final class ShipPadBlockEntity extends MachineBlockEntity {
         }
         final Ownership owned = ownership();
         if (formed && owned != null) {
-            ShipLandings.notePad(level, id(), this.worldPosition, owned);
+            ShipLandings.notePad(level, id(), this.worldPosition, middle(), owned);
         } else if (!formed) {
             ShipLandings.dropPad(level.getServer(), id());
         }

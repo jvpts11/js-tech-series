@@ -1,0 +1,6 @@
+{
+  "model": "jsspace:jsmodels/ship_pad/ship_pad.gltf",
+  "textures": [
+    "jsspace:textures/models/ship_pad/ship_pad.png"
+  ]
+}

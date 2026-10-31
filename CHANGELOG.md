@@ -2662,6 +2662,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   land; its wheels turn as it rolls. Each leg has one wheel on a fork, which turns the wheel flat as it folds, and a
   leg's foot stays flat as it folds; the main legs and the rear feet stand a block from the ship's middle, where the
   belly is flat.
+- (Space) The ship landing pad raised: a round deck of Ship Pad Plates twenty-one blocks across, three blocks up on a
+  truss of Ship Pad Truss blocks, a stair of Ship Pad Steps down its south side and four Ship Pad Light Masts six blocks
+  tall at its corners, its terminal a pedestal on the deck by the stair's head, its screen turned to the middle. Formed,
+  its blocks merge into the pad drawn whole: the deck's plates in rings, the white touchdown ring, the hazard band, the
+  lines and the yellow cross in the middle, the rim with its flush cyan lights, the truss with its braces, the stair's
+  railings and the masts' floodlights and red lamps, the lamps lit in the dark. Ships set down on the deck's middle,
+  whichever way the pad was built.
 - (Core) A moving structure crossing to another dimension takes whoever sits on its seats along still sitting on
   them, and its pilot's hold on the controls goes with it.
 - (Core) A room among a moving structure's blocks is the room of the place of the world they fill now: whoever is

@@ -63,7 +63,7 @@ public final class JsTests {
         // The dock with room east of it for a network.
         Arenas.declare(MODID, "shipyard_network", 36, 20, 30);
         // A ship landing pad with a block round it, and a runway's stretch from its beacon, as high as its headroom.
-        Arenas.declare(MODID, "ship_pad", 23, 6, 23);
+        Arenas.declare(MODID, "ship_pad", 31, 13, 31);
         Arenas.declare(MODID, "runway", 15, 9, 70);
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();

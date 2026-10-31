@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.space.landing.RunwayBeaconBlock;
 import dev.jstech.space.landing.Runways;
@@ -16,23 +17,28 @@ import dev.jstech.space.landing.ShipPadBlockEntity;
 import dev.jstech.space.ship.ShipAutopilots;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * Where a ship sets down: a ship landing pad forms from its octagon of plates round its terminal, the corners cut off
- * it needing nothing, and is noted for its owner's ships, its middle where they set down, and let go as a plate is
- * broken; a runway beacon is noted facing the way its runway runs and let go when broken, and its runway's stretch is
- * clear only while it is long, firm and free.
+ * Where a ship sets down: a ship landing pad forms from its round deck of plates, its truss, its stair and its masts
+ * round its terminal on the deck, and its blocks merge into the pad drawn whole; it is noted for its owner's ships, its
+ * deck's middle where they set down, whichever way it was built, and let go as a plate is broken; a runway beacon is
+ * noted facing the way its runway runs and let go when broken, and its runway's stretch is clear only while it is long,
+ * firm and free.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -40,9 +46,15 @@ public final class ShipLandingGameTests {
 
     private static final String PAD_ARENA = "ship_pad";
     private static final String RUNWAY_ARENA = "runway";
-    /* The pad's terminal, in the middle of its arena's floor; the runway's beacon, near one end of its arena's. */
-    private static final BlockPos TERMINAL = new BlockPos(11, 2, 11);
+    /* The block under the pad's deck's middle, in the middle of its arena's floor; the runway's beacon, by one end. */
+    private static final BlockPos MIDDLE = new BlockPos(15, 2, 15);
     private static final BlockPos BEACON = new BlockPos(7, 2, 2);
+    /* The pattern's bounds round its middle, as it faces north: across, up, along. */
+    private static final int REACH = ShipLandingBlocks.DECK_RADIUS;
+    private static final int TOP_LAYER = 8;
+    private static final int SOUTH = 15;
+    /* How many blocks of each kind the pad is: plates, truss, steps and masts. */
+    private static final Map<Character, Integer> KINDS = Map.of('P', 341, 'T', 90, 'S', 15, 'M', 24);
     /* How far along the runway a block stands in its way. */
     private static final int IN_THE_WAY = 30;
 
@@ -50,34 +62,28 @@ public final class ShipLandingGameTests {
     }
 
     @GameTest(template = PAD_ARENA, timeoutTicks = 400)
-    public static void shipPad_formsFromItsOctagonOfPlatesAndIsNotedForItsOwnersShips(final GameTestHelper helper) {
+    public static void shipPad_formsRaisedAndIsNotedForItsOwnersShipsOverItsDecksMiddle(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
-        final BlockPos terminal = helper.absolutePos(TERMINAL);
+        final BlockPos middle = helper.absolutePos(MIDDLE);
         final ServerPlayer owner = GameTestPlayers.connected(helper, "owner");
-        level.setBlockAndUpdate(terminal, ShipLandingBlocks.TERMINAL.get().defaultBlockState());
+        final Map<Character, Integer> laid = build(level, middle, Orientation.NORTH);
+        helper.assertTrue(laid.equals(KINDS), "its deck, truss, stair and masts: " + laid);
+        final BlockPos terminal = middle.offset(ShipLandingBlocks.TERMINAL_X, ShipLandingBlocks.TERMINAL_Y,
+                ShipLandingBlocks.TERMINAL_Z);
         final ShipPadBlockEntity pad = (ShipPadBlockEntity) level.getBlockEntity(terminal);
         pad.own(Ownership.of(owner.getUUID()));
-        int plates = 0;
-        for (int x = -ShipLandingBlocks.PAD_REACH; x <= ShipLandingBlocks.PAD_REACH; x++) {
-            for (int z = -ShipLandingBlocks.PAD_REACH; z <= ShipLandingBlocks.PAD_REACH; z++) {
-                if ((x != 0 || z != 0) && ShipLandingBlocks.onPad(x, z)) {
-                    level.setBlockAndUpdate(terminal.offset(x, 0, z), ShipLandingBlocks.PLATE.get()
-                            .defaultBlockState());
-                    plates++;
-                }
-            }
-        }
-        helper.assertTrue(plates == 356, "an octagon of 356 plates round its terminal: " + plates);
-        final BlockPos edge = terminal.offset(ShipLandingBlocks.PAD_REACH, 0, 0);
+        final BlockPos deck = middle.above(ShipLandingBlocks.DECK);
+        final BlockPos edge = middle.offset(REACH, ShipLandingBlocks.DECK, 0);
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(pad.shownFormed(), "the pad forms, its corners cut off"))
+                .thenWaitUntil(() -> helper.assertTrue(pad.shownFormed() && pad.merged(), "the pad forms, its blocks"
+                        + " merged into it"))
                 .thenWaitUntil(() -> helper.assertTrue(ShipLandings.pad(level.getServer(), pad.id()).isPresent(),
                         "and is noted"))
                 .thenExecute(() -> {
                     final Vec3 spot = ShipLandings.padSpot(level, ShipLandings.pad(level.getServer(), pad.id())
                             .orElseThrow());
-                    helper.assertTrue(spot.equals(Vec3.atBottomCenterOf(terminal.above())), "its middle over its"
-                            + " terminal, where a ship sets down: " + spot);
+                    helper.assertTrue(pad.middle().equals(deck) && spot.equals(Vec3.atBottomCenterOf(deck.above())),
+                            "its ships set down on its deck's middle, three blocks up: " + spot + " for " + deck);
                     helper.assertTrue(ShipLandings.padsUsableBy(owner, level).stream().anyMatch(each ->
                             each.terminal().equals(terminal)), "its owner's ships may use it");
                     helper.assertFalse(ShipLandings.taken(level, spot, null), "no ship stands on it");
@@ -88,6 +94,56 @@ public final class ShipLandingGameTests {
                         + " let go"))
                 .thenExecute(() -> GameTestPlayers.leave(owner))
                 .thenSucceed();
+    }
+
+    @GameTest(template = PAD_ARENA, timeoutTicks = 400)
+    public static void shipPad_builtTurnedSetsItsShipsDownOnItsDecksMiddleStill(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos middle = helper.absolutePos(MIDDLE);
+        build(level, middle, Orientation.EAST);
+        final int[] at = Orientation.EAST.apply(ShipLandingBlocks.TERMINAL_X, ShipLandingBlocks.TERMINAL_Y,
+                ShipLandingBlocks.TERMINAL_Z);
+        final ShipPadBlockEntity pad = (ShipPadBlockEntity) level.getBlockEntity(middle.offset(at[0], at[1], at[2]));
+        pad.own(Ownership.of(UUID.randomUUID()));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(pad.shownFormed(), "built turned east, the pad forms"))
+                .thenExecute(() -> helper.assertTrue(pad.middle().equals(middle.above(ShipLandingBlocks.DECK)),
+                        "its deck's middle found from its terminal, turned as it stands: " + pad.middle() + " for "
+                                + middle.above(ShipLandingBlocks.DECK)))
+                .thenSucceed();
+    }
+
+    /*
+     * Builds the pad round {@code middle}, the block under its deck's middle on the ground, its pattern turned as
+     * {@code turned} says; how many blocks of each kind it laid, its terminal aside.
+     */
+    private static Map<Character, Integer> build(final ServerLevel level, final BlockPos middle,
+                                                 final Orientation turned) {
+        final Map<Character, Integer> laid = new HashMap<>();
+        for (int x = -REACH; x <= REACH; x++) {
+            for (int y = 0; y <= TOP_LAYER; y++) {
+                for (int z = -REACH; z <= SOUTH; z++) {
+                    final char letter = ShipLandingBlocks.letterAt(x, y, z);
+                    final Block block = switch (letter) {
+                        case '#' -> ShipLandingBlocks.TERMINAL.get();
+                        case 'P' -> ShipLandingBlocks.PLATE.get();
+                        case 'T' -> ShipLandingBlocks.TRUSS.get();
+                        case 'S' -> ShipLandingBlocks.STEP.get();
+                        case 'M' -> ShipLandingBlocks.MAST_BLOCK.get();
+                        default -> null;
+                    };
+                    if (block == null) {
+                        continue;
+                    }
+                    final int[] at = turned.apply(x, y, z);
+                    level.setBlockAndUpdate(middle.offset(at[0], at[1], at[2]), block.defaultBlockState());
+                    if (letter != '#') {
+                        laid.merge(letter, 1, Integer::sum);
+                    }
+                }
+            }
+        }
+        return laid;
     }
 
     @GameTest(template = RUNWAY_ARENA, timeoutTicks = 200)
