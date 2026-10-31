@@ -364,6 +364,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   moment of its work and `ArmReach` how its two links stand to reach a point, both pure. A terminal may watch its
   multiblock and a plan it builds at once: `LevelStructures.forget(terminal, watcher)` stops one watcher, a watcher
   filed again taking only its own place. Experimental.
+- Carried after the old place is kept: J's Core's API is at version 29. On a player's game,
+  `StructureFooting.onceOldPositionKept` has something done to an entity once the game has kept where it stood before
+  the tick, as it does just before ticking it, and `StructureFooting.oldPositionKept` is what the game calls then: the
+  player and what they drive are carried by the deck under them so, and drawn going with it. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1945,6 +1949,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A player or a mob walking a moving structure steps over a sill under a low lintel, as a doorway's: where the
+  room overhead is too low for a whole step, it steps as high as what stands in its way, as on the ground, and no
+  longer stops at the sill.
+- A player standing or walking on a moving structure in flight no longer shakes on it: their game carried them
+  at the start of each tick, before it kept where they stood, so each tick's carrying was drawn as a jump at its end
+  against a deck drawn going smoothly, and they slid back and forth on it by as much as it went in a tick. They are
+  carried once where they stood is kept, as is what they drive.
 - A large formed structure losing many blocks at once, blown away or cleared, no longer holds the server for
   minutes: each lost block marks the blocks beside it, and the world asked each of them, for redstone and for light,
   its shape as the strikes had left it, working its struck model out again every time. It answers both by its

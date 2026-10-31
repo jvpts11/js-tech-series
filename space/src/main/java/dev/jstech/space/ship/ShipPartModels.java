@@ -9,6 +9,7 @@ package dev.jstech.space.ship;
 
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.content.ModelBuilder;
+import dev.jstech.core.moving.BlockAboard;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
 import dev.jstech.space.api.ShipKit;
@@ -40,6 +41,9 @@ public final class ShipPartModels {
     private static final Map<ResourceLocation, DeclaredModel> MODELS = new LinkedHashMap<>();
     /* The cluster's four bells have the most triangles. */
     private static final int MOST_TRIANGLES = 9_000;
+    /** A pilot seat aboard: sat on upright, half a block over its block's bottom, the ship's helm. */
+    public static final BlockAboard PILOT = new BlockAboard(Optional.of(new BlockAboard.Seat(0.5, true)),
+            Optional.empty(), Optional.empty(), Optional.empty());
 
     private ShipPartModels() {
     }
@@ -62,6 +66,10 @@ public final class ShipPartModels {
                             .triangles(MOST_TRIANGLES);
                     if (glazed) {
                         model.translucent();
+                    }
+                    if (declared != null && declared.kind() == ShipPartKind.COCKPIT) {
+                        // A cockpit's pilot seat is its helm: the pilot sitting in it flies the ship.
+                        model.aboard(ShipKitBlocks.PILOT_SEAT.getId(), PILOT);
                     }
                     MODELS.put(id(finish, name), model.register());
                 }

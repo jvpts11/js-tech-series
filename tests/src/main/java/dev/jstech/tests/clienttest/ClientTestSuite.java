@@ -256,6 +256,7 @@ import dev.jstech.tests.clienttest.space.ShipPartsClientTests;
 import dev.jstech.tests.clienttest.space.ShipArmsClientTests;
 import dev.jstech.tests.clienttest.space.ShipBuildClientTests;
 import dev.jstech.tests.clienttest.space.ShipDesignClientTests;
+import dev.jstech.tests.clienttest.space.ShipFlightClientTests;
 import dev.jstech.tests.clienttest.space.ShipHoleClientTests;
 import dev.jstech.tests.clienttest.space.ShipReleaseClientTests;
 import dev.jstech.tests.clienttest.space.ShipyardClientTests;
@@ -514,6 +515,7 @@ public final class ClientTestSuite {
             ShipArmsClientTests.class,
             ShipReleaseClientTests.class,
             ShipHoleClientTests.class,
+            ShipFlightClientTests.class,
             RocketCabinClientTests.class,
             FlightComputerClientTests.class,
             DescentClientTests.class,

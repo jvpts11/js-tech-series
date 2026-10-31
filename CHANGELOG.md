@@ -445,6 +445,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   moment of its work and `ArmReach` how its two links stand to reach a point, both pure. A terminal may watch its
   multiblock and a plan it builds at once: `LevelStructures.forget(terminal, watcher)` stops one watcher, a watcher
   filed again taking only its own place. Experimental.
+- (Core) Carried after the old place is kept: J's Core's API is at version 29. On a player's game,
+  `StructureFooting.onceOldPositionKept` has something done to an entity once the game has kept where it stood before
+  the tick, as it does just before ticking it, and `StructureFooting.oldPositionKept` is what the game calls then: the
+  player and what they drive are carried by the deck under them so, and drawn going with it. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2571,6 +2575,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   again to change by its arms or by hand and let it go once more. A block broken from a ship's formed part, in the
   dock or aboard wherever the ship is, leaves a hole the part holds round, drawn as that block of its model gone and
   shown in the dock's hologram; the right block put back merges and mends it.
+- (Space) A ship let go from its dock flies: its cockpit's pilot seat is its helm, and the pilot sitting in it sends
+  it on along its nose with the key they walk forward with, slows it with the one they walk back with, turns it with
+  left and right and takes it up and down. With nobody at the helm it slows to a stop and stays where it is, parked;
+  its blocks fly as they stand, what works on the ground works aboard, and its crew walks about inside in flight.
 - (Core) A block merged into a formed part seals a room as the block it was, so a formed hull keeps its crew's air.
 - (Core) A moving structure lets a mod part chosen blocks off as a structure of their own, joined to the rest or not,
   pushed apart as a decoupler pushes, the structure keeping its name and its rule: as a rocket lets a spent stage go.
@@ -2783,6 +2791,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A player or a mob walking a moving structure steps over a sill under a low lintel, as a doorway's: where the
+  room overhead is too low for a whole step, it steps as high as what stands in its way, as on the ground, and no
+  longer stops at the sill.
+- (Core) A player standing or walking on a moving structure in flight no longer shakes on it: their game carried them
+  at the start of each tick, before it kept where they stood, so each tick's carrying was drawn as a jump at its end
+  against a deck drawn going smoothly, and they slid back and forth on it by as much as it went in a tick. They are
+  carried once where they stood is kept, as is what they drive.
 - (Core) A large formed structure losing many blocks at once, blown away or cleared, no longer holds the server for
   minutes: each lost block marks the blocks beside it, and the world asked each of them, for redstone and for light,
   its shape as the strikes had left it, working its struck model out again every time. It answers both by its

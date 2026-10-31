@@ -2,6 +2,11 @@
   "values": {
     "jsspace:crew_seat": {
       "seat": {}
+    },
+    "jsspace:pilot_seat": {
+      "seat": {
+        "helm": true
+      }
     }
   }
 }

@@ -312,31 +312,13 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         }
         // A player riding something is where it puts them, a seat aboard sunk into its block: neither carried by a
         // deck nor pushed out of the block they sit in, which would set them off their seat between its updates.
+        // What the player drives on this game, a car, a boat, a horse, is carried by the deck under it as they are on
+        // foot: their game moves it, and the server only hears where it went. Each is carried once the game has kept
+        // where it stood before the tick, so its carrying is drawn going with the deck, frame by frame.
         if (!player.isPassenger()) {
-            final IStructureBody standing = StructureFooting.standingOn(player);
-            if (standing instanceof ClientStructure structure && structure.ready()) {
-                StructureFooting.carry(player, structure);
-            }
-            final List<IStructureBody> near = new ArrayList<>(LevelMovingStructures.of(player.level())
-                    .near(player.getBoundingBox().inflate(0.5)));
-            for (final IStructureBody body : near) {
-                if (body.ready() && !player.isSpectator() && !player.noPhysics) {
-                    StructureCollisions.pushOut(player, body);
-                }
-            }
+            StructureFooting.onceOldPositionKept(player, ClientMovingStructures::carried);
         } else if (drivenHere(player) instanceof Entity driven) {
-            // What the player drives on this game, a car, a boat, a horse, is carried by the deck under it as they
-            // are on foot: their game moves it, and the server only hears where it went.
-            final IStructureBody standing = StructureFooting.standingOn(driven);
-            if (standing instanceof ClientStructure structure && structure.ready()) {
-                StructureFooting.carry(driven, structure);
-            }
-            for (final IStructureBody body : new ArrayList<>(LevelMovingStructures.of(player.level())
-                    .near(driven.getBoundingBox().inflate(0.5)))) {
-                if (body.ready()) {
-                    StructureCollisions.pushOut(driven, body);
-                }
-            }
+            StructureFooting.onceOldPositionKept(driven, ClientMovingStructures::carried);
         }
         final Vec3 eye = game.gameRenderer.getMainCamera().getPosition();
         for (final ClientStructure structure : BY_ENTITY.values()) {
@@ -424,6 +406,26 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
                     living.yBodyRot = entity.getYRot();
                     living.yBodyRotO = entity.yRotO;
                 }
+            }
+        }
+    }
+
+    /*
+     * Carries {@code mover}, the player or what they drive, by the deck it stands on, and pushes it out of the
+     * structures near; a player who is a spectator or goes through blocks is not pushed.
+     */
+    private static void carried(final Entity mover) {
+        final IStructureBody standing = StructureFooting.standingOn(mover);
+        if (standing instanceof ClientStructure structure && structure.ready()) {
+            StructureFooting.carry(mover, structure);
+        }
+        if (mover.noPhysics || mover.isSpectator()) {
+            return;
+        }
+        for (final IStructureBody body : new ArrayList<>(LevelMovingStructures.of(mover.level())
+                .near(mover.getBoundingBox().inflate(0.5)))) {
+            if (body.ready()) {
+                StructureCollisions.pushOut(mover, body);
             }
         }
     }

@@ -80,8 +80,8 @@ public final class StructureCollisions {
         final boolean grounded = entity.onGround() || contacts.support != null || wanted.y < 0 && moved.y > wanted.y;
         if (stepHeight > 0 && contacts.sideways && grounded) {
             final Contacts stepped = new Contacts();
-            final Vec3 step = step(entity, box, wanted, near, stepHeight, stepped);
-            if (horizontal(step) > horizontal(moved) + 1.0e-7) {
+            final Vec3 step = climbed(entity, box, wanted, near, stepHeight, horizontal(moved), stepped);
+            if (step != null) {
                 moved = step;
                 contacts.support = stepped.support;
                 contacts.supportBody = stepped.supportBody;
@@ -316,8 +316,81 @@ public final class StructureCollisions {
     }
 
     /* Climbing a step, as the game does on the ground: up, across, and down onto it. */
+    /*
+     * The step up that takes an entity further than its move did, or null for none: the whole step first; where the
+     * room overhead is too low for that, the lowest that clears what stands in the way, as the game's own step tries
+     * the tops of the shapes it meets. A sill under a doorway's lintel is climbed so.
+     */
+    private static @Nullable Vec3 climbed(final Entity entity, final AABB box, final Vec3 wanted,
+                                          final List<IStructureBody> near, final double height, final double went,
+                                          final Contacts contacts) {
+        final Vec3 whole = step(entity, box, wanted, near, height, contacts);
+        if (horizontal(whole) > went + 1.0e-7) {
+            return whole;
+        }
+        for (final double lower : stepHeights(entity, box, wanted, near, height)) {
+            final Contacts tried = new Contacts();
+            final Vec3 step = step(entity, box, wanted, near, lower, tried);
+            if (horizontal(step) > went + 1.0e-7) {
+                contacts.support = tried.support;
+                contacts.supportBody = tried.supportBody;
+                return step;
+            }
+        }
+        return null;
+    }
+
+    /*
+     * How high over {@code box}'s bottom the tops of the structures' blocks in the way of its move stand, lowest first,
+     * each above nothing and below {@code height}.
+     */
+    private static double[] stepHeights(final Entity entity, final AABB box, final Vec3 wanted,
+                                        final List<IStructureBody> near, final double height) {
+        final AABB area = box.expandTowards(wanted.x, height, wanted.z);
+        double[] tops = new double[8];
+        int count = 0;
+        for (final IStructureBody body : near) {
+            if (!body.ready()) {
+                continue;
+            }
+            final StructureFrame frame = body.frame();
+            final Scratch scratch = SCRATCH.get();
+            final int boxes = gather(entity.level(), entity, frame, area, scratch);
+            for (int i = 0; i < boxes; i++) {
+                final double top = top(frame, scratch.boxes, i) - box.minY;
+                if (top > KEEP_OFF && top < height) {
+                    if (count == tops.length) {
+                        tops = Arrays.copyOf(tops, count * 2);
+                    }
+                    tops[count++] = top;
+                }
+            }
+        }
+        final double[] sorted = Arrays.copyOf(tops, count);
+        Arrays.sort(sorted);
+        int kept = 0;
+        for (final double top : sorted) {
+            if (kept == 0 || top - sorted[kept - 1] > KEEP_OFF) {
+                sorted[kept++] = top;
+            }
+        }
+        return Arrays.copyOf(sorted, kept);
+    }
+
+    /* The highest the box numbered {@code i} of {@code boxes}, in a structure's places, stands in the world. */
+    private static double top(final StructureFrame frame, final double[] boxes, final int i) {
+        double top = Double.NEGATIVE_INFINITY;
+        for (int corner = 0; corner < 8; corner++) {
+            final double x = boxes[i * 6 + ((corner & 1) == 0 ? 0 : 3)];
+            final double y = boxes[i * 6 + ((corner & 2) == 0 ? 1 : 4)];
+            final double z = boxes[i * 6 + ((corner & 4) == 0 ? 2 : 5)];
+            top = Math.max(top, frame.worldY(x, y, z));
+        }
+        return top;
+    }
+
     private static Vec3 step(final Entity entity, final AABB box, final Vec3 wanted, final List<IStructureBody> near,
-                             final float height, final Contacts contacts) {
+                             final double height, final Contacts contacts) {
         final Contacts ignored = new Contacts();
         Vec3 up = world(entity, box, new Vec3(0, height, 0));
         up = sweepAll(entity, box, up, near, ignored);

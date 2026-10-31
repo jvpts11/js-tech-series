@@ -19,6 +19,7 @@ import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipPartModels;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -107,7 +108,7 @@ public final class RocketKitDataProvider extends DataMapProvider {
         // A crew seat is sat on upright, as in the lander's cabin; a capsule's model lays its crew down on it.
         builder(BlockAboard.ABOARD).add(RocketKitBlocks.CREW_SEAT, new BlockAboard(Optional.of(
                 new BlockAboard.Seat(CREW_SEAT_HEIGHT, false)), Optional.empty(), Optional.empty(), Optional.empty()),
-                false);
+                false).add(ShipKitBlocks.PILOT_SEAT, ShipPartModels.PILOT, false);
         final Builder<BlockPhysics, Block> physics = builder(BlockPhysics.PHYSICS);
         masses(RocketParts.declared(), RocketKits.declared()).forEach((id, mass) -> physics.add(
                 BuiltInRegistries.BLOCK.wrapAsHolder(BuiltInRegistries.BLOCK.get(id)),

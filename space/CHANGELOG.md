@@ -592,6 +592,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   again to change by its arms or by hand and let it go once more. A block broken from a ship's formed part, in the
   dock or aboard wherever the ship is, leaves a hole the part holds round, drawn as that block of its model gone and
   shown in the dock's hologram; the right block put back merges and mends it.
+- A ship let go from its dock flies: its cockpit's pilot seat is its helm, and the pilot sitting in it sends
+  it on along its nose with the key they walk forward with, slows it with the one they walk back with, turns it with
+  left and right and takes it up and down. With nobody at the helm it slows to a stop and stays where it is, parked;
+  its blocks fly as they stand, what works on the ground works aboard, and its crew walks about inside in flight.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

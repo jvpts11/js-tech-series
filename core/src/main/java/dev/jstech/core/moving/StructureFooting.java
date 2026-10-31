@@ -8,11 +8,13 @@
 package dev.jstech.core.moving;
 
 import dev.jstech.core.registry.CoreAttachments;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -43,8 +45,33 @@ public final class StructureFooting {
     private static final Map<ServerPlayer, Reported> REPORTED = new WeakHashMap<>();
     /* Where on a deck each player's game says the vehicle they drive stands. */
     private static final Map<ServerPlayer, Reported> REPORTED_VEHICLES = new WeakHashMap<>();
+    /* On a player's game, what waits for the game to keep where it stood before this tick, and what is done then. */
+    private static WeakReference<Entity> waiting = new WeakReference<>(null);
+    private static @Nullable Consumer<Entity> waitingAction;
 
     private StructureFooting() {
+    }
+
+    /**
+     * Has {@code action} done to {@code entity} on a player's game once the game has kept where it stood before this
+     * tick, as it does just before ticking it, in place of whatever waited before: the carrying of the player, or of
+     * what they drive, by the deck under them. Carried before that, the tick's carrying would be kept as where they
+     * stood, and drawn as a jump at the tick's end against a deck drawn going smoothly: they would shake on it.
+     */
+    public static void onceOldPositionKept(final Entity entity, final Consumer<Entity> action) {
+        waiting = new WeakReference<>(entity);
+        waitingAction = action;
+    }
+
+    /** The game kept where {@code entity} stood before its tick: what waited for that is done now. */
+    public static void oldPositionKept(final Entity entity) {
+        if (waitingAction == null || !entity.level().isClientSide() || waiting.get() != entity) {
+            return;
+        }
+        final Consumer<Entity> action = waitingAction;
+        waiting = new WeakReference<>(null);
+        waitingAction = null;
+        action.accept(entity);
     }
 
     /** {@code entity} stood on {@code body} this tick, on the block {@code support} of the yard. */

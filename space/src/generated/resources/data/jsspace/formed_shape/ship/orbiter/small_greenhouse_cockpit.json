@@ -1,4 +1,11 @@
 {
+  "aboard": {
+    "jsspace:pilot_seat": {
+      "seat": {
+        "helm": true
+      }
+    }
+  },
   "cells": [
     {
       "at": [

@@ -65,8 +65,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.inventory.ChestMenu;
@@ -110,6 +112,9 @@ public final class MovingStructureGameTests {
     private static final String ARENA = "empty";
     /* How close, in blocks, two places count as one. */
     private static final double CLOSE = 1.0e-3;
+    /* How far a walker goes a tick through the doorway, and for how many ticks: from before it to past it. */
+    private static final double DOORWAY_STRIDE = 0.15;
+    private static final int DOORWAY_STRIDES = 20;
     private static final TextKey LOADER_ABOARD = TextKey.of("jstests.moving.loader_aboard",
             "A loader aboard keeps the world under it loaded");
 
@@ -330,6 +335,25 @@ public final class MovingStructureGameTests {
                 .thenExecute(() -> {
                     zombie.discard();
                     MovingStructures.takeAway(floor);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = "jscore_moving_standing", timeoutTicks = 200)
+    public static void creeper_stepsOverASillUnderALowLintel(final GameTestHelper helper) {
+        final MovingStructure doorway = doorway(helper);
+        final Creeper creeper = helper.spawnWithNoFreeWill(EntityType.CREEPER, new Vec3(4.5, 4.0, 3.5));
+        final double floor = helper.absolutePos(new BlockPos(0, 4, 0)).getY();
+        final double through = helper.absolutePos(new BlockPos(0, 0, 6)).getZ();
+        // Too tall to rise the whole step under the lintel, it rises only as high as the sill.
+        helper.startSequence()
+                .thenExecuteFor(DOORWAY_STRIDES, () -> creeper.move(MoverType.SELF, new Vec3(0, -0.08,
+                        DOORWAY_STRIDE)))
+                .thenExecute(() -> helper.assertTrue(creeper.getZ() > through && Math.abs(creeper.getY() - floor)
+                        < 0.1, "the creeper steps over the doorway's sill and on: at " + creeper.position()))
+                .thenExecute(() -> {
+                    creeper.discard();
+                    MovingStructures.takeAway(doorway);
                 })
                 .thenSucceed();
     }
@@ -918,6 +942,29 @@ public final class MovingStructureGameTests {
         final StructureResult made = MovingStructures.assemble(helper.getLevel(),
                 helper.absolutePos(new BlockPos(3, 3, 3)), helper.absolutePos(new BlockPos(5, 3, 5)));
         helper.assertTrue(made.ok() && made.structure() != null, "a floor is made: " + refusal(made));
+        return made.structure();
+    }
+
+    /*
+     * A floor of stone three wide and five long, a doorway across its middle at z 5: a pillar either side, a lintel
+     * over the way whose underside is two blocks over the floor, and a carpet for its sill; made a structure.
+     */
+    private static MovingStructure doorway(final GameTestHelper helper) {
+        for (int x = 3; x <= 5; x++) {
+            for (int z = 3; z <= 7; z++) {
+                helper.setBlock(new BlockPos(x, 3, z), Blocks.STONE);
+            }
+        }
+        for (int y = 4; y <= 6; y++) {
+            helper.setBlock(new BlockPos(3, y, 5), Blocks.STONE);
+            helper.setBlock(new BlockPos(5, y, 5), Blocks.STONE);
+        }
+        helper.setBlock(new BlockPos(4, 6, 5), Blocks.STONE);
+        helper.setBlock(new BlockPos(4, 4, 5), Blocks.WHITE_CARPET);
+        warm(helper.getLevel());
+        final StructureResult made = MovingStructures.assemble(helper.getLevel(),
+                helper.absolutePos(new BlockPos(3, 3, 3)), helper.absolutePos(new BlockPos(5, 6, 7)));
+        helper.assertTrue(made.ok() && made.structure() != null, "a doorway is made: " + refusal(made));
         return made.structure();
     }
 
