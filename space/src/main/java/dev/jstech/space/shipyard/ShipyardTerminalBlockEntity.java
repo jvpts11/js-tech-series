@@ -41,11 +41,13 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.region.Box;
+import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
+import dev.jstech.space.crew.ShipCrew;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAboard;
 import dev.jstech.space.ship.ShipDesign;
@@ -355,6 +357,10 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
             return Optional.empty();
         }
         keeper.carry(new ShipAboard(design, at.subtract(seat.get()), this.planTurn.get(), formed));
+        // Its pilot who started it owns it, their team its crew; a ship back from a dock keeps its crew.
+        if (by != null && keeper.crew().isEmpty()) {
+            keeper.crew(ShipCrew.of(by, CoreTeams.nameOf(server.getServer(), by).orElse("")));
+        }
         // It flies from now on as its pilot sends it, its nose the way its plan laid it, by what its parts weigh and
         // push, at rest until then, its console showing its flight.
         final int[] nose = planTurn().apply(0, 0, -1);

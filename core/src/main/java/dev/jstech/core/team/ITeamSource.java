@@ -8,6 +8,7 @@
 package dev.jstech.core.team;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
@@ -30,5 +31,13 @@ public interface ITeamSource {
      */
     default List<UUID> membersOf(final MinecraftServer server, final String team) {
         return List.of();
+    }
+
+    /**
+     * The name {@code team} is shown by to players, as the source names it; none by default, for a source that cannot
+     * say, and none for a team it does not know.
+     */
+    default Optional<String> teamName(final MinecraftServer server, final String team) {
+        return Optional.empty();
     }
 }

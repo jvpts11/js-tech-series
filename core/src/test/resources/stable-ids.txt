@@ -52,6 +52,10 @@ CrcPart.CrcPart INTEGRATED_RESEARCH_PROCESSOR (2, "integrated_research_processor
 CrcPart.CrcPart LIQUID_COOLER (5, "liquid_cooler", IndustrialTier.T3, 0.0, 15_000.0, Cooling.WATER, "cooler")
 CrcPart.CrcPart NANOSCALE_RESEARCH_PROCESSOR (3, "nanoscale_research_processor", IndustrialTier.T5, 16.0, 80_000.0, Cooling.NONE
 CrcPart.CrcPart RESEARCH_PROCESSOR (1, "research_processor", IndustrialTier.T3, 1.0, 5_000.0, Cooling.NONE, "p3")
+CrewRole.CrewRole CREW (2, "crew", TextKey.of("jsspace.crew.role.crew", "CREW"))
+CrewRole.CrewRole NONE (0, "none", TextKey.of("jsspace.crew.role.none", "NONE"))
+CrewRole.CrewRole PASSENGER (1, "passenger", TextKey.of("jsspace.crew.role.passenger", "PASS"))
+CrewRole.CrewRole PILOT (3, "pilot", TextKey.of("jsspace.crew.role.pilot", "PILOT"))
 DataLine.DataLine ACCESS (0, "access")
 DataLine.DataLine BACKBONE (1, "backbone")
 DataLine.DataLine CRAFTING (4, "crafting")

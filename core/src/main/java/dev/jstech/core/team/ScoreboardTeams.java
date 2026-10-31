@@ -10,6 +10,7 @@ package dev.jstech.core.team;
 import com.mojang.authlib.GameProfile;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -58,5 +59,12 @@ public final class ScoreboardTeams implements ITeamSource {
             }
         }
         return out;
+    }
+
+    /* A scoreboard team's display name, as /team names it. */
+    @Override
+    public Optional<String> teamName(final MinecraftServer server, final String team) {
+        return Optional.ofNullable(team.startsWith(PREFIX) ? server.getScoreboard().getPlayerTeam(team.substring(
+                PREFIX.length())) : null).map(found -> found.getDisplayName().getString());
     }
 }

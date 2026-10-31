@@ -659,6 +659,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   when its stretch is long and free, sixty-four blocks of firm level land thirteen wide with six of headroom and no
   other ship on it, looked at as the ship comes near when its land is not loaded yet; its pilot is told when it is not.
   Ships on wheels set down on landing pads too.
+- A starship's crew: a ship started from its dock is its pilot's, who flies it, and the pilot's team works
+  aboard; everyone else stays outside till the owner names them. A pilot flies it from its helm and changes its blocks;
+  its crew works its fittings and the machines aboard; a passenger comes aboard, sits and sleeps. The owner sets the
+  roles of the team, shown by its name, of everyone else and of each player named on the crew page of the ship's
+  flight console, drawn as the flight computer's display; everyone else aboard reads it there. The airlock door takes whoever may come
+  aboard in and out, and a player refused is told whose the ship is; a docking collar asks for a place aboard the other
+  ship too.
 
 ### Fixed
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

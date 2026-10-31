@@ -16,9 +16,11 @@ import dev.jstech.core.team.Ownership;
 import dev.jstech.core.team.ScoreboardTeams;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.PlayerTeam;
@@ -29,7 +31,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Core's owners and teams: the teams come from FTB Teams when it is installed and from the scoreboard when it is
- * not, and a thing's owner lets in whom its access says: nobody else, the owner's team, or everyone.
+ * not, each shown by its name, and a thing's owner lets in whom its access says: nobody else, the owner's team, or
+ * everyone.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -125,6 +128,30 @@ public final class OwnershipGameTests {
             scoreboard.removePlayerTeam(team);
             GameTestPlayers.leave(owner);
             GameTestPlayers.leave(mate);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void scoreboardTeams_showATeamByItsDisplayName(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final Scoreboard scoreboard = server.getScoreboard();
+        final PlayerTeam team = scoreboard.addPlayerTeam("jstests_named_" + UUID.randomUUID().toString().substring(0,
+                8));
+        final ITeamSource before = CoreTeams.source();
+        // Forced to the scoreboard source so the check runs whichever team mod the run has loaded.
+        CoreTeams.use(ScoreboardTeams.INSTANCE);
+        try {
+            team.setDisplayName(Component.literal("Orbital Works"));
+            helper.assertTrue(CoreTeams.teamName(server, ScoreboardTeams.idOf(team)).equals(Optional.of(
+                    "Orbital Works")), "a team is shown by its display name");
+            helper.assertTrue(CoreTeams.teamName(server, CoreTeams.solo(UUID.randomUUID())).isEmpty(),
+                    "a player's team of their own has none: its name is the player's");
+            helper.assertTrue(CoreTeams.teamName(server, "scoreboard:jstests_no_such_team").isEmpty(),
+                    "nor has a team the scoreboard does not know");
+        } finally {
+            CoreTeams.use(before);
+            scoreboard.removePlayerTeam(team);
         }
         helper.succeed();
     }

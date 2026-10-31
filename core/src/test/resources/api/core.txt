@@ -12598,6 +12598,7 @@ stable 4
 10 dev.jstech.core.team.CoreTeams  static ITeamSource source()
 12 dev.jstech.core.team.CoreTeams  static List<UUID> membersOf(MinecraftServer, String)
 10 dev.jstech.core.team.CoreTeams  static Optional<String> nameOf(MinecraftServer, UUID)
+31 dev.jstech.core.team.CoreTeams  static Optional<String> teamName(MinecraftServer, String)
 12 dev.jstech.core.team.CoreTeams  static Optional<UUID> soloPlayer(String)
 10 dev.jstech.core.team.CoreTeams  static String solo(UUID)
 10 dev.jstech.core.team.CoreTeams  static String teamOf(MinecraftServer, UUID)
@@ -12611,6 +12612,7 @@ stable 4
 10 dev.jstech.core.team.ITeamSource  type interface
 10 dev.jstech.core.team.ITeamSource  abstract String teamOf(MinecraftServer, UUID)
 12 dev.jstech.core.team.ITeamSource  default List<UUID> membersOf(MinecraftServer, String)
+31 dev.jstech.core.team.ITeamSource  default Optional<String> teamName(MinecraftServer, String)
 10 dev.jstech.core.team.Ownership  type record(UUID owner, Access access, Map<UUID, Trust> trusted)
 10 dev.jstech.core.team.Ownership  Optional<Trust> trustOf(UUID)
 10 dev.jstech.core.team.Ownership  Ownership withAccess(Access)
@@ -12631,6 +12633,7 @@ stable 4
 10 dev.jstech.core.team.Ownership  static final int MOST_TRUSTED
 10 dev.jstech.core.team.ScoreboardTeams  type final class implements ITeamSource
 12 dev.jstech.core.team.ScoreboardTeams  List<UUID> membersOf(MinecraftServer, String)
+31 dev.jstech.core.team.ScoreboardTeams  Optional<String> teamName(MinecraftServer, String)
 10 dev.jstech.core.team.ScoreboardTeams  String teamOf(MinecraftServer, UUID)
 10 dev.jstech.core.team.ScoreboardTeams  static String idOf(PlayerTeam)
 10 dev.jstech.core.team.ScoreboardTeams  static final ScoreboardTeams INSTANCE

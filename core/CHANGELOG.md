@@ -373,6 +373,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   a frame, as that frame draws them. `StructureFooting.holdGotUp` and `settleGotUp` are what a player's game calls
   before each frame is drawn and as each tick ends, so a player who got up from a seat aboard is drawn on the deck
   from the first frame. Experimental.
+- A team's name: J's Core's API is at version 31. `CoreTeams.teamName` is the name a team is shown by, as the
+  source of teams in use names it: a scoreboard team's display name, or an FTB team's name; none for a player's team
+  of their own. `ITeamSource.teamName` is how a source says it, none by default. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

@@ -77,6 +77,14 @@ public final class CoreTeams {
         return source.membersOf(server, team);
     }
 
+    /**
+     * The name {@code team} is shown by to players, as the source in use names it; none for a player's team of their
+     * own, whose name is the player's, or when the source cannot say.
+     */
+    public static Optional<String> teamName(final MinecraftServer server, final String team) {
+        return soloPlayer(team).isPresent() ? Optional.empty() : source.teamName(server, team);
+    }
+
     /** The name the server last knew {@code player} by, online or not; none when it never knew one. */
     public static Optional<String> nameOf(final MinecraftServer server, final UUID player) {
         final ServerPlayer online = server.getPlayerList().getPlayer(player);

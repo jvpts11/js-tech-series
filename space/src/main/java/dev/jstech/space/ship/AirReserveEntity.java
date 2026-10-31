@@ -20,6 +20,7 @@ import dev.jstech.core.room.Room;
 import dev.jstech.core.room.RoomLiving;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.core.util.Loaded;
+import dev.jstech.space.crew.ShipCrew;
 import dev.jstech.space.shipyard.ShipyardPlans;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,7 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     private final ValueField<List<Integer>> holes;
     private final ValueField<ShipReadings> flight;
     private final ValueField<Double> deuterium;
+    private final ValueField<ShipCrew> crew;
     /* The ship's plan, watched aboard once the ship is a structure; on the server. */
     private @Nullable PlannedBuild aboard;
     /* What its reactor has burnt since its load was last told, on the server: told a thousandth at a time. */
@@ -70,6 +72,19 @@ public final class AirReserveEntity extends SyncedBlockEntity {
         this.holes = fields().value("Holes", Codec.INT.listOf(), List.<Integer>of()).toClient();
         this.flight = fields().value("Flight", ShipReadings.CODEC, ShipReadings.PARKED).toClient();
         this.deuterium = fields().value("Deuterium", Codec.DOUBLE, 1.0).save().toClient();
+        // Who may do what aboard its ship, kept with the ship through docks and restarts.
+        this.crew = fields().nullable("Crew", ShipCrew.CODEC).save().toClient();
+    }
+
+    /** Who may do what aboard its ship; none for a ship nobody owns, which anyone may use. */
+    public Optional<ShipCrew> crew() {
+        return Optional.ofNullable(this.crew.get());
+    }
+
+    /** Keeps {@code next} as who may do what aboard its ship. */
+    public void crew(final ShipCrew next) {
+        this.crew.set(next);
+        setChanged();
     }
 
     /** How much of a full load of deuterium its ship's fusion reactor has left, from nought to one. */

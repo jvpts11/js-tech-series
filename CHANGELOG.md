@@ -454,6 +454,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a frame, as that frame draws them. `StructureFooting.holdGotUp` and `settleGotUp` are what a player's game calls
   before each frame is drawn and as each tick ends, so a player who got up from a seat aboard is drawn on the deck
   from the first frame. Experimental.
+- (Core) A team's name: J's Core's API is at version 31. `CoreTeams.teamName` is the name a team is shown by, as the
+  source of teams in use names it: a scoreboard team's display name, or an FTB team's name; none for a player's team
+  of their own. `ITeamSource.teamName` is how a source says it, none by default. Experimental.
 - (Space) Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
   wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
   speed and less in thinner air; written in a part's file as `wing`. Experimental.
@@ -2647,6 +2650,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   when its stretch is long and free, sixty-four blocks of firm level land thirteen wide with six of headroom and no
   other ship on it, looked at as the ship comes near when its land is not loaded yet; its pilot is told when it is not.
   Ships on wheels set down on landing pads too.
+- (Space) A starship's crew: a ship started from its dock is its pilot's, who flies it, and the pilot's team works
+  aboard; everyone else stays outside till the owner names them. A pilot flies it from its helm and changes its blocks;
+  its crew works its fittings and the machines aboard; a passenger comes aboard, sits and sleeps. The owner sets the
+  roles of the team, shown by its name, of everyone else and of each player named on the crew page of the ship's
+  flight console, drawn as the flight computer's display; everyone else aboard reads it there. The airlock door takes whoever may come
+  aboard in and out, and a player refused is told whose the ship is; a docking collar asks for a place aboard the other
+  ship too.
 - (Core) A moving structure crossing to another dimension takes whoever sits on its seats along still sitting on
   them, and its pilot's hold on the controls goes with it.
 - (Core) A room among a moving structure's blocks is the room of the place of the world they fill now: whoever is

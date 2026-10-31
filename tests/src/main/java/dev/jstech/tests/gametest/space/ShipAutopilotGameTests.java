@@ -61,7 +61,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -93,12 +92,11 @@ public final class ShipAutopilotGameTests {
     /* How high the ship is taken up before its autopilot is engaged, in blocks. */
     private static final double HIGH = 60;
     /*
-     * How far north of the ship the landing platform stands, in blocks, at the nearest and the farthest, tried a step
-     * apart, and how wide it is; how far round it, across and along, the land is bare for the ship to set down.
+     * How far north of the ship the landing platform stands, and how far below it, in blocks; how far round its
+     * middle, across and along, its floor reaches for the ship to set down.
      */
     private static final int PLATFORM_NORTH = 56;
-    private static final int PLATFORM_FARTHEST = 112;
-    private static final int PLATFORM_STEP = 8;
+    private static final int PAD_BELOW = 20;
     private static final int BARE_ACROSS = 6;
     private static final int BARE_ALONG = 11;
     /*
@@ -150,6 +148,7 @@ public final class ShipAutopilotGameTests {
         final ServerPlayer[] pilot = new ServerPlayer[1];
         final UUID pad = UUID.randomUUID();
         final Vec3[] spot = new Vec3[1];
+        final BlockPos[] floor = new BlockPos[1];
         letGo(helper, ship, LEGS_SHIP).thenExecute(() -> keep(helper, true, NORTH_CHUNKS))
                 .thenWaitUntil(() -> loaded(helper, NORTH_CHUNKS))
                 .thenExecute(() -> {
@@ -157,10 +156,10 @@ public final class ShipAutopilotGameTests {
                             ShipKitBlocks.PILOT_SEAT.getId())));
                     aloft(ship[0], HIGH);
                     pilot[0] = seated(helper, seat);
-                    // A ship landing pad of its pilot's on the land to the north, its top level with the land, where
-                    // the land is bare round it: the tests beside this one stand on the land too.
-                    final BlockPos terminal = bareNorthOf(helper, ship[0].pose());
-                    ShipLandings.notePad(level, pad, terminal, Ownership.of(pilot[0].getUUID()));
+                    // A ship landing pad of its pilot's on a floor in the sky to the north and below it: the tests
+                    // beside this one stand on the land.
+                    floor[0] = skyPadNorthOf(level, ship[0].pose());
+                    ShipLandings.notePad(level, pad, floor[0], Ownership.of(pilot[0].getUUID()));
                     spot[0] = ShipLandings.padSpot(level, ShipLandings.pad(level.getServer(), pad).orElseThrow());
                     ShipAutopilotControl.pressed(pilot[0]);
                     final Optional<ShipAutopilot> engaged = flight(ship[0]).autopilot();
@@ -188,6 +187,7 @@ public final class ShipAutopilotGameTests {
                     ShipLandings.dropPad(level.getServer(), pad);
                     GameTestPlayers.leave(pilot[0]);
                     MovingStructures.takeAway(ship[0]);
+                    takeAwayPad(level, floor[0]);
                     keep(helper, false, NORTH_CHUNKS);
                 })
                 .thenSucceed();
@@ -443,26 +443,28 @@ public final class ShipAutopilotGameTests {
     }
 
     /*
-     * The top block of the land, a way north of {@code at}, the land bare and level round it as far as a ship sets
-     * down on it: the nearest such place, a platform's length apart, within the land the test keeps.
+     * A floor laid in the sky a way north of {@code at} and below it, clear of whatever the tests beside this one, or
+     * the runs before, left on the land: stone as wide and as long as a ship sets down on; its middle block, where the
+     * pad's terminal is taken to stand.
      */
-    private static BlockPos bareNorthOf(final GameTestHelper helper, final StructurePose at) {
-        final ServerLevel level = helper.getLevel();
-        final int x = Mth.floor(at.x());
-        for (int north = PLATFORM_NORTH; north <= PLATFORM_FARTHEST; north += PLATFORM_STEP) {
-            final int z = Mth.floor(at.z()) - north;
-            final int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
-            boolean bare = true;
-            for (int dx = -BARE_ACROSS; dx <= BARE_ACROSS && bare; dx++) {
-                for (int dz = -BARE_ALONG; dz <= BARE_ALONG && bare; dz++) {
-                    bare = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x + dx, z + dz) == ground;
-                }
-            }
-            if (bare) {
-                return new BlockPos(x, ground - 1, z);
+    private static BlockPos skyPadNorthOf(final ServerLevel level, final StructurePose at) {
+        final BlockPos middle = new BlockPos(Mth.floor(at.x()), Mth.floor(at.y()) - PAD_BELOW,
+                Mth.floor(at.z()) - PLATFORM_NORTH);
+        for (int across = -BARE_ACROSS; across <= BARE_ACROSS; across++) {
+            for (int along = -BARE_ALONG; along <= BARE_ALONG; along++) {
+                level.setBlockAndUpdate(middle.offset(across, 0, along), Blocks.STONE.defaultBlockState());
             }
         }
-        throw new IllegalStateException("no bare land north of the dock to set the pad on");
+        return middle;
+    }
+
+    /* Takes the sky floor whose middle is {@code middle} away. */
+    private static void takeAwayPad(final ServerLevel level, final BlockPos middle) {
+        for (int across = -BARE_ACROSS; across <= BARE_ACROSS; across++) {
+            for (int along = -BARE_ALONG; along <= BARE_ALONG; along++) {
+                level.removeBlock(middle.offset(across, 0, along), false);
+            }
+        }
     }
 
     /*

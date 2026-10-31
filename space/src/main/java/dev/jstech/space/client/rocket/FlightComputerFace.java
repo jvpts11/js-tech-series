@@ -106,7 +106,7 @@ public final class FlightComputerFace {
         g.pose().pushPose();
         g.pose().scale(w / (float) WIDTH, h / (float) HEIGHT, 1);
         final Colours c = PALETTE.get();
-        bezel(g, font, c, view.readings().lit(CabinLamp.MASTER_ALARM));
+        bezel(g, font, c, MAKER, view.readings().lit(CabinLamp.MASTER_ALARM));
         g.fill(SX0, SY0, SX1, SY1, c.screen());
         if (view.page() == FlightPage.TRANSFER) {
             FlightComputerPages.transfer(g, font, view, c);
@@ -142,6 +142,17 @@ public final class FlightComputerFace {
      * numbers {@link FlightComputerBlockEntity#press} takes.
      */
     public static int keyAt(final Font font, final View view, final double x, final double y) {
+        return keyAt(font, view.left(), view.right(), x, y);
+    }
+
+    /**
+     * The key at {@code (x, y)} of a face of this display, in its own pixels, or -1: a key's cap, or the legend
+     * beside it, {@code left} and {@code right} the side keys' legends; the keys along the top from
+     * {@link FlightComputerBlockEntity#TOP}, those down the left from {@link FlightComputerBlockEntity#LEFT} and those
+     * down the right from {@link FlightComputerBlockEntity#RIGHT}.
+     */
+    public static int keyAt(final Font font, final List<Legend> left, final List<Legend> right, final double x,
+                            final double y) {
         for (int i = 0; i < PAGES.size(); i++) {
             if (x >= topKeyX(i) - 1 && x < topKeyX(i) + TOP_KEY_WIDTH + 1 && y >= SY0 - 21 && y < SY0 + 12) {
                 return FlightComputerBlockEntity.TOP + i;
@@ -152,20 +163,24 @@ public final class FlightComputerFace {
             if (y < top || y >= top + KEY_HEIGHT + 2) {
                 continue;
             }
-            final int left = font.width(i < view.left().size() ? view.left().get(i).text() : "");
-            if (x >= SX0 - 29 && x < SX0 + LEGEND_FROM + left + 2) {
+            final int leftWidth = font.width(i < left.size() ? left.get(i).text() : "");
+            if (x >= SX0 - 29 && x < SX0 + LEGEND_FROM + leftWidth + 2) {
                 return FlightComputerBlockEntity.LEFT + i;
             }
-            final int right = font.width(i < view.right().size() ? view.right().get(i).text() : "");
-            if (x >= SX1 - LEGEND_FROM - right - 2 && x < SX1 + 29) {
+            final int rightWidth = font.width(i < right.size() ? right.get(i).text() : "");
+            if (x >= SX1 - LEGEND_FROM - rightWidth - 2 && x < SX1 + 29) {
                 return FlightComputerBlockEntity.RIGHT + i;
             }
         }
         return -1;
     }
 
-    /* The bezel, flat, with more of a display's parts, and its fail lamp lit when {@code failing}. */
-    private static void bezel(final GuiGraphics g, final Font font, final Colours c, final boolean failing) {
+    /**
+     * The bezel, flat, with more of a display's parts: {@code maker}'s line along its top, and its fail lamp lit when
+     * {@code failing}; the display of every onboard computer of the mod.
+     */
+    public static void bezel(final GuiGraphics g, final Font font, final Colours c, final TextKey maker,
+                             final boolean failing) {
         g.fill(0, 0, WIDTH, HEIGHT, c.bezel());
         hline(g, 0, WIDTH, 0, c.bezelLit());
         vline(g, 0, 0, HEIGHT, c.bezelLit());
@@ -187,7 +202,7 @@ public final class FlightComputerFace {
         g.fill(SX0 - 3, SY0 - 3, SX1 + 3, SY1 + 3, c.bezelShade());
         g.fill(SX0 - 2, SY0 - 2, SX1 + 2, SY1 + 2, c.gasket());
         // The maker's line, the fail lamp, the light sensor.
-        text(g, font, GameText.resolve(MAKER), WIDTH / 2, 7, c.engrave(), true);
+        text(g, font, GameText.resolve(maker), WIDTH / 2, 7, c.engrave(), true);
         g.fill(SX0 - 2, 6, SX0 + 22, 16, c.bezelShade());
         g.fill(SX0 - 1, 7, SX0 + 21, 15, failing ? c.amber() : c.failGlass());
         text(g, font, GameText.resolve(FAIL), SX0 + 10, 7, failing ? c.screen() : c.failText(), true);
@@ -218,8 +233,8 @@ public final class FlightComputerFace {
      * short line pointing at the key, a chosen one white and boxed, one not in use dim; over the landing map, on its
      * own dark ground.
      */
-    private static void legend(final GuiGraphics g, final Font font, final List<Legend> legends, final int i,
-                               final boolean left, final Colours c) {
+    public static void legend(final GuiGraphics g, final Font font, final List<Legend> legends, final int i,
+                              final boolean left, final Colours c) {
         if (i >= legends.size() || legends.get(i).text().isEmpty()) {
             return;
         }
@@ -246,13 +261,40 @@ public final class FlightComputerFace {
         }
     }
 
-    private static int sideKeyY(final int i) {
+    /** Where side key {@code i} stands, from the top, in the face's pixels. */
+    public static int sideKeyY(final int i) {
         return SY0 + 24 + i * SIDE_KEY_STEP;
     }
 
-    private static int topKeyX(final int i) {
+    /** Where the key {@code i} along the top stands, from the left, in the face's pixels. */
+    public static int topKeyX(final int i) {
         final int step = (SX1 - SX0 - 16) / PAGES.size();
         return SX0 + 8 + i * step + (step - TOP_KEY_WIDTH) / 2;
+    }
+
+    /** Text at {@code (x, y)}, or centred on {@code x}; for the pages too. */
+    public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                            final int colour, final boolean centred) {
+        Draw.text(g, font, text, centred ? x - font.width(text) / 2 : x, y, colour);
+    }
+
+    /** A line across, from {@code x0} to just before {@code x1}. */
+    public static void hline(final GuiGraphics g, final int x0, final int x1, final int y, final int colour) {
+        g.fill(x0, y, x1, y + 1, colour);
+    }
+
+    /** A line down, from {@code y0} to just before {@code y1}. */
+    public static void vline(final GuiGraphics g, final int x, final int y0, final int y1, final int colour) {
+        g.fill(x, y0, x + 1, y1, colour);
+    }
+
+    /** A frame a pixel wide round the box from {@code (x0, y0)} to just before {@code (x1, y1)}. */
+    public static void frame(final GuiGraphics g, final int x0, final int y0, final int x1, final int y1,
+                             final int colour) {
+        hline(g, x0, x1, y0, colour);
+        hline(g, x0, x1, y1 - 1, colour);
+        vline(g, x0, y0, y1, colour);
+        vline(g, x1 - 1, y0, y1, colour);
     }
 
     /* A soft key, flat: its cap, a lit edge above, a dark one below, and the green bar of the night lighting. */
@@ -317,28 +359,6 @@ public final class FlightComputerFace {
         } else {
             text(g, font, word, tx + 3, ty + lift, c.engrave(), false);
         }
-    }
-
-    /* Text at {@code (x, y)}, or centred on {@code x}; for the pages too. */
-    static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
-                     final int colour, final boolean centred) {
-        Draw.text(g, font, text, centred ? x - font.width(text) / 2 : x, y, colour);
-    }
-
-    static void hline(final GuiGraphics g, final int x0, final int x1, final int y, final int colour) {
-        g.fill(x0, y, x1, y + 1, colour);
-    }
-
-    static void vline(final GuiGraphics g, final int x, final int y0, final int y1, final int colour) {
-        g.fill(x, y0, x + 1, y1, colour);
-    }
-
-    static void frame(final GuiGraphics g, final int x0, final int y0, final int x1, final int y1,
-                      final int colour) {
-        hline(g, x0, x1, y0, colour);
-        hline(g, x0, x1, y1 - 1, colour);
-        vline(g, x0, y0, y1, colour);
-        vline(g, x1 - 1, y0, y1, colour);
     }
 
     /**

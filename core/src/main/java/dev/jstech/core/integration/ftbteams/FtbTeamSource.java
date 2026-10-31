@@ -50,4 +50,17 @@ final class FtbTeamSource implements ITeamSource {
             return List.of();
         }
     }
+
+    @Override
+    public Optional<String> teamName(final MinecraftServer server, final String team) {
+        if (!team.startsWith(PREFIX) || !FTBTeamsAPI.api().isManagerLoaded()) {
+            return ScoreboardTeams.INSTANCE.teamName(server, team);
+        }
+        try {
+            return FTBTeamsAPI.api().getManager().getTeamByID(UUID.fromString(team.substring(PREFIX.length())))
+                    .map(found -> found.getName().getString());
+        } catch (final IllegalArgumentException notAnId) {
+            return Optional.empty();
+        }
+    }
 }

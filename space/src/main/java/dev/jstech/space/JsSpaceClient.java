@@ -32,12 +32,14 @@ import dev.jstech.space.client.ship.FlightConsoleRenderer;
 import dev.jstech.space.client.ship.ShipAutopilotClient;
 import dev.jstech.space.client.ship.ShipBoostClient;
 import dev.jstech.space.client.ship.ShipChaseCamera;
+import dev.jstech.space.client.ship.ShipConsoleScreen;
 import dev.jstech.space.client.ship.ShipExhaust;
 import dev.jstech.space.client.ship.ShipHud;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
 import dev.jstech.space.client.shipyard.ShipHolograms;
 import dev.jstech.space.client.shipyard.ShipyardRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
+import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.launch.LaunchPanel;
@@ -87,6 +89,9 @@ public final class JsSpaceClient {
         ShipChaseCamera.listen();
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipDesigner.MENU.get(),
                 ShipDesignScreen::new));
+        // A ship's console's screen, its crew page.
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipConsole.MENU.get(),
+                ShipConsoleScreen::new));
         PlanHologram.show(ShipHolograms::shown);
         // The Flight Computer's screen, and the landing maps it is sent.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(FlightComputer.MENU.get(),

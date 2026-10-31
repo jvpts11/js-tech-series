@@ -18,8 +18,13 @@ installed:
 - Without it, the game's own teams (the `/team` command) answer.
 - A player on no team is on a team of their own, so "same team" never lumps the teamless together.
 
+The id is for keeping; to show a team to players, ask its name (*added 2026-10-31*):
+`CoreTeams.teamName(server, team)` gives a scoreboard team's display name or an FTB team's name, and nothing for a
+player's team of their own, whose name is the player's.
+
 A mod that brings its own kind of teams replaces the source once, while the game loads:
-`CoreTeams.use(new MyTeamSource())`, where `ITeamSource` answers `teamOf(server, uuid)`. The log says when a
+`CoreTeams.use(new MyTeamSource())`, where `ITeamSource` answers `teamOf(server, uuid)`, and `teamName` when it
+can name a team. The log says when a
 source is replaced, since only one can answer.
 
 ## Owners and access

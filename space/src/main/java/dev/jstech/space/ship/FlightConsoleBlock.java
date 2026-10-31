@@ -12,10 +12,14 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.room.RoomLiving;
+import dev.jstech.space.crew.CrewRole;
+import dev.jstech.space.crew.ShipConsole;
+import dev.jstech.space.crew.ShipCrews;
 import dev.jstech.space.life.OxygenBottleItem;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -34,6 +38,8 @@ import net.minecraft.world.phys.Vec3;
  * The cockpit's flight console, which keeps the small ship's air reserve ({@link AirReserveEntity}) and tops up the
  * pressurised cabin from it; an oxygen bottle used on it pours into the reserve. Used with an empty hand in a ship
  * built whole in its dock, it starts the ship: the ship leaves the dock's hold, a moving structure from then on.
+ * Aboard the ship, a pilot's hand on it near a dock has the dock take the ship back; else it opens its screen, the
+ * ship's crew page ({@link ShipConsole}).
  */
 public final class FlightConsoleBlock extends ShipFixtureBlock implements EntityBlock {
 
@@ -55,7 +61,13 @@ public final class FlightConsoleBlock extends ShipFixtureBlock implements Entity
             return InteractionResult.SUCCESS;
         }
         if (YardLayout.isYardBlock(pos.getX())) {
-            if (MovingStructures.at(server, pos) instanceof MovingStructure ship) {
+            if (!(MovingStructures.at(server, pos) instanceof MovingStructure ship)
+                    || !(player instanceof ServerPlayer using)) {
+                return InteractionResult.PASS;
+            }
+            final CrewRole role = ShipCrews.roleOf(using, ship);
+            // A pilot near a dock has it take the ship back.
+            if (role.holds(CrewRole.PILOT)) {
                 final Vec3 here = Vec3.atCenterOf(MovingStructures.inWorld(server, pos));
                 for (final ShipyardTerminalBlockEntity dock : ShipyardTerminalBlockEntity.near(server, here,
                         DOCK_REACH)) {
@@ -63,6 +75,11 @@ public final class FlightConsoleBlock extends ShipFixtureBlock implements Entity
                         return InteractionResult.CONSUME;
                     }
                 }
+            }
+            // Its screen shows the ship's crew.
+            if (server.getBlockEntity(pos) instanceof AirReserveEntity console && console.crew().isPresent()) {
+                ShipConsole.open(using, console, role);
+                return InteractionResult.CONSUME;
             }
             return InteractionResult.PASS;
         }

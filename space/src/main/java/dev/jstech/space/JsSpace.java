@@ -18,6 +18,8 @@ import dev.jstech.space.geology.LooseStones;
 import dev.jstech.space.geology.SpaceOres;
 import dev.jstech.space.geology.SpaceRocks;
 import dev.jstech.space.guide.MissionHandbook;
+import dev.jstech.space.crew.ShipConsole;
+import dev.jstech.space.crew.ShipCrews;
 import dev.jstech.space.landing.ShipLandingBlocks;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
@@ -199,6 +201,9 @@ public final class JsSpace {
         ShipDocks.listen();
         // Where a ship sets down: the ship landing pad, and the runway beacon a wheeled ship lines up on.
         ShipLandingBlocks.declare();
+        // Who may do what aboard a ship, and its console's crew page where its owner says so.
+        ShipConsole.declare();
+        ShipCrews.listen();
         // The Small Shipyard, the dry dock a small starship is built in: its shape, its blocks and its formed model.
         ShipyardStructure.declare();
         ShipyardBlocks.declare();
