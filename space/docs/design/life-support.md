@@ -6,10 +6,18 @@ ability to stay somewhere for as long as the player likes; no module buys time.
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core already posts a hazard event before a dimension's air, heat or cold harms a
-player, which a suit cancels, and its dimension rules hold whether each dimension's air can be breathed, its temperature
-and its pressure. The sealed-room kit, the Atmosphere Detector and the two channels of radiation are designed with J's
-Space and J's Industrial and are still to be built in J's Core.
+J's Core posts a hazard event before a dimension's air, heat or cold harms a player, which a suit cancels, and its
+dimension rules hold whether each dimension's air can be breathed, its temperature and its pressure. Its sealed-room
+kit and its Atmosphere Detector exist.
+
+**Coming back after a death on another world.** A player who dies on another world comes back, in this order:
+
+1. at their bed there, if it stands in a sealed room with air;
+2. otherwise in the cabin of the module they landed in, if it is still whole and has air; the first landing marks it,
+   a few blocks from the lander, never the middle of the near side;
+3. otherwise at home, in the Overworld, as after a death in the Nether or the End.
+
+Air matters because, on an airless world, a player reborn outside without a suit would die again at once.
 
 ## To build
 

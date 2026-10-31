@@ -7,7 +7,33 @@ are in [Worlds](worlds.md).
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core already has what the worlds are built on:
+**Round worlds.** Every round world lies on its sphere: X is the longitude and Z the latitude, and the spawn is the
+middle of the near side (0°, 0°). From that one map come each place's sky (the Overworld high in the Moon's sky near
+the spawn, lower as one goes, on the horizon at 90°, hidden on the far side; the Sun's hour by the longitude), the spot
+a landing comes down on, since choosing a point on the sphere is choosing its coordinates, and what the generator puts
+there (the maria where the map has maria, Tycho at its place), so what is seen from orbit is what is found on the
+ground.
+
+**Their size.** A world's size is the Overworld's size times its diameter against the Earth's: the Moon 27% (3,474 of
+12,742 km), Mars 53%. With the default Overworld, about 60 million blocks a side, the Moon is about 16.4 million blocks
+in X (360°) by 8.2 million in Z (180°), some 45,000 blocks a degree, and Mars 31.9 by 16 million; a block is about
+0.67 m on every world. The Overworld reaches the Moon's horizon 4 million blocks from the spawn, so it really hangs
+still, and the far side and the poles are reached by landing, not on foot. On a server with a small Overworld border
+the worlds shrink with it. A world's size is fixed when the world is first created, so a later change of the
+Overworld's border never shifts what is already generated. A world larger than the Earth takes the Overworld's own
+size. The border of a round world stands at ±180°, the middle of its far side, and at its poles.
+
+**The Overworld is never the Earth.** Seen from space, from orbit, from the Moon's sky with its phases or from the top
+of the climb, it is a sphere with continents at random from the world's seed, polar caps always, Minecraft's biome
+colours, and clouds that go round it, the game's cloud map wrapped round with each band drifting at its own pace.
+
+**Bodies as the game draws them.** Every world and moon is a round body drawn at the screen's own resolution: a smooth
+outline, only the surface keeps its texture's texels, the texture's resolution chosen by distance so the texels stay a
+few pixels wide; light is continuous like the game's smooth lighting (a soft line of dawn, a warm dusk where there is
+air, graded relief shadows, deep on airless worlds). The Moon and Mars carry height maps lit by the Sun. The Sun stays
+the game's square.
+
+J's Core has what the worlds are built on:
 
 - **dimension rules**, a datapack file per dimension with its gravity, whether its air can be breathed, its temperature,
   its weather and its pressure, worked out the same way by the server and by every player's game;
@@ -385,9 +411,8 @@ builds a new world out of the ones that exist.
 
 ### The size of a world
 
-**A round world is an ordinary Minecraft world**, practically endless, as the Overworld. It doesn't wrap around: walking
-east doesn't bring the player back from the west. A world's size is felt through its data, its gravity, its sky and its
-day, not through an edge; on the real Moon the curve of the ground can't be seen either.
+The far side of a round world is not yet sewn to its near side: the border at ±180° is an edge, and sewing it without
+a seam is for later.
 
 ### The sky
 
@@ -398,8 +423,8 @@ sky:
 - **stars** are vanilla's small square points, in the places the data gives;
 - **the sun** is square like vanilla's, with the size and colour of that star: a point at Sedna, red and filling about
   30° of the sky at Verath;
-- **planets and moons** in the sky are drawn by hand in the style of vanilla's moon, in pixels, with their phases. From
-  Io, Jupiter fills about 19° of the sky, nearly forty times the full Moon seen from the Earth; from the Moon, the Earth
+- **planets and moons** in the sky are round bodies drawn as above, at the screen's own resolution with the texels of
+  their maps, with their phases. From Io, Jupiter fills about 19° of the sky, nearly forty times the full Moon seen from the Earth; from the Moon, the Earth
   hangs still and shows phases; from Titan, Saturn and its rings; from Mars, Phobos rising in the west twice a day;
 - the colour of the sky and of the haze is vanilla's in the tone of the place: black and starry at noon with no air,
   as in the Apollo photographs; butterscotch on Mars with blue sunsets; orange on Titan; yellow high in the clouds of

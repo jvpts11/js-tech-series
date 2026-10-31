@@ -72,11 +72,13 @@ fills, the rocket launches on schedule ([Cargo](cargo.md)), the stage comes back
 A rocket is built in the **Rocket Hangar** and carried to the pad, which is only for launching. There are two ways, two
 visual styles:
 
-- **The American way.** The rocket is stacked **standing**, in a tall hangar of variable size with a **bridge crane**
-  under the roof (the cranes of the Kennedy Space Center's Vehicle Assembly Building lift 325 tonnes) and huge doors. A
-  **crawler-transporter**, a multiblock, carries it standing and slowly along the **crawlerway**, a path of blocks of
-  its own, to the pad, leaves it on the hold-down clamps and goes back. NASA's crawlers date from 1965 and carry a
-  rocket at under 2 km/h along a road of river gravel 5.5 km long.
+- **The American way, as Apollo did.** The rocket is stacked **standing**, in a tall hangar of variable size with a
+  **bridge crane** under the roof (the cranes of the Kennedy Space Center's Vehicle Assembly Building lift 325 tonnes)
+  and huge doors, on a **mobile launcher** that carries its own **umbilical tower**, its swing arms meeting the rocket's
+  Umbilical Plates. A **crawler-transporter**, a multiblock, carries launcher, tower and rocket together, standing and
+  slowly, along the **crawlerway** to the pad, sets them over its flame trench and goes back; the propellant is fed at
+  the pad from its tank farm. NASA's crawlers date from 1965 and carry a rocket at under 2 km/h along a road of river
+  gravel 5.5 km long.
 - **The Russian way.** The rocket is assembled **lying down**, in a long, low hangar, and goes to the pad **by train**,
   on a car that **raises it upright** at the end, as Soyuz rockets are taken out at Baikonur.
 
@@ -85,7 +87,7 @@ visual styles:
 | Piece | American | Russian |
 | --- | --- | --- |
 | Platform | a base with **hold-down clamps**, which keep the rocket down until its engines reach full power | the four arms of the **"tulip"**, which hold the rocket hanging and open like petals as it rises |
-| Tower | a **fixed service tower** with arms that swing back (hoses, cables, the crew access arm) | a **mobile service tower**, which rolls away on rails before launch |
+| Tower | the mobile launcher's red **umbilical tower**, which comes to the pad with the rocket, its arms swinging back before launch (hoses, cables, the crew access arm) | a **mobile service tower**, which rolls away on rails before launch |
 | Flame trench | a **trench with a deflector** under the pad | the **flame pit** of Gagarin's Start, an old quarry about 45 m deep |
 | Deluge | **water** poured onto the pad at ignition, to dampen the sound and protect the concrete (about 1.7 million litres at an SLS launch) | the same |
 | Tank farm | the **spheres** of hydrogen and oxygen ([Propellants](propellants.md)) | the same |

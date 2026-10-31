@@ -5,9 +5,10 @@ purpose of not only making every system that will exist sane and easy to build b
 about the things yet to be made.
 
 Each page covers one subject. Inside a page, what the mod already does comes first, and what is designed but not built
-yet is in a section called **To build**. **Nothing of J's Space is built yet**, so every page is, for now, a design
-waiting to be made, and the order below says what comes first. Every number in these pages is a first estimate, to be
-tuned in play.
+yet is in a section called **To build**. **The skeleton of J's Space is built**: the Moon and Mars, the climb to space,
+the first rockets and their launch complex, the lunar suit and the small starship. Everything else is, for now, a
+design waiting to be made, and the order below says what comes first. Every number in these pages is a first estimate,
+to be tuned in play.
 
 ## The pages
 

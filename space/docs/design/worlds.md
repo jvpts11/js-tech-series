@@ -13,8 +13,8 @@ Nothing of J's Space exists yet.
 ### What every world has
 
 - **Biomes of its own**: no world borrows a biome from another.
-- **Landmarks**: unique landforms with their names, real ones on real worlds, each placed once, **near the world's
-  origin**, at a distance that can be crossed. A landmark shows on the Atlas once the relief of its region is known
+- **Landmarks**: unique landforms with their names, real ones on real worlds, each placed once, **at its real place on
+  the world's sphere**, as large as the sphere draws it; Tycho stands on the Moon. A landmark shows on the Atlas once the relief of its region is known
   ([Exploration](exploration.md)), and visiting one is an advancement. Heights are squeezed into the world's height, and
   the proportions between them stay: Olympus Mons is the tallest of all.
 - **Its weather, its sky and its minerals**, and, where there are, life and structures.
