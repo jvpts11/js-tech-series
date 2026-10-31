@@ -55,6 +55,7 @@ public final class FlightConsoleRenderer implements BlockEntityRenderer<AirReser
             return;
         }
         ShipExhaust.seen(console);
+        ShipConsoles.drawn(console);
         // Its gear up in flight is drawn stowed: not at all, as the approved flight draws it.
         final ShipDesign design = ship.get().design();
         final boolean gearDown = console.flight().gearDown();

@@ -32,6 +32,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.levelgen.Heightmap;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A small ship that has left its dock, flown as a moving structure of J's Core a tick at a time by
@@ -42,8 +43,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
  * it faster across the empty stretches. With nobody at the helm its throttle closes and it comes down gently. It rests
  * on the land under it, rolling on wheels or standing on feet, and is stopped by the land it would fly into
  * ({@link ShipGround}); the land ahead of it is loaded as it goes, as a rocket's is, so it climbs to space and crosses
- * into it without stopping. Its console shows its flight ({@link ShipReadings}). Its rule goes on through a save and
- * into another dimension, as the structure does.
+ * into it without stopping. Its console shows its flight ({@link ShipReadings}) and keeps its fusion reactor's
+ * deuterium, burnt as it flies: with none left, the reactor makes nothing, and its boost fills no more. Its rule goes
+ * on through a save and into another dimension, as the structure does.
  *
  * @param state    where its flight stands
  * @param noseX    which way its nose points among its blocks, across, as its plan laid it
@@ -96,6 +98,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     private static final double LOADS_FROM = 1.0;
     /* How often along its way the land is held, in blocks: half a chunk, so no chunk the way crosses is missed. */
     private static final double HELD_EVERY = 8;
+    /* How long a full load of deuterium keeps its reactor going in flight, in seconds: four hours. */
+    private static final double REACTOR_LOAD_SECONDS = 4 * 3600;
 
     /** Registers the rule's kind, once, from the mod's constructor. */
     public static void declare() {
@@ -177,9 +181,18 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final StructureFrame frame = context.frame();
         final double[] nose = nose(frame);
         final double pitch = Math.toDegrees(Math.asin(Math.clamp(nose[1], -1.0, 1.0)));
-        final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, held, air(level, now, body), this.ship,
+        // Its reactor burns its deuterium as it flies; with none left it makes nothing, its boost filling no more.
+        final AirReserveEntity keeper = keeper(level, body);
+        final boolean fuelled = keeper == null || (this.grounded ? keeper.deuterium() > 0
+                : keeper.burn(ShipFlightModel.TICK / REACTOR_LOAD_SECONDS));
+        final ShipFlightModel.Performance running = fuelled ? this.ship : new ShipFlightModel.Performance(
+                this.ship.mass(), this.ship.airThrust(), this.ship.bellThrust(), this.ship.wing(),
+                Math.min(0, this.ship.power()), this.ship.gear());
+        final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, held, air(level, now, body), running,
                 pitch);
-        show(level, body, next);
+        if (keeper != null) {
+            keeper.flew(ShipReadings.of(next, ShipAltitude.of(level, now.x(), body.worldBox().minY, now.z())));
+        }
         StructurePose turned = next.turn() == 0 ? now : now.turnedBy(0, 1, 0, Math.toRadians(next.turn()));
         if (next.pitch() != 0) {
             final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
@@ -257,13 +270,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         return new ShipFlight(next, this.noseX, this.noseZ, this.ship, landed, this.console);
     }
 
-    /* Its console shows the tick's flight, where its yard's land is loaded. */
-    private void show(final ServerLevel level, final MovingStructure body, final ShipFlightModel.Tick tick) {
+    /* Its console, which shows its flight and keeps its reactor's deuterium, where its yard's land is loaded. */
+    private @Nullable AirReserveEntity keeper(final ServerLevel level, final MovingStructure body) {
         final Optional<BlockPos> at = consoleIn(body);
-        if (at.isPresent() && level.isLoaded(at.get())
-                && level.getBlockEntity(at.get()) instanceof AirReserveEntity keeper) {
-            keeper.flew(ShipReadings.of(tick));
-        }
+        return at.isPresent() && level.isLoaded(at.get())
+                && level.getBlockEntity(at.get()) instanceof AirReserveEntity keeper ? keeper : null;
     }
 
     /*

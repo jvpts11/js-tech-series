@@ -29,7 +29,9 @@ import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.ship.FlightConsoleRenderer;
 import dev.jstech.space.client.ship.ShipBoostClient;
+import dev.jstech.space.client.ship.ShipChaseCamera;
 import dev.jstech.space.client.ship.ShipExhaust;
+import dev.jstech.space.client.ship.ShipHud;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
 import dev.jstech.space.client.shipyard.ShipHolograms;
 import dev.jstech.space.client.shipyard.ShipyardRenderer;
@@ -76,6 +78,9 @@ public final class JsSpaceClient {
         FlightConsoleRenderer.listen(modEventBus);
         ShipBoostClient.listen();
         ShipExhaust.listen();
+        // The HUD on its canopy, for the pilot at its helm, and the camera behind it in the third person.
+        ShipHud.listen(modEventBus);
+        ShipChaseCamera.listen();
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipDesigner.MENU.get(),
                 ShipDesignScreen::new));
         PlanHologram.show(ShipHolograms::shown);

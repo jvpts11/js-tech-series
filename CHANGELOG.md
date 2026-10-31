@@ -2606,6 +2606,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   flies on through the open sky, the land ahead of it loading as it goes, and over the line it crosses into the Solar
   System's space whole, with no loading screen, its pilot still at its helm and its flight going on as it went. Fast,
   its nose stays where its pilot points it in any air, so it climbs out of thin air on its bells; slow, it hovers.
+- (Space) A ship's HUD, projected on its canopy for the pilot at its helm, green, flat and in pixels: the heading tape
+  across the top, the pitch ladder with the flight path marker in the middle, the speed and the boost's bar on the
+  left, amber while it boosts, the altitude and the climb on the right, the reactor's power and its deuterium above,
+  the nozzles' angle and the gear below, amber with the gear down, and the autopilot's three modes along the bottom.
+  The flight path marker stands for the crosshair. Seen from behind, the camera stands back round the ship, the whole
+  ship in view, and the HUD spreads over the screen.
+- (Space) A ship's fusion reactor burns its deuterium as the ship flies, a full load lasting four hours aloft; with
+  none left it makes nothing, and the boost fills no more. A dock fills it again as it takes the ship back.
 - (Space) A small ship's cabin is a sealed room wherever it flies, in space too: its flight console asks for it, and
   the furniture standing in it, its seats, consoles, bunks, suit lockers and racks, lets its air round them, so its
   crew breathes it, kept warm, with the vacuum outside.

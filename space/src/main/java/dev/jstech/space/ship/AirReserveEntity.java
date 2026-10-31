@@ -36,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
  * its ship goes. An oxygen bottle pours into it. Once the ship has left
  * its dock, the console keeps the ship too ({@link ShipAboard}), and draws its parts aboard; and watches its plan
  * there, so a block broken aboard leaves a hole its part holds round, and the right block put back mends it. It shows
- * the ship's flight as it flies ({@link ShipReadings}).
+ * the ship's flight as it flies ({@link ShipReadings}), and keeps its fusion reactor's deuterium, which the reactor
+ * burns as the ship flies and a dock fills again.
  */
 public final class AirReserveEntity extends SyncedBlockEntity {
 
@@ -45,8 +46,11 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     private final ValueField<ShipAboard> ship;
     private final ValueField<List<Integer>> holes;
     private final ValueField<ShipReadings> flight;
+    private final ValueField<Double> deuterium;
     /* The ship's plan, watched aboard once the ship is a structure; on the server. */
     private @Nullable PlannedBuild aboard;
+    /* What its reactor has burnt since its load was last told, on the server: told a thousandth at a time. */
+    private double burnt;
     /** The oxygen a full reserve holds, in moles: two hours of one crew member's breathing. */
     public static final double OXYGEN = 2 * 3600 * RoomLiving.PLAYER_BREATH;
     /** The nitrogen a full reserve holds, in moles, to make good what leaks. */
@@ -55,6 +59,8 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     private static final double OXYGEN_KPA = 21.2;
     private static final double NITROGEN_KPA = 79.1;
     private static final int TICKS_A_SECOND = 20;
+    /* How finely its reactor's load is told its players, as a share of a full one. */
+    private static final double LOAD_TOLD = 0.001;
 
     public AirReserveEntity(final BlockPos pos, final BlockState state) {
         super(ShipKitBlocks.AIR_RESERVE_ENTITY.get(), pos, state);
@@ -63,6 +69,28 @@ public final class AirReserveEntity extends SyncedBlockEntity {
         this.ship = fields().nullable("Ship", ShipAboard.CODEC).save().toClient();
         this.holes = fields().value("Holes", Codec.INT.listOf(), List.<Integer>of()).toClient();
         this.flight = fields().value("Flight", ShipReadings.CODEC, ShipReadings.PARKED).toClient();
+        this.deuterium = fields().value("Deuterium", Codec.DOUBLE, 1.0).save().toClient();
+    }
+
+    /** How much of a full load of deuterium its ship's fusion reactor has left, from nought to one. */
+    public double deuterium() {
+        final Double left = this.deuterium.get();
+        return left == null ? 0 : left;
+    }
+
+    /** Its ship's reactor burns {@code share} of a full load of deuterium; whether it had any to burn. */
+    public boolean burn(final double share) {
+        final double left = deuterium();
+        if (left <= 0) {
+            return false;
+        }
+        this.burnt += share;
+        if (this.burnt >= LOAD_TOLD || this.burnt >= left) {
+            this.deuterium.set(Math.max(0, left - this.burnt));
+            this.burnt = 0;
+            setChanged();
+        }
+        return true;
     }
 
     /** What its ship's flight shows, as its players are told. */
@@ -89,11 +117,13 @@ public final class AirReserveEntity extends SyncedBlockEntity {
         setChanged();
     }
 
-    /** Lets its ship's plan go, as a dock takes the ship back onto the grid. */
+    /** Lets its ship's plan go, as a dock takes the ship back onto the grid, and the dock fills its reactor again. */
     public void land() {
         stopWatching();
         this.ship.set(null);
         this.holes.set(List.of());
+        this.deuterium.set(1.0);
+        this.burnt = 0;
         setChanged();
     }
 

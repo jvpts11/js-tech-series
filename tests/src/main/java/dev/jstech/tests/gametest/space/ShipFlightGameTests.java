@@ -55,12 +55,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -128,6 +130,8 @@ public final class ShipFlightGameTests {
      * how long it is watched across the line, in ticks; how far open its throttle stays, its pilot's hold carried.
      */
     private static final int UNDER_THE_LINE = 80;
+    /* How long a ship hovers burning its reactor's deuterium, in ticks: past a thousandth of a load, the least told. */
+    private static final int BURNING = 320;
     private static final double CLIMBING_PITCH = 60;
     private static final int CROSSED = 10;
     private static final double HELD_OPEN = 0.95;
@@ -344,6 +348,37 @@ public final class ShipFlightGameTests {
                     GameTestPlayers.leave(pilot[0]);
                     MovingStructures.takeAway(MovingStructures.byId(space, ship[0].id()));
                 }).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void flight_itsReactorBurnsItsDeuteriumAndWithNoneLeftItsBoostFillsNoMore(
+            final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final GameTestSequence sequence = letGo(helper, ship).thenExecute(() -> {
+            // Taken up and hovering where it is, its boost spent, its pilot at the helm holding nothing.
+            aloft(ship[0], HIGH);
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(0, 0, 0,
+                    0, 0, 0)));
+        });
+        cruise(helper, sequence, ship, BURNING).thenExecute(() -> {
+            final AirReserveEntity console = console(helper, ship[0]);
+            helper.assertTrue(console.deuterium() < 1, "flying, its reactor burns its deuterium: "
+                    + console.deuterium());
+            helper.assertTrue(((ShipFlight) ship[0].motion()).state().charge() > 0, "and its power fills its boost");
+            final StructurePose at = ship[0].pose();
+            final double over = ship[0].worldBox().minY - helper.getLevel().getHeight(
+                    Heightmap.Types.MOTION_BLOCKING, Mth.floor(at.x()), Mth.floor(at.z()));
+            helper.assertTrue(Math.abs(console.flight().altitude() - over) <= 1, "its console reads how high over"
+                    + " what stands under it it flies: " + console.flight().altitude() + " for " + over);
+            console.burn(1);
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(0, 0, 0,
+                    0, 0, 0)));
+        });
+        cruise(helper, sequence, ship, HELD).thenExecute(() -> {
+            helper.assertTrue(((ShipFlight) ship[0].motion()).state().charge() == 0, "with none left its reactor"
+                    + " makes nothing, its boost filling no more");
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)

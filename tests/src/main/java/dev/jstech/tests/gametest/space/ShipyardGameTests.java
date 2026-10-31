@@ -350,8 +350,15 @@ public final class ShipyardGameTests {
                 .thenExecute(() -> {
                     final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
                             .getBlockEntity(terminal);
+                    // Its reactor's deuterium burnt away in flight.
+                    console(level, ship[0]).burn(1);
                     helper.assertTrue(dock.seat(ship[0]), "the dock takes its ship back onto the grid");
                     final PlannedBuild plan = dock.build().orElseThrow();
+                    final AirReserveEntity docked = plan.plan().spots().stream().filter(spot -> spot.block()
+                            .equals(ShipKitBlocks.FLIGHT_CONSOLE.getId())).map(spot -> level.getBlockEntity(
+                            plan.where(spot))).filter(AirReserveEntity.class::isInstance)
+                            .map(AirReserveEntity.class::cast).findFirst().orElseThrow();
+                    helper.assertTrue(docked.deuterium() == 1, "the dock fills its reactor's deuterium again");
                     helper.assertTrue(dock.plan().orElseThrow().equals(WORKSHOP_SHIP) && plan.complete()
                             && dock.built(), "set down where its plan goes, the ship stands whole, its plan the"
                             + " dock's again");
