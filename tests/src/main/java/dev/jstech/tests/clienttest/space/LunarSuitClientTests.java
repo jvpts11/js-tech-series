@@ -19,6 +19,7 @@ import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
+import net.minecraft.client.CameraType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
@@ -38,7 +39,8 @@ import org.joml.Vector3f;
 /**
  * The lunar suit on a player's game: worn on a stand, each of its four pieces is drawn, the helmet, the suit with its
  * chest module, the trousers and the boots, where the stand alone shows none of them; the gold visor, fitted, is drawn
- * gold over the smoked one. On the Moon at noon, looking at the Sun whites the view out, and the gold visor lowered
+ * gold over the smoked one. Worn by the player, it covers their hands and chin; in first person their arm is drawn in
+ * its sleeve. On the Moon at noon, looking at the Sun whites the view out, and the gold visor lowered
  * cuts it to a gold tint.
  */
 public final class LunarSuitClientTests {
@@ -74,6 +76,27 @@ public final class LunarSuitClientTests {
     private static final int SETTLE = 10;
     private static final int CHANNEL = 0xFF;
     private static final double LOOK_AHEAD = 16;
+    /*
+     * The first person's arm: the share of the screen it is read from, across and down, a pixel in so many, the
+     * hotbar's rows left out; how much warmer than green and blue the skin is, how light the suit's cloth; how many
+     * skin pixels the bare arm shows at least, how many may show in the sleeve, how many cloth pixels the sleeve shows
+     * at least.
+     */
+    private static final double ARM_FROM_X = 0.55;
+    private static final double ARM_FROM_Y = 0.45;
+    private static final int ARM_STEP = 2;
+    private static final int HOTBAR = 24;
+    private static final int WARM = 20;
+    private static final int CLOTH = 180;
+    private static final int SKIN_SEEN = 200;
+    private static final int SKIN_LEFT = 10;
+    private static final int CLOTH_SEEN = 200;
+    /* The player seen from in front, in the middle of the screen: the shares it is read between. */
+    private static final double FRONT_LEFT = 0.3;
+    private static final double FRONT_TOP = 0.1;
+    private static final double FRONT_BOTTOM = 0.9;
+    private static final List<EquipmentSlot> PIECES = List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST,
+            EquipmentSlot.LEGS, EquipmentSlot.FEET);
 
     private LunarSuitClientTests() {
     }
@@ -128,6 +151,74 @@ public final class LunarSuitClientTests {
                                     + str(suited[0]));
                 })
                 .thenScreenshot(2, "lunar-helmet-gold-visor-down");
+    }
+
+    @ClientTest(timeoutTicks = 600)
+    public static void arm_inFirstPersonIsDrawnInTheSuitsSleeve(final ClientTestContext ctx) {
+        final int[][] bare = new int[1][];
+        ctx.afterTest(() -> ctx.server().execute(() ->
+                ctx.serverPlayer().setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY)));
+        ctx.thenTeleport(0, EYE, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    ctx.hold(ItemStack.EMPTY);
+                    ctx.serverPlayer().setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+                })
+                .thenAwaitLandDrawn(ARRIVE)
+                .then(0, () -> ctx.lookAt(ctx.player().getEyePosition().add(0, 0, 1)))
+                .then(SETTLE, () -> bare[0] = armColours(ctx))
+                .thenScreenshot(0, "arm-bare")
+                .then(0, () -> ctx.assertTrue(bare[0][0] > SKIN_SEEN, "the bare arm shows its skin: "
+                        + bare[0][0] + " pixels"))
+                .thenServer(0, level -> ctx.serverPlayer().setItemSlot(EquipmentSlot.CHEST,
+                        new ItemStack(LunarSuit.SUIT.get())))
+                .thenWaitUntil(() -> ctx.player().getItemBySlot(EquipmentSlot.CHEST).is(LunarSuit.SUIT.get()),
+                        ARRIVE, "the suit on the player's game")
+                .then(SETTLE, () -> {
+                    final int[] suited = armColours(ctx);
+                    ctx.assertTrue(suited[0] <= SKIN_LEFT, "in the suit no skin of the arm shows: " + suited[0]
+                            + " pixels, against " + bare[0][0] + " bare");
+                    ctx.assertTrue(suited[1] > CLOTH_SEEN, "the suit's white sleeve is drawn: " + suited[1]
+                            + " pixels");
+                })
+                .thenScreenshot(0, "arm-in-the-sleeve");
+    }
+
+    @ClientTest(timeoutTicks = 600)
+    public static void suit_onThePlayerCoversTheirHandsAndChin(final ClientTestContext ctx) {
+        final int[] bare = new int[1];
+        ctx.afterTest(() -> {
+            ctx.mc().options.setCameraType(CameraType.FIRST_PERSON);
+            ctx.server().execute(() -> {
+                for (final EquipmentSlot slot : PIECES) {
+                    ctx.serverPlayer().setItemSlot(slot, ItemStack.EMPTY);
+                }
+            });
+        });
+        ctx.thenTeleport(0, EYE, Direction.SOUTH)
+                .thenServer(0, level -> ctx.hold(ItemStack.EMPTY))
+                .thenAwaitLandDrawn(ARRIVE)
+                .then(0, () -> {
+                    ctx.lookAt(ctx.player().getEyePosition().add(0, 0, 1));
+                    ctx.mc().options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+                })
+                .then(SETTLE, () -> bare[0] = skinSeen(ctx))
+                .thenScreenshot(0, "player-bare")
+                .then(0, () -> ctx.assertTrue(bare[0] > SKIN_SEEN, "the bare player shows their skin: " + bare[0]
+                        + " pixels"))
+                .thenServer(0, level -> {
+                    ctx.serverPlayer().setItemSlot(EquipmentSlot.HEAD, new ItemStack(LunarSuit.HELMET.get()));
+                    ctx.serverPlayer().setItemSlot(EquipmentSlot.CHEST, new ItemStack(LunarSuit.SUIT.get()));
+                    ctx.serverPlayer().setItemSlot(EquipmentSlot.LEGS, new ItemStack(LunarSuit.TROUSERS.get()));
+                    ctx.serverPlayer().setItemSlot(EquipmentSlot.FEET, new ItemStack(LunarSuit.BOOTS.get()));
+                })
+                .thenWaitUntil(() -> ctx.player().getItemBySlot(EquipmentSlot.FEET).is(LunarSuit.BOOTS.get()),
+                        ARRIVE, "the suit on the player's game")
+                .then(SETTLE, () -> {
+                    final int suited = skinSeen(ctx);
+                    ctx.assertTrue(suited <= SKIN_LEFT, "the suit covers the player's hands and chin: " + suited
+                            + " pixels of skin show, against " + bare[0] + " bare");
+                })
+                .thenScreenshot(0, "player-in-the-suit");
     }
 
     @ClientTest(timeoutTicks = 2400)
@@ -238,6 +329,66 @@ public final class LunarSuitClientTests {
             }
         }
         return new int[] {(int) (sum[0] / count), (int) (sum[1] / count), (int) (sum[2] / count)};
+    }
+
+    /*
+     * Where the empty right hand is drawn in first person, the bottom right of the screen read a pixel in so many: how
+     * many pixels are of the skin's warm brown, and how many of the suit's white cloth.
+     */
+    private static int[] armColours(final ClientTestContext ctx) {
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        int skin = 0;
+        int cloth = 0;
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = (int) (height * ARM_FROM_Y); y < height - HOTBAR; y += ARM_STEP) {
+                for (int x = (int) (width * ARM_FROM_X); x < width; x += ARM_STEP) {
+                    final int argb = frame.pixel(x, y);
+                    if (skin(argb)) {
+                        skin++;
+                    } else if (cloth(argb)) {
+                        cloth++;
+                    }
+                }
+            }
+        }
+        return new int[] {skin, cloth};
+    }
+
+    /* How many pixels of skin the player shows, seen from in front in the middle of the screen. */
+    private static int skinSeen(final ClientTestContext ctx) {
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        int skin = 0;
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = (int) (height * FRONT_TOP); y < height * FRONT_BOTTOM; y++) {
+                for (int x = (int) (width * FRONT_LEFT); x < width * (1 - FRONT_LEFT); x++) {
+                    if (skin(frame.pixel(x, y))) {
+                        skin++;
+                    }
+                }
+            }
+        }
+        return skin;
+    }
+
+    /*
+     * A pixel of the test player's skin: warm brown, red over green by a little and green over blue, never the suit's
+     * bright red bands.
+     */
+    private static boolean skin(final int argb) {
+        final int r = argb >> 16 & CHANNEL;
+        final int g = argb >> 8 & CHANNEL;
+        final int b = argb & CHANNEL;
+        return r - g >= WARM && r - g <= WARM * 4 && g - b >= WARM / 2 && r < CLOTH;
+    }
+
+    /* A pixel of the suit's white cloth. */
+    private static boolean cloth(final int argb) {
+        final int r = argb >> 16 & CHANNEL;
+        final int g = argb >> 8 & CHANNEL;
+        final int b = argb & CHANNEL;
+        return r > CLOTH && g > CLOTH && b > CLOTH - WARM && Math.abs(r - b) < WARM;
     }
 
     private static int distance(final int[] a, final int[] b) {

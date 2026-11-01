@@ -212,7 +212,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   unlit, and a torch or a lantern falls as an item with a puff of smoke. A new consequence in `jsspace-server.toml`,
   Flames need air, lets them burn anywhere.
 - The lunar suit, after Apollo's A7L: the Lunar Helmet, hard and white with its smoked visor in its frame, its
-  hinges and its red stripe; the Lunar Suit with its neck ring, bearings, convolutes, gloves, the chest module with its
+  hinges, its red stripe and its lock ring closing it under the chin; the Lunar Suit with its bearings, convolutes,
+  sleeves and gloves over the wearer's arms and hands, the chest module with its
   connectors and hoses, and the life-support pack on its back with its hatch, vent, lamps, purge unit, antenna and
   bottles; the Lunar Trousers and the Lunar Boots. Worn whole it is a pressure suit with half an hour of air in its
   tanks that stands the cold of the lunar night and the heat of its noon, and armour as leather is. The Gold Visor, a

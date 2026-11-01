@@ -2167,7 +2167,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   short (`Flames`, `IFlame`). A dimension's rules may say how blocks seal a room there, over the map of seals
   (`seals`, `DimensionSeal`).
 - (Space) The lunar suit, after Apollo's A7L: the Lunar Helmet, hard and white with its smoked visor in its frame, its
-  hinges and its red stripe; the Lunar Suit with its neck ring, bearings, convolutes, gloves, the chest module with its
+  hinges, its red stripe and its lock ring closing it under the chin; the Lunar Suit with its bearings, convolutes,
+  sleeves and gloves over the wearer's arms and hands, the chest module with its
   connectors and hoses, and the life-support pack on its back with its hatch, vent, lamps, purge unit, antenna and
   bottles; the Lunar Trousers and the Lunar Boots. Worn whole it is a pressure suit with half an hour of air in its
   tanks that stands the cold of the lunar night and the heat of its noon, and armour as leather is. The Gold Visor, a
@@ -2177,7 +2178,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Armour drawn with the Core's models draws each piece worn, every one of them, where only the first was drawn
   before; a model may give the leggings a waist of their own, `armorWaist`, so leggings worn alone show no chest; and a
   bone may be shown only while the piece's stack says so (`KitArmorModel.shownWhile`), a visor lowered or a module
-  fitted.
+  fitted. A piece a player wears covers the outer layer of their skin where it is worn, the hat under a helmet, the
+  jacket and sleeves under a chest piece, the trouser legs under leggings, so a piece fitted close lets none of it
+  through; and in first person the player's arm is drawn in the sleeve of the piece on their chest.
 - (Space) A suit's air is breathed for real: worn whole where the air round cannot be breathed, the suit gives its
   wearer the pure oxygen of its tanks at the quarter of a bar the A7L held, and takes nothing from the room; where the air
   can be breathed, the wearer breathes it and the tanks are spared, so the helmet comes off in a room with air. A hole

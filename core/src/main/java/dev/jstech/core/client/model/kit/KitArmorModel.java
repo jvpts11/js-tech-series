@@ -20,16 +20,25 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.client.event.RenderArmEvent;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,7 +50,8 @@ import org.jetbrains.annotations.Nullable;
  * from, unless the model has a bone of its own for the waist, {@code armorWaist}, which follows the body: then the
  * body's bone is the chestplate's alone, so leggings worn alone show no chest. A bone may be shown only while the
  * piece's stack says so, a visor lowered or a module fitted. The piece is painted with its model's textures, and
- * glints when it is enchanted.
+ * glints when it is enchanted. A piece worn by a player covers the skin's outer layer of its parts; in first person,
+ * the player's arm is drawn in the sleeve of the piece on their chest.
  *
  * <pre>{@code
  * event.registerItem(KitArmorModel.of(ResourceLocation.fromNamespaceAndPath(MODID, "exosuit"))
@@ -60,12 +70,14 @@ public final class KitArmorModel {
     /** The bone of a model's own for the waist leggings hang from, which follows the body. */
     public static final String WAIST = "armorWaist";
     private static final String BODY = "armorBody";
+    private static final String RIGHT_ARM = "armorRightArm";
+    private static final String LEFT_ARM = "armorLeftArm";
     private static final List<Follow> FOLLOWS = List.of(
             new Follow("armorHead", Set.of(EquipmentSlot.HEAD), model -> model.head),
             new Follow(BODY, Set.of(EquipmentSlot.CHEST, EquipmentSlot.LEGS), model -> model.body),
             new Follow(WAIST, Set.of(EquipmentSlot.LEGS), model -> model.body),
-            new Follow("armorRightArm", Set.of(EquipmentSlot.CHEST), model -> model.rightArm),
-            new Follow("armorLeftArm", Set.of(EquipmentSlot.CHEST), model -> model.leftArm),
+            new Follow(RIGHT_ARM, Set.of(EquipmentSlot.CHEST), model -> model.rightArm),
+            new Follow(LEFT_ARM, Set.of(EquipmentSlot.CHEST), model -> model.leftArm),
             new Follow("armorRightLeg", Set.of(EquipmentSlot.LEGS), model -> model.rightLeg),
             new Follow("armorLeftLeg", Set.of(EquipmentSlot.LEGS), model -> model.leftLeg),
             new Follow("armorRightBoot", Set.of(EquipmentSlot.FEET), model -> model.rightLeg),
@@ -99,21 +111,94 @@ public final class KitArmorModel {
 
     /** What the game asks an item for to be drawn as this armour. */
     public IClientItemExtensions extensions() {
-        final KitArmorModel armour = this;
-        return new IClientItemExtensions() {
-            @Override
-            public HumanoidModel<?> getHumanoidArmorModel(final LivingEntity entity, final ItemStack stack,
-                                                          final EquipmentSlot equipmentSlot,
-                                                          final HumanoidModel<?> original) {
-                if (armour.worn == null) {
-                    armour.worn = new Worn(armour.model, armour.shown);
-                }
-                armour.worn.wearer = entity;
-                armour.worn.stack = stack;
-                armour.worn.slot = equipmentSlot;
-                return armour.worn;
+        return new Extensions(this);
+    }
+
+    /** Hands the game's bus what this answers, once, from the Core's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RenderArmEvent.class, KitArmorModel::onArm);
+        NeoForge.EVENT_BUS.addListener(RenderPlayerEvent.Pre.class, KitArmorModel::onPlayer);
+    }
+
+    /*
+     * A piece of this kind worn covers the skin's outer layer of the parts it is worn on, as a suit does: the hat under
+     * a helmet, the jacket and the sleeves under a chest piece, the trouser legs under leggings. The game shows that
+     * layer a quarter or half a pixel out from the body, where a piece fitted close to the body would let it through;
+     * it shows it again by itself each frame, from the player's settings, once the piece is off.
+     */
+    private static void onPlayer(final RenderPlayerEvent.Pre event) {
+        final Player player = event.getEntity();
+        final PlayerModel<AbstractClientPlayer> body = event.getRenderer().getModel();
+        if (kit(player.getItemBySlot(EquipmentSlot.HEAD))) {
+            body.hat.visible = false;
+        }
+        if (kit(player.getItemBySlot(EquipmentSlot.CHEST))) {
+            body.jacket.visible = false;
+            body.leftSleeve.visible = false;
+            body.rightSleeve.visible = false;
+        }
+        if (kit(player.getItemBySlot(EquipmentSlot.LEGS))) {
+            body.leftPants.visible = false;
+            body.rightPants.visible = false;
+        }
+    }
+
+    /* Whether {@code stack} is a piece drawn with a model of the Core's. */
+    private static boolean kit(final ItemStack stack) {
+        return !stack.isEmpty() && IClientItemExtensions.of(stack) instanceof Extensions;
+    }
+
+    /*
+     * The player's own arm drawn in first person: with a piece of this kind on their chest whose model has a bone for
+     * that arm, the arm is drawn in its sleeve. The game's arm is drawn without its outer layer, which a sleeve close
+     * to the arm would let through, and the sleeve over it by the same bone, posed the way the game poses the arm.
+     */
+    private static void onArm(final RenderArmEvent event) {
+        final AbstractClientPlayer player = event.getPlayer();
+        final ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (chest.isEmpty() || !(IClientItemExtensions.of(chest) instanceof Extensions worn)) {
+            return;
+        }
+        final Optional<KitModel> found = KitModels.get(worn.armour.model.apply(chest));
+        if (found.isEmpty()) {
+            return;
+        }
+        final KitInstance instance = KitAnimations.of(chest, ItemDisplayContext.NONE, found.get());
+        instance.animate(KitClock.frame(), KitClock.now(), false, IAnimationListener.NONE);
+        final ModelPose pose = instance.pose();
+        final boolean right = event.getArm() == HumanoidArm.RIGHT;
+        final int bone = pose.index(right ? RIGHT_ARM : LEFT_ARM);
+        if (bone < 0) {
+            return;
+        }
+        for (final Shown each : worn.armour.shown) {
+            final int shownBone = pose.index(each.bone);
+            if (shownBone >= 0) {
+                pose.setHidden(shownBone, !each.shown.test(chest));
             }
-        };
+        }
+        event.setCanceled(true);
+        final PlayerRenderer renderer = (PlayerRenderer) Minecraft.getInstance().getEntityRenderDispatcher()
+                .getRenderer(player);
+        final PlayerModel<AbstractClientPlayer> body = renderer.getModel();
+        // As the game poses the arm it draws in first person.
+        body.attackTime = 0.0F;
+        body.crouching = false;
+        body.swimAmount = 0.0F;
+        body.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+        final ModelPart arm = right ? body.rightArm : body.leftArm;
+        arm.xRot = 0.0F;
+        final PoseStack poses = event.getPoseStack();
+        final MultiBufferSource buffers = event.getMultiBufferSource();
+        arm.render(poses, buffers.getBuffer(RenderType.entitySolid(player.getSkin().texture())),
+                event.getPackedLight(), OverlayTexture.NO_OVERLAY);
+        final VertexConsumer glint = chest.hasFoil() ? buffers.getBuffer(RenderType.armorEntityGlint()) : null;
+        poses.pushPose();
+        arm.translateAndRotate(poses);
+        poses.scale(-1, -1, 1);
+        KitRenderer.drawBranch(instance, bone, poses, buffers, event.getPackedLight(), OverlayTexture.NO_OVERLAY,
+                glint);
+        poses.popPose();
     }
 
     /* Whether a piece in {@code slot} draws {@code follow}'s bone of the model posed as {@code pose}. */
@@ -195,6 +280,29 @@ public final class KitArmorModel {
                 KitRenderer.drawBranch(instance, bone, poses, buffers, light, overlay, glint);
                 poses.popPose();
             }
+        }
+    }
+
+    /* What the game asks a piece of this armour for, which the first person's arm knows it by. */
+    private static final class Extensions implements IClientItemExtensions {
+
+        private final KitArmorModel armour;
+
+        Extensions(final KitArmorModel armour) {
+            this.armour = armour;
+        }
+
+        @Override
+        public HumanoidModel<?> getHumanoidArmorModel(final LivingEntity entity, final ItemStack stack,
+                                                      final EquipmentSlot equipmentSlot,
+                                                      final HumanoidModel<?> original) {
+            if (this.armour.worn == null) {
+                this.armour.worn = new Worn(this.armour.model, this.armour.shown);
+            }
+            this.armour.worn.wearer = entity;
+            this.armour.worn.stack = stack;
+            this.armour.worn.slot = equipmentSlot;
+            return this.armour.worn;
         }
     }
 

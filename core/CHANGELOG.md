@@ -1770,7 +1770,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Armour drawn with the Core's models draws each piece worn, every one of them, where only the first was drawn
   before; a model may give the leggings a waist of their own, `armorWaist`, so leggings worn alone show no chest; and a
   bone may be shown only while the piece's stack says so (`KitArmorModel.shownWhile`), a visor lowered or a module
-  fitted.
+  fitted. A piece a player wears covers the outer layer of their skin where it is worn, the hat under a helmet, the
+  jacket and sleeves under a chest piece, the trouser legs under leggings, so a piece fitted close lets none of it
+  through; and in first person the player's arm is drawn in the sleeve of the piece on their chest.
 - Air of its own: a mod gives a body its own air to breathe, a suit's tanks or a mask's line (`Lungs`,
   `IAirSupply`); whether it can breathe and whether the air poisons it are read from that air, and it breathes nothing
   of the room it stands in.

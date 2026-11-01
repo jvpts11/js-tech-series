@@ -80,6 +80,7 @@ import dev.jstech.core.client.material.MaterialTooltips;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.client.model.PartMotions;
 import dev.jstech.core.client.model.kit.KitAnimations;
+import dev.jstech.core.client.model.kit.KitArmorModel;
 import dev.jstech.core.client.model.kit.KitClock;
 import dev.jstech.core.client.model.kit.KitEntityModels;
 import dev.jstech.core.client.model.kit.KitInstancing;
@@ -182,6 +183,7 @@ public final class JsCoreClient {
         KitEntityModels.listen(modEventBus);
         KitAnimations.listen();
         KitClock.listen();
+        KitArmorModel.listen();
         // Alike models and particles drawn many at once on the graphics card, with their shaders.
         Instancing.listen(modEventBus);
         KitInstancing.listen();
