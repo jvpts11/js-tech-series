@@ -120,10 +120,27 @@ public final class MoonWorld {
     public static final Landforms.LandformSpec RILLES = Landforms.landform(id("moon_rilles"), LandformKind.RILLE)
             .cell(768).chance(0.8).radius(160, 420).height(0.04).surface(SpaceRocks.MARE_REGOLITH)
             .biomes(MoonBiomes.RILLES).declare();
-    /** Lava tubes under the maria, open to the sky where their roofs fell in. */
+    /**
+     * Lava tubes under the maria, twenty blocks wide at the most, walled in basalt, open to the sky in a row of
+     * skylights where their roofs fell in, the regolith that fell heaped under each in the light.
+     */
     public static final Landforms.LandformSpec LAVA_TUBES = Landforms.landform(id("moon_lava_tubes"),
-                    LandformKind.LAVA_TUBE).cell(512).chance(0.75).radius(120, 320).height(0.03)
-            .special(SpaceRocks.MARE_BASALT).biomes(MoonBiomes.LAVA_TUBES).declare();
+                    LandformKind.LAVA_TUBE).cell(512).chance(0.75).radius(120, 320).height(0.07)
+            .special(SpaceRocks.MARE_BASALT).scatter(SpaceRocks.MARE_REGOLITH).biomes(MoonBiomes.CAVES)
+            .middle(MoonBiomes.LAVA_TUBES).declare();
+    /** Pits in the maria, as Mare Tranquillitatis', their shafts opening on a hollow under the basalt. */
+    public static final Landforms.LandformSpec MARIA_PITS = Landforms.landform(id("moon_maria_pits"),
+                    LandformKind.PIT).cell(384).chance(0.5).radius(3, 6).height(4)
+            .special(SpaceRocks.MARE_BASALT).scatter(SpaceRocks.MARE_REGOLITH).biomes(MoonBiomes.CAVES)
+            .middle(MoonBiomes.MARIA).declare();
+    /** Caves under all the Moon's ground, chambers and winding tunnels, many open to the sky. */
+    public static final Landforms.LandformSpec CAVES = Landforms.landform(id("moon_caves"), LandformKind.CAVE)
+            .cell(112).chance(0.55).radius(24, 48).height(0.5).biomes(MoonBiomes.CAVES).declare();
+    /** Small pits in the highlands, opening on small hollows, the regolith that fell heaped under them. */
+    public static final Landforms.LandformSpec HIGHLAND_PITS = Landforms.landform(id("moon_highland_pits"),
+                    LandformKind.PIT).cell(320).chance(0.4).radius(2, 4).height(4).special(() -> Blocks.AIR)
+            .scatter(SpaceRocks.HIGHLAND_REGOLITH).biomes(MoonBiomes.CAVES).middle(MoonBiomes.ANORTHOSITE)
+            .declare();
 
     /** The titanium of the maria: ilmenite, with armalcolite and tranquillityite. */
     public static final ResourceLocation MARIA_TITANIUM = Deposits.deposit(id("moon_maria_titanium"))

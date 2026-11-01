@@ -1,0 +1,16 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "biomes": "#jsspace:mars_caps",
+    "cell": 128,
+    "chance": 0.6,
+    "height": 0.3,
+    "kind": "cave",
+    "largest": 48,
+    "salt": -1776010965,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 24
+  }
+}

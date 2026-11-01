@@ -1,0 +1,19 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "biomes": "#jsspace:moon_anorthosite",
+    "cell": 320,
+    "chance": 0.4,
+    "height": 4.0,
+    "kind": "pit",
+    "largest": 4,
+    "salt": -322001,
+    "scatter": {
+      "Name": "jsspace:highland_regolith"
+    },
+    "smallest": 2,
+    "special": {
+      "Name": "minecraft:air"
+    }
+  }
+}

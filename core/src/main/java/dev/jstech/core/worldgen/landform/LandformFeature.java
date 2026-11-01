@@ -23,7 +23,8 @@ import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
  * Lays the landforms of a kind on the chunk it is placed in, and only there, the feature {@code jscore:landform}: it
  * finds every landform of the kind that reaches the chunk ({@link LandformField}), keeps those whose middle lies in
  * the kind's biomes, and paints each over the chunk's columns ({@link LandformPainter}) from the ground as the noise
- * made it, before anything grew on it. A landform larger than a chunk is laid a chunk at a time, the same on any
+ * made it, before anything grew on it; a grotto on the ground as it stands, so it opens in what landforms laid
+ * before it raised. A landform larger than a chunk is laid a chunk at a time, the same on any
  * thread for the same seed. Placed once a chunk, with no placement of its own.
  */
 public final class LandformFeature extends Feature<LandformConfig> {
@@ -49,10 +50,13 @@ public final class LandformFeature extends Feature<LandformConfig> {
         for (final LandformField.Instance one : reaching) {
             final int base = generator.getBaseHeight(one.x(), one.z(), Heightmap.Types.OCEAN_FLOOR_WG, level,
                     random) - 1;
-            if (config.biomes().isPresent() && !config.biomes().get().contains(middle(generator, random, one, base))) {
+            if (config.biomes().isPresent() && !config.biomes().get().contains(middle(generator, random, one, base))
+                    || !config.mayLieAt(one.x(), one.z())) {
                 continue;
             }
-            LandformPainter.paint(level, config, one, base, Heightmap.Types.OCEAN_FLOOR_WG, x0, z0, x0 + CHUNK - 1,
+            // The generation's own heightmaps stand still once features begin: the ground as the noise made it.
+            LandformPainter.paint(level, config, one, base, config.kind().onTheGroundAsItStands()
+                    ? Heightmap.Types.OCEAN_FLOOR : Heightmap.Types.OCEAN_FLOOR_WG, x0, z0, x0 + CHUNK - 1,
                     z0 + CHUNK - 1);
             painted = true;
         }

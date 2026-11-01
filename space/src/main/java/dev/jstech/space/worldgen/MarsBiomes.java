@@ -95,6 +95,12 @@ public final class MarsBiomes {
     public static final TagKey<Biome> LAYERED = tag("mars_layered");
     /** The biomes its spiders are carved in and its ridges of Inca City stand in. */
     public static final TagKey<Biome> SPIDERS = tag("mars_spiders");
+    /** The biomes of its canyons, the chaos and the layered mounds, in whose blocks and mounds its grottos open. */
+    public static final TagKey<Biome> GROTTOS = tag("mars_grottos");
+    /** The biomes of its caps, through whose water ice its ice caves wind. */
+    public static final TagKey<Biome> CAPS = tag("mars_caps");
+    /** Every biome of Mars, under all of which its caves wind and its pits open. */
+    public static final TagKey<Biome> CAVES = tag("mars_caves");
 
     private MarsBiomes() {
     }

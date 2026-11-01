@@ -9,13 +9,18 @@ package dev.jstech.core.worldgen.landform;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.dimension.DimensionBorders;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.worldgen.terrain.RoundMap;
+import dev.jstech.core.worldgen.terrain.RoundMaps;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistryCodecs;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -47,11 +52,12 @@ import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfigur
  * @param freezes   below how many kelvin its liquid freezes to the scatter
  * @param boils     above how many kelvin its liquid boils away
  * @param biomes    the biomes one lies in, by the biome at its middle; empty for any biome it is placed in
+ * @param within    the region of a round world's map one lies in, by its middle; empty for anywhere
  */
 public record LandformConfig(LandformKind kind, int cell, double chance, int smallest, int largest, long salt,
                              double height, BlockState surface, BlockState fill, BlockState special,
                              BlockState scatter, List<BlockState> bands, double freezes, double boils,
-                             Optional<HolderSet<Biome>> biomes)
+                             Optional<HolderSet<Biome>> biomes, Optional<Region> within)
         implements FeatureConfiguration {
 
     private static final int MOST_CELL = 4096;
@@ -60,6 +66,8 @@ public record LandformConfig(LandformKind kind, int cell, double chance, int sma
     private static final double WATER_FREEZES = 273.15;
     private static final double WATER_BOILS = 373.15;
     private static final double HOTTEST = 100_000;
+    /* How white a region's map must read where a landform's middle lies. */
+    private static final double HALF = 0.5;
     public static final Codec<LandformConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             StableCodecs.byName(LandformKind.class).fieldOf("kind").forGetter(LandformConfig::kind),
             Codec.intRange(16, MOST_CELL).fieldOf("cell").forGetter(LandformConfig::cell),
@@ -79,7 +87,8 @@ public record LandformConfig(LandformKind kind, int cell, double chance, int sma
             Codec.doubleRange(0, HOTTEST).optionalFieldOf("freezes", WATER_FREEZES).forGetter(LandformConfig::freezes),
             Codec.doubleRange(0, HOTTEST).optionalFieldOf("boils", WATER_BOILS).forGetter(LandformConfig::boils),
             RegistryCodecs.homogeneousList(Registries.BIOME).optionalFieldOf("biomes")
-                    .forGetter(LandformConfig::biomes))
+                    .forGetter(LandformConfig::biomes),
+            Region.CODEC.optionalFieldOf("within").forGetter(LandformConfig::within))
             .apply(instance, LandformConfig::new));
 
     public LandformConfig {
@@ -89,12 +98,56 @@ public record LandformConfig(LandformKind kind, int cell, double chance, int sma
         Objects.requireNonNull(special, "special");
         Objects.requireNonNull(scatter, "scatter");
         Objects.requireNonNull(biomes, "biomes");
+        Objects.requireNonNull(within, "within");
         bands = List.copyOf(bands);
+    }
+
+    /** A kind of landform that lies anywhere its biomes allow, in no region of a map. */
+    public LandformConfig(final LandformKind kind, final int cell, final double chance, final int smallest,
+                          final int largest, final long salt, final double height, final BlockState surface,
+                          final BlockState fill, final BlockState special, final BlockState scatter,
+                          final List<BlockState> bands, final double freezes, final double boils,
+                          final Optional<HolderSet<Biome>> biomes) {
+        this(kind, cell, chance, smallest, largest, salt, height, surface, fill, special, scatter, bands, freezes,
+                boils, biomes, Optional.empty());
     }
 
     /** Where in the world they lie. */
     public LandformField field() {
         return new LandformField(this.cell, this.chance, this.smallest, Math.max(this.smallest, this.largest),
                 this.salt);
+    }
+
+    /**
+     * Whether a landform whose middle is at {@code x, z} lies where they may: anywhere when they keep to no region,
+     * else where the region's map reads more than half, at the size its world has on the server; nowhere where that
+     * map or that size is not known.
+     */
+    public boolean mayLieAt(final int x, final int z) {
+        if (this.within.isEmpty()) {
+            return true;
+        }
+        final Region region = this.within.get();
+        final Optional<DimensionBorders.Bounds> bounds = DimensionBorders.inForce(ResourceKey.create(
+                Registries.DIMENSION, region.world()));
+        final Optional<RoundMap> map = RoundMaps.get(region.map());
+        if (bounds.isEmpty() || map.isEmpty()) {
+            return false;
+        }
+        return map.get().atBlock(x, z, bounds.get().maxX() - bounds.get().minX()) > HALF;
+    }
+
+    /**
+     * The region of a round world's map a kind of landform keeps to: where the map is white.
+     *
+     * @param map   the map, of {@link RoundMaps}
+     * @param world the round world it is the map of, its dimension's id
+     */
+    public record Region(ResourceLocation map, ResourceLocation world) {
+
+        public static final Codec<Region> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                ResourceLocation.CODEC.fieldOf("map").forGetter(Region::map),
+                ResourceLocation.CODEC.fieldOf("world").forGetter(Region::world))
+                .apply(instance, Region::new));
     }
 }

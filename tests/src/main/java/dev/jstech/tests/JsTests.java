@@ -52,6 +52,8 @@ public final class JsTests {
         Arenas.declare(MODID, "empty", 9, 6, 9);
         Arenas.declare(MODID, "bench", 48, 8, 48);
         Arenas.declare(MODID, "tall", 12, 32, 12);
+        // A deep floor for caves, pits and lava tubes to be hollowed under, with their reach round them.
+        Arenas.declare(MODID, "cavern", 41, 24, 41);
         // A Rocket Hangar with room for a mobile launcher under its rocket.
         Arenas.declare(MODID, "hangar", 29, 44, 29);
         // A crawlerway long enough for a crawler-transporter to go along with a launcher on it.

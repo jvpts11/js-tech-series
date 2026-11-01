@@ -1,0 +1,19 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "biomes": "#jsspace:moon_maria",
+    "cell": 384,
+    "chance": 0.5,
+    "height": 4.0,
+    "kind": "pit",
+    "largest": 6,
+    "salt": -1917512670,
+    "scatter": {
+      "Name": "jsspace:mare_regolith"
+    },
+    "smallest": 3,
+    "special": {
+      "Name": "jsspace:mare_basalt"
+    }
+  }
+}

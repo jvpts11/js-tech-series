@@ -67,10 +67,16 @@ Gravity is a share of the Overworld's pull. The hour follows the longitude, as o
 
 - Mare: plains of old lava, low and dark. Mare Regolith over a thick layer of Mare Basalt, the basalt bare on steep walls and its stones strewn about. Its craters are fewer and smaller than the highlands', their rims of the basalt they broke.
 - Rille: a mare cut by narrow winding channels, the troughs left by rivers of lava whose roofs fell in.
-- Lava Tube Skylight: a mare over lava tubes, tunnels floored with mare basalt, open to the sky where their roofs fell in.
+- Lava Tube Skylight: a mare over lava tubes, tunnels walled in mare basalt, open to the sky where their roofs fell in.
 - Highlands: the bright cratered land everywhere else, crater on crater. Highland Regolith over Anorthosite, the rock bare on steep walls and its stones strewn about.
 - Young Crater: a fresh crater with a sharp rim, its bright ejecta and rays of highland regolith lying over what they fell on.
 - Polar Craters: craters round the poles whose floors never see the Sun, Icy Regolith on their floors.
+
+### Caves
+
+- Caves wind under all the Moon's ground: a chamber with tunnels running out of it, a crack over the chamber open to the sky, and a mouth where one tunnel comes out, in a slope or a plain.
+- Lava tubes under the maria, up to twenty blocks wide and walled in Mare Basalt, a row of skylights open in their roofs, the regolith that fell heaped under each in the light.
+- Pits in the maria, as Mare Tranquillitatis', shafts with their rims broken in steps, down to a hollow under the basalt; smaller ones in the highlands.
 
 ## What can go wrong
 

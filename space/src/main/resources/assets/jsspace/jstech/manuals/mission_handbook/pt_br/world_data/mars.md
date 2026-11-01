@@ -84,6 +84,14 @@ A gravidade é uma fração da força do Overworld. Cada estação dura um quart
 
 As zonas de Marte ficam onde ficam no planeta de verdade, e dentro de cada uma os biomas vêm e vão a cada poucos milhares de blocos: o sul salpicado de hematita aqui, um lago antigo ali, dunas escuras mais adiante.
 
+### Cavernas
+
+- Cavernas serpenteiam debaixo de todo o chão de Marte: uma câmara com túneis saindo dela, uma fenda sobre a câmara aberta para o céu e uma boca onde um túnel sai, numa encosta, numa planície ou numa parede.
+- Tubos de lava em Tharsis e nas outras regiões vulcânicas, revestidos de Basalto Marciano, sob uma fileira de claraboias, o regolito vermelho que caiu amontoado debaixo de cada uma, na luz.
+- Grutas nas faces dos blocos do caos, dos montes em camadas e dos buttes de Valles Marineris e dos outros cânions, no pé e subindo por elas.
+- Túneis no Gelo de Água das calotas polares, sob a geada, escuros lá dentro.
+- Poços pequenos em toda parte: aberturas redondas que descem até pequenas cavidades.
+
 ## O que pode dar errado
 
 > [!WARNING]

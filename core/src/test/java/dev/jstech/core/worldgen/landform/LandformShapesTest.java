@@ -153,6 +153,22 @@ class LandformShapesTest {
     }
 
     @Test
+    void chamber_isWholeHeightInItsMiddleFallingAsAnEllipse() {
+        assertEquals(6, LandformShapes.chamber(0, 10, 6), CLOSE);
+        assertEquals(4.8, LandformShapes.chamber(6, 10, 6), CLOSE);
+        assertEquals(0, LandformShapes.chamber(10, 10, 6), CLOSE);
+        assertEquals(0, LandformShapes.chamber(14, 10, 6), CLOSE, "nothing past its edge");
+    }
+
+    @Test
+    void heap_isAConeOfRubble() {
+        assertEquals(4, LandformShapes.heap(0, 8, 4), CLOSE);
+        assertEquals(2, LandformShapes.heap(4, 8, 4), CLOSE);
+        assertEquals(0, LandformShapes.heap(8, 8, 4), CLOSE);
+        assertEquals(0, LandformShapes.heap(12, 8, 4), CLOSE, "nothing past its foot");
+    }
+
+    @Test
     void fade_holdsInsideAndFadesAtTheEdge() {
         assertEquals(1, LandformShapes.fade(5, 20, 4), CLOSE);
         assertEquals(0.5, LandformShapes.fade(18, 20, 4), CLOSE);

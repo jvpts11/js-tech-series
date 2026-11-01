@@ -1,0 +1,15 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "biomes": "#jsspace:mars_grottos",
+    "cell": 48,
+    "chance": 0.9,
+    "kind": "grotto",
+    "largest": 40,
+    "salt": -590544578,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 24
+  }
+}

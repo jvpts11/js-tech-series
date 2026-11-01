@@ -23,8 +23,8 @@ public enum LandformKind implements IStableName {
     CANYON("canyon", 1.0),
     /** A narrow channel winding tightly, a smooth trough as a lava channel whose roof fell; its floor the surface. */
     RILLE("rille", 1.0),
-    /** A tunnel under the ground along a line, its floor lined with the special, skylights open to the sky here. */
-    LAVA_TUBE("lava_tube", 1.0),
+    /** A tunnel under the ground along a line, walled all round in the special, skylights open to the sky here. */
+    LAVA_TUBE("lava_tube", 1.05),
     /** A sheet of the special (ice) over the land, its top the surface (snow). */
     ICE_SHEET("ice_sheet", 1.0),
     /**
@@ -73,7 +73,25 @@ public enum LandformKind implements IStableName {
      * A broad mound in bands of the band blocks, each band set back from the one under it, so its slopes climb in
      * steps; its top the surface: a mound of layered sediments.
      */
-    LAYERED_MOUND("layered_mound", 1.0);
+    LAYERED_MOUND("layered_mound", 1.0),
+    /**
+     * Caves under the ground: a chamber deep under its middle, opened to the sky by a crack over it, and winding
+     * tunnels running out from it, coming out where they meet a steep slope or a wall, one rising to open on the ground
+     * as a mouth, wherever the ground stands, a slope, a plain, a crater's wall; hollow with cave air, its rock left as
+     * it was.
+     */
+    CAVE("cave", 1.15),
+    /**
+     * Grottos in whatever stands over the ground round its middle, a mesa, a butte, a mound's flank: tunnels running
+     * out from its middle a block over its ground, some climbing as they go, hollowed only where they run through
+     * rock, so each opens in a face, at its foot or up it; hollow with cave air, roofed.
+     */
+    GROTTO("grotto", 1.15),
+    /**
+     * A round shaft from the ground down into a chamber under it, as wide as its radius and as deep as its height
+     * says, the light falling in and the rubble of its roof heaped on the chamber's floor under it, of the scatter.
+     */
+    PIT("pit", 2.6);
 
     private final String serializedName;
     private final double reach;
@@ -96,5 +114,14 @@ public enum LandformKind implements IStableName {
     /** Whether it lays a liquid, which freezes or boils away by the place's temperature. */
     public boolean liquid() {
         return this == LAKE || this == RIVER;
+    }
+
+    /**
+     * Whether it is laid on the ground as it stands when it is laid, the other landforms laid before it among it,
+     * rather than the ground as the noise made it: a grotto, which opens in what other landforms raised, and so is
+     * laid in a later step of the generation than they are.
+     */
+    public boolean onTheGroundAsItStands() {
+        return this == GROTTO;
     }
 }

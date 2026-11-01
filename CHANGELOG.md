@@ -2193,6 +2193,21 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   basalt has its pale laths and round vesicles; Mars' regolith has its dark pebbles and its hematite soil its
   blueberries; its basalt is dusted red in its cracks, its mudstone laid in thin laminae with white veins, and its ices
   cracked and pitted.
+- (Space) Caves on the Moon and Mars: chambers and winding tunnels under all their ground, many of them open to the
+  sky by a crack over the chamber or a mouth where a tunnel comes out, in a slope, a plain or a wall. The Moon's lava
+  tubes under the maria are wider, up to twenty blocks, walled in basalt, and Mars has its own in Tharsis and the
+  other volcanic regions, each under a row of skylights, the regolith that fell heaped under each in the light. Pits
+  open in the Moon's maria, as Mare Tranquillitatis', their rims broken in steps, down to a hollow under the basalt,
+  and smaller ones in its highlands and all over Mars; grottos open in the faces of the chaos' blocks, the layered
+  mounds and the buttes of Valles Marineris and the other canyons, and tunnels wind through the water ice of Mars'
+  caps under the frost, dark deep inside.
+- (Core) Caves, grottos and pits: three kinds of landform, `cave`, a chamber under its middle opened by a crack, its
+  tunnels winding out to come out in the steep slopes and walls they meet, one rising to a mouth wherever the ground
+  stands at its end; `grotto`, tunnels a block over the ground hollowed only through what stands on it, so they open
+  in the faces of mesas, buttes and mounds, at their feet or up them; and `pit`, a shaft with a ragged, stepped rim
+  down into a wider domed chamber over the rubble of its roof. A lava tube is walled in its own block whatever rock it runs through, and its roof
+  falls in at its middle and by chance along it, its rubble heaped under each skylight. `within(map, world)` keeps a
+  kind of landform to the region of a round world's map, as a planet's volcanic provinces, whatever biomes lie there.
 - (Space) Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece

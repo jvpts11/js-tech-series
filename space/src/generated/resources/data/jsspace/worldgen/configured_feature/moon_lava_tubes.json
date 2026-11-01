@@ -1,14 +1,15 @@
 {
   "type": "jscore:landform",
   "config": {
+    "biomes": "#jsspace:moon_lava_tubes",
     "cell": 512,
     "chance": 0.75,
-    "height": 0.03,
+    "height": 0.07,
     "kind": "lava_tube",
     "largest": 320,
     "salt": -1887509871,
     "scatter": {
-      "Name": "minecraft:ice"
+      "Name": "jsspace:mare_regolith"
     },
     "smallest": 120,
     "special": {

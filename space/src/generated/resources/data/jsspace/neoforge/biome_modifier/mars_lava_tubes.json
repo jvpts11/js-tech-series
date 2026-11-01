@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_caves",
+  "features": "jsspace:mars_lava_tubes",
+  "step": "raw_generation"
+}

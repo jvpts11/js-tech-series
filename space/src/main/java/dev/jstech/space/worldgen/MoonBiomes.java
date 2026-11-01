@@ -65,6 +65,8 @@ public final class MoonBiomes {
     public static final TagKey<Biome> RILLES = tag("moon_rilles");
     /** The biomes lava tubes run under. */
     public static final TagKey<Biome> LAVA_TUBES = tag("moon_lava_tubes");
+    /** Every biome of the Moon, under all of which its caves wind and its pits open. */
+    public static final TagKey<Biome> CAVES = tag("moon_caves");
 
     private MoonBiomes() {
     }

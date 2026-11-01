@@ -127,13 +127,14 @@ public final class Landforms {
      * @param biomes   the biomes they are drawn in
      * @param middle   the biomes one's middle lies in, or none for any biome they are drawn in
      * @param step     when in the generation they are laid
+     * @param within   the region of a round world's map one's middle lies in, or none for anywhere
      */
     public record LandformSpec(ResourceLocation id, LandformKind kind, int cell, double chance, int smallest,
                                int largest, long salt, double height, Supplier<? extends Block> surface,
                                Supplier<? extends Block> fill, Supplier<? extends Block> special,
                                Supplier<? extends Block> scatter, List<Supplier<? extends Block>> bands,
                                double freezes, double boils, TagKey<Biome> biomes, @Nullable TagKey<Biome> middle,
-                               GenerationStep.Decoration step) {
+                               GenerationStep.Decoration step, @Nullable LandformConfig.Region within) {
 
         public LandformSpec {
             bands = List.copyOf(bands);
@@ -147,7 +148,7 @@ public final class Landforms {
                     this.height, this.surface.get().defaultBlockState(), this.fill.get().defaultBlockState(),
                     this.special.get().defaultBlockState(), this.scatter.get().defaultBlockState(),
                     this.bands.stream().map(band -> band.get().defaultBlockState()).toList(), this.freezes,
-                    this.boils, where);
+                    this.boils, where, Optional.ofNullable(this.within));
         }
     }
 
@@ -221,6 +222,7 @@ public final class Landforms {
         private @Nullable TagKey<Biome> biomes;
         private @Nullable TagKey<Biome> middle;
         private GenerationStep.Decoration step = GenerationStep.Decoration.RAW_GENERATION;
+        private @Nullable LandformConfig.Region within;
 
         private LandformBuilder(final ResourceLocation id, final LandformKind kind) {
             this.id = Objects.requireNonNull(id, "id");
@@ -318,6 +320,15 @@ public final class Landforms {
         }
 
         /**
+         * Only those whose middle lies where the round world {@code world}'s map {@code map} is white are laid: a
+         * region a map lays, as the volcanic regions of a planet, whatever biomes lie there.
+         */
+        public LandformBuilder within(final ResourceLocation map, final ResourceLocation world) {
+            this.within = new LandformConfig.Region(map, world);
+            return this;
+        }
+
+        /**
          * Declares the landforms.
          *
          * @throws IllegalStateException when they name no biomes, or their numbers make no landform
@@ -330,7 +341,7 @@ public final class Landforms {
                 throw new IllegalStateException("the landforms " + id + " have a cell, a chance, sizes and a height");
             }
             final LandformSpec spec = new LandformSpec(id, kind, cell, chance, smallest, largest, salt, height,
-                    surface, fill, special, scatter, bands, freezes, boils, biomes, middle, step);
+                    surface, fill, special, scatter, bands, freezes, boils, biomes, middle, step, within);
             LANDFORMS.add(spec);
             return spec;
         }

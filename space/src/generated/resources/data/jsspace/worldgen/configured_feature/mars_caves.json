@@ -1,0 +1,15 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 112,
+    "chance": 0.55,
+    "height": 0.5,
+    "kind": "cave",
+    "largest": 48,
+    "salt": 1877053151,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 24
+  }
+}

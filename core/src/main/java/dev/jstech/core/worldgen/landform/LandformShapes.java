@@ -11,8 +11,8 @@ package dev.jstech.core.worldgen.landform;
  * The shapes of landforms, as heights over or under the ground at a distance from their middle: a crater's bowl, raised
  * rim and central peak; a volcano's cone, broad and gentle for a shield, steep for a stratovolcano, with its summit
  * crater; a mesa's flat top and cliffs; the ridges of dunes; the cross-sections of a canyon and of a rille; a glacier's
- * thickness down its length; a terraced apron's pools and rims, a chimney, a spider's troughs, a ridge and a layered
- * mound's steps. In blocks; pure.
+ * thickness down its length; a terraced apron's pools and rims, a chimney, a spider's troughs, a ridge, a layered
+ * mound's steps, a cave's chambers and tunnels and a heap of rubble. In blocks; pure.
  */
 public final class LandformShapes {
 
@@ -238,6 +238,23 @@ public final class LandformShapes {
         }
         final double rise = height * (1 - Math.pow(at / radius, MOUND_POWER));
         return Math.floor(rise / step) * step;
+    }
+
+    /**
+     * How high a domed chamber {@code radius} wide and {@code height} high is at {@code at} from its middle: its whole
+     * height in its middle, falling as an ellipse to nothing at its edge; the cross-section of a tunnel too.
+     */
+    public static double chamber(final double at, final double radius, final double height) {
+        if (at >= radius) {
+            return 0;
+        }
+        final double share = at / radius;
+        return height * Math.sqrt(1 - share * share);
+    }
+
+    /** How high a heap {@code radius} wide and {@code height} high stands at {@code at}: a cone of rubble. */
+    public static double heap(final double at, final double radius, final double height) {
+        return at >= radius ? 0 : height * (1 - at / radius);
     }
 
     /** How much of a landform's change holds at {@code at} of {@code radius}: all of it inside, fading to none. */

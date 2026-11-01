@@ -232,6 +232,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   basalt has its pale laths and round vesicles; Mars' regolith has its dark pebbles and its hematite soil its
   blueberries; its basalt is dusted red in its cracks, its mudstone laid in thin laminae with white veins, and its ices
   cracked and pitted.
+- Caves on the Moon and Mars: chambers and winding tunnels under all their ground, many of them open to the
+  sky by a crack over the chamber or a mouth where a tunnel comes out, in a slope, a plain or a wall. The Moon's lava
+  tubes under the maria are wider, up to twenty blocks, walled in basalt, and Mars has its own in Tharsis and the
+  other volcanic regions, each under a row of skylights, the regolith that fell heaped under each in the light. Pits
+  open in the Moon's maria, as Mare Tranquillitatis', their rims broken in steps, down to a hollow under the basalt,
+  and smaller ones in its highlands and all over Mars; grottos open in the faces of the chaos' blocks, the layered
+  mounds and the buttes of Valles Marineris and the other canyons, and tunnels wind through the water ice of Mars'
+  caps under the frost, dark deep inside.
 - Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece

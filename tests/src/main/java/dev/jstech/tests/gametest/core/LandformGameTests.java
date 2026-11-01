@@ -69,6 +69,18 @@ public final class LandformGameTests {
     private static final int TALL_SIDE = 11;
     private static final int TALL_MIDDLE = 5;
     private static final int MOUND_RADIUS = 5;
+    /* The deep arena, 41 blocks a side, its floor of stone filling y 1 to 18, its middle; and the caves' radius. */
+    private static final String CAVERN = "cavern";
+    private static final int CAVERN_SIDE = 40;
+    private static final int CAVERN_MIDDLE = 20;
+    private static final int DEEP = 18;
+    private static final int CAVE_RADIUS = 16;
+    /* Past how far out its chamber of four and the crack over it reach, with a few blocks to spare. */
+    private static final int PAST_CRACK = 7;
+    /* The ring of walls grottos open in: how far out, inside and out, and how high. */
+    private static final int RING_INSIDE = 8;
+    private static final int RING_OUTSIDE = 10;
+    private static final int WALL = 9;
 
     private LandformGameTests() {
     }
@@ -208,14 +220,147 @@ public final class LandformGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = ARENA, skyAccess = true)
-    public static void lavaTube_hollowsATunnelUnderTheGround(final GameTestHelper helper) {
-        floor(helper);
-        paint(helper, config(LandformKind.LAVA_TUBE, 0.5, Blocks.STONE, Blocks.STONE, Blocks.BASALT, Blocks.ICE), 4);
-        helper.assertBlockState(new BlockPos(MIDDLE, 1, MIDDLE), state -> state.is(Blocks.CAVE_AIR),
+    @GameTest(template = CAVERN, skyAccess = true)
+    public static void lavaTube_hollowsATunnelUnderTheGroundWithASkylightOverRubble(final GameTestHelper helper) {
+        deepFloor(helper);
+        // A tube 20 blocks either way along x, its bore of 4 lying 8 under the ground: hollow from 11 under the ground
+        // to 4 under it, walled two blocks thick from 14 under to 2 under; the skylight in its middle, the rubble
+        // heaped two high under it.
+        paintDeep(helper, config(LandformKind.LAVA_TUBE, 0.4, Blocks.STONE, Blocks.STONE, Blocks.BASALT,
+                Blocks.GRAVEL), BENCH_RADIUS);
+        final int away = CAVERN_MIDDLE + 10;
+        helper.assertBlockState(new BlockPos(away, DEEP - 8, CAVERN_MIDDLE), state -> state.is(Blocks.CAVE_AIR),
                 () -> "the tube is hollow under the ground");
-        helper.assertBlockState(new BlockPos(MIDDLE, 0, MIDDLE), state -> state.is(Blocks.BASALT),
-                () -> "its floor is lined with its own block");
+        helper.assertBlockState(new BlockPos(away, DEEP - 12, CAVERN_MIDDLE), state -> state.is(Blocks.BASALT),
+                () -> "its floor is of its own block");
+        helper.assertBlockState(new BlockPos(away, DEEP - 3, CAVERN_MIDDLE), state -> state.is(Blocks.BASALT),
+                () -> "and its roof, away from its skylights");
+        helper.assertBlockState(new BlockPos(away, DEEP - 8, CAVERN_MIDDLE + 5), state -> state.is(Blocks.BASALT),
+                () -> "and its sides, whatever rock it runs through");
+        helper.assertBlockState(new BlockPos(away, DEEP - 1, CAVERN_MIDDLE), state -> state.is(Blocks.STONE),
+                () -> "the ground's rock left over its wall");
+        helper.assertBlockState(new BlockPos(away, DEEP - 8, CAVERN_MIDDLE + 7), state -> state.is(Blocks.STONE),
+                () -> "beside it");
+        helper.assertBlockState(new BlockPos(away, DEEP - 15, CAVERN_MIDDLE), state -> state.is(Blocks.STONE),
+                () -> "and under it");
+        helper.assertTrue(open(helper, CAVERN_MIDDLE, DEEP - 8, CAVERN_MIDDLE),
+                "its middle is open to the sky through a skylight");
+        for (int y = DEEP - 11; y <= DEEP - 10; y++) {
+            helper.assertBlockState(new BlockPos(CAVERN_MIDDLE, y, CAVERN_MIDDLE), state -> state.is(Blocks.GRAVEL),
+                    () -> "the rubble that fell lies heaped under the skylight, of the scatter");
+        }
+        helper.assertBlockState(new BlockPos(CAVERN_MIDDLE, DEEP - 9, CAVERN_MIDDLE),
+                state -> state.is(Blocks.CAVE_AIR), () -> "two blocks high");
+        helper.assertBlockState(new BlockPos(CAVERN_MIDDLE + 3, DEEP - 11, CAVERN_MIDDLE),
+                state -> state.is(Blocks.CAVE_AIR), () -> "the heap a cone, nothing at its foot");
+        helper.succeed();
+    }
+
+    @GameTest(template = CAVERN, skyAccess = true)
+    public static void cave_hollowsAChamberAndTunnelsOpenToTheSkyWithinItsReach(final GameTestHelper helper) {
+        deepFloor(helper);
+        // A cave of radius 16, its chamber 8 under the ground at its middle, under its crack.
+        paintDeep(helper, config(LandformKind.CAVE, 0.5, Blocks.STONE, Blocks.STONE, Blocks.AIR, Blocks.AIR),
+                CAVE_RADIUS);
+        helper.assertBlockState(new BlockPos(CAVERN_MIDDLE, DEEP - 8, CAVERN_MIDDLE),
+                state -> state.is(Blocks.CAVE_AIR), () -> "its chamber lies hollow under its middle");
+        helper.assertTrue(open(helper, CAVERN_MIDDLE, DEEP - 8, CAVERN_MIDDLE),
+                "a crack over the chamber opens it to the sky");
+        final double reach = CAVE_RADIUS * LandformKind.CAVE.reach();
+        int hollow = 0;
+        int tunnels = 0;
+        int mouths = 0;
+        for (int x = 0; x <= CAVERN_SIDE; x++) {
+            for (int z = 0; z <= CAVERN_SIDE; z++) {
+                final double from = Math.hypot(x - CAVERN_MIDDLE, z - CAVERN_MIDDLE);
+                for (int y = 1; y <= DEEP; y++) {
+                    if (!helper.getBlockState(new BlockPos(x, y, z)).is(Blocks.CAVE_AIR)) {
+                        continue;
+                    }
+                    hollow++;
+                    helper.assertTrue(from <= reach, "nothing is hollowed past the kind's reach, " + reach
+                            + " blocks: " + x + ", " + y + ", " + z + " is " + from + " out");
+                    if (from > PAST_CRACK) {
+                        tunnels++;
+                        if (y == DEEP) {
+                            mouths++;
+                        }
+                    }
+                }
+            }
+        }
+        helper.assertTrue(hollow > 300, "the cave is a good volume of rock hollowed: " + hollow + " blocks");
+        helper.assertTrue(tunnels > 40, "its tunnels run out past its chamber and its crack: " + tunnels
+                + " blocks of them");
+        helper.assertTrue(mouths > 0, "one opens on the ground as a mouth, away from the crack");
+        helper.succeed();
+    }
+
+    @GameTest(template = CAVERN, skyAccess = true)
+    public static void grotto_opensOnlyInTheFacesOfWhatStandsOnTheGround(final GameTestHelper helper) {
+        // A ring of walls nine blocks high round the middle, 8 to 10 out, on the plain floor; grottos of radius 16.
+        floor(helper, CAVERN_SIDE);
+        for (int x = 0; x <= CAVERN_SIDE; x++) {
+            for (int z = 0; z <= CAVERN_SIDE; z++) {
+                if (ring(x, z)) {
+                    for (int y = TOP + 1; y <= TOP + WALL; y++) {
+                        helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                    }
+                }
+            }
+        }
+        paint(helper, config(LandformKind.GROTTO, 0.25, Blocks.STONE, Blocks.STONE, Blocks.AIR, Blocks.AIR),
+                CAVE_RADIUS, CAVERN_SIDE, CAVERN_MIDDLE);
+        int hollow = 0;
+        int faces = 0;
+        for (int x = 0; x <= CAVERN_SIDE; x++) {
+            for (int z = 0; z <= CAVERN_SIDE; z++) {
+                for (int y = 1; y <= TOP + WALL; y++) {
+                    if (!helper.getBlockState(new BlockPos(x, y, z)).is(Blocks.CAVE_AIR)) {
+                        continue;
+                    }
+                    hollow++;
+                    helper.assertTrue(ring(x, z) && y > TOP, "a grotto is hollowed only through what stands on the"
+                            + " ground, not the ground nor the open air: " + x + ", " + y + ", " + z);
+                    helper.assertTrue(y < TOP + WALL, "roofed by a block at least: " + x + ", " + y + ", " + z);
+                    if (Math.max(Math.abs(x - CAVERN_MIDDLE), Math.abs(z - CAVERN_MIDDLE)) == RING_INSIDE) {
+                        faces++;
+                    }
+                }
+            }
+        }
+        helper.assertTrue(hollow > 0 && faces > 0, "its grottos open in the walls' inner faces: " + hollow + " blocks"
+                + " hollow, " + faces + " of them in the faces");
+        helper.succeed();
+    }
+
+    @GameTest(template = CAVERN, skyAccess = true)
+    public static void pit_dropsAShaftIntoAWiderChamberOverItsRubble(final GameTestHelper helper) {
+        deepFloor(helper);
+        // A shaft of radius 3, ragged from 2.1 to 3.9, down 12 blocks into a chamber 7.5 wide, its floor of basalt, the
+        // rubble four high; a step two deep round its rim.
+        paintDeep(helper, config(LandformKind.PIT, 4, Blocks.STONE, Blocks.STONE, Blocks.BASALT, Blocks.GRAVEL), 3);
+        final int floor = DEEP - 12;
+        helper.assertTrue(open(helper, CAVERN_MIDDLE + 2, floor + 2, CAVERN_MIDDLE),
+                "its shaft is open to the sky down to the rubble on the chamber's floor");
+        helper.assertBlockState(new BlockPos(CAVERN_MIDDLE + 6, DEEP, CAVERN_MIDDLE), state -> state.is(Blocks.STONE),
+                () -> "the ground stands round the pit");
+        final int rim = hollowAt(helper, DEEP);
+        final int shaft = hollowAt(helper, DEEP - 2);
+        helper.assertTrue(rim > shaft && shaft > 0, "its rim broke away in a step round the shaft: " + rim
+                + " blocks hollow at the ground, " + shaft + " under the step");
+        helper.assertBlockState(new BlockPos(CAVERN_MIDDLE + 6, floor, CAVERN_MIDDLE),
+                state -> state.is(Blocks.CAVE_AIR), () -> "the chamber is wider than the shaft");
+        helper.assertBlockState(new BlockPos(CAVERN_MIDDLE + 6, floor - 1, CAVERN_MIDDLE),
+                state -> state.is(Blocks.BASALT), () -> "its floor lined with the special");
+        helper.assertBlockState(new BlockPos(CAVERN_MIDDLE + 6, floor + 4, CAVERN_MIDDLE),
+                state -> state.is(Blocks.STONE), () -> "its roof domed, low at its edge");
+        helper.assertBlockState(new BlockPos(CAVERN_MIDDLE + 8, floor, CAVERN_MIDDLE), state -> state.is(Blocks.STONE),
+                () -> "and nothing hollowed past it");
+        for (int y = floor; y < floor + 4; y++) {
+            helper.assertBlockState(new BlockPos(CAVERN_MIDDLE, y, CAVERN_MIDDLE), state -> state.is(Blocks.GRAVEL),
+                    () -> "the rubble of its roof lies heaped under the shaft, of the scatter");
+        }
         helper.succeed();
     }
 
@@ -544,15 +689,37 @@ public final class LandformGameTests {
         }
     }
 
+    /* Lays the deep arena's floor of stone, its top at y 18. */
+    private static void deepFloor(final GameTestHelper helper) {
+        for (int x = 0; x <= CAVERN_SIDE; x++) {
+            for (int z = 0; z <= CAVERN_SIDE; z++) {
+                for (int y = 1; y <= DEEP; y++) {
+                    helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                }
+            }
+        }
+    }
+
     /* Paints a landform of {@code radius} in the arena's middle, over the whole arena. */
     private static void paint(final GameTestHelper helper, final LandformConfig config, final int radius) {
         paint(helper, config, radius, SIDE, MIDDLE);
     }
 
+    /* Paints a landform of {@code radius} in the deep arena's middle, on its deep floor. */
+    private static void paintDeep(final GameTestHelper helper, final LandformConfig config, final int radius) {
+        paint(helper, config, radius, CAVERN_SIDE, CAVERN_MIDDLE, DEEP);
+    }
+
     /* Paints a landform of {@code radius} at {@code middle} of an arena {@code side} blocks a side and more. */
     private static void paint(final GameTestHelper helper, final LandformConfig config, final int radius,
                               final int side, final int middleAt) {
-        final BlockPos middle = helper.absolutePos(new BlockPos(middleAt, TOP, middleAt));
+        paint(helper, config, radius, side, middleAt, TOP);
+    }
+
+    /* The same, on a floor whose top is {@code ground}. */
+    private static void paint(final GameTestHelper helper, final LandformConfig config, final int radius,
+                              final int side, final int middleAt, final int ground) {
+        final BlockPos middle = helper.absolutePos(new BlockPos(middleAt, ground, middleAt));
         final BlockPos low = helper.absolutePos(BlockPos.ZERO);
         final BlockPos high = helper.absolutePos(new BlockPos(side, 0, side));
         LandformPainter.paint(helper.getLevel(), config, new LandformField.Instance(middle.getX(), middle.getZ(),
@@ -589,6 +756,35 @@ public final class LandformGameTests {
             }
         }
         return -1;
+    }
+
+    /* Whether a column of the deep arena lies in the ring of walls round its middle. */
+    private static boolean ring(final int x, final int z) {
+        final int out = Math.max(Math.abs(x - CAVERN_MIDDLE), Math.abs(z - CAVERN_MIDDLE));
+        return out >= RING_INSIDE && out <= RING_OUTSIDE;
+    }
+
+    /* How many blocks of the deep arena are hollow with cave air at the height {@code y}. */
+    private static int hollowAt(final GameTestHelper helper, final int y) {
+        int hollow = 0;
+        for (int x = 0; x <= CAVERN_SIDE; x++) {
+            for (int z = 0; z <= CAVERN_SIDE; z++) {
+                if (helper.getBlockState(new BlockPos(x, y, z)).is(Blocks.CAVE_AIR)) {
+                    hollow++;
+                }
+            }
+        }
+        return hollow;
+    }
+
+    /* Whether nothing but air stands over a block of the deep arena, up past its floor, so the sky shows down to it. */
+    private static boolean open(final GameTestHelper helper, final int x, final int y, final int z) {
+        for (int up = y; up <= DEEP + 2; up++) {
+            if (!helper.getBlockState(new BlockPos(x, up, z)).isAir()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /* The highest block of anything, a liquid too, of a column of the arena, relative. */

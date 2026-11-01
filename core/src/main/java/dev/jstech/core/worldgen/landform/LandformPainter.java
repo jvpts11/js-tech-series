@@ -25,10 +25,20 @@ import net.minecraft.world.level.material.FluidState;
  */
 public final class LandformPainter {
 
-    /* How deep a volcano's summit is filled, how often a lava tube opens to the sky, and how a channel winds. */
+    /*
+     * How deep a volcano's summit is filled; how thick a lava tube's wall of the lava that set round it is; where its
+     * roof fell in, one in its middle and others every so many blocks along it by chance, how wide each skylight is
+     * for the tube's bore, and the rubble heaped under it, how far out and how high for the bore; and how a channel
+     * winds.
+     */
     private static final int SUMMIT_POOL = 2;
-    private static final double SKYLIGHT = 0.08;
-    private static final int SKYLIGHT_SPACING = 4;
+    private static final int TUBE_WALL = 2;
+    private static final double SKYLIGHT = 0.5;
+    private static final int SKYLIGHT_EVERY = 36;
+    private static final double SKYLIGHT_WIDTH = 0.5;
+    private static final int SKYLIGHT_LEAST = 2;
+    private static final double RUBBLE_REACH = 0.5;
+    private static final double RUBBLE_HEIGHT = 0.4;
     private static final double MEANDER = 48.0;
     private static final int GEYSER_MOUND = 2;
     private static final double CRACK_SPACING = 7.0;
@@ -64,6 +74,49 @@ public final class LandformPainter {
     private static final double WANDER_WAVE = 0.11;
     /* A spider's fan lies in clumps of this many blocks a side, not grain by grain. */
     private static final int FAN_CLUMP = 2;
+    /*
+     * A cave: how many tunnels run out of its chamber, at least and at most more; in how many straight lengths each
+     * winds; how far, in radians, each strays from an even spread round the chamber; how far it reaches at least, as a
+     * share of the radius; how wide a tunnel is, at least and at most more; how far it wanders aside and up or down,
+     * as shares of the radius and of the depth; how much flatter than round it is; its chamber, as a share of the
+     * radius, at least so many blocks and at most a share of the radius, how high for its width and how much of it
+     * lies under its middle; how deep it lies at least; its crack, how wide either way and how long for the chamber;
+     * how a mouth rises as it nears its end; and how far over the world's floor nothing is hollowed.
+     */
+    private static final int CAVE_TUNNELS = 3;
+    private static final int CAVE_MORE_TUNNELS = 3;
+    private static final int CAVE_LENGTHS = 6;
+    private static final double CAVE_SPREAD = 0.4;
+    private static final double CAVE_LEAST_REACH = 0.6;
+    private static final double CAVE_BORE = 1.8;
+    private static final double CAVE_MORE_BORE = 1.4;
+    private static final double CAVE_WANDER = 0.12;
+    private static final double CAVE_DRIFT = 0.3;
+    private static final double CAVE_FLAT = 0.8;
+    private static final double CHAMBER_SHARE = 0.22;
+    private static final int CHAMBER_LEAST = 4;
+    private static final double CHAMBER_MOST = 0.6;
+    private static final double CHAMBER_HEIGHT = 0.6;
+    private static final double CHAMBER_FLOOR = 0.5;
+    private static final int CAVE_LEAST_DEPTH = 8;
+    private static final double CRACK_HALF = 1.0;
+    private static final double CRACK_LENGTH = 0.7;
+    private static final double MOUTH_RISE = 1.5;
+    private static final double MOUTH_SINK = 0.4;
+    private static final int FLOOR_KEPT = 4;
+    /*
+     * A pit's chamber, as wide for the shaft's radius and as high, at least so many blocks; how ragged its rim is, as
+     * a share of the radius, and the step round it, how far out for the rim and how deep; and the rubble under the
+     * shaft, as far out and as high for its radius.
+     */
+    private static final double PIT_ROOM = 2.5;
+    private static final double PIT_ROOM_HEIGHT = 1.2;
+    private static final int PIT_LEAST_ROOM_HEIGHT = 3;
+    private static final double PIT_RAGGED = 0.3;
+    private static final double PIT_STEP = 1.35;
+    private static final int PIT_STEP_DEPTH = 2;
+    private static final double PIT_RUBBLE_REACH = 1.5;
+    private static final double PIT_RUBBLE_HEIGHT = 1.2;
     private static final double CHIMNEY_HOLLOW = 0.75;
     private static final int CHIMNEY_HOLLOW_DEPTH = 2;
     private static final int MOUND_STEP = 3;
@@ -121,6 +174,13 @@ public final class LandformPainter {
         /* A terraced apron's lobes, each its phase round it, and the phases its pools' edges wander by. */
         private final double[] lobes;
         private final double[] wander;
+        /*
+         * A cave's tunnels, each a line of points out from its middle, across and along as shares of its radius and up
+         * or down as a share of its depth; how wide each is; and which way its crack runs.
+         */
+        private final double[][][] tunnels;
+        private final double[] bores;
+        private final double crack;
 
         private Column(final WorldGenLevel level, final LandformConfig config, final LandformField.Instance one,
                        final int base) {
@@ -143,6 +203,26 @@ public final class LandformPainter {
                 this.lobes[k] = random.nextDouble() * 2 * Math.PI;
             }
             this.wander = new double[] {random.nextDouble() * 2 * Math.PI, random.nextDouble() * 2 * Math.PI};
+            final int count = CAVE_TUNNELS + random.nextInt(CAVE_MORE_TUNNELS);
+            this.tunnels = new double[count][CAVE_LENGTHS + 1][];
+            this.bores = new double[count];
+            // A tunnel's end stops its widest bore short of the radius, so no cave reaches past its kind's reach.
+            final double inside = Math.max(0, 1 - (CAVE_BORE + CAVE_MORE_BORE) / one.radius());
+            for (int k = 0; k < count; k++) {
+                final double angle = 2 * Math.PI * k / count + (random.nextDouble() * 2 - 1) * CAVE_SPREAD;
+                final double reach = (CAVE_LEAST_REACH + random.nextDouble() * (1 - CAVE_LEAST_REACH)) * inside;
+                final double phase = random.nextDouble() * 2 * Math.PI;
+                final double drift = (random.nextDouble() * 2 - 1) * CAVE_DRIFT;
+                this.bores[k] = CAVE_BORE + random.nextDouble() * CAVE_MORE_BORE;
+                for (int i = 0; i <= CAVE_LENGTHS; i++) {
+                    final double t = (double) i / CAVE_LENGTHS;
+                    final double out = reach * t;
+                    final double aside = Math.sin(t * 2 * Math.PI + phase) * CAVE_WANDER * t;
+                    this.tunnels[k][i] = new double[] {out * Math.cos(angle) - aside * Math.sin(angle),
+                            out * Math.sin(angle) + aside * Math.cos(angle), drift * t};
+                }
+            }
+            this.crack = random.nextDouble() * Math.PI;
         }
 
         private void paint(final int x, final int z, final int ground) {
@@ -188,6 +268,9 @@ public final class LandformPainter {
                 case SPIDER -> spider(x, z, ground, d, r);
                 case RIDGES -> ridges(x, z, ground, d, r, tall);
                 case LAYERED_MOUND -> layeredMound(x, z, ground, d, r, tall);
+                case CAVE -> cave(x, z, ground, d, r, tall);
+                case GROTTO -> grotto(x, z, ground, r, tall);
+                case PIT -> pit(x, z, ground, d, r, tall);
             }
             settle(x, z, ground);
         }
@@ -367,25 +450,185 @@ public final class LandformPainter {
             liquid(x, z, floor + 1, surface);
         }
 
-        /* A lava tube is as wide as its height says, at least a block either way, and lies as deep under the ground. */
+        /*
+         * A lava tube is as wide as its height says, at least a block either way, and lies as deep under the ground,
+         * walled all round in the special, the lava that set round it, whatever rock it runs through. Its roof has
+         * fallen in at its middle, and every so many blocks along it by chance: a skylight open to the sky, its rubble
+         * of the scatter heaped on the tube's floor under it, where the light falls.
+         */
         private void tube(final int x, final int z, final int ground, final double r, final double tall) {
             final double along = this.one.along(x, z);
             final double across = this.one.across(x, z);
             final int bore = Math.max(1, (int) Math.round(tall / 2));
-            if (Math.abs(along) > r || Math.abs(across) > bore) {
+            final int wall = bore + TUBE_WALL;
+            if (Math.abs(along) > r || Math.abs(across) > wall) {
                 return;
             }
             final int middle = ground - 2 * bore;
+            final int outer = (int) Math.floor(Math.sqrt(wall * wall - across * across));
+            fill(x, z, middle - outer, Math.min(ground - 1, middle + outer), this.config.special());
+            if (Math.abs(across) >= bore) {
+                return;
+            }
             final int half = (int) Math.floor(Math.sqrt(bore * bore - across * across));
             if (half <= 0) {
                 return;
             }
-            fill(x, z, middle - half + 1, middle + half, Blocks.CAVE_AIR.defaultBlockState());
-            put(x, middle - half, z, this.config.special());
-            final int stretch = (int) Math.floor(along / SKYLIGHT_SPACING);
-            if (Math.abs(across) < 1 && chance(stretch, 0) < SKYLIGHT) {
+            final int floor = middle - half;
+            fill(x, z, floor + 1, middle + half, Blocks.CAVE_AIR.defaultBlockState());
+            final int which = (int) Math.round(along / SKYLIGHT_EVERY);
+            if (which != 0 && chance(which, 0) >= SKYLIGHT) {
+                return;
+            }
+            final double fromLight = Math.hypot(along - which * SKYLIGHT_EVERY, across);
+            if (fromLight < Math.max(SKYLIGHT_LEAST, bore * SKYLIGHT_WIDTH)) {
                 fill(x, z, middle + half + 1, ground, Blocks.AIR.defaultBlockState());
             }
+            final int heap = (int) Math.round(LandformShapes.heap(fromLight, bore * RUBBLE_REACH,
+                    bore * RUBBLE_HEIGHT));
+            if (heap > 0) {
+                fill(x, z, floor + 1, floor + heap, this.config.scatter());
+            }
+        }
+
+        /*
+         * A cave lies under the ground at its middle, its chamber the deepest of it: a crack opens over the chamber to
+         * the sky, and its tunnels run out, rising or falling a little, roofed by a block at least, coming out where
+         * they meet a steep slope or a wall; the first rises as it goes and opens on the ground at its end, wherever
+         * the ground stands there.
+         */
+        private void cave(final int x, final int z, final int ground, final double d, final double r,
+                          final double tall) {
+            final double depth = Math.max(CAVE_LEAST_DEPTH, tall);
+            final double deep = this.base - depth;
+            final double room = Math.min(r * CHAMBER_MOST, Math.max(CHAMBER_LEAST, r * CHAMBER_SHARE));
+            final double roof = LandformShapes.chamber(d, room, room * CHAMBER_HEIGHT);
+            if (roof > 0) {
+                hollow(x, z, deep - roof * CHAMBER_FLOOR, deep + roof, ground - 1);
+            }
+            final double dx = x - this.one.x();
+            final double dz = z - this.one.z();
+            final double along = dx * Math.cos(this.crack) + dz * Math.sin(this.crack);
+            final double across = -dx * Math.sin(this.crack) + dz * Math.cos(this.crack);
+            if (Math.abs(across) <= CRACK_HALF && Math.abs(along) < room * CRACK_LENGTH) {
+                hollow(x, z, deep, ground, ground);
+            }
+            for (int k = 0; k < this.tunnels.length; k++) {
+                final double[] near = nearest(this.tunnels[k], dx / r, dz / r);
+                final double bore = this.bores[k];
+                final double half = LandformShapes.chamber(near[0] * r, bore, bore * CAVE_FLAT);
+                if (half <= 0) {
+                    continue;
+                }
+                final double level = deep + near[2] * depth;
+                if (k == 0) {
+                    final double rise = Math.pow(near[1], MOUTH_RISE);
+                    final double centre = level + (ground - bore * CAVE_FLAT * MOUTH_SINK - level) * rise;
+                    hollow(x, z, centre - half, centre + half, ground);
+                } else {
+                    hollow(x, z, level - half, level + half, ground - 1);
+                }
+            }
+        }
+
+        /*
+         * Grottos run out from the middle a block over its ground, the cave's tunnels, each climbing as it goes by as
+         * much as its drift says, up to the landform's height at its end; hollowed only where they run through rock,
+         * roofed by a block at least, so each opens in a face it meets, a mesa's, a butte's, a mound's, at its foot or
+         * up it, and nothing is hollowed under the open ground.
+         */
+        private void grotto(final int x, final int z, final int ground, final double r, final double tall) {
+            final double dx = x - this.one.x();
+            final double dz = z - this.one.z();
+            for (int k = 0; k < this.tunnels.length; k++) {
+                final double[] near = nearest(this.tunnels[k], dx / r, dz / r);
+                final double bore = this.bores[k];
+                final double half = LandformShapes.chamber(near[0] * r, bore, bore * CAVE_FLAT);
+                if (half <= 0) {
+                    continue;
+                }
+                final double level = this.base + 1 + bore * CAVE_FLAT + tall * Math.abs(near[2]) / CAVE_DRIFT;
+                hollow(x, z, level - half, level + half, ground - 1);
+            }
+        }
+
+        /*
+         * A pit's shaft runs from the ground down into a domed chamber at its depth, wider than the shaft, its floor
+         * level; its rim broke away as the roof fell, its outline ragged and a step round it; the rubble of the roof
+         * lies heaped on the floor under the shaft, the special lining the floor where it is not air.
+         */
+        private void pit(final int x, final int z, final int ground, final double d, final double r,
+                         final double tall) {
+            final double room = r * PIT_ROOM;
+            if (d >= room) {
+                return;
+            }
+            final int floor = this.base - (int) Math.round(Math.max(PIT_LEAST_ROOM_HEIGHT * 2, tall));
+            final double high = Math.max(PIT_LEAST_ROOM_HEIGHT, r * PIT_ROOM_HEIGHT);
+            final double edge = r * (1 + PIT_RAGGED * swell(x, z));
+            final boolean shaft = d < edge;
+            hollow(x, z, floor, shaft ? ground : floor + LandformShapes.chamber(d, room, high),
+                    shaft ? ground : ground - 1);
+            if (!shaft && d < edge * PIT_STEP) {
+                hollow(x, z, ground - PIT_STEP_DEPTH + 1, ground, ground);
+            }
+            if (!this.config.special().isAir()) {
+                put(x, floor - 1, z, this.config.special());
+            }
+            final int heap = (int) Math.round(LandformShapes.heap(d, r * PIT_RUBBLE_REACH, r * PIT_RUBBLE_HEIGHT));
+            if (heap > 0) {
+                fill(x, z, floor, floor + heap - 1, this.config.scatter());
+            }
+        }
+
+        /*
+         * How far an outline swells out or in at the column's bearing from the middle, from -1 to 1: a few lobes of
+         * the landform's own, as a spring's terraces grew where the water ran or a pit's rim broke away.
+         */
+        private double swell(final int x, final int z) {
+            final double angle = Math.atan2(z - this.one.z(), x - this.one.x());
+            double swell = 0;
+            for (int k = 0; k < TERRACE_LOBES; k++) {
+                swell += Math.sin((k + 2) * angle + this.lobes[k]) / TERRACE_LOBES;
+            }
+            return swell;
+        }
+
+        /*
+         * Hollows the column with cave air from {@code from} up to {@code to}, no higher than {@code ceiling}, and
+         * never into the few blocks over the world's floor.
+         */
+        private void hollow(final int x, final int z, final double from, final double to, final int ceiling) {
+            final int low = Math.max(this.level.getMinBuildHeight() + FLOOR_KEPT, (int) Math.round(from));
+            final int high = Math.min(ceiling, (int) Math.round(to));
+            fill(x, z, low, high, Blocks.CAVE_AIR.defaultBlockState());
+        }
+
+        /*
+         * The point of the line {@code points} nearest {@code px, pz}: how far it lies from it, how far along the line
+         * it is, from 0 to 1, and the line's rise there.
+         */
+        private static double[] nearest(final double[][] points, final double px, final double pz) {
+            double best = Double.MAX_VALUE;
+            double along = 0;
+            double rise = 0;
+            final int lengths = points.length - 1;
+            for (int i = 0; i < lengths; i++) {
+                final double[] a = points[i];
+                final double[] b = points[i + 1];
+                final double ex = b[0] - a[0];
+                final double ez = b[1] - a[1];
+                final double span = ex * ex + ez * ez;
+                final double u = span == 0 ? 0
+                        : Math.max(0, Math.min(1, ((px - a[0]) * ex + (pz - a[1]) * ez) / span));
+                final double far = Math.hypot(px - (a[0] + u * ex), pz - (a[1] + u * ez));
+                if (far < best) {
+                    best = far;
+                    along = (i + u) / lengths;
+                    rise = a[2] + u * (b[2] - a[2]);
+                }
+            }
+            return new double[] {best, along, rise};
         }
 
         /* A geyser's vent goes down as deep as its height says, at least two blocks. */
@@ -451,12 +694,7 @@ public final class LandformPainter {
          */
         private void terraces(final int x, final int z, final int ground, final double d, final double r,
                               final double tall) {
-            final double angle = Math.atan2(z - this.one.z(), x - this.one.x());
-            double swell = 0;
-            for (int k = 0; k < TERRACE_LOBES; k++) {
-                swell += Math.sin((k + 2) * angle + this.lobes[k]) / TERRACE_LOBES;
-            }
-            final double at = d / (1 + TERRACE_LOBE * swell) + TERRACE_WANDER
+            final double at = d / (1 + TERRACE_LOBE * swell(x, z)) + TERRACE_WANDER
                     * Math.sin(x * WANDER_WAVE + this.wander[0]) * Math.cos(z * WANDER_WAVE + this.wander[1]);
             if (at >= r || d >= r * (1 + TERRACE_LOBE)) {
                 return;

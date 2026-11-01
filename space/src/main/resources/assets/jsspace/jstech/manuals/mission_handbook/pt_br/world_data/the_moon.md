@@ -67,10 +67,16 @@ A gravidade é uma fração da força do Overworld. A hora segue a longitude, co
 
 - Mar: planícies de lava antiga, baixas e escuras. Regolito dos Mares sobre uma camada grossa de Basalto dos Mares, o basalto nu nas encostas íngremes e as suas pedras espalhadas. As crateras são menos numerosas e menores que as das terras altas, com bordas do basalto que quebraram.
 - Rima: um mar cortado por canais estreitos e sinuosos, as calhas deixadas por rios de lava cujo teto desabou.
-- Claraboia de Tubo de Lava: um mar sobre tubos de lava, túneis com o chão de basalto dos mares, abertos para o céu onde o teto desabou.
+- Claraboia de Tubo de Lava: um mar sobre tubos de lava, túneis revestidos de basalto dos mares, abertos para o céu onde o teto desabou.
 - Terras Altas: a terra clara e cheia de crateras em todo o resto, cratera sobre cratera. Regolito das Terras Altas sobre Anortosito, a rocha nua nas encostas íngremes e as suas pedras espalhadas.
 - Cratera Jovem: uma cratera recente de borda afiada, com o material ejetado e os raios claros de regolito das terras altas por cima do que atingiram.
 - Crateras Polares: crateras em volta dos polos cujo fundo nunca vê o Sol, com Regolito Gelado no fundo.
+
+### Cavernas
+
+- Cavernas serpenteiam debaixo de todo o chão da Lua: uma câmara com túneis saindo dela, uma fenda sobre a câmara aberta para o céu e uma boca onde um túnel sai, numa encosta ou numa planície.
+- Tubos de lava sob os mares, com até vinte blocos de largura e revestidos de Basalto dos Mares, uma fileira de claraboias abertas no teto, o regolito que caiu amontoado debaixo de cada uma, na luz.
+- Poços nos mares, como o do Mare Tranquillitatis: aberturas com a borda quebrada em degraus, que descem até uma cavidade sob o basalto; menores nas terras altas.
 
 ## O que pode dar errado
 

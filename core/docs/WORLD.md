@@ -767,7 +767,7 @@ public static final Landforms.LandformSpec CRATERS = Landforms.landform(rl("crat
 | `rille` | A narrow channel winding tightly, a smooth trough, as a lava channel whose roof fell in. | floor | | | |
 | `river` | A shallow winding channel of any liquid. | bed | | liquid | what it freezes to |
 | `lake` | A bowl of any liquid. | bed | bank | liquid | what it freezes to |
-| `lava_tube` | A tunnel under the ground, open to the sky here and there. | | | its floor | |
+| `lava_tube` | A tunnel under the ground along a line, walled two blocks thick in the lava that set round it whatever rock it runs through, its roof fallen in at its middle and every so many blocks by chance: skylights open to the sky, the rubble heaped as a cone on the floor under each. | | | its wall | rubble |
 | `ice_sheet` | A sheet of ice over the land. | snow on top | | ice | |
 | `glacier` | A tongue of ice down the land, thick near its head and thin at its snout, cracked by crevasses down its lower half. | snow on top | | ice | moraines along its edges and before its snout |
 | `geyser` | A mound round a vent down to water over magma, which bubbles. | mound's top | mound | water | magma |
@@ -779,9 +779,13 @@ public static final Landforms.LandformSpec CRATERS = Landforms.landform(rl("crat
 | `spider` | Troughs cut from a pit at its middle, branching outwards as legs, and a fan laid downwind of the pit along its turn, as the spiders under Mars' seasonal ice. | troughs' floors | | | fan |
 | `ridges` | Straight ridges crossing it at a few angles, sloping to the ground either side, as Inca City. | crests and slopes | body | | |
 | `layered_mound` | A broad mound in bands, climbing in steps three blocks high, each band set back from the one under it (`bands(...)`), as Mount Sharp. | top | | | |
+| `cave` | A domed chamber under its middle, a crack over it open to the sky, and three to five tunnels winding out from it, rising or falling a little, roofed, coming out where they meet a steep slope or a wall; the first rises as it goes and opens on the ground at its end as a mouth, wherever the ground stands there. Hollow with cave air, the rock left as it was. | | | | |
+| `grotto` | Grottos in whatever stands over the ground round its middle, a mesa, a butte, a mound's flank: a cave's tunnels running out a block over the ground at its middle, some climbing as they go up to its height, hollowed only where they run through rock, so each opens in a face it meets, at its foot or up it. It is laid on the ground as it stands, so it opens in what other landforms raised: lay it in a later step than they are (`step(...)`). | | | | |
+| `pit` | A shaft down into a domed chamber two and a half times as wide, its rim ragged where it broke away and stepped down round it, the rubble of its roof heaped under the shaft, as the pits of the Moon's maria. | | | its floor, unless air | rubble |
 
 `height` is a share of the radius: a crater's depth, a mesa's height, a lava tube's bore, a river's depth, a
-geyser's vent, a glacier's thickness at its head. A river's, a canyon's, a rille's or a glacier's radius is half its
+geyser's vent, a glacier's thickness at its head, how deep a cave's chamber lies (8 blocks at the least), how high
+a grotto climbs, how deep a pit goes. A river's, a canyon's, a rille's or a glacier's radius is half its
 length; a glacier is as wide as a third of its length. A lake's or a river's liquid freezes where it is
 colder than `liquidRange(freezes, boils)` says, in kelvin, and boils away where it is hotter; water's 273.15 and
 373.15 are the default, and a lake of lava, of brine or of liquid methane says its own.
@@ -791,7 +795,17 @@ holding at most one, at a place, size and turn of its own. So any chunk finds ev
 without asking another, and a landform of any size is laid a chunk at a time, on any thread, the same every time
 for the same seed. Each kind is laid in the chunks of its biomes; `middle(tag)` lays only those whose middle lies in
 the tag's biomes, drawn whole into every biome of `biomes(...)` they reach, so one at a biome's edge is not cut
-off there.
+off there. `within(map, world)` lays only those whose middle lies where a round world's map is white, at the size
+that world has on the server: a region a map lays, as a planet's volcanic provinces, whatever biomes lie there.
+
+```java
+public static final Landforms.LandformSpec TUBES = Landforms.landform(rl("tubes"), LandformKind.LAVA_TUBE)
+        .cell(768).chance(0.7).radius(120, 300).height(0.06)
+        .special(() -> Blocks.BASALT).scatter(() -> Blocks.GRAVEL)
+        .biomes(ALL_MY_PLANET_BIOMES)
+        .within(rl("my_planet/volcanic"), rl("my_planet"))   // only in its volcanic regions
+        .declare();
+```
 
 `LandformPainter.paint(level, config, instance, base, heightmap, x0, z0, x1, z1)` lays one where code wants it, a
 command or a test.

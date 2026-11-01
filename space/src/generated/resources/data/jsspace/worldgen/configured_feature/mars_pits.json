@@ -1,0 +1,18 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 320,
+    "chance": 0.4,
+    "height": 4.0,
+    "kind": "pit",
+    "largest": 4,
+    "salt": 1726387109,
+    "scatter": {
+      "Name": "jsspace:martian_regolith"
+    },
+    "smallest": 2,
+    "special": {
+      "Name": "minecraft:air"
+    }
+  }
+}

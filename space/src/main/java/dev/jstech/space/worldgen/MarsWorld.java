@@ -29,6 +29,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
+import net.minecraft.world.level.levelgen.GenerationStep;
 
 /**
  * Mars' ground, as its sphere shows it from orbit: the dichotomy between the low smooth north and the old cratered
@@ -209,6 +210,32 @@ public final class MarsWorld {
                     LandformKind.RIDGES).cell(512).chance(0.5).radius(60, 160).height(0.04)
             .surface(SpaceRocks.MARTIAN_REGOLITH).fill(SpaceRocks.MARTIAN_BASALT).biomes(MarsBiomes.SPIDERS)
             .declare();
+    /**
+     * Lava tubes in Tharsis and the other volcanic regions, walled in basalt, a row of skylights open in their
+     * roofs, the red regolith that fell heaped under each.
+     */
+    public static final Landforms.LandformSpec LAVA_TUBES = Landforms.landform(id("mars_lava_tubes"),
+                    LandformKind.LAVA_TUBE).cell(768).chance(0.7).radius(120, 300).height(0.06)
+            .special(SpaceRocks.MARTIAN_BASALT).scatter(SpaceRocks.MARTIAN_REGOLITH).biomes(MarsBiomes.CAVES)
+            .within(id("mars/volcanic"), dimension()).declare();
+    /**
+     * Grottos in the canyons' walls, the faces of the chaos' blocks and of the layered mounds and buttes, at their feet
+     * and up them: laid after the other landforms, so the blocks and mounds they open in already stand.
+     */
+    public static final Landforms.LandformSpec CANYON_GROTTOS = Landforms.landform(id("mars_canyon_grottos"),
+                    LandformKind.GROTTO).cell(48).chance(0.9).radius(24, 40).height(0.25).biomes(MarsBiomes.CAVES)
+            .middle(MarsBiomes.GROTTOS).step(GenerationStep.Decoration.LAKES).declare();
+    /** Tunnels in the caps' water ice under the frost, dark deep inside, opening where they come out. */
+    public static final Landforms.LandformSpec ICE_CAVES = Landforms.landform(id("mars_ice_caves"),
+                    LandformKind.CAVE).cell(128).chance(0.6).radius(24, 48).height(0.3).biomes(MarsBiomes.CAVES)
+            .middle(MarsBiomes.CAPS).declare();
+    /** Caves under all of Mars' ground, chambers and winding tunnels, many open to the sky. */
+    public static final Landforms.LandformSpec CAVES = Landforms.landform(id("mars_caves"), LandformKind.CAVE)
+            .cell(112).chance(0.55).radius(24, 48).height(0.5).biomes(MarsBiomes.CAVES).declare();
+    /** Small pits anywhere on Mars, opening on small hollows, the regolith that fell heaped under them. */
+    public static final Landforms.LandformSpec PITS = Landforms.landform(id("mars_pits"), LandformKind.PIT)
+            .cell(320).chance(0.4).radius(2, 4).height(4).special(() -> Blocks.AIR)
+            .scatter(SpaceRocks.MARTIAN_REGOLITH).biomes(MarsBiomes.CAVES).declare();
 
     /** Martian Basalt in columns on the scarps and walls, pocked by gas on the tops of flows, faceted below. */
     public static final RockVariations.Spec BASALT = RockVariations.rock(id("mars_basalt_variations"),

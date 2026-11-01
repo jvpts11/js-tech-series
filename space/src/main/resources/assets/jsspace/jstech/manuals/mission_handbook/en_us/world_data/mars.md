@@ -84,6 +84,14 @@ Gravity is a share of the Overworld's pull. Each season is a quarter of the year
 
 Mars' zones lie where they lie on the real planet, and inside each its biomes come and go every few thousand blocks: the south strewn with hematite here, an old lake there, dark dunes elsewhere.
 
+### Caves
+
+- Caves wind under all of Mars' ground: a chamber with tunnels running out of it, a crack over the chamber open to the sky, and a mouth where one tunnel comes out, in a slope, a plain or a wall.
+- Lava tubes in Tharsis and the other volcanic regions, walled in Martian Basalt, under a row of skylights, the red regolith that fell heaped under each in the light.
+- Grottos in the faces of the chaos' blocks, the layered mounds and the buttes of Valles Marineris and the other canyons, at their feet and up them.
+- Tunnels in the polar caps' Water Ice, under the frost, dark deep inside.
+- Small pits anywhere, round shafts down to small hollows.
+
 ## What can go wrong
 
 > [!WARNING]
