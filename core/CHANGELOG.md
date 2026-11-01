@@ -1861,9 +1861,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ### Changed
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
-  counter and the pocket dosimeter are drawn in three dimensions in the hand and on the ground, each held as its own
-  is: the saw and the wrench as tools, the extinguishers and the Geiger counter carried by their handles, the
-  instruments upright, their screens turned to the player. Their icons stay, as bright in a slot as their textures,
+  counter and the pocket dosimeter are drawn in three dimensions in the hand and on the ground, each held as the game
+  holds an item of its kind: the saw and the wrench as its axe is, the saw's teeth forward; the instruments in front
+  of the hand as its clock is, their screens turned to the player; the extinguishers and the Geiger counter carried by
+  their handles. Their icons stay, as bright in a slot as their textures,
   the physics tool's too; the pocket dosimeter is the HUD's yellow device everywhere now, its icon too.
 - A halo is the glare the eye sees: drawn whole over the picture, never cut by the floor a lamp stands on or
   the wall beside it, and fading, smoothly, only as much as the blocks between hide the light itself, glass hiding

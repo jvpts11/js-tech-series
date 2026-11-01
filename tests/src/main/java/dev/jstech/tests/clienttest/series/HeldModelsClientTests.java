@@ -39,12 +39,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * The tools and instruments drawn in three dimensions in the hand: each of the fourteen held, read off the screen
- * against the empty hand, and seen from the player's eye and from in front of them, for the eye to judge its grip;
- * and all of them laid on the ground.
+ * against the empty hand, and seen from the player's eye and from in front of them beside the game's own iron axe and
+ * clock, held the two ways they are, for the eye to judge its grip; all of them laid on the ground; and their icons in
+ * a slot as bright as their textures.
  */
 public final class HeldModelsClientTests {
 
@@ -82,6 +84,8 @@ public final class HeldModelsClientTests {
             FireSafety.FOAM_EXTINGUISHER, FireSafety.CARBON_DIOXIDE_EXTINGUISHER, FireSafety.DRY_POWDER_EXTINGUISHER,
             NetworkProbe.ITEM, SignalProbe.ITEM, ClampMeter.ITEM, HazardDevices.GEIGER_COUNTER,
             HazardDevices.POCKET_DOSIMETER);
+    /* The game's own items held the two ways the tools are: a tool on the axe line, a plain item as a clock is. */
+    private static final List<Item> REFERENCES = List.of(Items.IRON_AXE, Items.CLOCK);
 
     private HeldModelsClientTests() {
     }
@@ -99,6 +103,16 @@ public final class HeldModelsClientTests {
                 .thenAwaitLandDrawn(WAIT)
                 .then(0, () -> ctx.lookAt(ctx.player().getEyePosition().add(0, 0, -1)))
                 .then(RAISED, () -> empty[0] = hand(ctx));
+        // The game's own iron axe and clock first, held the game's way, for the eye to compare the grips with.
+        for (final Item reference : REFERENCES) {
+            final String name = BuiltInRegistries.ITEM.getKey(reference).getPath();
+            ctx.thenServer(0, level -> ctx.hold(new ItemStack(reference)))
+                    .thenWaitUntil(() -> ctx.player().getMainHandItem().is(reference), WAIT, name + " in the hand")
+                    .thenScreenshot(RAISED, "held-" + name)
+                    .then(0, () -> ctx.mc().options.setCameraType(CameraType.THIRD_PERSON_FRONT))
+                    .thenScreenshot(3, "held-" + name + "-front")
+                    .then(0, () -> ctx.mc().options.setCameraType(CameraType.FIRST_PERSON));
+        }
         for (final Supplier<? extends Item> held : HELD) {
             final String name = BuiltInRegistries.ITEM.getKey(held.get()).getPath();
             ctx.thenServer(0, level -> ctx.hold(new ItemStack(held.get())))
