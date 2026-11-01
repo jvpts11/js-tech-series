@@ -25,8 +25,8 @@ import net.minecraft.world.entity.EquipmentSlot;
  * @param name   the key of its name in the language files
  * @param kind   what it does
  * @param piece  the piece of a suit it fits
- * @param amount how much: the share of the tanks it adds, of the radiation it stops, the light it gives, of the glare
- *               it cuts
+ * @param amount how much: the share of the tanks it adds, of the radiation it stops, the light it gives, how strongly a
+ *               visor tints the view through it
  */
 public record SuitModule(String name, Kind kind, EquipmentSlot piece, double amount) {
 
@@ -53,10 +53,10 @@ public record SuitModule(String name, Kind kind, EquipmentSlot piece, double amo
         /** Lights the way: its amount the light it gives, 0 to 15. */
         LIGHT("light"),
         /**
-         * Cuts the Sun's glare where no air softens it, a visor lowered over the helmet's: its amount the share it
-         * cuts, 1 for all of it.
+         * A visor lowered over the helmet's own, worn for its look, as Apollo's crews wore their gold one: the helmet
+         * shows it lowered, and the view through it takes its tint, its amount how strongly, 0 to 1.
          */
-        GLARE("glare");
+        VISOR("visor");
 
         public static final Codec<Kind> CODEC = StableCodecs.byName(Kind.class);
 

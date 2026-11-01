@@ -11,7 +11,6 @@ import dev.jstech.core.client.sky.SkyPlace;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.sky.Skies;
 import dev.jstech.space.JsSpace;
-import dev.jstech.space.client.life.SunGlare;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
 import dev.jstech.space.worldgen.MoonWorld;
@@ -40,8 +39,8 @@ import org.joml.Vector3f;
  * The lunar suit on a player's game: worn on a stand, each of its four pieces is drawn, the helmet, the suit with its
  * chest module, the trousers and the boots, where the stand alone shows none of them; the gold visor, fitted, is drawn
  * gold over the smoked one. Worn by the player, it covers their hands and chin; in first person their arm is drawn in
- * its sleeve. On the Moon at noon, looking at the Sun whites the view out, and the gold visor lowered
- * cuts it to a gold tint.
+ * its sleeve. On the Moon at noon, looking at the Sun leaves the black sky round it black, and the gold visor lowered
+ * tints the view a little gold.
  */
 public final class LunarSuitClientTests {
 
@@ -62,13 +61,12 @@ public final class LunarSuitClientTests {
     private static final int DRAWN = 40;
     private static final int GOLDEN = 40;
     private static final int BRIGHTER = 40;
-    /* The patches read, in scaled pixels either way; the glare's read off the Sun's disc. */
+    /* The patches read, in scaled pixels either way; the sky's read off the Sun's disc. */
     private static final int PATCH = 3;
-    private static final int GLARE_PATCH = 6;
+    private static final int SKY_PATCH = 6;
     private static final int OFF_THE_DISC = 40;
-    /* How white the glare makes the view, and how dark it stays behind the gold visor. */
-    private static final int WHITE = 190;
-    private static final int DIMMED = 100;
+    /* How dark the black sky by the Sun stays, and how much redder than blue the gold visor makes it. */
+    private static final int DARK = 100;
     private static final int TINTED = 8;
     private static final long NOON = 6_000L;
     private static final int ABOVE = 3;
@@ -222,8 +220,9 @@ public final class LunarSuitClientTests {
     }
 
     @ClientTest(timeoutTicks = 2400)
-    public static void sunGlare_whitesOutTheViewOnTheMoonAndTheGoldVisorCutsIt(final ClientTestContext ctx) {
+    public static void sun_onTheMoonLeavesTheViewClearAndTheGoldVisorTintsIt(final ClientTestContext ctx) {
         final boolean[] daylight = new boolean[1];
+        final int[][] clear = new int[1][];
         ctx.afterTest(() -> ctx.server().execute(() -> {
             ctx.server().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(daylight[0], ctx.server());
             final ServerPlayer player = ctx.serverPlayer();
@@ -247,13 +246,13 @@ public final class LunarSuitClientTests {
                 .thenAwaitLandDrawn(ARRIVE)
                 .then(SETTLE, () -> lookAtTheSun(ctx))
                 .then(SETTLE, () -> {
-                    final double glare = SunGlare.glare(ctx.mc().level, ctx.mc().gameRenderer.getMainCamera());
-                    final int[] seen = mean(ctx, GLARE_PATCH, OFF_THE_DISC);
-                    ctx.assertTrue(glare > 0.9, "looking at the Sun in the Moon's vacuum, it glares: " + glare);
-                    ctx.assertTrue(seen[0] > WHITE && seen[1] > WHITE && seen[2] > WHITE,
-                            "and whites out the view: " + str(seen));
+                    final int[] seen = mean(ctx, SKY_PATCH, OFF_THE_DISC);
+                    clear[0] = seen;
+                    ctx.assertTrue(seen[0] < DARK && seen[1] < DARK && seen[2] < DARK,
+                            "looking at the Sun in the Moon's vacuum, the black sky round it stays black: "
+                                    + str(seen));
                 })
-                .thenScreenshot(0, "moon-sun-glare")
+                .thenScreenshot(0, "moon-sun")
                 .thenServer(0, level -> {
                     final ItemStack helmet = new ItemStack(LunarSuit.HELMET.get());
                     LifeSupport.fit(level, helmet, ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
@@ -262,10 +261,11 @@ public final class LunarSuitClientTests {
                 })
                 .then(SETTLE, () -> lookAtTheSun(ctx))
                 .then(SETTLE, () -> {
-                    final int[] seen = mean(ctx, GLARE_PATCH, OFF_THE_DISC);
-                    ctx.assertTrue(seen[0] < DIMMED && seen[1] < DIMMED && seen[2] < DIMMED,
-                            "the gold visor lowered cuts the glare: " + str(seen));
-                    ctx.assertTrue(seen[0] - seen[2] > TINTED, "and the view through it is gold: " + str(seen));
+                    final int[] seen = mean(ctx, SKY_PATCH, OFF_THE_DISC);
+                    ctx.assertTrue(seen[0] < DARK && seen[1] < DARK && seen[2] < DARK,
+                            "through the gold visor lowered the sky stays dark: " + str(seen));
+                    ctx.assertTrue(seen[0] - seen[2] > clear[0][0] - clear[0][2] + TINTED,
+                            "and is a little gold: " + str(seen) + " where it was " + str(clear[0]));
                 })
                 .thenScreenshot(0, "moon-sun-through-the-gold-visor");
     }

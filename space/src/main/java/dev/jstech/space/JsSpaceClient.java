@@ -25,7 +25,7 @@ import dev.jstech.space.client.launcher.LauncherDeckRenderer;
 import dev.jstech.space.client.life.LunarSuitClient;
 import dev.jstech.space.client.life.SuitControlsHud;
 import dev.jstech.space.client.life.SuitLamps;
-import dev.jstech.space.client.life.SunGlare;
+import dev.jstech.space.client.life.VisorTint;
 import dev.jstech.space.client.platform.LandingPlatformRenderer;
 import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.ship.FlightConsoleRenderer;
@@ -66,11 +66,11 @@ public final class JsSpaceClient {
         WideBackgrounds.declare(SKY, WIDE_SKY, WIDE_SKY_WIDTH, WIDE_SKY_HEIGHT);
         // The worlds of the Solar System's space, drawn as spheres in their places, and the Sun among the stars.
         SystemSpaceRenderer.listen(modEventBus);
-        // The lamps on suits' helmets, lighting the way; the lunar suit worn, drawn with its model; and the Sun's glare
-        // where no air softens it, which the gold visor cuts.
+        // The lamps on suits' helmets, lighting the way; the lunar suit worn, drawn with its model; and the view
+        // through a gold visor lowered over a helmet's.
         SuitLamps.listen();
         LunarSuitClient.listen(modEventBus);
-        SunGlare.listen(modEventBus);
+        VisorTint.listen(modEventBus);
         // The suit's controls on the HUD, stacked with the hazard devices, and up close on their key.
         SuitControlsHud.listen(modEventBus);
         // The target painted across a formed landing platform.

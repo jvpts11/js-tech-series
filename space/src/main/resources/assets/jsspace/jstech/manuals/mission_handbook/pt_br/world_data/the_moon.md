@@ -81,9 +81,6 @@ A gravidade é uma fração da força do Overworld. A hora segue a longitude, co
 > As chamas precisam de ar. Tochas, lanternas, velas e fogueiras só queimam numa sala selada com ar, gastando o oxigênio dela, e as fornalhas só queimam combustível onde um fogo poderia queimar. Ilumine a base com luzes que não queimam nada, como pedra luminosa ou lâmpada de redstone. As configurações do J's Space podem deixar tochas, lanternas, velas e fogueiras queimarem em qualquer lugar.
 
 > [!NOTE]
-> Sem ar para suavizá-lo, o brilho do Sol ofusca a vista quando você olha perto dele. Isso não machuca, e a Viseira Dourada baixada sobre o capacete corta o brilho.
-
-> [!NOTE]
 > Tudo o que vive lá cai pela força da Lua, {{jsspace:moon_gravity}}: um pulo leva você bem mais alto, e a descida é mais lenta.
 
 > [!NOTE]

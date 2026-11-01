@@ -30,18 +30,18 @@ public final class LunarSuitClient {
     public static void listen(final IEventBus modEventBus) {
         modEventBus.addListener(RegisterClientExtensionsEvent.class, event -> event.registerItem(
                 KitArmorModel.of(LunarSuit.MODEL.id())
-                        .shownWhile(LunarSuit.GOLD_VISOR_BONE, LunarSuitClient::glareCut).extensions(),
+                        .shownWhile(LunarSuit.GOLD_VISOR_BONE, LunarSuitClient::visorLowered).extensions(),
                 LunarSuit.HELMET.get(), LunarSuit.SUIT.get(), LunarSuit.TROUSERS.get(), LunarSuit.BOOTS.get()));
     }
 
-    /** Whether a module that cuts the Sun's glare is fitted to {@code piece}, as the gold visor is to a helmet. */
-    public static boolean glareCut(final ItemStack piece) {
+    /** Whether a visor is fitted to {@code piece}, lowered over its own, as the gold visor is to a helmet. */
+    public static boolean visorLowered(final ItemStack piece) {
         final ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return false;
         }
         for (final SuitModule module : LifeSupport.modules(level, piece)) {
-            if (module.kind() == SuitModule.Kind.GLARE) {
+            if (module.kind() == SuitModule.Kind.VISOR) {
                 return true;
             }
         }

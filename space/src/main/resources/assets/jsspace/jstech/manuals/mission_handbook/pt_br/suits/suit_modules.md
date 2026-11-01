@@ -17,11 +17,11 @@ Table: Os módulos
 | Oxigênio Extra | Traje Lunar | Uma segunda garrafa para a mochila: os tanques guardam metade a mais de ar. |
 | Colete Antirradiação | Traje Lunar | Um colete vestido por baixo do traje que barra metade da radiação do céu. |
 | Lâmpadas do Traje | Capacete Lunar | Duas lâmpadas nas laterais do capacete que iluminam o caminho à frente. |
-| Viseira Dourada | Capacete Lunar | Uma viseira banhada a ouro, baixada sobre a do capacete, que corta todo o ofuscamento do Sol. |
+| Viseira Dourada | Capacete Lunar | A viseira banhada a ouro dos capacetes da Apollo, baixada sobre a do capacete: a vista através dela fica um pouco dourada. |
 
 ## Para que serve
 
-Caminhadas mais longas, uma dose menor, luz no escuro e uma vista limpa perto do Sol. Onde nenhum ar o suaviza, na Lua e no espaço, olhar perto do Sol deixa a vista toda branca. O ofuscamento não faz mal; só cega.
+Caminhadas mais longas, uma dose menor e luz no escuro. A Viseira Dourada é pelo visual, como as tripulações da Apollo usavam a sua na Lua.
 
 ## Como conseguir
 

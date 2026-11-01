@@ -17,11 +17,11 @@ Table: The modules
 | Extra Oxygen | Lunar Suit | A second bottle for the pack: its tanks hold half as much air again. |
 | Radiation Vest | Lunar Suit | A vest worn under the suit that stops half the sky's radiation. |
 | Suit Lamps | Lunar Helmet | Two lamps on the helmet's sides that light the way ahead. |
-| Gold Visor | Lunar Helmet | A gold-coated visor, lowered over the helmet's own, that cuts all the Sun's glare. |
+| Gold Visor | Lunar Helmet | The gold-coated visor of Apollo's helmets, lowered over the helmet's own: the view through it is a little gold. |
 
 ## What it is for
 
-Longer walks, a smaller dose, light in the dark and a clear view near the Sun. Where no air softens it, on the Moon and in space, looking near the Sun whites out your view. The glare does no harm; it only blinds.
+Longer walks, a smaller dose and light in the dark. The Gold Visor is for the look of it, as Apollo's crews wore theirs on the Moon.
 
 ## How to get it
 

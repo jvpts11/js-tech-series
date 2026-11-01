@@ -42,7 +42,7 @@ import net.neoforged.neoforge.event.ItemStackedOnOtherEvent;
  * hold, each second of breathing spent from them, the only clock of a walk outside ({@link SuitAir}), and stand any
  * cold or heat within its range. The air left lives on the piece worn on the chest, which carries the tanks; only
  * refilling them gives it back. Modules fitted to the pieces add to the tanks, stop the sky's radiation, light the way
- * or cut the Sun's glare, and come back off the way a bundle gives back what it holds. And each world says its dangers,
+ * or lower a visor, and come back off the way a bundle gives back what it holds. And each world says its dangers,
  * and how much of the sky's radiation reaches its open ground.
  */
 public final class LifeSupport {

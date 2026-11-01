@@ -39,8 +39,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The lunar suit: its four pieces worn whole are a pressure suit with half an hour of air in its tanks, standing the
- * Moon's cold, and armour as leather is; modules fit it as any suit, the gold visor on the helmet alone, where it cuts
- * all the Sun's glare.
+ * Moon's cold, and armour as leather is; modules fit it as any suit, the gold visor on the helmet alone, a visor
+ * lowered over its own.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -52,7 +52,6 @@ public final class LunarSuitGameTests {
     private static final Vec3 HIGH = new Vec3(0.5, 100, 0.5);
     /* The armour its four pieces give, as leather's do. */
     private static final int ARMOUR = 7;
-    private static final double CLOSE = 1e-6;
 
     private LunarSuitGameTests() {
     }
@@ -91,7 +90,7 @@ public final class LunarSuitGameTests {
     }
 
     @GameTest(template = ARENA, batch = BATCH)
-    public static void goldVisor_fitsTheHelmetAloneAndCutsAllTheGlare(final GameTestHelper helper) {
+    public static void goldVisor_fitsTheHelmetAloneAsAVisorLowered(final GameTestHelper helper) {
         final Level level = helper.getLevel();
         final SpaceSuit suit = SpaceSuits.declared().get(LunarSuit.ID);
         final ItemStack helmet = new ItemStack(LunarSuit.HELMET.get());
@@ -99,8 +98,9 @@ public final class LunarSuitGameTests {
         helper.assertFalse(LifeSupport.fit(level, chest, module("gold_visor")), "the gold visor does not fit the suit");
         helper.assertTrue(LifeSupport.fit(level, helmet, module("gold_visor")), "it fits the helmet");
         final List<SuitModule> fitted = LifeSupport.modules(level, helmet);
-        helper.assertTrue(fitted.size() == 1 && fitted.getFirst().kind() == SuitModule.Kind.GLARE
-                && Math.abs(fitted.getFirst().amount() - 1) < CLOSE, "and cuts all the glare; " + fitted);
+        helper.assertTrue(fitted.size() == 1 && fitted.getFirst().kind() == SuitModule.Kind.VISOR
+                && fitted.getFirst().amount() > 0 && fitted.getFirst().amount() < 1,
+                "and is a visor lowered, the view through it tinted, never hidden; " + fitted);
         helper.assertTrue(LifeSupport.fit(level, chest, module("extra_oxygen")), "the extra oxygen fits the suit");
         helper.assertTrue(LifeSupport.capacity(level, chest, suit) == LunarSuit.AIR * 3 / 2,
                 "and holds half as much air again: " + LifeSupport.capacity(level, chest, suit));

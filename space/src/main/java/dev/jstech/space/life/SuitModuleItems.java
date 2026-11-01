@@ -19,8 +19,8 @@ import net.minecraft.world.entity.EquipmentSlot;
 /**
  * The suit modules of the skeleton, those the Moon and Mars call for: more air in the tanks, a vest against the sky's
  * radiation, as the AstroRad vest flew on Artemis I, lamps on the helmet to light the dark, and the gold visor of
- * Apollo's helmets against the Sun's glare where no air softens it. The rest come with the worlds that call for them.
- * They follow the suits in the tab's row of what keeps a crew alive.
+ * Apollo's helmets, worn for its look. The rest come with the worlds that call for them. They follow the suits in the
+ * tab's row of what keeps a crew alive.
  */
 public final class SuitModuleItems {
 
@@ -36,15 +36,15 @@ public final class SuitModuleItems {
     /** Two lamps on the helmet's sides, lighting the way ahead of whoever wears it. */
     public static final ItemEntry<SuitModuleItem> SUIT_LAMPS = SpaceContent.CONTENT.item("suit_lamps",
             SuitModuleItem::new).named("Suit Lamps").tab(LIFE_SUPPORT).register();
-    /** The gold-coated visor lowered over the helmet's own: it cuts all the Sun's glare. */
+    /** The gold-coated visor lowered over the helmet's own: the view through it is a little gold. */
     public static final ItemEntry<SuitModuleItem> GOLD_VISOR = SpaceContent.CONTENT.item("gold_visor",
             SuitModuleItem::new).named("Gold Visor").tab(LIFE_SUPPORT).register();
 
-    /* How much each gives: a share more air, the share of radiation stopped, the light given, the glare cut. */
+    /* How much each gives: a share more air, the share of radiation stopped, the light given, the visor's tint. */
     private static final double MORE_AIR = 0.5;
     private static final double STOPPED = 0.5;
     private static final double LIGHT = 14;
-    private static final double GLARE_CUT = 1;
+    private static final double GOLD_TINT = 0.14;
 
     private SuitModuleItems() {
     }
@@ -54,7 +54,7 @@ public final class SuitModuleItems {
         module("extra_oxygen", SuitModule.Kind.AIR, EquipmentSlot.CHEST, MORE_AIR);
         module("radiation_vest", SuitModule.Kind.RADIATION, EquipmentSlot.CHEST, STOPPED);
         module("suit_lamps", SuitModule.Kind.LIGHT, EquipmentSlot.HEAD, LIGHT);
-        module("gold_visor", SuitModule.Kind.GLARE, EquipmentSlot.HEAD, GLARE_CUT);
+        module("gold_visor", SuitModule.Kind.VISOR, EquipmentSlot.HEAD, GOLD_TINT);
     }
 
     private static void module(final String id, final SuitModule.Kind kind, final EquipmentSlot piece,

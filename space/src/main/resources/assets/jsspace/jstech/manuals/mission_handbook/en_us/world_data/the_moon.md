@@ -81,9 +81,6 @@ Gravity is a share of the Overworld's pull. The hour follows the longitude, as o
 > Flames need air. Torches, lanterns, candles and campfires burn only in a sealed room with air, using up its oxygen, and furnaces burn their fuel only where a fire could. Light a base with lights that burn nothing, such as glowstone or a redstone lamp. J's Space's settings can let torches, lanterns, candles and campfires burn anywhere.
 
 > [!NOTE]
-> With no air to soften it, the Sun's glare whites out your view when you look near it. It does no harm, and the Gold Visor lowered over the helmet cuts it.
-
-> [!NOTE]
 > Everything living there falls by the Moon's pull, {{jsspace:moon_gravity}}: a jump carries you far higher, and you come down slower.
 
 > [!NOTE]

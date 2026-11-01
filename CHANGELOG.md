@@ -398,8 +398,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `SuitModule`, a suit's module, what it does (more air, radiation stopped, light), the piece it fits and how much,
   registered in `SuitModules`; and `WorldDangers` lists each world's `WorldDanger`s. Each takes a data pack's files,
   `data/<namespace>/jsspace/suits/`, `suit_modules/` and `dangers/`. Experimental.
-- (Space) The Sun's glare: J's Space's API is at version 7. A suit module may cut the Sun's glare where no air
-  softens it, `SuitModule.Kind.GLARE`, its amount the share it cuts. Experimental.
+- (Space) Visors: J's Space's API is at version 7. A suit module may be a visor lowered over the helmet's own, worn
+  for its look, `SuitModule.Kind.VISOR`, its amount how strongly it tints the view through it. Experimental.
 - (Space) Rocket parts: J's Space's API is at version 8. `RocketPart` is a part of a rocket, what kind it is (an
   engine, a tank, a separation ring, a capsule and the rest), its diameter of 3, 5, 7 or 9 blocks and the one on its
   top, its height and whether it is built in layers, its mass, the propellant it holds, its engine's thrust and
@@ -2177,9 +2177,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   connectors and hoses, and the life-support pack on its back with its hatch, vent, lamps, purge unit, antenna and
   bottles; the Lunar Trousers and the Lunar Boots. Worn whole it is a pressure suit with half an hour of air in its
   tanks that stands the cold of the lunar night and the heat of its noon, and armour as leather is. The Gold Visor, a
-  module for the helmet, is lowered gold over its visor. On the Moon and in space, where no air softens it, looking
-  near the Sun whites out the view, the nearer the more; the gold visor cuts it, and the view through it is a little
-  gold. It harms no one.
+  module for the helmet worn for its look, is lowered gold over its visor, and the view through it is a little gold.
 - (Core) Armour drawn with the Core's models draws each piece worn, every one of them, where only the first was drawn
   before; a model may give the leggings a waist of their own, `armorWaist`, so leggings worn alone show no chest; and a
   bone may be shown only while the piece's stack says so (`KitArmorModel.shownWhile`), a visor lowered or a module
