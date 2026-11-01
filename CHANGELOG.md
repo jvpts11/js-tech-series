@@ -1058,7 +1058,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Landforms as data, laid a chunk at a time from the world's seed so any size draws whole: craters with
   their ejecta, rays and central peaks, shield volcanoes and stratovolcanoes with lava in their summits, mesas in
   bands, dunes, canyons, rilles, lava tubes open to the sky here and there, ice sheets, glaciers with their
-  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats.
+  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats. Whatever stood on
+  ground a landform then cuts or opens, a stone or a plant laid by the chunk beside, goes with the ground rather than
+  hang over nothing.
 - (Core) Lakes, rivers and seas of any liquid, which freeze over where the place is colder than their liquid
   freezes and boil away where it is hotter.
 - (Core) Rock in layers by depth, each region of the land with its own sequence, the layers rising and falling
@@ -2142,7 +2144,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) Loose stones, a decoration of a few small stones lying on the ground, never a whole block: Mare Basalt
   Stones of the Moon's maria, Anorthosite Stones of its highlands, and Martian Basalt Stones, the vesicular basalt
   strewn over Mars' plains. They lie in one of four arrangements, turned as chance has it, are walked through, break
-  at once to be picked up, and go with the ground under them.
+  at once to be picked up, and go with the ground under them; none is left floating where a crater or a lava tube's
+  skylight cut the ground away after it was laid.
 - (Space) The ices of Mars off the Earth: Water Ice, warmed, melts into water only in a sealed room full of air, and
   anywhere else, in a vacuum or in Mars' thin air, turns straight to vapour and is gone; Dry Ice, warmed, turns to
   gas wherever it lies, even in a sealed room, giving the room its carbon dioxide share by share, a cubic metre's

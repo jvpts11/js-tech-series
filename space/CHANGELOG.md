@@ -188,7 +188,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Loose stones, a decoration of a few small stones lying on the ground, never a whole block: Mare Basalt
   Stones of the Moon's maria, Anorthosite Stones of its highlands, and Martian Basalt Stones, the vesicular basalt
   strewn over Mars' plains. They lie in one of four arrangements, turned as chance has it, are walked through, break
-  at once to be picked up, and go with the ground under them.
+  at once to be picked up, and go with the ground under them; none is left floating where a crater or a lava tube's
+  skylight cut the ground away after it was laid.
 - The ices of Mars off the Earth: Water Ice, warmed, melts into water only in a sealed room full of air, and
   anywhere else, in a vacuum or in Mars' thin air, turns straight to vapour and is gone; Dry Ice, warmed, turns to
   gas wherever it lies, even in a sealed room, giving the room its carbon dioxide share by share, a cubic metre's

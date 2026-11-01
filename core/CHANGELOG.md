@@ -971,7 +971,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Landforms as data, laid a chunk at a time from the world's seed so any size draws whole: craters with
   their ejecta, rays and central peaks, shield volcanoes and stratovolcanoes with lava in their summits, mesas in
   bands, dunes, canyons, rilles, lava tubes open to the sky here and there, ice sheets, glaciers with their
-  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats.
+  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats. Whatever stood on
+  ground a landform then cuts or opens, a stone or a plant laid by the chunk beside, goes with the ground rather than
+  hang over nothing.
 - Lakes, rivers and seas of any liquid, which freeze over where the place is colder than their liquid
   freezes and boil away where it is hotter.
 - Rock in layers by depth, each region of the land with its own sequence, the layers rising and falling

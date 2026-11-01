@@ -50,6 +50,8 @@ public final class LandformPainter {
     /* How far past a cryovolcano's foot what it threw out lies, as a share of its radius. */
     private static final double PLUME = 0.5;
     private static final int UPDATE = 2;
+    /* How high over the ground what stands on it may reach: a stone, a plant, a plant two blocks tall. */
+    private static final int STANDING = 2;
     private static final int MAGMA_TICK = 20;
     private static final long MIX_X = 341_873_128_712L;
     private static final long MIX_Z = 132_897_987_541L;
@@ -127,6 +129,22 @@ public final class LandformPainter {
                 }
                 case SALT_FLAT -> saltFlat(x, z, ground, d, r);
                 case LAKE -> lake(x, z, ground, d, r, tall);
+            }
+            settle(x, z, ground);
+        }
+
+        /*
+         * Whatever stood on the ground before it was painted and can no longer stand there goes, a stone or a plant
+         * over ground cut away or opened under it: a landform is painted a chunk at a time, often after the stones and
+         * plants of the chunk beside were laid on ground it then cuts, which would leave them hanging over nothing.
+         * From the bottom up, so what stood on what went goes too.
+         */
+        private void settle(final int x, final int z, final int ground) {
+            for (int y = ground + 1; y <= ground + STANDING; y++) {
+                final BlockState state = this.level.getBlockState(this.at.set(x, y, z));
+                if (!state.isAir() && !state.canSurvive(this.level, this.at)) {
+                    put(x, y, z, Blocks.AIR.defaultBlockState());
+                }
             }
         }
 
