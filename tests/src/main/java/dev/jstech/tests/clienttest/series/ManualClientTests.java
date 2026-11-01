@@ -216,7 +216,9 @@ public final class ManualClientTests {
                     return rows > hello.lines().size();
                 }, "the line too long for the page goes on under itself")
                 .thenScreenshot(2, "manual_code")
-                .then(0, () -> ctx.click(manual().listingPoint(TestGuide.HELLO, true)[0],
+                // The entry may run on past its first spread: the book is turned to where the listing stands.
+                .then(0, () -> manual().goToPage(listingPage(TestGuide.HELLO)))
+                .then(SETTLE, () -> ctx.click(manual().listingPoint(TestGuide.HELLO, true)[0],
                         manual().listingPoint(TestGuide.HELLO, true)[1]))
                 .thenAssert(SETTLE, () -> Minecraft.getInstance().keyboardHandler.getClipboard().equals(String.join(
                         "\n", listingPiece(TestGuide.HELLO).lines())), "Copy puts the whole listing on the clipboard")
@@ -761,6 +763,18 @@ public final class ManualClientTests {
                 .flatMap(page -> page.pieces().stream()).filter(piece -> piece instanceof GuidePiece.Listing listing
                         && listing.name().equals(name)).map(piece -> (GuidePiece.Listing) piece).findFirst()
                 .orElseThrow();
+    }
+
+    /* The page the listing of that file stands on, in the code entry. */
+    private static int listingPage(final String name) {
+        final GuideBook book = manual().book();
+        for (int page = book.pageOf(TestGuide.CODE).orElseThrow(); page < book.pages().size(); page++) {
+            if (book.pages().get(page).pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Listing listing
+                    && listing.name().equals(name))) {
+                return page;
+            }
+        }
+        throw new IllegalStateException("no listing of " + name + " in the code entry");
     }
 
     /* Whether that sound was let through to the speakers since the time given. */

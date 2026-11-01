@@ -64,7 +64,8 @@ public final class HelpTerminalClientTests {
                         && shows(prompt(ctx).editorScreen(), "<1 The Series>"), SCREEN_WAIT,
                         "Alt+C to show the contents, the manual's chapters first")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_END))
-                .thenWaitUntil(() -> shows(prompt(ctx).editorScreen(), "<dir>"), SCREEN_WAIT,
+                // The commands' first rows may pass above the screen as the other manuals grow: a later one is read.
+                .thenWaitUntil(() -> shows(prompt(ctx).editorScreen(), "<tasklist>"), SCREEN_WAIT,
                         "End to bring the machine's commands up, under the manuals")
                 .thenScreenshot(2, "help-dos-commands")
                 .thenScreenshot(2, "help-dos-contents")
