@@ -971,7 +971,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Landforms as data, laid a chunk at a time from the world's seed so any size draws whole: craters with
   their ejecta, rays and central peaks, shield volcanoes and stratovolcanoes with lava in their summits, mesas in
   bands, dunes, canyons, rilles, lava tubes open to the sky here and there, ice sheets, glaciers with their
-  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats. Whatever stood on
+  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats; a hot spring's sinter
+  terraces, each pool held by a rim, and its chimneys; spiders cut from a pit under seasonal ice with the dark fan
+  their jet lays downwind; fields of straight crossing ridges; and mounds in bands climbing in steps. Whatever stood on
   ground a landform then cuts or opens, a stone or a plant laid by the chunk beside, goes with the ground rather than
   hang over nothing.
 - Lakes, rivers and seas of any liquid, which freeze over where the place is colder than their liquid
@@ -1861,7 +1863,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lays one great crater at its place, as wide as its sphere draws it. A terrain's biomes may be spread by any two
   density functions in place of its own noises, and lie in two scales: zones where its maps lay them, and inside
   each zone its patch biomes in patches a thousand blocks or two across, as the overworld's vary, each about a sixth
-  of the zone and within the game's own search of anywhere in it. No two of a dimension's biomes tie where a slow map
+  of the zone and within the game's own search of anywhere in it, and rare patches between them, a thirtieth each. No two of a dimension's biomes tie where a slow map
   leaves places between two zones, so a zone's edge comes out the same whatever the game read before it, chunk by
   chunk and thread by thread. In a dimension that keeps bounds of its own,
   `/locate biome` finds a biome anywhere in the world, however far, when the game's own search of 6,400 blocks finds

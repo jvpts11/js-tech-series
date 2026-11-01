@@ -1,0 +1,17 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 64,
+    "chance": 0.7,
+    "kind": "spider",
+    "largest": 24,
+    "salt": -1156747001,
+    "scatter": {
+      "Name": "jsspace:fan_dust"
+    },
+    "smallest": 10,
+    "surface": {
+      "Name": "jsspace:basalt_sand"
+    }
+  }
+}

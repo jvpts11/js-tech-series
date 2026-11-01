@@ -84,6 +84,11 @@ public final class Terrains {
      * near enough for each patch biome to hold about a sixth of it.
      */
     public static final float PATCH_RADIUS = 0.27F;
+    /**
+     * How far from the middle of the patches' plane a zone's rare patch biomes lie: so far that each holds only about a
+     * thirtieth of the zone, where the patches' noises run furthest.
+     */
+    public static final float RARE_PATCH_RADIUS = 0.53F;
 
     private Terrains() {
     }

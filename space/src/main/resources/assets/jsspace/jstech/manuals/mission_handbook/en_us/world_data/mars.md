@@ -2,7 +2,7 @@
 section: world_data
 order: 2
 icon: jsspace:martian_regolith
-covers: [jsspace:martian_basalt, jsspace:martian_basalt_stones, jsspace:columnar_martian_basalt, jsspace:vesicular_martian_basalt, jsspace:martian_regolith, jsspace:hematite_regolith, jsspace:basalt_sand, jsspace:mudstone, jsspace:buff_mudstone, jsspace:dusted_mudstone, jsspace:water_ice, jsspace:dry_ice]
+covers: [jsspace:martian_basalt, jsspace:martian_basalt_stones, jsspace:columnar_martian_basalt, jsspace:vesicular_martian_basalt, jsspace:martian_regolith, jsspace:hematite_regolith, jsspace:basalt_sand, jsspace:mudstone, jsspace:buff_mudstone, jsspace:dusted_mudstone, jsspace:water_ice, jsspace:dry_ice, jsspace:silica_sinter, jsspace:nodular_silica, jsspace:silica_soil, jsspace:digitate_silica, jsspace:layered_sulfate, jsspace:fan_dust]
 ---
 # Mars
 
@@ -26,7 +26,10 @@ A crew finds Mars' own ground there, and nowhere else:
 - Martian Basalt Stones, vesicular stones lying loose on the plains and the highlands.
 - Mudstone, grey and laid in thin layers by the water of old lakes, under the lakebeds and the chaos. Buff Mudstone shows on its scarps, and Dusted Mudstone, with red dust caught in its partings, in the upper layers of every exposure.
 - Water Ice, the ice of the polar caps, layered with dust and hard as rock in their cold.
-- Dry Ice, the carbon dioxide frost over the caps.
+- Dry Ice, the carbon dioxide frost over the caps, and the seasonal ice over the spider fields.
+- Silica Sinter, the opal old hot springs laid in pale layers, and Nodular Silica, opal in rounded knobs, in the terraces, mounds and chimneys of the Lifeless Springs; Silica Soil, white, under their red dust; and Digitate Silica, tufts of opal fingers on the nodules, as Spirit found them at Home Plate.
+- Layered Sulfate, the light beds of the layered mounds.
+- Fan Dust, the thin dark dust the spiders' jets lay over the ice.
 
 Ores lie in veins in those rocks: hematite in the red regolith of the oxide plains and in the lakebeds' mudstone; magnetite and olivine in the basalt; and jarosite and gypsum, signs of old water, in the mudstone.
 
@@ -38,7 +41,7 @@ From Mars' orbit, mark a spot on the LAND page and the rocket [comes down](jsspa
 
 Every team knows where Mars is from the start. A server may also ask that a team knows what kills there before its crew lands: its atmosphere, temperature, radiation, gravity and relief.
 
-The blocks of this page are found on Mars and mined there, each dropping itself: the regoliths and Basalt Sand with a shovel, the basalts, the mudstones and Water Ice with a pickaxe, Dry Ice with anything, and loose stones at a touch. They are also in the creative menu, J's Space tab.
+The blocks of this page are found on Mars and mined there, each dropping itself: the regoliths, Basalt Sand, Silica Soil and Fan Dust with a shovel, the basalts, the mudstones, the silicas, Layered Sulfate and Water Ice with a pickaxe, Dry Ice with anything, and loose stones and Digitate Silica at a touch. They are also in the creative menu, J's Space tab.
 
 To leave, set a transfer on the Flight Computer: when its time comes, the rocket lights its lowest stage left and climbs from the ground, with no pad.
 
@@ -75,6 +78,11 @@ Gravity is a share of the Overworld's pull. Each season is a quarter of the year
 - Chaos Terrain: where the canyons open, ground broken into flat-topped blocks of mudstone under red regolith.
 - Dark Dunes: crescents of dark Basalt Sand walking over the red ground, north and south.
 - Polar Cap: Dry Ice frost over a thick layer of Water Ice, cut by spiral troughs.
+- Lifeless Springs: old hot springs, dry for three billion years, at Gusev round Home Plate, at Nili Patera and in Vernal crater, and here and there in the south and the volcanic regions. Terraces of sinter step down, each pool held by a rim of nodules, among the low mounds of extinct geysers and short chimneys, Digitate Silica growing on the nodules.
+- Layered Mounds: Gale's Mount Sharp and Valles Marineris' layered deposits. A mound of light sulfate and mudstone beds climbing in steps, buttes of mudstone under a dark cap, and yardangs the wind cut.
+- Spider Fields: the cryptic region by the south cap, Inca City in it. Seasonal Dry Ice over the red ground, spiders carved through it by the gas escaping from under it, their troughs floored with dark sand, the dark fans of their jets, and the straight ridges of Inca City.
+
+Mars' zones lie where they lie on the real planet, and inside each its biomes come and go every few thousand blocks: the south strewn with hematite here, an old lake there, dark dunes elsewhere.
 
 ## What can go wrong
 

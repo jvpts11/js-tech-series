@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 160,
+    "chance": 0.8,
+    "fill": {
+      "Name": "jsspace:silica_sinter"
+    },
+    "height": 0.15,
+    "kind": "terraces",
+    "largest": 40,
+    "salt": 687595276,
+    "scatter": {
+      "Name": "jsspace:nodular_silica"
+    },
+    "smallest": 16,
+    "surface": {
+      "Name": "jsspace:martian_regolith"
+    }
+  }
+}

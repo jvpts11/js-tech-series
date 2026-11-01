@@ -15,6 +15,16 @@
       "seasons": 14.0,
       "temperature": -63.0
     },
+    "jsspace:mars_layered_mounds": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -63.0
+    },
+    "jsspace:mars_lifeless_springs": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -63.0
+    },
     "jsspace:mars_northern_plains": {
       "rain": 0.0,
       "seasons": 14.0,
@@ -34,6 +44,11 @@
       "rain": 0.0,
       "seasons": 14.0,
       "temperature": -63.0
+    },
+    "jsspace:mars_spider_fields": {
+      "rain": 0.0,
+      "seasons": 14.0,
+      "temperature": -110.0
     },
     "jsspace:moon_highlands": {
       "rain": 0.0,

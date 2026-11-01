@@ -1,0 +1,38 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "bands": [
+      {
+        "Name": "jsspace:mudstone"
+      },
+      {
+        "Name": "jsspace:mudstone"
+      },
+      {
+        "Name": "jsspace:buff_mudstone"
+      },
+      {
+        "Name": "jsspace:buff_mudstone"
+      },
+      {
+        "Name": "jsspace:dusted_mudstone"
+      }
+    ],
+    "cell": 128,
+    "chance": 0.6,
+    "fill": {
+      "Name": "jsspace:mudstone"
+    },
+    "height": 0.7,
+    "kind": "mesa",
+    "largest": 20,
+    "salt": -2040195858,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 8,
+    "surface": {
+      "Name": "jsspace:martian_basalt"
+    }
+  }
+}

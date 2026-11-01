@@ -13,15 +13,18 @@ import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.content.IItemLook;
 import dev.jstech.space.SpaceContent;
 import java.util.function.Function;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.ColorRGBA;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CarpetBlock;
 import net.minecraft.world.level.block.ColoredFallingBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 
 /**
  * The ground of the Moon and of Mars: their regoliths and sands, loose and falling as sand does; their rocks and the
@@ -29,7 +32,8 @@ import net.minecraft.world.level.material.MapColor;
  * come in three blocks each, put where geology puts them: the basalt faceted below ground and in the highlands, in
  * columns on the scarps of lava plateaus and the walls of canyons, pocked by gas bubbles on the tops of lava flows; the
  * mudstone in the grey of Gale's lakebeds, in the buff of Jezero's delta, and dusted red in the upper layers of every
- * exposure.
+ * exposure. Mars' old hot springs leave silica in sinter, in nodules, as white soil and in tufts of digitate fingers;
+ * its layered mounds are of light sulfate beds; and the jets under its seasonal ice lay a thin dark dust.
  */
 public final class SpaceRocks {
 
@@ -85,12 +89,36 @@ public final class SpaceRocks {
     /** Mudstone with the red dust of Mars caught in its partings: the upper layers of every exposure. */
     public static final BlockEntry<Block> DUSTED_MUDSTONE = rock("dusted_mudstone", MapColor.TERRACOTTA_BROWN, true)
             .named("Dusted Mudstone").register();
+    /** The opal old hot springs laid in pale, porous layers, as at El Tatio and round Home Plate in Gusev. */
+    public static final BlockEntry<Block> SILICA_SINTER = rock("silica_sinter", MapColor.TERRACOTTA_WHITE, true)
+            .named("Silica Sinter").register();
+    /** Opal in rounded knobs, the cauliflower Spirit drove past at Home Plate. */
+    public static final BlockEntry<Block> NODULAR_SILICA = rock("nodular_silica", MapColor.TERRACOTTA_WHITE, false)
+            .named("Nodular Silica").register();
+    /** The near-pure opal soil Spirit's dragging wheel turned up from under the red soil. */
+    public static final BlockEntry<ColoredFallingBlock> SILICA_SOIL = loose("silica_soil", 0xE2DFD9,
+            MapColor.SNOW).named("Silica Soil").register();
+    /** A tuft of opal fingers grown on the silica of an old spring's channels, standing as dead coral does. */
+    public static final BlockEntry<DigitateSilicaBlock> DIGITATE_SILICA = SpaceContent.CONTENT.block(
+                    "digitate_silica", DigitateSilicaBlock::new)
+            .properties(properties -> properties.mapColor(MapColor.TERRACOTTA_WHITE).instabreak().noCollission()
+                    .noOcclusion().sound(SoundType.CALCITE).pushReaction(PushReaction.DESTROY))
+            .look(IBlockLook.fixed(new IBlockModel.Handmade("digitate_silica")))
+            .item().itemLook(IItemLook.HANDMADE).drops(Drops.SELF).tab(GROUND).named("Digitate Silica").register();
+    /** The light beds of Mount Sharp and of Valles Marineris' layered deposits, veined with calcium sulfate. */
+    public static final BlockEntry<Block> LAYERED_SULFATE = rock("layered_sulfate", MapColor.SAND, true)
+            .named("Layered Sulfate").register();
+    /** The dark dust a jet of carbon dioxide throws up through Mars' seasonal ice, a thin layer where it fell. */
+    public static final BlockEntry<CarpetBlock> FAN_DUST = thin("fan_dust", MapColor.COLOR_BLACK).named("Fan Dust")
+            .register();
 
     /* A rock's strength against breaking and against blasts, as stone's; loose ground's, as sand's. */
     private static final float ROCK = 1.5F;
     private static final float ROCK_BLAST = 6.0F;
     private static final float LOOSE = 0.5F;
     private static final float ICE = 0.5F;
+    /* A thin layer of dust's, as a carpet's. */
+    private static final float FINE = 0.1F;
 
     private SpaceRocks() {
     }
@@ -123,6 +151,15 @@ public final class SpaceRocks {
                         .requiresCorrectToolForDrops().sound(SoundType.STONE))
                 .look(IBlockLook.fixed(model))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(GROUND);
+    }
+
+    /* A thin layer of dust over what it fell on, as a carpet lies, dug with a shovel; its model is drawn by hand. */
+    private static BlockBuilder<CarpetBlock> thin(final String id, final MapColor colour) {
+        return SpaceContent.CONTENT.block(id, CarpetBlock::new)
+                .properties(properties -> properties.mapColor(colour).strength(FINE).sound(SoundType.SAND)
+                        .pushReaction(PushReaction.DESTROY))
+                .look(IBlockLook.fixed(new IBlockModel.Handmade(id)))
+                .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_SHOVEL).tab(GROUND);
     }
 
     /* Frozen ground, broken with anything; how it melts or sublimates is its block's own. */

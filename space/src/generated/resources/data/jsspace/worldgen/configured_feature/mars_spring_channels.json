@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 128,
+    "chance": 0.6,
+    "height": 0.04,
+    "kind": "river",
+    "largest": 60,
+    "salt": -997865829,
+    "scatter": {
+      "Name": "minecraft:air"
+    },
+    "smallest": 24,
+    "special": {
+      "Name": "minecraft:air"
+    },
+    "surface": {
+      "Name": "jsspace:nodular_silica"
+    }
+  }
+}

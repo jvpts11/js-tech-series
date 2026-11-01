@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_spiders",
+  "features": "jsspace:mars_spiders",
+  "step": "raw_generation"
+}

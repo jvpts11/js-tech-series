@@ -2,7 +2,7 @@
 section: world_data
 order: 2
 icon: jsspace:martian_regolith
-covers: [jsspace:martian_basalt, jsspace:martian_basalt_stones, jsspace:columnar_martian_basalt, jsspace:vesicular_martian_basalt, jsspace:martian_regolith, jsspace:hematite_regolith, jsspace:basalt_sand, jsspace:mudstone, jsspace:buff_mudstone, jsspace:dusted_mudstone, jsspace:water_ice, jsspace:dry_ice]
+covers: [jsspace:martian_basalt, jsspace:martian_basalt_stones, jsspace:columnar_martian_basalt, jsspace:vesicular_martian_basalt, jsspace:martian_regolith, jsspace:hematite_regolith, jsspace:basalt_sand, jsspace:mudstone, jsspace:buff_mudstone, jsspace:dusted_mudstone, jsspace:water_ice, jsspace:dry_ice, jsspace:silica_sinter, jsspace:nodular_silica, jsspace:silica_soil, jsspace:digitate_silica, jsspace:layered_sulfate, jsspace:fan_dust]
 ---
 # Marte
 
@@ -26,7 +26,10 @@ Lá a tripulação encontra o chão próprio de Marte, que não existe em nenhum
 - Pedras de Basalto Marciano, pedras vesiculares soltas sobre as planícies e as terras altas.
 - Lamito, cinzento e assentado em camadas finas pela água de lagos antigos, sob os leitos de lago e o terreno caótico. O Lamito Bege aparece nas escarpas, e o Lamito Empoeirado, com a poeira vermelha presa entre as camadas, nas camadas de cima de todo afloramento.
 - Gelo de Água, o gelo das calotas polares, em camadas com poeira entre elas e duro como rocha no frio de lá.
-- Gelo Seco, a geada de dióxido de carbono sobre as calotas.
+- Gelo Seco, a geada de dióxido de carbono sobre as calotas, e o gelo sazonal sobre os campos de aranhas.
+- Sínter de Sílica, a opala que fontes termais antigas depositaram em camadas claras, e Sílica Nodular, opala em nódulos arredondados, nos terraços, montes e chaminés das Fontes Sem Vida; o Solo de Sílica, branco, sob a poeira vermelha delas; e a Sílica Digitada, tufos de dedos de opala sobre os nódulos, como o Spirit os achou em Home Plate.
+- Sulfato em Camadas, as camadas claras dos montes em camadas.
+- Poeira dos Leques, a poeira escura e fina que os jatos das aranhas deitam sobre o gelo.
 
 Os minérios ficam em veios nessas rochas: hematita no regolito vermelho das planícies de óxido e no lamito dos leitos de lago; magnetita e olivina no basalto; e jarosita e gesso, sinais de água antiga, no lamito.
 
@@ -38,7 +41,7 @@ Da órbita de Marte, marque um ponto na página POUS e o foguete [desce](jsspace
 
 Toda equipe sabe onde fica Marte desde o início. Um servidor também pode exigir que a equipe conheça o que mata lá antes de a tripulação pousar: a atmosfera, a temperatura, a radiação, a gravidade e o relevo.
 
-Os blocos desta página são encontrados em Marte e minerados lá, e cada um, quebrado, dá o próprio bloco: os regolitos e a Areia Basáltica com pá, os basaltos, os lamitos e o Gelo de Água com picareta, o Gelo Seco com qualquer coisa e as pedras soltas com um toque. Eles também estão no menu criativo, aba J's Space.
+Os blocos desta página são encontrados em Marte e minerados lá, e cada um, quebrado, dá o próprio bloco: os regolitos, a Areia Basáltica, o Solo de Sílica e a Poeira dos Leques com pá, os basaltos, os lamitos, as sílicas, o Sulfato em Camadas e o Gelo de Água com picareta, o Gelo Seco com qualquer coisa e as pedras soltas e a Sílica Digitada com um toque. Eles também estão no menu criativo, aba J's Space.
 
 Para partir, defina uma transferência no Computador de Voo: quando chegar a hora, o foguete acende o estágio mais baixo que ainda tem e sobe do chão, sem plataforma.
 
@@ -75,6 +78,11 @@ A gravidade é uma fração da força do Overworld. Cada estação dura um quart
 - Terreno Caótico: onde os cânions se abrem, chão partido em blocos de topo plano, de lamito sob o regolito vermelho.
 - Dunas Escuras: crescentes de Areia Basáltica escura andando sobre o chão vermelho, no norte e no sul.
 - Calota Polar: geada de Gelo Seco sobre uma camada grossa de Gelo de Água, cortada por vales em espiral.
+- Fontes Sem Vida: fontes termais antigas, secas há três bilhões de anos, em Gusev em volta de Home Plate, em Nili Patera e na cratera Vernal, e aqui e ali no sul e nas regiões vulcânicas. Terraços de sínter descem em degraus, cada piscina presa por uma borda de nódulos, entre os montes baixos de gêiseres extintos e chaminés curtas, com Sílica Digitada crescendo nos nódulos.
+- Montes em Camadas: o Monte Sharp, na cratera Gale, e os depósitos em camadas de Valles Marineris. Um monte de camadas claras de sulfato e de lamito subindo em degraus, buttes de lamito sob uma capa escura e yardangs que o vento esculpiu.
+- Campos de Aranhas: a região críptica junto à calota sul, com a Inca City. Gelo Seco sazonal sobre o chão vermelho, aranhas escavadas através dele pelo gás que escapa por baixo, com os sulcos forrados de areia escura, os leques escuros dos jatos e as cristas retas da Inca City.
+
+As zonas de Marte ficam onde ficam no planeta de verdade, e dentro de cada uma os biomas vêm e vão a cada poucos milhares de blocos: o sul salpicado de hematita aqui, um lago antigo ali, dunas escuras mais adiante.
 
 ## O que pode dar errado
 

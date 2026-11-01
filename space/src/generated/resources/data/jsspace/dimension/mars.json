@@ -184,6 +184,150 @@
             "temperature": -0.2,
             "weirdness": 0.0
           }
+        },
+        {
+          "biome": "jsspace:mars_northern_plains",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0075,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_southern_highlands",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.008,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_dark_dunes",
+          "parameters": {
+            "continentalness": 0.27,
+            "depth": 0.0085,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_oxide_plains",
+          "parameters": {
+            "continentalness": 0.27,
+            "depth": 0.009,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_lakebed",
+          "parameters": {
+            "continentalness": -0.135,
+            "depth": 0.0095,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.2338
+          }
+        },
+        {
+          "biome": "jsspace:mars_dark_dunes",
+          "parameters": {
+            "continentalness": -0.135,
+            "depth": 0.01,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": -0.2338
+          }
+        },
+        {
+          "biome": "jsspace:mars_lifeless_springs",
+          "parameters": {
+            "continentalness": 0.2649,
+            "depth": 0.0105,
+            "erosion": 0.0,
+            "humidity": 0.0,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.4589
+          }
+        },
+        {
+          "biome": "jsspace:mars_lifeless_springs",
+          "parameters": {
+            "continentalness": -0.5299,
+            "depth": 0.011,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": 1.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_lifeless_springs",
+          "parameters": {
+            "continentalness": 0.2649,
+            "depth": 0.0115,
+            "erosion": 0.0,
+            "humidity": 0.7,
+            "offset": 0.0,
+            "temperature": -0.2,
+            "weirdness": 0.4589
+          }
+        },
+        {
+          "biome": "jsspace:mars_lifeless_springs",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.012,
+            "erosion": 0.0,
+            "humidity": 2.0,
+            "offset": 0.0,
+            "temperature": 2.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_layered_mounds",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.0125,
+            "erosion": 0.0,
+            "humidity": -2.0,
+            "offset": 0.0,
+            "temperature": 2.0,
+            "weirdness": 0.0
+          }
+        },
+        {
+          "biome": "jsspace:mars_spider_fields",
+          "parameters": {
+            "continentalness": 0.0,
+            "depth": 0.013,
+            "erosion": 0.0,
+            "humidity": -2.0,
+            "offset": 0.0,
+            "temperature": -2.0,
+            "weirdness": 0.0
+          }
         }
       ]
     },

@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_springs",
+  "features": "jsspace:digitate_silica",
+  "step": "vegetal_decoration"
+}

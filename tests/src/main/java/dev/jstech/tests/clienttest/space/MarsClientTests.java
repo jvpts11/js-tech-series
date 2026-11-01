@@ -9,11 +9,17 @@ package dev.jstech.tests.clienttest.space;
 
 import dev.jstech.core.dimension.DimensionBorders;
 import dev.jstech.core.dimension.RuntimeDimensions;
+import dev.jstech.core.worldgen.biome.WorldBiomes;
+import dev.jstech.core.worldgen.landform.LandformField;
+import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.space.worldgen.MarsBiomes;
 import dev.jstech.space.worldgen.MarsWorld;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.testkit.client.ClientTestHelper;
+import java.util.Comparator;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.QuartPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,6 +49,16 @@ public final class MarsClientTests {
     private static final int BRIGHTER = 150;
     private static final int CHANNEL = 0xFF;
     private static final int SEEING = 20 * 60 * 5;
+    /* The new biomes' real places: Home Plate in Gusev, Mount Sharp in Gale, and Inca City. */
+    private static final double[] HOME_PLATE = {175.5, -14.6};
+    private static final double[] MOUNT_SHARP = {137.8, -5.1};
+    private static final double[] INCA_CITY = {-64.0, -81.0};
+    /* How many cells round a place a landform of it is looked for in; facing north, as a yaw. */
+    private static final int CELLS = 4;
+    private static final float NORTH = 180F;
+    private static final int BIOME_Y = 64;
+    private static final long DAY = 24_000L;
+    private static final double FULL_TURN = 360;
 
     private MarsClientTests() {
     }
@@ -89,6 +105,81 @@ public final class MarsClientTests {
                             + " the highlands: " + cap + " over " + highlands[0]);
                 })
                 .thenScreenshot(0, "north_cap_from_above");
+    }
+
+    @ClientTest(timeoutTicks = 6000)
+    public static void newBiomes_standAsTheirMocksDrewThem(final ClientTestContext ctx) {
+        final boolean[] daylight = new boolean[1];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            ctx.server().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(daylight[0], ctx.server());
+            final ServerPlayer player = ctx.serverPlayer();
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
+            player.removeEffect(MobEffects.NIGHT_VISION);
+            final BlockPos origin = ctx.origin().above(2);
+            player.teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0F,
+                    0F);
+        }));
+        ctx.thenServer(0, level -> {
+                    final GameRules.BooleanValue rule = level.getServer().getGameRules()
+                            .getRule(GameRules.RULE_DAYLIGHT);
+                    daylight[0] = rule.get();
+                    rule.set(false, level.getServer());
+                    // Before an old spring's terraces, a little above them, looking down across their pools.
+                    face(ctx, MarsWorld.SPRING_TERRACES, MarsBiomes.LIFELESS_SPRINGS, HOME_PLATE, 6, 7, 18F);
+                })
+                .thenWaitUntil(() -> ctx.mc().level != null
+                        && ctx.mc().level.dimension().equals(MarsWorld.world().dimension()), ARRIVE,
+                        "the player's game to reach Mars")
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SETTLE, "lifeless_springs_terraces")
+                // Before a layered mound's foot, looking up its steps.
+                .thenServer(0, level -> face(ctx, MarsWorld.LAYERED_MOUND, MarsBiomes.LAYERED_MOUNDS, MOUNT_SHARP, 40,
+                        12, -6F))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SETTLE, "layered_mounds_mound")
+                // Over a spider's edge, looking down on its troughs and its fan.
+                .thenServer(0, level -> face(ctx, MarsWorld.SPIDERS, MarsBiomes.SPIDER_FIELDS, INCA_CITY, 4, 22,
+                        48F))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SETTLE, "spider_fields_spider");
+    }
+
+    /*
+     * Puts the player before the landform of {@code spec} nearest Mars' place {@code at} whose middle lies in
+     * {@code biome}: {@code beyond} blocks south of its edge, {@code above} over the ground there, facing north at it
+     * with {@code pitch}, seeing in the dark.
+     */
+    private static void face(final ClientTestContext ctx, final Landforms.LandformSpec spec,
+                             final WorldBiomes.BiomeSpec biome, final double[] at, final int beyond, final int above,
+                             final float pitch) {
+        final ResourceKey<Level> key = MarsWorld.world().dimension();
+        final ServerLevel mars = RuntimeDimensions.getOrCreate(ctx.server(), key, key.location());
+        final DimensionBorders.Bounds bounds = DimensionBorders.inForce(mars.dimension()).orElseThrow();
+        final double perDegree = (bounds.maxX() - bounds.minX()) / 360;
+        final int px = (int) Math.round(at[0] * perDegree);
+        final int pz = (int) Math.round(-at[1] * perDegree);
+        final LandformField field = new LandformField(spec.cell(), spec.chance(), spec.smallest(), spec.largest(),
+                spec.salt());
+        final int reach = spec.cell() * CELLS;
+        final LandformField.Instance one = field.reaching(mars.getSeed(), px - reach, pz - reach, px + reach,
+                        pz + reach).stream()
+                .filter(each -> mars.getChunkSource().getGenerator().getBiomeSource().getNoiseBiome(
+                        QuartPos.fromBlock(each.x()), QuartPos.fromBlock(BIOME_Y), QuartPos.fromBlock(each.z()),
+                        mars.getChunkSource().randomState().sampler()).is(biome.key()))
+                .min(Comparator.comparingDouble(each -> each.distance(px, pz)))
+                .orElseThrow(() -> new IllegalStateException("no " + spec.id() + " near " + px + ", " + pz));
+        final int x = one.x();
+        final int z = one.z() + one.radius() + beyond;
+        // Noon there: Mars' hour follows the longitude, later the farther east.
+        mars.setDayTime(Math.floorMod(NOON - Math.round(at[0] / FULL_TURN * DAY), DAY));
+        mars.getChunk(new BlockPos(x, 0, z));
+        final int ground = mars.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+        final ServerPlayer player = ctx.serverPlayer();
+        player.getAbilities().flying = true;
+        player.onUpdateAbilities();
+        player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, SEEING, 0, false, false));
+        player.teleportTo(mars, x + 0.5, ground + above, z + 0.5, NORTH, pitch);
     }
 
     /* Puts the player over Mars' place {@code at}, by longitude and latitude, seeing in the dark, looking down. */

@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 32,
+    "chance": 0.3,
+    "fill": {
+      "Name": "jsspace:nodular_silica"
+    },
+    "height": 2.0,
+    "kind": "chimney",
+    "largest": 2,
+    "salt": -769755739,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 1,
+    "surface": {
+      "Name": "jsspace:nodular_silica"
+    }
+  }
+}

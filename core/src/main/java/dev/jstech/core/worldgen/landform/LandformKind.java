@@ -53,7 +53,27 @@ public enum LandformKind implements IStableName {
     /** A bowl filled with the special, any liquid, frozen to the scatter where it is cold, dry where it boils away. */
     LAKE("lake", 1.0),
     /** A shallow winding channel filled with the special, any liquid, freezing or boiling away as a lake does. */
-    RIVER("river", 1.0);
+    RIVER("river", 1.0),
+    /**
+     * An apron of the fill sloping down from its middle, stepped into level pools, each held at its lower edge by a rim
+     * of the scatter, the pools' floors the surface: the sinter terraces of a hot spring, dry or not.
+     */
+    TERRACES("terraces", 1.4),
+    /** A narrow column of the fill, its top the surface, hollow at its top: a spring's chimney, a fumarole's. */
+    CHIMNEY("chimney", 1.0),
+    /**
+     * Troughs cut into the ground from a pit at its middle, branching outwards as legs, their floors the surface, and
+     * a fan of the scatter laid over the ground downwind of the pit, along its turn: the spiders gas carves under
+     * Mars' seasonal ice, and the dark fans its jets leave.
+     */
+    SPIDER("spider", 1.6),
+    /** Straight ridges of the fill crossing it at a few angles, sloping either side, topped by the surface. */
+    RIDGES("ridges", 1.0),
+    /**
+     * A broad mound in bands of the band blocks, each band set back from the one under it, so its slopes climb in
+     * steps; its top the surface: a mound of layered sediments.
+     */
+    LAYERED_MOUND("layered_mound", 1.0);
 
     private final String serializedName;
     private final double reach;

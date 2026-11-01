@@ -1,15 +1,126 @@
 {
   "type": "minecraft:add",
   "argument1": {
-    "type": "jscore:round_map",
-    "high": 4.0,
-    "map": "jsspace:mars/dark",
-    "world": "jsspace:mars"
+    "type": "minecraft:mul",
+    "argument1": {
+      "type": "minecraft:add",
+      "argument1": {
+        "type": "minecraft:mul",
+        "argument1": {
+          "type": "minecraft:add",
+          "argument1": {
+            "type": "minecraft:mul",
+            "argument1": {
+              "type": "minecraft:add",
+              "argument1": {
+                "type": "minecraft:add",
+                "argument1": {
+                  "type": "jscore:round_map",
+                  "high": 4.0,
+                  "map": "jsspace:mars/dark",
+                  "world": "jsspace:mars"
+                },
+                "argument2": {
+                  "type": "jscore:round_map",
+                  "high": -4.0,
+                  "map": "jsspace:mars/canyon",
+                  "world": "jsspace:mars"
+                }
+              },
+              "argument2": {
+                "type": "jscore:round_map",
+                "high": 0.699999988079071,
+                "map": "jsspace:mars/volcanic",
+                "world": "jsspace:mars"
+              }
+            },
+            "argument2": {
+              "type": "minecraft:add",
+              "argument1": 1.0,
+              "argument2": {
+                "type": "minecraft:mul",
+                "argument1": -1.0,
+                "argument2": {
+                  "type": "minecraft:cache_once",
+                  "argument": {
+                    "type": "jscore:round_map",
+                    "map": "jsspace:mars/springs",
+                    "world": "jsspace:mars"
+                  }
+                }
+              }
+            }
+          },
+          "argument2": {
+            "type": "minecraft:mul",
+            "argument1": 2.0,
+            "argument2": {
+              "type": "minecraft:cache_once",
+              "argument": {
+                "type": "jscore:round_map",
+                "map": "jsspace:mars/springs",
+                "world": "jsspace:mars"
+              }
+            }
+          }
+        },
+        "argument2": {
+          "type": "minecraft:add",
+          "argument1": 1.0,
+          "argument2": {
+            "type": "minecraft:mul",
+            "argument1": -1.0,
+            "argument2": {
+              "type": "minecraft:cache_once",
+              "argument": {
+                "type": "jscore:round_map",
+                "map": "jsspace:mars/layered",
+                "world": "jsspace:mars"
+              }
+            }
+          }
+        }
+      },
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": -2.0,
+        "argument2": {
+          "type": "minecraft:cache_once",
+          "argument": {
+            "type": "jscore:round_map",
+            "map": "jsspace:mars/layered",
+            "world": "jsspace:mars"
+          }
+        }
+      }
+    },
+    "argument2": {
+      "type": "minecraft:add",
+      "argument1": 1.0,
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": -1.0,
+        "argument2": {
+          "type": "minecraft:cache_once",
+          "argument": {
+            "type": "jscore:round_map",
+            "map": "jsspace:mars/cryptic",
+            "world": "jsspace:mars"
+          }
+        }
+      }
+    }
   },
   "argument2": {
-    "type": "jscore:round_map",
-    "high": -4.0,
-    "map": "jsspace:mars/canyon",
-    "world": "jsspace:mars"
+    "type": "minecraft:mul",
+    "argument1": -2.0,
+    "argument2": {
+      "type": "minecraft:cache_once",
+      "argument": {
+        "type": "jscore:round_map",
+        "map": "jsspace:mars/cryptic",
+        "world": "jsspace:mars"
+      }
+    }
   }
 }

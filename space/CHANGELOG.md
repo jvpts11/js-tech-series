@@ -218,7 +218,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   caps lie where they lie on the real planet, and inside them its biomes vary every few thousand blocks: the south's
   highlands strewn with hematite here, holding an old lake there, walked by dark dunes elsewhere; the north's plains
   by dark dunes; a dark region opened onto its hemisphere's ground; a canyon's floor an old lake. `/locate` finds each
-  of its biomes from anywhere on it.
+  of its biomes from anywhere on it. Three biomes more, each at its real places: Lifeless Springs, old hot springs dry
+  for three billion years at Gusev round Home Plate, at Nili Patera and in Vernal crater, and rare in the south and
+  the volcanic regions, their sinter in terraces, mounds, chimneys and dry channels, Digitate Silica on the nodules as
+  Spirit found it; Layered Mounds, Gale's Mount Sharp and Valles Marineris' layered deposits, light sulfate and
+  mudstone beds climbing in steps among buttes and yardangs; and Spider Fields, the cryptic region by the south cap,
+  its seasonal ice cut by spiders with their dark fans, the ridges of Inca City in it. Their new blocks: Silica
+  Sinter, Nodular Silica, Silica Soil, Digitate Silica, Layered Sulfate and Fan Dust.
 - Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece

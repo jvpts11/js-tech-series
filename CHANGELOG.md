@@ -1058,7 +1058,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Landforms as data, laid a chunk at a time from the world's seed so any size draws whole: craters with
   their ejecta, rays and central peaks, shield volcanoes and stratovolcanoes with lava in their summits, mesas in
   bands, dunes, canyons, rilles, lava tubes open to the sky here and there, ice sheets, glaciers with their
-  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats. Whatever stood on
+  crevasses and moraines, geysers that bubble, cryovolcanoes, sinkholes and cracked salt flats; a hot spring's sinter
+  terraces, each pool held by a rim, and its chimneys; spiders cut from a pit under seasonal ice with the dark fan
+  their jet lays downwind; fields of straight crossing ridges; and mounds in bands climbing in steps. Whatever stood on
   ground a landform then cuts or opens, a stone or a plant laid by the chunk beside, goes with the ground rather than
   hang over nothing.
 - (Core) Lakes, rivers and seas of any liquid, which freeze over where the place is colder than their liquid
@@ -2174,7 +2176,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   caps lie where they lie on the real planet, and inside them its biomes vary every few thousand blocks: the south's
   highlands strewn with hematite here, holding an old lake there, walked by dark dunes elsewhere; the north's plains
   by dark dunes; a dark region opened onto its hemisphere's ground; a canyon's floor an old lake. `/locate` finds each
-  of its biomes from anywhere on it.
+  of its biomes from anywhere on it. Three biomes more, each at its real places: Lifeless Springs, old hot springs dry
+  for three billion years at Gusev round Home Plate, at Nili Patera and in Vernal crater, and rare in the south and
+  the volcanic regions, their sinter in terraces, mounds, chimneys and dry channels, Digitate Silica on the nodules as
+  Spirit found it; Layered Mounds, Gale's Mount Sharp and Valles Marineris' layered deposits, light sulfate and
+  mudstone beds climbing in steps among buttes and yardangs; and Spider Fields, the cryptic region by the south cap,
+  its seasonal ice cut by spiders with their dark fans, the ridges of Inca City in it. Their new blocks: Silica
+  Sinter, Nodular Silica, Silica Soil, Digitate Silica, Layered Sulfate and Fan Dust.
 - (Space) Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece
@@ -2751,7 +2759,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lays one great crater at its place, as wide as its sphere draws it. A terrain's biomes may be spread by any two
   density functions in place of its own noises, and lie in two scales: zones where its maps lay them, and inside
   each zone its patch biomes in patches a thousand blocks or two across, as the overworld's vary, each about a sixth
-  of the zone and within the game's own search of anywhere in it. No two of a dimension's biomes tie where a slow map
+  of the zone and within the game's own search of anywhere in it, and rare patches between them, a thirtieth each. No two of a dimension's biomes tie where a slow map
   leaves places between two zones, so a zone's edge comes out the same whatever the game read before it, chunk by
   chunk and thread by thread. In a dimension that keeps bounds of its own,
   `/locate biome` finds a biome anywhere in the world, however far, when the game's own search of 6,400 blocks finds

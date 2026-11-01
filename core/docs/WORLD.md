@@ -642,7 +642,8 @@ function says.
 inside each zone too, as the overworld's vary, `patches(blocks)`: two slow noises of its own, a patch coming about
 every `blocks` blocks, read together as a place in a plane. A zone's own biome lies at the plane's middle, given as
 before with `biome(key, warmth, wetness)`, and its patch biomes round it, `patches(warmth, wetness, keys...)`: each
-holds about a sixth of the zone, the zone's own about half of it however many it has. At 2048 a patch is a thousand
+holds about a sixth of the zone, the zone's own about half of it however many it has; `rarePatches(warmth, wetness,
+keys...)` lays a biome in rare patches between them, about a thirtieth of the zone each. At 2048 a patch is a thousand
 blocks or two across, and every patch biome of a zone lies within the 6,400 blocks the game's `/locate` searches from
 anywhere in it. Each of a dimension's biomes lies a hair apart from the others on the depth axis, which nothing in its
 ground reads, so no two tie where a slow map leaves places exactly between two zones: the game breaks a tie by the
@@ -773,6 +774,11 @@ public static final Landforms.LandformSpec CRATERS = Landforms.landform(rl("crat
 | `cryovolcano` | A broad dome of ice with a liquid of the cold in its summit. | slopes | body | summit's liquid | what it threw out, round its foot |
 | `sinkhole` | A shaft down into the ground. | floor | | in its bottom | |
 | `salt_flat` | The land made level, cracked in a net. | | | salt | cracks |
+| `terraces` | An apron sloping down from its middle, stepped into level pools two blocks deep, each held at its lower edge by a rim, as a hot spring's sinter terraces. | pools' floors | apron | | rims |
+| `chimney` | A narrow column, hollow down its middle when two blocks across or more. | top | body | | |
+| `spider` | Troughs cut from a pit at its middle, branching outwards as legs, and a fan laid downwind of the pit along its turn, as the spiders under Mars' seasonal ice. | troughs' floors | | | fan |
+| `ridges` | Straight ridges crossing it at a few angles, sloping to the ground either side, as Inca City. | crests and slopes | body | | |
+| `layered_mound` | A broad mound in bands, climbing in steps three blocks high, each band set back from the one under it (`bands(...)`), as Mount Sharp. | top | | | |
 
 `height` is a share of the radius: a crater's depth, a mesa's height, a lava tube's bore, a river's depth, a
 geyser's vent, a glacier's thickness at its head. A river's, a canyon's, a rille's or a glacier's radius is half its

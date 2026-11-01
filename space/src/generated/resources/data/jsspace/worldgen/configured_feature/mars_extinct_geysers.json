@@ -1,0 +1,24 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 96,
+    "chance": 0.6,
+    "fill": {
+      "Name": "jsspace:silica_sinter"
+    },
+    "height": 0.6,
+    "kind": "geyser",
+    "largest": 8,
+    "salt": 1375167615,
+    "scatter": {
+      "Name": "jsspace:silica_sinter"
+    },
+    "smallest": 4,
+    "special": {
+      "Name": "minecraft:air"
+    },
+    "surface": {
+      "Name": "jsspace:nodular_silica"
+    }
+  }
+}

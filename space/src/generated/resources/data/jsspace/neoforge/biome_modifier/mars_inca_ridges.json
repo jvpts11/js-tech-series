@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_spiders",
+  "features": "jsspace:mars_inca_ridges",
+  "step": "raw_generation"
+}

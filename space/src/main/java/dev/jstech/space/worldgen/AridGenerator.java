@@ -40,10 +40,16 @@ public final class AridGenerator implements IWorldGenerator {
     private static final int MUDSTONE = 14;
     private static final int ICE = 24;
     private static final int SAND = 4;
+    private static final int SILICA_SOIL = 2;
 
     /** The small bumps of the ground, a few dozen blocks across. */
     public static final NoiseSpec BUMP_NOISE = Terrains.noise(
             ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "arid_bumps"), -6, 1.0, 0.5, 0.25);
+    /** Where the seasonal ice of the spider fields has already gone in spring, in patches a dozen blocks across. */
+    public static final NoiseSpec THAW_NOISE = Terrains.noise(
+            ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "arid_thaw"), -4, 1.0, 0.5);
+    /* How high the thaw's noise reads where the ice is gone: about a quarter of the ground. */
+    private static final double THAWED = 0.3;
 
     @Override
     public DensityFunction ground(final SpaceWorld world, final HolderGetter<NormalNoise.NoiseParameters> noises,
@@ -75,6 +81,16 @@ public final class AridGenerator implements IWorldGenerator {
                         .layers(SpaceRocks.MUDSTONE, SpaceRocks.MUDSTONE, MUDSTONE)))
                 .in(MarsBiomes.CHAOS_TERRAIN.key(), mudstone(Terrains.surfaceRules()
                         .layers(SpaceRocks.MARTIAN_REGOLITH, SpaceRocks.MUDSTONE, MUDSTONE)))
+                // The springs: red dust over the white silica soil, the sinter bare on the steep; the layered
+                // mounds: dust over the sulfate beds; the cryptic region: the seasonal ice over the red ground.
+                .in(MarsBiomes.LIFELESS_SPRINGS.key(), Terrains.surfaceRules().steep(SpaceRocks.SILICA_SINTER)
+                        .layers(SpaceRocks.MARTIAN_REGOLITH, SpaceRocks.SILICA_SOIL, SILICA_SOIL))
+                .in(MarsBiomes.LAYERED_MOUNDS.key(), Terrains.surfaceRules().steep(SpaceRocks.LAYERED_SULFATE)
+                        .layers(SpaceRocks.MARTIAN_REGOLITH, SpaceRocks.LAYERED_SULFATE, MUDSTONE))
+                .in(MarsBiomes.SPIDER_FIELDS.key(), Terrains.surfaceRules()
+                        .where(THAW_NOISE.key(), THAWED, Double.MAX_VALUE, Terrains.surfaceRules()
+                                .layers(SpaceRocks.MARTIAN_REGOLITH, SpaceRocks.MARTIAN_REGOLITH, REGOLITH))
+                        .layers(SpaceRocks.DRY_ICE, SpaceRocks.MARTIAN_REGOLITH, REGOLITH))
                 .steep(SpaceRocks.MARTIAN_BASALT)
                 .layers(SpaceRocks.MARTIAN_REGOLITH, SpaceRocks.MARTIAN_REGOLITH, REGOLITH)
                 .build();

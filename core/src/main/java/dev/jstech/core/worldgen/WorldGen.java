@@ -334,6 +334,31 @@ public final class WorldGen {
             return this;
         }
 
+        /**
+         * Adds {@code rare} to its biomes, in rare patches inside the zone that lies where its terrain's noise is
+         * {@code warmth} warm and {@code wetness} wet: each about a thirtieth of the zone, far fewer than its common
+         * patches ({@link #patches(float, float, ResourceKey[])}), lying between them. Its terrain has patches.
+         */
+        @SafeVarargs
+        public final DimensionBuilder rarePatches(final float warmth, final float wetness,
+                                                  final ResourceKey<Biome>... rare) {
+            if (rare.length == 0) {
+                throw new IllegalArgumentException("a zone of " + id + " is given rare patches, at least one");
+            }
+            final long common = this.biomes.stream().filter(one -> one.warmth() == warmth && one.wetness() == wetness
+                    && one.patch() && Math.hypot(one.patchA(), one.patchB()) < Terrains.RARE_PATCH_RADIUS).count();
+            // Half a turn on from each common patch, in the gaps between them, or spread evenly if there are more.
+            final long gaps = Math.max(common, rare.length);
+            for (int i = 0; i < rare.length; i++) {
+                final double turn = 2 * Math.PI * (i + 0.5) / gaps;
+                this.biomes.add(new BiomePoint(Objects.requireNonNull(rare[i], "rare"), warmth, wetness,
+                        (float) (Terrains.RARE_PATCH_RADIUS * Math.cos(turn)),
+                        (float) (Terrains.RARE_PATCH_RADIUS * Math.sin(turn))));
+            }
+            this.biome = this.biomes.getFirst().biome();
+            return this;
+        }
+
         /** No sky over it: no daylight, no rain, no sun or moon. */
         public DimensionBuilder noSkylight() {
             this.skylight = false;

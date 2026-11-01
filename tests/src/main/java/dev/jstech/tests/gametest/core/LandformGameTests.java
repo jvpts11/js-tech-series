@@ -56,6 +56,19 @@ public final class LandformGameTests {
     /* Hotter and colder than any arena's air, to see a liquid freeze or boil whatever the place. */
     private static final double ABOVE_ANY_AIR = 400;
     private static final double BELOW_ANY_AIR = 200;
+    /*
+     * The wide arena, 48 blocks a side, and its middle; the tall one, 12 a side and 32 high, and its middle; and the
+     * radii painted in them.
+     */
+    private static final String BENCH = "bench";
+    private static final int BENCH_SIDE = 47;
+    private static final int BENCH_MIDDLE = 23;
+    private static final int BENCH_RADIUS = 20;
+    private static final int SPIDER_RADIUS = 16;
+    private static final String TALL = "tall";
+    private static final int TALL_SIDE = 11;
+    private static final int TALL_MIDDLE = 5;
+    private static final int MOUND_RADIUS = 5;
 
     private LandformGameTests() {
     }
@@ -377,10 +390,153 @@ public final class LandformGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = BENCH, skyAccess = true)
+    public static void terraces_stepLevelPoolsDownFromTheMiddleEachHeldByARim(final GameTestHelper helper) {
+        floor(helper, BENCH_SIDE);
+        paint(helper, config(LandformKind.TERRACES, 0.2, Blocks.SAND, Blocks.CALCITE, Blocks.AIR, Blocks.COBBLESTONE),
+                BENCH_RADIUS, BENCH_SIDE, BENCH_MIDDLE);
+        // Its apron falls four blocks over its radius of 20 in pools two deep, its outline lobed and its pools' edges
+        // wandering: every column an even number of blocks up is a pool's floor, every one an odd number up a rim.
+        int floors = 0;
+        int rims = 0;
+        int raisedFloors = 0;
+        for (int x = 0; x <= BENCH_SIDE; x++) {
+            for (int z = 0; z <= BENCH_SIDE; z++) {
+                final int top = highest(helper, x, z);
+                final BlockState state = helper.getBlockState(new BlockPos(x, top, z));
+                if ((top - TOP) % 2 == 1) {
+                    rims++;
+                    helper.assertTrue(state.is(Blocks.COBBLESTONE), "a column " + (top - TOP) + " up is a rim of"
+                            + " the scatter, at " + x + ", " + z + ": " + state);
+                } else if (top > TOP) {
+                    raisedFloors++;
+                    helper.assertTrue(state.is(Blocks.SAND), "a column " + (top - TOP) + " up is a pool's floor of"
+                            + " the surface, at " + x + ", " + z + ": " + state);
+                    helper.assertBlockState(new BlockPos(x, top - 1, z), below -> below.is(Blocks.CALCITE),
+                            () -> "over the apron's fill");
+                } else if (state.is(Blocks.SAND)) {
+                    floors++;
+                }
+            }
+        }
+        helper.assertTrue(raisedFloors > 0 && floors > 0 && rims > 0, "pools stand over the ground and level with"
+                + " it, held by rims: " + raisedFloors + " raised, " + floors + " level, " + rims + " rims");
+        helper.succeed();
+    }
+
+    @GameTest(template = TALL, skyAccess = true)
+    public static void chimney_standsAColumnHollowAtItsTop(final GameTestHelper helper) {
+        floor(helper, TALL_SIDE);
+        paint(helper, config(LandformKind.CHIMNEY, 1.5, Blocks.CALCITE, Blocks.DRIPSTONE_BLOCK, Blocks.AIR,
+                Blocks.AIR), 2, TALL_SIDE, TALL_MIDDLE);
+        helper.assertBlockState(new BlockPos(TALL_MIDDLE + 1, TOP + 3, TALL_MIDDLE), state -> state.is(Blocks.CALCITE),
+                () -> "the chimney stands three blocks over the ground, its top the surface");
+        helper.assertBlockState(new BlockPos(TALL_MIDDLE + 1, TOP + 1, TALL_MIDDLE),
+                state -> state.is(Blocks.DRIPSTONE_BLOCK), () -> "of its fill");
+        helper.assertBlockState(new BlockPos(TALL_MIDDLE, TOP + 3, TALL_MIDDLE), BlockState::isAir,
+                () -> "and hollow down its middle");
+        helper.assertBlockState(new BlockPos(TALL_MIDDLE, TOP + 1, TALL_MIDDLE),
+                state -> state.is(Blocks.DRIPSTONE_BLOCK), () -> "to the hollow's floor");
+        helper.assertTrue(highest(helper, TALL_MIDDLE + 3, TALL_MIDDLE) == TOP, "nothing stands past it");
+        helper.succeed();
+    }
+
+    @GameTest(template = BENCH, skyAccess = true)
+    public static void spider_cutsLegsFromAPitAndLaysItsFanDownwind(final GameTestHelper helper) {
+        floor(helper, BENCH_SIDE);
+        paint(helper, config(LandformKind.SPIDER, 0.5, Blocks.GRAVEL, Blocks.STONE, Blocks.AIR, Blocks.BLACK_CARPET),
+                SPIDER_RADIUS, BENCH_SIDE, BENCH_MIDDLE);
+        helper.assertTrue(highest(helper, BENCH_MIDDLE, BENCH_MIDDLE) == TOP - 3, "its pit goes three blocks down");
+        helper.assertBlockState(new BlockPos(BENCH_MIDDLE, TOP - 3, BENCH_MIDDLE), state -> state.is(Blocks.GRAVEL),
+                () -> "floored with the surface");
+        int cut = 0;
+        int inside = 0;
+        int upwind = 0;
+        int downwind = 0;
+        for (int x = 0; x <= BENCH_SIDE; x++) {
+            for (int z = 0; z <= BENCH_SIDE; z++) {
+                if (Math.hypot(x - BENCH_MIDDLE, z - BENCH_MIDDLE) < SPIDER_RADIUS) {
+                    inside++;
+                    if (highest(helper, x, z) < TOP) {
+                        cut++;
+                    }
+                }
+                if (helper.getBlockState(new BlockPos(x, TOP + 1, z)).is(Blocks.BLACK_CARPET)) {
+                    if (x > BENCH_MIDDLE) {
+                        downwind++;
+                    } else {
+                        upwind++;
+                    }
+                }
+            }
+        }
+        helper.assertTrue(cut > inside / 20 && cut < inside * 3 / 4, "its legs cut a share of the ground round the pit,"
+                + " not all of it: " + cut + " of " + inside);
+        helper.assertTrue(downwind > 0 && upwind == 0, "its fan lies downwind of the pit, along its turn, and none"
+                + " up: " + downwind + " down, " + upwind + " up");
+        helper.succeed();
+    }
+
+    @GameTest(template = BENCH, skyAccess = true)
+    public static void ridges_raiseStraightCrestsAcrossTheField(final GameTestHelper helper) {
+        floor(helper, BENCH_SIDE);
+        paint(helper, config(LandformKind.RIDGES, 0.15, Blocks.COARSE_DIRT, Blocks.STONE, Blocks.AIR, Blocks.AIR),
+                BENCH_RADIUS, BENCH_SIDE, BENCH_MIDDLE);
+        int raised = 0;
+        int crests = 0;
+        int inside = 0;
+        for (int x = 0; x <= BENCH_SIDE; x++) {
+            for (int z = 0; z <= BENCH_SIDE; z++) {
+                if (Math.hypot(x - BENCH_MIDDLE, z - BENCH_MIDDLE) >= BENCH_RADIUS) {
+                    continue;
+                }
+                inside++;
+                final int top = highest(helper, x, z);
+                if (top > TOP) {
+                    raised++;
+                    helper.assertBlockState(new BlockPos(x, top, z), state -> state.is(Blocks.COARSE_DIRT),
+                            () -> "a ridge's crest and slopes are the surface");
+                }
+                if (top == TOP + 3) {
+                    crests++;
+                }
+            }
+        }
+        helper.assertTrue(crests > 0, "its crests stand its whole height, three blocks");
+        helper.assertTrue(raised > inside / 20 && raised < inside * 2 / 3, "its ridges cross the field, not all of it: "
+                + raised + " of " + inside);
+        helper.succeed();
+    }
+
+    @GameTest(template = TALL, skyAccess = true)
+    public static void layeredMound_climbsInBandsStepByStep(final GameTestHelper helper) {
+        floor(helper, TALL_SIDE);
+        paint(helper, new LandformConfig(LandformKind.LAYERED_MOUND, 64, 1, 5, 5, 0, 1.2, state(Blocks.SANDSTONE),
+                state(Blocks.STONE), state(Blocks.AIR), state(Blocks.AIR),
+                List.of(state(Blocks.RED_TERRACOTTA), state(Blocks.WHITE_TERRACOTTA)), WATER_FREEZES, WATER_BOILS,
+                Optional.empty()), MOUND_RADIUS, TALL_SIDE, TALL_MIDDLE);
+        // Six blocks high in its middle, in steps of three: three up a block or two out, the ground four out.
+        helper.assertTrue(highest(helper, TALL_MIDDLE, TALL_MIDDLE) == TOP + 6, "its middle stands six up");
+        helper.assertTrue(highest(helper, TALL_MIDDLE + 2, TALL_MIDDLE) == TOP + 3, "its slope a step of three down");
+        helper.assertTrue(highest(helper, TALL_MIDDLE + 4, TALL_MIDDLE) == TOP, "and nothing at its foot");
+        helper.assertBlockState(new BlockPos(TALL_MIDDLE, TOP + 6, TALL_MIDDLE), state -> state.is(Blocks.SANDSTONE),
+                () -> "its top is the surface");
+        helper.assertBlockState(new BlockPos(TALL_MIDDLE, TOP + 1, TALL_MIDDLE),
+                state -> state.is(Blocks.WHITE_TERRACOTTA), () -> "over bands from its foot");
+        helper.assertBlockState(new BlockPos(TALL_MIDDLE, TOP + 2, TALL_MIDDLE),
+                state -> state.is(Blocks.RED_TERRACOTTA), () -> "one band after the other");
+        helper.succeed();
+    }
+
     /* Lays the arena's floor of stone, its top at y 3. */
     private static void floor(final GameTestHelper helper) {
-        for (int x = 0; x <= SIDE; x++) {
-            for (int z = 0; z <= SIDE; z++) {
+        floor(helper, SIDE);
+    }
+
+    /* Lays a floor of stone {@code side} blocks a side and more, its top at y 3. */
+    private static void floor(final GameTestHelper helper, final int side) {
+        for (int x = 0; x <= side; x++) {
+            for (int z = 0; z <= side; z++) {
                 for (int y = 1; y <= TOP; y++) {
                     helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
                 }
@@ -390,9 +546,15 @@ public final class LandformGameTests {
 
     /* Paints a landform of {@code radius} in the arena's middle, over the whole arena. */
     private static void paint(final GameTestHelper helper, final LandformConfig config, final int radius) {
-        final BlockPos middle = helper.absolutePos(new BlockPos(MIDDLE, TOP, MIDDLE));
+        paint(helper, config, radius, SIDE, MIDDLE);
+    }
+
+    /* Paints a landform of {@code radius} at {@code middle} of an arena {@code side} blocks a side and more. */
+    private static void paint(final GameTestHelper helper, final LandformConfig config, final int radius,
+                              final int side, final int middleAt) {
+        final BlockPos middle = helper.absolutePos(new BlockPos(middleAt, TOP, middleAt));
         final BlockPos low = helper.absolutePos(BlockPos.ZERO);
-        final BlockPos high = helper.absolutePos(new BlockPos(SIDE, 0, SIDE));
+        final BlockPos high = helper.absolutePos(new BlockPos(side, 0, side));
         LandformPainter.paint(helper.getLevel(), config, new LandformField.Instance(middle.getX(), middle.getZ(),
                         radius, 0, 1L), middle.getY(), Heightmap.Types.OCEAN_FLOOR, Math.min(low.getX(), high.getX()),
                 Math.min(low.getZ(), high.getZ()), Math.max(low.getX(), high.getX()),

@@ -52,6 +52,39 @@ public final class LandformPainter {
     private static final int UPDATE = 2;
     /* How high over the ground what stands on it may reach: a stone, a plant, a plant two blocks tall. */
     private static final int STANDING = 2;
+    /* How deep a terrace's pools are, how much of a chimney's middle is hollow and how deep, a layered mound's step. */
+    private static final int TERRACE_STEP = 2;
+    /*
+     * How far a terraced apron's outline swells and shrinks round it, as a share of its radius, in a few lobes; and how
+     * far its pools' edges wander in and out, in blocks, so no pool is a ring.
+     */
+    private static final double TERRACE_LOBE = 0.35;
+    private static final int TERRACE_LOBES = 3;
+    private static final double TERRACE_WANDER = 4.0;
+    private static final double WANDER_WAVE = 0.11;
+    /* A spider's fan lies in clumps of this many blocks a side, not grain by grain. */
+    private static final int FAN_CLUMP = 2;
+    private static final double CHIMNEY_HOLLOW = 0.75;
+    private static final int CHIMNEY_HOLLOW_DEPTH = 2;
+    private static final int MOUND_STEP = 3;
+    /*
+     * How many legs a spider has, at least and at most more, how far each strays from an even spread, in radians; how
+     * far its fan reaches downwind, as a share of its radius, how wide it is at the pit and how it widens, and how
+     * much of it has thinned out by its tip.
+     */
+    private static final int SPIDER_LEGS = 8;
+    private static final int SPIDER_MORE_LEGS = 6;
+    private static final double SPIDER_STRAY = 0.2;
+    private static final double SPIDER_FAN = 1.6;
+    private static final double FAN_ROOT = 1.5;
+    private static final double FAN_WIDENING = 0.32;
+    private static final double FAN_THINNING = 0.8;
+    /* How many ridges cross a field of them, at least and at most more; how wide one is for its height, at least. */
+    private static final int RIDGES = 3;
+    private static final int MORE_RIDGES = 3;
+    private static final double RIDGE_WIDTH = 1.4;
+    private static final int RIDGE_LEAST_WIDTH = 3;
+    private static final double RIDGE_OFFSET = 0.4;
     private static final int MAGMA_TICK = 20;
     private static final long MIX_X = 341_873_128_712L;
     private static final long MIX_Z = 132_897_987_541L;
@@ -82,6 +115,12 @@ public final class LandformPainter {
         private final LandformField.Instance one;
         private final int base;
         private final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        /* A spider's legs, the angles they run out at; a field of ridges' lines, each its angle and its offset. */
+        private final double[] legs;
+        private final double[][] lines;
+        /* A terraced apron's lobes, each its phase round it, and the phases its pools' edges wander by. */
+        private final double[] lobes;
+        private final double[] wander;
 
         private Column(final WorldGenLevel level, final LandformConfig config, final LandformField.Instance one,
                        final int base) {
@@ -89,6 +128,21 @@ public final class LandformPainter {
             this.config = config;
             this.one = one;
             this.base = base;
+            final SplittableRandom random = new SplittableRandom(one.seed());
+            this.legs = new double[SPIDER_LEGS + random.nextInt(SPIDER_MORE_LEGS)];
+            for (int k = 0; k < this.legs.length; k++) {
+                this.legs[k] = 2 * Math.PI * k / this.legs.length + (random.nextDouble() * 2 - 1) * SPIDER_STRAY;
+            }
+            this.lines = new double[RIDGES + random.nextInt(MORE_RIDGES)][];
+            for (int k = 0; k < this.lines.length; k++) {
+                this.lines[k] = new double[] {random.nextDouble() * Math.PI,
+                        (random.nextDouble() * 2 - 1) * RIDGE_OFFSET};
+            }
+            this.lobes = new double[TERRACE_LOBES];
+            for (int k = 0; k < TERRACE_LOBES; k++) {
+                this.lobes[k] = random.nextDouble() * 2 * Math.PI;
+            }
+            this.wander = new double[] {random.nextDouble() * 2 * Math.PI, random.nextDouble() * 2 * Math.PI};
         }
 
         private void paint(final int x, final int z, final int ground) {
@@ -129,6 +183,11 @@ public final class LandformPainter {
                 }
                 case SALT_FLAT -> saltFlat(x, z, ground, d, r);
                 case LAKE -> lake(x, z, ground, d, r, tall);
+                case TERRACES -> terraces(x, z, ground, d, r, tall);
+                case CHIMNEY -> chimney(x, z, ground, d, r, tall);
+                case SPIDER -> spider(x, z, ground, d, r);
+                case RIDGES -> ridges(x, z, ground, d, r, tall);
+                case LAYERED_MOUND -> layeredMound(x, z, ground, d, r, tall);
             }
             settle(x, z, ground);
         }
@@ -383,6 +442,105 @@ public final class LandformPainter {
                 lower(x, z, ground, bottom, this.config.surface());
             }
             liquid(x, z, bottom + 1, surface);
+        }
+
+        /*
+         * A terraced apron's pools lie level, each at its step's height over the ground at the apron's middle, whatever
+         * the ground under it does; the rim at each pool's lower edge stands a block over the pool's floor. Its outline
+         * swells in a few lobes and its pools' edges wander, as a spring's terraces grow where the water ran.
+         */
+        private void terraces(final int x, final int z, final int ground, final double d, final double r,
+                              final double tall) {
+            final double angle = Math.atan2(z - this.one.z(), x - this.one.x());
+            double swell = 0;
+            for (int k = 0; k < TERRACE_LOBES; k++) {
+                swell += Math.sin((k + 2) * angle + this.lobes[k]) / TERRACE_LOBES;
+            }
+            final double at = d / (1 + TERRACE_LOBE * swell) + TERRACE_WANDER
+                    * Math.sin(x * WANDER_WAVE + this.wander[0]) * Math.cos(z * WANDER_WAVE + this.wander[1]);
+            if (at >= r || d >= r * (1 + TERRACE_LOBE)) {
+                return;
+            }
+            final int floor = this.base + (int) Math.round(LandformShapes.terrace(Math.max(0, at), r, tall,
+                    TERRACE_STEP));
+            // The lowest pool lies level with the ground round it, which holds it: it needs no rim.
+            final boolean rim = floor > this.base
+                    && LandformShapes.terraceRim(Math.max(0, at), r, tall, TERRACE_STEP);
+            final int top = rim ? floor + 1 : floor;
+            final BlockState face = rim ? this.config.scatter() : this.config.surface();
+            if (top > ground) {
+                raise(x, z, ground, top, face);
+            } else if (top < ground) {
+                lower(x, z, ground, top, face);
+            } else {
+                put(x, top, z, face);
+            }
+        }
+
+        /* A chimney stands on the ground where it is; one two blocks across or more is hollow down its middle. */
+        private void chimney(final int x, final int z, final int ground, final double d, final double r,
+                             final double tall) {
+            final int top = ground + (int) Math.round(LandformShapes.chimney(d, r, tall));
+            if (top <= ground) {
+                return;
+            }
+            raise(x, z, ground, top, this.config.surface());
+            if (d < CHIMNEY_HOLLOW && r >= 2) {
+                fill(x, z, top - CHIMNEY_HOLLOW_DEPTH + 1, top, Blocks.AIR.defaultBlockState());
+            }
+        }
+
+        /*
+         * A spider's troughs are cut into the ground from its own height; its fan lies over the ground outside them,
+         * downwind of the pit along its turn, widening and thinning out towards its tip.
+         */
+        private void spider(final int x, final int z, final int ground, final double d, final double r) {
+            final double angle = Math.atan2(z - this.one.z(), x - this.one.x());
+            final int cut = LandformShapes.spider(d, angle, r, this.legs);
+            if (cut > 0) {
+                lower(x, z, ground, ground - cut, this.config.surface());
+                return;
+            }
+            final double along = this.one.along(x, z);
+            final double length = r * SPIDER_FAN;
+            final double clump = chance(Math.floorDiv(x, FAN_CLUMP), Math.floorDiv(z, FAN_CLUMP));
+            if (along > 0 && along < length && Math.abs(this.one.across(x, z)) < FAN_ROOT + along * FAN_WIDENING
+                    && clump > along / length * FAN_THINNING) {
+                put(x, ground + 1, z, this.config.scatter());
+            }
+        }
+
+        /* Each ridge crosses the field along its own line, the highest of them standing where they meet. */
+        private void ridges(final int x, final int z, final int ground, final double d, final double r,
+                            final double tall) {
+            if (d >= r) {
+                return;
+            }
+            final double width = Math.max(RIDGE_LEAST_WIDTH, tall * RIDGE_WIDTH);
+            double rise = 0;
+            for (final double[] line : this.lines) {
+                final double across = -(x - this.one.x()) * Math.sin(line[0]) + (z - this.one.z()) * Math.cos(line[0])
+                        - line[1] * r;
+                rise = Math.max(rise, LandformShapes.ridge(across, width, tall));
+            }
+            rise *= LandformShapes.fade(d, r, r * FADING);
+            raise(x, z, ground, ground + (int) Math.round(rise), this.config.surface());
+        }
+
+        /* A layered mound stands from the ground at its middle, its bands counted from there, as a mesa's are. */
+        private void layeredMound(final int x, final int z, final int ground, final double d, final double r,
+                                  final double tall) {
+            final double rise = LandformShapes.layeredMound(d, r, tall, MOUND_STEP);
+            if (rise <= 0) {
+                return;
+            }
+            final int top = Math.max(ground, this.base + (int) Math.round(rise));
+            for (int y = ground + 1; y < top; y++) {
+                put(x, y, z, band(y - this.base));
+            }
+            if (top > ground) {
+                put(x, top, z, this.config.surface());
+            }
         }
 
         /* Fills from {@code from} to {@code to} with the liquid: frozen on top where cold, none where it boils. */

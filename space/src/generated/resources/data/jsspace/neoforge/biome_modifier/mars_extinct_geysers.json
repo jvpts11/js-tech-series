@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jsspace:mars_springs",
+  "features": "jsspace:mars_extinct_geysers",
+  "step": "raw_generation"
+}

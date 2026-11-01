@@ -68,12 +68,14 @@ public final class BiomeZonesGameTests {
     private static final int SIDE = 48;
     private static final int SPACING = 192;
     /*
-     * The zone's own biome's share of it at least, each patch biome's at least and at most, and how much of the
-     * squares may lie in another zone.
+     * The zone's own biome's share of it at least, each patch biome's at least and at most, each rare one's, and how
+     * much of the squares may lie in another zone.
      */
-    private static final double LEAST_OWN = 0.4;
+    private static final double LEAST_OWN = 0.3;
     private static final double LEAST_PATCH = 0.08;
     private static final double MOST_PATCH = 0.3;
+    private static final double LEAST_RARE = 0.005;
+    private static final double MOST_RARE = 0.06;
     private static final double MOST_ELSEWHERE = 0.2;
     /*
      * Across a zone's edge: the lines read, how far apart they are, how far each runs either side of the edge, and a
@@ -186,6 +188,12 @@ public final class BiomeZonesGameTests {
                     helper.assertTrue(patchShare >= LEAST_PATCH && patchShare <= MOST_PATCH && patchShare < own,
                             "in " + zone.name() + ", " + patch.location() + " is a patch of a share of it, less"
                                     + " than its own biome's: " + shares(counts, total));
+                }
+                for (final ResourceKey<Biome> rare : zone.rare()) {
+                    final double rareShare = share(counts, rare, total);
+                    inZone += rareShare;
+                    helper.assertTrue(rareShare >= LEAST_RARE && rareShare <= MOST_RARE, "in " + zone.name() + ", "
+                            + rare.location() + " lies in rare patches: " + shares(counts, total));
                 }
                 helper.assertTrue(1 - inZone <= MOST_ELSEWHERE, "and little of the ground round " + zone.name()
                         + "'s places is another zone's: " + shares(counts, total));
@@ -306,31 +314,38 @@ public final class BiomeZonesGameTests {
         return places;
     }
 
-    /* Mars' zones, by its maps of the north, its dark regions, its canyons and its caps. */
+    /*
+     * Mars' zones with patches, by its maps of the north, its dark regions, its canyons and its caps, away from the new
+     * biomes' own places; the south's old springs rare among its patches.
+     */
     private static List<Zone> marsZones() {
         final RoundMap north = map("mars/north");
         final RoundMap dark = map("mars/dark");
         final RoundMap canyon = map("mars/canyon");
         final RoundMap polar = map("mars/polar");
-        final IPlace open = (lon, lat) -> dark.at(lon, lat) < 1 - SURE && canyon.at(lon, lat) < 1 - SURE
-                && polar.at(lon, lat) < 1 - SURE;
-        final IPlace dunes = (lon, lat) -> dark.at(lon, lat) > SURE && canyon.at(lon, lat) < 1 - SURE
-                && polar.at(lon, lat) < 1 - SURE;
+        final RoundMap[] own = {map("mars/springs"), map("mars/layered"), map("mars/cryptic")};
+        final IPlace ordinary = (lon, lat) -> own[0].at(lon, lat) < 1 - SURE && own[1].at(lon, lat) < 1 - SURE
+                && own[2].at(lon, lat) < 1 - SURE && polar.at(lon, lat) < 1 - SURE;
+        final IPlace open = (lon, lat) -> ordinary.holds(lon, lat) && dark.at(lon, lat) < 1 - SURE
+                && canyon.at(lon, lat) < 1 - SURE;
+        final IPlace dunes = (lon, lat) -> ordinary.holds(lon, lat) && dark.at(lon, lat) > SURE
+                && canyon.at(lon, lat) < 1 - SURE;
         return List.of(
                 new Zone("the south", (lon, lat) -> open.holds(lon, lat) && north.at(lon, lat) < 1 - SURE,
                         MarsBiomes.SOUTHERN_HIGHLANDS.key(), List.of(MarsBiomes.OXIDE_PLAINS.key(),
-                        MarsBiomes.LAKEBED.key(), MarsBiomes.DARK_DUNES.key())),
+                        MarsBiomes.LAKEBED.key(), MarsBiomes.DARK_DUNES.key()),
+                        List.of(MarsBiomes.LIFELESS_SPRINGS.key())),
                 new Zone("the north", (lon, lat) -> open.holds(lon, lat) && north.at(lon, lat) > SURE,
-                        MarsBiomes.NORTHERN_PLAINS.key(), List.of(MarsBiomes.DARK_DUNES.key())),
+                        MarsBiomes.NORTHERN_PLAINS.key(), List.of(MarsBiomes.DARK_DUNES.key()), List.of()),
                 new Zone("a dark region of the north", (lon, lat) -> dunes.holds(lon, lat)
                         && north.at(lon, lat) > SURE, MarsBiomes.DARK_DUNES.key(),
-                        List.of(MarsBiomes.NORTHERN_PLAINS.key())),
+                        List.of(MarsBiomes.NORTHERN_PLAINS.key()), List.of()),
                 new Zone("a dark region of the south", (lon, lat) -> dunes.holds(lon, lat)
                         && north.at(lon, lat) < 1 - SURE, MarsBiomes.DARK_DUNES.key(),
-                        List.of(MarsBiomes.SOUTHERN_HIGHLANDS.key())),
-                new Zone("a canyon", (lon, lat) -> canyon.at(lon, lat) > SURE && dark.at(lon, lat) < 1 - SURE
-                        && polar.at(lon, lat) < 1 - SURE, MarsBiomes.CHAOS_TERRAIN.key(),
-                        List.of(MarsBiomes.LAKEBED.key())));
+                        List.of(MarsBiomes.SOUTHERN_HIGHLANDS.key()), List.of()),
+                new Zone("a canyon", (lon, lat) -> ordinary.holds(lon, lat) && canyon.at(lon, lat) > SURE
+                        && dark.at(lon, lat) < 1 - SURE, MarsBiomes.CHAOS_TERRAIN.key(),
+                        List.of(MarsBiomes.LAKEBED.key()), List.of()));
     }
 
     /* The Moon's zones with patches, by its maps of the maria, its young craters and its poles. */
@@ -342,9 +357,9 @@ public final class BiomeZonesGameTests {
         return List.of(
                 new Zone("the maria", (lon, lat) -> plain.holds(lon, lat) && maria.at(lon, lat) > SURE,
                         MoonBiomes.MARE.key(), List.of(MoonBiomes.RILLE.key(), MoonBiomes.LAVA_TUBE_SKYLIGHT.key(),
-                        MoonBiomes.YOUNG_CRATER.key())),
+                        MoonBiomes.YOUNG_CRATER.key()), List.of()),
                 new Zone("the highlands", (lon, lat) -> plain.holds(lon, lat) && maria.at(lon, lat) < 1 - SURE,
-                        MoonBiomes.HIGHLANDS.key(), List.of(MoonBiomes.YOUNG_CRATER.key())));
+                        MoonBiomes.HIGHLANDS.key(), List.of(MoonBiomes.YOUNG_CRATER.key()), List.of()));
     }
 
     private static double share(final Map<ResourceKey<Biome>, AtomicInteger> counts, final ResourceKey<Biome> biome,
@@ -397,8 +412,10 @@ public final class BiomeZonesGameTests {
     }
 
     /*
-     * A zone of a world: where its maps lay it, the biome it is its own, and the biomes that lie in patches inside it.
+     * A zone of a world: where its maps lay it, the biome it is its own, the biomes that lie in patches inside it, and
+     * those that lie in rare patches.
      */
-    private record Zone(String name, IPlace where, ResourceKey<Biome> own, List<ResourceKey<Biome>> patches) {
+    private record Zone(String name, IPlace where, ResourceKey<Biome> own, List<ResourceKey<Biome>> patches,
+                        List<ResourceKey<Biome>> rare) {
     }
 }

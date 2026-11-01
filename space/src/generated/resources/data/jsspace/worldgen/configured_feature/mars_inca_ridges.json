@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 512,
+    "chance": 0.5,
+    "fill": {
+      "Name": "jsspace:martian_basalt"
+    },
+    "height": 0.04,
+    "kind": "ridges",
+    "largest": 160,
+    "salt": 1662854781,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 60,
+    "surface": {
+      "Name": "jsspace:martian_regolith"
+    }
+  }
+}

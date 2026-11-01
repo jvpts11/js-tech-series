@@ -84,6 +84,12 @@ final class GroundColours {
     private static final ResourceLocation BASALT_SAND = own("basalt_sand");
     private static final ResourceLocation DUSTED_MUDSTONE = own("dusted_mudstone_top");
     private static final ResourceLocation DRY_ICE = own("dry_ice");
+    /* Its old springs' pale sinter under the red dust, its layered mounds' sulfate, and the spiders' dark fans. */
+    private static final ResourceLocation SILICA_SINTER = own("silica_sinter_top");
+    private static final ResourceLocation LAYERED_SULFATE = own("layered_sulfate_top");
+    private static final ResourceLocation FAN_DUST = own("fan_dust");
+    private static final double SINTER_SHOWING = 0.35;
+    private static final double FANS = 0.25;
     /* The leaves the game tints with fixed colours, not the biome's. */
     private static final int SPRUCE_TINT = 0x619961;
     private static final int BIRCH_TINT = 0x80A755;
@@ -175,6 +181,15 @@ final class GroundColours {
         }
         if (biome.is(MarsBiomes.LAKEBED.key())) {
             return mean(DUSTED_MUDSTONE);
+        }
+        if (biome.is(MarsBiomes.LIFELESS_SPRINGS.key())) {
+            return mix(mean(MARTIAN_REGOLITH), mean(SILICA_SINTER), SINTER_SHOWING);
+        }
+        if (biome.is(MarsBiomes.LAYERED_MOUNDS.key())) {
+            return mean(LAYERED_SULFATE);
+        }
+        if (biome.is(MarsBiomes.SPIDER_FIELDS.key())) {
+            return mix(mean(DRY_ICE), mean(FAN_DUST), FANS);
         }
         if (biome.is(MarsBiomes.STONY) || biome.is(MarsBiomes.CHAOS)) {
             return mean(MARTIAN_REGOLITH);

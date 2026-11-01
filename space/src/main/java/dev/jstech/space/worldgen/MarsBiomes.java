@@ -16,16 +16,19 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 
 /**
- * Mars' seven biomes, its own: the low smooth northern plains and the old cratered southern highlands either side of
+ * Mars' ten biomes, its own: the low smooth northern plains and the old cratered southern highlands either side of
  * the dichotomy, the dark dunes of basalt sand where its map is dark, the chaos terrain where its canyons open, the
- * oxide plains strewn with hematite and the beds of old lakes in the highlands, and its polar caps. Every one is as
- * cold as Mars is, the caps colder by far.
+ * oxide plains strewn with hematite and the beds of old lakes in the highlands, its polar caps, and, where Mars has
+ * them, its lifeless old springs, its layered mounds and its spider fields. Every one is as cold as Mars is, the caps
+ * and the spider fields colder by far.
  */
 public final class MarsBiomes {
 
     /* How cold Mars' ground is on the whole, and its polar caps, in degrees Celsius. */
     private static final double MARS = -63;
     private static final double CAP = -125;
+    /* The cryptic region by the south cap, under its seasonal ice for much of the year. */
+    private static final double CRYPTIC = -110;
     /* The butterscotch of a dusty sky, and the haze its far ground fades into. */
     private static final int SKY = 0xC9946A;
     private static final int HAZE = 0xB98A68;
@@ -49,9 +52,24 @@ public final class MarsBiomes {
     public static final WorldBiomes.BiomeSpec LAKEBED = biome("mars_lakebed", MARS).name("Lakebed").declare();
     /** Water ice in layers with dust between them, carbon dioxide frost over it, cut by spiral troughs. */
     public static final WorldBiomes.BiomeSpec POLAR_CAP = biome("mars_polar_cap", CAP).name("Polar Cap").declare();
+    /**
+     * Old hot springs, dry for three billion years: terraces and mounds of opal sinter, chimneys, and digitate silica
+     * on the channels' nodules, as round Home Plate in Gusev, at Nili Patera and in Vernal crater.
+     */
+    public static final WorldBiomes.BiomeSpec LIFELESS_SPRINGS = biome("mars_lifeless_springs", MARS)
+            .name("Lifeless Springs").declare();
+    /** A mound of light sulfate and mudstone beds climbing in steps, as Mount Sharp and Valles' layered deposits. */
+    public static final WorldBiomes.BiomeSpec LAYERED_MOUNDS = biome("mars_layered_mounds", MARS)
+            .name("Layered Mounds").declare();
+    /**
+     * The cryptic region by the south cap: seasonal carbon dioxide ice over the ground, spiders carved under it by the
+     * gas escaping, the dark fans its jets leave, and the ridges of Inca City.
+     */
+    public static final WorldBiomes.BiomeSpec SPIDER_FIELDS = biome("mars_spider_fields", CRYPTIC)
+            .name("Spider Fields").declare();
     /** Every one of them. */
     public static final List<WorldBiomes.BiomeSpec> ALL = List.of(NORTHERN_PLAINS, OXIDE_PLAINS, SOUTHERN_HIGHLANDS,
-            DARK_DUNES, CHAOS_TERRAIN, LAKEBED, POLAR_CAP);
+            DARK_DUNES, CHAOS_TERRAIN, LAKEBED, POLAR_CAP, LIFELESS_SPRINGS, LAYERED_MOUNDS, SPIDER_FIELDS);
 
     /** The biomes of Mars' stony ground, where its basalt's stones lie loose. */
     public static final TagKey<Biome> STONY = tag("mars_stony");
@@ -71,6 +89,12 @@ public final class MarsBiomes {
     public static final TagKey<Biome> TROUGHS = tag("mars_troughs");
     /** The biomes its oxides lie in, hematite in the regolith and the mudstone. */
     public static final TagKey<Biome> OXIDES = tag("mars_oxides");
+    /** The biomes its old hot springs' terraces, mounds and chimneys stand in. */
+    public static final TagKey<Biome> SPRINGS = tag("mars_springs");
+    /** The biomes its layered mounds, buttes and yardangs stand in. */
+    public static final TagKey<Biome> LAYERED = tag("mars_layered");
+    /** The biomes its spiders are carved in and its ridges of Inca City stand in. */
+    public static final TagKey<Biome> SPIDERS = tag("mars_spiders");
 
     private MarsBiomes() {
     }

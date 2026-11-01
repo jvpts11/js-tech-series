@@ -1,0 +1,74 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "bands": [
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:mudstone"
+      },
+      {
+        "Name": "jsspace:mudstone"
+      },
+      {
+        "Name": "jsspace:mudstone"
+      },
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:buff_mudstone"
+      },
+      {
+        "Name": "jsspace:buff_mudstone"
+      },
+      {
+        "Name": "jsspace:buff_mudstone"
+      },
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:layered_sulfate"
+      },
+      {
+        "Name": "jsspace:dusted_mudstone"
+      },
+      {
+        "Name": "jsspace:dusted_mudstone"
+      },
+      {
+        "Name": "jsspace:dusted_mudstone"
+      }
+    ],
+    "cell": 768,
+    "chance": 0.85,
+    "height": 0.2,
+    "kind": "layered_mound",
+    "largest": 300,
+    "salt": 348426003,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 120,
+    "surface": {
+      "Name": "jsspace:layered_sulfate"
+    }
+  }
+}

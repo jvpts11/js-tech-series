@@ -1,0 +1,21 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 96,
+    "chance": 0.7,
+    "fill": {
+      "Name": "jsspace:layered_sulfate"
+    },
+    "height": 0.06,
+    "kind": "dunes",
+    "largest": 50,
+    "salt": 108297344,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 20,
+    "surface": {
+      "Name": "jsspace:layered_sulfate"
+    }
+  }
+}
