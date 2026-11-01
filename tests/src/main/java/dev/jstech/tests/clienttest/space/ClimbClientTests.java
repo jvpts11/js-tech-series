@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.dimension.TravelScreens;
 import dev.jstech.core.client.sky.GroundCovers;
 import dev.jstech.space.universe.ClimbView;
@@ -16,6 +17,11 @@ import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.testkit.client.ClientTestHelper;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -26,6 +32,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The way up from the Overworld to its space on a player's game, read from the picture: low in the climb the sky is
@@ -33,7 +41,7 @@ import net.minecraft.world.level.Level;
  * crossed, the player's hand as it was, holding what it held, neither lowered nor swung round; and the passage up,
  * and the one back down, open no loading screen at all.
  * Low in the climb the loaded ground is drawn however far below it lies, and from halfway up its own picture stands in
- * for it.
+ * for it. Flying down out of the low orbit, the world below is carried on to the place it comes down over, never back.
  */
 public final class ClimbClientTests {
 
@@ -68,6 +76,18 @@ public final class ClimbClientTests {
     private static final int SEEN = 60;
     private static final int NAVY = 250;
     private static final int CHANNEL = 0xFF;
+    /* How long the way down from the orbit to its floor may take, flying down. */
+    private static final int DESCENT = 1200;
+    /*
+     * The band read across the middle of each frame on the way down: its rows and the pixels between them; the
+     * farthest sideways shift looked for from one frame to the next, a shift so small it is no move at all, and how
+     * many frames must move for the world to have moved.
+     */
+    private static final int BAND_ROWS = 12;
+    private static final int BAND_STEP = 6;
+    private static final int MOST_SHIFT = 48;
+    private static final int STILL_SHIFT = 1;
+    private static final int MOVING_FRAMES = 20;
 
     private ClimbClientTests() {
     }
@@ -122,7 +142,7 @@ public final class ClimbClientTests {
                 .thenWaitUntil(() -> arrived(ctx, SPACE, screen) && swayed(ctx, sway), ARRIVE,
                         "the climber to cross into space")
                 // Read as the line is crossed: in its low orbit the world below slides on from the moment one comes
-                // there, a turn every 1,500 ticks, so a second later it is no longer the picture of the passage.
+                // there, a turn a game day, so the sooner it is read the nearer it is to the picture of the passage.
                 .thenWaitUntil(() -> swayed(ctx, sway) && bright(colour(ctx, GROUND[0][0], GROUND[0][1])) > SEEN,
                         DRAWN, "the world's sphere to be drawn below in space")
                 .then(0, () -> {
@@ -188,6 +208,39 @@ public final class ClimbClientTests {
                 .thenScreenshot(0, "climb_blocks_given_way");
     }
 
+    /*
+     * Coming down out of the Overworld's low orbit as a player does, flying and holding the key to go down: the world
+     * below is carried on to the place it comes down over, and never turns back. Read from the picture, every frame: a
+     * band across the middle of the sphere, and how far it moved since the frame before.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void descent_fromTheOrbitCarriesTheWorldBelowOnNeverBack(final ClientTestContext ctx) {
+        final Slides slides = new Slides();
+        final boolean[] screen = new boolean[1];
+        ctx.afterTest(() -> {
+            slides.stop();
+            ctx.sneak(false);
+            ctx.server().execute(() -> land(ctx));
+        });
+        ctx.thenServer(0, level -> look(ctx, level.getServer().overworld(),
+                        SpaceClimbs.ceiling(level.getServer().overworld()) + OVER, DOWN))
+                .thenWaitUntil(() -> arrived(ctx, SPACE, screen), ARRIVE, "the climber to cross into space")
+                .thenWaitUntil(() -> bright(colour(ctx, GROUND[0][0], GROUND[0][1])) > SEEN, DRAWN,
+                        "the world's sphere to be drawn below in its orbit")
+                .then(SETTLE, () -> {
+                    slides.start();
+                    ctx.sneak(true);
+                })
+                .thenWaitUntil(() -> ctx.mc().player.getY() < SpaceClimbs.floor() + OVER, DESCENT,
+                        "the player to fly down out of the orbit to just over the floor of the orbits")
+                .then(0, () -> {
+                    ctx.sneak(false);
+                    slides.stop();
+                    slides.assertOneWay(ctx);
+                })
+                .thenScreenshot(0, "descent_over_the_floor");
+    }
+
     /* Puts the player back on the ground of the test's place, no longer flying, as the next test expects them. */
     private static void land(final ClientTestContext ctx) {
         final ServerPlayer player = ctx.serverPlayer();
@@ -245,5 +298,90 @@ public final class ClimbClientTests {
             }
         }
         return new int[] {sum[0] / 9, sum[1] / 9, sum[2] / 9};
+    }
+
+    /*
+     * A band across the middle of every frame drawn while it watches, as greys, and how far the picture in it moved
+     * sideways from each frame to the next: the shift that lays one on the other best.
+     */
+    private static final class Slides {
+
+        private final List<Integer> moved = new ArrayList<>();
+        private final Consumer<RenderFrameEvent.Post> listener = event -> frame();
+        private int[] last;
+        private int width;
+        private boolean watching;
+
+        /** Starts reading every frame. */
+        void start() {
+            watching = true;
+            NeoForge.EVENT_BUS.addListener(listener);
+        }
+
+        /** Stops reading. */
+        void stop() {
+            if (watching) {
+                watching = false;
+                NeoForge.EVENT_BUS.unregister(listener);
+            }
+        }
+
+        /** Fails unless the picture moved, and only ever one way, never back, from frame to frame. */
+        void assertOneWay(final ClientTestContext ctx) {
+            int right = 0;
+            int left = 0;
+            for (final int shift : moved) {
+                right += shift > STILL_SHIFT ? 1 : 0;
+                left += shift < -STILL_SHIFT ? 1 : 0;
+            }
+            ctx.assertTrue(right + left > MOVING_FRAMES, "the world below moved on the way down: in " + (right + left)
+                    + " of " + moved.size() + " frames");
+            ctx.assertTrue(Math.min(right, left) == 0, "the world below moved one way only on the way down: "
+                    + right + " frames one way and " + left + " the other, of " + moved.size() + ": " + moved);
+        }
+
+        private void frame() {
+            try (NativeImage image = Screenshot.takeScreenshot(Minecraft.getInstance().getMainRenderTarget())) {
+                final int[] band = band(image);
+                if (last != null && last.length == band.length) {
+                    moved.add(shift(last, band));
+                }
+                last = band;
+            }
+        }
+
+        /* The band's greys: BAND_ROWS rows across the middle half of the frame, round its middle. */
+        private int[] band(final NativeImage image) {
+            width = image.getWidth() / 2;
+            final int x0 = image.getWidth() / 4;
+            final int y0 = image.getHeight() / 2 - BAND_ROWS * BAND_STEP / 2;
+            final int[] out = new int[width * BAND_ROWS];
+            for (int row = 0; row < BAND_ROWS; row++) {
+                for (int x = 0; x < width; x++) {
+                    final int abgr = image.getPixelRGBA(x0 + x, y0 + row * BAND_STEP);
+                    out[row * width + x] = (abgr & CHANNEL) + (abgr >> 8 & CHANNEL) + (abgr >> 16 & CHANNEL);
+                }
+            }
+            return out;
+        }
+
+        /* The sideways shift, in pixels, that lays {@code before} best on {@code after}. */
+        private int shift(final int[] before, final int[] after) {
+            int best = 0;
+            long bestOff = Long.MAX_VALUE;
+            for (int dx = -MOST_SHIFT; dx <= MOST_SHIFT; dx++) {
+                long off = 0;
+                for (int row = 0; row < BAND_ROWS; row++) {
+                    for (int x = MOST_SHIFT; x < width - MOST_SHIFT; x++) {
+                        off += Math.abs(before[row * width + x] - after[row * width + x + dx]);
+                    }
+                }
+                if (off < bestOff) {
+                    bestOff = off;
+                    best = dx;
+                }
+            }
+            return best;
+        }
     }
 }

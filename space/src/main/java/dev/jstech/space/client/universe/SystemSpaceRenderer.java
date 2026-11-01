@@ -15,6 +15,7 @@ import com.mojang.blaze3d.vertex.VertexBuffer;
 import dev.jstech.space.network.ClimbWorldsPayload;
 import dev.jstech.space.network.SpacePayloads;
 import dev.jstech.space.universe.ClimbView;
+import dev.jstech.space.universe.OrbitSlide;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SpaceClimbs;
 import dev.jstech.space.universe.StarSystems;
@@ -59,18 +60,18 @@ public final class SystemSpaceRenderer {
     private static final float TEXEL_PIXELS = 1F;
     /* The worlds under the space as their climbs draw them, by their sphere's name, as the server last told. */
     private static final Map<String, ClimbWorldsPayload.ClimbWorld> WORLDS_BELOW = new ConcurrentHashMap<>();
-    /*
-     * How long a low orbit takes, in ticks: sixteen a day at the Overworld's pace, as the International Space Station
-     * sees sixteen sunrises a day, a little over a minute each.
-     */
-    private static final double ORBIT_TICKS = 24_000.0 / 16;
+    private static final double TURN = 2 * Math.PI;
 
     @Nullable
     private static VertexBuffer sunSquare;
-    /* The world whose orbit the eye is in, and the tick it came into it at, from which its world slides by below. */
+    /*
+     * The world whose orbit the eye is in, and the tick it came into it at, from which its world slides by below; and
+     * how far it had slid when the eye went down out of the orbit, or NaN while the eye is in it.
+     */
     @Nullable
     private static SolarBody orbiting;
     private static double orbitingSince;
+    private static double slidWhenLeft = Double.NaN;
 
     private SystemSpaceRenderer() {
     }
@@ -150,8 +151,11 @@ public final class SystemSpaceRenderer {
 
     /*
      * How far the world whose orbit the eye at {@code camera} is in has slid by below it since it came there, in
-     * radians, at {@code tick}: a turn every {@link #ORBIT_TICKS}; on the way down to the floor of the orbits, under
-     * them, wound back to nothing as it comes to the floor, so the way down shows the place it comes down over.
+     * radians, at {@code tick} ({@link OrbitSlide}): a turn a game day while in the orbit; under it, on the way down
+     * to the floor of the orbits, stopped where it was as the eye left the orbit and carried on, never back, to the
+     * next whole turn as it comes to the floor, so the way down shows the place it comes down over. Back up in the
+     * orbit, it slides on from where it stopped. An eye that comes into a world's space under its orbit sees the place
+     * below as it is.
      */
     private static double orbitSlide(final Vec3 camera, final double tick) {
         final double floor = SystemLayout.ORBIT_Y - SpaceClimbs.UNDER_THE_FLOOR;
@@ -159,14 +163,20 @@ public final class SystemSpaceRenderer {
         if (body == null || body != orbiting) {
             orbiting = body;
             orbitingSince = tick;
+            slidWhenLeft = camera.y >= SystemLayout.ORBIT_Y ? Double.NaN : 0;
             return 0;
         }
-        final double slide = 2 * Math.PI * (tick - orbitingSince) / ORBIT_TICKS;
         if (camera.y >= SystemLayout.ORBIT_Y) {
-            return slide;
+            if (!Double.isNaN(slidWhenLeft)) {
+                orbitingSince = tick - slidWhenLeft / TURN * OrbitSlide.TURN_TICKS;
+                slidWhenLeft = Double.NaN;
+            }
+            return OrbitSlide.slid(tick - orbitingSince);
         }
-        final double wound = Math.IEEEremainder(slide, 2 * Math.PI);
-        return wound * (camera.y - floor) / (SystemLayout.ORBIT_Y - floor);
+        if (Double.isNaN(slidWhenLeft)) {
+            slidWhenLeft = OrbitSlide.slid(tick - orbitingSince);
+        }
+        return OrbitSlide.downTo(slidWhenLeft, (SystemLayout.ORBIT_Y - camera.y) / (SystemLayout.ORBIT_Y - floor));
     }
 
     /*

@@ -2413,8 +2413,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   falling near where it came loose falls by its physics and strikes the ground where it meets it, its blast and its
   wreckage; one sent to its fall zone or anywhere round a player falls out of sight and strikes its column there. A
   stage's wreckage now holds the blocks its formed parts were made of.
-- (Space) In orbit. Seen from a world's orbit, the world slides by below, an orbit a little over a minute at the
-  Overworld's pace, sixteen sunrises to its day, its clouds going round with it; coming down, it winds back to the
+- (Space) In orbit. Seen from a world's orbit, the world slides by below, a whole turn a game day, its clouds going
+  round with it; coming down out of the orbit it stops sliding, and the way down carries it on, never back, to the
   place below. In the system's space there is no air and no gravity: no sound carries, and a loose thing floats where it
   is let go. The world keeps everything in its worlds' orbits: the rockets that pass into one are told there as they
   arrive, whose they are, kept loaded when a Space Persistor stands aboard, and forgotten as they go back down; a
