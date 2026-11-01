@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.sky.SkyPlace;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.sky.Skies;
@@ -20,6 +21,8 @@ import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.testkit.client.ClientTestHelper;
+import java.util.ArrayDeque;
+import net.minecraft.client.Screenshot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -34,7 +37,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
  * The skies seen from the ground, read from the picture: on the Moon, the Overworld hangs high in the north over the
  * middle of the map, full at the Moon's midnight there, and is gone from the far side; the hour follows the longitude,
  * so at one moment a block is dark at the middle's midnight and lit by the late morning on the far side; on Mars,
- * Phobos stands where J's Core's sky puts it, lit against the night.
+ * Phobos and Deimos stand where J's Core's sky puts them, at the size the approved views draw them, Phobos a bright
+ * oblong a few pixels long and Deimos a point like a star, each brighter than every star round it.
  */
 public final class GroundSkyClientTests {
 
@@ -50,10 +54,16 @@ public final class GroundSkyClientTests {
      * where the middle's midnight is the morning, the Sun clear of where the Overworld would hang.
      */
     private static final double FAR_SIDE = 0.45;
-    /* Phobos' path in Mars' sky file, and how it is looked for: high, the Sun well down and nearly opposite it. */
+    /*
+     * Phobos' and Deimos' paths in Mars' sky file, and how they are looked for: high, the Sun well down, Phobos nearly
+     * opposite it.
+     */
     private static final double PHOBOS_OFFSET = 0.3;
     private static final double PHOBOS_ORBIT = -0.319;
     private static final double PHOBOS_TILT = 1.1;
+    private static final double DEIMOS_OFFSET = 0.62;
+    private static final double DEIMOS_ORBIT = -1.262;
+    private static final double DEIMOS_TILT = 1.8;
     private static final double HIGH = 0.6;
     private static final double SUN_DOWN = -0.3;
     private static final double OPPOSITE = -0.5;
@@ -70,9 +80,20 @@ public final class GroundSkyClientTests {
     private static final int DARK = 45;
     private static final int BLOCK_LIT = 450;
     private static final int BLOCK_DARK = 250;
-    /* How much brighter Phobos is than the night sky beside it, and how far beside it the sky is read. */
-    private static final int PHOBOS_OVER_SKY = 40;
-    private static final int BESIDE = 30;
+    /*
+     * How wide the approved views draw Phobos and Deimos, in degrees: Phobos five pixels of a frame 960 high, Deimos
+     * two; and by how much more, plus a pixel, the game may draw them, its pixels falling where they may.
+     */
+    private static final double PHOBOS_WIDE = 0.42;
+    private static final double DEIMOS_WIDE = 0.17;
+    private static final double LEEWAY = 1.5;
+    /*
+     * A moon is read off the frame's own pixels, the GUI hidden: the brightest pixel this near the middle and the spot
+     * of pixels at least this share of it joined to it; the stars round it, out to this far.
+     */
+    private static final int CORE = 10;
+    private static final int RING = 80;
+    private static final double SPOT_SHARE = 0.4;
     private static final int CHANNEL = 0xFF;
 
     private GroundSkyClientTests() {
@@ -83,19 +104,12 @@ public final class GroundSkyClientTests {
             final ClientTestContext ctx) {
         final int[] near = new int[1];
         final double[] phobos = new double[3];
+        final double[] deimos = new double[3];
         final boolean[] daylight = new boolean[1];
-        ctx.afterTest(() -> ctx.server().execute(() -> {
-            ctx.server().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(daylight[0], ctx.server());
-            // Back on the ground and no longer flying, as the next test expects the player.
-            final ServerPlayer player = ctx.serverPlayer();
-            player.getAbilities().flying = false;
-            player.onUpdateAbilities();
-            final BlockPos origin = ctx.origin().above(2);
-            player.teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0F,
-                    0F);
-            forget(ctx, SolarSystemWorlds.MOON);
-            forget(ctx, SolarSystemWorlds.MARS);
-        }));
+        ctx.afterTest(() -> {
+            ctx.mc().options.hideGui = false;
+            ctx.server().execute(() -> back(ctx, daylight[0]));
+        });
         ctx.thenServer(0, level -> {
             // The clocks held still, so the Moon's hour and Phobos stay where they are put while the player arrives.
             final GameRules.BooleanValue rule = level.getServer().getGameRules().getRule(GameRules.RULE_DAYLIGHT);
@@ -144,22 +158,129 @@ public final class GroundSkyClientTests {
                 })
                 .thenServer(0, level -> {
                     final ServerLevel mars = world(ctx, SolarSystemWorlds.MARS);
-                    final long time = phobosUpAtNight(phobos);
-                    mars.setDayTime(time);
-                    final float yaw = (float) Math.toDegrees(Math.atan2(-phobos[0], phobos[2]));
-                    final float pitch = (float) -Math.toDegrees(Math.asin(phobos[1]));
-                    look(ctx, mars, 0, 0, yaw, pitch);
+                    mars.setDayTime(upAtNight(PHOBOS_OFFSET, PHOBOS_ORBIT, PHOBOS_TILT, true, phobos));
+                    lookAt(ctx, mars, phobos);
                 })
                 .thenWaitUntil(() -> in(ctx, SolarSystemWorlds.MARS), ARRIVE, "the player's game to reach Mars")
                 .thenAwaitLandDrawn(ARRIVE)
-                .then(SETTLE, () -> {
-                    // Phobos is small: read just off the crosshair's middle, and the sky well beside it.
-                    final int moonlet = bright(ctx, 0, 3, NARROW_PATCH);
-                    final int sky = bright(ctx, BESIDE, 3, NARROW_PATCH);
-                    ctx.assertTrue(moonlet > sky + PHOBOS_OVER_SKY, "Phobos stands lit where the sky kit puts it: "
-                            + moonlet + " against the sky's " + sky);
+                // Read off the frame with the GUI hidden: the crosshair would stand over a moon so small.
+                .then(SETTLE, () -> ctx.mc().options.hideGui = true)
+                .then(2, () -> assertMoon(ctx, "Phobos", PHOBOS_WIDE))
+                .thenScreenshot(0, "mars_phobos")
+                .thenServer(0, level -> {
+                    final ServerLevel mars = world(ctx, SolarSystemWorlds.MARS);
+                    mars.setDayTime(upAtNight(DEIMOS_OFFSET, DEIMOS_ORBIT, DEIMOS_TILT, false, deimos));
+                    lookAt(ctx, mars, deimos);
                 })
-                .thenScreenshot(0, "mars_phobos");
+                // The server tells a player's game the time once a second.
+                .then(SETTLE * 2, () -> assertMoon(ctx, "Deimos", DEIMOS_WIDE))
+                .thenScreenshot(0, "mars_deimos");
+    }
+
+    /* The player back on the ground at home, no longer flying, the clocks going, and the copies made let go. */
+    private static void back(final ClientTestContext ctx, final boolean daylight) {
+        ctx.server().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(daylight, ctx.server());
+        final ServerPlayer player = ctx.serverPlayer();
+        player.getAbilities().flying = false;
+        player.onUpdateAbilities();
+        final BlockPos origin = ctx.origin().above(2);
+        player.teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0F, 0F);
+        forget(ctx, SolarSystemWorlds.MOON);
+        forget(ctx, SolarSystemWorlds.MARS);
+    }
+
+    /* Puts the player flying over the middle of {@code world}'s map, looking straight along {@code direction}. */
+    private static void lookAt(final ClientTestContext ctx, final ServerLevel world, final double[] direction) {
+        final float yaw = (float) Math.toDegrees(Math.atan2(-direction[0], direction[2]));
+        final float pitch = (float) -Math.toDegrees(Math.asin(direction[1]));
+        look(ctx, world, 0, 0, yaw, pitch);
+    }
+
+    /*
+     * Fails unless the frame's middle holds a moon: a spot no wider than {@code wide} degrees, as the approved views
+     * draw it, by the leeway and a pixel, brighter than every star round it. The spot is the brightest pixel near the
+     * middle and every pixel joined to it at least a share as bright, so a star beside it is never taken for its
+     * edge.
+     */
+    private static void assertMoon(final ClientTestContext ctx, final String which, final double wide) {
+        try (NativeImage frame = Screenshot.takeScreenshot(ctx.mc().getMainRenderTarget())) {
+            final int cx = frame.getWidth() / 2;
+            final int cy = frame.getHeight() / 2;
+            int bx = cx;
+            int by = cy;
+            int brightest = -1;
+            for (int y = cy - CORE; y <= cy + CORE; y++) {
+                for (int x = cx - CORE; x <= cx + CORE; x++) {
+                    if (luminance(frame, x, y) > brightest) {
+                        brightest = luminance(frame, x, y);
+                        bx = x;
+                        by = y;
+                    }
+                }
+            }
+            final int[] spot = spot(frame, bx, by, (int) Math.ceil(brightest * SPOT_SHARE));
+            int star = 0;
+            for (int y = cy - RING; y <= cy + RING; y++) {
+                for (int x = cx - RING; x <= cx + RING; x++) {
+                    if (Math.abs(x - cx) > CORE || Math.abs(y - cy) > CORE) {
+                        star = Math.max(star, luminance(frame, x, y));
+                    }
+                }
+            }
+            final double perDegree = frame.getHeight() / 2.0
+                    / Math.tan(Math.toRadians(ctx.mc().options.fov().get()) / 2) * Math.PI / 180;
+            final double most = wide * perDegree * LEEWAY + 1;
+            final int across = Math.max(spot[1], spot[2]);
+            ctx.assertTrue(across <= most, which + " is drawn at its size: " + across + " pixels across, "
+                    + spot[0] + " pixels in all, where the approved views draw it " + Math.round(wide * perDegree)
+                    + " across");
+            ctx.assertTrue(brightest > star, which + " outshines every star round it: " + brightest + " against "
+                    + star);
+        }
+    }
+
+    /*
+     * The spot of pixels joined to ({@code x}, {@code y}), side by side or corner to corner, each at least
+     * {@code least} bright, within the middle of the frame: how many there are, how wide and how tall.
+     */
+    private static int[] spot(final NativeImage frame, final int x, final int y, final int least) {
+        final int cx = frame.getWidth() / 2;
+        final int cy = frame.getHeight() / 2;
+        final boolean[][] seen = new boolean[2 * CORE + 1][2 * CORE + 1];
+        final ArrayDeque<int[]> open = new ArrayDeque<>();
+        open.add(new int[] {x, y});
+        seen[y - cy + CORE][x - cx + CORE] = true;
+        int count = 0;
+        int minX = x;
+        int maxX = x;
+        int minY = y;
+        int maxY = y;
+        while (!open.isEmpty()) {
+            final int[] at = open.poll();
+            count++;
+            minX = Math.min(minX, at[0]);
+            maxX = Math.max(maxX, at[0]);
+            minY = Math.min(minY, at[1]);
+            maxY = Math.max(maxY, at[1]);
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    final int nx = at[0] + dx;
+                    final int ny = at[1] + dy;
+                    if (Math.abs(nx - cx) <= CORE && Math.abs(ny - cy) <= CORE
+                            && !seen[ny - cy + CORE][nx - cx + CORE] && luminance(frame, nx, ny) >= least) {
+                        seen[ny - cy + CORE][nx - cx + CORE] = true;
+                        open.add(new int[] {nx, ny});
+                    }
+                }
+            }
+        }
+        return new int[] {count, maxX - minX + 1, maxY - minY + 1};
+    }
+
+    /* The red, green and blue of the frame's pixel at ({@code x}, {@code y}), summed. */
+    private static int luminance(final NativeImage frame, final int x, final int y) {
+        final int abgr = frame.getPixelRGBA(x, y);
+        return (abgr & CHANNEL) + (abgr >> 8 & CHANNEL) + (abgr >> 16 & CHANNEL);
     }
 
     /* Puts the player flying over the ground of {@code world} at ({@code x}, {@code z}). */
@@ -191,25 +312,26 @@ public final class GroundSkyClientTests {
     }
 
     /*
-     * A time of Mars' clock, at the middle of its map, when Phobos stands well up and the Sun is down, its direction
-     * then put in {@code phobos}: worked out as J's Core's sky works it, from the clock and Phobos' path.
+     * A time of Mars' clock, at the middle of its map, when the moon on the path {@code offset}, {@code orbit} and
+     * {@code tilt} stands well up and the Sun is down, and, if {@code full}, nearly opposite it; its direction then put
+     * in {@code moon}: worked out as J's Core's sky works it, from the clock and the moon's path.
      */
-    private static long phobosUpAtNight(final double[] phobos) {
+    private static long upAtNight(final double offset, final double orbit, final double tilt, final boolean full,
+                                  final double[] moon) {
         for (long time = 0; time < SEARCH_DAYS * (long) SkyMath.DAY; time += SEARCH_STEP) {
             final double celestial = SkyMath.celestial(time);
-            final double turns = celestial + SkyMath.drift(PHOBOS_OFFSET, PHOBOS_ORBIT, time / SkyMath.DAY);
-            final double[] sky = SkyMath.direction(turns, PHOBOS_TILT);
+            final double turns = celestial + SkyMath.drift(offset, orbit, time / SkyMath.DAY);
+            final double[] sky = SkyMath.direction(turns, tilt);
             // The sky's directions turned as the game turns its sky: a quarter round about the vertical.
             final double[] world = {-sky[2], sky[1], sky[0]};
             final double[] sun = SkyMath.sky(celestial, 0);
             final double facing = world[0] * sun[0] + world[1] * sun[1] + world[2] * sun[2];
-            // High, the Sun down, and opposite it, so nearly full.
-            if (world[1] > HIGH && sun[1] < SUN_DOWN && facing < OPPOSITE) {
-                System.arraycopy(world, 0, phobos, 0, 3);
+            if (world[1] > HIGH && sun[1] < SUN_DOWN && (!full || facing < OPPOSITE)) {
+                System.arraycopy(world, 0, moon, 0, 3);
                 return time;
             }
         }
-        throw new IllegalStateException("Phobos never stands high and full at night in " + SEARCH_DAYS + " days");
+        throw new IllegalStateException("the moon never stands high at night in " + SEARCH_DAYS + " days");
     }
 
     /*

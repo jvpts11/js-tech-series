@@ -150,8 +150,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   middle of the Moon's map, lower the farther one goes, on the horizon a quarter of the way round and hidden on the
   far side, the same sphere as in space, its phases following the Moon's hour, its texels as wide as the game's
   moon's; the Sun's hour follows the longitude on the Moon and on Mars; the Moon's sky is black, its stars shining by
-  day; in Mars' butterscotch sky Phobos rises in the west and crosses it twice a sol, Deimos is a slow point of light
-  and the Overworld an evening star beside the Sun.
+  day; in Mars' butterscotch sky Phobos rises in the west and crosses it twice a sol, at its real size a bright
+  oblong a few pixels long, darker on its side away from the Sun; Deimos is a slow point of light like a star; both
+  outshine the stars; and the Overworld is an evening star beside the Sun.
 - The way up to space with no loading screen, for players and for rockets and ships alike: seven hundred
   blocks over a world's build limit it becomes its system's space. On the way up the loaded land goes on, out to the
   horizon, in a far map of the real ground as the world's own generator makes it, its mountains standing in relief
