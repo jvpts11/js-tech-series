@@ -61,6 +61,12 @@ public final class WorldGen {
 
     private static final List<OreVein> ORES = Collections.synchronizedList(new ArrayList<>());
     private static final List<DimensionSpec> DIMENSIONS = Collections.synchronizedList(new ArrayList<>());
+    /*
+     * How far apart on the depth axis a dimension's biomes lie, in the game's steps of a ten-thousandth: enough that
+     * the round trip through a dimension's file, which can lose a step, keeps them apart, and so little that its
+     * square moves no zone's edge of a dimension of a dozen or so biomes by more than a block or two.
+     */
+    private static final long TIE_STEP = 5;
 
     private WorldGen() {
     }
@@ -129,9 +135,19 @@ public final class WorldGen {
      */
     public record BiomePoint(ResourceKey<Biome> biome, float warmth, float wetness, float patchA, float patchB) {
 
-        /** Where it lies, as the game's biome source reads it: its patches as continentalness and weirdness. */
-        public Climate.ParameterPoint point() {
-            return Climate.parameters(this.warmth, this.wetness, this.patchA, 0F, 0F, this.patchB, 0F);
+        /**
+         * Where it lies, as the game's biome source reads it: its patches as continentalness and weirdness, and its
+         * {@code order} among its dimension's biomes as a hair of depth, an axis nothing in its ground reads. Two
+         * biomes would otherwise tie over a band of places where a slow map leaves the climate exactly between them,
+         * and the game breaks a tie by whichever biome it read last on that thread, so a zone's edge would come out
+         * one way here and another there; a hair apart, the nearer always wins.
+         */
+        public Climate.ParameterPoint point(final int order) {
+            final long hair = TIE_STEP * order;
+            return new Climate.ParameterPoint(Climate.Parameter.point(this.warmth),
+                    Climate.Parameter.point(this.wetness), Climate.Parameter.point(this.patchA),
+                    Climate.Parameter.point(0F), new Climate.Parameter(hair, hair),
+                    Climate.Parameter.point(this.patchB), 0L);
         }
 
         /** Whether it is a patch of its zone, not the zone's own biome. */
@@ -196,11 +212,14 @@ public final class WorldGen {
                                         final HolderGetter<NoiseGeneratorSettings> noiseSettings) {
             final Holder<Biome> only = biomes.getOrThrow(biome);
             if (noise != null) {
+                final List<Pair<Climate.ParameterPoint, Holder<Biome>>> points = new ArrayList<>();
+                for (int order = 0; order < this.biomes.size(); order++) {
+                    final BiomePoint one = this.biomes.get(order);
+                    points.add(Pair.of(one.point(order), biomes.getOrThrow(one.biome())));
+                }
                 return new NoiseBasedChunkGenerator(this.biomes.isEmpty() ? new FixedBiomeSource(only)
-                        : MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(this.biomes.stream()
-                                .map(one -> Pair.<Climate.ParameterPoint, Holder<Biome>>of(one.point(),
-                                        biomes.getOrThrow(one.biome())))
-                                .toList())), noiseSettings.getOrThrow(noise));
+                        : MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(points)),
+                        noiseSettings.getOrThrow(noise));
             }
             final List<FlatLayerInfo> flat = new ArrayList<>();
             for (final Layer layer : layers) {

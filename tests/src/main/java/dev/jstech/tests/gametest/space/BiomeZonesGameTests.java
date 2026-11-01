@@ -75,6 +75,15 @@ public final class BiomeZonesGameTests {
     private static final double LEAST_PATCH = 0.08;
     private static final double MOST_PATCH = 0.3;
     private static final double MOST_ELSEWHERE = 0.2;
+    /*
+     * Across a zone's edge: the lines read, how far apart they are, how far each runs either side of the edge, and a
+     * read every quart, the size of a biome's cell.
+     */
+    private static final int EDGE_LINES = 16;
+    private static final int LINE_GAP = 512;
+    private static final int EDGE_REACH = 512;
+    private static final int QUART = 4;
+    private static final int SHOWN = 8;
     /* Ticks between the places or biomes read, so that no tick reads too much. */
     private static final int PACE = 2;
     private static final int TIMEOUT = 200;
@@ -100,6 +109,16 @@ public final class BiomeZonesGameTests {
     @GameTest(template = ARENA, batch = MOON_BATCH, timeoutTicks = TIMEOUT)
     public static void zones_ofTheMoonStayMostlyTheirOwnBiome(final GameTestHelper helper) {
         shares(helper, moon(helper), moonZones());
+    }
+
+    @GameTest(template = ARENA, batch = MARS_BATCH, timeoutTicks = TIMEOUT)
+    public static void edges_ofMarsZonesReadAlikeWhateverWasReadBefore(final GameTestHelper helper) {
+        edgesReadAlike(helper, mars(helper), MarsBiomes.NORTHERN_PLAINS.key());
+    }
+
+    @GameTest(template = ARENA, batch = MOON_BATCH, timeoutTicks = TIMEOUT)
+    public static void edges_ofTheMoonsZonesReadAlikeWhateverWasReadBefore(final GameTestHelper helper) {
+        edgesReadAlike(helper, moon(helper), MoonBiomes.POLAR_CRATERS.key());
     }
 
     @GameTest(template = ARENA, batch = MARS_BATCH, timeoutTicks = TIMEOUT)
@@ -217,6 +236,55 @@ public final class BiomeZonesGameTests {
         });
     }
 
+    /*
+     * Across the edge of the zone of {@code across} nearest the world's middle, where a slow map leaves places between
+     * two zones, every place reads the same biome whichever biome was read just before it: the game's biome source
+     * starts each search from the last biome it found, and two biomes that tie would be told apart by that.
+     */
+    private static void edgesReadAlike(final GameTestHelper helper, final ServerLevel level,
+                                       final ResourceKey<Biome> across) {
+        final BlockPos middle = new BlockPos(0, BIOME_Y, 0);
+        final List<BlockPos> before = new ArrayList<>();
+        int tick = 1;
+        for (final Holder<Biome> biome : level.getChunkSource().getGenerator().getBiomeSource().possibleBiomes()) {
+            helper.runAfterDelay(tick, () -> {
+                final ResourceKey<Biome> key = biome.unwrapKey().orElseThrow();
+                final Pair<BlockPos, Holder<Biome>> found = BiomeSearch.wholeWorld(level, held -> held.is(key),
+                        middle);
+                helper.assertTrue(found != null, "a place of " + key.location() + " is found");
+                before.add(found.getFirst());
+            });
+            tick += PACE;
+        }
+        helper.runAfterDelay(tick, () -> {
+            final Pair<BlockPos, Holder<Biome>> edge = BiomeSearch.wholeWorld(level, found -> found.is(across),
+                    middle);
+            helper.assertTrue(edge != null, "the zone of " + across.location() + " is found");
+            final double length = Math.sqrt(edge.getFirst().distSqr(middle));
+            final double alongX = edge.getFirst().getX() / length;
+            final double alongZ = edge.getFirst().getZ() / length;
+            final List<String> apart = new ArrayList<>();
+            for (int line = -EDGE_LINES / 2; line < EDGE_LINES / 2; line++) {
+                for (int step = -EDGE_REACH; step <= EDGE_REACH; step += QUART) {
+                    final int x = (int) Math.round(edge.getFirst().getX() + alongX * step - alongZ * line * LINE_GAP);
+                    final int z = (int) Math.round(edge.getFirst().getZ() + alongZ * step + alongX * line * LINE_GAP);
+                    Holder<Biome> first = null;
+                    for (final BlockPos last : before) {
+                        biomeAt(level, last.getX(), last.getZ());
+                        final Holder<Biome> read = biomeAt(level, x, z);
+                        if (first == null) {
+                            first = read;
+                        } else if (!read.equals(first) && apart.size() < SHOWN) {
+                            apart.add(x + ", " + z + ": " + name(first) + " or " + name(read));
+                        }
+                    }
+                }
+            }
+            helper.assertTrue(apart.isEmpty(), "every place across the edge reads one biome: " + apart);
+            helper.succeed();
+        });
+    }
+
     /* A few places of the zone, spread across the world, as its maps lay it. */
     private static List<BlockPos> places(final GameTestHelper helper, final ServerLevel level, final Zone zone) {
         final List<double[]> all = new ArrayList<>();
@@ -290,6 +358,10 @@ public final class BiomeZonesGameTests {
         counts.forEach((biome, count) -> out.append(biome.location().getPath()).append(' ')
                 .append(Math.round(count.get() * 1000 / total) / 10.0).append("% "));
         return out.toString().trim();
+    }
+
+    private static String name(final Holder<Biome> biome) {
+        return biome.unwrapKey().map(key -> key.location().toString()).orElse("?");
     }
 
     private static Holder<Biome> biomeAt(final ServerLevel level, final int x, final int z) {

@@ -644,7 +644,10 @@ every `blocks` blocks, read together as a place in a plane. A zone's own biome l
 before with `biome(key, warmth, wetness)`, and its patch biomes round it, `patches(warmth, wetness, keys...)`: each
 holds about a sixth of the zone, the zone's own about half of it however many it has. At 2048 a patch is a thousand
 blocks or two across, and every patch biome of a zone lies within the 6,400 blocks the game's `/locate` searches from
-anywhere in it. In a dimension that keeps bounds of its own, `/locate biome` searches the whole world when the game's
+anywhere in it. Each of a dimension's biomes lies a hair apart from the others on the depth axis, which nothing in its
+ground reads, so no two tie where a slow map leaves places exactly between two zones: the game breaks a tie by the
+biome it read last on that thread, and a zone's edge would come out one way in one chunk and another in the next. In
+a dimension that keeps bounds of its own, `/locate biome` searches the whole world when the game's
 own search finds nothing (`BiomeSearch`): on a grid of 2,048 steps across the world, out from where it is run, then
 finer round what it found, so a cap or a canyon millions of blocks away is found
 ([Reaches into the game](REACHES.md)).

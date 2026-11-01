@@ -2751,7 +2751,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lays one great crater at its place, as wide as its sphere draws it. A terrain's biomes may be spread by any two
   density functions in place of its own noises, and lie in two scales: zones where its maps lay them, and inside
   each zone its patch biomes in patches a thousand blocks or two across, as the overworld's vary, each about a sixth
-  of the zone and within the game's own search of anywhere in it. In a dimension that keeps bounds of its own,
+  of the zone and within the game's own search of anywhere in it. No two of a dimension's biomes tie where a slow map
+  leaves places between two zones, so a zone's edge comes out the same whatever the game read before it, chunk by
+  chunk and thread by thread. In a dimension that keeps bounds of its own,
   `/locate biome` finds a biome anywhere in the world, however far, when the game's own search of 6,400 blocks finds
   nothing.
 - (Core) Water stays liquid only in air thicker than its triple point: the game's ice, melting by a torch or broken,
