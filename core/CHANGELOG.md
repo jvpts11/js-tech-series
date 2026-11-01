@@ -234,8 +234,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its bones, `MachineStructure.handsOn` gives it to a structure, and `HandGeometry` says, free of the game, which part
   a line of sight meets, the box it is outlined by and how the model stands round its terminal.
 - Items drawn in three dimensions: J's Core's API stays at version 12, all experimental. `IItemLook.HELD`
-  shows an item's flat texture in a slot and an item frame and its model `held/<id>` in the hand, on the ground and on
-  the head, as the game's spyglass and trident are.
+  shows an item's flat texture in a slot and an item frame, lit from the front as a flat item is, and its model
+  `held/<id>` in the hand, on the ground and on the head, as the game's spyglass and trident are.
 - One type of era: J's Core's API stays at version 12, all experimental. `Era` is the one type of era in every
   mod, a record of its id, its name, its colour and the year its machines are made in, compared by its place in the
   order (`isAtLeast`, `isAtMost`, `next`, `prev`). `HardwareEra` is no longer an enum but the class holding the
@@ -1863,8 +1863,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
   counter and the pocket dosimeter are drawn in three dimensions in the hand and on the ground, each held as its own
   is: the saw and the wrench as tools, the extinguishers and the Geiger counter carried by their handles, the
-  instruments upright, their screens turned to the player. Their icons stay; the pocket dosimeter is the HUD's yellow
-  device everywhere now, its icon too.
+  instruments upright, their screens turned to the player. Their icons stay, as bright in a slot as their textures,
+  the physics tool's too; the pocket dosimeter is the HUD's yellow device everywhere now, its icon too.
 - A halo is the glare the eye sees: drawn whole over the picture, never cut by the floor a lamp stands on or
   the wall beside it, and fading, smoothly, only as much as the blocks between hide the light itself, glass hiding
   none of it. A block's glow follows its drawing: a lantern or a torch glows about its own shape and as big as it, and

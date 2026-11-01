@@ -7,23 +7,34 @@
  */
 package dev.jstech.tests.clienttest.series;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.jstechseries.energy.ClampMeter;
 import dev.jstech.core.jstechseries.fire.FireSafety;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
 import dev.jstech.core.jstechseries.probe.NetworkProbe;
 import dev.jstech.core.jstechseries.probe.SignalProbe;
+import dev.jstech.core.jstechseries.tools.PhysicsTool;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.industrial.tool.HandTools;
 import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
@@ -57,6 +68,15 @@ public final class HeldModelsClientTests {
     private static final int DIFFERENT = 60;
     private static final int DRAWN = 40;
     private static final int CHANNEL = 0xFF;
+    /*
+     * An icon read off the screen texel by texel against its flat texture: the texels a side, how far apart in the sum
+     * of the channels a pixel may be from its texel and still be alike, and the share of a texture's opaque texels
+     * that must be. A flat icon lit as a model's side comes out a fifth darker or more, far past it.
+     */
+    private static final int TEXELS = 16;
+    private static final int LIKE = 30;
+    private static final double ALIKE_SHARE = 0.9;
+    private static final int SETTLE = 5;
     private static final List<Supplier<? extends Item>> HELD = List.of(HandTools.FORGE_HAMMER, HandTools.DRAW_PLATE,
             HandTools.MORTAR, SharedTools.SAW, SharedTools.WRENCH, FireSafety.WATER_EXTINGUISHER,
             FireSafety.FOAM_EXTINGUISHER, FireSafety.CARBON_DIOXIDE_EXTINGUISHER, FireSafety.DRY_POWDER_EXTINGUISHER,
@@ -110,6 +130,42 @@ public final class HeldModelsClientTests {
                 .thenServer(0, level -> dropped.forEach(Entity::discard));
     }
 
+    @ClientTest(timeoutTicks = 400)
+    public static void icons_inASlotAreDrawnAsTheirFlatTexture(final ClientTestContext ctx) {
+        final List<ItemStack> stacks = new ArrayList<>();
+        HELD.forEach(held -> stacks.add(new ItemStack(held.get())));
+        // The physics tool too, whose model in the hand is drawn by its own renderer.
+        stacks.add(new ItemStack(PhysicsTool.ITEM.get()));
+        ctx.afterTest(() -> ctx.mc().setScreen(null));
+        ctx.then(0, () -> ctx.mc().setScreen(new IconSheet(stacks)))
+                .thenScreenshot(SETTLE, "held-icons")
+                .then(0, () -> {
+                    try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+                        for (int i = 0; i < stacks.size(); i++) {
+                            final ResourceLocation id = BuiltInRegistries.ITEM.getKey(stacks.get(i).getItem());
+                            final int[] texels = texels(ctx, id.withPath(path -> "textures/item/" + path + ".png"));
+                            int opaque = 0;
+                            int alike = 0;
+                            for (int t = 0; t < texels.length; t++) {
+                                if (texels[t] >>> 24 != CHANNEL) {
+                                    continue;
+                                }
+                                opaque++;
+                                final double x = (IconSheet.LEFT + i % IconSheet.COLUMNS * IconSheet.CELL
+                                        + t % TEXELS + 0.5) * IconSheet.SCALE;
+                                final double y = (IconSheet.TOP + i / IconSheet.COLUMNS * IconSheet.CELL
+                                        + t / TEXELS + 0.5) * IconSheet.SCALE;
+                                if (apart(frame.pixel((int) x, (int) y), texels[t]) <= LIKE) {
+                                    alike++;
+                                }
+                            }
+                            ctx.assertTrue(opaque > 0 && alike >= opaque * ALIKE_SHARE, id + "'s icon is drawn as "
+                                    + "its flat texture, not darker: " + alike + " of " + opaque + " texels alike");
+                        }
+                    }
+                });
+    }
+
     /* The brightness of the screen where the main hand's item is drawn, a pixel in so many. */
     private static int[] hand(final ClientTestContext ctx) {
         final int width = ctx.mc().getWindow().getGuiScaledWidth();
@@ -140,5 +196,58 @@ public final class HeldModelsClientTests {
             }
         }
         return count;
+    }
+
+    /* How far a pixel on the screen (ARGB) is from a texel (ARGB), in the sum of their channels' differences. */
+    private static int apart(final int pixel, final int texel) {
+        return Math.abs((pixel >> 16 & CHANNEL) - (texel >> 16 & CHANNEL))
+                + Math.abs((pixel >> 8 & CHANNEL) - (texel >> 8 & CHANNEL))
+                + Math.abs((pixel & CHANNEL) - (texel & CHANNEL));
+    }
+
+    /* The texels of the sixteen-square texture {@code file} as the player's game reads it, ARGB, row by row. */
+    private static int[] texels(final ClientTestContext ctx, final ResourceLocation file) {
+        final Resource resource = ctx.mc().getResourceManager().getResource(file)
+                .orElseThrow(() -> new IllegalStateException("no texture " + file));
+        try (InputStream in = resource.open(); NativeImage image = NativeImage.read(NativeImage.Format.RGBA, in)) {
+            final int[] out = new int[TEXELS * TEXELS];
+            for (int y = 0; y < TEXELS; y++) {
+                for (int x = 0; x < TEXELS; x++) {
+                    out[y * TEXELS + x] = FastColor.ABGR32.fromArgb32(image.getPixelRGBA(x, y));
+                }
+            }
+            return out;
+        } catch (final IOException unreadable) {
+            throw new UncheckedIOException(unreadable);
+        }
+    }
+
+    /* The held items' icons as a slot draws them, in rows on a plain ground, each so many times its size. */
+    private static final class IconSheet extends Screen {
+
+        private final List<ItemStack> stacks;
+
+        private static final int SCALE = 2;
+        private static final int CELL = 18;
+        private static final int COLUMNS = 7;
+        private static final int LEFT = 4;
+        private static final int TOP = 4;
+        private static final int GROUND = 0xFF << 24 | 0x8B << 16 | 0x8B << 8 | 0x8B;
+
+        private IconSheet(final List<ItemStack> stacks) {
+            super(Component.empty());
+            this.stacks = List.copyOf(stacks);
+        }
+
+        @Override
+        public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
+            g.fill(0, 0, this.width, this.height, GROUND);
+            g.pose().pushPose();
+            g.pose().scale(SCALE, SCALE, SCALE);
+            for (int i = 0; i < this.stacks.size(); i++) {
+                g.renderItem(this.stacks.get(i), LEFT + i % COLUMNS * CELL, TOP + i / COLUMNS * CELL);
+            }
+            g.pose().popPose();
+        }
     }
 }

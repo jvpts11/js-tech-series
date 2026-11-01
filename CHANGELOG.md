@@ -237,8 +237,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its bones, `MachineStructure.handsOn` gives it to a structure, and `HandGeometry` says, free of the game, which part
   a line of sight meets, the box it is outlined by and how the model stands round its terminal.
 - (Core) Items drawn in three dimensions: J's Core's API stays at version 12, all experimental. `IItemLook.HELD`
-  shows an item's flat texture in a slot and an item frame and its model `held/<id>` in the hand, on the ground and on
-  the head, as the game's spyglass and trident are.
+  shows an item's flat texture in a slot and an item frame, lit from the front as a flat item is, and its model
+  `held/<id>` in the hand, on the ground and on the head, as the game's spyglass and trident are.
 - (Core) One type of era: J's Core's API stays at version 12, all experimental. `Era` is the one type of era in every
   mod, a record of its id, its name, its colour and the year its machines are made in, compared by its place in the
   order (`isAtLeast`, `isAtMost`, `next`, `prev`). `HardwareEra` is no longer an enum but the class holding the
@@ -2760,8 +2760,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
   counter and the pocket dosimeter are drawn in three dimensions in the hand and on the ground, each held as its own
   is: the saw and the wrench as tools, the extinguishers and the Geiger counter carried by their handles, the
-  instruments upright, their screens turned to the player. Their icons stay; the pocket dosimeter is the HUD's yellow
-  device everywhere now, its icon too.
+  instruments upright, their screens turned to the player. Their icons stay, as bright in a slot as their textures,
+  the physics tool's too; the pocket dosimeter is the HUD's yellow device everywhere now, its icon too.
 - (Industrial) The Forge Hammer, the Draw Plate and the Mortar are drawn in three dimensions in the hand and on the
   ground: the hammer and the plate held as tools, the mortar with its pestle in the palm.
 - (Core) A halo is the glare the eye sees: drawn whole over the picture, never cut by the floor a lamp stands on or

@@ -2,6 +2,7 @@
   "base": {
     "parent": "jscore:held/carbon_dioxide_extinguisher"
   },
+  "gui_light": "front",
   "loader": "neoforge:separate_transforms",
   "perspectives": {
     "fixed": {

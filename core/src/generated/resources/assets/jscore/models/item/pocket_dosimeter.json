@@ -2,6 +2,7 @@
   "base": {
     "parent": "jscore:held/pocket_dosimeter"
   },
+  "gui_light": "front",
   "loader": "neoforge:separate_transforms",
   "perspectives": {
     "fixed": {

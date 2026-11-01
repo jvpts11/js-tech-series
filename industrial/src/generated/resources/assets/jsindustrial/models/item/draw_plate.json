@@ -2,6 +2,7 @@
   "base": {
     "parent": "jsindustrial:held/draw_plate"
   },
+  "gui_light": "front",
   "loader": "neoforge:separate_transforms",
   "perspectives": {
     "fixed": {

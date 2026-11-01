@@ -1,4 +1,5 @@
 {
+  "gui_light": "front",
   "loader": "neoforge:separate_transforms",
   "base": {
     "parent": "jscore:held/physics_tool"

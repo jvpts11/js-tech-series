@@ -2,6 +2,7 @@
   "base": {
     "parent": "jscore:held/geiger_counter"
   },
+  "gui_light": "front",
   "loader": "neoforge:separate_transforms",
   "perspectives": {
     "fixed": {

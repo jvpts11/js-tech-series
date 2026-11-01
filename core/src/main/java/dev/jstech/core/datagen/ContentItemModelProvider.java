@@ -15,6 +15,7 @@ import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.util.DeclarationError;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
@@ -94,10 +95,13 @@ public final class ContentItemModelProvider extends ItemModelProvider {
 
     /*
      * The model held/<id> in the hand, on the ground and on the head, and the flat texture item/<id> in a slot and an
-     * item frame, by NeoForge's model of separate transforms.
+     * item frame, by NeoForge's model of separate transforms. The slot lights the whole model by its own gui_light,
+     * not its flat perspective's: a model left at the default side light would light the flat icon as a block's
+     * side, a fifth darker, so it is lit from the front as a flat item is.
      */
     private void held(final String id) {
         getBuilder(id)
+                .guiLight(BlockModel.GuiLight.FRONT)
                 .customLoader(SeparateTransformsModelBuilder::begin)
                 .base(nested().parent(new ModelFile.UncheckedModelFile(modLoc("held/" + id))))
                 .perspective(ItemDisplayContext.GUI, flat(id))
