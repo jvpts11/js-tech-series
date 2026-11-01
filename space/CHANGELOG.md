@@ -114,7 +114,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   no air for clouds and its stars bright; Mars' butterscotch, with blue sunsets, thin clouds, a haze of dust and a sun
   that looks smaller and gives less light from half again as far; and every system's space black and starry, its sun
   always up since nothing turns under it.
-- Orbital mechanics, as real ones work at the game's scale: an astronomical unit is 10,000 blocks of a system's
+- Orbital mechanics, as real ones work at the game's scale: an astronomical unit is 30,000 blocks of a system's
   space and the Earth's year a week of Overworld days, so each planet keeps its real pace and the launch windows come
   round as they really do, Mars about every five real hours; a launch out of the window costs more delta-v, up to
   twice from the worst place; a trip is shortened by the delta-v spent on it; a rocket's delta-v is Tsiolkovsky's and
@@ -141,7 +141,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   The Overworld is never the Earth: its continents, biomes, mountain ranges and polar caps come from the world's seed,
   of which the server sends only a number made from it, and the game's own clouds wrap round it in bands that drift at
   their own pace, with their shadows on the ground. The Sun is the game's square, as big as in the Overworld's sky,
-  and the stars shine by day, crowding along the Milky Way.
+  and the stars shine by day, crowding along the Milky Way. The worlds are grand: the Overworld a sphere 3,000 blocks
+  in radius, every other in proportion to its width, the Moon 18,900 blocks from it and the Sun 4,500 in radius. A
+  planet and its moons make a region of the space round it, from inside which they are seen as spheres; from outside,
+  as Mars is from the Overworld and the Overworld from Mars, a planet is a bright point of its colour, larger than any
+  star, and it grows out of its point into its sphere as one comes into its region.
 - The skies seen from the ground: the Overworld stands still in the Moon's sky, high in the north over the
   middle of the Moon's map, lower the farther one goes, on the horizon a quarter of the way round and hidden on the
   far side, the same sphere as in space, its phases following the Moon's hour, its texels as wide as the game's

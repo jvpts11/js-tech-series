@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.StarSystems;
@@ -27,7 +28,7 @@ import net.minecraft.world.level.block.Blocks;
  * lit, over its night side it is the deep blue of its night and not the black of space, and straight over its middle
  * the line of dawn runs below, day towards the Sun and night away from it; the Sun is the game's bright square where it
  * stands; the Moon is lit on its side towards the Sun and dark away from it; a block in space stands in full
- * daylight; and over Mars the ground is red.
+ * daylight; and over Mars the ground is red, while from the Overworld's orbit Mars is a bright point.
  */
 public final class SystemSpaceClientTests {
 
@@ -36,8 +37,8 @@ public final class SystemSpaceClientTests {
     /* The Overworld's maps are drawn from the seed away from the game's thread, which takes a few seconds. */
     private static final int DRAWN = 600;
     private static final int SETTLE = 10;
-    /* How far west or east of a world's middle the player looks down from, in blocks. */
-    private static final double ASIDE = 600;
+    /* How far west or east of a world's middle the player looks down from, in blocks: 3/5 of the Overworld's radius. */
+    private static final double ASIDE = 0.6 * SystemLayout.OVERWORLD_RADIUS;
     /* Where the screen is read, in the GUI's points from its middle: clear of the crosshair, and to either side. */
     private static final int OFF_CROSSHAIR = 12;
     private static final int WIDE = 100;
@@ -67,15 +68,29 @@ public final class SystemSpaceClientTests {
     private static final float DOWN = 90F;
     private static final int CHANNEL = 0xFF;
     /*
-     * The world below slid by in orbit: a patch of the screen under the crosshair read twice, a second apart; in a
-     * second it slides by some 84 blocks, against some 5 it turns by itself, so the patch's picture moves this many
-     * points or more, across and down at once since the world turns about its leaning poles, sought this far each way.
+     * The world below slid by in orbit: a patch of the screen under the crosshair read twice, fifteen seconds apart;
+     * it slides by a turn a day, some twelve points of the picture every five seconds, so the patch's picture moves
+     * this many points or more, across and down at once since the world turns about its leaning poles, sought this
+     * far each way.
      */
-    private static final int SLIDING = 20;
+    private static final int SLIDING = 300;
     private static final int PATCH = 30;
     private static final int PATCH_DOWN = 24;
     private static final int MOST_SHIFT = 60;
     private static final int SLID = 20;
+    /*
+     * Mars looked at from the Overworld's orbit: how far beside the crosshair it is put, in degrees, and how far round
+     * the crosshair it is sought, in the GUI's points; how red a pixel of it is, and the least and the most of them a
+     * point covers, more than a star's and where its disc would cover hundreds; and how high over the player's feet
+     * their eye is.
+     */
+    private static final float BESIDE = 2.5F;
+    private static final int AHEAD = 15;
+    private static final int RED = 200;
+    private static final int REDDER = 60;
+    private static final int LEAST_POINT_PIXELS = 4;
+    private static final int POINT_PIXELS = 60;
+    private static final double EYE = 1.62;
 
     private SystemSpaceClientTests() {
     }
@@ -181,10 +196,43 @@ public final class SystemSpaceClientTests {
                 .thenScreenshot(0, "orbit_after")
                 .then(0, () -> {
                     final long moved = Math.round(shift(patches[0], patches[1]));
-                    ctx.assertTrue(moved >= SLID, "in orbit the world slides by below, a turn a little over a "
-                            + "minute, far faster than it turns by itself: moved " + moved + " points in " + SLIDING
-                            + " ticks");
+                    ctx.assertTrue(moved >= SLID, "in orbit the world slides by below, a turn a day: moved "
+                            + moved + " points in " + SLIDING + " ticks");
                 });
+    }
+
+    /*
+     * From the Overworld's low orbit Mars lies outside its region: looked at, it is a bright point of its orange red,
+     * a few pixels, larger than a star and no disc. Read at the frame's own pixels round the crosshair, clear of the
+     * Sun, with Mars a little beside the crosshair, which would hide a point under it.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void mars_fromTheOverworldsOrbitIsABrightPoint(final ClientTestContext ctx) {
+        final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
+        final double[] mars = SystemLayout.centre(SolarBody.MARS);
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            final BlockPos origin = ctx.origin().above(2);
+            ctx.serverPlayer().teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(),
+                    origin.getZ() + 0.5, 0F, 0F);
+            RuntimeDimensions.remove(ctx.server(), SPACE);
+        }));
+        final double dx = mars[0] - home[0];
+        final double dz = mars[2] - home[2];
+        final double dy = mars[1] - (SystemLayout.ORBIT_Y + EYE);
+        final float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)) + BESIDE;
+        final float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
+        ctx.thenServer(0, level -> look(ctx, SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM),
+                        home[0], home[2], yaw, pitch))
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(SPACE), ARRIVE,
+                        "the player's game to reach the Solar System's space")
+                .thenWaitUntil(() -> red(ctx) > 0, DRAWN, "Mars to be drawn ahead")
+                .then(SETTLE, () -> {
+                    final int seen = red(ctx);
+                    ctx.assertTrue(seen >= LEAST_POINT_PIXELS && seen <= POINT_PIXELS, "from the Overworld's orbit "
+                            + "Mars is a bright point, larger than a star and no disc: " + seen + " of its orange red "
+                            + "pixels by the crosshair");
+                })
+                .thenScreenshot(0, "mars_a_point_from_the_overworld");
     }
 
     /* Puts the player flying in the space over ({@code x}, {@code z}), at the height of the low orbits. */
@@ -202,6 +250,24 @@ public final class SystemSpaceClientTests {
             throw new IllegalStateException("the Solar System's space is gone");
         }
         return space;
+    }
+
+    /* How many of the frame's pixels round the crosshair are a bright orange red, as Mars is. */
+    private static int red(final ClientTestContext ctx) {
+        final int x = ctx.mc().getWindow().getGuiScaledWidth() / 2 - AHEAD;
+        final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2 - AHEAD;
+        int count = 0;
+        try (NativeImage frame = ctx.capture(x, y, 2 * AHEAD, 2 * AHEAD)) {
+            for (int py = 0; py < frame.getHeight(); py++) {
+                for (int px = 0; px < frame.getWidth(); px++) {
+                    final int abgr = frame.getPixelRGBA(px, py);
+                    final int r = abgr & CHANNEL;
+                    final int b = abgr >> 16 & CHANNEL;
+                    count += r > RED && r - b > REDDER ? 1 : 0;
+                }
+            }
+        }
+        return count;
     }
 
     /* The sum of red, green and blue a little off the screen's middle. */

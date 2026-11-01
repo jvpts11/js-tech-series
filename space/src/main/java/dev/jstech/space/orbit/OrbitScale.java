@@ -9,7 +9,7 @@ package dev.jstech.space.orbit;
 
 /**
  * The scale J's Space squeezes the Solar System to. Distances are squeezed far more than sizes, so worlds look grand
- * and journeys stay short enough to fly: an astronomical unit is about 10,000 blocks of a system's space. Time keeps
+ * and journeys stay short enough to fly: an astronomical unit is 30,000 blocks of a system's space. Time keeps
  * the Overworld's pace: its day of 24,000 ticks is the Earth's 24 hours, so a tick stands for 3.6 real seconds and an
  * orbit of the International Space Station's 92 minutes takes a little over a minute; and the Earth's year lasts seven
  * of those days, a week, the pace the planets and the launch windows keep.
@@ -17,7 +17,7 @@ package dev.jstech.space.orbit;
 public final class OrbitScale {
 
     /** How many blocks of a system's space an astronomical unit is. */
-    public static final double BLOCKS_PER_AU = 10_000;
+    public static final double BLOCKS_PER_AU = 30_000;
     /** The Overworld's day, the Earth's 24 hours, in ticks. */
     public static final int DAY_TICKS = 24_000;
     /** The Earth's year, seven of the Overworld's days, in ticks. */

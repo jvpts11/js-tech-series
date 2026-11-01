@@ -49,11 +49,23 @@ import org.joml.Vector3d;
  *
  * <p>The game sees only a few hundred blocks, and the worlds are thousands away, so each is drawn shrunk towards the
  * eye until it fits: a world shrunk with its distance looks the same, and nothing here is tested against depth.
+ *
+ * <p>A world outside the region the eye is in, as Mars is from the Overworld, is a bright point in its colour, added
+ * to what is behind as the Sun is; coming into its region it grows out of its point into its sphere
+ * ({@link SystemLayout#shown}, {@link WorldPoints}).
  */
 public final class SystemSpaceRenderer {
 
     /* The game's sun is a square half its picture wide in the middle of it. */
     private static final double SUN_PICTURE = 2;
+    /*
+     * How wide a world's point is, half of it, in radians across the eye: over a third of a degree across, larger
+     * than any star round it; how near the edge of the drawing it is set; and the channels of its colour.
+     */
+    private static final double POINT_HALF = 0.0032;
+    private static final double POINT_AT = 0.9;
+    private static final int CHANNEL = 0xFF;
+    private static final float CHANNEL_MOST = 255F;
     private static final ResourceLocation SUN = ResourceLocation.withDefaultNamespace("textures/environment/sun.png");
     private static final ResourceKey<Level> SOLAR_SYSTEM_SPACE = SystemSpaces.keyOf(StarSystems.SOLAR_SYSTEM);
     /* In space a texel is never drawn smaller than a pixel. */
@@ -64,6 +76,8 @@ public final class SystemSpaceRenderer {
 
     @Nullable
     private static VertexBuffer sunSquare;
+    @Nullable
+    private static VertexBuffer pointSquare;
     /*
      * The world whose orbit the eye is in, and the tick it came into it at, from which its world slides by below; and
      * how far it had slid when the eye went down out of the orbit, or NaN while the eye is in it.
@@ -196,13 +210,23 @@ public final class SystemSpaceRenderer {
         return new Vec3(eye[0], eye[1], eye[2]);
     }
 
-    /* A world where it stands, brought within reach of the eye, turned {@code slide} radians more about its poles. */
+    /*
+     * A world where it stands, brought within reach of the eye, turned {@code slide} radians more about its poles: as
+     * much of its sphere as is seen from the eye, and its point for the rest.
+     */
     private static void drawWorld(final SolarBody body, final double tick, final double slide, final Vec3 eye,
                                   final float fade, final SphereDrawing.Veil veil, final Matrix4f view,
                                   final Matrix4f projection) {
+        final double shown = SystemLayout.shown(body, new double[] {eye.x, eye.y, eye.z});
+        if (shown < 1) {
+            drawPoint(body, eye, fade * (float) (1 - shown), view, projection);
+        }
+        if (shown <= 0) {
+            return;
+        }
         final double[] centre = SystemLayout.centre(body);
         final Vector3d at = new Vector3d(centre[0] - eye.x, centre[1] - eye.y, centre[2] - eye.z);
-        final double radius = SystemLayout.radius(body);
+        final double radius = SystemLayout.radius(body) * shown;
         final double shrink = SphereDrawing.DRAWN_WITHIN / (at.length() + radius);
         final double[] north = SystemLayout.north(body);
         final double[] middle = SystemLayout.middle(body, tick);
@@ -240,6 +264,31 @@ public final class SystemSpaceRenderer {
             square.close();
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    /*
+     * A world seen from outside its region: a small square of its colour facing the eye, added to what is behind, its
+     * colour on its corners for a shader that lays no fog over it, since space's fog would dim it to the black.
+     */
+    private static void drawPoint(final SolarBody body, final Vec3 eye, final float fade, final Matrix4f view,
+                                  final Matrix4f projection) {
+        final ShaderInstance coloured = GameRenderer.getPositionColorShader();
+        if (fade <= 0 || coloured == null) {
+            return;
+        }
+        final double[] centre = SystemLayout.centre(body);
+        final Vector3d at = new Vector3d(centre[0] - eye.x, centre[1] - eye.y, centre[2] - eye.z).normalize()
+                .mul(SphereDrawing.DRAWN_WITHIN * POINT_AT);
+        final int colour = WorldPoints.of(body);
+        final float[] rgba = {(colour >> 16 & CHANNEL) / CHANNEL_MOST, (colour >> 8 & CHANNEL) / CHANNEL_MOST,
+            (colour & CHANNEL) / CHANNEL_MOST, fade};
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        if (pointSquare == null) {
+            pointSquare = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);
+        }
+        SphereDrawing.draw(pointSquare, SphereDrawing.square(at, at.length() * POINT_HALF, rgba), view, projection,
+                coloured);
     }
 
     private static double distance(final double[] point, final Vec3 eye) {

@@ -18,11 +18,15 @@ import org.jetbrains.annotations.Nullable;
  * in their orbits, which give the launch windows and the trips; the space only gives each its place.
  *
  * <p>Distances are squeezed far more than sizes, so worlds look grand and journeys stay short: an astronomical unit is
- * 10,000 blocks, while the Overworld is a sphere 1,000 blocks in radius and every other world in proportion to its
+ * 30,000 blocks, while the Overworld is a sphere 3,000 blocks in radius and every other world in proportion to its
  * width. Each world hangs below the space's floor of stations, its low orbit, at a third of its radius above its
- * ground, at the height a player arrives at, so the world below fills the view. The Moon stands 3,000 blocks from the
- * Overworld's middle. The Sun stands in the middle, level with the Overworld's middle, a sphere of 1,500 blocks: at the
+ * ground, at the height a player arrives at, so the world below fills the view. The Moon stands 18,900 blocks from the
+ * Overworld's middle. The Sun stands in the middle, level with the Overworld's middle, a sphere of 4,500 blocks: at the
  * Overworld's distance it looks as big as the game's own sun.
+ *
+ * <p>A planet and its moons make a region of the space round the planet; from inside it they are seen as the spheres
+ * they are, and from outside, as from the Overworld Mars is, the planet is a bright point, as a planet is seen from
+ * another in the sky. Coming towards a region from outside, its planet grows out of its point into its sphere.
  *
  * <p>A planet's poles stand square to its sun, its north leaning half way up from the space's north, so the stations
  * over it look on its middle latitudes with the line of dawn under them: day on the side towards the Sun, night on the
@@ -37,18 +41,23 @@ import org.jetbrains.annotations.Nullable;
 public final class SystemLayout {
 
     /** The Overworld's radius in its system's space, in blocks: every world's in proportion to its width. */
-    public static final double OVERWORLD_RADIUS = 1_000;
+    public static final double OVERWORLD_RADIUS = 3_000;
     /** How high above a world's ground its low orbit lies, as a share of its radius. */
     public static final double LOW_ORBIT = 0.3;
     /** The height in a system's space where every world's low orbit lies, where stations stand and players arrive. */
     public static final double ORBIT_Y = 64;
     /** The Sun's radius, in blocks. */
-    public static final double SUN_RADIUS = 1_500;
+    public static final double SUN_RADIUS = 4_500;
     /**
      * How far the Moon stands from the Overworld's middle, in blocks: so far that the Overworld looks from it about 18
      * degrees wide, as the approved views of the Moon's sky and orbit draw it.
      */
-    public static final double MOON_DISTANCE = 6_300;
+    public static final double MOON_DISTANCE = 18_900;
+    /**
+     * How far a planet's region reaches from its middle, in its own radii: past its moons' low orbits, the Overworld's
+     * past the Moon's.
+     */
+    public static final double REGION_RADII = 8;
     /**
      * How far north of the middle of the Moon's map the Overworld stands still in its sky, in degrees: off the Sun's
      * path by more than the two together are wide, so it never hides the Sun.
@@ -163,6 +172,26 @@ public final class SystemLayout {
         final double[] c = centre(body);
         final double spread = spread(body);
         return new double[] {clampUnit((x - c[0]) / spread) * 180, -clampUnit((z - c[2]) / spread) * 90};
+    }
+
+    /** The planet whose region {@code body} belongs to: a planet's own, the Overworld's for the Moon. */
+    public static SolarBody planetOf(final SolarBody body) {
+        return body.orbit() != null ? body : SolarBody.OVERWORLD;
+    }
+
+    /**
+     * How much of its sphere {@code body} is seen as from the eye at {@code eye}, x, y and z: all of it from inside its
+     * planet's region, shrinking smoothly to nothing from the region's edge to twice as far, where only its point is
+     * seen.
+     */
+    public static double shown(final SolarBody body, final double[] eye) {
+        final SolarBody planet = planetOf(body);
+        final double[] middle = centre(planet);
+        final double region = radius(planet) * REGION_RADII;
+        final double away = Math.sqrt((eye[0] - middle[0]) * (eye[0] - middle[0])
+                + (eye[1] - middle[1]) * (eye[1] - middle[1]) + (eye[2] - middle[2]) * (eye[2] - middle[2]));
+        final double t = Math.max(0, Math.min(1, 2 - away / region));
+        return t * t * (3 - 2 * t);
     }
 
     /** Which body's low orbit a point of the space at ({@code x}, {@code z}) lies over, if any. */

@@ -93,8 +93,9 @@ public final class CruiseGameTests {
     private CruiseGameTests() {
     }
 
-    // Its cruise waits for the space ahead to load, and a test server runs its ticks faster than it loads: long ticks.
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 12_000)
+    // Its cruise waits for the space ahead to load, and a test server runs its ticks faster than it loads: long ticks,
+    // the more the farther the Moon stands.
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 36_000)
     public static void cruise_burnsSetsOutAndArrivesInTheMoonsOrbit(final GameTestHelper helper) {
         fly(helper, new Flight(TRAVEL, false, 0, false));
     }

@@ -56,6 +56,8 @@ final class SphereDrawing {
     private static final int SAMPLERS = 5;
     /* The textures the game had bound where the worlds' maps go, given back once they are drawn. */
     private static final int[] SAVED = new int[SAMPLERS];
+    /* A square's corners, across and up from its middle, and the picture's corners in that order. */
+    private static final double[][] CORNERS = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
 
     @Nullable
     private static ShaderInstance shader;
@@ -181,23 +183,46 @@ final class SphereDrawing {
     static MeshData square(final Vector3d at, final double radius, final VertexFormat format, final boolean textured) {
         final double away = at.length();
         final double half = textured ? radius : radius * away / Math.sqrt(away * away - radius * radius);
+        final BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, format);
+        final Vector3d[] corners = corners(at, half);
+        for (int i = 0; i < CORNERS.length; i++) {
+            final Vector3d corner = corners[i];
+            if (textured) {
+                builder.addVertex((float) corner.x, (float) corner.y, (float) corner.z)
+                        .setUv((float) (CORNERS[i][0] + 1) / 2, (float) (1 - CORNERS[i][1]) / 2);
+            } else {
+                builder.addVertex((float) corner.x, (float) corner.y, (float) corner.z);
+            }
+        }
+        return builder.buildOrThrow();
+    }
+
+    /**
+     * A square facing the eye round {@code at}, {@code half} wide each way from its middle, all of it the colour
+     * {@code rgba}: for a shader that takes its colour from its corners and lays no fog over it.
+     */
+    static MeshData square(final Vector3d at, final double half, final float[] rgba) {
+        final BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS,
+                DefaultVertexFormat.POSITION_COLOR);
+        for (final Vector3d corner : corners(at, half)) {
+            builder.addVertex((float) corner.x, (float) corner.y, (float) corner.z)
+                    .setColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+        }
+        return builder.buildOrThrow();
+    }
+
+    /* The corners of a square facing the eye round {@code at}, {@code half} wide each way from its middle. */
+    private static Vector3d[] corners(final Vector3d at, final double half) {
         final Vector3d forward = new Vector3d(at).normalize();
         final Vector3d helper = Math.abs(forward.y) > 0.9 ? new Vector3d(1, 0, 0) : new Vector3d(0, 1, 0);
         final Vector3d right = new Vector3d(forward).cross(helper).normalize().mul(half);
         final Vector3d up = new Vector3d(right).cross(forward).normalize().mul(half);
-        final BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, format);
-        final double[][] corners = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
-        for (final double[] corner : corners) {
-            final float x = (float) (at.x + right.x * corner[0] + up.x * corner[1]);
-            final float y = (float) (at.y + right.y * corner[0] + up.y * corner[1]);
-            final float z = (float) (at.z + right.z * corner[0] + up.z * corner[1]);
-            if (textured) {
-                builder.addVertex(x, y, z).setUv((float) (corner[0] + 1) / 2, (float) (1 - corner[1]) / 2);
-            } else {
-                builder.addVertex(x, y, z);
-            }
+        final Vector3d[] out = new Vector3d[CORNERS.length];
+        for (int i = 0; i < CORNERS.length; i++) {
+            out[i] = new Vector3d(at).add(new Vector3d(right).mul(CORNERS[i][0])).add(new Vector3d(up)
+                    .mul(CORNERS[i][1]));
         }
-        return builder.buildOrThrow();
+        return out;
     }
 
     /** Puts {@code square} in {@code buffer} and draws it with {@code with}. */

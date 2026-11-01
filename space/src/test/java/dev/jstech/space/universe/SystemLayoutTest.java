@@ -22,9 +22,9 @@ class SystemLayoutTest {
 
     @Test
     void radius_isTheOverworldsTimesTheWidthOverTheEarths() {
-        assertEquals(1_000, SystemLayout.radius(SolarBody.OVERWORLD), CLOSE);
-        assertEquals(272.7, SystemLayout.radius(SolarBody.MOON), 0.1);
-        assertEquals(532.0, SystemLayout.radius(SolarBody.MARS), 0.1);
+        assertEquals(3_000, SystemLayout.radius(SolarBody.OVERWORLD), CLOSE);
+        assertEquals(818.1, SystemLayout.radius(SolarBody.MOON), 0.1);
+        assertEquals(1_596.1, SystemLayout.radius(SolarBody.MARS), 0.1);
     }
 
     @Test
@@ -39,9 +39,9 @@ class SystemLayoutTest {
     @Test
     void centre_keepsEachWorldInItsPlaceWhateverTheTime() {
         final double[] overworld = SystemLayout.centre(SolarBody.OVERWORLD);
-        assertEquals(10_000, Math.hypot(overworld[0], overworld[2]), CLOSE);
+        assertEquals(30_000, Math.hypot(overworld[0], overworld[2]), CLOSE);
         final double[] mars = SystemLayout.centre(SolarBody.MARS);
-        assertEquals(15_240, Math.hypot(mars[0], mars[2]), 1);
+        assertEquals(45_720, Math.hypot(mars[0], mars[2]), 1);
         assertArrayEquals(overworld, SystemLayout.centre(SolarBody.OVERWORLD), CLOSE);
     }
 
@@ -129,9 +129,53 @@ class SystemLayoutTest {
     void over_findsTheWorldWhoseLowOrbitAPointLiesIn() {
         final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
         final double[] moon = SystemLayout.centre(SolarBody.MOON);
-        assertEquals(SolarBody.OVERWORLD, SystemLayout.over(home[0] + 1_200, home[2]));
-        assertEquals(SolarBody.MOON, SystemLayout.over(moon[0], moon[2] - 300));
-        assertNull(SystemLayout.over(home[0] + 2_000, home[2]));
+        assertEquals(SolarBody.OVERWORLD, SystemLayout.over(home[0] + 3_600, home[2]));
+        assertEquals(SolarBody.MOON, SystemLayout.over(moon[0], moon[2] - 900));
+        assertNull(SystemLayout.over(home[0] + 6_000, home[2]));
+    }
+
+    @Test
+    void shown_isTheWholeSphereInItsPlanetsRegionAndAPointFarOutside() {
+        final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
+        final double[] overHome = {home[0], SystemLayout.ORBIT_Y, home[2]};
+        assertEquals(1, SystemLayout.shown(SolarBody.OVERWORLD, overHome), CLOSE);
+        assertEquals(1, SystemLayout.shown(SolarBody.MOON, overHome), CLOSE, "the Moon is the Overworld's own");
+        assertEquals(0, SystemLayout.shown(SolarBody.MARS, overHome), CLOSE, "Mars is a point from the Overworld");
+        final double[] moon = SystemLayout.centre(SolarBody.MOON);
+        final double[] overMoon = {moon[0], SystemLayout.ORBIT_Y, moon[2]};
+        assertEquals(1, SystemLayout.shown(SolarBody.OVERWORLD, overMoon), CLOSE, "the Overworld from the Moon");
+        assertEquals(0, SystemLayout.shown(SolarBody.MARS, overMoon), CLOSE, "Mars from the Moon");
+        final double[] mars = SystemLayout.centre(SolarBody.MARS);
+        final double[] overMars = {mars[0], SystemLayout.ORBIT_Y, mars[2]};
+        assertEquals(1, SystemLayout.shown(SolarBody.MARS, overMars), CLOSE);
+        assertEquals(0, SystemLayout.shown(SolarBody.OVERWORLD, overMars), CLOSE, "the Overworld from Mars");
+        assertEquals(0, SystemLayout.shown(SolarBody.MOON, overMars), CLOSE, "the Moon from Mars");
+    }
+
+    @Test
+    void shown_growsOutOfThePointWithoutAJumpComingTowardsAPlanet() {
+        final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
+        final double[] mars = SystemLayout.centre(SolarBody.MARS);
+        double last = SystemLayout.shown(SolarBody.MARS, home);
+        for (int step = 1; step <= 1_000; step++) {
+            final double t = step / 1_000.0;
+            final double[] eye = {home[0] + (mars[0] - home[0]) * t, home[1] + (mars[1] - home[1]) * t,
+                home[2] + (mars[2] - home[2]) * t};
+            final double now = SystemLayout.shown(SolarBody.MARS, eye);
+            assertTrue(now >= last - CLOSE && now - last < 0.05, "smoothly, never back, at step " + step);
+            last = now;
+        }
+        assertEquals(1, last, CLOSE);
+    }
+
+    @Test
+    void regions_holdTheirMoonsLowOrbits() {
+        final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
+        final double[] moon = SystemLayout.centre(SolarBody.MOON);
+        final double reach = Math.hypot(moon[0] - home[0], moon[2] - home[2])
+                + SystemLayout.radius(SolarBody.MOON) * (1 + SystemLayout.LOW_ORBIT);
+        assertTrue(reach < SystemLayout.radius(SolarBody.OVERWORLD) * SystemLayout.REGION_RADII,
+                "the Moon's low orbit lies in the Overworld's region");
     }
 
     @Test
