@@ -22,6 +22,7 @@
     "LivingEntityMixin",
     "MappedRegistryMixin",
     "NaturalSpawnerMixin",
+    "PlayerAccessor",
     "PlayerListMixin",
     "PlayerMixin",
     "RecipeManagerMixin",

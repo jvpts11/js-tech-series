@@ -9,6 +9,7 @@ package dev.jstech.core.client.dimension;
 
 import dev.jstech.core.dimension.DimensionTravel;
 import dev.jstech.core.mixin.LivingEntityAccessor;
+import dev.jstech.core.mixin.PlayerAccessor;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,7 +20,11 @@ import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +69,8 @@ public final class TravelScreens {
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Opening.class, TravelScreens::onOpening);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.Clone.class, TravelScreens::onClone);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Pre.class, event -> keepTheSway());
+        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Pre.class, event -> keepTheSway());
     }
 
     /** The server said the coming passage is shown through the screen {@code id}. */
@@ -120,7 +127,9 @@ public final class TravelScreens {
     /*
      * The game makes the player anew for the new level: in a seamless passage the new one takes the old one's swing
      * and the sway of their view, so their hand neither drops nor shows the swing's cooldown, and nothing on the
-     * screen tells that the dimension changed.
+     * screen tells that the dimension changed. It also takes what the old one holds: the game's new player has empty
+     * hands until the server sends their inventory a moment later, and the item coming back would read as a new one,
+     * lowering the hand and starting the swing over.
      */
     private static void onClone(final ClientPlayerNetworkEvent.Clone event) {
         if (!DimensionTravel.SEAMLESS.equals(passing) || Util.getMillis() > passingUntil) {
@@ -128,12 +137,34 @@ public final class TravelScreens {
         }
         final LocalPlayer from = event.getOldPlayer();
         final LocalPlayer to = event.getNewPlayer();
+        final Inventory held = from.getInventory();
+        for (int slot = 0; slot < held.getContainerSize(); slot++) {
+            to.getInventory().setItem(slot, held.getItem(slot).copy());
+        }
+        to.getInventory().selected = held.selected;
+        ((PlayerAccessor) to).jscore$setLastItemInMainHand(((PlayerAccessor) from).jscore$lastItemInMainHand().copy());
         ((LivingEntityAccessor) to).jscore$setAttackStrengthTicker(
                 ((LivingEntityAccessor) from).jscore$attackStrengthTicker());
         to.xBob = from.xBob;
         to.yBob = from.yBob;
         to.xBobO = from.xBobO;
         to.yBobO = from.yBobO;
+    }
+
+    /*
+     * The server keeps a player's heading within one turn, -180 to 180, while their game lets it run on as they turn,
+     * so the player made anew for a new level faces the same way by a number whole turns away from the old one's. The
+     * hand sways by how far the view has turned past its sway, and would swing round those whole turns, out of sight
+     * and back. Through a seamless passage the sway is kept within half a turn of the heading, before each tick and
+     * each frame, the heading set first by the game and then by the server.
+     */
+    private static void keepTheSway() {
+        final LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || !DimensionTravel.SEAMLESS.equals(passing) || Util.getMillis() > passingUntil) {
+            return;
+        }
+        player.yBob = player.getYRot() + Mth.wrapDegrees(player.yBob - player.getYRot());
+        player.yBobO = player.yRotO + Mth.wrapDegrees(player.yBobO - player.yRotO);
     }
 
     /* Whether the land round the player is there to be seen: their chunk received and its section built. */

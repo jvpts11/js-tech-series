@@ -1745,9 +1745,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   way, as Phobos rises in the west, be squashed into a lump, or show as a point of light, as a far planet does.
 - Passages with no screen at all: `DimensionTravel.SEAMLESS` keeps the world drawn while the land loads, for a
   passage where both ends show only sky, and `DimensionTravel.announce` tells a player's game of a passage a mod
-  makes itself; the player made anew for the new level keeps the old one's swing and the sway of their view, so their
-  hand does not drop and nothing on the screen tells that the dimension changed. `SkyLayers` draws one sky's stars over
-  another's, and `Skies.of(level, dimension)` reads any dimension's sky.
+  makes itself; the player made anew for the new level keeps the old one's swing, what they hold and the sway of
+  their view, kept to their heading as the server writes it, so their hand neither drops nor swings round and nothing
+  on the screen tells that the dimension changed. `SkyLayers` draws one sky's stars over another's, and
+  `Skies.of(level, dimension)` reads any dimension's sky.
 - The ground drawn by its mod: `GroundCovers` lets a mod draw a level's ground itself from far above, the game
   drawing none of the level's blocks and none of its clouds while it does, and on the way there lets the game's sight
   reach down, every loaded block in sight drawn however far below the eye it is.

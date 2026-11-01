@@ -17,17 +17,21 @@ import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.testkit.client.ClientTestHelper;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 
 /**
  * The way up from the Overworld to its space on a player's game, read from the picture: low in the climb the sky is
  * the day's, half way up it is navy; just under the line the picture is the very one the space shows once the line is
- * crossed, the player's hand as it was; and the passage up, and the one back down, open no loading screen at all.
+ * crossed, the player's hand as it was, holding what it held, neither lowered nor swung round; and the passage up,
+ * and the one back down, open no loading screen at all.
  * Low in the climb the loaded ground is drawn however far below it lies, and from halfway up its own picture stands in
  * for it.
  */
@@ -53,6 +57,8 @@ public final class ClimbClientTests {
     private static final int HIGH = (int) (SpaceClimbs.ABOVE_THE_LIMIT * (ClimbView.BLOCKS_GIVE_WAY + 0.1));
     /* A swing all but whole, as a player's who has not struck in a while. */
     private static final float WHOLE_SWING = 0.99F;
+    /* How far, in degrees, the hand's sway may stray from the heading; the hand turns by a tenth of it. */
+    private static final float STEADY = 5F;
     /* Where the picture is read below the horizon, in the GUI's points from its middle, clear of the hand. */
     private static final int[][] GROUND = {{0, 40}, {-60, 60}, {-30, 90}, {-90, 30}};
     /* Where the sky is read, high over the middle. */
@@ -72,9 +78,11 @@ public final class ClimbClientTests {
         final boolean[] daylight = new boolean[1];
         final boolean[] screen = new boolean[1];
         final int[] passages = new int[1];
+        final float[] sway = new float[1];
         final int[][] under = new int[GROUND.length][];
         ctx.afterTest(() -> ctx.server().execute(() -> {
             ctx.server().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(daylight[0], ctx.server());
+            ctx.hold(ItemStack.EMPTY);
             land(ctx);
         }));
         ctx.thenServer(0, level -> {
@@ -82,6 +90,8 @@ public final class ClimbClientTests {
             daylight[0] = rule.get();
             rule.set(false, level.getServer());
             level.getServer().overworld().setDayTime(NOON);
+            // Something in the hand, as a player climbs with: the same item there after the line is no new one.
+            ctx.hold(new ItemStack(Items.IRON_SWORD));
             look(ctx, level.getServer().overworld(), level.getMaxBuildHeight() + LOW, LEVEL);
         })
                 .thenWaitUntil(() -> ctx.mc().player != null && ctx.mc().player.getY() > 300, ARRIVE,
@@ -109,11 +119,12 @@ public final class ClimbClientTests {
                 .thenScreenshot(0, "climb_under_the_line")
                 .thenServer(0, level -> look(ctx, level.getServer().overworld(),
                         SpaceClimbs.ceiling(level.getServer().overworld()) + OVER, DOWN))
-                .thenWaitUntil(() -> arrived(ctx, SPACE, screen), ARRIVE, "the climber to cross into space")
+                .thenWaitUntil(() -> arrived(ctx, SPACE, screen) && swayed(ctx, sway), ARRIVE,
+                        "the climber to cross into space")
                 // Read as the line is crossed: in its low orbit the world below slides on from the moment one comes
                 // there, a turn every 1,500 ticks, so a second later it is no longer the picture of the passage.
-                .thenWaitUntil(() -> bright(colour(ctx, GROUND[0][0], GROUND[0][1])) > SEEN, DRAWN,
-                        "the world's sphere to be drawn below in space")
+                .thenWaitUntil(() -> swayed(ctx, sway) && bright(colour(ctx, GROUND[0][0], GROUND[0][1])) > SEEN,
+                        DRAWN, "the world's sphere to be drawn below in space")
                 .then(0, () -> {
                     ctx.assertTrue(!screen[0] && TravelScreens.seamlessPassages() > passages[0],
                             "the passage up opened no loading screen: a screen seen " + screen[0] + ", seamless "
@@ -122,6 +133,9 @@ public final class ClimbClientTests {
                     // The player made anew for the space kept the old one's swing: the hand did not drop.
                     ctx.assertTrue(ctx.mc().player.getAttackStrengthScale(0F) > WHOLE_SWING,
                             "the hand as it was across the line: swing " + ctx.mc().player.getAttackStrengthScale(0F));
+                    // Nor did it swing round: its sway kept to the heading, which the server writes within one turn.
+                    ctx.assertTrue(sway[0] < STEADY, "the hand held still across the line: its sway strayed "
+                            + sway[0] + " degrees from the heading");
                     for (int i = 0; i < GROUND.length; i++) {
                         final int[] over = colour(ctx, GROUND[i][0], GROUND[i][1]);
                         final int differs = Math.abs(over[0] - under[i][0]) + Math.abs(over[1] - under[i][1])
@@ -200,6 +214,15 @@ public final class ClimbClientTests {
             screen[0] = true;
         }
         return ctx.mc().level != null && ctx.mc().level.dimension().equals(dimension);
+    }
+
+    /* Keeps the farthest the hand's sway strays from the player's heading in {@code most}; always true. */
+    private static boolean swayed(final ClientTestContext ctx, final float[] most) {
+        final LocalPlayer player = ctx.mc().player;
+        if (player != null) {
+            most[0] = Math.max(most[0], Math.abs(player.getYRot() - player.yBob));
+        }
+        return true;
     }
 
     private static int bright(final int[] colour) {
