@@ -6,7 +6,23 @@ its minerals in [Minerals](minerals.md); its ruins and Enigmatic sites in [Struc
 
 ## What exists today
 
-Nothing of J's Space exists yet.
+Two worlds have their ground built.
+
+**The Moon** has six biomes of its own: Mare, Highlands, Polar Craters, Rille, Young Crater and Lava Tube Skylight. The
+maria lie low and dark where its map has them, mare regolith over mare basalt, with the bright highlands of highland
+regolith over anorthosite round them. Craters are everywhere, fresh ones bright. The rilles wind through the maria, the
+lava tubes run under them, and the craters of eternal shadow round the poles have floors of icy regolith. **Tycho** is
+the first landmark of the worlds: a great crater at its place, with its bowl, its rim, its central peak and its bright
+ejecta.
+
+**Mars** has seven biomes of its own: Northern Plains, Oxide Plains, Southern Highlands, Dark Dunes, Chaos Terrain,
+Lakebed and Polar Cap. The low smooth north and the old cratered south lie either side of the dichotomy. Tharsis'
+volcanoes stand and Valles Marineris is cut where its height map has them, as relief of the ground, not as named
+landmarks. Dark dunes walk in crescents where the map is dark, the chaos breaks into flat-topped blocks of mudstone where
+the canyons open, the lakebeds lie in old craters, and the caps are water ice under carbon dioxide frost, cut by spiral
+troughs.
+
+The rocks and the ores of both are in [Minerals](minerals.md).
 
 ## To build
 
@@ -14,9 +30,9 @@ Nothing of J's Space exists yet.
 
 - **Biomes of its own**: no world borrows a biome from another.
 - **Landmarks**: unique landforms with their names, real ones on real worlds, each placed once, **at its real place on
-  the world's sphere**, as large as the sphere draws it; Tycho stands on the Moon. A landmark shows on the Atlas once the relief of its region is known
-  ([Exploration](exploration.md)), and visiting one is an advancement. Heights are squeezed into the world's height, and
-  the proportions between them stay: Olympus Mons is the tallest of all.
+  the world's sphere** and as large as it is drawn there. A landmark shows on the Atlas once the relief of its region is
+  known ([Exploration](exploration.md)), and visiting one is an advancement. Heights are squeezed into the world's
+  height, and the proportions between them stay: Olympus Mons is the tallest of all. Tycho is the only one built.
 - **Its weather, its sky and its minerals**, and, where there are, life and structures.
 
 ### Historic sites

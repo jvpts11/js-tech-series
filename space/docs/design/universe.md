@@ -7,39 +7,105 @@ are in [Worlds](worlds.md).
 
 ## What exists today
 
-**Round worlds.** Every round world lies on its sphere: X is the longitude and Z the latitude, and the spawn is the
-middle of the near side (0°, 0°). From that one map come each place's sky (the Overworld high in the Moon's sky near
-the spawn, lower as one goes, on the horizon at 90°, hidden on the far side; the Sun's hour by the longitude), the spot
-a landing comes down on, since choosing a point on the sphere is choosing its coordinates, and what the generator puts
-there (the maria where the map has maria, Tycho at its place), so what is seen from orbit is what is found on the
-ground.
-
-**Their size.** A world's size is the Overworld's size times its diameter against the Earth's: the Moon 27% (3,474 of
-12,742 km), Mars 53%. With the default Overworld, about 60 million blocks a side, the Moon is about 16.4 million blocks
-in X (360°) by 8.2 million in Z (180°), some 45,000 blocks a degree, and Mars 31.9 by 16 million; a block is about
-0.67 m on every world. The Overworld reaches the Moon's horizon 4 million blocks from the spawn, so it really hangs
-still, and the far side and the poles are reached by landing, not on foot. On a server with a small Overworld border
-the worlds shrink with it. A world's size is fixed when the world is first created, so a later change of the
-Overworld's border never shifts what is already generated. A world larger than the Earth takes the Overworld's own
-size. The border of a round world stands at ±180°, the middle of its far side, and at its poles.
-
-**The Overworld is never the Earth.** Seen from space, from orbit, from the Moon's sky with its phases or from the top
-of the climb, it is a sphere with continents at random from the world's seed, polar caps always, Minecraft's biome
-colours, and clouds that go round it, the game's cloud map wrapped round with each band drifting at its own pace.
-
-**Bodies as the game draws them.** Every world and moon is a round body drawn at the screen's own resolution: a smooth
-outline, only the surface keeps its texture's texels, the texture's resolution chosen by distance so the texels stay a
-few pixels wide; light is continuous like the game's smooth lighting (a soft line of dawn, a warm dusk where there is
-air, graded relief shadows, deep on airless worlds). The Moon and Mars carry height maps lit by the Sun. The Sun stays
-the game's square.
-
 J's Core has what the worlds are built on:
 
 - **dimension rules**, a datapack file per dimension with its gravity, whether its air can be breathed, its temperature,
   its weather and its pressure, worked out the same way by the server and by every player's game;
 - the **hazard event** a dimension posts before its air, heat or cold harms a player, which a space suit cancels;
 - **dimensions made while the game runs**, copies of a declared template saved with the world, which is how a star
-  system's space appears the first time someone reaches it.
+  system's space appears the first time someone reaches it;
+- **a border of its own for a dimension**, from west to east and north to south, kept with it;
+- **sky files**, with stars that can shine by day, a sun that lights the day while the mod draws it, a round world whose
+  sun hour follows the longitude, and a space with no ground under its sky;
+- **passages with no screen at all** between a world and its space.
+
+On them J's Space builds its skeleton.
+
+### The star systems
+
+All twenty-six star systems exist, in their three galaxies, each with its name, its galaxy, its distance in light-years
+and what shines at its heart. Each is a datapack file, so a pack can change one or add its own. The worlds of every
+system but the Solar System are in To build.
+
+### The space of a system
+
+Every system has a space of its own, a dimension made the first time someone gets there and kept with the world: empty,
+vacuum, with no gravity, a black starry sky and its sun always up, since nothing turns under it.
+
+In the Solar System's space the Overworld, the Moon and Mars are round bodies in their places, each kept still, so
+whatever is built in its orbit stays over it. An astronomical unit is 10,000 blocks. The Overworld is a sphere 1,000
+blocks in radius and every other world is in proportion to its width. The Sun stands in the middle, a sphere of 1,500
+blocks that looks as big, from the Overworld, as the game's own sun. The Moon stands 6,300 blocks from the Overworld,
+a quarter of the way round from the Sun, so from the Moon the Overworld shows half lit. Each world's low orbit is about a
+third of its radius above its ground, and the world below fills the view. A planet turns once a day, with the day on the
+side towards the Sun and the night away from it; the Moon turns once an orbit and keeps its near side to the Overworld.
+These sizes and distances are first estimates.
+
+A player or a rocket that climbs 700 blocks over a world's build limit passes into the space of its system, with no
+loading screen. On the way up the loaded land goes on to the horizon in a far map of the real ground, and the world
+bends into its sphere. Coming down from a spot of the low orbit brings the player to the place of the world under it.
+
+### Worlds as data
+
+A world is its name, its star system, its dimension, its generator, its modifiers and its diameter, written in code or
+as a datapack file. Three worlds are built: the Overworld, whose dimension generates itself as the game's does; the Moon,
+shaped by the Cratered generator; and Mars, shaped by the Arid generator. Both generators are registered through
+[the API](api.md). The mechanism for modifiers is built, but the Moon and Mars use none: their polar craters, rilles,
+lava tubes, dichotomy and caps are laid by their own data.
+
+### The Moon and Mars to stand on
+
+| | Moon | Mars |
+| --- | --- | --- |
+| Diameter | 3,474 km | 6,779 km |
+| Gravity | 0.165 g | 0.38 g |
+| Air | none | 0.6 kPa (0.006 atm): 95% carbon dioxide, 3% nitrogen, 2% argon |
+| Temperature | −20 °C | −63 °C |
+| Day | 29.5 Overworld days, about ten real hours | 24 h 37 min of the Overworld's day, a little over 20 real minutes |
+| Year | | 13 sols |
+
+The temperature is one mean value for now. A system's space has no gravity, no air and −270 °C. Both worlds have the
+same rules for sealed rooms (glass, doors and gates).
+
+### The blocks of a round world
+
+Every round world lies on its sphere: X is the longitude and Z the latitude, and the spawn is the middle of the near side
+(0°, 0°). The same map gives each place its sky (the Sun's hour follows the longitude, and the Overworld stands high in
+the Moon's sky near the spawn, lower as one goes east, on the horizon a quarter of the way round and hidden on the far
+side), the spot a landing comes down on, and what the generator puts there, so what a player sees from orbit is what is
+found on the ground.
+
+A world's size is the Overworld's size times its diameter over the Earth's, fixed when the world is first created, so a
+later change of the Overworld's border never shifts what is generated. With the default Overworld, about 60 million
+blocks a side, the Moon is about 16.4 million blocks in X (360°) by 8.2 million in Z (180°), some 45,000 blocks a degree,
+and Mars is 31.9 by 16 million. A block is about 0.67 m on every world. The Overworld reaches the Moon's horizon 4 million
+blocks from the spawn, so it hangs still, and the far side and the poles are reached by landing, not on foot. A world
+larger than the Earth takes the Overworld's own size. On a server with a small Overworld border the worlds shrink with
+it. The border of a round world stands at ±180°, the middle of its far side, and at its poles.
+
+### The sky of the Moon and Mars
+
+**Real by the data, Minecraft by the look.** The sky is drawn the way Minecraft draws its own, from each world's data:
+
+- **stars** are the game's small square points, bright and shining by day where there is no air;
+- **the Sun** is the game's square, smaller and giving less light from the distance of Mars;
+- **planets and moons** are round bodies drawn at the screen's own resolution, with a smooth outline and the texels of
+  their maps, so the texels stay a few pixels wide at any distance. Light is continuous, as the game's smooth lighting:
+  a soft line of dawn, a warm dusk and a glow of air on the limb where there is air, relief shadows from their height
+  maps, and the night side in a deep tone;
+- **the sky's colour** is black on the Moon, and butterscotch on Mars with blue sunsets, thin clouds, a haze of dust and
+  a smaller Sun.
+
+**The Overworld is never the Earth.** Its continents, biomes, mountain ranges and polar caps come from the world's seed,
+in the game's biome colours. The game's own clouds wrap round it in bands that drift at their own pace. Seen from the
+Moon it stands still in the sky, with its phases following the Moon's hour. On Mars it is an evening star beside the
+Sun. Phobos rises in the west and crosses Mars' sky twice a sol, and Deimos is a slow point of light.
+
+### Day and night on the Moon and Mars
+
+The Overworld keeps its day of twenty minutes. The Moon's day is 29.5 of them, about ten real hours, half of sunlight and
+half of night, which turns into play: solar panels stop through the long lunar night. Mars' sol is a little longer than
+the Overworld's day, and its year is thirteen sols, so the launch windows come round as they do in reality.
 
 ## To build
 
@@ -411,26 +477,16 @@ builds a new world out of the ones that exist.
 
 ### The size of a world
 
-The far side of a round world is not yet sewn to its near side: the border at ±180° is an edge, and sewing it without
-a seam is for later.
+The far side of a round world is not yet sewn to its near side: the border at ±180° is an edge, and sewing it without a
+seam is for later. With J's Overworld installed, the Overworld follows the same map, X as the longitude and Z as the
+latitude, and takes the same proportions, so it is coherent with every other world.
 
 ### The sky
 
-**Real by the data, Minecraft by the look.** Each world's sky is worked out from real data: where its star and its
-neighbours are, how big they look, their colour and the light of its day. It is drawn the way Minecraft draws its own
-sky:
-
-- **stars** are vanilla's small square points, in the places the data gives;
-- **the sun** is square like vanilla's, with the size and colour of that star: a point at Sedna, red and filling about
-  30° of the sky at Verath;
-- **planets and moons** in the sky are round bodies drawn as above, at the screen's own resolution with the texels of
-  their maps, with their phases. From Io, Jupiter fills about 19° of the sky, nearly forty times the full Moon seen from the Earth; from the Moon, the Earth
-  hangs still and shows phases; from Titan, Saturn and its rings; from Mars, Phobos rising in the west twice a day;
-- the colour of the sky and of the haze is vanilla's in the tone of the place: black and starry at noon with no air,
-  as in the Apollo photographs; butterscotch on Mars with blue sunsets; orange on Titan; yellow high in the clouds of
-  Venus.
-
-No photograph and no realistic sky: the look stays the game's.
+The sky of every other world is worked out from real data in the same way: where its star and its neighbours are, how big
+they look, their colour and the light of its day. The Sun is a point at Sedna and red, filling about 30° of the sky, at
+Verath. From Io, Jupiter fills about 19° of the sky, nearly forty times the full Moon seen from the Earth; from Titan
+there are Saturn and its rings. The sky of Titan is orange and the sky high in the clouds of Venus is yellow.
 
 **The planets are in the Overworld's sky too.** Each planet is a tiny texture in the sky, where it really is, moving
 among the stars from night to night. To the eye it is a bright point, as in the real sky; through a telescope, its disc,
@@ -443,8 +499,6 @@ Overworld's sky is otherwise vanilla's.
 
 ### Day and night
 
-**The Overworld keeps its day of twenty minutes**, so nothing that depends on it, in vanilla or in another mod, changes.
-Every other world's day is in proportion to it: the Earth's 24 hours are the Overworld's twenty minutes, so Mars has
-almost the same day. Long days are estimates, set by playing: the Moon's would give about five real hours of sunlight
-and five of night, which turns into play (solar panels stop through the long lunar night, the real problem of the
-Artemis bases), and Mercury's about 59 hours.
+Every other world's day is in proportion to the Overworld's twenty minutes: the Earth's 24 hours are the Overworld's
+twenty minutes. Long days are estimates, set by playing: Mercury's would give about 59 real hours. The temperature of the
+Moon and Mars is one mean value, so the swing between their day and their night is also to build.
