@@ -16,6 +16,8 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.team.Ownership;
+import dev.jstech.space.crew.CrewRole;
+import dev.jstech.space.crew.ShipCrew;
 import dev.jstech.space.landing.RunwayBeaconBlock;
 import dev.jstech.space.landing.Runways;
 import dev.jstech.space.landing.ShipLandingBlocks;
@@ -355,6 +357,12 @@ public final class ShipAutopilotGameTests {
                     + " its pilot");
             ours[0] = there;
         }).thenExecute(() -> {
+            // A ship whose owner lets nobody else aboard is not one DOCK takes; let in as passengers, it is.
+            final AirReserveEntity other = console(theirs[0]);
+            other.crew(ShipCrew.of(UUID.randomUUID(), "STRANGER"));
+            helper.assertTrue(ShipAutopilotControl.next(pilot[0], space, ours[0], Optional.empty()).isEmpty(),
+                    "DOCK takes no ship that would not let its pilot aboard");
+            other.crew(other.crew().orElseThrow().withOthers(CrewRole.PASSENGER));
             ShipAutopilotControl.pressed(pilot[0]);
             final Optional<ShipAutopilot> engaged = flight(ours[0]).autopilot();
             helper.assertTrue(engaged.isPresent() && engaged.get().mode() == ShipAutopilot.Mode.DOCK

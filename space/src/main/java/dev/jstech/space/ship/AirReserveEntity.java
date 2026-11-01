@@ -20,6 +20,7 @@ import dev.jstech.core.room.Room;
 import dev.jstech.core.room.RoomLiving;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.core.util.Loaded;
+import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.crew.ShipCrew;
 import dev.jstech.space.shipyard.ShipyardPlans;
 import java.util.List;
@@ -36,7 +37,8 @@ import org.jetbrains.annotations.Nullable;
  * the crew breathe and the hull leaks, while the reserve lasts; it asks for its cabin to be found as a room, wherever
  * its ship goes. An oxygen bottle pours into it. Once the ship has left
  * its dock, the console keeps the ship too ({@link ShipAboard}), and draws its parts aboard; and watches its plan
- * there, so a block broken aboard leaves a hole its part holds round, and the right block put back mends it. It shows
+ * there, so a block broken aboard leaves a hole its part holds round, the part doing only what the blocks still in it
+ * can, and the right block put back mends it. It shows
  * the ship's flight as it flies ({@link ShipReadings}), and keeps its fusion reactor's deuterium, which the reactor
  * burns as the ship flies and a dock fills again.
  */
@@ -53,6 +55,8 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     private @Nullable PlannedBuild aboard;
     /* What its reactor has burnt since its load was last told, on the server: told a thousandth at a time. */
     private double burnt;
+    /* What its ship weighs and pushes with the holes in its parts, on the server; none while it is whole. */
+    private ShipFlightModel.@Nullable Performance holed;
     /** The oxygen a full reserve holds, in moles: two hours of one crew member's breathing. */
     public static final double OXYGEN = 2 * 3600 * RoomLiving.PLAYER_BREATH;
     /** The nitrogen a full reserve holds, in moles, to make good what leaks. */
@@ -146,6 +150,14 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     public List<Integer> holes() {
         final List<Integer> kept = this.holes.get();
         return kept == null ? List.of() : kept;
+    }
+
+    /**
+     * What its ship weighs and pushes with the holes in its parts, each part doing the share of its blocks still in it;
+     * none while the ship is whole, or its plan not watched, when its flight keeps the figures it left the dock with.
+     */
+    public Optional<ShipFlightModel.Performance> performance() {
+        return Optional.ofNullable(this.holed);
     }
 
     /** Loaded, on the server: it asks for its cabin to be found, as a room is only where a block asks for one. */
@@ -251,23 +263,46 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     private void stopWatching() {
         final PlannedBuild was = this.aboard;
         this.aboard = null;
+        this.holed = null;
         if (was != null) {
             was.stop(false);
         }
     }
 
-    /* Its ship's plan's counts changed: its players hear the holes, and its parts formed are kept. */
+    /*
+     * Its ship's plan's counts changed: its players hear the holes, its parts formed are kept, and its flight does
+     * what its parts still can, each the share of its blocks still in it.
+     */
     private void told() {
         final PlannedBuild now = this.aboard;
         final ShipAboard kept = this.ship.get();
-        if (now == null || kept == null) {
+        if (now == null || kept == null || getLevel() == null) {
             return;
         }
         this.holes.set(ShipyardPlans.holesIn(now));
         if (!now.formedParts().equals(kept.formed())) {
             this.ship.set(new ShipAboard(kept.design(), kept.nose(), kept.turn(), now.formedParts()));
         }
+        this.holed = now.missing() == 0 ? null : ShipFlight.performance(kept.design(), ShipParts.all(getLevel()),
+                shares(now));
         setChanged();
+    }
+
+    /* The share of each part's blocks still in it, by the parts' numbers in the plan. */
+    private static double[] shares(final PlannedBuild plan) {
+        int parts = 0;
+        for (final PlanSpot spot : plan.plan().spots()) {
+            parts = Math.max(parts, spot.part() + 1);
+        }
+        final int[] blocks = new int[parts];
+        for (final PlanSpot spot : plan.plan().spots()) {
+            blocks[spot.part()]++;
+        }
+        final double[] shares = new double[parts];
+        for (int part = 0; part < parts; part++) {
+            shares[part] = blocks[part] == 0 ? 1 : 1 - (double) plan.missing(part) / blocks[part];
+        }
+        return shares;
     }
 
     /* Gives {@code room} as much of {@code gas} as brings it back to {@code kilopascals}, out of {@code left}. */

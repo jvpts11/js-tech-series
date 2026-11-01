@@ -15,6 +15,8 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.text.GameText;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.crew.CrewRole;
+import dev.jstech.space.crew.ShipCrews;
 import dev.jstech.space.landing.Runways;
 import dev.jstech.space.landing.ShipLandingTexts;
 import dev.jstech.space.landing.ShipLandings;
@@ -80,7 +82,7 @@ public final class ShipAutopilotControl {
                         : Optional.empty();
                 case ORBIT -> SystemSpaces.systemOf(level.dimension()).isEmpty() ? Optional.of(ShipAutopilot.orbit())
                         : Optional.empty();
-                case DOCK -> docking(level, ship);
+                case DOCK -> docking(pilot, level, ship);
             };
             if (offered.isPresent()) {
                 return offered;
@@ -130,8 +132,12 @@ public final class ShipAutopilotControl {
         return best;
     }
 
-    /* DOCK, in space, with the nearest other ship with a collar, its own having one too. */
-    private static Optional<ShipAutopilot> docking(final ServerLevel level, final MovingStructure ship) {
+    /*
+     * DOCK, in space, with the nearest other ship with a collar, its own having one too, of the ships that would let
+     * {@code pilot} come aboard: at least a passenger of theirs.
+     */
+    private static Optional<ShipAutopilot> docking(final ServerPlayer pilot, final ServerLevel level,
+                                                   final MovingStructure ship) {
         if (SystemSpaces.systemOf(level.dimension()).isEmpty() || ShipCollars.mouth(level, ship).isEmpty()) {
             return Optional.empty();
         }
@@ -139,7 +145,8 @@ public final class ShipAutopilotControl {
         MovingStructure nearest = null;
         double best = DOCK_RANGE;
         for (final IStructureBody body : MovingStructures.near(level, new AABB(at, at).inflate(DOCK_RANGE))) {
-            if (body == ship || !(body instanceof MovingStructure other) || !(other.motion() instanceof ShipFlight)) {
+            if (body == ship || !(body instanceof MovingStructure other) || !(other.motion() instanceof ShipFlight)
+                    || !ShipCrews.roleOf(pilot, other).holds(CrewRole.PASSENGER)) {
                 continue;
             }
             final Optional<Vec3> mouth = ShipCollars.mouth(level, other);

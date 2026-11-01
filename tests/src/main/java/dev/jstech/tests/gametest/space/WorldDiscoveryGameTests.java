@@ -56,8 +56,12 @@ public final class WorldDiscoveryGameTests {
                 "the Moon's and Mars' places are known from the Overworld's sky, so probes can go");
         helper.assertTrue(WorldDiscovery.known(server, team, SolarSystemWorlds.MOON, SpaceProperties.ATMOSPHERE) == 0,
                 "but nothing else of them");
-        helper.assertFalse(WorldDiscovery.canLandCrew(server, team, SolarSystemWorlds.MOON),
-                "so no crew lands there yet");
+        helper.assertFalse(SpaceServerConfig.LANDING_NEEDS_THE_ESSENTIALS.defaultValue(),
+                "by default a crew lands knowing nothing, while nothing teaches the essentials");
+        withTheRule(true, () -> helper.assertFalse(WorldDiscovery.canLandCrew(server, team, SolarSystemWorlds.MOON),
+                "with the rule on, no crew lands there yet"));
+        withTheRule(false, () -> helper.assertTrue(WorldDiscovery.canLandCrew(server, team, SolarSystemWorlds.MOON),
+                "with it off, one does"));
         helper.succeed();
     }
 
@@ -77,17 +81,29 @@ public final class WorldDiscoveryGameTests {
                 SpaceProperties.RELIEF}) {
             WorldDiscovery.learn(server, team, moon, essential, 1);
         }
-        helper.assertTrue(WorldDiscovery.canLandCrew(server, team, moon), "with what kills known, a crew lands");
+        withTheRule(true, () -> {
+            helper.assertTrue(WorldDiscovery.canLandCrew(server, team, moon), "with what kills known, a crew lands");
+            helper.assertFalse(WorldDiscovery.canLandCrew(server, team, SolarSystemWorlds.MARS),
+                    "and on Mars, known not at all, it does not");
+        });
         helper.assertTrue(WorldDiscovery.knownShare(server, team, moon) < 1, "though the Moon is not known whole");
+        withTheRule(false, () -> helper.assertTrue(WorldDiscovery.canLandCrew(server, team, SolarSystemWorlds.MARS),
+                "a server that lets crews land blind lets them land on Mars knowing nothing"));
+        helper.succeed();
+    }
+
+    /*
+     * Does {@code check} with the server's rule that crews land only knowing the essentials {@code on} or off, then
+     * puts it back as it was.
+     */
+    private static void withTheRule(final boolean on, final Runnable check) {
         final boolean rule = SpaceServerConfig.FILE.get(SpaceServerConfig.LANDING_NEEDS_THE_ESSENTIALS);
         try {
-            SpaceServerConfig.FILE.set(SpaceServerConfig.LANDING_NEEDS_THE_ESSENTIALS, false);
-            helper.assertTrue(WorldDiscovery.canLandCrew(server, team, SolarSystemWorlds.MARS),
-                    "a server that lets crews land blind lets them land on Mars knowing nothing");
+            SpaceServerConfig.FILE.set(SpaceServerConfig.LANDING_NEEDS_THE_ESSENTIALS, on);
+            check.run();
         } finally {
             SpaceServerConfig.FILE.set(SpaceServerConfig.LANDING_NEEDS_THE_ESSENTIALS, rule);
         }
-        helper.succeed();
     }
 
     @GameTest(template = ARENA)

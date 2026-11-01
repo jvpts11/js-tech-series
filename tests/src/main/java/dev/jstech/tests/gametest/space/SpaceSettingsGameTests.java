@@ -18,7 +18,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * J's Space's settings, {@code jsspace-server.toml}: every consequence on unless a server turns it off, each saying
- * what happens when it is off, the two rules of balance that start off, and the whole file read by the server.
+ * what happens when it is off, the three rules that start off, and the whole file read by the server.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -26,9 +26,12 @@ public final class SpaceSettingsGameTests {
 
     private static final String ARENA = "empty";
     private static final String OFF = "Off, ";
-    /* The rules of balance that start off: fast travel, and J's Industrial's chains as the only path. */
+    /*
+     * The rules that start off: fast travel, J's Industrial's chains as the only path, and landing only where the
+     * essentials are known, while nothing in the game teaches them yet.
+     */
     private static final List<ConfigKey<Boolean>> STARTING_OFF = List.of(SpaceServerConfig.FAST_TRAVEL,
-            SpaceServerConfig.INDUSTRIAL_CHAIN_ONLY);
+            SpaceServerConfig.INDUSTRIAL_CHAIN_ONLY, SpaceServerConfig.LANDING_NEEDS_THE_ESSENTIALS);
 
     private SpaceSettingsGameTests() {
     }

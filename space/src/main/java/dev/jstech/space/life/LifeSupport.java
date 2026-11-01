@@ -24,21 +24,26 @@ import dev.jstech.space.universe.SolarSystemWorlds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.item.Equipable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.ItemStackedOnOtherEvent;
 
 /**
  * Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its tanks
  * hold, each second of breathing spent from them, the only clock of a walk outside ({@link SuitAir}), and stand any
  * cold or heat within its range. The air left lives on the piece worn on the chest, which carries the tanks; only
  * refilling them gives it back. Modules fitted to the pieces add to the tanks, stop the sky's radiation, light the way
- * or cut the Sun's glare. And each world says its dangers, and how much of the sky's radiation reaches its open ground.
+ * or cut the Sun's glare, and come back off the way a bundle gives back what it holds. And each world says its dangers,
+ * and how much of the sky's radiation reaches its open ground.
  */
 public final class LifeSupport {
 
@@ -55,6 +60,7 @@ public final class LifeSupport {
     /** Hands the game's bus what life support answers, and declares the worlds' dangers, once, from the constructor. */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(DimensionHazardEvent.class, LifeSupport::onHazard);
+        NeoForge.EVENT_BUS.addListener(ItemStackedOnOtherEvent.class, LifeSupport::onTakingOff);
         Resistances.source(LifeSupport::fitted);
         CosmicRadiation.declare(dimension(SolarSystemWorlds.MOON), MOON_DOSE * GAME_DAYS_AN_HOUR);
         CosmicRadiation.declare(dimension(SolarSystemWorlds.MARS), MARS_DOSE * GAME_DAYS_AN_HOUR);
@@ -124,6 +130,30 @@ public final class LifeSupport {
         return true;
     }
 
+    /**
+     * Takes the module last fitted to {@code piece} off it; the module taken, none when it has none. A chest piece's
+     * tanks then keep no more air than they hold without it.
+     */
+    public static Optional<ResourceLocation> takeOff(final Level level, final ItemStack piece) {
+        final List<ResourceLocation> on = fittedIds(piece);
+        if (on.isEmpty()) {
+            return Optional.empty();
+        }
+        final ResourceLocation module = on.get(on.size() - 1);
+        if (on.size() == 1) {
+            piece.remove(SuitData.MODULES.get());
+        } else {
+            piece.set(SuitData.MODULES.get(), List.copyOf(on.subList(0, on.size() - 1)));
+        }
+        final ResourceLocation id = piece.getItemHolder().unwrapKey().map(ResourceKey::location).orElse(null);
+        final Integer kept = piece.get(SuitData.AIR.get());
+        if (kept != null) {
+            SpaceSuits.all(level).values().stream().filter(suit -> suit.chest().equals(id)).findFirst()
+                    .ifPresent(suit -> setAir(level, piece, suit, kept));
+        }
+        return Optional.of(module);
+    }
+
     /*
      * A suit worn whole stands the cold and heat of its range. Its air is breathed through J's Core's lungs
      * ({@link SuitAir}), so what the wearer breathes is weighed from the tanks themselves.
@@ -134,6 +164,25 @@ public final class LifeSupport {
         if (suit.isPresent() && (event.hazard() == DimensionHazardEvent.Hazard.COLD
                 || event.hazard() == DimensionHazardEvent.Hazard.HEAT)
                 && suit.get().stands(SealedRooms.climateAt(player.level(), player.blockPosition()).temperature())) {
+            event.setCanceled(true);
+        }
+    }
+
+    /*
+     * As a bundle gives back what it holds: clicked with the right button and nothing in the hand, a suit's piece in
+     * the inventory gives its last fitted module back into the hand.
+     */
+    private static void onTakingOff(final ItemStackedOnOtherEvent event) {
+        if (event.getClickAction() != ClickAction.SECONDARY || !event.getCarriedItem().isEmpty()
+                || fittedIds(event.getStackedOnItem()).isEmpty()) {
+            return;
+        }
+        final Player player = event.getPlayer();
+        final Optional<ResourceLocation> module = takeOff(player.level(), event.getStackedOnItem());
+        if (module.isPresent()) {
+            event.getCarriedSlotAccess().set(new ItemStack(BuiltInRegistries.ITEM.get(module.get())));
+            event.getSlot().setChanged();
+            player.playSound(SoundEvents.ARMOR_EQUIP_IRON.value());
             event.setCanceled(true);
         }
     }

@@ -36,7 +36,7 @@ A tripulação chega à Lua de foguete. Faça a contagem regressiva no [painel d
 
 Da órbita, marque um ponto na página POUS e o foguete [desce](jsspace:coming_down) em algum lugar da elipse de pouso em volta dele. Sem ar, não precisa de escudo térmico. Precisa, sim, de pernas, as Pernas de Pouso ou um Estágio de Descida do Módulo Lunar, e de propelente para {{jsspace:moon_landing_delta_v}} para frear até pousar nelas.
 
-Toda equipe sabe onde fica a Lua desde o início. Para pousar uma tripulação, a equipe também precisa conhecer o que mata lá: a atmosfera, a temperatura, a radiação, a gravidade e o relevo. Um servidor pode desligar essa regra.
+Toda equipe sabe onde fica a Lua desde o início. Um servidor também pode exigir que a equipe conheça o que mata lá antes de a tripulação pousar: a atmosfera, a temperatura, a radiação, a gravidade e o relevo.
 
 Os blocos desta página são encontrados na Lua e minerados lá, e cada um, quebrado, dá o próprio bloco: os regolitos com pá, o Basalto dos Mares e o Anortosito com picareta, o Regolito Gelado com qualquer coisa e as pedras soltas com um toque. Eles também estão no menu criativo, aba J's Space.
 
@@ -93,7 +93,7 @@ A gravidade é uma fração da força do Overworld. A hora segue a longitude, co
 > A radiação do céu chega ao chão a céu aberto. Cada bloco sólido acima de você barra a maior parte dela, então more sob um teto de rocha ou regolito; o Colete Antirradiação, encaixado no traje, barra uma parte também.
 
 > [!PROBLEM] O pouso fica retido na órbita.
-> A sua equipe ainda não conhece o que mata na Lua: a atmosfera, a temperatura, a radiação, a gravidade e o relevo. Ou o foguete não tem pernas, ou tem propelente de menos para frear, e o servidor retém esses pousos em vez de deixá-los acabar em queda.
+> O servidor exige que a sua equipe conheça antes o que mata na Lua, e ela ainda não conhece: a atmosfera, a temperatura, a radiação, a gravidade e o relevo. Ou o foguete não tem pernas, ou tem propelente de menos para frear, e o servidor retém esses pousos em vez de deixá-los acabar em queda.
 
 > [!PROBLEM] O foguete se espatifa ao tocar o chão.
 > Ele não tinha pernas, ou tinha propelente de menos para frear os {{jsspace:moon_landing_delta_v}} da descida. Instale Pernas de Pouso ou um Estágio de Descida do Módulo Lunar, e guarde essa quantidade nos tanques.

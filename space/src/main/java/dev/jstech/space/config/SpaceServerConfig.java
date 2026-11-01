@@ -89,9 +89,10 @@ public final class SpaceServerConfig {
             .named("Fast travel");
     /** Whether a crew lands only on a world whose essentials its team knows. */
     public static final ConfigKey<Boolean> LANDING_NEEDS_THE_ESSENTIALS = ConfigKey.flag(TRAVEL
-                    + ".landing_needs_the_essentials", true)
+                    + ".landing_needs_the_essentials", false)
             .comment("A crew cannot land on a world until its team knows the world's atmosphere, temperature, "
-                    + "radiation, gravity and relief.", "Off, a crew may land on any world it reaches, known or not.")
+                    + "radiation, gravity and relief.", "Off, a crew may land on any world it reaches, known or not. "
+                    + "Off by default while nothing in the game teaches a team those yet.")
             .named("Landing needs the essentials");
     /** Whether dust settles on solar panels on Mars and global dust storms come. */
     public static final ConfigKey<Boolean> DUST_ON_MARS = ConfigKey.flag(WORLDS + ".dust_on_mars", true)
@@ -187,8 +188,8 @@ public final class SpaceServerConfig {
     /** Its consequences, each on unless a server turns it off. */
     public static final List<ConfigKey<Boolean>> CONSEQUENCES = List.of(LAUNCH_DAMAGE, NO_LAUNCH_IN_THUNDERSTORMS,
             FALLING_STAGES_DO_DAMAGE, TOO_HEAVY_TO_LIFT, BURNING_UP, CRASH_LANDINGS, WORN_STAGES_FAIL,
-            DAMAGED_TANKS_EXPLODE, CRUISE_EVENTS, LANDING_NEEDS_THE_ESSENTIALS, DUST_ON_MARS, NAMING_HIDDEN_WORLDS,
-            FLAMES_NEED_AIR, DEBRIS, LASER_SATELLITE_WEAPON);
+            DAMAGED_TANKS_EXPLODE, CRUISE_EVENTS, DUST_ON_MARS, NAMING_HIDDEN_WORLDS, FLAMES_NEED_AIR, DEBRIS,
+            LASER_SATELLITE_WEAPON);
 
     private SpaceServerConfig() {
     }

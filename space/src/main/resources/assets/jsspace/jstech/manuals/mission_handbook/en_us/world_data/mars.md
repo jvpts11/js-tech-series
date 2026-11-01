@@ -36,7 +36,7 @@ A crew reaches Mars by rocket. Count the launch down at [the launch panel](jsspa
 
 From Mars' orbit, mark a spot on the LAND page and the rocket [comes down](jsspace:coming_down) somewhere in the landing ellipse round it. Mars has air, thin as it is, so the rocket needs a Heat Shield to come through it. The air is too thin to set it down, too: it needs legs, Landing Legs or a Lunar Lander Descent Stage, and propellant for {{jsspace:mars_landing_delta_v}}, the last burn down once the air has slowed it.
 
-Every team knows where Mars is from the start. To land a crew, the team must also know what kills there: its atmosphere, temperature, radiation, gravity and relief. A server can turn that rule off.
+Every team knows where Mars is from the start. A server may also ask that a team knows what kills there before its crew lands: its atmosphere, temperature, radiation, gravity and relief.
 
 The blocks of this page are found on Mars and mined there, each dropping itself: the regoliths and Basalt Sand with a shovel, the basalts, the mudstones and Water Ice with a pickaxe, Dry Ice with anything, and loose stones at a touch. They are also in the creative menu, J's Space tab.
 
@@ -103,7 +103,7 @@ Gravity is a share of the Overworld's pull. Each season is a quarter of the year
 > The sky's radiation reaches the open ground, and Mars' thin air stops almost none of it. Every solid block overhead stops most of it, so live under a roof of rock or regolith; the Radiation Vest, fitted to the suit, stops part of it too.
 
 > [!PROBLEM] The landing is held in orbit.
-> Your team does not know what kills on Mars yet: its atmosphere, temperature, radiation, gravity and relief. Or the rocket has no heat shield, or no legs or too little propellant, and the server holds such landings rather than let them burn up or crash.
+> The server asks that your team knows what kills on Mars first, and it does not yet: its atmosphere, temperature, radiation, gravity and relief. Or the rocket has no heat shield, or no legs or too little propellant, and the server holds such landings rather than let them burn up or crash.
 
 > [!PROBLEM] The rocket burns as it enters the air.
 > It has no heat shield. It loses blocks from its top, and its parachutes with them. Fit a Heat Shield before coming down.

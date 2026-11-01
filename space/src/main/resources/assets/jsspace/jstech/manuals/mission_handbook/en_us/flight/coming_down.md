@@ -50,7 +50,7 @@ title: Coming down 3/3
 > With no parachutes, or no legs and propellant to brake on, it crashes and loses its lowest blocks in the blast.
 
 > [!PROBLEM] Landing held: the crew may not land.
-> Your team does not yet know the world's atmosphere, temperature, radiation, gravity and relief. Learn them, then set the landing again.
+> The server lets a crew land only where its team knows the world's atmosphere, temperature, radiation, gravity and relief, and your team does not yet. Learn them, then set the landing again.
 
 > [!PROBLEM] Landing held, and the rocket stays in orbit.
 > The world's rules keep in orbit a rocket that would burn up or crash. Bring a heat shield, or legs and propellant, then set the landing again.

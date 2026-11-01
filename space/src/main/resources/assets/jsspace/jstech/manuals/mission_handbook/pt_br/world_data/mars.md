@@ -36,7 +36,7 @@ A tripulação chega a Marte de foguete. Faça a contagem regressiva no [painel 
 
 Da órbita de Marte, marque um ponto na página POUS e o foguete [desce](jsspace:coming_down) em algum lugar da elipse de pouso em volta dele. Marte tem ar, por mais rarefeito que seja, então o foguete precisa de um Escudo Térmico para atravessá-lo. E o ar é rarefeito demais para pousá-lo sozinho: ele precisa de pernas, as Pernas de Pouso ou um Estágio de Descida do Módulo Lunar, e de propelente para {{jsspace:mars_landing_delta_v}}, a última queima até o chão depois que o ar o desacelerou.
 
-Toda equipe sabe onde fica Marte desde o início. Para pousar uma tripulação, a equipe também precisa conhecer o que mata lá: a atmosfera, a temperatura, a radiação, a gravidade e o relevo. Um servidor pode desligar essa regra.
+Toda equipe sabe onde fica Marte desde o início. Um servidor também pode exigir que a equipe conheça o que mata lá antes de a tripulação pousar: a atmosfera, a temperatura, a radiação, a gravidade e o relevo.
 
 Os blocos desta página são encontrados em Marte e minerados lá, e cada um, quebrado, dá o próprio bloco: os regolitos e a Areia Basáltica com pá, os basaltos, os lamitos e o Gelo de Água com picareta, o Gelo Seco com qualquer coisa e as pedras soltas com um toque. Eles também estão no menu criativo, aba J's Space.
 
@@ -103,7 +103,7 @@ A gravidade é uma fração da força do Overworld. Cada estação dura um quart
 > A radiação do céu chega ao chão a céu aberto, e o ar rarefeito de Marte quase não a barra. Cada bloco sólido acima de você barra a maior parte dela, então more sob um teto de rocha ou regolito; o Colete Antirradiação, encaixado no traje, barra uma parte também.
 
 > [!PROBLEM] O pouso fica retido na órbita.
-> A sua equipe ainda não conhece o que mata em Marte: a atmosfera, a temperatura, a radiação, a gravidade e o relevo. Ou o foguete não tem escudo térmico, ou não tem pernas ou propelente bastante, e o servidor retém esses pousos em vez de deixá-los queimar ou se espatifar.
+> O servidor exige que a sua equipe conheça antes o que mata em Marte, e ela ainda não conhece: a atmosfera, a temperatura, a radiação, a gravidade e o relevo. Ou o foguete não tem escudo térmico, ou não tem pernas ou propelente bastante, e o servidor retém esses pousos em vez de deixá-los queimar ou se espatifar.
 
 > [!PROBLEM] O foguete queima ao entrar no ar.
 > Ele não tem escudo térmico. Perde blocos do topo, e os paraquedas com eles. Instale um Escudo Térmico antes de descer.

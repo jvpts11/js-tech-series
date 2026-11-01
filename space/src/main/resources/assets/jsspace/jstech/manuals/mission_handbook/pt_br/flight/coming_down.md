@@ -50,7 +50,7 @@ title: Descer 3/3
 > Sem paraquedas, ou sem pernas e propelente para frear, ele cai e perde os blocos mais baixos na explosão.
 
 > [!PROBLEM] Pouso retido: a tripulação não pode pousar.
-> A sua equipe ainda não conhece a atmosfera, a temperatura, a radiação, a gravidade e o relevo do mundo. Descubra tudo isso e fixe o pouso de novo.
+> O servidor só deixa uma tripulação pousar onde a sua equipe conhece a atmosfera, a temperatura, a radiação, a gravidade e o relevo do mundo, e a sua equipe ainda não conhece. Descubra tudo isso e fixe o pouso de novo.
 
 > [!PROBLEM] Pouso retido, e o foguete fica na órbita.
 > As regras do mundo seguram na órbita um foguete que queimaria ou cairia. Leve um escudo térmico, ou pernas e propelente, e fixe o pouso de novo.

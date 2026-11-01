@@ -39,7 +39,7 @@ Table: The HUD
 | Below | The nozzles' angle, `NOZZLES`, and `GEAR UP` or `GEAR DOWN`, amber when down |
 | Bottom | The autopilot, `AP`: `LAND`, `ORBIT`, `DOCK`, the one engaged lit |
 
-LAND sets the ship down on the nearest pad you may use within 512 blocks, or, on wheels, a clear runway; its diamond marks the spot. ORBIT opens the throttle and climbs at 55 degrees, boosting where it can, and lets go in space. DOCK, in space, brings its docking collar to the nearest ship's within 200 blocks, its cross on the other collar. Once they touch in line, the two are made one; [[J]] lets the docked ship go.
+LAND sets the ship down on the nearest pad you may use within 512 blocks, or, on wheels, a clear runway; its diamond marks the spot. ORBIT opens the throttle and climbs at 55 degrees, boosting where it can, and lets go in space. DOCK, in space, brings its docking collar to the nearest ship's within 200 blocks that would let you aboard, at least as a passenger, its cross on the other collar. Once they touch in line, the two are made one; [[J]] lets the docked ship go.
 
 The reactor's deuterium lasts four hours aloft. With none left the boost fills no more; a dock fills it again.
 

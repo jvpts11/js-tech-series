@@ -152,6 +152,17 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
      */
     public static ShipFlightModel.Performance performance(final ShipDesign design,
                                                           final Map<ResourceLocation, ShipPart> parts) {
+        return performance(design, parts, null);
+    }
+
+    /**
+     * The same, each part counting for {@code shares} of itself, by its number among the spine's parts then the hung
+     * ones: the share of its blocks still in it, so a holed engine pushes less and a holed wing holds less up, and a
+     * part all gone counts for nothing. With no shares, every part is whole.
+     */
+    public static ShipFlightModel.Performance performance(final ShipDesign design,
+                                                          final Map<ResourceLocation, ShipPart> parts,
+                                                          final @Nullable double[] shares) {
         final List<ResourceLocation> all = new ArrayList<>(design.spine());
         all.addAll(design.hung());
         double mass = 0;
@@ -160,17 +171,18 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         double wing = 0;
         double power = 0;
         ShipFlightModel.Gear gear = ShipFlightModel.Gear.NONE;
-        for (final ResourceLocation id : all) {
-            final ShipPart part = parts.get(id);
-            if (part == null) {
+        for (int index = 0; index < all.size(); index++) {
+            final ShipPart part = parts.get(all.get(index));
+            final double share = shares == null || index >= shares.length ? 1 : shares[index];
+            if (part == null || share <= 0) {
                 continue;
             }
             final ShipPart.Figures figures = part.figures();
-            mass += figures.mass();
-            air += part.kind() == ShipPartKind.AIR_ENGINE ? figures.lift() : 0;
-            bells += figures.thrust();
-            wing += figures.wing();
-            power += figures.power();
+            mass += figures.mass() * share;
+            air += part.kind() == ShipPartKind.AIR_ENGINE ? figures.lift() * share : 0;
+            bells += figures.thrust() * share;
+            wing += figures.wing() * share;
+            power += figures.power() * share;
             if (part.kind() == ShipPartKind.GEAR) {
                 gear = part.rolls() ? ShipFlightModel.Gear.WHEELS : ShipFlightModel.Gear.LEGS;
             }
@@ -225,9 +237,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final AirReserveEntity keeper = keeper(level, body);
         final boolean fuelled = keeper == null || (this.grounded ? keeper.deuterium() > 0
                 : keeper.burn(ShipFlightModel.TICK / REACTOR_LOAD_SECONDS));
-        final ShipFlightModel.Performance running = fuelled ? this.ship : new ShipFlightModel.Performance(
-                this.ship.mass(), this.ship.airThrust(), this.ship.bellThrust(), this.ship.wing(),
-                Math.min(0, this.ship.power()), this.ship.gear());
+        // A part with holes in it does as much as the share of its blocks still in it, as its console counts them.
+        final ShipFlightModel.Performance whole = keeper == null ? this.ship : keeper.performance().orElse(this.ship);
+        final ShipFlightModel.Performance running = fuelled ? whole : new ShipFlightModel.Performance(
+                whole.mass(), whole.airThrust(), whole.bellThrust(), whole.wing(), Math.min(0, whole.power()),
+                whole.gear());
         // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done, and a
         // runway whose stretch is found not clear as the ship comes near.
         final Optional<ShipAutopilot> pilot = this.autopilot.filter(engaged -> !holding(helm)

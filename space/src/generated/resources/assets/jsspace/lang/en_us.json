@@ -266,7 +266,7 @@
   "jsspace.configuration.travel.fast_travel": "Fast travel",
   "jsspace.configuration.travel.fast_travel.tooltip": "Whether a rocket or a starship skips its cruise and arrives at once.\nOff, the cruise is flown, with its time and its events.",
   "jsspace.configuration.travel.landing_needs_the_essentials": "Landing needs the essentials",
-  "jsspace.configuration.travel.landing_needs_the_essentials.tooltip": "A crew cannot land on a world until its team knows the world's atmosphere, temperature, radiation, gravity and relief.\nOff, a crew may land on any world it reaches, known or not.",
+  "jsspace.configuration.travel.landing_needs_the_essentials.tooltip": "A crew cannot land on a world until its team knows the world's atmosphere, temperature, radiation, gravity and relief.\nOff, a crew may land on any world it reaches, known or not. Off by default while nothing in the game teaches a team those yet.",
   "jsspace.configuration.travel.tooltip": "The way between worlds, and what a crew must know before it lands.",
   "jsspace.configuration.worlds": "Worlds",
   "jsspace.configuration.worlds.dust_on_mars": "Dust on Mars",

@@ -695,6 +695,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A rocket too heavy for its engines, where the server's "Too heavy to lift" is off, has its launch scrubbed at
   ignition: its engines never light and nothing is spent. With it on, as it is by default, the rocket stays on the pad
   burning its propellant.
+- Suit modules come back off: a suit's piece right-clicked in the inventory with nothing in the hand gives its
+  last fitted module back, as a bundle gives back what it holds; taking the Extra Oxygen off leaves the tanks no more
+  air than they hold without it.
+- A holed part of a starship does only the share of its blocks still in it: a holed engine pushes less, a holed
+  wing holds less up, a holed reactor makes less power, until the right block is put back.
+- DOCK aims only at a ship that would let its pilot aboard, at least as a passenger.
+- "Landing needs the essentials" is off by default, while nothing in the game teaches a team a world's
+  atmosphere, temperature, radiation, gravity and relief yet.
 
 ### Fixed
 - A landing platform is free again a few seconds after the stage it holds is taken away or moved off it;

@@ -33,7 +33,7 @@ From the creative menu, J's Space tab. The Starship Design counts the blocks a s
 > Kit blocks are cut with a pickaxe.
 
 > [!PROBLEM] A formed part shows a hole.
-> A block of it was broken. The part holds round the hole, in the dock and aboard; the right block put back mends it.
+> A block of it was broken. The part holds round the hole, in the dock and aboard, but does only what its blocks still in it can: a holed engine pushes less, a holed wing holds less up, a holed reactor makes less power. The right block put back mends it.
 
 > [!PROBLEM] You may not place or break a block aboard.
 > Only the ship's pilots change its blocks ([the crew](jsspace:crew)).

@@ -69,7 +69,7 @@
   "jsspace.configuration.travel.fast_travel": "Viagem rápida",
   "jsspace.configuration.travel.fast_travel.tooltip": "Se um foguete ou uma nave pula o cruzeiro e chega na hora.\nDesligado, o cruzeiro é voado, com o seu tempo e os seus eventos.",
   "jsspace.configuration.travel.landing_needs_the_essentials": "Pousar exige o essencial",
-  "jsspace.configuration.travel.landing_needs_the_essentials.tooltip": "Uma tripulação não pousa num mundo antes de a sua equipe conhecer a atmosfera, a temperatura, a radiação, a gravidade e o relevo dele.\nDesligado, uma tripulação pode pousar em qualquer mundo que alcance, conhecido ou não.",
+  "jsspace.configuration.travel.landing_needs_the_essentials.tooltip": "Uma tripulação não pousa num mundo antes de a sua equipe conhecer a atmosfera, a temperatura, a radiação, a gravidade e o relevo dele.\nDesligado, uma tripulação pode pousar em qualquer mundo que alcance, conhecido ou não. Desligado por padrão enquanto nada no jogo ensina isso a uma equipe.",
   "jsspace.configuration.travel.tooltip": "O caminho entre os mundos, e o que uma tripulação precisa saber antes de pousar.",
   "jsspace.configuration.worlds": "Mundos",
   "jsspace.configuration.worlds.dust_on_mars": "Poeira em Marte",

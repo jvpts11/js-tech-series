@@ -22,7 +22,7 @@ J's Space has no switches that turn parts of the mod off. Its settings are **con
 | Rocket failures | on, one per kind | a rocket that can't lift, burns up, crashes, wears out unrepaired or explodes |
 | Cruise events | on | solar storms, micrometeoroids and failures on the way |
 | Fast travel | **off** | skips the cruise of rockets and starships |
-| Landing needs the essentials | on | a crew can't land until a world's atmosphere, temperature, radiation, gravity and relief are known |
+| Landing needs the essentials | **off** | a crew can't land until a world's atmosphere, temperature, radiation, gravity and relief are known; off by default until exploration teaches a team those |
 | Dust on Mars | on | dust on solar panels and global dust storms |
 | Debris | on | destroyed satellites leave debris in orbit, which strikes and multiplies |
 | Laser Satellite as a weapon | on | off for servers without PvP |

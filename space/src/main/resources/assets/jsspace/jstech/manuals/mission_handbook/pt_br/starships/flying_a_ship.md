@@ -39,7 +39,7 @@ Table: O HUD
 | Abaixo | O ângulo dos bocais, `BOCAIS`, e `TREM RECOLHIDO` ou `TREM BAIXADO`, âmbar quando baixado |
 | Base | O piloto automático, `PA`: `POUSO`, `ÓRBITA`, `ACOPLA`, o ativo aceso |
 
-O POUSO assenta a nave na plataforma mais próxima que você pode usar, a até 512 blocos, ou, com rodas, numa pista livre; o losango dele marca o ponto. A ÓRBITA abre o acelerador e sobe a 55 graus, dando impulso onde pode, e solta no espaço. O ACOPLA, no espaço, leva o colar de acoplagem até o da nave mais próxima a até 200 blocos, com a cruz dele no outro colar. Quando eles se tocam alinhados, as duas viram uma só; [[J]] solta a nave acoplada.
+O POUSO assenta a nave na plataforma mais próxima que você pode usar, a até 512 blocos, ou, com rodas, numa pista livre; o losango dele marca o ponto. A ÓRBITA abre o acelerador e sobe a 55 graus, dando impulso onde pode, e solta no espaço. O ACOPLA, no espaço, leva o colar de acoplagem até o da nave mais próxima a até 200 blocos que deixaria você subir a bordo, ao menos como passageiro, com a cruz dele no outro colar. Quando eles se tocam alinhados, as duas viram uma só; [[J]] solta a nave acoplada.
 
 O deutério do reator dura quatro horas no ar. Sem ele, o impulso não enche mais; uma doca reabastece.
 

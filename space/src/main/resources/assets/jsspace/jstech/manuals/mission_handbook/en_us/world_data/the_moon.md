@@ -36,7 +36,7 @@ A crew reaches the Moon by rocket. Count the launch down at [the launch panel](j
 
 From orbit, mark a spot on the LAND page and the rocket [comes down](jsspace:coming_down) somewhere in the landing ellipse round it. With no air, it needs no heat shield. It does need legs, Landing Legs or a Lunar Lander Descent Stage, and propellant for {{jsspace:moon_landing_delta_v}} to brake down onto them.
 
-Every team knows where the Moon is from the start. To land a crew, the team must also know what kills there: its atmosphere, temperature, radiation, gravity and relief. A server can turn that rule off.
+Every team knows where the Moon is from the start. A server may also ask that a team knows what kills there before its crew lands: its atmosphere, temperature, radiation, gravity and relief.
 
 The blocks of this page are found on the Moon and mined there, each dropping itself: the regoliths with a shovel, Mare Basalt and Anorthosite with a pickaxe, Icy Regolith with anything, and loose stones at a touch. They are also in the creative menu, J's Space tab.
 
@@ -93,7 +93,7 @@ Gravity is a share of the Overworld's pull. The hour follows the longitude, as o
 > The sky's radiation reaches the open ground. Every solid block overhead stops most of it, so live under a roof of rock or regolith; the Radiation Vest, fitted to the suit, stops part of it too.
 
 > [!PROBLEM] The landing is held in orbit.
-> Your team does not know what kills on the Moon yet: its atmosphere, temperature, radiation, gravity and relief. Or the rocket has no legs, or too little propellant to brake, and the server holds such landings rather than let them crash.
+> The server asks that your team knows what kills on the Moon first, and it does not yet: its atmosphere, temperature, radiation, gravity and relief. Or the rocket has no legs, or too little propellant to brake, and the server holds such landings rather than let them crash.
 
 > [!PROBLEM] The rocket crashes at touchdown.
 > It had no legs, or too little propellant left to brake the {{jsspace:moon_landing_delta_v}} down. Fit Landing Legs or a Lunar Lander Descent Stage, and keep that much in the tanks.

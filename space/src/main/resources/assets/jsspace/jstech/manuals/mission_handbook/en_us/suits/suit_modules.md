@@ -33,7 +33,7 @@ From the creative menu, J's Space tab.
 2. Pick the module up and right-click it onto the piece it fits. It is fitted, and goes from your hand.
 3. Wear the piece. A fitted Gold Visor shows lowered over the helmet, and the view through it is a little gold.
 
-A piece keeps its modules wherever it goes; there is no taking one off again.
+A piece keeps its modules wherever it goes. To take one off, right-click the piece in your inventory with nothing in your hand: the module fitted last comes back into your hand. Taking the Extra Oxygen off leaves the tanks no more air than they hold without it.
 
 ## What can go wrong
 

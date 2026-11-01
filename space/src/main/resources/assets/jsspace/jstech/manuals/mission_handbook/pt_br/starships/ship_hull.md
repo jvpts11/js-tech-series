@@ -33,7 +33,7 @@ No menu criativo, aba J's Space. O Projeto da Nave conta os blocos de que uma na
 > Os blocos do kit se quebram com uma picareta.
 
 > [!PROBLEM] Uma peça formada mostra um buraco.
-> Um bloco dela foi quebrado. A peça se mantém em volta do buraco, na doca e a bordo; o bloco certo posto de volta a conserta.
+> Um bloco dela foi quebrado. A peça se mantém em volta do buraco, na doca e a bordo, mas só faz o que os blocos que ainda tem conseguem: um motor furado empurra menos, uma asa furada sustenta menos, um reator furado gera menos energia. O bloco certo posto de volta a conserta.
 
 > [!PROBLEM] Você não consegue pôr nem quebrar um bloco a bordo.
 > Só os pilotos da nave mudam os blocos dela ([a tripulação](jsspace:crew)).

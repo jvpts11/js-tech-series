@@ -24,6 +24,8 @@ import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipFlight;
+import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.SmallShipFinishes;
@@ -94,6 +96,8 @@ public final class ShipyardGameTests {
     private static final long ONE_TICK = 50;
     /* How far from its dock's terminal a ship let go stands, at most, in blocks. */
     private static final double SHIP_REACH = 32;
+    /* One block of a part's dozens holed, the ship still weighs nearly all it did. */
+    private static final double HOLED_AT_LEAST = 0.9;
     private static final Logger LOGGER = LogUtils.getLogger();
     /* A dock turned a quarter, in an arena as wide as the dock is long. */
     private static final String TURNED = "shipyard_turned";
@@ -344,9 +348,18 @@ public final class ShipyardGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().size() == 1
                         && console(level, ship[0]).ship().orElseThrow().formed().contains(0), "a block broken"
                         + " aboard, its part holds round the hole"))
-                .thenExecute(() -> level.setBlockAndUpdate(hull[0], block[0]))
-                .thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().isEmpty(), "the block put"
-                        + " back aboard mends it"))
+                .thenExecute(() -> {
+                    final ShipFlightModel.Performance whole = ShipFlight.performance(WORKSHOP_SHIP,
+                            ShipParts.all(level));
+                    final ShipFlightModel.Performance holed = console(level, ship[0]).performance().orElseThrow();
+                    helper.assertTrue(holed.mass() < whole.mass() && holed.mass() > whole.mass() * HOLED_AT_LEAST,
+                            "the holed part counts for the share of its blocks still in it: " + holed.mass() + " of "
+                                    + whole.mass());
+                    level.setBlockAndUpdate(hull[0], block[0]);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().isEmpty()
+                        && console(level, ship[0]).performance().isEmpty(), "the block put back aboard mends it, and "
+                        + "the ship does all it did"))
                 .thenExecute(() -> {
                     final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
                             .getBlockEntity(terminal);

@@ -33,7 +33,7 @@ No menu criativo, aba J's Space.
 2. Pegue o módulo e clique com o botão direito sobre a peça em que ele encaixa. Ele fica encaixado e sai da sua mão.
 3. Vista a peça. Uma Viseira Dourada encaixada aparece baixada sobre o capacete, e a vista através dela fica um pouco dourada.
 
-Uma peça guarda os seus módulos aonde quer que vá; não há como tirar um módulo de novo.
+Uma peça guarda os seus módulos aonde quer que vá. Para tirar um, clique com o botão direito sobre a peça no inventário com a mão vazia: o módulo encaixado por último volta para a sua mão. Tirar o Oxigênio Extra deixa nos tanques no máximo o ar que eles guardam sem ele.
 
 ## O que pode dar errado
 

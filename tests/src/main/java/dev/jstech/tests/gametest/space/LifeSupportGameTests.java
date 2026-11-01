@@ -26,8 +26,10 @@ import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestSpaceSuits;
 import dev.jstech.tests.TestWorldGen;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -36,6 +38,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -46,7 +49,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * Life support: a pressure suit worn whole breathes from its tanks where there is no air, a second of air each second,
  * and stands the cold of its range; empty, or not worn whole, its wearer suffocates. Modules fit only the piece they go
- * on, once, and do what they say: more air, the sky's radiation stopped. The worlds say their dangers, and the sky's
+ * on, once, and do what they say: more air, the sky's radiation stopped; and they come back off, the last first, into
+ * an empty hand, the tanks keeping no more air than they hold without them. The worlds say their dangers, and the sky's
  * radiation reaches the Moon's open ground as its dose a day.
  */
 @GameTestHolder(JsTests.MODID)
@@ -61,6 +65,9 @@ public final class LifeSupportGameTests {
     /* The Moon's dose a day of the game, in millisieverts, and the game's days an hour. */
     private static final double MOON_DOSE = 1.4;
     private static final double GAME_DAYS_AN_HOUR = 3;
+    /* A slot of the player's own inventory, the same in their inventory's menu; the mouse's right button. */
+    private static final int INVENTORY_SLOT = 9;
+    private static final int RIGHT_BUTTON = 1;
 
     private LifeSupportGameTests() {
     }
@@ -136,6 +143,37 @@ public final class LifeSupportGameTests {
         helper.assertTrue(LifeSupport.fit(level, chest, module("radiation_vest")), "the vest fits the chest");
         helper.assertTrue(Math.abs(Resistances.of(chest, DamageKinds.RADIATION) - 0.5) < CLOSE,
                 "and stops half the sky's radiation");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void modules_comeBackOffTheirPieceAsTheyWentOn(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final SpaceSuit suit = SpaceSuits.declared().get(TestSpaceSuits.SUIT);
+        final ServerPlayer player = GameTestPlayers.join(level, UUID.randomUUID(), "outfitter");
+        final ItemStack chest = new ItemStack(Items.IRON_CHESTPLATE);
+        LifeSupport.fit(level, chest, module("extra_oxygen"));
+        LifeSupport.fit(level, chest, module("radiation_vest"));
+        LifeSupport.setAir(level, chest, suit, LifeSupport.capacity(level, chest, suit));
+        player.getInventory().setItem(INVENTORY_SLOT, chest);
+        final ItemStack piece = player.getInventory().getItem(INVENTORY_SLOT);
+        // The right button, nothing in the hand, on the piece in the inventory.
+        player.inventoryMenu.clicked(INVENTORY_SLOT, RIGHT_BUTTON, ClickType.PICKUP, player);
+        final ItemStack first = player.inventoryMenu.getCarried().copy();
+        final boolean keptOxygen = LifeSupport.fittedIds(piece).equals(List.of(module("extra_oxygen")));
+        player.inventoryMenu.setCarried(ItemStack.EMPTY);
+        player.inventoryMenu.clicked(INVENTORY_SLOT, RIGHT_BUTTON, ClickType.PICKUP, player);
+        final ItemStack second = player.inventoryMenu.getCarried().copy();
+        final int air = LifeSupport.air(level, piece, suit);
+        final boolean stillThere = player.getInventory().getItem(INVENTORY_SLOT) == piece;
+        GameTestPlayers.leave(player);
+        helper.assertTrue(BuiltInRegistries.ITEM.getKey(first.getItem()).equals(module("radiation_vest")),
+                "the last module fitted comes back into the hand: " + first);
+        helper.assertTrue(keptOxygen, "the one fitted before stays on the piece");
+        helper.assertTrue(BuiltInRegistries.ITEM.getKey(second.getItem()).equals(module("extra_oxygen")),
+                "and comes off next: " + second);
+        helper.assertTrue(stillThere && LifeSupport.fittedIds(piece).isEmpty(), "the piece stays where it was, bare");
+        helper.assertTrue(air == TestSpaceSuits.AIR, "its tanks keep no more air than they hold bare: " + air);
         helper.succeed();
     }
 
