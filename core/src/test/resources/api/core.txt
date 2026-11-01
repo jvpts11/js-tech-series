@@ -3078,7 +3078,7 @@ stable 4
 10 dev.jstech.core.content.GeoLook  ResourceLocation textureFile(String)
 10 dev.jstech.core.content.GeoLook  ResourceLocation textureOf(T)
 10 dev.jstech.core.content.GeoLook  static <T> GeoLook<T> of(String, String, String, Function<? super T, String>)
-10 dev.jstech.core.content.IBlockLook  type sealed interface permits IBlockLook.Fixed, IBlockLook.Axis, IBlockLook.ByState, IBlockLook.Facing, IBlockLook.FacingByState, IBlockLook.Pipe
+32 dev.jstech.core.content.IBlockLook  type sealed interface permits IBlockLook.Fixed, IBlockLook.Axis, IBlockLook.ByState, IBlockLook.Facing, IBlockLook.FacingByState, IBlockLook.Pipe, IBlockLook.Varied
 10 dev.jstech.core.content.IBlockLook  static Facing facing(IBlockModel)
 10 dev.jstech.core.content.IBlockLook  static FacingByState facingByState(Function<BlockState, IBlockModel>)
 10 dev.jstech.core.content.IBlockLook  static IBlockLook axis(IBlockModel)
@@ -3088,6 +3088,7 @@ stable 4
 10 dev.jstech.core.content.IBlockLook  static IBlockLook fixed(IBlockModel)
 10 dev.jstech.core.content.IBlockLook  static IBlockLook orientable(String)
 10 dev.jstech.core.content.IBlockLook  static IBlockLook pipe(String, String, String)
+32 dev.jstech.core.content.IBlockLook  static IBlockLook varied(boolean, List<IBlockModel>)
 10 dev.jstech.core.content.IBlockLook.Axis  type record(IBlockModel model) implements IBlockLook
 10 dev.jstech.core.content.IBlockLook.ByState  type record(Function<BlockState, IBlockModel> model) implements IBlockLook
 10 dev.jstech.core.content.IBlockLook.Facing  type record(IBlockModel model, int angleOffset, Toggle toggle) implements IBlockLook
@@ -3098,6 +3099,7 @@ stable 4
 10 dev.jstech.core.content.IBlockLook.Fixed  type record(IBlockModel model) implements IBlockLook
 10 dev.jstech.core.content.IBlockLook.Pipe  type record(String texture, String coreParent, String armParent) implements IBlockLook
 10 dev.jstech.core.content.IBlockLook.Toggle  type record(BooleanProperty property, IBlockModel on)
+32 dev.jstech.core.content.IBlockLook.Varied  type record(List<IBlockModel> models, boolean turned) implements IBlockLook
 10 dev.jstech.core.content.IBlockModel  type sealed interface permits IBlockModel.CubeAll, IBlockModel.Column, IBlockModel.BottomTop, IBlockModel.Orientable, IBlockModel.SixFaces, IBlockModel.ParticleOnly, IBlockModel.Handmade
 10 dev.jstech.core.content.IBlockModel  abstract String name()
 10 dev.jstech.core.content.IBlockModel  static IBlockModel column(String)

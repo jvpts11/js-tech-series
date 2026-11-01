@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.content;
 
+import java.util.List;
 import java.util.function.Function;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -22,7 +23,8 @@ public sealed interface IBlockLook
         IBlockLook.ByState,
         IBlockLook.Facing,
         IBlockLook.FacingByState,
-        IBlockLook.Pipe {
+        IBlockLook.Pipe,
+        IBlockLook.Varied {
 
     /** The block's own texture on every face. */
     static IBlockLook cubeAll(final String id) {
@@ -42,6 +44,16 @@ public sealed interface IBlockLook
     /** One model, whatever the state. */
     static IBlockLook fixed(final IBlockModel model) {
         return new Fixed(model);
+    }
+
+    /**
+     * One of {@code models}, the game picking one for each block by where it stands, as it varies its own grass and
+     * stone, so a field of the block is never one stamp repeated; each also turned a quarter at random about the
+     * upright when {@code turned}, for textures with no way up. The first is the one named after the block, which its
+     * item shows.
+     */
+    static IBlockLook varied(final boolean turned, final List<IBlockModel> models) {
+        return new Varied(models, turned);
     }
 
     /** One model laid along the block's axis, for a block that rotates as a log does. */
@@ -121,6 +133,17 @@ public sealed interface IBlockLook
 
     /** A cable drawn as a core with an arm toward each connected side, from the six sides of a pipe block. */
     record Pipe(String texture, String coreParent, String armParent) implements IBlockLook {
+    }
+
+    /** One of the models for each block where it stands, each turned at random about the upright when turned. */
+    record Varied(List<IBlockModel> models, boolean turned) implements IBlockLook {
+
+        public Varied {
+            if (models.isEmpty()) {
+                throw new IllegalArgumentException("a varied look has a model at least");
+            }
+            models = List.copyOf(models);
+        }
     }
 
     /** Another model while a property of the block is on. */

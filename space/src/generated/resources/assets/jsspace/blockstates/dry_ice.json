@@ -1,7 +1,500 @@
 {
   "variants": {
-    "": {
-      "model": "jsspace:block/dry_ice"
-    }
+    "sublimated=0": [
+      {
+        "model": "jsspace:block/dry_ice"
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_1"
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_2"
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_3"
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 270
+      }
+    ],
+    "sublimated=1": [
+      {
+        "model": "jsspace:block/dry_ice"
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_1"
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_2"
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_3"
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 270
+      }
+    ],
+    "sublimated=2": [
+      {
+        "model": "jsspace:block/dry_ice"
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_1"
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_2"
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_3"
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 270
+      }
+    ],
+    "sublimated=3": [
+      {
+        "model": "jsspace:block/dry_ice"
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_1"
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_2"
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_3"
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 270
+      }
+    ],
+    "sublimated=4": [
+      {
+        "model": "jsspace:block/dry_ice"
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_1"
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_2"
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_3"
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 270
+      }
+    ],
+    "sublimated=5": [
+      {
+        "model": "jsspace:block/dry_ice"
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_1"
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_2"
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_3"
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 270
+      }
+    ],
+    "sublimated=6": [
+      {
+        "model": "jsspace:block/dry_ice"
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_1"
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_2"
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_3"
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 270
+      }
+    ],
+    "sublimated=7": [
+      {
+        "model": "jsspace:block/dry_ice"
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_1"
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_2"
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/dry_ice_3"
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/dry_ice_3",
+        "y": 270
+      }
+    ]
   }
 }

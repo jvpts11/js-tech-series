@@ -15,6 +15,8 @@ import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.space.SpaceContent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.ColorRGBA;
@@ -103,7 +105,7 @@ public final class SpaceRocks {
                     "digitate_silica", DigitateSilicaBlock::new)
             .properties(properties -> properties.mapColor(MapColor.TERRACOTTA_WHITE).instabreak().noCollission()
                     .noOcclusion().sound(SoundType.CALCITE).pushReaction(PushReaction.DESTROY))
-            .look(IBlockLook.fixed(new IBlockModel.Handmade("digitate_silica")))
+            .look(handmade("digitate_silica"))
             .item().itemLook(IItemLook.HANDMADE).drops(Drops.SELF).tab(GROUND).named("Digitate Silica").register();
     /** The light beds of Mount Sharp and of Valles Marineris' layered deposits, veined with calcium sulfate. */
     public static final BlockEntry<Block> LAYERED_SULFATE = rock("layered_sulfate", MapColor.SAND, true)
@@ -119,6 +121,8 @@ public final class SpaceRocks {
     private static final float ICE = 0.5F;
     /* A thin layer of dust's, as a carpet's. */
     private static final float FINE = 0.1F;
+    /* How many pictures each block of the ground comes in, the first named after the block and the rest numbered. */
+    private static final int VARIANTS = 4;
 
     private SpaceRocks() {
     }
@@ -132,7 +136,7 @@ public final class SpaceRocks {
     private static BlockBuilder<ColoredFallingBlock> loose(final String id, final int dust, final MapColor colour) {
         return SpaceContent.CONTENT.block(id, properties -> new ColoredFallingBlock(new ColorRGBA(dust), properties))
                 .properties(properties -> properties.mapColor(colour).strength(LOOSE).sound(SoundType.SAND))
-                .look(IBlockLook.fixed(new IBlockModel.CubeAll(id, "block/" + id)))
+                .look(cubes(id))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_SHOVEL).tab(GROUND);
     }
 
@@ -144,12 +148,10 @@ public final class SpaceRocks {
     private static <B extends Block> BlockBuilder<B> rock(final String id,
                                                           final Function<BlockBehaviour.Properties, B> made,
                                                           final MapColor colour, final boolean ownTop) {
-        final IBlockModel model = ownTop ? new IBlockModel.Column(id, "block/" + id, "block/" + id + "_top")
-                : new IBlockModel.CubeAll(id, "block/" + id);
         return SpaceContent.CONTENT.block(id, made)
                 .properties(properties -> properties.mapColor(colour).strength(ROCK, ROCK_BLAST)
                         .requiresCorrectToolForDrops().sound(SoundType.STONE))
-                .look(IBlockLook.fixed(model))
+                .look(ownTop ? columns(id) : cubes(id))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(GROUND);
     }
 
@@ -158,7 +160,7 @@ public final class SpaceRocks {
         return SpaceContent.CONTENT.block(id, CarpetBlock::new)
                 .properties(properties -> properties.mapColor(colour).strength(FINE).sound(SoundType.SAND)
                         .pushReaction(PushReaction.DESTROY))
-                .look(IBlockLook.fixed(new IBlockModel.Handmade(id)))
+                .look(handmade(id))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_SHOVEL).tab(GROUND);
     }
 
@@ -172,7 +174,43 @@ public final class SpaceRocks {
                                                             final MapColor colour, final SoundType sound) {
         return SpaceContent.CONTENT.block(id, made)
                 .properties(properties -> properties.mapColor(colour).strength(ICE).sound(sound))
-                .look(IBlockLook.fixed(new IBlockModel.CubeAll(id, "block/" + id)))
+                .look(cubes(id))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(GROUND);
+    }
+
+    /*
+     * The block's pictures on every face, one of its variants for each block where it stands, turned at random: no
+     * texture of the worlds' ground has a way up but the sides of rocks in layers, which turning never tips over.
+     */
+    private static IBlockLook cubes(final String id) {
+        final List<IBlockModel> models = new ArrayList<>();
+        for (int v = 0; v < VARIANTS; v++) {
+            models.add(new IBlockModel.CubeAll(variant(id, v), "block/" + variant(id, v)));
+        }
+        return IBlockLook.varied(true, models);
+    }
+
+    /* Its side and its top, the variants of each going together. */
+    private static IBlockLook columns(final String id) {
+        final List<IBlockModel> models = new ArrayList<>();
+        for (int v = 0; v < VARIANTS; v++) {
+            models.add(new IBlockModel.Column(variant(id, v), "block/" + variant(id, v),
+                    "block/" + variant(id + "_top", v)));
+        }
+        return IBlockLook.varied(true, models);
+    }
+
+    /* Its models drawn by hand, one for each variant of its picture. */
+    private static IBlockLook handmade(final String id) {
+        final List<IBlockModel> models = new ArrayList<>();
+        for (int v = 0; v < VARIANTS; v++) {
+            models.add(new IBlockModel.Handmade(variant(id, v)));
+        }
+        return IBlockLook.varied(true, models);
+    }
+
+    /* The name of variant {@code v} of {@code name}: the name itself for the first. */
+    private static String variant(final String name, final int v) {
+        return v == 0 ? name : name + "_" + v;
     }
 }

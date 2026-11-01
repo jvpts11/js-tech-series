@@ -61,6 +61,7 @@ the models from it. The texture names below are files in `assets/<your mod>/text
 | `IBlockLook.facing(model)` | One model turned to the block's horizontal facing; `.frontAgainstFacing()` turns it round, `.whileOn(property, otherModel)` swaps the model while a property is on (a screen lit, a drive loaded). |
 | `IBlockLook.facingByState(state -> model)` | A model chosen from the whole state, turned to the facing: for a block with more than one property that changes how it looks. |
 | `IBlockLook.pipe(texture, core, arm)` | A cable: a core in the middle and an arm toward each side it connects to. |
+| `IBlockLook.varied(turned, models)` | One of the models for each block, the game picking by where the block stands, as it varies its own grass and stone, so a field of the block is never one stamp; each turned a quarter at random about the upright when `turned`, for textures with no way up. The first model is named after the block and its item shows it. |
 
 The models a look takes are made by `IBlockModel`: `cubeAll(name)`, `column(name)`, `orientable(name)` and
 `orientable(name, side, front, top)`, plus the records `BottomTop`, `SixFaces`, `ParticleOnly` (for a block

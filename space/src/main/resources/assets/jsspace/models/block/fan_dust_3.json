@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/carpet",
+  "textures": {
+    "wool": "jsspace:block/fan_dust_3",
+    "particle": "jsspace:block/fan_dust_3"
+  }
+}

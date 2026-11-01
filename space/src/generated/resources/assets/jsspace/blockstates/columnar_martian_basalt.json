@@ -1,7 +1,66 @@
 {
   "variants": {
-    "": {
-      "model": "jsspace:block/columnar_martian_basalt"
-    }
+    "": [
+      {
+        "model": "jsspace:block/columnar_martian_basalt"
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_1"
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_2"
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_3"
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/columnar_martian_basalt_3",
+        "y": 270
+      }
+    ]
   }
 }

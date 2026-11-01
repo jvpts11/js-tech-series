@@ -1,7 +1,66 @@
 {
   "variants": {
-    "": {
-      "model": "jsspace:block/mudstone"
-    }
+    "": [
+      {
+        "model": "jsspace:block/mudstone"
+      },
+      {
+        "model": "jsspace:block/mudstone",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/mudstone",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/mudstone",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/mudstone_1"
+      },
+      {
+        "model": "jsspace:block/mudstone_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/mudstone_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/mudstone_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/mudstone_2"
+      },
+      {
+        "model": "jsspace:block/mudstone_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/mudstone_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/mudstone_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/mudstone_3"
+      },
+      {
+        "model": "jsspace:block/mudstone_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/mudstone_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/mudstone_3",
+        "y": 270
+      }
+    ]
   }
 }

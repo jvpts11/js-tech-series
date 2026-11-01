@@ -1,7 +1,66 @@
 {
   "variants": {
-    "": {
-      "model": "jsspace:block/layered_sulfate"
-    }
+    "": [
+      {
+        "model": "jsspace:block/layered_sulfate"
+      },
+      {
+        "model": "jsspace:block/layered_sulfate",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/layered_sulfate",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/layered_sulfate",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_1"
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_2"
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_3"
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/layered_sulfate_3",
+        "y": 270
+      }
+    ]
   }
 }

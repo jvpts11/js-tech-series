@@ -1,7 +1,66 @@
 {
   "variants": {
-    "": {
-      "model": "jsspace:block/fan_dust"
-    }
+    "": [
+      {
+        "model": "jsspace:block/fan_dust"
+      },
+      {
+        "model": "jsspace:block/fan_dust",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/fan_dust",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/fan_dust",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/fan_dust_1"
+      },
+      {
+        "model": "jsspace:block/fan_dust_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/fan_dust_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/fan_dust_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/fan_dust_2"
+      },
+      {
+        "model": "jsspace:block/fan_dust_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/fan_dust_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/fan_dust_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/fan_dust_3"
+      },
+      {
+        "model": "jsspace:block/fan_dust_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/fan_dust_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/fan_dust_3",
+        "y": 270
+      }
+    ]
   }
 }

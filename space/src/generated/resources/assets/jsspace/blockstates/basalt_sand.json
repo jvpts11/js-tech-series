@@ -1,7 +1,66 @@
 {
   "variants": {
-    "": {
-      "model": "jsspace:block/basalt_sand"
-    }
+    "": [
+      {
+        "model": "jsspace:block/basalt_sand"
+      },
+      {
+        "model": "jsspace:block/basalt_sand",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/basalt_sand",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/basalt_sand",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/basalt_sand_1"
+      },
+      {
+        "model": "jsspace:block/basalt_sand_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/basalt_sand_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/basalt_sand_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/basalt_sand_2"
+      },
+      {
+        "model": "jsspace:block/basalt_sand_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/basalt_sand_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/basalt_sand_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/basalt_sand_3"
+      },
+      {
+        "model": "jsspace:block/basalt_sand_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/basalt_sand_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/basalt_sand_3",
+        "y": 270
+      }
+    ]
   }
 }

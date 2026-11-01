@@ -457,6 +457,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A team's name: J's Core's API is at version 31. `CoreTeams.teamName` is the name a team is shown by, as the
   source of teams in use names it: a scoreboard team's display name, or an FTB team's name; none for a player's team
   of their own. `ITeamSource.teamName` is how a source says it, none by default. Experimental.
+- (Core) Blocks in variants: J's Core's API is at version 32. `IBlockLook.varied(turned, models)` shows one of
+  several models for each block, the game picking by where the block stands, each turned a quarter at random about
+  the upright when `turned`, so a field of the block is never one stamp repeated. Experimental.
 - (Space) Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
   wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
   speed and less in thinner air; written in a part's file as `wing`. Experimental.
@@ -2183,6 +2186,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   mudstone beds climbing in steps among buttes and yardangs; and Spider Fields, the cryptic region by the south cap,
   its seasonal ice cut by spiders with their dark fans, the ridges of Inca City in it. Their new blocks: Silica
   Sinter, Nodular Silica, Silica Soil, Digitate Silica, Layered Sulfate and Fan Dust.
+- (Space) The worlds' own ground: every block of the Moon's and Mars' ground is drawn from what the real soil or rock
+  looks like, none of the game's own recoloured, in four variants a shade apart that the game lays one at each block,
+  turned at random, so the ground is never one stamp repeated. The regoliths are fine soils of many close tones with
+  chips of brighter rock and beads of glass; anorthosite is blocky white plagioclase, no longer the diorite; mare
+  basalt has its pale laths and round vesicles; Mars' regolith has its dark pebbles and its hematite soil its
+  blueberries; its basalt is dusted red in its cracks, its mudstone laid in thin laminae with white veins, and its ices
+  cracked and pitted.
 - (Space) Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece

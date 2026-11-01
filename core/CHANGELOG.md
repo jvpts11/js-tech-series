@@ -376,6 +376,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A team's name: J's Core's API is at version 31. `CoreTeams.teamName` is the name a team is shown by, as the
   source of teams in use names it: a scoreboard team's display name, or an FTB team's name; none for a player's team
   of their own. `ITeamSource.teamName` is how a source says it, none by default. Experimental.
+- Blocks in variants: J's Core's API is at version 32. `IBlockLook.varied(turned, models)` shows one of
+  several models for each block, the game picking by where the block stands, each turned a quarter at random about
+  the upright when `turned`, so a field of the block is never one stamp repeated. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

@@ -12,7 +12,9 @@ import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.util.DeclarationError;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -32,6 +34,9 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 public final class ContentBlockStateProvider extends BlockStateProvider {
 
     private final ModContent content;
+    /* A varied block is turned by quarters, four of them. */
+    private static final int QUARTERS = 4;
+    private static final int QUARTER = 90;
 
     public ContentBlockStateProvider(final PackOutput output, final ModContent content,
                                      final ExistingFileHelper existingFiles) {
@@ -79,8 +84,22 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
                     }, byState.angleOffset());
                 }
                 case IBlockLook.Pipe pipe -> pipe(block, entry.getId().getPath(), pipe);
+                case IBlockLook.Varied varied -> varied(block, varied);
             }
         }
+    }
+
+    /* Every state shows one of the models, the game picking by where the block stands, each turned if wanted. */
+    private void varied(final Block block, final IBlockLook.Varied varied) {
+        final List<ConfiguredModel> each = new ArrayList<>();
+        for (final IBlockModel one : varied.models()) {
+            final ModelFile file = model(one);
+            for (int turn = 0; turn < (varied.turned() ? QUARTERS : 1); turn++) {
+                each.add(new ConfiguredModel(file, 0, turn * QUARTER, false));
+            }
+        }
+        final ConfiguredModel[] models = each.toArray(new ConfiguredModel[0]);
+        getVariantBuilder(block).forAllStates(state -> models);
     }
 
     private ModelFile model(final IBlockModel model) {

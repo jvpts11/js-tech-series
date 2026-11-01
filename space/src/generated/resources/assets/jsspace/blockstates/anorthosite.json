@@ -1,7 +1,66 @@
 {
   "variants": {
-    "": {
-      "model": "jsspace:block/anorthosite"
-    }
+    "": [
+      {
+        "model": "jsspace:block/anorthosite"
+      },
+      {
+        "model": "jsspace:block/anorthosite",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/anorthosite",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/anorthosite",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/anorthosite_1"
+      },
+      {
+        "model": "jsspace:block/anorthosite_1",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/anorthosite_1",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/anorthosite_1",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/anorthosite_2"
+      },
+      {
+        "model": "jsspace:block/anorthosite_2",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/anorthosite_2",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/anorthosite_2",
+        "y": 270
+      },
+      {
+        "model": "jsspace:block/anorthosite_3"
+      },
+      {
+        "model": "jsspace:block/anorthosite_3",
+        "y": 90
+      },
+      {
+        "model": "jsspace:block/anorthosite_3",
+        "y": 180
+      },
+      {
+        "model": "jsspace:block/anorthosite_3",
+        "y": 270
+      }
+    ]
   }
 }
