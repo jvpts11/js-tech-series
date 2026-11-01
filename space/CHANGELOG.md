@@ -159,7 +159,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   through, and the line is crossed with the very picture the space shows. Each place of a world arrives at its own
   spot of the low orbit, laid out like a map of the world, so a station built there stands over its base; going down
   through the floor of the low orbits shows the climb's own pictures on the way and comes back down over the same
-  place, high over the ground.
+  place, high over the ground. Every other passage between the Solar System's worlds and its space shows no loading
+  screen either, however it is made, a command such as `/execute in jsspace:moon run tp` included: the last picture
+  before it stays on the screen until the ground where the player arrives is there, never a world with nothing in it.
 - The ground of the Moon and of Mars, in a row of its own in the mod's tab: the Moon's Highland and Mare
   Regolith, its Anorthosite and Mare Basalt, and the Icy Regolith of its craters of eternal shadow; Mars' Martian and
   Hematite Regolith, its dark Basalt Sand, the Water Ice of its polar caps and the Dry Ice over them. Martian Basalt

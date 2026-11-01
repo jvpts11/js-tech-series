@@ -992,6 +992,20 @@ player.changeDimension(new DimensionTransition(space, at, player.getDeltaMovemen
 The game opens its loading screen twice in a passage, as it takes up the new level and as it waits for its land; the
 passage's screen, or none, stands for both.
 
+*Added 2026-11-01.* A mod can group its dimensions, the worlds of one star system and its space, say:
+
+```java
+DimensionTravel.group((server, dimension) -> MY_WORLDS.contains(dimension) ? MY_SYSTEM : null);
+```
+
+Every passage between two dimensions of one group is then shown `DimensionTravel.STILL`, however it is made: by
+`travel` with no screen named, by a portal, by the mod moving the player itself or by a command such as
+`/execute in mymod:moon run tp @s 0 80 0`. No screen opens, so the pointer stays hidden and the keys held stay held:
+the player goes on seeing the last picture drawn before the passage, held still over every frame, until the server
+has placed them and the land in sight round them, two sections every way from the eye, is built to be drawn, and then
+that land. A frame of a world with nothing in it yet is never shown. A mod that names a screen for the passage as
+it sends the player, or `SEAMLESS`, still has it.
+
 ## Sky, time and weather
 
 *Added 2026-10-17.*

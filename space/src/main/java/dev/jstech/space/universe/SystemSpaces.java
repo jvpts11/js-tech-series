@@ -11,6 +11,8 @@ import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.sky.Skies;
 import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.api.SpaceWorld;
+import dev.jstech.space.api.SpaceWorlds;
 import java.util.Optional;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -20,6 +22,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The space of each star system: a dimension of its own, where its worlds are spheres in their places and a world's
@@ -63,6 +66,19 @@ public final class SystemSpaces {
         final ResourceLocation id = dimension.location();
         return RuntimeDimensions.templateOf(id).filter(TEMPLATE.id()::equals).map(template -> id.withPath(
                 id.getPath().substring(0, id.getPath().length() - SPACE.length())));
+    }
+
+    /**
+     * The system {@code dimension} is in on {@code server}, as its space or one of its worlds, a data pack's
+     * included, or null when it is in none.
+     */
+    public static @Nullable ResourceLocation systemHolding(final MinecraftServer server,
+                                                           final ResourceKey<Level> dimension) {
+        final Optional<ResourceLocation> space = systemOf(dimension);
+        if (space.isPresent()) {
+            return space.get();
+        }
+        return SpaceWorlds.ofDimension(server.overworld(), dimension).map(SpaceWorld::system).orElse(null);
     }
 
     private static ResourceLocation id(final String path) {

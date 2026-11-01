@@ -1092,7 +1092,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Echoes and Distance and Ringing Ears.
 - Travelling between dimensions with what one rides: a vehicle and everyone in it go together and arrive at a
   safe place near where they were sent, on firm ground with room above, a platform laid where there is no ground;
-  a mod shows the passage through a screen of its own instead of the game's "loading terrain".
+  a mod shows the passage through a screen of its own instead of the game's "loading terrain". A mod can group its
+  dimensions (`DimensionTravel.group`): every passage between two of one group, by whatever means, a command's too,
+  opens no screen, the last picture drawn before it held still until the server has placed the player and the land
+  round them is built to be drawn (`DimensionTravel.STILL`).
 - Hazards: one kit for whatever harms a body from where it is. Kinds of harm every mod shares (radiation,
   electrical, cryogenic, acid, heat, blast, pressure, dust, toxic, glare), any damage of the game or of a mod made one
   of them by a tag; what worn things and each kind of creature stop of each, as data, adding up by kind and cutting

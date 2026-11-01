@@ -1179,7 +1179,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Echoes and Distance and Ringing Ears.
 - (Core) Travelling between dimensions with what one rides: a vehicle and everyone in it go together and arrive at a
   safe place near where they were sent, on firm ground with room above, a platform laid where there is no ground;
-  a mod shows the passage through a screen of its own instead of the game's "loading terrain".
+  a mod shows the passage through a screen of its own instead of the game's "loading terrain". A mod can group its
+  dimensions (`DimensionTravel.group`): every passage between two of one group, by whatever means, a command's too,
+  opens no screen, the last picture drawn before it held still until the server has placed the player and the land
+  round them is built to be drawn (`DimensionTravel.STILL`).
 - (Core) Hazards: one kit for whatever harms a body from where it is. Kinds of harm every mod shares (radiation,
   electrical, cryogenic, acid, heat, blast, pressure, dust, toxic, glare), any damage of the game or of a mod made one
   of them by a tag; what worn things and each kind of creature stop of each, as data, adding up by kind and cutting
@@ -2102,7 +2105,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   through, and the line is crossed with the very picture the space shows. Each place of a world arrives at its own
   spot of the low orbit, laid out like a map of the world, so a station built there stands over its base; going down
   through the floor of the low orbits shows the climb's own pictures on the way and comes back down over the same
-  place, high over the ground.
+  place, high over the ground. Every other passage between the Solar System's worlds and its space shows no loading
+  screen either, however it is made, a command such as `/execute in jsspace:moon run tp` included: the last picture
+  before it stays on the screen until the ground where the player arrives is there, never a world with nothing in it.
 - (Core) Rock varied by geology: `RockVariations` puts each variant of a rock where geology puts it, as the faces of
   scarps, the tops of flows, the upper layers of every exposure or the rock below ground, each told by how the rock
   lies open, how deep, how steep the ground is round it, its height and its biome; the feature

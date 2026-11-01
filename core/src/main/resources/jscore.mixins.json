@@ -45,6 +45,7 @@
     "LivingEntityRendererMixin",
     "ParticleEngineMixin",
     "ParticleMixin",
+    "ReceivingLevelScreenAccessor",
     "RenderChunkRegionMixin",
     "RenderSectionMixin",
     "SectionOcclusionGraphMixin"

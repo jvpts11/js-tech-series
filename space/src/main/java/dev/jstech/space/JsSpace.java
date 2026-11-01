@@ -8,6 +8,7 @@
 package dev.jstech.space;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.dimension.DimensionTravel;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.datagen.JsSpaceDataGenerators;
 import dev.jstech.space.exploration.SpaceMilestones;
@@ -128,6 +129,8 @@ public final class JsSpace {
         // The way up from a world to its space and back, with no loading screen, and the far map seen on the way.
         SpaceClimbs.listen();
         FarMaps.listen();
+        // Any other passage between a star system's worlds and its space, a command's too, shows no loading screen.
+        DimensionTravel.group(SystemSpaces::systemHolding);
         // The ground of the Moon and of Mars: regoliths, sands, rocks and ices, the ores in their rocks, and the
         // stones lying loose on them.
         SpaceRocks.declare();
