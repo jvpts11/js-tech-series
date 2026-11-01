@@ -96,7 +96,8 @@ public final class MoonGameTests {
     public static void biomes_lieWhereTheMoonsMapPutsThem(final GameTestHelper helper) {
         final ServerLevel moon = moon(helper);
         final Holder<Biome> imbrium = biome(moon, IMBRIUM);
-        helper.assertTrue(imbrium.is(MoonBiomes.MARIA), "the middle of Mare Imbrium is a mare; " + name(imbrium));
+        helper.assertTrue(imbrium.is(MoonBiomes.MARIA) || imbrium.is(MoonBiomes.YOUNG_CRATER.key()),
+                "the middle of Mare Imbrium is a mare, or a young crater's patch of it; " + name(imbrium));
         final Holder<Biome> far = biome(moon, FAR_HIGHLANDS);
         helper.assertTrue(far.is(MoonBiomes.ANORTHOSITE) && !far.is(MoonBiomes.POLAR_CRATERS.key()),
                 "the far side's highlands are highland; " + name(far));
@@ -130,8 +131,9 @@ public final class MoonGameTests {
                 } else if (dull && pole > SURE) {
                     right = found.is(MoonBiomes.POLAR_CRATERS.key());
                 } else if (dull && pole < 1 - SURE && (mare > SURE || mare < 1 - SURE)) {
+                    // A mare or the highlands, or a young crater's patch of either.
                     final TagKey<Biome> rock = mare > SURE ? MoonBiomes.MARIA : MoonBiomes.ANORTHOSITE;
-                    right = found.is(rock) && !found.is(MoonBiomes.YOUNG_CRATER.key())
+                    right = (found.is(rock) || found.is(MoonBiomes.YOUNG_CRATER.key()))
                             && !found.is(MoonBiomes.POLAR_CRATERS.key());
                 } else {
                     continue;

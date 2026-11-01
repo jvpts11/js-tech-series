@@ -15,7 +15,6 @@ import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.core.worldgen.landform.LandformKind;
 import dev.jstech.core.worldgen.landform.Landforms;
 import dev.jstech.core.worldgen.terrain.DensitySpec;
-import dev.jstech.core.worldgen.terrain.NoiseSpec;
 import dev.jstech.core.worldgen.terrain.Terrains;
 import dev.jstech.core.worldgen.terrain.density.CoreDensities;
 import dev.jstech.core.worldgen.vein.Deposits;
@@ -35,26 +34,27 @@ import net.minecraft.world.level.levelgen.DensityFunctions;
 /**
  * The Moon's ground, as its sphere shows it from orbit: the maria where its map has them, low and dark, the bright
  * highlands round them, Tycho at its place with its rays, the craters of eternal shadow round its poles, and in the
- * maria the rilles and the skylights of lava tubes. Its biomes are laid by its maps: the maria's map says mare or
- * highland, its latitude the poles, the young craters' map where their bright ejecta lie, and a slow noise where a
- * mare is cut by rilles or holed by skylights. Its ores lie in veins in the rocks their minerals are found in.
+ * maria the rilles and the skylights of lava tubes. Its biomes lie in zones laid by its maps, where they lie on the
+ * real Moon: the maria's map says mare or highland, its latitude the poles, the young craters' map where their bright
+ * ejecta lie. Inside each zone they vary in patches a thousand blocks or two across, as the overworld's biomes vary: a
+ * mare cut by rilles here, holed by skylights there, splashed by a young crater elsewhere; the highlands by young
+ * craters. Its ores lie in veins in the rocks their minerals are found in.
  */
 @TextHolder
 public final class MoonWorld {
 
-    /* Where the biomes lie by warmth: the polar craters, the highlands and the maria. */
+    /* Where the zones lie by warmth: the polar craters, the highlands and the maria. */
     private static final float POLAR = -1.4F;
     private static final float HIGHLAND = -0.2F;
     private static final float MARE = 1F;
     /*
-     * And by wetness: a mare cut by rilles or holed by skylights, and the young craters' ejecta at the edge of the
-     * game's range of a biome's place, which their map pushes a place far past, beyond where the slow noise, of which
-     * only half reaches the biomes, can pull it back.
+     * And by wetness: the young craters' ejecta at the edge of the game's range of a biome's place, which their map
+     * pushes a place past, so their zone reaches a quarter of the way into the map's edge.
      */
-    private static final float CUT = 0.4F;
     private static final float YOUNG = 2F;
     private static final float YOUNG_PUSH = 4F;
-    private static final double NOISE = 0.5;
+    /* About how many blocks apart the patches of a zone come. */
+    private static final int PATCHES = 2048;
     private static final int BEDROCK = 3;
 
     public static final TextKey TYCHO_NAME = TextKey.of("jsspace.landmark.tycho", "Tycho");
@@ -63,8 +63,6 @@ public final class MoonWorld {
     public static final SpaceLandmark TYCHO = SpaceLandmarks.declare(id("tycho"), new SpaceLandmark(
             TYCHO_NAME.key(), SolarSystemWorlds.MOON, SpaceLandmark.Kind.CRATER, -11.4, -43.3, 2.6));
 
-    /** The slow noise that cuts a mare with rilles here and holes it with skylights there. */
-    public static final NoiseSpec PATCHES = Terrains.noise(id("moon_patches"), -11, 1.0, 1.0, 0.5);
     /** The Moon's ground, as its generator makes it with the modifiers laid over it. */
     public static final DensitySpec GROUND = Terrains.density(id("moon/ground"), (noises, densities) ->
             WorldShapes.ground(world(), noises, densities));
@@ -73,12 +71,9 @@ public final class MoonWorld {
             DensityFunctions.add(
                     CoreDensities.roundMap(id("moon/maria"), dimension(), HIGHLAND, MARE),
                     CoreDensities.roundMap(id("moon/polar"), dimension(), 0, POLAR - HIGHLAND)));
-    /** How wet a place is, to its biomes: the slow noise, and the young craters' ejecta far above it. */
+    /** How wet a place is, to its biomes: the young craters' ejecta far above the rest. */
     public static final DensitySpec WETNESS = Terrains.density(id("moon/wetness"), (noises, densities) ->
-            DensityFunctions.add(
-                    DensityFunctions.mul(DensityFunctions.constant(NOISE),
-                            DensityFunctions.noise(noises.getOrThrow(PATCHES.key()), 1.0, 0.0)),
-                    CoreDensities.roundMap(id("moon/young"), dimension(), 0, YOUNG_PUSH)));
+            CoreDensities.roundMap(id("moon/young"), dimension(), 0, YOUNG_PUSH));
     public static final Terrains.TerrainSpec TERRAIN = Terrains.terrain(id("moon"))
             .heights(CrateredGenerator.MIN_Y, CrateredGenerator.HEIGHT).ground(CrateredGenerator.GROUND).hills(1, 64)
             .sea(CrateredGenerator.MIN_Y).stone(SpaceRocks.ANORTHOSITE).liquid(() -> Blocks.AIR).bedrock(BEDROCK)
@@ -86,6 +81,7 @@ public final class MoonWorld {
             .surfaceRules(Terrains.surfaceRules().bedrock(JsSpace.MODID + ":moon_bedrock", BEDROCK)
                     .rule(() -> WorldShapes.surface(world())))
             .biomesBy(WARMTH, WETNESS)
+            .patches(PATCHES)
             .declare();
     public static final WorldGen.DimensionSpec DIMENSION = WorldGen.dimension(id("moon"))
             .terrain(TERRAIN)
@@ -94,9 +90,10 @@ public final class MoonWorld {
             .biome(MoonBiomes.MARE.key(), MARE, 0F)
             .biome(MoonBiomes.HIGHLANDS.key(), HIGHLAND, 0F)
             .biome(MoonBiomes.POLAR_CRATERS.key(), POLAR, 0F)
-            .biome(MoonBiomes.RILLE.key(), MARE, CUT)
-            .biome(MoonBiomes.LAVA_TUBE_SKYLIGHT.key(), MARE, -CUT)
             .biome(MoonBiomes.YOUNG_CRATER.key(), (MARE + HIGHLAND) / 2, YOUNG)
+            .patches(MARE, 0F, MoonBiomes.RILLE.key(), MoonBiomes.LAVA_TUBE_SKYLIGHT.key(),
+                    MoonBiomes.YOUNG_CRATER.key())
+            .patches(HIGHLAND, 0F, MoonBiomes.YOUNG_CRATER.key())
             .declare();
 
     /** The maria's craters: fewer and smaller than the highlands', their rims of the basalt they broke. */

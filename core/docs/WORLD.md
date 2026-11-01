@@ -638,6 +638,17 @@ A terrain's biomes are spread by its own two noises, its warmth and its wetness,
 functions given in their place, `biomesBy(warmth, wetness)`: biomes laid by a map, by latitude, by anything a
 function says.
 
+*Added 2026-11-01.* **Zones and their patches.** A terrain whose biomes lie in zones laid by its maps varies them
+inside each zone too, as the overworld's vary, `patches(blocks)`: two slow noises of its own, a patch coming about
+every `blocks` blocks, read together as a place in a plane. A zone's own biome lies at the plane's middle, given as
+before with `biome(key, warmth, wetness)`, and its patch biomes round it, `patches(warmth, wetness, keys...)`: each
+holds about a sixth of the zone, the zone's own about half of it however many it has. At 2048 a patch is a thousand
+blocks or two across, and every patch biome of a zone lies within the 6,400 blocks the game's `/locate` searches from
+anywhere in it. In a dimension that keeps bounds of its own, `/locate biome` searches the whole world when the game's
+own search finds nothing (`BiomeSearch`): on a grid of 2,048 steps across the world, out from where it is run, then
+finer round what it found, so a cap or a canyon millions of blocks away is found
+([Reaches into the game](REACHES.md)).
+
 ### Worldgen modifiers
 
 *Added 2026-10-22.*

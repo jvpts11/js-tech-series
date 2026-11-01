@@ -16,7 +16,19 @@
   },
   "noise_router": {
     "barrier": 0.0,
-    "continents": 0.0,
+    "continents": {
+      "type": "minecraft:flat_cache",
+      "argument": {
+        "type": "minecraft:mul",
+        "argument1": 0.5,
+        "argument2": {
+          "type": "minecraft:noise",
+          "noise": "jsspace:moon_patch_a",
+          "xz_scale": 1.0,
+          "y_scale": 0.0
+        }
+      }
+    },
     "depth": 0.0,
     "erosion": 0.0,
     "final_density": {
@@ -27,7 +39,19 @@
     "fluid_level_spread": 0.0,
     "initial_density_without_jaggedness": "jsspace:moon/ground",
     "lava": 0.0,
-    "ridges": 0.0,
+    "ridges": {
+      "type": "minecraft:flat_cache",
+      "argument": {
+        "type": "minecraft:mul",
+        "argument1": 0.5,
+        "argument2": {
+          "type": "minecraft:noise",
+          "noise": "jsspace:moon_patch_b",
+          "xz_scale": 1.0,
+          "y_scale": 0.0
+        }
+      }
+    },
     "temperature": {
       "type": "minecraft:flat_cache",
       "argument": "jsspace:moon/warmth"

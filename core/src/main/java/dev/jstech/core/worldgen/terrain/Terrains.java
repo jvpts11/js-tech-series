@@ -33,7 +33,9 @@ import org.jetbrains.annotations.Nullable;
  * noise settings and the noises they sample), so a datapack can change them: how high the land lies, how far hills
  * rise from it and how wide they are, how rough it is, what rock it is made of, what liquid fills it up to its sea,
  * and its surface, biome by biome. The noise that says which biome lies where is its own, two of them, its warmth and
- * its wetness, which a dimension's biomes are placed by ({@code WorldGen.dimension(id).terrain(spec)}).
+ * its wetness, which a dimension's biomes are placed by ({@code WorldGen.dimension(id).terrain(spec)}). A terrain whose
+ * biomes lie in zones, laid by maps, may vary them inside each zone too, in patches a few thousand blocks across, as
+ * the overworld's vary ({@link TerrainBuilder#patches(int)}).
  *
  * <pre>{@code
  * Terrains.terrain(id("salt_plains")).heights(-64, 256).ground(72).hills(18, 320).sea(63)
@@ -65,6 +67,23 @@ public final class Terrains {
     /* A hill's noise, its octaves halving: the broad shape, then the hills on it, then the knolls. */
     private static final double[] HILL_OCTAVES = {1.0, 0.5, 0.25, 0.125};
     private static final int ROUGH_OCTAVE = -5;
+    /*
+     * How much of the patches' two noises reaches the biomes: half, so that a patch, however far its noises run, never
+     * lies nearer to another zone than its own, the zones lying more than a whole unit apart.
+     */
+    private static final double PATCH_SCALE = 0.5;
+    /*
+     * The patches' noises, their octaves halving from the broadest, as the warmth's and the wetness's: blobs with
+     * ragged edges, a patch here and there, never a stripe.
+     */
+    private static final double[] PATCH_OCTAVES = {1.0, 1.0, 0.5};
+
+    /**
+     * How far from the middle of the plane of a terrain's two patch noises a zone's patch biomes lie, its own biome at
+     * the middle: far enough for a zone to stay its own biome over about half of it however many patch biomes it has,
+     * near enough for each patch biome to hold about a sixth of it.
+     */
+    public static final float PATCH_RADIUS = 0.27F;
 
     private Terrains() {
     }
@@ -152,12 +171,13 @@ public final class Terrains {
      * @param rules     its surface as rules, or null for its surfaces
      * @param warmth    the density function its biomes' warmth is, or null for its own noise
      * @param wetness   the density function its biomes' wetness is, or null for its own noise
+     * @param patches   about how many blocks apart the patches its zones' biomes vary in come, 0 for none
      */
     public record TerrainSpec(ResourceLocation id, int minY, int height, int ground, double hills, int hillWidth,
                               double roughness, int sea, Supplier<? extends Block> stone,
                               Supplier<? extends Block> liquid, int bedrock, List<Surface> surfaces,
                               @Nullable DensitySpec density, @Nullable SurfaceRuleBuilder rules,
-                              @Nullable DensitySpec warmth, @Nullable DensitySpec wetness) {
+                              @Nullable DensitySpec warmth, @Nullable DensitySpec wetness, int patches) {
 
         public TerrainSpec {
             surfaces = List.copyOf(surfaces);
@@ -168,32 +188,44 @@ public final class Terrains {
             return ResourceKey.create(Registries.NOISE_SETTINGS, this.id);
         }
 
-        /** The key of one of its noises: {@code hills}, {@code rough}, {@code warmth} or {@code wetness}. */
+        /**
+         * The key of one of its noises: {@code hills}, {@code rough}, {@code warmth}, {@code wetness}, or one of its
+         * patches' two, {@code patch_a} and {@code patch_b}.
+         */
         public ResourceKey<NormalNoise.NoiseParameters> noise(final String which) {
             return ResourceKey.create(Registries.NOISE, this.id.withSuffix("_" + which));
         }
 
         /**
-         * Its noises, by their names, as the game registers them: the two its biomes are placed by, and, for ground of
-         * hills, the hills' and the roughness's; ground of its own density function samples noises of its own.
+         * Its noises, by their names, as the game registers them: the two its biomes are placed by, the two its zones'
+         * patches are when it has patches, and, for ground of hills, the hills' and the roughness's; ground of its own
+         * density function samples noises of its own.
          */
         public List<Noise> noises() {
             final List<Noise> out = new ArrayList<>();
             if (this.density == null) {
-                final int hillOctave = -(int) Math.round(Math.log(this.hillWidth) / Math.log(2));
+                final int hillOctave = octave(this.hillWidth);
                 out.add(new Noise("hills", new NormalNoise.NoiseParameters(hillOctave, HILL_OCTAVES[0],
                         HILL_OCTAVES[1], HILL_OCTAVES[2], HILL_OCTAVES[3])));
                 out.add(new Noise("rough", new NormalNoise.NoiseParameters(ROUGH_OCTAVE, 1.0, 0.5)));
             }
             out.add(new Noise("warmth", new NormalNoise.NoiseParameters(CLIMATE_OCTAVE, 1.0, 1.0, 0.5)));
             out.add(new Noise("wetness", new NormalNoise.NoiseParameters(CLIMATE_OCTAVE, 1.0, 1.0, 0.5)));
+            if (this.patches > 0) {
+                for (final String patch : new String[] {"patch_a", "patch_b"}) {
+                    out.add(new Noise(patch, new NormalNoise.NoiseParameters(octave(this.patches), PATCH_OCTAVES[0],
+                            PATCH_OCTAVES[1], PATCH_OCTAVES[2])));
+                }
+            }
             return List.copyOf(out);
         }
 
         /**
          * Its noise settings, as the game registers them: the ground solid wherever the land's height, raised and
          * lowered by the hills' noise, is above a block, broken by the roughness, or wherever its own density function
-         * says; the liquid below its sea, and its surfaces laid on it, or its rules.
+         * says; the liquid below its sea, and its surfaces laid on it, or its rules. Its biomes are read from its
+         * warmth and its wetness and, when it has patches, from its patches' two noises, which the game's biome source
+         * takes as continentalness and weirdness, the two of its axes nothing else in the ground reads.
          */
         public NoiseGeneratorSettings settings(final HolderGetter<NormalNoise.NoiseParameters> noises,
                                                final HolderGetter<DensityFunction> densities) {
@@ -205,11 +237,24 @@ public final class Terrains {
                     ? this.wetness.reference(densities)
                     : DensityFunctions.noise(noises.getOrThrow(noise("wetness")), 1.0, 0.0));
             final DensityFunction none = DensityFunctions.zero();
-            final NoiseRouter router = new NoiseRouter(none, none, none, none, warmth, wetness, none, none, none,
-                    none, density, DensityFunctions.interpolated(density), none, none, none);
+            final DensityFunction patchA = this.patches > 0 ? patch(noises, "patch_a") : none;
+            final DensityFunction patchB = this.patches > 0 ? patch(noises, "patch_b") : none;
+            final NoiseRouter router = new NoiseRouter(none, none, none, none, warmth, wetness, patchA, none, none,
+                    patchB, density, DensityFunctions.interpolated(density), none, none, none);
             return new NoiseGeneratorSettings(NoiseSettings.create(this.minY, this.height, 1, 2),
                     this.stone.get().defaultBlockState(), this.liquid.get().defaultBlockState(), router,
                     surfaceRule(), List.of(), this.sea, false, false, false, false);
+        }
+
+        /* The octave of a noise whose features come about {@code blocks} apart. */
+        private static int octave(final int blocks) {
+            return -(int) Math.round(Math.log(blocks) / Math.log(2));
+        }
+
+        /* One of its patches' noises, as much of it as reaches the biomes. */
+        private DensityFunction patch(final HolderGetter<NormalNoise.NoiseParameters> noises, final String which) {
+            return DensityFunctions.flatCache(DensityFunctions.mul(DensityFunctions.constant(PATCH_SCALE),
+                    DensityFunctions.noise(noises.getOrThrow(noise(which)), 1.0, 0.0)));
         }
 
         /* The land's height, raised and lowered by the hills' noise, broken by the roughness. */
@@ -277,6 +322,7 @@ public final class Terrains {
         private @Nullable SurfaceRuleBuilder rules;
         private @Nullable DensitySpec warmth;
         private @Nullable DensitySpec wetness;
+        private int patches;
 
         private TerrainBuilder(final ResourceLocation id) {
             this.id = Objects.requireNonNull(id, "id");
@@ -367,6 +413,21 @@ public final class Terrains {
         }
 
         /**
+         * Inside each of the zones its warmth and its wetness lay, its biomes vary in patches, one coming about every
+         * {@code blocks} blocks, as the overworld's biomes vary: two slow noises of its own, read together as a place
+         * in a plane, whose middle is a zone's own biome and round which its patch biomes lie
+         * ({@code WorldGen.dimension(id).patches(...)}). 2048 makes patches a thousand blocks or two across, a few
+         * thousand apart, so that any patch biome of a zone lies within the game's own search of anywhere in it.
+         */
+        public TerrainBuilder patches(final int blocks) {
+            if (blocks < 2) {
+                throw new IllegalArgumentException("patches come at least two blocks apart; got " + blocks);
+            }
+            this.patches = blocks;
+            return this;
+        }
+
+        /**
          * Declares the terrain.
          *
          * @throws IllegalStateException when its heights are not whole sections, or its ground or hills make no land
@@ -381,7 +442,7 @@ public final class Terrains {
             final List<Surface> all = new ArrayList<>(surfaces);
             all.add(fallback);
             final TerrainSpec spec = new TerrainSpec(id, minY, height, ground, hills, hillWidth, roughness, sea,
-                    stone, liquid, bedrock, all, density, rules, warmth, wetness);
+                    stone, liquid, bedrock, all, density, rules, warmth, wetness, patches);
             TERRAINS.add(spec);
             return spec;
         }

@@ -118,17 +118,25 @@ public final class WorldGen {
 
     /**
      * Where a biome lies among a dimension's others: by the warmth and the wetness its terrain's noise gives each
-     * place, each from -1 to 1, the biome nearest to a place's lying there.
+     * place, each from -1 to 1, and, among the patches of the zone they lay, by the two noises of its terrain's
+     * patches; the biome nearest to a place's lying there.
      *
      * @param biome    the biome
      * @param warmth   how warm the places it lies in are
      * @param wetness  how wet
+     * @param patchA   where it lies among its zone's patches, by the first patch noise; 0 for the zone's own biome
+     * @param patchB   and by the second
      */
-    public record BiomePoint(ResourceKey<Biome> biome, float warmth, float wetness) {
+    public record BiomePoint(ResourceKey<Biome> biome, float warmth, float wetness, float patchA, float patchB) {
 
-        /** Where it lies, as the game's biome source reads it. */
+        /** Where it lies, as the game's biome source reads it: its patches as continentalness and weirdness. */
         public Climate.ParameterPoint point() {
-            return Climate.parameters(this.warmth, this.wetness, 0F, 0F, 0F, 0F, 0F);
+            return Climate.parameters(this.warmth, this.wetness, this.patchA, 0F, 0F, this.patchB, 0F);
+        }
+
+        /** Whether it is a patch of its zone, not the zone's own biome. */
+        public boolean patch() {
+            return this.patchA != 0F || this.patchB != 0F;
         }
     }
 
@@ -156,7 +164,8 @@ public final class WorldGen {
      * @param natural      whether compasses and clocks work, and beds and portals behave as in the overworld
      * @param bedWorks     whether a bed can be slept in
      * @param biome        the one biome it is all of, when its biomes are not spread by {@code biomes}
-     * @param biomes       its biomes, spread by the warmth and wetness of its terrain; empty for its one biome
+     * @param biomes       its biomes, spread by the warmth and wetness of its terrain and its patches; empty for its
+     *                     one biome
      * @param layers       a flat dimension's ground, lowest layer first; empty for ground made by {@code noise}
      * @param noise        the noise settings its ground is made with, when it is not flat
      * @param runtimeOnly  whether only its copies made while the game runs exist, the world loading none of it
@@ -227,6 +236,7 @@ public final class WorldGen {
         private boolean bedWorks = true;
         private ResourceKey<Biome> biome = Biomes.PLAINS;
         private @Nullable ResourceKey<NoiseGeneratorSettings> noise;
+        private @Nullable Terrains.TerrainSpec terrain;
         private boolean runtimeOnly;
 
         private DimensionBuilder(final ResourceLocation id) {
@@ -261,6 +271,7 @@ public final class WorldGen {
          */
         public DimensionBuilder terrain(final Terrains.TerrainSpec terrain) {
             this.noise = terrain.key();
+            this.terrain = terrain;
             this.minY = terrain.minY();
             this.height = terrain.height();
             return this;
@@ -276,7 +287,30 @@ public final class WorldGen {
          * wet, each from -1 to 1: every place takes the biome nearest it. Its ground is made by noise.
          */
         public DimensionBuilder biome(final ResourceKey<Biome> spread, final float warmth, final float wetness) {
-            this.biomes.add(new BiomePoint(spread, warmth, wetness));
+            this.biomes.add(new BiomePoint(spread, warmth, wetness, 0F, 0F));
+            this.biome = this.biomes.getFirst().biome();
+            return this;
+        }
+
+        /**
+         * Adds {@code patches} to its biomes, in patches inside the zone that lies where its terrain's noise is
+         * {@code warmth} warm and {@code wetness} wet, round the zone's own biome
+         * ({@link #biome(ResourceKey, float, float)}), each about as common as the others: as the overworld's biomes
+         * vary, the patches of a zone come and go every few thousand blocks across it, wherever its maps lay it. Its
+         * terrain has patches ({@link Terrains.TerrainBuilder#patches(int)}).
+         */
+        @SafeVarargs
+        public final DimensionBuilder patches(final float warmth, final float wetness,
+                                              final ResourceKey<Biome>... patches) {
+            if (patches.length == 0) {
+                throw new IllegalArgumentException("a zone of " + id + " is given patches, at least one");
+            }
+            for (int i = 0; i < patches.length; i++) {
+                final double turn = 2 * Math.PI * i / patches.length;
+                this.biomes.add(new BiomePoint(Objects.requireNonNull(patches[i], "patch"), warmth, wetness,
+                        (float) (Terrains.PATCH_RADIUS * Math.cos(turn)),
+                        (float) (Terrains.PATCH_RADIUS * Math.sin(turn))));
+            }
             this.biome = this.biomes.getFirst().biome();
             return this;
         }
@@ -339,6 +373,10 @@ public final class WorldGen {
             }
             if (!biomes.isEmpty() && noise == null) {
                 throw new IllegalStateException("the dimension " + id + " spreads its biomes over ground of noise");
+            }
+            if (biomes.stream().anyMatch(BiomePoint::patch) && (terrain == null || terrain.patches() <= 0)) {
+                throw new IllegalStateException("the dimension " + id + " lays biomes in patches over a terrain"
+                        + " with patches");
             }
             if (height < 16 || height % 16 != 0 || minY % 16 != 0) {
                 throw new IllegalStateException("the dimension " + id + " is a whole number of sections tall");

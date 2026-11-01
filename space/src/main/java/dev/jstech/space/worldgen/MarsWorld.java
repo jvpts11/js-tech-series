@@ -13,7 +13,6 @@ import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.core.worldgen.landform.LandformKind;
 import dev.jstech.core.worldgen.landform.Landforms;
 import dev.jstech.core.worldgen.terrain.DensitySpec;
-import dev.jstech.core.worldgen.terrain.NoiseSpec;
 import dev.jstech.core.worldgen.terrain.Terrains;
 import dev.jstech.core.worldgen.terrain.density.CoreDensities;
 import dev.jstech.core.worldgen.variation.RockRule;
@@ -34,34 +33,34 @@ import net.minecraft.world.level.levelgen.DensityFunctions;
  * Mars' ground, as its sphere shows it from orbit: the dichotomy between the low smooth north and the old cratered
  * south, Tharsis' volcanoes and Valles Marineris standing and cut where its height map has them, its dark regions of
  * basalt sand walking in dunes, chaos where its canyons open, and its caps of water ice under carbon dioxide frost.
- * Its biomes are laid by its maps: the dichotomy and the caps by their maps, the dunes by its dark regions', the chaos
- * by its canyons', and a slow noise where the south's plains are strewn with hematite or hold an old lake. Its basalt
- * and its mudstone are varied by geology, and its minerals lie in veins in their rocks.
+ * Its biomes lie in zones laid by its maps, where they lie on the real planet: the dichotomy and the caps by their
+ * maps, the dunes by its dark regions', the chaos by its canyons'. Inside each zone they vary in patches a thousand
+ * blocks or two across, as the overworld's biomes vary: the south's highlands strewn with hematite here, holding an
+ * old lake there, walked by dark dunes elsewhere; the north's plains by dark dunes; a dark region opened onto its
+ * hemisphere's ground; a canyon's floor an old lake. Its basalt and its mudstone are varied by geology, and its
+ * minerals lie in veins in their rocks.
  */
 public final class MarsWorld {
 
-    /* Where the biomes lie by warmth: the caps, the southern highlands and the northern plains. */
+    /* Where the zones lie by warmth: the caps, the southern highlands and the northern plains. */
     private static final float POLAR = -1.4F;
     private static final float SOUTH = -0.2F;
     private static final float NORTH = 1F;
     /*
-     * And by wetness: the south's oxide plains and old lakes, and the dark dunes and the chaos, north and south alike,
-     * at the edge of the game's range of a biome's place; their maps push a place far past it, beyond where the slow
-     * noise can pull it back.
+     * And by wetness: the dark dunes and the chaos, north and south alike, at the edge of the game's range of a
+     * biome's place; their maps push a place past it, so a region holds its zone a quarter of the way into the map's
+     * edge.
      */
-    private static final float PATCH = 0.4F;
-    /* How much of the slow noise reaches the biomes: never past halfway to the dunes or the chaos. */
-    private static final double NOISE = 0.5;
     private static final float DUNE = 2F;
     private static final float CHAOS = -2F;
     private static final float DARK_PUSH = 4F;
     private static final float CANYON_PUSH = -4F;
+    /* About how many blocks apart the patches of a zone come. */
+    private static final int PATCHES = 2048;
     private static final int BEDROCK = 3;
     /* How steep a wall is, its ground rising or falling this many blocks in two, for its rock's face to show. */
     private static final int SCARP = 3;
 
-    /** The slow noise that strews the south with hematite here and holds an old lake there. */
-    public static final NoiseSpec PATCHES = Terrains.noise(id("mars_patches"), -11, 1.0, 1.0, 0.5);
     /** Mars' ground, as its generator makes it with the modifiers laid over it. */
     public static final DensitySpec GROUND = Terrains.density(id("mars/ground"), (noises, densities) ->
             WorldShapes.ground(world(), noises, densities));
@@ -70,12 +69,10 @@ public final class MarsWorld {
             DensityFunctions.add(
                     CoreDensities.roundMap(id("mars/north"), dimension(), SOUTH, NORTH),
                     CoreDensities.roundMap(id("mars/polar"), dimension(), 0, POLAR - NORTH)));
-    /** How wet a place is, to its biomes: the slow noise, the dark regions far above it, the canyons far below. */
+    /** How wet a place is, to its biomes: the dark regions far above the rest, the canyons far below. */
     public static final DensitySpec WETNESS = Terrains.density(id("mars/wetness"), (noises, densities) ->
-            DensityFunctions.add(DensityFunctions.add(
-                    DensityFunctions.mul(DensityFunctions.constant(NOISE),
-                            DensityFunctions.noise(noises.getOrThrow(PATCHES.key()), 1.0, 0.0)),
-                    CoreDensities.roundMap(id("mars/dark"), dimension(), 0, DARK_PUSH)),
+            DensityFunctions.add(
+                    CoreDensities.roundMap(id("mars/dark"), dimension(), 0, DARK_PUSH),
                     CoreDensities.roundMap(id("mars/canyon"), dimension(), 0, CANYON_PUSH)));
     public static final Terrains.TerrainSpec TERRAIN = Terrains.terrain(id("mars"))
             .heights(CrateredGenerator.MIN_Y, CrateredGenerator.HEIGHT).ground(CrateredGenerator.GROUND).hills(1, 64)
@@ -84,6 +81,7 @@ public final class MarsWorld {
             .surfaceRules(Terrains.surfaceRules().bedrock(JsSpace.MODID + ":mars_bedrock", BEDROCK)
                     .rule(() -> WorldShapes.surface(world())))
             .biomesBy(WARMTH, WETNESS)
+            .patches(PATCHES)
             .declare();
     public static final WorldGen.DimensionSpec DIMENSION = WorldGen.dimension(id("mars"))
             .terrain(TERRAIN)
@@ -92,12 +90,16 @@ public final class MarsWorld {
             .biome(MarsBiomes.NORTHERN_PLAINS.key(), NORTH, 0F)
             .biome(MarsBiomes.SOUTHERN_HIGHLANDS.key(), SOUTH, 0F)
             .biome(MarsBiomes.POLAR_CAP.key(), POLAR, 0F)
-            .biome(MarsBiomes.OXIDE_PLAINS.key(), SOUTH, PATCH)
-            .biome(MarsBiomes.LAKEBED.key(), SOUTH, -PATCH)
             .biome(MarsBiomes.DARK_DUNES.key(), NORTH, DUNE)
             .biome(MarsBiomes.DARK_DUNES.key(), SOUTH, DUNE)
             .biome(MarsBiomes.CHAOS_TERRAIN.key(), NORTH, CHAOS)
             .biome(MarsBiomes.CHAOS_TERRAIN.key(), SOUTH, CHAOS)
+            .patches(SOUTH, 0F, MarsBiomes.OXIDE_PLAINS.key(), MarsBiomes.LAKEBED.key(), MarsBiomes.DARK_DUNES.key())
+            .patches(NORTH, 0F, MarsBiomes.DARK_DUNES.key())
+            .patches(NORTH, DUNE, MarsBiomes.NORTHERN_PLAINS.key())
+            .patches(SOUTH, DUNE, MarsBiomes.SOUTHERN_HIGHLANDS.key())
+            .patches(NORTH, CHAOS, MarsBiomes.LAKEBED.key())
+            .patches(SOUTH, CHAOS, MarsBiomes.LAKEBED.key())
             .declare();
 
     /** The southern highlands' craters, their rims of the basalt they broke. */

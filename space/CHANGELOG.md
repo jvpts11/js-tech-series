@@ -202,7 +202,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Crater and Lava Tube Skylight, the rilles winding through the maria and the lava tubes running under them, craters
   by the thousand, fresh ones bright, loose stones of basalt and of anorthosite strewn over the ground, and veins of
   ilmenite with armalcolite and tranquillityite, of KREEP's merrillite and of the native iron of meteorites. Tycho is
-  the first landmark of the worlds. The far map seen climbing from the Moon is painted in its regoliths.
+  the first landmark of the worlds. The far map seen climbing from the Moon is painted in its regoliths. Its maria,
+  its highlands, its young craters and its poles lie where they lie on the real Moon, and inside them its biomes vary
+  every few thousand blocks: a mare cut by rilles here, holed by skylights there, splashed by a young crater
+  elsewhere, the highlands by young craters; `/locate` finds each of its biomes from anywhere on it.
 - Mars' ground, as its sphere shows it from orbit: the low smooth north and the old cratered south either side
   of the dichotomy, Tharsis' volcanoes standing and Valles Marineris cut where its height map has them, under a dusty
   sky. Seven biomes of its own: Northern Plains and Southern Highlands of red regolith over basalt, Oxide Plains of
@@ -211,7 +214,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   ice under carbon dioxide frost, cut by spiral troughs. Its basalt lies in columns on the scarps and walls, pocked
   on the tops of flows and faceted below; its mudstone dusted red in the upper layers of every exposure, buff on the
   scarps and grey below. Vesicular basalt's stones lie loose on its plains, and veins of hematite, of magnetite and
-  olivine, and of gypsum and jarosite lie in their rocks.
+  olivine, and of gypsum and jarosite lie in their rocks. Its north, its south, its dark regions, its canyons and its
+  caps lie where they lie on the real planet, and inside them its biomes vary every few thousand blocks: the south's
+  highlands strewn with hematite here, holding an old lake there, walked by dark dunes elsewhere; the north's plains
+  by dark dunes; a dark region opened onto its hemisphere's ground; a canyon's floor an old lake. `/locate` finds each
+  of its biomes from anywhere on it.
 - Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece

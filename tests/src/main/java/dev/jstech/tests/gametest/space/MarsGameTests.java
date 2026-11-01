@@ -123,8 +123,10 @@ public final class MarsGameTests {
     }
 
     /*
-     * The biomes a place may hold where the maps are sure of it, none where they are not: a cap, a dark region's
-     * dunes, a canyon's chaos, the northern plains, or one of the south's three.
+     * The biomes a place may hold where the maps are sure of it, none where they are not: its zone's own or one of the
+     * zone's patches. A cap; a dark region's dunes, opened onto its hemisphere's ground, either where a cap cools it;
+     * a canyon's chaos or an old lake; the northern plains or dark dunes; the southern highlands or one of the south's
+     * three patches.
      */
     private static Set<ResourceKey<Biome>> expected(final double north, final double dark, final double canyon,
                                                     final double polar) {
@@ -133,17 +135,24 @@ public final class MarsGameTests {
             return Set.of(MarsBiomes.POLAR_CAP.key());
         }
         if (dark > SURE && canyon < 1 - SURE) {
-            return Set.of(MarsBiomes.DARK_DUNES.key());
+            if (polar < 1 - SURE && north > SURE) {
+                return Set.of(MarsBiomes.DARK_DUNES.key(), MarsBiomes.NORTHERN_PLAINS.key());
+            }
+            if (polar < 1 - SURE && north < 1 - SURE) {
+                return Set.of(MarsBiomes.DARK_DUNES.key(), MarsBiomes.SOUTHERN_HIGHLANDS.key());
+            }
+            return Set.of(MarsBiomes.DARK_DUNES.key(), MarsBiomes.NORTHERN_PLAINS.key(),
+                    MarsBiomes.SOUTHERN_HIGHLANDS.key());
         }
         if (canyon > SURE && dark < 1 - SURE) {
-            return Set.of(MarsBiomes.CHAOS_TERRAIN.key());
+            return Set.of(MarsBiomes.CHAOS_TERRAIN.key(), MarsBiomes.LAKEBED.key());
         }
         if (none && north > SURE) {
-            return Set.of(MarsBiomes.NORTHERN_PLAINS.key());
+            return Set.of(MarsBiomes.NORTHERN_PLAINS.key(), MarsBiomes.DARK_DUNES.key());
         }
         if (none && north < 1 - SURE) {
             return Set.of(MarsBiomes.SOUTHERN_HIGHLANDS.key(), MarsBiomes.OXIDE_PLAINS.key(),
-                    MarsBiomes.LAKEBED.key());
+                    MarsBiomes.LAKEBED.key(), MarsBiomes.DARK_DUNES.key());
         }
         return Set.of();
     }

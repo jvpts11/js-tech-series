@@ -20,6 +20,7 @@
     "LevelStorageAccessMixin",
     "LivingEntityAccessor",
     "LivingEntityMixin",
+    "LocateCommandMixin",
     "MappedRegistryMixin",
     "NaturalSpawnerMixin",
     "PlayerAccessor",
