@@ -16,6 +16,8 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.jstech.core.client.sky.GroundCovers;
+import dev.jstech.core.sky.Skies;
+import dev.jstech.core.sky.SkySpec;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.network.FarMapPayload;
 import dev.jstech.space.universe.ClimbView;
@@ -24,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -280,11 +283,16 @@ final class FarGround {
         VertexBuffer.unbind();
     }
 
-    /* The game's clouds over the far ground: where the eye stands in their map, their height, colour and drift. */
+    /*
+     * The clouds over the far ground, the world's own: where the eye stands in their map, their height, colour and
+     * drift. A sky with clouds of its own has them in its colour and as thick as it says, none where it says none, as
+     * J's Core's sky draws them over the loaded land; the game's own sky, the game's clouds.
+     */
     private static void clouds(final ShaderInstance ground, final ClientLevel level, final Vec3 eye, final Look look,
                                final boolean covered) {
+        final Optional<SkySpec.Clouds> own = Skies.of(level).clouds();
         final float height = level.effects().getCloudHeight();
-        final boolean shown = !Float.isNaN(height)
+        final boolean shown = !Float.isNaN(height) && own.map(clouds -> clouds.density() > 0).orElse(true)
                 && Minecraft.getInstance().options.getCloudsType() != CloudStatus.OFF;
         final double drift = (Minecraft.getInstance().levelRenderer.getTicks() + look.partialTick()) * CLOUD_DRIFT;
         final double u = (eye.x + drift) / CLOUD_TEXEL;
@@ -292,9 +300,17 @@ final class FarGround {
         ground.safeGetUniform("Clouds").set((float) (u - Math.floor(u / CLOUD_MAP) * CLOUD_MAP),
                 (float) (v - Math.floor(v / CLOUD_MAP) * CLOUD_MAP),
                 (float) (height + CLOUD_TOP - sea(level)), shown ? 1F : 0F);
-        final Vec3 colour = level.getCloudColor(look.partialTick());
-        ground.safeGetUniform("CloudColour").set((float) colour.x, (float) colour.y, (float) colour.z,
-                CLOUD_SOLID);
+        if (own.isPresent()) {
+            final int colour = own.get().colour();
+            final float day = look.light();
+            ground.safeGetUniform("CloudColour").set((colour >> 16 & FULL) / (float) FULL * day,
+                    (colour >> 8 & FULL) / (float) FULL * day, (colour & FULL) / (float) FULL * day,
+                    (float) own.get().density() * CLOUD_SOLID);
+        } else {
+            final Vec3 colour = level.getCloudColor(look.partialTick());
+            ground.safeGetUniform("CloudColour").set((float) colour.x, (float) colour.y, (float) colour.z,
+                    CLOUD_SOLID);
+        }
         ground.safeGetUniform("CloudSkip").set(covered ? 0F : 1F);
     }
 

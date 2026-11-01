@@ -167,6 +167,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   place, high over the ground. Every other passage between the Solar System's worlds and its space shows no loading
   screen either, however it is made, a command such as `/execute in jsspace:moon run tp` included: the last picture
   before it stays on the screen until the ground where the player arrives is there, never a world with nothing in it.
+  Each world is climbed out of under its own air: the Overworld's haze and veil are blue, Mars' are its butterscotch,
+  its sky deepening from its own colour, and the Moon, with no air, has no haze, no veil and no cloud, its ground
+  sharp out to the horizon under a black sky; the clouds over the far ground are each world's own, in its colour and
+  as thick as its sky has them. On a world whose sky has a haze of its own, the loaded blocks below are drawn under
+  the climb's haze rather than lost in a flat fog.
 - The ground of the Moon and of Mars, in a row of its own in the mod's tab: the Moon's Highland and Mare
   Regolith, its Anorthosite and Mare Basalt, and the Icy Regolith of its craters of eternal shadow; Mars' Martian and
   Hematite Regolith, its dark Basalt Sand, the Water Ice of its polar caps and the Dry Ice over them. Martian Basalt

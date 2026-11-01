@@ -2113,6 +2113,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   place, high over the ground. Every other passage between the Solar System's worlds and its space shows no loading
   screen either, however it is made, a command such as `/execute in jsspace:moon run tp` included: the last picture
   before it stays on the screen until the ground where the player arrives is there, never a world with nothing in it.
+  Each world is climbed out of under its own air: the Overworld's haze and veil are blue, Mars' are its butterscotch,
+  its sky deepening from its own colour, and the Moon, with no air, has no haze, no veil and no cloud, its ground
+  sharp out to the horizon under a black sky; the clouds over the far ground are each world's own, in its colour and
+  as thick as its sky has them. On a world whose sky has a haze of its own, the loaded blocks below are drawn under
+  the climb's haze rather than lost in a flat fog.
 - (Core) Rock varied by geology: `RockVariations` puts each variant of a rock where geology puts it, as the faces of
   scarps, the tops of flows, the upper layers of every exposure or the rock below ground, each told by how the rock
   lies open, how deep, how steep the ground is round it, its height and its biome; the feature

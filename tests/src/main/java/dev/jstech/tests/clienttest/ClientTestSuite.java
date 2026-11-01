@@ -231,6 +231,7 @@ import dev.jstech.tests.clienttest.space.CrawlerClientTests;
 import dev.jstech.tests.clienttest.space.DepotClientTests;
 import dev.jstech.tests.clienttest.space.DescentClientTests;
 import dev.jstech.tests.clienttest.space.SpaceEffectsClientTests;
+import dev.jstech.tests.clienttest.space.FarGroundClientTests;
 import dev.jstech.tests.clienttest.space.FlightComputerClientTests;
 import dev.jstech.tests.clienttest.space.GroundSkyClientTests;
 import dev.jstech.tests.clienttest.space.LandingGroundClientTests;
@@ -510,6 +511,7 @@ public final class ClientTestSuite {
             MoonClientTests.class,
             MarsClientTests.class,
             PassageClientTests.class,
+            FarGroundClientTests.class,
             LunarSuitClientTests.class,
             SuitControlsClientTests.class,
             RocketPartsClientTests.class,
