@@ -30,6 +30,7 @@
     "ServerGamePacketListenerImplMixin",
     "ServerLevelMixin",
     "TrackedEntityMixin",
+    "WalkAnimationStateMixin",
     "WorldBorderMixin",
     "WorldDimensionsMixin"
   ],

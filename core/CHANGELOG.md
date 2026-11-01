@@ -1096,6 +1096,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   dimensions (`DimensionTravel.group`): every passage between two of one group, by whatever means, a command's too,
   opens no screen, the last picture drawn before it held still until the server has placed the player and the land
   round them is built to be drawn (`DimensionTravel.STILL`).
+- A walk swings at the pace of the ground's pull: every creature's arms and legs swing slower where a
+  dimension pulls less, by the square root of its pull, as wide as on the Overworld, four tenths of the pace on the
+  Moon and six on Mars; where nothing pulls they still swing, at a quarter.
 - Hazards: one kit for whatever harms a body from where it is. Kinds of harm every mod shares (radiation,
   electrical, cryogenic, acid, heat, blast, pressure, dust, toxic, glare), any damage of the game or of a mod made one
   of them by a tag; what worn things and each kind of creature stop of each, as data, adding up by kind and cutting
