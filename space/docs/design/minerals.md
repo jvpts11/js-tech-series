@@ -6,9 +6,32 @@ things from orbit, from giants and from dead stars are in [Mining in space](mini
 
 ## What exists today
 
-Nothing of J's Space exists yet. Its minerals live in J's Core's shared catalogue of materials, which today holds five
-metals; the registries of minerals, mineral families and host rocks every world needs are designed with J's Industrial,
-in its Materials page, and are still to be built.
+J's Space brings the rocks and ores of the Moon and of Mars, and J's Core's shared catalogue of materials holds the
+minerals they give.
+
+The ground of the two worlds has a row of its own in the mod's creative tab. On the Moon: Highland Regolith and Mare
+Regolith, Anorthosite and Mare Basalt, and the Icy Regolith of the craters of eternal shadow. On Mars: Martian
+Regolith and Hematite Regolith, the dark Basalt Sand, the Water Ice of the polar caps and the Dry Ice over them.
+Martian Basalt comes in three blocks (faceted, in columns, and pocked by gas bubbles), and Mudstone in three (the grey
+of the lakebeds, the buff of the delta, and dusted red). Regolith and sand dig with a shovel and fall as sand does.
+The rocks and the Water Ice need a pickaxe, and the Dry Ice and the Icy Regolith break with anything. Water Ice melts to
+water only in a sealed room full of air, and turns straight to vapour in a vacuum or in Mars' thin air. Dry Ice turns
+to carbon dioxide wherever it lies. The Icy Regolith never thaws by itself.
+
+Loose stones lie on the ground as decoration, never as a whole block: Mare Basalt Stones, Anorthosite Stones and
+Martian Basalt Stones. They stand in one of four arrangements, are walked through, and break at once to be picked up.
+
+Twelve ores lie in these rocks. The Moon has ilmenite in the Mare Basalt and the Mare Regolith, armalcolite,
+tranquillityite and merrillite in the Mare Basalt, and native iron in the Highland Regolith. Mars has hematite in the
+Martian Regolith and the Mudstone, magnetite and olivine in the Martian Basalt, and jarosite and gypsum in the
+Mudstone. Each breaks under a pickaxe into its raw mineral. The six rocks that hold them are host rocks any mod can lay
+its own ores in.
+
+Ilmenite, armalcolite, tranquillityite, merrillite, native iron, olivine, jarosite and gypsum are in J's Core's shared
+catalogue, each with its formula, its family and the byproducts it gives. The catalogue is open: materials, forms,
+properties, mineral families and host rocks are registries any mod adds to.
+
+No other world has minerals yet.
 
 ## To build
 

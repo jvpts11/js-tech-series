@@ -5,7 +5,16 @@ The arithmetic behind J's Space, gathered in one place. The numbers that feed it
 
 ## What exists today
 
-Nothing of J's Space exists yet.
+Only the arithmetic of rockets and of orbits is built, and it lives in the game's code, not in a page of its own. A
+rocket's delta-v is Tsiolkovsky's, and it lifts off only when its thrust beats its weight on the world it stands on.
+An astronomical unit is 10,000 blocks of a system's space and the Earth's year is a week of Overworld days, so each
+planet keeps its real pace and the launch windows come round as they really do, Mars about every five real hours. A
+launch out of the window costs more delta-v, up to twice from the worst place, and a trip is shortened by the delta-v
+spent on it. A transfer can also use a gravity assist, which spends less and takes longer, and aerobraking where the
+destination has air and the rocket has a heat shield, which saves the capture burn.
+
+The rest of this page is not built yet: the light of a star, the arithmetic of measuring the stars, of knowing, of
+keeping and of big things.
 
 ## To build
 

@@ -4,7 +4,7 @@ The largest things a player builds: around stars, around worlds, and from the gr
 
 ## What exists today
 
-Nothing of J's Space exists yet.
+None of this is built yet: no megastructure of any size is in the game.
 
 ## To build
 

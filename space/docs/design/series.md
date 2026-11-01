@@ -5,7 +5,27 @@ Warfare. This page says what it takes from J's Core and what it does with each o
 
 ## What exists today
 
-Nothing of J's Space exists yet.
+J's Space is a mod of the series: a jar of its own that requires J's Core alone, at the same version as every other
+mod of the series. It does not depend on any other mod of the series.
+
+What it takes from the series and the Core:
+
+- The tab. It has its own creative tab and logo, and its manual, the Mission Handbook, is a manual of J's Core's guide
+  framework, with its chapter also in the Technical Reference.
+- The Core's frameworks. Its worlds' rules (gravity, air, temperature, weather, pressure, the length of the day, which
+  blocks hold a room's air) are J's Core's dimension rules; their skies are the Core's sky files; its rockets and
+  ships are the Core's moving structures; its ownership by team is the Core's.
+- The Space Persistor, the series' chunk loader, which keeps a rocket or a ship in orbit loaded.
+- The cable block. The telemetry line is a line of the series' cable block, with a model but no device on it yet.
+- The settings. Its world settings, in `jsspace-server.toml`, are on J's Core's settings screen, in English and
+  Brazilian Portuguese.
+- The ores. The six rocks of the Moon and of Mars that hold ores are host rocks any mod can lay its own ores in, and
+  their minerals are in J's Core's shared catalogue.
+- The advancements. Its three advancement tabs are drawn with J's Core's wide backgrounds, over its own night sky, and
+  its milestones are J's Core's progression a team holds.
+
+One server setting, J's Industrial's chains as the only path, exists and starts off; no link with J's Industrial is
+built. Beyond what is above, the rest of what J's Space shares with the series is still to be built.
 
 ## To build
 

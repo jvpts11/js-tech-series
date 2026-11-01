@@ -6,9 +6,37 @@ the probes, the Space Research Computer, the hunt for the hidden planets, and th
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core already keeps progression a mod can read, which discovery and milestones are
-built on, and the knowledge gate that lets a recipe ask for something the team knows is designed with J's Space and J's
-Industrial and still to be built in J's Core.
+What a team knows of each world is built. There are ten properties: orbit and position, size, mass and gravity,
+atmosphere, temperature, magnetic field and radiation, relief, what lies on the ground, interior, structures and
+samples. A team knows each by a share from nothing to all of it, and the share only grows. A world's share known is the
+mean of its properties, and a world known whole reaches a milestone for the team.
+
+Knowledge opens the doors, as in reality. A probe goes only to a world whose orbit and position are known. A crew lands
+only where what kills there is known: the atmosphere, the temperature, the radiation, the gravity and the relief. The
+server rule "Landing needs the essentials" governs the second door, and it is off by default, so a crew may land on any
+world it reaches. Every team knows the Overworld whole from the start, and the orbit and position of the Moon and Mars,
+because its sky shows them from home.
+
+Nothing in the game teaches a team a world's properties yet, apart from what its sky shows from home. There is no
+discovery by telescope, probe, sample or survey yet, and no Space Research Computer.
+
+The milestones are built: the firsts of spaceflight, nineteen in all, from the first suborbital flight, satellite,
+person in orbit, spacewalk and docking to the first starship, star and galaxy. They belong to the team, any mod can
+read them, and each is knowledge a recipe can ask for. Some are earned by advancements as they happen: the first crew
+in orbit, the first starship out of the shipyard, the first landing on the Moon and the first landing on Mars, which is
+also the first person on another planet. The rest are reached by what does them, as that is built.
+
+J's Space has three advancement tabs on a night sky of the Milky Way: Leaving the Earth, which opens with a player's
+first rocket; The Moon, as they first see the Earth rise over it; and Mars, as they first land there.
+
+The universe the exploration is set in is built too: twenty-six star systems in three galaxies, eighteen in the Milky
+Way, five in Andromeda and three in Triangulum, with real stars at their real distances. Each system has a space of
+its own, a dimension made the first time someone gets there. The Overworld, the Moon and Mars are worlds of the Solar
+System, with their skies, their ground, their ores and their landmarks.
+
+J's Core keeps progression a mod can read, which discovery and milestones are built on, and its knowledge gate lets a
+recipe ask for something the team knows: such a recipe crafts only for a player whose team knows it, and shows with a
+padlock while the team does not.
 
 ## To build
 

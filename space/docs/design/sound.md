@@ -4,7 +4,12 @@ How J's Space sounds, and how it doesn't.
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core's audio framework exists.
+J's Space has no sound of its own yet: no engine, no countdown, no suit, no ship. Its blocks use the game's own sounds
+for the material they are made of, and its suit and bottles the game's sounds of armour and buckets.
+
+In the system's space there is no air and no sound carries there. J's Core's audio framework, which these sounds are to
+be built on, exists: sounds echo in the place they are heard, are muffled by walls and silent through a vacuum, and the
+Sound Mixer lets the player set them.
 
 ## To build
 

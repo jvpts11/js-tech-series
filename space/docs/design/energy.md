@@ -6,8 +6,21 @@ own, the ones real spaceflight uses, so it plays on its own.
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core's energy is still Forge Energy today; J's Energy, its voltage classes and the
-FE converters are designed with J's Industrial, in its Energy page.
+J's Energy is built in J's Core: energy counted in joules and shown in watts, its lines in five voltage classes from
+400 V to ±1,100 kV direct current, with transformers between neighbouring classes, the FE converters, a basic cable and
+a battery. A server's settings say whether it is on, and while it is off the blocks of the series speak FE.
+
+J's Space has little energy of its own yet. Its Pad Service Port takes J's Energy by cable into a store for its pumps,
+20,000 J a tick coming in. Holding a whole deluge (64 buckets of water and 400 kJ) lets the pad pour it at ignition.
+When the port fuels a rocket from a propellant depot, its pumps spend 20 J for every kilogram of propellant.
+
+A starship's fusion reactor makes the ship's power, burning its deuterium as the ship flies, a full load lasting four
+hours aloft. Its boost takes the ship faster across an empty stretch. With no deuterium left the reactor makes nothing
+and the boost fills no more, and a holed reactor makes only the share of its blocks still in it until the right block
+is put back. A dock fills the deuterium again as it takes the ship back.
+
+None of the rest is built: the generators, solar and other power for stations and satellites, batteries, and power
+lines of its own.
 
 ## To build
 

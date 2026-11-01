@@ -6,7 +6,22 @@ sees.
 
 ## What exists today
 
-Nothing of J's Space exists yet.
+J's Space has three advancement tabs, drawn on the night sky of its wide Milky Way picture, each showing its world's
+picture on its tab: Leaving the Earth, which opens with a player's first rocket; The Moon, as they first see the Earth
+rise over it; and Mars, as they first land there.
+
+The firsts of spaceflight are built as the team's milestones, nineteen in all, from the first suborbital flight,
+satellite, person in orbit, spacewalk and docking to the first starship, star and galaxy. They belong to the team, any
+mod can read them, and each is knowledge a recipe can ask for. A milestone is reached by what does it, as that is
+built.
+
+Under the three roots, four advancements are built, each earned where it happens and reaching its milestone for the
+team: The Overworld Is Blue, for the team's first crew in orbit; Enterprise, for its first starship out of the
+shipyard; A Small Step for a Player, but a Huge Leap for Playerkind, for the first landing on the Moon; and Seven
+Minutes of Terror, for the first landing on Mars, which is also the first person on another planet.
+
+None of the other advancements of the tabs exists yet. J's Core provides the milestones a team reaches, the trigger
+that is met once a team reaches one, and the wide backgrounds the tabs use.
 
 ## To build
 

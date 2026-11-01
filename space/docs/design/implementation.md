@@ -4,8 +4,30 @@ The settings, the files and the numbers of J's Space. Every number here is an es
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core's settings screen shows every setting of every mod of the series, with its
-range, its default, a comment and its unit.
+J's Space's server settings are built, in `jsspace-server.toml` beside the world. None of them turns a part of the mod
+off. J's Core's settings screen shows every setting of every mod of the series, with its range, its default, a comment
+and its unit, in English and Brazilian Portuguese.
+
+Fourteen consequences are on unless a server turns them off, and each says what happens instead:
+
+- Launch: launch damage to a pad with no flame trench and no deluge; no launch in a thunderstorm.
+- Rockets: falling stages that leave craters.
+- Rocket failures: too heavy to lift, burning up on re-entry, crash landings, worn stages that fail, damaged tanks that
+  explode.
+- Travel: cruise events.
+- Worlds: dust on Mars; the first team to find a hidden world naming it.
+- Life support: flames that need air.
+- Orbit: debris from a destroyed satellite; the Laser Satellite as a weapon.
+
+Three rules start off: fast travel, which skips the cruise; "Landing needs the essentials", which asks a team to know a
+world's atmosphere, temperature, radiation, gravity and relief before a crew lands, and stays off while nothing in the
+game teaches a team those; and J's Industrial's chains as the only path for what both mods make.
+
+Four settings size the Rocket Hangar's bay, each held to its range: the narrowest, 7 blocks (5 to 33); the widest, 48
+(9 to 96); the lowest, 12 (8 to 64); and the tallest, 128 (16 to 256). Every setting is read by the part of the game it
+governs, as that part is built.
+
+The rest of the numbers on this page are not in the game yet.
 
 ## To build
 

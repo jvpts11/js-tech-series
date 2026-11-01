@@ -77,14 +77,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ### Added
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
-  the same version as every mod of the series. It adds nothing to the game yet.
-- The settings of a world, `jsspace-server.toml`, none of which turns a part of the mod off: fifteen
+  the same version as every mod of the series.
+- The settings of a world, `jsspace-server.toml`, none of which turns a part of the mod off: fourteen
   consequences, each on unless a server turns it off and saying what happens instead (launch damage, no launch in a
-  thunderstorm, falling stages that leave craters, five failures of a rocket, cruise events, landing only once a
-  world's essentials are known, dust on Mars, naming hidden worlds, flames that need air, debris, and the Laser
-  Satellite as a weapon), and
-  two rules of balance that start off, fast travel and J's Industrial's chains as the only path. They are on J's
-  Core's settings screen, in English and Brazilian Portuguese; each is read by what it governs as that is built.
+  thunderstorm, falling stages that leave craters, five failures of a rocket, cruise events, dust on Mars, naming
+  hidden worlds, flames that need air, debris, and the Laser Satellite as a weapon), and three rules that start off:
+  fast travel, landing only once a world's essentials are known, and J's Industrial's chains as the only path. They
+  are on J's Core's settings screen, in English and Brazilian Portuguese; each is read by what it governs as that is
+  built.
 - Its mark and its tab: J's Space's logo, the word in the white of the Apollo rockets with a red livery band
   and a Saturn V beside it, and its square icon, in the mods list and the README; its creative tab, with the Saturn V
   on its button, shown once it holds a thing; and the night sky its advancement tabs will stand on, the Milky Way

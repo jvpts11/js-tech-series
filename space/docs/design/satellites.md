@@ -6,8 +6,29 @@ there, and probes are in [Exploration](exploration.md) and [Mining in space](min
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core has a telemetry cable type, a point-to-point link of 256 blocks with no block
-of its own, which the telemetry line below replaces.
+J's Space keeps a list of the things in each world's orbit, saved with the world. Each entry says what the thing is,
+the world it goes round, the orbit it is in, whose it is, and whether its owner has let it go. Rockets are the things
+in it today: a rocket that reaches a world's orbit is entered there as it arrives, with its owner, and forgotten as it
+goes back down. A Space Persistor aboard keeps its place loaded. A thing let go by its owner works no more and any team
+may take it. A destroyed one becomes debris in its orbit, in pieces, unless the server turns debris off.
+
+The kinds of satellite and of probe exist as a catalogue, each with a name and the orbits it may take (for a probe,
+whether it lands), and an add-on or a data pack can declare more. The satellites are communication, relay, navigation,
+mapping, weather, observation, the space telescope, solar power, the antiproton collector, the debris collector, the
+laser and the planetary climate satellite. The probes are flyby, orbiter, lander, rover, drone, sample return,
+aeroprobe, mining, impactor, solar, interstellar and solar gravitational lens. Three sizes are named: a CubeSat,
+medium and large. Nothing in the game builds, launches or flies any of them yet: no satellite or probe is an item, a
+block or an entry in orbit.
+
+The telemetry line has a model in the code. It is a line of J's Core's cable block that carries data only, never the
+network's id, and every connected stretch of it is one ground system of the antennas, receivers, decoders, data
+recorders and ground stations it joins. An antenna is small (the low orbits), medium (the geostationary orbit and the
+Moon) or large (the other worlds). A geostationary satellite is heard by an antenna under it that hears that far; one
+in a low or polar orbit only while it passes over one; a relay passes the signal on all the time. None of those devices
+exists as a block yet, so the line has nothing to join. J's Core's point-to-point links are the computer's peripherals
+and the industrial control link; telemetry is a line of its own.
+
+A server setting for the Laser Satellite as a weapon exists, on by default; the satellite it governs is not built yet.
 
 ## To build
 

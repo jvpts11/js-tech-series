@@ -5,8 +5,25 @@ kept. The engines that burn them are in [Rockets](rockets.md) and [Starships](st
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core's catalogue holds the fluids every mod shares; the propellants live there, and
-J's Space only says it uses them.
+Rockets burn methalox: liquid methane and liquid oxygen. J's Core's catalogue holds the fluids every mod shares, the
+propellants among them, and J's Space uses these materials and does not define its own.
+
+A rocket's delta-v comes from what its tanks really hold. An engine lights only on its own propellant, and what it does
+not burn is carried as dead weight. An engine's thrust and impulse fall from their vacuum values as the air's pressure
+rises, so on Mars an engine is nearly as good as in a vacuum.
+
+Cold liquids boil off a rocket's tanks as it stands, in this order: liquid hydrogen fastest, then oxygen, then methane
+least. A liquid that keeps at the place's warmth does not boil off at all. On the pad the loaded tanks' boil-off is seen
+as white vapour along their sides.
+
+The propellant depot feeds the pad. It is a sphere built as a cube of Sphere Shell of odd edge, from three to nine
+blocks, on a Tank Leg under each bottom corner, with a Vent Stack on top and a Transfer Pump on the ground against a
+leg. It holds as much liquid oxygen or liquid methane as a ball that wide, fills and empties by pipe through its pump,
+and lets its contents boil away when it falls apart. A depot of liquid oxygen can also fill an Oxygen Bottle held to
+its pump. The pad's Pad Service Port takes liquid oxygen and liquid methane by pipe and fuels the rocket standing on
+the launcher over it, each tank to its propellant's mix. Its pumps spend energy for every kilogram.
+
+No other propellant, and no production of propellants on other worlds, is built yet.
 
 ## To build
 

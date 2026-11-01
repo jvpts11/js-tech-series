@@ -6,8 +6,12 @@ sites and cities themselves are in [Structures](structures.md).
 
 ## What exists today
 
-Nothing of J's Space exists yet. The knowledge gate of J's Core, which holds these recipes until the team understands
-enough, is designed with J's Space and J's Industrial and still to be built.
+None of this is built yet: there are no Enigmatic sites, no comprehension and no recipes behind it.
+
+The knowledge gate of J's Core, which holds these recipes until the team understands enough, exists: crafting recipes
+that ask for knowledge craft only for a player whose team knows what they ask, and show in JEI, EMI and the manuals
+with a padlock while the team does not know it. J's Core's research, discoveries a team makes with research computers
+and knows in part while its research goes, exists too.
 
 ## To build
 

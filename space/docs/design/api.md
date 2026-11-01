@@ -6,7 +6,25 @@ public surface.
 
 ## What exists today
 
-Nothing of J's Space exists yet.
+J's Space's API is at version 18, in `dev.jstech.space.api`, and all of it is experimental. It holds the registries an
+add-on adds to, each with the model it holds, and a data pack's files can add to most of them:
+
+- The tabs of its advancements (`SpaceAdvancementTab`: Leaving the Earth, The Moon and Mars), with each one's root,
+  which an add-on hangs its own advancements under.
+- Worlds (`SpaceWorld`, `SpaceWorlds`), the generators that shape their ground and the modifiers laid over it
+  (`WorldGenerators`, `WorldModifiers`), what can be known of a world (`WorldProperties`), what kills there
+  (`WorldDangers`) and its landmarks (`SpaceLandmark`, `SpaceLandmarks`).
+- Life support: pressure suits (`SpaceSuit`, `SpaceSuits`), the air their tanks hold and the cold and heat they stand,
+  and the suit modules (`SuitModule`, `SuitModules`), which may also cut the Sun's glare where no air does.
+- Rocket parts (`RocketPart`, `RocketParts`), the kits of blocks they are built of (`RocketKit`, `RocketKits`) and the
+  propellants they burn (`Propellant`, `Propellants`).
+- Starship parts (`ShipPart`, `ShipParts`), their kits of blocks (`ShipKit`, `ShipKits`), the finishes a ship is
+  painted in (`ShipFinish`, `ShipFinishes`), the makers of its parts (`ShipMaker`, `ShipMakers`), and each part's
+  figures: mass, thrust, lift, power, crew, the weight its wings hold up and whether its gear rolls.
+- The kinds of satellite and of probe (`SatelliteTypes`, `ProbeTypes`), the orbits they take (`OrbitKind`) and their
+  sizes (`SpacecraftSize`).
+
+An add-on checks the number, `JsSpaceApi.VERSION`, before it uses what a later version adds.
 
 ## To build
 

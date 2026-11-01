@@ -7,8 +7,16 @@ every machine, rocket and starship works through its own screens and controls.
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Computers' registries of computers and hardware, through which J's Space adds the
-ones below, are designed with J's Computers and still to be built.
+J's Computers' registries of computers and hardware, through which J's Space adds the ones below, are designed with
+J's Computers and still to be built. None of the computers or hardware below is built in J's Space yet.
+
+What J's Space does with a data network is small. The Hangar Terminal of the Rocket Hangar and the Shipyard Terminal of
+the Small Shipyard are members of the series' data network, and each takes a data cable. On a network,
+`RUN jscore:assemble` sends a plan to the terminal and sets its machine building: the hangar's crane builds the rocket
+in the bay, or a hangar plan named in the request (`WITH plan = 'Orbital I'`), and the shipyard's robot arms build a
+ship plan the dock keeps by name. In both, the network brings the blocks. The small starship's Computing module is
+furniture, a desk and a server rack. The Flight Computer of a rocket is its flight display, not a computer of the
+network.
 
 ## To build
 

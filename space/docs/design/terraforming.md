@@ -5,8 +5,12 @@ changing it, in pressurized rooms, is in [Life support](life-support.md).
 
 ## What exists today
 
-Nothing of J's Space exists yet. J's Core's dimension rules, which terraforming changes stage by stage, already exist;
-their rules by altitude are still to be built.
+None of this is built yet: nothing in J's Space changes a world's air, temperature, water or ground stage by stage.
+
+J's Core's dimension rules, which terraforming is to change, exist. J's Space gives the Moon, Mars and the star
+systems' space each one set of rules for the whole dimension: gravity, whether the air can be breathed, temperature,
+weather, pressure, the length of the day and which blocks hold a room's air. Mars has a thin air of carbon dioxide and
+the Moon none. The rules by altitude are still to be built.
 
 ## To build
 

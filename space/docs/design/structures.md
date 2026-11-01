@@ -7,8 +7,13 @@ the player to piece together, and on purpose it is not written here. The histori
 
 ## What exists today
 
-Nothing of J's Space exists yet. The structure generation kit of J's Core that these are built on is designed with J's
-Space and still to be built.
+None of this is built yet: J's Space generates no structure of its own in any world.
+
+J's Core's structure generation kit, which these are to be built on, exists. A structure is one template or a layout of
+many joined by jigsaws, spread as often as it says, none near the world's origin and none within reach of another
+structure of any mod, or at fixed places only; refused on ground too steep, too low or high, or under water; sunk as
+deep as it says; and worn by rule as it is placed (iron rusts, glass cracks). Settlements grow a stage at a time as the
+world's days pass, and a mod can place a structure where it says, kept by the world afterwards.
 
 ## To build
 

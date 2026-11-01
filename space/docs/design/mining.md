@@ -6,8 +6,13 @@ is brought home is in [Cargo](cargo.md).
 
 ## What exists today
 
-Nothing of J's Space exists yet. The containment of exotic matter that the dead stars' harvest needs is designed for J's
-Core, shared with J's Industrial, and still to be built.
+None of this is built yet. The only mining in the game is by hand: the ores of the Moon and of Mars break under a
+pickaxe into their raw minerals (see the Minerals page). There are no mining machines, no asteroid or comet mining and
+no harvest of dead stars.
+
+The containment of exotic matter that the harvest of dead stars needs exists in J's Core, shared with J's Industrial.
+It holds every exotic form of matter but antimatter, and the Antimatter Trap holds antimatter alone. Each spends energy
+for as long as it holds something. Without energy it takes nothing and lets nothing out, so nothing is lost.
 
 ## To build
 
