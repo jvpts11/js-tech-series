@@ -16,11 +16,13 @@ import dev.jstech.core.model.BedrockReader;
 import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelCube;
 import dev.jstech.core.model.ModelData;
+import dev.jstech.core.model.Rotations;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -38,6 +40,9 @@ class PhysicsToolModelTest {
             "thirdperson_righthand", "thirdperson_lefthand");
     /* How far ahead of the grip the claws are, at least, in the model's pixels before it is scaled. */
     private static final float AHEAD = 10;
+    /* The claws, and how near a segment's end must come to its tip's hinge, in pixels. */
+    private static final int CLAWS = 3;
+    private static final float MEETS = 0.5f;
 
     @Test
     void heldModel_pointsTheClawsAheadOfTheGripInEveryHand() {
@@ -65,9 +70,54 @@ class PhysicsToolModelTest {
                     side * radians(turn, 2));
             final Vector3f ahead = turned.transform(new Vector3f(claws));
             final Vector3f held = turned.transform(new Vector3f(grip));
-            assertTrue(ahead.z < held.z - AHEAD, hand + ": the claws point ahead of the grip, away from the eye ("
-                    + ahead.z + " against " + held.z + ")");
+            if (hand.startsWith("firstperson")) {
+                assertTrue(ahead.z < held.z - AHEAD, hand + ": the claws point ahead of the grip, away from the eye ("
+                        + ahead.z + " against " + held.z + ")");
+            } else {
+                // In the hand of a player seen, the game's held item points out of the fist along its Y, as an
+                // axe's head does; its -Z runs down the arm.
+                assertTrue(ahead.y > held.y + AHEAD, hand + ": the claws point out of the fist, ahead of the grip ("
+                        + ahead.y + " against " + held.y + ")");
+            }
         }
+    }
+
+    @Test
+    void model_eachClawSegmentReachesItsTip() {
+        final ModelData model = BedrockReader.geometry("physics_tool",
+                json(MODELS.resolve("jsmodels/physics_tool.geo.json"))).getFirst();
+        final List<ModelCube> segments = new ArrayList<>();
+        final List<ModelCube> tips = new ArrayList<>();
+        for (final ModelBone bone : model.bones()) {
+            for (final ModelCube cube : bone.cubes()) {
+                // A claw is a turned bar a pixel thick: its segment four long, its tip two.
+                if (cube.rotation().z() != 0 && cube.size().y() == 1) {
+                    (cube.size().x() > 3 ? segments : tips).add(cube);
+                }
+            }
+        }
+        assertTrue(segments.size() == CLAWS && tips.size() == CLAWS, "three claws of a segment and a tip each: "
+                + segments.size() + " segments, " + tips.size() + " tips");
+        for (final ModelCube segment : segments) {
+            final Vector3f end = farEnd(segment);
+            float nearest = Float.MAX_VALUE;
+            for (final ModelCube tip : tips) {
+                nearest = Math.min(nearest, end.distance(new Vector3f(tip.pivot())));
+            }
+            assertTrue(nearest <= MEETS, "a claw's segment ends where its tip is hinged, as the game draws them: "
+                    + nearest + " pixels apart");
+        }
+    }
+
+    /* The middle of a bar's end away from its pivot, turned about the pivot as the game's baker turns it. */
+    private static Vector3f farEnd(final ModelCube cube) {
+        final float low = cube.from().x();
+        final float high = low + cube.size().x();
+        final float x = Math.abs(low - cube.pivot().x()) > Math.abs(high - cube.pivot().x()) ? low : high;
+        final Vector3f end = new Vector3f(x, cube.from().y() + cube.size().y() / 2,
+                cube.from().z() + cube.size().z() / 2).sub(cube.pivot());
+        Rotations.ofEuler(cube.rotation()).transform(end);
+        return end.add(cube.pivot());
     }
 
     private static float radians(final JsonArray turn, final int axis) {

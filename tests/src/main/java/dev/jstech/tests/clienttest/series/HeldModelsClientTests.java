@@ -43,7 +43,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The tools and instruments drawn in three dimensions in the hand: each of the fourteen held, read off the screen
+ * The tools and instruments drawn in three dimensions in the hand: each of the fifteen held, read off the screen
  * against the empty hand, and seen from the player's eye and from in front of them beside the game's own iron axe and
  * clock, held the two ways they are, for the eye to judge its grip; all of them laid on the ground; and their icons in
  * a slot as bright as their textures.
@@ -83,7 +83,7 @@ public final class HeldModelsClientTests {
             HandTools.MORTAR, SharedTools.SAW, SharedTools.WRENCH, FireSafety.WATER_EXTINGUISHER,
             FireSafety.FOAM_EXTINGUISHER, FireSafety.CARBON_DIOXIDE_EXTINGUISHER, FireSafety.DRY_POWDER_EXTINGUISHER,
             NetworkProbe.ITEM, SignalProbe.ITEM, ClampMeter.ITEM, HazardDevices.GEIGER_COUNTER,
-            HazardDevices.POCKET_DOSIMETER);
+            HazardDevices.POCKET_DOSIMETER, PhysicsTool.ITEM);
     /* The game's own items held the two ways the tools are: a tool on the axe line, a plain item as a clock is. */
     private static final List<Item> REFERENCES = List.of(Items.IRON_AXE, Items.CLOCK);
 
@@ -148,8 +148,6 @@ public final class HeldModelsClientTests {
     public static void icons_inASlotAreDrawnAsTheirFlatTexture(final ClientTestContext ctx) {
         final List<ItemStack> stacks = new ArrayList<>();
         HELD.forEach(held -> stacks.add(new ItemStack(held.get())));
-        // The physics tool too, whose model in the hand is drawn by its own renderer.
-        stacks.add(new ItemStack(PhysicsTool.ITEM.get()));
         ctx.afterTest(() -> ctx.mc().setScreen(null));
         ctx.then(0, () -> ctx.mc().setScreen(new IconSheet(stacks)))
                 .thenScreenshot(SETTLE, "held-icons")
@@ -243,7 +241,7 @@ public final class HeldModelsClientTests {
 
         private static final int SCALE = 2;
         private static final int CELL = 18;
-        private static final int COLUMNS = 7;
+        private static final int COLUMNS = 8;
         private static final int LEFT = 4;
         private static final int TOP = 4;
         private static final int GROUND = 0xFF << 24 | 0x8B << 16 | 0x8B << 8 | 0x8B;
