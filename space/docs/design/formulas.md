@@ -7,7 +7,7 @@ The arithmetic behind J's Space, gathered in one place. The numbers that feed it
 
 Only the arithmetic of rockets and of orbits is built, and it lives in the game's code, not in a page of its own. A
 rocket's delta-v is Tsiolkovsky's, and it lifts off only when its thrust beats its weight on the world it stands on.
-An astronomical unit is 10,000 blocks of a system's space and the Earth's year is a week of Overworld days, so each
+An astronomical unit is 30,000 blocks of a system's space and the Earth's year is a week of Overworld days, so each
 planet keeps its real pace and the launch windows come round as they really do, Mars about every five real hours. A
 launch out of the window costs more delta-v, up to twice from the worst place, and a trip is shortened by the delta-v
 spent on it. A transfer can also use a gravity assist, which spends less and takes longer, and aerobraking where the
@@ -45,7 +45,7 @@ keeping and of big things.
 - **A world's day**, in the game: `the real day × 20 minutes / 24 hours`; the Overworld keeps its 20 minutes.
 - **A year of the Earth** lasts 7 Overworld days. A **launch window** recurs every synodic period of the two worlds:
   `1 / |1/T1 − 1/T2|`, with their years `T1` and `T2`.
-- **A system's space**: about 10,000 blocks for an astronomical unit; worlds are drawn far larger than to scale.
+- **A system's space**: about 30,000 blocks for an astronomical unit; worlds are drawn far larger than to scale.
 
 ### Light and heat
 

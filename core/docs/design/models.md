@@ -67,7 +67,9 @@ modelling kernel: what the exporting program worked out is laid out as it says.
   ([Lighting and effects](lighting-and-effects.md)).
 - **Layers**: overlays such as the **cracks of a damaged machine**, armour layers, and sorted transparency.
 - **One model for a block, an item (its icon still or animated), an entity, armour and the hand.** What a block shows in
-  the world never leaks into its item, and the other way round.
+  the world never leaks into its item, and the other way round. A piece of the series' armour worn on the chest shows
+  its sleeve on the arm in first person, drawn from the same bone as on the body, and the skin's outer layer is hidden
+  under the pieces worn.
 - **Cost**: meshes baked once; animations worked out only for what is seen; **no animation far away**; and
   **instancing**, so a rack of a hundred identical drives is drawn as one.
 - **Works with shaders** (Iris, Oculus).

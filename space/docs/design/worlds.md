@@ -15,12 +15,24 @@ lava tubes run under them, and the craters of eternal shadow round the poles hav
 the first landmark of the worlds: a great crater at its place, with its bowl, its rim, its central peak and its bright
 ejecta.
 
-**Mars** has seven biomes of its own: Northern Plains, Oxide Plains, Southern Highlands, Dark Dunes, Chaos Terrain,
-Lakebed and Polar Cap. The low smooth north and the old cratered south lie either side of the dichotomy. Tharsis'
-volcanoes stand and Valles Marineris is cut where its height map has them, as relief of the ground, not as named
-landmarks. Dark dunes walk in crescents where the map is dark, the chaos breaks into flat-topped blocks of mudstone where
-the canyons open, the lakebeds lie in old craters, and the caps are water ice under carbon dioxide frost, cut by spiral
-troughs.
+**Mars** has ten biomes of its own: Northern Plains, Oxide Plains, Southern Highlands, Dark Dunes, Chaos Terrain,
+Lakebed, Polar Cap, Lifeless Springs, Layered Mounds and Spider Fields. The low smooth north and the old cratered south
+lie either side of the dichotomy. Tharsis' volcanoes stand and Valles Marineris is cut where its height map has them, as
+relief of the ground, not as named landmarks. Dark dunes walk in crescents where the map is dark, the chaos breaks into
+flat-topped blocks of mudstone where the canyons open, the lakebeds lie in old craters, and the caps are water ice under
+carbon dioxide frost, cut by spiral troughs. The lifeless springs are old hot springs, dry for three billion years, with
+terraces and mounds of opal sinter, at their real places (Gusev's Home Plate, Nili Patera, Vernal crater); the layered
+mounds rise in the craters and canyons where Gale's and Valles' deposits are; and the spider fields lie by the south cap,
+where Inca City is.
+
+**Biomes in two scales.** The real zones lie where the planet has them, so the ground matches the sphere seen from
+orbit; inside each zone its biomes vary in patches a few kilometres wide, as in the game's own worlds, so every kind of
+ground is found near any place, and a search for a biome finds it anywhere on the round world.
+
+**Caves.** Ordinary caves lie under all the ground, and many break out at the surface. On the Moon, wide lava tubes up to
+twenty blocks across run under the maria, with skylights and rubble, and pits open in the maria; the highlands have
+caves and pits of their own. On Mars, tubes and skylights run under Tharsis, grottos open in the walls of Valles
+Marineris and among the chaos blocks, ice caves lie under the polar caps, and caves and pits are common elsewhere.
 
 The rocks and the ores of both are in [Minerals](minerals.md).
 

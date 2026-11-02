@@ -83,7 +83,12 @@ outside the series builds its multiblocks as it likes; the kit takes any block.
 - **Help to build**: a manual shows the structure layer by layer, in 3D ([Manuals](manuals.md)); and the **Structure
   Projector**, a block of the Core's shared content, shows the missing blocks in the world as ghosts (the block itself,
   pale and see-through), with a count of what is in place, missing and wrong floating above the structure, and **marks
-  in red, in the world, a block that is wrong**; looking at a ghost says what goes there and on which layer.
+  in red, in the world, a block that is wrong**; looking at a ghost, from up to 32 blocks away, outlines it and says
+  what goes there and on which layer, the ghost found by its shape, with plants and the projector itself not in the
+  way. What it shows stands in front of whoever placed it, beyond the projector; a pattern says which of its layers
+  stands on the ground, and the projector puts that layer level with itself, the layers under it shown dug in. Places
+  that must stay empty are shown too, whatever stands in them outlined in red with a count of the blocks to take out,
+  cave air counting as empty; and a block merged into a formed multiblock counts as the block it was.
 - **The Projector's screen** has no inventory, since it holds nothing: a 3D preview layer by layer (the chosen layer
   whole, the ones below as ghosts), the list of the installed mods' multiblocks, what is in the world, and the turn, the
   mirror (for shapes that allow it), "only what is missing" and the layer.
@@ -93,10 +98,13 @@ outside the series builds its multiblocks as it likes; the kit takes any block.
 - **A preview in JEI, EMI and the manuals**: in 3D, layer by layer, cycling through the choices each place allows, with
   the **list of materials** and the counts for the size chosen, and whether it turns or mirrors; from there it is
   projected into the world or its manual page opened.
-- **Building it for the player**: a handheld tool of the instruments' family (the Multiblock Builder, a name to be
-  confirmed), in the spirit of GregTech's terminal, aimed at a terminal, says what it will place and how much the
-  player has, asks the player to choose where a place allows several blocks, and builds it block by block from the
-  player's inventory; with J's Computers installed, from the network's storage.
+- **Building it for the player**: the Multiblock Builder, a handheld tool of the instruments' family, in the spirit of
+  GregTech's terminal, aimed at a terminal or at a Structure Projector (then building where the projector shows), says
+  what it will place and how much the player has, asks the player to choose where a place allows several blocks, and
+  builds it block by block from the player's inventory; with J's Computers installed, from the network's storage.
+  Before it places anything it takes out, from the top down as a player would break them, the blocks standing where
+  the multiblock must be left empty or in its places, giving them back to where it takes its blocks from (in creative
+  it only clears); its terminal goes in last, turned as the multiblock stands.
 
 ### For modpacks
 

@@ -183,7 +183,7 @@ public final class LunarSuitClientTests {
 
     @ClientTest(timeoutTicks = 600)
     public static void suit_onThePlayerCoversTheirHandsAndChin(final ClientTestContext ctx) {
-        final int[] bare = new int[1];
+        final boolean[][][] bare = new boolean[1][][];
         ctx.afterTest(() -> {
             ctx.mc().options.setCameraType(CameraType.FIRST_PERSON);
             ctx.server().execute(() -> {
@@ -201,8 +201,8 @@ public final class LunarSuitClientTests {
                 })
                 .then(SETTLE, () -> bare[0] = skinSeen(ctx))
                 .thenScreenshot(0, "player-bare")
-                .then(0, () -> ctx.assertTrue(bare[0] > SKIN_SEEN, "the bare player shows their skin: " + bare[0]
-                        + " pixels"))
+                .then(0, () -> ctx.assertTrue(count(bare[0], bare[0]) > SKIN_SEEN, "the bare player shows their skin: "
+                        + count(bare[0], bare[0]) + " pixels"))
                 .thenServer(0, level -> {
                     ctx.serverPlayer().setItemSlot(EquipmentSlot.HEAD, new ItemStack(LunarSuit.HELMET.get()));
                     ctx.serverPlayer().setItemSlot(EquipmentSlot.CHEST, new ItemStack(LunarSuit.SUIT.get()));
@@ -212,9 +212,11 @@ public final class LunarSuitClientTests {
                 .thenWaitUntil(() -> ctx.player().getItemBySlot(EquipmentSlot.FEET).is(LunarSuit.BOOTS.get()),
                         ARRIVE, "the suit on the player's game")
                 .then(SETTLE, () -> {
-                    final int suited = skinSeen(ctx);
+                    // Only the skin the bare player showed counts: the suit's own warm colours, as its patch's in
+                    // some light, stand where the bare player showed a shirt, not skin.
+                    final int suited = count(skinSeen(ctx), bare[0]);
                     ctx.assertTrue(suited <= SKIN_LEFT, "the suit covers the player's hands and chin: " + suited
-                            + " pixels of skin show, against " + bare[0] + " bare");
+                            + " pixels of their skin still show, against " + count(bare[0], bare[0]) + " bare");
                 })
                 .thenScreenshot(0, "player-in-the-suit");
     }
@@ -355,21 +357,38 @@ public final class LunarSuitClientTests {
         return new int[] {skin, cloth};
     }
 
-    /* How many pixels of skin the player shows, seen from in front in the middle of the screen. */
-    private static int skinSeen(final ClientTestContext ctx) {
+    /*
+     * Where the player shows skin, seen from in front in the middle of the screen: the points read, from the top left
+     * of the part read, each whether it is skin.
+     */
+    private static boolean[][] skinSeen(final ClientTestContext ctx) {
         final int width = ctx.mc().getWindow().getGuiScaledWidth();
         final int height = ctx.mc().getWindow().getGuiScaledHeight();
-        int skin = 0;
+        final int fromY = (int) (height * FRONT_TOP);
+        final int fromX = (int) (width * FRONT_LEFT);
+        final boolean[][] skin = new boolean[(int) Math.ceil(height * FRONT_BOTTOM) - fromY]
+                [(int) Math.ceil(width * (1 - FRONT_LEFT)) - fromX];
         try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
-            for (int y = (int) (height * FRONT_TOP); y < height * FRONT_BOTTOM; y++) {
-                for (int x = (int) (width * FRONT_LEFT); x < width * (1 - FRONT_LEFT); x++) {
-                    if (skin(frame.pixel(x, y))) {
-                        skin++;
-                    }
+            for (int y = fromY; y < height * FRONT_BOTTOM; y++) {
+                for (int x = fromX; x < width * (1 - FRONT_LEFT); x++) {
+                    skin[y - fromY][x - fromX] = skin(frame.pixel(x, y));
                 }
             }
         }
         return skin;
+    }
+
+    /* How many points are skin in {@code seen} where they were skin in {@code bare} too. */
+    private static int count(final boolean[][] seen, final boolean[][] bare) {
+        int both = 0;
+        for (int y = 0; y < Math.min(seen.length, bare.length); y++) {
+            for (int x = 0; x < Math.min(seen[y].length, bare[y].length); x++) {
+                if (seen[y][x] && bare[y][x]) {
+                    both++;
+                }
+            }
+        }
+        return both;
     }
 
     /*

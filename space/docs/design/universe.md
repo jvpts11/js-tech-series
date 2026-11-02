@@ -33,17 +33,23 @@ Every system has a space of its own, a dimension made the first time someone get
 vacuum, with no gravity, a black starry sky and its sun always up, since nothing turns under it.
 
 In the Solar System's space the Overworld, the Moon and Mars are round bodies in their places, each kept still, so
-whatever is built in its orbit stays over it. An astronomical unit is 10,000 blocks. The Overworld is a sphere 1,000
-blocks in radius and every other world is in proportion to its width. The Sun stands in the middle, a sphere of 1,500
-blocks that looks as big, from the Overworld, as the game's own sun. The Moon stands 6,300 blocks from the Overworld,
-a quarter of the way round from the Sun, so from the Moon the Overworld shows half lit. Each world's low orbit is about a
-third of its radius above its ground, and the world below fills the view. A planet turns once a day, with the day on the
-side towards the Sun and the night away from it; the Moon turns once an orbit and keeps its near side to the Overworld.
-These sizes and distances are first estimates.
+whatever is built in its orbit stays over it. An astronomical unit is 30,000 blocks, so every distance between worlds,
+Mars' from the Overworld among them, follows from it. The Overworld is a sphere 3,000 blocks in radius and every other
+world is in proportion to its width. The Sun stands in the middle, a sphere of 4,500 blocks that looks as big, from the
+Overworld, as the game's own sun. The Moon stands 18,900 blocks from the Overworld, a quarter of the way round from the
+Sun, so from the Moon the Overworld shows half lit. Each world's low orbit is about a third of its radius above its
+ground, and the world below fills the view. A planet turns once a day, with the day on the side towards the Sun and the
+night away from it; the Moon turns once an orbit and keeps its near side to the Overworld. Seen from its low orbit, the
+Overworld slides by below one turn in a game day; going down, it stops turning and the way down carries it on, never
+back. A world is a sphere only within its region, eight of its radii round it (the Moon is in the Overworld's): outside
+it, a planet is a bright point of its own colour, as Mars is from the Overworld, and grows into its sphere as one comes
+into its region. These sizes and distances are first estimates.
 
 A player or a rocket that climbs 700 blocks over a world's build limit passes into the space of its system, with no
 loading screen. On the way up the loaded land goes on to the horizon in a far map of the real ground, and the world
 bends into its sphere. Coming down from a spot of the low orbit brings the player to the place of the world under it.
+Any other passage between the dimensions of the system, the Overworld, its space, the Moon and Mars, by rocket, by
+ship or by a command, shows no screen either: the last picture stays until the ground where one arrives is in view.
 
 ### Worlds as data
 
@@ -94,12 +100,19 @@ it. The border of a round world stands at ±180°, the middle of its far side, a
   a soft line of dawn, a warm dusk and a glow of air on the limb where there is air, relief shadows from their height
   maps, and the night side in a deep tone;
 - **the sky's colour** is black on the Moon, and butterscotch on Mars with blue sunsets, thin clouds, a haze of dust and
-  a smaller Sun.
+  a smaller Sun;
+- **the Milky Way** stands rich across the sky where it lies on the real one, its heart warm; Venus, Mars, Jupiter and
+  Saturn are points of their own colours on the ecliptic; the zodiacal light rises before dawn as a faint wedge; and
+  where there is no air the Sun rises with no orange glow;
+- **on Mars**, meteors cross the night sky, and dust storms, regional and now and then global, darken its sky to brown,
+  hide its stars and leave a pale Sun. A storm is only seen, it does nothing else.
 
 **The Overworld is never the Earth.** Its continents, biomes, mountain ranges and polar caps come from the world's seed,
 in the game's biome colours. The game's own clouds wrap round it in bands that drift at their own pace. Seen from the
-Moon it stands still in the sky, with its phases following the Moon's hour. On Mars it is an evening star beside the
-Sun. Phobos rises in the west and crosses Mars' sky twice a sol, and Deimos is a slow point of light.
+Moon it stands still in the sky, large and in its phase, following the Moon's hour, over the near side. On Mars it is
+an evening star beside the Sun. Phobos and Deimos are drawn at their real size, irregular and brighter than the stars:
+Phobos, a small lit oblong about half a degree long, rises in the west and crosses Mars' sky twice a sol, and Deimos is
+little more than a slow star.
 
 ### Day and night on the Moon and Mars
 
@@ -160,8 +173,8 @@ name the International Astronomical Union gave them (AEgir, Draugr, Poltergeist,
 - **Every star system has a space of its own**, a dimension made the first time someone gets there, where its worlds are
   spheres in their places, moons around their planets. **A world's orbit is the space around its sphere**: vacuum, no
   gravity, the world below filling half the view; stations, satellites and debris stay there. Distances are squeezed far
-  more than sizes, as in No Man's Sky, so worlds look grand and journeys stay short enough to fly: about 10,000 blocks
-  for an astronomical unit, the Solar System as far as Neptune about 300,000, and Oceanus about 5 million, within
+  more than sizes, as in No Man's Sky, so worlds look grand and journeys stay short enough to fly: about 30,000 blocks
+  for an astronomical unit, the Solar System as far as Neptune about 900,000, and Oceanus about 15 million, within
   Minecraft's limit of 30 million ([Travel](travel.md)).
 - **Asteroid belts** (the main belt and the second Kuiper belt beyond Terminus) are fields of small rocks floating in
   their system's space, for mining ([Mining in space](mining.md)).

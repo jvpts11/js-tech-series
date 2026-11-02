@@ -23,9 +23,8 @@ Three rules start off: fast travel, which skips the cruise; "Landing needs the e
 world's atmosphere, temperature, radiation, gravity and relief before a crew lands, and stays off while nothing in the
 game teaches a team those; and J's Industrial's chains as the only path for what both mods make.
 
-Four settings size the Rocket Hangar's bay, each held to its range: the narrowest, 7 blocks (5 to 33); the widest, 48
-(9 to 96); the lowest, 12 (8 to 64); and the tallest, 128 (16 to 256). Every setting is read by the part of the game it
-governs, as that part is built.
+The Rocket Hangar has one size and no setting for it. Every setting is read by the part of the game it governs, as that
+part is built.
 
 The rest of the numbers on this page are not in the game yet.
 
@@ -74,7 +73,7 @@ Aerobraking saves much of the delta-v of arriving where there is air.
 | What | Value |
 | --- | --- |
 | A year of the Earth | 7 Overworld days |
-| An astronomical unit in a system's space | about 10,000 blocks |
+| An astronomical unit in a system's space | about 30,000 blocks |
 | An orbit in low orbit | a little over a minute |
 | The climb to space | depends on the rocket; about a minute for an ordinary one |
 | Small starship reach | about 10 light-years |

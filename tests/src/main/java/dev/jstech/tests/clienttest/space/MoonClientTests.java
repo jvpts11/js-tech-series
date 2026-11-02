@@ -41,6 +41,13 @@ public final class MoonClientTests {
     private static final int BRIGHTER = 60;
     private static final int CHANNEL = 0xFF;
     private static final int SEEING = 20 * 60 * 5;
+    /*
+     * Noon on the clock, a day's ticks and a whole turn in degrees: the Moon's hour follows the longitude, and seeing
+     * in the dark does not take the night's blue out of a place's light, so each place is looked at in its own noon.
+     */
+    private static final long NOON = 6_000L;
+    private static final long DAY = 24_000L;
+    private static final double FULL_TURN = 360.0;
 
     private MoonClientTests() {
     }
@@ -74,13 +81,18 @@ public final class MoonClientTests {
                 .thenScreenshot(0, "far_side_highlands_from_above");
     }
 
-    /* Puts the player over the Moon's place {@code at}, by longitude and latitude, seeing in the dark, looking down. */
+    /*
+     * Puts the player over the Moon's place {@code at}, by longitude and latitude, at its noon, seeing in the dark,
+     * looking down.
+     */
     private static void lookDown(final ClientTestContext ctx, final double[] at) {
         final ServerLevel moon = moon(ctx);
         final DimensionBorders.Bounds bounds = DimensionBorders.inForce(moon.dimension()).orElseThrow();
         final double perDegree = (bounds.maxX() - bounds.minX()) / 360;
         final int x = (int) Math.round(at[0] * perDegree);
         final int z = (int) Math.round(-at[1] * perDegree);
+        // Noon there: later the farther east.
+        moon.setDayTime(Math.floorMod(NOON - Math.round(at[0] / FULL_TURN * DAY), DAY));
         moon.getChunk(new BlockPos(x, 0, z));
         final int ground = moon.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
         final ServerPlayer player = ctx.serverPlayer();

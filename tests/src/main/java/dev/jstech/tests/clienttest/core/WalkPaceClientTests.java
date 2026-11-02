@@ -63,6 +63,11 @@ public final class WalkPaceClientTests {
                 RuntimeDimensions.remove(ctx.server(), key);
             });
         });
+        // The player walks: a test before this one may have left them flying.
+        ctx.thenServer(0, level -> {
+            ctx.serverPlayer().getAbilities().flying = false;
+            ctx.serverPlayer().onUpdateAbilities();
+        });
         ctx.thenTeleport(0, START, Direction.NORTH);
         walk(ctx, home, started);
         ctx.thenServer(0, level -> {

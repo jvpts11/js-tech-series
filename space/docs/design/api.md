@@ -15,7 +15,8 @@ add-on adds to, each with the model it holds, and a data pack's files can add to
   (`WorldGenerators`, `WorldModifiers`), what can be known of a world (`WorldProperties`), what kills there
   (`WorldDangers`) and its landmarks (`SpaceLandmark`, `SpaceLandmarks`).
 - Life support: pressure suits (`SpaceSuit`, `SpaceSuits`), the air their tanks hold and the cold and heat they stand,
-  and the suit modules (`SuitModule`, `SuitModules`), which may also cut the Sun's glare where no air does.
+  and the suit modules (`SuitModule`, `SuitModules`), which may also tint the view through the helmet, as the Gold
+  Visor does.
 - Rocket parts (`RocketPart`, `RocketParts`), the kits of blocks they are built of (`RocketKit`, `RocketKits`) and the
   propellants they burn (`Propellant`, `Propellants`).
 - Starship parts (`ShipPart`, `ShipParts`), their kits of blocks (`ShipKit`, `ShipKits`), the finishes a ship is

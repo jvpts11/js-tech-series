@@ -149,6 +149,36 @@ public final class CrawlerGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = WAY, batch = BATCH, timeoutTicks = 2600)
+    public static void crawler_leavesWhatTouchesTheLauncherOnlyByAnEdgeOrACorner(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos engine = helper.absolutePos(ENGINE);
+        build(helper, engine);
+        lanes(helper);
+        launcher(helper);
+        // Over the deck's north-west corner, a stone touching it by that corner alone and one touching it by an edge.
+        final BlockPos byCorner = new BlockPos(DECK_FROM_X - 1, 8, ENGINE.getZ() - DECK_HALF - 1);
+        final BlockPos byEdge = new BlockPos(DECK_FROM_X - 1, 8, ENGINE.getZ() - DECK_HALF);
+        helper.setBlock(byCorner, Blocks.STONE);
+        helper.setBlock(byEdge, Blocks.COBBLESTONE);
+        final BlockPos deck = helper.absolutePos(new BlockPos(DECK_FROM_X, 6, 7));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(engine(level, engine).along().isPresent(), "the crawler forms"))
+                .thenExecute(() -> {
+                    final Optional<Text> why = engine(level, engine).start();
+                    helper.assertTrue(why.isEmpty(), "with the launcher over it, it sets off: " + why);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(level.getBlockState(deck.relative(Direction.EAST, STEPS))
+                        .is(LauncherBlocks.LAUNCHER_DECK.get()), "the launcher is set down at the far end"))
+                .thenExecute(() -> {
+                    helper.assertBlockPresent(Blocks.STONE, byCorner);
+                    helper.assertBlockPresent(Blocks.COBBLESTONE, byEdge);
+                    helper.assertBlockNotPresent(Blocks.STONE, byCorner.relative(Direction.EAST, STEPS));
+                    helper.assertBlockNotPresent(Blocks.COBBLESTONE, byEdge.relative(Direction.EAST, STEPS));
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = WAY, batch = BATCH, timeoutTicks = 200)
     public static void crawler_staysWhereTheWayIsBlocked(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();

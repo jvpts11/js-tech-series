@@ -28,8 +28,12 @@ and the planets of Ad Astra and Galacticraft do, and more.
 - **Terrain declared in code**: builders for noise, density functions and surface rules, which the data generation
   writes, so each world is one readable declaration.
 - **A library of landforms**, as data, which any mod adds to: craters with their ejecta, rays and central peaks,
-  scattered by size; dunes; canyons and rilles; lava tubes; ice sheets and glaciers; geysers and cryovolcanoes;
-  sinkholes; salt flats; mesas; shield volcanoes and stratovolcanoes.
+  scattered by size; dunes; canyons and rilles; lava tubes lined with basalt and open to the sky through skylights;
+  caves, grottos and pits; ice sheets and glaciers; geysers, vents and cryovolcanoes; sinkholes; salt flats; mesas;
+  silica terraces; spider channels; ridges and layered mounds; shield volcanoes and stratovolcanoes. A landform can be
+  bound to a region of a world's map, so it lies where the map has it.
+- **Biomes in two scales**: a world's real zones where its map has them, and inside each, its biomes in patches a few
+  kilometres wide, read off two noises of the terrain as the game's own worlds read theirs.
 - **Seas, lakes and rivers of any liquid**: the methane of Titan, the liquid oxygen of Terminus, freezing or boiling
   away by the temperature of the place.
 - **Rock strata**: host rocks lie in layers by depth and region, so veins cross real strata; J's Geology adds rocks.
@@ -98,7 +102,8 @@ J's Space's ruins, Enigmatic sites and cities come first, then J's Overworld's, 
 
 - **Landmarks**: unique, named features of a world (Olympus Mons), with a known place, which players discover.
 - **Finding things**: the nearest structure, landmark, biome or vein of a kind, answered with **levels of imprecision**,
-  so an instrument can point roughly at first and exactly later.
+  so an instrument can point roughly at first and exactly later. On a round world the game's search for a biome goes on
+  over the whole world, coarse and then fine, where the game's own stops short.
 - **Markers on maps**: an API of markers and layers, points (structures found, machines, veins found) and areas
   (satellite coverage, pollution, radiation, claims), shown through guarded adapters in JourneyMap, Xaero's Minimap and
   World Map, and FTB Chunks; with no map mod, in the maps mods on the Core have, such as J's Space's Atlas; each player
@@ -117,7 +122,8 @@ atmosphere and 30 °C high in the clouds, where floating bases sit.
 - **A sky kit**: several suns, each sized and coloured by its kind of star; planets and moons drawn in the sky with
   their phases and their surfaces turning, which a telescope can look at; rings; square stars, the band of the galaxy
   and nebulae; auroras; eclipses worked out from the real geometry; the colour of the sky and of the sunset from the
-  air (the blue sunsets of Mars); clouds with their own height, colour and density; haze.
+  air (the blue sunsets of Mars); clouds with their own height, colour and density; haze; the colour of each world's
+  air for its fog, its veil and its sky, never the Earth's blue where it has none; a veil a storm draws over the sky.
 - **Sunlight by distance**: the farther the star, the dimmer the day; on Pluto the day is dark.
 - **A weather kit**: kinds of weather per dimension (dust storms, acid rain, methane rain, snow of other ices, electric
   storms), with what they do to sight and to a body, registered by any mod.
@@ -127,7 +133,9 @@ atmosphere and 30 °C high in the clouds, where floating bases sit.
 Areas or whole dimensions **with laws of their own**, for J's Industrial's Aleph first and J's Space's worlds next, as
 visual effects and as mechanics:
 
-- **gravity fields**: strength and direction, zero, or towards a point, applied to entities and falling things;
+- **gravity fields**: strength and direction, zero, or towards a point, applied to entities and falling things; where
+  the ground pulls less, every creature's arms and legs swing slower, at the pace of the square root of the pull (0.4
+  on the Moon, 0.62 on Mars), never under a quarter, and as wide as at home;
 - **a rate of time**: entities and block entities, machines included, tick slower or faster;
 - **light**: colour shifted as by the Doppler effect, bent as by gravity (lensing, mirages), darkness or glow with no
   source;
@@ -152,8 +160,9 @@ Where the laws depart from the normal ones, **dissonance** builds up ([Hazards](
 ### Travelling between dimensions
 
 A player goes from one dimension to another **with what they ride**, a vehicle or a moving structure and everyone in
-it, and arrives at a safe place. A mod gives the passage a **screen of its own** instead of the game's "loading
-terrain" (the fire of a re-entry).
+it, and arrives at a safe place. A mod groups its dimensions: a passage between two of one group, by any means (a
+climb, a portal, a command), opens no screen at all, the last picture held until the ground where one arrives is in
+view, never the game's "loading terrain".
 
 ### World events
 

@@ -19,9 +19,13 @@ Every item of J's Space has its entry. Launch Operations holds the rocket hangar
 the lander, the mobile launcher, the crawler, the launch pad, the propellant depot and the launch panel. Flight holds
 the flight computer, coming down, the landing platform and rocket wreckage. Suits holds the Lunar Suit, its modules and
 its supplies. Starships holds the Small Shipyard, the hull, the engines, the wings and gear, the fittings, flying a
-ship, the crew, the ship landing pad and the runway beacon. Each drill is on cuff cards, three steps a card.
+ship, the crew, the ship landing pad and the runway beacon. Each drill is on cuff cards, three steps a card. Every
+multiblock of J's Space has its scene on its page, to turn and peel layer by layer: the Rocket Hangar whole, seen from
+its door's side, the launch pad with its trench dug in, the crawler, the propellant depot, both landing platforms, the
+ship landing pad and the Small Shipyard.
 
-World Data has a sheet for the Moon and one for Mars, each painted as seen from orbit, with its ground, its ores, how a
+World Data has a sheet for the Moon and one for Mars, each a picture of the world as seen from orbit, taken in the game
+from the same sphere the system's space draws, with its ground, its ores, how a
 crew gets there and back, its landmarks, its biomes and what kills there. Its figures (diameter, gravity, air,
 temperature, day and year, the usual trip and the delta-v to land) are read from the world's own data, so a data
 pack's change shows on the page.

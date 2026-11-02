@@ -28,6 +28,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The way a crawler-transporter goes and what it takes along it: its crawlerway, a lane of gravel under each side's
@@ -170,9 +171,11 @@ public final class CrawlerWay {
     }
 
     /*
-     * The launcher whose deck the arm at {@code arm} draws: every block joined to it from its deck's underside up,
-     * but the pedestals it stands on, the crawler under it and the hangar round it. Blocks touching by an edge or a
-     * corner are joined too, as an engine's nozzle hangs from its mount by the rim of its bell.
+     * The launcher whose deck the arm at {@code arm} draws: every block joined to it face to face from its deck's
+     * underside up, but the pedestals it stands on, the crawler under it and the hangar round it. A formed block of
+     * the rocket or the launcher joins by an edge or a corner too, to a formed block of the same build: a part joined
+     * to the rest only so, as an engine's nozzle hangs from its mount by the rim of its bell, goes with it, and
+     * nothing else that touches it only by an edge or a corner does.
      */
     private static Load load(final ServerLevel level, final BlockPos arm, final BlockPos engine) throws Refusal {
         final int bottom = engine.getY() + 1;
@@ -184,8 +187,9 @@ public final class CrawlerWay {
         BlockPos computer = null;
         while (!open.isEmpty()) {
             final BlockPos at = open.poll();
-            if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part && part.terminal() != null) {
-                terminal = part.terminal();
+            final BlockPos built = builtBy(level, at);
+            if (built != null) {
+                terminal = built;
             }
             if (level.getBlockEntity(at) instanceof FlightComputerBlockEntity) {
                 computer = at;
@@ -193,22 +197,42 @@ public final class CrawlerWay {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     for (int dz = -1; dz <= 1; dz++) {
+                        final int sides = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
                         final BlockPos next = at.offset(dx, dy, dz);
-                        if (next.getY() < bottom || Math.abs(next.getX() - arm.getX()) > REACH
-                                || Math.abs(next.getZ() - arm.getZ()) > REACH || blocks.contains(next)
-                                || !carried(level.getBlockState(next))) {
+                        if (sides == 0 || sides > 1 && (built == null || !built.equals(builtBy(level, next)))) {
                             continue;
                         }
-                        if (blocks.size() >= StructureBalance.mostBlocks()) {
-                            throw new Refusal(CrawlerTexts.TOO_BIG.text());
+                        if (joins(level, next, arm, bottom, blocks)) {
+                            blocks.add(next);
+                            open.add(next);
                         }
-                        blocks.add(next);
-                        open.add(next);
                     }
                 }
             }
         }
         return new Load(List.copyOf(blocks), Optional.ofNullable(terminal), Optional.ofNullable(computer));
+    }
+
+    /* The terminal of the build the formed block at {@code at} is part of; none for any other block. */
+    private static @Nullable BlockPos builtBy(final ServerLevel level, final BlockPos at) {
+        return level.getBlockEntity(at) instanceof FormedPartBlockEntity part ? part.terminal() : null;
+    }
+
+    /*
+     * Whether the block at {@code at} joins the load {@code blocks} gathered round the arm at {@code arm}: within its
+     * reach, from its deck's underside up, carried and not in it already. Refused where the load grows past what a
+     * crawler carries.
+     */
+    private static boolean joins(final ServerLevel level, final BlockPos at, final BlockPos arm, final int bottom,
+                                 final Set<BlockPos> blocks) throws Refusal {
+        if (at.getY() < bottom || Math.abs(at.getX() - arm.getX()) > REACH || Math.abs(at.getZ() - arm.getZ()) > REACH
+                || blocks.contains(at) || !carried(level.getBlockState(at))) {
+            return false;
+        }
+        if (blocks.size() >= StructureBalance.mostBlocks()) {
+            throw new Refusal(CrawlerTexts.TOO_BIG.text());
+        }
+        return true;
     }
 
     /* Whether a block standing so is carried with a launcher: anything but air, its pedestals, crawlers and hangars. */

@@ -19,7 +19,8 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
 ### In 3D and in motion
 
 - **3D scenes on a page**: a structure or a multiblock the reader turns, zooms and goes through layer by layer (or hides
-  layers of), brought in from a saved structure.
+  layers of), brought in from a saved structure. A scene holds up to 128 blocks each way, room for a whole building;
+  its blocks are made into meshes once and kept on the graphics card, so a large one turns without stalling.
 - **Animated scenes that explain how something works**, as Ponder does: step by step, with captions, blocks appearing,
   items moving along a pipe, a machine at work; with a timeline to pause and go back; written as data. On the page the
   scene sits in its own box: the step and its caption above ("2 of 3: it is pressed flat"), the timeline below with a

@@ -12,7 +12,9 @@ more air.
 The lunar suit is a pressure suit in four pieces, after Apollo's A7L: the **Lunar Helmet**, hard and white with its
 smoked visor in its frame; the **Lunar Suit**, with the life-support pack on its back (its hatch, vent, lamps, purge
 unit, antenna and bottles); the **Lunar Trousers**; and the **Lunar Boots**. It seals only when all four are worn. Worn
-whole it stands cold down to -160 °C and heat up to 125 °C, and protects like leather armour.
+whole it stands cold down to -160 °C and heat up to 125 °C, and protects like leather armour. It fits its wearer: the
+helmet closes under the chin, the neck covered, and the gloves cover the hands; in first person the arm is seen in the
+suit's sleeve.
 
 Its tanks hold half an hour of air. The air left is kept on the Lunar Suit, the piece with the tanks.
 
@@ -44,7 +46,7 @@ A module is fitted by right-clicking it onto the piece it goes on, and a piece t
 | **Extra Oxygen** | Lunar Suit | the tanks hold half as much air again |
 | **Radiation Vest** | Lunar Suit | stops half of the radiation the suit's wearer would take |
 | **Suit Lamps** | Lunar Helmet | lights the way ahead, as a torch does |
-| **Gold Visor** | Lunar Helmet | a gold-coated visor lowered over the helmet's own; it cuts all of the Sun's glare, and the view through it is a little gold |
+| **Gold Visor** | Lunar Helmet | a gold-coated visor lowered over the helmet's own; the view through it is a little gold. It is a look only, as looking at the Sun does no harm |
 
 These are first estimates.
 
@@ -95,7 +97,6 @@ On an airless world, a player reborn outside without a suit would die again at o
 | **Heat and cold** | the Moon's noon and night, Mars' cold | burns or freezes | a suit whose range holds the temperature; a sealed room |
 | **Poisonous air** | the carbon dioxide of Mars | poisons | the lunar suit |
 | **Cosmic radiation** | the Moon, Mars, space | a dose that builds up slowly | the Radiation Vest |
-| **Glare of the Sun** | the Moon and space, where no air softens it | the view whites out near the Sun; it does no harm | the Gold Visor |
 
 ## To build
 

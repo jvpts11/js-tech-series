@@ -68,16 +68,26 @@ public final class SystemSpaceClientTests {
     private static final float DOWN = 90F;
     private static final int CHANNEL = 0xFF;
     /*
-     * The world below slid by in orbit: a patch of the screen under the crosshair read twice, fifteen seconds apart;
-     * it slides by a turn a day, some twelve points of the picture every five seconds, so the patch's picture moves
-     * this many points or more, across and down at once since the world turns about its leaning poles, sought this
-     * far each way.
+     * The world below slid by in orbit: a patch of the screen on the world read twice, fifteen seconds apart; it
+     * slides by a turn a day, some twelve points of the picture every five seconds, so the patch's picture moves this
+     * many points or more, across and down at once since the world turns about its leaning poles, sought this far each
+     * way.
      */
     private static final int SLIDING = 300;
     private static final int PATCH = 30;
-    private static final int PATCH_DOWN = 24;
     private static final int MOST_SHIFT = 60;
     private static final int SLID = 20;
+    /*
+     * Where the patch is read: of the places this far apart on the world's face, right of the screen's middle and
+     * above the hand, up to these shares of the screen's width and height, the one whose picture varies most, its
+     * clouds and coasts, for plain sea matches itself wherever it is laid; and none with more than this share of its
+     * points as dark as space, where the stars stand still.
+     */
+    private static final int BUSY_STEP = 16;
+    private static final double BUSY_RIGHT = 0.68;
+    private static final double BUSY_BOTTOM = 0.6;
+    private static final int SPACE_DARK = 90;
+    private static final double FEW_DARK = 0.02;
     /*
      * Mars looked at from the Overworld's orbit: how far beside the crosshair it is put, in degrees, and how far round
      * the crosshair it is sought, in the GUI's points; how red a pixel of it is, and the least and the most of them a
@@ -100,12 +110,7 @@ public final class SystemSpaceClientTests {
         final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
         final double[] mars = SystemLayout.centre(SolarBody.MARS);
         final double[] marsSunward = SystemLayout.sunward(SolarBody.MARS);
-        ctx.afterTest(() -> ctx.server().execute(() -> {
-            final BlockPos origin = ctx.origin().above(2);
-            ctx.serverPlayer().teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(),
-                    origin.getZ() + 0.5, 0F, 0F);
-            RuntimeDimensions.remove(ctx.server(), SPACE);
-        }));
+        ctx.afterTest(() -> ctx.server().execute(() -> home(ctx)));
         ctx.thenServer(0, level -> look(ctx, SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM),
                         home[0] - ASIDE, home[2], NORTH, DOWN))
                 .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(SPACE), ARRIVE,
@@ -178,21 +183,20 @@ public final class SystemSpaceClientTests {
     public static void orbit_slidesTheWorldByBelow(final ClientTestContext ctx) {
         final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
         final int[][][] patches = new int[2][][];
-        ctx.afterTest(() -> ctx.server().execute(() -> {
-            final BlockPos origin = ctx.origin().above(2);
-            ctx.serverPlayer().teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(),
-                    origin.getZ() + 0.5, 0F, 0F);
-            RuntimeDimensions.remove(ctx.server(), SPACE);
-        }));
+        final int[][] centre = new int[1][];
+        ctx.afterTest(() -> ctx.server().execute(() -> home(ctx)));
         ctx.thenServer(0, level -> look(ctx, SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM),
                         home[0] - ASIDE, home[2], NORTH, DOWN))
                 .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(SPACE), ARRIVE,
                         "the player's game to reach the Solar System's space")
                 .thenWaitUntil(() -> bright(ctx, 0, OFF_CROSSHAIR) > LIT, DRAWN,
                         "the Overworld's day side to be drawn lit below")
-                .then(SETTLE, () -> patches[0] = patch(ctx, 0))
+                .then(SETTLE, () -> {
+                    centre[0] = busiest(ctx);
+                    patches[0] = patch(ctx, 0, centre[0]);
+                })
                 .thenScreenshot(0, "orbit_before")
-                .then(SLIDING, () -> patches[1] = patch(ctx, MOST_SHIFT))
+                .then(SLIDING, () -> patches[1] = patch(ctx, MOST_SHIFT, centre[0]))
                 .thenScreenshot(0, "orbit_after")
                 .then(0, () -> {
                     final long moved = Math.round(shift(patches[0], patches[1]));
@@ -210,12 +214,7 @@ public final class SystemSpaceClientTests {
     public static void mars_fromTheOverworldsOrbitIsABrightPoint(final ClientTestContext ctx) {
         final double[] home = SystemLayout.centre(SolarBody.OVERWORLD);
         final double[] mars = SystemLayout.centre(SolarBody.MARS);
-        ctx.afterTest(() -> ctx.server().execute(() -> {
-            final BlockPos origin = ctx.origin().above(2);
-            ctx.serverPlayer().teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(),
-                    origin.getZ() + 0.5, 0F, 0F);
-            RuntimeDimensions.remove(ctx.server(), SPACE);
-        }));
+        ctx.afterTest(() -> ctx.server().execute(() -> home(ctx)));
         final double dx = mars[0] - home[0];
         final double dz = mars[2] - home[2];
         final double dy = mars[1] - (SystemLayout.ORBIT_Y + EYE);
@@ -233,6 +232,19 @@ public final class SystemSpaceClientTests {
                             + "pixels by the crosshair");
                 })
                 .thenScreenshot(0, "mars_a_point_from_the_overworld");
+    }
+
+    /*
+     * Brings the player back to the test's place on the Overworld, on their feet, as {@link #look} set them flying:
+     * a test after this one finds them standing, not hanging in the air over their ground.
+     */
+    private static void home(final ClientTestContext ctx) {
+        final ServerPlayer player = ctx.serverPlayer();
+        player.getAbilities().flying = false;
+        player.onUpdateAbilities();
+        final BlockPos origin = ctx.origin().above(2);
+        player.teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0F, 0F);
+        RuntimeDimensions.remove(ctx.server(), SPACE);
     }
 
     /* Puts the player flying in the space over ({@code x}, {@code z}), at the height of the low orbits. */
@@ -276,14 +288,52 @@ public final class SystemSpaceClientTests {
         return colour[0] + colour[1] + colour[2];
     }
 
+    /* The middle of the place on the world's face where the patch is read, in the GUI's points. */
+    private static int[] busiest(final ClientTestContext ctx) {
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        int[] best = null;
+        double most = -1;
+        final int side = 2 * PATCH + 1;
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int cy = PATCH + MOST_SHIFT; cy <= height * BUSY_BOTTOM; cy += BUSY_STEP) {
+                for (int cx = width / 2; cx <= width * BUSY_RIGHT; cx += BUSY_STEP) {
+                    long sum = 0;
+                    long squares = 0;
+                    int dark = 0;
+                    for (int y = cy - PATCH; y <= cy + PATCH; y++) {
+                        for (int x = cx - PATCH; x <= cx + PATCH; x++) {
+                            final int argb = frame.pixel(x, y);
+                            final int bright = (argb >> 16 & CHANNEL) + (argb >> 8 & CHANNEL) + (argb & CHANNEL);
+                            sum += bright;
+                            squares += (long) bright * bright;
+                            dark += bright < SPACE_DARK ? 1 : 0;
+                        }
+                    }
+                    final double count = (double) side * side;
+                    final double mean = sum / count;
+                    final double varies = squares / count - mean * mean;
+                    if (dark <= count * FEW_DARK && varies > most) {
+                        most = varies;
+                        best = new int[] {cx, cy};
+                    }
+                }
+            }
+        }
+        if (best == null) {
+            throw new IllegalStateException("no place on the world's face clear of space to read the slide at");
+        }
+        return best;
+    }
+
     /*
-     * How bright the screen is over a square under the crosshair, point by point, row by row, {@code margin} points
+     * How bright the screen is over a square round {@code centre}, point by point, row by row, {@code margin} points
      * wider than the patch all round.
      */
-    private static int[][] patch(final ClientTestContext ctx, final int margin) {
+    private static int[][] patch(final ClientTestContext ctx, final int margin, final int[] centre) {
         final int side = 2 * (PATCH + margin) + 1;
-        final int left = ctx.mc().getWindow().getGuiScaledWidth() / 2 - PATCH - margin;
-        final int top = ctx.mc().getWindow().getGuiScaledHeight() / 2 + PATCH_DOWN - PATCH - margin;
+        final int left = centre[0] - PATCH - margin;
+        final int top = centre[1] - PATCH - margin;
         final int[][] out = new int[side][side];
         try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
             for (int y = 0; y < side; y++) {

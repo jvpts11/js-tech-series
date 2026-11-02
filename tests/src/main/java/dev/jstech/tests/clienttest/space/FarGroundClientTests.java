@@ -9,12 +9,14 @@ package dev.jstech.tests.clienttest.space;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.dimension.DimensionBorders;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.space.network.FarMapPayload;
 import dev.jstech.space.universe.ClimbView;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SphereMap;
+import dev.jstech.space.worldgen.MarsBiomes;
 import dev.jstech.space.worldgen.MarsWorld;
 import dev.jstech.space.worldgen.MoonWorld;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -22,11 +24,14 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.Locale;
 import net.minecraft.client.Screenshot;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import org.slf4j.Logger;
 
 /**
@@ -70,6 +75,16 @@ public final class FarGroundClientTests {
     private static final double FEW_WHITE = 0.01;
     private static final double GREY = 20;
     private static final double TEXTURED = 3;
+    /*
+     * Mars' ground is laid in its real zones, and the middle of its world is Meridiani's, strewn with dark dunes: the
+     * climb there would read the basalt's grey, not the air. It is made instead over the plains or the highlands, the
+     * planet's common ground, at the first latitude along the prime meridian (so its noon stays the world's) where the
+     * ground round the spot is all theirs: this far round it, at these latitudes, at the biomes' height.
+     */
+    private static final int ROUND = 192;
+    private static final int[] LATITUDES = {0, 10, -10, 20, -20, 30, -30, 40, -40, 50, -50};
+    private static final int BIOME_Y = 64;
+    private static final double FULL_TURN = 360.0;
 
     private FarGroundClientTests() {
     }
@@ -136,8 +151,35 @@ public final class FarGroundClientTests {
         final ServerPlayer player = ctx.serverPlayer();
         player.getAbilities().flying = true;
         player.onUpdateAbilities();
-        final BlockPos at = body == SolarBody.OVERWORLD ? ctx.origin() : BlockPos.ZERO;
+        final BlockPos at = switch (body) {
+            case OVERWORLD -> ctx.origin();
+            case MARS -> commonGround(world);
+            default -> BlockPos.ZERO;
+        };
         player.teleportTo(world, at.getX() + 0.5, height, at.getZ() + 0.5, NORTH, DOWN);
+    }
+
+    /* The first place along Mars' prime meridian whose ground, and the ground round it, is plains or highlands. */
+    private static BlockPos commonGround(final ServerLevel mars) {
+        final DimensionBorders.Bounds bounds = DimensionBorders.inForce(mars.dimension()).orElseThrow();
+        final double perDegree = (bounds.maxX() - bounds.minX()) / FULL_TURN;
+        for (final int latitude : LATITUDES) {
+            final int z = (int) Math.round(-latitude * perDegree);
+            boolean common = true;
+            for (int dx = -ROUND; dx <= ROUND && common; dx += ROUND) {
+                for (int dz = -ROUND; dz <= ROUND && common; dz += ROUND) {
+                    final Holder<Biome> biome = mars.getChunkSource().getGenerator().getBiomeSource().getNoiseBiome(
+                            QuartPos.fromBlock(dx), QuartPos.fromBlock(BIOME_Y), QuartPos.fromBlock(z + dz),
+                            mars.getChunkSource().randomState().sampler());
+                    common = biome.is(MarsBiomes.NORTHERN_PLAINS.key()) || biome.is(MarsBiomes.SOUTHERN_HIGHLANDS
+                            .key());
+                }
+            }
+            if (common) {
+                return new BlockPos(0, 0, z);
+            }
+        }
+        throw new IllegalStateException("no plains or highlands round any latitude of Mars' prime meridian");
     }
 
     /* The world {@code body} is drawn as: the Overworld, or the Moon's or Mars' own dimension, made from its file. */

@@ -449,7 +449,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   exhaust stacks either side and a ladder. Its crawlerway is a lane of gravel under each side's trucks. A cab used, it
   goes along the crawlerway to its farther end: with a launcher centred over it, it lifts the launcher off its
   pedestals, carries it slowly to the end, sets it down there on the grid and comes back by itself; empty, it just goes
-  to the other end. The bay doors in its way open while it passes and close once it is back; it says where the way is
+  to the other end. It takes the launcher and the rocket on it whole, an engine's nozzle hanging by the rim of its
+  bell too, and nothing that only touches them by an edge or a corner. The bay doors in its way open while it passes and close once it is back; it says where the way is
   blocked, and will not take an unfinished rocket. Leaving the hangar, the rocket's plan goes to its flight computer,
   which draws its formed parts from then on. A Structure Projector shows the crawler whole, and a Multiblock Builder
   used on the projector builds it, its engine last. New blocks: the Crawler Track, the Crawler Deck, the Crawler Cab,
