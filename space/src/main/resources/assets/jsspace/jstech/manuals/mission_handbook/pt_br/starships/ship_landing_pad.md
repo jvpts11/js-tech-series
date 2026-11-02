@@ -29,7 +29,7 @@ height: 120
 ```
 
 1. Construa a treliça com dois blocos de altura: uma coluna sob o meio e um anel de postes contraventados em volta.
-2. Assente o piso sobre ela, a escada descendo da borda e os mastros na beirada. O Projetor de Estruturas do J's Core mostra cada bloco.
+2. Assente o piso sobre ela, a escada descendo da borda e os mastros na beirada. O Projetor de Estruturas do J's Core mostra cada bloco, e um Construtor de Multiblocos usado no projetor constrói a plataforma, com o terminal por último.
 3. Coloque o terminal no piso, junto ao topo da escada. Quem o coloca é o dono da plataforma.
 4. Para compartilhar a plataforma, o dono gira a chave na aba Proteção da tela do terminal: para a sua equipe ou para todos.
 5. A até 512 blocos, aperte [[J]] no comando de uma nave para POUSO ([pilotar uma nave](jsspace:flying_a_ship)). A nave voa alto, desacelera ao se aproximar e desce pairando sobre o meio.

@@ -451,16 +451,21 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   pedestals, carries it slowly to the end, sets it down there on the grid and comes back by itself; empty, it just goes
   to the other end. The bay doors in its way open while it passes and close once it is back; it says where the way is
   blocked, and will not take an unfinished rocket. Leaving the hangar, the rocket's plan goes to its flight computer,
-  which draws its formed parts from then on. New blocks: the Crawler Track, the Crawler Deck, the Crawler Cab, the
-  Leveling Jack and the Crawler Engine.
+  which draws its formed parts from then on. A Structure Projector shows the crawler whole, and a Multiblock Builder
+  used on the projector builds it, its engine last. New blocks: the Crawler Track, the Crawler Deck, the Crawler Cab,
+  the Leveling Jack and the Crawler Engine.
 - The launch pad the crawler sets the launcher down on, with the real pads' rules. Its flame trench runs
   under the launcher's exhaust opening: a row of Flame Deflectors below the ground, a ridge that splits the flame both
   ways along the trench, spanning it from one wall of Trench Lining to the other. Its Pad Service Port takes water by
   pipe and J's Energy by cable, and holding a whole deluge (64 buckets, and 400 kJ for its pumps) pours it over the pad
   at ignition. A pad with neither trench nor deluge is blown apart at ignition, as Starship's first flight tore up its
   pad, unless the launch damage setting is off; and in a thunderstorm the launch panel holds the countdown. Pad
-  Pedestals take their shape by themselves when three stand in a column, as on a pad built by hand. New blocks: the
-  Flame Deflector, the Trench Lining and the Pad Service Port.
+  Pedestals take their shape by themselves when three stand in a column, as on a pad built by hand. The whole pad is
+  also one multiblock, which a Structure Projector shows and a Multiblock Builder builds: a square of light gray
+  concrete with its corners cut, the trench dug five blocks deep along its middle and lined, a band of deflectors
+  nine rows long under the pad's middle, the crawler's two lanes of gravel from its edge to where the crawler stops
+  with any rocket's axis over the deflectors, and the service port by its edge. New blocks: the Flame Deflector, the
+  Trench Lining and the Pad Service Port.
 - The propellant depot that feeds the pad. A sphere built as a cube of Sphere Shell of odd edge from three to
   nine blocks, on a column of Tank Leg under each bottom corner, a Vent Stack on its top and a Transfer Pump on the
   ground against a leg, forms and is drawn whole as the approved one: the welded sphere in rings of white plates, eight
@@ -468,8 +473,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   that wide, by pipe through its pump, and lets it boil away when it falls apart. The pad's service port now also takes
   liquid oxygen and liquid methane by pipe and fuels the rocket standing on the launcher over it, each tank to its
   propellant's mix, its pumps spending energy for every kilogram; the rocket's flight computer keeps what its tanks hold
-  until it flies. A depot of liquid oxygen fills an Oxygen Bottle held to its pump. New blocks: the Sphere Shell, the
-  Tank Leg, the Vent Stack and the Transfer Pump.
+  until it flies. A depot of liquid oxygen fills an Oxygen Bottle held to its pump. A Structure Projector shows the
+  approved depot, nine blocks wide on legs two tall, and a Multiblock Builder builds it. New blocks: the Sphere
+  Shell, the Tank Leg, the Vent Stack and the Transfer Pump.
 - The Launch Panel by the pad, its console the approved LCC-1: the count in seven segments with the mission's
   clock and the holds, the sequence on its screen, the HOLD and ABORT lamps, the go and no-go board (vehicle,
   propellant, tower arms, deluge, weather, crew, range, clamps), the tanks' bars, the DELUGE and CLAMPS toggles, the

@@ -1,0 +1,155 @@
+{
+  "key": {
+    "L": {
+      "blocks": [
+        "jsspace:tank_leg"
+      ]
+    },
+    "S": {
+      "blocks": [
+        "jsspace:sphere_shell"
+      ]
+    },
+    "V": {
+      "blocks": [
+        "jsspace:vent_stack"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "#L       L",
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      " L       L"
+    ],
+    [
+      " L       L",
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      " L       L"
+    ],
+    [
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS"
+    ],
+    [
+      " SSSSSSSSS",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " SSSSSSSSS"
+    ],
+    [
+      " SSSSSSSSS",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " SSSSSSSSS"
+    ],
+    [
+      " SSSSSSSSS",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " SSSSSSSSS"
+    ],
+    [
+      " SSSSSSSSS",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " SSSSSSSSS"
+    ],
+    [
+      " SSSSSSSSS",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " SSSSSSSSS"
+    ],
+    [
+      " SSSSSSSSS",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " SSSSSSSSS"
+    ],
+    [
+      " SSSSSSSSS",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " S       S",
+      " SSSSSSSSS"
+    ],
+    [
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS",
+      " SSSSSSSSS"
+    ],
+    [
+      "          ",
+      "          ",
+      "          ",
+      "          ",
+      "     V    ",
+      "          ",
+      "          ",
+      "          ",
+      "          "
+    ]
+  ],
+  "name": "propellant_depot",
+  "terminal": "jsspace:transfer_pump"
+}

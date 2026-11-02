@@ -1,0 +1,67 @@
+{
+  "key": {
+    "C": {
+      "blocks": [
+        "jsspace:crawler_cab"
+      ]
+    },
+    "D": {
+      "blocks": [
+        "jsspace:crawler_deck"
+      ]
+    },
+    "J": {
+      "blocks": [
+        "jsspace:leveling_jack"
+      ]
+    },
+    "T": {
+      "blocks": [
+        "jsspace:crawler_track"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "  TTTT       TTTT  ",
+      "  TTTT       TTTT  ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "  TTTT       TTTT  ",
+      "  TTTT       TTTT  "
+    ],
+    [
+      "CCJJJJ       JJJJ  ",
+      "CCJJJJ       JJJJ  ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "  JJJJ       JJJJCC",
+      "  JJJJ       JJJJCC"
+    ],
+    [
+      "CCDDDDDDDDDDDDDDD  ",
+      "CCDDDDDDDDDDDDDDD  ",
+      "  DDDDDDDDDDDDDDD  ",
+      "  DDDDDDDDDDDDDDD  ",
+      "  DDDDDDDDDDDDDDD  ",
+      "  DDDDDDD#DDDDDDD  ",
+      "  DDDDDDDDDDDDDDD  ",
+      "  DDDDDDDDDDDDDDD  ",
+      "  DDDDDDDDDDDDDDD  ",
+      "  DDDDDDDDDDDDDDDCC",
+      "  DDDDDDDDDDDDDDDCC"
+    ]
+  ],
+  "name": "crawler_transporter",
+  "terminal": "jsspace:crawler_engine"
+}

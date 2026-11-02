@@ -21,7 +21,7 @@ No menu criativo, aba J's Space.
 ## Como usar
 
 1. Faça o caminho do transportador: uma faixa de cascalho sob as esteiras de cada lado, de até 1.024 blocos, terminando onde o transportador deve parar.
-2. Construa o transportador ao longo dela; o motor o encontra inteiro e o forma.
+2. Construa o transportador ao longo dela, pelo fantasma de um Projetor de Estruturas, ou use um Construtor de Multiblocos no projetor. O motor o encontra inteiro e o forma.
 3. Para um translado, deixe-o embaixo do deck da plataforma, centrado, com o comprimento ao longo do deck.
 4. Use uma cabine. O hangar passa o plano do foguete ao [computador de voo](jsspace:flight_computer) dele, e o transportador parte.
 

@@ -13,14 +13,24 @@ import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.multiblock.BlockMatch;
+import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.MultiblockPatterns;
+import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
@@ -45,6 +55,10 @@ public final class CrawlerBlocks {
             CrawlerEngineBlock::new).named("Crawler Engine").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrawlerEngineBlockEntity>> ENGINE_ENTITY =
             SpaceContent.CONTENT.blockEntity("crawler_engine", CrawlerEngineBlockEntity::new, CRAWLER_ENGINE);
+    /** The whole crawler as one multiblock, which the Structure Projector shows and the Multiblock Builder builds. */
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
+            "crawler_transporter");
+    public static final MultiblockPattern PATTERN = MultiblockPatterns.declare(ID, pattern());
 
     private CrawlerBlocks() {
     }
@@ -72,5 +86,47 @@ public final class CrawlerBlocks {
                         .strength(3.0F, 6.0F).requiresCorrectToolForDrops().sound(SoundType.METAL))
                 .look(IBlockLook.byState(state -> state.getValue(CrawlerPieceBlock.FORMED) ? drawn : face))
                 .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(CRAWLER);
+    }
+
+    /*
+     * The crawler drawn from its layout, its length along x, its tracks' layer on the ground and its engine the
+     * terminal: the engine finds the same layout it is built from, so the two cannot part. It is not mirrored, as its
+     * cabs stand at opposite corners.
+     */
+    private static MultiblockPattern pattern() {
+        final Map<BlockPos, Character> letters = new HashMap<>();
+        for (final CrawlerLayout.Spot spot : CrawlerLayout.spots(BlockPos.ZERO, Direction.EAST)) {
+            letters.put(spot.at(), letter(spot.kind()));
+        }
+        final BoundingBox box = BoundingBox.encapsulatingPositions(letters.keySet()).orElseThrow();
+        final MultiblockPattern.Builder builder = MultiblockPattern.builder(ID.getPath());
+        for (int y = box.minY(); y <= box.maxY(); y++) {
+            final String[] rows = new String[box.getZSpan()];
+            for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                final StringBuilder row = new StringBuilder(box.getXSpan());
+                for (int x = box.minX(); x <= box.maxX(); x++) {
+                    row.append(letters.getOrDefault(new BlockPos(x, y, z), MultiblockPattern.IGNORE_CHAR));
+                }
+                rows[z - box.minZ()] = row.toString();
+            }
+            builder.layer(rows);
+        }
+        return builder.where(letter(CrawlerLayout.Kind.TRACK), BlockMatch.blocks(CRAWLER_TRACK.getId().toString()))
+                .where(letter(CrawlerLayout.Kind.JACK), BlockMatch.blocks(LEVELING_JACK.getId().toString()))
+                .where(letter(CrawlerLayout.Kind.DECK), BlockMatch.blocks(CRAWLER_DECK.getId().toString()))
+                .where(letter(CrawlerLayout.Kind.CAB), BlockMatch.blocks(CRAWLER_CAB.getId().toString()))
+                .terminal(CRAWLER_ENGINE.getId().toString())
+                .build();
+    }
+
+    /* The letter a piece of {@code kind} is drawn with in the crawler's pattern. */
+    private static char letter(final CrawlerLayout.Kind kind) {
+        return switch (kind) {
+            case TRACK -> 'T';
+            case JACK -> 'J';
+            case DECK -> 'D';
+            case CAB -> 'C';
+            case ENGINE -> MultiblockPattern.TERMINAL_CHAR;
+        };
     }
 }

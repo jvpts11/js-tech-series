@@ -29,7 +29,7 @@ height: 120
 ```
 
 1. Build the truss two blocks high: a column under the middle and a ring of braced posts round it.
-2. Lay the deck on it, the stair down from its edge and the masts on its rim. J's Core's Structure Projector shows every block.
+2. Lay the deck on it, the stair down from its edge and the masts on its rim. J's Core's Structure Projector shows every block, and a Multiblock Builder used on the projector builds the pad, its terminal last.
 3. Place the terminal on the deck by the stair's head. Whoever places it owns the pad.
 4. To share it, its owner turns the key switch on the terminal's Protection tab, to their team or to everyone.
 5. Within 512 blocks, press [[J]] at a ship's helm for LAND ([flying a ship](jsspace:flying_a_ship)). The ship flies over high, slows as it nears and comes down hovering over the middle.

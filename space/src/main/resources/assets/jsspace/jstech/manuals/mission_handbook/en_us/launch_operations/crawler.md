@@ -21,7 +21,7 @@ From the creative menu, J's Space tab.
 ## How to use it
 
 1. Lay the crawlerway: a lane of gravel under each side's tracks, up to 1,024 blocks, ending where the crawler is to stop.
-2. Build the crawler along it; its engine finds it whole and forms it.
+2. Build the crawler along it, from a Structure Projector's ghost, or use a Multiblock Builder on the projector. Its engine finds it whole and forms it.
 3. For a rollout, stand it under the launcher's deck, centred, its length along the deck's.
 4. Use a cab. The hangar hands the rocket's plan to its [flight computer](jsspace:flight_computer), and the crawler sets off.
 

@@ -20,7 +20,7 @@ No menu criativo, aba J's Space.
 
 ## Como usar
 
-1. Monte um quadrado de Lajes de Pouso com a Plataforma de Pouso no meio: 9 por 9 blocos para estágios de até 3 blocos de largura, 15 por 15 blocos para estágios de até 5 blocos. Ela se forma quando o quadrado fica completo.
+1. Monte um quadrado de Lajes de Pouso com a Plataforma de Pouso no meio: 9 por 9 blocos para estágios de até 3 blocos de largura, 15 por 15 blocos para estágios de até 5 blocos. Ela se forma quando o quadrado fica completo. Um Projetor de Estruturas mostra os dois tamanhos, e um Construtor de Multiblocos usado no projetor a monta.
 2. Dê ao estágio pernas de pouso e um motor.
 3. Antes do lançamento, na página EST do [computador de voo](jsspace:flight_computer), escolha o estágio à esquerda e aperte PLAT. Ele pega a plataforma mais próxima neste mundo que você ou a sua equipe podem usar e que seja larga o bastante; PLAT + pega a seguinte. A página mostra o número dela, a largura, a distância e se está LIVRE.
 4. Quando o estágio se solta, ele voa de volta bem alto sobre a plataforma, desce reto com o motor e toca no meio dela.

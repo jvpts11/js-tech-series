@@ -70,6 +70,10 @@ public final class JsTests {
         // A ship landing pad with a block round it, and a runway's stretch from its beacon, as high as its headroom.
         Arenas.declare(MODID, "ship_pad", 31, 13, 31);
         Arenas.declare(MODID, "runway", 15, 9, 70);
+        // Earth for any multiblock of J's Space to be built on from a projector, as tall as the propellant depot; and
+        // the launch pad's, its trench dug into it, with a crawlerway before the pad for a crawler to bring a launcher.
+        Arenas.declare(MODID, "space_build", 41, 24, 37);
+        Arenas.declare(MODID, "launch_pad", 51, 24, 37);
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
         // A thruster, a wheel, a burner, a light block, a levitator and a magnet, to prove the structures' physics.

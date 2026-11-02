@@ -20,9 +20,11 @@ No menu criativo, aba J's Space.
 
 ## Como usar
 
-1. Termine o caminho do transportador na base, com uma coluna de três Pedestais da Plataforma embaixo de cada um dos seis da plataforma, como no hangar.
-2. Cave a vala ao longo do caminho, entre as suas duas faixas. Ponha os defletores atravessando-a, virados ao longo dela, no máximo oito blocos abaixo do chão e só com ar acima deles até a abertura, e feche as pontas da fileira com Revestimento da Vala.
-3. Ponha uma Porta de Serviço da Plataforma no chão, a até dezesseis blocos do eixo do foguete. Encha-a por canos com água, e com oxigênio líquido e metano líquido do [depósito de propelente](jsspace:propellant_depot), e dê energia a ela.
+1. Construa a base pelo fantasma de um Projetor de Estruturas, ou use um Construtor de Multiblocos no projetor: um quadrado de concreto cinza-claro com os cantos cortados; a vala de chamas cavada com cinco blocos de fundo ao longo do meio, revestida com Revestimento da Vala; uma faixa de Defletores de Chamas atravessando o fundo da vala sob o meio da base; as duas faixas de cascalho do transportador, da borda da base até três blocos depois do meio; e a Porta de Serviço da Plataforma junto à base.
+2. Leve o caminho do transportador em linha reta da porta do hangar até as faixas da base. O transportador para onde elas terminam e assenta a plataforma com a abertura sobre os defletores, seja qual for o foguete em cima dela. Você pode pôr ali uma coluna de três Pedestais da Plataforma embaixo de cada um dos seis da plataforma, como no hangar.
+3. Encha a porta de serviço por canos com água, e com oxigênio líquido e metano líquido do [depósito de propelente](jsspace:propellant_depot), e dê energia a ela.
+
+Uma base construída à mão funciona do mesmo jeito: os defletores atravessando a vala, virados ao longo dela, no máximo oito blocos abaixo do chão e só com ar acima deles até a abertura, as pontas da fileira fechadas com Revestimento da Vala; e a porta de serviço no chão, a até dezesseis blocos do eixo do foguete.
 
 Table: O que a Porta de Serviço da Plataforma guarda
 

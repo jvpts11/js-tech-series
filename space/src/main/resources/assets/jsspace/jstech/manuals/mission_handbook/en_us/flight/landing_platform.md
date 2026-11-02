@@ -20,7 +20,7 @@ From the creative menu, J's Space tab.
 
 ## How to use it
 
-1. Lay a square of Landing Pads with the Landing Platform in its middle: 9 by 9 blocks for stages up to 3 blocks wide, 15 by 15 blocks for stages up to 5 blocks wide. It forms once the square is whole.
+1. Lay a square of Landing Pads with the Landing Platform in its middle: 9 by 9 blocks for stages up to 3 blocks wide, 15 by 15 blocks for stages up to 5 blocks wide. It forms once the square is whole. A Structure Projector shows either size, and a Multiblock Builder used on the projector lays it.
 2. Give the stage landing legs and an engine.
 3. Before launch, on the STG page of the [flight computer](jsspace:flight_computer), choose the stage on the left and press PLAT. It picks the nearest platform in this world that you or your team may use and that is wide enough; PLAT + picks the next. The page shows its number, width, distance and whether it is FREE.
 4. When the stage comes loose, it flies back high over the platform, comes straight down on its engine and touches down in the middle.

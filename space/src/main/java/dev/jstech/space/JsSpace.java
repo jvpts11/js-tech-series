@@ -45,6 +45,7 @@ import dev.jstech.space.telemetry.TelemetryLine;
 import dev.jstech.space.depot.DepotBlocks;
 import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.launcher.LauncherBlocks;
+import dev.jstech.space.pad.LaunchPadStructure;
 import dev.jstech.space.pad.PadBlocks;
 import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.rocket.RocketAscent;
@@ -172,11 +173,15 @@ public final class JsSpace {
         RocketDesigner.declare();
         // The mobile launcher a rocket stands on in its hangar: its deck, its umbilical tower and their arms.
         LauncherBlocks.declare();
-        // The crawler-transporter that carries the launcher, its tower and its rocket along the crawlerway.
+        // The crawler-transporter that carries the launcher, its tower and its rocket along the crawlerway; its kit and
+        // its shape, for the Structure Projector and the Multiblock Builder.
         CrawlerBlocks.declare();
-        // The launch pad the crawler brings the launcher to: its flame trench, its deflector and its service port.
+        // The launch pad the crawler brings the launcher to: its flame trench, its deflector and its service port; and
+        // the whole pad as one shape, its concrete, its trench and the crawler's lanes on it.
         PadBlocks.declare(modEventBus);
-        // The propellant depot that feeds the pad: its welded sphere on its legs, its vent stack and transfer pump.
+        LaunchPadStructure.declare();
+        // The propellant depot that feeds the pad: its welded sphere on its legs, its vent stack and transfer pump;
+        // and its shape at the approved depot's size.
         DepotBlocks.declare(modEventBus);
         // The Launch Panel by the pad, where a launch is counted down.
         LaunchPanel.declare();

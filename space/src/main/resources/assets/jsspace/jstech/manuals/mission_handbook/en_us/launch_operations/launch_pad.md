@@ -20,9 +20,11 @@ From the creative menu, J's Space tab.
 
 ## How to use it
 
-1. End the crawlerway at the pad, with a column of three Pad Pedestals under each of the launcher's six, as in its hangar.
-2. Dig the trench along the crawlerway, between its lanes. Set the deflectors across it, facing along it, at most eight blocks below the ground with only air above them up to the opening, and close the row's ends with Trench Lining.
-3. Set a Pad Service Port on the ground within sixteen blocks of the rocket's axis. Pipe in water, and liquid oxygen and liquid methane from the [propellant depot](jsspace:propellant_depot), and give it energy.
+1. Build the pad from a Structure Projector's ghost, or use a Multiblock Builder on the projector: a square of light gray concrete with its corners cut; the flame trench dug five blocks deep along its middle, lined with Trench Lining; a band of Flame Deflectors across the trench's floor under the pad's middle; the crawler's two lanes of gravel, from the pad's edge to three blocks past its middle; and the Pad Service Port by the pad.
+2. Run the crawlerway from the hangar's door straight to the pad's lanes. The crawler stops where they end, and sets the launcher down with its opening over the deflectors, whatever rocket stands on it. You may put a column of three Pad Pedestals under each of the launcher's six there, as in its hangar.
+3. Pipe water into the service port, and liquid oxygen and liquid methane from the [propellant depot](jsspace:propellant_depot), and give it energy.
+
+A pad built by hand works the same way: its deflectors across the trench, facing along it, at most eight blocks below the ground with only air above them up to the opening, the row's ends closed with Trench Lining; and its service port on the ground within sixteen blocks of the rocket's axis.
 
 Table: What the Pad Service Port holds
 

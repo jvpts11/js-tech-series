@@ -20,7 +20,7 @@ From the creative menu, J's Space tab.
 
 ## How to use it
 
-1. Build the cube of Sphere Shell, its four legs, the vent stack and the pump.
+1. Build the cube of Sphere Shell, its four legs, the vent stack and the pump. A Structure Projector shows the approved depot, nine blocks wide on legs two tall, and a Multiblock Builder used on the projector builds it; a depot of another size is built by hand.
 2. The pump looks for its depot every two seconds, and forms it once it is whole.
 3. Pipe one liquid into the pump. A methalox rocket needs a depot of each.
 4. Run a pipe from the pump to the Pad Service Port.
