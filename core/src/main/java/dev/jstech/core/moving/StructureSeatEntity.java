@@ -150,6 +150,17 @@ public final class StructureSeatEntity extends Entity {
         return false;
     }
 
+    /*
+     * It ticks wherever it is, as the player sitting on it does: the game ticks an entity only once its chunk has
+     * loaded, and a structure flying fast over land made only as it comes carries its seat into chunks still loading.
+     * Left there it stood still while the structure flew on, its sitter with it, ticked by it alone: on the server
+     * they were left behind in the air, and on their game, never ticked, they could not even get up.
+     */
+    @Override
+    public boolean isAlwaysTicking() {
+        return true;
+    }
+
     @Override
     public boolean isPickable() {
         return false;

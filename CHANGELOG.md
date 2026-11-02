@@ -3079,6 +3079,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A seat aboard a moving structure goes on with it however fast it flies over land still being made: before, a
+  ship come down from space onto the Moon and flying on over it could leave its pilot's seat behind in the air, the
+  pilot with it, on the server, while on their game they sat on in the ship and could not get up.
 - (Core) A build tagged on the screen, as a ship in a dock, names its parts and shows its line across the top only
   within 28 blocks of its middle, as a dock is worked from beside it; before, its tags covered the screen from 64
   blocks away. Its ghosts still show from as far as before.
