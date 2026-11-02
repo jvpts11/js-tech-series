@@ -1,0 +1,149 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "jsspace:block/hangar/personnel_door",
+    "door": "jsspace:block/hangar/personnel_door",
+    "frame": "jsspace:block/hangar/hangar_frame"
+  },
+  "elements": [
+    {
+      "name": "leaf",
+      "from": [
+        0,
+        0,
+        6.5
+      ],
+      "to": [
+        3,
+        16,
+        22.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            3,
+            16
+          ],
+          "texture": "#door"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            3,
+            16
+          ],
+          "texture": "#door"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#door"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#door"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            3,
+            16
+          ],
+          "texture": "#door"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            3,
+            16
+          ],
+          "texture": "#door"
+        }
+      }
+    },
+    {
+      "name": "handle",
+      "from": [
+        -1,
+        7,
+        19
+      ],
+      "to": [
+        4,
+        9,
+        20.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            14,
+            5,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            0,
+            14,
+            5,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "east": {
+          "uv": [
+            0,
+            14,
+            1.5,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            0,
+            14,
+            1.5,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            5,
+            1.5
+          ],
+          "texture": "#frame"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            5,
+            1.5
+          ],
+          "texture": "#frame"
+        }
+      }
+    }
+  ]
+}

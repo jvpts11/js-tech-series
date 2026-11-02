@@ -8,11 +8,13 @@
 package dev.jstech.space.client.hangar;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.space.api.RocketKits;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.client.rocket.RocketPartsRenderer;
 import dev.jstech.space.hangar.HangarBay;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.rocket.CabinReadings;
@@ -30,10 +32,10 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 /**
- * Draws a formed Rocket Hangar's crane and work platforms whole, as the approved hangar has them, and the rocket it
- * builds, as far as it is built: each part of its plan that has formed, its blocks merged and drawn as nothing, is
- * drawn with its own model where it stands on the bay's floor, its cabin at rest. The parts not yet formed are their
- * kit's blocks, drawn by the world as any block is.
+ * Draws a formed Rocket Hangar's crane and work platforms whole, as the approved hangar has them, the pictures its
+ * control room lights, and the rocket it builds, as far as it is built: each part of its plan that has formed, its
+ * blocks merged and drawn as nothing, is drawn with its own model where it stands in the bay, its cabin at rest. The
+ * parts not yet formed are their kit's blocks, drawn by the world as any block is.
  */
 public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarTerminalBlockEntity> {
 
@@ -42,6 +44,9 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
     /* Round a plan whose bay is not known: as wide as the widest rocket, as tall as the tallest bay. */
     private static final double REACH = 16;
     private static final double TALLEST = 256;
+    /* The control room's box, as the hangar's pattern draws it, from one corner to the other. */
+    private static final double[] ROOM_FROM = {16, 0, -8};
+    private static final double[] ROOM_TO = {28, 10, 12};
 
     public HangarTerminalRenderer(final BlockEntityRendererProvider.Context context) {
         // Nothing to keep: the models are drawn as they are.
@@ -61,6 +66,7 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
             return;
         }
         HangarPieces.draw(terminal, level, poses, buffers);
+        terminal.turn().ifPresent(turn -> ControlRoomPictures.draw(terminal.getBlockPos(), turn, poses, buffers));
         final Optional<RocketDesign> plan = terminal.plan();
         final Optional<BlockPos> at = terminal.planAt();
         final List<Integer> formed = terminal.formedParts();
@@ -84,14 +90,22 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
         return true;
     }
 
-    /* The whole bay, where the rocket stands, so it is drawn while any of it is in sight. */
+    /*
+     * The whole bay, where the rocket stands, and the control room, where its pictures glow, so they are drawn while
+     * any of them is in sight.
+     */
     @Override
     public AABB getRenderBoundingBox(final HangarTerminalBlockEntity terminal) {
         final Optional<HangarBay> bay = terminal.bay();
+        final Optional<Orientation> turn = terminal.turn();
         final AABB self = new AABB(terminal.getBlockPos());
-        if (bay.isPresent()) {
-            return self.minmax(new AABB(bay.get().low().getX(), bay.get().low().getY(), bay.get().low().getZ(),
-                    bay.get().high().getX() + 1, bay.get().high().getY() + 1, bay.get().high().getZ() + 1));
+        if (bay.isPresent() && turn.isPresent()) {
+            final BlockPos at = terminal.getBlockPos();
+            final AABB room = new AABB(HangarStructure.point(at, turn.get(), ROOM_FROM[0], ROOM_FROM[1],
+                    ROOM_FROM[2]), HangarStructure.point(at, turn.get(), ROOM_TO[0], ROOM_TO[1], ROOM_TO[2]));
+            return self.minmax(room).minmax(new AABB(bay.get().low().getX(), bay.get().low().getY(),
+                    bay.get().low().getZ(), bay.get().high().getX() + 1, bay.get().high().getY() + 1,
+                    bay.get().high().getZ() + 1));
         }
         return terminal.planAt().map(foot -> self.minmax(new AABB(foot).inflate(REACH, 0, REACH)
                 .expandTowards(0, TALLEST, 0))).orElse(self);

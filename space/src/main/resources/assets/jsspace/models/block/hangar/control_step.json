@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "jsspace:block/hangar/control_floor",
+    "top": "jsspace:block/hangar/control_floor",
+    "side": "jsspace:block/hangar/control_floor"
+  }
+}

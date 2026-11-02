@@ -8,17 +8,18 @@
 package dev.jstech.tests.gametest.space;
 
 import com.mojang.serialization.JsonOps;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
-import dev.jstech.space.hangar.AssemblyConsoleBlock;
 import dev.jstech.space.hangar.DesignDestinations;
 import dev.jstech.space.hangar.DesignEdits;
 import dev.jstech.space.hangar.DesignReport;
 import dev.jstech.space.hangar.DesignTexts;
 import dev.jstech.space.hangar.HangarBay;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.rocket.RocketStack;
@@ -27,6 +28,7 @@ import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.rocket.StageMath;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.space.TestHangars;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,34 +37,31 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Rocket Design: where a rocket can go from the Overworld and from the Moon and what each destination asks; each
  * stage's delta-v and the thrust against weight as a rocket leaves the ground; what a design lacks, a stage with
- * propellant and no engine, a rocket taller than its bay; the edits of the screen, a part picked up with what is on its
- * far side from the root, set at a node, turned, stretched, boosters hung round it; and the hangar's terminal keeping
- * the design, saving it as a plan, and sending it to the bay only once it is ready, its Assembly Console finding it.
+ * propellant and no engine, a rocket taller than a hangar builds; the edits of the screen, a part picked up with what
+ * is on its far side from the root, set at a node, turned, stretched, boosters hung round it; and the hangar's
+ * terminal keeping the design, saving it as a plan, and sending it to the bay only once it is ready, its Rocket Design
+ * table finding it.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class RocketDesignGameTests {
 
     private static final String ARENA = "empty";
-    private static final String HANGAR = "tall";
+    private static final String HANGAR = "rocket_hangar";
     private static final String BATCH = "jsspace_rocket_design";
     private static final double CLOSE = 1e-6;
-    /* The hangar's bay, from (2, 2, 2) to (8, 13, 8), its hoist at 12: ten blocks clear under the crane. */
-    private static final int LOW = 2;
-    private static final int HIGH_XZ = 8;
-    private static final int TOP = 13;
-    private static final BlockPos TERMINAL = new BlockPos(5, 3, 9);
-    private static final BlockPos DOOR = new BlockPos(1, 2, 5);
-    private static final BlockPos HOIST = new BlockPos(5, 12, 5);
-    private static final BlockPos CONSOLE = new BlockPos(3, 2, 3);
+    /* The hangar's terminal in the arena's middle; its Rocket Design table, as the hangar's pattern draws it. */
+    private static final BlockPos TERMINAL = new BlockPos(40, 2, 42);
+    private static final int[] TABLE = {24, 0, 2};
+    /* A tank's layers that make a rocket taller than a hangar builds. */
+    private static final int TOWERING = 100;
     private static final ResourceLocation SEA_ENGINE = SkeletonRocketParts.id("sea_level_engine_3");
     private static final ResourceLocation VACUUM_ENGINE = SkeletonRocketParts.id("vacuum_engine_3");
     private static final ResourceLocation TANK = SkeletonRocketParts.id("tank_3");
@@ -135,12 +134,16 @@ public final class RocketDesignGameTests {
                 Optional.empty());
         helper.assertTrue(!empty.ready() && says(empty, DesignTexts.NO_PARTS) && empty.destinations().isEmpty(),
                 "no parts yet, and no routes from a world that is not the Solar System's");
-        final HangarBay bay = new HangarBay(new BlockPos(0, 0, 0), new BlockPos(6, 11, 6), Direction.Axis.Z,
-                new BlockPos(3, 11, 3), new BlockPos(3, 10, 3));
-        final DesignReport tall = DesignReport.of(parts, two(), 1, 1, Optional.of(SolarBody.OVERWORLD),
+        final HangarBay bay = new HangarBay(new BlockPos(0, 0, 0), new BlockPos(28, 107, 36), Direction.Axis.X,
+                new BlockPos(0, 107, 18), new BlockPos(14, 106, 18));
+        final RocketStack towering = RocketStack.of(part(SEA_ENGINE), new RocketStack.Part(TANK, TOWERING),
+                part(CAPSULE));
+        final DesignReport tall = DesignReport.of(parts, towering, 1, 1, Optional.of(SolarBody.OVERWORLD),
                 Optional.of(bay));
-        helper.assertTrue(DesignReport.clearHeight(bay) == 10 && !tall.ready() && says(tall, DesignTexts.TOO_TALL),
-                "taller than the ten blocks under its crane: " + tall.height());
+        helper.assertTrue(tall.height() > HangarStructure.TALLEST_ROCKET && !tall.ready()
+                && says(tall, DesignTexts.TOO_TALL), "taller than the 96 blocks a hangar builds: " + tall.height());
+        helper.assertTrue(!says(DesignReport.of(parts, two(), 1, 1, Optional.of(SolarBody.OVERWORLD),
+                Optional.of(bay)), DesignTexts.TOO_TALL), "a rocket within them is not");
         final DesignReport crewless = DesignReport.of(parts, RocketStack.of(part(SEA_ENGINE),
                 new RocketStack.Part(TANK, 2)), 1, 1, Optional.of(SolarBody.OVERWORLD), Optional.empty());
         helper.assertTrue(crewless.ready() && says(crewless, DesignTexts.NO_SEATS),
@@ -193,12 +196,19 @@ public final class RocketDesignGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = HANGAR, batch = BATCH, timeoutTicks = 200)
+    @GameTest(template = HANGAR, batch = BATCH, timeoutTicks = 400)
     public static void terminal_keepsTheDesignSavesItAndSendsItWhenReady(final GameTestHelper helper) {
-        build(helper);
-        final HangarTerminalBlockEntity terminal = helper.getBlockEntity(TERMINAL);
-        terminal.look();
-        helper.assertTrue(terminal.bay().isPresent(), "the hangar is formed");
+        final ServerLevel level = helper.getLevel();
+        final BlockPos at = TestHangars.build(level, helper.absolutePos(TERMINAL), Orientation.NORTH);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(((HangarTerminalBlockEntity) level.getBlockEntity(at))
+                        .formed(), "the hangar forms"))
+                .thenExecute(() -> keepsAndSends(helper, (HangarTerminalBlockEntity) level.getBlockEntity(at)))
+                .thenSucceed();
+    }
+
+    /* The terminal keeps the design on its screen, saves it as a plan and sends it to the bay once it is ready. */
+    private static void keepsAndSends(final GameTestHelper helper, final HangarTerminalBlockEntity terminal) {
         final RocketDesign lacking = new RocketDesign("LACKING", RocketStack.of(part(TANK), part(CAPSULE)));
         terminal.design(lacking);
         helper.assertTrue(terminal.design().equals(lacking), "it keeps the design on its screen");
@@ -221,12 +231,13 @@ public final class RocketDesignGameTests {
         terminal.delete(0);
         helper.assertTrue(terminal.plans().isEmpty() && terminal.plan().isPresent(),
                 "a plan deleted, the one in the bay stays");
-        helper.setBlock(CONSOLE, HangarBlocks.ASSEMBLY_CONSOLE.get());
-        helper.assertTrue(AssemblyConsoleBlock.hangarOf(helper.getLevel(), helper.absolutePos(CONSOLE))
-                .filter(found -> found == terminal).isPresent(), "a console in its bay finds its terminal");
-        helper.assertTrue(AssemblyConsoleBlock.hangarOf(helper.getLevel(), helper.absolutePos(new BlockPos(0, 2,
-                0))).isEmpty(), "and one outside finds none");
-        helper.succeed();
+        final BlockPos table = TestHangars.at(terminal.getBlockPos(), Orientation.NORTH, TABLE[0], TABLE[1],
+                TABLE[2]);
+        helper.assertTrue(helper.getLevel().getBlockState(table).is(HangarBlocks.DESIGN_TABLE.get())
+                && HangarTerminalBlockEntity.holding(helper.getLevel(), table).filter(found -> found == terminal)
+                .isPresent(), "its Rocket Design table finds its terminal");
+        helper.assertTrue(HangarTerminalBlockEntity.holding(helper.getLevel(), helper.absolutePos(new BlockPos(1, 2,
+                1))).isEmpty(), "and a place outside the hangar finds none");
     }
 
     /* A rocket of two stages: a sea-level engine and its tank, the ring, a vacuum engine, its tank, the capsule. */
@@ -249,26 +260,4 @@ public final class RocketDesignGameTests {
                 instanceof Text.Translated translated && translated.key().equals(key));
     }
 
-    /* The hangar of stone, its terminal in the south wall looking north, its crane, its door: formed when looked. */
-    private static void build(final GameTestHelper helper) {
-        for (int x = LOW - 1; x <= HIGH_XZ + 1; x++) {
-            for (int z = LOW - 1; z <= HIGH_XZ + 1; z++) {
-                for (int y = LOW - 1; y <= TOP + 1; y++) {
-                    final boolean shell = x < LOW || x > HIGH_XZ || z < LOW || z > HIGH_XZ || y < LOW || y > TOP;
-                    helper.setBlock(new BlockPos(x, y, z), shell ? Blocks.STONE : Blocks.AIR);
-                }
-            }
-        }
-        helper.setBlock(TERMINAL, HangarBlocks.TERMINAL.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        for (int x = LOW; x <= HIGH_XZ; x++) {
-            helper.setBlock(new BlockPos(x, TOP - 1, LOW), HangarBlocks.CRANE_RAIL.get());
-            helper.setBlock(new BlockPos(x, TOP - 1, HIGH_XZ), HangarBlocks.CRANE_RAIL.get());
-        }
-        for (int z = LOW; z <= HIGH_XZ; z++) {
-            helper.setBlock(new BlockPos(5, TOP, z), HangarBlocks.CRANE_BRIDGE.get());
-        }
-        helper.setBlock(HOIST, HangarBlocks.CRANE_HOIST.get());
-        helper.setBlock(DOOR, HangarBlocks.BAY_DOOR.get());
-    }
 }

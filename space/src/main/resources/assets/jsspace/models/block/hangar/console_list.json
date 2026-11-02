@@ -1,0 +1,597 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "jsspace:block/hangar/console",
+    "body": "jsspace:block/hangar/console",
+    "desk": "jsspace:block/hangar/console_desk",
+    "lamps": "jsspace:block/hangar/console_lamps",
+    "screen": "jsspace:block/hangar/screen_list"
+  },
+  "elements": [
+    {
+      "name": "cabinet",
+      "from": [
+        0,
+        0,
+        6
+      ],
+      "to": [
+        16,
+        13,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            3,
+            16,
+            16
+          ],
+          "texture": "#body"
+        },
+        "south": {
+          "uv": [
+            0,
+            3,
+            16,
+            16
+          ],
+          "texture": "#body"
+        },
+        "east": {
+          "uv": [
+            0,
+            3,
+            10,
+            16
+          ],
+          "texture": "#body"
+        },
+        "west": {
+          "uv": [
+            0,
+            3,
+            10,
+            16
+          ],
+          "texture": "#body"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            10
+          ],
+          "texture": "#body"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            10
+          ],
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "name": "shelf",
+      "from": [
+        0,
+        11.5,
+        1.5
+      ],
+      "to": [
+        16,
+        13,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            14.5,
+            16,
+            16
+          ],
+          "texture": "#desk"
+        },
+        "south": {
+          "uv": [
+            0,
+            14.5,
+            16,
+            16
+          ],
+          "texture": "#desk"
+        },
+        "east": {
+          "uv": [
+            0,
+            14.5,
+            4.5,
+            16
+          ],
+          "texture": "#desk"
+        },
+        "west": {
+          "uv": [
+            0,
+            14.5,
+            4.5,
+            16
+          ],
+          "texture": "#desk"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            4.5
+          ],
+          "texture": "#desk"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            4.5
+          ],
+          "texture": "#desk"
+        }
+      }
+    },
+    {
+      "name": "housing",
+      "from": [
+        0,
+        13,
+        12
+      ],
+      "to": [
+        16,
+        20,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            9,
+            16,
+            16
+          ],
+          "texture": "#body"
+        },
+        "south": {
+          "uv": [
+            0,
+            9,
+            16,
+            16
+          ],
+          "texture": "#body"
+        },
+        "east": {
+          "uv": [
+            0,
+            9,
+            4,
+            16
+          ],
+          "texture": "#body"
+        },
+        "west": {
+          "uv": [
+            0,
+            9,
+            4,
+            16
+          ],
+          "texture": "#body"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ],
+          "texture": "#body"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ],
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "name": "slope",
+      "from": [
+        0,
+        12,
+        5
+      ],
+      "to": [
+        16,
+        13,
+        16.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            15,
+            16,
+            16
+          ],
+          "texture": "#body"
+        },
+        "south": {
+          "uv": [
+            0,
+            15,
+            16,
+            16
+          ],
+          "texture": "#body"
+        },
+        "east": {
+          "uv": [
+            0,
+            15,
+            11.5,
+            16
+          ],
+          "texture": "#body"
+        },
+        "west": {
+          "uv": [
+            0,
+            15,
+            11.5,
+            16
+          ],
+          "texture": "#body"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            11.5
+          ],
+          "texture": "#body"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            11.5
+          ],
+          "texture": "#body"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          13,
+          5
+        ],
+        "axis": "x",
+        "angle": -45
+      }
+    },
+    {
+      "name": "screen",
+      "from": [
+        0.5,
+        13,
+        5.5
+      ],
+      "to": [
+        15.5,
+        13.05,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            12
+          ],
+          "texture": "#screen",
+          "rotation": 180
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          13,
+          5
+        ],
+        "axis": "x",
+        "angle": -45
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    },
+    {
+      "name": "lamp0",
+      "from": [
+        1.5,
+        13,
+        2.5
+      ],
+      "to": [
+        3.0,
+        13.6,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            2,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            2,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#lamps"
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    },
+    {
+      "name": "lamp1",
+      "from": [
+        5.5,
+        13,
+        2.5
+      ],
+      "to": [
+        7.0,
+        13.6,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            0,
+            6,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "south": {
+          "uv": [
+            4,
+            0,
+            6,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "east": {
+          "uv": [
+            4,
+            0,
+            6,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "west": {
+          "uv": [
+            4,
+            0,
+            6,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "up": {
+          "uv": [
+            4,
+            0,
+            6,
+            2
+          ],
+          "texture": "#lamps"
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    },
+    {
+      "name": "lamp2",
+      "from": [
+        9.5,
+        13,
+        2.5
+      ],
+      "to": [
+        11.0,
+        13.6,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            0,
+            10,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "south": {
+          "uv": [
+            8,
+            0,
+            10,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "east": {
+          "uv": [
+            8,
+            0,
+            10,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "west": {
+          "uv": [
+            8,
+            0,
+            10,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "up": {
+          "uv": [
+            8,
+            0,
+            10,
+            2
+          ],
+          "texture": "#lamps"
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    },
+    {
+      "name": "lamp3",
+      "from": [
+        13.5,
+        13,
+        2.5
+      ],
+      "to": [
+        15.0,
+        13.6,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            0,
+            14,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "south": {
+          "uv": [
+            12,
+            0,
+            14,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "east": {
+          "uv": [
+            12,
+            0,
+            14,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "west": {
+          "uv": [
+            12,
+            0,
+            14,
+            1
+          ],
+          "texture": "#lamps"
+        },
+        "up": {
+          "uv": [
+            12,
+            0,
+            14,
+            2
+          ],
+          "texture": "#lamps"
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15
+      },
+      "shade": false
+    }
+  ]
+}

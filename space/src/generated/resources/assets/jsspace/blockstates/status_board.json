@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jsspace:block/hangar/status_board",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsspace:block/hangar/status_board"
+    },
+    "facing=south": {
+      "model": "jsspace:block/hangar/status_board",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsspace:block/hangar/status_board",
+      "y": 270
+    }
+  }
+}

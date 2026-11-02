@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jsspace:block/hangar/step_railing",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsspace:block/hangar/step_railing"
+    },
+    "facing=south": {
+      "model": "jsspace:block/hangar/step_railing",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsspace:block/hangar/step_railing",
+      "y": 270
+    }
+  }
+}

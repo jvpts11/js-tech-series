@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
-      "model": "jsspace:block/hangar_terminal"
+    "facing=east": {
+      "model": "jsspace:block/hangar/hangar_terminal",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsspace:block/hangar/hangar_terminal"
+    },
+    "facing=south": {
+      "model": "jsspace:block/hangar/hangar_terminal",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsspace:block/hangar/hangar_terminal",
+      "y": 270
     }
   }
 }

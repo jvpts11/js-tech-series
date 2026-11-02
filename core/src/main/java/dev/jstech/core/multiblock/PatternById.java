@@ -42,6 +42,11 @@ public record PatternById(ResourceLocation id) implements IStructureShape {
     }
 
     @Override
+    public int reachAcross() {
+        return MultiblockPatterns.get(this.id).map(MultiblockPattern::reachAcross).orElse(1);
+    }
+
+    @Override
     public Map<String, Limit> limits() {
         return MultiblockPatterns.get(this.id).map(MultiblockPattern::limits).orElse(Map.of());
     }

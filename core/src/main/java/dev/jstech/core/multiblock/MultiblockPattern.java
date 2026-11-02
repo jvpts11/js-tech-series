@@ -208,6 +208,22 @@ public final class MultiblockPattern implements IStructureShape {
         return Math.max(size[0], Math.max(size[1], size[2]));
     }
 
+    /**
+     * Its longest side across the ground, grown to its repeated slice's most: turned any of its four ways, no place
+     * is farther across than that; its height counts too where it may lie on its side.
+     */
+    @Override
+    public int reachAcross() {
+        if (this.liesDown) {
+            return reach();
+        }
+        final int[] size = {sizeX(), sizeY(), sizeZ()};
+        if (this.repeat != null) {
+            size[this.repeat.axis()] += this.repeat.times().most() - 1;
+        }
+        return Math.max(size[0], size[2]);
+    }
+
     /** The pattern as drawn, its repeated slice there its least times and {@code grow} more. */
     @Override
     public Optional<ShapePreview> preview(final int grow) {

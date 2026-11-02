@@ -7,11 +7,20 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
-import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.space.api.RocketPart;
+import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.hangar.DesignReport;
+import dev.jstech.space.hangar.DesignTexts;
+import dev.jstech.space.hangar.HangarBay;
+import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.launcher.ArmBlockEntity;
 import dev.jstech.space.launcher.CraneBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
@@ -21,11 +30,16 @@ import dev.jstech.space.launcher.LauncherPieceBlock;
 import dev.jstech.space.launcher.TowerFrameBlock;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
+import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.space.TestHangars;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import net.minecraft.core.BlockPos;
@@ -46,37 +60,62 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * room for it, sized by the rocket, its deck on six pedestals with the exhaust opening under the engines and three
  * masts round it, its length pointing at the bay's door and its tower past the rocket's top at the far end, its arms
  * out to the tanks and the hatch; its parts forming as their last blocks go down, each piece taking its formed shape
- * from the pieces round it and one hold-down arm measuring the deck to draw it; and left out of a bay too small.
+ * from the pieces round it and one hold-down arm measuring the deck to draw it. The hangar builds rockets up to 96
+ * blocks tall and as wide as its door's slot, the tallest and widest on a launcher under its crane's hoist.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class LauncherGameTests {
 
-    private static final String HANGAR = "hangar";
-    private static final String SMALL = "tall";
+    private static final String ARENA = "rocket_hangar";
     private static final String BATCH = "jsspace_launcher";
-    /* The large hangar's bay, from (2, 2, 2) to (26, 40, 26), its hoist at 39 over the middle; the small one's. */
-    private static final int LOW = 2;
-    private static final int HIGH = 26;
-    private static final int TOP = 40;
-    private static final int SMALL_HIGH = 8;
-    private static final int SMALL_TOP = 13;
+    /* The hangar's terminal in the arena's middle, the hangar standing with its door to the north. */
+    private static final BlockPos TERMINAL = new BlockPos(40, 2, 42);
+    private static final int TIME = 400;
     /* The first bay of a corner of the tower, as TowerFrameBlock numbers them. */
     private static final int CORNER_SLOT = 48;
     /* How far the test rocket's foot, an engine three blocks across, reaches each side of its axis. */
     private static final int FOOT = 1;
+    /* The tallest rocket's tank, in layers: with its engine and its capsule, 96 blocks. */
+    private static final int TALLEST_TANK = 89;
+    private static final int BOOSTER_TANK = 20;
 
     private LauncherGameTests() {
     }
 
-    @GameTest(template = HANGAR, batch = BATCH, timeoutTicks = 200)
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = TIME)
     public static void launcher_isLaidUnderTheRocketSizedByIt(final GameTestHelper helper) {
-        final HangarTerminalBlockEntity terminal = hangar(helper, HIGH, TOP);
-        helper.assertTrue(terminal.bay().isPresent(), "the large hangar forms: " + terminal.reason().english());
+        inHangar(helper, terminal -> laidUnderTheRocket(helper, terminal));
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = TIME)
+    public static void launcher_formsAndEachPieceTakesItsShape(final GameTestHelper helper) {
+        inHangar(helper, terminal -> formsPieceByPiece(helper, terminal));
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = TIME)
+    public static void hangar_buildsTheTallestAndWidestRocketOnALauncherAndNoTaller(final GameTestHelper helper) {
+        inHangar(helper, terminal -> {
+            final HangarBay bay = terminal.bay().orElseThrow();
+            final RocketStack tallest = tallest(TALLEST_TANK);
+            final Map<ResourceLocation, RocketPart> parts = RocketParts.all(helper.getLevel());
+            helper.assertTrue(RocketStages.height(parts, tallest) == HangarStructure.TALLEST_ROCKET,
+                    "the test's rocket is the tallest the hangar builds");
+            helper.assertTrue(RocketPlans.launcherSide(helper.getLevel(), tallest, bay).isPresent(),
+                    "the tallest rocket, its boosters out each side, stands on a launcher under the hoist");
+            helper.assertTrue(!faults(helper, tallest, bay, DesignTexts.TOO_TALL)
+                    && !faults(helper, tallest, bay, DesignTexts.TOO_WIDE), "and the design screen allows it");
+            helper.assertTrue(faults(helper, tallest(TALLEST_TANK + 1), bay, DesignTexts.TOO_TALL),
+                    "a block taller, the design screen refuses it");
+        });
+    }
+
+    /* The design is laid on a launcher under its rocket, sized by it, its tower toward the far wall. */
+    private static void laidUnderTheRocket(final GameTestHelper helper, final HangarTerminalBlockEntity terminal) {
         terminal.design(new RocketDesign("LAUNCHER", rocket()));
         helper.assertTrue(terminal.confirm(), "a ready design is sent to the bay");
         final Direction side = terminal.launcherSide().orElseThrow();
-        helper.assertTrue(side == Direction.EAST, "the deck points at the bay's door in its west wall, the tower at"
+        helper.assertTrue(side == Direction.SOUTH, "the deck points at the bay's door in its north wall, the tower at"
                 + " its far end, so the crawler comes in under it: the tower to the " + side);
         final BlockPos pad = terminal.bay().orElseThrow().pad();
         helper.assertTrue(terminal.planAt().orElseThrow().equals(pad.above(LauncherLayout.RAISE)),
@@ -123,13 +162,10 @@ public final class LauncherGameTests {
         helper.assertTrue(!crew.isEmpty() && crew.stream().allMatch(spot -> spot.at().getY() == hatch.getY()),
                 "the crew access arm runs out at the hatch's height");
         helper.assertTrue(!only(spots, LauncherBlocks.SWING_ARM.getId()).isEmpty(), "a swing arm goes to the tank");
-        terminal.undo();
-        helper.succeed();
     }
 
-    @GameTest(template = HANGAR, batch = BATCH, timeoutTicks = 200)
-    public static void launcher_formsAndEachPieceTakesItsShape(final GameTestHelper helper) {
-        final HangarTerminalBlockEntity terminal = hangar(helper, HIGH, TOP);
+    /* The launcher's parts form as their last blocks go down, each piece taking its shape from those round it. */
+    private static void formsPieceByPiece(final GameTestHelper helper, final HangarTerminalBlockEntity terminal) {
         terminal.design(new RocketDesign("FORM", rocket()));
         helper.assertTrue(terminal.confirm(), "a ready design is sent to the bay");
         final Direction side = terminal.launcherSide().orElseThrow();
@@ -230,27 +266,30 @@ public final class LauncherGameTests {
         helper.getLevel().setBlockAndUpdate(plan.where(boom), Blocks.AIR.defaultBlockState());
         helper.assertTrue(!plan.formed(first + 1) && !at(helper, plan, house).getValue(LauncherPieceBlock.FORMED),
                 "a block of the tower taken, the tower is a kit again");
-        terminal.undo();
-        helper.succeed();
-    }
-
-    @GameTest(template = SMALL, batch = BATCH, timeoutTicks = 200)
-    public static void launcher_isLeftOutOfABayTooSmallForIt(final GameTestHelper helper) {
-        final HangarTerminalBlockEntity terminal = hangar(helper, SMALL_HIGH, SMALL_TOP);
-        terminal.design(new RocketDesign("FLOOR", rocket()));
-        helper.assertTrue(terminal.confirm(), "a ready design is sent to the bay");
-        helper.assertTrue(terminal.launcherSide().isEmpty() && terminal.planAt().orElseThrow()
-                .equals(terminal.bay().orElseThrow().pad()), "with no room for a launcher, the rocket stands on the"
-                + " floor");
-        helper.assertTrue(terminal.build().orElseThrow().plan().parts() == rocket().sections().size(),
-                "and the plan is the rocket's alone");
-        terminal.undo();
-        helper.succeed();
     }
 
     /* An engine, a tank and a capsule. */
     private static RocketStack rocket() {
         return RocketStack.of(part("sea_level_engine_3", 1), part("tank_3", 2), part("capsule_3", 1));
+    }
+
+    /*
+     * The tallest rocket: a five-block engine, a tank of {@code tank} layers and a capsule, two boosters of an engine
+     * and a tank hung each side of its engine, fifteen blocks across.
+     */
+    private static RocketStack tallest(final int tank) {
+        final List<RocketStack.Part> booster = List.of(part("sea_level_engine_5", 1), part("tank_5", BOOSTER_TANK));
+        return new RocketStack(List.of(new RocketStack.Section(part("sea_level_engine_5", 1), List.of(booster,
+                booster)), new RocketStack.Section(part("tank_5", tank), List.of()),
+                new RocketStack.Section(part("capsule_5", 1), List.of())));
+    }
+
+    /* Whether the design screen of the hangar of {@code bay} finds the fault {@code fault} in {@code stack}. */
+    private static boolean faults(final GameTestHelper helper, final RocketStack stack, final HangarBay bay,
+                                  final TextKey fault) {
+        return DesignReport.in(helper.getLevel(), stack, Optional.of(bay)).checks().stream().anyMatch(check ->
+                check.severity() == DesignReport.Severity.FAULT && check.text() instanceof Text.Translated said
+                        && said.key().equals(fault));
     }
 
     private static RocketStack.Part part(final String path, final int layers) {
@@ -278,34 +317,16 @@ public final class LauncherGameTests {
         return at(helper, plan, spot).getValue(LauncherPieceBlock.ROLE);
     }
 
-    /*
-     * A hangar of stone {@code high} wide and deep from (2, 2, 2) and {@code top} high, its terminal in the south wall
-     * looking north, its crane, its door; looked at once.
-     */
-    private static HangarTerminalBlockEntity hangar(final GameTestHelper helper, final int high, final int top) {
-        for (int x = LOW - 1; x <= high + 1; x++) {
-            for (int z = LOW - 1; z <= high + 1; z++) {
-                for (int y = LOW - 1; y <= top + 1; y++) {
-                    final boolean shell = x < LOW || x > high || z < LOW || z > high || y < LOW || y > top;
-                    helper.setBlock(new BlockPos(x, y, z), shell ? Blocks.STONE : Blocks.AIR);
-                }
-            }
-        }
-        final int middle = (LOW + high) / 2;
-        final BlockPos terminal = new BlockPos(middle, 3, high + 1);
-        helper.setBlock(terminal, HangarBlocks.TERMINAL.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        for (int x = LOW; x <= high; x++) {
-            helper.setBlock(new BlockPos(x, top - 1, LOW), HangarBlocks.CRANE_RAIL.get());
-            helper.setBlock(new BlockPos(x, top - 1, high), HangarBlocks.CRANE_RAIL.get());
-        }
-        for (int z = LOW; z <= high; z++) {
-            helper.setBlock(new BlockPos(middle, top, z), HangarBlocks.CRANE_BRIDGE.get());
-        }
-        helper.setBlock(new BlockPos(middle, top - 1, middle), HangarBlocks.CRANE_HOIST.get());
-        helper.setBlock(new BlockPos(LOW - 1, LOW, middle), HangarBlocks.BAY_DOOR.get());
-        final HangarTerminalBlockEntity found = helper.getBlockEntity(terminal);
-        found.look();
-        return found;
+    /* Builds the hangar, its door to the north, and once it forms runs {@code body} on its terminal. */
+    private static void inHangar(final GameTestHelper helper, final Consumer<HangarTerminalBlockEntity> body) {
+        final BlockPos at = TestHangars.build(helper.getLevel(), helper.absolutePos(TERMINAL), Orientation.NORTH);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(terminal(helper, at).formed(), "the hangar forms"))
+                .thenExecute(() -> body.accept(terminal(helper, at)))
+                .thenSucceed();
+    }
+
+    private static HangarTerminalBlockEntity terminal(final GameTestHelper helper, final BlockPos at) {
+        return (HangarTerminalBlockEntity) helper.getLevel().getBlockEntity(at);
     }
 }

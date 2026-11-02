@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=east,screen=left": {
+      "model": "jsspace:block/hangar/door_console_left",
+      "y": 90
+    },
+    "facing=east,screen=off": {
+      "model": "jsspace:block/hangar/door_console_off",
+      "y": 90
+    },
+    "facing=east,screen=right": {
+      "model": "jsspace:block/hangar/door_console_right",
+      "y": 90
+    },
+    "facing=north,screen=left": {
+      "model": "jsspace:block/hangar/door_console_left"
+    },
+    "facing=north,screen=off": {
+      "model": "jsspace:block/hangar/door_console_off"
+    },
+    "facing=north,screen=right": {
+      "model": "jsspace:block/hangar/door_console_right"
+    },
+    "facing=south,screen=left": {
+      "model": "jsspace:block/hangar/door_console_left",
+      "y": 180
+    },
+    "facing=south,screen=off": {
+      "model": "jsspace:block/hangar/door_console_off",
+      "y": 180
+    },
+    "facing=south,screen=right": {
+      "model": "jsspace:block/hangar/door_console_right",
+      "y": 180
+    },
+    "facing=west,screen=left": {
+      "model": "jsspace:block/hangar/door_console_left",
+      "y": 270
+    },
+    "facing=west,screen=off": {
+      "model": "jsspace:block/hangar/door_console_off",
+      "y": 270
+    },
+    "facing=west,screen=right": {
+      "model": "jsspace:block/hangar/door_console_right",
+      "y": 270
+    }
+  }
+}

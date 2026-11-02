@@ -23,8 +23,8 @@ public final class DesignTexts {
     public static final TextKey NO_ENGINE = TextKey.of("jsspace.design.no_engine", "S%s has no engine");
     public static final TextKey NO_PROPELLANT = TextKey.of("jsspace.design.no_propellant", "S%s has no propellant");
     public static final TextKey STAYS_DOWN = TextKey.of("jsspace.design.stays_down", "Too weak to lift off");
-    public static final TextKey TOO_TALL = TextKey.of("jsspace.design.too_tall", "%s tall, the bay %s");
-    public static final TextKey TOO_WIDE = TextKey.of("jsspace.design.too_wide", "%s wide, the bay %s");
+    public static final TextKey TOO_TALL = TextKey.of("jsspace.design.too_tall", "%s tall, at most %s");
+    public static final TextKey TOO_WIDE = TextKey.of("jsspace.design.too_wide", "%s wide, the door %s");
     public static final TextKey NO_SEATS = TextKey.of("jsspace.design.no_seats", "No crew seats");
     public static final TextKey SEATS = TextKey.of("jsspace.design.seats", "Crew: %s seats");
     public static final TextKey SEAT_ONE = TextKey.of("jsspace.design.seat_one", "Crew: 1 seat");

@@ -394,7 +394,8 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         if (now < this.notBefore || !this.dirty && now < this.recheckAt) {
             return;
         }
-        final int reach = this.shape.reach();
+        // Only as far across the ground as it reaches: a tall structure needs no wider ring of chunks for its height.
+        final int reach = this.shape.reachAcross();
         if (!level.hasChunksAt(pos.offset(-reach, 0, -reach), pos.offset(reach, 0, reach))) {
             this.notBefore = now + LOADED_EVERY;
             return;

@@ -257,6 +257,17 @@ class MultiblockPatternTest {
     }
 
     @Test
+    void reachAcross_leavesOutTheHeightOfAShapeStandingUpright() {
+        final MultiblockPattern upright = MultiblockPattern.builder("tower").layer("#x").layer("xx").layer("xx")
+                .layer("xx").layer("xx").where('x', BlockMatch.blocks("jsc:casing")).build();
+        assertEquals(5, upright.reach(), "its height is its longest side");
+        assertEquals(2, upright.reachAcross(), "standing upright, only its width reaches across the ground");
+        final MultiblockPattern lying = MultiblockPattern.builder("log").layer("#x").layer("xx").layer("xx")
+                .layer("xx").layer("xx").where('x', BlockMatch.blocks("jsc:casing")).liesDown().build();
+        assertEquals(5, lying.reachAcross(), "lying on its side, its height may lie across the ground");
+    }
+
+    @Test
     void inside_refusesALetterThatIsAlsoAPlace() {
         assertThrows(IllegalArgumentException.class, () -> MultiblockPattern.builder("tank")
                 .layer("#x")

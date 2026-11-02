@@ -1,0 +1,356 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "jsspace:block/hangar/console_chair",
+    "chair": "jsspace:block/hangar/console_chair",
+    "frame": "jsspace:block/hangar/hangar_frame"
+  },
+  "elements": [
+    {
+      "name": "foot_x",
+      "from": [
+        3,
+        0,
+        7.5
+      ],
+      "to": [
+        13,
+        1,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            15,
+            10,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            0,
+            15,
+            10,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "east": {
+          "uv": [
+            0,
+            15,
+            1.0,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            0,
+            15,
+            1.0,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            10,
+            1.0
+          ],
+          "texture": "#frame"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            10,
+            1.0
+          ],
+          "texture": "#frame"
+        }
+      }
+    },
+    {
+      "name": "foot_z",
+      "from": [
+        7.5,
+        0,
+        3
+      ],
+      "to": [
+        8.5,
+        1,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            15,
+            1.0,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            0,
+            15,
+            1.0,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "east": {
+          "uv": [
+            0,
+            15,
+            10,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            0,
+            15,
+            10,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            1.0,
+            10
+          ],
+          "texture": "#frame"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            1.0,
+            10
+          ],
+          "texture": "#frame"
+        }
+      }
+    },
+    {
+      "name": "post",
+      "from": [
+        7.25,
+        1,
+        7.25
+      ],
+      "to": [
+        8.75,
+        7,
+        8.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            10,
+            1.5,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            0,
+            10,
+            1.5,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "east": {
+          "uv": [
+            0,
+            10,
+            1.5,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            0,
+            10,
+            1.5,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "texture": "#frame"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            1.5,
+            1.5
+          ],
+          "texture": "#frame"
+        }
+      }
+    },
+    {
+      "name": "seat",
+      "from": [
+        3,
+        7,
+        3
+      ],
+      "to": [
+        13,
+        8.6,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            14.4,
+            10,
+            16
+          ],
+          "texture": "#chair"
+        },
+        "south": {
+          "uv": [
+            0,
+            14.4,
+            10,
+            16
+          ],
+          "texture": "#chair"
+        },
+        "east": {
+          "uv": [
+            0,
+            14.4,
+            10,
+            16
+          ],
+          "texture": "#chair"
+        },
+        "west": {
+          "uv": [
+            0,
+            14.4,
+            10,
+            16
+          ],
+          "texture": "#chair"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            10,
+            10
+          ],
+          "texture": "#chair"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            10,
+            10
+          ],
+          "texture": "#chair"
+        }
+      }
+    },
+    {
+      "name": "back",
+      "from": [
+        3,
+        8.6,
+        11.5
+      ],
+      "to": [
+        13,
+        21,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            3.5999999999999996,
+            10,
+            16
+          ],
+          "texture": "#chair"
+        },
+        "south": {
+          "uv": [
+            0,
+            3.5999999999999996,
+            10,
+            16
+          ],
+          "texture": "#chair"
+        },
+        "east": {
+          "uv": [
+            0,
+            3.5999999999999996,
+            1.5,
+            16
+          ],
+          "texture": "#chair"
+        },
+        "west": {
+          "uv": [
+            0,
+            3.5999999999999996,
+            1.5,
+            16
+          ],
+          "texture": "#chair"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            10,
+            1.5
+          ],
+          "texture": "#chair"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            10,
+            1.5
+          ],
+          "texture": "#chair"
+        }
+      }
+    }
+  ]
+}

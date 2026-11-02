@@ -12,7 +12,6 @@ import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.text.Text;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.HangarBlocks;
-import dev.jstech.space.hangar.HangarPieceBlock;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.launcher.LauncherLayout;
@@ -172,7 +171,8 @@ public final class CrawlerWay {
 
     /*
      * The launcher whose deck the arm at {@code arm} draws: every block joined to it from its deck's underside up,
-     * but the pedestals it stands on, the crawler under it and the hangar round it.
+     * but the pedestals it stands on, the crawler under it and the hangar round it. Blocks touching by an edge or a
+     * corner are joined too, as an engine's nozzle hangs from its mount by the rim of its bell.
      */
     private static Load load(final ServerLevel level, final BlockPos arm, final BlockPos engine) throws Refusal {
         final int bottom = engine.getY() + 1;
@@ -190,18 +190,22 @@ public final class CrawlerWay {
             if (level.getBlockEntity(at) instanceof FlightComputerBlockEntity) {
                 computer = at;
             }
-            for (final Direction side : Direction.values()) {
-                final BlockPos next = at.relative(side);
-                if (next.getY() < bottom || Math.abs(next.getX() - arm.getX()) > REACH
-                        || Math.abs(next.getZ() - arm.getZ()) > REACH || blocks.contains(next)
-                        || !carried(level.getBlockState(next))) {
-                    continue;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        final BlockPos next = at.offset(dx, dy, dz);
+                        if (next.getY() < bottom || Math.abs(next.getX() - arm.getX()) > REACH
+                                || Math.abs(next.getZ() - arm.getZ()) > REACH || blocks.contains(next)
+                                || !carried(level.getBlockState(next))) {
+                            continue;
+                        }
+                        if (blocks.size() >= StructureBalance.mostBlocks()) {
+                            throw new Refusal(CrawlerTexts.TOO_BIG.text());
+                        }
+                        blocks.add(next);
+                        open.add(next);
+                    }
                 }
-                if (blocks.size() >= StructureBalance.mostBlocks()) {
-                    throw new Refusal(CrawlerTexts.TOO_BIG.text());
-                }
-                blocks.add(next);
-                open.add(next);
             }
         }
         return new Load(List.copyOf(blocks), Optional.ofNullable(terminal), Optional.ofNullable(computer));
@@ -210,9 +214,7 @@ public final class CrawlerWay {
     /* Whether a block standing so is carried with a launcher: anything but air, its pedestals, crawlers and hangars. */
     private static boolean carried(final BlockState state) {
         return !state.isAir() && !state.is(LauncherBlocks.PAD_PEDESTAL.get())
-                && !(state.getBlock() instanceof CrawlerPieceBlock) && !(state.getBlock() instanceof HangarPieceBlock)
-                && !state.is(HangarBlocks.TERMINAL.get()) && !state.is(HangarBlocks.ASSEMBLY_CONSOLE.get())
-                && !state.is(HangarBlocks.ITEM_PORT.get());
+                && !(state.getBlock() instanceof CrawlerPieceBlock) && !HangarBlocks.building(state);
     }
 
     /* Where {@code at} is along {@code way}. */

@@ -70,7 +70,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -380,7 +379,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         final Optional<HangarBay> bay = this.terminal.bay();
         if (this.view == null && bay.isPresent()) {
             final BlockPos pad = foot(bay.get());
-            final Direction into = this.terminal.getBlockState().getValue(HorizontalDirectionalBlock.FACING);
+            final Direction into = this.terminal.intoBay();
             final double tall = Math.max(LEAST_HEIGHT, this.report.height());
             this.view = OrbitView.hold(Vec3.atBottomCenterOf(pad).add(0, tall / 2, 0), new AABB(
                     Vec3.atLowerCornerOf(bay.get().low()), Vec3.atLowerCornerOf(bay.get().high().offset(1, 1, 1))),

@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -87,6 +88,26 @@ public final class HangarPieceBlock extends HorizontalDirectionalBlock {
             return Shapes.block();
         }
         return (state.getValue(EDGE) ? this.edged : this.shapes).get(state.getValue(FACING));
+    }
+
+    /* A work platform set in a formed hangar's bay tells the hangar, which shapes it and those beside it. */
+    @Override
+    protected void onPlace(final BlockState state, final Level level, final BlockPos pos, final BlockState old,
+                           final boolean moved) {
+        super.onPlace(state, level, pos, old, moved);
+        if (this.kind == Kind.PLATFORM && !old.is(this) && !level.isClientSide()) {
+            HangarTerminalBlockEntity.holding(level, pos).ifPresent(hangar -> hangar.platformChanged(pos));
+        }
+    }
+
+    /* A work platform taken from a formed hangar's bay tells the hangar, which shapes those beside it again. */
+    @Override
+    protected void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState after,
+                            final boolean moved) {
+        super.onRemove(state, level, pos, after, moved);
+        if (this.kind == Kind.PLATFORM && !after.is(this) && !level.isClientSide()) {
+            HangarTerminalBlockEntity.holding(level, pos).ifPresent(hangar -> hangar.platformChanged(pos));
+        }
     }
 
     @Override

@@ -2,17 +2,17 @@
 section: launch_operations
 order: 1
 icon: jsspace:hangar_terminal
-covers: [jsspace:hangar_terminal, jsspace:assembly_console, jsspace:bay_door, jsspace:crane_bridge, jsspace:crane_hoist, jsspace:crane_rail, jsspace:item_port, jsspace:work_platform]
+covers: [jsspace:hangar_terminal, jsspace:hangar_wall, jsspace:hangar_frame, jsspace:hangar_roof, jsspace:hangar_window, jsspace:hangar_floor, jsspace:hangar_lamp, jsspace:bay_door, jsspace:control_floor, jsspace:control_step, jsspace:step_railing, jsspace:hangar_console, jsspace:door_console, jsspace:console_chair, jsspace:design_table, jsspace:status_board, jsspace:personnel_door, jsspace:ceiling_light, jsspace:loading_dock, jsspace:crane_bridge, jsspace:crane_hoist, jsspace:crane_rail, jsspace:work_platform]
 ---
 # Rocket Hangar
 
 ## What it is
 
-A closed bay of any solid blocks, where a crane builds a rocket from a design drawn on its screen. The Hangar Terminal, set in a wall facing into the bay, finds the bay, keeps up to 16 plans and runs the crane.
+One building of one size, where a crane builds a rocket from a design drawn on its screen, as the Vehicle Assembly Building's high bay. Its bay is 29 blocks across, 37 long and 108 high, for rockets up to 96 blocks tall and 17 wide. In its end wall a stepped door: a lower door 25 wide and 12 high for the crawler and the launcher's deck, and a slot 17 wide over it, up to 106, for the rocket and the tower. Against a long wall stands its control room: a row of consoles before windows into the bay, the Hangar Terminal among them, a chair at each, the Bay Door Console at the row's end, the Rocket Design Table on a step at the back, the Status Board on the end wall. Its loading dock is in the control room's outer wall.
 
 ## What it is for
 
-Having a rocket built, standing on a [mobile launcher](jsspace:launcher) where the bay has a door and room for one. A data cable puts the terminal on a network, which can set it building.
+Having a rocket built on its [mobile launcher](jsspace:launcher), and rolled out through the door by the [crawler](jsspace:crawler). The terminal keeps up to 16 plans; a data cable puts it on a network, which can set it building.
 
 ## How to get it
 
@@ -20,26 +20,23 @@ From the creative menu, J's Space tab.
 
 ## How to use it
 
-1. Close a bay, by default 7 to 48 blocks across and deep and 12 to 128 high, with a Bay Door in a wall at floor level.
-2. Run Crane Rail the whole length of two facing walls, a block under the top row. Across the top row lay Crane Bridge from rail to rail, with a Crane Hoist right under it.
-3. Set the Hangar Terminal in a wall from inside the bay, and use it: it gives the bay's size, or what is missing.
-4. Use it, or an Assembly Console in the bay, to open the Rocket Design screen. Drag parts to the green nodes, then Confirm and build ([[E]]).
-5. Feed the blocks through an Item Port set in the wall, floor or roof, or lay them by hand where the hologram shows.
-6. Place Work Platforms round the rocket: each has its railing on the edge you faced, where no platform follows.
+1. Build it from a Structure Projector's ghost, or use a Multiblock Builder on the projector. Its floor, with the crawler's two lanes of gravel, is laid into the ground.
+2. Set the Hangar Terminal last, in its place in the console row. The building forms: the consoles and the Status Board light up, and the crane takes its shape.
+3. Use the terminal or the Rocket Design Table to open the Rocket Design. Drag parts to the green nodes, then Confirm and build ([[E]]).
+4. Feed the blocks through the Loading Dock by hopper or pipe, or lay them by hand where the hologram shows.
+5. Place Work Platforms round the rocket: each has its railing on the edge you faced, where no platform follows.
+6. Press the Bay Door Console high on its screen to open the bay door, low to shut it. The door also opens by itself for a crawler going through.
 
 ## What can go wrong
 
-> [!PROBLEM] The terminal says the bay is open at a place.
-> A block of the walls, floor or roof is missing or not solid there; the corners where two walls meet do not count.
+> [!PROBLEM] The terminal opens a machine screen instead of the Rocket Design.
+> The building is not whole: the screen says which block is missing, and where.
 
-> [!PROBLEM] The screen says Not ready to build.
-> Mend the faults it lists first.
+> [!PROBLEM] The Rocket Design says the rocket is too tall or too wide.
+> The hangar builds rockets up to 96 blocks tall and 17 wide, as wide as its door's slot.
 
-> [!PROBLEM] The Item Port takes nothing.
+> [!PROBLEM] The Loading Dock takes nothing.
 > It takes only the blocks the plan sent to the bay still wants, and no more of each than it wants.
 
-> [!PROBLEM] The crawler is blocked at the hangar's wall.
-> A Bay Door opens only for the crawler: make it as large as what passes through.
-
 > [!CAUTION]
-> Breaking the terminal undoes the hangar, and the blocks its crane held drop.
+> Breaking the terminal undoes the hangar: its rocket's parts come apart, and the blocks its crane held drop.

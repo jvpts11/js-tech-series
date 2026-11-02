@@ -8,7 +8,6 @@
 package dev.jstech.space.hangar;
 
 import com.mojang.serialization.Codec;
-import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.builder.Assembly;
 import dev.jstech.core.jstechseries.builder.IAssembler;
@@ -21,8 +20,12 @@ import dev.jstech.core.jstechseries.operation.IOperationRequest;
 import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.jstechseries.operation.OperationType;
-import dev.jstech.core.multiblock.IMultiblockPortHost;
-import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
+import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineResource;
+import dev.jstech.core.machine.MachineStatus;
+import dev.jstech.core.machine.MachineStructure;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanAssembler;
@@ -32,46 +35,48 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
-import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A Rocket Hangar's terminal: it looks at its bay every few seconds ({@link HangarBays}) and holds the bay it found,
- * told to the players who see it; as the bay forms its pieces take their own shapes, its rails, its bridge and its
- * hoist turned to lie as they run, and as it is undone they are blocks of the kit again. It remembers what kept the bay
- * from forming, for the player who uses it. It keeps the hangar's rockets: the design on its screen, the plans saved,
- * and the plan sent to the bay to be built.
+ * The Rocket Hangar's terminal, a console in its control room's row: the hangar's multiblock, a machine of J's Core's
+ * kit that spends nothing and makes nothing ({@link HangarStructure}). Its bay is the building's, wherever the building
+ * stands and however it is turned. As the building forms its fittings take their places: the consoles light their
+ * screens, the chairs, the status board, the step's railing and the doors turn the way the building has them, the
+ * crane's pieces take their formed shapes, and the work platforms in the bay theirs; as it comes apart they go dark
+ * and are blocks of the kit again. It keeps the hangar's rockets: the design on its screen, the plans saved, and the
+ * plan sent to the bay to be built; and it opens and shuts the bay door for its console.
  *
  * <p>Its crane builds the plan sent by itself, block by block ({@link PlanAssembler}), from what comes in through the
- * item ports in the bay's shell: whatever the hangar waits for, it builds into the rocket. On a network, a request of
+ * loading dock: whatever the hangar waits for, it builds into the rocket. On a network, a request of
  * {@link Assembly#ASSEMBLE} sets it building, a plan it keeps by name or the plan it was sent, and while it waits for
  * blocks it says which, so the network brings them, made first where they can be.
  */
-public final class HangarTerminalBlockEntity extends SyncedBlockEntity implements IMultiblockPortHost, INetworkMember,
-        IItemNeeds, IAssembler {
+public final class HangarTerminalBlockEntity extends MachineBlockEntity implements INetworkMember, IItemNeeds,
+        IAssembler {
 
-    private final ValueField<HangarBay> bay;
+    private final MachineStructure structure;
     private final ValueField<RocketDesign> design;
     private final ValueField<List<RocketDesign>> plans;
     private final ValueField<RocketDesign> plan;
@@ -81,12 +86,9 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     private final ValueField<List<Integer>> missingParts;
     private final ValueField<List<BlockPos>> platforms;
     private final ValueField<Integer> number;
+    private final ValueField<Integer> shapedAs;
     /* The crane, and what it holds of the blocks its rocket wants. */
     private final PlanAssembler crane;
-    /* The ports of its shell it is bound to, on the server. */
-    private final Set<BlockPos> ports = new HashSet<>();
-    private Text reason = HangarTexts.NOT_YET.text();
-    private int wait;
     /* The plan being built, on the server, while its chunk is loaded; and whether it is to start. */
     private @Nullable PlannedBuild build;
     private boolean pending;
@@ -95,23 +97,25 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
 
     /** The most plans a hangar keeps. */
     public static final int MOST_PLANS = 16;
-    /* How often it looks at its bay, in ticks: oftener while it is not formed, the player building it. */
-    private static final int LOOK_UNFORMED = 40;
-    private static final int LOOK_FORMED = 100;
+    /* Not shaped as any way the building stands. */
+    private static final int UNSHAPED = -1;
 
-    /* The terminals loaded on a player's game, forgotten as they go. */
+    /* The terminals loaded on a player's game, and on the server, forgotten as they go. */
     private static final Set<HangarTerminalBlockEntity> LOADED_ON_CLIENT = Collections.newSetFromMap(
+            new WeakHashMap<>());
+    private static final Set<HangarTerminalBlockEntity> LOADED_ON_SERVER = Collections.newSetFromMap(
             new WeakHashMap<>());
 
     public HangarTerminalBlockEntity(final BlockPos pos, final BlockState state) {
-        super(HangarBlocks.TERMINAL_ENTITY.get(), pos, state);
-        this.bay = fields().nullable("Bay", HangarBay.CODEC).save().toClient();
+        super(HangarBlocks.TERMINAL_ENTITY.get(), pos, state, 0, MachineEnergy.fe(0, 0, 0));
+        this.structure = MachineStructure.of(HangarStructure.PATTERN);
+        formsWith(this.structure);
         this.design = fields().value("Design", RocketDesign.CODEC, RocketDesign.EMPTY).save().toClient();
         this.plans = fields().value("Plans", RocketDesign.CODEC.listOf(0, MOST_PLANS), List.<RocketDesign>of())
                 .save().toClient();
         this.plan = fields().nullable("Plan", RocketDesign.CODEC).save().toClient();
         this.planAt = fields().nullable("PlanAt", BlockPos.CODEC).save().toClient();
-        // The side of the tower of the mobile launcher the rocket stands on, where the bay has room for one.
+        // The side of the tower of the mobile launcher the rocket stands on.
         this.launcher = fields().nullable("Launcher", Direction.CODEC).save().toClient();
         // What its players see of the plan being built: the parts formed, and how much of each is missing.
         this.formedParts = fields().value("FormedParts", Codec.INT.listOf(), List.<Integer>of()).toClient();
@@ -121,20 +125,26 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
                 .toClient();
         // Its number among the world's hangars, taken the first time it forms; none before.
         this.number = fields().value("Number", Codec.INT, 0).save().toClient();
+        // How the building stood when its fittings took their places, by its turn; none while they have not.
+        this.shapedAs = fields().value("ShapedAs", Codec.INT, UNSHAPED).save();
         this.crane = new PlanAssembler(pos, this::setChanged);
         fields().part(PlanAssembler.KEY, this.crane).save();
         // Loaded, it starts building again once the chunks its plan stands in are loaded too, unless it already is.
-        fields().whenLoaded(level -> this.pending = this.build == null);
+        fields().whenLoaded(level -> this.pending = this.build == null && this.plan.get() != null);
+        // Broken, its fittings go dark, its rocket's parts come apart and the blocks its crane held drop.
+        fields().whenBroken((level, at) -> {
+            unshape(level);
+            stopBuild(true);
+            this.crane.spill(level, at);
+        });
         // On the network its cables reach, it may be set building.
         NetworkMembers.keep(this);
     }
 
-    /**
-     * Looks at its bay when it is time to, and starts building its plan once all of it is loaded; its crane lays the
-     * next blocks it can, and the network's request hears how the building goes.
-     */
+    /** One server tick: the machine's, then its plan started once all of it is loaded, and its crane at work. */
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final HangarTerminalBlockEntity terminal) {
+        MachineBlockEntity.serverTick(level, pos, state, terminal);
         if (terminal.pending) {
             terminal.startBuild();
         }
@@ -142,10 +152,18 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
             terminal.crane.tick(server);
         }
         terminal.follow();
-        if (--terminal.wait > 0) {
-            return;
+    }
+
+    /** The formed hangar loaded in {@code level} whose building or bay holds {@code pos}, if one does. */
+    public static Optional<HangarTerminalBlockEntity> holding(final Level level, final BlockPos pos) {
+        for (final HangarTerminalBlockEntity terminal : level.isClientSide() ? LOADED_ON_CLIENT : LOADED_ON_SERVER) {
+            if (terminal.getLevel() == level && !terminal.isRemoved() && terminal.formed()
+                    && (terminal.structure.holdsPlace(pos) || terminal.bay().filter(bay -> bay.holds(pos))
+                    .isPresent())) {
+                return Optional.of(terminal);
+            }
         }
-        terminal.look();
+        return Optional.empty();
     }
 
     /** Its plan's chunk unloads: it stops watching it, leaving its formed parts as they are for when it loads. */
@@ -154,14 +172,18 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         super.onChunkUnloaded();
         stopBuild(false);
         LOADED_ON_CLIENT.remove(this);
+        LOADED_ON_SERVER.remove(this);
     }
 
-    /** On a player's game it is known among the terminals loaded there, whose plans are shown as holograms. */
+    /**
+     * It is known among the terminals loaded: on a player's game, whose plans are shown as holograms; on the server,
+     * whose fittings and platforms find it.
+     */
     @Override
     public void onLoad() {
         super.onLoad();
-        if (this.level != null && this.level.isClientSide()) {
-            LOADED_ON_CLIENT.add(this);
+        if (this.level != null) {
+            (this.level.isClientSide() ? LOADED_ON_CLIENT : LOADED_ON_SERVER).add(this);
         }
     }
 
@@ -169,6 +191,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     public void setRemoved() {
         super.setRemoved();
         LOADED_ON_CLIENT.remove(this);
+        LOADED_ON_SERVER.remove(this);
     }
 
     /** The terminals loaded on this player's game. */
@@ -176,9 +199,28 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return List.copyOf(LOADED_ON_CLIENT);
     }
 
-    /** The bay it found, if it is formed. */
+    /** Whether its building stands whole. */
+    public boolean formed() {
+        return this.structure.formed();
+    }
+
+    /** How its building stands, once formed: its turn from the way the pattern draws it. */
+    public Optional<Orientation> turn() {
+        return formed() ? this.structure.orientation().filter(Orientation.turns()::contains) : Optional.empty();
+    }
+
+    /** Its bay, while its building stands whole. */
     public Optional<HangarBay> bay() {
-        return Optional.ofNullable(this.bay.get());
+        return turn().map(turn -> HangarStructure.bay(this.worldPosition, turn));
+    }
+
+    /**
+     * The way from its control room into its bay, through the windows before its consoles: the way a player at its
+     * console looks, as the terminal faces the other way, toward its chair.
+     */
+    public Direction intoBay() {
+        return turn().map(turn -> HangarStructure.turned(turn, Direction.WEST))
+                .orElse(getBlockState().getValue(HorizontalDirectionalBlock.FACING).getOpposite());
     }
 
     /** Its number among the world's hangars, or 0 before it has first formed. */
@@ -191,11 +233,6 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     public List<BlockPos> platforms() {
         final List<BlockPos> found = this.platforms.get();
         return found == null ? List.of() : found;
-    }
-
-    /** What it says to the player who uses it: its bay's size, or what keeps it from forming. */
-    public Text reason() {
-        return this.reason;
     }
 
     /** The design on its screen. */
@@ -263,8 +300,8 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     }
 
     /**
-     * Sends the design on its screen to its bay to be built, when the bay is formed and the design is ready to fly;
-     * saved among its plans too, as every rocket built becomes a plan the hangar keeps.
+     * Sends the design on its screen to its bay to be built, when the building stands whole and the design is ready
+     * to fly; saved among its plans too, as every rocket built becomes a plan the hangar keeps.
      *
      * @return whether it was sent
      */
@@ -279,8 +316,8 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     }
 
     /**
-     * Where the plan sent to its bay stands, the middle of the rocket's foot, if one was sent: on the floor, or on the
-     * deck of its mobile launcher.
+     * Where the plan sent to its bay stands, the middle of the rocket's foot, if one was sent: on the deck of its
+     * mobile launcher, or on the floor where the launcher has no room.
      */
     public Optional<BlockPos> planAt() {
         return Optional.ofNullable(this.planAt.get());
@@ -335,56 +372,50 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return Optional.of(new Released(design, foot, formed));
     }
 
-    /** Looks at its bay now, forming it or undoing it as it finds it. */
-    public void look() {
-        if (this.level == null || this.level.isClientSide()) {
+    /** Whether its bay door stands open, as the first block of its lower door says. */
+    public boolean doorOpen() {
+        final Optional<Orientation> turn = turn();
+        if (this.level == null || turn.isEmpty()) {
+            return false;
+        }
+        final BlockState door = this.level.getBlockState(HangarStructure.door(this.worldPosition, turn.get())
+                .getFirst());
+        return door.is(HangarBlocks.BAY_DOOR.get()) && door.getValue(HangarPieceBlock.OPEN);
+    }
+
+    /** Opens its bay door, the lower door and the slot over it together, or shuts it, while its building stands. */
+    public void door(final boolean open) {
+        final Optional<Orientation> turn = turn();
+        if (this.level == null || this.level.isClientSide() || turn.isEmpty()) {
             return;
         }
-        final Direction into = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
-        final HangarBays.Result found = HangarBays.find(this.level, this.worldPosition, into, new HangarBays.Limits(
-                SpaceServerConfig.FILE.get(SpaceServerConfig.HANGAR_NARROWEST),
-                SpaceServerConfig.FILE.get(SpaceServerConfig.HANGAR_WIDEST),
-                SpaceServerConfig.FILE.get(SpaceServerConfig.HANGAR_LOWEST),
-                SpaceServerConfig.FILE.get(SpaceServerConfig.HANGAR_TALLEST)));
-        this.reason = found.reason();
-        final HangarBay was = this.bay.get();
-        final HangarBay now = found.bay().orElse(null);
-        if (!Objects.equals(was, now)) {
-            if (was != null) {
-                shape(this.level, was, false);
+        for (final BlockPos at : HangarStructure.door(this.worldPosition, turn.get())) {
+            final BlockState state = this.level.getBlockState(at);
+            if (state.is(HangarBlocks.BAY_DOOR.get()) && state.getValue(HangarPieceBlock.OPEN) != open) {
+                this.level.setBlock(at, state.setValue(HangarPieceBlock.OPEN, open), Block.UPDATE_ALL);
             }
-            this.platforms.set(now != null ? shape(this.level, now, true) : List.of());
-            this.bay.set(now);
-            if (now != null && number() == 0 && this.level.getServer() != null) {
-                this.number.set(HangarNumbers.take(this.level.getServer()));
-            }
-            setChanged();
         }
-        bind(found.ports());
-        this.wait = now == null ? LOOK_UNFORMED : LOOK_FORMED;
     }
 
     /**
-     * Undoes its bay, as it is broken: its pieces are blocks of the kit again, its ports let go, and its rocket's
-     * parts come apart.
+     * A work platform was set or taken away at {@code at}, in its bay: the platform there, and those beside it, take
+     * their formed shapes, each with its railing where no platform follows it.
      */
-    public void undo() {
-        final HangarBay was = this.bay.get();
-        if (was != null && this.level != null) {
-            shape(this.level, was, false);
-            this.bay.set(null);
-            this.platforms.set(List.of());
+    public void platformChanged(final BlockPos at) {
+        if (this.level == null || this.level.isClientSide() || !formed()) {
+            return;
         }
-        bind(List.of());
-        stopBuild(true);
-    }
-
-    /** It is broken: its bay is undone, and the blocks its crane held drop where it stood. */
-    public void broken() {
-        undo();
-        if (this.level != null && !this.level.isClientSide()) {
-            this.crane.spill(this.level, this.worldPosition);
+        final List<BlockPos> now = new ArrayList<>(platforms());
+        now.remove(at);
+        for (final BlockPos near : List.of(at, at.north(), at.south(), at.east(), at.west())) {
+            if (shapePlatform(this.level, near, true)) {
+                if (!now.contains(near)) {
+                    now.add(near.immutable());
+                }
+            }
         }
+        this.platforms.set(List.copyOf(now));
+        setChanged();
     }
 
     /** Its crane: what it holds, what it waits for, and the build it lays. */
@@ -392,10 +423,10 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return this.crane;
     }
 
-    /** The crane's inbox, to an item port of its shell while the bay is formed; nothing else passes through. */
+    /** The crane's inbox, to the loading dock while the building stands; nothing else passes through. */
     @Override
     public @Nullable IItemHandler itemPort(final PortKind kind, final BlockPos part, final @Nullable Direction side) {
-        return kind == PortKind.ITEM_INPUT && bay().isPresent() ? this.crane.inbox() : null;
+        return kind == PortKind.ITEM_INPUT && formed() ? this.crane.inbox() : null;
     }
 
     @Override
@@ -408,7 +439,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return List.of(Assembly.ASSEMBLE);
     }
 
-    /** Why it will not build what the network asks: no bay, no such plan, no plan at all, or a plan not ready. */
+    /** Why it will not build what the network asks: no building, no such plan, no plan at all, or a plan not ready. */
     @Override
     public @Nullable Text refuses(final OperationType<?> type, final IOperationArgs args) {
         final Refusal why = refusal(args);
@@ -458,9 +489,189 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return follow();
     }
 
+    /* It spends no energy. */
+    @Override
+    public boolean takesEnergy() {
+        return false;
+    }
+
+    /* It holds no items. */
+    @Override
+    public boolean inventoryOn(final int tab) {
+        return false;
+    }
+
+    /* It shows nothing as it works. */
+    @Override
+    public void animate(final Level level, final BlockPos pos, final RandomSource random) {
+    }
+
+    @Override
+    protected MachineStatus work(final ServerLevel level) {
+        return MachineStatus.WAITING;
+    }
+
+    @Override
+    protected Set<MachineResource> resources() {
+        return Set.of();
+    }
+
+    /*
+     * Its building checked again: formed, its fittings take their places as it stands, the first time it forms it
+     * takes its number among the world's hangars; come apart, they go dark.
+     */
+    @Override
+    protected void structureChecked(final ServerLevel level) {
+        final Optional<Orientation> turn = turn();
+        final int now = turn.map(Orientation.turns()::indexOf).orElse(UNSHAPED);
+        if (now == shaped()) {
+            return;
+        }
+        unshape(level);
+        if (turn.isPresent()) {
+            this.platforms.set(shape(level, turn.get(), true));
+            this.shapedAs.set(now);
+            if (number() == 0) {
+                this.number.set(HangarNumbers.take(level.getServer()));
+            }
+        }
+        setChanged();
+    }
+
+    /* How its fittings were shaped, by the building's turn, or none. */
+    private int shaped() {
+        final Integer was = this.shapedAs.get();
+        return was == null ? UNSHAPED : was;
+    }
+
+    /* Its fittings, shaped as the building stood, go dark and are blocks of the kit again. */
+    private void unshape(final Level level) {
+        final int was = shaped();
+        if (was >= 0 && was < Orientation.turns().size()) {
+            shape(level, Orientation.turns().get(was), false);
+        }
+        this.shapedAs.set(UNSHAPED);
+        this.platforms.set(List.of());
+    }
+
+    /*
+     * Gives the fittings of the building standing as {@code turn} says their places, or takes them back: the consoles
+     * their screens, the chairs, the status board, the railing and the doors their ways, the crane's pieces their
+     * formed shapes turned as they run; and the work platforms in its bay theirs. The platforms it shaped.
+     */
+    private List<BlockPos> shape(final Level level, final Orientation turn, final boolean formed) {
+        for (final HangarStructure.Fitting fitting : HangarStructure.fittings()) {
+            final BlockPos at = HangarStructure.world(this.worldPosition, turn, fitting.x(), fitting.y(), fitting.z());
+            final BlockState state = level.getBlockState(at);
+            final BlockState shaped = fitted(state, fitting, turn, formed);
+            if (shaped != state) {
+                level.setBlock(at, shaped, Block.UPDATE_CLIENTS);
+            }
+        }
+        final List<BlockPos> found = new ArrayList<>();
+        final HangarBay bay = HangarStructure.bay(this.worldPosition, turn);
+        final BlockPos low = bay.low();
+        final BlockPos high = bay.high();
+        for (int sx = SectionPos.blockToSectionCoord(low.getX()); sx <= SectionPos.blockToSectionCoord(high.getX());
+             sx++) {
+            for (int sz = SectionPos.blockToSectionCoord(low.getZ());
+                 sz <= SectionPos.blockToSectionCoord(high.getZ()); sz++) {
+                final ChunkAccess chunk = level.getChunk(sx, sz);
+                for (int sy = SectionPos.blockToSectionCoord(low.getY());
+                     sy <= SectionPos.blockToSectionCoord(high.getY()); sy++) {
+                    final int index = level.getSectionIndexFromSectionY(sy);
+                    // A section holding only air holds no platform: most of a bay's height is skipped so.
+                    if (index >= 0 && index < chunk.getSectionsCount() && !chunk.getSection(index).hasOnlyAir()) {
+                        platformsIn(level, bay, SectionPos.of(sx, sy, sz), formed, found);
+                    }
+                }
+            }
+        }
+        return found;
+    }
+
+    /*
+     * The work platforms of {@code bay} in the section {@code section}, shaped as {@code formed} says, added to
+     * {@code found}.
+     */
+    private static void platformsIn(final Level level, final HangarBay bay, final SectionPos section,
+                                     final boolean formed, final List<BlockPos> found) {
+        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        final int fromX = Math.max(bay.low().getX(), section.minBlockX());
+        final int toX = Math.min(bay.high().getX(), section.maxBlockX());
+        final int fromY = Math.max(bay.low().getY(), section.minBlockY());
+        final int toY = Math.min(bay.high().getY(), section.maxBlockY());
+        final int fromZ = Math.max(bay.low().getZ(), section.minBlockZ());
+        final int toZ = Math.min(bay.high().getZ(), section.maxBlockZ());
+        for (int x = fromX; x <= toX; x++) {
+            for (int y = fromY; y <= toY; y++) {
+                for (int z = fromZ; z <= toZ; z++) {
+                    if (level.getBlockState(at.set(x, y, z)).is(HangarBlocks.WORK_PLATFORM.get())
+                            && shapePlatform(level, at, formed)) {
+                        found.add(at.immutable());
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+     * A work platform at {@code at} takes its formed shape, with its railing where no platform follows it the way it
+     * faces, or is a block of the kit again; whether one stands there.
+     */
+    private static boolean shapePlatform(final Level level, final BlockPos at, final boolean formed) {
+        final BlockState state = level.getBlockState(at);
+        if (!state.is(HangarBlocks.WORK_PLATFORM.get())) {
+            return false;
+        }
+        final boolean edge = formed && !level.getBlockState(at.relative(state.getValue(
+                HorizontalDirectionalBlock.FACING))).is(HangarBlocks.WORK_PLATFORM.get());
+        final BlockState shaped = state.setValue(HangarPieceBlock.FORMED, formed).setValue(HangarPieceBlock.EDGE, edge);
+        if (shaped != state) {
+            level.setBlock(at, shaped, Block.UPDATE_CLIENTS);
+        }
+        return true;
+    }
+
+    /* The state {@code state} at {@code fitting}'s place takes as the building forms or comes apart. */
+    private static BlockState fitted(final BlockState state, final HangarStructure.Fitting fitting,
+                                     final Orientation turn, final boolean formed) {
+        if (state.getBlock() instanceof HangarPieceBlock piece) {
+            final BlockState shaped = state.setValue(HangarPieceBlock.FORMED, formed);
+            return formed ? shaped.setValue(HorizontalDirectionalBlock.FACING, craneWay(piece.kind(), fitting, turn))
+                    : shaped;
+        }
+        if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) {
+            return state;
+        }
+        BlockState shaped = state.setValue(HorizontalDirectionalBlock.FACING, HangarStructure.turned(turn,
+                fitting.drawn()));
+        if (state.is(HangarBlocks.CONSOLE.get())) {
+            shaped = shaped.setValue(HangarConsoleBlock.SCREEN, formed ? HangarConsoleBlock.screenAt(fitting.along())
+                    : HangarConsoleBlock.Screen.OFF);
+        } else if (state.is(HangarBlocks.DOOR_CONSOLE.get())) {
+            shaped = shaped.setValue(DoorConsoleBlock.SCREEN, !formed ? HangarConsoleBlock.Screen.OFF
+                    : fitting.left() ? HangarConsoleBlock.Screen.LEFT : HangarConsoleBlock.Screen.RIGHT);
+        }
+        return shaped;
+    }
+
+    /*
+     * The way a formed piece of the crane faces: a rail into the bay from its wall, the bridge and the hoist along the
+     * bridge's span; as the pattern draws them, the rails along the west and east walls and the bridge across.
+     */
+    private static Direction craneWay(final HangarPieceBlock.Kind kind, final HangarStructure.Fitting fitting,
+                                      final Orientation turn) {
+        final Direction drawn = switch (kind) {
+            case RAIL -> fitting.x() < 0 ? Direction.EAST : Direction.WEST;
+            default -> Direction.EAST;
+        };
+        return HangarStructure.turned(turn, drawn);
+    }
+
     /* Why it will not build what {@code args} asks, or null when it will. */
     private @Nullable Refusal refusal(final IOperationArgs args) {
-        if (bay().isEmpty()) {
+        if (!formed()) {
             return new Refusal(HangarTexts.NOT_FORMED, "");
         }
         if (!(args instanceof Assembly.Args asked) || asked.plan().isEmpty()) {
@@ -479,14 +690,14 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return plans().stream().filter(kept -> kept.name().equals(name)).findFirst();
     }
 
-    /* Whether {@code design} may be sent to its bay: the bay is formed and the design is ready to fly from it. */
+    /* Whether {@code design} may be sent to its bay: the building stands whole and the design is ready to fly. */
     private boolean ready(final RocketDesign design) {
         return this.level != null && bay().isPresent() && DesignReport.in(this.level, design.stack(), bay()).ready();
     }
 
     /*
-     * Sends {@code design} to its bay: the plan it built before comes apart, and this one is laid out, on the deck of
-     * a mobile launcher where the bay has room for one, on the floor where it has not.
+     * Sends {@code design} to its bay: the plan it built before comes apart, and this one is laid out on the deck of a
+     * mobile launcher, its tower toward the far wall, where the launcher has room; on the floor where it has not.
      */
     private void send(final RocketDesign design) {
         stopBuild(true);
@@ -503,9 +714,7 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
     /*
      * Tells the network's request how the building goes, and lets it go once it is over: done when the rocket is
      * whole, waiting while the crane has no block it can lay or the plan waits for its chunks, building otherwise;
-     * failed when the plan is taken back or the bay comes apart.
-     *
-     * @return the state it is in now
+     * failed when the plan is taken back. The state it is in now.
      */
     private OperationStatus follow() {
         final IOperationRequest<Assembly.Args> following = this.assembling;
@@ -529,30 +738,6 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
             this.assembling = null;
         }
         return now;
-    }
-
-    /* Binds the ports of its shell found at {@code found} to it, and lets go of those no longer there. */
-    private void bind(final List<BlockPos> found) {
-        if (this.level == null || this.level.isClientSide()) {
-            return;
-        }
-        final Set<BlockPos> now = Set.copyOf(found);
-        for (final BlockPos gone : List.copyOf(this.ports)) {
-            if (!now.contains(gone)) {
-                this.ports.remove(gone);
-                if (this.level.isLoaded(gone) && this.level.getBlockEntity(gone)
-                        instanceof MultiblockPartBlockEntity port && this.worldPosition.equals(port.terminalPos())) {
-                    port.release();
-                    this.level.invalidateCapabilities(gone);
-                }
-            }
-        }
-        for (final BlockPos at : now) {
-            if (this.ports.add(at) && this.level.getBlockEntity(at) instanceof MultiblockPartBlockEntity port) {
-                port.setTerminal(this.worldPosition);
-                this.level.invalidateCapabilities(at);
-            }
-        }
     }
 
     /* Starts building the plan sent to its bay, where its chunks are all loaded; it waits for them otherwise. */
@@ -618,49 +803,6 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
         return true;
     }
 
-    /*
-     * Gives the pieces of {@code bay} their own shapes, or takes them back: each piece in the bay, and each door in its
-     * walls; a formed bay's rails turned to look into the bay, its bridge and its hoist to run the way it spans, each
-     * work platform told whether it is at the edge it faces. The work platforms it formed.
-     */
-    private static List<BlockPos> shape(final Level level, final HangarBay bay, final boolean formed) {
-        final List<BlockPos> platforms = new ArrayList<>();
-        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        final BlockPos low = bay.low();
-        final BlockPos high = bay.high();
-        for (int x = low.getX() - 1; x <= high.getX() + 1; x++) {
-            for (int z = low.getZ() - 1; z <= high.getZ() + 1; z++) {
-                for (int y = low.getY(); y <= high.getY(); y++) {
-                    final BlockState state = level.getBlockState(at.set(x, y, z));
-                    if (!(state.getBlock() instanceof HangarPieceBlock piece)) {
-                        continue;
-                    }
-                    final boolean inside = bay.holds(at);
-                    if (!inside && piece.kind() != HangarPieceBlock.Kind.DOOR) {
-                        continue;
-                    }
-                    BlockState shaped = state.setValue(HangarPieceBlock.FORMED, formed);
-                    final Direction way = formed ? way(piece.kind(), bay, at) : null;
-                    if (way != null) {
-                        shaped = shaped.setValue(HorizontalDirectionalBlock.FACING, way);
-                    }
-                    if (piece.kind() == HangarPieceBlock.Kind.PLATFORM) {
-                        final boolean edge = formed && !level.getBlockState(at.relative(state.getValue(
-                                HorizontalDirectionalBlock.FACING))).is(HangarBlocks.WORK_PLATFORM.get());
-                        shaped = shaped.setValue(HangarPieceBlock.EDGE, edge);
-                        if (formed) {
-                            platforms.add(at.immutable());
-                        }
-                    }
-                    if (shaped != state) {
-                        level.setBlock(at, shaped, Block.UPDATE_CLIENTS);
-                    }
-                }
-            }
-        }
-        return platforms;
-    }
-
     /* Whether every part of {@code design}, its boosters' with them, is one {@code level} knows. */
     private static boolean known(final Level level, final RocketDesign design) {
         final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
@@ -677,17 +819,6 @@ public final class HangarTerminalBlockEntity extends SyncedBlockEntity implement
             }
         }
         return true;
-    }
-
-    /* The way a formed piece looks: a rail into the bay, the bridge and the hoist along their span; others as set. */
-    private static @Nullable Direction way(final HangarPieceBlock.Kind kind, final HangarBay bay, final BlockPos at) {
-        return switch (kind) {
-            case RAIL -> at.getZ() == bay.low().getZ() && bay.span() == Direction.Axis.Z ? Direction.SOUTH
-                    : at.getZ() == bay.high().getZ() && bay.span() == Direction.Axis.Z ? Direction.NORTH
-                    : at.getX() == bay.low().getX() ? Direction.EAST : Direction.WEST;
-            case BRIDGE, HOIST -> bay.span() == Direction.Axis.Z ? Direction.NORTH : Direction.EAST;
-            default -> null;
-        };
     }
 
     /**

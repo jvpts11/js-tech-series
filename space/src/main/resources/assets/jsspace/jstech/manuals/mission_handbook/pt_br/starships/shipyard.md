@@ -2,7 +2,7 @@
 section: starships
 order: 1
 icon: jsspace:shipyard_terminal
-covers: [jsspace:shipyard_terminal, jsspace:booth_panel, jsspace:cradle_clamp, jsspace:dock_conveyor, jsspace:dock_feeder, jsspace:dock_floodlight, jsspace:dock_gantry, jsspace:dock_girder, jsspace:dock_rail, jsspace:dock_stairs, jsspace:dock_tower, jsspace:dock_walkway, jsspace:pit_rim]
+covers: [jsspace:shipyard_terminal, jsspace:booth_panel, jsspace:cradle_clamp, jsspace:dock_conveyor, jsspace:dock_feeder, jsspace:dock_floodlight, jsspace:dock_gantry, jsspace:dock_girder, jsspace:dock_rail, jsspace:dock_stairs, jsspace:dock_tower, jsspace:dock_walkway, jsspace:pit_rim, jsspace:item_port]
 ---
 # Estaleiro Pequeno
 

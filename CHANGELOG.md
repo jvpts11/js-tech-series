@@ -469,6 +469,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   says which way a pattern's terminal faces as drawn, as the turn that brings north round to it, written in its file
   as `terminal_faces`; `IStructureShape.terminalFaces()` reads it for any shape, north unless it says otherwise.
   Experimental.
+- (Core) How far a shape reaches across the ground: J's Core's API is at version 35. `IStructureShape.reachAcross()`
+  is the farthest from its terminal along x or z that checking it reads the world, the ring of chunks a machine waits
+  to have loaded before it checks its structure; `MultiblockPattern` gives its longest side across the ground, its
+  height left out unless it may lie on its side, so a structure taller than it is wide forms where only the chunks
+  round it are loaded. Experimental.
 - (Space) Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
   wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
   speed and less in thinner air; written in a part's file as `wing`. Experimental.
@@ -2351,21 +2356,35 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the game's map item draws a world, from that world's own generator: zoom in and out, mark the spot to land on by
   clicking the map, clear it, lay the grid; the ellipse the rocket comes down in is drawn round the mark, with north,
   the scale and where the spot is.
-- (Space) The Rocket Hangar, where a rocket is stacked standing: walls and roof of any solid block a player likes,
-  its Hangar Terminal set in a wall facing into the bay. From the terminal the hangar measures its bay and forms once
-  a line of Crane Rail runs along two facing walls a block under the roof, a Crane Bridge lies on them from wall to
-  wall, a Crane Hoist hangs under the bridge and a Bay Door stands in a wall on the floor; its walls, floor and roof
-  must be closed, and its bay no smaller and no larger than the server allows (new settings: the narrowest, widest,
-  lowest and tallest bay). Used, the terminal opens the hangar's design screen once it is formed, or says what keeps
-  it from forming. Formed, the crane and the work platforms are drawn whole as the approved hangar has them: each
-  rail a yellow box girder with its stiffeners and stencil, its steel rail on top and a bracket under it every eight
-  blocks; the bridge's taller girder on the rails, two blocks wide; the hoist's trolley of riveted steel plates with
-  its drum; each deck of work platforms a grated plate over an underframe of I-beams, hazard stripes round its edge, a
-  hazard band, the yellow posts and rail along the edge it faces, and two struts down to the side away from it, the
-  deck at its blocks' tops. Its kit: the Hangar Terminal, the Assembly Console, the Crane Rail, the Crane Bridge, the
-  Crane Hoist, the Bay Door and the Work Platform.
-- (Space) The Rocket Design, the Rocket Hangar's design screen, opened at its terminal or at an Assembly Console in
-  its bay: the hangar itself seen in 3D through its middle, the rocket standing on the middle of the bay's floor with
+- (Space) The Rocket Hangar, where a rocket is stacked standing: one building of one size, as the Vehicle Assembly
+  Building's high bay, a multiblock formed from its terminal. Its bay is 29 blocks across, 37 long and 108 high, for
+  the tallest rocket it builds, 96 blocks, on its mobile launcher with the tower beside it, and the widest, 17 blocks;
+  walls of light grey panels with a dark frame column every six blocks and a band every twelve, lamps up the inner
+  faces of the long walls, a concrete floor laid into the ground with the crawler's two lanes of gravel down it. In
+  its end wall the stepped door, of Bay Door: a lower door 25 wide and 12 high for the crawler and the launcher's
+  deck, a slot 17 wide over it up to 106 for the rocket and the tower; it opens by itself for a crawler going through,
+  and from the Bay Door Console, pressed high on its screen to open and low to shut. Against a long wall stands the
+  control room, as a launch control room: a row of consoles before windows into the bay, the Hangar Terminal among
+  them, a chair at each; the door's console at the row's end; a step at the back with its railing and the Rocket
+  Design Table on it; the status board on the end wall; light panels in the ceiling; a personnel door in its outer
+  wall and one onto the bay's floor, each opened by using it; and in its outer wall the loading dock the crane's
+  blocks come in through. Along the top of the long walls run the crane's rails, its bridge across the bay's middle,
+  its hoist under the bridge. As the building forms the consoles light their screens along the row, the status board
+  and the table their pictures, and the chairs, the railing, the doors and the lamps turn the way the building has
+  them; used, the terminal opens the hangar's design screen once it is formed, or the machine's screen, which says
+  what the building still lacks. Formed, the crane and the work platforms set in the bay are drawn whole as the
+  approved hangar has them: each rail a yellow box girder with its stiffeners and stencil, its steel rail on top and a
+  bracket under it every eight blocks; the bridge's taller girder on the rails, two blocks wide; the hoist's trolley
+  of riveted steel plates with its drum; each deck of work platforms a grated plate over an underframe of I-beams,
+  hazard stripes round its edge, a hazard band, the yellow posts and rail along the edge it faces, and two struts down
+  to the side away from it, the deck at its blocks' tops. Its blocks: the Hangar Terminal, the Hangar Wall Panel, the
+  Hangar Frame, the Hangar Roof, the Hangar Window, the Hangar Floor, the Hangar Lamp, the Bay Door, the Control Room
+  Floor, the Control Room Step, the Step Railing, the Hangar Console, the Bay Door Console, the Console Chair, the
+  Rocket Design Table, the Status Board, the Personnel Door, the Ceiling Light, the Loading Dock, the Crane Rail, the
+  Crane Bridge, the Crane Hoist and the Work Platform.
+- (Space) The Rocket Design, the Rocket Hangar's design screen, opened at its terminal or at its Rocket Design Table:
+  the hangar itself seen in 3D through its middle, from its control room's side, the rocket standing on the middle of
+  the bay's floor with
   hazard stripes painted round it, and the hangar's own steel plates round it. A part is dragged from its bin, each
   bin showing the part's own model and its label card, to a green node of the rocket, where it snaps, as in Kerbal
   Space Program's editor; a part of the rocket is dragged off with those on its far side from the root, and dropped on
@@ -2378,8 +2397,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   delta-v and its thrust against its weight on the world it leaves, the rocket's delta-v on a display, whether it
   lifts off, each destination with its globe, what it asks (from the Overworld: a low orbit 9,400 m/s, the Moon
   15,200, Mars 13,000) and a bar of how far the rocket gets, short in red; and its checks: a stage with propellant and
-  no engine or an engine with nothing to burn, too weak to lift off, taller than the bay's crane or wider than the
-  bay, the crew's seats, the heat shield to come home through air, the tanks filled at the pad; its sign lit READY or
+  no engine or an engine with nothing to burn, too weak to lift off, taller than the 96 blocks a hangar builds or
+  wider than the 17 of its door's slot, the crew's seats, the heat shield to come home through air, the tanks filled
+  at the pad; its sign lit READY or
   NOT READY. Every change is kept by the hangar; the design is named, saved as one of the hangar's sixteen plans,
   loaded from them, and sent to the bay to be built once it is ready. Each hangar takes a number of its own in the
   world the first time it forms, and its screen's sign reads it: Rocket Hangar 1, Rocket Hangar 2.
@@ -2410,13 +2430,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   missing as ghosts, the next layer glowing, wrong blocks marked, each part's box and words, and a line across the top
   of the screen for the nearest plan.
 - (Space) The Rocket Hangar's crane builds the rocket by itself: once a design is sent to the bay, whatever the hangar
-  waits for that comes in through an Item Port in its shell (from a chest, a hopper, a pipe, a conveyor or another
+  waits for that comes in through its loading dock (from a chest, a hopper, a pipe, a conveyor or another
   mod's exporter) the crane lays where it goes, block by block at the pace of the multiblock builder, the lowest first,
   layer by layer; the port takes only the blocks the rocket still wants and no more of each, and gives back out what
   it no longer wants, as when a player lays a block by hand. A part forms as its last block goes down. The Hangar
   Terminal takes a data cable on any face: on a network, `RUN jscore:assemble` sets the crane building the plan sent
   to the bay, or one of the hangar's plans by name (`WITH plan = 'Orbital I'`), and the request stays in flight until
-  the rocket is whole. Broken, the terminal drops the blocks its crane held. New block: the Item Port.
+  the rocket is whole. Broken, the terminal drops the blocks its crane held.
 - (Space) The mobile launcher a rocket stands on in its hangar, Apollo's way: where the bay has room for one, the plan
   sent to it lays the launcher under the rocket, sized by it, and the crane builds them together. Its deck, three blocks
   thick, stands on six Pad Pedestals three blocks tall, in two rows along its length so the crawler can come in under

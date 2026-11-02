@@ -92,14 +92,6 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
                 this.destinations, List.copyOf(all));
     }
 
-    /**
-     * How tall a rocket can stand in {@code bay}: up to its crane's hoist, which travels over the rocket on its
-     * bridge.
-     */
-    public static int clearHeight(final HangarBay bay) {
-        return bay.hoist().getY() - bay.low().getY();
-    }
-
     /** Whether it has nothing it lacks to fly: no fault among its checks. */
     public boolean ready() {
         return this.checks.stream().noneMatch(check -> check.severity() == Severity.FAULT);
@@ -178,8 +170,9 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
 
     /*
      * What the design lacks, warns of or has: no parts; a part that does not fit; a stage with propellant and no
-     * engine, or an engine and nothing to burn; too weak to lift off; too tall or too wide for its bay; its crew, and
-     * the heat shield a crew needs to come home through air; and the tanks, filled at the pad.
+     * engine, or an engine and nothing to burn; too weak to lift off; taller than the hangar builds, or too wide to
+     * roll out through its door's slot; its crew, and the heat shield a crew needs to come home through air; and the
+     * tanks, filled at the pad.
      */
     private static List<Check> checks(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
                                       final List<Stage> stages, final double liftOff, final int height,
@@ -203,13 +196,13 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
             faults.add(new Check(Severity.FAULT, DesignTexts.STAYS_DOWN.text()));
         }
         if (bay.isPresent()) {
-            final int clear = clearHeight(bay.get());
-            if (height > clear) {
-                faults.add(new Check(Severity.FAULT, DesignTexts.TOO_TALL.with(height, clear)));
+            if (height > HangarStructure.TALLEST_ROCKET) {
+                faults.add(new Check(Severity.FAULT, DesignTexts.TOO_TALL.with(height,
+                        HangarStructure.TALLEST_ROCKET)));
             }
-            final int across = Math.min(bay.get().width(), bay.get().depth());
-            if (width > across) {
-                faults.add(new Check(Severity.FAULT, DesignTexts.TOO_WIDE.with(width, across)));
+            if (width > HangarStructure.WIDEST_ROCKET) {
+                faults.add(new Check(Severity.FAULT, DesignTexts.TOO_WIDE.with(width,
+                        HangarStructure.WIDEST_ROCKET)));
             }
         }
         boolean capsule = false;

@@ -1,0 +1,219 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "jsspace:block/hangar/control_floor",
+    "floor": "jsspace:block/hangar/control_floor",
+    "edge": "jsspace:block/hangar/control_step_edge",
+    "frame": "jsspace:block/hangar/hangar_frame"
+  },
+  "elements": [
+    {
+      "name": "step",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        8,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            8,
+            16,
+            16
+          ],
+          "texture": "#edge"
+        },
+        "south": {
+          "uv": [
+            0,
+            8,
+            16,
+            16
+          ],
+          "texture": "#floor"
+        },
+        "east": {
+          "uv": [
+            0,
+            8,
+            16,
+            16
+          ],
+          "texture": "#floor"
+        },
+        "west": {
+          "uv": [
+            0,
+            8,
+            16,
+            16
+          ],
+          "texture": "#floor"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#floor"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#floor"
+        }
+      }
+    },
+    {
+      "name": "post",
+      "from": [
+        7.4,
+        8,
+        1.2
+      ],
+      "to": [
+        8.6,
+        24,
+        2.4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1.1999999999999993,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            1.1999999999999993,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            1.2,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            1.2,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            1.1999999999999993,
+            1.2
+          ],
+          "texture": "#frame"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            1.1999999999999993,
+            1.2
+          ],
+          "texture": "#frame"
+        }
+      }
+    },
+    {
+      "name": "rail",
+      "from": [
+        0,
+        23,
+        1
+      ],
+      "to": [
+        16,
+        24.6,
+        2.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            14.399999999999999,
+            16,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            0,
+            14.399999999999999,
+            16,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "east": {
+          "uv": [
+            0,
+            14.399999999999999,
+            1.6,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            0,
+            14.399999999999999,
+            1.6,
+            16
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            1.6
+          ],
+          "texture": "#frame"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            1.6
+          ],
+          "texture": "#frame"
+        }
+      }
+    }
+  ]
+}

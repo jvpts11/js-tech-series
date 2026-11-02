@@ -10,8 +10,10 @@ package dev.jstech.space.hangar;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
+import java.util.function.Predicate;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * The menu of a Rocket Hangar's design screen: no slots, since a design is drawn, not stored in items; its screen reads
@@ -24,7 +26,13 @@ public final class RocketDesignMenu extends CoreMenu {
 
     public RocketDesignMenu(final int containerId, final Inventory inventory,
                             final HangarTerminalBlockEntity terminal) {
-        super(RocketDesigner.MENU.get(), containerId, inventory, MenuValidity.blockEntity(terminal));
+        this(containerId, inventory, terminal, MenuValidity.blockEntity(terminal));
+    }
+
+    /** The menu of {@code terminal}'s hangar, open while {@code valid} holds for its player. */
+    public RocketDesignMenu(final int containerId, final Inventory inventory, final HangarTerminalBlockEntity terminal,
+                            final Predicate<Player> valid) {
+        super(RocketDesigner.MENU.get(), containerId, inventory, valid);
         this.terminal = terminal;
     }
 

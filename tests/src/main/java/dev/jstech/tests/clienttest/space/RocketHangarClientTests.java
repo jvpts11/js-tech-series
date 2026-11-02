@@ -7,72 +7,100 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.hangar.HangarPieceBlock;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import dev.jstech.tests.testkit.space.TestHangars;
+import java.util.function.IntPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * A Rocket Hangar on a player's game: built of stone round its bay, its crane formed, the bridge across the bay is
- * drawn as its yellow girder, seen from the bay's floor, where the open roof above it would be grey stone; and its
- * deck of work platforms along a wall shows its hazard band and yellow railing along the edge it faces.
+ * A Rocket Hangar on a player's game, the building built whole and formed: its crane's bridge is drawn as its yellow
+ * girder over the bay, seen from a perch near the top of the bay; and a deck of work platforms along a wall shows its
+ * hazard band and yellow railing along the edge it faces, seen from the bay's floor.
  */
 public final class RocketHangarClientTests {
 
-    /* The bay, from (2, 2, 6) to (8, 13, 12) of the test's place, the player standing on its floor. */
-    private static final int X0 = 2;
-    private static final int X1 = 8;
-    private static final int Z0 = 6;
-    private static final int Z1 = 12;
-    private static final int Y0 = 2;
-    private static final int TOP = 13;
-    private static final BlockPos TERMINAL = new BlockPos(5, 3, Z1 + 1);
-    private static final BlockPos EYE = new BlockPos(5, 2, 7);
-    private static final BlockPos BRIDGE = new BlockPos(5, TOP, 9);
+    /* The hangar's terminal, its door to the north; the bay's middle at (5, 2, 11) of the test's place. */
+    private static final BlockPos TERMINAL = new BlockPos(22, 2, 9);
+    private static final Orientation TURN = Orientation.NORTH;
+    /* Where the player stands on the bay's floor, and the perch near its top the bridge is seen from. */
+    private static final BlockPos EYE = new BlockPos(7, 2, 11);
+    private static final BlockPos PERCH = new BlockPos(-4, 103, 8);
+    /* The bridge's underside, away from the hoist under its middle, near the lamps of the west wall. */
+    private static final Vec3 UNDER_BRIDGE = new Vec3(-7.5, 109.15, 11.5);
+    /* A deck of work platforms along the east wall, facing west into the bay; the middle of its edge's band. */
+    private static final int DECK_X0 = 17;
+    private static final int DECK_X1 = 18;
+    private static final int DECK_Z0 = 9;
+    private static final int DECK_Z1 = 14;
+    private static final int DECK_Y = 8;
+    private static final Vec3 BAND = new Vec3(DECK_X0, DECK_Y + 0.75, 12.0);
     private static final int ARRIVE = 400;
     private static final int SETTLE = 20;
     private static final int PATCH = 4;
     private static final int CHANNEL = 0xFF;
     /* How far red and green stand over blue on the girder's underside, shaded as the game shades a face below. */
     private static final int YELLOW = 30;
-    private static final int LAMPS = 3;
-    /* The work platforms' height, and the middle of the hazard band along their deck's edge, looked at. */
-    private static final int PLATFORM_Y = 6;
-    private static final Vec3 BAND = new Vec3(X1 - 1.0, PLATFORM_Y + 0.75, 9.5);
-    /* The bridge's underside between the platforms and the hoist hanging under its middle. */
-    private static final Vec3 UNDER_BRIDGE = new Vec3(5.5, TOP + 0.15, 8.5);
     private static final int WINDOW = 10;
-    /* How far red stands over blue in the band's yellow under the deck, in the bay's dim light; green half as far. */
+    /* How far red stands over blue in the band's yellow under the deck, in the bay's light; green half as far. */
     private static final int YELLOWER = 35;
     private static final double ENOUGH_YELLOW = 0.1;
+    /*
+     * The approved views: from the step at the back of the control room, looking over the consoles through the windows
+     * into the bay; the status board's middle on its end wall; and from outside, off the door's corner, the building.
+     */
+    private static final BlockPos ON_STEP = new BlockPos(30, 2, 7);
+    private static final Vec3 INTO_BAY = new Vec3(13.0, 6.0, 15.0);
+    private static final Vec3 BOARD_MIDDLE = new Vec3(25.0, 6.5, 4.15);
+    private static final BlockPos OUTSIDE = new BlockPos(-45, 2, -75);
+    private static final Vec3 BUILDING = new Vec3(8.0, 48.0, 11.0);
+    /*
+     * A lit screen's pixel: bright and strong in colour. The row of consoles in the view from the step, below and to
+     * the left of the crosshair, the player's hand left out; how much of it the screens fill at least. The board round
+     * the crosshair, and how much of it its picture's colours fill.
+     */
+    private static final int SCREEN_BRIGHT = 150;
+    private static final int SCREEN_STRONG = 80;
+    private static final int ROW_LEFT = -200;
+    private static final int ROW_RIGHT = 80;
+    private static final int ROW_TOP = 30;
+    private static final int ROW_BOTTOM = 60;
+    private static final double ENOUGH_SCREENS = 0.01;
+    private static final int BOARD_WINDOW = 40;
+    private static final double ENOUGH_BOARD = 0.05;
 
     private RocketHangarClientTests() {
     }
 
-    @ClientTest(timeoutTicks = 1200)
+    @ClientTest(timeoutTicks = 1600)
     public static void hangar_drawsItsFormedBridgeAsAGirder(final ClientTestContext ctx) {
         final int[][] seen = new int[1][];
-        ctx.afterTest(() -> ctx.server().execute(() -> clear(ctx, ctx.serverLevel())));
+        ctx.afterTest(() -> ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL),
+                TURN)));
         ctx.thenServer(0, level -> build(ctx, level))
-                .thenTeleport(SETTLE, EYE, Direction.NORTH)
-                .thenWaitUntil(() -> ctx.mc().level.getBlockState(ctx.abs(BRIDGE)).is(HangarBlocks.CRANE_BRIDGE.get())
-                        && ctx.mc().level.getBlockState(ctx.abs(BRIDGE)).getValue(HangarPieceBlock.FORMED), ARRIVE,
+                .thenTeleport(SETTLE, EYE, Direction.EAST)
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(TERMINAL))
+                        instanceof HangarTerminalBlockEntity terminal && terminal.formed() && ctx.mc().level
+                        .getBlockState(bridge(ctx)).getValue(HangarPieceBlock.FORMED), ARRIVE,
                         "the formed hangar to reach the player")
+                .thenTeleport(SETTLE, PERCH, Direction.SOUTH)
                 .then(SETTLE, () -> ctx.lookAt(UNDER_BRIDGE.add(Vec3.atLowerCornerOf(ctx.origin()))))
                 .then(SETTLE, () -> seen[0] = mean(ctx))
                 .thenScreenshot(0, "hangar-formed")
                 .then(0, () -> ctx.assertTrue(seen[0][0] - seen[0][2] > YELLOW && seen[0][1] - seen[0][2] > YELLOW,
                         "the bridge's girder is drawn yellow over the bay: " + seen[0][0] + ", " + seen[0][1] + ", "
                                 + seen[0][2]))
-                // Up at the work platforms' deck: its hazard band and its yellow railing along its edge.
+                // Down on the floor, up at the work platforms' deck: its hazard band and its railing along its edge.
+                .thenTeleport(SETTLE, EYE, Direction.EAST)
                 .then(SETTLE, () -> ctx.lookAt(BAND.add(Vec3.atLowerCornerOf(ctx.origin()))))
                 .then(SETTLE, () -> { })
                 .thenScreenshot(0, "hangar-platform")
@@ -81,6 +109,82 @@ public final class RocketHangarClientTests {
                     ctx.assertTrue(yellow >= ENOUGH_YELLOW, "the platform's edge is drawn with its hazard band and"
                             + " railing: " + Math.round(yellow * 100) + "% yellow round the crosshair");
                 });
+    }
+
+    @ClientTest(timeoutTicks = 1600)
+    public static void hangar_standsAsItsApprovedBuilding(final ClientTestContext ctx) {
+        ctx.afterTest(() -> ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL),
+                TURN)));
+        ctx.thenServer(0, level -> TestHangars.build(level, ctx.abs(TERMINAL), TURN))
+                .thenTeleport(SETTLE, ON_STEP, Direction.WEST)
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(TERMINAL))
+                        instanceof HangarTerminalBlockEntity terminal && terminal.formed(), ARRIVE,
+                        "the formed hangar to reach the player")
+                // From the step at the back of the control room, over the consoles to the windows into the bay.
+                .then(SETTLE, () -> ctx.lookAt(INTO_BAY.add(Vec3.atLowerCornerOf(ctx.origin()))))
+                .then(SETTLE, () -> { })
+                .thenScreenshot(0, "hangar-control-room")
+                .then(0, () -> {
+                    final double lit = share(ctx, ROW_LEFT, ROW_RIGHT, ROW_TOP, ROW_BOTTOM,
+                            RocketHangarClientTests::screenLit);
+                    ctx.assertTrue(lit >= ENOUGH_SCREENS, "the consoles' screens are lit along the row: "
+                            + Math.round(lit * 10_000) / 100.0 + "% of the row");
+                })
+                // The status board on the end wall, its picture lit.
+                .then(SETTLE, () -> ctx.lookAt(BOARD_MIDDLE.add(Vec3.atLowerCornerOf(ctx.origin()))))
+                .then(SETTLE, () -> { })
+                .thenScreenshot(0, "hangar-status-board")
+                .then(0, () -> {
+                    final double lit = share(ctx, -BOARD_WINDOW, BOARD_WINDOW, -BOARD_WINDOW, BOARD_WINDOW,
+                            RocketHangarClientTests::screenLit);
+                    ctx.assertTrue(lit >= ENOUGH_BOARD, "the status board's picture is lit round the crosshair: "
+                            + Math.round(lit * 100) + "%");
+                })
+                // From outside, far off its door's corner: the whole building, as the approved exterior shows it.
+                .thenTeleport(SETTLE, OUTSIDE, Direction.SOUTH)
+                .then(SETTLE, () -> ctx.lookAt(BUILDING.add(Vec3.atLowerCornerOf(ctx.origin()))))
+                .then(SETTLE * 2, () -> { })
+                .thenScreenshot(0, "hangar-exterior");
+    }
+
+    /*
+     * Whether a pixel is a lit screen's: one of its pictures' cyan, green, amber or red, bright and strong, which
+     * neither the room's grey nor the windows' blue-grey nor the lamps' white is.
+     */
+    private static boolean screenLit(final int argb) {
+        final int r = argb >> 16 & CHANNEL;
+        final int g = argb >> 8 & CHANNEL;
+        final int b = argb & CHANNEL;
+        final int most = Math.max(r, Math.max(g, b));
+        return most > SCREEN_BRIGHT && most - Math.min(r, Math.min(g, b)) > SCREEN_STRONG;
+    }
+
+    /*
+     * How much of a box round the crosshair, from {@code left} to {@code right} and from {@code top} to
+     * {@code bottom} pixels off it, is as {@code is} says.
+     */
+    private static double share(final ClientTestContext ctx, final int left, final int right, final int top,
+                                final int bottom, final IntPredicate is) {
+        final int x = ctx.mc().getWindow().getGuiScaledWidth() / 2;
+        final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2;
+        int found = 0;
+        int count = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int dx = left; dx <= right; dx++) {
+                for (int dy = top; dy <= bottom; dy++) {
+                    if (is.test(frame.pixel(x + dx, y + dy))) {
+                        found++;
+                    }
+                    count++;
+                }
+            }
+        }
+        return (double) found / count;
+    }
+
+    /* A block of the crane's bridge, over the bay's middle line. */
+    private static BlockPos bridge(final ClientTestContext ctx) {
+        return TestHangars.at(ctx.abs(TERMINAL), TURN, -4, 107, 0);
     }
 
     /* How much of a window round the crosshair is yellow, red and green well over blue. */
@@ -104,53 +208,19 @@ public final class RocketHangarClientTests {
         return (double) yellow / count;
     }
 
-    /* The hangar of stone round the bay, its terminal in the south wall, its crane, its door; formed at once. */
+    /*
+     * The hangar built whole, a deck of work platforms along its east wall facing into the bay, and a perch of barrier
+     * near the top of the bay to stand on.
+     */
     private static void build(final ClientTestContext ctx, final ServerLevel level) {
-        for (int x = X0 - 1; x <= X1 + 1; x++) {
-            for (int z = Z0 - 1; z <= Z1 + 1; z++) {
-                for (int y = Y0 - 1; y <= TOP + 1; y++) {
-                    final boolean shell = x < X0 || x > X1 || z < Z0 || z > Z1 || y < Y0 || y > TOP;
-                    // Lamps in the roof, as a hangar has, so the bay is lit.
-                    final boolean lamp = y > TOP && (x - X0) % LAMPS == 1 && (z - Z0) % LAMPS == 1;
-                    level.setBlockAndUpdate(ctx.abs(new BlockPos(x, y, z)), lamp ? Blocks.GLOWSTONE
-                            .defaultBlockState() : shell ? Blocks.STONE.defaultBlockState()
-                            : Blocks.AIR.defaultBlockState());
-                }
-            }
-        }
-        level.setBlockAndUpdate(ctx.abs(TERMINAL), HangarBlocks.TERMINAL.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        final BlockState rail = HangarBlocks.CRANE_RAIL.get().defaultBlockState();
-        for (int x = X0; x <= X1; x++) {
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP - 1, Z0)), rail);
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP - 1, Z1)), rail);
-        }
-        for (int z = Z0; z <= Z1; z++) {
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(5, TOP, z)), HangarBlocks.CRANE_BRIDGE.get()
-                    .defaultBlockState());
-        }
-        level.setBlockAndUpdate(ctx.abs(new BlockPos(5, TOP - 1, 10)), HangarBlocks.CRANE_HOIST.get()
-                .defaultBlockState());
-        level.setBlockAndUpdate(ctx.abs(new BlockPos(X0 - 1, Y0, 9)), HangarBlocks.BAY_DOOR.get().defaultBlockState());
-        // A deck of work platforms along the east wall, its railing on its edge toward the bay's middle.
-        for (int x = X1 - 1; x <= X1; x++) {
-            for (int z = Z0 + 1; z <= Z1 - 1; z++) {
-                level.setBlockAndUpdate(ctx.abs(new BlockPos(x, PLATFORM_Y, z)), HangarBlocks.WORK_PLATFORM.get()
+        TestHangars.build(level, ctx.abs(TERMINAL), TURN);
+        for (int x = DECK_X0; x <= DECK_X1; x++) {
+            for (int z = DECK_Z0; z <= DECK_Z1; z++) {
+                level.setBlockAndUpdate(ctx.abs(new BlockPos(x, DECK_Y, z)), HangarBlocks.WORK_PLATFORM.get()
                         .defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.WEST));
             }
         }
-        ((HangarTerminalBlockEntity) level.getBlockEntity(ctx.abs(TERMINAL))).look();
-    }
-
-    private static void clear(final ClientTestContext ctx, final ServerLevel level) {
-        for (int x = X0 - 1; x <= X1 + 1; x++) {
-            for (int z = Z0 - 1; z <= Z1 + 1; z++) {
-                for (int y = Y0 - 1; y <= TOP + 1; y++) {
-                    level.setBlockAndUpdate(ctx.abs(new BlockPos(x, y, z)), y == Y0 - 1 ? Blocks.GRASS_BLOCK
-                            .defaultBlockState() : Blocks.AIR.defaultBlockState());
-                }
-            }
-        }
+        level.setBlockAndUpdate(ctx.abs(PERCH.below()), Blocks.BARRIER.defaultBlockState());
     }
 
     /* The mean colour of a patch beside the crosshair, which whitens its own middle. */

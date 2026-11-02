@@ -10806,6 +10806,7 @@ stable 4
 34 dev.jstech.core.multiblock.IStructureShape  default Orientation terminalFaces()
 10 dev.jstech.core.multiblock.IStructureShape  default boolean liesDown()
 10 dev.jstech.core.multiblock.IStructureShape  default boolean mirrors()
+35 dev.jstech.core.multiblock.IStructureShape  default int reachAcross()
 12 dev.jstech.core.multiblock.IStructureTerminal  type interface
 12 dev.jstech.core.multiblock.IStructureTerminal  abstract Optional<Orientation> formedOrientation()
 12 dev.jstech.core.multiblock.IStructureTerminal  abstract boolean holdsPlace(BlockPos)
@@ -10880,6 +10881,7 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockPattern  char charAt(int, int, int)
 33 dev.jstech.core.multiblock.MultiblockPattern  int ground()
 10 dev.jstech.core.multiblock.MultiblockPattern  int reach()
+35 dev.jstech.core.multiblock.MultiblockPattern  int reachAcross()
 10 dev.jstech.core.multiblock.MultiblockPattern  int sizeX()
 10 dev.jstech.core.multiblock.MultiblockPattern  int sizeY()
 10 dev.jstech.core.multiblock.MultiblockPattern  int sizeZ()
@@ -11049,6 +11051,7 @@ stable 4
 10 dev.jstech.core.multiblock.PatternById  boolean liesDown()
 10 dev.jstech.core.multiblock.PatternById  boolean mirrors()
 10 dev.jstech.core.multiblock.PatternById  int reach()
+35 dev.jstech.core.multiblock.PatternById  int reachAcross()
 10 dev.jstech.core.multiblock.PatternById  static final String MISSING
 10 dev.jstech.core.multiblock.PatternMatcher  type final class
 10 dev.jstech.core.multiblock.PatternMatcher  static IMatchResult match(MultiblockPattern, IBlockProvider, long)

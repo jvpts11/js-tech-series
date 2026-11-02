@@ -34,6 +34,7 @@ import dev.jstech.space.life.SuitSupplies;
 import dev.jstech.space.platform.LandingPlatform;
 import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.crawler.CrawlerBlocks;
 import dev.jstech.space.cruise.CruiseTexts;
 import dev.jstech.space.cruise.RocketCruise;
@@ -164,8 +165,9 @@ public final class JsSpace {
         RocketShapes.declare();
         // The Flight Computer every rocket carries: its transfer and landing pages, and its landing maps.
         FlightComputer.declare();
-        // The Rocket Hangar a rocket is built in: its terminal, its crane, its doors, its platforms and its item ports;
-        // and its design screen, where a rocket is designed.
+        // The Rocket Hangar a rocket is built in, one building of one size: its shape, its blocks, from its terminal
+        // and its walls to its crane and its loading dock; and its design screen, where a rocket is designed.
+        HangarStructure.declare();
         HangarBlocks.declare(modEventBus);
         RocketDesigner.declare();
         // The mobile launcher a rocket stands on in its hangar: its deck, its umbilical tower and their arms.

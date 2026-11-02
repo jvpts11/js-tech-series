@@ -27,6 +27,15 @@ public interface IStructureShape {
      */
     int reach();
 
+    /**
+     * The farthest from its terminal across the ground, along x or z, that checking it reads the world: the chunks
+     * round its terminal that have to be loaded for it to be checked. As far as {@link #reach()}, unless it says less,
+     * as a shape standing upright that is taller than it is wide does.
+     */
+    default int reachAcross() {
+        return reach();
+    }
+
     /** The least and the most of each count, by name. */
     Map<String, Limit> limits();
 

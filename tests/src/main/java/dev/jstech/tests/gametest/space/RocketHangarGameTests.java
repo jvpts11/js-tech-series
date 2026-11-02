@@ -7,139 +7,265 @@
  */
 package dev.jstech.tests.gametest.space;
 
-import dev.jstech.core.text.GameText;
-import dev.jstech.core.text.Text;
-import dev.jstech.core.text.TextKey;
+import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.space.hangar.DoorConsoleBlock;
 import dev.jstech.space.hangar.HangarBay;
 import dev.jstech.space.hangar.HangarBlocks;
+import dev.jstech.space.hangar.HangarConsoleBlock;
 import dev.jstech.space.hangar.HangarPieceBlock;
+import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
-import dev.jstech.space.hangar.HangarTexts;
+import dev.jstech.space.hangar.PersonnelDoorBlock;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.space.TestHangars;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The Rocket Hangar, its walls and roof of plain stone: from its terminal it finds its bay, seven by seven and twelve
- * high, and forms once its crane rails run along the tops of two facing walls, its bridge spans them, its hoist hangs
- * under the bridge and a bay door stands on the floor; it says what is missing until then, the crane's pieces taking
- * their own shapes as it forms, their rails looking into the bay and their bridge along its span, and giving them back
- * as a piece of it goes or its wall is opened.
+ * The Rocket Hangar, one building of one size, built block by block from its pattern: it forms whichever way it is
+ * turned, its bay 29 across, 37 long and 108 high wherever it stands; its fittings take their places as it forms, the
+ * consoles lighting their screens along the row, the chairs, the status board and the doors turning the way the
+ * building has them, the crane's pieces taking their shapes; and as a panel of its wall goes, it comes apart and they
+ * go dark. The bay door opens and shuts from its console, the personnel doors as they are used, and a work platform
+ * set in the bay takes its shape with its railing where no platform follows it.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class RocketHangarGameTests {
 
-    private static final String ARENA = "tall";
+    private static final String ARENA = "rocket_hangar";
     private static final String BATCH = "jsspace_hangar";
-    /* The bay inside the walls: from (2, 2, 2) to (8, 13, 8); the walls round it, the floor at 1, the roof at 14. */
-    private static final int LOW = 2;
-    private static final int HIGH_XZ = 8;
-    private static final int TOP = 13;
-    private static final BlockPos TERMINAL = new BlockPos(5, 3, 9);
-    private static final BlockPos DOOR = new BlockPos(1, 2, 5);
-    private static final BlockPos HOIST = new BlockPos(5, 12, 5);
-    private static final BlockPos BRIDGE = new BlockPos(5, TOP, 5);
-    private static final BlockPos RAIL = new BlockPos(3, TOP - 1, LOW);
-    private static final BlockPos WALL = new BlockPos(9, 6, 5);
+    /* The terminal in the arena's middle, its floor a block under it on the arena's. */
+    private static final BlockPos TERMINAL = new BlockPos(40, 2, 42);
+    private static final int ACROSS = 29;
+    private static final int ALONG = 37;
+    private static final int HIGH = 108;
+    private static final int FORM_TIME = 400;
+    /* Places of the building, as its pattern draws them. */
+    private static final int[] FIRST_CONSOLE = {17, 0, -3};
+    private static final int[] THIRD_CONSOLE = {17, 0, -1};
+    private static final int[] DOOR_RIGHT = {17, 0, 9};
+    private static final int[] DOOR_LEFT = {17, 0, 10};
+    private static final int[] CHAIR = {18, 0, -2};
+    private static final int[] BOARD = {17, 3, -7};
+    private static final int[] RAILING = {23, 0, 0};
+    private static final int[] WEST_RAIL = {-14, 106, 5};
+    private static final int[] HOIST = {0, 106, 0};
+    private static final int[] LOWER_DOOR = {0, 0, -19};
+    private static final int[] SLOT = {0, 60, -19};
+    private static final int[] PANEL = {-15, 50, 3};
+    private static final int[] INNER_DOOR = {15, 0, -6};
+    private static final int[] OUTER_DOOR = {27, 0, -4};
+    private static final int[] TABLE = {24, 0, 2};
+    private static final int[] PLATFORM = {0, 20, 0};
+    /* Where on a console's block its screen is pressed: over its middle opens the door, under it shuts it. */
+    private static final double UPPER = 1.2;
+    private static final double LOWER = 0.9;
 
     private RocketHangarGameTests() {
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
-    public static void hangar_formsWithItsCraneAndDoorAndSaysWhatIsMissing(final GameTestHelper helper) {
-        build(helper);
-        final HangarTerminalBlockEntity terminal = helper.getBlockEntity(TERMINAL);
-        terminal.look();
-        helper.assertTrue(terminal.bay().isEmpty() && says(terminal, HangarTexts.NO_DOOR),
-                "without a door it is not formed: " + GameText.resolve(terminal.reason()));
-        helper.setBlock(DOOR, HangarBlocks.BAY_DOOR.get());
-        terminal.look();
-        final HangarBay bay = terminal.bay().orElse(null);
-        helper.assertTrue(bay != null && bay.width() == 7 && bay.depth() == 7 && bay.height() == 12,
-                "with its door it forms, a bay seven by seven and twelve high: " + bay + ", "
-                        + GameText.resolve(terminal.reason()));
-        final BlockState rail = helper.getBlockState(RAIL);
-        helper.assertTrue(rail.getValue(HangarPieceBlock.FORMED)
-                && rail.getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH,
-                "its north rail takes its shape, looking into the bay: " + rail);
-        final BlockState bridge = helper.getBlockState(BRIDGE);
-        helper.assertTrue(bridge.getValue(HangarPieceBlock.FORMED)
-                && bridge.getValue(HorizontalDirectionalBlock.FACING).getAxis() == Direction.Axis.Z,
-                "its bridge, along its span from rail to rail: " + bridge);
-        helper.assertTrue(helper.getBlockState(HOIST).getValue(HangarPieceBlock.FORMED), "its hoist too");
-        helper.setBlock(HOIST, Blocks.AIR);
-        terminal.look();
-        helper.assertTrue(terminal.bay().isEmpty() && says(terminal, HangarTexts.NO_HOIST)
-                && !helper.getBlockState(RAIL).getValue(HangarPieceBlock.FORMED),
-                "its hoist gone, it is undone and its pieces are the kit's again: "
-                        + GameText.resolve(terminal.reason()));
-        helper.setBlock(HOIST, HangarBlocks.CRANE_HOIST.get());
-        helper.setBlock(WALL, Blocks.AIR);
-        terminal.look();
-        helper.assertTrue(terminal.bay().isEmpty() && says(terminal, HangarTexts.OPEN),
-                "a wall opened, it is not formed: " + GameText.resolve(terminal.reason()));
-        helper.setBlock(WALL, Blocks.STONE);
-        terminal.look();
-        helper.assertTrue(terminal.bay().isPresent(), "the wall closed, it forms again");
-        helper.succeed();
+    @GameTest(template = ARENA, batch = BATCH + "_north", timeoutTicks = FORM_TIME)
+    public static void hangar_formsTurnedNorthAndItsFittingsTakeTheirPlaces(final GameTestHelper helper) {
+        formsTurned(helper, Orientation.NORTH);
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
-    public static void hangar_withoutItsCraneSaysSo(final GameTestHelper helper) {
-        build(helper);
-        for (int x = LOW; x <= HIGH_XZ; x++) {
-            helper.setBlock(new BlockPos(x, TOP - 1, LOW), Blocks.AIR);
-        }
-        final HangarTerminalBlockEntity terminal = helper.getBlockEntity(TERMINAL);
-        terminal.look();
-        helper.assertTrue(terminal.bay().isEmpty() && says(terminal, HangarTexts.NO_RAILS),
-                "one wall's rail gone, no crane: " + GameText.resolve(terminal.reason()));
-        helper.setBlock(TERMINAL, Blocks.STONE);
-        helper.setBlock(new BlockPos(5, 3, 1), HangarBlocks.TERMINAL.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
-        final HangarTerminalBlockEntity other = helper.getBlockEntity(new BlockPos(5, 3, 1));
-        other.look();
-        helper.assertTrue(other.bay().isEmpty() && says(other, HangarTexts.NO_RAILS),
-                "a terminal in the far wall finds the same bay, and the same rail missing: "
-                        + GameText.resolve(other.reason()));
-        helper.succeed();
+    @GameTest(template = ARENA, batch = BATCH + "_east", timeoutTicks = FORM_TIME)
+    public static void hangar_formsTurnedEastAndItsFittingsTakeTheirPlaces(final GameTestHelper helper) {
+        formsTurned(helper, Orientation.EAST);
     }
 
-    /*
-     * The hangar of plain stone round the bay, its terminal in the south wall looking north, the rails along the
-     * north and south walls at the top, the bridge across from one to the other, the hoist under it; no door yet.
-     */
-    private static void build(final GameTestHelper helper) {
-        for (int x = LOW - 1; x <= HIGH_XZ + 1; x++) {
-            for (int z = LOW - 1; z <= HIGH_XZ + 1; z++) {
-                for (int y = LOW - 1; y <= TOP + 1; y++) {
-                    final boolean shell = x < LOW || x > HIGH_XZ || z < LOW || z > HIGH_XZ || y < LOW || y > TOP;
-                    helper.setBlock(new BlockPos(x, y, z), shell ? Blocks.STONE : Blocks.AIR);
-                }
-            }
-        }
-        helper.setBlock(TERMINAL, HangarBlocks.TERMINAL.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        for (int x = LOW; x <= HIGH_XZ; x++) {
-            helper.setBlock(new BlockPos(x, TOP - 1, LOW), HangarBlocks.CRANE_RAIL.get());
-            helper.setBlock(new BlockPos(x, TOP - 1, HIGH_XZ), HangarBlocks.CRANE_RAIL.get());
-        }
-        for (int z = LOW; z <= HIGH_XZ; z++) {
-            helper.setBlock(new BlockPos(5, TOP, z), HangarBlocks.CRANE_BRIDGE.get());
-        }
-        helper.setBlock(HOIST, HangarBlocks.CRANE_HOIST.get());
+    @GameTest(template = ARENA, batch = BATCH + "_south", timeoutTicks = FORM_TIME)
+    public static void hangar_formsTurnedSouthAndItsFittingsTakeTheirPlaces(final GameTestHelper helper) {
+        formsTurned(helper, Orientation.SOUTH);
     }
 
-    /* Whether the terminal says the sentence {@code key}, whatever is put into it. */
-    private static boolean says(final HangarTerminalBlockEntity terminal, final TextKey key) {
-        return terminal.reason() instanceof Text.Translated said && said.key().equals(key);
+    @GameTest(template = ARENA, batch = BATCH + "_west", timeoutTicks = FORM_TIME)
+    public static void hangar_formsTurnedWestAndItsFittingsTakeTheirPlaces(final GameTestHelper helper) {
+        formsTurned(helper, Orientation.WEST);
+    }
+
+    @GameTest(template = ARENA, batch = BATCH + "_apart", timeoutTicks = FORM_TIME)
+    public static void hangar_comesApartWithoutAPanelAndItsFittingsGoDark(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final Orientation turn = Orientation.NORTH;
+        final BlockPos terminal = TestHangars.build(level, helper.absolutePos(TERMINAL), turn);
+        final BlockPos panel = place(terminal, turn, PANEL);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed(), "the building forms"))
+                .thenExecute(() -> level.setBlock(panel, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL))
+                .thenWaitUntil(() -> helper.assertTrue(!hangar(level, terminal).formed()
+                        && hangar(level, terminal).bay().isEmpty(), "a panel of its wall gone, it comes apart"))
+                .thenExecute(() -> {
+                    helper.assertTrue(level.getBlockState(place(terminal, turn, FIRST_CONSOLE))
+                            .getValue(HangarConsoleBlock.SCREEN) == HangarConsoleBlock.Screen.OFF,
+                            "its consoles go dark");
+                    helper.assertTrue(!level.getBlockState(place(terminal, turn, WEST_RAIL))
+                            .getValue(HangarPieceBlock.FORMED), "its crane's pieces are blocks of the kit again");
+                    level.setBlock(panel, HangarBlocks.WALL.get().defaultBlockState(), Block.UPDATE_ALL);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed()
+                        && level.getBlockState(place(terminal, turn, FIRST_CONSOLE)).getValue(
+                        HangarConsoleBlock.SCREEN) == HangarConsoleBlock.Screen.ROCKET,
+                        "the panel back, it forms again and lights up"))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH + "_doors", timeoutTicks = FORM_TIME)
+    public static void doors_openFromTheConsoleAndAsTheyAreUsed(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final Orientation turn = Orientation.NORTH;
+        final BlockPos terminal = TestHangars.build(level, helper.absolutePos(TERMINAL), turn);
+        final BlockPos console = place(terminal, turn, DOOR_RIGHT);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed(), "the building forms"))
+                .thenExecute(() -> {
+                    final FakePlayer player = player(helper);
+                    press(helper, player, console, UPPER);
+                    helper.assertTrue(open(level, terminal, turn, LOWER_DOOR) && open(level, terminal, turn, SLOT)
+                            && hangar(level, terminal).doorOpen(), "pressed high, the console opens the bay door,"
+                            + " the lower door and the slot together: " + level.getBlockState(place(terminal, turn,
+                            LOWER_DOOR)) + ", the console " + level.getBlockState(console) + " finds its hangar: "
+                            + HangarTerminalBlockEntity.holding(level, console).isPresent());
+                    press(helper, player, console, LOWER);
+                    helper.assertTrue(!open(level, terminal, turn, LOWER_DOOR) && !open(level, terminal, turn, SLOT),
+                            "pressed low, it shuts it");
+                    for (final int[] door : new int[][] {INNER_DOOR, OUTER_DOOR}) {
+                        final BlockPos foot = place(terminal, turn, door);
+                        press(helper, player, foot, LOWER);
+                        helper.assertTrue(level.getBlockState(foot).getValue(PersonnelDoorBlock.OPEN)
+                                && level.getBlockState(foot.above()).getValue(PersonnelDoorBlock.OPEN),
+                                "a personnel door used opens, its other block with it");
+                        press(helper, player, foot.above(), LOWER);
+                        helper.assertTrue(!level.getBlockState(foot).getValue(PersonnelDoorBlock.OPEN),
+                                "used again, it shuts");
+                    }
+                    helper.assertTrue(HangarTerminalBlockEntity.holding(level, place(terminal, turn, TABLE))
+                            .filter(found -> found.getBlockPos().equals(terminal)).isPresent(),
+                            "the Rocket Design table knows its hangar, whose design screen it opens");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH + "_platforms", timeoutTicks = FORM_TIME)
+    public static void platform_setInTheBayTakesItsShape(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final Orientation turn = Orientation.NORTH;
+        final BlockPos terminal = TestHangars.build(level, helper.absolutePos(TERMINAL), turn);
+        final BlockPos back = place(terminal, turn, PLATFORM);
+        final BlockPos front = back.north();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed(), "the building forms"))
+                .thenExecute(() -> {
+                    final BlockState platform = HangarBlocks.WORK_PLATFORM.get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH);
+                    level.setBlock(back, platform, Block.UPDATE_ALL);
+                    level.setBlock(front, platform, Block.UPDATE_ALL);
+                    helper.assertTrue(formed(level, back) && formed(level, front)
+                            && hangar(level, terminal).platforms().containsAll(List.of(back, front)),
+                            "platforms set in the bay take their shapes, and the hangar draws them");
+                    helper.assertTrue(level.getBlockState(front).getValue(HangarPieceBlock.EDGE)
+                            && !level.getBlockState(back).getValue(HangarPieceBlock.EDGE),
+                            "the railing stands at the edge, where no platform follows");
+                    level.setBlock(front, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                    helper.assertTrue(level.getBlockState(back).getValue(HangarPieceBlock.EDGE)
+                            && !hangar(level, terminal).platforms().contains(front),
+                            "the front one taken, the other has its railing");
+                })
+                .thenSucceed();
+    }
+
+    /* Builds the hangar turned {@code turn}, and checks it forms and its fittings take their places as it stands. */
+    private static void formsTurned(final GameTestHelper helper, final Orientation turn) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestHangars.build(level, helper.absolutePos(TERMINAL), turn);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed(), "the building forms turned "
+                        + turn))
+                .thenExecute(() -> {
+                    final HangarTerminalBlockEntity hangar = hangar(level, terminal);
+                    final HangarBay bay = hangar.bay().orElseThrow();
+                    final boolean along = turn == Orientation.NORTH || turn == Orientation.SOUTH;
+                    helper.assertTrue(bay.height() == HIGH && bay.width() == (along ? ACROSS : ALONG)
+                            && bay.depth() == (along ? ALONG : ACROSS), "its bay is 29 across, 37 long and 108"
+                            + " high: " + bay);
+                    helper.assertTrue(bay.pad().equals(place(terminal, turn, new int[] {0, 0, 0})),
+                            "the rocket stands in the bay's middle");
+                    helper.assertTrue(hangar.number() > 0, "it takes its number among the world's hangars");
+                    final Direction toChair = HangarStructure.turned(turn, Direction.EAST);
+                    final BlockState first = level.getBlockState(place(terminal, turn, FIRST_CONSOLE));
+                    helper.assertTrue(first.getValue(HangarConsoleBlock.SCREEN) == HangarConsoleBlock.Screen.ROCKET
+                            && level.getBlockState(place(terminal, turn, THIRD_CONSOLE)).getValue(
+                            HangarConsoleBlock.SCREEN) == HangarConsoleBlock.Screen.LIST
+                            && first.getValue(HorizontalDirectionalBlock.FACING) == toChair,
+                            "the consoles light their screens along the row, toward their chairs: " + first);
+                    helper.assertTrue(level.getBlockState(place(terminal, turn, DOOR_LEFT)).getValue(
+                            DoorConsoleBlock.SCREEN) == HangarConsoleBlock.Screen.LEFT && level.getBlockState(
+                            place(terminal, turn, DOOR_RIGHT)).getValue(DoorConsoleBlock.SCREEN)
+                            == HangarConsoleBlock.Screen.RIGHT, "the door's console shows its picture, half on each");
+                    helper.assertTrue(facing(level, terminal, turn, CHAIR) == toChair.getOpposite()
+                            && facing(level, terminal, turn, RAILING) == toChair.getOpposite()
+                            && facing(level, terminal, turn, BOARD) == HangarStructure.turned(turn, Direction.SOUTH),
+                            "the chairs and the step's railing face the consoles, the status board the room");
+                    final BlockState rail = level.getBlockState(place(terminal, turn, WEST_RAIL));
+                    helper.assertTrue(rail.getValue(HangarPieceBlock.FORMED) && rail.getValue(
+                            HorizontalDirectionalBlock.FACING) == HangarStructure.turned(turn, Direction.EAST)
+                            && level.getBlockState(place(terminal, turn, HOIST)).getValue(HangarPieceBlock.FORMED),
+                            "the crane's pieces take their shapes, its rails looking into the bay: " + rail);
+                })
+                .thenSucceed();
+    }
+
+    private static HangarTerminalBlockEntity hangar(final ServerLevel level, final BlockPos terminal) {
+        return (HangarTerminalBlockEntity) level.getBlockEntity(terminal);
+    }
+
+    private static BlockPos place(final BlockPos terminal, final Orientation turn, final int[] at) {
+        return TestHangars.at(terminal, turn, at[0], at[1], at[2]);
+    }
+
+    private static Direction facing(final ServerLevel level, final BlockPos terminal, final Orientation turn,
+                                    final int[] at) {
+        return level.getBlockState(place(terminal, turn, at)).getValue(HorizontalDirectionalBlock.FACING);
+    }
+
+    private static boolean open(final ServerLevel level, final BlockPos terminal, final Orientation turn,
+                                final int[] at) {
+        final BlockState door = level.getBlockState(place(terminal, turn, at));
+        return door.is(HangarBlocks.BAY_DOOR.get()) && door.getValue(HangarPieceBlock.OPEN);
+    }
+
+    private static boolean formed(final ServerLevel level, final BlockPos at) {
+        return level.getBlockState(at).getValue(HangarPieceBlock.FORMED);
+    }
+
+    /* The shared fake player, empty-handed and standing. */
+    private static FakePlayer player(final GameTestHelper helper) {
+        final FakePlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        player.getInventory().clearContent();
+        player.setShiftKeyDown(false);
+        return player;
+    }
+
+    /* Uses the block at {@code at} empty-handed, pressing it {@code high} blocks up from its foot, on its top. */
+    private static void press(final GameTestHelper helper, final FakePlayer player, final BlockPos at,
+                              final double high) {
+        final Vec3 hit = new Vec3(at.getX() + 0.5, at.getY() + high, at.getZ() + 0.5);
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, new BlockHitResult(hit,
+                Direction.UP, at, false));
     }
 }

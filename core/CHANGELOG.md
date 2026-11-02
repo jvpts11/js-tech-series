@@ -388,6 +388,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   says which way a pattern's terminal faces as drawn, as the turn that brings north round to it, written in its file
   as `terminal_faces`; `IStructureShape.terminalFaces()` reads it for any shape, north unless it says otherwise.
   Experimental.
+- How far a shape reaches across the ground: J's Core's API is at version 35. `IStructureShape.reachAcross()`
+  is the farthest from its terminal along x or z that checking it reads the world, the ring of chunks a machine waits
+  to have loaded before it checks its structure; `MultiblockPattern` gives its longest side across the ground, its
+  height left out unless it may lie on its side, so a structure taller than it is wide forms where only the chunks
+  round it are loaded. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

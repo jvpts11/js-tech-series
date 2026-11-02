@@ -7,102 +7,58 @@
  */
 package dev.jstech.space.hangar;
 
-import com.mojang.serialization.MapCodec;
-import dev.jstech.core.connect.FacePorts;
-import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.jstechseries.network.DataLine;
-import dev.jstech.core.jstechseries.network.DataLines;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
-import dev.jstech.core.text.GameText;
+import dev.jstech.core.content.Device;
+import dev.jstech.core.content.DeviceBlock;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * The Rocket Hangar's terminal, set in a wall of the hangar facing into its bay, the way it faces whoever set it: from
- * it the hangar finds its bay ({@link HangarTerminalBlockEntity}). Used, it opens the hangar's design screen once the
- * hangar is formed, or says what keeps it from forming. A data cable on any face puts it on a network, which may set
- * its crane building. Broken, the hangar is undone, and the blocks its crane held drop.
+ * The Rocket Hangar's terminal block, a console of the control room's row, its screen the bay seen from above: once
+ * its hangar stands whole it opens the Rocket Design; till then, the machine's screen, which says what the building
+ * still lacks.
  */
-public final class HangarTerminalBlock extends HorizontalDirectionalBlock implements EntityBlock, IFaceConnector {
+public final class HangarTerminalBlock extends DeviceBlock {
 
-    private static final MapCodec<HangarTerminalBlock> CODEC = simpleCodec(HangarTerminalBlock::new);
-    /* A machine on the network, as a server's access and backbone lines reach it, of every era. */
-    private static final FacePorts DATA = FacePorts.everyFace(DataLines.upTo(HardwareEra.SINGULARITY,
-            DataLine.ACCESS, DataLine.BACKBONE));
+    private final Map<Direction, VoxelShape> shapes = new EnumMap<>(Direction.class);
 
-    public HangarTerminalBlock(final Properties properties) {
-        super(properties);
-    }
-
-    @Override
-    public BlockState getStateForPlacement(final BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
-    }
-
-    @Override
-    public @Nullable BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
-        return new HangarTerminalBlockEntity(pos, state);
-    }
-
-    @Override
-    public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(final Level level, final BlockState state,
-                                                                            final BlockEntityType<T> type) {
-        if (level.isClientSide() || type != HangarBlocks.TERMINAL_ENTITY.get()) {
-            return null;
+    public HangarTerminalBlock(final Properties properties, final Device<?> device) {
+        super(properties, device);
+        for (final Direction way : Direction.Plane.HORIZONTAL) {
+            VoxelShape shape = Shapes.empty();
+            for (final int[] box : HangarConsoleBlock.BOXES) {
+                shape = Shapes.or(shape, HangarFittingBlock.turned(box, way));
+            }
+            this.shapes.put(way, shape.optimize());
         }
-        return (ticking, pos, at, entity) -> HangarTerminalBlockEntity.serverTick(ticking, pos, at,
-                (HangarTerminalBlockEntity) entity);
+    }
+
+    @Override
+    protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                  final CollisionContext context) {
+        return this.shapes.get(state.getValue(FACING));
     }
 
     @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player, final BlockHitResult hit) {
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof HangarTerminalBlockEntity terminal) {
-            terminal.look();
-            if (terminal.bay().isPresent() && player instanceof ServerPlayer designer) {
-                RocketDesigner.open(designer, terminal);
-            } else {
-                player.displayClientMessage(GameText.component(terminal.reason()), true);
+        if (level.getBlockEntity(pos) instanceof HangarTerminalBlockEntity terminal && terminal.formed()) {
+            if (!level.isClientSide() && player instanceof ServerPlayer designer) {
+                RocketDesigner.open(designer, terminal, pos);
             }
+            return InteractionResult.sidedSuccess(level.isClientSide());
         }
-        return InteractionResult.sidedSuccess(level.isClientSide());
-    }
-
-    @Override
-    protected void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState after,
-                            final boolean moved) {
-        if (!state.is(after.getBlock()) && level.getBlockEntity(pos) instanceof HangarTerminalBlockEntity terminal) {
-            terminal.broken();
-        }
-        super.onRemove(state, level, pos, after, moved);
-    }
-
-    @Override
-    public FacePorts ports() {
-        return DATA;
-    }
-
-    @Override
-    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
-        return CODEC;
-    }
-
-    @Override
-    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        return super.useWithoutItem(state, level, pos, player, hit);
     }
 }

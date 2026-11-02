@@ -7,9 +7,9 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
-import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.launcher.LauncherBlocks;
@@ -18,13 +18,13 @@ import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import dev.jstech.tests.testkit.space.TestHangars;
 import java.util.Comparator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -35,15 +35,15 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class LauncherClientTests {
 
-    /* The bay, from (-10, 2, 4) to (14, 40, 28) of the test's place, its walls and roof all lamps. */
-    private static final int X0 = -10;
-    private static final int X1 = 14;
-    private static final int Z0 = 4;
-    private static final int Z1 = 28;
-    private static final int Y0 = 2;
-    private static final int TOP = 40;
-    private static final int MIDDLE = 2;
-    private static final BlockPos TERMINAL = new BlockPos(MIDDLE, 3, Z1 + 1);
+    /* The hangar's terminal, its door to the north; the bay's middle at (5, 2, 11) of the test's place. */
+    private static final BlockPos TERMINAL = new BlockPos(22, 2, 9);
+    private static final Orientation TURN = Orientation.NORTH;
+    /* Columns of lamps in the bay, each side of the launcher's tower, from its deck to past its top. */
+    private static final int[] LIGHT_X = {-2, 12};
+    private static final int[] LIGHT_Z = {14, 22};
+    private static final int LIGHT_FROM = 8;
+    private static final int LIGHT_TO = 24;
+    private static final int LIGHT_EVERY = 4;
     private static final int ARRIVE = 400;
     private static final int FORM = 200;
     private static final int SETTLE = 20;
@@ -75,11 +75,13 @@ public final class LauncherClientTests {
         final BlockPos[] tower = new BlockPos[1];
         final BlockPos[] eye = new BlockPos[1];
         final Vec3[] deck = new Vec3[4];
-        ctx.afterTest(() -> ctx.server().execute(() -> clear(ctx, ctx.serverLevel())));
-        ctx.thenServer(0, level -> {
-            build(ctx, level);
-            lay(ctx, level, tower, eye, deck);
-        })
+        ctx.afterTest(() -> ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL),
+                TURN)));
+        ctx.thenServer(0, level -> build(ctx, level))
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(TERMINAL))
+                        instanceof HangarTerminalBlockEntity terminal && terminal.formed(), ARRIVE,
+                        "the hangar to form", level -> "it stands unformed")
+                .thenServer(0, level -> lay(ctx, level, tower, eye, deck))
                 .thenWaitUntil(() -> eye[0] != null, SETTLE, "the launcher to be laid")
                 .thenServer(0, level -> {
                     // On a block no one sees, level with the deck, so the deck is not in the way.
@@ -124,35 +126,19 @@ public final class LauncherClientTests {
                 .thenScreenshot(0, "launcher-crane");
     }
 
-    /* The hangar, its walls and roof all lamps, its terminal in the south wall looking north, its crane, its door. */
+    /*
+     * The hangar built whole, its door to the north; and columns of lamps standing in the bay each side of where the
+     * launcher goes, so its tower stands in light all the way up, away from the bay's walls.
+     */
     private static void build(final ClientTestContext ctx, final ServerLevel level) {
-        for (int x = X0 - 1; x <= X1 + 1; x++) {
-            for (int z = Z0 - 1; z <= Z1 + 1; z++) {
-                for (int y = Y0 - 1; y <= TOP + 1; y++) {
-                    final boolean shell = x < X0 || x > X1 || z < Z0 || z > Z1 || y < Y0 || y > TOP;
-                    // Walls and roof of lamps, so the tower stands in light all the way up.
-                    level.setBlockAndUpdate(ctx.abs(new BlockPos(x, y, z)), !shell ? Blocks.AIR.defaultBlockState()
-                            : y >= Y0 ? Blocks.GLOWSTONE.defaultBlockState() : Blocks.STONE.defaultBlockState());
+        TestHangars.build(level, ctx.abs(TERMINAL), TURN);
+        for (final int x : LIGHT_X) {
+            for (final int z : LIGHT_Z) {
+                for (int y = LIGHT_FROM; y <= LIGHT_TO; y += LIGHT_EVERY) {
+                    level.setBlockAndUpdate(ctx.abs(new BlockPos(x, y, z)), Blocks.GLOWSTONE.defaultBlockState());
                 }
             }
         }
-        level.setBlockAndUpdate(ctx.abs(TERMINAL), HangarBlocks.TERMINAL.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
-        for (int x = X0; x <= X1; x++) {
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP - 1, Z0)), HangarBlocks.CRANE_RAIL.get()
-                    .defaultBlockState());
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(x, TOP - 1, Z1)), HangarBlocks.CRANE_RAIL.get()
-                    .defaultBlockState());
-        }
-        for (int z = Z0; z <= Z1; z++) {
-            level.setBlockAndUpdate(ctx.abs(new BlockPos(MIDDLE, TOP, z)), HangarBlocks.CRANE_BRIDGE.get()
-                    .defaultBlockState());
-        }
-        level.setBlockAndUpdate(ctx.abs(new BlockPos(MIDDLE, TOP - 1, (Z0 + Z1) / 2)), HangarBlocks.CRANE_HOIST.get()
-                .defaultBlockState());
-        level.setBlockAndUpdate(ctx.abs(new BlockPos(X0 - 1, Y0, (Z0 + Z1) / 2)), HangarBlocks.BAY_DOOR.get()
-                .defaultBlockState());
-        ((HangarTerminalBlockEntity) level.getBlockEntity(ctx.abs(TERMINAL))).look();
     }
 
     /*
@@ -190,20 +176,6 @@ public final class LauncherClientTests {
                 .getId())).mapToInt(spot -> spot.at().getY()).max().orElseThrow();
         deck[3] = foot.add(along.scale(HIGH_ALONG / 2)).add(0, boom, 0);
         eye[0] = tower[0].relative(across, AWAY).atY(plan.origin().getY());
-    }
-
-    private static void clear(final ClientTestContext ctx, final ServerLevel level) {
-        if (level.getBlockEntity(ctx.abs(TERMINAL)) instanceof HangarTerminalBlockEntity terminal) {
-            terminal.undo();
-        }
-        for (int x = X0 - 1; x <= X1 + 1; x++) {
-            for (int z = Z0 - 1; z <= Z1 + 1; z++) {
-                for (int y = Y0 - 1; y <= TOP + 1; y++) {
-                    level.setBlockAndUpdate(ctx.abs(new BlockPos(x, y, z)), y == Y0 - 1 ? Blocks.GRASS_BLOCK
-                            .defaultBlockState() : Blocks.AIR.defaultBlockState());
-                }
-            }
-        }
     }
 
     private static RocketStack.Part part(final String path, final int layers) {
