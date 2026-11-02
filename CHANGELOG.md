@@ -3076,6 +3076,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) A ship meeting the land too fast is harmed: over 5 blocks a second, the blocks it meets the land with are
+  holed, one more for every 5 blocks a second past that, its feet, wheels and underside first, each a hole its part
+  holds round; over 30, its crew are hurt too. Before, a ship stopped dead on the land at any speed, unharmed. The
+  figures are estimates.
 - (Space) A ship's ORBIT autopilot, over the line in space, levels the ship out on the plane of the low orbits, keeping
   its heading, and only then lets go; before, it let go at the line with the nose still up at 55 degrees and the
   throttle open, and the ship climbed on through space for good.

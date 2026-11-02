@@ -79,3 +79,6 @@ title: Pouso manual 2/2
 
 > [!CAUTION]
 > Os motores de ar respiram o ar. Onde ele é rarefeito demais, eles não sustentam a nave, e ela afunda.
+
+> [!WARNING]
+> Desça devagar. Acima de 5 blocos por segundo, os blocos com que a nave toca o chão ficam furados, um a mais a cada 5 blocos por segundo além disso, e acima de 30 a tripulação também se machuca. Os furos se consertam numa doca.

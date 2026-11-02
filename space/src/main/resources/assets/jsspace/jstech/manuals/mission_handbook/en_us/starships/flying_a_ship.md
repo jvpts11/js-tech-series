@@ -79,3 +79,6 @@ title: Landing by hand 2/2
 
 > [!CAUTION]
 > The air engines breathe air. Where it is too thin, they cannot hold the ship up and it sinks.
+
+> [!WARNING]
+> Come down slowly. Faster than 5 blocks a second, the blocks the ship meets the land with are holed, one more for every 5 blocks a second past that, and faster than 30 its crew are hurt too. Mend the holes in a dock.

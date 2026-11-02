@@ -505,6 +505,10 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final StructurePose moved = turned.movedTo(now.x() + dx, now.y() + dy, now.z() + dz);
         final ShipGround.Contact meets = ShipGround.meet(level, body, frameOf(body, moved), most);
         if (!meets.blocked()) {
+            if (meets.touching() && !this.grounded && dy < 0) {
+                // Touching down: as hard as it came down.
+                ShipImpacts.met(level, body, -dy / ShipFlightModel.TICK);
+            }
             return still(now, moved.movedTo(moved.x(), moved.y() + meets.rise(), moved.z()),
                     meets.touching() ? stood(next) : next, meets.touching());
         }
@@ -512,7 +516,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             // Already in the land where it stands, built into it or set there: it flies on out of it, never deeper.
             return still(now, moved, next, false);
         }
-        // Run into land: it stops where it was, only coming down onto what is under it, or not at all.
+        // Run into land: it stops where it was, as hard as it flew into it, only coming down onto what is under it.
+        ShipImpacts.met(level, body, Math.sqrt(dx * dx + dy * dy + dz * dz) / ShipFlightModel.TICK);
         final ShipFlightModel.State stopped = new ShipFlightModel.State(0, next.sink(), next.throttle(),
                 next.charge(), next.rise(), next.nozzles());
         final StructurePose dropped = turned.movedTo(now.x(), now.y() + Math.min(0, dy), now.z());

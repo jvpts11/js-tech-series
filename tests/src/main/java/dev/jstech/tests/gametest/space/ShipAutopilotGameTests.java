@@ -31,6 +31,7 @@ import dev.jstech.space.ship.ShipDocks;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
+import dev.jstech.space.ship.ShipImpacts;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipReadings;
 import dev.jstech.space.ship.SmallShipParts;
@@ -64,6 +65,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -131,6 +133,15 @@ public final class ShipAutopilotGameTests {
     private static final double WATCHER_ASIDE = 40;
     private static final double ON_THE_PLANE = 3;
     private static final double LEVEL = 3;
+    /*
+     * Hard landings: the speed a ship meets the land at, in blocks a second; how high over the land one is let fall
+     * from, in blocks, and how fast it falls, in metres a second.
+     */
+    private static final double CRASH = 40;
+    private static final double DROP = 5;
+    private static final double FALLING = 40;
+    /* How long a player just joined cannot be hurt, in ticks, and a few more. */
+    private static final int JOINED = 70;
     private static final double ABOVE = 24;
     private static final double ASIDE = 8;
     /* How near the two collars come, in blocks, and how far round the space's land is kept loaded, in chunks. */
@@ -332,6 +343,53 @@ public final class ShipAutopilotGameTests {
                             + " autopilot go");
                     MovingStructures.takeAway(ship[0]);
                     keep(helper, false, NORTH_CHUNKS);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void impact_holesItsLowestBlocksAndHurtsItsCrewByHowFastItMetTheLand(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerPlayer[] crew = new ServerPlayer[1];
+        final int[] before = new int[1];
+        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> {
+            crew[0] = GameTestPlayers.connected(helper, "crash_crew");
+            crew[0].setGameMode(GameType.SURVIVAL);
+            final AABB box = ship[0].worldBox();
+            crew[0].teleportTo(level, box.getCenter().x, box.maxY, box.getCenter().z, 0, 0);
+        }).thenExecuteAfter(JOINED, () -> {
+            // A player just joined cannot be hurt for a moment, as one just come back to life cannot.
+            before[0] = blocksOf(level, ship[0]);
+            ShipImpacts.met(level, ship[0], CRASH);
+        }).thenExecuteAfter(2, () -> {
+            helper.assertTrue(blocksOf(level, ship[0]) == before[0] - ShipImpacts.holes(CRASH), "meeting the land at "
+                    + CRASH + " blocks a second holes " + ShipImpacts.holes(CRASH) + " of its blocks: "
+                    + (before[0] - blocksOf(level, ship[0])));
+            helper.assertTrue(Math.abs(crew[0].getHealth() - (crew[0].getMaxHealth() - ShipImpacts.hurt(CRASH)))
+                    < 0.01, "and hurts its crew by " + ShipImpacts.hurt(CRASH) + ": " + crew[0].getHealth());
+            GameTestPlayers.leave(crew[0]);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void touchdown_fallingFastHolesTheShip(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure[] ship = new MovingStructure[1];
+        final int[] before = new int[1];
+        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> {
+            aloft(ship[0], DROP);
+            before[0] = blocksOf(level, ship[0]);
+            // Off the land, falling: a flight still standing on the land would lose its fall the first tick.
+            final ShipFlight flown = flight(ship[0]);
+            MovingStructures.move(ship[0], new ShipFlight(new ShipFlightModel.State(0, FALLING, 0, 1, 0, 0),
+                    flown.noseX(), flown.noseZ(), flown.ship(), false, flown.console(), flown.autopilot()));
+        }).thenWaitUntil(() -> helper.assertTrue(flight(ship[0]).grounded(), "it comes down on the land"))
+                .thenExecuteAfter(2, () -> {
+                    helper.assertTrue(blocksOf(level, ship[0]) < before[0], "falling fast onto the land, it is holed: "
+                            + blocksOf(level, ship[0]) + " of " + before[0] + " blocks");
+                    MovingStructures.takeAway(ship[0]);
                 })
                 .thenSucceed();
     }
@@ -564,6 +622,17 @@ public final class ShipAutopilotGameTests {
     /* {@code ship}'s flight console, which shows its flight. */
     private static AirReserveEntity console(final MovingStructure ship) {
         return (AirReserveEntity) ship.level().getBlockEntity(flight(ship).consoleIn(ship).orElseThrow());
+    }
+
+    /* How many blocks stand in {@code ship}'s plot of the yard now. */
+    private static int blocksOf(final ServerLevel level, final MovingStructure ship) {
+        final Box box = ship.bounds();
+        int count = 0;
+        for (final BlockPos at : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(),
+                box.maxZ())) {
+            count += level.getBlockState(at).isAir() ? 0 : 1;
+        }
+        return count;
     }
 
     /* Takes {@code ship} straight up by {@code blocks}. */
