@@ -31,6 +31,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.ModList;
 
@@ -43,7 +44,10 @@ import net.neoforged.fml.ModList;
 public final class MultiblockToolsClientTests {
 
     private static final BlockPos STAND = new BlockPos(0, 2, -2);
-    /* The projector faces north as placed: the furnace stands north of it, between it and the player. */
+    /*
+     * The projector as a player south of it looking north places it, turned to face them: the furnace stands north of
+     * it, beyond it, between it and the player standing to look.
+     */
     private static final BlockPos PROJECTOR = new BlockPos(0, 2, 6);
     private static final BlockPos FURNACE_MIDDLE = new BlockPos(0, 2, 4);
     /* Within reach of the projector, on its far side from the furnace. */
@@ -64,7 +68,8 @@ public final class MultiblockToolsClientTests {
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
                 .thenServer(0, level -> {
                     clear(ctx, level);
-                    level.setBlockAndUpdate(ctx.abs(PROJECTOR), StructureProjector.BLOCK.get().defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(PROJECTOR), StructureProjector.BLOCK.get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
                     if (level.getBlockEntity(ctx.abs(PROJECTOR)) instanceof StructureProjectorBlockEntity projector) {
                         projector.apply(ProjectorSettings.FRESH.choosing(TestMultiblocks.FURNACE_ID));
                     }

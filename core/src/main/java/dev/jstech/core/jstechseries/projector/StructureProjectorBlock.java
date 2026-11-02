@@ -21,7 +21,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * The Structure Projector's block: a low dark body with its lens on top, which opens the projector's screen and shows
- * the chosen multiblock in front of itself.
+ * the chosen multiblock beyond itself, away from whoever placed it.
  */
 public final class StructureProjectorBlock extends DeviceBlock {
 

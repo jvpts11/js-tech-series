@@ -397,8 +397,8 @@ public final class ProjectorClient {
     }
 
     /**
-     * The multiblock a recipe viewer asked to show, as a projector at the player's feet facing where they looked
-     * would show it, and what was last seen of it and when.
+     * The multiblock a recipe viewer asked to show, as a projector placed at the player's feet would show it, in
+     * front of them where they looked, and what was last seen of it and when.
      */
     private static final class Held {
 

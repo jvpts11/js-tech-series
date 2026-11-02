@@ -753,12 +753,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   walls or a cuboid), its slots, lanes and tanks, its energy, the kind of recipe it works and how many at once, and a
   controller block built on the Core's data machine block names the file. The files reach every player, and a data
   pack adds or changes a machine with no code.
-- The Structure Projector: shows any multiblock of any installed mod in the world before it is built, the
-  blocks still missing as pale ghosts, what is wrong outlined in red through walls, and above the structure its name,
-  its size and how much is in place, missing and wrong; looking at a ghost says what goes there and on which layer.
-  Its screen previews the multiblock in 3D layer by layer and chooses it from the list of every multiblock, its turn,
-  its mirror, its layer and whether only what is missing shows. Every multiblock is listed with nothing more to write,
-  and a mod can hide one.
+- The Structure Projector: shows any multiblock of any installed mod in the world before it is built, beyond
+  itself and in front of whoever placed it, the blocks still missing as pale ghosts, what is wrong outlined in red
+  through walls, and above the structure its name, its size and how much is in place, missing and wrong; looking at a
+  ghost says what goes there and on which layer. Its screen previews the multiblock in 3D layer by layer and chooses
+  it from the list of every multiblock, its turn, its mirror, its layer and whether only what is missing shows. Every
+  multiblock is listed with nothing more to write, and a mod can hide one.
 - Multiblocks in JEI and EMI: every multiblock that can be shown has a page of its own, with the multiblock in
   3D turned by a drag or a click, a button for each layer, the blocks that will do where more than one does, how it
   may stand, its materials with how many of each, its size, and buttons that show its ghosts in front of the player

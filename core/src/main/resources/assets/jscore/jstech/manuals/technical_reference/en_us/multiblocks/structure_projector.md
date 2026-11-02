@@ -23,7 +23,7 @@ In creative, take it from the J's Tech tab; the mods that build multiblocks give
 
 ## How to use it
 
-1. Place it beside where the multiblock is to stand: it faces you as you place it, and shows the multiblock on the side it faces.
+1. Place it on the near side of where the multiblock is to stand, looking that way: it shows the multiblock beyond itself, in front of you.
 2. Use it to open its screen and choose the multiblock from the list.
 3. Turn it with the knob, mirror it if it allows, and show it a layer at a time with the layer's wheel, or only what is still missing.
 4. Build into the ghosts: each goes as its block is placed, and the count above follows.

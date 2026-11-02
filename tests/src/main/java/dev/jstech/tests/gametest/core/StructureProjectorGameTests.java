@@ -19,26 +19,40 @@ import dev.jstech.tests.TestMultiblocks;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Structure Projector: it lists every multiblock that may be shown and leaves out the ones their mods hide, takes
- * only settings it can show, turns what it shows, and sees, in the world in front of it, what is placed, missing and
- * wrong.
+ * only settings it can show, turns what it shows, shows it in front of whoever placed it, and sees there, in the
+ * world, what is placed, missing and wrong.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class StructureProjectorGameTests {
 
     private static final String ARENA = "empty";
-    /* The projector faces north as placed: what it shows stands north of it, above the arena's floor. */
+    /*
+     * The projector as a player looking north places it, turned to face them, south: what it shows stands north of it,
+     * in front of them, above the arena's floor.
+     */
     private static final BlockPos PROJECTOR = new BlockPos(2, 2, 5);
     private static final BlockPos TERMINAL = new BlockPos(2, 2, 3);
+    /* A player's turn looking north, in degrees. */
+    private static final float LOOKING_NORTH = 180F;
 
     private StructureProjectorGameTests() {
     }
@@ -71,12 +85,12 @@ public final class StructureProjectorGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void projector_seesWhatIsPlacedMissingAndWrongInFrontOfIt(final GameTestHelper helper) {
+    public static void projector_seesWhatIsPlacedMissingAndWrongWhereItShows(final GameTestHelper helper) {
         final StructureProjectorBlockEntity projector = projector(helper);
         projector.apply(ProjectorSettings.FRESH.choosing(TestMultiblocks.FURNACE_ID));
         final ShapePreview preview = projector.preview().orElseThrow();
         helper.assertTrue(projector.terminalOf(preview).equals(helper.absolutePos(TERMINAL)),
-                "the furnace stands in front of the projector, its near side a block away; got "
+                "the furnace stands beyond the projector, its near side a block away; got "
                         + projector.terminalOf(preview));
         helper.setBlock(TERMINAL.west(), TestMultiblocks.PART.get());
         helper.setBlock(TERMINAL.east(), TestMultiblocks.PART.get());
@@ -91,6 +105,27 @@ public final class StructureProjectorGameTests {
         helper.assertTrue(view.missingByBlock().getOrDefault("jstests:test_furnace_part", 0) == 4,
                 "four furnace parts still to place; got " + view.missingByBlock());
         helper.assertTrue(view.upTo(1).size() == 9, "its one layer is all of it");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void projector_showsWhatItShowsInFrontOfWhoPlacedIt(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        player.setYRot(LOOKING_NORTH);
+        final ItemStack item = new ItemStack(StructureProjector.BLOCK.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, item);
+        helper.setBlock(PROJECTOR.below(), Blocks.STONE);
+        final BlockPos floor = helper.absolutePos(PROJECTOR.below());
+        item.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(floor).add(0, 0.5, 0), Direction.UP, floor, false)));
+        if (!(helper.getBlockEntity(PROJECTOR) instanceof StructureProjectorBlockEntity projector)) {
+            throw new IllegalStateException("the player did not place the projector");
+        }
+        projector.apply(ProjectorSettings.FRESH.choosing(TestMultiblocks.FURNACE_ID));
+        final BlockPos terminal = projector.terminalOf(projector.preview().orElseThrow());
+        helper.assertTrue(terminal.equals(helper.absolutePos(TERMINAL)),
+                "a player looking north places it: the furnace stands north of it, in front of them, not behind them;"
+                        + " got " + helper.relativePos(terminal));
         helper.succeed();
     }
 
@@ -114,7 +149,8 @@ public final class StructureProjectorGameTests {
     }
 
     private static StructureProjectorBlockEntity projector(final GameTestHelper helper) {
-        helper.setBlock(PROJECTOR, StructureProjector.BLOCK.get());
+        helper.setBlock(PROJECTOR, StructureProjector.BLOCK.get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         if (helper.getBlockEntity(PROJECTOR) instanceof StructureProjectorBlockEntity projector) {
             return projector;
         }

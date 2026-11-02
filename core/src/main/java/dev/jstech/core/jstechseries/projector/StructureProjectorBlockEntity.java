@@ -28,8 +28,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * A Structure Projector: the multiblock it shows and how, saved and sent to the players who see it, and where it
- * shows it, in front of the projector, its near side a block away, its middle across from it, its bottom level with
- * it. What is placed, missing or wrong is worked out on each player's side from the world they see, so the projector
+ * shows it, beyond the projector from whoever placed it, its near side a block away, its middle across from it, its
+ * bottom level with it. What is placed, missing or wrong is worked out on each player's side from the world they see, so the projector
  * does no work on the server.
  */
 public final class StructureProjectorBlockEntity extends SyncedBlockEntity {
@@ -92,12 +92,16 @@ public final class StructureProjectorBlockEntity extends SyncedBlockEntity {
                 .map(preview -> preview.turned(orientation()));
     }
 
-    /** Where the terminal of what it shows stands: in front of it. */
+    /**
+     * Where the terminal of what it shows stands: beyond it, away from whoever placed it. The projector turns to face
+     * them as it is placed, so what it shows stands on its back side, in front of them and not behind them.
+     */
     public BlockPos terminalOf(final ShapePreview preview) {
         final Direction facing = getBlockState().hasProperty(HorizontalDirectionalBlock.FACING)
-                ? getBlockState().getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
-        final int axis = facing.getAxis() == Direction.Axis.X ? 0 : 2;
-        final int sign = facing.getAxisDirection().getStep();
+                ? getBlockState().getValue(HorizontalDirectionalBlock.FACING) : Direction.SOUTH;
+        final Direction away = facing.getOpposite();
+        final int axis = away.getAxis() == Direction.Axis.X ? 0 : 2;
+        final int sign = away.getAxisDirection().getStep();
         final int[] at = preview.anchor(this.worldPosition.getX(), this.worldPosition.getY(),
                 this.worldPosition.getZ(), axis, sign);
         return new BlockPos(at[0], at[1], at[2]);

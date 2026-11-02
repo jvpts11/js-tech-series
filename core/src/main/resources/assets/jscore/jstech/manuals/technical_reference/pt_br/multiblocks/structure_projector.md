@@ -23,7 +23,7 @@ No criativo, pegue-o da aba J's Tech; os mods que montam multiblocos dão a rece
 
 ## Como usar
 
-1. Coloque-o ao lado de onde o multibloco vai ficar: ele fica virado para você ao ser colocado, e mostra o multibloco do lado para onde está virado.
+1. Coloque-o do lado de cá de onde o multibloco vai ficar, olhando para lá: ele mostra o multibloco depois de si, na sua frente.
 2. Use-o para abrir a tela e escolher o multibloco na lista.
 3. Gire-o com o botão giratório, espelhe-o se ele deixar, e mostre-o uma camada de cada vez com a roda da camada, ou só o que ainda falta.
 4. Construa sobre os fantasmas: cada um some quando seu bloco é colocado, e a contagem acima acompanha.
