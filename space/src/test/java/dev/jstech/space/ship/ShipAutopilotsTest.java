@@ -30,6 +30,8 @@ class ShipAutopilotsTest {
     /* How far off level its nose is, at the most, as it settles onto a runway, in degrees. */
     private static final double LEVEL = 2;
     private static final ShipFlightModel.State CRUISING = new ShipFlightModel.State(30, 0, 0.75, 1, 0, 0);
+    /* The height of the plane of the low orbits in a system's space. */
+    private static final double PLANE = 64;
     private static final double[] UP = {0, 1, 0};
     private static final double[] STILL = {0, 0, 0};
     private static final int TICKS_A_SECOND = 20;
@@ -59,6 +61,31 @@ class ShipAutopilotsTest {
         }
         assertEquals(ShipAutopilots.CLIMB_PITCH, flight.pitch, 3, "climbs at its angle");
         assertTrue(flight.y > 1000, "and has climbed: " + flight.y);
+    }
+
+    @Test
+    void settle_bringsTheNoseDownToThePlaneAndLevelsOnIt() {
+        assertEquals(1, ShipAutopilots.settle(ShipAutopilots.CLIMB_PITCH, 300).down(), "high over the plane, its "
+                + "nose climbing, it pitches down");
+        assertEquals(1, ShipAutopilots.settle(-30, -300).up(), "under the plane, its nose diving, it pitches up");
+        final ShipFlightModel.Held level = ShipAutopilots.settle(0, 0);
+        assertEquals(0, level.up() + level.down(), "level on the plane, it holds nothing");
+        assertFalse(level.boost(), "and never boosts");
+    }
+
+    @Test
+    void settle_flownFromTheClimbLevelsOntoThePlaneOfTheLowOrbits() {
+        // Just over the line in space, climbing at the climb's angle, at the speed it climbed at: no air, no pull.
+        final Flight flight = new Flight(new ShipFlightModel.State(190, 0, 1, 1, 0, 0), 0, 70, 0, 0,
+                ShipAutopilots.CLIMB_PITCH, false);
+        int ticks = 0;
+        while (!ShipAutopilots.settled(flight.pitch, flight.y - PLANE) && ticks < 120 * TICKS_A_SECOND) {
+            flight.flyInSpace(ShipAutopilots.settle(flight.pitch, flight.y - PLANE));
+            ticks++;
+        }
+        assertTrue(ShipAutopilots.settled(flight.pitch, flight.y - PLANE), "levels on the plane: " + flight);
+        assertTrue(ticks < 60 * TICKS_A_SECOND, "within a minute: " + ticks / TICKS_A_SECOND + " s");
+        assertTrue(flight.state.speed() > 100, "still flying on: " + flight);
     }
 
     @Test
@@ -327,8 +354,15 @@ class ShipAutopilotsTest {
         }
 
         void fly(final ShipFlightModel.Held held, final double ground) {
-            final ShipFlightModel.Air air = new ShipFlightModel.Air(1.0, 1.0, this.y - ground >= 24, this.landed,
-                    this.y - ground);
+            fly(held, ground, new ShipFlightModel.Air(1.0, 1.0, this.y - ground >= 24, this.landed, this.y - ground));
+        }
+
+        /* A tick in a system's space: no air, no pull, no land under it. */
+        void flyInSpace(final ShipFlightModel.Held held) {
+            fly(held, Double.NEGATIVE_INFINITY, new ShipFlightModel.Air(0.0, 0.0, true, false, Double.MAX_VALUE));
+        }
+
+        private void fly(final ShipFlightModel.Held held, final double ground, final ShipFlightModel.Air air) {
             final ShipFlightModel.Tick tick = ShipFlightModel.step(this.state, held, air, this.ship, this.pitch);
             // A turn to the left above nought: its heading, east of north, falls.
             this.heading -= tick.turn();

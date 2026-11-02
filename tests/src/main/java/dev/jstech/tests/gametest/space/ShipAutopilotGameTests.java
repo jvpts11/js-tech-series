@@ -40,6 +40,7 @@ import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.SpaceClimbs;
 import dev.jstech.space.universe.StarSystems;
+import dev.jstech.space.universe.SystemLayout;
 import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
@@ -122,6 +123,14 @@ public final class ShipAutopilotGameTests {
     private static final double OPEN = 0.95;
     /* Where the two ships stand in space docking: the other above, ours below, off to one side, in blocks. */
     private static final double SPACE_HEIGHT = 200;
+    /*
+     * ORBIT over the line: how high over the plane of the low orbits the ship is left, how far aside the watcher
+     * floats, and how near the plane and level, in degrees, it counts as levelled out.
+     */
+    private static final double OVER_THE_PLANE = 100;
+    private static final double WATCHER_ASIDE = 40;
+    private static final double ON_THE_PLANE = 3;
+    private static final double LEVEL = 3;
     private static final double ABOVE = 24;
     private static final double ASIDE = 8;
     /* How near the two collars come, in blocks, and how far round the space's land is kept loaded, in chunks. */
@@ -323,6 +332,44 @@ public final class ShipAutopilotGameTests {
                             + " autopilot go");
                     MovingStructures.takeAway(ship[0]);
                     keep(helper, false, NORTH_CHUNKS);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 4000)
+    public static void autopilot_orbitOverTheLineLevelsTheShipOntoTheLowOrbitsAndLetsGo(final GameTestHelper helper) {
+        final ServerLevel overworld = helper.getLevel();
+        final ServerLevel space = SystemSpaces.spaceOf(overworld.getServer(), StarSystems.SOLAR_SYSTEM);
+        final MovingStructure[] ship = new MovingStructure[1];
+        final ServerPlayer[] watcher = new ServerPlayer[1];
+        final BlockPos far = helper.absolutePos(CORNER).offset(0, 0, -PLATFORM_NORTH * 8);
+        final Vec3 over = new Vec3(far.getX() + 0.5, SystemLayout.ORBIT_Y + OVER_THE_PLANE, far.getZ() + 0.5);
+        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> {
+            keepSpace(helper, space, far, true);
+            // A player in space beside it keeps the space ticking, as its pilot would.
+            watcher[0] = GameTestPlayers.connected(helper, "orbit_watcher");
+            watcher[0].setGameMode(GameType.CREATIVE);
+            watcher[0].teleportTo(space, over.x + WATCHER_ASIDE, over.y, over.z, 0, 0);
+            helper.assertTrue(MovingStructures.travel(ship[0], space, over).ok(), "the ship goes to space, high over"
+                    + " the plane of the low orbits");
+        }).thenWaitUntil(() -> {
+            final MovingStructure there = MovingStructures.byId(space, ship[0].id());
+            helper.assertTrue(there != null && there.ready(), "and arrives there");
+            ship[0] = there;
+        }).thenExecute(() -> MovingStructures.move(ship[0], flight(ship[0]).with(new ShipFlightModel.State(CRUISING,
+                0, 0.75, 1, 0, 0)).engaged(Optional.of(ShipAutopilot.orbit()))))
+                .thenWaitUntil(() -> helper.assertTrue(flight(ship[0]).autopilot().isEmpty(), "ORBIT lets go once "
+                        + "the ship is level on the plane: at " + ship[0].pose().y()))
+                .thenExecute(() -> {
+                    final double[] nose = flight(ship[0]).noseIn(ship[0].frame());
+                    final double pitch = Math.toDegrees(Math.asin(Mth.clamp(nose[1], -1, 1)));
+                    helper.assertTrue(Math.abs(ship[0].pose().y() - SystemLayout.ORBIT_Y) < ON_THE_PLANE,
+                            "on the plane of the low orbits: " + ship[0].pose().y());
+                    helper.assertTrue(Math.abs(pitch) < LEVEL, "its nose level: " + pitch);
+                    helper.assertTrue(flight(ship[0]).state().speed() > 1, "flying on: " + flight(ship[0]).state());
+                    GameTestPlayers.leave(watcher[0]);
+                    MovingStructures.takeAway(ship[0]);
+                    keepSpace(helper, space, far, false);
                 })
                 .thenSucceed();
     }

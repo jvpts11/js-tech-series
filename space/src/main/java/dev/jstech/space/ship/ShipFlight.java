@@ -32,6 +32,7 @@ import dev.jstech.space.landing.ShipLandings;
 import dev.jstech.space.rocket.SpaceAhead;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.SpaceClimbs;
+import dev.jstech.space.universe.SystemLayout;
 import dev.jstech.space.universe.SystemSpaces;
 import java.util.ArrayList;
 import java.util.List;
@@ -245,7 +246,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done, and a
         // runway whose stretch is found not clear as the ship comes near.
         final Optional<ShipAutopilot> pilot = this.autopilot.filter(engaged -> !holding(helm)
-                && !done(level, now, engaged)).flatMap(engaged -> runwayLookedAt(level, body, now, engaged));
+                && !done(level, now, engaged, pitch)).flatMap(engaged -> runwayLookedAt(level, body, now, engaged));
         final ShipFlight self = pilot.equals(this.autopilot) ? this : engaged(pilot);
         final int altitude = ShipAltitude.of(level, now.x(), body.worldBox().minY, now.z());
         if (pilot.isPresent() && pilot.get().mode() == ShipAutopilot.Mode.DOCK) {
@@ -262,6 +263,9 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                     : ShipAutopilots.land(this.state, heading, pitch, spot.x - now.x(), dy, spot.z - now.z());
             shown = ShipReadings.Pilot.of(ShipAutopilot.Mode.LAND, spot, Math.hypot(spot.x - now.x(),
                     spot.z - now.z()), this.state.speed(), false, 0, 0);
+        } else if (pilot.isPresent() && SystemSpaces.systemOf(level.dimension()).isPresent()) {
+            held = ShipAutopilots.settle(pitch, now.y() - SystemLayout.ORBIT_Y);
+            shown = levelling(now, nose, this.state.speed() * nose[1]);
         } else if (pilot.isPresent()) {
             held = ShipAutopilots.orbit(this.state, pitch);
             shown = climbing(level, now, nose, altitude, this.state.speed() * nose[1]);
@@ -437,18 +441,32 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     }
 
     /*
-     * Whether the autopilot {@code pilot} is done, the ship standing at {@code now}: LAND set down on its spot, not
-     * only on the land, as it stood before it took off, or, onto a runway, stopped on its stretch; ORBIT over the line
-     * in space.
+     * Whether the autopilot {@code pilot} is done, the ship standing at {@code now}, its nose at {@code pitch}
+     * degrees: LAND set down on its spot, not only on the land, as it stood before it took off, or, onto a runway,
+     * stopped on its stretch; ORBIT over the line in space, level on the plane of the low orbits.
      */
-    private boolean done(final ServerLevel level, final StructurePose now, final ShipAutopilot pilot) {
+    private boolean done(final ServerLevel level, final StructurePose now, final ShipAutopilot pilot,
+                         final double pitch) {
         return switch (pilot.mode()) {
             case LAND -> this.grounded && this.state.speed() < LANDED_SPEED && pilot.spot().map(spot -> pilot.runway()
                     .map(runway -> ShipAutopilots.onRunway(spot.x - now.x(), spot.z - now.z(), runway))
                     .orElse(Math.hypot(spot.x - now.x(), spot.z - now.z()) <= ARRIVED)).orElse(true);
-            case ORBIT -> SystemSpaces.systemOf(level.dimension()).isPresent();
+            case ORBIT -> SystemSpaces.systemOf(level.dimension()).isPresent()
+                    && ShipAutopilots.settled(pitch, now.y() - SystemLayout.ORBIT_Y);
             case DOCK -> false;
         };
+    }
+
+    /*
+     * What ORBIT shows once over the line: its caret ahead on the plane of the low orbits, where it levels the ship
+     * out.
+     */
+    private static ShipReadings.Pilot levelling(final StructurePose now, final double[] nose, final double climb) {
+        final double across = Math.hypot(nose[0], nose[2]);
+        final Vec3 ahead = across < STILL ? new Vec3(now.x(), SystemLayout.ORBIT_Y, now.z())
+                : new Vec3(now.x() + nose[0] / across * CARET_AHEAD, SystemLayout.ORBIT_Y,
+                now.z() + nose[2] / across * CARET_AHEAD);
+        return ShipReadings.Pilot.of(ShipAutopilot.Mode.ORBIT, ahead, 0, climb, false, 0, 0);
     }
 
     /*

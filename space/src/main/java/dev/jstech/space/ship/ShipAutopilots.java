@@ -13,9 +13,9 @@ package dev.jstech.space.ship;
  * runway flies it to a gate a way back along the runway's line, then down a shallow glide lined up on the runway's
  * middle, to touch down past the beacon and roll on along the runway, its throttle shut, till it stops, as an airliner
  * lands; ORBIT opens its throttle, pitches its nose up to the climb's angle and boosts where it may, up and over the
- * line to space; DOCK, in space, drifts it on its thrusters till its collar stands off the other ship's, in line with
- * it, then closes slowly till they touch, its flight turning it meanwhile to face the other's collar. Pure, as the
- * flight is.
+ * line to space, where it levels the nose and brings the ship onto the plane of the low orbits; DOCK, in space,
+ * drifts it on its thrusters till its collar stands off the other ship's, in line with it, then closes slowly till
+ * they touch, its flight turning it meanwhile to face the other's collar. Pure, as the flight is.
  */
 public final class ShipAutopilots {
 
@@ -44,6 +44,13 @@ public final class ShipAutopilots {
     private static final double TURN_LEAST = 0.15;
     /* How far off a pitch it pitches back, in degrees. */
     private static final double PITCH_OFF = 1.5;
+    /*
+     * ORBIT over the line: how far it pitches toward the plane of the low orbits for each metre off it, in degrees,
+     * and at most; how near the plane it counts as on it, in metres.
+     */
+    private static final double SETTLE_GAIN = 0.2;
+    private static final double MOST_SETTLE = 20;
+    private static final double ON_THE_PLANE = 2;
     /* The air's cruise, which the throttle's share is of. */
     private static final double CRUISE = ShipFlightModel.CRUISE_AIR;
     /*
@@ -210,6 +217,26 @@ public final class ShipAutopilots {
         final double up = pitch < CLIMB_PITCH - PITCH_OFF ? 1 : 0;
         final double down = pitch > CLIMB_PITCH + PITCH_OFF ? 1 : 0;
         return new ShipFlightModel.Held(state.throttle() < 1 ? 1 : 0, 0, 0, 0, up, down, true, true);
+    }
+
+    /**
+     * What ORBIT holds once the ship is over the line in its system's space, its nose at {@code pitch} degrees,
+     * {@code over} metres over the plane of the low orbits: its nose brought level and the ship down, or up, to that
+     * plane, its throttle and heading left as they are and no boost, so it stays in orbit instead of climbing on.
+     */
+    public static ShipFlightModel.Held settle(final double pitch, final double over) {
+        final double wanted = Math.clamp(-over * SETTLE_GAIN, -MOST_SETTLE, MOST_SETTLE);
+        final double up = pitch < wanted - PITCH_OFF ? 1 : 0;
+        final double down = pitch > wanted + PITCH_OFF ? 1 : 0;
+        return new ShipFlightModel.Held(0, 0, 0, 0, up, down, false, true);
+    }
+
+    /**
+     * Whether ORBIT is done with a ship in its system's space, its nose at {@code pitch} degrees, {@code over} metres
+     * over the plane of the low orbits: level on the plane, where it hands the helm back.
+     */
+    public static boolean settled(final double pitch, final double over) {
+        return Math.abs(over) <= ON_THE_PLANE && Math.abs(pitch) <= PITCH_OFF;
     }
 
     /**

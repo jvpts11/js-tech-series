@@ -786,6 +786,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   atmosphere, temperature, radiation, gravity and relief yet.
 
 ### Fixed
+- A ship's ORBIT autopilot, over the line in space, levels the ship out on the plane of the low orbits, keeping
+  its heading, and only then lets go; before, it let go at the line with the nose still up at 55 degrees and the
+  throttle open, and the ship climbed on through space for good.
 - A system's space has no bottom: a ship flown down where no world lies under it, or a player there, is no
   longer taken away 128 blocks down as fallen out of the world, a ship lost with its pilot left floating; going down
   is as free as going up. Coming down over a world still passes into it.
