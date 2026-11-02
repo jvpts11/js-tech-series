@@ -24,6 +24,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -72,6 +73,14 @@ public final class RocketHangarGameTests {
     private static final int[] OUTER_DOOR = {27, 0, -4};
     private static final int[] TABLE = {24, 0, 2};
     private static final int[] PLATFORM = {0, 20, 0};
+    /*
+     * The bay lit through: its grid of lights' first place, this far in from the bay's lowest corner each way; the
+     * places farthest from its walls' lamps and its roof's, the middle of its floor and high up its middle, and the
+     * light a crew needs there, where the dark kept none.
+     */
+    private static final int LIGHT = 2;
+    private static final int[][] DARKEST = {{0, 0, 0}, {0, 90, 0}, {-5, 0, 5}};
+    private static final int LIT = 7;
     /* Where on a console's block its screen is pressed: over its middle opens the door, under it shuts it. */
     private static final double UPPER = 1.2;
     private static final double LOWER = 0.9;
@@ -105,12 +114,23 @@ public final class RocketHangarGameTests {
         final Orientation turn = Orientation.NORTH;
         final BlockPos terminal = TestHangars.build(level, helper.absolutePos(TERMINAL), turn);
         final BlockPos panel = place(terminal, turn, PANEL);
+        final BlockPos[] light = new BlockPos[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed(), "the building forms"))
+                .thenWaitUntil(() -> {
+                    for (final int[] spot : DARKEST) {
+                        final int lit = level.getBrightness(LightLayer.BLOCK, place(terminal, turn, spot));
+                        helper.assertTrue(lit >= LIT, "its bay is lit through, " + lit + " at " + spot[0] + ", "
+                                + spot[1] + ", " + spot[2] + " of it");
+                    }
+                    light[0] = hangar(level, terminal).bay().orElseThrow().low().offset(LIGHT, LIGHT, LIGHT);
+                    helper.assertTrue(level.getBlockState(light[0]).is(Blocks.LIGHT), "a light stands in its grid");
+                })
                 .thenExecute(() -> level.setBlock(panel, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL))
                 .thenWaitUntil(() -> helper.assertTrue(!hangar(level, terminal).formed()
                         && hangar(level, terminal).bay().isEmpty(), "a panel of its wall gone, it comes apart"))
                 .thenExecute(() -> {
+                    helper.assertTrue(level.getBlockState(light[0]).isAir(), "its bay's lights go with it");
                     helper.assertTrue(level.getBlockState(place(terminal, turn, FIRST_CONSOLE))
                             .getValue(HangarConsoleBlock.SCREEN) == HangarConsoleBlock.Screen.OFF,
                             "its consoles go dark");
@@ -120,8 +140,9 @@ public final class RocketHangarGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed()
                         && level.getBlockState(place(terminal, turn, FIRST_CONSOLE)).getValue(
-                        HangarConsoleBlock.SCREEN) == HangarConsoleBlock.Screen.ROCKET,
-                        "the panel back, it forms again and lights up"))
+                        HangarConsoleBlock.SCREEN) == HangarConsoleBlock.Screen.ROCKET
+                        && level.getBlockState(light[0]).is(Blocks.LIGHT),
+                        "the panel back, it forms again and lights up, its bay too"))
                 .thenSucceed();
     }
 

@@ -20,6 +20,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -59,7 +60,9 @@ public record ProjectorView(ShapePreview preview, BlockPos terminal, List<Place>
         final List<Place> clears = new ArrayList<>();
         for (final ShapePreview.Ghost ghost : preview.clears()) {
             final BlockPos at = terminal.offset(ghost.x(), ghost.y(), ghost.z());
-            clears.add(new Place(at, ghost, level.getBlockState(at).isAir() ? State.PLACED : State.WRONG));
+            // The game's invisible light block, which a building lit through keeps in its empty places, is empty too.
+            final BlockState there = level.getBlockState(at);
+            clears.add(new Place(at, ghost, there.isAir() || there.is(Blocks.LIGHT) ? State.PLACED : State.WRONG));
         }
         return new ProjectorView(preview, terminal, places, clears);
     }

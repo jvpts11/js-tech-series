@@ -2360,7 +2360,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Building's high bay, a multiblock formed from its terminal. Its bay is 29 blocks across, 37 long and 108 high, for
   the tallest rocket it builds, 96 blocks, on its mobile launcher with the tower beside it, and the widest, 17 blocks;
   walls of light grey panels with a dark frame column every six blocks and a band every twelve, lamps up the inner
-  faces of the long walls, a concrete floor laid into the ground with the crawler's two lanes of gravel down it. In
+  faces of the long walls, a concrete floor laid into the ground with the crawler's two lanes of gravel down it. Its
+  bay is lit through, as the VAB's floodlights light its high bay: formed, the hangar lays the game's invisible light
+  blocks in a grid through the bay wherever it is empty, so the rocket is seen from its foot to its top and no
+  creature of the dark is born in it; a block built there takes a light's place, a crawler leaves them behind, they
+  come back where the bay is empty again, and they go when the hangar comes apart. In
   its end wall the stepped door, of Bay Door: a lower door 25 wide and 12 high for the crawler and the launcher's
   deck, a slot 17 wide over it up to 106 for the rocket and the tower; it opens by itself for a crawler going through,
   and from the Bay Door Console, pressed high on its screen to open and low to shut. Against a long wall stands the
@@ -2895,6 +2899,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   atmosphere, temperature, radiation, gravity and relief yet.
 
 ### Changed
+- (Core) Multiblocks: the game's invisible light block counts as empty, as a cave's air does, in a place a multiblock
+  must leave empty: a building lit through with them still forms, and the Structure Projector and the Multiblock
+  Builder do not ask for them to be taken out.
 - (Core) Manuals: a scene holds a whole building, up to 128 blocks each way (it held 32), so a multiblock as tall as a
   rocket hangar is drawn on its page. Its blocks' meshes are built once and kept on the graphics card until another
   layer or step is shown, so a scene of thousands of blocks turns under the reader's drag as smoothly as a furnace's;

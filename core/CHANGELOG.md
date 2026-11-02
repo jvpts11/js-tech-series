@@ -1921,6 +1921,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   to a reader standing in the Overworld.
 
 ### Changed
+- Multiblocks: the game's invisible light block counts as empty, as a cave's air does, in a place a multiblock
+  must leave empty: a building lit through with them still forms, and the Structure Projector and the Multiblock
+  Builder do not ask for them to be taken out.
 - Manuals: a scene holds a whole building, up to 128 blocks each way (it held 32), so a multiblock as tall as a
   rocket hangar is drawn on its page. Its blocks' meshes are built once and kept on the graphics card until another
   layer or step is shown, so a scene of thousands of blocks turns under the reader's drag as smoothly as a furnace's;

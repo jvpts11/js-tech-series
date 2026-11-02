@@ -518,11 +518,13 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
 
     /*
      * Its building checked again: formed, its fittings take their places as it stands, the first time it forms it
-     * takes its number among the world's hangars; come apart, they go dark.
+     * takes its number among the world's hangars, and its bay is lit through, its lights laid again where a rocket
+     * rolled out has left the bay empty; come apart, they go dark.
      */
     @Override
     protected void structureChecked(final ServerLevel level) {
         final Optional<Orientation> turn = turn();
+        turn.ifPresent(standing -> HangarLights.light(level, HangarStructure.bay(this.worldPosition, standing)));
         final int now = turn.map(Orientation.turns()::indexOf).orElse(UNSHAPED);
         if (now == shaped()) {
             return;
@@ -544,11 +546,12 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
         return was == null ? UNSHAPED : was;
     }
 
-    /* Its fittings, shaped as the building stood, go dark and are blocks of the kit again. */
+    /* Its fittings, shaped as the building stood, go dark and are blocks of the kit again; its bay's lights go. */
     private void unshape(final Level level) {
         final int was = shaped();
         if (was >= 0 && was < Orientation.turns().size()) {
             shape(level, Orientation.turns().get(was), false);
+            HangarLights.darken(level, HangarStructure.bay(this.worldPosition, Orientation.turns().get(was)));
         }
         this.shapedAs.set(UNSHAPED);
         this.platforms.set(List.of());

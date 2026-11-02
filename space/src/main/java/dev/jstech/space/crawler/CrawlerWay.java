@@ -235,9 +235,12 @@ public final class CrawlerWay {
         return true;
     }
 
-    /* Whether a block standing so is carried with a launcher: anything but air, its pedestals, crawlers and hangars. */
+    /*
+     * Whether a block standing so is carried with a launcher: anything but air, its pedestals, crawlers, hangars and
+     * the lights a hangar keeps its bay lit with.
+     */
     private static boolean carried(final BlockState state) {
-        return !state.isAir() && !state.is(LauncherBlocks.PAD_PEDESTAL.get())
+        return !state.isAir() && !state.is(Blocks.LIGHT) && !state.is(LauncherBlocks.PAD_PEDESTAL.get())
                 && !(state.getBlock() instanceof CrawlerPieceBlock) && !HangarBlocks.building(state);
     }
 

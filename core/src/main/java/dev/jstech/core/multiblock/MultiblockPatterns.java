@@ -40,6 +40,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 /**
  * The multiblock patterns of every mod, by id, as data: each file under {@code data/<namespace>/multiblock/} is one
@@ -230,8 +231,10 @@ public final class MultiblockPatterns {
             @Override
             public String blockAt(final long encodedPos) {
                 final Block block = blockIn(level, encodedPos);
-                // A cave's air and the void's are air too: a place that must be left empty is, whichever is there.
-                return block.defaultBlockState().isAir() ? Cells.AIR
+                // A cave's air and the void's are air too, and so is the game's invisible light block, which a
+                // building lit through keeps in its empty places: a place that must be left empty is, whichever is
+                // there.
+                return block.defaultBlockState().isAir() || block == Blocks.LIGHT ? Cells.AIR
                         : BuiltInRegistries.BLOCK.getKey(block).toString();
             }
 

@@ -342,7 +342,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Building's high bay, a multiblock formed from its terminal. Its bay is 29 blocks across, 37 long and 108 high, for
   the tallest rocket it builds, 96 blocks, on its mobile launcher with the tower beside it, and the widest, 17 blocks;
   walls of light grey panels with a dark frame column every six blocks and a band every twelve, lamps up the inner
-  faces of the long walls, a concrete floor laid into the ground with the crawler's two lanes of gravel down it. In
+  faces of the long walls, a concrete floor laid into the ground with the crawler's two lanes of gravel down it. Its
+  bay is lit through, as the VAB's floodlights light its high bay: formed, the hangar lays the game's invisible light
+  blocks in a grid through the bay wherever it is empty, so the rocket is seen from its foot to its top and no
+  creature of the dark is born in it; a block built there takes a light's place, a crawler leaves them behind, they
+  come back where the bay is empty again, and they go when the hangar comes apart. In
   its end wall the stepped door, of Bay Door: a lower door 25 wide and 12 high for the crawler and the launcher's
   deck, a slot 17 wide over it up to 106 for the rocket and the tower; it opens by itself for a crawler going through,
   and from the Bay Door Console, pressed high on its screen to open and low to shut. Against a long wall stands the
