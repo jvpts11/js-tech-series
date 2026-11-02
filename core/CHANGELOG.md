@@ -2048,6 +2048,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A build tagged on the screen, as a ship in a dock, names its parts and shows its line across the top only
+  within 28 blocks of its middle, as a dock is worked from beside it; before, its tags covered the screen from 64
+  blocks away. Its ghosts still show from as far as before.
 - A moving structure fallen under its dimension's world, 64 blocks under its lowest block, where the game takes
   away whatever falls that far, stops there whole and goes on from there, a pilot flying it up again; before, it was
   taken away like any falling thing, its blocks left in its plot of the yard for good, the plot still taken, and

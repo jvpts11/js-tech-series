@@ -3079,6 +3079,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A build tagged on the screen, as a ship in a dock, names its parts and shows its line across the top only
+  within 28 blocks of its middle, as a dock is worked from beside it; before, its tags covered the screen from 64
+  blocks away. Its ghosts still show from as far as before.
 - (Space) At a ship's helm, B boosts the ship and J changes its autopilot, as their keys say; before, B also opened
   the Core's screen of the body over the helm, and no boost came. Up from the helm, B opens the body's screen as
   before.

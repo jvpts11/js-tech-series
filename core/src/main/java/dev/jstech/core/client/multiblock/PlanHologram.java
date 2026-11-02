@@ -120,6 +120,11 @@ public final class PlanHologram {
     private static final float TAG_SMALL = 0.75F;
     private static final int TAG_ROOM = 3;
     private static final int TAG_EDGE = 2;
+    /*
+     * How far from its middle a build tagged on the screen is told of, its tags and the line over the screen, in
+     * blocks: about as far as a dock is worked from.
+     */
+    private static final double TAG_RANGE = 28.0;
 
     private static final List<Supplier<List<Shown>>> SOURCES = new CopyOnWriteArrayList<>();
     private static volatile @Nullable Text banner;
@@ -177,7 +182,12 @@ public final class PlanHologram {
                 }
                 ghosts(pose, camera.getPosition(), buffers, minecraft.getBlockRenderer(), shown);
                 parts(pose, camera, minecraft.font, buffers, shown);
-                if (shown.labels() == Labels.TAGS) {
+                // A build tagged on the screen is told of only near it, as a dock is worked from beside it.
+                final boolean tagged = shown.labels() == Labels.TAGS;
+                if (tagged && distance > TAG_RANGE * TAG_RANGE) {
+                    continue;
+                }
+                if (tagged) {
                     tagsOf(shown, camera.getPosition(), view, projection, frameTags);
                 }
                 if (shown.banner().isPresent() && distance < nearestDistance) {
@@ -595,7 +605,8 @@ public final class PlanHologram {
         /**
          * As name tags on the screen, each lifted over its part or hung under it on a leader from the top of its box,
          * at the first height where it meets no other tag and stays on the screen: as over parts laid side by side.
-         * Its name is written in capitals; its size and state as they are given.
+         * Its name is written in capitals; its size and state as they are given. The tags and the line over the screen
+         * show only within 28 blocks of the build's middle, as a dock is worked from beside it.
          */
         TAGS
     }

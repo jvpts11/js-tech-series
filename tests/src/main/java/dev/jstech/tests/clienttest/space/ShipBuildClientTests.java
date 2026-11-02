@@ -48,6 +48,8 @@ public final class ShipBuildClientTests {
     private static final Vec3 WIDE_AT = new Vec3(0, 3.0, -0.5);
     private static final Vec3 CLOSE_EYES = new Vec3(-4.4, 7.2, -10.5);
     private static final Vec3 CLOSE_AT = new Vec3(0, 3.2, -0.5);
+    /* Out past where a dock is worked from, in the dock's own places. */
+    private static final Vec3 FAR_EYES = new Vec3(-7.4, 15.6, -45);
     /* The parts formed, by their numbers in the plan: the cockpit, the airlock, and the air intakes. */
     private static final List<Integer> FORMED = List.of(0, 1, 5);
     /* The hold, being built, and how much of it is in place, lowest first. */
@@ -121,6 +123,16 @@ public final class ShipBuildClientTests {
         stand(ctx, CLOSE_EYES);
         ctx.then(2, () -> ctx.lookAt(place(ctx, CLOSE_AT)))
                 .thenScreenshot(SETTLE, "ship-build-close");
+        // Far from the dock, its tags and its line are not told of; the ghosts still show.
+        stand(ctx, FAR_EYES);
+        ctx.then(2, () -> ctx.lookAt(place(ctx, WIDE_AT)))
+                .thenWaitUntil(() -> PlanHologram.banner().isEmpty(), ARRIVE,
+                        "the line across the top to go, far from the dock")
+                .thenScreenshot(SETTLE, "ship-build-far");
+        stand(ctx, WIDE_EYES);
+        ctx.then(2, () -> ctx.lookAt(place(ctx, WIDE_AT)))
+                .thenWaitUntil(() -> PlanHologram.banner().isPresent(), ARRIVE,
+                        "the line across the top to come back near the dock");
     }
 
     /* Floats the player, a spectator, with their eyes at the dock's place {@code eyes}. */
