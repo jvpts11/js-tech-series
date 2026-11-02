@@ -773,7 +773,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whatever stands where it must be left empty, as a dock's pit in the land; and above the structure its name, its
   size and how much is in place, missing, wrong and to be cleared; a ghost looked at, from up to 32 blocks away, is
   outlined and says what goes there and on which layer, the look meeting a ghost by its block's shape and going past
-  plants and the projector. A cave's air counts as empty there, for the projector and for a structure forming, and a
+  plants. A cave's air counts as empty there, for the projector and for a structure forming, and a
   formed multiblock's blocks merged into its model count as the blocks they were, so it shows whole. Its screen
   previews the multiblock in 3D layer by layer and chooses it from the list of every multiblock, its turn, its mirror,
   its layer and whether only what is missing shows. Every multiblock is listed with nothing more to write, and a mod
@@ -2042,6 +2042,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- The Structure Projector: looking at the projector itself names nothing; before, the look went through it and
+  named the ghost behind it, as if the projector were not there.
 - Manuals: a scene too tall for its page, moved on to the next with the heading over it, is drawn shorter under
   that heading, so its caption no longer runs onto the page's foot.
 - Manuals: the button that hides a scene's top layer stays inside the scene's frame on a narrow page or for a

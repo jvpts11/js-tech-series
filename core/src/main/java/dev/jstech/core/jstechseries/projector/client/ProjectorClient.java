@@ -80,9 +80,9 @@ import org.jetbrains.annotations.Nullable;
  * outlined in cyan until it is built, and above the structure float its name, its size and how much is in place,
  * missing, wrong and to be cleared. A ghost looked at, near or as far as {@link #REACH}, is outlined, and beside the
  * crosshair it says what goes there and on which layer: the look meets a ghost by its shape, not its whole block, and
- * goes past what a player walks through, as plants, and past the projector itself. A multiblock a recipe viewer's
- * button asks to show is shown the same way, as a projector at the player's feet would show it, until it is built or
- * the player walks away. Its screen is registered here too.
+ * goes past what a player walks through, as plants, but stops at any other block, the projector too. A multiblock a
+ * recipe viewer's button asks to show is shown the same way, as a projector at the player's feet would show it, until
+ * it is built or the player walks away. Its screen is registered here too.
  */
 @PaletteHolder
 public final class ProjectorClient {
@@ -406,7 +406,7 @@ public final class ProjectorClient {
     /*
      * The ghost along the player's look within reach, nearer than any real block in the way; none for none. Block by
      * block along the look, a ghost is met by its shape, and a real block only by what stops a player walking into it,
-     * so plants are looked past; and so is the projector, which stands in front of the ghosts it shows.
+     * so plants are looked past. The projector stops the look as any block does: a player looking at it means it.
      */
     @Nullable
     private static Looked looked(final Player player, final List<Projection> projections, final float partial) {
@@ -424,8 +424,7 @@ public final class ProjectorClient {
                 return Optional.of(place);
             }
             final BlockState state = level.getBlockState(at);
-            if (state.is(StructureProjector.BLOCK.get())
-                    || state.getCollisionShape(level, at, walker).clip(eye, end, at) == null) {
+            if (state.getCollisionShape(level, at, walker).clip(eye, end, at) == null) {
                 return null;
             }
             return Optional.empty();

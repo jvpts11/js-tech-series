@@ -64,12 +64,14 @@ public final class MultiblockToolsClientTests {
     /* The baker's terminal stands amid the north face of the box it forms, off the floor. */
     private static final BlockPos BAKER = new BlockPos(0, 3, 1);
     /*
-     * Far south of the furnace, past the reach a look once had, with the projector and a sugar cane on the line to the
-     * middle of its south side, low on it, so the look goes through the projector's body and the cane's leaves.
+     * Far south of the furnace, past the reach a look once had. A sugar cane stands on the line to the south-east
+     * corner of the furnace, low on it, so the look goes through the cane's leaves, beside the projector; the line to
+     * the middle of its south side, low on it, meets the projector's body first.
      */
     private static final BlockPos AFAR = new BlockPos(0, 2, 20);
-    private static final BlockPos CANE = new BlockPos(0, 2, 10);
+    private static final BlockPos CANE = new BlockPos(1, 2, 10);
     private static final BlockPos FURNACE_SOUTH = new BlockPos(0, 2, 5);
+    private static final BlockPos FURNACE_SOUTH_EAST = new BlockPos(1, 2, 5);
     private static final Vec3 LOW_ON_IT = new Vec3(0.5, 0.3, 0.5);
     private static final int AFAR_LAST_Z = 21;
     /* Shown in front of a player standing here facing north: a slab's ghost, and a stone's behind it. */
@@ -132,15 +134,16 @@ public final class MultiblockToolsClientTests {
     }
 
     /*
-     * From fourteen blocks off, past a sugar cane and through the projector itself, the furnace's ghost looked at is
-     * found, outlined in white and named beside the crosshair; with the projector switched off, the same view has
-     * neither the outline nor the words.
+     * From fourteen blocks off, past a sugar cane, the furnace's ghost looked at is found, outlined in white and named
+     * beside the crosshair; with the projector switched off, the same view has neither the outline nor the words. A
+     * look through the projector stops at it, as at any block, and finds no ghost behind it.
      */
     @ClientTest(timeoutTicks = 1200)
     public static void projector_outlinesAndNamesTheGhostLookedAtFromAfar(final ClientTestContext ctx) {
         final int[] shown = new int[2];
         final int[] hidden = new int[2];
         final ProjectorView.Place[] looked = new ProjectorView.Place[1];
+        final ProjectorView.Place[] behind = new ProjectorView.Place[1];
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
                 .thenServer(0, level -> {
                     clearAfar(ctx, level);
@@ -155,6 +158,8 @@ public final class MultiblockToolsClientTests {
                 .thenWaitUntil(() -> showing(ctx, true), WAIT, "the projector to show the furnace")
                 .thenTeleport(0, AFAR, Direction.NORTH)
                 .then(2, () -> ctx.lookAt(Vec3.atLowerCornerOf(ctx.abs(FURNACE_SOUTH)).add(LOW_ON_IT)))
+                .then(SETTLE, () -> behind[0] = ProjectorClient.lookedAt().orElse(null))
+                .then(0, () -> ctx.lookAt(Vec3.atLowerCornerOf(ctx.abs(FURNACE_SOUTH_EAST)).add(LOW_ON_IT)))
                 .then(SETTLE, () -> {
                     looked[0] = ProjectorClient.lookedAt().orElse(null);
                     count(ctx, shown);
@@ -170,8 +175,10 @@ public final class MultiblockToolsClientTests {
                 .thenWaitUntil(() -> showing(ctx, false), WAIT, "the projector to be switched off")
                 .then(SETTLE, () -> {
                     count(ctx, hidden);
-                    ctx.assertTrue(looked[0] != null && looked[0].pos().equals(ctx.abs(FURNACE_SOUTH)),
-                            "the look from afar meets the ghost in the middle of the furnace's south side: "
+                    ctx.assertTrue(behind[0] == null, "a look through the projector stops at it: "
+                            + (behind[0] == null ? "none" : behind[0].pos()));
+                    ctx.assertTrue(looked[0] != null && looked[0].pos().equals(ctx.abs(FURNACE_SOUTH_EAST)),
+                            "the look from afar meets the ghost at the south-east corner of the furnace: "
                                     + (looked[0] == null ? "none" : looked[0].pos()));
                     ctx.assertTrue(shown[0] - hidden[0] > MORE_OUTLINE, "the ghost looked at is outlined in white: "
                             + shown[0] + " white pixels round the crosshair, " + hidden[0] + " switched off");
