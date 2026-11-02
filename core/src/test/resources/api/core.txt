@@ -10298,6 +10298,7 @@ stable 4
 10 dev.jstech.core.moving.StructureSeatEntity  boolean canBeCollidedWith()
 10 dev.jstech.core.moving.StructureSeatEntity  boolean helm()
 10 dev.jstech.core.moving.StructureSeatEntity  boolean hurt(DamageSource, float)
+37 dev.jstech.core.moving.StructureSeatEntity  boolean isAlwaysTicking()
 10 dev.jstech.core.moving.StructureSeatEntity  boolean isInvulnerableTo(DamageSource)
 10 dev.jstech.core.moving.StructureSeatEntity  boolean isNoGravity()
 10 dev.jstech.core.moving.StructureSeatEntity  boolean isPickable()

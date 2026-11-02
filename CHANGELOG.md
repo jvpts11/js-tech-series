@@ -477,6 +477,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Keys used at a helm: J's Core's API is at version 36. `KeyAction.Builder.atTheHelm()` makes a key action
   one a pilot uses at the helm of a moving structure, and `KeyAction.atTheHelm()` says whether it is: while the
   player sits at a helm, it wins over every other key action on the same key, which does nothing then. Experimental.
+- (Core) Seats that always tick: J's Core's API is at version 37. `StructureSeatEntity.isAlwaysTicking()` is true, as a
+  player's is: a seat aboard a moving structure ticks wherever it is, its chunk loaded or not yet. Experimental.
 - (Space) Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
   wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
   speed and less in thinner air; written in a part's file as `wing`. Experimental.
