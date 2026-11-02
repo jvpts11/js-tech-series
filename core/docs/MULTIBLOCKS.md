@@ -765,8 +765,10 @@ ground). The places still empty are drawn as ghosts, the block that goes there p
 wrong is outlined in red, seen through whatever stands between, and so is one standing where the multiblock must be
 left empty, as a dock's pit dug into the land; the terminal is a ghost too when its block is known, and its place is
 outlined in cyan until it is built when it is not; and above the structure float its name, its mod, its size, how
-much is in place, what is missing, what is wrong and how many blocks are to be cleared. Looking at a ghost says what
-goes there and on which layer.
+much is in place, what is missing, what is wrong and how many blocks are to be cleared. Looking at a ghost, near or
+up to 32 blocks away, outlines it and says beside the crosshair what goes there and on which layer: the look meets a
+ghost by the shape of its block, so a ghost slab is looked over, and it goes past what a player walks through, as
+plants, and past the projector itself.
 
 Its screen has no inventory, since a projector holds nothing: the multiblock in 3D (the layer shown whole, those below
 as ghosts, turned by dragging), the list of the multiblocks, what is placed, missing and wrong in the world, and the

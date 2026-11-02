@@ -52,11 +52,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
@@ -72,17 +78,19 @@ import org.jetbrains.annotations.Nullable;
  * the blocks still missing are drawn as ghosts, pale and see-through, a block that is wrong is outlined in red through
  * whatever stands between, and so is one standing where the multiblock must be left empty, the terminal's place is
  * outlined in cyan until it is built, and above the structure float its name, its size and how much is in place,
- * missing, wrong and to be cleared. A ghost looked at says what goes there and on which
- * layer, beside the crosshair. A multiblock a recipe viewer's button asks to show is shown the same way, as a projector
- * at the player's feet would show it, until it is built or the player walks away. Its screen is registered here too.
+ * missing, wrong and to be cleared. A ghost looked at, near or as far as {@link #REACH}, is outlined, and beside the
+ * crosshair it says what goes there and on which layer: the look meets a ghost by its shape, not its whole block, and
+ * goes past what a player walks through, as plants, and past the projector itself. A multiblock a recipe viewer's
+ * button asks to show is shown the same way, as a projector at the player's feet would show it, until it is built or
+ * the player walks away. Its screen is registered here too.
  */
 @PaletteHolder
 public final class ProjectorClient {
 
     /** How far from the player a projector's multiblock is drawn, in blocks. */
     public static final double RANGE = 64.0;
-    /** How far a ghost is looked at from, in blocks. */
-    public static final double REACH = 8.0;
+    /** How far a ghost is looked at from, in blocks: as far as a player stands back to see a big multiblock whole. */
+    public static final double REACH = 32.0;
     private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "structure_projector");
     /* What is seen of the world is read again this often, in ticks: the counts need not follow every block. */
@@ -90,11 +98,10 @@ public final class ProjectorClient {
     private static final float GHOST_ALPHA = 0.45F;
     private static final float GHOST_SCALE = 0.98F;
     private static final double GROW = 0.004;
-    private static final double LOOK_STEP = 0.05;
     /** The colours of the words above a structure and of its marks. */
     public static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "structure_projector", new Colours(
             0xFF << 24 | 0xFFFFFF, 0xFF << 24 | 0xB4BCC6, 0xFF << 24 | 0x5FE6F0, 0xFF << 24 | 0xF0564A,
-            0xC0 << 24 | 0x262E3A, 0xF0564A, 0x5FE6F0, 0x20 << 24 | 0xFFFFFF));
+            0xC0 << 24 | 0x262E3A, 0xF0564A, 0x5FE6F0, 0x20 << 24 | 0xFFFFFF, 0xFFFFFF));
     private static final float TEXT_SCALE = 0.025F;
     private static final int LINE_HEIGHT = 10;
     private static final int MOST_NAMED = 3;
@@ -108,6 +115,11 @@ public final class ProjectorClient {
     /* The multiblock a recipe viewer asked to show in front of the player, and what was last seen of it. */
     @Nullable
     private static Held held;
+    /* The places that can be looked at, by where they stand, gathered again only when what is shown changes. */
+    private static Picks picks = Picks.NONE;
+    /* The ghost looked at this frame, found as the world is drawn; the words by the crosshair then name it. */
+    @Nullable
+    private static Looked looked;
 
     private ProjectorClient() {
     }
@@ -151,20 +163,33 @@ public final class ProjectorClient {
         return view;
     }
 
+    /** The place of the ghost the player looks at now, the one outlined and named beside the crosshair, or none. */
+    public static Optional<ProjectorView.Place> lookedAt() {
+        final Looked now = looked;
+        return now == null ? Optional.empty() : Optional.of(now.place());
+    }
+
     private static void onRender(final RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
             return;
         }
         final Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) {
+            looked = null;
             return;
         }
         final Camera camera = event.getCamera();
         final PoseStack pose = event.getPoseStack();
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-        for (final Projection projection : projections(minecraft.player)) {
+        final List<Projection> projections = projections(minecraft.player);
+        looked = looked(minecraft.player, projections, event.getPartialTick().getGameTimeDeltaPartialTick(true));
+        for (final Projection projection : projections) {
             drawGhosts(pose, camera, buffers, minecraft.getBlockRenderer(), projection.view(), projection.settings());
             drawWords(pose, camera, minecraft.font, buffers, projection);
+        }
+        final Looked now = looked;
+        if (now != null) {
+            outlineLooked(pose, camera.getPosition(), buffers.getBuffer(SeenThrough.LINES), minecraft.level, now);
         }
         buffers.endBatch(Sheets.translucentCullBlockSheet());
         buffers.endBatch(SeenThrough.LINES);
@@ -209,6 +234,8 @@ public final class ProjectorClient {
     private static void forget() {
         SEEN.clear();
         held = null;
+        picks = Picks.NONE;
+        looked = null;
     }
 
     /* The projectors loaded in the player's level, showing, near enough to be drawn. */
@@ -269,6 +296,30 @@ public final class ProjectorClient {
         pose.translate(-eye.x, -eye.y, -eye.z);
         LevelRenderer.renderLineBox(pose, lines, new AABB(at).inflate(GROW), (colour >> 16 & 0xFF) / 255F,
                 (colour >> 8 & 0xFF) / 255F, (colour & 0xFF) / 255F, 1F);
+        pose.popPose();
+    }
+
+    /* The ghost looked at, outlined by the shape the look meets, so it is plain which ghost the words name. */
+    private static void outlineLooked(final PoseStack pose, final Vec3 eye, final VertexConsumer lines,
+                                      final BlockGetter level, final Looked place) {
+        final BlockPos at = place.place().pos();
+        final int colour = PALETTE.get().lookedMark();
+        final float red = (colour >> 16 & 0xFF) / 255F;
+        final float green = (colour >> 8 & 0xFF) / 255F;
+        final float blue = (colour & 0xFF) / 255F;
+        pose.pushPose();
+        pose.translate(at.getX() - eye.x, at.getY() - eye.y, at.getZ() - eye.z);
+        final PoseStack.Pose last = pose.last();
+        shapeOf(place, level, at).forAllEdges((x1, y1, z1, x2, y2, z2) -> {
+            final float dx = (float) (x2 - x1);
+            final float dy = (float) (y2 - y1);
+            final float dz = (float) (z2 - z1);
+            final float length = Mth.sqrt(dx * dx + dy * dy + dz * dz);
+            lines.addVertex(last, (float) x1, (float) y1, (float) z1).setColor(red, green, blue, 1F)
+                    .setNormal(last, dx / length, dy / length, dz / length);
+            lines.addVertex(last, (float) x2, (float) y2, (float) z2).setColor(red, green, blue, 1F)
+                    .setNormal(last, dx / length, dy / length, dz / length);
+        });
         pose.popPose();
     }
 
@@ -340,52 +391,103 @@ public final class ProjectorClient {
     /* Beside the crosshair, the ghost looked at: what goes there and on which layer. */
     private static void drawLooked(final GuiGraphics g, final DeltaTracker delta) {
         final Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.level == null || minecraft.screen != null) {
+        final Looked now = looked;
+        if (now == null || minecraft.player == null || minecraft.screen != null) {
             return;
         }
-        final Looked looked = looked(minecraft.player, delta.getGameTimeDeltaPartialTick(true));
-        if (looked == null) {
-            return;
-        }
-        final ShapePreview.Ghost ghost = looked.place().ghost();
+        final ShapePreview.Ghost ghost = now.place().ghost();
         final Component what = ghost.first() == null ? GameText.component(ProjectorTexts.TERMINAL)
                 : GhostBlocks.nameOf(ghost.first());
         g.renderComponentTooltip(minecraft.font, List.of(what, GameText.component(ProjectorTexts.GHOST_LAYER.with(
-                ghost.layer() + 1, looked.layers()))), g.guiWidth() / 2 + TOOLTIP_OFFSET,
+                ghost.layer() + 1, now.layers()))), g.guiWidth() / 2 + TOOLTIP_OFFSET,
                 g.guiHeight() / 2 + TOOLTIP_OFFSET);
     }
 
-    /* The ghost along the player's look, nearer than any real block they look at; none for none. */
+    /*
+     * The ghost along the player's look within reach, nearer than any real block in the way; none for none. Block by
+     * block along the look, a ghost is met by its shape, and a real block only by what stops a player walking into it,
+     * so plants are looked past; and so is the projector, which stands in front of the ghosts it shows.
+     */
     @Nullable
-    private static Looked looked(final Player player, final float partial) {
-        final Map<BlockPos, Looked> ghosts = new HashMap<>();
-        for (final Projection projection : projections(player)) {
-            for (final ProjectorView.Place place : projection.view().upTo(projection.settings().layer())) {
-                if (place.state() != ProjectorView.State.PLACED) {
-                    ghosts.put(place.pos(), new Looked(place, projection.view().preview().layers()));
-                }
-            }
-        }
-        if (ghosts.isEmpty()) {
+    private static Looked looked(final Player player, final List<Projection> projections, final float partial) {
+        final Map<BlockPos, Looked> places = picks(projections);
+        if (places.isEmpty()) {
             return null;
         }
+        final Level level = player.level();
         final Vec3 eye = player.getEyePosition(partial);
-        final Vec3 look = player.getViewVector(partial);
-        for (double t = 0; t <= REACH; t += LOOK_STEP) {
-            final BlockPos at = BlockPos.containing(eye.add(look.scale(t)));
-            final Looked place = ghosts.get(at);
-            if (place != null) {
-                return place;
+        final Vec3 end = eye.add(player.getViewVector(partial).scale(REACH));
+        final CollisionContext walker = CollisionContext.of(player);
+        return BlockGetter.<Optional<Looked>, Map<BlockPos, Looked>>traverseBlocks(eye, end, places, (known, at) -> {
+            final Looked place = known.get(at);
+            if (place != null && shapeOf(place, level, at).clip(eye, end, at) != null) {
+                return Optional.of(place);
             }
-            if (!player.level().getBlockState(at).isAir()) {
+            final BlockState state = level.getBlockState(at);
+            if (state.is(StructureProjector.BLOCK.get())
+                    || state.getCollisionShape(level, at, walker).clip(eye, end, at) == null) {
                 return null;
             }
+            return Optional.empty();
+        }, known -> Optional.empty()).orElse(null);
+    }
+
+    /* The places that can be looked at in what is shown, by where they stand; the same as last when it is the same. */
+    private static Map<BlockPos, Looked> picks(final List<Projection> projections) {
+        if (!picks.from(projections)) {
+            final Map<BlockPos, Looked> at = new HashMap<>();
+            for (final Projection projection : projections) {
+                for (final ProjectorView.Place place : projection.view().upTo(projection.settings().layer())) {
+                    if (place.state() != ProjectorView.State.PLACED) {
+                        at.put(place.pos(), new Looked(place, projection.view().preview().layers()));
+                    }
+                }
+            }
+            picks = new Picks(projections, at);
         }
-        return null;
+        return picks.at();
+    }
+
+    /*
+     * What the look meets at a place: the shape of the block its ghost is drawn as; the whole block for a place that
+     * holds a wrong block or names none, as its outline is.
+     */
+    private static VoxelShape shapeOf(final Looked place, final BlockGetter level, final BlockPos at) {
+        final BlockState drawn = GhostBlocks.stateOf(place.place().ghost());
+        if (drawn == null || place.place().state() == ProjectorView.State.WRONG) {
+            return Shapes.block();
+        }
+        final VoxelShape shape = drawn.getShape(level, at);
+        return shape.isEmpty() ? Shapes.block() : shape;
     }
 
     /** What a projector last saw, with the settings it saw it with and when. */
     private record Seen(ProjectorSettings settings, long at, @Nullable ProjectorView view) {
+    }
+
+    /**
+     * The places that can be looked at, by where they stand, and the multiblocks shown they were gathered from.
+     *
+     * @param shown the multiblocks shown when they were gathered
+     * @param at    each place that is not yet right, by where it stands
+     */
+    private record Picks(List<Projection> shown, Map<BlockPos, Looked> at) {
+
+        private static final Picks NONE = new Picks(List.of(), Map.of());
+
+        /* Whether they were gathered from {@code projections}: the very views seen, shown the same way. */
+        boolean from(final List<Projection> projections) {
+            if (projections.size() != this.shown.size()) {
+                return false;
+            }
+            for (int i = 0; i < projections.size(); i++) {
+                if (projections.get(i).view() != this.shown.get(i).view()
+                        || !projections.get(i).settings().equals(this.shown.get(i).settings())) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     /** One multiblock shown: how it is shown, what is seen of it, and what it and its mod are called. */
@@ -501,11 +603,12 @@ public final class ProjectorClient {
      * @param wrong          the line of what is wrong
      * @param ground         the dim ground behind the words
      * @param wrongMark      the outline of a block that is wrong, without its alpha
-     * @param terminalMark the outline of the terminal's place, without its alpha
+     * @param terminalMark   the outline of the terminal's place, without its alpha
      * @param faint          the words as they show through what stands between, faint
+     * @param lookedMark     the outline of the ghost looked at, without its alpha
      */
     public record Colours(int title, int words, int missing, int wrong, int ground, int wrongMark,
-                          int terminalMark, int faint) {
+                          int terminalMark, int faint, int lookedMark) {
     }
 
     /* Lines drawn over everything, as a mark seen through walls is: the game's own lines with no depth test. */

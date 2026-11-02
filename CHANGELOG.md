@@ -849,11 +849,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   itself and in front of whoever placed it, a multiblock sunk into the ground with its layer on the ground level with
   the projector, the blocks still missing as pale ghosts, what is wrong outlined in red through walls, and so is
   whatever stands where it must be left empty, as a dock's pit in the land; and above the structure its name, its
-  size and how much is in place, missing, wrong and to be cleared; looking at a ghost says what goes there and on which
-  layer. A cave's air counts as empty there, for the projector and for a structure forming. Its screen previews the
-  multiblock in 3D layer by layer and chooses
-  it from the list of every multiblock, its turn, its mirror, its layer and whether only what is missing shows. Every
-  multiblock is listed with nothing more to write, and a mod can hide one.
+  size and how much is in place, missing, wrong and to be cleared; a ghost looked at, from up to 32 blocks away, is
+  outlined and says what goes there and on which layer, the look meeting a ghost by its block's shape and going past
+  plants and the projector. A cave's air counts as empty there, for the projector and for a structure forming. Its
+  screen previews the multiblock in 3D layer by layer and chooses it from the list of every multiblock, its turn, its
+  mirror, its layer and whether only what is missing shows. Every multiblock is listed with nothing more to write, and
+  a mod can hide one.
 - (Core) Multiblocks in JEI and EMI: every multiblock that can be shown has a page of its own, with the multiblock in
   3D turned by a drag or a click, a button for each layer, the blocks that will do where more than one does, how it
   may stand, its materials with how many of each, its size, and buttons that show its ghosts in front of the player

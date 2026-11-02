@@ -15,7 +15,7 @@ A projector that shows any multiblock of any mod you have in the world, before y
 Building a multiblock right the first time, block by block, without counting layers from a picture.
 
 > [!DEFINE] Ghost
-> A pale, see-through block where a block of the multiblock still goes. Look at one to see which block and on which layer.
+> A pale, see-through block where a block of the multiblock still goes. Look at one, from up to 32 blocks away, to outline it and see which block and on which layer; plants and the projector do not stand in the way.
 
 ## How to get it
 

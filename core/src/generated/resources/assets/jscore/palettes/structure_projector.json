@@ -1,6 +1,7 @@
 {
   "faint": "#20FFFFFF",
   "ground": "#C0262E3A",
+  "lookedMark": "#00FFFFFF",
   "missing": "#FF5FE6F0",
   "terminalMark": "#005FE6F0",
   "title": "#FFFFFFFF",

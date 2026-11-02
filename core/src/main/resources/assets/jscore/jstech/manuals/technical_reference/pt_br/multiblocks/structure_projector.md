@@ -15,7 +15,7 @@ Um projetor que mostra no mundo qualquer multibloco de qualquer mod que você te
 Montar um multibloco certo de primeira, bloco a bloco, sem contar camadas numa figura.
 
 > [!DEFINE] Fantasma
-> Um bloco pálido e transparente onde ainda vai um bloco do multibloco. Olhe para um para ver qual bloco e em qual camada.
+> Um bloco pálido e transparente onde ainda vai um bloco do multibloco. Olhe para um, de até 32 blocos de distância, para contorná-lo e ver qual bloco e em qual camada; plantas e o projetor não atrapalham.
 
 ## Como conseguir
 
