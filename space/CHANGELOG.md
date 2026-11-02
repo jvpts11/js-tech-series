@@ -247,6 +247,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   hide its sky: regional ones now and then, some six kilometres across and some six hours long, and about once a
   Martian year a global one that covers the whole planet for a day and a half, the sky turned brown, the Sun a pale
   disc and the horizon swallowed in dust.
+- The Moon's and Mars' pictures on their World Data sheets in the Mission Handbook are photographs now, the
+  worlds as the system's space draws them from orbit, where they were paintings: the Moon's near side, and Mars over
+  Valles Marineris with Tharsis to the west and its north cap leaning towards the eye, each with its night along the
+  east. `WorldPortraits.draw` draws any of the Solar System's worlds so, alone on a clear ground, for a picture of it.
 - Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece

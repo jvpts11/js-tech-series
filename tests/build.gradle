@@ -141,6 +141,10 @@ neoForge {
                 // industrial, space, example, series; see TestSuites), shared out over the shards as the whole
                 // suite is.
                 systemProperty 'jstestkit.clienttests.suites', (providers.gradleProperty('ctMods').getOrElse(''))
+                // -PctPictures lets the tests that check a picture a mod carries against the game's drawing of it
+                // write the picture again into the mod's sources, from the repository's root.
+                systemProperty 'jstestkit.clienttests.pictures',
+                        providers.gradleProperty('ctPictures').present ? rootProject.projectDir.absolutePath : ''
                 // -PctWorld=normal -PctSeed=<seed> runs them in the game's normal land of that seed instead of the
                 // flat one, for the tests about how the land itself looks from far above.
                 systemProperty 'jstestkit.clienttests.world', (providers.gradleProperty('ctWorld').getOrElse('flat'))

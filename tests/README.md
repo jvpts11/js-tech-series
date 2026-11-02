@@ -13,4 +13,7 @@ the shipped jars. It is built on J's Core Test Kit ([testkit/](../testkit/README
 For contributors: `./gradlew runGameTestServer` runs every GameTest, `./gradlew runClientTests0` runs a
 client test shard, and `./gradlew runClient` starts the game with the whole series and this mod loaded. The client
 tests run in a flat world; `-PctWorld=normal -PctSeed=<seed>` runs those asked for with `-PctOnly` in the game's
-normal land of that seed instead, for a look at how the land itself is drawn from far above.
+normal land of that seed instead, for a look at how the land itself is drawn from far above. A few client tests
+check a picture a mod carries against the game's own drawing of it, as the Moon's and Mars' pictures in the Mission
+Handbook against the worlds as the system's space draws them; with `-PctPictures` they write those pictures again
+into the mod's sources instead, after what they show has changed.
