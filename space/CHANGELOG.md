@@ -786,6 +786,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   atmosphere, temperature, radiation, gravity and relief yet.
 
 ### Fixed
+- A system's space has no bottom: a ship flown down where no world lies under it, or a player there, is no
+  longer taken away 128 blocks down as fallen out of the world, a ship lost with its pilot left floating; going down
+  is as free as going up. Coming down over a world still passes into it.
 - A landing platform is free again a few seconds after the stage it holds is taken away or moved off it;
   before, it held that stage for good, and no other stage could land on it.
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back

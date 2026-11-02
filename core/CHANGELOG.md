@@ -1067,6 +1067,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Each dimension's own day and year: a dimension's rules can give it a day of any length, a world locked to its
   star with its sun held still, and a year of its own days, its seasons a quarter of it and its world going round its
   orbit; the overworld's day is never touched. Its wind can blow harder or softer than the overworld's.
+- A dimension's rules say whether it has no bottom (`"bottomless"`), as a system's space has none: there the
+  game takes away nothing that goes under its lowest block, a player, a dropped item or a moving structure, and going
+  down is as free as going up.
 - The sky kit: a dimension's sky drawn from a data file, with suns coloured and sized by their kind of star and
   dimmer the farther they are; planets and moons lit by the real geometry, so their phases and eclipses come of where
   they stand, their surfaces turning and their rings leaning; square stars, the band of the galaxy, nebulae and an

@@ -8,6 +8,7 @@
 package dev.jstech.core.moving;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.moving.physics.PhysicsMotion;
 import dev.jstech.core.moving.physics.StructurePhysics;
 import dev.jstech.core.region.Box;
@@ -390,12 +391,13 @@ public final class MovingStructure implements IStructureBody {
      * Puts it back up on the line under its dimension's world, under which the game takes away whatever falls, with
      * what holds it if anything does, when it went under it: its fall by its physics stopped, whatever else moves it
      * left to go on from there, so a pilot can fly it up again. A structure taken away there would leave its blocks in
-     * its plot of the yard for good, the plot still taken, and whoever sat on it where it was.
+     * its plot of the yard for good, the plot still taken, and whoever sat on it where it was. A dimension whose rules
+     * say it has no bottom has no such line: it goes on down.
      */
     void keepAboveTheVoid() {
         final double floor = entity.level().getMinBuildHeight() - BELOW_THE_WORLD;
         final double under = floor - frame.pose().y();
-        if (under <= 0) {
+        if (under <= 0 || DimensionRulesData.of(entity.level()).bottomless()) {
             return;
         }
         final MovingStructure root = StructureMounts.rootOf(this);

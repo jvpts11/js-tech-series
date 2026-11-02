@@ -898,6 +898,7 @@ A dimension's rules are a data file, `data/<namespace>/dimension_rules/<path>.js
 | `bands` | Its air, pressure and temperature by height (below). *Added 2026-10-17.* | | none |
 | `laws` | Laws of its own for the whole dimension ([Laws of their own](#laws-of-their-own)). *Added 2026-10-17.* | | none |
 | `seals` | How blocks seal a sealed room here, over what the map of seals says everywhere: a list of `{"blocks": [...], "leak", "rating", "door"}`, each block by id or `#tag` ([Sealed rooms](ROOMS.md#how-blocks-seal)). *Added 2026-10-29.* | as a seal's | none: the map's |
+| `bottomless` | Whether it has no bottom, as a system's space has none: the game takes away nothing that goes under its lowest block, a player, a dropped item or a moving structure, and going down is as free as going up. Anywhere else, a moving structure that falls 64 blocks under the lowest block stops there whole instead of being taken away. *Added 2026-11-02.* | yes or no | no |
 
 Every rule is optional. The Core applies them: entities fall as the gravity says; once a second a player in air
 they cannot breathe, or in heat or cold past the limits, is hurt; the weather follows the rule. Before hurting a

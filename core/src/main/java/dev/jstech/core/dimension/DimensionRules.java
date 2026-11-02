@@ -24,8 +24,8 @@ import java.util.function.Function;
 /**
  * What a dimension is like to stand in: how hard it pulls, whether its air can be breathed, how hot or cold it is,
  * what its weather does, how thick its atmosphere is, its own clock and how hard its wind blows, what its air is made
- * of, how all that changes with height in bands, laws of its own, and how blocks seal a room there when not as they do
- * everywhere ({@link DimensionSeal}). A dimension's rules are a datapack file named
+ * of, how all that changes with height in bands, laws of its own, how blocks seal a room there when not as they do
+ * everywhere ({@link DimensionSeal}), and whether it has a bottom. A dimension's rules are a datapack file named
  * after it, {@code data/<namespace>/dimension_rules/<path>.json} for the dimension {@code <namespace>:<path>}; a
  * dimension without one is like the overworld. What it is like at a height is {@link #at}.
  *
@@ -34,6 +34,7 @@ import java.util.function.Function;
  *  "wind": 2.5, "air": {"jscore:carbon_dioxide": 0.95, "jscore:nitrogen": 0.03, "jscore:argon": 0.02}}
  * {"gravity": 0.9, "pressure": 9300, "temperature": 464,                                     // Venus: hell below,
  *  "bands": [{"at": 0, "pressure": 9300, "temperature": 464}, {"at": 220, "pressure": 101, "temperature": 30}]}
+ * {"gravity": 0, "breathable": false, "temperature": -270, "pressure": 0, "bottomless": true}     // a system's space
  * }</pre>
  *
  * @param gravity     how hard it pulls, as a share of the overworld's pull
@@ -47,10 +48,14 @@ import java.util.function.Function;
  * @param bands       how it changes with height, the lowest first
  * @param laws        laws of its own over the whole of it, if any
  * @param seals       how blocks seal a room here over what they do everywhere, the first that covers a block said
+ * @param bottomless  whether it has no bottom, as a system's space has none: the game takes nothing away that goes
+ *                    under its lowest block, a player, a dropped item or a moving structure, and going down is as
+ *                    free as going up
  */
 public record DimensionRules(double gravity, boolean breathable, double temperature, Weather weather,
                              double pressure, Optional<DimensionClock> clock, double wind, Optional<AirMix> air,
-                             List<AltitudeBand> bands, Optional<Laws> laws, List<DimensionSeal> seals) {
+                             List<AltitudeBand> bands, Optional<Laws> laws, List<DimensionSeal> seals,
+                             boolean bottomless) {
 
     /** Hotter than this, a player not made for it burns. */
     public static final double SCORCHING = 60.0;
@@ -59,7 +64,7 @@ public record DimensionRules(double gravity, boolean breathable, double temperat
 
     /** The overworld's rules, which every dimension without a file of its own keeps. */
     public static final DimensionRules OVERWORLD = new DimensionRules(1.0, true, 15.0, Weather.NATURAL, 101.3,
-            Optional.empty(), 1.0, Optional.empty(), List.of(), Optional.empty(), List.of());
+            Optional.empty(), 1.0, Optional.empty(), List.of(), Optional.empty(), List.of(), false);
     /** The hardest a dimension's wind may blow, as a share of the overworld's. */
     public static final double MOST_WIND = 20.0;
 
@@ -79,7 +84,8 @@ public record DimensionRules(double gravity, boolean breathable, double temperat
             AirMix.CODEC.optionalFieldOf("air").forGetter(DimensionRules::air),
             AltitudeBand.CODEC.listOf().optionalFieldOf("bands", List.of()).forGetter(DimensionRules::bands),
             Laws.CODEC.optionalFieldOf("laws").forGetter(DimensionRules::laws),
-            DimensionSeal.CODEC.listOf().optionalFieldOf("seals", List.of()).forGetter(DimensionRules::seals)
+            DimensionSeal.CODEC.listOf().optionalFieldOf("seals", List.of()).forGetter(DimensionRules::seals),
+            Codec.BOOL.optionalFieldOf("bottomless", OVERWORLD.bottomless()).forGetter(DimensionRules::bottomless)
     ).apply(instance, DimensionRules::new));
 
     public DimensionRules {

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.mixin;
 
+import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.moving.StructureCollisions;
 import dev.jstech.core.moving.StructureFooting;
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * held to the blocks of the structures near, turned as they are ({@link StructureCollisions}); and an entity standing
  * on a structure has the block under it read from there, so it slides on a structure's ice and is hurt by its magma.
  * With no structure near, the move is the game's own. On a player's game, the player and what they drive are carried
- * by the deck under them once the game has kept where they stood before the tick ({@link StructureFooting}).
+ * by the deck under them once the game has kept where they stood before the tick ({@link StructureFooting}). And in a
+ * dimension its rules say has no bottom, as a system's space, nothing that goes under its lowest block is taken away
+ * as fallen out of the world: the game takes away whatever goes that far, and no event comes between.
  */
 @Mixin(Entity.class)
 public abstract class EntityMixin {
@@ -44,6 +47,13 @@ public abstract class EntityMixin {
         final BlockPos support = StructureFooting.support((Entity) (Object) this);
         if (support != null) {
             info.setReturnValue(support);
+        }
+    }
+
+    @Inject(method = "checkBelowWorld", at = @At("HEAD"), cancellable = true)
+    private void jscore$noBottomToFallOutOf(final CallbackInfo info) {
+        if (DimensionRulesData.of(((Entity) (Object) this).level()).bottomless()) {
+            info.cancel();
         }
     }
 }
