@@ -393,6 +393,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   to have loaded before it checks its structure; `MultiblockPattern` gives its longest side across the ground, its
   height left out unless it may lie on its side, so a structure taller than it is wide forms where only the chunks
   round it are loaded. Experimental.
+- Keys used at a helm: J's Core's API is at version 36. `KeyAction.Builder.atTheHelm()` makes a key action
+  one a pilot uses at the helm of a moving structure, and `KeyAction.atTheHelm()` says whether it is: while the
+  player sits at a helm, it wins over every other key action on the same key, which does nothing then. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

@@ -31,6 +31,7 @@ public final class KeyAction {
     private final int defaultKey;
     private final @Nullable TextKey category;
     private final @Nullable IServerPress server;
+    private final boolean helm;
 
     /** No key: the player gives it one in the game's controls. */
     public static final int NO_KEY = -1;
@@ -41,6 +42,7 @@ public final class KeyAction {
         this.defaultKey = builder.defaultKey;
         this.category = builder.category;
         this.server = builder.server;
+        this.helm = builder.helm;
     }
 
     /** Starts declaring the action known by {@code id}, called {@code name} in the game's controls. */
@@ -72,6 +74,14 @@ public final class KeyAction {
         return this.server != null;
     }
 
+    /**
+     * Whether it is a key a pilot uses at the helm of a moving structure: while the player sits at a helm it wins over
+     * every other key action on the same key, which does nothing then, as a ship's boost wins over a screen's key.
+     */
+    public boolean atTheHelm() {
+        return this.helm;
+    }
+
     /* A press came from {@code player}; nothing for an action the server has no part in. */
     void pressedBy(final ServerPlayer player, final boolean shift) {
         if (this.server != null) {
@@ -98,6 +108,7 @@ public final class KeyAction {
         private int defaultKey = NO_KEY;
         private @Nullable TextKey category;
         private @Nullable IServerPress server;
+        private boolean helm;
 
         private Builder(final ResourceLocation id, final TextKey name) {
             this.id = Objects.requireNonNull(id, "id");
@@ -122,6 +133,15 @@ public final class KeyAction {
         /** What the server does when a player presses it. */
         public Builder onServer(final IServerPress press) {
             this.server = Objects.requireNonNull(press, "press");
+            return this;
+        }
+
+        /**
+         * Makes it a key used at the helm of a moving structure: while the player sits at a helm it wins over every
+         * other key action on its key.
+         */
+        public Builder atTheHelm() {
+            this.helm = true;
             return this;
         }
 

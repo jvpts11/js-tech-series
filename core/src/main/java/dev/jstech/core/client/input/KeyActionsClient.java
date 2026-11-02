@@ -11,13 +11,18 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.input.KeyAction;
 import dev.jstech.core.input.KeyActionPayload;
 import dev.jstech.core.input.KeyActions;
+import dev.jstech.core.moving.StructureSeatEntity;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -119,7 +124,13 @@ public final class KeyActionsClient {
     }
 
     public static void onClientTick(final ClientTickEvent.Post event) {
+        final Set<InputConstants.Key> helm = helmKeys();
         for (final Map.Entry<KeyAction, KeyMapping> entry : MAPPINGS.entrySet()) {
+            if (!entry.getKey().atTheHelm() && helm.contains(entry.getValue().getKey())) {
+                // At a helm its key steers: a press of it here does nothing.
+                drop(entry.getValue());
+                continue;
+            }
             final Hold hold = HOLDS.get(entry.getKey());
             if (hold == null) {
                 while (entry.getValue().consumeClick()) {
@@ -135,6 +146,30 @@ public final class KeyActionsClient {
                 press(entry.getKey());
             }
         }
+    }
+
+    /* While the player sits at a helm, the keys of the actions used there, which win over any other action's. */
+    private static Set<InputConstants.Key> helmKeys() {
+        final LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || !(player.getVehicle() instanceof StructureSeatEntity seat) || !seat.helm()) {
+            return Set.of();
+        }
+        final Set<InputConstants.Key> keys = new HashSet<>();
+        MAPPINGS.forEach((action, mapping) -> {
+            if (action.atTheHelm() && !mapping.isUnbound()) {
+                keys.add(mapping.getKey());
+            }
+        });
+        return keys;
+    }
+
+    /* Lets go of every press of {@code mapping} since the last tick, doing nothing with them; how many there were. */
+    private static int drop(final KeyMapping mapping) {
+        int dropped = 0;
+        while (mapping.consumeClick()) {
+            dropped++;
+        }
+        return dropped;
     }
 
     /* How long a key with something to do when held has been down, and whether that has been done. */

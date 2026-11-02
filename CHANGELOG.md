@@ -474,6 +474,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   to have loaded before it checks its structure; `MultiblockPattern` gives its longest side across the ground, its
   height left out unless it may lie on its side, so a structure taller than it is wide forms where only the chunks
   round it are loaded. Experimental.
+- (Core) Keys used at a helm: J's Core's API is at version 36. `KeyAction.Builder.atTheHelm()` makes a key action
+  one a pilot uses at the helm of a moving structure, and `KeyAction.atTheHelm()` says whether it is: while the
+  player sits at a helm, it wins over every other key action on the same key, which does nothing then. Experimental.
 - (Space) Wings' figures: J's Space's API is at version 17. `ShipPart.Figures` gains `wing`, the weight a part's
   wings hold up at `WING_SPEED`, 20 metres a second, in the overworld's air at sea level, more as the square of the
   speed and less in thinner air; written in a part's file as `wing`. Experimental.
@@ -3076,6 +3079,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) At a ship's helm, B boosts the ship and J changes its autopilot, as their keys say; before, B also opened
+  the Core's screen of the body over the helm, and no boost came. Up from the helm, B opens the body's screen as
+  before.
 - (Space) A ship meeting the land too fast is harmed: over 5 blocks a second, the blocks it meets the land with are
   holed, one more for every 5 blocks a second past that, its feet, wheels and underside first, each a hole its part
   holds round; over 30, its crew are hurt too. Before, a ship stopped dead on the land at any speed, unharmed. The

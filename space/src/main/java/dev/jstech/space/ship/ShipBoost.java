@@ -27,7 +27,7 @@ public final class ShipBoost {
     /** The key that boosts the ship its player pilots. */
     public static final KeyAction KEY = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship_boost"), ShipFlightTexts.BOOST_KEY)
-            .key(GLFW.GLFW_KEY_B));
+            .key(GLFW.GLFW_KEY_B).atTheHelm());
     /* How long a hold lasts untold, in ticks. */
     private static final int LASTS = 20;
     /* When each ship's pilot last held its boost, by the game's tick. */

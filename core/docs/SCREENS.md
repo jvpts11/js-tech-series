@@ -398,6 +398,10 @@ public static final KeyAction SCAN = KeyActions.declare(KeyAction.builder(rl("sc
 On the client, `KeyActionsClient.sendsWhen(SCAN, () -> holdsScanner())` sends the press only when it means
 something, and `onPress(SCAN, ...)` runs client code instead.
 
+A key a pilot uses at the helm of a moving structure says so with `.atTheHelm()`: while the player sits at a helm it
+wins over every other key action on the same key, which does nothing then, so a ship's boost on B is not also a
+screen's key on B. *Added 2026-11-02.*
+
 ## The keyboard, a controller and the narrator
 
 *Added 2026-10-21.*

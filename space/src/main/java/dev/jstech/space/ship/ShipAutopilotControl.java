@@ -41,7 +41,7 @@ public final class ShipAutopilotControl {
     /** The key that changes the autopilot of the ship its player pilots. */
     public static final KeyAction KEY = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship_autopilot"), ShipFlightTexts.AUTOPILOT_KEY)
-            .key(GLFW.GLFW_KEY_J));
+            .key(GLFW.GLFW_KEY_J).atTheHelm());
     /* How far a landing pad or a runway, and another ship to dock with, may be, in metres. */
     private static final double LAND_RANGE = 512;
     private static final double DOCK_RANGE = 200;

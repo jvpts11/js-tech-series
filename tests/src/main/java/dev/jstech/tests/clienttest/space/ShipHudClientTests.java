@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.client.gui.data.DataScreen;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructurePose;
@@ -16,6 +18,7 @@ import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.client.ship.ShipHud;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAutopilot;
+import dev.jstech.space.ship.ShipBoost;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
@@ -29,6 +32,7 @@ import dev.jstech.testkit.client.ClientTestHelper;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -40,6 +44,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * A ship's HUD on a player's game, as the approved flight draws it: projected on the canopy for the pilot at its helm,
@@ -112,6 +117,36 @@ public final class ShipHudClientTests {
                         "the player to get up from the helm on their game")
                 .then(SETTLE, () -> ctx.assertTrue(!green(ctx, SEAT_SPEED) && !green(ctx, SEAT_HEADING),
                         "up from the helm, the HUD is gone"));
+    }
+
+    /*
+     * B is both the boost's key and the key of the Core's screen of the body: at the helm the boost's wins, held it
+     * boosts and no screen opens; up from the helm it opens the body's screen, which Escape closes to the game.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void keys_atTheHelmTheBoostWinsItsKeyAndOnFootTheBodysScreenOpens(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final InputConstants.Key b = InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_B);
+        final boolean[] boosted = new boolean[1];
+        atTheHelm(ctx, ship)
+                .then(0, () -> {
+                    KeyMapping.resetMapping();
+                    KeyMapping.click(b);
+                    KeyMapping.set(b, true);
+                })
+                .thenServer(SETTLE, level -> boosted[0] = ShipBoost.held(ship[0], level.getGameTime()))
+                .then(0, () -> {
+                    KeyMapping.set(b, false);
+                    ctx.assertTrue(boosted[0], "at the helm, B held boosts the ship");
+                    ctx.assertTrue(ctx.mc().screen == null, "and opens no screen: " + ctx.mc().screen);
+                })
+                .thenServer(0, level -> ctx.serverPlayer().stopRiding())
+                .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,
+                        "the player to get up from the helm on their game")
+                .then(0, () -> KeyMapping.click(b))
+                .thenAwaitScreen(DataScreen.class, ARRIVE)
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(ARRIVE);
     }
 
     @ClientTest(timeoutTicks = 2400)

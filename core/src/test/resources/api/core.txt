@@ -6426,11 +6426,13 @@ stable 4
 10 dev.jstech.core.input.KeyAction  ResourceLocation id()
 10 dev.jstech.core.input.KeyAction  TextKey category()
 10 dev.jstech.core.input.KeyAction  TextKey name()
+36 dev.jstech.core.input.KeyAction  boolean atTheHelm()
 10 dev.jstech.core.input.KeyAction  boolean reachesServer()
 10 dev.jstech.core.input.KeyAction  int defaultKey()
 10 dev.jstech.core.input.KeyAction  static Builder builder(ResourceLocation, TextKey)
 10 dev.jstech.core.input.KeyAction  static final int NO_KEY
 10 dev.jstech.core.input.KeyAction.Builder  type static final class
+36 dev.jstech.core.input.KeyAction.Builder  Builder atTheHelm()
 10 dev.jstech.core.input.KeyAction.Builder  Builder category(TextKey)
 10 dev.jstech.core.input.KeyAction.Builder  Builder key(int)
 10 dev.jstech.core.input.KeyAction.Builder  Builder onServer(IServerPress)
