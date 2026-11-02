@@ -3073,6 +3073,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) The Structure Projector no longer slows the game showing a big multiblock: its ghosts and marks are built once,
+  off the game's thread, and kept on the graphics card until what it shows changes, where every ghost was drawn afresh
+  every frame. Showing the Rocket Hangar, tens of thousands of ghosts, took the game to under 20 frames a second; it
+  now costs about a millisecond a frame, and looks the same.
 - (Core) The Structure Projector: looking at the projector itself names nothing; before, the look went through it and
   named the ghost behind it, as if the projector were not there.
 - (Core) Manuals: a scene too tall for its page, moved on to the next with the heading over it, is drawn shorter under

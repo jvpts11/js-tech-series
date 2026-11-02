@@ -12,7 +12,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.jstech.core.JsCore;
-import dev.jstech.core.client.multiblock.FadedConsumer;
 import dev.jstech.core.client.multiblock.GhostBlocks;
 import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.jstechseries.projector.ProjectorSettings;
@@ -29,11 +28,13 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 import net.minecraft.client.Camera;
@@ -41,13 +42,10 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -58,7 +56,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -69,7 +66,6 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
-import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,9 +91,6 @@ public final class ProjectorClient {
             "structure_projector");
     /* What is seen of the world is read again this often, in ticks: the counts need not follow every block. */
     private static final int READ_EVERY = 10;
-    private static final float GHOST_ALPHA = 0.45F;
-    private static final float GHOST_SCALE = 0.98F;
-    private static final double GROW = 0.004;
     /** The colours of the words above a structure and of its marks. */
     public static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "structure_projector", new Colours(
             0xFF << 24 | 0xFFFFFF, 0xFF << 24 | 0xB4BCC6, 0xFF << 24 | 0x5FE6F0, 0xFF << 24 | 0xF0564A,
@@ -109,6 +102,8 @@ public final class ProjectorClient {
 
     /* What each projector saw when it last looked, by its place, and when it looked. */
     private static final Map<BlockPos, Seen> SEEN = new HashMap<>();
+    /* The ghosts and marks of each multiblock shown, kept on the graphics card, by what shows it. */
+    private static final Map<Object, KeptGhosts> KEPT = new HashMap<>();
     /* What other tools of the series show the same way, each asked every frame. */
     private static final List<Supplier<Optional<Shown>>> ALSO = new CopyOnWriteArrayList<>();
 
@@ -120,6 +115,8 @@ public final class ProjectorClient {
     /* The ghost looked at this frame, found as the world is drawn; the words by the crosshair then name it. */
     @Nullable
     private static Looked looked;
+    /* How long the last frame's drawing of what is shown took on the game's thread, in nanoseconds. */
+    private static long drawNanos;
 
     private ProjectorClient() {
     }
@@ -169,6 +166,11 @@ public final class ProjectorClient {
         return now == null ? Optional.empty() : Optional.of(now.place());
     }
 
+    /** How long the last frame's drawing of every multiblock shown took on the game's thread, in nanoseconds. */
+    public static long lastDrawNanos() {
+        return drawNanos;
+    }
+
     private static void onRender(final RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
             return;
@@ -178,22 +180,36 @@ public final class ProjectorClient {
             looked = null;
             return;
         }
+        final long began = System.nanoTime();
         final Camera camera = event.getCamera();
+        final Vec3 eye = camera.getPosition();
         final PoseStack pose = event.getPoseStack();
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
         final List<Projection> projections = projections(minecraft.player);
         looked = looked(minecraft.player, projections, event.getPartialTick().getGameTimeDeltaPartialTick(true));
+        final Set<Object> drawn = new HashSet<>();
         for (final Projection projection : projections) {
-            drawGhosts(pose, camera, buffers, minecraft.getBlockRenderer(), projection.view(), projection.settings());
+            final KeptGhosts kept = KEPT.computeIfAbsent(projection.key(),
+                    key -> new KeptGhosts(Sheets.translucentCullBlockSheet(), SeenThrough.LINES));
+            kept.want(projection.view(), projection.settings(), () -> content(projection), eye);
+            kept.draw(eye);
+            drawn.add(projection.key());
             drawWords(pose, camera, minecraft.font, buffers, projection);
         }
+        KEPT.entrySet().removeIf(entry -> {
+            if (drawn.contains(entry.getKey())) {
+                return false;
+            }
+            entry.getValue().close();
+            return true;
+        });
         final Looked now = looked;
         if (now != null) {
-            outlineLooked(pose, camera.getPosition(), buffers.getBuffer(SeenThrough.LINES), minecraft.level, now);
+            outlineLooked(pose, eye, buffers.getBuffer(SeenThrough.LINES), minecraft.level, now);
         }
-        buffers.endBatch(Sheets.translucentCullBlockSheet());
         buffers.endBatch(SeenThrough.LINES);
         buffers.endBatch();
+        drawNanos = System.nanoTime() - began;
     }
 
     /*
@@ -205,7 +221,7 @@ public final class ProjectorClient {
         for (final StructureProjectorBlockEntity projector : shown(player)) {
             final ProjectorView view = seen(projector);
             if (view != null) {
-                out.add(named(projector.settings(), view));
+                out.add(named(projector.getBlockPos().immutable(), projector.settings(), view));
             }
         }
         final Held showing = held;
@@ -215,24 +231,62 @@ public final class ProjectorClient {
                     || view.missing() == 0 && view.wrong() == 0 && view.toClear() == 0) {
                 held = null;
             } else {
-                out.add(named(showing.settings(), view));
+                out.add(named(showing, showing.settings(), view));
             }
         }
         for (final Supplier<Optional<Shown>> source : ALSO) {
-            source.get().ifPresent(shown -> out.add(new Projection(ProjectorSettings.FRESH, shown.view(),
+            source.get().ifPresent(shown -> out.add(new Projection(source, ProjectorSettings.FRESH, shown.view(),
                     shown.name(), shown.mod())));
         }
         return out;
     }
 
     /* A projection of the multiblock its settings choose, named as the multiblock and its mod are. */
-    private static Projection named(final ProjectorSettings settings, final ProjectorView view) {
+    private static Projection named(final Object key, final ProjectorSettings settings, final ProjectorView view) {
         final ResourceLocation id = settings.chosen().orElseThrow();
-        return new Projection(settings, view, Projectables.name(id), ScreenWords.modName(id));
+        return new Projection(key, settings, view, Projectables.name(id), ScreenWords.modName(id));
+    }
+
+    /*
+     * What a projection draws: a ghost of what is missing, and of what is wrong unless only the missing is shown; the
+     * red outline of what is wrong and of what stands where the multiblock must be left empty; the cyan outline of a
+     * terminal's place that names no block to draw.
+     */
+    private static KeptGhosts.Content content(final Projection projection) {
+        final ProjectorView view = projection.view();
+        final ProjectorSettings settings = projection.settings();
+        final Colours c = PALETTE.get();
+        final List<KeptGhosts.Ghost> ghosts = new ArrayList<>();
+        final List<KeptGhosts.Mark> marks = new ArrayList<>();
+        for (final ProjectorView.Place place : view.upTo(settings.layer())) {
+            if (place.state() == ProjectorView.State.PLACED) {
+                continue;
+            }
+            if (place.state() == ProjectorView.State.WRONG) {
+                marks.add(new KeptGhosts.Mark(place.pos(), c.wrongMark()));
+                if (settings.missingOnly()) {
+                    continue;
+                }
+            }
+            final BlockState state = GhostBlocks.stateOf(place.ghost());
+            if (state == null) {
+                marks.add(new KeptGhosts.Mark(place.pos(), c.terminalMark()));
+            } else {
+                ghosts.add(new KeptGhosts.Ghost(place.pos(), state));
+            }
+        }
+        for (final ProjectorView.Place place : view.clearsUpTo(settings.layer())) {
+            if (place.state() == ProjectorView.State.WRONG) {
+                marks.add(new KeptGhosts.Mark(place.pos(), c.wrongMark()));
+            }
+        }
+        return KeptGhosts.Content.of(ghosts, marks);
     }
 
     private static void forget() {
         SEEN.clear();
+        KEPT.values().forEach(KeptGhosts::close);
+        KEPT.clear();
         held = null;
         picks = Picks.NONE;
         looked = null;
@@ -248,55 +302,6 @@ public final class ProjectorClient {
             }
         }
         return out;
-    }
-
-    /* The ghosts of what is missing, the red outline of what is wrong, the cyan outline of a missing terminal. */
-    private static void drawGhosts(final PoseStack pose, final Camera camera,
-                                   final MultiBufferSource.BufferSource buffers, final BlockRenderDispatcher blocks,
-                                   final ProjectorView view, final ProjectorSettings settings) {
-        final Vec3 eye = camera.getPosition();
-        final VertexConsumer faded = new FadedConsumer(buffers.getBuffer(Sheets.translucentCullBlockSheet()),
-                GHOST_ALPHA);
-        final VertexConsumer lines = buffers.getBuffer(SeenThrough.LINES);
-        for (final ProjectorView.Place place : view.upTo(settings.layer())) {
-            if (place.state() == ProjectorView.State.PLACED) {
-                continue;
-            }
-            final BlockPos at = place.pos();
-            if (place.state() == ProjectorView.State.WRONG) {
-                outline(pose, eye, lines, at, PALETTE.get().wrongMark());
-                if (settings.missingOnly()) {
-                    continue;
-                }
-            }
-            final BlockState state = GhostBlocks.stateOf(place.ghost());
-            if (state == null) {
-                outline(pose, eye, lines, at, PALETTE.get().terminalMark());
-                continue;
-            }
-            pose.pushPose();
-            pose.translate(at.getX() - eye.x + 0.5, at.getY() - eye.y + 0.5, at.getZ() - eye.z + 0.5);
-            pose.scale(GHOST_SCALE, GHOST_SCALE, GHOST_SCALE);
-            pose.translate(-0.5, -0.5, -0.5);
-            blocks.getModelRenderer().renderModel(pose.last(), faded, state, blocks.getBlockModel(state), 1F, 1F,
-                    1F, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, null);
-            pose.popPose();
-        }
-        // Whatever stands where the multiblock must be left empty is outlined as wrong, to be cleared.
-        for (final ProjectorView.Place place : view.clearsUpTo(settings.layer())) {
-            if (place.state() == ProjectorView.State.WRONG) {
-                outline(pose, eye, lines, place.pos(), PALETTE.get().wrongMark());
-            }
-        }
-    }
-
-    private static void outline(final PoseStack pose, final Vec3 eye, final VertexConsumer lines, final BlockPos at,
-                                final int colour) {
-        pose.pushPose();
-        pose.translate(-eye.x, -eye.y, -eye.z);
-        LevelRenderer.renderLineBox(pose, lines, new AABB(at).inflate(GROW), (colour >> 16 & 0xFF) / 255F,
-                (colour >> 8 & 0xFF) / 255F, (colour & 0xFF) / 255F, 1F);
-        pose.popPose();
     }
 
     /* The ghost looked at, outlined by the shape the look meets, so it is plain which ghost the words name. */
@@ -489,8 +494,12 @@ public final class ProjectorClient {
         }
     }
 
-    /** One multiblock shown: how it is shown, what is seen of it, and what it and its mod are called. */
-    private record Projection(ProjectorSettings settings, ProjectorView view, Text name, Text mod) {
+    /**
+     * One multiblock shown: what shows it, which its kept meshes are kept by (its projector's place, the recipe
+     * viewer's showing, another tool's source); how it is shown, what is seen of it, and what it and its mod are
+     * called.
+     */
+    private record Projection(Object key, ProjectorSettings settings, ProjectorView view, Text name, Text mod) {
     }
 
     /**
