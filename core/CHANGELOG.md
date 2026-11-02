@@ -379,6 +379,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Blocks in variants: J's Core's API is at version 32. `IBlockLook.varied(turned, models)` shows one of
   several models for each block, the game picking by where the block stands, each turned a quarter at random about
   the upright when `turned`, so a field of the block is never one stamp repeated. Experimental.
+- Shapes sunk into the ground: J's Core's API is at version 33. `MultiblockPattern.Builder.ground(layer)`
+  says which layer of a pattern stands on the ground, the layers under it dug in, written in its file as `ground`;
+  `MultiblockPattern.ground()` reads it. `ShapePreview` changes shape: it keeps the places that must be left empty
+  apart, in `clears`, and the height that stands on the ground, in `ground`, which `anchor` puts level with what it is
+  shown beside; `ShapePreview.of(places, clears, ground)` lays both out. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -754,9 +759,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   controller block built on the Core's data machine block names the file. The files reach every player, and a data
   pack adds or changes a machine with no code.
 - The Structure Projector: shows any multiblock of any installed mod in the world before it is built, beyond
-  itself and in front of whoever placed it, the blocks still missing as pale ghosts, what is wrong outlined in red
-  through walls, and above the structure its name, its size and how much is in place, missing and wrong; looking at a
-  ghost says what goes there and on which layer. Its screen previews the multiblock in 3D layer by layer and chooses
+  itself and in front of whoever placed it, a multiblock sunk into the ground with its layer on the ground level with
+  the projector, the blocks still missing as pale ghosts, what is wrong outlined in red through walls, and so is
+  whatever stands where it must be left empty, as a dock's pit in the land; and above the structure its name, its
+  size and how much is in place, missing, wrong and to be cleared; looking at a ghost says what goes there and on which
+  layer. A cave's air counts as empty there, for the projector and for a structure forming. Its screen previews the
+  multiblock in 3D layer by layer and chooses
   it from the list of every multiblock, its turn, its mirror, its layer and whether only what is missing shows. Every
   multiblock is listed with nothing more to write, and a mod can hide one.
 - Multiblocks in JEI and EMI: every multiblock that can be shown has a page of its own, with the multiblock in

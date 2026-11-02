@@ -35,3 +35,6 @@ In creative, take it from the J's Tech tab; the mods that build multiblocks give
 
 > [!PROBLEM] A block stays outlined in red.
 > Another block stands there. Break it and place the one the ghost shows.
+
+> [!PROBLEM] Blocks with no ghost, even the ground, are outlined in red.
+> The multiblock must be left empty there, as a dock's pit dug into the ground: break them until nothing stands there. A multiblock sunk into the ground shows its sunk layers under the projector, the layer that stands on the ground level with it.

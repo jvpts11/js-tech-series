@@ -152,6 +152,11 @@ Every pattern is found in its four horizontal turns. Two more calls widen that:
 The formed structure's `orientation()` says which way it stands. The four turns are tried first, so a symmetric
 shape reads as the turn you would expect.
 
+A shape sunk into the ground, as a dry dock with its pit, says which layer stands on it: `ground(layer)`, from 0 at
+the bottom as drawn. The layers under it are dug in, and the Structure Projector shows them under itself, the layer on
+the ground level with it ([Showing a multiblock](#showing-a-multiblock-before-it-is-built)); a shape that says nothing
+stands on the ground by its bottom.
+
 ## Shapes that grow
 
 *Added 2026-10-16.*
@@ -305,7 +310,7 @@ Everything above is written to the pattern's file, so a data pack changes it as 
                "count": {"name": "hatch", "which": {"blocks": ["mymod:hatch"]}}},
          "G": {"blocks": ["mymod:glass"]}},
  "limits": {"hatch": {"least": 1, "most": 4}},
- "mirrors": true, "lies_down": false,
+ "mirrors": true, "lies_down": false, "ground": 0,
  "repeat": {"axis": "y", "index": 1, "least": 1, "most": 6},
  "inside": {"letter": "x", "rule": {"allows": {"blocks": ["minecraft:air"]}, "parts": [
      {"name": "cell", "which": {"blocks": ["mymod:cell"]}, "gives": {"power": 5},
@@ -754,12 +759,14 @@ PlanArmsRenderer.draw(entity, entity.arms(), ARM_MODEL, poses, buffers, overlay,
 *Added 2026-10-16.*
 
 The **Structure Projector**, a block of the Core's shared content, shows any multiblock of any installed mod in the
-world, in front of itself: its near side a block away, its middle across from the projector, its bottom level with
-it. The places still empty are drawn as ghosts, the block that goes there pale and see-through; a block that is
-wrong is outlined in red, seen through whatever stands between; the terminal is a ghost too when its block is known,
-and its place is outlined in cyan until it is built when it is not; and above the structure float its name, its mod,
-its size, how much is in place, what is missing and what is wrong. Looking at a ghost says what goes there and on
-which layer.
+world, beyond itself from whoever placed it, so in front of them: its near side a block away, its middle across from
+the projector, the layer that stands on the ground level with it (its bottom, unless the shape is sunk into the
+ground). The places still empty are drawn as ghosts, the block that goes there pale and see-through; a block that is
+wrong is outlined in red, seen through whatever stands between, and so is one standing where the multiblock must be
+left empty, as a dock's pit dug into the land; the terminal is a ghost too when its block is known, and its place is
+outlined in cyan until it is built when it is not; and above the structure float its name, its mod, its size, how
+much is in place, what is missing, what is wrong and how many blocks are to be cleared. Looking at a ghost says what
+goes there and on which layer.
 
 Its screen has no inventory, since a projector holds nothing: the multiblock in 3D (the layer shown whole, those below
 as ghosts, turned by dragging), the list of the multiblocks, what is placed, missing and wrong in the world, and the
@@ -776,14 +783,16 @@ MultiblockPatterns.declare(rl("secret_core"), pattern, false);   // projectable:
   none, its id's path is shown with its words capitalised ("coke_oven" as "Coke Oven").
 - Every shape lays itself out to be shown: `shape.preview(grow)` gives the places at its least size (a pattern's
   slice its least times, a box its least sides) grown by `grow`, each with its offset from the terminal, its layer
-  and the blocks and tags that go there; `preview.turned(orientation)` stands it another way, and
-  `preview.materials()` counts what it takes.
+  and the blocks and tags that go there; the places that must be left empty, a place that takes air alone, are kept
+  apart in `preview.clears()`, and `preview.ground()` is the height that stands on the ground;
+  `preview.turned(orientation)` stands it another way, and `preview.materials()` counts what it takes.
 - A kit of its own that has multiblocks to show adds them with `Projectables.addSource(...)`, and the terminals it
   knows with `Projectables.addTerminals(...)`. A multiblock's terminal is the block its pattern names, else the
   block built on `DataMachineBlock` for its file (or for a machine whose shape is that pattern);
   `Projectables.preview(id, grow)` lays it out with the terminal at its place.
 - What the projector sees, `ProjectorView.of(level, projector)`, is worked out on whichever side asks, from the world
-  that side holds: the projector does no work on the server.
+  that side holds: the projector does no work on the server. A place that must be left empty is right when any air
+  is there, a cave's included, as it is when the structure forms.
 
 ### In the recipe viewers
 

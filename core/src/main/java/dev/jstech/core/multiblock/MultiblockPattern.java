@@ -43,6 +43,7 @@ public final class MultiblockPattern implements IStructureShape {
     private final List<Together> together;
     private final boolean mirrors;
     private final boolean liesDown;
+    private final int ground;
     @Nullable
     private final Repeat repeat;
     @Nullable
@@ -77,6 +78,7 @@ public final class MultiblockPattern implements IStructureShape {
         this.together = List.copyOf(from.together);
         this.mirrors = from.mirrors;
         this.liesDown = from.liesDown;
+        this.ground = from.ground;
         this.repeat = from.repeat;
         this.inside = from.inside;
         this.terminalX = terminalX;
@@ -133,6 +135,14 @@ public final class MultiblockPattern implements IStructureShape {
     @Override
     public boolean liesDown() {
         return this.liesDown;
+    }
+
+    /**
+     * The layer, from 0 at the bottom as drawn, that stands on the ground: the layers under it are dug into the
+     * ground, and a projector shows it with that layer level with itself. 0 for a shape that stands on the ground.
+     */
+    public int ground() {
+        return this.ground;
     }
 
     /** Every way it is found standing, the four horizontal turns first. */
@@ -335,6 +345,7 @@ public final class MultiblockPattern implements IStructureShape {
         private final List<Together> together = new ArrayList<>();
         private boolean mirrors;
         private boolean liesDown;
+        private int ground;
         @Nullable
         private Repeat repeat;
         @Nullable
@@ -452,6 +463,15 @@ public final class MultiblockPattern implements IStructureShape {
             return this;
         }
 
+        /**
+         * Makes {@code layer}, from 0 at the bottom as drawn, the one that stands on the ground, for a shape sunk into
+         * it, as a dry dock's pit: the layers under it are dug in, and a projector shows them under itself.
+         */
+        public Builder ground(final int layer) {
+            this.ground = layer;
+            return this;
+        }
+
         /** Repeats the column {@code x}, west to east from zero, from {@code least} to {@code most} times. */
         public Builder repeatColumn(final int x, final int least, final int most) {
             return repeat(new Repeat(AXIS_X, x, new Limit(least, most)));
@@ -545,6 +565,10 @@ public final class MultiblockPattern implements IStructureShape {
             }
             requireCounted();
             requireOneGatherPerKey();
+            if (ground < 0 || ground >= sizeY) {
+                throw new IllegalStateException("The layer on the ground, " + ground + ", is not one of the pattern's "
+                        + sizeY);
+            }
             if (repeat != null) {
                 final int[] size = {sizeX, sizeY, sizeZ};
                 final int[] terminal = {terminalX, terminalY, terminalZ};

@@ -235,6 +235,18 @@ class MultiblockPatternTest {
     }
 
     @Test
+    void ground_isOneOfItsLayers() {
+        assertEquals(1, MultiblockPattern.builder("sunk").layer("C").layer("#")
+                .where('C', BlockMatch.blocks("jsc:casing")).ground(1).build().ground());
+        assertEquals(0, MultiblockPattern.builder("standing").layer("#").build().ground(),
+                "a shape stands on the ground by its bottom unless it says otherwise");
+        assertThrows(IllegalStateException.class, () -> MultiblockPattern.builder("sunk").layer("C").layer("#")
+                .where('C', BlockMatch.blocks("jsc:casing")).ground(2).build());
+        assertThrows(IllegalStateException.class, () -> MultiblockPattern.builder("sunk").layer("#").ground(-1)
+                .build());
+    }
+
+    @Test
     void inside_refusesALetterThatIsAlsoAPlace() {
         assertThrows(IllegalArgumentException.class, () -> MultiblockPattern.builder("tank")
                 .layer("#x")

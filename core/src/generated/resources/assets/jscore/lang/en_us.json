@@ -2997,6 +2997,7 @@
   "jscore.probe.want": "Consumers want %s: they run at %s",
   "jscore.probe.want_get": "want %s, get %s",
   "jscore.projector.and_more": "%s, %s",
+  "jscore.projector.clear_line": "%s blocks to clear where it must stay empty",
   "jscore.projector.counted": "%s %s",
   "jscore.projector.drag": "drag to turn",
   "jscore.projector.east": "E",

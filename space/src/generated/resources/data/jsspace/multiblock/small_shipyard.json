@@ -1,4 +1,5 @@
 {
+  "ground": 3,
   "inside": {
     "letter": "x",
     "rule": {

@@ -100,7 +100,7 @@ class GuideBlockTest {
                 ghost(-1, 0, 0, List.of("test:brick"), List.of(), false),
                 ghost(0, 0, 0, List.of("test:oven"), List.of(), true),
                 ghost(1, 1, -2, List.of(), List.of("test:windows"), false),
-                ghost(1, 0, 0, List.of("test:unknown"), List.of(), false)), -1, 0, -2, 3, 2, 3);
+                ghost(1, 0, 0, List.of("test:unknown"), List.of(), false)), List.of(), -1, 0, -2, 3, 2, 3, 0);
 
         final List<GuideBlock.SceneBlock> blocks = GuideBlock.Multiblock.blocksOf(preview,
                 first -> first.equals("test:unknown") ? "" : first.replace("#", ""));
@@ -119,7 +119,7 @@ class GuideBlockTest {
     void multiblock_tooBigForASceneIsLeftOut() {
         final int big = GuideBlock.Scene.GRID + 1;
         final ShapePreview preview = new ShapePreview(List.of(ghost(0, 0, 0, List.of("test:brick"), List.of(),
-                true)), 0, 0, 0, big, 1, 1);
+                true)), List.of(), 0, 0, 0, big, 1, 1, 0);
 
         assertEquals(List.of(), GuideBlock.Multiblock.blocksOf(preview, first -> first));
         assertThrows(IllegalArgumentException.class, () -> new GuideBlock.Multiblock("", GuideBlock.SceneView.CORNER,

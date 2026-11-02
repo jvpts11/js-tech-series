@@ -7,20 +7,31 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.jstechseries.projector.ProjectorSettings;
+import dev.jstech.core.jstechseries.projector.ProjectorView;
+import dev.jstech.core.jstechseries.projector.StructureProjector;
+import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
+import dev.jstech.core.jstechseries.projector.client.ProjectorClient;
 import dev.jstech.core.multiblock.FormedParts;
+import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestShipyards;
+import java.util.Objects;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A Small Shipyard on a player's game: built and formed, it is drawn as the approved dry dock, seen from where its
- * drawing was made, from the open front and from the back; its crane's bridge drawn in its hazard yellow.
+ * drawing was made, from the open front and from the back; its crane's bridge drawn in its hazard yellow. Shown by a
+ * projector, it stands dug into the ground the projector stands on, the land where its pit goes outlined in red.
  */
 public final class ShipyardClientTests {
 
@@ -51,6 +62,18 @@ public final class ShipyardClientTests {
     private static final int YELLOW = 40;
     private static final int ARRIVE = 600;
     private static final int SETTLE = 20;
+    /*
+     * A projector on the land's grass, as a player south of it places it, the dock shown north of it; the eyes behind
+     * and over it, looking at the middle of what it shows; the booth's terminal over the ground.
+     */
+    private static final BlockPos PROJECTOR = new BlockPos(0, 2, 38);
+    private static final Vec3 PROJECTOR_EYES = new Vec3(0, 16, 10);
+    private static final Vec3 PROJECTED_MIDDLE = new Vec3(0, -1, -15);
+    private static final int BOOTH_ABOVE = 4;
+    /* The projector's red: strong red, weak green and blue; and how many more such pixels the dug land makes. */
+    private static final int RED_LEAST = 200;
+    private static final int OTHER_MOST = 120;
+    private static final int MORE_RED = 300;
 
     private ShipyardClientTests() {
     }
@@ -83,6 +106,71 @@ public final class ShipyardClientTests {
                 .then(0, () -> ctx.assertTrue(seen[0][0] - seen[0][2] > YELLOW && seen[0][1] - seen[0][2] > YELLOW,
                         "the crane's bridge is drawn in its hazard yellow: " + seen[0][0] + ", " + seen[0][1] + ", "
                                 + seen[0][2]));
+    }
+
+    @ClientTest(timeoutTicks = 1200)
+    public static void projector_showsTheDockDugIntoTheGroundItStandsOn(final ClientTestContext ctx) {
+        final ServerLevel[] placed = new ServerLevel[1];
+        final int[] reds = new int[2];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            if (placed[0] != null) {
+                placed[0].setBlock(ctx.abs(PROJECTOR), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                placed[0].players().forEach(player -> player.setGameMode(GameType.CREATIVE));
+            }
+        }));
+        ctx.thenServer(0, level -> {
+            placed[0] = level;
+            level.setBlock(ctx.abs(PROJECTOR), StructureProjector.BLOCK.get().defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH), Block.UPDATE_ALL);
+            ctx.serverPlayer().setGameMode(GameType.SPECTATOR);
+            final Vec3 eyes = Vec3.atCenterOf(ctx.abs(PROJECTOR)).add(PROJECTOR_EYES);
+            ctx.serverPlayer().teleportTo(level, eyes.x, eyes.y - ctx.serverPlayer().getEyeHeight(), eyes.z, 0, 0);
+        }).thenWaitUntil(() -> projector(ctx) != null, ARRIVE, "the projector to reach the player's game")
+                .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(PROJECTOR)).add(PROJECTED_MIDDLE)))
+                .then(SETTLE, () -> reds[0] = reds(ctx))
+                .thenServer(0, level -> {
+                    if (level.getBlockEntity(ctx.abs(PROJECTOR)) instanceof StructureProjectorBlockEntity projector) {
+                        projector.apply(ProjectorSettings.FRESH.choosing(ShipyardStructure.ID));
+                    }
+                })
+                .thenWaitUntil(() -> projector(ctx) != null && projector(ctx).settings().chosen().isPresent(), ARRIVE,
+                        "the projector to show the dock")
+                .thenScreenshot(SETTLE, "projector-shipyard")
+                .then(0, () -> reds[1] = reds(ctx))
+                .then(0, () -> {
+                    final ProjectorView view = ProjectorClient.seen(Objects.requireNonNull(projector(ctx)));
+                    ctx.assertTrue(view != null && view.terminal().getY() - ctx.abs(PROJECTOR).getY() == BOOTH_ABOVE,
+                            "the booth's terminal stands four blocks over the ground the projector stands on");
+                    ctx.assertTrue(view.toClear() > 0, "the land where the pit goes is to be cleared");
+                    ctx.assertTrue(reds[1] - reds[0] > MORE_RED, "the land in the pit is outlined in red: "
+                            + reds[0] + " red pixels before, " + reds[1] + " after");
+                });
+    }
+
+    /* The projector shown on this player's side, once it is there. */
+    @Nullable
+    private static StructureProjectorBlockEntity projector(final ClientTestContext ctx) {
+        return ctx.mc().level != null && ctx.mc().level.getBlockEntity(ctx.abs(PROJECTOR))
+                instanceof StructureProjectorBlockEntity projector ? projector : null;
+    }
+
+    /* How many pixels of the frame are the projector's red, which nothing else in a flat land's day is. */
+    private static int reds(final ClientTestContext ctx) {
+        final int wide = ctx.mc().getWindow().getGuiScaledWidth();
+        final int tall = ctx.mc().getWindow().getGuiScaledHeight();
+        int count = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = 0; y < tall; y++) {
+                for (int x = 0; x < wide; x++) {
+                    final int argb = frame.pixel(x, y);
+                    if ((argb >> 16 & CHANNEL) >= RED_LEAST && (argb >> 8 & CHANNEL) <= OTHER_MOST
+                            && (argb & CHANNEL) <= OTHER_MOST) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     /* Floats the player, a spectator, with their eyes at the dock's place {@code eyes}. */

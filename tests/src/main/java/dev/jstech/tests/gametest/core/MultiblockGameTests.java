@@ -115,6 +115,28 @@ public final class MultiblockGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void pattern_takesACavesAirForThePlaceThatMustBeEmpty(final GameTestHelper helper) {
+        final MultiblockPattern well = MultiblockPattern.builder("well")
+                .layer(" x ")
+                .layer("C#C")
+                .where('C', BlockMatch.blocks("minecraft:stone_bricks"))
+                .inside('x', InsideRule.empty())
+                .build();
+        final BlockPos at = TERMINAL.above();
+        helper.setBlock(at.west(), Blocks.STONE_BRICKS);
+        helper.setBlock(at.east(), Blocks.STONE_BRICKS);
+        helper.setBlock(at, Blocks.FURNACE);
+        helper.setBlock(at.below(), Blocks.CAVE_AIR);
+        final IMatchResult inCave = MultiblockPatterns.match(well, helper.getLevel(), helper.absolutePos(at));
+        helper.assertTrue(inCave instanceof IMatchResult.Success, "a cave's air under it is the empty place it needs,"
+                + " as a pit dug into a cave is; got " + inCave);
+        helper.setBlock(at.below(), Blocks.DIRT);
+        helper.assertTrue(!(MultiblockPatterns.match(well, helper.getLevel(), helper.absolutePos(at))
+                instanceof IMatchResult.Success), "dirt there is not");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void pattern_isReadFromADatapacksFileAlone(final GameTestHelper helper) {
         final Optional<MultiblockPattern> tower = MultiblockPatterns.get(
                 ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "test_tower"));

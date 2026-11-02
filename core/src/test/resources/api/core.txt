@@ -10876,6 +10876,7 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockPattern  boolean liesDown()
 10 dev.jstech.core.multiblock.MultiblockPattern  boolean mirrors()
 10 dev.jstech.core.multiblock.MultiblockPattern  char charAt(int, int, int)
+33 dev.jstech.core.multiblock.MultiblockPattern  int ground()
 10 dev.jstech.core.multiblock.MultiblockPattern  int reach()
 10 dev.jstech.core.multiblock.MultiblockPattern  int sizeX()
 10 dev.jstech.core.multiblock.MultiblockPattern  int sizeY()
@@ -10891,6 +10892,7 @@ stable 4
 10 dev.jstech.core.multiblock.MultiblockPattern  static final int AXIS_Z
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  type static final class
 12 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder entry(char, String, IBlockMatcher, PortKind)
+33 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder ground(int)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder inside(char, InsideRule)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder layer(String...)
 10 dev.jstech.core.multiblock.MultiblockPattern.Builder  Builder liesDown()
@@ -11166,7 +11168,7 @@ stable 4
 10 dev.jstech.core.multiblock.ShapeMatch.Wrong  BLOCK
 10 dev.jstech.core.multiblock.ShapeMatch.Wrong  COUNT
 10 dev.jstech.core.multiblock.ShapeMatch.Wrong  SIZE
-10 dev.jstech.core.multiblock.ShapePreview  type record(List<Ghost> ghosts, int minX, int minY, int minZ, int sizeX, int sizeY, int sizeZ)
+33 dev.jstech.core.multiblock.ShapePreview  type record(List<Ghost> ghosts, List<Ghost> clears, int minX, int minY, int minZ, int sizeX, int sizeY, int sizeZ, int ground)
 10 dev.jstech.core.multiblock.ShapePreview  List<Choice> choices()
 10 dev.jstech.core.multiblock.ShapePreview  List<Ghost> layer(int)
 10 dev.jstech.core.multiblock.ShapePreview  Map<String, Integer> materials()
@@ -11177,6 +11179,7 @@ stable 4
 10 dev.jstech.core.multiblock.ShapePreview  int layers()
 10 dev.jstech.core.multiblock.ShapePreview  int[] anchor(int, int, int, int, int)
 10 dev.jstech.core.multiblock.ShapePreview  static ShapePreview of(List<Ghost>)
+33 dev.jstech.core.multiblock.ShapePreview  static ShapePreview of(List<Ghost>, List<Ghost>, int)
 10 dev.jstech.core.multiblock.ShapePreview.Choice  type record(List<String> blocks, List<String> tags, int places)
 12 dev.jstech.core.multiblock.ShapePreview.Ghost  type record(int x, int y, int z, int layer, List<String> blocks, List<String> tags, boolean terminal)
 10 dev.jstech.core.multiblock.ShapePreview.Ghost  String first()

@@ -24,16 +24,19 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * What a Structure Projector sees of its multiblock in the world: each place where it stands, and whether the right
  * block is there, nothing is (missing), or another block is (wrong); how many of each; and what is still missing, by
- * block. Worked out on whichever side reads it, from the world that side holds.
+ * block. Each place that must be left empty, as a dry dock's pit, is right when nothing stands in it and wrong
+ * otherwise, the block there to be cleared. Worked out on whichever side reads it, from the world that side holds.
  *
- * @param preview    the multiblock laid out as the projector shows it
+ * @param preview  the multiblock laid out as the projector shows it
  * @param terminal where its terminal stands
- * @param places     each place, the bottom layer first
+ * @param places   each place where a block goes, the bottom layer first
+ * @param clears   each place that must be left empty, the bottom layer first
  */
-public record ProjectorView(ShapePreview preview, BlockPos terminal, List<Place> places) {
+public record ProjectorView(ShapePreview preview, BlockPos terminal, List<Place> places, List<Place> clears) {
 
     public ProjectorView {
         places = List.copyOf(places);
+        clears = List.copyOf(clears);
     }
 
     /** What {@code projector} sees in {@code level}, when it has a multiblock to show. */
@@ -48,7 +51,23 @@ public record ProjectorView(ShapePreview preview, BlockPos terminal, List<Place>
             final BlockPos at = terminal.offset(ghost.x(), ghost.y(), ghost.z());
             places.add(new Place(at, ghost, stateOf(level.getBlockState(at), ghost)));
         }
-        return new ProjectorView(preview, terminal, places);
+        final List<Place> clears = new ArrayList<>();
+        for (final ShapePreview.Ghost ghost : preview.clears()) {
+            final BlockPos at = terminal.offset(ghost.x(), ghost.y(), ghost.z());
+            clears.add(new Place(at, ghost, level.getBlockState(at).isAir() ? State.PLACED : State.WRONG));
+        }
+        return new ProjectorView(preview, terminal, places, clears);
+    }
+
+    /** How many places that must be left empty hold a block, which is to be cleared. */
+    public int toClear() {
+        return (int) this.clears.stream().filter(place -> place.state() == State.WRONG).count();
+    }
+
+    /** The places that must be left empty shown when the projector shows up to {@code layer}, as {@link #upTo}. */
+    public List<Place> clearsUpTo(final int layer) {
+        return layer <= 0 ? this.clears : this.clears.stream().filter(place -> place.ghost().layer() < layer)
+                .toList();
     }
 
     /** How many places hold the right block. */

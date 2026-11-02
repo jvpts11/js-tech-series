@@ -42,6 +42,8 @@ public final class ProjectorTexts {
     public static final TextKey IN_PLACE = TextKey.of("jscore.projector.in_place", "%s of %s in place");
     public static final TextKey MISSING_LINE = TextKey.of("jscore.projector.missing_line", "%s missing: %s");
     public static final TextKey WRONG_LINE = TextKey.of("jscore.projector.wrong_line", "%s wrong: %s for %s");
+    public static final TextKey CLEAR_LINE = TextKey.of("jscore.projector.clear_line",
+            "%s blocks to clear where it must stay empty");
     public static final TextKey LOOK = TextKey.of("jscore.projector.look",
             "Look at a ghost to see what goes there");
     public static final TextKey GHOST_LAYER = TextKey.of("jscore.projector.ghost_layer", "layer %s of %s");

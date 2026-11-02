@@ -16,6 +16,7 @@ import dev.jstech.core.multiblock.Projectables;
 import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMultiblocks;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -126,6 +127,24 @@ public final class StructureProjectorGameTests {
         helper.assertTrue(terminal.equals(helper.absolutePos(TERMINAL)),
                 "a player looking north places it: the furnace stands north of it, in front of them, not behind them;"
                         + " got " + helper.relativePos(terminal));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void projector_marksWhatStandsWhereItMustBeEmpty(final GameTestHelper helper) {
+        final ShapePreview preview = ShapePreview.of(
+                List.of(new ShapePreview.Ghost(0, 0, 0, 0, List.of(), List.of(), true)),
+                List.of(new ShapePreview.Ghost(0, -1, 0, 0, List.of("minecraft:air"), List.of(), false)), 0);
+        final BlockPos terminal = helper.absolutePos(TERMINAL);
+        helper.setBlock(TERMINAL.below(), Blocks.DIRT);
+        final ProjectorView dirt = ProjectorView.of(helper.getLevel(), preview, terminal);
+        helper.assertTrue(dirt.toClear() == 1 && dirt.clears().getFirst().state() == ProjectorView.State.WRONG,
+                "dirt where it must be empty is to be cleared; got " + dirt.toClear());
+        helper.setBlock(TERMINAL.below(), Blocks.AIR);
+        final ProjectorView dug = ProjectorView.of(helper.getLevel(), preview, terminal);
+        helper.assertTrue(dug.toClear() == 0 && dug.clears().getFirst().state() == ProjectorView.State.PLACED,
+                "once dug out, nothing is");
+        helper.assertTrue(dug.places().size() == 1, "and the place left empty is no place to build");
         helper.succeed();
     }
 

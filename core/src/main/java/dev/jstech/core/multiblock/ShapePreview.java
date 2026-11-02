@@ -17,62 +17,72 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A shape laid out as it stands, for showing it before it is built: in the world as ghosts, in a screen layer by
  * layer, in a recipe viewer with its materials. Each place has its offset from the terminal, its layer from the
- * bottom, and the blocks and tags that go there; the terminal's place is marked, and places left empty (air
- * inside a tank) are not in it. Pure.
+ * bottom, and the blocks and tags that go there; the terminal's place is marked. The places that must be left empty,
+ * as a dry dock's pit, are kept apart, so whatever stands in them can be shown to be cleared; places a shape leaves to
+ * code to fill are in neither. A shape sunk into the ground says at which height it meets it. Pure.
  *
- * @param ghosts the places, the bottom layer first
- * @param minX   the least offset from the terminal along x of any place, the terminal's counted in
+ * @param ghosts the places where a block goes, the bottom layer first
+ * @param clears the places that must be left empty, the bottom layer first
+ * @param minX   the least offset from the terminal along x of any place, either kind, the terminal's counted in
  * @param minY   along y
  * @param minZ   along z
  * @param sizeX  its size along x, in blocks
  * @param sizeY  its height, which is how many layers it has
  * @param sizeZ  its size along z
+ * @param ground the offset from the terminal along y of the height that stands on the ground, level with whatever it
+ *               is shown beside: its bottom, unless it is sunk into the ground
  */
-public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int sizeX, int sizeY, int sizeZ) {
+public record ShapePreview(List<Ghost> ghosts, List<Ghost> clears, int minX, int minY, int minZ, int sizeX,
+                           int sizeY, int sizeZ, int ground) {
 
     public ShapePreview {
         ghosts = List.copyOf(ghosts);
+        clears = List.copyOf(clears);
     }
 
     /**
      * Lays out {@code places}, each an offset from the terminal with what goes there, the terminal's included:
      * also blocks that are no multiblock, such as a manual's scene shown in the world, with no terminal among them.
+     * It stands on the ground by its bottom, and has no place that must be left empty.
      */
     public static ShapePreview of(final List<Ghost> places) {
-        final int[] lo = {0, 0, 0};
-        final int[] hi = {0, 0, 0};
-        for (final Ghost ghost : places) {
-            final int[] at = {ghost.x(), ghost.y(), ghost.z()};
-            for (int axis = 0; axis < 3; axis++) {
-                lo[axis] = Math.min(lo[axis], at[axis]);
-                hi[axis] = Math.max(hi[axis], at[axis]);
-            }
-        }
-        final List<Ghost> layered = new ArrayList<>();
-        for (final Ghost ghost : places) {
-            layered.add(new Ghost(ghost.x(), ghost.y(), ghost.z(), ghost.y() - lo[1], ghost.blocks(), ghost.tags(),
-                    ghost.terminal()));
-        }
-        layered.sort((a, b) -> a.layer() != b.layer() ? Integer.compare(a.layer(), b.layer())
-                : a.z() != b.z() ? Integer.compare(a.z(), b.z()) : Integer.compare(a.x(), b.x()));
-        return new ShapePreview(layered, lo[0], lo[1], lo[2], hi[0] - lo[0] + 1, hi[1] - lo[1] + 1,
-                hi[2] - lo[2] + 1);
+        return of(places, List.of(), Integer.MIN_VALUE);
     }
 
-    /** The same standing {@code orientation}: each place turned, mirrored or laid down round the terminal. */
-    public ShapePreview turned(final Orientation orientation) {
-        final List<Ghost> moved = new ArrayList<>();
-        for (final Ghost ghost : this.ghosts) {
-            final int[] w = orientation.apply(ghost.x(), ghost.y(), ghost.z());
-            moved.add(new Ghost(w[0], w[1], w[2], 0, ghost.blocks(), ghost.tags(), ghost.terminal()));
+    /**
+     * Lays out {@code places} and the places that must be left empty, {@code clears}, standing on the ground at
+     * {@code ground}, an offset from the terminal along y, brought within its height.
+     */
+    public static ShapePreview of(final List<Ghost> places, final List<Ghost> clears, final int ground) {
+        final int[] lo = {0, 0, 0};
+        final int[] hi = {0, 0, 0};
+        for (final List<Ghost> kind : List.of(places, clears)) {
+            for (final Ghost ghost : kind) {
+                final int[] at = {ghost.x(), ghost.y(), ghost.z()};
+                for (int axis = 0; axis < 3; axis++) {
+                    lo[axis] = Math.min(lo[axis], at[axis]);
+                    hi[axis] = Math.max(hi[axis], at[axis]);
+                }
+            }
         }
-        return of(moved);
+        return new ShapePreview(layered(places, lo[1]), layered(clears, lo[1]), lo[0], lo[1], lo[2],
+                hi[0] - lo[0] + 1, hi[1] - lo[1] + 1, hi[2] - lo[2] + 1, Math.max(lo[1], Math.min(hi[1], ground)));
+    }
+
+    /**
+     * The same standing {@code orientation}: each place turned, mirrored or laid down round the terminal. Turned
+     * upright it meets the ground where it did; laid down, by its new bottom.
+     */
+    public ShapePreview turned(final Orientation orientation) {
+        return of(moved(this.ghosts, orientation), moved(this.clears, orientation),
+                orientation.upright() ? this.ground : Integer.MIN_VALUE);
     }
 
     /**
      * Where its terminal stands when it is shown in front of something at {@code x}, {@code y}, {@code z} that
      * faces along axis {@code axis} (0 for x, 2 for z) the way {@code sign} says: its near side one block in front,
-     * its middle across from it, its bottom level with it.
+     * its middle across from it, the height that stands on the ground level with it, so a shape sunk into the ground
+     * shows its sunk layers under it.
      */
     public int[] anchor(final int x, final int y, final int z, final int axis, final int sign) {
         final int[] at = {x, y, z};
@@ -82,7 +92,7 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
         final int across = axis == 0 ? 2 : 0;
         terminal[axis] = at[axis] + sign - (sign > 0 ? lo[axis] : hi[axis]);
         terminal[across] = at[across] - Math.floorDiv(lo[across] + hi[across], 2);
-        terminal[1] = at[1] - lo[1];
+        terminal[1] = at[1] - this.ground;
         return terminal;
     }
 
@@ -96,7 +106,8 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
             named.add(ghost.terminal() && ghost.blocks().isEmpty() ? new Ghost(ghost.x(), ghost.y(), ghost.z(),
                     ghost.layer(), List.of(block), List.of(), true) : ghost);
         }
-        return new ShapePreview(named, this.minX, this.minY, this.minZ, this.sizeX, this.sizeY, this.sizeZ);
+        return new ShapePreview(named, this.clears, this.minX, this.minY, this.minZ, this.sizeX, this.sizeY,
+                this.sizeZ, this.ground);
     }
 
     /** The id of the block at its terminal's place, when it is known. */
@@ -160,6 +171,28 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
         return out;
     }
 
+    /* {@code places} each given its layer, counted from {@code bottom}, sorted bottom layer first, then by row. */
+    private static List<Ghost> layered(final List<Ghost> places, final int bottom) {
+        final List<Ghost> out = new ArrayList<>();
+        for (final Ghost ghost : places) {
+            out.add(new Ghost(ghost.x(), ghost.y(), ghost.z(), ghost.y() - bottom, ghost.blocks(), ghost.tags(),
+                    ghost.terminal()));
+        }
+        out.sort((a, b) -> a.layer() != b.layer() ? Integer.compare(a.layer(), b.layer())
+                : a.z() != b.z() ? Integer.compare(a.z(), b.z()) : Integer.compare(a.x(), b.x()));
+        return out;
+    }
+
+    /* {@code places} standing {@code orientation} round the terminal; their layers are given again after. */
+    private static List<Ghost> moved(final List<Ghost> places, final Orientation orientation) {
+        final List<Ghost> out = new ArrayList<>();
+        for (final Ghost ghost : places) {
+            final int[] w = orientation.apply(ghost.x(), ghost.y(), ghost.z());
+            out.add(new Ghost(w[0], w[1], w[2], 0, ghost.blocks(), ghost.tags(), ghost.terminal()));
+        }
+        return out;
+    }
+
     /**
      * What will do at some of a shape's places.
      *
@@ -219,6 +252,11 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
          */
         boolean empty() {
             return !this.terminal && this.tags.isEmpty() && this.blocks.stream().allMatch(Cells.AIR::equals);
+        }
+
+        /** Whether it must be left empty: a place that takes air and nothing else. */
+        boolean clear() {
+            return empty() && !this.blocks.isEmpty();
         }
     }
 }

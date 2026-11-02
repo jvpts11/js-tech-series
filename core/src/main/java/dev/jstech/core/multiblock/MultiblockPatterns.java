@@ -78,6 +78,7 @@ public final class MultiblockPatterns {
                                     .forGetter(RawPattern::together),
                             Codec.BOOL.optionalFieldOf("mirrors", false).forGetter(RawPattern::mirrors),
                             Codec.BOOL.optionalFieldOf("lies_down", false).forGetter(RawPattern::liesDown),
+                            Codec.INT.optionalFieldOf("ground", 0).forGetter(RawPattern::ground),
                             ShapeCodecs.REPEAT.optionalFieldOf("repeat").forGetter(RawPattern::repeat),
                             RecordCodecBuilder.<MultiblockPattern.Inside>create(inside -> inside.group(
                                             ShapeCodecs.LETTER.fieldOf("letter")
@@ -220,7 +221,10 @@ public final class MultiblockPatterns {
         return new IBlockProvider() {
             @Override
             public String blockAt(final long encodedPos) {
-                return BuiltInRegistries.BLOCK.getKey(blockIn(level, encodedPos)).toString();
+                final Block block = blockIn(level, encodedPos);
+                // A cave's air and the void's are air too: a place that must be left empty is, whichever is there.
+                return block.defaultBlockState().isAir() ? Cells.AIR
+                        : BuiltInRegistries.BLOCK.getKey(block).toString();
             }
 
             @Override
@@ -373,6 +377,7 @@ public final class MultiblockPatterns {
             if (raw.liesDown()) {
                 builder.liesDown();
             }
+            builder.ground(raw.ground());
             raw.repeat().ifPresent(builder::repeat);
             raw.inside().ifPresent(inside -> builder.inside(inside.letter(), inside.rule()));
             raw.terminal().ifPresent(builder::terminal);
@@ -394,13 +399,13 @@ public final class MultiblockPatterns {
             layers.add(List.of(pattern.rows(y)));
         }
         return DataResult.success(new RawPattern(pattern.name(), layers, pattern.places(), pattern.ports(),
-                pattern.limits(), pattern.together(), pattern.mirrors(), pattern.liesDown(), pattern.repeat(),
-                pattern.inside(), pattern.terminalBlock()));
+                pattern.limits(), pattern.together(), pattern.mirrors(), pattern.liesDown(), pattern.ground(),
+                pattern.repeat(), pattern.inside(), pattern.terminalBlock()));
     }
 
     private record RawPattern(String name, List<List<String>> layers, Map<Character, Place> key,
                               Map<Character, PortKind> ports, Map<String, Limit> limits,
-                              List<MultiblockPattern.Together> together, boolean mirrors, boolean liesDown,
+                              List<MultiblockPattern.Together> together, boolean mirrors, boolean liesDown, int ground,
                               Optional<MultiblockPattern.Repeat> repeat, Optional<MultiblockPattern.Inside> inside,
                               Optional<String> terminal) {
     }

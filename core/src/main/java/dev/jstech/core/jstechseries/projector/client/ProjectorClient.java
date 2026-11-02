@@ -70,8 +70,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The Structure Projector on the player's side: for every projector loaded near the player that shows a multiblock,
  * the blocks still missing are drawn as ghosts, pale and see-through, a block that is wrong is outlined in red through
- * whatever stands between, the terminal's place is outlined in cyan until it is built, and above the structure float
- * its name, its size and how much is in place, missing and wrong. A ghost looked at says what goes there and on which
+ * whatever stands between, and so is one standing where the multiblock must be left empty, the terminal's place is
+ * outlined in cyan until it is built, and above the structure float its name, its size and how much is in place,
+ * missing, wrong and to be cleared. A ghost looked at says what goes there and on which
  * layer, beside the crosshair. A multiblock a recipe viewer's button asks to show is shown the same way, as a projector
  * at the player's feet would show it, until it is built or the player walks away. Its screen is registered here too.
  */
@@ -186,7 +187,7 @@ public final class ProjectorClient {
         if (showing != null) {
             final ProjectorView view = showing.view(player);
             if (view == null || showing.at().distToCenterSqr(player.position()) > RANGE * RANGE
-                    || view.missing() == 0 && view.wrong() == 0) {
+                    || view.missing() == 0 && view.wrong() == 0 && view.toClear() == 0) {
                 held = null;
             } else {
                 out.add(named(showing.settings(), view));
@@ -254,6 +255,12 @@ public final class ProjectorClient {
                     1F, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, null);
             pose.popPose();
         }
+        // Whatever stands where the multiblock must be left empty is outlined as wrong, to be cleared.
+        for (final ProjectorView.Place place : view.clearsUpTo(settings.layer())) {
+            if (place.state() == ProjectorView.State.WRONG) {
+                outline(pose, eye, lines, place.pos(), PALETTE.get().wrongMark());
+            }
+        }
     }
 
     private static void outline(final PoseStack pose, final Vec3 eye, final VertexConsumer lines, final BlockPos at,
@@ -320,6 +327,9 @@ public final class ProjectorClient {
                     .getName();
             lines.add(new Line(GameText.component(ProjectorTexts.WRONG_LINE.with(view.wrong(), GameText.of(found),
                     GameText.of(GhostBlocks.nameOf(wrong.ghost().first())))), c.wrong()));
+        }
+        if (view.toClear() > 0) {
+            lines.add(new Line(GameText.component(ProjectorTexts.CLEAR_LINE.with(view.toClear())), c.wrong()));
         }
         if (view.missing() > 0 || view.wrong() > 0) {
             lines.add(new Line(GameText.component(ProjectorTexts.LOOK.text()), c.words()));

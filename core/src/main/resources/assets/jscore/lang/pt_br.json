@@ -2493,6 +2493,7 @@
   "jscore.probe.want_get": "pedem %s, recebem %s",
   "jscore.projector.and_more": "%s, %s",
   "jscore.projector.terminal": "O terminal",
+  "jscore.projector.clear_line": "%s blocos para tirar onde precisa ficar vazio",
   "jscore.projector.counted": "%s %s",
   "jscore.projector.drag": "arraste para girar",
   "jscore.projector.east": "L",

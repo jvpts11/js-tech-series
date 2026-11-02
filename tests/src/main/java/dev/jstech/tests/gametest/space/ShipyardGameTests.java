@@ -8,6 +8,9 @@
 package dev.jstech.tests.gametest.space;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.jstechseries.projector.ProjectorSettings;
+import dev.jstech.core.jstechseries.projector.StructureProjector;
+import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.FormedPartBlock;
@@ -15,6 +18,7 @@ import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedShapes;
@@ -49,6 +53,7 @@ import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -58,8 +63,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.slf4j.Logger;
 
 /**
- * The Small Shipyard: built whole, dug into the ground, it forms, its blocks merge into its model and take its shapes
- * (a walkway its grating, a tower its lattice), its item port staying itself; a block in its pit undoes it, and
+ * The Small Shipyard: a projector shows it dug into the ground it stands on; built whole, dug in, it forms, its blocks
+ * merge into its model and take its shapes (a walkway its grating, a tower its lattice), its item port staying
+ * itself; a block in its pit undoes it, and
  * clearing the pit forms it again; a block of it taken away undoes it and its other blocks come back as they were;
  * and cleared all at once, as a blast or a fill clears it, it is gone in a moment. A ship sent to it is laid out over
  * its pit as the dock stands, and built by hand: each part forms by itself as its last block goes in, shaped as its
@@ -101,12 +107,39 @@ public final class ShipyardGameTests {
     private static final Logger LOGGER = LogUtils.getLogger();
     /* A dock turned a quarter, in an arena as wide as the dock is long. */
     private static final String TURNED = "shipyard_turned";
+    /*
+     * A projector on an empty arena's floor, as a player south of it places it; the dock's pit, in layers dug under
+     * the ground, and its terminal's height over the ground.
+     */
+    private static final String EMPTY = "empty";
+    private static final BlockPos PROJECTOR = new BlockPos(2, 2, 5);
+    private static final int PIT_LAYERS = 3;
+    private static final int BOOTH_ABOVE = 4;
     /* A ship ready to fly with a workshop, whose kit has blocks of the game in it. */
     private static final ShipDesign WORKSHOP_SHIP = new ShipDesign("JS-02", List.of(part("orbiter_cockpit"),
             part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
             part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
 
     private ShipyardGameTests() {
+    }
+
+    @GameTest(template = EMPTY)
+    public static void shipyard_isProjectedDugIntoTheGroundTheProjectorStandsOn(final GameTestHelper helper) {
+        helper.setBlock(PROJECTOR, StructureProjector.BLOCK.get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+        if (!(helper.getBlockEntity(PROJECTOR) instanceof StructureProjectorBlockEntity projector)) {
+            throw new IllegalStateException("no projector where the test put it");
+        }
+        projector.apply(ProjectorSettings.FRESH.choosing(ShipyardStructure.ID));
+        final ShapePreview preview = projector.preview().orElseThrow();
+        helper.assertTrue(preview.ground() - preview.minY() == PIT_LAYERS,
+                "the dock's pit is three layers dug under the ground; got " + (preview.ground() - preview.minY()));
+        final int above = projector.terminalOf(preview).getY() - helper.absolutePos(PROJECTOR).getY();
+        helper.assertTrue(above == BOOTH_ABOVE, "its booth's terminal stands four blocks over the ground the projector"
+                + " stands on, not over the pit's floor; got " + above);
+        helper.assertTrue(!preview.clears().isEmpty() && preview.clears().stream()
+                .allMatch(place -> place.y() < preview.ground()), "and its pit, under the ground, is to be left empty");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)

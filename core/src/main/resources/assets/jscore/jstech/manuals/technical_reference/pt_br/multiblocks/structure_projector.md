@@ -35,3 +35,6 @@ No criativo, pegue-o da aba J's Tech; os mods que montam multiblocos dão a rece
 
 > [!PROBLEM] Um bloco continua contornado de vermelho.
 > Outro bloco está ali. Quebre-o e coloque o que o fantasma mostra.
+
+> [!PROBLEM] Blocos sem fantasma, até o chão, aparecem contornados de vermelho.
+> Ali o multibloco precisa ficar vazio, como a cova de uma doca cavada no chão: quebre-os até não sobrar nada. Um multibloco enterrado mostra as camadas enterradas abaixo do projetor, com a camada que fica sobre o chão no nível dele.

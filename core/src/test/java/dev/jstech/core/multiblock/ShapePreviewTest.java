@@ -149,6 +149,59 @@ class ShapePreviewTest {
         assertArrayEquals(new int[] {12, 64, 20}, preview.anchor(10, 64, 20, 0, 1));
     }
 
+    @Test
+    void pattern_keepsThePlacesThatMustBeLeftEmptyApart() {
+        final MultiblockPattern dock = MultiblockPattern.builder("dock")
+                .layer("CxC", "CxC")
+                .layer("C#C", "CCC")
+                .where('C', BlockMatch.blocks(CASING))
+                .inside('x', InsideRule.empty())
+                .build();
+        final ShapePreview preview = ShapePreviews.pattern(dock, Orientation.NORTH, 0);
+        assertEquals(10, preview.blocks(), "nine casings and the terminal");
+        assertEquals(2, preview.clears().size(), "the pit's two places are to be left empty");
+        assertTrue(preview.clears().stream().allMatch(ghost -> ghost.layer() == 0 && ghost.x() == 0));
+        assertEquals(Map.of(CASING, 9), preview.materials(), "nothing is built where it must be empty");
+    }
+
+    @Test
+    void anchor_putsTheLayerOnTheGroundLevelWithWhatItIsShownBeside() {
+        final MultiblockPattern sunk = MultiblockPattern.builder("sunk")
+                .layer("CCC")
+                .layer("CxC")
+                .layer("C#C")
+                .where('C', BlockMatch.blocks(CASING))
+                .inside('x', InsideRule.empty())
+                .ground(1)
+                .build();
+        final ShapePreview preview = ShapePreviews.pattern(sunk, Orientation.NORTH, 0);
+        assertEquals(-1, preview.ground(), "the middle layer, a block under the terminal, stands on the ground");
+        assertEquals(65, preview.anchor(10, 64, 20, 2, -1)[1], "it stands level with the projector, the bottom layer"
+                + " under it");
+        final MultiblockPattern standing = MultiblockPattern.builder("standing")
+                .layer("CCC")
+                .layer("C#C")
+                .where('C', BlockMatch.blocks(CASING))
+                .build();
+        assertEquals(65, ShapePreviews.pattern(standing, Orientation.NORTH, 0).anchor(10, 64, 20, 2, -1)[1],
+                "a shape not sunk stands on the ground by its bottom");
+    }
+
+    @Test
+    void turned_keepsTheGroundUprightAndStandsOnItsBottomLaidDown() {
+        final MultiblockPattern sunk = MultiblockPattern.builder("sunk")
+                .layer("CC")
+                .layer("C#")
+                .where('C', BlockMatch.blocks(CASING))
+                .ground(1)
+                .build();
+        final ShapePreview preview = ShapePreviews.pattern(sunk, Orientation.NORTH, 0);
+        assertEquals(preview.ground(), preview.turned(Orientation.EAST).ground());
+        final Orientation lying = Orientation.lying().stream().filter(o -> !o.upright()).findFirst().orElseThrow();
+        final ShapePreview laid = preview.turned(lying);
+        assertEquals(laid.minY(), laid.ground());
+    }
+
     /* Builds the preview's first choices round a terminal at the origin, and checks the shape forms there. */
     private static void assertFormsAsShown(final IStructureShape shape, final ShapePreview preview) {
         final Map<Long, String> world = new HashMap<>();

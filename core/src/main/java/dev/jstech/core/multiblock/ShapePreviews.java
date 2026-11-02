@@ -12,20 +12,25 @@ import java.util.List;
 
 /**
  * How each shape lays itself out to be shown: a drawn pattern as drawn, its slice there as many times as asked; a box,
- * a floor and walls, and a cuboid at their least size, grown by as many blocks as asked. Pure.
+ * a floor and walls, and a cuboid at their least size, grown by as many blocks as asked. A place that takes air alone
+ * is one that must be left empty, kept apart. Pure.
  */
 final class ShapePreviews {
 
     private ShapePreviews() {
     }
 
-    /** {@code pattern} standing {@code orientation}, its repeated slice there its least times and {@code grow} more. */
+    /**
+     * {@code pattern} standing {@code orientation}, its repeated slice there its least times and {@code grow} more,
+     * meeting the ground where it says, upright; its bottom laid down.
+     */
     static ShapePreview pattern(final MultiblockPattern pattern, final Orientation orientation, final int grow) {
         final int times = pattern.repeat().map(r -> clamp(r.times().least() + grow, r.times())).orElse(1);
         final MultiblockPattern.Grid grid = pattern.grown(times);
         final char insideLetter = pattern.inside().map(MultiblockPattern.Inside::letter)
                 .orElse(MultiblockPattern.IGNORE_CHAR);
         final List<ShapePreview.Ghost> ghosts = new ArrayList<>();
+        final List<ShapePreview.Ghost> clears = new ArrayList<>();
         final char[][][] cells = grid.cells();
         for (int y = 0; y < cells.length; y++) {
             for (int z = 0; z < cells[y].length; z++) {
@@ -41,13 +46,13 @@ final class ShapePreviews {
                             : ShapePreview.Ghost.of(w[0], w[1], w[2], letter == insideLetter
                                     ? pattern.inside().orElseThrow().rule().allows()
                                     : pattern.places().get(letter).fits());
-                    if (!ghost.empty()) {
-                        ghosts.add(ghost);
-                    }
+                    keep(ghost, ghosts, clears);
                 }
             }
         }
-        final ShapePreview laid = ShapePreview.of(ghosts);
+        // The ground is counted in the layers as drawn, so it stays as far from the terminal however the slice grows.
+        final int ground = orientation.upright() ? pattern.ground() - pattern.terminalY() : Integer.MIN_VALUE;
+        final ShapePreview laid = ShapePreview.of(ghosts, clears, ground);
         return pattern.terminalBlock().map(laid::withTerminal).orElse(laid);
     }
 
@@ -58,6 +63,7 @@ final class ShapePreviews {
         final int cx = side / 2;
         final int cy = high / 2;
         final List<ShapePreview.Ghost> ghosts = new ArrayList<>();
+        final List<ShapePreview.Ghost> clears = new ArrayList<>();
         for (int y = 0; y < high; y++) {
             for (int z = 0; z < side; z++) {
                 for (int x = 0; x < side; x++) {
@@ -67,13 +73,11 @@ final class ShapePreviews {
                             ? ShapePreview.Ghost.terminalAt(0, 0, 0)
                             : ShapePreview.Ghost.of(x - cx, y - cy, z, bounds >= 2 ? box.frame().fits()
                                     : bounds == 1 ? box.face().fits() : box.inside().allows());
-                    if (!ghost.empty()) {
-                        ghosts.add(ghost);
-                    }
+                    keep(ghost, ghosts, clears);
                 }
             }
         }
-        return ShapePreview.of(ghosts);
+        return ShapePreview.of(ghosts, clears, Integer.MIN_VALUE);
     }
 
     /**
@@ -89,15 +93,12 @@ final class ShapePreviews {
         final int high = walls.height().least();
         final int cx = side / 2;
         final List<ShapePreview.Ghost> ghosts = new ArrayList<>();
+        final List<ShapePreview.Ghost> clears = new ArrayList<>();
         for (int z = 0; z < side; z++) {
             for (int x = 0; x < side; x++) {
                 ghosts.add(ShapePreview.Ghost.of(x - cx, -1, z + 1, walls.floor().fits()));
                 for (int y = 0; y < high; y++) {
-                    final ShapePreview.Ghost inside = ShapePreview.Ghost.of(x - cx, y, z + 1,
-                            walls.inside().allows());
-                    if (!inside.empty()) {
-                        ghosts.add(inside);
-                    }
+                    keep(ShapePreview.Ghost.of(x - cx, y, z + 1, walls.inside().allows()), ghosts, clears);
                 }
             }
         }
@@ -112,7 +113,7 @@ final class ShapePreviews {
             }
         }
         ghosts.add(ShapePreview.Ghost.terminalAt(0, 0, 0));
-        return ShapePreview.of(ghosts);
+        return ShapePreview.of(ghosts, clears, Integer.MIN_VALUE);
     }
 
     /** {@code cuboid} as a cube of its least side, {@code grow} more, its terminal at its lowest corner. */
@@ -128,6 +129,16 @@ final class ShapePreviews {
             }
         }
         return ShapePreview.of(ghosts);
+    }
+
+    /* Keeps {@code ghost} where it belongs: among the places that must be left empty, among the others, or neither. */
+    private static void keep(final ShapePreview.Ghost ghost, final List<ShapePreview.Ghost> ghosts,
+                             final List<ShapePreview.Ghost> clears) {
+        if (ghost.clear()) {
+            clears.add(ghost);
+        } else if (!ghost.empty()) {
+            ghosts.add(ghost);
+        }
     }
 
     private static int clamp(final int value, final Limit limit) {

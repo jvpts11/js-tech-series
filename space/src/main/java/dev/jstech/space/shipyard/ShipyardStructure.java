@@ -234,6 +234,8 @@ public final class ShipyardStructure {
                 .port('I', PortKind.ITEM_INPUT)
                 .inside(PIT, InsideRule.empty())
                 .terminal(TERMINAL)
+                // The layer at 0 stands on the ground; the pit's three under it are dug into it.
+                .ground(-BOTTOM)
                 .build();
     }
 
