@@ -64,17 +64,24 @@ public final class DimensionTravel {
     public static final ResourceLocation STILL = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "still");
     private static final String VERSION = "1";
 
+    /*
+     * How long a player's game is told how their next passage is shown before it, at most, in ticks: as long as their
+     * game waits for that passage (TravelScreens), ten seconds.
+     */
+    private static final int ANNOUNCEMENT_STANDS = 200;
+
     private static final List<IDimensionGroups> GROUPS = new CopyOnWriteArrayList<>();
-    /* When each player's game was last told how their next passage is shown, by the server's tick. */
+    /* When each player's game was told how their next passage is shown, by the server's tick, till that passage. */
     private static final Map<ServerPlayer, Integer> ANNOUNCED = new WeakHashMap<>();
 
     private DimensionTravel() {
     }
 
     /**
-     * Tells {@code player}'s game that its next passage to another dimension is shown through the screen declared as
-     * {@code screen}, or through none for {@link #SEAMLESS} and {@link #STILL}; for a passage the mod makes itself, at
-     * once, so no group's passage stands in for it.
+     * Tells {@code player}'s game that its next passage to another dimension, made within ten seconds, is shown through
+     * the screen declared as {@code screen}, or through none for {@link #SEAMLESS} and {@link #STILL}, so no group's
+     * passage stands in for it: for a passage the mod makes itself, at once or as soon as what it waits for is there,
+     * as a moving structure on its way waits for the land it goes to.
      */
     public static void announce(final ServerPlayer player, final ResourceLocation screen) {
         ANNOUNCED.put(player, player.server.getTickCount());
@@ -149,20 +156,21 @@ public final class DimensionTravel {
 
     /*
      * A player about to pass between two dimensions of one group sees it still, unless the mod sending them told their
-     * game of it as it sent them. Heard last of all, and not when another listener stopped the passage, so a passage
-     * that does not happen is never told.
+     * game of this passage, which it does as it sends them or a moment before. What their game was told is for this
+     * passage alone. Heard last of all, and not when another listener stopped the passage, so a passage that does not
+     * happen is never told.
      */
     private static void onTravel(final EntityTravelToDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || player instanceof FakePlayer
                 || player.connection == null) {
             return;
         }
-        final Integer told = ANNOUNCED.get(player);
-        if (told != null && told == player.server.getTickCount()) {
+        final Integer told = ANNOUNCED.remove(player);
+        if (told != null && player.server.getTickCount() - told <= ANNOUNCEMENT_STANDS) {
             return;
         }
         if (grouped(player.server, player.level().dimension(), event.getDimension())) {
-            announce(player, STILL);
+            PacketDistributor.sendToPlayer(player, new TravelScreenPayload(STILL));
         }
     }
 

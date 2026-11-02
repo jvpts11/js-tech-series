@@ -1039,7 +1039,9 @@ Every passage between two dimensions of one group is then shown `DimensionTravel
 the player goes on seeing the last picture drawn before the passage, held still over every frame, until the server
 has placed them and the land in sight round them, two sections every way from the eye, is built to be drawn, and then
 that land. A frame of a world with nothing in it yet is never shown. A mod that names a screen for the passage as
-it sends the player, or `SEAMLESS`, still has it.
+it sends the player, or `SEAMLESS`, still has it; so does one that tells their game up to ten seconds before the
+passage, as a moving structure sent to another dimension waits for the land it goes to before its riders cross with
+it. What the game was told is for that next passage alone.
 
 ## Sky, time and weather
 

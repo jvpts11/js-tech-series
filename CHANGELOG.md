@@ -1220,7 +1220,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a mod shows the passage through a screen of its own instead of the game's "loading terrain". A mod can group its
   dimensions (`DimensionTravel.group`): every passage between two of one group, by whatever means, a command's too,
   opens no screen, the last picture drawn before it held still until the server has placed the player and the land
-  round them is built to be drawn (`DimensionTravel.STILL`).
+  round them is built to be drawn (`DimensionTravel.STILL`), unless the mod making the passage told the player's game
+  of another way to show it, as it sent them or up to ten seconds before, as a moving structure waits for the land it
+  goes to (`DimensionTravel.announce`).
 - (Core) A walk swings at the pace of the ground's pull: every creature's arms and legs swing slower where a
   dimension pulls less, by the square root of its pull, as wide as on the Overworld, four tenths of the pace on the
   Moon and six on Mars; where nothing pulls they still swing, at a quarter.
