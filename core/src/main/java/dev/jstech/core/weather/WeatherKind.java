@@ -31,6 +31,8 @@ import net.minecraft.resources.ResourceLocation;
  * @param density   how thick it falls, 0 to 1
  * @param fogColour the fog's colour in it, if it has fog of its own
  * @param sight     how much it closes the view in, 0 for not at all to 1 for a few blocks
+ * @param veil      how much of the sky it hides, 0 to 1: the sky turned to its fog's colour, the suns, moons and
+ *                  stars dimmed behind it, as a dust storm hides the sun
  * @param wind      how hard it makes the wind blow, as a share of the wind without it
  * @param harm      what it does to a body out in it, if anything
  * @param effect    the effect it gives a body out in it, if any
@@ -38,8 +40,8 @@ import net.minecraft.resources.ResourceLocation;
  * @param sheltered whether a roof keeps it off; false for what reaches indoors too, as a choking dust might
  */
 public record WeatherKind(ResourceLocation event, Fall falls, int colour, double density, Optional<Integer> fogColour,
-                          double sight, double wind, Optional<Harm> harm, Optional<Effect> effect, double lightning,
-                          boolean sheltered) {
+                          double sight, double veil, double wind, Optional<Harm> harm, Optional<Effect> effect,
+                          double lightning, boolean sheltered) {
 
     /** The most a weather may make the wind blow, and the most strikes a minute. */
     public static final double MOST_WIND = 20.0;
@@ -51,6 +53,7 @@ public record WeatherKind(ResourceLocation event, Fall falls, int colour, double
             Codec.doubleRange(0, 1).optionalFieldOf("density", 0.5).forGetter(WeatherKind::density),
             LightColours.COLOUR.optionalFieldOf("fog_colour").forGetter(WeatherKind::fogColour),
             Codec.doubleRange(0, 1).optionalFieldOf("sight", 0.0).forGetter(WeatherKind::sight),
+            Codec.doubleRange(0, 1).optionalFieldOf("veil", 0.0).forGetter(WeatherKind::veil),
             Codec.doubleRange(0, MOST_WIND).optionalFieldOf("wind", 1.0).forGetter(WeatherKind::wind),
             Harm.CODEC.optionalFieldOf("harm").forGetter(WeatherKind::harm),
             Effect.CODEC.optionalFieldOf("effect").forGetter(WeatherKind::effect),

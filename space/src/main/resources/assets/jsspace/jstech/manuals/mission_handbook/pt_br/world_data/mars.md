@@ -67,7 +67,7 @@ A gravidade é uma fração da força do Overworld. Cada estação dura um quart
 
 - A dicotomia, entre o norte baixo e liso e o sul antigo e cheio de crateras.
 - Os vulcões de Tharsis e os cânions do Valles Marineris, de pé e cortados onde o mapa de relevo de Marte os tem.
-- No céu, Fobos atravessando-o, e Deimos e o Overworld como pontos de luz. No pôr do sol, o céu fica azul em volta do Sol.
+- No céu, Fobos atravessando-o, e Deimos e o Overworld como pontos de luz. No pôr do sol, o céu fica azul em volta do Sol. À noite a Via Láctea o atravessa, e de vez em quando um meteoro risca o ar rarefeito.
 
 ### Biomas
 
@@ -108,6 +108,9 @@ As zonas de Marte ficam onde ficam no planeta de verdade, e dentro de cada uma o
 
 > [!CAUTION]
 > O gelo de água aquecido do mesmo jeito só derrete em água numa sala selada com ar. Em qualquer outro lugar de Marte o ar é rarefeito demais para haver água, e o gelo vira vapor direto e some.
+
+> [!NOTE]
+> Tempestades de poeira sopram sobre Marte: regionais de vez em quando, com alguns quilômetros de largura e algumas horas de duração, e mais ou menos uma vez por ano marciano uma global, que cobre o planeta inteiro por um dia e meio. Debaixo de uma, o céu fica marrom, o Sol vira um disco pálido, as estrelas somem e o horizonte se perde na poeira soprada.
 
 > [!NOTE]
 > Tudo o que vive lá cai pela força de Marte, {{jsspace:mars_gravity}}: um pulo leva você mais alto, e a descida é mais lenta.

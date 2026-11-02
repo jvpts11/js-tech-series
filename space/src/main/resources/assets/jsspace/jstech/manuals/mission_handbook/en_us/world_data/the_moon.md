@@ -62,6 +62,7 @@ Gravity is a share of the Overworld's pull. The hour follows the longitude, as o
 
 - Tycho, a great crater, young and bright, in the south of the near side: a bowl under a raised rim with a peak in its middle, its rays laid across the ground round it.
 - The Overworld, which hangs still over the near side: high in the sky near the middle of the Moon's map, lower the farther you go, on the horizon a quarter of the way round, and hidden on the far side.
+- The night sky, sharper than from any world with air: the Milky Way, thick and warm towards Sagittarius, split by the dark Great Rift; Venus, Mars, Jupiter and Saturn as points of light along the Sun's path; and before sunrise the zodiacal light, a faint cone standing over the east.
 
 ### Biomes
 

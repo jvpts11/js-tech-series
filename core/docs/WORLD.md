@@ -1102,8 +1102,20 @@ template's:
 - **Stars**, square as the game's, **the band of the galaxy**, **nebulae** and **an aurora** over the north at night;
   `"stars": { "by_day": 0.75 }` lights the stars, the galaxy and the nebulae by day as well, at that share of how
   bright they are at midnight, for a sky with no air.
-- **The colour of the sky, its fog and its sunsets**; **clouds** of their own height, colour and density (0 for none);
-  **haze** that closes the view in.
+- **The galaxy as it is seen from inside it**: a band drawn in its own longitude and latitude, thick and warm at its
+  heart (`"heart_colour"`) and thin and cool (`"colour"`) towards its ends, in clouds of stars split by a dark rift
+  along the inner band and spotted with pink nebulae, in a dozen levels of light dithered as pixel art; more of the
+  sky's faint stars crowd into it the nearer its heart. `"tilt"` leans it against the sun's path and `"centre"` turns
+  its heart round from where the band crosses that path.
+- **The zodiacal light** (`"zodiacal_light": { "colour": "#E8E0CE", "brightness": 0.6 }`): a faint cone of sunlight
+  along the sun's path, widening as it leaves the sun, seen in the east before dawn and in the west after dusk, and
+  only where the stars shine.
+- **Meteors** (`"meteors": { "per_minute": 1.5 }`): a streak with a fading trail now and then, at night only, falling
+  through any haze. `SkyMeteors.fall(fromYaw, fromPitch, toYaw, toPitch, ticks)` lets a mod's client draw one where it
+  wants, as a shower would.
+- **The colour of the sky, its fog and its sunsets**, and `"sunsets": false` for a world with no air to redden the
+  sky round a rising or setting sun; **clouds** of their own height, colour and density (0 for none); **haze** that
+  closes the view in.
 - **Sunlight by distance**: the day's light falls with the square of the first sun's distance (a dark day on Pluto),
   and the suns' colours tint it. This is only what the player sees: the game's light levels, and what spawns and
   grows by them, stay the overworld's.
@@ -1113,15 +1125,15 @@ at a distance), without the game.
 
 ### The weather kit
 
-A kind of weather says what falls and in what colour, how much it closes the view in and in what fog, how hard it
-makes the wind blow, what it does to a body out in it, and how often its lightning strikes. It comes with a world event
+A kind of weather says what falls and in what colour, how much it closes the view in and in what fog, how much of the
+sky it hides, how hard it makes the wind blow, what it does to a body out in it, and how often its lightning strikes. It comes with a world event
 of the same id ([World events](#world-events)), which says where, when and for how long, and warns of it:
 
 ```java
 public static final ResourceLocation DUST_STORM = WorldEvents.event(rl("dust_storm"), MyTexts.DUST_STORM)
         .in(MARS).chance(0.1).warning(6000).instrument(MyTags.BAROMETERS).lasts(12000).declare();
 public static final ResourceLocation DUST_STORM_WEATHER = Weathers.weather(DUST_STORM)
-        .falls(WeatherKind.Fall.DUST, 0xC08A60, 0.9).fog(0xB07A50, 0.7).wind(4).declare();
+        .falls(WeatherKind.Fall.DUST, 0xC08A60, 0.9).fog(0xB07A50, 0.7).veils(0.75).wind(4).declare();
 public static final ResourceLocation ACID_RAIN_WEATHER = Weathers.weather(ACID_RAIN)
         .falls(WeatherKind.Fall.RAIN, 0x9CE05A, 0.6).harms(rl("acid"), 1, 2).gives(POISON_ID, 0, 4).declare();
 ```
@@ -1130,11 +1142,15 @@ or a file under `data/<namespace>/jstech/weathers/`, which replaces one declared
 
 ```json
 { "event": "mymod:methane_rain", "falls": "rain", "colour": "#E0C890", "density": 0.5, "fog_colour": "#B09060",
-  "sight": 0.3, "wind": 1.5, "lightning": 2, "harm": { "damage_type": "mymod:acid", "amount": 1, "every": 2 },
+  "sight": 0.3, "veil": 0.5, "wind": 1.5, "lightning": 2,
+  "harm": { "damage_type": "mymod:acid", "amount": 1, "every": 2 },
   "effect": { "effect": "minecraft:poison", "amplifier": 0, "seconds": 4 }, "sheltered": true }
 ```
 
-What falls is `none`, `rain`, `snow` or `dust`, drawn round the player in the weather's colour. Once a second what
+What falls is `none`, `rain`, `snow` or `dust`, drawn round the player in the weather's colour. Its `veil` (0 to 1)
+is how much of the sky it hides from a player within its reach, roof or no roof: the sky turns towards the colour of
+its fog, the stars, the galaxy and the planets fade by that share, and the suns and moons dim by a little less, as a
+dust storm's sun is a pale disc. Once a second what
 lives out in a weather near a player is harmed and given its effect (a roof keeps it off, unless `sheltered` is
 false), its lightning strikes near the players out in it, and within its reach the wind blows as hard as it says. A
 server that makes the event harmless (`world_events.harmless`) makes its weather harmless too. `Weathers.at(level, pos)`

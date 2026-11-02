@@ -1777,9 +1777,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   tunnels winding out to come out in the steep slopes and walls they meet, one rising to a mouth wherever the ground
   stands at its end; `grotto`, tunnels a block over the ground hollowed only through what stands on it, so they open
   in the faces of mesas, buttes and mounds, at their feet or up them; and `pit`, a shaft with a ragged, stepped rim
-  down into a wider domed chamber over the rubble of its roof. A lava tube is walled in its own block whatever rock it runs through, and its roof
-  falls in at its middle and by chance along it, its rubble heaped under each skylight. `within(map, world)` keeps a
-  kind of landform to the region of a round world's map, as a planet's volcanic provinces, whatever biomes lie there.
+  down into a wider domed chamber over the rubble of its roof. A lava tube is walled in its own block whatever rock it
+  runs through, and its roof falls in at its middle and by chance along it, its rubble heaped under each skylight.
+  `within(map, world)` keeps a kind of landform to the region of a round world's map, as a planet's volcanic
+  provinces, whatever biomes lie there.
+- The sky kit's galaxy drawn as it is seen from inside it: a band in its own longitude and latitude, thick and
+  warm at its heart (`heart_colour`) and thin and cool towards its ends, in clouds of stars split by a dark rift and
+  spotted with pink nebulae, in a dozen dithered levels of light, the sky's faint stars crowding into it; `centre`
+  turns its heart round along it. A sky may have the zodiacal light (`zodiacal_light`), a cone of sunlight along the
+  sun's path before dawn and after dusk; meteors (`meteors`, so many a minute at night), and `SkyMeteors.fall` for a
+  mod to draw one where it wants; and no reddened glow round a rising sun (`"sunsets": false`). A weather's `veil`
+  hides that share of the sky from those within its reach, the sky turning to the colour of its fog and its suns
+  dimming.
 - What is fitted to a worn thing stops harm too: a mod says what a module or a lining fitted to that very
   stack stops of a kind, beside what its item stops by the data map (`Resistances.source`).
 - Flames need oxygen as fire does: the game's furnaces, smokers and blast furnaces light their fuel only where a

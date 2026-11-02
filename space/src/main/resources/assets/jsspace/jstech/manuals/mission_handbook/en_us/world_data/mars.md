@@ -67,7 +67,7 @@ Gravity is a share of the Overworld's pull. Each season is a quarter of the year
 
 - The dichotomy, between the low smooth north and the old cratered south.
 - Tharsis' volcanoes and the canyons of Valles Marineris, standing and cut where Mars' map of heights has them.
-- In the sky, Phobos crossing it, and Deimos and the Overworld as points of light. At sunset the sky turns blue round the Sun.
+- In the sky, Phobos crossing it, and Deimos and the Overworld as points of light. At sunset the sky turns blue round the Sun. At night the Milky Way crosses it, and now and then a meteor streaks through the thin air.
 
 ### Biomes
 
@@ -108,6 +108,9 @@ Mars' zones lie where they lie on the real planet, and inside each its biomes co
 
 > [!CAUTION]
 > Water ice warmed the same way melts into water only in a sealed room with air. Anywhere else on Mars the air is too thin for water, and the ice turns straight to vapour and is gone.
+
+> [!NOTE]
+> Dust storms blow over Mars: regional ones now and then, a few kilometres across and some hours long, and about once a Martian year a global one that covers the whole planet for a day and a half. Under one the sky turns brown, the Sun is a pale disc, the stars are gone and the horizon is lost in blown dust.
 
 > [!NOTE]
 > Everything living there falls by Mars' pull, {{jsspace:mars_gravity}}: a jump carries you higher, and you come down slower.

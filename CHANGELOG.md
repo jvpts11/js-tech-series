@@ -2205,9 +2205,25 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   tunnels winding out to come out in the steep slopes and walls they meet, one rising to a mouth wherever the ground
   stands at its end; `grotto`, tunnels a block over the ground hollowed only through what stands on it, so they open
   in the faces of mesas, buttes and mounds, at their feet or up them; and `pit`, a shaft with a ragged, stepped rim
-  down into a wider domed chamber over the rubble of its roof. A lava tube is walled in its own block whatever rock it runs through, and its roof
-  falls in at its middle and by chance along it, its rubble heaped under each skylight. `within(map, world)` keeps a
-  kind of landform to the region of a round world's map, as a planet's volcanic provinces, whatever biomes lie there.
+  down into a wider domed chamber over the rubble of its roof. A lava tube is walled in its own block whatever rock it
+  runs through, and its roof falls in at its middle and by chance along it, its rubble heaped under each skylight.
+  `within(map, world)` keeps a kind of landform to the region of a round world's map, as a planet's volcanic
+  provinces, whatever biomes lie there.
+- (Space) The night skies of the Moon and Mars: the Milky Way crosses them as it does the Earth's, thick and warm
+  towards Sagittarius, in clouds of stars split by the Great Rift and spotted with pink nebulae; Venus, Mars, Jupiter
+  and Saturn shine from the Moon as points along the ecliptic, and before the Sun rises the zodiacal light stands over
+  the east, with no glow round the Sun, there being no air. Meteors streak through Mars' night, and its dust storms
+  hide its sky: regional ones now and then, some six kilometres across and some six hours long, and about once a
+  Martian year a global one that covers the whole planet for a day and a half, the sky turned brown, the Sun a pale
+  disc and the horizon swallowed in dust.
+- (Core) The sky kit's galaxy drawn as it is seen from inside it: a band in its own longitude and latitude, thick and
+  warm at its heart (`heart_colour`) and thin and cool towards its ends, in clouds of stars split by a dark rift and
+  spotted with pink nebulae, in a dozen dithered levels of light, the sky's faint stars crowding into it; `centre`
+  turns its heart round along it. A sky may have the zodiacal light (`zodiacal_light`), a cone of sunlight along the
+  sun's path before dawn and after dusk; meteors (`meteors`, so many a minute at night), and `SkyMeteors.fall` for a
+  mod to draw one where it wants; and no reddened glow round a rising sun (`"sunsets": false`). A weather's `veil`
+  hides that share of the sky from those within its reach, the sky turning to the colour of its fog and its suns
+  dimming.
 - (Space) Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece

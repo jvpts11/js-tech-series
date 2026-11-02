@@ -111,6 +111,8 @@
   "biome.jsspace.moon_young_crater": "Cratera Jovem",
   "biome.jsspace.moon_lava_tube_skylight": "Claraboia de Tubo de Lava",
   "jsspace.landmark.tycho": "Tycho",
+  "jsspace.world_event.dust_storm": "Tempestade de poeira",
+  "jsspace.world_event.global_dust_storm": "Tempestade de poeira global",
   "item.jsspace.extra_oxygen": "Oxigênio Extra",
   "item.jsspace.radiation_vest": "Colete Antirradiação",
   "item.jsspace.suit_lamps": "Lâmpadas do Traje",

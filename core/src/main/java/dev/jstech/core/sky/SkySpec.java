@@ -33,12 +33,16 @@ import net.minecraft.resources.ResourceLocation;
  * @param skyColour    the sky's colour at noon, if not the biome's
  * @param fogColour    the fog's colour at noon, if not the biome's
  * @param sunsetColour the colour of its sunrises and sunsets, if not the game's orange
+ * @param sunsets      whether its air colours the sky round its sun as it rises and sets: not where there is no air,
+ *                     as on the Moon
  * @param suns         its suns, the first the one its clock follows
  * @param bodies       the planets and moons in its sky
  * @param stars        its stars at night, or by day too
  * @param galaxy       the band of its galaxy, if it shows
  * @param nebulae      the nebulae among its stars
  * @param aurora       the aurora over its north at night, if it has one
+ * @param zodiacalLight the zodiacal light round its sun at night, where its air is thin enough to show it
+ * @param meteors      the meteors burning through its air at night, if it has air enough for them
  * @param clouds       its clouds, if not the game's; a density of 0 for none at all
  * @param haze         the haze in its air, if any
  * @param round        whether its world is round: its border from west to east goes once round it and from north to
@@ -48,9 +52,10 @@ import net.minecraft.resources.ResourceLocation;
  *                     however low the eye is, never dark under it as the game draws the void under a world
  */
 public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, Optional<Integer> sunsetColour,
-                      List<Sun> suns, List<Body> bodies, Stars stars, Optional<Galaxy> galaxy, List<Nebula> nebulae,
-                      Optional<Aurora> aurora, Optional<Clouds> clouds, Optional<Haze> haze, boolean round,
-                      boolean ground) {
+                      boolean sunsets, List<Sun> suns, List<Body> bodies, Stars stars, Optional<Galaxy> galaxy,
+                      List<Nebula> nebulae,
+                      Optional<Aurora> aurora, Optional<ZodiacalLight> zodiacalLight, Optional<Meteors> meteors,
+                      Optional<Clouds> clouds, Optional<Haze> haze, boolean round, boolean ground) {
 
     /** The farthest a sun may be, in astronomical units, and the nearest. */
     public static final double FARTHEST = 1_000.0;
@@ -58,19 +63,22 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
     /** The largest a sun or a body may look, beside the overworld's sun or moon. */
     public static final double LARGEST = 20.0;
     /** The overworld's sky: one yellow sun, its stars, and nothing else of the Core's. */
-    public static final SkySpec DEFAULT = new SkySpec(Optional.empty(), Optional.empty(), Optional.empty(),
+    public static final SkySpec DEFAULT = new SkySpec(Optional.empty(), Optional.empty(), Optional.empty(), true,
             List.of(Sun.OURS), List.of(), Stars.DEFAULT, Optional.empty(), List.of(), Optional.empty(),
-            Optional.empty(), Optional.empty(), false, true);
+            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), false, true);
     public static final Codec<SkySpec> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             LightColours.COLOUR.optionalFieldOf("sky_colour").forGetter(SkySpec::skyColour),
             LightColours.COLOUR.optionalFieldOf("fog_colour").forGetter(SkySpec::fogColour),
             LightColours.COLOUR.optionalFieldOf("sunset_colour").forGetter(SkySpec::sunsetColour),
+            Codec.BOOL.optionalFieldOf("sunsets", true).forGetter(SkySpec::sunsets),
             Sun.CODEC.listOf().optionalFieldOf("suns", List.of(Sun.OURS)).forGetter(SkySpec::suns),
             Body.CODEC.listOf().optionalFieldOf("bodies", List.of()).forGetter(SkySpec::bodies),
             Stars.CODEC.optionalFieldOf("stars", Stars.DEFAULT).forGetter(SkySpec::stars),
             Galaxy.CODEC.optionalFieldOf("galaxy").forGetter(SkySpec::galaxy),
             Nebula.CODEC.listOf().optionalFieldOf("nebulae", List.of()).forGetter(SkySpec::nebulae),
             Aurora.CODEC.optionalFieldOf("aurora").forGetter(SkySpec::aurora),
+            ZodiacalLight.CODEC.optionalFieldOf("zodiacal_light").forGetter(SkySpec::zodiacalLight),
+            Meteors.CODEC.optionalFieldOf("meteors").forGetter(SkySpec::meteors),
             Clouds.CODEC.optionalFieldOf("clouds").forGetter(SkySpec::clouds),
             Haze.CODEC.optionalFieldOf("haze").forGetter(SkySpec::haze),
             Codec.BOOL.optionalFieldOf("round", false).forGetter(SkySpec::round),
@@ -185,18 +193,25 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
     }
 
     /**
-     * The band of the galaxy across the night: a glow and stars crowding along a great circle of the sky.
+     * The band of the galaxy across the night, as one like ours shows from inside it ({@link GalaxyPicture}): a band
+     * of light along a great circle of the sky, thickening and warming towards its heart, mottled by clouds of stars,
+     * a dark rift winding along its inner half, a few pink nebulae in it, faint stars crowding it.
      *
-     * @param colour     its glow's colour
-     * @param brightness how bright it shines, 0 to 1
-     * @param tilt       how far its band leans from the sun's path, in degrees
+     * @param colour      its light's colour towards its ends
+     * @param brightness  how bright it shines, 0 to 1
+     * @param tilt        how far its band leans from the sun's path, in degrees
+     * @param centre      where along its band its heart lies, in degrees round from where the band crosses the sun's
+     *                    path
+     * @param heartColour its light's colour at its heart
      */
-    public record Galaxy(int colour, double brightness, double tilt) {
+    public record Galaxy(int colour, double brightness, double tilt, double centre, int heartColour) {
 
         public static final Codec<Galaxy> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 LightColours.COLOUR.optionalFieldOf("colour", 0xC8D0FF).forGetter(Galaxy::colour),
                 Codec.doubleRange(0, 1).optionalFieldOf("brightness", 0.5).forGetter(Galaxy::brightness),
-                Codec.doubleRange(-90, 90).optionalFieldOf("tilt", 60.0).forGetter(Galaxy::tilt))
+                Codec.doubleRange(-90, 90).optionalFieldOf("tilt", 60.0).forGetter(Galaxy::tilt),
+                Codec.doubleRange(-360, 360).optionalFieldOf("centre", 0.0).forGetter(Galaxy::centre),
+                LightColours.COLOUR.optionalFieldOf("heart_colour", 0xFFEDD1).forGetter(Galaxy::heartColour))
                 .apply(instance, Galaxy::new));
     }
 
@@ -234,6 +249,38 @@ public record SkySpec(Optional<Integer> skyColour, Optional<Integer> fogColour, 
                 LightColours.COLOUR.optionalFieldOf("top_colour", 0xA040FF).forGetter(Aurora::topColour),
                 Codec.doubleRange(0, 1).optionalFieldOf("strength", 0.7).forGetter(Aurora::strength))
                 .apply(instance, Aurora::new));
+    }
+
+    /**
+     * The zodiacal light ({@link ZodiacalPicture}): the dust round its sun lit along the worlds' plane, a cone of faint
+     * light standing up from the horizon along the sun's path before sunrise and after sunset; seen where the air is
+     * thin, as on the Moon, never under a thick sky.
+     *
+     * @param colour     its colour
+     * @param brightness how bright it shines at midnight, 0 to 1
+     */
+    public record ZodiacalLight(int colour, double brightness) {
+
+        public static final Codec<ZodiacalLight> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                LightColours.COLOUR.optionalFieldOf("colour", 0xE8E0CE).forGetter(ZodiacalLight::colour),
+                Codec.doubleRange(0, 1).optionalFieldOf("brightness", 0.6).forGetter(ZodiacalLight::brightness))
+                .apply(instance, ZodiacalLight::new));
+    }
+
+    /**
+     * Meteors: streaks of light burning through its air at night, high over the horizon, falling at random.
+     *
+     * @param perMinute how many fall a minute of the night, on the average
+     * @param colour    their colour
+     */
+    public record Meteors(double perMinute, int colour) {
+
+        /** A meteor's usual colour, a little green of burning metal. */
+        public static final int WHITE = 0xD1FFDB;
+        public static final Codec<Meteors> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.doubleRange(0, 60).optionalFieldOf("per_minute", 1.0).forGetter(Meteors::perMinute),
+                LightColours.COLOUR.optionalFieldOf("colour", WHITE).forGetter(Meteors::colour))
+                .apply(instance, Meteors::new));
     }
 
     /**

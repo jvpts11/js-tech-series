@@ -65,6 +65,10 @@ class HardcodedColorTest {
                     "the white a model's texture is multiplied by, which leaves the texture's own colours")),
             Map.entry("core/src/main/java/dev/jstech/core/client/developer/Pictures.java", new Data(1,
                     "the pixel a difference is marked with in the picture of the differences, read back from it")),
+            Map.entry("core/src/main/java/dev/jstech/core/client/sky/SkyGalaxy.java", new Data(1,
+                    "the full alpha of the galaxy's picture, whose colours come from the sky's file")),
+            Map.entry("core/src/main/java/dev/jstech/core/client/sky/SkyZodiacal.java", new Data(1,
+                    "the full alpha of the zodiacal light's grey picture, tinted by the colour in the sky's file")),
             Map.entry("space/src/main/java/dev/jstech/space/client/skin/SkinAtlas.java", new Data(1,
                     "the white texel a structure's plain parts are drawn from, which leaves the colour they are"
                             + " tinted with as it is")));

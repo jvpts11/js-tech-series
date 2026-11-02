@@ -49,6 +49,9 @@ public final class SkyEffects extends DimensionSpecialEffects {
     public float @Nullable [] getSunriseColor(final float timeOfDay, final float partialTicks) {
         final float[] game = super.getSunriseColor(timeOfDay, partialTicks);
         final SkySpec sky = sky();
+        if (sky != null && !sky.sunsets()) {
+            return null;
+        }
         if (game == null || sky == null || sky.sunsetColour().isEmpty()) {
             return game;
         }

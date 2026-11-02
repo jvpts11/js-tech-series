@@ -62,6 +62,7 @@ A gravidade é uma fração da força do Overworld. A hora segue a longitude, co
 
 - Tycho, uma grande cratera, jovem e clara, no sul da face visível: uma bacia sob uma borda elevada, com um pico no meio e os seus raios espalhados pelo chão em volta.
 - O Overworld, parado no céu sobre a face visível: alto perto do meio do mapa da Lua, mais baixo quanto mais longe se vai, no horizonte a um quarto da volta e escondido na face oculta.
+- O céu da noite, mais nítido que o de qualquer mundo com ar: a Via Láctea, grossa e quente para os lados de Sagitário, partida pela escura Grande Fenda; Vênus, Marte, Júpiter e Saturno como pontos de luz ao longo do caminho do Sol; e, antes do nascer do Sol, a luz zodiacal, um cone tênue de pé sobre o leste.
 
 ### Biomas
 

@@ -120,11 +120,20 @@ public final class SpaceWorldsGameTests {
         // Both are round: the Sun's hour follows the longitude and its path leans with the latitude.
         helper.assertTrue(moon.round() && mars.round(), "the Moon's and Mars' skies are a round world's");
         helper.assertTrue(moon.stars().byDay() > 0, "the Moon's stars shine by day, there being no air");
-        // Phobos goes round the other way, rising in the west; Deimos and the Overworld are points of light.
+        // With no air there is no red glow round the rising Sun; the planets stand on the ecliptic as points, and the
+        // zodiacal light rises before the Sun.
+        helper.assertTrue(!moon.sunsets() && moon.bodies().size() == 4
+                && moon.bodies().stream().allMatch(SkySpec.Body::point) && moon.zodiacalLight().isPresent(),
+                "the Moon's sky has no sunset glow, four planets as points and the zodiacal light: " + moon.bodies());
+        // Phobos goes round the other way, rising in the west, drawn at its real size and squashed as it is; Deimos
+        // and the Overworld are points of light. Meteors fall through Mars' thin air at night.
         helper.assertTrue(mars.bodies().size() == 3 && mars.bodies().getFirst().orbitDays() < 0
-                && mars.bodies().getFirst().texture().isPresent() && !mars.bodies().getFirst().point()
+                && mars.bodies().getFirst().squash() < 1 && !mars.bodies().getFirst().point()
                 && mars.bodies().get(1).point() && mars.bodies().get(2).point(),
                 "Mars' sky holds Phobos, Deimos and the Overworld as an evening star: " + mars.bodies());
+        helper.assertTrue(mars.sunsets() && mars.meteors().filter(meteors -> meteors.perMinute() > 0).isPresent()
+                && moon.galaxy().isPresent() && mars.galaxy().isPresent(),
+                "Mars has its sunsets and meteors, and both skies the Milky Way");
         final SkySpec space = Skies.of(ResourceKey.create(Registries.DIMENSION, SystemSpaces.TEMPLATE.id()));
         helper.assertTrue(space.skyColour().filter(colour -> colour == BLACK).isPresent(),
                 "every system's space is black, by its template");

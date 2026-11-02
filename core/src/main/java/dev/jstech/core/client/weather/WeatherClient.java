@@ -140,6 +140,20 @@ public final class WeatherClient {
         event.setCanceled(true);
     }
 
+    /**
+     * The weather the player stands in that hides most of the sky, if any hides any of it: under a roof too, the sky
+     * through a window as hidden as outside.
+     */
+    public static @Nullable WeatherKind veiling() {
+        WeatherKind veiling = null;
+        for (final WeatherKind kind : around()) {
+            if (kind.veil() > 0 && (veiling == null || kind.veil() > veiling.veil())) {
+                veiling = kind;
+            }
+        }
+        return veiling;
+    }
+
     /* The weather the player stands in that closes the view in most, if any does. */
     private static @Nullable WeatherKind thickest() {
         final Minecraft minecraft = Minecraft.getInstance();

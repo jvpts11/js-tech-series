@@ -333,6 +333,7 @@ public final class Weathers {
         private double density = 0.5;
         private Optional<Integer> fogColour = Optional.empty();
         private double sight;
+        private double veil;
         private double wind = 1;
         private Optional<WeatherKind.Harm> harm = Optional.empty();
         private Optional<WeatherKind.Effect> effect = Optional.empty();
@@ -362,6 +363,15 @@ public final class Weathers {
         public WeatherBuilder fog(final int inColour, final double closes) {
             this.fogColour = Optional.of(inColour);
             this.sight = Math.clamp(closes, 0.0, 1.0);
+            return this;
+        }
+
+        /**
+         * How much of the sky it hides, 0 to 1: the sky turned to its fog's colour, the suns, moons and stars dimmed
+         * behind it.
+         */
+        public WeatherBuilder veils(final double share) {
+            this.veil = Math.clamp(share, 0.0, 1.0);
             return this;
         }
 
@@ -399,7 +409,7 @@ public final class Weathers {
         public ResourceLocation declare() {
             synchronized (DECLARED) {
                 DECLARED.put(this.id, new WeatherKind(this.event, this.falls, this.colour, this.density,
-                        this.fogColour, this.sight, this.wind, this.harm, this.effect, this.lightning,
+                        this.fogColour, this.sight, this.veil, this.wind, this.harm, this.effect, this.lightning,
                         this.sheltered));
             }
             return this.id;

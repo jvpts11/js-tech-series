@@ -73,6 +73,7 @@ import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.spacecraft.SkeletonSpacecraft;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.LandingCabins;
+import dev.jstech.space.universe.MarsWeather;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SpaceClimbs;
 import dev.jstech.space.universe.SpaceRespawns;
@@ -141,6 +142,8 @@ public final class JsSpace {
         MoonWorld.declare();
         MarsBiomes.declare();
         MarsWorld.declare();
+        // Mars' dust storms, regional and now and then global, which hide its sky.
+        MarsWeather.declare();
         // Life support: the lunar suit, the suits' air and modules, and each world's dangers and the sky's radiation
         // on it; the open flames that go out where the air holds too little oxygen.
         LunarSuit.declare(modEventBus);

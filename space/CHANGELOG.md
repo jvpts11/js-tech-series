@@ -240,6 +240,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   and smaller ones in its highlands and all over Mars; grottos open in the faces of the chaos' blocks, the layered
   mounds and the buttes of Valles Marineris and the other canyons, and tunnels wind through the water ice of Mars'
   caps under the frost, dark deep inside.
+- The night skies of the Moon and Mars: the Milky Way crosses them as it does the Earth's, thick and warm
+  towards Sagittarius, in clouds of stars split by the Great Rift and spotted with pink nebulae; Venus, Mars, Jupiter
+  and Saturn shine from the Moon as points along the ecliptic, and before the Sun rises the zodiacal light stands over
+  the east, with no glow round the Sun, there being no air. Meteors streak through Mars' night, and its dust storms
+  hide its sky: regional ones now and then, some six kilometres across and some six hours long, and about once a
+  Martian year a global one that covers the whole planet for a day and a half, the sky turned brown, the Sun a pale
+  disc and the horizon swallowed in dust.
 - Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its
   tanks hold, each second of breathing spent from them, the only clock of a walk outside, and stand any cold or heat
   within its range; empty, its wearer suffocates. Three suit modules, fitted by right-clicking them onto the piece

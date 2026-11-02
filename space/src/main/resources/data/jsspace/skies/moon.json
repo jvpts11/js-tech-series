@@ -1,11 +1,19 @@
 {
   "sky_colour": "#000000",
   "fog_colour": "#000000",
+  "sunsets": false,
   "suns": [
     {"kind": "g", "distance": 1.0}
   ],
+  "bodies": [
+    {"point": true, "colour": "#FFF6E0", "size": 0.03, "offset": 0.11, "tilt": 3.4},
+    {"point": true, "colour": "#FF9068", "size": 0.022, "orbit_days": 26.4, "offset": 0.38, "tilt": 1.8},
+    {"point": true, "colour": "#FFEAD0", "size": 0.028, "orbit_days": 13.5, "offset": 0.42, "tilt": 1.3},
+    {"point": true, "colour": "#F2DCA2", "size": 0.022, "orbit_days": 12.8, "offset": 0.47, "tilt": 2.5}
+  ],
   "stars": {"count": 3000, "brightness": 1.6, "by_day": 0.75},
-  "galaxy": {"colour": "#C8CCD8", "brightness": 0.0, "tilt": 60},
+  "galaxy": {"colour": "#CCD8FF", "brightness": 0.9, "tilt": 60, "heart_colour": "#FFEDD1"},
+  "zodiacal_light": {"colour": "#E8E0CE", "brightness": 1.0},
   "clouds": {"height": 320, "colour": "#FFFFFF", "density": 0},
   "round": true
 }

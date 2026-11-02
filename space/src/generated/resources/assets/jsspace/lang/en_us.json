@@ -984,6 +984,8 @@
   "jsspace.world.mars": "Mars",
   "jsspace.world.moon": "The Moon",
   "jsspace.world.overworld": "The Overworld",
+  "jsspace.world_event.dust_storm": "Dust storm",
+  "jsspace.world_event.global_dust_storm": "Global dust storm",
   "key.jsspace.ship_autopilot": "Change the ship's autopilot",
   "key.jsspace.ship_boost": "Boost the ship",
   "key.jsspace.suit_controls": "Look at the suit's controls"
