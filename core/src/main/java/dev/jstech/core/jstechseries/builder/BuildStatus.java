@@ -79,18 +79,16 @@ public record BuildStatus(BlockPos terminal, Phase phase, int placed, Reason rea
         NONE("none", BuilderTexts.STOPPED),
         /** The player may not build multiblocks. */
         NOT_ALLOWED("not_allowed", BuilderTexts.NOT_ALLOWED),
-        /** The terminal forms no multiblock the builder knows, or is gone. */
+        /** What it is aimed at, a terminal or a projector, has no multiblock the builder knows, or is gone. */
         UNKNOWN("unknown", BuilderTexts.UNKNOWN),
         /** The player walked too far from the terminal. */
         TOO_FAR("too_far", BuilderTexts.TOO_FAR),
         /** A place is protected from the player. */
         PROTECTED("protected", BuilderTexts.PROTECTED),
-        /** Something stands where a block goes. */
+        /** Something it cannot move stands where a block goes, or where it must be left empty. */
         BLOCKED("blocked", BuilderTexts.BLOCKED),
         /** The source has none of a block left. */
-        RAN_OUT("ran_out", BuilderTexts.RAN_OUT),
-        /** Nothing is missing, but places hold other blocks, which it does not break. */
-        WRONG_LEFT("wrong_left", BuilderTexts.WRONG_LEFT);
+        RAN_OUT("ran_out", BuilderTexts.RAN_OUT);
 
         private final String serializedName;
         private final TextKey says;

@@ -11,6 +11,7 @@ import dev.jstech.core.jstechseries.builder.BuildStatus;
 import dev.jstech.core.jstechseries.builder.BuilderPlan;
 import dev.jstech.core.jstechseries.builder.BuilderState;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
+import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
 import dev.jstech.core.jstechseries.projector.client.ProjectorClient;
 import dev.jstech.core.jstechseries.projector.client.ScreenWords;
 import java.util.Optional;
@@ -104,11 +105,20 @@ public final class BuilderClient {
             }
             final Optional<BuilderPlan> plan = plan(stack);
             final Optional<BlockPos> aim = MultiblockBuilder.aim(stack, player);
-            if (plan.isPresent() && aim.isPresent()) {
-                return Optional.of(new ProjectorClient.Shown(plan.get().view(), plan.get().name(),
-                        ScreenWords.modName(BuiltInRegistries.BLOCK.getKey(minecraft.level.getBlockState(aim.get())
-                                .getBlock()))));
+            if (plan.isEmpty() || aim.isEmpty()) {
+                continue;
             }
+            // A projector aimed at shows the multiblock itself while it is on; its mod is the multiblock's.
+            if (minecraft.level.getBlockEntity(aim.get()) instanceof StructureProjectorBlockEntity projector) {
+                if (!projector.settings().on() && projector.settings().chosen().isPresent()) {
+                    return Optional.of(new ProjectorClient.Shown(plan.get().view(), plan.get().name(),
+                            ScreenWords.modName(projector.settings().chosen().get())));
+                }
+                continue;
+            }
+            return Optional.of(new ProjectorClient.Shown(plan.get().view(), plan.get().name(),
+                    ScreenWords.modName(BuiltInRegistries.BLOCK.getKey(minecraft.level.getBlockState(aim.get())
+                            .getBlock()))));
         }
         return Optional.empty();
     }

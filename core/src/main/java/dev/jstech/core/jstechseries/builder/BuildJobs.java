@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.jstechseries.builder;
 
+import dev.jstech.core.jstechseries.projector.ProjectorView;
 import dev.jstech.core.multiblock.BuildBalance;
 import dev.jstech.core.multiblock.BuildOrder;
 import dev.jstech.core.multiblock.MultiblockBlocks;
@@ -27,16 +28,22 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.EventHooks;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -44,10 +51,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What the Multiblock Builders are building on the server, one job for each player: a block at a time, at the pace
- * the settings give, each block taken from the player's chosen source and placed as the player would place it, so it
- * is theirs and the claims and protections round it have their say. A job holds when its player asks, and stops when
- * it is built, when the player walks away, when a place is protected or blocked, or when the source runs out; the
- * player is told each time. Read and changed on the server thread only.
+ * the settings give. First whatever stands where the multiblock must be left empty, or in one of its places, is taken
+ * out from the top down and given back to the source; then each block is taken from the player's chosen source and
+ * placed as the player would place it, so it is theirs and the claims and protections round it have their say. A job
+ * holds when its player asks, and stops when it is built, when the player walks away, when a place is protected or
+ * blocked, or when the source runs out; the player is told each time. Read and changed on the server thread only.
  */
 public final class BuildJobs {
 
@@ -148,11 +156,13 @@ public final class BuildJobs {
         if (plan.isEmpty()) {
             return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.UNKNOWN, "");
         }
+        final List<ProjectorView.Place> out = plan.get().toTakeOut();
+        if (!out.isEmpty()) {
+            return takeOut(player, job, out.getFirst().pos());
+        }
         final List<BuildOrder.Step> steps = plan.get().order().steps();
         if (steps.isEmpty()) {
-            return plan.get().view().wrong() > 0
-                    ? job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.WRONG_LEFT, "")
-                    : job.status(BuildStatus.Phase.BUILT, BuildStatus.Reason.NONE, "");
+            return job.status(BuildStatus.Phase.BUILT, BuildStatus.Reason.NONE, "");
         }
         final BuildOrder.Step next = steps.getFirst();
         final Block block = MultiblockBlocks.blockOf(next.block());
@@ -183,7 +193,44 @@ public final class BuildJobs {
             return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.PROTECTED, "");
         }
         source.giveBack(player, stack);
+        // A terminal placed turns the way the multiblock stands, not the way the player happens to look.
+        final BlockState standing = level.getBlockState(at);
+        if (at.equals(plan.get().view().terminal()) && standing.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
+                && plan.get().facing().getAxis().isHorizontal()) {
+            level.setBlock(at, standing.setValue(BlockStateProperties.HORIZONTAL_FACING, plan.get().facing()),
+                    Block.UPDATE_ALL);
+        }
         job.placed++;
+        tell(player, job.status(BuildStatus.Phase.BUILDING, BuildStatus.Reason.NONE, ""));
+        return null;
+    }
+
+    /*
+     * Takes out the block at {@code at}, as the player would break it, so the claims and protections round it have
+     * their say, and gives it back to the source, which a player in creative does not fill; what it ended with, or
+     * none to go on. A block no one can break stops it.
+     */
+    @Nullable
+    private static BuildStatus takeOut(final ServerPlayer player, final Job job, final BlockPos at) {
+        final Level level = player.level();
+        final BlockState state = level.getBlockState(at);
+        if (state.getDestroySpeed(level, at) < 0) {
+            return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.BLOCKED, "");
+        }
+        if (!Protection.may(Actor.of(player), ProtectedAction.BREAK, player.serverLevel(), at)
+                || !level.mayInteract(player, at)
+                || NeoForge.EVENT_BUS.post(new BlockEvent.BreakEvent(level, at, state, player)).isCanceled()) {
+            return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.PROTECTED, "");
+        }
+        level.destroyBlock(at, false, player);
+        if (!level.getBlockState(at).isAir()) {
+            // A fluid, or a block's water, which breaking leaves behind.
+            level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        }
+        final Item item = state.getBlock().asItem();
+        if (item != Items.AIR) {
+            BuildSources.get(job.state.source()).giveBack(player, new ItemStack(item));
+        }
         tell(player, job.status(BuildStatus.Phase.BUILDING, BuildStatus.Reason.NONE, ""));
         return null;
     }

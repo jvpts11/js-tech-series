@@ -157,6 +157,12 @@ the bottom as drawn. The layers under it are dug in, and the Structure Projector
 the ground level with it ([Showing a multiblock](#showing-a-multiblock-before-it-is-built)); a shape that says nothing
 stands on the ground by its bottom.
 
+A terminal that does not face the way the shape does, as a control booth's console facing the booth's back, says
+which way it faces as drawn: `terminalFaces(Orientation.EAST)`, the turn that brings north round to it
+(`"terminal_faces": "east"` in a file; `IStructureShape.terminalFaces()` for any shape). The Multiblock Builder reads
+from a terminal's facing how the whole stands, and turns a terminal it places so; a shape that says nothing has its
+terminal facing the way it does.
+
 ## Shapes that grow
 
 *Added 2026-10-16.*
@@ -310,7 +316,7 @@ Everything above is written to the pattern's file, so a data pack changes it as 
                "count": {"name": "hatch", "which": {"blocks": ["mymod:hatch"]}}},
          "G": {"blocks": ["mymod:glass"]}},
  "limits": {"hatch": {"least": 1, "most": 4}},
- "mirrors": true, "lies_down": false, "ground": 0,
+ "mirrors": true, "lies_down": false, "ground": 0, "terminal_faces": "north",
  "repeat": {"axis": "y", "index": 1, "least": 1, "most": 6},
  "inside": {"letter": "x", "rule": {"allows": {"blocks": ["minecraft:air"]}, "parts": [
      {"name": "cell", "which": {"blocks": ["mymod:cell"]}, "gives": {"power": 5},
@@ -768,7 +774,8 @@ outlined in cyan until it is built when it is not; and above the structure float
 much is in place, what is missing, what is wrong and how many blocks are to be cleared. Looking at a ghost, near or
 up to 32 blocks away, outlines it and says beside the crosshair what goes there and on which layer: the look meets a
 ghost by the shape of its block, so a ghost slab is looked over, and it goes past what a player walks through, as
-plants, and past the projector itself.
+plants, and past the projector itself. A block merged into a formed multiblock's model counts as the block it was, so
+a formed multiblock shows as whole.
 
 Its screen has no inventory, since a projector holds nothing: the multiblock in 3D (the layer shown whole, those below
 as ghosts, turned by dragging), the list of the multiblocks, what is placed, missing and wrong in the world, and the
@@ -819,8 +826,10 @@ beside the category.
 
 The **Multiblock Builder**, a handheld instrument of the probes' family, builds a multiblock around its terminal.
 The player places the terminal and uses the builder on it: it is aimed at it, and works out the multiblock from the
-terminal itself, the shape its machine forms with at its least size, turned the way the terminal faces. Its
-display has three pages:
+terminal itself, the shape its machine forms with at its least size, standing as the terminal's facing says (the
+pattern's `terminalFaces`). Or the player uses it on a Structure Projector showing a multiblock: it builds the
+multiblock where and as the projector shows it, its terminal too, placed last and turned as the multiblock stands,
+which suits a terminal that stands off the ground, as a dock's booth up on its walkway. Its display has three pages:
 
 - **Build**: the multiblock's name, size and facing; how many blocks it will place and how many are already there;
   each block it needs, how many, and how many the player has (green when enough, red when not); the first place that
@@ -833,13 +842,16 @@ display has three pages:
   a pattern works out from its `limit`s.
 - **Source**: where the blocks come from, the player's inventory first.
 
-OK builds: a block at a time, at the pace the settings give, each taken from the source and placed as the player
-would place it, so it is the player's and the claims round it have their say. It never breaks a block that stands in
-the way. HOLD holds the building and carries it on; SHOW shows the multiblock's ghosts as a projector would while the
-builder is held; LIGHT lights the display; POWER turns it off, which stops it. It stops, and says why, when it is
-built, when the player walks too far away, when a place is protected or something stands in it, or when the source
-runs out; a player without the permission `jscore.multiblock.build` may not start it. A player in creative takes
-from the inventory without using it up.
+OK builds: a block at a time, at the pace the settings give. First it takes out, from the top down, whatever stands
+where the multiblock must be left empty (a dock's pit is dug) and any other block standing in one of its places, as
+the player would break each, and gives each block back to the source; then it places each block, taken from the
+source and placed as the player would place it, so it is the player's and the claims round it have their say. HOLD
+holds the building and carries it on; SHOW shows the multiblock's ghosts as a projector would while the builder is
+held (a projector it is aimed at shows them itself); LIGHT lights the display; POWER turns it off, which stops it. It
+stops, and says why, when it is built, when the player walks too far away, when a place is protected, when something
+it cannot move stands in the way (a block no one can break, or something where a block goes), or when the source runs
+out; a player without the permission `jscore.multiblock.build` may not start it. A player in creative takes from the
+inventory without using it up, and what it takes out is not given back.
 
 - How fast it builds and how far the player may walk are server settings: `multiblock.blocks_per_second` (5) and
   `multiblock.build_reach` (32 blocks), in the balance file.

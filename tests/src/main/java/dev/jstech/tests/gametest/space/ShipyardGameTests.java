@@ -7,12 +7,19 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.jstechseries.builder.BuildJobs;
+import dev.jstech.core.jstechseries.builder.BuilderPlan;
+import dev.jstech.core.jstechseries.builder.BuilderState;
 import dev.jstech.core.jstechseries.projector.ProjectorSettings;
+import dev.jstech.core.jstechseries.projector.ProjectorView;
 import dev.jstech.core.jstechseries.projector.StructureProjector;
 import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.multiblock.BuildBalance;
+import dev.jstech.core.multiblock.BuildOrder;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
@@ -41,8 +48,11 @@ import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -58,6 +68,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.slf4j.Logger;
@@ -115,6 +127,18 @@ public final class ShipyardGameTests {
     private static final BlockPos PROJECTOR = new BlockPos(2, 2, 5);
     private static final int PIT_LAYERS = 3;
     private static final int BOOTH_ABOVE = 4;
+    /*
+     * The builder's tests: a ground of earth four blocks deep, grass on top; a projector on it at the arena's south
+     * side, the dock north of it, in the arena as long as the dock stands along it or across it; the build's pace
+     * while they run, high enough for a dock of some sixteen hundred blocks taken out and put in to go in seconds.
+     */
+    private static final int EARTH_TOP = 4;
+    private static final BlockPos PROJECTOR_ALONG = new BlockPos(12, 5, 28);
+    private static final BlockPos PROJECTOR_ACROSS = new BlockPos(14, 5, 24);
+    private static final int ALONG_WIDE = 26;
+    private static final int ACROSS_WIDE = 30;
+    private static final int DOCK_PACE = 1_000;
+    private static final int BUILD_TIME = 1_200;
     /* A ship ready to fly with a workshop, whose kit has blocks of the game in it. */
     private static final ShipDesign WORKSHOP_SHIP = new ShipDesign("JS-02", List.of(part("orbiter_cockpit"),
             part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
@@ -140,6 +164,32 @@ public final class ShipyardGameTests {
         helper.assertTrue(!preview.clears().isEmpty() && preview.clears().stream()
                 .allMatch(place -> place.y() < preview.ground()), "and its pit, under the ground, is to be left empty");
         helper.succeed();
+    }
+
+    /*
+     * The Multiblock Builder, aimed at a projector showing the dock on a ground of earth, digs its pit, puts its rim
+     * and its cradle's feet in the earth in place of what stood there, and builds the rest, its terminal last, turned
+     * as the dock stands; and the dock forms, whichever of the four ways the projector turns it. Each in a batch of its
+     * own, as each turns the build's pace up while it runs.
+     */
+    @GameTest(template = ARENA, batch = "jsspace_dock_north", timeoutTicks = BUILD_TIME)
+    public static void builder_buildsTheDockAProjectorShowsTurnedNorth(final GameTestHelper helper) {
+        buildsTheDock(helper, 0, PROJECTOR_ALONG);
+    }
+
+    @GameTest(template = TURNED, batch = "jsspace_dock_east", timeoutTicks = BUILD_TIME)
+    public static void builder_buildsTheDockAProjectorShowsTurnedEast(final GameTestHelper helper) {
+        buildsTheDock(helper, 1, PROJECTOR_ACROSS);
+    }
+
+    @GameTest(template = ARENA, batch = "jsspace_dock_south", timeoutTicks = BUILD_TIME)
+    public static void builder_buildsTheDockAProjectorShowsTurnedSouth(final GameTestHelper helper) {
+        buildsTheDock(helper, 2, PROJECTOR_ALONG);
+    }
+
+    @GameTest(template = TURNED, batch = "jsspace_dock_west", timeoutTicks = BUILD_TIME)
+    public static void builder_buildsTheDockAProjectorShowsTurnedWest(final GameTestHelper helper) {
+        buildsTheDock(helper, 3, PROJECTOR_ACROSS);
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
@@ -514,6 +564,63 @@ public final class ShipyardGameTests {
 
     private static boolean formed(final ServerLevel level, final BlockPos terminal) {
         return level.getBlockEntity(terminal) instanceof ShipyardTerminalBlockEntity dock && dock.formed();
+    }
+
+    /*
+     * Lays a ground of earth over the arena's floor, a projector on it at {@code at} turning the dock {@code turn}
+     * quarters, and a player in creative beside it with the Multiblock Builder aimed at the projector; once the dock
+     * the builder built forms, its terminal must face the booth's back as the dock stands.
+     */
+    private static void buildsTheDock(final GameTestHelper helper, final int turn, final BlockPos at) {
+        final ServerLevel level = helper.getLevel();
+        // The arena is as long, along z, as the projector stands from its north side, and a block more.
+        final int deep = at.getZ() + 2;
+        final int wide = deep == PROJECTOR_ALONG.getZ() + 2 ? ALONG_WIDE : ACROSS_WIDE;
+        for (int x = 0; x < wide; x++) {
+            for (int z = 0; z < deep; z++) {
+                for (int y = 1; y <= EARTH_TOP; y++) {
+                    level.setBlock(helper.absolutePos(new BlockPos(x, y, z)), (y == EARTH_TOP ? Blocks.GRASS_BLOCK
+                            : Blocks.DIRT).defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
+        }
+        helper.setBlock(at, StructureProjector.BLOCK.get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+        if (!(helper.getBlockEntity(at) instanceof StructureProjectorBlockEntity projector)) {
+            throw new IllegalStateException("no projector where the test put it");
+        }
+        projector.apply(new ProjectorSettings(Optional.of(ShipyardStructure.ID), turn, false, 0, false, true));
+        final BlockPos terminal = projector.terminalOf(projector.preview().orElseThrow());
+        final FakePlayer player = FakePlayerFactory.get(level, new GameProfile(UUID.nameUUIDFromBytes(
+                ("dock-builder-" + turn).getBytes(StandardCharsets.UTF_8)), "dock-builder-" + turn));
+        player.getAbilities().instabuild = true;
+        final BlockPos stand = helper.absolutePos(at.south());
+        player.setPos(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5);
+        final BuilderPlan plan = BuilderPlan.of(level, helper.absolutePos(at), player, BuilderState.DEFAULT)
+                .orElseThrow();
+        final BuildOrder.Want last = plan.wants().getLast();
+        helper.assertTrue(new BlockPos(last.x(), last.y(), last.z()).equals(terminal),
+                "its terminal is the last block it places, the dock round it first");
+        helper.assertTrue(!plan.toTakeOut().isEmpty(), "the earth where its pit and its rim go is to be taken out");
+        final int pace = BuildBalance.blocksPerSecond();
+        BuildBalance.setBlocksPerSecond(DOCK_PACE);
+        BuildJobs.start(player, helper.absolutePos(at), BuilderState.DEFAULT);
+        final int[] back = Orientation.turns().get(turn).apply(1, 0, 0);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock the builder built forms"))
+                .thenExecute(() -> {
+                    BuildBalance.setBlocksPerSecond(pace);
+                    helper.assertTrue(level.getBlockState(terminal).getValue(HorizontalDirectionalBlock.FACING)
+                            == Direction.fromDelta(back[0], back[1], back[2]),
+                            "its terminal faces the booth's back as the dock stands");
+                    helper.assertTrue(BuildJobs.building(player).isEmpty(), "and the builder is done with it");
+                    final ProjectorView seen = ProjectorView.of(level, projector).orElseThrow();
+                    helper.assertTrue(seen.missing() == 0 && seen.wrong() == 0 && seen.toClear() == 0,
+                            "the projector sees it whole, its merged blocks as the blocks they were: "
+                                    + seen.missing() + " missing, " + seen.wrong() + " wrong, " + seen.toClear()
+                                    + " to clear");
+                })
+                .thenSucceed();
     }
 
     /* The places of the part {@code part} of {@code plan}. */

@@ -518,5 +518,6 @@
   "ports": {
     "I": "item_input"
   },
-  "terminal": "jsspace:shipyard_terminal"
+  "terminal": "jsspace:shipyard_terminal",
+  "terminal_faces": "east"
 }

@@ -65,4 +65,9 @@ public record PatternById(ResourceLocation id) implements IStructureShape {
     public boolean liesDown() {
         return MultiblockPatterns.get(this.id).map(MultiblockPattern::liesDown).orElse(false);
     }
+
+    @Override
+    public Orientation terminalFaces() {
+        return MultiblockPatterns.get(this.id).map(MultiblockPattern::terminalFaces).orElse(Orientation.NORTH);
+    }
 }

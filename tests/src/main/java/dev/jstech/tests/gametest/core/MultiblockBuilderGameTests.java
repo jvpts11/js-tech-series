@@ -12,8 +12,12 @@ import dev.jstech.core.jstechseries.builder.BuildJobs;
 import dev.jstech.core.jstechseries.builder.BuilderPlan;
 import dev.jstech.core.jstechseries.builder.BuilderState;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
+import dev.jstech.core.jstechseries.projector.ProjectorSettings;
 import dev.jstech.core.jstechseries.projector.ProjectorView;
+import dev.jstech.core.jstechseries.projector.StructureProjector;
+import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestMultiblocks;
 import dev.jstech.tests.TestStructures;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -28,6 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
@@ -50,6 +55,8 @@ public final class MultiblockBuilderGameTests {
     private static final String IRON = "minecraft:iron_block";
     private static final String GLASS = "minecraft:glass";
     private static final int TIME = 400;
+    /* A projector on the floor at the arena's south side, placed by a player south of it: the furnace north of it. */
+    private static final BlockPos PROJECTOR = new BlockPos(4, 1, 7);
 
     private MultiblockBuilderGameTests() {
     }
@@ -114,6 +121,50 @@ public final class MultiblockBuilderGameTests {
         });
     }
 
+    @GameTest(template = ARENA, timeoutTicks = TIME)
+    public static void build_takesOutABlockStandingInAPlaceAndGivesItBack(final GameTestHelper helper) {
+        final FakePlayer player = builder(helper, "take-out");
+        player.getInventory().add(new ItemStack(Items.IRON_BLOCK, 64));
+        final BlockPos place = plan(helper, player, BuilderState.DEFAULT).view().places().stream()
+                .filter(each -> !each.ghost().terminal()).findFirst().orElseThrow().pos();
+        helper.getLevel().setBlockAndUpdate(place, Blocks.DIRT.defaultBlockState());
+        BuildJobs.start(player, helper.absolutePos(TERMINAL), BuilderState.DEFAULT);
+        helper.succeedWhen(() -> {
+            final BuilderPlan now = plan(helper, player, BuilderState.DEFAULT);
+            helper.assertTrue(now.wants().isEmpty() && now.toTakeOut().isEmpty(), "still building");
+            helper.assertTrue(helper.getLevel().getBlockState(place).is(Blocks.IRON_BLOCK),
+                    "the dirt standing in a place gave way to the block that goes there");
+            helper.assertTrue(player.getInventory().countItem(Items.DIRT) == 1, "and went back to the inventory");
+        });
+    }
+
+    @GameTest(template = ARENA)
+    public static void item_isAimedAtAProjectorShowingAMultiblock(final GameTestHelper helper) {
+        helper.setBlock(PROJECTOR, StructureProjector.BLOCK.get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+        if (!(helper.getBlockEntity(PROJECTOR) instanceof StructureProjectorBlockEntity projector)) {
+            throw new IllegalStateException("no projector where the test put it");
+        }
+        final FakePlayer player = player(helper, "projector", PROJECTOR.south());
+        final BlockPos at = helper.absolutePos(PROJECTOR);
+        final ItemStack idle = new ItemStack(MultiblockBuilder.ITEM.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, idle);
+        helper.assertTrue(idle.onItemUseFirst(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(at), Direction.UP, at, false))) == InteractionResult.PASS,
+                "used on a projector showing nothing, it lets the projector open its screen");
+        projector.apply(ProjectorSettings.FRESH.choosing(TestMultiblocks.FURNACE_ID));
+        final ItemStack stack = new ItemStack(MultiblockBuilder.ITEM.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        helper.assertTrue(stack.onItemUseFirst(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(at), Direction.UP, at, false))).consumesAction()
+                && MultiblockBuilder.aim(stack, player).equals(Optional.of(at)),
+                "used on a projector showing a multiblock, it is aimed at the projector");
+        final BuilderPlan plan = BuilderPlan.of(helper.getLevel(), at, player, BuilderState.DEFAULT).orElseThrow();
+        helper.assertTrue(plan.view().terminal().equals(projector.terminalOf(projector.preview().orElseThrow())),
+                "and builds the multiblock where the projector shows it");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void item_isAimedAtATerminalItIsUsedOn(final GameTestHelper helper) {
         final FakePlayer player = builder(helper, "aim");
@@ -139,11 +190,16 @@ public final class MultiblockBuilderGameTests {
     /* The baker's terminal placed, and a player of the test's own standing north of it, out of the way. */
     private static FakePlayer builder(final GameTestHelper helper, final String name) {
         helper.setBlock(TERMINAL, TestStructures.BAKER.get());
+        return player(helper, name, TERMINAL.north(2));
+    }
+
+    /* A player of the test's own, with nothing on them, standing at {@code stand}. */
+    private static FakePlayer player(final GameTestHelper helper, final String name, final BlockPos stand) {
         final FakePlayer player = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.nameUUIDFromBytes(
                 ("builder-" + name).getBytes(StandardCharsets.UTF_8)), "builder-" + name));
         player.getInventory().clearContent();
-        final BlockPos stand = helper.absolutePos(TERMINAL.north(2));
-        player.setPos(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5);
+        final BlockPos at = helper.absolutePos(stand);
+        player.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         return player;
     }
 

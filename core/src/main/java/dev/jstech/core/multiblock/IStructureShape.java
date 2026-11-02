@@ -48,6 +48,15 @@ public interface IStructureShape {
     }
 
     /**
+     * The way its terminal faces as it stands drawn, facing north, as the turn that brings north round to it: a tool
+     * that builds it from its terminal reads from it how the whole stands, and turns a terminal it places so. North,
+     * unless it says otherwise: a terminal that faces the way the shape does.
+     */
+    default Orientation terminalFaces() {
+        return Orientation.NORTH;
+    }
+
+    /**
      * The shape laid out as it stands facing north, to be shown before it is built: at its least size, grown by
      * {@code grow} (more repeats of a pattern's slice, longer sides of a box), or none for a shape that cannot be
      * shown.

@@ -26,7 +26,7 @@ caption: O Estaleiro Pequeno, construído
 height: 120
 ```
 
-1. Construa a doca inteira, com o poço escavado e vazio. O Projetor de Estruturas do J's Core mostra a doca bloco por bloco.
+1. Construa a doca inteira, com o poço escavado e vazio. O Projetor de Estruturas do J's Core mostra a doca bloco por bloco, e o Construtor de Multiblocos usado nesse projetor escava o poço e constrói a doca para você, com o terminal lá em cima na cabine por último.
 2. Use o terminal para abrir o Projeto da Nave. Arraste as peças dos cartões até o nó verde de uma junta; o botão direito do mouse gira a vista.
 3. Respeite a checagem de voo: uma cabine, uma eclusa, um reator, um motor principal, trem de pouso, uma espinha inteira e uma nave que caiba no vão.
 4. Aperte [[S]] para guardar o projeto e [[E]] para mandá-lo para a doca.

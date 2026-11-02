@@ -384,6 +384,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `MultiblockPattern.ground()` reads it. `ShapePreview` changes shape: it keeps the places that must be left empty
   apart, in `clears`, and the height that stands on the ground, in `ground`, which `anchor` puts level with what it is
   shown beside; `ShapePreview.of(places, clears, ground)` lays both out. Experimental.
+- A terminal that faces its own way: J's Core's API is at version 34. `MultiblockPattern.Builder.terminalFaces`
+  says which way a pattern's terminal faces as drawn, as the turn that brings north round to it, written in its file
+  as `terminal_faces`; `IStructureShape.terminalFaces()` reads it for any shape, north unless it says otherwise.
+  Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -764,10 +768,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whatever stands where it must be left empty, as a dock's pit in the land; and above the structure its name, its
   size and how much is in place, missing, wrong and to be cleared; a ghost looked at, from up to 32 blocks away, is
   outlined and says what goes there and on which layer, the look meeting a ghost by its block's shape and going past
-  plants and the projector. A cave's air counts as empty there, for the projector and for a structure forming. Its
-  screen previews the multiblock in 3D layer by layer and chooses it from the list of every multiblock, its turn, its
-  mirror, its layer and whether only what is missing shows. Every multiblock is listed with nothing more to write, and
-  a mod can hide one.
+  plants and the projector. A cave's air counts as empty there, for the projector and for a structure forming, and a
+  formed multiblock's blocks merged into its model count as the blocks they were, so it shows whole. Its screen
+  previews the multiblock in 3D layer by layer and chooses it from the list of every multiblock, its turn, its mirror,
+  its layer and whether only what is missing shows. Every multiblock is listed with nothing more to write, and a mod
+  can hide one.
 - Multiblocks in JEI and EMI: every multiblock that can be shown has a page of its own, with the multiblock in
   3D turned by a drag or a click, a button for each layer, the blocks that will do where more than one does, how it
   may stand, its materials with how many of each, its size, and buttons that show its ghosts in front of the player
@@ -778,12 +783,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   itself.
 - Multiblocks in the manuals: a page names a multiblock by its id and it is drawn as a scene the reader turns
   and peels layer by layer, laid out from the multiblock in force when the manual is read, its controller in place.
-- The Multiblock Builder, a handheld instrument used on a multiblock's controller: its display says what is
-  missing and how much of each block the player has, lets them choose what goes where a place takes several blocks
-  and where the blocks come from, and OK builds the multiblock a block at a time from the inventory, as the player
-  would place each block, stopping and saying why when it runs out, the player walks away or a place is protected.
-  HOLD holds it, SHOW shows the multiblock's ghosts, LIGHT lights the display. Servers set how fast it builds and how
-  far the player may walk; other mods can add a source of blocks of their own.
+- The Multiblock Builder, a handheld instrument used on a multiblock's controller, or on a Structure Projector
+  showing a multiblock, which it then builds where the projector shows it, its controller last and turned as the
+  multiblock stands: its display says what is missing and how much of each block the player has, lets them choose
+  what goes where a place takes several blocks and where the blocks come from, and OK first takes out, from the top
+  down, whatever stands where the multiblock must be left empty or in its places, giving the blocks back (a player in
+  creative only clears), then builds the multiblock a block at a time from the inventory, as the player would place
+  each block, stopping and saying why when it runs out, the player walks away, a place is protected or something it
+  cannot move is in the way. Used on a controller, it reads how the multiblock stands from the way the controller
+  faces. HOLD holds it, SHOW shows the multiblock's ghosts, LIGHT lights the display. Servers set how fast it builds
+  and how far the player may walk; other mods can add a source of blocks of their own.
 - Microblocks of any full block of any mod: covers, panels, slabs and the thicknesses between, hollow pieces,
   posts and corners, drawn from the block's own textures. Several share one block space, a cable's included, each
   placed where the click puts it, hit, outlined and broken on its own with its own drop, and a block space of pieces

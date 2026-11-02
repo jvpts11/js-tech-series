@@ -234,6 +234,8 @@ public final class ShipyardStructure {
                 .port('I', PortKind.ITEM_INPUT)
                 .inside(PIT, InsideRule.empty())
                 .terminal(TERMINAL)
+                // Its terminal faces east, to the booth's back, as a player in the booth places it.
+                .terminalFaces(Orientation.EAST)
                 // The layer at 0 stands on the ground; the pit's three under it are dug into it.
                 .ground(-BOTTOM)
                 .build();

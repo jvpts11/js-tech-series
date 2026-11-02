@@ -247,6 +247,16 @@ class MultiblockPatternTest {
     }
 
     @Test
+    void terminalFaces_isOneOfTheFourTurns() {
+        assertEquals(Orientation.EAST, MultiblockPattern.builder("booth").layer("#")
+                .terminalFaces(Orientation.EAST).build().terminalFaces());
+        assertEquals(Orientation.NORTH, MultiblockPattern.builder("plain").layer("#").build().terminalFaces(),
+                "a terminal faces the way the shape does unless it says otherwise");
+        assertThrows(IllegalArgumentException.class, () -> MultiblockPattern.builder("booth").layer("#")
+                .terminalFaces(Orientation.lying().getLast()));
+    }
+
+    @Test
     void inside_refusesALetterThatIsAlsoAPlace() {
         assertThrows(IllegalArgumentException.class, () -> MultiblockPattern.builder("tank")
                 .layer("#x")

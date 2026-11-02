@@ -63,6 +63,12 @@ import net.minecraft.world.level.block.Block;
  */
 public final class MultiblockPatterns {
 
+    /* One of the four turns, by the way it brings north round to: north, east, south or west. */
+    private static final List<String> TURN_NAMES = List.of("north", "east", "south", "west");
+    private static final Codec<Orientation> TURN = Codec.STRING.comapFlatMap(name -> TURN_NAMES.contains(name)
+                    ? DataResult.success(Orientation.turns().get(TURN_NAMES.indexOf(name)))
+                    : DataResult.error(() -> "a turn is one of " + TURN_NAMES + ", not " + name),
+            turn -> TURN_NAMES.get(Math.max(0, Orientation.turns().indexOf(turn))));
     /** A pattern as its file holds it. */
     public static final Codec<MultiblockPattern> CODEC = RecordCodecBuilder.<RawPattern>create(instance ->
                     instance.group(
@@ -79,6 +85,8 @@ public final class MultiblockPatterns {
                             Codec.BOOL.optionalFieldOf("mirrors", false).forGetter(RawPattern::mirrors),
                             Codec.BOOL.optionalFieldOf("lies_down", false).forGetter(RawPattern::liesDown),
                             Codec.INT.optionalFieldOf("ground", 0).forGetter(RawPattern::ground),
+                            TURN.optionalFieldOf("terminal_faces", Orientation.NORTH)
+                                    .forGetter(RawPattern::terminalFaces),
                             ShapeCodecs.REPEAT.optionalFieldOf("repeat").forGetter(RawPattern::repeat),
                             RecordCodecBuilder.<MultiblockPattern.Inside>create(inside -> inside.group(
                                             ShapeCodecs.LETTER.fieldOf("letter")
@@ -378,6 +386,7 @@ public final class MultiblockPatterns {
                 builder.liesDown();
             }
             builder.ground(raw.ground());
+            builder.terminalFaces(raw.terminalFaces());
             raw.repeat().ifPresent(builder::repeat);
             raw.inside().ifPresent(inside -> builder.inside(inside.letter(), inside.rule()));
             raw.terminal().ifPresent(builder::terminal);
@@ -400,13 +409,13 @@ public final class MultiblockPatterns {
         }
         return DataResult.success(new RawPattern(pattern.name(), layers, pattern.places(), pattern.ports(),
                 pattern.limits(), pattern.together(), pattern.mirrors(), pattern.liesDown(), pattern.ground(),
-                pattern.repeat(), pattern.inside(), pattern.terminalBlock()));
+                pattern.terminalFaces(), pattern.repeat(), pattern.inside(), pattern.terminalBlock()));
     }
 
     private record RawPattern(String name, List<List<String>> layers, Map<Character, Place> key,
                               Map<Character, PortKind> ports, Map<String, Limit> limits,
                               List<MultiblockPattern.Together> together, boolean mirrors, boolean liesDown, int ground,
-                              Optional<MultiblockPattern.Repeat> repeat, Optional<MultiblockPattern.Inside> inside,
-                              Optional<String> terminal) {
+                              Orientation terminalFaces, Optional<MultiblockPattern.Repeat> repeat,
+                              Optional<MultiblockPattern.Inside> inside, Optional<String> terminal) {
     }
 }

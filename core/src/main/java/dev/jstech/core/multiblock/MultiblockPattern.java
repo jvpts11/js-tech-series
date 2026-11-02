@@ -44,6 +44,7 @@ public final class MultiblockPattern implements IStructureShape {
     private final boolean mirrors;
     private final boolean liesDown;
     private final int ground;
+    private final Orientation terminalFaces;
     @Nullable
     private final Repeat repeat;
     @Nullable
@@ -79,6 +80,7 @@ public final class MultiblockPattern implements IStructureShape {
         this.mirrors = from.mirrors;
         this.liesDown = from.liesDown;
         this.ground = from.ground;
+        this.terminalFaces = from.terminalFaces;
         this.repeat = from.repeat;
         this.inside = from.inside;
         this.terminalX = terminalX;
@@ -143,6 +145,11 @@ public final class MultiblockPattern implements IStructureShape {
      */
     public int ground() {
         return this.ground;
+    }
+
+    @Override
+    public Orientation terminalFaces() {
+        return this.terminalFaces;
     }
 
     /** Every way it is found standing, the four horizontal turns first. */
@@ -346,6 +353,7 @@ public final class MultiblockPattern implements IStructureShape {
         private boolean mirrors;
         private boolean liesDown;
         private int ground;
+        private Orientation terminalFaces = Orientation.NORTH;
         @Nullable
         private Repeat repeat;
         @Nullable
@@ -469,6 +477,20 @@ public final class MultiblockPattern implements IStructureShape {
          */
         public Builder ground(final int layer) {
             this.ground = layer;
+            return this;
+        }
+
+        /**
+         * Says which way its terminal faces as drawn, as the turn that brings north round to it ({@link
+         * Orientation#EAST} for a terminal facing east), for a terminal that does not face the way the shape does.
+         *
+         * @throws IllegalArgumentException when {@code turn} is not one of the four turns
+         */
+        public Builder terminalFaces(final Orientation turn) {
+            if (!Orientation.turns().contains(turn)) {
+                throw new IllegalArgumentException("A terminal faces one of the four turns, not " + turn);
+            }
+            this.terminalFaces = turn;
             return this;
         }
 

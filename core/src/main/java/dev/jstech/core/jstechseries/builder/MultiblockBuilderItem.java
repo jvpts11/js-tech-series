@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.jstechseries.builder;
 
-import dev.jstech.core.machine.MachineBlockEntity;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -19,8 +18,9 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
 /**
- * The Multiblock Builder as an item: used on a multiblock's terminal it is aimed at it and held up, before the
- * terminal opens its own screen; used on anything else, or in the air, it is held up as it is, to read or to set.
+ * The Multiblock Builder as an item: used on a multiblock's terminal, or on a Structure Projector showing a
+ * multiblock, it is aimed at it and held up, before the block opens its own screen; used on anything else, or in the
+ * air, it is held up as it is, to read or to set.
  */
 public final class MultiblockBuilderItem extends Item {
 
@@ -28,12 +28,11 @@ public final class MultiblockBuilderItem extends Item {
         super(properties.stacksTo(1));
     }
 
-    /* Before the block it is used on answers: a terminal's own screen would open otherwise. */
+    /* Before the block it is used on answers: a terminal's or a projector's own screen would open otherwise. */
     @Override
     public InteractionResult onItemUseFirst(final ItemStack stack, final UseOnContext context) {
         final Level level = context.getLevel();
-        if (!(level.getBlockEntity(context.getClickedPos()) instanceof MachineBlockEntity machine)
-                || machine.structure() == null) {
+        if (!BuilderPlan.aimable(level, context.getClickedPos())) {
             return InteractionResult.PASS;
         }
         stack.set(MultiblockBuilder.AIM.get(), GlobalPos.of(level.dimension(), context.getClickedPos().immutable()));

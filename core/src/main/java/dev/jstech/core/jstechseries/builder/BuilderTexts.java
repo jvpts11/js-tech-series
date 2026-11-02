@@ -44,9 +44,9 @@ public final class BuilderTexts {
     public static final TextKey BUILT = TextKey.of("jscore.builder.built", "BUILT");
     public static final TextKey BUILT_LINE = TextKey.of("jscore.builder.built_line", "Nothing is missing");
     public static final TextKey NOT_AIMED = TextKey.of("jscore.builder.not_aimed",
-            "Use it on a multiblock's terminal");
+            "Use it on a terminal or a projector");
     public static final TextKey UNKNOWN = TextKey.of("jscore.builder.unknown",
-            "This terminal forms no multiblock it knows");
+            "It aims at no multiblock it knows");
     public static final TextKey CHOOSE = TextKey.of("jscore.builder.choose", "CHOOSE WHAT GOES WHERE");
     public static final TextKey NO_CHOICES = TextKey.of("jscore.builder.no_choices",
             "Every place takes one block only");
@@ -68,9 +68,7 @@ public final class BuilderTexts {
     public static final TextKey TOO_FAR = TextKey.of("jscore.builder.too_far", "Stopped: you walked too far away");
     public static final TextKey RAN_OUT = TextKey.of("jscore.builder.ran_out", "Stopped: you ran out of %s");
     public static final TextKey BLOCKED = TextKey.of("jscore.builder.blocked",
-            "Stopped: something stands where a block goes");
-    public static final TextKey WRONG_LEFT = TextKey.of("jscore.builder.wrong_left",
-            "Done, but other blocks stand in its places: break them");
+            "Stopped: something it cannot move is in the way");
     public static final TextKey NOT_ALLOWED = TextKey.of("jscore.builder.not_allowed",
             "You may not build multiblocks here");
 

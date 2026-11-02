@@ -104,7 +104,9 @@ public final class MultiblockToolsClientTests {
     @ClientTest(timeoutTicks = 1200)
     public static void projector_showsTheFurnaceInTheWorldAndOnItsScreen(final ClientTestContext ctx) {
         ctx.afterTest(() -> ctx.mc().setScreen(null));
-        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+        // Empty hands, so the projector opens its own screen: a Multiblock Builder held would be aimed at it instead.
+        ctx.thenGive(0)
+                .thenTeleport(0, STAND, Direction.SOUTH)
                 .thenServer(0, level -> {
                     clear(ctx, level);
                     level.setBlockAndUpdate(ctx.abs(PROJECTOR), StructureProjector.BLOCK.get().defaultBlockState()

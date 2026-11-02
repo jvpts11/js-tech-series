@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.jstechseries.projector;
 
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.ShapePreview;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -44,12 +45,16 @@ public record ProjectorView(ShapePreview preview, BlockPos terminal, List<Place>
         return projector.preview().map(preview -> of(level, preview, projector.terminalOf(preview)));
     }
 
-    /** What is seen in {@code level} of {@code preview} with its terminal at {@code terminal}. */
+    /**
+     * What is seen in {@code level} of {@code preview} with its terminal at {@code terminal}; a block merged into a
+     * formed multiblock's model is seen as the block it was.
+     */
     public static ProjectorView of(final BlockGetter level, final ShapePreview preview, final BlockPos terminal) {
         final List<Place> places = new ArrayList<>();
         for (final ShapePreview.Ghost ghost : preview.ghosts()) {
             final BlockPos at = terminal.offset(ghost.x(), ghost.y(), ghost.z());
-            places.add(new Place(at, ghost, stateOf(level.getBlockState(at), ghost)));
+            places.add(new Place(at, ghost, stateOf(FormedPartBlock.originalAt(level, at, level.getBlockState(at)),
+                    ghost)));
         }
         final List<Place> clears = new ArrayList<>();
         for (final ShapePreview.Ghost ghost : preview.clears()) {

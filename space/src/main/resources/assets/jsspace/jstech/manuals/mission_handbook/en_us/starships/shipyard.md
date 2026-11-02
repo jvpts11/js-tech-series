@@ -26,7 +26,7 @@ caption: The Small Shipyard, built
 height: 120
 ```
 
-1. Build the dock whole, its pit dug clear. J's Core's Structure Projector shows it block by block.
+1. Build the dock whole, its pit dug clear. J's Core's Structure Projector shows it block by block, and the Multiblock Builder used on that projector digs the pit and builds the dock for you, its terminal up in the booth last.
 2. Use the terminal to open the Starship Design. Drag parts from their cards to the green node of a joint; the right mouse button turns the view.
 3. Mind the flight check: a cockpit, an airlock, a reactor, a main engine, landing gear, a whole spine, and a ship that fits the bay.
 4. Press [[S]] to keep the design, [[E]] to send it to the dock.
