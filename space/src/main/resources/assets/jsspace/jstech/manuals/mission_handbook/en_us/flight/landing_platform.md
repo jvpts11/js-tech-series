@@ -20,6 +20,18 @@ From the creative menu, J's Space tab.
 
 ## How to use it
 
+```multiblock
+id: jsspace:landing_platform_small
+caption: The Landing Platform for stages of three, built
+height: 80
+```
+
+```multiblock
+id: jsspace:landing_platform_large
+caption: The Landing Platform for stages of five, built
+height: 80
+```
+
 1. Lay a square of Landing Pads with the Landing Platform in its middle: 9 by 9 blocks for stages up to 3 blocks wide, 15 by 15 blocks for stages up to 5 blocks wide. It forms once the square is whole. A Structure Projector shows either size, and a Multiblock Builder used on the projector lays it.
 2. Give the stage landing legs and an engine.
 3. Before launch, on the STG page of the [flight computer](jsspace:flight_computer), choose the stage on the left and press PLAT. It picks the nearest platform in this world that you or your team may use and that is wide enough; PLAT + picks the next. The page shows its number, width, distance and whether it is FREE.

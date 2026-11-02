@@ -1921,6 +1921,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   to a reader standing in the Overworld.
 
 ### Changed
+- Manuals: a scene holds a whole building, up to 128 blocks each way (it held 32), so a multiblock as tall as a
+  rocket hangar is drawn on its page. Its blocks' meshes are built once and kept on the graphics card until another
+  layer or step is shown, so a scene of thousands of blocks turns under the reader's drag as smoothly as a furnace's;
+  translucent blocks are still drawn each time, sorted as the scene turns.
 - The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
   counter and the pocket dosimeter are drawn in three dimensions in the hand and on the ground, each held as the game
   holds an item of its kind: the saw and the wrench as its axe is, the saw's teeth forward; the instruments in front
@@ -2035,6 +2039,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- Manuals: a scene too tall for its page, moved on to the next with the heading over it, is drawn shorter under
+  that heading, so its caption no longer runs onto the page's foot.
+- Manuals: the button that hides a scene's top layer stays inside the scene's frame on a narrow page or for a
+  scene of many layers, where it stood over the binding; the words beside it are cut short instead.
 - A player getting up from a seat aboard a structure in flight stands where they got up from the first frame:
   the server's own placing of them, worked out a tick ahead of the structure their game draws, carried them a tick
   along the deck into its wall, and they were drawn there for a frame or two before being pushed back out.

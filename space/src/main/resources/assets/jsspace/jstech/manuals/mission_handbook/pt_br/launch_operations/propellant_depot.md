@@ -20,6 +20,12 @@ No menu criativo, aba J's Space.
 
 ## Como usar
 
+```multiblock
+id: jsspace:propellant_depot
+caption: O Depósito de Propelente, construído no tamanho aprovado
+height: 120
+```
+
 1. Construa o cubo de Casco da Esfera, as quatro pernas, a chaminé e a bomba. Um Projetor de Estruturas mostra o depósito aprovado, de nove blocos de largura sobre pernas de dois, e um Construtor de Multiblocos usado no projetor o constrói; um depósito de outro tamanho se constrói à mão.
 2. A bomba procura o seu depósito a cada dois segundos e o forma quando ele fica inteiro.
 3. Encha a bomba por cano com um líquido. Um foguete de metalox precisa de um depósito de cada.

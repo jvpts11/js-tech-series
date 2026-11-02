@@ -1351,9 +1351,12 @@ public final class GuideLayout {
         final String label = this.figureLabel();
         final List<String> caption = this.captionLines(label, this.text.text(scene.captionKey()));
         final int captionRoom = CAPTION_GAP + this.captionHeight(label, caption);
-        // A scene taller than a fresh page holds with its caption is drawn shorter, so nothing runs past the foot.
-        final int frame = Math.min(scene.height() + SCENE_STRIP, this.bottom() - this.top - captionRoom);
-        this.ensure(frame + captionRoom);
+        // A scene taller than a fresh page holds with its caption is drawn shorter, so nothing runs past the foot; and
+        // shorter still under a heading that moved on with it, measured once it has moved.
+        final int asked = scene.height() + SCENE_STRIP;
+        this.ensure(Math.min(asked, this.bottom() - this.top - captionRoom) + captionRoom);
+        final int room = this.measuring ? this.bottom() - this.top : this.bottom() - this.y;
+        final int frame = Math.min(asked, room - captionRoom);
         this.entryScenes++;
         final String id = this.currentEntry + "#" + this.entryScenes;
         this.place(new GuidePiece.Scene(this.x(), this.y, this.width, frame, id, scene));

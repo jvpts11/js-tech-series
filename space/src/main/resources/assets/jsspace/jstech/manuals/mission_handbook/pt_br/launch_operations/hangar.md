@@ -20,6 +20,13 @@ No menu criativo, aba J's Space.
 
 ## Como usar
 
+```multiblock
+id: jsspace:rocket_hangar
+caption: O Hangar de Foguetes, construído
+height: 180
+yaw: -145
+```
+
 1. Construa-o pelo fantasma de um Projetor de Estruturas, ou use um Construtor de Multiblocos no projetor. O piso, com as duas faixas de cascalho do transportador, fica assentado no chão.
 2. Ponha o Terminal do Hangar por último, no seu lugar na fileira de consoles. O prédio se forma: os consoles e o Painel de Status acendem, e a ponte rolante toma a sua forma.
 3. Use o terminal ou a Mesa do Projeto de Foguete para abrir o Projeto de Foguete. Arraste peças até os nós verdes e depois Confirmar e montar ([[E]]).

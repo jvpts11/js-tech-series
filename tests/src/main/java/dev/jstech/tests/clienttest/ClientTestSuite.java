@@ -231,6 +231,7 @@ import dev.jstech.tests.clienttest.space.ClimbClientTests;
 import dev.jstech.tests.clienttest.space.CrawlerClientTests;
 import dev.jstech.tests.clienttest.space.DepotClientTests;
 import dev.jstech.tests.clienttest.space.DescentClientTests;
+import dev.jstech.tests.clienttest.space.HandbookScenesClientTests;
 import dev.jstech.tests.clienttest.space.SpaceCavesClientTests;
 import dev.jstech.tests.clienttest.space.SpaceEffectsClientTests;
 import dev.jstech.tests.clienttest.space.SpaceSkiesClientTests;
@@ -553,6 +554,7 @@ public final class ClientTestSuite {
             CrawlerClientTests.class,
             LaunchPadClientTests.class,
             DepotClientTests.class,
+            HandbookScenesClientTests.class,
             LaunchPanelClientTests.class,
             RocketLaunchClientTests.class,
             StagingClientTests.class);

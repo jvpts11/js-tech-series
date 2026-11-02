@@ -756,6 +756,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   flight computer, coming down, the landing platform and rocket wreckage; Suits the Lunar Suit, its modules and its
   supplies; and a new section, Starships, the Small Shipyard, the hull, the engines, the wings and gear, the fittings,
   flying a ship, the crew, the ship landing pad and the runway beacon. Each drill is on cuff cards, three steps a card.
+  Every multiblock of the mod is drawn on its page as a scene to turn and peel: the Rocket Hangar whole, the launch
+  pad with its trench dug in, the crawler, the propellant depot, both landing platforms, the ship landing pad and the
+  Small Shipyard.
 - The world sheets: World Data has a sheet for the Moon and one for Mars, each painted as seen from orbit, with
   its ground, its ores, how a crew gets there and back, its landmarks, its biomes and what kills there. Its figures,
   the diameter, gravity, air, temperature, day and year, the usual trip and the delta-v to land, are read from the

@@ -96,12 +96,28 @@ final class SceneLevel implements BlockAndTintGetter {
         this.shown = Math.max(1, Math.min(this.tall, layers));
     }
 
+    /** How many layers are shown, counted up from the bottom. */
+    int shown() {
+        return this.shown;
+    }
+
     /** The blocks shown and where they stand, for the renderer. */
     Map<BlockPos, BlockState> shownStates() {
         final Map<BlockPos, BlockState> out = new HashMap<>();
         this.states.forEach((pos, state) -> {
             if (pos.getY() < this.shown) {
                 out.put(pos, state);
+            }
+        });
+        return out;
+    }
+
+    /** The block entities of the blocks shown and where they stand, for their renderers. */
+    Map<BlockPos, BlockEntity> shownEntities() {
+        final Map<BlockPos, BlockEntity> out = new HashMap<>();
+        this.entities.forEach((pos, entity) -> {
+            if (pos.getY() < this.shown) {
+                out.put(pos, entity);
             }
         });
         return out;

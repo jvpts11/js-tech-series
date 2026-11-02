@@ -792,6 +792,27 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_shortensASceneUnderTheHeadingItCarriesOnSoItsCaptionEndsAboveTheFoot() {
+        // Room under the filler for the heading, not for the tallest scene, which moves on with its heading.
+        final GuideBook book = lay(new GuideContents(List.of(chapter("mod", entry("mod:hall",
+                new GuideBlock.Custom("mod:filler", 80, ""), new GuideBlock.Heading("hall.heading"),
+                new GuideBlock.Scene(List.of(new GuideBlock.SceneBlock(0, 0, 0, "mod:wall", "")),
+                        GuideBlock.SceneView.CORNER, List.of(), true, GuideBlock.Scene.MAX_HEIGHT,
+                        "hall.caption"))))));
+
+        final GuideBook.Page page = book.pages().stream().filter(each -> each.pieces().stream()
+                .anyMatch(piece -> piece instanceof GuidePiece.Scene)).findFirst().orElseThrow();
+        final GuidePiece.Scene scene = page.pieces().stream().filter(piece -> piece instanceof GuidePiece.Scene)
+                .map(piece -> (GuidePiece.Scene) piece).findFirst().orElseThrow();
+        assertTrue(page.pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.text().equalsIgnoreCase("hall.heading") && text.y() < scene.y()), "its heading came with it");
+        final int lowest = page.pieces().stream().filter(piece -> piece instanceof GuidePiece.Text)
+                .mapToInt(piece -> piece.y() + ((GuidePiece.Text) piece).size().lineHeight()).max().orElseThrow();
+        assertTrue(lowest <= GuideLayout.bottom(STYLE, 0), "its caption ends at " + lowest + ", above the foot at "
+                + GuideLayout.bottom(STYLE, 0));
+    }
+
+    @Test
     void lay_listsALegendTooLongForTwoColumnsInOne() {
         final GuideBook book = lay(sceneBook("one", "two"), new FixedText(Map.of(
                 "one", "The power button, which starts the computer", "two", "Tray")));

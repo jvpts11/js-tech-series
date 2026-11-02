@@ -20,6 +20,12 @@ No menu criativo, aba J's Space.
 
 ## Como usar
 
+```multiblock
+id: jsspace:launch_pad
+caption: A Base de Lançamento, construída, com a vala cavada no chão
+height: 120
+```
+
 1. Construa a base pelo fantasma de um Projetor de Estruturas, ou use um Construtor de Multiblocos no projetor: um quadrado de concreto cinza-claro com os cantos cortados; a vala de chamas cavada com cinco blocos de fundo ao longo do meio, revestida com Revestimento da Vala; uma faixa de Defletores de Chamas atravessando o fundo da vala sob o meio da base; as duas faixas de cascalho do transportador, da borda da base até três blocos depois do meio; e a Porta de Serviço da Plataforma junto à base.
 2. Leve o caminho do transportador em linha reta da porta do hangar até as faixas da base. O transportador para onde elas terminam e assenta a plataforma com a abertura sobre os defletores, seja qual for o foguete em cima dela. Você pode pôr ali uma coluna de três Pedestais da Plataforma embaixo de cada um dos seis da plataforma, como no hangar.
 3. Encha a porta de serviço por canos com água, e com oxigênio líquido e metano líquido do [depósito de propelente](jsspace:propellant_depot), e dê energia a ela.

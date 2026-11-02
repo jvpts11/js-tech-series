@@ -20,6 +20,12 @@ No menu criativo, aba J's Space.
 
 ## Como usar
 
+```multiblock
+id: jsspace:crawler_transporter
+caption: O Transportador, construído
+height: 100
+```
+
 1. Faça o caminho do transportador: uma faixa de cascalho sob as esteiras de cada lado, de até 1.024 blocos, terminando onde o transportador deve parar.
 2. Construa o transportador ao longo dela, pelo fantasma de um Projetor de Estruturas, ou use um Construtor de Multiblocos no projetor. O motor o encontra inteiro e o forma.
 3. Para um translado, deixe-o embaixo do deck da plataforma, centrado, com o comprimento ao longo do deck.

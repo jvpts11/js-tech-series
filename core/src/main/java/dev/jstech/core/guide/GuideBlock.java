@@ -495,7 +495,7 @@ public sealed interface GuideBlock {
     }
 
     /**
-     * A scene: blocks placed in a small grid and drawn as the game draws them, which the reader turns by dragging and
+     * A scene: blocks placed in a grid and drawn as the game draws them, which the reader turns by dragging and
      * brings nearer or farther with the wheel, with numbered balloons pinned to its parts and their legend under it;
      * numbered and captioned with the figures ("Figure 1-14."). One the reader may peel layer by layer, such as a
      * multiblock, has a control that hides the layers above the one chosen.
@@ -512,8 +512,11 @@ public sealed interface GuideBlock {
     record Scene(List<SceneBlock> blocks, SceneView view, List<SceneBalloon> balloons, boolean layers, int height,
                  String captionKey, List<SceneStep> steps) implements GuideBlock {
 
-        /** How many blocks a scene's grid holds along each side: a scene is a small piece of a world, never a build. */
-        public static final int GRID = 32;
+        /**
+         * How many blocks a scene's grid holds along each side: room for a whole building shown as a multiblock, as a
+         * rocket hangar a hundred and ten blocks tall, and no more, as a scene is still a piece of a world.
+         */
+        public static final int GRID = 128;
         /** The least and the most a scene is drawn tall on a page. */
         public static final int MIN_HEIGHT = 48;
         public static final int MAX_HEIGHT = 180;

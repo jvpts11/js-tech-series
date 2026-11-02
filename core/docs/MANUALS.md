@@ -520,9 +520,10 @@ these; a manual's files never hold one.
 .balloon(2, GuideBlock.ScenePart.of(1, 1, 0), "A chest")
 ```
 
-A scene is a few blocks in a small grid (up to 32 each way), drawn on the page as the game draws them in a world:
-each block's model shaded by the blocks round it, and each block entity through its renderer, the Core's models among
-them, in full light. `place` puts a block at a place of the grid (across, up, and back towards the north), in the
+A scene is blocks in a grid (up to 128 each way, room for a whole building), drawn on the page as the game draws them
+in a world: each block's model shaded by the blocks round it, and each block entity through its renderer, the Core's
+models among them, in full light. The blocks' meshes are built once and kept on the graphics card until another layer
+or step is shown, so a scene of thousands of blocks turns as smoothly as a few. `place` puts a block at a place of the grid (across, up, and back towards the north), in the
 state its properties give, with what its block entity holds written as a compound tag; both may be empty.
 
 The reader drags the scene to turn it (across turns it round, up and down tilts it), turns the wheel over it to bring

@@ -20,6 +20,13 @@ From the creative menu, J's Space tab.
 
 ## How to use it
 
+```multiblock
+id: jsspace:rocket_hangar
+caption: The Rocket Hangar, built
+height: 180
+yaw: -145
+```
+
 1. Build it from a Structure Projector's ghost, or use a Multiblock Builder on the projector. Its floor, with the crawler's two lanes of gravel, is laid into the ground.
 2. Set the Hangar Terminal last, in its place in the console row. The building forms: the consoles and the Status Board light up, and the crane takes its shape.
 3. Use the terminal or the Rocket Design Table to open the Rocket Design. Drag parts to the green nodes, then Confirm and build ([[E]]).

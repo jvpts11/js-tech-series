@@ -231,7 +231,7 @@ final class ManualScenes {
         }
         if (scene.layers()) {
             final ManualScreenLayout.Rect more = this.more(world.orElse(reset));
-            final ManualScreenLayout.Rect fewer = this.fewer(scene, more);
+            final ManualScreenLayout.Rect fewer = this.fewer(scene, more, x);
             if (more.contains(mx, my) || fewer.contains(mx, my)) {
                 this.pressed = more.contains(mx, my) ? more : fewer;
                 state.layers = Math.max(1, Math.min(scene.tall(), state.layers + (more.contains(mx, my) ? 1 : -1)));
@@ -300,7 +300,7 @@ final class ManualScenes {
             return false;
         }
         final ManualScreenLayout.Rect more = this.more(this.inWorld(piece, x, stripY).orElse(reset));
-        return more.contains(mx, my) || this.fewer(scene, more).contains(mx, my);
+        return more.contains(mx, my) || this.fewer(scene, more, x).contains(mx, my);
     }
 
     /** The Reset button of a scene whose frame stands at that place. */
@@ -313,7 +313,7 @@ final class ManualScenes {
         final int stripY = y + pictureHeight(piece);
         final ManualScreenLayout.Rect shown = this.more(this.inWorld(piece, x, stripY).orElse(this.reset(piece, x,
                 stripY)));
-        return more ? shown : this.fewer(piece.scene(), shown);
+        return more ? shown : this.fewer(piece.scene(), shown, x);
     }
 
     /** How the reader has turned a scene, once it has been drawn. */
@@ -351,11 +351,14 @@ final class ManualScenes {
         return this.inWorld(piece, x, y + pictureHeight(piece));
     }
 
-    /** Lets every scene's picture go, for a manual being closed. */
+    /** Lets every scene's picture and kept meshes go, for a manual being closed. */
     void close() {
         for (final State state : this.states.values()) {
             if (state.surface != null) {
                 state.surface.close();
+            }
+            if (state.painter != null) {
+                state.painter.close();
             }
         }
         this.states.clear();
@@ -379,8 +382,13 @@ final class ManualScenes {
             state.stale = true;
         }
         // A scene shown step by step stands as its step says; another always stands whole.
-        if (state.level == null || state.levelStep != state.step) {
+        if (state.level == null || state.painter == null || state.levelStep != state.step) {
+            if (state.painter != null) {
+                state.painter.close();
+            }
             state.level = new SceneLevel(state.scene, state.scene.blocksAt(state.step));
+            // Its blocks' meshes are kept between pictures, so turning even a whole building costs little.
+            state.painter = SceneLevelPainter.keeping(state.level);
             state.levelStep = state.step;
             state.stale = true;
         }
@@ -390,7 +398,7 @@ final class ManualScenes {
             state.level.showLayers(state.layers);
             final SceneProjection projection = new SceneProjection(state.scene, state.view, pixelsWide, pixelsTall);
             SceneRenderer.draw(state.surface, SceneRenderer.View.of(projection.middle(), state.view.yaw(),
-                    state.view.pitch(), (float) projection.scale()), new SceneLevelPainter(state.level));
+                    state.view.pitch(), (float) projection.scale()), state.painter);
             state.stale = false;
         }
         RenderSystem.enableBlend();
@@ -507,11 +515,12 @@ final class ManualScenes {
         int room = beside.x() - x - BUTTON_ROOM;
         if (scene.layers()) {
             final ManualScreenLayout.Rect more = this.more(beside);
-            final ManualScreenLayout.Rect fewer = this.fewer(scene, more);
+            final ManualScreenLayout.Rect fewer = this.fewer(scene, more, x);
             this.button(g, more, "+", state.layers < scene.tall(), mx, my);
             this.button(g, fewer, "-", state.layers > 1, mx, my);
-            final String shown = this.layers(state, scene);
-            GuideFonts.draw(g, this.font, shown, TextSize.SMALL, this.style, fewer.x() + fewer.width() + GAP, y + 3,
+            final int wordsX = fewer.x() + fewer.width() + GAP;
+            final String shown = this.fit(this.layers(state, scene), more.x() - GAP - wordsX);
+            GuideFonts.draw(g, this.font, shown, TextSize.SMALL, this.style, wordsX, y + 3,
                     this.colour.applyAsInt(GuideStyle.INK));
             room = fewer.x() - x - BUTTON_ROOM;
         }
@@ -714,14 +723,19 @@ final class ManualScenes {
         return new ManualScreenLayout.Rect(reset.x() - GAP - BUTTON_HEIGHT, reset.y(), BUTTON_HEIGHT, BUTTON_HEIGHT);
     }
 
-    /** The button that hides the top layer, before the words saying how many are shown. */
-    private ManualScreenLayout.Rect fewer(final GuideBlock.Scene scene, final ManualScreenLayout.Rect more) {
-        // Room for the widest the words can be, so the buttons stand still as the layers change.
+    /**
+     * The button that hides the top layer, before the words saying how many are shown, in the frame whose left edge
+     * is at {@code left}.
+     */
+    private ManualScreenLayout.Rect fewer(final GuideBlock.Scene scene, final ManualScreenLayout.Rect more,
+                                          final int left) {
+        // Room for the widest the words can be, so the buttons stand still as the layers change; never past the
+        // frame's edge, where a scene of a hundred layers on a narrow page would push it, the words cut short instead.
         final int words = Math.max(GuideFonts.width(this.font, this.text.text(GuideTexts.SCENE_ALL_LAYERS.key()),
                 TextSize.SMALL, this.style), GuideFonts.width(this.font, this.text.text(GuideTexts.SCENE_LAYER.key(),
                 scene.tall(), scene.tall()), TextSize.SMALL, this.style));
-        return new ManualScreenLayout.Rect(more.x() - 2 * GAP - words - BUTTON_HEIGHT, more.y(), BUTTON_HEIGHT,
-                BUTTON_HEIGHT);
+        return new ManualScreenLayout.Rect(Math.max(left + GAP, more.x() - 2 * GAP - words - BUTTON_HEIGHT),
+                more.y(), BUTTON_HEIGHT, BUTTON_HEIGHT);
     }
 
     /** The words as they fit the room, cut short when they do not. */
@@ -755,6 +769,9 @@ final class ManualScenes {
         private GpuSurface surface;
         @Nullable
         private SceneLevel level;
+        /** What paints its level, keeping its meshes between pictures until the level changes or the manual closes. */
+        @Nullable
+        private SceneLevelPainter painter;
         /** Whether the picture no longer shows what the scene shows now. */
         private boolean stale = true;
         /** A scene shown step by step: the step it is at, the step its level stands as, and whether it plays. */

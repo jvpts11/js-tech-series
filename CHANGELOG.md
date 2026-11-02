@@ -2866,6 +2866,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   flight computer, coming down, the landing platform and rocket wreckage; Suits the Lunar Suit, its modules and its
   supplies; and a new section, Starships, the Small Shipyard, the hull, the engines, the wings and gear, the fittings,
   flying a ship, the crew, the ship landing pad and the runway beacon. Each drill is on cuff cards, three steps a card.
+  Every multiblock of the mod is drawn on its page as a scene to turn and peel: the Rocket Hangar whole, the launch
+  pad with its trench dug in, the crawler, the propellant depot, both landing platforms, the ship landing pad and the
+  Small Shipyard.
 - (Space) The world sheets: World Data has a sheet for the Moon and one for Mars, each painted as seen from orbit, with
   its ground, its ores, how a crew gets there and back, its landmarks, its biomes and what kills there. Its figures,
   the diameter, gravity, air, temperature, day and year, the usual trip and the delta-v to land, are read from the
@@ -2891,6 +2894,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   atmosphere, temperature, radiation, gravity and relief yet.
 
 ### Changed
+- (Core) Manuals: a scene holds a whole building, up to 128 blocks each way (it held 32), so a multiblock as tall as a
+  rocket hangar is drawn on its page. Its blocks' meshes are built once and kept on the graphics card until another
+  layer or step is shown, so a scene of thousands of blocks turns under the reader's drag as smoothly as a furnace's;
+  translucent blocks are still drawn each time, sorted as the scene turns.
 - (Core) The saw, the basic wrench, the four extinguishers, the network and signal probes, the Clamp Meter, the Geiger
   counter and the pocket dosimeter are drawn in three dimensions in the hand and on the ground, each held as the game
   holds an item of its kind: the saw and the wrench as its axe is, the saw's teeth forward; the instruments in front
@@ -3058,6 +3065,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) Manuals: a scene too tall for its page, moved on to the next with the heading over it, is drawn shorter under
+  that heading, so its caption no longer runs onto the page's foot.
+- (Core) Manuals: the button that hides a scene's top layer stays inside the scene's frame on a narrow page or for a
+  scene of many layers, where it stood over the binding; the words beside it are cut short instead.
 - (Space) A landing platform is free again a few seconds after the stage it holds is taken away or moved off it;
   before, it held that stage for good, and no other stage could land on it.
 - (Core) A player getting up from a seat aboard a structure in flight stands where they got up from the first frame:
