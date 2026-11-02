@@ -451,8 +451,10 @@ public final class ShipFlightGameTests {
     }
 
     /*
-     * The ship let go as {@link #letGo} lets it go, then the land it flies over kept loaded: asked for only once the
-     * ship stands, so its own blocks are not kept waiting behind it.
+     * The ship let go as {@link #letGo} lets it go, then the land it flies over kept loaded and ticking: asked for
+     * only once the ship stands, so its own blocks are not kept waiting behind it. A ship waits where it is till the
+     * land ahead of it ticks, and land loaded is not yet land ticking: with other tests making their land beside it,
+     * a ship set off over land only loaded waited out its pilot's hold.
      */
     private static GameTestSequence flying(final GameTestHelper helper, final MovingStructure[] ship,
                                            final int west) {
@@ -460,8 +462,8 @@ public final class ShipFlightGameTests {
             final ChunkPos dock = new ChunkPos(helper.absolutePos(CORNER));
             for (int x = dock.x - west; x <= dock.x + 1; x++) {
                 for (int z = dock.z - FLOWN_CHUNKS; z <= dock.z + 1; z++) {
-                    helper.assertTrue(helper.getLevel().getChunkSource().getChunkNow(x, z) != null, "the land it"
-                            + " flies over loads");
+                    helper.assertTrue(helper.getLevel().isPositionEntityTicking(new ChunkPos(x, z)
+                            .getWorldPosition()), "the land it flies over loads and ticks");
                 }
             }
         });
