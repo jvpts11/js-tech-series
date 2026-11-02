@@ -106,6 +106,16 @@ public final class MovingStructureEntity extends Entity {
         }
     }
 
+    /* Fallen under its dimension's world, where the game takes away whatever falls that far, it stops there whole. */
+    @Override
+    protected void onBelowWorld() {
+        if (structure == null) {
+            super.onBelowWorld();
+            return;
+        }
+        structure.keepAboveTheVoid();
+    }
+
     @Override
     public void setPos(final double x, final double y, final double z) {
         if (structure != null && !following) {

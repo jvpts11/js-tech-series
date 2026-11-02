@@ -2042,6 +2042,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A moving structure fallen under its dimension's world, 64 blocks under its lowest block, where the game takes
+  away whatever falls that far, stops there whole and goes on from there, a pilot flying it up again; before, it was
+  taken away like any falling thing, its blocks left in its plot of the yard for good, the plot still taken, and
+  whoever sat on it left floating where it was.
 - The Structure Projector no longer slows the game showing a big multiblock: its ghosts and marks are built once,
   off the game's thread, and kept on the graphics card until what it shows changes, where every ghost was drawn afresh
   every frame. Showing the Rocket Hangar, tens of thousands of ghosts, took the game to under 20 frames a second; it

@@ -108,6 +108,8 @@ public final class MovingStructure implements IStructureBody {
     private static final Codec<double[]> PLACE = Codec.DOUBLE.listOf(3, 3).xmap(
             list -> new double[] {list.get(0), list.get(1), list.get(2)},
             place -> List.of(place[0], place[1], place[2]));
+    /* How far under its dimension's lowest block the game takes away whatever falls, in blocks. */
+    private static final int BELOW_THE_WORLD = 64;
 
     MovingStructure(final MovingStructureEntity entity, final StructureUuid id, final int plot, final Box bounds,
                     final int blocks, final double pivotX, final double pivotY, final double pivotZ,
@@ -385,6 +387,28 @@ public final class MovingStructure implements IStructureBody {
     }
 
     /**
+     * Puts it back up on the line under its dimension's world, under which the game takes away whatever falls, with
+     * what holds it if anything does, when it went under it: its fall by its physics stopped, whatever else moves it
+     * left to go on from there, so a pilot can fly it up again. A structure taken away there would leave its blocks in
+     * its plot of the yard for good, the plot still taken, and whoever sat on it where it was.
+     */
+    void keepAboveTheVoid() {
+        final double floor = entity.level().getMinBuildHeight() - BELOW_THE_WORLD;
+        final double under = floor - frame.pose().y();
+        if (under <= 0) {
+            return;
+        }
+        final MovingStructure root = StructureMounts.rootOf(this);
+        final StructurePose now = root.frame.pose();
+        root.pending = null;
+        root.teleport(now.movedTo(now.x(), now.y() + under, now.z()));
+        final StructurePhysics falling = root.physics();
+        if (falling != null && falling.body().velocity().y < 0) {
+            falling.body().velocity().y = 0;
+        }
+    }
+
+    /**
      * Works out the next tick of a rule that does not read the world, away from the server's thread: the pose is
      * taken next tick on it. A rule that reads the world, or a structure at rest, does nothing here.
      */
@@ -463,6 +487,7 @@ public final class MovingStructure implements IStructureBody {
             }
         }
         stepOwn(level);
+        keepAboveTheVoid();
         StructureMounts.drive(level, this, 0);
     }
 
