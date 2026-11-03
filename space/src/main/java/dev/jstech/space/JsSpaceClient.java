@@ -36,6 +36,8 @@ import dev.jstech.space.client.ship.ShipChaseCamera;
 import dev.jstech.space.client.ship.ShipConsoleScreen;
 import dev.jstech.space.client.ship.ShipExhaust;
 import dev.jstech.space.client.ship.ShipHud;
+import dev.jstech.space.client.ship.SuitLockerRenderer;
+import dev.jstech.space.client.ship.SuitLockerScreen;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
 import dev.jstech.space.client.shipyard.ShipHolograms;
 import dev.jstech.space.client.shipyard.ShipyardRenderer;
@@ -45,6 +47,7 @@ import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.network.SpacePayloads;
+import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.shipyard.ShipDesigner;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -95,6 +98,10 @@ public final class JsSpaceClient {
         // A ship's console's screen, its crew page.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipConsole.MENU.get(),
                 ShipConsoleScreen::new));
+        // A ship's suit locker: its screen, a place for each thing, and its suit standing on its rack.
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(
+                ShipKitBlocks.SUIT_LOCKER_MENU.get(), SuitLockerScreen::new));
+        SuitLockerRenderer.listen(modEventBus);
         PlanHologram.show(ShipHolograms::shown);
         // The Flight Computer's screen, and the landing maps it is sent.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(FlightComputer.MENU.get(),

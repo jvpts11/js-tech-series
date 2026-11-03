@@ -424,6 +424,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its structure goes. Experimental.
 
 ### Added
+- Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
+  armour drawn with a model of the Core's as on an armour stand or a locker's rack, each of its bones of that slot
+  where a wearer at rest has that part, what it carries shown as when worn.
 - A declared model may name a texture a pack makes as the game loads, once promised: the data run's check of
   the model takes it.
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

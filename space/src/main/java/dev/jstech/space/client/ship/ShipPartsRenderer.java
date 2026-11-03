@@ -29,12 +29,14 @@ import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.ShipStairGeometry;
 import dev.jstech.space.ship.ShipStairs;
+import dev.jstech.space.ship.SuitLockerEntity;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 import net.minecraft.client.Minecraft;
@@ -93,19 +95,21 @@ public final class ShipPartsRenderer {
                             final Map<Integer, Map<String, Set<String>>> holes, final GearMotion gear,
                             final CabinReadings readings, final PoseStack poses, final MultiBufferSource buffers,
                             final int light, final int overlay) {
-        draw(owner, placed, holes, gear, (part, door) -> door.startsShut(), (part, door) -> false, readings, poses,
-                buffers, light, overlay);
+        draw(owner, placed, holes, gear, (part, door) -> door.startsShut(), (part, door) -> false,
+                (part, cell) -> null, readings, poses, buffers, light, overlay);
     }
 
     /**
      * Draws {@code placed} as {@link #draw(BlockEntity, List, Map, GearMotion, CabinReadings, PoseStack,
      * MultiBufferSource, int, int)} does, each door shut where {@code shut} says, its leaf slid away where not, and
-     * what it lets down, a stair, down where {@code down} says ({@link ShipDoors}).
+     * what it lets down, a stair, down where {@code down} says ({@link ShipDoors}); and each suit locker as the one
+     * {@code lockers} finds at its block holds, none an empty one ({@link ShipLockers}).
      */
     public static void draw(final BlockEntity owner, final List<ShipPartModels.Placed> placed,
                             final Map<Integer, Map<String, Set<String>>> holes, final GearMotion gear,
                             final BiPredicate<ShipPartModels.Placed, ShipDoors.Door> shut,
                             final BiPredicate<ShipPartModels.Placed, ShipDoors.Door> down,
+                            final BiFunction<ShipPartModels.Placed, List<Integer>, SuitLockerEntity> lockers,
                             final CabinReadings readings, final PoseStack poses, final MultiBufferSource buffers,
                             final int light, final int overlay) {
         final Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
@@ -124,6 +128,8 @@ public final class ShipPartsRenderer {
             ShipGears.rigOf(cabinOf(part.model())).ifPresent(rig -> ShipGears.pose(instance, rig, gear, hidden));
             ShipDoors.rigOf(cabinOf(part.model())).ifPresent(rig -> ShipDoors.pose(instance, rig,
                     door -> shut.test(part, door), door -> down.test(part, door), hidden));
+            ShipLockers.rigOf(part.model()).ifPresent(rig -> ShipLockers.hide(rig, lockers.apply(part, rig.cell()),
+                    hidden));
             hide(instance, hidden);
             poses.pushPose();
             poses.translate(0, 0, part.z());
@@ -181,8 +187,9 @@ public final class ShipPartsRenderer {
         final int[] stair = ShipStairGeometry.CELLS.getFirst();
         draw(owner, placed, holes, gear, (part, door) -> FormedDoors.shut(level, blockOf(noseAt, turn, part,
                 door.cell()), door.piece(), door.startsShut()), (part, door) -> ShipStairs.down(level,
-                blockOf(noseAt, turn, part, List.of(stair[0], stair[1], stair[2]))), readings, poses, buffers, light,
-                overlay);
+                blockOf(noseAt, turn, part, List.of(stair[0], stair[1], stair[2]))),
+                (part, cell) -> level.getBlockEntity(blockOf(noseAt, turn, part, cell)) instanceof SuitLockerEntity
+                        locker ? locker : null, readings, poses, buffers, light, overlay);
         poses.popPose();
     }
 
@@ -228,8 +235,8 @@ public final class ShipPartsRenderer {
         return turn;
     }
 
-    /* A model's cabin is read from beside its geometry, the same in every finish. */
-    private static ResourceLocation cabinOf(final ResourceLocation model) {
+    /* A model's cabin is read from beside its geometry, the same in every finish; its doors and its locker too. */
+    static ResourceLocation cabinOf(final ResourceLocation model) {
         final String path = model.getPath();
         return ResourceLocation.fromNamespaceAndPath(model.getNamespace(), "ship/"
                 + path.substring(path.lastIndexOf('/') + 1));

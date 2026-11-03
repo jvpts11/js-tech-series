@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -75,6 +76,9 @@ public final class ShipKitBlocks {
             .named("Suit Locker").register());
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SuitLockerEntity>> SUIT_LOCKER_ENTITY =
             SpaceContent.CONTENT.blockEntity("suit_locker", SuitLockerEntity::new, SUIT_LOCKER);
+    /** The suit locker's menu, a place for each thing it holds. */
+    public static final DeferredHolder<MenuType<?>, MenuType<SuitLockerMenu>> SUIT_LOCKER_MENU =
+            SpaceContent.CONTENT.menu("suit_locker", SuitLockerMenu::new);
     public static final BlockEntry<Block> OXYGEN_PANEL = add(fixture("oxygen_panel", OxygenPanelBlock::new)
             .named("Oxygen Panel").register());
     public static final BlockEntry<Block> DOCKING_COLLAR = add(kit("docking_collar").named("Docking Collar")

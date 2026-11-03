@@ -192,6 +192,19 @@ event.registerItem(KitArmorModel.of(SUIT.id()).shownWhile("goldVisor", stack -> 
         HELMET.get(), SUIT_PIECE.get(), TROUSERS.get(), BOOTS.get());
 ```
 
+*Added 2026-11-03:* a piece stands with no one in it, on an armour stand or a locker's rack, with
+`KitArmorModel.drawStanding(stack, slot, poses, light)`: each of its bones of that slot where a wearer standing at
+rest has that part, a visor or a module it carries shown as when worn. The pose stack is a living thing's model space,
+as the game's renderer of one sets it up: Y down, the model's origin 1.501 blocks over the feet.
+
+```java
+poses.translate(0.5, 0.0, 0.5);                         // the feet, in the middle of the block
+poses.mulPose(Axis.YP.rotationDegrees(180.0F - facing)); // turned as the game turns a living thing
+poses.scale(-1, -1, 1);
+poses.translate(0.0, -1.501, 0.0);
+KitArmorModel.drawStanding(helmet, EquipmentSlot.HEAD, poses, light);
+```
+
 ## What moves a model
 
 A model's `ModelAnimator` holds its **controllers**, each playing one animation, in the order they were first asked

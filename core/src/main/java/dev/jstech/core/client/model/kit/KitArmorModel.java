@@ -114,6 +114,42 @@ public final class KitArmorModel {
         return new Extensions(this);
     }
 
+    /**
+     * Draws {@code stack}, a piece of armour drawn with a model of the Core's, standing with no one in it, as on an
+     * armour stand or a locker's rack: each of its bones of {@code slot} where a wearer standing at rest has that part.
+     * {@code poses} is a living thing's model space, as the game's renderer of one sets it up before its model: Y down,
+     * the model's origin 1.5 blocks over the feet. A stack drawn some other way draws nothing.
+     *
+     * <pre>{@code
+     * poses.pushPose();
+     * poses.translate(0.5, 0.0, 0.5);
+     * poses.scale(-1, -1, 1);
+     * poses.translate(0.0, -1.501, 0.0);
+     * KitArmorModel.drawStanding(helmet, EquipmentSlot.HEAD, poses, light);
+     * poses.popPose();
+     * }</pre>
+     */
+    public static void drawStanding(final ItemStack stack, final EquipmentSlot slot, final PoseStack poses,
+                                    final int light) {
+        if (stack.isEmpty() || !(IClientItemExtensions.of(stack) instanceof Extensions kit)) {
+            return;
+        }
+        if (kit.armour.worn == null) {
+            kit.armour.worn = new Worn(kit.armour.model, kit.armour.shown);
+        }
+        final Worn worn = kit.armour.worn;
+        worn.wearer = null;
+        worn.stack = stack;
+        worn.slot = slot;
+        // At rest, as the game's model stands before a wearer's pose is copied into it.
+        for (final ModelPart part : List.of(worn.head, worn.hat, worn.body, worn.rightArm, worn.leftArm,
+                worn.rightLeg, worn.leftLeg)) {
+            part.resetPose();
+            part.visible = true;
+        }
+        worn.draw(poses, light, OverlayTexture.NO_OVERLAY);
+    }
+
     /** Hands the game's bus what this answers, once, from the Core's constructor on a player's game. */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(RenderArmEvent.class, KitArmorModel::onArm);
@@ -235,6 +271,11 @@ public final class KitArmorModel {
         @Override
         public void renderToBuffer(final PoseStack poses, final VertexConsumer given, final int light,
                                    final int overlay, final int colour) {
+            draw(poses, light, overlay);
+        }
+
+        /* Draws the piece told last, on its wearer's limbs as they are posed now. */
+        void draw(final PoseStack poses, final int light, final int overlay) {
             // The game draws a piece once for each layer of its material and once more for its trim and its glint;
             // each piece is drawn once, with its own textures, and its glint with it.
             final long frame = KitClock.frame();

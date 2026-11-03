@@ -21,6 +21,7 @@ import dev.jstech.space.api.SpaceSuit;
 import dev.jstech.space.api.SpaceSuits;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
+import dev.jstech.space.life.SuitSupplies;
 import dev.jstech.space.ship.BunkBlock;
 import dev.jstech.space.ship.IFixtureEntity;
 import dev.jstech.space.ship.OxygenPanelBlock;
@@ -32,6 +33,7 @@ import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.ship.SuitLockerEntity;
+import dev.jstech.space.ship.SuitLockerMenu;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.LinkedHashMap;
@@ -68,7 +70,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * A starship's fixtures at work: the airlock's oxygen panel fills the tanks of a worn suit from the cabin's air, taking
  * its oxygen; the quarters' bunk is a respawn point in a cabin of breathable air and refuses one of nitrogen; the suit
- * locker keeps what is put in it and gives it back when broken; a formed part's fixture stops drawing itself and lets
+ * locker keeps what is put in it and gives it back when broken, each of its places taking only its own thing, and shows
+ * the suit on its rack and its bottles; a formed part's fixture stops drawing itself and lets
  * the light through, and stands as its block of its part's model; the workshop's working pieces keep themselves in a
  * ship's plan, and work as the game's own blocks do: the crafting grid, the smithing slots, a furnace that smelts and
  * gives light as it burns, a barrel of 27 stacks.
@@ -84,6 +87,9 @@ public final class ShipFixtureGameTests {
     private static final BlockPos INSIDE = new BlockPos(4, 3, 4);
     private static final BlockPos FIXTURE = new BlockPos(3, 2, 3);
     private static final double ATMOSPHERE = 101.3;
+    /* The suit locker's menu: its places first, then the player's main grid, then the hotbar. */
+    private static final int LOCKER_PLACES = 9;
+    private static final int MAIN_GRID = 27;
 
     private ShipFixtureGameTests() {
     }
@@ -140,6 +146,44 @@ public final class ShipFixtureGameTests {
                     helper.assertTrue(!stale, "in a cabin of nitrogen it wakes no one");
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void suitLocker_eachPlaceTakesItsOwnThingAndItShowsTheSuitAndTheBottles(
+            final GameTestHelper helper) {
+        helper.setBlock(FIXTURE, ShipKitBlocks.SUIT_LOCKER.get());
+        final SuitLockerEntity locker = (SuitLockerEntity) helper.getBlockEntity(FIXTURE);
+        final ItemStack helmet = new ItemStack(LunarSuit.HELMET.get());
+        final ItemStack suit = new ItemStack(LunarSuit.SUIT.get());
+        final ItemStack trousers = new ItemStack(LunarSuit.TROUSERS.get());
+        final ItemStack boots = new ItemStack(LunarSuit.BOOTS.get());
+        final ItemStack bottle = new ItemStack(SuitSupplies.OXYGEN_BOTTLE.get());
+        final ItemStack patch = new ItemStack(SuitSupplies.SUIT_PATCH.get());
+        final List<Boolean> takes = List.of(locker.canPlaceItem(0, helmet), !locker.canPlaceItem(0, suit),
+                locker.canPlaceItem(1, suit), locker.canPlaceItem(2, trousers), !locker.canPlaceItem(2, boots),
+                locker.canPlaceItem(3, boots), locker.canPlaceItem(4, bottle), !locker.canPlaceItem(4, helmet),
+                locker.canPlaceItem(8, patch), !locker.canPlaceItem(8, bottle),
+                // A helmet of no suit (the tests' own suit is iron).
+                !locker.canPlaceItem(0, new ItemStack(Items.GOLDEN_HELMET)));
+        helper.assertTrue(!takes.contains(false), "each place takes only its own thing: " + takes);
+        // A player's shift-clicks put each thing in its place: the suit on the rack, the bottles on the shelf.
+        final ServerPlayer crew = GameTestPlayers.join(helper.getLevel(), UUID.randomUUID(), "jst-locker-crew");
+        crew.getInventory().setItem(0, suit.copy());
+        crew.getInventory().setItem(1, bottle.copy());
+        crew.getInventory().setItem(2, bottle.copy());
+        final SuitLockerMenu menu = new SuitLockerMenu(1, crew.getInventory(), locker);
+        for (int hotbar = 0; hotbar < 3; hotbar++) {
+            menu.quickMoveStack(crew, LOCKER_PLACES + MAIN_GRID + hotbar);
+        }
+        menu.removed(crew);
+        GameTestPlayers.leave(crew);
+        helper.assertTrue(locker.getItem(1).is(LunarSuit.SUIT.get()) && locker.getItem(4).is(bottle.getItem())
+                && locker.getItem(5).is(bottle.getItem()), "shift-clicked, the suit goes on the rack and the "
+                + "bottles on the shelf");
+        helper.assertTrue(locker.holds(SuitLockerEntity.Place.SUIT) && !locker.holds(SuitLockerEntity.Place.HELMET)
+                && locker.bottles() == 2 && locker.piece(SuitLockerEntity.Place.SUIT).is(LunarSuit.SUIT.get()),
+                "it shows the suit on its rack and two bottles on its shelf");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = BATCH)

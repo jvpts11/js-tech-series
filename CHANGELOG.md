@@ -511,6 +511,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its structure goes. Experimental.
 
 ### Added
+- (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
+  armour drawn with a model of the Core's as on an armour stand or a locker's rack, each of its bones of that slot
+  where a wearer at rest has that part, what it carries shown as when worn.
 - (Space) A pressure door in the bulkhead at the front of each of a small starship's sections: it shuts and opens
   with a click, its leaf sliding into the bulkhead's wall, solid only while it is shut, the lamp over it red shut and
   green open. A ship's sections stand with their pressure doors open as it forms, its airlock's outer door shut.
@@ -522,6 +525,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   cabin's air. The bunks, suit lockers and racks, standing in the blocks the hull passes through, hold the air as the
   hull does; and the flight console's reserve tops the cabin up once a gas has fallen half a kilopascal under the
   sea's air, as a cabin's pressure valve opens.
+- (Space) A small starship's suit locker shows what it holds: the suit stands on its rack piece by piece, the game's own
+  suit a little smaller than worn, each piece only while it is there; up to four oxygen bottles lie on the shelf over
+  it; and the oxygen panel's hose reaches the suit's pack while a suit hangs there, coiled on its hook while none does.
+  The locker is as deep as its wall's block, and has a place for each thing, each taking only its own: the helmet, the
+  suit, the trousers, the boots, four bottles and a box for the suit's modules and patches. It opens a screen of its
+  own, the locker open on the airlock's wall, an empty place showing its thing faintly and saying what it takes.
+  Before, it was a chest's row of nine with the same suit always drawn in it.
 - (Space) Four blocks of the starship's kit for its workshop and holds, each standing against the hull's wall and
   working as the game's own does: the Ship Crafting Table, the Ship Smithing Table, the Ship Furnace, which gives light
   while it burns, and the Ship Barrel, of 27 stacks. The holds carry their barrels along both walls, one on another
