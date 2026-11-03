@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -60,8 +61,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -111,6 +114,12 @@ public final class ShipFlightGameTests {
      */
     private static final double HIGH = 80;
     private static final double LOW = 2;
+    /*
+     * How far over its pattern's lowest corner the sky a ship flies in is cleared from, in blocks: over the dock's
+     * fifteen layers and its crane; a chunk's width.
+     */
+    private static final int OVER_THE_DOCKS = 20;
+    private static final int CHUNK = 16;
     /* A cruise at half again its stall at sea level, and its full cruise in the air, in metres a second. */
     private static final double CRUISE = 30;
     private static final double CRUISING = 40;
@@ -454,7 +463,7 @@ public final class ShipFlightGameTests {
      * The ship let go as {@link #letGo} lets it go, then the land it flies over kept loaded and ticking: asked for
      * only once the ship stands, so its own blocks are not kept waiting behind it. A ship waits where it is till the
      * land ahead of it ticks, and land loaded is not yet land ticking: with other tests making their land beside it,
-     * a ship set off over land only loaded waited out its pilot's hold.
+     * a ship set off over land only loaded waited out its pilot's hold. Then the sky it is taken up to is cleared.
      */
     private static GameTestSequence flying(final GameTestHelper helper, final MovingStructure[] ship,
                                            final int west) {
@@ -466,7 +475,42 @@ public final class ShipFlightGameTests {
                             .getWorldPosition()), "the land it flies over loads and ticks");
                 }
             }
-        });
+        }).thenExecute(() -> clearSky(helper, west));
+    }
+
+    /*
+     * Every batch is built on the same places, so what an earlier batch's tests left may still stand where the ship
+     * flies, an arena's barriers as high as its test was tall: a ship flown into one stops dead and sinks, and one
+     * flying over one reads the land as just under it and lowers its gear. The sky over the land kept for the ship,
+     * from over the tallest of this batch's docks up, is cleared of whatever stands there first, the chunks' empty
+     * sections passed over.
+     */
+    private static void clearSky(final GameTestHelper helper, final int west) {
+        final ServerLevel level = helper.getLevel();
+        final int low = helper.absolutePos(CORNER).getY() + OVER_THE_DOCKS;
+        final ChunkPos dock = new ChunkPos(helper.absolutePos(CORNER));
+        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int cx = dock.x - west; cx <= dock.x + 1; cx++) {
+            for (int cz = dock.z - FLOWN_CHUNKS; cz <= dock.z + 1; cz++) {
+                final LevelChunk chunk = level.getChunk(cx, cz);
+                for (int index = chunk.getSectionIndex(low); index < chunk.getSectionsCount(); index++) {
+                    if (chunk.getSection(index).hasOnlyAir()) {
+                        continue;
+                    }
+                    final int floor = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(index));
+                    for (int y = Math.max(low, floor); y < floor + CHUNK; y++) {
+                        for (int x = 0; x < CHUNK; x++) {
+                            for (int z = 0; z < CHUNK; z++) {
+                                at.set(chunk.getPos().getBlockX(x), y, chunk.getPos().getBlockZ(z));
+                                if (!level.getBlockState(at).isAir()) {
+                                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /* Its pilot holds {@code axis} a while, as their helm tells the structure each tick, then lets go. */
