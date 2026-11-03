@@ -14,6 +14,8 @@ import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestHangars;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.IntPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -46,6 +48,10 @@ public final class RocketHangarClientTests {
     private static final Vec3 BAND = new Vec3(DECK_X0, DECK_Y + 0.75, 12.0);
     private static final int ARRIVE = 400;
     private static final int SETTLE = 20;
+    /* How far round the terminal the floor's light is read, in blocks, every so many; how much dimmer is darker. */
+    private static final int LIGHT_REACH = 30;
+    private static final int LIGHT_STEP = 3;
+    private static final int DIMMER = 2;
     private static final int PATCH = 4;
     private static final int CHANNEL = 0xFF;
     /* How far red and green stand over blue on the girder's underside, shaded as the game shades a face below. */
@@ -145,6 +151,49 @@ public final class RocketHangarClientTests {
                 .then(SETTLE, () -> ctx.lookAt(BUILDING.add(Vec3.atLowerCornerOf(ctx.origin()))))
                 .then(SETTLE * 2, () -> { })
                 .thenScreenshot(0, "hangar-exterior");
+    }
+
+    /*
+     * The formed hangar saved and opened again: the light over its floor, its lamps' and the sky's, is as it was before,
+     * place by place, not dark until a block beside changes.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void hangar_keepsItsLightThroughASaveAndAReload(final ClientTestContext ctx) {
+        final int[][] before = new int[1][];
+        ctx.afterTest(() -> ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL),
+                TURN)));
+        ctx.thenServer(0, level -> TestHangars.build(level, ctx.abs(TERMINAL), TURN))
+                .thenTeleport(SETTLE, ON_STEP, Direction.WEST)
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(TERMINAL))
+                        instanceof HangarTerminalBlockEntity terminal && terminal.formed(), ARRIVE,
+                        "the hangar to form", level -> "not formed")
+                .thenServer(SETTLE, level -> before[0] = light(level, ctx.abs(TERMINAL)))
+                .thenSaveAndReload(0)
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(TERMINAL))
+                        instanceof HangarTerminalBlockEntity terminal && terminal.formed(), ARRIVE,
+                        "the hangar to be formed again, opened from its files", level -> "not formed")
+                .thenServer(SETTLE, level -> {
+                    final int[] after = light(level, ctx.abs(TERMINAL));
+                    int darker = 0;
+                    int lit = 0;
+                    for (int i = 0; i < after.length; i++) {
+                        lit += before[0][i] > 0 ? 1 : 0;
+                        darker += after[i] < before[0][i] - DIMMER ? 1 : 0;
+                    }
+                    ctx.assertTrue(lit > 0 && darker == 0, "opened again, the hangar's floor is as lit as it was: "
+                            + darker + " of " + lit + " lit places darker");
+                });
+    }
+
+    /* The light over the floor round the terminal, the brighter of the sky's and the lamps', place by place. */
+    private static int[] light(final ServerLevel level, final BlockPos terminal) {
+        final List<Integer> out = new ArrayList<>();
+        for (int dx = -LIGHT_REACH; dx <= LIGHT_REACH; dx += LIGHT_STEP) {
+            for (int dz = -LIGHT_REACH; dz <= LIGHT_REACH; dz += LIGHT_STEP) {
+                out.add(level.getMaxLocalRawBrightness(terminal.offset(dx, 0, dz)));
+            }
+        }
+        return out.stream().mapToInt(Integer::intValue).toArray();
     }
 
     /*
