@@ -5,6 +5,9 @@
   "mixins": [
     "StructureTemplateManagerMixin"
   ],
+  "client": [
+    "MouseHandlerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

@@ -156,6 +156,7 @@ import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.ToolClientTests;
 import dev.jstech.tests.clienttest.core.TooltipClientTests;
 import dev.jstech.tests.clienttest.core.KeyboardFocusClientTests;
+import dev.jstech.tests.clienttest.core.CursorClientTests;
 import dev.jstech.tests.clienttest.core.HudEditorClientTests;
 import dev.jstech.tests.clienttest.core.ScreenTouchClientTests;
 import dev.jstech.tests.clienttest.core.StillPartsClientTests;
@@ -446,6 +447,7 @@ public final class ClientTestSuite {
             CameraClientTests.class,
             TooltipClientTests.class,
             KeyboardFocusClientTests.class,
+            CursorClientTests.class,
             HudEditorClientTests.class,
             ScreenTouchClientTests.class,
             StillPartsClientTests.class,

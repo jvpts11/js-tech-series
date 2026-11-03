@@ -2970,6 +2970,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Core) The test kit's client tests leave the cursor free: the game never takes the mouse while they run, as it does
+  whenever its window has the focus, so whoever runs them keeps using their computer; the tests turn, walk and click by
+  themselves.
 - (Core) Multiblocks: the game's invisible light block counts as empty, as a cave's air does, in a place a multiblock
   must leave empty: a building lit through with them still forms, and the Structure Projector and the Multiblock
   Builder do not ask for them to be taken out.
