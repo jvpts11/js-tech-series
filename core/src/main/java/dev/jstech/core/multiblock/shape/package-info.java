@@ -14,7 +14,9 @@
  * <p>A mod declares a formed model formed from its structure's pattern, {@code ModelBuilder.formedFrom(pattern)}, and
  * the data run does the rest: it reads the model at rest ({@link ModelTriangles}), shares its faces out among the
  * blocks of the pattern ({@link MeshCells}), works out each block's boxes on a grid of sixteenths, in eighths for a
- * block that would have too many ({@link MeshVoxels}), and writes the model's shape file ({@link FormedShape}), which
+ * block that would have too many ({@link MeshVoxels}), solid within what the model's faces close ({@link MeshSolid}),
+ * reads the pieces a player takes for one thing each, written beside the model's file ({@link FormedPiece}), and
+ * writes the model's shape file ({@link FormedShape}), which
  * the server reads, since it has no models, and sends to the players. The run stops when a block of the pattern has no
  * face of the model, or faces lie more than a block outside the pattern. As a structure merges, each of its blocks is
  * told which block of the model it is and how the structure stands ({@link FormedPlace}), and takes that block's shape,
@@ -22,7 +24,9 @@
  *
  * <p>On a player's game, where the models are known, a line of sight that finds such a block is followed again against
  * the model's faces ({@link FormedAim}, {@link MeshPick}), and the block aimed at is outlined by the model's own edges,
- * its sharp edges and the cuts at the block's walls ({@link MeshOutline}), not by its boxes.
+ * its sharp edges and the cuts at the block's walls ({@link MeshOutline}), not by its boxes; or, aimed at on one of the
+ * model's pieces, by that whole piece. A block that keeps itself in its structure but stands for a block of the model
+ * says which with {@link IFormedPlaced}, and is aimed at and outlined the same way.
  *
  * <p>How to use it is in {@code core/docs/MULTIBLOCKS.md}, under "Shaped as the model". A working example is the test
  * turbine of the test mod ({@code tests/src/main/java/dev/jstech/tests/TestModels.java}), with its game test

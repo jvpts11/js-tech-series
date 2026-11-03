@@ -421,6 +421,13 @@ public static final DeclaredModel TURBINE = CONTENT.model("turbine")
   `data/<mod>/formed_shape/<model>.json`, each block's boxes in sixteenths of a block. A block whose faces would make
   more than 32 boxes is worked out in eighths, that block alone. The file is sent to the players, whose own collisions
   read it. (Until 2026-10-29 a block worked out in eighths was written twice its size, and its file did not read.)
+- **Solid through, not a shell** (*added 2026-11-03*): a block takes the sixteenths its faces pass through and those
+  within the solid the model's faces close, so a seat, a console or a thick wall is solid through and through, and a
+  player or a thing pushed against it never ends up inside it. A point is within when every line through it along the
+  three axes, followed from either end, has gone in through the model's faces more often than out, a face's way out
+  being its front; asking all six ways keeps a model that is not closed everywhere, a lone panel or a window's edge,
+  from filling the room beside it. Make the model's solids closed, their faces facing out, and they are filled.
+  (Until 2026-11-03 only the sixteenths the faces passed through were taken: a shell.)
 - **The run stops when model and pattern have drifted apart**: a block of the pattern with no face of the model in
   it, or faces more than a block outside the pattern, each named by its place from the terminal. Faces less than a
   block outside, a lip or a rotor's tip, are carried by the nearest block of the pattern, pressed onto its side.
@@ -447,6 +454,24 @@ CONTENT.model("capsule").file("jsmodels/capsule.gltf").formedFrom(rl("capsule"))
                 Optional.empty(), Optional.empty(), Optional.empty()))
         .register();
 ```
+
+- **Pieces outlined whole** (*added 2026-11-03*): a model may name pieces a player takes for one thing each, a door,
+  a seat, a console, however many blocks they stand in. Each piece is a few convex solids round it, in the model's
+  space, faces facing out; aimed at from any block it stands in, the whole piece is outlined by its solids' sharp
+  edges, in place of the part of the model in the block aimed at, and the rest of the block is outlined as before.
+  A program making the model writes them beside its file, `<file>.pieces.json`, which the data run reads into the
+  shape file; or a mod declares them, `FormedShapes.declarePieces(model, pieces)`.
+
+```json
+{"pieces": [{"name": "seat", "solids": [[-0.2, 0.95, 3.87, ...], [-0.48, 1.28, 3.75, ...]]}]}
+```
+
+- **A block that keeps itself stands as the model too** (*added 2026-11-03*): a block of a plan that keeps something
+  of its own (`IPlanMember`), a locker that keeps its stores and its click, is told which block of its part's model it
+  stands for as its part forms (`partFormed(level, pos, formed, place)`). Kept by its block entity, which says so
+  with `IFormedPlaced`, the place is aimed at and outlined from the model as a merged block is; and the block may take
+  that block's shape, `FormedShapes.get(level, place.model()).map(shape -> shape.shape(place))`, its block declaring
+  `dynamicShape()`, since its shape is no longer its state's alone.
 
 ### Damaged where struck
 

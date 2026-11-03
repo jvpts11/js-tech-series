@@ -485,6 +485,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) Gear that rolls: J's Space's API is at version 18. `ShipPart` gains `rolls`, whether a part of gear rolls
   on wheels, on the land and a runway, where feet stand where they come down; written in a part's file as `rolls`.
   Experimental.
+- (Core) Formed models' pieces and solids: J's Core's API is at version 38. `FormedPiece` is a piece of a formed
+  model a player takes for one thing, a few convex solids round it, outlined whole from any block it stands in;
+  `FormedShape.pieces()` and `pieceLines(place, at)`, `FormedShapes.declarePieces(model, pieces)` and
+  `piecesDeclared(model)`, and a `<file>.pieces.json` beside a model's file read by the data run. `IFormedPlaced` is a
+  block entity standing for blocks of formed models, as `FormedPartBlockEntity` now is, and
+  `IPlanMember.partFormed(level, pos, formed, place)` tells a block that keeps itself which block of its part's model
+  it stands for. `MeshSolid` finds what a model's faces close, and `MeshVoxels.boxes(triangles, within)` fills it.
+  Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2907,6 +2915,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) DOCK aims only at a ship that would let its pilot aboard, at least as a passenger.
 - (Space) "Landing needs the essentials" is off by default, while nothing in the game teaches a team a world's
   atmosphere, temperature, radiation, gravity and relief yet.
+- (Core) A formed model's pieces are outlined whole: aimed at on a door, a seat or a console a model names as one
+  piece, from any block it stands in, the player sees the whole piece outlined, as the game outlines a block; aimed at
+  the rest of the block, its part of the model as before.
+- (Space) A small starship's pilot seat, its flight console and the airlock's suit locker are outlined whole from any
+  block they stand in; and the ship's fixtures, the suit locker, the flight console, the oxygen panel and the bunk,
+  once their part is formed, stand, are aimed at and are outlined as the ship's model draws them there, no longer as
+  whole blocks.
 
 ### Changed
 - (Core) Multiblocks: the game's invisible light block counts as empty, as a cave's air does, in a place a multiblock
@@ -3083,6 +3098,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A block of a formed structure is solid through what its model's faces close, a seat, a console, a floor's
+  body: before, only the sixteenths its faces passed through were solid, a thin shell a thing pushed against it could
+  end up inside.
 - (Core) A structure held by another, as a ship a docking clamp draws in, goes on smoothly on the player's screen when
   the server falls behind for a few ticks, along the way it was going, as a free one does: before, it stood still on
   the screen till the server caught up, then jumped the ground at once.

@@ -15,6 +15,7 @@ import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.RoomLiving;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
  * the ship's flight as it flies ({@link ShipReadings}), and keeps its fusion reactor's deuterium, which the reactor
  * burns as the ship flies and a dock fills again.
  */
-public final class AirReserveEntity extends SyncedBlockEntity {
+public final class AirReserveEntity extends SyncedBlockEntity implements IFixtureEntity {
 
     private final ValueField<Double> oxygen;
     private final ValueField<Double> nitrogen;
@@ -51,6 +52,8 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     private final ValueField<ShipReadings> flight;
     private final ValueField<Double> deuterium;
     private final ValueField<ShipCrew> crew;
+    /* The block of its cockpit's formed model the console stands for, as it stands, collides and is outlined. */
+    private final FixturePlace place;
     /* The ship's plan, watched aboard once the ship is a structure; on the server. */
     private @Nullable PlannedBuild aboard;
     /* What its reactor has burnt since its load was last told, on the server: told a thousandth at a time. */
@@ -78,6 +81,7 @@ public final class AirReserveEntity extends SyncedBlockEntity {
         this.deuterium = fields().value("Deuterium", Codec.DOUBLE, 1.0).save().toClient();
         // Who may do what aboard its ship, kept with the ship through docks and restarts.
         this.crew = fields().nullable("Crew", ShipCrew.CODEC).save().toClient();
+        this.place = new FixturePlace(this);
     }
 
     /** Who may do what aboard its ship; none for a ship nobody owns, which anyone may use. */
@@ -191,8 +195,21 @@ public final class AirReserveEntity extends SyncedBlockEntity {
     @Override
     public void moved(final BlockPos was, final BlockMove move) {
         super.moved(was, move);
+        this.place.moved(move);
         if (move.from() instanceof ServerLevel left) {
             SealedRooms.untrack(left, was);
+        }
+    }
+
+    @Override
+    public List<FormedPlace> places() {
+        return this.place.places();
+    }
+
+    @Override
+    public void place(final @Nullable FormedPlace place) {
+        if (this.place.set(place)) {
+            setChanged();
         }
     }
 

@@ -784,6 +784,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - DOCK aims only at a ship that would let its pilot aboard, at least as a passenger.
 - "Landing needs the essentials" is off by default, while nothing in the game teaches a team a world's
   atmosphere, temperature, radiation, gravity and relief yet.
+- A small starship's pilot seat, its flight console and the airlock's suit locker are outlined whole from any
+  block they stand in; and the ship's fixtures, the suit locker, the flight console, the oxygen panel and the bunk,
+  once their part is formed, stand, are aimed at and are outlined as the ship's model draws them there, no longer as
+  whole blocks.
 
 ### Fixed
 - At a ship's helm, B boosts the ship and J changes its autopilot, as their keys say; before, B also opened

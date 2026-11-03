@@ -10747,7 +10747,7 @@ stable 4
 10 dev.jstech.core.multiblock.FormedPartBlock  new(Properties)
 10 dev.jstech.core.multiblock.FormedPartBlock  static BlockState originalAt(BlockGetter, BlockPos, BlockState)
 10 dev.jstech.core.multiblock.FormedPartBlock  static final int LOOKS_EVERY
-10 dev.jstech.core.multiblock.FormedPartBlockEntity  type final class extends SyncedBlockEntity
+38 dev.jstech.core.multiblock.FormedPartBlockEntity  type final class extends SyncedBlockEntity implements IFormedPlaced
 12 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockPos terminal()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  BlockState original()
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  FormedPlace place()
@@ -11354,6 +11354,7 @@ stable 4
 21 dev.jstech.core.multiblock.plan.BuildPlan  static final Codec<BuildPlan> CODEC
 21 dev.jstech.core.multiblock.plan.IPlanMember  type interface
 21 dev.jstech.core.multiblock.plan.IPlanMember  abstract void partFormed(ServerLevel, BlockPos, boolean)
+38 dev.jstech.core.multiblock.plan.IPlanMember  default void partFormed(ServerLevel, BlockPos, boolean, FormedPlace)
 27 dev.jstech.core.multiblock.plan.IPlanMember  static boolean keepsItself(BlockState)
 27 dev.jstech.core.multiblock.plan.IPlanMember  static final TagKey<Block> KEEPS_ITSELF
 28 dev.jstech.core.multiblock.plan.PlanArms  type final class implements IFieldPart
@@ -11435,24 +11436,34 @@ stable 4
 21 dev.jstech.core.multiblock.shape.FormedAim  static BlockHitResult hit(Level, List<FormedPlace>, Vec3, Vec3, BlockPos)
 21 dev.jstech.core.multiblock.shape.FormedAim  static List<FormedPlace> places(Level, BlockPos, BlockState)
 19 dev.jstech.core.multiblock.shape.FormedAim  static Optional<FormedPlace> place(Level, BlockPos, BlockState)
+38 dev.jstech.core.multiblock.shape.FormedPiece  type record(String name, List<float[]> solids)
+38 dev.jstech.core.multiblock.shape.FormedPiece  boolean holds(double[])
+38 dev.jstech.core.multiblock.shape.FormedPiece  float[] lines()
+38 dev.jstech.core.multiblock.shape.FormedPiece  static FormedPiece at(List<FormedPiece>, double[])
+38 dev.jstech.core.multiblock.shape.FormedPiece  static final Codec<FormedPiece> CODEC
+38 dev.jstech.core.multiblock.shape.FormedPiece  static final double MARGIN
 19 dev.jstech.core.multiblock.shape.FormedPlace  type record(ResourceLocation model, int orientation, int x, int y, int z)
 19 dev.jstech.core.multiblock.shape.FormedPlace  FormedPlace turned(Rotation)
 19 dev.jstech.core.multiblock.shape.FormedPlace  Orientation turn()
 19 dev.jstech.core.multiblock.shape.FormedPlace  long cell()
 19 dev.jstech.core.multiblock.shape.FormedPlace  static final Codec<FormedPlace> CODEC
 19 dev.jstech.core.multiblock.shape.FormedShape  type final class
+38 dev.jstech.core.multiblock.shape.FormedShape  List<FormedPiece> pieces()
 19 dev.jstech.core.multiblock.shape.FormedShape  Map<Long, int[]> cells()
 20 dev.jstech.core.multiblock.shape.FormedShape  Map<ResourceLocation, BlockAboard> aboard()
 20 dev.jstech.core.multiblock.shape.FormedShape  Optional<BlockAboard> aboard(Block)
+38 dev.jstech.core.multiblock.shape.FormedShape  Optional<float[]> pieceLines(FormedPlace, double[])
 19 dev.jstech.core.multiblock.shape.FormedShape  Optional<int[]> boxes(long)
 19 dev.jstech.core.multiblock.shape.FormedShape  Set<Long> apart()
 19 dev.jstech.core.multiblock.shape.FormedShape  VoxelShape shape(FormedPlace)
 19 dev.jstech.core.multiblock.shape.FormedShape  double[] origin()
 19 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>)
 20 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>, Map<ResourceLocation, BlockAboard>)
+38 dev.jstech.core.multiblock.shape.FormedShape  new(double[], Set<Long>, Map<Long, int[]>, Map<ResourceLocation, BlockAboard>, List<FormedPiece>)
 24 dev.jstech.core.multiblock.shape.FormedShape  static VoxelShape shapeOf(int[], Orientation)
 19 dev.jstech.core.multiblock.shape.FormedShape  static final Codec<FormedShape> CODEC
 19 dev.jstech.core.multiblock.shape.FormedShapes  type final class
+38 dev.jstech.core.multiblock.shape.FormedShapes  static List<FormedPiece> piecesDeclared(ResourceLocation)
 20 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, BlockAboard> aboardDeclared(ResourceLocation)
 21 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, Laid> laidBy(String)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static Map<ResourceLocation, ResourceLocation> declaredBy(String)
@@ -11467,12 +11478,15 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedShapes  static void declare(ResourceLocation, ResourceLocation)
 20 dev.jstech.core.multiblock.shape.FormedShapes  static void declareAboard(ResourceLocation, ResourceLocation, BlockAboard)
 21 dev.jstech.core.multiblock.shape.FormedShapes  static void declareLaid(ResourceLocation, double[], Set<Long>, Set<Long>, Set<Long>)
+38 dev.jstech.core.multiblock.shape.FormedShapes  static void declarePieces(ResourceLocation, List<FormedPiece>)
 19 dev.jstech.core.multiblock.shape.FormedShapes  static void register()
 21 dev.jstech.core.multiblock.shape.FormedShapes.Laid  type record(double[] origin, Set<Long> own, Set<Long> reach, Set<Long> hollow)
 21 dev.jstech.core.multiblock.shape.FormedShapes.Laid  double[] origin()
 19 dev.jstech.core.multiblock.shape.IFormedMeshes  type interface
 19 dev.jstech.core.multiblock.shape.IFormedMeshes  abstract float[] lines(FormedPlace, FormedShape)
 19 dev.jstech.core.multiblock.shape.IFormedMeshes  abstract float[] triangles(FormedPlace, FormedShape)
+38 dev.jstech.core.multiblock.shape.IFormedPlaced  type interface
+38 dev.jstech.core.multiblock.shape.IFormedPlaced  abstract List<FormedPlace> places()
 19 dev.jstech.core.multiblock.shape.MeshCells  type final class
 19 dev.jstech.core.multiblock.shape.MeshCells  static Split split(float[], double[], Set<Long>, Set<Long>)
 19 dev.jstech.core.multiblock.shape.MeshCells  static String name(long)
@@ -11488,12 +11502,16 @@ stable 4
 19 dev.jstech.core.multiblock.shape.MeshOutline  static float[] lines(float[])
 19 dev.jstech.core.multiblock.shape.MeshPick  type final class
 19 dev.jstech.core.multiblock.shape.MeshPick  static double along(float[], double[], double[], double[])
+38 dev.jstech.core.multiblock.shape.MeshSolid  type final class
+38 dev.jstech.core.multiblock.shape.MeshSolid  boolean[] within(double[], int)
+38 dev.jstech.core.multiblock.shape.MeshSolid  static MeshSolid of(float[])
 19 dev.jstech.core.multiblock.shape.MeshVoxels  type final class
 19 dev.jstech.core.multiblock.shape.MeshVoxels  static final int BOX
 19 dev.jstech.core.multiblock.shape.MeshVoxels  static final int COARSE
 19 dev.jstech.core.multiblock.shape.MeshVoxels  static final int FINE
 19 dev.jstech.core.multiblock.shape.MeshVoxels  static final int MOST_BOXES
 19 dev.jstech.core.multiblock.shape.MeshVoxels  static int[] boxes(float[])
+38 dev.jstech.core.multiblock.shape.MeshVoxels  static int[] boxes(float[], IntFunction<boolean[]>)
 19 dev.jstech.core.multiblock.shape.ModelTriangles  type final class
 19 dev.jstech.core.multiblock.shape.ModelTriangles  static float[] of(ModelData, BakedGeometry, double)
 10 dev.jstech.core.multipart.CoreParts  type final class

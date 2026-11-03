@@ -8,6 +8,7 @@
 package dev.jstech.core.multiblock.plan;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.multiblock.shape.FormedPlace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -15,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A block of a plan that keeps something of its own, as a computer keeps its state or a piece keeps a formed look of
@@ -31,6 +33,19 @@ public interface IPlanMember {
 
     /** The part of a plan the block at {@code pos} belongs to has formed, or come apart. */
     void partFormed(ServerLevel level, BlockPos pos, boolean formed);
+
+    /**
+     * The part of a plan the block at {@code pos} belongs to has formed, or come apart, and which block of the part's
+     * formed model it stands for, where its place in the plan names one: a block the model draws may keep it, to be
+     * collided with, aimed at and outlined as the model is drawn there ({@code IFormedPlaced}). Tells
+     * {@link #partFormed(ServerLevel, BlockPos, boolean)} unless a member wants its place.
+     *
+     * @param place which block of the formed model it stands for; none for a place naming none
+     */
+    default void partFormed(final ServerLevel level, final BlockPos pos, final boolean formed,
+                            final @Nullable FormedPlace place) {
+        partFormed(level, pos, formed);
+    }
 
     /** Whether {@code state}'s block keeps itself in a plan, a member or in the tag. */
     static boolean keepsItself(final BlockState state) {

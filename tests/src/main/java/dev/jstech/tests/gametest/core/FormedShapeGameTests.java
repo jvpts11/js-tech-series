@@ -60,6 +60,8 @@ public final class FormedShapeGameTests {
     private static final double RESTS = 0.01;
     /* Half an armour stand's width, in sixteenths. */
     private static final int HALF_STAND = 4;
+    /* A block's middle, in its own space. */
+    private static final Vec3 MIDDLE = new Vec3(0.5, 0.5, 0.5);
 
     private FormedShapeGameTests() {
     }
@@ -96,6 +98,19 @@ public final class FormedShapeGameTests {
                 helper.assertTrue(shapedAsItsModel(level, pos, Orientation.NORTH),
                         "and stands as the shape file says that block does: " + at);
             }
+        });
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = WAIT)
+    public static void turbine_aBlockWithinItsModelsSolidIsSolidThrough(final GameTestHelper helper) {
+        build(helper, false);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(structure(helper).merged(), "the turbine forms and merges");
+            // The turbine's body runs through the block behind its terminal: inside it, not only round its faces.
+            final BlockPos body = helper.absolutePos(TERMINAL.offset(0, 0, -1));
+            final VoxelShape shape = helper.getLevel().getBlockState(body).getCollisionShape(helper.getLevel(), body);
+            helper.assertTrue(shape.toAabbs().stream().anyMatch(box -> box.contains(MIDDLE)), "the block within "
+                    + "the turbine's body collides at its middle, as the solid it is: " + shape.toAabbs());
         });
     }
 

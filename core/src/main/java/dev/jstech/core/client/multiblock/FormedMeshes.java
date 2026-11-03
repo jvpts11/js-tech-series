@@ -12,14 +12,14 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.moving.YardLayout;
-import dev.jstech.core.multiblock.FormedPartBlock;
-import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.shape.CellSpace;
+import dev.jstech.core.multiblock.shape.FormedPiece;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShape;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.multiblock.shape.IFormedMeshes;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import dev.jstech.core.multiblock.shape.MeshCells;
 import dev.jstech.core.multiblock.shape.MeshOutline;
 import dev.jstech.core.multiblock.shape.ModelTriangles;
@@ -66,19 +66,28 @@ public final class FormedMeshes implements IFormedMeshes {
     }
 
     /**
-     * Gives {@code sink} the lines of the outline of the merged block at {@code pos}, in its own space, from its faces;
-     * false, giving nothing, for any other block, or one whose model is not known.
+     * Gives {@code sink} the lines of the outline of the block at {@code pos} standing as blocks of formed models, in
+     * its own space: of the whole piece aimed at, where the point {@code aimed} is on one ({@link FormedPiece}), or
+     * else from its faces; false, giving nothing, for any other block, or one whose model is not known.
+     *
+     * @param aimed the point aimed at, in the same space as {@code pos}; none to outline its faces alone
      */
     public static boolean outline(final Level level, final BlockPos pos, final BlockState state,
-                                  final Shapes.DoubleLineConsumer sink) {
-        if (!(state.getBlock() instanceof FormedPartBlock)
-                || !(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part) || part.places().isEmpty()) {
+                                  final @Nullable Vec3 aimed, final Shapes.DoubleLineConsumer sink) {
+        if (state.isAir() || !(level.getBlockEntity(pos) instanceof IFormedPlaced part) || part.places().isEmpty()) {
             return false;
         }
+        // A piece aimed at is outlined whole, by the first of the models it stands in that has it there.
+        if (aimed != null) {
+            for (final FormedPlace place : part.places()) {
+                final Optional<float[]> piece = pieceLines(level, pos, place, aimed);
+                if (piece.isPresent()) {
+                    draw(piece.get(), place, sink);
+                    return true;
+                }
+            }
+        }
         boolean drawn = false;
-        final double[] local = new double[AXES];
-        final double[] from = new double[AXES];
-        final double[] to = new double[AXES];
         // Its own model's outline, and those of the models reaching into it, each turned as its model stands.
         for (final FormedPlace place : part.places()) {
             // A block a strike reached is outlined by its faces as the strike left them.
@@ -87,18 +96,7 @@ public final class FormedMeshes implements IFormedMeshes {
             if (lines.isEmpty()) {
                 continue;
             }
-            final float[] all = lines.get();
-            for (int at = 0; at + MeshOutline.LINE <= all.length; at += MeshOutline.LINE) {
-                local[0] = all[at];
-                local[1] = all[at + 1];
-                local[2] = all[at + 2];
-                CellSpace.toWorld(local, place.turn(), from);
-                local[0] = all[at + 3];
-                local[1] = all[at + 4];
-                local[2] = all[at + 5];
-                CellSpace.toWorld(local, place.turn(), to);
-                sink.consume(from[0], from[1], from[2], to[0], to[1], to[2]);
-            }
+            draw(lines.get(), place, sink);
             drawn = true;
         }
         return drawn;
@@ -136,6 +134,37 @@ public final class FormedMeshes implements IFormedMeshes {
                 dz / length);
     }
 
+    /* The outline of the piece of the block {@code place} at {@code pos} the point {@code aimed} is on, if any. */
+    private static Optional<float[]> pieceLines(final Level level, final BlockPos pos, final FormedPlace place,
+                                                final Vec3 aimed) {
+        final Optional<FormedShape> shape = FormedShapes.get(level, place.model());
+        if (shape.isEmpty() || shape.get().pieces().isEmpty()) {
+            return Optional.empty();
+        }
+        final double[] own = new double[AXES];
+        CellSpace.toModel(new double[] {aimed.x - pos.getX(), aimed.y - pos.getY(), aimed.z - pos.getZ()},
+                place.turn(), own);
+        return shape.get().pieceLines(place, own);
+    }
+
+    /* Gives {@code sink} the lines {@code all}, in the block {@code place}'s own space, turned as its model stands. */
+    private static void draw(final float[] all, final FormedPlace place, final Shapes.DoubleLineConsumer sink) {
+        final double[] local = new double[AXES];
+        final double[] from = new double[AXES];
+        final double[] to = new double[AXES];
+        for (int at = 0; at + MeshOutline.LINE <= all.length; at += MeshOutline.LINE) {
+            local[0] = all[at];
+            local[1] = all[at + 1];
+            local[2] = all[at + 2];
+            CellSpace.toWorld(local, place.turn(), from);
+            local[0] = all[at + 3];
+            local[1] = all[at + 4];
+            local[2] = all[at + 5];
+            CellSpace.toWorld(local, place.turn(), to);
+            sink.consume(from[0], from[1], from[2], to[0], to[1], to[2]);
+        }
+    }
+
     /* The model's faces shared out among its blocks, worked out again for a model or a shape file read anew. */
     private @Nullable Shared shared(final ResourceLocation id, final FormedShape shape) {
         final Optional<KitModel> model = KitModels.get(id);
@@ -168,8 +197,9 @@ public final class FormedMeshes implements IFormedMeshes {
         final float x = (float) (pos.getX() - camera.x);
         final float y = (float) (pos.getY() - camera.y);
         final float z = (float) (pos.getZ() - camera.z);
-        final boolean drawn = outline(level, pos, state, (x1, y1, z1, x2, y2, z2) -> line(lines, at,
-                x + (float) x1, y + (float) y1, z + (float) z1, x + (float) x2, y + (float) y2, z + (float) z2));
+        final boolean drawn = outline(level, pos, state, event.getTarget().getLocation(),
+                (x1, y1, z1, x2, y2, z2) -> line(lines, at, x + (float) x1, y + (float) y1, z + (float) z1,
+                        x + (float) x2, y + (float) y2, z + (float) z2));
         if (drawn) {
             event.setCanceled(true);
         }

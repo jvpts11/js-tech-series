@@ -404,7 +404,7 @@ public final class PlannedBuild implements IStructureWatcher {
             // A block that keeps itself is told, whether or not it keeps a block entity; the others merge.
             final BlockState state = in.getBlockState(at);
             if (state.getBlock() instanceof IPlanMember member) {
-                member.partFormed(in, at, true);
+                member.partFormed(in, at, true, spot.place().orElse(null));
             } else if (state.is(IPlanMember.KEEPS_ITSELF)) {
                 continue;
             } else if (!FormedParts.lay(in, this.owner, at, spot.place().orElse(null), reaching(spot))) {
@@ -446,7 +446,7 @@ public final class PlannedBuild implements IStructureWatcher {
                     instanceof FormedPartBlockEntity merged && merged.planned()) {
                 FormedParts.restoreAt(in, at);
             } else if (state.getBlock() instanceof IPlanMember member) {
-                member.partFormed(in, at, false);
+                member.partFormed(in, at, false, this.plan.spots().get(index).place().orElse(null));
             }
         }
         reshape(part);

@@ -116,9 +116,11 @@ public final class StructureAim {
                 (float) (block.getZ() - structure.pivotZ()));
         final PoseStack.Pose at = pose.last();
         final VertexConsumer lines = event.getMultiBufferSource().getBuffer(RenderType.lines());
-        // A block of a formed structure aboard is outlined by its model's faces, as on the ground.
-        if (FormedMeshes.outline(level, block, state, (x1, y1, z1, x2, y2, z2) -> FormedMeshes.line(lines, at,
-                (float) x1, (float) y1, (float) z1, (float) x2, (float) y2, (float) z2))) {
+        // A block of a formed structure aboard is outlined by its model's faces, or the whole piece aimed at, as on
+        // the ground; the aim names the place on it in the yard's places, as the block's.
+        if (FormedMeshes.outline(level, block, state, event.getTarget().getLocation(), (x1, y1, z1, x2, y2, z2) ->
+                FormedMeshes.line(lines, at, (float) x1, (float) y1, (float) z1, (float) x2, (float) y2,
+                        (float) z2))) {
             pose.popPose();
             return;
         }

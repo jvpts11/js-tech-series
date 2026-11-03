@@ -398,6 +398,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   player sits at a helm, it wins over every other key action on the same key, which does nothing then. Experimental.
 - Seats that always tick: J's Core's API is at version 37. `StructureSeatEntity.isAlwaysTicking()` is true, as a
   player's is: a seat aboard a moving structure ticks wherever it is, its chunk loaded or not yet. Experimental.
+- Formed models' pieces and solids: J's Core's API is at version 38. `FormedPiece` is a piece of a formed
+  model a player takes for one thing, a few convex solids round it, outlined whole from any block it stands in;
+  `FormedShape.pieces()` and `pieceLines(place, at)`, `FormedShapes.declarePieces(model, pieces)` and
+  `piecesDeclared(model)`, and a `<file>.pieces.json` beside a model's file read by the data run. `IFormedPlaced` is a
+  block entity standing for blocks of formed models, as `FormedPartBlockEntity` now is, and
+  `IPlanMember.partFormed(level, pos, formed, place)` tells a block that keeps itself which block of its part's model
+  it stands for. `MeshSolid` finds what a model's faces close, and `MeshVoxels.boxes(triangles, within)` fills it.
+  Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1929,6 +1937,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A dimension's rules read away from it: `DimensionRulesData.known` gives a dimension's rules wherever it is
   asked, the server's where the server runs, else those it sent to the player, so a manual's page shows the Moon's air
   to a reader standing in the Overworld.
+- A formed model's pieces are outlined whole: aimed at on a door, a seat or a console a model names as one
+  piece, from any block it stands in, the player sees the whole piece outlined, as the game outlines a block; aimed at
+  the rest of the block, its part of the model as before.
 
 ### Changed
 - Multiblocks: the game's invisible light block counts as empty, as a cave's air does, in a place a multiblock
@@ -2052,6 +2063,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A block of a formed structure is solid through what its model's faces close, a seat, a console, a floor's
+  body: before, only the sixteenths its faces passed through were solid, a thin shell a thing pushed against it could
+  end up inside.
 - A structure held by another, as a ship a docking clamp draws in, goes on smoothly on the player's screen when
   the server falls behind for a few ticks, along the way it was going, as a free one does: before, it stood still on
   the screen till the server caught up, then jumped the ground at once.

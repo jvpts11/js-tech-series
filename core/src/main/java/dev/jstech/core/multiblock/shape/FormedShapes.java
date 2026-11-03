@@ -56,6 +56,9 @@ public final class FormedShapes {
     /* What a kind of block does aboard as a block of a formed model, by the model, then the block. */
     private static final Map<ResourceLocation, Map<ResourceLocation, BlockAboard>> ABOARD =
             Collections.synchronizedMap(new LinkedHashMap<>());
+    /* The pieces of each model a player takes for one thing each, by the model. */
+    private static final Map<ResourceLocation, List<FormedPiece>> PIECES =
+            Collections.synchronizedMap(new LinkedHashMap<>());
     /* The models of blocks laid by a plan, with their own blocks and those of others their faces may reach into. */
     private static final Map<ResourceLocation, Laid> LAID = Collections.synchronizedMap(new LinkedHashMap<>());
     /* Where the lowest corner of a pattern's terminal block is in its formed model's space. */
@@ -96,6 +99,20 @@ public final class FormedShapes {
     public static void declareAboard(final ResourceLocation model, final ResourceLocation block,
                                      final BlockAboard aboard) {
         ABOARD.computeIfAbsent(model, any -> Collections.synchronizedMap(new LinkedHashMap<>())).put(block, aboard);
+    }
+
+    /**
+     * Declares the pieces of the formed model {@code model} a player takes for one thing each, a door, a seat, a
+     * console: aimed at from any block they stand in, each is outlined whole, by its own solids, in place of the part
+     * of the model in the block aimed at. Written into the model's shape file by the data run.
+     */
+    public static void declarePieces(final ResourceLocation model, final List<FormedPiece> pieces) {
+        PIECES.put(model, List.copyOf(pieces));
+    }
+
+    /** The pieces declared for the formed model {@code model}, none for one with no pieces declared. */
+    public static List<FormedPiece> piecesDeclared(final ResourceLocation model) {
+        return PIECES.getOrDefault(model, List.of());
     }
 
     /**

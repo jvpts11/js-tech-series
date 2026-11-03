@@ -9,10 +9,13 @@ package dev.jstech.core.multiblock.shape;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What a block of a formed structure collides with, worked out from its faces: the sixteenths of the block a face
- * passes through, joined into as few boxes as they make. A block whose boxes would be more than {@link #MOST_BOXES}
+ * passes through, and those within the solid the model's faces close ({@link MeshSolid}), joined into as few boxes as
+ * they make. A block whose boxes would be more than {@link #MOST_BOXES}
  * is worked out in eighths instead, that block alone, so a curved wall costs no more than a few dozen boxes wherever it
  * stands. A face is moved a hair into the solid it closes first, so one lying on the block's wall fills the sixteenth
  * inside it; one reaching out of the block, as a piece carried for a place the structure has no block in, is pressed
@@ -45,17 +48,40 @@ public final class MeshVoxels {
      * @return {@link #BOX} numbers to a box, in sixteenths of a block
      */
     public static int[] boxes(final float[] triangles) {
-        final int[] fine = boxes(triangles, FINE);
+        return boxes(triangles, grid -> null);
+    }
+
+    /**
+     * The boxes of a block with {@code triangles} in it, and the solid they close: the cells of a grid of a given
+     * size to a side {@code within} says are within its model's solids, as {@link MeshSolid#within} answers, filled
+     * too.
+     *
+     * @param within the cells within, by {@code (x * grid + y) * grid + z}, for a grid's size; none for no solid
+     * @return {@link #BOX} numbers to a box, in sixteenths of a block
+     */
+    public static int[] boxes(final float[] triangles, final IntFunction<boolean[]> within) {
+        final int[] fine = boxes(triangles, FINE, within.apply(FINE));
         if (fine.length / BOX <= MOST_BOXES) {
             return fine;
         }
         // In eighths, each box already given in sixteenths by the grid's step.
-        return boxes(triangles, COARSE);
+        return boxes(triangles, COARSE, within.apply(COARSE));
     }
 
     /** The boxes of a block with {@code triangles} in it, worked out in a grid of {@code grid} to a side. */
     static int[] boxes(final float[] triangles, final int grid) {
-        return join(fill(triangles, grid), grid);
+        return boxes(triangles, grid, null);
+    }
+
+    /* The boxes of the cells {@code triangles} pass through and those {@code within} says are solid. */
+    private static int[] boxes(final float[] triangles, final int grid, final boolean @Nullable [] within) {
+        final boolean[] full = fill(triangles, grid);
+        if (within != null) {
+            for (int at = 0; at < full.length; at++) {
+                full[at] |= within[at];
+            }
+        }
+        return join(full, grid);
     }
 
     /* Each cell of the grid a face passes through. */

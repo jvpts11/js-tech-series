@@ -8,23 +8,33 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.core.air.AirMix;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.IPlanMember;
+import dev.jstech.core.multiblock.shape.FormedPlace;
+import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.SealedRooms;
+import dev.jstech.space.api.ShipKit;
+import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.SpaceSuit;
 import dev.jstech.space.api.SpaceSuits;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
 import dev.jstech.space.ship.BunkBlock;
+import dev.jstech.space.ship.IFixtureEntity;
 import dev.jstech.space.ship.OxygenPanelBlock;
 import dev.jstech.space.ship.ShipFixtureBlock;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipPartModels;
+import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.ship.SuitLockerEntity;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -34,8 +44,12 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -43,7 +57,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * A starship's fixtures at work: the airlock's oxygen panel fills the tanks of a worn suit from the cabin's air, taking
  * its oxygen; the quarters' bunk is a respawn point in a cabin of breathable air and refuses one of nitrogen; the suit
  * locker keeps what is put in it and gives it back when broken; a formed part's fixture stops drawing itself and lets
- * the light through; and the workshop's vanilla blocks keep themselves in a ship's plan.
+ * the light through, and stands as its block of its part's model; and the workshop's vanilla blocks keep themselves
+ * in a ship's plan.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -140,6 +155,50 @@ public final class ShipFixtureGameTests {
                         && !IPlanMember.keepsItself(ShipKitBlocks.HULL_FRAME.get().defaultBlockState()),
                 "the workshop's vanilla blocks and the fixtures keep themselves in a plan; the hull merges");
         helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void fixture_formedStandsAsItsBlockOfItsPartsModel(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos pos = helper.absolutePos(FIXTURE);
+        for (final Block block : List.of(ShipKitBlocks.SUIT_LOCKER.get(), ShipKitBlocks.OXYGEN_PANEL.get())) {
+            final FormedPlace place = placeOf(level, SmallShipParts.id("small_airlock"), block);
+            helper.setBlock(FIXTURE, block);
+            ((ShipFixtureBlock) block).partFormed(level, pos, true, place);
+            final VoxelShape wanted = FormedShapes.get(level, place.model()).orElseThrow().shape(place);
+            final VoxelShape stands = level.getBlockState(pos).getCollisionShape(level, pos);
+            helper.assertTrue(level.getBlockEntity(pos) instanceof IFixtureEntity fixture
+                    && fixture.places().equals(List.of(place)), "formed, " + block + " keeps its block of the model");
+            helper.assertTrue(!Shapes.joinIsNotEmpty(wanted, stands, BooleanOp.NOT_SAME)
+                    && Shapes.joinIsNotEmpty(stands, Shapes.block(), BooleanOp.NOT_SAME),
+                    "and stands as the model draws it there, not as a whole block: " + stands.toAabbs());
+            ((ShipFixtureBlock) block).partFormed(level, pos, false, place);
+            helper.assertTrue(!Shapes.joinIsNotEmpty(level.getBlockState(pos).getCollisionShape(level, pos),
+                    Shapes.block(), BooleanOp.NOT_SAME), "come apart, " + block + " is a whole block again");
+        }
+        helper.succeed();
+    }
+
+    /* The block of the formed model of {@code part}'s kit that {@code block} stands for there, standing north. */
+    private static FormedPlace placeOf(final ServerLevel level, final ResourceLocation part, final Block block) {
+        final ShipKit kit = ShipKits.all(level).get(part);
+        final ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+        for (final ShipKit.Piece piece : kit.pieces()) {
+            for (int y = 0; y < piece.layers().size(); y++) {
+                final List<String> layer = piece.layers().get(y);
+                for (int z = 0; z < layer.size(); z++) {
+                    final String row = layer.get(z);
+                    for (int x = 0; x < row.length(); x++) {
+                        if (id.equals(kit.key().get(String.valueOf(row.charAt(x))))) {
+                            return new FormedPlace(ShipPartModels.shape(part, kit, piece),
+                                    FormedShapes.ORIENTATIONS.indexOf(Orientation.NORTH), piece.x() + x,
+                                    piece.y() + y, piece.z() + z);
+                        }
+                    }
+                }
+            }
+        }
+        throw new IllegalStateException(id + " is not in the kit of " + part);
     }
 
     /* A closed box of stone from LOW to HIGH_CORNER, its inside air. */

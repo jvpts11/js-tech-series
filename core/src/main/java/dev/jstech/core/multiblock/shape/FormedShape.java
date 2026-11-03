@@ -36,12 +36,15 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * faces, since a server has no models, and sent to the players. Each block's shape turned each way a structure can
  * stand is worked out once, the first time a block stands that way, and shared by every block of every structure of
  * the model that stands so. It also holds what a kind of its blocks does aboard a moving structure in place of what it
- * does alone, as its model's declaration says: the same seat a couch in a capsule and a chair in a lander's cabin.
+ * does alone, as its model's declaration says: the same seat a couch in a capsule and a chair in a lander's cabin. And
+ * it holds the model's pieces a player takes for one thing ({@link FormedPiece}), a door, a seat, outlined whole from
+ * any block they stand in.
  *
  * <pre>{@code
  * {"origin": [-0.5, 0.0, -0.5], "apart": [[0, 0, 0]],
  *  "cells": [{"at": [0, 1, 0], "boxes": [0, 0, 0, 16, 2, 16, ...]}, ...],
- *  "aboard": {"mymod:crew_seat": {"seat": {"height": 0.1, "lying": true}}}}
+ *  "aboard": {"mymod:crew_seat": {"seat": {"height": 0.1, "lying": true}}},
+ *  "pieces": [{"name": "seat", "solids": [[0.2, 1.0, 0.2, ...], ...]}]}
  * }</pre>
  */
 public final class FormedShape {
@@ -50,7 +53,10 @@ public final class FormedShape {
     private final Set<Long> apart;
     private final Map<Long, int[]> cells;
     private final Map<ResourceLocation, BlockAboard> aboard;
+    private final List<FormedPiece> pieces;
     private final Map<Turned, VoxelShape> turned = new ConcurrentHashMap<>();
+    /* Each piece's outline, by its place among the pieces, worked out the first time it is drawn. */
+    private final Map<Integer, float[]> pieceLines = new ConcurrentHashMap<>();
 
     private static final int AXES = 3;
     private static final double SIXTEENTH = 1.0 / MeshVoxels.FINE;
@@ -66,7 +72,9 @@ public final class FormedShape {
                     TRIPLE.listOf().optionalFieldOf("apart", List.of()).forGetter(Raw::apart),
                     CELL.listOf().fieldOf("cells").forGetter(Raw::cells),
                     Codec.unboundedMap(ResourceLocation.CODEC, BlockAboard.CODEC).optionalFieldOf("aboard", Map.of())
-                            .forGetter(Raw::aboard)).apply(instance, Raw::new))
+                            .forGetter(Raw::aboard),
+                    FormedPiece.CODEC.listOf().optionalFieldOf("pieces", List.of()).forGetter(Raw::pieces))
+                    .apply(instance, Raw::new))
             .comapFlatMap(FormedShape::build, FormedShape::raw);
 
     /**
@@ -76,9 +84,10 @@ public final class FormedShape {
      * @param apart  the blocks of its structure that stand for themselves, as its terminal does
      * @param cells  each merging block's boxes, by {@link MeshCells#key}, {@link MeshVoxels#BOX} numbers a box
      * @param aboard what a kind of its blocks does aboard in place of what it does alone, by the block's id
+     * @param pieces its pieces a player takes for one thing each, outlined whole
      */
     public FormedShape(final double[] origin, final Set<Long> apart, final Map<Long, int[]> cells,
-                       final Map<ResourceLocation, BlockAboard> aboard) {
+                       final Map<ResourceLocation, BlockAboard> aboard, final List<FormedPiece> pieces) {
         if (origin.length != AXES) {
             throw new IllegalArgumentException("an origin is three numbers");
         }
@@ -91,6 +100,13 @@ public final class FormedShape {
         this.apart = Collections.unmodifiableSet(new LinkedHashSet<>(apart));
         this.cells = Collections.unmodifiableMap(new TreeMap<>(cells));
         this.aboard = Map.copyOf(aboard);
+        this.pieces = List.copyOf(pieces);
+    }
+
+    /** The shapes of a model's blocks, with no pieces outlined whole. */
+    public FormedShape(final double[] origin, final Set<Long> apart, final Map<Long, int[]> cells,
+                       final Map<ResourceLocation, BlockAboard> aboard) {
+        this(origin, apart, cells, aboard, List.of());
     }
 
     /** The shapes of a model's blocks, none of which does anything aboard in place of what it does alone. */
@@ -122,6 +138,40 @@ public final class FormedShape {
     public Optional<BlockAboard> aboard(final Block block) {
         return this.aboard.isEmpty() ? Optional.empty()
                 : Optional.ofNullable(this.aboard.get(BuiltInRegistries.BLOCK.getKey(block)));
+    }
+
+    /** Its pieces a player takes for one thing each, outlined whole from any block they stand in. */
+    public List<FormedPiece> pieces() {
+        return this.pieces;
+    }
+
+    /**
+     * The piece the point {@code at} of the block {@code place} is on, and its outline in that block's own space as
+     * the model stands facing north; none where no piece holds it.
+     *
+     * @param at a point of the block in its own space, as the model stands facing north, from 0 to 1 along each axis
+     * @return its {@link MeshOutline#LINE} numbers to a line, reaching out of the block where the piece does
+     */
+    public Optional<float[]> pieceLines(final FormedPlace place, final double[] at) {
+        if (this.pieces.isEmpty()) {
+            return Optional.empty();
+        }
+        final double[] inModel = {at[0] + this.origin[0] + MeshCells.x(place.cell()),
+            at[1] + this.origin[1] + MeshCells.y(place.cell()), at[2] + this.origin[2] + MeshCells.z(place.cell())};
+        for (int i = 0; i < this.pieces.size(); i++) {
+            final FormedPiece piece = this.pieces.get(i);
+            if (!piece.holds(inModel)) {
+                continue;
+            }
+            final float[] lines = this.pieceLines.computeIfAbsent(i, any -> piece.lines()).clone();
+            for (int k = 0; k < lines.length; k += 3) {
+                lines[k] -= (float) (this.origin[0] + MeshCells.x(place.cell()));
+                lines[k + 1] -= (float) (this.origin[1] + MeshCells.y(place.cell()));
+                lines[k + 2] -= (float) (this.origin[2] + MeshCells.z(place.cell()));
+            }
+            return Optional.of(lines);
+        }
+        return Optional.empty();
     }
 
     /** The boxes of the block {@code cell}, as the model stands facing north, in sixteenths. */
@@ -177,7 +227,7 @@ public final class FormedShape {
                     cell.boxes().stream().mapToInt(Integer::intValue).toArray());
         }
         return DataResult.success(new FormedShape(new double[] {raw.origin().get(0), raw.origin().get(1),
-            raw.origin().get(2)}, apart, cells, raw.aboard()));
+            raw.origin().get(2)}, apart, cells, raw.aboard(), raw.pieces()));
     }
 
     private static Raw raw(final FormedShape shape) {
@@ -187,7 +237,7 @@ public final class FormedShape {
         shape.cells.forEach((key, boxes) -> cells.add(new Cell(List.of(MeshCells.x(key), MeshCells.y(key),
                 MeshCells.z(key)), Arrays.stream(boxes).boxed().toList())));
         return new Raw(List.of(shape.origin[0], shape.origin[1], shape.origin[2]), apart, cells,
-                new TreeMap<>(shape.aboard));
+                new TreeMap<>(shape.aboard), shape.pieces);
     }
 
     /* A block's shape standing one way. */
@@ -205,12 +255,13 @@ public final class FormedShape {
 
     /* A shape file as it reads. */
     private record Raw(List<Double> origin, List<List<Integer>> apart, List<Cell> cells,
-                       Map<ResourceLocation, BlockAboard> aboard) {
+                       Map<ResourceLocation, BlockAboard> aboard, List<FormedPiece> pieces) {
 
         Raw {
             origin = List.copyOf(origin);
             apart = List.copyOf(apart);
             cells = List.copyOf(cells);
+            pieces = List.copyOf(pieces);
         }
     }
 }

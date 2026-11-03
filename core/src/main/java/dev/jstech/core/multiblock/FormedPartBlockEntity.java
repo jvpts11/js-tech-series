@@ -17,6 +17,7 @@ import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShape;
 import dev.jstech.core.multiblock.shape.FormedShapes;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
  * owner, which gives it back itself. It keeps, too, the strikes of damage that reached it ({@code FormedDamage}),
  * and takes its shape from its faces as they left them.
  */
-public final class FormedPartBlockEntity extends SyncedBlockEntity {
+public final class FormedPartBlockEntity extends SyncedBlockEntity implements IFormedPlaced {
 
     private final ValueField<BlockState> original;
     private final ValueField<BlockPos> terminal;
@@ -97,6 +98,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity {
     }
 
     /** Every block of a formed model it takes its shape from: its own first, then those reaching into it. */
+    @Override
     public List<FormedPlace> places() {
         final List<FormedPlace> all = new ArrayList<>();
         final FormedPlace own = this.place.get();

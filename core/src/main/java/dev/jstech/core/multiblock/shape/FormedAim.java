@@ -7,8 +7,6 @@
  */
 package dev.jstech.core.multiblock.shape;
 
-import dev.jstech.core.multiblock.FormedPartBlock;
-import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.damage.FormedDamage;
 import java.util.List;
 import java.util.Optional;
@@ -79,8 +77,7 @@ public final class FormedAim {
      * it, when it is a merged block whose faces are known here; none otherwise.
      */
     public static List<FormedPlace> places(final Level level, final BlockPos pos, final BlockState state) {
-        if (!level.isClientSide() || !(state.getBlock() instanceof FormedPartBlock)
-                || !(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part)) {
+        if (!level.isClientSide() || state.isAir() || !(level.getBlockEntity(pos) instanceof IFormedPlaced part)) {
             return List.of();
         }
         return part.places().stream().filter(place -> FormedShapes.triangles(level, place).isPresent()).toList();

@@ -127,6 +127,9 @@ public final class ShipKitBlocks {
     public static final BlockEntry<Block> ANTENNA_FEED = add(kit("antenna_feed").named("Antenna Feed").register());
     public static final BlockEntry<Block> BUNK_FRAME = add(fixture("bunk_frame", BunkBlock::new).named("Bunk Frame")
             .register());
+    /* The fixtures that keep nothing but the block of their part's model they stand for. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShipFixtureEntity>> FIXTURE_ENTITY =
+            SpaceContent.CONTENT.blockEntity("ship_fixture", ShipFixtureEntity::new, OXYGEN_PANEL, BUNK_FRAME);
     public static final BlockEntry<Block> CARGO_RACK = add(kit("cargo_rack").named("Cargo Rack").register());
     public static final BlockEntry<Block> TIE_DOWN_DECK = add(kit("tie_down_deck").named("Tie-Down Deck").register());
     public static final BlockEntry<Block> RAMP_HINGE = add(kit("ramp_hinge").named("Ramp Hinge").register());
@@ -156,7 +159,8 @@ public final class ShipKitBlocks {
                                                final Function<BlockBehaviour.Properties, Block> factory) {
         final IBlockModel cube = new IBlockModel.CubeAll(id, "block/ship/" + id);
         final IBlockModel formed = new IBlockModel.ParticleOnly(id + "_formed", "jsspace:block/ship/" + id);
-        return metal(SpaceContent.CONTENT.block(id, factory))
+        // Formed, it takes its shape from the block of its part's model it stands for, so its shape is asked anew.
+        return metal(SpaceContent.CONTENT.block(id, factory)).properties(BlockBehaviour.Properties::dynamicShape)
                 .look(IBlockLook.byState(state -> state.getValue(ShipFixtureBlock.FORMED) ? formed : cube));
     }
 
