@@ -806,6 +806,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whole blocks.
 
 ### Fixed
+- A small starship's wings meet its hull cleanly: the blended delta's leading edge meets the hull 1.2 further
+  aft, so the airlock's boarding stair comes down clear of the wing, where it came down through it and the wing stood
+  over the door's sill, and the wedge between its root and the hull's cut corner is closed; the stub wings' root stands
+  at the hull's side, where it reached 0.3 into the cabin.
 - A small starship is boarded through its airlock's door: its outer door, as high as the passages, its leaf
   and frame bent with the hull's corners at its top and its foot as an aircraft's door follows its fuselage, opens and
   shuts with a click, in its dock, on the land and in flight; opening on the land, it lets its boarding stair down

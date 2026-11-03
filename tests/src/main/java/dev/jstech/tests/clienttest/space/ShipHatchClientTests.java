@@ -89,7 +89,7 @@ public final class ShipHatchClientTests {
         final Direction[] out = new Direction[1];
         final StructurePose[] stood = new StructurePose[1];
         final ShipDesign design = new ShipDesign("JS-05", List.of(part("orbiter_cockpit"), part("airlock"),
-                part("reactor_flush")), List.of(part("twin_bells"), part("swept_wings"), part("wheels")));
+                part("reactor_flush")), List.of(part("twin_bells"), part("blended_delta"), part("wheels")));
         ctx.afterTest(() -> ctx.server().execute(() -> {
             ctx.mc().options.keyUp.setDown(false);
             ctx.serverPlayer().setGameMode(GameType.CREATIVE);
