@@ -173,7 +173,19 @@
     "jsspace:server_panel": {
       "rating": 300.0
     },
+    "jsspace:ship_barrel": {
+      "rating": 300.0
+    },
+    "jsspace:ship_crafting_table": {
+      "rating": 300.0
+    },
     "jsspace:ship_engine_mount": {
+      "rating": 300.0
+    },
+    "jsspace:ship_furnace": {
+      "rating": 300.0
+    },
+    "jsspace:ship_smithing_table": {
       "rating": 300.0
     },
     "jsspace:suit_locker": {

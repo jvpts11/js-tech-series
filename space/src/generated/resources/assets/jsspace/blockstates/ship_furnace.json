@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "formed=false,lit=false": {
+      "model": "jsspace:block/ship_furnace"
+    },
+    "formed=false,lit=true": {
+      "model": "jsspace:block/ship_furnace"
+    },
+    "formed=true,lit=false": {
+      "model": "jsspace:block/ship_furnace_formed"
+    },
+    "formed=true,lit=true": {
+      "model": "jsspace:block/ship_furnace_formed"
+    }
+  }
+}

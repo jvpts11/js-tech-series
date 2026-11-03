@@ -51,8 +51,6 @@ public final class JsSpaceDataGenerators {
                 SpaceWorld.CODEC, SpaceWorlds::declared));
         // The rocket parts' blocks as rooms and physics see them: the crews' pressure shell, and each block's mass.
         data.server(new RocketKitDataProvider(data.output(), data.lookup()));
-        // The vanilla blocks the ships' kits keep working aboard.
-        data.server(new ShipBlockTagsProvider(data.output(), data.lookup(), data.existingFiles()));
         data.check();
     }
 }

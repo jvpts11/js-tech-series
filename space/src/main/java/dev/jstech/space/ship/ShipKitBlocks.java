@@ -127,9 +127,25 @@ public final class ShipKitBlocks {
     public static final BlockEntry<Block> ANTENNA_FEED = add(kit("antenna_feed").named("Antenna Feed").register());
     public static final BlockEntry<Block> BUNK_FRAME = add(fixture("bunk_frame", BunkBlock::new).named("Bunk Frame")
             .register());
+    // The workshop's and the holds' working pieces, standing against the hull's walls, working as the game's own do.
+    public static final BlockEntry<Block> SHIP_CRAFTING_TABLE = add(fixture("ship_crafting_table",
+            ShipCraftingTableBlock::new).named("Ship Crafting Table").register());
+    public static final BlockEntry<Block> SHIP_SMITHING_TABLE = add(fixture("ship_smithing_table",
+            ShipSmithingTableBlock::new).named("Ship Smithing Table").register());
+    public static final BlockEntry<Block> SHIP_FURNACE = add(fixture("ship_furnace", ShipFurnaceBlock::new)
+            .properties(properties -> properties.lightLevel(state -> state.getValue(ShipFurnaceBlock.LIT)
+                    ? ShipFurnaceBlock.LIGHT : 0))
+            .named("Ship Furnace").register());
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShipFurnaceEntity>> SHIP_FURNACE_ENTITY =
+            SpaceContent.CONTENT.blockEntity("ship_furnace", ShipFurnaceEntity::new, SHIP_FURNACE);
+    public static final BlockEntry<Block> SHIP_BARREL = add(fixture("ship_barrel", ShipBarrelBlock::new)
+            .named("Ship Barrel").register());
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShipBarrelEntity>> SHIP_BARREL_ENTITY =
+            SpaceContent.CONTENT.blockEntity("ship_barrel", ShipBarrelEntity::new, SHIP_BARREL);
     /* The fixtures that keep nothing but the block of their part's model they stand for. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShipFixtureEntity>> FIXTURE_ENTITY =
-            SpaceContent.CONTENT.blockEntity("ship_fixture", ShipFixtureEntity::new, OXYGEN_PANEL, BUNK_FRAME);
+            SpaceContent.CONTENT.blockEntity("ship_fixture", ShipFixtureEntity::new, OXYGEN_PANEL, BUNK_FRAME,
+                    SHIP_CRAFTING_TABLE, SHIP_SMITHING_TABLE);
     public static final BlockEntry<Block> CARGO_RACK = add(kit("cargo_rack").named("Cargo Rack").register());
     public static final BlockEntry<Block> TIE_DOWN_DECK = add(kit("tie_down_deck").named("Tie-Down Deck").register());
     public static final BlockEntry<Block> RAMP_HINGE = add(kit("ramp_hinge").named("Ramp Hinge").register());

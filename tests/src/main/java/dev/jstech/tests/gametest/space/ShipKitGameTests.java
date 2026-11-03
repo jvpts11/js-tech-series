@@ -37,10 +37,10 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The small starship's block kit: its 61 blocks, each with its item, its name, its place in the mod's tab and its
+ * The small starship's block kit: its 65 blocks, each with its item, its name, its place in the mod's tab and its
  * drop; every part of the catalogue built of its kit, a spine section as wide as the hull and as long as it is, the
- * hung parts set from their places on the ship; the kits using the blocks of the kit, or the vanilla blocks that work
- * aboard, and every block of the kit; and the example ships laid whole, no two of their parts wanting one place.
+ * hung parts set from their places on the ship; the kits using the blocks of the kit, or a block that keeps itself in
+ * a plan, and every block of the kit; and the example ships laid whole, no two of their parts wanting one place.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -53,9 +53,9 @@ public final class ShipKitGameTests {
     }
 
     @GameTest(template = ARENA, batch = BATCH)
-    public static void kit_sixtyOneBlocksNamedInTheTabAndDroppingThemselves(final GameTestHelper helper) {
+    public static void kit_sixtyFiveBlocksNamedInTheTabAndDroppingThemselves(final GameTestHelper helper) {
         final List<BlockEntry<Block>> blocks = ShipKitBlocks.all();
-        helper.assertTrue(blocks.size() == 61, "61 blocks: " + blocks.size());
+        helper.assertTrue(blocks.size() == 65, "65 blocks: " + blocks.size());
         for (final BlockEntry<Block> block : blocks) {
             helper.assertTrue(block.get().asItem() != Items.AIR, block.getId() + " has its item");
             helper.assertTrue(Language.getInstance().has(block.get().getDescriptionId()), block.getId()
@@ -84,7 +84,7 @@ public final class ShipKitGameTests {
             for (final ResourceLocation block : kit.key().values()) {
                 helper.assertTrue(blocks.contains(block) || IPlanMember.keepsItself(BuiltInRegistries.BLOCK
                         .get(block).defaultBlockState()), entry.getKey() + "'s " + block + " is the kit's, or a "
-                        + "vanilla block working aboard");
+                        + "block keeping itself in a plan");
             }
             used.addAll(kit.key().values());
             final boolean spine = part.place() == ShipPlace.NOSE || part.place() == ShipPlace.SPINE

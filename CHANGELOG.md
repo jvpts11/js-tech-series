@@ -499,6 +499,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   it stands in, a piece is used through that block. Experimental.
 
 ### Added
+- (Space) Four blocks of the starship's kit for its workshop and holds, each standing against the hull's wall and
+  working as the game's own does: the Ship Crafting Table, the Ship Smithing Table, the Ship Furnace, which gives light
+  while it burns, and the Ship Barrel, of 27 stacks. The holds carry their barrels along both walls, one on another
+  every other row: the bay and the ramp fifteen each, the side door's hold eleven, small cargo four. A crew's
+  furnaces and barrels are its own to use, as its lockers are.
+- (Core) A declared model may name a texture a pack makes as the game loads, once promised: the data run's check of
+  the model takes it.
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
   default is outside its range, two things under one id), the game stops loading with one paragraph saying which
   mod, which declaration, what is wrong and how to fix it, from the content builders, the settings, the registries
@@ -3104,6 +3111,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) A player walks a small starship from its cockpit's doorway to its tail: the workshop's crafting table,
+  smithing table, furnace and barrel and the holds' barrels stand against the hull's walls, on the floor, the walkway
+  between them clear, where they stood in it a block over the floor; small cargo's barrels too, in their racks; the
+  computing module's stool tucks under its desk; and the Orbiter's flight deck steps back from its doorway, its
+  threshold flush with the airlock's floor, where its half step stood across the doorway and a player's head met the
+  door's frame.
+- (Space) A starship's furniture shows the game's own blocks without the mod shipping any of the game's art: the
+  workshop's and the holds' pieces and the quarters' bunk's wool are drawn into their models' textures from the game's
+  own files as the game loads.
 - (Space) Climbing over a world of the Solar System, the ground stays drawn under the climber from as high as the
   game's sight reaches down to the top of the world: over the Moon, between about 250 and 320 high, it went black, out
   of the game's sight and with no air to haze it, till the far map's picture took over at the top.

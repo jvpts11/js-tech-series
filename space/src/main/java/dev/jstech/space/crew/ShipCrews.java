@@ -68,8 +68,9 @@ public final class ShipCrews {
 
     /**
      * The role using a block of the kind {@code block} aboard a ship asks for: its helm a pilot, its airlock's door,
-     * its bunks and its docking collar whoever may come aboard, its fittings and any machine aboard ({@code machine},
-     * a block with something of its own that is no part of a ship's kit) its crew. Anything else asks for nothing,
+     * its bunks and its docking collar whoever may come aboard, its fittings, the furnaces and barrels of its workshop
+     * and holds and any machine aboard ({@code machine}, a block with something of its own that is no part of a
+     * ship's kit) its crew. Anything else asks for nothing,
      * unless a block is being put in ({@code placing}), which is a pilot's to do.
      */
     public static CrewRole needed(final Block block, final boolean machine, final boolean placing) {
@@ -82,6 +83,7 @@ public final class ShipCrews {
         }
         if (block == ShipKitBlocks.FLIGHT_CONSOLE.get() || block == ShipKitBlocks.SUIT_LOCKER.get()
                 || block == ShipKitBlocks.OXYGEN_PANEL.get() || block == ShipKitBlocks.AIRLOCK_CYCLER.get()
+                || block == ShipKitBlocks.SHIP_FURNACE.get() || block == ShipKitBlocks.SHIP_BARREL.get()
                 || machine) {
             return CrewRole.CREW;
         }

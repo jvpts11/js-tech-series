@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "jsspace:block/ship_barrel"
+    },
+    "formed=true": {
+      "model": "jsspace:block/ship_barrel_formed"
+    }
+  }
+}

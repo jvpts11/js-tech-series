@@ -15,6 +15,10 @@ import dev.jstech.core.text.TextKey;
 public final class ShipFixtureTexts {
 
     public static final TextKey SUIT_LOCKER = TextKey.of("jsspace.ship_fixture.suit_locker", "Suit Locker");
+    public static final TextKey CRAFTING = TextKey.of("jsspace.ship_fixture.crafting", "Crafting");
+    public static final TextKey SMITHING = TextKey.of("jsspace.ship_fixture.smithing", "Upgrade Gear");
+    public static final TextKey FURNACE = TextKey.of("jsspace.ship_fixture.furnace", "Furnace");
+    public static final TextKey BARREL = TextKey.of("jsspace.ship_fixture.barrel", "Barrel");
     public static final TextKey NO_SUIT = TextKey.of("jsspace.ship_fixture.no_suit",
             "Wear a suit to fill its tanks");
     public static final TextKey FILLED = TextKey.of("jsspace.ship_fixture.filled",

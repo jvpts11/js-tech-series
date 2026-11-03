@@ -13,6 +13,8 @@ import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import java.util.List;
 import java.util.Objects;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.level.block.Rotation;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,9 +25,24 @@ import org.jetbrains.annotations.Nullable;
 final class FixturePlace {
 
     private final ValueField<FormedPlace> place;
+    /* Under what a fixture's block entity keeps its place, whatever kind of block entity it is. */
+    private static final String KEY = "FixturePlace";
 
     FixturePlace(final SyncedBlockEntity entity) {
-        this.place = entity.fields().nullable("FixturePlace", FormedPlace.CODEC).save().toClient();
+        this.place = entity.fields().nullable(KEY, FormedPlace.CODEC).save().toClient();
+    }
+
+    /** Writes {@code place} into {@code tag}, for a fixture whose block entity is of the game's own kinds. */
+    static void write(final CompoundTag tag, final @Nullable FormedPlace place) {
+        if (place != null) {
+            FormedPlace.CODEC.encodeStart(NbtOps.INSTANCE, place).result().ifPresent(at -> tag.put(KEY, at));
+        }
+    }
+
+    /** The place {@link #write} wrote into {@code tag}, if it wrote one. */
+    static @Nullable FormedPlace read(final CompoundTag tag) {
+        return tag.contains(KEY) ? FormedPlace.CODEC.parse(NbtOps.INSTANCE, tag.get(KEY)).result().orElse(null)
+                : null;
     }
 
     /** The block it stands for, as a list: none, or that one. */

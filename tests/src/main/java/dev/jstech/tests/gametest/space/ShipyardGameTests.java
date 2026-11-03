@@ -34,6 +34,7 @@ import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.ship.AirReserveEntity;
+import dev.jstech.space.ship.IFixtureEntity;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
@@ -343,10 +344,12 @@ public final class ShipyardGameTests {
                         lay(level, plan, spot);
                     }
                     helper.assertTrue(plan.complete() && dock.built(), "every block in, the whole ship is formed");
-                    final PlanSpot table = plan.plan().spots().stream().filter(spot -> spot.place().isEmpty())
-                            .findFirst().orElseThrow();
-                    helper.assertTrue(level.getBlockState(plan.where(table)).is(BuiltInRegistries.BLOCK.get(
-                            table.block())), "a block of the game in the workshop's kit keeps itself");
+                    final PlanSpot table = plan.plan().spots().stream().filter(spot -> spot.block().equals(
+                            ShipKitBlocks.SHIP_CRAFTING_TABLE.getId())).findFirst().orElseThrow();
+                    helper.assertTrue(level.getBlockState(plan.where(table)).is(ShipKitBlocks.SHIP_CRAFTING_TABLE.get())
+                            && level.getBlockEntity(plan.where(table)) instanceof IFixtureEntity fixture
+                            && fixture.places().equals(List.of(table.place().orElseThrow())), "the workshop's"
+                            + " crafting table keeps itself, standing as its block of the workshop's model");
                     level.destroyBlock(terminal, false);
                     helper.assertTrue(cockpit.stream().noneMatch(spot -> level.getBlockState(plan.where(spot))
                             .getBlock() instanceof FormedPartBlock), "the terminal broken, the ship comes apart");

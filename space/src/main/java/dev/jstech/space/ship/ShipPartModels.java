@@ -10,6 +10,7 @@ package dev.jstech.space.ship;
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.content.ModelBuilder;
 import dev.jstech.core.moving.BlockAboard;
+import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
 import dev.jstech.space.api.ShipKit;
@@ -17,13 +18,18 @@ import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
 import dev.jstech.space.api.ShipParts;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.IntPredicate;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforgespi.language.IModFileInfo;
 
 /**
  * The formed models of the small starship's parts, as the approved catalogue drew them, with the joints drawn on the
@@ -39,6 +45,8 @@ public final class ShipPartModels {
     public static final List<String> FINISHES = List.of("orbiter", "bare_metal", "enamel");
     /* Every model, by its id. */
     private static final Map<ResourceLocation, DeclaredModel> MODELS = new LinkedHashMap<>();
+    /* Every model's name, the same in every finish. */
+    private static final Set<String> NAMES = new LinkedHashSet<>();
     /* The cluster's four bells have the most triangles. */
     private static final int MOST_TRIANGLES = 9_000;
     /** A pilot seat aboard: sat on upright, half a block over its block's bottom, the ship's helm. */
@@ -59,7 +67,14 @@ public final class ShipPartModels {
                     || declared.kind() == ShipPartKind.HULL || declared.kind() == ShipPartKind.MODULE);
             for (final ShipKit.Piece piece : kit.pieces()) {
                 final String name = name(part, kit, piece);
+                NAMES.add(name);
+                final boolean showsTheGames = showsTheGamesBlocks(name);
                 for (final String finish : FINISHES) {
+                    if (showsTheGames) {
+                        // Its texture is drawn as the game loads, the game's own blocks drawn in from its files.
+                        RuntimePacks.promise(ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
+                                "models/ship/" + name + "_" + finish));
+                    }
                     final ModelBuilder model = SpaceContent.CONTENT.model("ship/" + finish + "/" + name)
                             .file("jsmodels/ship/" + name + ".gltf")
                             .texture("textures/models/ship/" + name + "_" + finish + ".png")
@@ -75,6 +90,11 @@ public final class ShipPartModels {
                 }
             }
         });
+    }
+
+    /** Every model's name, as its files are named, the same in every finish. */
+    public static List<String> names() {
+        return List.copyOf(NAMES);
     }
 
     /** The model of {@code id}, if it is one of the parts' models. */
@@ -174,6 +194,16 @@ public final class ShipPartModels {
 
     private static ResourceLocation id(final String finish, final String name) {
         return ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship/" + finish + "/" + name);
+    }
+
+    /*
+     * Whether the model {@code name} shows the game's own blocks, the mod's files saying which texels of its texture
+     * are the game's beside it ({@code jsmodels/ship/<model>.game.json}).
+     */
+    private static boolean showsTheGamesBlocks(final String name) {
+        final IModFileInfo mod = ModList.get().getModFileById(JsSpace.MODID);
+        return mod != null && Files.isRegularFile(mod.getFile().findResource("assets", JsSpace.MODID,
+                "jsmodels/ship/" + name + ".game.json"));
     }
 
     /**

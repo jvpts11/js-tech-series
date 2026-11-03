@@ -14,6 +14,7 @@ import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelFormatException;
 import dev.jstech.core.model.ModelReaders;
 import dev.jstech.core.model.ModelShaping;
+import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +33,8 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
 /**
  * Writes the definition of every model a mod declares to {@code assets/<mod>/jsmodels/<path>.model.json}, once it has
- * read the model: every file the declaration names has to be there, the model has to read, and every bone it names
+ * read the model: every file the declaration names has to be there, or be a texture a pack promised to make as the
+ * player's game loads ({@link RuntimePacks#promise}), the model has to read, and every bone it names
  * (to glow, to hide, to show) has to be one of the model's; and a file of more triangles than a model may have
  * without saying how many it is drawn with has to say it. A declaration that has drifted from its files stops the
  * generation instead of drawing nothing, or too much, in the game.
@@ -42,6 +44,8 @@ public final class ModelDefinitionProvider implements DataProvider {
     private final PackOutput output;
     private final ModContent content;
     private final ExistingFileHelper files;
+    private static final String TEXTURES = "textures/";
+    private static final String PICTURE = ".png";
 
     public ModelDefinitionProvider(final PackOutput output, final ModContent content, final ExistingFileHelper files) {
         this.output = output;
@@ -87,7 +91,8 @@ public final class ModelDefinitionProvider implements DataProvider {
             }
         }
         for (final String file : named) {
-            if (!files.exists(ResourceLocation.parse(file), PackType.CLIENT_RESOURCES)) {
+            final ResourceLocation location = ResourceLocation.parse(file);
+            if (!files.exists(location, PackType.CLIENT_RESOURCES) && !madeAsTheGameLoads(location)) {
                 throw DeclarationError.of(model.id().getNamespace(), "the model " + model.id(), "names " + file
                         + ", which is not there", "put the file there, or name the one that is");
             }
@@ -148,5 +153,12 @@ public final class ModelDefinitionProvider implements DataProvider {
         } catch (final IOException e) {
             throw new UncheckedIOException("the model file " + file + " could not be read", e);
         }
+    }
+
+    /* Whether {@code file} is a texture a pack promised to make as the player's game loads ({@link RuntimePacks}). */
+    private static boolean madeAsTheGameLoads(final ResourceLocation file) {
+        final String path = file.getPath();
+        return path.startsWith(TEXTURES) && path.endsWith(PICTURE) && RuntimePacks.promised(file.withPath(
+                path.substring(TEXTURES.length(), path.length() - PICTURE.length())));
     }
 }

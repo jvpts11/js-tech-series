@@ -412,6 +412,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   it stands in, a piece is used through that block. Experimental.
 
 ### Added
+- A declared model may name a texture a pack makes as the game loads, once promised: the data run's check of
+  the model takes it.
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
   default is outside its range, two things under one id), the game stops loading with one paragraph saying which
   mod, which declaration, what is wrong and how to fix it, from the content builders, the settings, the registries

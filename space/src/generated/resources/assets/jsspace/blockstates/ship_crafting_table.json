@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "jsspace:block/ship_crafting_table"
+    },
+    "formed=true": {
+      "model": "jsspace:block/ship_crafting_table_formed"
+    }
+  }
+}

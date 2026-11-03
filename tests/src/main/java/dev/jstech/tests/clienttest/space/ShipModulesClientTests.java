@@ -15,36 +15,34 @@ import dev.jstech.tests.TestShips;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
-import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * The small ship's functional modules on a player's game, furnished as the approved modules were: a ship of the
- * Orbiter's cockpit and airlock, a workshop, a laboratory and quarters, and its reactor; the workshop's vanilla
- * crafting table, smithing table, furnace and barrel standing where its kit puts them and drawn as themselves, the
- * laboratory's bench and the quarters' bunk drawn by their models.
+ * Orbiter's cockpit and airlock, a workshop, a laboratory and quarters, and its reactor; the workshop's crafting table
+ * standing against its left wall, drawn by the workshop's model with the game's own crafting table's texture, drawn in
+ * as the game loads; the laboratory's bench and the quarters' bunk drawn by their models; and a bay's barrels along
+ * its walls, drawn the same way.
  */
 public final class ShipModulesClientTests {
 
     private static final BlockPos STAND = new BlockPos(0, 2, 0);
     private static final double HULL = 2;
-    /* The workshop's middle row, where its kit stands its vanilla blocks, from the stand's north-west corner. */
+    /* Where the workshop begins along the ship, from the stand's north-west corner. */
     private static final int WORKSHOP = 8;
-    private static final Map<BlockPos, Block> VANILLA = Map.of(new BlockPos(-1, 3, WORKSHOP), Blocks.CRAFTING_TABLE,
-            new BlockPos(0, 3, WORKSHOP), Blocks.SMITHING_TABLE, new BlockPos(-1, 3, WORKSHOP + 1), Blocks.FURNACE,
-            new BlockPos(0, 3, WORKSHOP + 1), Blocks.BARREL);
-    /* Where the player looks from and at, inside the ship. */
-    private static final Vec3 AIRLOCK_EYES = new Vec3(-0.5, HULL + 1.7, 6.2);
-    private static final Vec3 CRAFTING_TABLE = new Vec3(-0.5, HULL + 1.5, WORKSHOP);
+    /* Where the player looks from and at, inside the ship: the crafting table's front, against the left wall. */
+    private static final Vec3 WORKSHOP_EYES = new Vec3(0.3, HULL + 1.7, WORKSHOP + 1.6);
+    private static final Vec3 CRAFTING_TABLE = new Vec3(-1.2, HULL + 0.9, WORKSHOP + 0.5);
     private static final Vec3 LAB_EYES = new Vec3(0.3, HULL + 1.7, 11);
     private static final Vec3 LAB_BENCH = new Vec3(-1.8, HULL + 1.2, 11);
     private static final Vec3 QUARTERS_EYES = new Vec3(0.5, HULL + 1.7, 13);
     private static final Vec3 BUNK = new Vec3(-1.6, HULL + 0.9, 13);
+    /* In the hold of a ship of the Cab's cockpit and a docking module, its bay from 8 to 13: a barrel on the right. */
+    private static final Vec3 HOLD_EYES = new Vec3(-0.3, HULL + 1.7, 10.5);
+    private static final Vec3 BARREL = new Vec3(1.2, HULL + 0.9, 10.5);
     private static final int PATCH = 1;
     /* How far red outshines blue on the crafting table's planks, which take the cabin's light aslant. */
     private static final int WOODEN = 12;
@@ -56,12 +54,11 @@ public final class ShipModulesClientTests {
     }
 
     @ClientTest(timeoutTicks = 1500)
-    public static void modules_areFurnishedAsTheApprovedOnesAndTheWorkshopsBlocksStandInIt(
+    public static void modules_areFurnishedAsTheApprovedOnesTheWorkshopsTableDrawnAsTheGamesOwn(
             final ClientTestContext ctx) {
-        final int[][] seen = new int[1][];
+        final int[][] seen = new int[2][];
         ctx.afterTest(() -> ctx.server().execute(() -> {
             ctx.serverLevel().removeBlock(ctx.abs(STAND), false);
-            VANILLA.keySet().forEach(cell -> ctx.serverLevel().removeBlock(at(ctx, cell), false));
             ctx.serverPlayer().setGameMode(GameType.CREATIVE);
         }));
         final ShipDesign ship = new ShipDesign("MODULES", List.of(part("orbiter_cockpit"), part("airlock"),
@@ -70,22 +67,35 @@ public final class ShipModulesClientTests {
                 part("wheels")));
         ctx.thenServer(0, level -> {
             level.setBlockAndUpdate(ctx.abs(STAND), TestShips.DISPLAY.get().defaultBlockState());
-            VANILLA.forEach((cell, block) -> level.setBlockAndUpdate(at(ctx, cell), block.defaultBlockState()));
             ((TestShips.DisplayEntity) level.getBlockEntity(ctx.abs(STAND))).show(ship, SmallShipFinishes.DEFAULT);
             ctx.serverPlayer().setGameMode(GameType.SPECTATOR);
         }).thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(STAND))
                 instanceof TestShips.DisplayEntity stand && stand.design().equals(ship), ARRIVE,
                 "the stand's ship to reach the player's game");
-        stand(ctx, AIRLOCK_EYES);
+        stand(ctx, WORKSHOP_EYES);
         ctx.then(2, () -> ctx.lookAt(corner(ctx).add(CRAFTING_TABLE)))
                 .then(SETTLE, () -> seen[0] = mean(ctx))
                 .thenScreenshot(0, "ship-module-workshop");
         stand(ctx, LAB_EYES);
         ctx.then(2, () -> ctx.lookAt(corner(ctx).add(LAB_BENCH))).thenScreenshot(SETTLE, "ship-module-lab");
         stand(ctx, QUARTERS_EYES);
-        ctx.then(2, () -> ctx.lookAt(corner(ctx).add(BUNK))).thenScreenshot(SETTLE, "ship-module-quarters")
-                .then(0, () -> ctx.assertTrue(seen[0][0] - seen[0][2] > WOODEN,
-                        "the workshop's crafting table stands in it, drawn as itself: " + str(seen[0])));
+        ctx.then(2, () -> ctx.lookAt(corner(ctx).add(BUNK))).thenScreenshot(SETTLE, "ship-module-quarters");
+        final ShipDesign hold = new ShipDesign("HOLD", List.of(part("cab_cockpit"), part("docking"), part("bay"),
+                part("reactor_fins")), List.of(part("cluster"), part("stub_wings"), part("legs")));
+        ctx.thenServer(0, level -> ((TestShips.DisplayEntity) level.getBlockEntity(ctx.abs(STAND))).show(hold,
+                SmallShipFinishes.DEFAULT)).thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(STAND))
+                instanceof TestShips.DisplayEntity stand && stand.design().equals(hold), ARRIVE,
+                "the stand's hold to reach the player's game");
+        stand(ctx, HOLD_EYES);
+        ctx.then(2, () -> ctx.lookAt(corner(ctx).add(BARREL)))
+                .then(SETTLE, () -> seen[1] = mean(ctx))
+                .thenScreenshot(0, "ship-module-hold")
+                .then(0, () -> {
+                    ctx.assertTrue(seen[0][0] - seen[0][2] > WOODEN, "the workshop's crafting table stands against"
+                            + " its wall, drawn with the game's own planks: " + str(seen[0]));
+                    ctx.assertTrue(seen[1][0] - seen[1][2] > WOODEN, "the hold's barrels stand along its walls,"
+                            + " drawn with the game's own staves: " + str(seen[1]));
+                });
     }
 
     /* Floats the player, a spectator, with their eyes at {@code eyes} from the stand's corner. */
@@ -100,11 +110,6 @@ public final class ShipModulesClientTests {
 
     private static ResourceLocation part(final String path) {
         return SmallShipParts.id("small_" + path);
-    }
-
-    /* The world's place of the ship's cell {@code cell}, from the stand's corner. */
-    private static BlockPos at(final ClientTestContext ctx, final BlockPos cell) {
-        return ctx.abs(STAND).offset(cell);
     }
 
     private static Vec3 corner(final ClientTestContext ctx) {

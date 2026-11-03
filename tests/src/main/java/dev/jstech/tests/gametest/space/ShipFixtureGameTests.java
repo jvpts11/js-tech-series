@@ -24,16 +24,22 @@ import dev.jstech.space.life.LunarSuit;
 import dev.jstech.space.ship.BunkBlock;
 import dev.jstech.space.ship.IFixtureEntity;
 import dev.jstech.space.ship.OxygenPanelBlock;
+import dev.jstech.space.ship.ShipBarrelEntity;
 import dev.jstech.space.ship.ShipFixtureBlock;
+import dev.jstech.space.ship.ShipFurnaceBlock;
+import dev.jstech.space.ship.ShipFurnaceEntity;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.ship.SuitLockerEntity;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -43,10 +49,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.CraftingMenu;
+import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -57,8 +69,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * A starship's fixtures at work: the airlock's oxygen panel fills the tanks of a worn suit from the cabin's air, taking
  * its oxygen; the quarters' bunk is a respawn point in a cabin of breathable air and refuses one of nitrogen; the suit
  * locker keeps what is put in it and gives it back when broken; a formed part's fixture stops drawing itself and lets
- * the light through, and stands as its block of its part's model; and the workshop's vanilla blocks keep themselves
- * in a ship's plan.
+ * the light through, and stands as its block of its part's model; the workshop's working pieces keep themselves in a
+ * ship's plan, and work as the game's own blocks do: the crafting grid, the smithing slots, a furnace that smelts and
+ * gives light as it burns, a barrel of 27 stacks.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -147,22 +160,80 @@ public final class ShipFixtureGameTests {
                 new AABB(helper.absolutePos(FIXTURE)).inflate(2), item -> item.getItem().is(LunarSuit.HELMET.get()))
                 .isEmpty();
         helper.assertTrue(dropped, "broken, it gives the helmet back");
-        helper.assertTrue(IPlanMember.keepsItself(Blocks.CRAFTING_TABLE.defaultBlockState())
-                        && IPlanMember.keepsItself(Blocks.FURNACE.defaultBlockState())
-                        && IPlanMember.keepsItself(Blocks.SMITHING_TABLE.defaultBlockState())
-                        && IPlanMember.keepsItself(Blocks.BARREL.defaultBlockState())
+        helper.assertTrue(IPlanMember.keepsItself(ShipKitBlocks.SHIP_CRAFTING_TABLE.get().defaultBlockState())
+                        && IPlanMember.keepsItself(ShipKitBlocks.SHIP_FURNACE.get().defaultBlockState())
+                        && IPlanMember.keepsItself(ShipKitBlocks.SHIP_SMITHING_TABLE.get().defaultBlockState())
+                        && IPlanMember.keepsItself(ShipKitBlocks.SHIP_BARREL.get().defaultBlockState())
                         && IPlanMember.keepsItself(ShipKitBlocks.BUNK_FRAME.get().defaultBlockState())
                         && !IPlanMember.keepsItself(ShipKitBlocks.HULL_FRAME.get().defaultBlockState()),
-                "the workshop's vanilla blocks and the fixtures keep themselves in a plan; the hull merges");
+                "the workshop's working pieces and the fixtures keep themselves in a plan; the hull merges");
         helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void workingPieces_workAsTheGamesOwnBlocksDo(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        // Logged in over a connection, as a menu opened is sent to the player's game.
+        final ServerPlayer crew = GameTestPlayers.connected(helper, "crew");
+        final BlockPos table = new BlockPos(2, 2, 2);
+        final BlockPos smithy = new BlockPos(4, 2, 2);
+        final BlockPos furnace = new BlockPos(2, 2, 4);
+        final BlockPos barrel = new BlockPos(4, 2, 4);
+        helper.setBlock(table, ShipKitBlocks.SHIP_CRAFTING_TABLE.get());
+        helper.setBlock(smithy, ShipKitBlocks.SHIP_SMITHING_TABLE.get());
+        helper.setBlock(furnace, ShipKitBlocks.SHIP_FURNACE.get());
+        helper.setBlock(barrel, ShipKitBlocks.SHIP_BARREL.get());
+        crew.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(3, 2, 3))));
+        helper.startSequence()
+                .thenExecute(() -> {
+                    use(helper, crew, table);
+                    helper.assertTrue(crew.containerMenu instanceof CraftingMenu menu && menu.stillValid(crew),
+                            "the crafting table opens the crafting grid, and keeps it open by it");
+                    crew.closeContainer();
+                    use(helper, crew, smithy);
+                    helper.assertTrue(crew.containerMenu instanceof SmithingMenu menu && menu.stillValid(crew),
+                            "the smithing table opens the smithing slots, and keeps them open by it");
+                    helper.setBlock(smithy, Blocks.STONE);
+                    helper.assertTrue(!crew.containerMenu.stillValid(crew), "and closes them once it is gone");
+                    crew.closeContainer();
+                    final ShipFurnaceEntity fire = (ShipFurnaceEntity) helper.getBlockEntity(furnace);
+                    fire.setItem(0, new ItemStack(Items.RAW_IRON));
+                    fire.setItem(1, new ItemStack(Items.COAL));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(helper.getBlockState(furnace).getValue(ShipFurnaceBlock.LIT)
+                        && helper.getBlockState(furnace).getLightEmission(level, helper.absolutePos(furnace)) > 0,
+                        "the furnace burns, and gives light"))
+                .thenWaitUntil(() -> helper.assertTrue(((ShipFurnaceEntity) helper.getBlockEntity(furnace))
+                        .getItem(2).is(Items.IRON_INGOT), "the furnace smelts the raw iron"))
+                .thenExecute(() -> {
+                    final ShipBarrelEntity drum = (ShipBarrelEntity) helper.getBlockEntity(barrel);
+                    helper.assertTrue(drum.getContainerSize() == 27, "the barrel keeps 27 stacks");
+                    drum.setItem(26, new ItemStack(Items.DIAMOND));
+                    use(helper, crew, barrel);
+                    helper.assertTrue(crew.containerMenu instanceof ChestMenu menu && menu.stillValid(crew)
+                            && menu.getContainer() == drum, "the barrel opens what it keeps");
+                    crew.closeContainer();
+                    helper.destroyBlock(barrel);
+                    helper.assertTrue(!level.getEntitiesOfClass(ItemEntity.class,
+                            new AABB(helper.absolutePos(barrel)).inflate(2), item -> item.getItem().is(Items.DIAMOND))
+                            .isEmpty(), "broken, it gives back what it kept");
+                    GameTestPlayers.leave(crew);
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH)
     public static void fixture_formedStandsAsItsBlockOfItsPartsModel(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos pos = helper.absolutePos(FIXTURE);
-        for (final Block block : List.of(ShipKitBlocks.SUIT_LOCKER.get(), ShipKitBlocks.OXYGEN_PANEL.get())) {
-            final FormedPlace place = placeOf(level, SmallShipParts.id("small_airlock"), block);
+        final Map<Block, String> parts = new LinkedHashMap<>();
+        parts.put(ShipKitBlocks.SUIT_LOCKER.get(), "small_airlock");
+        parts.put(ShipKitBlocks.OXYGEN_PANEL.get(), "small_airlock");
+        parts.put(ShipKitBlocks.SHIP_CRAFTING_TABLE.get(), "small_workshop");
+        parts.put(ShipKitBlocks.SHIP_FURNACE.get(), "small_workshop");
+        parts.put(ShipKitBlocks.SHIP_BARREL.get(), "small_bay");
+        for (final Block block : parts.keySet()) {
+            final FormedPlace place = placeOf(level, SmallShipParts.id(parts.get(block)), block);
             helper.setBlock(FIXTURE, block);
             ((ShipFixtureBlock) block).partFormed(level, pos, true, place);
             final VoxelShape wanted = FormedShapes.get(level, place.model()).orElseThrow().shape(place);
@@ -177,6 +248,13 @@ public final class ShipFixtureGameTests {
                     Shapes.block(), BooleanOp.NOT_SAME), "come apart, " + block + " is a whole block again");
         }
         helper.succeed();
+    }
+
+    /* {@code player} clicks the block at {@code at}, holding nothing, as a click on its top uses it. */
+    private static void use(final GameTestHelper helper, final ServerPlayer player, final BlockPos at) {
+        final BlockPos pos = helper.absolutePos(at);
+        helper.getLevel().getBlockState(pos).useWithoutItem(helper.getLevel(), player,
+                new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
     }
 
     /* The block of the formed model of {@code part}'s kit that {@code block} stands for there, standing north. */
