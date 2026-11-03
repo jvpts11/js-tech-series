@@ -76,6 +76,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- A pressure door in the bulkhead at the front of each of a small starship's sections: it shuts and opens
+  with a click, its leaf sliding into the bulkhead's wall, solid only while it is shut, the lamp over it red shut and
+  green open. A ship's sections stand with their pressure doors open as it forms, its airlock's outer door shut.
 - Four blocks of the starship's kit for its workshop and holds, each standing against the hull's wall and
   working as the game's own does: the Ship Crafting Table, the Ship Smithing Table, the Ship Furnace, which gives light
   while it burns, and the Ship Barrel, of 27 stacks. The holds carry their barrels along both walls, one on another
@@ -795,6 +798,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whole blocks.
 
 ### Fixed
+- A small starship is boarded through its airlock's door: its outer door, as high as the passages, its leaf
+  and frame bent with the hull's corners at its top and its foot as an aircraft's door follows its fuselage, opens and
+  shuts with a click, in its dock, on the land and in flight; opening on the land, it lets its boarding stair down
+  from a bay under the airlock's floor, a player walking up it and in; in the air and in space it opens with no
+  stair. An airlock never stands open inside and out at once: its outer door opens only with the doors at its ends
+  shut, and either of those only with it shut. Before, the door was a block high and, used, put the player inside or
+  outside at once.
 - A player walks a small starship from its cockpit's doorway to its tail: the workshop's crafting table,
   smithing table, furnace and barrel and the holds' barrels stand against the hull's walls, on the floor, the walkway
   between them clear, where they stood in it a block over the floor; small cargo's barrels too, in their racks; the

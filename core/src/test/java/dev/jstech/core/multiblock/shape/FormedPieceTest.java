@@ -61,6 +61,35 @@ class FormedPieceTest {
         assertThrows(IllegalArgumentException.class, () -> new FormedPiece("nothing", List.of()));
     }
 
+    @Test
+    void leafHolds_onlyWithinItsLeafShutNotOffIt() {
+        final FormedPiece door = new FormedPiece("door", List.of(box(-0.6, 0, -0.1, 0.6, 2.1, 0.1)), List.of(0, 0, 0),
+                List.of(box(-0.5, 0, 0, 0.5, 2, 0.0625)));
+
+        assertTrue(door.door());
+        assertTrue(door.leafHolds(new double[] {0, 1, 0.03}));
+        assertFalse(door.leafHolds(new double[] {0, 1, 0.07}), "the aiming margin is no part of the leaf");
+        assertFalse(new FormedPiece("seat", List.of(box(0, 0, 0, 1, 1, 1))).door());
+    }
+
+    @Test
+    void leafBounds_areItsLeafsCorners() {
+        final FormedPiece door = new FormedPiece("door", List.of(box(-0.6, 0, -0.1, 0.6, 2.1, 0.1)), List.of(0, 0, 0),
+                List.of(box(-0.5, 0, 0, 0.5, 2, 0.0625)));
+
+        final double[] bounds = door.leafBounds();
+
+        assertEquals(-0.5, bounds[0], 1e-6);
+        assertEquals(2, bounds[4], 1e-6);
+        assertEquals(0.0625, bounds[5], 1e-6);
+    }
+
+    @Test
+    void constructor_refusesADoorWorkingByNoBlock() {
+        assertThrows(IllegalArgumentException.class, () -> new FormedPiece("door", List.of(box(0, 0, 0, 1, 1, 1)),
+                List.of(), List.of(box(0, 0, 0, 1, 1, 0.1))));
+    }
+
     /* A box's twelve triangles from ({@code x0}, {@code y0}, {@code z0}) to ({@code x1}, {@code y1}, {@code z1}). */
     private static float[] box(final double x0, final double y0, final double z0, final double x1, final double y1,
                                final double z1) {

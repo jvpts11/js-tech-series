@@ -1,0 +1,45 @@
+{
+  "doors": [
+    {
+      "piece": "pressure_door",
+      "leaf": "door_leaf",
+      "travel": [
+        -1.12,
+        0.0,
+        0.0
+      ],
+      "shut_lamp": "door_lamp_shut",
+      "open_lamp": "door_lamp_open",
+      "cell": [
+        -1,
+        1,
+        0
+      ],
+      "starts_shut": false
+    },
+    {
+      "piece": "airlock_door",
+      "leaf": "hatch_leaf",
+      "travel": [
+        0.0,
+        0.0,
+        1.12
+      ],
+      "shut_lamp": "hatch_lamp_shut",
+      "open_lamp": "hatch_lamp_open",
+      "cell": [
+        -2,
+        1,
+        1
+      ],
+      "starts_shut": true,
+      "let_down": [
+        "stair",
+        "bay_open"
+      ],
+      "stowed": [
+        "bay_shut"
+      ]
+    }
+  ]
+}

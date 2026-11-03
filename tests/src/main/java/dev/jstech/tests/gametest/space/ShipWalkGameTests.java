@@ -11,10 +11,13 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.CellSpace;
+import dev.jstech.core.multiblock.shape.FormedDoors;
 import dev.jstech.core.multiblock.shape.FormedPlace;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
 import dev.jstech.space.api.ShipParts;
+import dev.jstech.space.crew.ShipDoorRules;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.SmallShipParts;
@@ -28,6 +31,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -77,6 +82,8 @@ public final class ShipWalkGameTests {
     private static final double LEVEL = 1.0 / 16 + 1.0e-6;
     /* How far into the walkway's middle a floor is held to the first's level. */
     private static final double MIDDLE = 0.5;
+    /* The section of the spine whose pressure door is shut: the workshop, behind the airlock. */
+    private static final int SHUT_SECTION = 2;
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private ShipWalkGameTests() {
@@ -114,8 +121,34 @@ public final class ShipWalkGameTests {
                 part("ramp")), List.of(part("magnetic_nozzle"), part("stub_wings"), part("legs"))));
     }
 
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void walk_stopsAtAShutPressureDoor(final GameTestHelper helper) {
+        final ShipDesign design = new ShipDesign("JS-W6", List.of(part("orbiter_cockpit"), part("airlock"),
+                part("workshop"), part("reactor_flush")), List.of(part("twin_bells"), part("blended_delta"),
+                part("wheels")));
+        walk(helper, design, (level, plan) -> {
+            final BlockPos door = plan.where(plan.plan().spots().stream().filter(spot -> spot.part() == SHUT_SECTION
+                    && spot.block().equals(ShipKitBlocks.PRESSURE_DOOR.getId())).findFirst().orElseThrow());
+            for (final FormedPlace place : ((IFormedPlaced) level.getBlockEntity(door)).places()) {
+                FormedDoors.named(level, door, place, ShipDoorRules.PRESSURE_DOOR).ifPresent(shut ->
+                        FormedDoors.set(level, shut, true));
+            }
+        }, wrong -> wrong.stream().anyMatch(line -> line.startsWith("small_workshop is not walked to")),
+                "the workshop behind its shut door is not walked to");
+    }
+
     /* The ship of {@code design} built whole in a dock, then walked from its cockpit to its tail. */
     private static void walk(final GameTestHelper helper, final ShipDesign design) {
+        walk(helper, design, (level, plan) -> { }, List::isEmpty, "walked from its cockpit to its tail");
+    }
+
+    /*
+     * The ship of {@code design} built whole in a dock, {@code before} done to it, then walked: what keeps a player
+     * from walking it as {@code wanted} says, or the test fails saying {@code what}.
+     */
+    private static void walk(final GameTestHelper helper, final ShipDesign design,
+                             final BiConsumer<ServerLevel, PlannedBuild> before, final Predicate<List<String>> wanted,
+                             final String what) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         final PlannedBuild[] plan = new PlannedBuild[1];
@@ -136,8 +169,9 @@ public final class ShipWalkGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(plan[0].complete(), "the ship stands whole and formed"))
                 .thenExecute(() -> {
+                    before.accept(level, plan[0]);
                     final List<String> wrong = new Walk(level, plan[0], design).wrong();
-                    helper.assertTrue(wrong.isEmpty(), design.name() + " walked from its cockpit to its tail: "
+                    helper.assertTrue(wanted.test(wrong), design.name() + " " + what + ": "
                             + String.join("; ", wrong));
                 })
                 .thenSucceed();

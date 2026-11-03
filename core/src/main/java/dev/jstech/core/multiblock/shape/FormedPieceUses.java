@@ -24,11 +24,11 @@ import org.jetbrains.annotations.ApiStatus;
  * A piece of a formed model used from any block it stands in ({@link FormedPiece}): a player using a piece that works
  * by another block of the model than the one aimed at, a seat's back standing in the block over the seat, uses that
  * block, aimed at where they aimed, as if they had aimed at it there; so the whole piece outlined is the whole piece
- * used. On a server, where the use is decided.
+ * used. A door used from any of its blocks shuts or opens ({@link FormedDoors}). On a server, where the use is
+ * decided.
  */
 public final class FormedPieceUses {
 
-    private static final double HALF = 0.5;
     private static final int AXES = 3;
 
     private FormedPieceUses() {
@@ -67,24 +67,27 @@ public final class FormedPieceUses {
             if (uses == place.cell()) {
                 return Optional.empty();
             }
-            // The middle of the block it works by, from this one's, turned as the model stands.
-            final double[] middle = {MeshCells.x(uses) - MeshCells.x(place.cell()) + HALF,
-                MeshCells.y(uses) - MeshCells.y(place.cell()) + HALF, MeshCells.z(uses) - MeshCells.z(place.cell())
-                    + HALF};
-            final double[] turned = new double[AXES];
-            CellSpace.toWorld(middle, place.turn(), turned);
-            return Optional.of(pos.offset((int) Math.floor(turned[0]), (int) Math.floor(turned[1]),
-                    (int) Math.floor(turned[2])));
+            return Optional.of(FormedDoors.blockOf(pos, place, uses));
         }
         return Optional.empty();
     }
 
-    /* A block used on a server: a piece that works by another block is used through that one. */
+    /*
+     * A block used on a server: a door shuts or opens ({@link FormedDoors}); a piece that works by another block is
+     * used through that one.
+     */
     private static void onUse(final PlayerInteractEvent.RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
         final Vec3 at = event.getHitVec().getLocation();
+        final Optional<FormedDoors.Door> door = FormedDoors.at(level, event.getPos(), at);
+        if (door.isPresent()) {
+            event.setCanceled(true);
+            event.setCancellationResult(FormedDoors.use(level, player, door.get()) ? InteractionResult.SUCCESS
+                    : InteractionResult.FAIL);
+            return;
+        }
         final Optional<BlockPos> works = worksBy(level, event.getPos(), at);
         if (works.isEmpty()) {
             return;

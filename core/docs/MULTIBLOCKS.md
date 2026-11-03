@@ -468,6 +468,20 @@ CONTENT.model("capsule").file("jsmodels/capsule.gltf").formedFrom(rl("capsule"))
 {"pieces": [{"name": "seat", "solids": [[-0.2, 0.95, 3.87, ...], [-0.48, 1.28, 3.75, ...]], "uses": [-1, 1, 4]}]}
 ```
 
+- **Doors** (*added 2026-11-03*): a piece with a leaf, `shut`, is a door. Used from any block it stands in, it shuts
+  if it is open and opens if it is shut (`FormedDoors.use`); while it is shut, the sixteenths of its blocks whose
+  middles its leaf's solids hold are solid, so a leaf a sixteenth thick is enough. It needs `uses`, the block that
+  keeps, with the blocks its leaf stands in, whether it is shut (`FormedPartBlockEntity.movedDoors`), so the state
+  goes wherever the structure goes and reaches the players. It stands open as its structure forms, or shut with
+  `"starts_shut": true`. Its `moves` name the bones of the model that move with it, its leaf first, which no block
+  takes a shape from: the mod drawing the model moves them as the door stands (`FormedDoors.shut(level, uses, name,
+  startsShut)`). Before a player moves a door the Core posts `FormedDoorEvent`; cancelled, the door stays as it is,
+  as an airlock keeps one of its doors shut while the other is open, and the mod tells the player why.
+
+```json
+{"name": "pressure_door", "solids": [[...]], "uses": [-1, 1, 0], "shut": [[...]], "moves": ["door_leaf"]}
+```
+
 - **A block that keeps itself stands as the model too** (*added 2026-11-03*): a block of a plan that keeps something
   of its own (`IPlanMember`), a locker that keeps its stores and its click, is told which block of its part's model it
   stands for as its part forms (`partFormed(level, pos, formed, place)`). Kept by its block entity, which says so

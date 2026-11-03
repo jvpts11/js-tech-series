@@ -23,8 +23,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The starship parts' interiors on a player's game, each in its maker's style: the Orbiter's airlock in Meridian
- * Orbital's padded white panels, the world seen through its door's window; the Hauler's reactor room in Ironside
- * Yards' bare metal; the Courier's docking module in Kosmozavod's turquoise.
+ * Orbital's padded white panels, its outer door's leaf shut in the doorway and the world outside hidden; the Hauler's
+ * reactor room in Ironside Yards' bare metal; the Courier's docking module in Kosmozavod's turquoise.
  */
 public final class ShipInteriorsClientTests {
 
@@ -34,7 +34,7 @@ public final class ShipInteriorsClientTests {
     /* Where the player's eyes are and what they look at, inside each ship, from the stand's north-west corner. */
     private static final Vec3 AIRLOCK_EYES = new Vec3(0, HULL + 1.65, 6.5);
     private static final Vec3 AIRLOCK_WALL = new Vec3(1.84, HULL + 1.75, 6.5);
-    private static final Vec3 DOOR_WINDOW = new Vec3(-1.9, HULL + 1.65, 7.15);
+    private static final Vec3 OUTER_DOOR = new Vec3(-1.9, HULL + 1.65, 7.15);
     /* Where the Orbiter's pilot sits, on the raised flight deck, and what is ahead through the windscreen. */
     private static final Vec3 PILOT_EYES = new Vec3(0, HULL + 2.1, 4.2);
     private static final Vec3 AHEAD = new Vec3(0, HULL + 2.0, -2);
@@ -80,9 +80,9 @@ public final class ShipInteriorsClientTests {
         ctx.then(2, () -> ctx.lookAt(corner(ctx).add(AIRLOCK_WALL)))
                 .then(SETTLE, () -> seen[0] = mean(ctx))
                 .thenScreenshot(0, "ship-interior-meridian")
-                .then(2, () -> ctx.lookAt(corner(ctx).add(DOOR_WINDOW)))
+                .then(2, () -> ctx.lookAt(corner(ctx).add(OUTER_DOOR)))
                 .then(SETTLE, () -> seen[1] = mean(ctx))
-                .thenScreenshot(0, "ship-interior-door-window");
+                .thenScreenshot(0, "ship-interior-outer-door");
         stand(ctx, PILOT_EYES);
         ctx.then(2, () -> ctx.lookAt(corner(ctx).add(AHEAD)))
                 .thenScreenshot(SETTLE, "ship-interior-cockpit");
@@ -100,7 +100,7 @@ public final class ShipInteriorsClientTests {
                 .thenScreenshot(0, "ship-interior-kosmozavod")
                 .then(0, () -> {
                     final int[] meridian = seen[0];
-                    final int[] window = seen[1];
+                    final int[] door = seen[1];
                     final int[] ironside = seen[2];
                     final int[] kosmozavod = seen[3];
                     ctx.assertTrue(meridian[0] - ironside[0] > APART && meridian[1] - ironside[1] > APART
@@ -109,8 +109,8 @@ public final class ShipInteriorsClientTests {
                     ctx.assertTrue(kosmozavod[1] - kosmozavod[0] > TURQUOISE
                                     && kosmozavod[2] - kosmozavod[0] > TURQUOISE,
                             "Kosmozavod's panels are turquoise: " + str(kosmozavod));
-                    ctx.assertTrue(window[0] - window[1] > TINT && window[0] - window[2] > TINT,
-                            "the red wall outside is seen through the door's window: " + str(window));
+                    ctx.assertTrue(door[0] - door[1] < TINT && door[0] - door[2] < TINT,
+                            "the outer door's leaf hides the red wall outside: " + str(door));
                 });
     }
 

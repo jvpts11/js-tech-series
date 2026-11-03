@@ -1,0 +1,21 @@
+{
+  "doors": [
+    {
+      "piece": "pressure_door",
+      "leaf": "door_leaf",
+      "travel": [
+        -1.12,
+        0.0,
+        0.0
+      ],
+      "shut_lamp": "door_lamp_shut",
+      "open_lamp": "door_lamp_open",
+      "cell": [
+        -1,
+        1,
+        0
+      ],
+      "starts_shut": false
+    }
+  ]
+}

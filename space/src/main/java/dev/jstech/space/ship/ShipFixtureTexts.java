@@ -19,6 +19,8 @@ public final class ShipFixtureTexts {
     public static final TextKey SMITHING = TextKey.of("jsspace.ship_fixture.smithing", "Upgrade Gear");
     public static final TextKey FURNACE = TextKey.of("jsspace.ship_fixture.furnace", "Furnace");
     public static final TextKey BARREL = TextKey.of("jsspace.ship_fixture.barrel", "Barrel");
+    public static final TextKey AIRLOCK_OTHER_DOOR = TextKey.of("jsspace.ship_fixture.airlock_other_door",
+            "Shut the airlock's other door first");
     public static final TextKey NO_SUIT = TextKey.of("jsspace.ship_fixture.no_suit",
             "Wear a suit to fill its tanks");
     public static final TextKey FILLED = TextKey.of("jsspace.ship_fixture.filled",

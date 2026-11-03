@@ -32,8 +32,9 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 /**
  * Who may do what aboard a starship, as its crew says ({@link ShipCrew}): its helm is a pilot's, and so is changing
  * its blocks, putting them in or breaking them; its fittings and the machines aboard are its crew's; its airlock's
- * door, its bunks and its docking collar let in whoever may come aboard. A player not let do something is told why
- * and the thing is not done. A ship nobody owns lets anyone do anything.
+ * door, its bunks and its docking collar let in whoever may come aboard (its doors moving as {@link ShipDoorRules}
+ * says). A player not let do something is told why and the thing is not done. A ship nobody owns lets anyone do
+ * anything.
  */
 public final class ShipCrews {
 
@@ -128,11 +129,6 @@ public final class ShipCrews {
             if (theirs.isPresent() && !theirs.get().roleOf(player).holds(CrewRole.PASSENGER)) {
                 refuse(event, player, refusal(theirs.get(), CrewRole.PASSENGER));
             }
-            return;
-        }
-        if (block == ShipKitBlocks.AIRLOCK_DOOR.get() && ShipHatches.through(player, ship, pos)) {
-            event.setCanceled(true);
-            event.setCancellationResult(InteractionResult.SUCCESS);
         }
     }
 

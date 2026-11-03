@@ -18,6 +18,8 @@ import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelPose;
 import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.core.multiblock.shape.CellSpace;
+import dev.jstech.core.multiblock.shape.FormedDoors;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.client.rocket.RocketCabins;
@@ -25,12 +27,15 @@ import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.ship.GearMotion;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipPartModels;
+import dev.jstech.space.ship.ShipStairGeometry;
+import dev.jstech.space.ship.ShipStairs;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -81,10 +86,26 @@ public final class ShipPartsRenderer {
 
     /**
      * Draws {@code placed} as {@link #draw(BlockEntity, List, Map, CabinReadings, PoseStack, MultiBufferSource, int,
-     * int)} does, its gear standing as {@code gear} has it ({@link ShipGears}).
+     * int)} does, its gear standing as {@code gear} has it ({@link ShipGears}), its doors as they stood as they
+     * formed.
      */
     public static void draw(final BlockEntity owner, final List<ShipPartModels.Placed> placed,
                             final Map<Integer, Map<String, Set<String>>> holes, final GearMotion gear,
+                            final CabinReadings readings, final PoseStack poses, final MultiBufferSource buffers,
+                            final int light, final int overlay) {
+        draw(owner, placed, holes, gear, (part, door) -> door.startsShut(), (part, door) -> false, readings, poses,
+                buffers, light, overlay);
+    }
+
+    /**
+     * Draws {@code placed} as {@link #draw(BlockEntity, List, Map, GearMotion, CabinReadings, PoseStack,
+     * MultiBufferSource, int, int)} does, each door shut where {@code shut} says, its leaf slid away where not, and
+     * what it lets down, a stair, down where {@code down} says ({@link ShipDoors}).
+     */
+    public static void draw(final BlockEntity owner, final List<ShipPartModels.Placed> placed,
+                            final Map<Integer, Map<String, Set<String>>> holes, final GearMotion gear,
+                            final BiPredicate<ShipPartModels.Placed, ShipDoors.Door> shut,
+                            final BiPredicate<ShipPartModels.Placed, ShipDoors.Door> down,
                             final CabinReadings readings, final PoseStack poses, final MultiBufferSource buffers,
                             final int light, final int overlay) {
         final Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
@@ -101,6 +122,8 @@ public final class ShipPartsRenderer {
             final Set<String> hidden = new HashSet<>(holes.getOrDefault(part.part(), Map.of())
                     .getOrDefault(ShipPartModels.name(part.model()), Set.of()));
             ShipGears.rigOf(cabinOf(part.model())).ifPresent(rig -> ShipGears.pose(instance, rig, gear, hidden));
+            ShipDoors.rigOf(cabinOf(part.model())).ifPresent(rig -> ShipDoors.pose(instance, rig,
+                    door -> shut.test(part, door), door -> down.test(part, door), hidden));
             hide(instance, hidden);
             poses.pushPose();
             poses.translate(0, 0, part.z());
@@ -152,8 +175,25 @@ public final class ShipPartsRenderer {
         poses.translate(nose.getX() + HALF, nose.getY() + HALF, nose.getZ() + HALF);
         poses.mulPose(turned(turn));
         poses.translate(-HALF, -HALF, -HALF);
-        draw(owner, placed, holes, gear, readings, poses, buffers, light, overlay);
+        // A door stands as the block it works by keeps it, that block found from the nose's as the ship stands; its
+        // stair is down where the stair's blocks are.
+        final BlockPos noseAt = owner.getBlockPos().offset(nose);
+        final int[] stair = ShipStairGeometry.CELLS.getFirst();
+        draw(owner, placed, holes, gear, (part, door) -> FormedDoors.shut(level, blockOf(noseAt, turn, part,
+                door.cell()), door.piece(), door.startsShut()), (part, door) -> ShipStairs.down(level,
+                blockOf(noseAt, turn, part, List.of(stair[0], stair[1], stair[2]))), readings, poses, buffers, light,
+                overlay);
         poses.popPose();
+    }
+
+    /* Where the block {@code cell} of the model of {@code part} is, the ship's nose at {@code nose}, turned so. */
+    private static BlockPos blockOf(final BlockPos nose, final Orientation turn, final ShipPartModels.Placed part,
+                                    final List<Integer> cell) {
+        // Flipped left for right about the ship's centre line, a block from x stands at -1 - x.
+        final int x = part.flipped() ? -1 - cell.get(0) : cell.get(0);
+        final double[] turned = new double[3];
+        CellSpace.toWorld(new double[] {x + HALF, cell.get(1) + HALF, part.z() + cell.get(2) + HALF}, turn, turned);
+        return nose.offset((int) Math.floor(turned[0]), (int) Math.floor(turned[1]), (int) Math.floor(turned[2]));
     }
 
     /* Hides the bones {@code bones} of {@code instance}, and shows again those it hid before that are not. */

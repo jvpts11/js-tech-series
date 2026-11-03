@@ -275,7 +275,12 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         if (keeper != null) {
             keeper.flew(ShipReadings.of(next, this.grounded, altitude, shown));
         }
-        return self.flownOn(level, body, now, frame, next);
+        final Step out = self.flownOn(level, body, now, frame, next);
+        if (out.next() instanceof ShipFlight after && after.grounded() != this.grounded) {
+            // Come down onto the land or lifted off it: its boarding stair follows, where its outer door is open.
+            ShipStairs.groundChanged(level, body, after.grounded());
+        }
+        return out;
     }
 
     /** Which way {@code nose} points, in degrees east of north, as a compass reads it. */

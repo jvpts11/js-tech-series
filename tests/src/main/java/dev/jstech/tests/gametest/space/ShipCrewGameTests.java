@@ -13,6 +13,8 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.multiblock.shape.FormedDoors;
+import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import dev.jstech.core.progression.TeamProgress;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.space.crew.CrewRole;
@@ -20,6 +22,7 @@ import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.crew.ShipConsoleMenu;
 import dev.jstech.space.crew.ShipCrew;
 import dev.jstech.space.crew.ShipCrews;
+import dev.jstech.space.crew.ShipDoorRules;
 import dev.jstech.space.crew.ShipHatches;
 import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.ship.AirReserveEntity;
@@ -34,6 +37,7 @@ import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -60,7 +64,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * Who may do what aboard a starship: its owner flies it, the owner's team works aboard, everyone else stays outside
  * till named, each named with a role of their own; its helm and its blocks are a pilot's, its fittings its crew's, its
  * airlock door, bunks and collar whoever may come aboard. A ship started from its dock is its pilot's, who alone sets
- * its roles on its console; its airlock door takes in whoever may come aboard, and out, and refuses everyone else.
+ * its roles on its console; its airlock door opens and shuts for whoever may come aboard, and stays shut for everyone
+ * else.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -69,8 +74,9 @@ public final class ShipCrewGameTests {
     private static final String ARENA = "shipyard";
     /* Where the dock's lowest corner stands in the arena. */
     private static final BlockPos CORNER = new BlockPos(1, 2, 1);
-    /* How far out from its airlock door a player stands outside, in blocks. */
+    /* How far out from its airlock door a player stands outside, in blocks; how far out from a block of it its leaf. */
     private static final int OUTSIDE = 2;
+    private static final double LEAF = 0.35;
     private static final ShipDesign SHIP = new ShipDesign("JS-09", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
             part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("legs")));
@@ -189,23 +195,24 @@ public final class ShipCrewGameTests {
                             + " team's role");
                     menu.set(owner, new ShipConsole.RoleSet(ShipConsole.RoleSet.TEAM, new UUID(0, 0),
                             CrewRole.CREW));
-                    // The airlock door: the stranger refused at it, the passenger taken in, and out again.
+                    // The airlock's outer door, its inner doors shut: it stays shut for the stranger, and opens and
+                    // shuts again for the passenger.
                     final BlockPos door = aboard(ship[0], plan(helper).where(spot(helper,
                             ShipKitBlocks.AIRLOCK_DOOR.getId())));
+                    final FormedDoors.Door hatch = outerDoor(level, door);
+                    ShipDoorRules.otherSide(level, hatch).forEach(inner -> FormedDoors.set(level, inner, true));
                     final Direction out = ShipHatches.outward(ship[0], door).orElseThrow();
                     standOutside(level, ship[0], stranger, door, out);
                     final PlayerInteractEvent.RightClickBlock refused = click(stranger, door, out);
                     helper.assertTrue(refused.isCanceled() && refused.getCancellationResult() == InteractionResult.FAIL
-                            && side(ship[0], stranger, door, out) > 0, "the airlock door refuses whoever may not"
-                            + " come aboard, who stays outside");
+                            && FormedDoors.shut(level, hatch), "the airlock door stays shut for whoever may not come"
+                            + " aboard");
                     standOutside(level, ship[0], rider, door, out);
-                    final PlayerInteractEvent.RightClickBlock taken = click(rider, door, out);
-                    helper.assertTrue(taken.isCanceled() && taken.getCancellationResult() == InteractionResult.SUCCESS
-                            && side(ship[0], rider, door, out) < 0, "and takes a passenger in: "
-                            + side(ship[0], rider, door, out));
+                    final PlayerInteractEvent.RightClickBlock opened = click(rider, door, out);
+                    helper.assertTrue(opened.isCanceled() && opened.getCancellationResult() == InteractionResult.SUCCESS
+                            && !FormedDoors.shut(level, hatch), "and opens for a passenger");
                     click(rider, door, out);
-                    helper.assertTrue(side(ship[0], rider, door, out) > 0, "and out again: "
-                            + side(ship[0], rider, door, out));
+                    helper.assertTrue(FormedDoors.shut(level, hatch), "who shuts it again");
                     MovingStructures.takeAway(ship[0]);
                     List.of(owner, stranger, rider).forEach(GameTestPlayers::leave);
                 })
@@ -225,18 +232,20 @@ public final class ShipCrewGameTests {
         player.teleportTo(level, world.x, world.y, world.z, 0F, 0F);
     }
 
-    /* {@code player} uses the door at {@code door} from the side {@code out} faces, as the game posts it. */
+    /*
+     * {@code player} uses the door at {@code door} from the side {@code out} faces, as the game posts it: aimed at its
+     * leaf in the hull's side of the block.
+     */
     private static PlayerInteractEvent.RightClickBlock click(final ServerPlayer player, final BlockPos door,
                                                              final Direction out) {
         return NeoForge.EVENT_BUS.post(new PlayerInteractEvent.RightClickBlock(player, InteractionHand.MAIN_HAND,
-                door, new BlockHitResult(Vec3.atCenterOf(door), out, door, false)));
+                door, new BlockHitResult(Vec3.atCenterOf(door).relative(out, LEAF), out, door, false)));
     }
 
-    /* How far out of {@code ship}'s airlock door {@code player} stands, in its yard: above nought outside. */
-    private static double side(final MovingStructure ship, final ServerPlayer player, final BlockPos door,
-                               final Direction out) {
-        final Vec3 at = MovingStructures.toYard(ship, player.position());
-        return (at.x - door.getX() - 0.5) * out.getStepX() + (at.z - door.getZ() - 0.5) * out.getStepZ();
+    /* The airlock's outer door, of the block of it at {@code door}. */
+    private static FormedDoors.Door outerDoor(final ServerLevel level, final BlockPos door) {
+        return ((IFormedPlaced) level.getBlockEntity(door)).places().stream().map(place -> FormedDoors.named(level,
+                door, place, ShipDoorRules.OUTER_DOOR)).flatMap(Optional::stream).findFirst().orElseThrow();
     }
 
     /* Where the block that stood at {@code built} in the dock is aboard {@code ship} now, in its yard. */

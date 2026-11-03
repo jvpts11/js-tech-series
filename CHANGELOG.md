@@ -497,8 +497,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   works by, written in a pieces file as `uses`, and `usesCell()`; `FormedShape.pieceAt(place, at)` finds the piece a
   point is on; `FormedPieceUses.worksBy(level, pos, at)` finds the block a piece aimed at works by. Used from any block
   it stands in, a piece is used through that block. Experimental.
+- (Core) Doors of formed models: J's Core's API is at version 40. A `FormedPiece` with a leaf (`shut`, written in a
+  pieces file as `shut`) is a door: used from any block it stands in, it shuts or opens (`FormedDoors.use`), and while
+  it is shut the sixteenths its leaf holds are solid in its blocks (`FormedShape.leafShape`). Its `moves` name the
+  bones of the model that move with it, left out of the blocks' shapes, and `starts_shut` a door shut as its structure
+  forms. Whether a door is shut is kept by its blocks (`FormedPartBlockEntity.movedDoors`), wherever the structure goes;
+  `FormedDoors.shut`, `named`, `set` and `blockOf` read and move one; `FormedDoorEvent`, posted before a player moves
+  one, is cancelled to keep it as it is. Experimental.
 
 ### Added
+- (Space) A pressure door in the bulkhead at the front of each of a small starship's sections: it shuts and opens
+  with a click, its leaf sliding into the bulkhead's wall, solid only while it is shut, the lamp over it red shut and
+  green open. A ship's sections stand with their pressure doors open as it forms, its airlock's outer door shut.
 - (Space) Four blocks of the starship's kit for its workshop and holds, each standing against the hull's wall and
   working as the game's own does: the Ship Crafting Table, the Ship Smithing Table, the Ship Furnace, which gives light
   while it burns, and the Ship Barrel, of 27 stacks. The holds carry their barrels along both walls, one on another
@@ -3111,6 +3121,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) A small starship is boarded through its airlock's door: its outer door, as high as the passages, its leaf
+  and frame bent with the hull's corners at its top and its foot as an aircraft's door follows its fuselage, opens and
+  shuts with a click, in its dock, on the land and in flight; opening on the land, it lets its boarding stair down
+  from a bay under the airlock's floor, a player walking up it and in; in the air and in space it opens with no
+  stair. An airlock never stands open inside and out at once: its outer door opens only with the doors at its ends
+  shut, and either of those only with it shut. Before, the door was a block high and, used, put the player inside or
+  outside at once.
 - (Space) A player walks a small starship from its cockpit's doorway to its tail: the workshop's crafting table,
   smithing table, furnace and barrel and the holds' barrels stand against the hull's walls, on the floor, the walkway
   between them clear, where they stood in it a block over the floor; small cargo's barrels too, in their racks; the

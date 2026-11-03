@@ -146,7 +146,8 @@ public final class ShipGround {
                 for (int y = box.minY(); y <= box.maxY(); y++) {
                     at.set(x, y, z);
                     final BlockState state = level.getBlockState(at);
-                    if (state.isAir()) {
+                    // Its boarding stair let down rests on the land as the ship does, never what it stands on.
+                    if (state.isAir() || state.is(ShipStairs.BLOCK.get())) {
                         continue;
                     }
                     final VoxelShape shape = state.getCollisionShape(level, at);

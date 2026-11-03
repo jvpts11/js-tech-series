@@ -22,6 +22,7 @@ import dev.jstech.space.guide.MissionHandbook;
 import dev.jstech.space.guide.WorldFacts;
 import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.crew.ShipCrews;
+import dev.jstech.space.crew.ShipDoorRules;
 import dev.jstech.space.landing.ShipLandingBlocks;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
@@ -65,6 +66,7 @@ import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.ShipShapes;
+import dev.jstech.space.ship.ShipStairs;
 import dev.jstech.space.ship.SmallShipFinishes;
 import dev.jstech.space.ship.SmallShipKits;
 import dev.jstech.space.ship.SmallShipMakers;
@@ -206,6 +208,9 @@ public final class JsSpace {
         SmallShipMakers.declare();
         SmallShipParts.declare();
         ShipKitBlocks.declare();
+        // The airlock's boarding stair, let down to the land as its outer door opens there.
+        ShipStairs.declare();
+        ShipStairs.listen();
         SmallShipKits.declare();
         SmallShipFinishes.declare();
         ShipPartModels.declare();
@@ -219,6 +224,8 @@ public final class JsSpace {
         // Who may do what aboard a ship, and its console's crew page where its owner says so.
         ShipConsole.declare();
         ShipCrews.listen();
+        // Who may move its doors, and its airlock never open inside and out at once.
+        ShipDoorRules.listen();
         // The Small Shipyard, the dry dock a small starship is built in: its shape, its blocks and its formed model.
         ShipyardStructure.declare();
         ShipyardBlocks.declare();

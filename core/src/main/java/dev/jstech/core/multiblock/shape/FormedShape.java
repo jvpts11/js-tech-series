@@ -38,7 +38,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * the model that stands so. It also holds what a kind of its blocks does aboard a moving structure in place of what it
  * does alone, as its model's declaration says: the same seat a couch in a capsule and a chair in a lander's cabin. And
  * it holds the model's pieces a player takes for one thing ({@link FormedPiece}), a door, a seat, outlined whole from
- * any block they stand in.
+ * any block they stand in, and a door's leaf, solid in the blocks it stands in while it is shut.
  *
  * <pre>{@code
  * {"origin": [-0.5, 0.0, -0.5], "apart": [[0, 0, 0]],
@@ -57,9 +57,14 @@ public final class FormedShape {
     private final Map<Turned, VoxelShape> turned = new ConcurrentHashMap<>();
     /* Each piece's outline, by its place among the pieces, worked out the first time it is drawn. */
     private final Map<Integer, float[]> pieceLines = new ConcurrentHashMap<>();
+    /* Each door's leaf shut, by the door's name: its boxes in each block it stands in, as the model faces north. */
+    private final Map<String, Map<Long, int[]>> leaves = new ConcurrentHashMap<>();
+    /* A door's leaf in a block, as its structure stands, by the door's name, the block and the way it stands. */
+    private final Map<Leaf, VoxelShape> leafShapes = new ConcurrentHashMap<>();
 
     private static final int AXES = 3;
     private static final double SIXTEENTH = 1.0 / MeshVoxels.FINE;
+    private static final double HALF = 0.5;
     private static final Codec<List<Integer>> TRIPLE = Codec.INT.listOf().comapFlatMap(list -> list.size() == AXES
             ? DataResult.success(list) : DataResult.error(() -> "a block's place is three numbers: " + list),
             list -> list);
@@ -182,6 +187,38 @@ public final class FormedShape {
         return Optional.ofNullable(FormedPiece.at(this.pieces, inModel));
     }
 
+    /** Its piece called {@code name}, if it has one. */
+    public Optional<FormedPiece> piece(final String name) {
+        for (final FormedPiece piece : this.pieces) {
+            if (piece.name().equals(name)) {
+                return Optional.of(piece);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * The blocks the leaf of its door {@code door} stands in while it is shut, and its boxes in each, in sixteenths as
+     * the model stands facing north: the sixteenths of its blocks whose middles the leaf holds. None for no such door.
+     */
+    public Map<Long, int[]> leaf(final String door) {
+        return this.leaves.computeIfAbsent(door, name -> piece(name).filter(FormedPiece::door)
+                .map(this::leafBoxes).orElse(Map.of()));
+    }
+
+    /**
+     * The shape the leaf of its door {@code door}, shut, adds to the block {@code place}, as its structure stands;
+     * none where the leaf stands in no part of it.
+     */
+    public Optional<VoxelShape> leafShape(final FormedPlace place, final String door) {
+        final int[] boxes = leaf(door).get(place.cell());
+        if (boxes == null || boxes.length == 0) {
+            return Optional.empty();
+        }
+        return Optional.of(this.leafShapes.computeIfAbsent(new Leaf(door, place.cell(), place.orientation()),
+                any -> voxels(CellSpace.boxes(boxes, place.turn()))));
+    }
+
     /** The boxes of the block {@code cell}, as the model stands facing north, in sixteenths. */
     public Optional<int[]> boxes(final long cell) {
         return Optional.ofNullable(this.cells.get(cell)).map(int[]::clone);
@@ -203,6 +240,67 @@ public final class FormedShape {
      */
     public static VoxelShape shapeOf(final int[] boxes, final Orientation turn) {
         return voxels(CellSpace.boxes(boxes, turn));
+    }
+
+    /* The boxes of {@code door}'s leaf in each block of the model it reaches, by the middles of their sixteenths. */
+    private Map<Long, int[]> leafBoxes(final FormedPiece door) {
+        final double[] bounds = door.leafBounds();
+        final int[] low = new int[AXES];
+        final int[] high = new int[AXES];
+        for (int axis = 0; axis < AXES; axis++) {
+            low[axis] = (int) Math.floor(bounds[axis] - this.origin[axis]);
+            high[axis] = (int) Math.floor(bounds[axis + AXES] - this.origin[axis]);
+        }
+        final Map<Long, int[]> out = new TreeMap<>();
+        final double[] at = new double[AXES];
+        for (int x = low[0]; x <= high[0]; x++) {
+            for (int y = low[1]; y <= high[1]; y++) {
+                for (int z = low[2]; z <= high[2]; z++) {
+                    final long cell = MeshCells.key(x, y, z);
+                    if (!this.cells.containsKey(cell)) {
+                        continue;
+                    }
+                    final boolean[] within = new boolean[MeshVoxels.FINE * MeshVoxels.FINE * MeshVoxels.FINE];
+                    boolean any = false;
+                    for (int i = 0; i < MeshVoxels.FINE; i++) {
+                        for (int j = 0; j < MeshVoxels.FINE; j++) {
+                            for (int k = 0; k < MeshVoxels.FINE; k++) {
+                                at[0] = this.origin[0] + x + (i + HALF) * SIXTEENTH;
+                                at[1] = this.origin[1] + y + (j + HALF) * SIXTEENTH;
+                                at[2] = this.origin[2] + z + (k + HALF) * SIXTEENTH;
+                                if (door.leafHolds(at)) {
+                                    within[(i * MeshVoxels.FINE + j) * MeshVoxels.FINE + k] = true;
+                                    any = true;
+                                }
+                            }
+                        }
+                    }
+                    if (any) {
+                        out.put(cell, MeshVoxels.boxes(new float[0], grid -> coarser(within, grid)));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /* The sixteenths {@code within} in a grid of {@code grid} to a side: a cell full where any sixteenth of it is. */
+    private static boolean[] coarser(final boolean[] within, final int grid) {
+        if (grid == MeshVoxels.FINE) {
+            return within;
+        }
+        final int step = MeshVoxels.FINE / grid;
+        final boolean[] out = new boolean[grid * grid * grid];
+        for (int i = 0; i < MeshVoxels.FINE; i++) {
+            for (int j = 0; j < MeshVoxels.FINE; j++) {
+                for (int k = 0; k < MeshVoxels.FINE; k++) {
+                    if (within[(i * MeshVoxels.FINE + j) * MeshVoxels.FINE + k]) {
+                        out[(i / step * grid + j / step) * grid + k / step] = true;
+                    }
+                }
+            }
+        }
+        return out;
     }
 
     private static VoxelShape voxels(final int[] boxes) {
@@ -250,6 +348,10 @@ public final class FormedShape {
 
     /* A block's shape standing one way. */
     private record Turned(long cell, int orientation) {
+    }
+
+    /* A door's leaf in a block standing one way. */
+    private record Leaf(String door, long cell, int orientation) {
     }
 
     /* A block's boxes, as its file holds them. */

@@ -410,6 +410,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   works by, written in a pieces file as `uses`, and `usesCell()`; `FormedShape.pieceAt(place, at)` finds the piece a
   point is on; `FormedPieceUses.worksBy(level, pos, at)` finds the block a piece aimed at works by. Used from any block
   it stands in, a piece is used through that block. Experimental.
+- Doors of formed models: J's Core's API is at version 40. A `FormedPiece` with a leaf (`shut`, written in a
+  pieces file as `shut`) is a door: used from any block it stands in, it shuts or opens (`FormedDoors.use`), and while
+  it is shut the sixteenths its leaf holds are solid in its blocks (`FormedShape.leafShape`). Its `moves` name the
+  bones of the model that move with it, left out of the blocks' shapes, and `starts_shut` a door shut as its structure
+  forms. Whether a door is shut is kept by its blocks (`FormedPartBlockEntity.movedDoors`), wherever the structure goes;
+  `FormedDoors.shut`, `named`, `set` and `blockOf` read and move one; `FormedDoorEvent`, posted before a player moves
+  one, is cancelled to keep it as it is. Experimental.
 
 ### Added
 - A declared model may name a texture a pack makes as the game loads, once promised: the data run's check of

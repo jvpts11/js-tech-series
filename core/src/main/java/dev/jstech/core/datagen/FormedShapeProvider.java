@@ -13,7 +13,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.model.BakedGeometry;
 import dev.jstech.core.model.GeometryBaker;
+import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
@@ -147,11 +149,33 @@ public final class FormedShapeProvider implements DataProvider {
                         "is declared formed but not declared a model", "declare it with model(...)"));
     }
 
-    /* The faces of {@code model} at rest, nine numbers to a triangle, in blocks. */
+    /*
+     * The faces of {@code model} at rest, nine numbers to a triangle, in blocks; but for the bones that move with its
+     * doors, so their blocks take a leaf's shape from the door's shut leaf alone.
+     */
     private float[] faces(final DeclaredModel model) {
         final List<ModelData> read = ModelDefinitionProvider.read(model, model.definition().model(), this.files);
         final ModelData data = read.getFirst();
-        return ModelTriangles.of(data, GeometryBaker.bake(data, Set.of()), model.definition().detail().scale());
+        final Set<String> moving = new LinkedHashSet<>();
+        for (final FormedPiece piece : pieces(model)) {
+            moving.addAll(piece.moves());
+        }
+        final BakedGeometry baked = GeometryBaker.bake(data, Set.of());
+        if (moving.isEmpty()) {
+            return ModelTriangles.of(data, baked, model.definition().detail().scale());
+        }
+        // A moving bone, and every bone hanging from it, keeps no faces here.
+        final List<List<BakedGeometry.Part>> kept = new ArrayList<>(baked.bones());
+        final Set<String> left = new LinkedHashSet<>();
+        for (int i = 0; i < data.bones().size(); i++) {
+            final ModelBone bone = data.bones().get(i);
+            if (moving.contains(bone.name()) || bone.parent() != null && left.contains(bone.parent())) {
+                left.add(bone.name());
+                kept.set(i, List.of());
+            }
+        }
+        return ModelTriangles.of(data, new BakedGeometry(kept, baked.deformed()), model.definition().detail()
+                .scale());
     }
 
     /* The shapes of the blocks of the model {@code id}, formed from the pattern {@code patternId}. */

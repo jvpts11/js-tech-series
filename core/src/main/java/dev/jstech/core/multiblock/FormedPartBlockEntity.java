@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multiblock;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
@@ -14,6 +15,7 @@ import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multiblock.damage.CellMark;
 import dev.jstech.core.multiblock.damage.DamageMark;
 import dev.jstech.core.multiblock.damage.FormedDamage;
+import dev.jstech.core.multiblock.shape.FormedPiece;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShape;
 import dev.jstech.core.multiblock.shape.FormedShapes;
@@ -41,7 +43,8 @@ import org.jetbrains.annotations.Nullable;
  * plan laid ({@code BuildPlan}) may take its shape from more than one model, its own and those of formed parts beside
  * it whose faces reach into it, as a rocket's skirt rises round the engine on it; and it never looks for its plan's
  * owner, which gives it back itself. It keeps, too, the strikes of damage that reached it ({@code FormedDamage}),
- * and takes its shape from its faces as they left them.
+ * and takes its shape from its faces as they left them; and the doors of its model moved from how they stood as it
+ * formed, a shut leaf through it solid in it.
  */
 public final class FormedPartBlockEntity extends SyncedBlockEntity implements IFormedPlaced {
 
@@ -52,6 +55,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
     private final BoolField planned;
     private final BoolField drawsPart;
     private final ValueField<List<CellMark>> damage;
+    private final ValueField<List<String>> moved;
     /* The shape last worked out, and from which shape files, places and damage, so any of them changing redoes it. */
     private @Nullable VoxelShape shape;
     private List<Object> shapeFrom = List.of();
@@ -74,6 +78,34 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
         this.drawsPart = fields().flag("DrawsPart", false).save().toClient();
         // The strikes laid on the models it is a block of, which reached it: what it is re-shaped and drawn by.
         this.damage = fields().value("Damage", CellMark.CODEC.listOf(), List.<CellMark>of()).save().toClient();
+        // The doors of its model moved from how they stood as it formed, by their names: their leaves stand in it, or
+        // it is the block they work by.
+        this.moved = fields().value("MovedDoors", Codec.STRING.listOf(), List.<String>of()).save().toClient();
+    }
+
+    /**
+     * The doors of its own model, their leaves standing in it or it the block they work by, moved from how they stood
+     * as it formed, shut or open, by their names ({@code FormedDoors}).
+     */
+    public List<String> movedDoors() {
+        final List<String> kept = this.moved.get();
+        return kept == null ? List.of() : kept;
+    }
+
+    /** Keeps the door {@code door} of its own model moved from how it stood as it formed, or not. */
+    @ApiStatus.Internal
+    public void moveDoor(final String door, final boolean moved) {
+        if (movedDoors().contains(door) == moved) {
+            return;
+        }
+        final List<String> now = new ArrayList<>(movedDoors());
+        if (moved) {
+            now.add(door);
+        } else {
+            now.remove(door);
+        }
+        this.moved.set(List.copyOf(now));
+        setChanged();
     }
 
     /** The block it was before its structure formed. */
@@ -181,6 +213,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
             from.add(FormedShapes.get(this.level, at.model()).orElse(null));
         }
         from.add(damage());
+        from.add(movedDoors());
         if (this.shape != null && from.equals(this.shapeFrom)) {
             return this.shape;
         }
@@ -194,6 +227,20 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
                 out = Shapes.joinUnoptimized(out, struck.isPresent() ? FormedShape.shapeOf(struck.get(), at.turn())
                         : file.get().shape(at), BooleanOp.OR);
                 known = true;
+            }
+        }
+        // The leaves of its own model's doors that stand shut through it.
+        final FormedPlace own = this.place.get();
+        final Optional<FormedShape> ownFile = own == null ? Optional.empty()
+                : FormedShapes.get(this.level, own.model());
+        if (ownFile.isPresent()) {
+            for (final FormedPiece door : ownFile.get().pieces()) {
+                if (door.door() && door.startsShut() != movedDoors().contains(door.name())) {
+                    final Optional<VoxelShape> leaf = ownFile.get().leafShape(own, door.name());
+                    if (leaf.isPresent()) {
+                        out = Shapes.joinUnoptimized(out, leaf.get(), BooleanOp.OR);
+                    }
+                }
             }
         }
         this.shape = known ? out.optimize() : Shapes.block();
