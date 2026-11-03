@@ -102,8 +102,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   machine's reason.
 - A machine of the network that waits on items for an Operation it was given is brought them: once a
   second the Mainframe sends it the first item it needs that the network stores, an export the log shows, and has the
-  ones the network lacks and can make crafted, so a hangar's crane gets its rocket's blocks from the network's disks
-  and its autocrafting.
+  ones the network lacks and can make crafted, so a machine laying a plan gets its blocks from the network's disks and
+  its autocrafting.
 
 ### Changed
 - Listeners declared: every class of the three mods that answers the game's events is

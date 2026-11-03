@@ -12,7 +12,7 @@ One building of one size, where a crane builds a rocket from a design drawn on i
 
 ## What it is for
 
-Having a rocket built on its [mobile launcher](jsspace:launcher), and rolled out through the door by the [crawler](jsspace:crawler). The terminal keeps up to 16 plans; a data cable puts it on a network, which can set it building.
+Having a rocket built on its [mobile launcher](jsspace:launcher), and rolled out through the door by the [crawler](jsspace:crawler). The terminal keeps up to 16 plans.
 
 ## How to get it
 

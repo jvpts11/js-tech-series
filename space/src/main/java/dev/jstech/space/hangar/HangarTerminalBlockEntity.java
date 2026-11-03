@@ -9,17 +9,6 @@ package dev.jstech.space.hangar;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.ValueField;
-import dev.jstech.core.jstechseries.builder.Assembly;
-import dev.jstech.core.jstechseries.builder.IAssembler;
-import dev.jstech.core.jstechseries.network.INetworkMember;
-import dev.jstech.core.jstechseries.network.NetworkCategory;
-import dev.jstech.core.jstechseries.network.NetworkMembers;
-import dev.jstech.core.jstechseries.operation.IItemNeeds;
-import dev.jstech.core.jstechseries.operation.IOperationArgs;
-import dev.jstech.core.jstechseries.operation.IOperationRequest;
-import dev.jstech.core.jstechseries.operation.OperationFailure;
-import dev.jstech.core.jstechseries.operation.OperationStatus;
-import dev.jstech.core.jstechseries.operation.OperationType;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineResource;
@@ -31,8 +20,6 @@ import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanAssembler;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
-import dev.jstech.core.text.Text;
-import dev.jstech.core.text.TextKey;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.launcher.LauncherLayout;
@@ -50,7 +37,6 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -69,12 +55,10 @@ import org.jetbrains.annotations.Nullable;
  * plan sent to the bay to be built; and it opens and shuts the bay door for its console.
  *
  * <p>Its crane builds the plan sent by itself, block by block ({@link PlanAssembler}), from what comes in through the
- * loading dock: whatever the hangar waits for, it builds into the rocket. On a network, a request of
- * {@link Assembly#ASSEMBLE} sets it building, a plan it keeps by name or the plan it was sent, and while it waits for
- * blocks it says which, so the network brings them, made first where they can be.
+ * loading dock: whatever the hangar waits for, it builds into the rocket. It is no member of a data network: a
+ * machine, not a computer.
  */
-public final class HangarTerminalBlockEntity extends MachineBlockEntity implements INetworkMember, IItemNeeds,
-        IAssembler {
+public final class HangarTerminalBlockEntity extends MachineBlockEntity {
 
     private final MachineStructure structure;
     private final ValueField<RocketDesign> design;
@@ -92,8 +76,6 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
     /* The plan being built, on the server, while its chunk is loaded; and whether it is to start. */
     private @Nullable PlannedBuild build;
     private boolean pending;
-    /* The network's request to build, followed until the rocket is whole; on the server. */
-    private @Nullable IOperationRequest<Assembly.Args> assembling;
 
     /** The most plans a hangar keeps. */
     public static final int MOST_PLANS = 16;
@@ -137,8 +119,6 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
             stopBuild(true);
             this.crane.spill(level, at);
         });
-        // On the network its cables reach, it may be set building.
-        NetworkMembers.keep(this);
     }
 
     /** One server tick: the machine's, then its plan started once all of it is loaded, and its crane at work. */
@@ -151,7 +131,6 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
         if (terminal.build != null && level instanceof ServerLevel server) {
             terminal.crane.tick(server);
         }
-        terminal.follow();
     }
 
     /** The formed hangar loaded in {@code level} whose building or bay holds {@code pos}, if one does. */
@@ -429,66 +408,6 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
         return kind == PortKind.ITEM_INPUT && formed() ? this.crane.inbox() : null;
     }
 
-    @Override
-    public NetworkCategory category() {
-        return NetworkCategory.C;
-    }
-
-    @Override
-    public List<OperationType<?>> carriesOut() {
-        return List.of(Assembly.ASSEMBLE);
-    }
-
-    /** Why it will not build what the network asks: no building, no such plan, no plan at all, or a plan not ready. */
-    @Override
-    public @Nullable Text refuses(final OperationType<?> type, final IOperationArgs args) {
-        final Refusal why = refusal(args);
-        return why == null ? null : why.text();
-    }
-
-    /** The blocks its crane waits for, the ones it lays first first. */
-    @Override
-    public List<ItemNeed> needs() {
-        final List<ItemNeed> out = new ArrayList<>();
-        for (final Map.Entry<Item, Integer> need : this.crane.needs().entrySet()) {
-            out.add(new ItemNeed(need.getKey(), need.getValue()));
-        }
-        return out;
-    }
-
-    /** The crane's inbox, while it builds. */
-    @Override
-    public Optional<IItemHandler> inbox() {
-        return this.build == null ? Optional.empty() : Optional.of(this.crane.inbox());
-    }
-
-    /**
-     * Sets its crane building, the plan named among its plans sent to its bay first, as its screen's confirm sends
-     * it; the request hears from then on how the building goes, until the rocket is whole.
-     */
-    @Override
-    public OperationStatus assemble(final IOperationRequest<Assembly.Args> request) {
-        final Refusal why = refusal(request.args());
-        if (why != null) {
-            request.fail(why.failure());
-            return OperationStatus.FAILED;
-        }
-        final Optional<RocketDesign> chosen = request.args().plan().flatMap(this::planNamed);
-        if (chosen.isPresent() && !chosen.equals(plan())) {
-            send(chosen.get());
-        }
-        if (this.assembling != null && this.assembling != request) {
-            this.assembling.fail(OperationFailure.of(HangarTexts.TAKEN));
-        }
-        this.assembling = request;
-        request.whenCancelled(() -> {
-            if (this.assembling == request) {
-                this.assembling = null;
-            }
-        });
-        return follow();
-    }
-
     /* It spends no energy. */
     @Override
     public boolean takesEnergy() {
@@ -672,27 +591,6 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
         return HangarStructure.turned(turn, drawn);
     }
 
-    /* Why it will not build what {@code args} asks, or null when it will. */
-    private @Nullable Refusal refusal(final IOperationArgs args) {
-        if (!formed()) {
-            return new Refusal(HangarTexts.NOT_FORMED, "");
-        }
-        if (!(args instanceof Assembly.Args asked) || asked.plan().isEmpty()) {
-            return plan().isPresent() ? null : new Refusal(HangarTexts.NOTHING_SENT, "");
-        }
-        final String name = asked.plan().get();
-        final Optional<RocketDesign> named = planNamed(name);
-        if (named.isEmpty()) {
-            return new Refusal(HangarTexts.NO_PLAN_NAMED, name);
-        }
-        return ready(named.get()) ? null : new Refusal(HangarTexts.NOT_READY, name);
-    }
-
-    /* The plan of that name among those it keeps. */
-    private Optional<RocketDesign> planNamed(final String name) {
-        return plans().stream().filter(kept -> kept.name().equals(name)).findFirst();
-    }
-
     /* Whether {@code design} may be sent to its bay: the building stands whole and the design is ready to fly. */
     private boolean ready(final RocketDesign design) {
         return this.level != null && bay().isPresent() && DesignReport.in(this.level, design.stack(), bay()).ready();
@@ -712,35 +610,6 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
         this.planAt.set(side.isPresent() ? at.pad().above(LauncherLayout.RAISE) : at.pad());
         setChanged();
         startBuild();
-    }
-
-    /*
-     * Tells the network's request how the building goes, and lets it go once it is over: done when the rocket is
-     * whole, waiting while the crane has no block it can lay or the plan waits for its chunks, building otherwise;
-     * failed when the plan is taken back. The state it is in now.
-     */
-    private OperationStatus follow() {
-        final IOperationRequest<Assembly.Args> following = this.assembling;
-        if (following == null) {
-            return OperationStatus.COMPLETED;
-        }
-        final OperationStatus now;
-        if (this.build == null) {
-            now = this.pending && plan().isPresent() ? OperationStatus.WAITING : OperationStatus.FAILED;
-        } else if (this.build.complete()) {
-            now = OperationStatus.COMPLETED;
-        } else {
-            now = this.crane.waiting() ? OperationStatus.WAITING : OperationStatus.PROCESSING;
-        }
-        if (now == OperationStatus.FAILED) {
-            following.fail(OperationFailure.of(HangarTexts.STOPPED));
-        } else {
-            following.report(now);
-        }
-        if (now.isTerminal()) {
-            this.assembling = null;
-        }
-        return now;
     }
 
     /* Starts building the plan sent to its bay, where its chunks are all loaded; it waits for them otherwise. */
@@ -832,18 +701,5 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity implemen
      * @param formed the parts of the plan formed, by their places in its stack
      */
     public record Released(RocketDesign design, BlockPos foot, List<Integer> formed) {
-    }
-
-    /* Why it will not build: a sentence, and what fills it, if anything. */
-    private record Refusal(TextKey sentence, String filling) {
-
-        Text text() {
-            return this.filling.isEmpty() ? this.sentence.text() : this.sentence.with(this.filling);
-        }
-
-        OperationFailure failure() {
-            return this.filling.isEmpty() ? OperationFailure.of(this.sentence)
-                    : OperationFailure.of(this.sentence, this.filling);
-        }
     }
 }

@@ -1,0 +1,294 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "jsspace:block/shipyard/terminal_body",
+    "body": "jsspace:block/shipyard/terminal_body",
+    "top": "jsspace:block/shipyard/terminal_top",
+    "keys": "jsspace:block/shipyard/terminal_keys",
+    "screen": "jsspace:block/shipyard/terminal_screen",
+    "bezel": "jsspace:block/shipyard/terminal_keys"
+  },
+  "elements": [
+    {
+      "name": "desk",
+      "from": [
+        0,
+        0,
+        4
+      ],
+      "to": [
+        16,
+        13.5,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            2.5,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            2.5,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            4,
+            2.5,
+            15,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            4,
+            2.5,
+            15,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#top",
+          "uv": [
+            0,
+            4,
+            16,
+            15
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            0,
+            4,
+            16,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "name": "lip",
+      "from": [
+        0,
+        13.5,
+        3.2
+      ],
+      "to": [
+        16,
+        14.4,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#top",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "south": {
+          "texture": "#top",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#top",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#top",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "up": {
+          "texture": "#top",
+          "uv": [
+            0,
+            3,
+            16,
+            15
+          ]
+        },
+        "down": {
+          "texture": "#top",
+          "uv": [
+            0,
+            3,
+            16,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "name": "keyboard",
+      "from": [
+        3,
+        14.4,
+        3.6
+      ],
+      "to": [
+        13,
+        14.9,
+        6.4
+      ],
+      "faces": {
+        "up": {
+          "texture": "#keys",
+          "uv": [
+            3,
+            3,
+            13,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#keys",
+          "uv": [
+            0,
+            0,
+            10,
+            1
+          ]
+        },
+        "south": {
+          "texture": "#keys",
+          "uv": [
+            0,
+            0,
+            10,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#keys",
+          "uv": [
+            0,
+            0,
+            3,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#keys",
+          "uv": [
+            0,
+            0,
+            3,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "screen",
+      "from": [
+        0.5,
+        14.4,
+        6.0
+      ],
+      "to": [
+        15.5,
+        14.8,
+        15.5
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          14.4,
+          6.0
+        ],
+        "axis": "x",
+        "angle": -45
+      },
+      "faces": {
+        "up": {
+          "texture": "#screen",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "rotation": 180
+        },
+        "down": {
+          "texture": "#bezel",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#bezel",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "south": {
+          "texture": "#bezel",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#bezel",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#bezel",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        }
+      },
+      "neoforge_data": {
+        "block_light": 15
+      }
+    }
+  ]
+}

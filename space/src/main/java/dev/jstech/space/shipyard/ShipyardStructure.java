@@ -29,9 +29,10 @@ import net.minecraft.world.phys.Vec3;
  * belly, a cross beam and a jaw each side; down both sides a line of four lattice towers, eleven blocks to the top of
  * the rails the gantry crane runs on, girders between them under walkways at two heights, a stair from the ground up
  * to both; the crane's bridge across the bay on the rails, a floodlight on each corner tower; on the east side at the
- * back the control booth, on the first walkway, with the terminal inside facing its windows on the bay; at its foot the
- * item port; and a feeder on each first walkway's edge. The front, to the north, is open. Its walls and floor are the
- * ground it is dug in, whatever that is.
+ * back the control booth, on the first walkway, its door to the walkway, the terminal the console under its windows on
+ * the bay and a bench at its back with room for a computer; at its foot the item port; and a feeder on each first
+ * walkway's edge. The front, to the north, is open. Its walls and floor are the ground it is dug in, whatever that
+ * is.
  *
  * <p>It is drawn as it stands facing north, the open front to the north, as its formed model is made: across, x, from
  * the west tower line at -11 to the booth's outer wall at 11, the bay's middle between 0 and -1; up, y, from the
@@ -91,7 +92,8 @@ public final class ShipyardStructure {
     private static final int BOOTH_ROOF = 6;
     private static final int BOOTH_FRONT = 9;
     private static final int BOOTH_BACK = 12;
-    private static final int TERMINAL_X = 10;
+    /* The terminal, the first half of the console under the booth's windows on the bay, its screen to the room. */
+    private static final int TERMINAL_X = 9;
     private static final int TERMINAL_Z = 10;
     /* The item port at the booth's foot; the feeders, one on each first walkway. */
     private static final int PORT_Z = 9;
@@ -231,7 +233,7 @@ public final class ShipyardStructure {
                 .port('I', PortKind.ITEM_INPUT)
                 .inside(PIT, InsideRule.empty())
                 .terminal(TERMINAL)
-                // Its terminal faces east, to the booth's back, as a player in the booth places it.
+                // Its terminal, against the windows on the bay, faces east into the booth, as a player there places it.
                 .terminalFaces(Orientation.EAST)
                 // The layer at 0 stands on the ground; the pit's three under it are dug into it.
                 .ground(-BOTTOM)
@@ -305,8 +307,9 @@ public final class ShipyardStructure {
     }
 
     /*
-     * A block of the booth: its walls and its roof, and its floor out past the tower line; inside, round the
-     * terminal, it is open.
+     * A block of the booth: its walls and its roof, and its floor out past the tower line; inside, before the
+     * terminal's console, it is open, and so are the two places on the bench at the back, left for a computer and
+     * its monitor.
      */
     private static boolean booth(final int x, final int y, final int z) {
         if (x < BOOTH_WEST || x > BOOTH_EAST || z < BOOTH_FRONT || z > BOOTH_BACK) {
@@ -318,8 +321,7 @@ public final class ShipyardStructure {
         if (y < BOOTH_FLOOR || y > BOOTH_ROOF) {
             return false;
         }
-        // The outer wall's place beside the terminal is a gland a data cable may come in by, the panel drawn over it.
-        if (x == BOOTH_EAST && y == BOOTH_FLOOR && z == TERMINAL_Z) {
+        if (y == BOOTH_FLOOR + 1 && z == BOOTH_BACK && x > BOOTH_WEST) {
             return false;
         }
         final boolean inside = x > BOOTH_WEST && x < BOOTH_EAST && z > BOOTH_FRONT && z < BOOTH_BACK

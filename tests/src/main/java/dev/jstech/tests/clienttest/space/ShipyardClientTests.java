@@ -30,8 +30,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A Small Shipyard on a player's game: built and formed, it is drawn as the approved dry dock, seen from where its
- * drawing was made, from the open front and from the back; its crane's bridge drawn in its hazard yellow. Shown by a
- * projector, it stands dug into the ground the projector stands on, the land where its pit goes outlined in red.
+ * drawing was made, from the open front and from the back; its crane's bridge drawn in its hazard yellow. Its control
+ * booth is the approved one, seen from where that drawing's cameras stood: the terminal the console under its windows,
+ * its screen showing the Starship Design, and the bench at its back. Shown by a projector, it stands dug into the
+ * ground the projector stands on, the land where its pit goes outlined in red.
  */
 public final class ShipyardClientTests {
 
@@ -62,6 +64,31 @@ public final class ShipyardClientTests {
     private static final int YELLOW = 40;
     private static final int ARRIVE = 600;
     private static final int SETTLE = 20;
+    /*
+     * The approved booth's cameras, in the dock's own places: from over the bay looking at it, brought nearer for the
+     * game's wider view; inside, from the back by the bench looking at the windows; and by the console looking at the
+     * bench, each turned as the drawing's, in degrees.
+     */
+    private static final Vec3 BOOTH_OUT_EYES = new Vec3(3.99, 6.79, 7.16);
+    private static final Vec3 BOOTH_OUT_AT = new Vec3(10.3, 5.5, 10.8);
+    private static final Vec3 BOOTH_IN_EYES = new Vec3(11.1, 5.62, 12.1);
+    private static final float BOOTH_IN_YAW = 65F;
+    private static final float BOOTH_IN_PITCH = 14F;
+    private static final Vec3 BOOTH_DESK_EYES = new Vec3(9.9, 5.62, 10.1);
+    private static final float BOOTH_DESK_YAW = -25F;
+    private static final float BOOTH_DESK_PITCH = 22F;
+    /* Standing before the console, looking down at its two halves, the terminal's and the next's. */
+    private static final Vec3 CONSOLE_EYES = new Vec3(11.2, 5.62, 11.0);
+    private static final Vec3 CONSOLE_AT = new Vec3(9.4, 5.0, 11.0);
+    /*
+     * The screen's colours, never the sky's: little red, blue well over it, and green either low (its grid) or high
+     * (its ship); how many such.
+     */
+    private static final int DESIGN_RED = 130;
+    private static final int DESIGN_BLUE = 30;
+    private static final int DESIGN_DARK = 60;
+    private static final int DESIGN_CYAN = 170;
+    private static final int DESIGN_LEAST = 300;
     /*
      * A projector on the land's grass, as a player south of it places it, the dock shown north of it; the eyes behind
      * and over it, looking at the middle of what it shows; the booth's terminal over the ground.
@@ -147,6 +174,38 @@ public final class ShipyardClientTests {
                 });
     }
 
+    @ClientTest(timeoutTicks = 1500)
+    public static void booth_isDrawnAsTheApprovedOne(final ClientTestContext ctx) {
+        final ServerLevel[] built = new ServerLevel[1];
+        final int[] screen = new int[1];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            if (built[0] != null) {
+                clear(ctx, built[0]);
+                built[0].players().forEach(player -> player.setGameMode(GameType.CREATIVE));
+            }
+        }));
+        ctx.thenServer(0, level -> {
+            built[0] = level;
+            TestShipyards.build(level, ctx.abs(CORNER));
+            ctx.serverPlayer().setGameMode(GameType.SPECTATOR);
+        }).thenWaitUntil(() -> ctx.mc().level.getBlockState(ctx.abs(TOWER_BLOCK)).is(FormedParts.BLOCK.get()),
+                ARRIVE, "the formed dock to reach the player's game");
+        stand(ctx, BOOTH_OUT_EYES);
+        ctx.then(2, () -> ctx.lookAt(place(ctx, BOOTH_OUT_AT)))
+                .thenScreenshot(SETTLE, "booth-out");
+        look(ctx, BOOTH_IN_EYES, BOOTH_IN_YAW, BOOTH_IN_PITCH);
+        ctx.thenScreenshot(SETTLE, "booth-in")
+                .then(0, () -> screen[0] = designPixels(ctx));
+        look(ctx, BOOTH_DESK_EYES, BOOTH_DESK_YAW, BOOTH_DESK_PITCH);
+        ctx.thenScreenshot(SETTLE, "booth-desk");
+        stand(ctx, CONSOLE_EYES);
+        ctx.then(2, () -> ctx.lookAt(place(ctx, CONSOLE_AT)))
+                .thenScreenshot(SETTLE, "booth-console")
+                .then(0, () -> screen[0] = Math.max(screen[0], designPixels(ctx)))
+                .then(0, () -> ctx.assertTrue(screen[0] > DESIGN_LEAST, "the console's screen shows the Starship"
+                        + " Design, its blue grid and its ship: " + screen[0] + " pixels"));
+    }
+
     /* The projector shown on this player's side, once it is there. */
     @Nullable
     private static StructureProjectorBlockEntity projector(final ClientTestContext ctx) {
@@ -171,6 +230,38 @@ public final class ShipyardClientTests {
             }
         }
         return count;
+    }
+
+    /* How many pixels of the frame are the Starship Design's blue or its ship's cyan, which nothing else here is. */
+    private static int designPixels(final ClientTestContext ctx) {
+        final int wide = ctx.mc().getWindow().getGuiScaledWidth();
+        final int tall = ctx.mc().getWindow().getGuiScaledHeight();
+        int count = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = 0; y < tall; y++) {
+                for (int x = 0; x < wide; x++) {
+                    final int argb = frame.pixel(x, y);
+                    final int r = argb >> 16 & CHANNEL;
+                    final int g = argb >> 8 & CHANNEL;
+                    final int b = argb & CHANNEL;
+                    if (r < DESIGN_RED && b - r > DESIGN_BLUE && b > g && (g < DESIGN_DARK || g > DESIGN_CYAN)) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    /* Floats the player, a spectator, with their eyes at the dock's place {@code eyes}, turned as given. */
+    private static void look(final ClientTestContext ctx, final Vec3 eyes, final float yaw, final float pitch) {
+        ctx.thenServer(0, level -> {
+            final Vec3 there = place(ctx, eyes);
+            ctx.serverPlayer().teleportTo(level, there.x, there.y - ctx.serverPlayer().getEyeHeight(), there.z, yaw,
+                    pitch);
+        }).thenWaitUntil(() -> ctx.player().getEyePosition().distanceTo(place(ctx, eyes)) < 0.1
+                && Math.abs(ctx.player().getYRot() - yaw) < 1, ARRIVE, "the player to float where the drawing's"
+                + " camera stood, turned as it was");
     }
 
     /* Floats the player, a spectator, with their eyes at the dock's place {@code eyes}. */

@@ -2523,10 +2523,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   waits for that comes in through its loading dock (from a chest, a hopper, a pipe, a conveyor or another
   mod's exporter) the crane lays where it goes, block by block at the pace of the multiblock builder, the lowest first,
   layer by layer; the port takes only the blocks the rocket still wants and no more of each, and gives back out what
-  it no longer wants, as when a player lays a block by hand. A part forms as its last block goes down. The Hangar
-  Terminal takes a data cable on any face: on a network, `RUN jscore:assemble` sets the crane building the plan sent
-  to the bay, or one of the hangar's plans by name (`WITH plan = 'Orbital I'`), and the request stays in flight until
-  the rocket is whole. Broken, the terminal drops the blocks its crane held.
+  it no longer wants, as when a player lays a block by hand. A part forms as its last block goes down. Broken, the
+  terminal drops the blocks its crane held.
 - (Space) The mobile launcher a rocket stands on in its hangar, Apollo's way: where the bay has room for one, the plan
   sent to it lays the launcher under the rocket, sized by it, and the crane builds them together. Its deck, three blocks
   thick, stands on six Pad Pedestals three blocks tall, in two rows along its length so the crawler can come in under
@@ -2769,8 +2767,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   long dug three deep into the ground, its rim of hazard concrete and a cradle of hydraulic clamps rising from its floor
   at four stations; down both sides four lattice towers, eleven blocks to the rails of a gantry crane, with walkways at
   two heights and a stair up to both; a floodlight on each corner tower; at the back the control booth on the first
-  walkway with the Shipyard Terminal inside, at its foot the Item Port, and a block feeder on each first walkway.
-  Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
+  walkway, entered by its door: the Shipyard Terminal is the first half of its console under the windows on the bay,
+  its screen showing the Starship Design, the parts list on the other half, and behind them a bench a computer can
+  stand on with a socket in the wall beside it; at the booth's foot the Item Port, and a block feeder on each first
+  walkway. Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
   its shapes: the walkways their gratings, the towers their lattice, the stair its steps. The Multiblock Builder used on
   a Structure Projector showing it digs the pit and builds it, whichever way it is turned.
 - (Space) The Starship Design, the Small Shipyard's builder, opened at its terminal once the dock is formed: the ship
@@ -2794,9 +2794,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   each running on its rail along the bay's edge. What the ship wants goes in through the dock's item port, and no more;
   each arm takes a block from the feeder of its side, swings it over to its place, sets it down and welds it with
   sparks, and a part glows round its box for a moment as it forms. The arms' blocks are handed back when another ship
-  is sent, and dropped when the terminal is broken. On a J's Computers network, by a data cable in through the gland
-  in the control booth's outer wall beside the terminal, `RUN jscore:assemble WITH plan = '<name>'` sends a plan the
-  dock keeps by name and sets the arms building, and the network brings the blocks.
+  is sent, and dropped when the terminal is broken.
 - (Core) The arms a plan is laid by, drawn on the player's game, each with its own model's bones turned to put its
   grip on its block, the block it carries in its grip or waiting in its feeder, and the sparks of its weld.
 - (Space) A ship built whole in the Small Shipyard leaves the dock's hold when its pilot uses its flight console with
@@ -2914,8 +2912,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   which, for the network to bring them.
 - (Computers) A machine of the network that waits on items for an Operation it was given is brought them: once a
   second the Mainframe sends it the first item it needs that the network stores, an export the log shows, and has the
-  ones the network lacks and can make crafted, so a hangar's crane gets its rocket's blocks from the network's disks
-  and its autocrafting.
+  ones the network lacks and can make crafted, so a machine laying a plan gets its blocks from the network's disks and
+  its autocrafting.
 - (Core) Building by a plan: a structure laid out ahead, place by place, as a hangar keeps the rocket it builds; each
   part forms by itself once its last block is down and comes apart when one goes, counted one block at a time however
   large the plan, with no terminal of its own; its blocks never look for their owner, which may hand the plan on. A

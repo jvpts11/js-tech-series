@@ -7,7 +7,6 @@
  */
 package dev.jstech.space.hangar;
 
-import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
@@ -16,9 +15,6 @@ import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.IItemLook;
-import dev.jstech.core.jstechseries.network.DataLine;
-import dev.jstech.core.jstechseries.network.DataLines;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.multiblock.MultiblockPortBlock;
 import dev.jstech.core.multiblock.MultiblockPorts;
@@ -63,9 +59,6 @@ public final class HangarBlocks {
     /* Where the building's models written by hand are, among the mod's block models. */
     private static final String HAND = "hangar/";
     private static final String BLOCK = "block/";
-    /* The terminal takes a data cable on any face, for a network to set its crane building. */
-    private static final FacePorts DATA = FacePorts.everyFace(DataLines.upTo(HardwareEra.SINGULARITY,
-            DataLine.ACCESS, DataLine.BACKBONE));
     /* The shapes of the fittings, each as it faces north, in sixteenths of a block. */
     private static final int[][] STEP_BOX = {{0, 0, 0, 16, 8, 16}};
     private static final int[][] RAILING_BOX = {{0, 0, 0, 16, 8, 16}, {0, 8, 1, 16, 24, 3}};
@@ -76,8 +69,7 @@ public final class HangarBlocks {
     /** The terminal, a console of the control room's row, which the hangar is worked from. */
     public static final BlockEntry<HangarTerminalBlock> TERMINAL = SpaceContent.CONTENT.block("hangar_terminal",
                     properties -> new HangarTerminalBlock(properties, Device.of(() -> HangarBlocks.TERMINAL_ENTITY
-                            .get()).ticks(HangarTerminalBlockEntity::serverTick).opensMenu(MachineMenu::new)
-                            .ports(DATA)))
+                            .get()).ticks(HangarTerminalBlockEntity::serverTick).opensMenu(MachineMenu::new)))
             .named("Hangar Terminal")
             .properties(properties -> metal(properties).noOcclusion())
             .look(IBlockLook.facing(new IBlockModel.Handmade(HAND + "hangar_terminal")))

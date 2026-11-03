@@ -692,7 +692,7 @@ public final class ShipAutopilotGameTests {
     }
 
     private static BlockPos terminal(final GameTestHelper helper) {
-        return helper.absolutePos(CORNER).offset(21, 7, 23);
+        return TestShipyards.terminalOf(helper.absolutePos(CORNER));
     }
 
     /* The plan of a ship of {@code design} in the dock, where it was built. */

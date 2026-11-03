@@ -8,13 +8,7 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.crafting.CraftingPattern;
-import dev.jstech.computers.operation.payload.OperationRecord;
-import dev.jstech.computers.program.IqlEngine;
-import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.jstechseries.builder.Assembly;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.multiblock.Orientation;
@@ -23,14 +17,12 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
-import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import dev.jstech.tests.testkit.space.TestHangars;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,10 +43,9 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 /**
  * The Rocket Hangar's crane building the rocket sent to its bay by itself: from the blocks a chest, a hopper or a pipe
- * puts into its loading dock, taking only what the rocket still wants; and, on a network, set building by a request of
- * the network's language, the network bringing the blocks it stores and crafting the ones it lacks, until the rocket
- * is whole and the request is written down done. The rocket's mobile launcher is laid by hand first, as a player may,
- * so the crane has only the rocket to build.
+ * puts into its loading dock, taking only what the rocket still wants. The rocket's mobile launcher is laid by hand
+ * first, as a player may, so the crane has only the rocket to build. Its terminal is a machine, no computer: a data
+ * network's cable running over it does not take it in.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -67,17 +58,12 @@ public final class CraneAssemblyGameTests {
     /* A block of the loading dock, as the hangar's pattern draws it, in the control room's outer wall to the east. */
     private static final int[] DOCK = {27, 1, 6};
     /*
-     * The network in the control room, in a line across the room a block over the floor's things: the Mainframe in
-     * the gap before the windows, its cable east over the terminal, then the router, its Ethernet and a Crafting
-     * Computer; the rack beside the Mainframe.
+     * A network in the control room, a block over the floor's things: the Mainframe in the gap before the windows,
+     * its cable east over the terminal; and how long the network is given to take in what its cable touches.
      */
     private static final BlockPos MAINFRAME = new BlockPos(39, 3, 42);
-    private static final BlockPos RACK = new BlockPos(40, 3, 43);
-    private static final BlockPos ROUTER = new BlockPos(44, 3, 42);
-    private static final BlockPos ETHERNET = new BlockPos(45, 3, 42);
-    private static final BlockPos CRAFTER = new BlockPos(46, 3, 42);
-    private static final String PLAN = "NET";
-    private static final int ROWS = 64;
+    private static final int CABLE_END = 41;
+    private static final int SETTLE = 40;
     /* The rocket's three parts, the first of its plan; the launcher's after them. */
     private static final int PARTS = 3;
 
@@ -123,59 +109,18 @@ public final class CraneAssemblyGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = HANGAR, batch = BATCH, timeoutTicks = 3000)
-    public static void crane_isSetBuildingByTheNetworkWhichBringsAndMakesItsBlocks(final GameTestHelper helper) {
+    @GameTest(template = HANGAR, batch = BATCH, timeoutTicks = 600)
+    public static void terminal_isNoMemberOfTheNetworkItsCableRunsOver(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos at = TestHangars.build(level, helper.absolutePos(TERMINAL), Orientation.NORTH);
         final MainframeBlockEntity mainframe = network(helper);
-        // The network stores every block of the rocket but one kind of the tank's, which it crafts from stone.
-        final BuildPlan laid = RocketPlans.of(level, rocket());
-        final Item made = BuiltInRegistries.BLOCK.get(laid.spots().stream().filter(spot -> spot.part() == 1)
-                .findFirst().orElseThrow().block()).asItem();
-        final ServerRackBlockEntity rack = helper.getBlockEntity(RACK);
-        for (final Map.Entry<Item, Integer> block : counts(laid, true).entrySet()) {
-            rack.getServerStorage(0).insert(block.getKey() == made ? Items.STONE : block.getKey(), block.getValue());
-        }
-        final CraftingComputerBlockEntity crafter = helper.getBlockEntity(CRAFTER);
-        final List<ItemStack> grid = new ArrayList<>();
-        for (int cell = 0; cell < CraftingPattern.GRID_SIZE; cell++) {
-            grid.add(cell == 0 ? new ItemStack(Items.STONE) : ItemStack.EMPTY);
-        }
-        helper.assertTrue(crafter.loadPattern(new CraftingPattern(grid, new ItemStack(made))),
-                "the network learns to make the tank's block from stone");
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(terminal(level, at).formed(), "the hangar forms"))
-                .thenExecute(() -> {
-                    final HangarTerminalBlockEntity terminal = terminal(level, at);
-                    terminal.design(new RocketDesign(PLAN, rocket()));
-                    terminal.save();
-                    helper.assertTrue(terminal.plan().isEmpty(), "the plan is kept, not sent");
-                })
-                .thenWaitUntil(() -> helper.assertTrue(mainframe.networkUuid() != null
-                        && NetworkSystem.get(level).membersCarryingOut(mainframe.networkUuid(),
-                        Assembly.ASSEMBLE.id()).size() == 1, "the hangar's terminal is on the network"))
-                .thenExecute(() -> {
-                    final IqlEngine.Outcome given = mainframe.networkOperations().query(IqlEngine.viewOf(
-                            new ServerCliComputer(mainframe, level)), "RUN " + Assembly.ASSEMBLE.id()
-                            + " WITH plan = '" + PLAN + "'", ROWS);
-                    helper.assertTrue(given.ok(), "the network sets the crane building: " + given.message());
-                })
-                .thenWaitUntil(() -> helper.assertTrue(terminal(level, at).plan().map(RocketDesign::name).orElse("")
-                        .equals(PLAN) && terminal(level, at).build().isPresent(),
-                        "its plan of that name is sent to the bay"))
-                .thenExecute(() -> layLauncher(level, terminal(level, at).build().orElseThrow()))
-                .thenWaitUntil(() -> helper.assertTrue(terminal(level, at).build().orElseThrow().complete(),
-                        "the network brings and makes the blocks, and the crane builds the rocket: "
-                                + terminal(level, at).build().orElseThrow().missing() + " blocks to go; waits for "
-                                + terminal(level, at).crane().needs() + ", holds " + terminal(level, at).crane()
-                                .held() + ", last operations " + mainframe.recentOperations().stream().limit(4)
-                                .map(row -> row.kind() + "/" + row.key() + "/" + row.status() + "/" + row.moved()
-                                        + "of" + row.requested()).toList()))
-                .thenWaitUntil(() -> helper.assertTrue(mainframe.recentOperations().stream()
-                        .anyMatch(row -> row.ofAnotherMod() && row.status() == OperationRecord.STATUS_COMPLETED),
-                        "and the request is written down done"))
-                .thenExecute(() -> helper.assertTrue(terminal(level, at).formedParts().containsAll(List.of(0, 1, 2)),
-                        "the whole rocket formed"))
+                .thenWaitUntil(() -> helper.assertTrue(terminal(level, at).formed() && mainframe.networkUuid() != null,
+                        "the hangar forms, and the network is up"))
+                .thenIdle(SETTLE)
+                .thenExecute(() -> helper.assertTrue(NetworkSystem.get(level).membersCarryingOut(
+                        mainframe.networkUuid(), Assembly.ASSEMBLE.id()).isEmpty(), "the hangar's terminal, a machine"
+                        + " and no computer, is no member of the network whose cable runs over it"))
                 .thenSucceed();
     }
 
@@ -234,20 +179,12 @@ public final class CraneAssemblyGameTests {
         return taken;
     }
 
-    /*
-     * The network in the control room: the Mainframe, its cable east over the terminal to the router, its Ethernet
-     * and a Crafting Computer; the rack of storage beside the Mainframe.
-     */
+    /* The network in the control room: the Mainframe, and its cable east over the terminal. */
     private static MainframeBlockEntity network(final GameTestHelper helper) {
-        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final MainframeBlockEntity mainframe = world.placeRunningMainframe(MAINFRAME);
-        for (int x = MAINFRAME.getX() + 1; x < ROUTER.getX(); x++) {
+        final MainframeBlockEntity mainframe = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(MAINFRAME);
+        for (int x = MAINFRAME.getX() + 1; x <= CABLE_END; x++) {
             TestCables.lay(helper, new BlockPos(x, MAINFRAME.getY(), MAINFRAME.getZ()), ComputingModule.HBW_CABLE);
         }
-        world.placeSeededRack(RACK, Direction.SOUTH);
-        helper.setBlock(ROUTER, ComputingModule.PERSONAL_ROUTER.get());
-        TestCables.lay(helper, ETHERNET, ComputingModule.ETHERNET_CABLE);
-        world.placeRunningCraftingComputer(CRAFTER);
         return mainframe;
     }
 }

@@ -108,12 +108,12 @@ machine says it is over. A test gives one to a member with the test kit's `Netwo
 *Added 2026-10-30.*
 
 The Core registers one kind of its own, `Assembly.ASSEMBLE` (`jscore:assemble`): it sets a machine building a plan by
-itself, as a hangar's crane builds a rocket from the blocks that come in through its ports
+itself, as a crane over a bay builds from the blocks that come in through its ports
 ([Multiblocks](MULTIBLOCKS.md#laid-by-a-machine)). Its request carries the name of one of the machine's plans, or none
 for the plan the machine was given already:
 
 ```
-RUN jscore:assemble ON 'Hangar Terminal-3fa2c1'
+RUN jscore:assemble ON 'Assembler-3fa2c1'
 RUN jscore:assemble WITH plan = 'Orbital I'
 ```
 

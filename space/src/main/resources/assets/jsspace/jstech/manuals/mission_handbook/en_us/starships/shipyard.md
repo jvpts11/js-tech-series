@@ -8,7 +8,7 @@ covers: [jsspace:shipyard_terminal, jsspace:booth_panel, jsspace:cradle_clamp, j
 
 ## What it is
 
-The dry dock a small starship is built in: a pit sixteen blocks wide, twenty-four long and three deep, ringed by Pit Rim, with Cradle Clamps rising from its floor. Lattice Towers, Dock Girders, Dock Walkways and Gantry Rails line its sides, under the Gantry Bridge and four Dock Floodlights. Dock Stairs climb one side. At the back of the other, a booth of Control Booth Panels holds the Shipyard Terminal, over an Item Port. A Block Feeder stands on each lower walkway.
+The dry dock a small starship is built in: a pit sixteen blocks wide, twenty-four long and three deep, ringed by Pit Rim, with Cradle Clamps rising from its floor. Lattice Towers, Dock Girders, Dock Walkways and Gantry Rails line its sides, under the Gantry Bridge and four Dock Floodlights. Dock Stairs climb one side. At the back of the other, a booth of Control Booth Panels, its door on the walkway, holds the Shipyard Terminal, the console under its windows on the bay, and a bench at its back; the Item Port stands under it. A Block Feeder stands on each lower walkway.
 
 ## What it is for
 
@@ -33,8 +33,6 @@ height: 120
 5. Build it by hand on the ghosts of its hologram, or feed the Item Port by hopper or pipe for the four robot arms; the Starship Design shows what is still to bring. Each part forms into its model as its last block goes in.
 6. With every part formed, use the Flight Console with an empty hand. The ship leaves the dock, yours to [fly](jsspace:flying_a_ship).
 7. To change or mend it, bring it within 32 blocks of a free dock's terminal and, as its pilot, use its Flight Console. The dock takes it back, fills its reactor and keeps its plan, to change and send again with [[E]].
-
-On a J's Computers network, wired by a data cable beside the terminal, RUN jscore:assemble WITH plan = 'NAME' sets the arms building a kept plan.
 
 ## What can go wrong
 

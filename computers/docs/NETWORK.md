@@ -106,7 +106,7 @@ QUERY disks
   Mainframe's queues. It stays in the list of what runs (where you can call it off, which stops the machine, or
   change its priority) and goes into the log once the machine says it is done, under `RUN`, with its kind, the
   machine and what was asked. A machine that waits on items for its work and says which (added 2026-10-30), as a
-  Rocket Hangar's crane waits for the blocks of its rocket after `RUN jscore:assemble WITH plan = 'Orbital I'`, is
+  crane over a bay waits for the blocks of its plan after `RUN jscore:assemble WITH plan = 'Orbital I'`, is
   brought them: once a second the network sends it the first item it needs that the disks hold, an export in the log,
   and has the ones it lacks crafted where its patterns make them.
 - **Settings**: `SET BUS 'name' ...`, `SET REDSTONE 'name' ...`, `SET INTERFACE ...`, `SET ROUTER ...`.

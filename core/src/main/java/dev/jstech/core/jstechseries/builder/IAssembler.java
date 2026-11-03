@@ -13,8 +13,8 @@ import dev.jstech.core.jstechseries.operation.OperationStatus;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * A machine of the network that builds a plan by itself, a crane over a rocket in its hangar or robot arms over a ship
- * in its dock, given the work as a request of {@link Assembly#ASSEMBLE}: its block entity implements this and carries
+ * A member of the network that builds a plan by itself, a crane over a bay or robot arms over a dock, or sets one
+ * building, given the work as a request of {@link Assembly#ASSEMBLE}: its block entity implements this and carries
  * that kind out. It reports on the request as it builds: {@link OperationStatus#PROCESSING PROCESSING} while it lays
  * blocks, {@link OperationStatus#WAITING WAITING} while it waits for them (and says which as an {@link IItemNeeds}),
  * and {@link OperationStatus#COMPLETED COMPLETED} once the plan is whole.

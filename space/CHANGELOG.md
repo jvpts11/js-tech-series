@@ -453,10 +453,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   waits for that comes in through its loading dock (from a chest, a hopper, a pipe, a conveyor or another
   mod's exporter) the crane lays where it goes, block by block at the pace of the multiblock builder, the lowest first,
   layer by layer; the port takes only the blocks the rocket still wants and no more of each, and gives back out what
-  it no longer wants, as when a player lays a block by hand. A part forms as its last block goes down. The Hangar
-  Terminal takes a data cable on any face: on a network, `RUN jscore:assemble` sets the crane building the plan sent
-  to the bay, or one of the hangar's plans by name (`WITH plan = 'Orbital I'`), and the request stays in flight until
-  the rocket is whole. Broken, the terminal drops the blocks its crane held.
+  it no longer wants, as when a player lays a block by hand. A part forms as its last block goes down. Broken, the
+  terminal drops the blocks its crane held.
 - The mobile launcher a rocket stands on in its hangar, Apollo's way: where the bay has room for one, the plan
   sent to it lays the launcher under the rocket, sized by it, and the crane builds them together. Its deck, three blocks
   thick, stands on six Pad Pedestals three blocks tall, in two rows along its length so the crawler can come in under
@@ -682,8 +680,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   long dug three deep into the ground, its rim of hazard concrete and a cradle of hydraulic clamps rising from its floor
   at four stations; down both sides four lattice towers, eleven blocks to the rails of a gantry crane, with walkways at
   two heights and a stair up to both; a floodlight on each corner tower; at the back the control booth on the first
-  walkway with the Shipyard Terminal inside, at its foot the Item Port, and a block feeder on each first walkway.
-  Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
+  walkway, entered by its door: the Shipyard Terminal is the first half of its console under the windows on the bay,
+  its screen showing the Starship Design, the parts list on the other half, and behind them a bench a computer can
+  stand on with a socket in the wall beside it; at the booth's foot the Item Port, and a block feeder on each first
+  walkway. Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
   its shapes: the walkways their gratings, the towers their lattice, the stair its steps. The Multiblock Builder used on
   a Structure Projector showing it digs the pit and builds it, whichever way it is turned.
 - The Starship Design, the Small Shipyard's builder, opened at its terminal once the dock is formed: the ship
@@ -705,9 +705,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   each running on its rail along the bay's edge. What the ship wants goes in through the dock's item port, and no more;
   each arm takes a block from the feeder of its side, swings it over to its place, sets it down and welds it with
   sparks, and a part glows round its box for a moment as it forms. The arms' blocks are handed back when another ship
-  is sent, and dropped when the terminal is broken. On a J's Computers network, by a data cable in through the gland
-  in the control booth's outer wall beside the terminal, `RUN jscore:assemble WITH plan = '<name>'` sends a plan the
-  dock keeps by name and sets the arms building, and the network brings the blocks.
+  is sent, and dropped when the terminal is broken.
 - A ship built whole in the Small Shipyard leaves the dock's hold when its pilot uses its flight console with
   an empty hand: it becomes one moving structure, once, of the blocks at the places of its plan and no others, the
   dock's left where they stand, each block and what it keeps as it was. It stays a structure from then on, standing

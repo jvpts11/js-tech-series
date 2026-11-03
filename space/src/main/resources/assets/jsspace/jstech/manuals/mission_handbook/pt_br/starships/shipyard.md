@@ -8,7 +8,7 @@ covers: [jsspace:shipyard_terminal, jsspace:booth_panel, jsspace:cradle_clamp, j
 
 ## O que é
 
-A doca seca onde se constrói uma nave estelar pequena: um poço de dezesseis blocos de largura, vinte e quatro de comprimento e três de profundidade, cercado pela Borda do Poço, com Garras do Berço subindo do fundo. Torres de Treliça, Vigas da Doca, Passarelas da Doca e Trilhos do Pórtico Rolante ladeiam o poço, sob a Ponte do Pórtico Rolante e quatro Holofotes da Doca. A Escada da Doca sobe por um lado. No fundo do outro, uma cabine de Painéis da Cabine de Controle abriga o Terminal do Estaleiro, sobre uma Porta de Itens. Um Alimentador de Blocos fica em cada passarela de baixo.
+A doca seca onde se constrói uma nave estelar pequena: um poço de dezesseis blocos de largura, vinte e quatro de comprimento e três de profundidade, cercado pela Borda do Poço, com Garras do Berço subindo do fundo. Torres de Treliça, Vigas da Doca, Passarelas da Doca e Trilhos do Pórtico Rolante ladeiam o poço, sob a Ponte do Pórtico Rolante e quatro Holofotes da Doca. A Escada da Doca sobe por um lado. No fundo do outro, uma cabine de Painéis da Cabine de Controle, com a porta na passarela, abriga o Terminal do Estaleiro, o console debaixo das janelas sobre o vão, e uma bancada no fundo; a Porta de Itens fica embaixo dela. Um Alimentador de Blocos fica em cada passarela de baixo.
 
 ## Para que serve
 
@@ -33,8 +33,6 @@ height: 120
 5. Construa à mão sobre os fantasmas do holograma, ou alimente a Porta de Itens com um funil ou um cano para os quatro braços robóticos; o Projeto da Nave mostra o que ainda falta trazer. Cada peça se forma no seu modelo quando o último bloco dela entra.
 6. Com todas as peças formadas, use o Console de Voo com a mão vazia. A nave sai da doca, sua para [pilotar](jsspace:flying_a_ship).
 7. Para mudá-la ou consertá-la, traga a nave a até 32 blocos do terminal de uma doca livre e, como piloto, use o Console de Voo dela. A doca a recebe de volta, reabastece o reator e guarda o projeto, para você mudar e mandar de novo com [[E]].
-
-Numa rede do J's Computers, ligada por um cabo de dados ao lado do terminal, RUN jscore:assemble WITH plan = 'NOME' põe os braços para construir um projeto guardado.
 
 ## O que pode dar errado
 

@@ -12,7 +12,7 @@ Um prédio de forma e tamanho únicos, onde uma ponte rolante constrói um fogue
 
 ## Para que serve
 
-Mandar construir um foguete sobre a sua [plataforma móvel](jsspace:launcher) e levá-lo para fora pela porta no [transportador](jsspace:crawler). O terminal guarda até 16 planos; um cabo de dados põe o terminal numa rede, que pode mandá-lo construir.
+Mandar construir um foguete sobre a sua [plataforma móvel](jsspace:launcher) e levá-lo para fora pela porta no [transportador](jsspace:crawler). O terminal guarda até 16 planos.
 
 ## Como conseguir
 

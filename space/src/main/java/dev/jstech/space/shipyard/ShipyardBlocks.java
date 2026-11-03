@@ -7,7 +7,6 @@
  */
 package dev.jstech.space.shipyard;
 
-import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
@@ -16,9 +15,7 @@ import dev.jstech.core.content.Device;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
-import dev.jstech.core.jstechseries.network.DataLine;
-import dev.jstech.core.jstechseries.network.DataLines;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.space.SpaceContent;
 import java.util.List;
@@ -42,19 +39,16 @@ public final class ShipyardBlocks {
     public static final ContentTab.Section SHIPYARD = SpaceContent.TAB.section();
     /* How bright a floodlight's lamp is, as a block: a work light over the bay. */
     private static final int FLOODLIGHT_LIGHT = 15;
-    /* The terminal takes a data cable on any face, for a network to set its arms building. */
-    private static final FacePorts DATA = FacePorts.everyFace(DataLines.upTo(HardwareEra.SINGULARITY,
-            DataLine.ACCESS, DataLine.BACKBONE));
+    /* The terminal's console, a model written by hand among the mod's block models. */
+    private static final String TERMINAL_MODEL = "shipyard/shipyard_terminal";
     /** The terminal in the control booth, which the dock is worked from. */
     public static final BlockEntry<ShipyardTerminalBlock> TERMINAL = SpaceContent.CONTENT.block("shipyard_terminal",
                     properties -> new ShipyardTerminalBlock(properties, Device.of(() -> ShipyardBlocks.TERMINAL_ENTITY
-                            .get()).ticks(ShipyardTerminalBlockEntity::serverTick).opensMenu(MachineMenu::new)
-                            .ports(DATA)))
+                            .get()).ticks(ShipyardTerminalBlockEntity::serverTick).opensMenu(MachineMenu::new)))
             .named("Shipyard Terminal")
-            .properties(ShipyardBlocks::metal)
-            .look(IBlockLook.facing(new IBlockModel.Orientable("shipyard_terminal", "block/shipyard/terminal_side",
-                    "block/shipyard/terminal_front", "block/shipyard/terminal_top")))
-            .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(SHIPYARD).register();
+            .properties(properties -> metal(properties).noOcclusion())
+            .look(IBlockLook.facing(new IBlockModel.Handmade(TERMINAL_MODEL)))
+            .item().itemLook(IItemLook.parent("block/" + TERMINAL_MODEL)).drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tab(SHIPYARD).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShipyardTerminalBlockEntity>>
             TERMINAL_ENTITY = SpaceContent.CONTENT.blockEntity("shipyard_terminal", ShipyardTerminalBlockEntity::new,
             TERMINAL);

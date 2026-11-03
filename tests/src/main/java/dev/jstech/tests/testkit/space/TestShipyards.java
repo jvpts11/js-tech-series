@@ -23,8 +23,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Builds a Small Shipyard the way a player does, block by block from its pattern: dug into a ground of stone, its pit
- * clear, every block of the kit where the pattern puts it, its terminal last, facing the booth's back as a player in
- * the booth places it.
+ * clear, every block of the kit where the pattern puts it, its terminal last, the console under the booth's windows,
+ * facing into the booth as a player there places it.
  */
 public final class TestShipyards {
 
@@ -96,12 +96,21 @@ public final class TestShipyards {
                 }
             }
         }
-        // As drawn the terminal faces east, to the booth's back.
+        // As drawn the terminal, the console under the windows on the bay, faces east into the booth.
         final int[] east = turn.apply(1, 0, 0);
         final BlockState console = ShipyardBlocks.TERMINAL.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.fromDelta(east[0], east[1], east[2]));
         level.setBlock(terminal, console, Block.UPDATE_ALL);
         return terminal;
+    }
+
+    /**
+     * Where the terminal stands of a dock built facing north with the lowest corner of its pattern at {@code corner},
+     * as {@link #build(ServerLevel, BlockPos)} builds it.
+     */
+    public static BlockPos terminalOf(final BlockPos corner) {
+        final MultiblockPattern pattern = ShipyardStructure.PATTERN;
+        return corner.offset(pattern.terminalX(), pattern.terminalY(), pattern.terminalZ());
     }
 
     /* Where the pattern's place ({@code x}, {@code y}, {@code z}) stands from its terminal, turned. */

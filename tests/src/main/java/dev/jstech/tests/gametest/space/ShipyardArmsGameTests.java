@@ -9,13 +9,8 @@ package dev.jstech.tests.gametest.space;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.operation.payload.OperationRecord;
-import dev.jstech.computers.program.IqlEngine;
-import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.jstechseries.builder.Assembly;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
-import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.ArmMotion;
 import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanArms;
@@ -25,7 +20,6 @@ import dev.jstech.space.hangar.ItemPortBlockEntity;
 import dev.jstech.space.hangar.ItemPortView;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.SmallShipParts;
-import dev.jstech.space.shipyard.ShipyardPlans;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
@@ -55,27 +49,27 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
  * The Small Shipyard's robot arms: four on their rails along the bay's edges once the dock forms; what the ship sent
  * to the dock wants goes in through its item port, and no more; each arm takes a block, swings it over and sets it
  * down only once its swing is over, then welds it; every part of the ship forms as its last block goes down, and the
- * arms hold nothing left over. On a network, a request to build a plan the dock keeps by name sends it to the dock,
- * the network brings the blocks through a data cable in at the booth's gland, and the request is written down done.
+ * arms hold nothing left over. Its terminal is a machine, no computer: a data network's cable touching it does not
+ * take it in.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class ShipyardArmsGameTests {
 
     private static final String ARENA = "shipyard";
-    private static final String NETWORKED = "shipyard_network";
     private static final String BATCH = "jsspace_shipyard_arms";
     /* The pattern's lowest corner, the pit floor's west front corner, a ground of stone under it. */
     private static final BlockPos CORNER = new BlockPos(1, 2, 1);
-    /* The item port, in the dock's own blocks; and the booth's gland beside the terminal. */
+    /* The item port, in the dock's own blocks. */
     private static final BlockPos PORT = dock(10, 0, 9);
-    private static final BlockPos GLAND = dock(11, 4, 10);
-    /* The network east of the booth: the Mainframe, and its rack of storage, its rear on the cable. */
-    private static final BlockPos MAINFRAME = dock(15, 4, 10);
-    private static final BlockPos RACK = dock(14, 4, 11);
+    /*
+     * A network in the booth, on its open floor before the console: the cable beside the terminal, the Mainframe
+     * behind it; and how long the network is given to take in what its cable touches.
+     */
+    private static final BlockPos CABLE = dock(10, 4, 10);
+    private static final BlockPos MAINFRAME = dock(10, 4, 11);
+    private static final int SETTLE = 40;
     private static final int ARMS = 4;
-    private static final String PLAN = "NET";
-    private static final int ROWS = 64;
     /* A small ship ready to fly that fits the dock. */
     private static final ShipDesign SHIP = new ShipDesign("ARMS", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
@@ -175,52 +169,19 @@ public final class ShipyardArmsGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = NETWORKED, batch = BATCH, timeoutTicks = 24000)
-    public static void arms_areSetBuildingByTheNetworkWhichBringsTheBlocks(final GameTestHelper helper) {
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void terminal_isNoMemberOfTheNetworkItsCableTouches(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         final MainframeBlockEntity[] mainframe = new MainframeBlockEntity[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"))
-                .thenExecute(() -> {
-                    mainframe[0] = network(helper);
-                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
-                            .getBlockEntity(terminal);
-                    dock.design(new ShipDesign(PLAN, SHIP.spine(), SHIP.hung()));
-                    helper.assertTrue(dock.save() && dock.plan().isEmpty(), "the plan is kept, not sent");
-                    final BuildPlan laid = ShipyardPlans.of(level, dock.design(), Orientation.NORTH);
-                    final ServerRackBlockEntity rack = helper.getBlockEntity(RACK);
-                    for (final Map.Entry<Item, Integer> block : counts(laid).entrySet()) {
-                        rack.getServerStorage(0).insert(block.getKey(), block.getValue());
-                    }
-                })
-                .thenWaitUntil(() -> helper.assertTrue(mainframe[0].networkUuid() != null
-                        && NetworkSystem.get(level).membersCarryingOut(mainframe[0].networkUuid(),
-                        Assembly.ASSEMBLE.id()).size() == 1, "the shipyard's terminal is on the network, by the"
-                        + " cable in at the booth's gland"))
-                .thenExecute(() -> {
-                    final IqlEngine.Outcome given = mainframe[0].networkOperations().query(IqlEngine.viewOf(
-                            new ServerCliComputer(mainframe[0], level)), "RUN " + Assembly.ASSEMBLE.id()
-                            + " WITH plan = '" + PLAN + "'", ROWS);
-                    helper.assertTrue(given.ok(), "the network sets the arms building: " + given.message());
-                })
-                .thenWaitUntil(() -> helper.assertTrue(terminal(level, terminal).plan().map(ShipDesign::name)
-                        .orElse("").equals(PLAN) && terminal(level, terminal).build().isPresent(), "its plan of"
-                        + " that name is sent to the dock"))
-                .thenWaitUntil(() -> {
-                    final ShipyardTerminalBlockEntity dock = terminal(level, terminal);
-                    final PlannedBuild plan = dock.build().orElseThrow();
-                    if (!plan.complete()) {
-                        helper.fail("the network brings the blocks, and the arms build the ship: " + plan.missing()
-                                + " blocks to go; waiting " + dock.assembler().waiting() + ", holds "
-                                + dock.assembler().held() + ", last operations " + mainframe[0].recentOperations()
-                                .stream().limit(4).map(row -> row.kind() + "/" + row.key() + "/" + row.status() + "/"
-                                + row.moved() + "of" + row.requested()).toList());
-                    }
-                })
-                .thenWaitUntil(() -> helper.assertTrue(mainframe[0].recentOperations().stream()
-                        .anyMatch(row -> row.ofAnotherMod() && row.status() == OperationRecord.STATUS_COMPLETED),
-                        "and the request is written down done"))
+                .thenExecute(() -> mainframe[0] = network(helper))
+                .thenWaitUntil(() -> helper.assertTrue(mainframe[0].networkUuid() != null, "the network is up"))
+                .thenIdle(SETTLE)
+                .thenExecute(() -> helper.assertTrue(NetworkSystem.get(level).membersCarryingOut(
+                        mainframe[0].networkUuid(), Assembly.ASSEMBLE.id()).isEmpty(), "the shipyard's terminal, a"
+                        + " machine and no computer, is no member of the network whose cable touches it"))
                 .thenSucceed();
     }
 
@@ -260,14 +221,10 @@ public final class ShipyardArmsGameTests {
         return (ShipyardTerminalBlockEntity) level.getBlockEntity(terminal);
     }
 
-    /* The network east of the booth: the Mainframe and its rack, and a cable in to the terminal by the gland. */
+    /* A network in the booth: a Mainframe on its floor, and a cable between it and the terminal's console. */
     private static MainframeBlockEntity network(final GameTestHelper helper) {
-        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final MainframeBlockEntity mainframe = world.placeRunningMainframe(MAINFRAME);
-        for (int x = GLAND.getX(); x < MAINFRAME.getX(); x++) {
-            TestCables.lay(helper, new BlockPos(x, GLAND.getY(), GLAND.getZ()), ComputingModule.HBW_CABLE);
-        }
-        world.placeSeededRack(RACK, Direction.SOUTH);
+        final MainframeBlockEntity mainframe = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(MAINFRAME);
+        TestCables.lay(helper, CABLE, ComputingModule.HBW_CABLE);
         return mainframe;
     }
 

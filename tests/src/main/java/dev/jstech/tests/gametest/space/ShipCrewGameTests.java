@@ -255,7 +255,7 @@ public final class ShipCrewGameTests {
 
     /* The plan of the ship in the dock, where it was built. */
     private static PlannedBuild plan(final GameTestHelper helper) {
-        final BlockPos terminal = helper.absolutePos(CORNER).offset(21, 7, 23);
+        final BlockPos terminal = TestShipyards.terminalOf(helper.absolutePos(CORNER));
         return new PlannedBuild(ShipyardPlans.of(helper.getLevel(), SHIP, Orientation.NORTH),
                 ShipyardStructure.shipAt(terminal, Orientation.NORTH));
     }

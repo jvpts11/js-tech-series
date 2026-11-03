@@ -26,8 +26,8 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The kind of Operation that sets a machine building a plan by itself, the link between the network and a machine
- * that lays a planned build's blocks from what comes in through its ports: {@code RUN jscore:assemble ON 'Hangar
- * Terminal-3fa2c1'} builds the plan the machine has, and {@code RUN jscore:assemble WITH plan = 'Lunar 1'} one of its
+ * that lays a planned build's blocks from what comes in through its ports: {@code RUN jscore:assemble ON
+ * 'Assembler-3fa2c1'} builds the plan the machine has, and {@code RUN jscore:assemble WITH plan = 'Lunar 1'} one of its
  * plans by name. The machine is an {@link IAssembler}; while it waits for blocks, the network brings them.
  */
 @TextHolder

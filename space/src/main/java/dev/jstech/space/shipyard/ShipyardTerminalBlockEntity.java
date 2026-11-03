@@ -10,17 +10,6 @@ package dev.jstech.space.shipyard;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.ValueField;
-import dev.jstech.core.jstechseries.builder.Assembly;
-import dev.jstech.core.jstechseries.builder.IAssembler;
-import dev.jstech.core.jstechseries.network.INetworkMember;
-import dev.jstech.core.jstechseries.network.NetworkCategory;
-import dev.jstech.core.jstechseries.network.NetworkMembers;
-import dev.jstech.core.jstechseries.operation.IItemNeeds;
-import dev.jstech.core.jstechseries.operation.IOperationArgs;
-import dev.jstech.core.jstechseries.operation.IOperationRequest;
-import dev.jstech.core.jstechseries.operation.OperationFailure;
-import dev.jstech.core.jstechseries.operation.OperationStatus;
-import dev.jstech.core.jstechseries.operation.OperationType;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineResource;
@@ -42,8 +31,6 @@ import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.team.CoreTeams;
-import dev.jstech.core.text.Text;
-import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.ShipKits;
@@ -60,7 +47,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -89,12 +75,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Its robot arms build the plan too, block by block ({@link PlanAssembler}, {@link PlanArms}), from what comes in
  * through the dock's item port: each takes a block from the feeder of its side, swings it to its place, sets it down
- * and welds it. On a network, a request of {@link Assembly#ASSEMBLE} sets it building, a plan it keeps by name or the
- * plan it was sent, and while it waits for blocks it says which, so the network brings them, made first where they
- * can be.
+ * and welds it. It is no member of a data network: a machine, not a computer.
  */
-public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implements INetworkMember, IItemNeeds,
-        IAssembler {
+public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
 
     private final MachineStructure structure;
     private final ValueField<ShipDesign> design;
@@ -112,8 +95,6 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
     /* The plan being built, on the server, while its chunks are loaded; and whether it is to start. */
     private @Nullable PlannedBuild build;
     private boolean pending;
-    /* The network's request to build, followed until the ship is whole; on the server. */
-    private @Nullable IOperationRequest<Assembly.Args> assembling;
     /* Its dock's Item Ports as they tick, forgotten as they go; on the server. */
     private final Set<ItemPortBlockEntity> ports = Collections.newSetFromMap(new WeakHashMap<>());
 
@@ -158,8 +139,6 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
             stopBuild(true);
             this.assembler.spill(level, at);
         });
-        // On the network its cables reach, it may be set building.
-        NetworkMembers.keep(this);
     }
 
     /** One server tick: the machine's, then its plan started once all of it is loaded, and its arms at work. */
@@ -172,7 +151,6 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         if (terminal.build != null && level instanceof ServerLevel server) {
             terminal.assembler.tick(server);
         }
-        terminal.follow();
     }
 
     /** Its plan's chunk unloads: it stops watching it, leaving its formed parts as they are for when it loads. */
@@ -484,66 +462,6 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         return kind == PortKind.ITEM_INPUT && formed() ? this.assembler.inbox() : null;
     }
 
-    @Override
-    public NetworkCategory category() {
-        return NetworkCategory.C;
-    }
-
-    @Override
-    public List<OperationType<?>> carriesOut() {
-        return List.of(Assembly.ASSEMBLE);
-    }
-
-    /** Why it will not build what the network asks: no dock, no such plan, no plan at all, or a plan not ready. */
-    @Override
-    public @Nullable Text refuses(final OperationType<?> type, final IOperationArgs args) {
-        final Refusal why = refusal(args);
-        return why == null ? null : why.text();
-    }
-
-    /** The blocks its arms wait for, the ones they lay first first. */
-    @Override
-    public List<ItemNeed> needs() {
-        final List<ItemNeed> out = new ArrayList<>();
-        for (final Map.Entry<Item, Integer> need : this.assembler.needs().entrySet()) {
-            out.add(new ItemNeed(need.getKey(), need.getValue()));
-        }
-        return out;
-    }
-
-    /** The arms' inbox, while it builds. */
-    @Override
-    public Optional<IItemHandler> inbox() {
-        return this.build == null ? Optional.empty() : Optional.of(this.assembler.inbox());
-    }
-
-    /**
-     * Sets its arms building, the plan named among its plans sent to its dock first, as its builder's confirm sends
-     * it; the request hears from then on how the building goes, until the ship is whole.
-     */
-    @Override
-    public OperationStatus assemble(final IOperationRequest<Assembly.Args> request) {
-        final Refusal why = refusal(request.args());
-        if (why != null) {
-            request.fail(why.failure());
-            return OperationStatus.FAILED;
-        }
-        final Optional<ShipDesign> chosen = request.args().plan().flatMap(this::planNamed);
-        if (chosen.isPresent()) {
-            send(chosen.get());
-        }
-        if (this.assembling != null && this.assembling != request) {
-            this.assembling.fail(OperationFailure.of(ShipyardTexts.TAKEN));
-        }
-        this.assembling = request;
-        request.whenCancelled(() -> {
-            if (this.assembling == request) {
-                this.assembling = null;
-            }
-        });
-        return follow();
-    }
-
     /* It spends no energy. */
     @Override
     public boolean takesEnergy() {
@@ -604,35 +522,6 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         return true;
     }
 
-    /*
-     * Tells the network's request how the building goes, and lets it go once it is over: done when the ship is
-     * whole, waiting while the arms have no block they can lay or the plan waits for its chunks, building otherwise;
-     * failed when the plan is taken back. The state it is in now.
-     */
-    private OperationStatus follow() {
-        final IOperationRequest<Assembly.Args> following = this.assembling;
-        if (following == null) {
-            return OperationStatus.COMPLETED;
-        }
-        final OperationStatus now;
-        if (this.build == null) {
-            now = this.pending && plan().isPresent() ? OperationStatus.WAITING : OperationStatus.FAILED;
-        } else if (this.build.complete()) {
-            now = OperationStatus.COMPLETED;
-        } else {
-            now = this.assembler.waiting() ? OperationStatus.WAITING : OperationStatus.PROCESSING;
-        }
-        if (now == OperationStatus.FAILED) {
-            following.fail(OperationFailure.of(ShipyardTexts.STOPPED));
-        } else {
-            following.report(now);
-        }
-        if (now.isTerminal()) {
-            this.assembling = null;
-        }
-        return now;
-    }
-
     /* Where in {@code ship}'s blocks the flight console keeping a ship's plan stands, if one does. */
     private static Optional<BlockPos> consoleIn(final ServerLevel level, final MovingStructure ship) {
         final Box bounds = ship.bounds();
@@ -678,28 +567,6 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
                                 final double wx, final double wy, final double wz, final int[] way) {
         return Math.abs(frame.worldX(x, y, z) - wx - way[0]) < CLOSE && Math.abs(frame.worldY(x, y, z) - wy - way[1])
                 < CLOSE && Math.abs(frame.worldZ(x, y, z) - wz - way[2]) < CLOSE;
-    }
-
-    /* Why it will not build what {@code args} asks, or null when it will. */
-    private @Nullable Refusal refusal(final IOperationArgs args) {
-        if (!formed()) {
-            return new Refusal(ShipyardTexts.NOT_FORMED, "");
-        }
-        if (!(args instanceof Assembly.Args asked) || asked.plan().isEmpty()) {
-            return plan().isPresent() ? null : new Refusal(ShipyardTexts.NOTHING_SENT, "");
-        }
-        final String name = asked.plan().get();
-        final Optional<ShipDesign> named = planNamed(name);
-        if (named.isEmpty()) {
-            return new Refusal(ShipyardTexts.NO_PLAN_NAMED, name);
-        }
-        return this.level != null && ready(this.level, named.get()) ? null
-                : new Refusal(ShipyardTexts.NOT_READY, name);
-    }
-
-    /* The plan of that name among those it keeps. */
-    private Optional<ShipDesign> planNamed(final String name) {
-        return plans().stream().filter(kept -> kept.name().equals(name)).findFirst();
     }
 
     /* Starts building the plan sent, where its chunks are all loaded; it waits for them otherwise. */
@@ -762,18 +629,5 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
         this.missingParts.set(List.copyOf(missing));
         this.holes.set(ShipyardPlans.holesIn(now));
         setChanged();
-    }
-
-    /* Why it will not build: a sentence, and what fills it, if anything. */
-    private record Refusal(TextKey sentence, String filling) {
-
-        Text text() {
-            return this.filling.isEmpty() ? this.sentence.text() : this.sentence.with(this.filling);
-        }
-
-        OperationFailure failure() {
-            return this.filling.isEmpty() ? OperationFailure.of(this.sentence)
-                    : OperationFailure.of(this.sentence, this.filling);
-        }
     }
 }
