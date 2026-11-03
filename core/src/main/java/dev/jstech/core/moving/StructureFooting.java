@@ -38,6 +38,8 @@ public final class StructureFooting {
 
     /* After this many ticks off a structure, and out of its box, a thing has left it. */
     private static final int GRACE = 10;
+    /* How far out of a structure's box, in blocks, a player may still be on it, standing on its top or at its side. */
+    private static final double NEAR = 4;
     /* What stands on the structures, on the server and on a player's game; each side keeps its own. */
     private static final Map<Entity, Stand> SERVER = new WeakHashMap<>();
     private static final Map<Entity, Stand> CLIENT = new WeakHashMap<>();
@@ -303,14 +305,23 @@ public final class StructureFooting {
 
     /**
      * Where {@code player} says they stand, in the world as the server's structure stands now, for the move they
-     * sent next; null when they stand on none.
+     * sent next; null when they stand on none. A player the server has nowhere near that structure, sent away by a
+     * command or gone to another dimension, stands on it no more, whatever their game last said: that is let go,
+     * and so is the place they would come back to on it.
      */
     public static @Nullable Vec3 reportedPlace(final ServerPlayer player) {
         if (REPORTED.isEmpty()) {
             return null;
         }
         final Reported reported = REPORTED.get(player);
-        if (reported == null || reported.structure.entity().isRemoved()) {
+        if (reported == null) {
+            return null;
+        }
+        final MovingStructure structure = reported.structure;
+        if (structure.entity().isRemoved() || structure.level() != player.level()
+                || !structure.worldBox().inflate(NEAR).contains(player.position())) {
+            REPORTED.remove(player);
+            player.setData(CoreAttachments.FOOTING.get(), Footing.NONE);
             return null;
         }
         final StructureFrame frame = reported.structure.frame();
@@ -356,7 +367,7 @@ public final class StructureFooting {
         }
         final MovingStructure structure = structureEntity.structure();
         final double[] place = payload.place().clone();
-        if (!(structure.worldBox().inflate(4).contains(new Vec3(structure.frame().worldX(place[0], place[1],
+        if (!(structure.worldBox().inflate(NEAR).contains(new Vec3(structure.frame().worldX(place[0], place[1],
                 place[2]), structure.frame().worldY(place[0], place[1], place[2]),
                 structure.frame().worldZ(place[0], place[1], place[2]))))) {
             // A place nowhere near the structure is not standing on it, whatever the game says.

@@ -3083,6 +3083,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A player sent away from a moving structure they stood on, by a command or to another dimension, stays where
+  they were sent: before, the server could go on putting them back on its deck where their game had last said they
+  stood, every move they made undone, till the world was opened again, and coming back to the game they were put on
+  the structure again.
 - (Core) A seat aboard a moving structure goes on with it however fast it flies over land still being made: before, a
   ship come down from space onto the Moon and flying on over it could leave its pilot's seat behind in the air, the
   pilot with it, on the server, while on their game they sat on in the ship and could not get up.
