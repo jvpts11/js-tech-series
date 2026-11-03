@@ -8,6 +8,7 @@
 package dev.jstech.core.audio;
 
 import dev.jstech.core.audio.pcm.Tone;
+import dev.jstech.core.moving.MovingStructures;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -47,7 +48,8 @@ public final class Audio {
     }
 
     /**
-     * Plays a sound of the world from that point, to every player near enough to hear it.
+     * Plays a sound of the world from that point, to every player near enough to hear it. A point among the blocks
+     * of a moving structure is heard where the structure carries it now, not where its blocks are kept.
      *
      * @return whether it was played, which it is not when the same sound came from the same place a moment ago
      * @throws IllegalArgumentException when the sound belongs to the interface, or is made as it plays
@@ -62,7 +64,9 @@ public final class Audio {
         if (!GATE.allow(source, sound.id().toString(), level.getGameTime())) {
             return false;
         }
-        level.playSound(null, x, y, z, sound.event().get(), sound.spec().channel().source(), volume, pitch);
+        final Vec3 heard = MovingStructures.inWorld(level, new Vec3(x, y, z));
+        level.playSound(null, heard.x, heard.y, heard.z, sound.event().get(), sound.spec().channel().source(), volume,
+                pitch);
         return true;
     }
 

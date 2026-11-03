@@ -519,6 +519,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
   armour drawn with a model of the Core's as on an armour stand or a locker's rack, each of its bones of that slot
   where a wearer at rest has that part, what it carries shown as when worn.
+- (Space) A small starship sounds as it works: its pressure doors whoosh as they slide, its airlock's outer door
+  hisses open and bangs shut, its boarding stair whirs down and up, its console's switch clicks as its pilot moves the
+  gear or changes the autopilot, its engines hum while it flies and roar with the throttle open, louder the more it is,
+  its boost roars as it lights and its gear clatters as it goes up or comes down. Inside its hull the engines are heard
+  muffled; in a vacuum only those aboard, in its air, hear any of it. A ship that meets the land too fast is heard as
+  the game's own explosion; one that touches down, and the dock letting a ship go, make no sound. Every sound is a
+  recording, found and chosen, each credited in the asset registry.
+- (Space) A small starship's doors slide open and shut, a pressure door's leaf in half a second and the airlock's
+  outer door's in a second and a quarter, where each jumped from shut to open. Its boarding stair comes down in two
+  seconds and a half as the approved storyboard draws it: the bay's two doors in the belly open down as the leaf
+  slides, the folded stair slides out under the sill, its first flight swings down as the other two unfold, and its
+  foot stands on the land, its handrails rising last; it goes up the same way back, the bay shut before the door.
 - (Space) A pressure door in the bulkhead at the front of each of a small starship's sections: it shuts and opens
   with a click, its leaf sliding into the bulkhead's wall, solid only while it is shut, the lamp over it red shut and
   green open. A ship's sections stand with their pressure doors open as it forms, its airlock's outer door shut.
@@ -2975,6 +2987,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Core) A block aboard a moving structure sounds where the structure carries it: a sound played at one of its blocks,
+  and a running sound a block entity aboard asks for, are heard from where that block is in the world now, a running
+  one following it every tick as the structure moves, where both came from the yard its blocks are kept in, far from
+  anyone.
 - (Core) The test kit's client tests leave the cursor free: the game never takes the mouse while they run, as it does
   whenever its window has the focus, so whoever runs them keeps using their computer; the tests turn, walk and click by
   themselves.

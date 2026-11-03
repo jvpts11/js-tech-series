@@ -76,6 +76,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- A small starship sounds as it works: its pressure doors whoosh as they slide, its airlock's outer door
+  hisses open and bangs shut, its boarding stair whirs down and up, its console's switch clicks as its pilot moves the
+  gear or changes the autopilot, its engines hum while it flies and roar with the throttle open, louder the more it is,
+  its boost roars as it lights and its gear clatters as it goes up or comes down. Inside its hull the engines are heard
+  muffled; in a vacuum only those aboard, in its air, hear any of it. A ship that meets the land too fast is heard as
+  the game's own explosion; one that touches down, and the dock letting a ship go, make no sound. Every sound is a
+  recording, found and chosen, each credited in the asset registry.
+- A small starship's doors slide open and shut, a pressure door's leaf in half a second and the airlock's
+  outer door's in a second and a quarter, where each jumped from shut to open. Its boarding stair comes down in two
+  seconds and a half as the approved storyboard draws it: the bay's two doors in the belly open down as the leaf
+  slides, the folded stair slides out under the sill, its first flight swings down as the other two unfold, and its
+  foot stands on the land, its handrails rising last; it goes up the same way back, the bay shut before the door.
 - A pressure door in the bulkhead at the front of each of a small starship's sections: it shuts and opens
   with a click, its leaf sliding into the bulkhead's wall, solid only while it is shut, the lamp over it red shut and
   green open. A ship's sections stand with their pressure doors open as it forms, its airlock's outer door shut.

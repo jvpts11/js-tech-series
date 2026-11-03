@@ -1,0 +1,86 @@
+{
+  "ship/console_switch": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsspace:ship/console_switch"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.console_switch"
+  },
+  "ship/engine_boost": {
+    "sounds": [
+      {
+        "attenuation_distance": 64,
+        "name": "jsspace:ship/engine_boost"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.engine_boost"
+  },
+  "ship/engine_idle": {
+    "sounds": [
+      {
+        "attenuation_distance": 32,
+        "name": "jsspace:ship/engine_idle"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.engine_idle"
+  },
+  "ship/engine_idle_inside": {
+    "sounds": [
+      {
+        "attenuation_distance": 32,
+        "name": "jsspace:ship/engine_idle_inside"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.engine_idle_inside"
+  },
+  "ship/engine_thrust": {
+    "sounds": [
+      {
+        "attenuation_distance": 64,
+        "name": "jsspace:ship/engine_thrust"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.engine_thrust"
+  },
+  "ship/engine_thrust_inside": {
+    "sounds": [
+      {
+        "attenuation_distance": 64,
+        "name": "jsspace:ship/engine_thrust_inside"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.engine_thrust_inside"
+  },
+  "ship/gear": {
+    "sounds": [
+      "jsspace:ship/gear"
+    ],
+    "subtitle": "subtitles.jsspace.ship.gear"
+  },
+  "ship/outer_door_open": {
+    "sounds": [
+      "jsspace:ship/outer_door_open"
+    ],
+    "subtitle": "subtitles.jsspace.ship.outer_door_open"
+  },
+  "ship/outer_door_shut": {
+    "sounds": [
+      "jsspace:ship/outer_door_shut"
+    ],
+    "subtitle": "subtitles.jsspace.ship.outer_door_shut"
+  },
+  "ship/pressure_door": {
+    "sounds": [
+      "jsspace:ship/pressure_door"
+    ],
+    "subtitle": "subtitles.jsspace.ship.pressure_door"
+  },
+  "ship/stair": {
+    "sounds": [
+      "jsspace:ship/stair"
+    ],
+    "subtitle": "subtitles.jsspace.ship.stair"
+  }
+}

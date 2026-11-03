@@ -34,6 +34,7 @@ import dev.jstech.space.client.ship.ShipAutopilotClient;
 import dev.jstech.space.client.ship.ShipBoostClient;
 import dev.jstech.space.client.ship.ShipChaseCamera;
 import dev.jstech.space.client.ship.ShipConsoleScreen;
+import dev.jstech.space.client.ship.ShipEngineSounds;
 import dev.jstech.space.client.ship.ShipExhaust;
 import dev.jstech.space.client.ship.ShipHud;
 import dev.jstech.space.client.ship.SuitLockerRenderer;
@@ -90,6 +91,8 @@ public final class JsSpaceClient {
         ShipBoostClient.listen();
         ShipAutopilotClient.listen();
         ShipExhaust.listen();
+        // Its engines, gear and console heard, wherever it is.
+        ShipEngineSounds.listen();
         // The HUD on its canopy, for the pilot at its helm, and the camera behind it in the third person.
         ShipHud.listen(modEventBus);
         ShipChaseCamera.listen();

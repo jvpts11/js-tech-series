@@ -67,6 +67,7 @@ import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.ShipShapes;
+import dev.jstech.space.ship.ShipSounds;
 import dev.jstech.space.ship.ShipStairs;
 import dev.jstech.space.ship.SmallShipFinishes;
 import dev.jstech.space.ship.SmallShipKits;
@@ -228,6 +229,9 @@ public final class JsSpace {
         // Who may move its doors, and its airlock never open inside and out at once; its pump cycling its air.
         ShipDoorRules.listen();
         ShipAirlocks.listen();
+        // How a ship sounds: its doors, its stair, its console, its engines and its gear.
+        ShipSounds.declare();
+        ShipSounds.listen();
         // The Small Shipyard, the dry dock a small starship is built in: its shape, its blocks and its formed model.
         ShipyardStructure.declare();
         ShipyardBlocks.declare();

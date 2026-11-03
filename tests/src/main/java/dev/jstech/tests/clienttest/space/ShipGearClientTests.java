@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.client.audio.SoundDirector;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.plan.PlanSpot;
@@ -15,7 +16,9 @@ import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.GearMotion;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
+import dev.jstech.space.client.ship.ShipEngineSounds;
 import dev.jstech.space.ship.ShipReadings;
+import dev.jstech.space.ship.ShipSounds;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -130,6 +133,15 @@ public final class ShipGearClientTests {
                 .thenScreenshot(0, "ship-gear-folding")
                 .then(CYCLE, () -> frames[2] = frame(ctx))
                 .thenScreenshot(0, "ship-gear-stowed")
+                .then(0, () -> {
+                    // In the air its engines hum, heard from them by whoever is near, outside the ship.
+                    SoundDirector.updateNow();
+                    ctx.assertTrue(ShipEngineSounds.playing(console(ctx, ship[0])).equals(List.of(
+                            ShipSounds.ENGINE_IDLE)), "in the air its engines hum: "
+                            + ShipEngineSounds.playing(console(ctx, ship[0])));
+                    ctx.assertTrue(SoundDirector.playing().stream().anyMatch(id -> id.endsWith("|"
+                            + ShipSounds.ENGINE_IDLE.id())), "and the hum is played: " + SoundDirector.playing());
+                })
                 .then(A_FEW, () -> frames[3] = frame(ctx))
                 .then(0, () -> tell(ctx, ship[0], true, true, ROLLING))
                 .then(CYCLE, () -> frames[4] = frame(ctx))
@@ -154,6 +166,8 @@ public final class ShipGearClientTests {
                             + changed(frames[4], frames[5], gear));
                     ctx.assertTrue(changed(frames[6], stopped, gear) <= STILL, "stopped, its wheels stand still: "
                             + changed(frames[6], stopped, gear));
+                    ctx.assertTrue(ShipEngineSounds.playing(console(ctx, ship[0])).isEmpty(), "stopped on the "
+                            + "land, its engines are quiet: " + ShipEngineSounds.playing(console(ctx, ship[0])));
                 });
     }
 

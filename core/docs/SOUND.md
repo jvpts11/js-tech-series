@@ -48,6 +48,11 @@ Audio.onScreen(player, MySounds.CLICK, 1.0F, 1.0F);       // on one player's scr
 
 The same sound at the same block within 2 ticks is played once, so a burst of calls does not stack into noise.
 
+*Added 2026-11-03:* a block aboard a [moving structure](MOVING_STRUCTURES.md) sounds where the structure carries it.
+Its blocks are kept in a yard far from anyone, so a sound played at one of them, and a running sound a block entity
+aboard asks for, are heard from where that block is in the world now, a running one following it every tick as the
+structure moves.
+
 A sound that runs while something is true (a fan while a machine works) is not started and stopped by hand.
 The block entity implements `IAudible` and says which loops it wants now; the player's side asks it every tick
 and starts or stops each loop as the list changes:

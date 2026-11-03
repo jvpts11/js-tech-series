@@ -24,8 +24,11 @@ import dev.jstech.core.util.Loaded;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.crew.ShipCrew;
 import dev.jstech.space.shipyard.ShipyardPlans;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -75,6 +78,8 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
     private static final int TICKS_A_SECOND = 20;
     /* How finely its reactor's load is told its players, as a share of a full one. */
     private static final double LOAD_TOLD = 0.001;
+    /* The consoles loaded on a player's game: the ships it hears there, whether it looks at them or not. */
+    private static final Set<AirReserveEntity> ON_CLIENT = Collections.newSetFromMap(new WeakHashMap<>());
 
     public AirReserveEntity(final BlockPos pos, final BlockState state) {
         super(ShipKitBlocks.AIR_RESERVE_ENTITY.get(), pos, state);
@@ -87,6 +92,11 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
         // Who may do what aboard its ship, kept with the ship through docks and restarts.
         this.crew = fields().nullable("Crew", ShipCrew.CODEC).save().toClient();
         this.place = new FixturePlace(this);
+    }
+
+    /** The consoles loaded on a player's game now, each a ship there; empty on a server. */
+    public static Set<AirReserveEntity> onClient() {
+        return Collections.unmodifiableSet(ON_CLIENT);
     }
 
     /** Who may do what aboard its ship; none for a ship nobody owns, which anyone may use. */
@@ -169,12 +179,17 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
         return Optional.ofNullable(this.holed);
     }
 
-    /** Loaded, on the server: it asks for its cabin to be found, as a room is only where a block asks for one. */
+    /**
+     * Loaded, on the server: it asks for its cabin to be found, as a room is only where a block asks for one; on a
+     * player's game, its ship is heard there.
+     */
     @Override
     public void onLoad() {
         super.onLoad();
         if (getLevel() instanceof ServerLevel level) {
             SealedRooms.track(level, getBlockPos());
+        } else if (getLevel() != null && getLevel().isClientSide()) {
+            ON_CLIENT.add(this);
         }
     }
 
@@ -183,12 +198,14 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
     public void onChunkUnloaded() {
         super.onChunkUnloaded();
         stopWatching();
+        ON_CLIENT.remove(this);
     }
 
     @Override
     public void setRemoved() {
         super.setRemoved();
         stopWatching();
+        ON_CLIENT.remove(this);
         // Taken away, not unloaded: its cabin is no longer asked for.
         if (getLevel() instanceof ServerLevel level && level.isLoaded(getBlockPos())
                 && !(level.getBlockEntity(getBlockPos()) instanceof AirReserveEntity)) {

@@ -20,9 +20,9 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * What a ship that meets the land too fast suffers. Up to {@link #SAFE} blocks a second it touches down as a ship
  * should. Faster, the blocks it meets the land with are holed, one more for every {@link #PER_HOLE} blocks a second
- * past that: its feet, wheels and underside first, each a hole its part holds round, as a block broken aboard leaves.
- * Faster than {@link #HURTS} blocks a second its crew are hurt too, more the faster. The figures are estimates, to be
- * weighed in play.
+ * past that: its feet, wheels and underside first, each a hole its part holds round, as a block broken aboard leaves,
+ * and the blow is heard as the game's own explosion. Faster than {@link #HURTS} blocks a second its crew are hurt too,
+ * more the faster. The figures are estimates, to be weighed in play.
  */
 public final class ShipImpacts {
 
@@ -66,7 +66,11 @@ public final class ShipImpacts {
             if (ship.entity().isRemoved() || ship.level() != level) {
                 return;
             }
-            for (final BlockPos block : lowest(level, ship, holes)) {
+            final List<BlockPos> struck = lowest(level, ship, Math.max(1, holes));
+            if (holes > 0 && !struck.isEmpty()) {
+                ShipSounds.impact(level, struck.getFirst());
+            }
+            for (final BlockPos block : struck.subList(0, Math.min(holes, struck.size()))) {
                 level.destroyBlock(block, false);
             }
             if (hurt > 0) {

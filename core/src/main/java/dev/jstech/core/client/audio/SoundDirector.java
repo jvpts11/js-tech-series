@@ -15,6 +15,7 @@ import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.audio.Occlusion;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.VoiceBudget;
+import dev.jstech.core.moving.MovingStructures;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -170,10 +172,10 @@ public final class SoundDirector {
             LoopSoundInstance sound = PLAYING.get(id);
             final boolean fresh = sound == null;
             if (fresh) {
-                sound = new LoopSoundInstance(one.sound, one.x, one.y, one.z, one.volume, one.pitch);
+                sound = new LoopSoundInstance(one.sound, one.place, one.volume, one.pitch);
                 PLAYING.put(id, sound);
             } else {
-                sound.retarget(one.x, one.y, one.z, one.volume, one.pitch);
+                sound.retarget(one.place, one.volume, one.pitch);
             }
             if (lookAtWalls || fresh) {
                 sound.muffle(muffle ? OcclusionProbe.through(mc.level, listener, new Vec3(one.x, one.y, one.z)) : 1F);
@@ -188,15 +190,23 @@ public final class SoundDirector {
     private static Map<String, Wanted> gather(final Vec3 listener) {
         final Map<String, Wanted> wanted = new HashMap<>();
         final List<AmbientClusters.Source> fielded = new ArrayList<>();
+        final Level level = Minecraft.getInstance().level;
         for (final IAudible source : SOURCES) {
             final String who = Integer.toHexString(System.identityHashCode(source));
-            for (final LoopRequest request : source.loops()) {
+            final List<LoopRequest> loops = source.loops();
+            if (loops.isEmpty()) {
+                continue;
+            }
+            // A source among a moving structure's blocks is heard where the structure carries it now.
+            final Vec3 place = new Vec3(source.audioX(), source.audioY(), source.audioZ());
+            final Vec3 at = MovingStructures.inWorld(level, place);
+            for (final LoopRequest request : loops) {
                 final String id = who + "|" + request.sound().id();
                 if (AudioPrefsStore.prefs().isMuted(request.sound().id().toString())) {
                     continue;
                 }
-                final Wanted one = new Wanted(request.sound(), source.audioX(), source.audioY(), source.audioZ(),
-                        request.volume(), request.pitch(), listener);
+                final Wanted one = new Wanted(request.sound(), place, at, request.volume(), request.pitch(),
+                        listener);
                 if (one.distance > request.sound().spec().range() + RANGE_SLACK) {
                     continue;
                 }
@@ -221,17 +231,22 @@ public final class SoundDirector {
             final SoundKey sound = fields.get(bed.field()).bed();
             ROOMS.add(new AudioStats.Room(bed.field(), bed.members().size(), bed.volume()));
             if (!AudioPrefsStore.prefs().isMuted(sound.id().toString())) {
+                final Vec3 middle = new Vec3(bed.x(), bed.y(), bed.z());
                 wanted.put("bed|" + bed.field() + "|" + bed.members().getFirst(),
-                        new Wanted(sound, bed.x(), bed.y(), bed.z(), (float) bed.volume(), 1.0F, listener));
+                        new Wanted(sound, middle, middle, (float) bed.volume(), 1.0F, listener));
             }
         }
         return wanted;
     }
 
-    /** One sound wanted now, where from, how loud and how high, and how far from the listener. */
+    /**
+     * One sound wanted now: the place its source gives, where that is in the world now, how loud and how high, and
+     * how far from the listener.
+     */
     private static final class Wanted {
 
         private final SoundKey sound;
+        private final Vec3 place;
         private final double x;
         private final double y;
         private final double z;
@@ -239,15 +254,16 @@ public final class SoundDirector {
         private final float pitch;
         private final double distance;
 
-        Wanted(final SoundKey sound, final double x, final double y, final double z, final float volume,
-               final float pitch, final Vec3 listener) {
+        Wanted(final SoundKey sound, final Vec3 place, final Vec3 at, final float volume, final float pitch,
+               final Vec3 listener) {
             this.sound = sound;
-            this.x = x;
-            this.y = y;
-            this.z = z;
+            this.place = place;
+            this.x = at.x;
+            this.y = at.y;
+            this.z = at.z;
             this.volume = volume;
             this.pitch = pitch;
-            this.distance = listener.distanceTo(new Vec3(x, y, z));
+            this.distance = listener.distanceTo(at);
         }
     }
 }

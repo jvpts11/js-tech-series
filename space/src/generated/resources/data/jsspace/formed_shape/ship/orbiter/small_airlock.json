@@ -2153,9 +2153,18 @@
     {
       "moves": [
         "hatch_leaf",
-        "bay_shut",
-        "bay_open",
-        "stair"
+        "bay_door_a",
+        "bay_door_b",
+        "stair_flight_1",
+        "stair_flight_2",
+        "stair_flight_3",
+        "stair_rails",
+        "stair_tread_1_1",
+        "stair_tread_1_2",
+        "stair_tread_2_1",
+        "stair_tread_2_2",
+        "stair_tread_3_1",
+        "stair_tread_3_2"
       ],
       "name": "airlock_door",
       "rooms": [

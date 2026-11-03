@@ -8,8 +8,12 @@
 package dev.jstech.core.client.audio;
 
 import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.moving.MovingStructures;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * A running sound the director keeps: it fades in when it starts, follows the volume and pitch its source asks for,
@@ -18,6 +22,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 final class LoopSoundInstance extends AbstractTickableSoundInstance {
 
     private final SoundKey sound;
+    private Vec3 place;
     private float wantedVolume;
     private float wantedPitch;
     private float muffle = 1.0F;
@@ -28,8 +33,11 @@ final class LoopSoundInstance extends AbstractTickableSoundInstance {
     /** Below this the sound is as good as silent, and a sound on its way out stops. */
     private static final float SILENT = 0.002F;
 
-    LoopSoundInstance(final SoundKey sound, final double x, final double y, final double z, final float volume,
-                      final float pitch) {
+    /**
+     * A sound running from {@code place}, as its source gives it: a place among a moving structure's blocks is
+     * followed every tick to where the structure carries it.
+     */
+    LoopSoundInstance(final SoundKey sound, final Vec3 place, final float volume, final float pitch) {
         super(sound.event().get(), sound.spec().channel().source(), SoundInstance.createUnseededRandom());
         this.sound = sound;
         this.looping = true;
@@ -38,9 +46,8 @@ final class LoopSoundInstance extends AbstractTickableSoundInstance {
         this.relative = false;
         this.volume = 0.0F;
         this.pitch = pitch;
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.place = place;
+        follow();
         this.wantedVolume = volume;
         this.wantedPitch = pitch;
     }
@@ -51,10 +58,8 @@ final class LoopSoundInstance extends AbstractTickableSoundInstance {
     }
 
     /** What its source asks for now: where it is, how loud and how high. */
-    void retarget(final double atX, final double atY, final double atZ, final float volume, final float pitch) {
-        this.x = atX;
-        this.y = atY;
-        this.z = atZ;
+    void retarget(final Vec3 at, final float volume, final float pitch) {
+        this.place = at;
         this.wantedVolume = volume;
         this.wantedPitch = pitch;
         this.leaving = false;
@@ -92,11 +97,21 @@ final class LoopSoundInstance extends AbstractTickableSoundInstance {
 
     @Override
     public void tick() {
+        follow();
         final float target = leaving ? 0.0F : wantedVolume * muffle;
         volume += (target - volume) * EASE;
         pitch += (wantedPitch - pitch) * EASE;
         if (leaving && volume < SILENT) {
             stop();
         }
+    }
+
+    /* Stands where its place is in the world now. */
+    private void follow() {
+        final Level level = Minecraft.getInstance().level;
+        final Vec3 at = level == null ? this.place : MovingStructures.inWorld(level, this.place);
+        this.x = at.x;
+        this.y = at.y;
+        this.z = at.z;
     }
 }

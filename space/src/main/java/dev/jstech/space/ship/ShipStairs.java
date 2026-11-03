@@ -82,6 +82,7 @@ public final class ShipStairs {
         if (place.isEmpty()) {
             return;
         }
+        BlockPos moved = null;
         for (final int[] cell : ShipStairGeometry.CELLS) {
             final BlockPos at = FormedDoors.blockOf(door.uses(), place.get(), MeshCells.key(cell[0], cell[1],
                     cell[2]));
@@ -91,9 +92,14 @@ public final class ShipStairs {
                     stair.place(new FormedPlace(place.get().model(), place.get().orientation(), cell[0], cell[1],
                             cell[2]));
                 }
+                moved = moved == null ? at : moved;
             } else if (!down && level.getBlockState(at).is(BLOCK.get())) {
                 level.setBlockAndUpdate(at, Blocks.AIR.defaultBlockState());
+                moved = moved == null ? at : moved;
             }
+        }
+        if (moved != null) {
+            ShipSounds.stair(level, moved);
         }
     }
 

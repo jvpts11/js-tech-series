@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructure;
@@ -25,11 +26,14 @@ import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipGround;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipSounds;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
+import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestShipyards;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -47,8 +51,9 @@ import net.minecraft.world.phys.Vec3;
 /**
  * A small ship's airlock, boarded from the land on a player's game, as a player does it: by a ship nobody owns, set
  * down on the grass beside its dock, its inner doors shut, the player in survival aims at its outer door and uses it;
- * the door opens and the boarding stair comes down; they walk up the stair and through the door into the airlock. (A
- * ship with a crew asks for a place aboard first; its game test covers that.)
+ * the door opens and the boarding stair comes down, frame by frame as the approved storyboard draws it, and stands
+ * still once it is down; they walk up the stair and through the door into the airlock. (A ship with a crew asks for a
+ * place aboard first; its game test covers that.)
  */
 public final class ShipHatchClientTests {
 
@@ -74,6 +79,25 @@ public final class ShipHatchClientTests {
     /* How long the player walks before they are in, in ticks, at most; how far within the door is in. */
     private static final int WALK = 200;
     private static final double IN = 0.6;
+    /*
+     * The ticks from one of the storyboard's frames to the next, a quarter of the stair's two and a half seconds each,
+     * the last a little longer for the player's game hearing of the door after the server.
+     */
+    private static final int[] FRAME_TICKS = {13, 12, 13, 16};
+    /* How many pixels of the picture below the door change between two frames while the stair moves, at least. */
+    private static final int MOVED = 200;
+    /* And at most once it is down. */
+    private static final int STOOD = 20;
+    /* How far apart two colours are, all three channels together, to count as a pixel that changed. */
+    private static final int CHANGED = 48;
+    private static final int CHANNEL = 0xFF;
+    /* How far back the sounds heard are looked through, in milliseconds. */
+    private static final long HEARD_FOR = 10_000;
+    /* Where the stair is watched from, as the storyboard drew it: out from the door, toward the nose, in blocks; and
+     * how far under the door's middle the player looks, at its sill and the stair below. */
+    private static final double SIDE_OUT = 6;
+    private static final double SIDE_FORE = 2.6;
+    private static final double SILL_BELOW = -1.6;
 
     private ShipHatchClientTests() {
     }
@@ -88,6 +112,7 @@ public final class ShipHatchClientTests {
         final FormedDoors.Door[] hatch = new FormedDoors.Door[1];
         final Direction[] out = new Direction[1];
         final StructurePose[] stood = new StructurePose[1];
+        final List<int[]> seen = new ArrayList<>();
         final ShipDesign design = new ShipDesign("JS-05", List.of(part("orbiter_cockpit"), part("airlock"),
                 part("reactor_flush")), List.of(part("twin_bells"), part("blended_delta"), part("wheels")));
         ctx.afterTest(() -> ctx.server().execute(() -> {
@@ -150,9 +175,7 @@ public final class ShipHatchClientTests {
             ctx.serverPlayer().setGameMode(GameType.SURVIVAL);
             ctx.serverPlayer().getAbilities().flying = false;
             ctx.serverPlayer().onUpdateAbilities();
-            final Vec3 there = MovingStructures.inWorld(level, door[0].relative(out[0], OUTSIDE));
-            ctx.serverPlayer().teleportTo(level, there.x, ctx.abs(new BlockPos(0, Y_GRASS + 1, 0)).getY(), there.z,
-                    0F, 0F);
+            stand(ctx, level, door[0].relative(out[0], OUTSIDE));
         }).then(LAND, () -> face(ctx, door[0]))
                 .then(2, () -> {
                     ctx.assertTrue(ctx.mc().hitResult instanceof BlockHitResult aimed && FormedPartBlock.originalAt(
@@ -164,9 +187,33 @@ public final class ShipHatchClientTests {
                 })
                 .thenWaitUntilServer(level -> !FormedDoors.shut(level, hatch[0]), SETTLE * 3,
                         "the outer door to open as it is used", level -> "shut")
-                .thenScreenshot(SETTLE, "ship-hatch-stair-down")
-                // Up the stair and through the door, walking at it.
-                .then(0, () -> {
+                // Watched from where the storyboard drew it: out from the side, toward the nose, low.
+                .thenServer(0, level -> stand(ctx, level, door[0].relative(out[0], SIDE_OUT)
+                        .relative(out[0].getClockWise(), SIDE_FORE)))
+                .then(1, () -> face(ctx, door[0].add(0, SILL_BELOW, 0)))
+                .then(0, () -> seen.add(below(ctx)));
+        // The stair coming down frame by frame, as the storyboard draws it: a picture at each of its frames.
+        for (int frame = 1; frame <= FRAME_TICKS.length; frame++) {
+            ctx.then(FRAME_TICKS[frame - 1], () -> seen.add(below(ctx))).thenScreenshot(0, "ship-hatch-stair-" + frame);
+        }
+        ctx.then(SETTLE, () -> {
+            seen.add(below(ctx));
+            for (int k = 1; k < seen.size() - 1; k++) {
+                ctx.assertTrue(changed(seen.get(k - 1), seen.get(k)) >= MOVED, "the stair moves between the "
+                        + "storyboard's frames " + (k - 1) + " and " + k + ": " + changed(seen.get(k - 1),
+                        seen.get(k)) + " pixels changed");
+            }
+            ctx.assertTrue(changed(seen.get(seen.size() - 2), seen.getLast()) <= STOOD, "and stands still once it is "
+                    + "down: " + changed(seen.get(seen.size() - 2), seen.getLast()) + " pixels changed");
+            final List<String> heard = AudioMixer.recent(HEARD_FOR);
+            ctx.assertTrue(heard.contains(ShipSounds.OUTER_DOOR_OPEN.id().toString())
+                    && heard.contains(ShipSounds.STAIR.id().toString()), "the door is heard opening and the stair "
+                    + "coming down: " + heard);
+        })
+                .thenScreenshot(0, "ship-hatch-stair-down")
+                // Back out of the door, and up the stair and through it, walking at it.
+                .thenServer(0, level -> stand(ctx, level, door[0].relative(out[0], OUTSIDE)))
+                .then(LAND, () -> {
                     face(ctx, door[0]);
                     ctx.player().setXRot(0);
                     ctx.mc().options.keyUp.setDown(true);
@@ -178,6 +225,43 @@ public final class ShipHatchClientTests {
                                 + "the door's middle at " + door[0])
                 .then(0, () -> ctx.mc().options.keyUp.setDown(false))
                 .thenScreenshot(SETTLE, "ship-hatch-walked-in");
+    }
+
+    /* Stands the player on the grass under {@code place}, a place in the ship's yard, where it is in the world. */
+    private static void stand(final ClientTestContext ctx, final ServerLevel level, final Vec3 place) {
+        final Vec3 there = MovingStructures.inWorld(level, place);
+        ctx.serverPlayer().teleportTo(level, there.x, ctx.abs(new BlockPos(0, Y_GRASS + 1, 0)).getY(), there.z, 0F,
+                0F);
+    }
+
+    /* The pixels of the picture's middle half across, from a third down to its bottom: the door and the land below. */
+    private static int[] below(final ClientTestContext ctx) {
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        final int[] out = new int[(width / 2) * (height - height / 3)];
+        int at = 0;
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = height / 3; y < height; y++) {
+                for (int x = width / 4; x < width / 4 + width / 2; x++) {
+                    out[at++] = frame.pixel(x, y);
+                }
+            }
+        }
+        return out;
+    }
+
+    /* How many pixels changed colour from one picture to the next. */
+    private static int changed(final int[] before, final int[] after) {
+        int count = 0;
+        for (int i = 0; i < Math.min(before.length, after.length); i++) {
+            final int a = before[i];
+            final int b = after[i];
+            if (Math.abs((a >> 16 & CHANNEL) - (b >> 16 & CHANNEL)) + Math.abs((a >> 8 & CHANNEL) - (b >> 8 & CHANNEL))
+                    + Math.abs((a & CHANNEL) - (b & CHANNEL)) > CHANGED) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /* The player looks at {@code door}, a place in the ship's yard, from where they stand. */

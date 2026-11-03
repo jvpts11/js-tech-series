@@ -1003,5 +1003,16 @@
   "jsspace.world_event.global_dust_storm": "Global dust storm",
   "key.jsspace.ship_autopilot": "Change the ship's autopilot",
   "key.jsspace.ship_boost": "Boost the ship",
-  "key.jsspace.suit_controls": "Look at the suit's controls"
+  "key.jsspace.suit_controls": "Look at the suit's controls",
+  "subtitles.jsspace.ship.console_switch": "Console switch clicks",
+  "subtitles.jsspace.ship.engine_boost": "Engines boost",
+  "subtitles.jsspace.ship.engine_idle": "Engines hum",
+  "subtitles.jsspace.ship.engine_idle_inside": "Engines hum",
+  "subtitles.jsspace.ship.engine_thrust": "Engines roar",
+  "subtitles.jsspace.ship.engine_thrust_inside": "Engines roar",
+  "subtitles.jsspace.ship.gear": "Landing gear moves",
+  "subtitles.jsspace.ship.outer_door_open": "Airlock door opens",
+  "subtitles.jsspace.ship.outer_door_shut": "Airlock door shuts",
+  "subtitles.jsspace.ship.pressure_door": "Pressure door slides",
+  "subtitles.jsspace.ship.stair": "Boarding stair moves"
 }
