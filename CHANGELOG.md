@@ -3104,6 +3104,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) A space suit worn whole keeps the cold of a vacuum out, whatever the vacuum reads, as no air is there to
+  carry the wearer's warmth away: out in space, frost crept over the view of a player sealed in a lunar suit, held just
+  short of hurting them.
+- (Core) A HUD element in a bottom corner too wide for the room beside the hotbar, on a small window, stands over the
+  hotbar and its bars: a space suit's controls covered the hotbar's first slot on a window of 854 by 480.
 - (Core) A seat of a moving structure is sat in only with nothing of the structure between the player's eyes and it:
   a cockpit's seat was sat in from outside, through its canopy. And one getting up never stands anywhere round the
   seat they could not see from it, behind a wall or under the floor: a pilot could be got up out of the hull.

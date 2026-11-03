@@ -13,7 +13,8 @@ import java.util.List;
 /**
  * Where the HUD elements of one corner of the screen go: stacked from the corner inwards, one under the other in the
  * top corners and one above the other in the bottom ones, each flush with its corner's side, so that any number of
- * them from any number of mods share the corner without one drawing over another.
+ * them from any number of mods share the corner without one drawing over another. In a bottom corner, an element too
+ * wide for the room beside the hotbar, on a small window, stands over the hotbar and its bars, never on them.
  *
  * <p>Pure: no game types, so the arithmetic is checked without the game.
  */
@@ -23,6 +24,13 @@ public final class HudStack {
     public static final int MARGIN = 4;
     /** Between one element and the next. */
     public static final int GAP = 2;
+    /** How wide the game's hotbar is, in the middle of the screen's foot. */
+    public static final int HOTBAR_WIDTH = 182;
+    /**
+     * How far up from the screen's foot the hotbar and the bars over it reach, and a row more, for the air's bubbles or
+     * a mount's hearts: the hotbar, the experience bar, the hearts and the armour.
+     */
+    public static final int OVER_THE_HOTBAR = 59;
 
     private HudStack() {
     }
@@ -94,10 +102,20 @@ public final class HudStack {
         int along = reserved > 0 ? reserved + GAP : MARGIN;
         for (final Size size : sizes) {
             final int x = corner.right() ? screenWidth - MARGIN - size.width() : MARGIN;
+            // In a bottom corner, an element too wide for the room beside the hotbar goes up over it and its bars.
+            if (corner.bottom() && overHotbar(x, size.width(), screenWidth)) {
+                along = Math.max(along, OVER_THE_HOTBAR);
+            }
             final int y = corner.bottom() ? screenHeight - along - size.height() : along;
             points.add(new Point(x, y));
             along += size.height() + GAP;
         }
         return points;
+    }
+
+    /* Whether an element from {@code x}, {@code width} wide, reaches across the hotbar's columns, a gap round them. */
+    private static boolean overHotbar(final int x, final int width, final int screenWidth) {
+        final int half = HOTBAR_WIDTH / 2 + GAP;
+        return x < screenWidth / 2 + half && x + width > screenWidth / 2 - half;
     }
 }

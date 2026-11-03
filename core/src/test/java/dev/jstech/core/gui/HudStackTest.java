@@ -36,6 +36,35 @@ class HudStackTest {
     }
 
     @Test
+    void place_putsABottomElementTooWideForBesideTheHotbarOverItsBars() {
+        // A window of 854 by 480 at the GUI's scale of 2: the room beside the hotbar is 120 wide.
+        final List<HudStack.Point> points = HudStack.place(HudStack.Corner.BOTTOM_LEFT, 427, 240,
+                List.of(new HudStack.Size(130, 40)));
+        assertEquals(new HudStack.Point(4, 240 - HudStack.OVER_THE_HOTBAR - 40), points.get(0));
+    }
+
+    @Test
+    void place_leavesABottomElementBesideTheHotbarWhereItFits() {
+        final List<HudStack.Point> points = HudStack.place(HudStack.Corner.BOTTOM_LEFT, WIDTH, HEIGHT,
+                List.of(new HudStack.Size(130, 40)));
+        assertEquals(new HudStack.Point(4, HEIGHT - 4 - 40), points.get(0));
+    }
+
+    @Test
+    void place_neverPutsABottomElementOverTheHotbarOnAnyWindow() {
+        for (int width = 240; width <= 960; width += 7) {
+            for (final HudStack.Corner corner : List.of(HudStack.Corner.BOTTOM_LEFT, HudStack.Corner.BOTTOM_RIGHT)) {
+                final HudStack.Size size = new HudStack.Size(110, 40);
+                final HudStack.Point at = HudStack.place(corner, width, HEIGHT, List.of(size)).getFirst();
+                final boolean across = at.x() < width / 2 + HudStack.HOTBAR_WIDTH / 2
+                        && at.x() + size.width() > width / 2 - HudStack.HOTBAR_WIDTH / 2;
+                assertTrue(!across || at.y() + size.height() <= HEIGHT - HudStack.OVER_THE_HOTBAR,
+                        corner + " on a window " + width + " wide: " + at);
+            }
+        }
+    }
+
+    @Test
     void place_stacksTheBottomCornersUpwards() {
         final List<HudStack.Point> points = HudStack.place(HudStack.Corner.BOTTOM_RIGHT, WIDTH, HEIGHT,
                 List.of(new HudStack.Size(50, 10), new HudStack.Size(30, 20)));

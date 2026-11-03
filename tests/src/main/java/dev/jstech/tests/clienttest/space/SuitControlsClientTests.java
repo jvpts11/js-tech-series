@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest.space;
 
 import dev.jstech.core.client.hud.HudElements;
 import dev.jstech.core.gui.HudSnap;
+import dev.jstech.core.gui.HudStack;
 import dev.jstech.space.api.SpaceSuit;
 import dev.jstech.space.api.SpaceSuits;
 import dev.jstech.space.client.life.SuitControlsArt;
@@ -51,6 +52,9 @@ public final class SuitControlsClientTests {
     private static final int LIT = 150;
     /* The bright sky under the game's dark gradient. */
     private static final int DIMMED = 90;
+    /* A small window, too narrow at its GUI's scale for the controls beside the hotbar. */
+    private static final int SMALL_WIDTH = 854;
+    private static final int SMALL_HEIGHT = 480;
 
     private SuitControlsClientTests() {
     }
@@ -142,6 +146,47 @@ public final class SuitControlsClientTests {
     }
 
     /* The colour of the place {@code at} of the controls' case as the HUD shows it, at a unit of 1. */
+    /*
+     * On a small window, the GUI's scale making it too narrow for the controls beside the hotbar, as a window of 854 by
+     * 480 is, the controls stand over the hotbar and its bars, never on them.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void controls_onASmallWindowStandOverTheHotbar(final ClientTestContext ctx) {
+        final int[] window = new int[2];
+        ctx.afterTest(() -> {
+            ctx.mc().execute(() -> {
+                ctx.mc().getWindow().setWindowed(window[0], window[1]);
+                ctx.mc().resizeDisplay();
+            });
+            ctx.server().execute(() -> ctx.serverPlayer().setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY));
+        });
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .then(0, () -> {
+                    window[0] = ctx.mc().getWindow().getWidth();
+                    window[1] = ctx.mc().getWindow().getHeight();
+                    ctx.mc().getWindow().setWindowed(SMALL_WIDTH, SMALL_HEIGHT);
+                    ctx.mc().resizeDisplay();
+                })
+                .thenServer(0, level -> ctx.serverPlayer().setItemSlot(EquipmentSlot.CHEST,
+                        new ItemStack(LunarSuit.SUIT.get())))
+                .thenWaitUntil(() -> SuitControlsHud.reading(ctx.player()).isPresent(), 100,
+                        "the suit to reach the player's game")
+                .then(SETTLE, () -> {
+                    final int width = ctx.mc().getWindow().getGuiScaledWidth();
+                    final int height = ctx.mc().getWindow().getGuiScaledHeight();
+                    final HudSnap.Box box = HudElements.declaredBoxes(ctx.mc(), width, height,
+                            Set.of(SuitControlsHud.HUD)).get(SuitControlsHud.HUD);
+                    final boolean across = box.x() < width / 2 + HudStack.HOTBAR_WIDTH / 2
+                            && box.x() + SuitControlsArt.WIDTH > width / 2 - HudStack.HOTBAR_WIDTH / 2;
+                    ctx.assertTrue(across, "on a window " + width + " wide the controls reach across the hotbar's"
+                            + " columns: " + box);
+                    ctx.assertTrue(box.y() + SuitControlsArt.HEIGHT <= height - HudStack.OVER_THE_HOTBAR,
+                            "and stand over the hotbar and its bars, never on them: " + box + " on a window "
+                                    + height + " high");
+                })
+                .thenScreenshot(0, "suit-controls-small-window");
+    }
+
     private static int[] onCase(final ClientTestContext ctx, final int[] at) {
         final int width = ctx.mc().getWindow().getGuiScaledWidth();
         final int height = ctx.mc().getWindow().getGuiScaledHeight();

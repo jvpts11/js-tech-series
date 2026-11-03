@@ -2069,6 +2069,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A HUD element in a bottom corner too wide for the room beside the hotbar, on a small window, stands over the
+  hotbar and its bars: a space suit's controls covered the hotbar's first slot on a window of 854 by 480.
 - A seat of a moving structure is sat in only with nothing of the structure between the player's eyes and it:
   a cockpit's seat was sat in from outside, through its canopy. And one getting up never stands anywhere round the
   seat they could not see from it, behind a wall or under the floor: a pilot could be got up out of the hull.

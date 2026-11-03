@@ -790,6 +790,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whole blocks.
 
 ### Fixed
+- A space suit worn whole keeps the cold of a vacuum out, whatever the vacuum reads, as no air is there to
+  carry the wearer's warmth away: out in space, frost crept over the view of a player sealed in a lunar suit, held just
+  short of hurting them.
 - A starship nobody owns lets anyone through its airlock door, as it lets anyone fly it: before, its door did
   nothing, used from outside or from inside.
 - At a ship's helm, B boosts the ship and J changes its autopilot, as their keys say; before, B also opened

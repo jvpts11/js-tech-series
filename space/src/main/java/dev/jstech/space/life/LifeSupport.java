@@ -7,6 +7,7 @@
  */
 package dev.jstech.space.life;
 
+import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.dimension.DimensionHazardEvent;
 import dev.jstech.core.hazard.DamageKind;
 import dev.jstech.core.hazard.DamageKinds;
@@ -155,15 +156,21 @@ public final class LifeSupport {
     }
 
     /*
-     * A suit worn whole stands the cold and heat of its range. Its air is breathed through J's Core's lungs
-     * ({@link SuitAir}), so what the wearer breathes is weighed from the tanks themselves.
+     * A suit worn whole stands the cold and heat of its range; and the cold of a vacuum whatever it reads, as no air is
+     * there to carry the wearer's warmth away, the background cold of space reaching no one sealed in. Its air is
+     * breathed through J's Core's lungs ({@link SuitAir}), so what the wearer breathes is weighed from the tanks
+     * themselves.
      */
     private static void onHazard(final DimensionHazardEvent event) {
         final Player player = event.player();
         final Optional<SpaceSuit> suit = SpaceSuits.worn(player);
-        if (suit.isPresent() && (event.hazard() == DimensionHazardEvent.Hazard.COLD
-                || event.hazard() == DimensionHazardEvent.Hazard.HEAT)
-                && suit.get().stands(SealedRooms.climateAt(player.level(), player.blockPosition()).temperature())) {
+        if (suit.isEmpty() || event.hazard() != DimensionHazardEvent.Hazard.COLD
+                && event.hazard() != DimensionHazardEvent.Hazard.HEAT) {
+            return;
+        }
+        final Climate here = SealedRooms.climateAt(player.level(), player.blockPosition());
+        if (suit.get().stands(here.temperature())
+                || event.hazard() == DimensionHazardEvent.Hazard.COLD && here.pressure() <= 0) {
             event.setCanceled(true);
         }
     }

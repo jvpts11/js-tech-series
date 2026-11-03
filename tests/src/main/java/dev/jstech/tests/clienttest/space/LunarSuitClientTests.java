@@ -11,8 +11,12 @@ import dev.jstech.core.client.sky.SkyPlace;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.sky.Skies;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.api.SpaceSuits;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
+import dev.jstech.space.universe.StarSystems;
+import dev.jstech.space.universe.SystemLayout;
+import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.space.worldgen.MoonWorld;
 import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -30,6 +34,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -69,6 +74,9 @@ public final class LunarSuitClientTests {
     private static final int DARK = 100;
     private static final int TINTED = 8;
     private static final long NOON = 6_000L;
+    /* Far out in the Solar System's space, over no world; how long a player is left in its cold, in ticks. */
+    private static final double DEEP_SPACE = 15_000;
+    private static final int IN_THE_COLD = 200;
     private static final int ABOVE = 3;
     private static final int ARRIVE = 600;
     private static final int SETTLE = 10;
@@ -270,6 +278,48 @@ public final class LunarSuitClientTests {
                             "and is a little gold: " + str(seen) + " where it was " + str(clear[0]));
                 })
                 .thenScreenshot(0, "moon-sun-through-the-gold-visor");
+    }
+
+    /*
+     * A player in the suit worn whole, its tanks full, out in the Solar System's space, far from any world: the cold
+     * there never reaches them, on the server or on their game, where no frost creeps over the view.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void suit_wornWholeInSpaceKeepsTheColdOut(final ClientTestContext ctx) {
+        final int[] frozen = new int[2];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            final ServerPlayer player = ctx.serverPlayer();
+            for (final EquipmentSlot slot : List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
+                    EquipmentSlot.FEET)) {
+                player.setItemSlot(slot, ItemStack.EMPTY);
+            }
+            player.setTicksFrozen(0);
+            player.setGameMode(GameType.CREATIVE);
+            final BlockPos origin = ctx.origin().above(2);
+            player.teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0F,
+                    0F);
+        }));
+        ctx.thenServer(0, level -> {
+            final ServerPlayer player = ctx.serverPlayer();
+            final ItemStack chest = new ItemStack(LunarSuit.SUIT.get());
+            LifeSupport.setAir(level, chest, SpaceSuits.declared().get(LunarSuit.ID), LunarSuit.AIR);
+            player.setItemSlot(EquipmentSlot.HEAD, new ItemStack(LunarSuit.HELMET.get()));
+            player.setItemSlot(EquipmentSlot.CHEST, chest);
+            player.setItemSlot(EquipmentSlot.LEGS, new ItemStack(LunarSuit.TROUSERS.get()));
+            player.setItemSlot(EquipmentSlot.FEET, new ItemStack(LunarSuit.BOOTS.get()));
+            player.setGameMode(GameType.SURVIVAL);
+            player.teleportTo(SystemSpaces.spaceOf(ctx.server(), StarSystems.SOLAR_SYSTEM), 0.5,
+                    SystemLayout.ORBIT_Y, DEEP_SPACE, 0F, 0F);
+        }).thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(SystemSpaces.keyOf(
+                StarSystems.SOLAR_SYSTEM)), ARRIVE, "the player's game to reach space")
+                .then(IN_THE_COLD, () -> frozen[1] = ctx.player().getTicksFrozen())
+                .thenServer(0, level -> {
+                    frozen[0] = ctx.serverPlayer().getTicksFrozen();
+                    ctx.assertTrue(frozen[0] == 0 && frozen[1] == 0, "in the suit worn whole, out in space, the"
+                            + " player takes none of its cold: frozen " + frozen[0] + " ticks on the server, "
+                            + frozen[1] + " on their game");
+                })
+                .thenScreenshot(0, "suit-in-space");
     }
 
     /* The player standing on the Moon where its longitude and latitude are nought, at the Moon's noon there. */
