@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.TransparentBlock;
@@ -37,6 +38,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import org.jetbrains.annotations.Nullable;
@@ -157,15 +159,21 @@ public final class HangarBlocks {
             .named("Crane Hoist").register();
     public static final BlockEntry<Block> WORK_PLATFORM = piece("work_platform", HangarPieceBlock.Kind.PLATFORM)
             .named("Work Platform").register();
-    /** The port in a wall the blocks a yard builds come in through: the Small Shipyard's. */
-    public static final BlockEntry<MultiblockPortBlock> ITEM_PORT = SpaceContent.CONTENT.block("item_port",
-                    properties -> new MultiblockPortBlock(properties, () -> HangarBlocks.ITEM_PORT_ENTITY.get()))
+    /**
+     * The port in a wall the blocks a yard builds come in through, the Small Shipyard's: a store of its own, filled by
+     * hand or by pipes, that takes only what the ship being built lacks.
+     */
+    public static final BlockEntry<ItemPortBlock> ITEM_PORT = SpaceContent.CONTENT.block("item_port",
+                    ItemPortBlock::new)
             .named("Item Port").properties(HangarBlocks::metal)
             .look(IBlockLook.fixed(new IBlockModel.CubeAll("item_port", "block/hangar/item_port")))
             .item().drops(Drops.SELF).tag(BlockTags.MINEABLE_WITH_PICKAXE).tag(MultiblockPorts.PORTS).tab(HANGAR)
             .register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ItemPortBlockEntity>> ITEM_PORT_ENTITY =
             SpaceContent.CONTENT.blockEntity("item_port", ItemPortBlockEntity::new, ITEM_PORT);
+    /** The Item Port's screen: its hold and what the build still lacks. */
+    public static final DeferredHolder<MenuType<?>, MenuType<ItemPortMenu>> ITEM_PORT_MENU =
+            SpaceContent.CONTENT.menu("item_port", ItemPortMenu::new);
 
     /* The blocks of the hangar's building, gathered once, after they are registered. */
     private static @Nullable Set<Block> building;
@@ -180,7 +188,9 @@ public final class HangarBlocks {
     public static void declare(final IEventBus modBus) {
         modBus.addListener(RegisterCapabilitiesEvent.class, event -> {
             MultiblockPorts.register(event, LOADING_DOCK_ENTITY.get());
-            MultiblockPorts.register(event, ITEM_PORT_ENTITY.get());
+            // The Item Port is a store of its own: pipes fill its hold, which passes what the build lacks on.
+            event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ITEM_PORT_ENTITY.get(),
+                    (port, side) -> port.hold());
         });
     }
 

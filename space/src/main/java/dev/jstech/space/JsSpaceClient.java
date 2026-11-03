@@ -39,12 +39,14 @@ import dev.jstech.space.client.ship.ShipExhaust;
 import dev.jstech.space.client.ship.ShipHud;
 import dev.jstech.space.client.ship.SuitLockerRenderer;
 import dev.jstech.space.client.ship.SuitLockerScreen;
+import dev.jstech.space.client.shipyard.ItemPortScreen;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
 import dev.jstech.space.client.shipyard.ShipHolograms;
 import dev.jstech.space.client.shipyard.ShipyardRenderer;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.flight.FlightComputer;
+import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.network.SpacePayloads;
@@ -101,6 +103,9 @@ public final class JsSpaceClient {
         // A ship's console's screen, its crew page.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ShipConsole.MENU.get(),
                 ShipConsoleScreen::new));
+        // A shipyard's Item Port: its hold and what the ship being built still lacks.
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(
+                HangarBlocks.ITEM_PORT_MENU.get(), ItemPortScreen::new));
         // A ship's suit locker: its screen, a place for each thing, and its suit standing on its rack.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(
                 ShipKitBlocks.SUIT_LOCKER_MENU.get(), SuitLockerScreen::new));

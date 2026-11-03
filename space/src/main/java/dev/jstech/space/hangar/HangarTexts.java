@@ -19,6 +19,16 @@ public final class HangarTexts {
 
     /** The design screen's name. */
     public static final TextKey DESIGN = TextKey.of("jsspace.hangar.design", "Rocket Design");
+    /* The Item Port's screen: its name, its hold's label, its display's lines and why it refuses a block. */
+    public static final TextKey ITEM_PORT = TextKey.of("jsspace.item_port.title", "Item Port");
+    public static final TextKey PORT_HOLD = TextKey.of("jsspace.item_port.hold", "Port hold  -  to the belt");
+    public static final TextKey PORT_BLOCKS = TextKey.of("jsspace.item_port.blocks", "%s of %s blocks");
+    public static final TextKey PORT_ROW = TextKey.of("jsspace.item_port.row", "%s of %s");
+    public static final TextKey PORT_OK = TextKey.of("jsspace.item_port.ok", "ok");
+    public static final TextKey PORT_IDLE = TextKey.of("jsspace.item_port.idle", "No ship is being built");
+    public static final TextKey PORT_REFUSES = TextKey.of("jsspace.item_port.refuses", "%s does not need it");
+    public static final TextKey PORT_NO_DOCK = TextKey.of("jsspace.item_port.no_dock",
+            "The port is in no formed dock");
     public static final TextKey NO_HANGAR = TextKey.of("jsspace.hangar.no_hangar",
             "This stands in no formed Rocket Hangar");
     /* What the bay door's console says as it is pressed. */

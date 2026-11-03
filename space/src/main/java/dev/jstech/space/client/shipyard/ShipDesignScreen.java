@@ -1059,7 +1059,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         }
         ShipDesignArt.heading(g, this.font, x0, ShipDesignLayout.DOCK_Y, up(ShipDesignTexts.THE_DOCK), x1);
         final int blocks = this.laid.cells().size();
-        final int held = 0;
+        final int held = this.menu.held();
         final int dy = ShipDesignLayout.DOCK_Y;
         ShipDesignArt.small(g, this.font, up(ShipDesignTexts.BLOCKS), x0, dy + 13, c.dim());
         right(g, String.valueOf(blocks), x1, dy + 13, c.text());

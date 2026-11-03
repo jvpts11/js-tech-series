@@ -76,6 +76,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Experimental.
 
 ### Added
+- The Small Shipyard's Item Port is a store with a screen: a hold of two rows of nine places a player fills
+  by hand, and a chest, a hopper or a pipe fills too, which takes only the blocks the ship being built still lacks,
+  no more of each than it lacks, and passes them on to the dock's arms. Its screen shows on a display across its top
+  the ship, how many of its blocks are laid of how many, and each block it still lacks with what the dock and the port
+  have of it, its bar, and ok once there is enough, the list scrolling under the mouse's wheel; a block the ship does
+  not need, held over the hold, is refused with the reason. The Starship Design's dock panel counts the blocks brought
+  to the ship, where it always said none.
 - A small starship sounds as it works: its pressure doors whoosh as they slide, its airlock's outer door
   hisses open and bangs shut, its boarding stair whirs down and up, its console's switch clicks as its pilot moves the
   gear or changes the autopilot, its engines hum while it flies and roar with the throttle open, louder the more it is,

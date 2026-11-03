@@ -49,6 +49,7 @@ import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
 import dev.jstech.space.crew.ShipCrew;
+import dev.jstech.space.hangar.ItemPortBlockEntity;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAboard;
 import dev.jstech.space.ship.ShipDesign;
@@ -58,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -112,6 +114,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
     private boolean pending;
     /* The network's request to build, followed until the ship is whole; on the server. */
     private @Nullable IOperationRequest<Assembly.Args> assembling;
+    /* Its dock's Item Ports as they tick, forgotten as they go; on the server. */
+    private final Set<ItemPortBlockEntity> ports = Collections.newSetFromMap(new WeakHashMap<>());
 
     /** The most plans a shipyard keeps. */
     public static final int MOST_PLANS = 16;
@@ -240,6 +244,36 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity implem
     /** The plan sent to its dock to be built, if one is. */
     public Optional<ShipDesign> plan() {
         return Optional.ofNullable(this.plan.get());
+    }
+
+    /** The name of the ship its dock builds, as its Item Ports show it; empty while it builds none. */
+    public String shipName() {
+        return this.build == null ? "" : plan().map(ShipDesign::name).orElse("").toUpperCase(Locale.ROOT);
+    }
+
+    /** {@code port}, one of its dock's Item Ports, is there: what it holds counts with what the arms hold. */
+    public void portSeen(final ItemPortBlockEntity port) {
+        this.ports.add(port);
+    }
+
+    /**
+     * How many blocks its dock has toward the ship it builds: what its arms were given, laid, carried or held, and
+     * what its Item Ports hold; none while it builds nothing.
+     */
+    public int heldForBuild() {
+        if (this.build == null) {
+            return 0;
+        }
+        int count = this.build.plan().spots().size();
+        for (final int waited : this.assembler.needs().values()) {
+            count -= waited;
+        }
+        for (final ItemPortBlockEntity port : this.ports) {
+            if (!port.isRemoved() && port.dock().filter(dock -> dock == this).isPresent()) {
+                count += port.held();
+            }
+        }
+        return count;
     }
 
     /** Where the plan sent stands, the block of its ship's nose on the centre line at the hull's floor, if one was. */

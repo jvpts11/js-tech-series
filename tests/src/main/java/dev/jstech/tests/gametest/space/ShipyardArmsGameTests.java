@@ -21,6 +21,8 @@ import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanArms;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.space.hangar.ItemPortBlockEntity;
+import dev.jstech.space.hangar.ItemPortView;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardPlans;
@@ -87,6 +89,7 @@ public final class ShipyardArmsGameTests {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         final BlockPos[] first = new BlockPos[1];
+        final int[] put = new int[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"))
                 .thenExecute(() -> {
@@ -104,9 +107,40 @@ public final class ShipyardArmsGameTests {
                     helper.assertTrue(needs.equals(counts(plan.plan())), "the arms wait for every block of the ship");
                     helper.assertTrue(insert(port, Items.STONE, 64) == 0, "stone, which the ship does not want,"
                             + " stays out");
-                    for (final Map.Entry<Item, Integer> need : needs.entrySet()) {
-                        helper.assertTrue(insert(port, need.getKey(), need.getValue() + 1) == need.getValue(),
-                                "as many of " + need.getKey() + " as the ship wants go in, and no more");
+                    final Map.Entry<Item, Integer> one = needs.entrySet().iterator().next();
+                    helper.assertTrue(insert(port, one.getKey(), one.getValue() + 1) == one.getValue(),
+                            "as many of " + one.getKey() + " as the ship lacks go into the port's hold, and no more");
+                    final ItemPortBlockEntity held = (ItemPortBlockEntity) level.getBlockEntity(helper.absolutePos(
+                            PORT));
+                    final ItemPortView view = held.view();
+                    helper.assertTrue(view.ship().equals(SHIP.name()) && view.laid() == 0
+                                    && view.blocks() == plan.plan().spots().size(),
+                            "the port's screen shows the ship, none of its blocks laid yet: " + view);
+                    helper.assertTrue(view.rows().stream().anyMatch(row -> row.item() == one.getKey()
+                                    && row.have() == one.getValue() && row.enough()),
+                            "and the block the port holds all of, as enough: " + view.rows());
+                    put[0] = one.getValue();
+                })
+                // A tick on, the port has met its dock: what it holds, and what it passed on, count toward the ship.
+                .thenIdle(1)
+                .thenExecute(() -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal);
+                    helper.assertTrue(dock.heldForBuild() == put[0], "the designer counts what the port holds "
+                            + "toward the ship: " + dock.heldForBuild() + " of " + put[0]);
+                })
+                // The rest comes in as a pipe brings it, as much as the port's hold takes at a time.
+                .thenWaitUntil(() -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal);
+                    final IItemHandler port = level.getCapability(Capabilities.ItemHandler.BLOCK,
+                            helper.absolutePos(PORT), Direction.EAST);
+                    for (final Map.Entry<Item, Integer> need : dock.assembler().needs().entrySet()) {
+                        insert(port, need.getKey(), need.getValue());
+                    }
+                    if (!dock.assembler().needs().isEmpty()) {
+                        helper.fail("the port passes the blocks on to the arms: " + dock.assembler().needs().size()
+                                + " kinds still to come");
                     }
                 })
                 .thenWaitUntil(() -> {

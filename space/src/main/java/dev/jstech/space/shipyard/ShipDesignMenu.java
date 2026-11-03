@@ -10,6 +10,7 @@ package dev.jstech.space.shipyard;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.MenuValue;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -21,11 +22,13 @@ import net.minecraft.world.entity.player.Inventory;
 public final class ShipDesignMenu extends CoreMenu {
 
     private final ShipyardTerminalBlockEntity terminal;
+    private final MenuValue held;
 
     public ShipDesignMenu(final int containerId, final Inventory inventory,
                           final ShipyardTerminalBlockEntity terminal) {
         super(ShipDesigner.MENU.get(), containerId, inventory, MenuValidity.blockEntity(terminal));
         this.terminal = terminal;
+        this.held = value("held", terminal::heldForBuild);
     }
 
     /** The menu on the player's side, for the terminal whose place the server wrote. */
@@ -36,5 +39,10 @@ public final class ShipDesignMenu extends CoreMenu {
     /** The shipyard's terminal. */
     public ShipyardTerminalBlockEntity terminal() {
         return this.terminal;
+    }
+
+    /** How many blocks the dock has toward the ship it builds, in its arms and its Item Ports. */
+    public int held() {
+        return this.held.get();
     }
 }
