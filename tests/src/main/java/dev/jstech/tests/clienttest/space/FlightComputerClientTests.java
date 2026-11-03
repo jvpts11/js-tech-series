@@ -53,6 +53,9 @@ public final class FlightComputerClientTests {
     private static final int CHANNEL = 0xFF;
     private static final int YELLOW = 180;
     private static final int APART = 40;
+    /* The fail lamp's glass, clear of its word; how bright a channel of it may be while it is not lit. */
+    private static final int[] FAIL_GLASS = {FlightComputerFace.SX0, 10};
+    private static final int UNLIT = 45;
     /*
      * A rocket of two stages, its first with legs: twelve blocks tall, drawn four pixels a block from the floor of the
      * stack's schematic; its first stage's ring, five blocks up, and the ZONE key's cap, in the face's pixels.
@@ -83,14 +86,19 @@ public final class FlightComputerClientTests {
 
     @ClientTest(timeoutTicks = 1500)
     public static void computer_opensOnTheTransferAndDrawsTheLandingMap(final ClientTestContext ctx) {
-        final int[][] seen = new int[2][];
+        final int[][] seen = new int[3][];
         ctx.afterTest(() -> ctx.server().execute(() -> ctx.serverLevel().removeBlock(ctx.abs(COMPUTER), false)));
         ctx.thenTeleport(0, EYE, Direction.SOUTH)
                 .thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(COMPUTER),
                         RocketKitBlocks.FLIGHT_COMPUTER.get().defaultBlockState()))
                 .thenRightClick(SETTLE, COMPUTER)
                 .thenAwaitScreen(FlightComputerScreen.class, OPEN)
-                .then(SETTLE, () -> seen[0] = sample(ctx, SUN))
+                .then(SETTLE, () -> {
+                    seen[0] = sample(ctx, SUN);
+                    seen[2] = sample(ctx, FAIL_GLASS);
+                })
+                .then(0, () -> ctx.assertTrue(seen[2][0] <= UNLIT && seen[2][1] <= UNLIT && seen[2][2] <= UNLIT,
+                        "nothing failing, the fail lamp's glass reads dark, not lit: " + str(seen[2])))
                 .thenScreenshot(0, "flight-computer-transfer")
                 .then(0, () -> {
                     final int[] at = screenOf(ctx, LANDING_KEY);

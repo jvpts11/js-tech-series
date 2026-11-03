@@ -813,6 +813,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whole blocks.
 
 ### Fixed
+- The Flight Computer's fail lamp reads dark while nothing fails, where its unlit glass and word were bright
+  enough to read as lit.
 - A small starship's wings meet its hull cleanly: the blended delta's leading edge meets the hull 1.2 further
   aft, so the airlock's boarding stair comes down clear of the wing, where it came down through it and the wing stood
   over the door's sill, and the wedge between its root and the hull's cut corner is closed; the stub wings' root stands

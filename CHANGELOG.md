@@ -3144,6 +3144,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) The Flight Computer's fail lamp reads dark while nothing fails, where its unlit glass and word were bright
+  enough to read as lit.
 - (Space) A small starship's wings meet its hull cleanly: the blended delta's leading edge meets the hull 1.2 further
   aft, so the airlock's boarding stair comes down clear of the wing, where it came down through it and the wing stood
   over the door's sill, and the wedge between its root and the hull's cut corner is closed; the stub wings' root stands
