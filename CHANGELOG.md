@@ -3098,6 +3098,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) A starship nobody owns lets anyone through its airlock door, as it lets anyone fly it: before, its door did
+  nothing, used from outside or from inside.
 - (Core) A block of a formed structure is solid through what its model's faces close, a seat, a console, a floor's
   body: before, only the sixteenths its faces passed through were solid, a thin shell a thing pushed against it could
   end up inside.

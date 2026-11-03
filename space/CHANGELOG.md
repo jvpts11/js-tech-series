@@ -790,6 +790,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whole blocks.
 
 ### Fixed
+- A starship nobody owns lets anyone through its airlock door, as it lets anyone fly it: before, its door did
+  nothing, used from outside or from inside.
 - At a ship's helm, B boosts the ship and J changes its autopilot, as their keys say; before, B also opened
   the Core's screen of the body over the helm, and no boost came. Up from the helm, B opens the body's screen as
   before.

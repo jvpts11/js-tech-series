@@ -92,6 +92,10 @@ public final class ShipOrbitClientTests {
      */
     private static final int WATCHED = 40;
     private static final double A_STEP = 0.5;
+    /* Far out in the Solar System's space, over no world; how often a mode is switched; how still a crew stands. */
+    private static final double DEEP_SPACE = 15_000;
+    private static final int SWITCHES = 4;
+    private static final double STOOD_STILL = 0.3;
     private static final ShipDesign SHIP = new ShipDesign("JS-06", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("lab"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
             part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
@@ -276,6 +280,45 @@ public final class ShipOrbitClientTests {
                 })
                 .then(0, () -> ctx.assertTrue(ship[0].worldBox().inflate(1).contains(ctx.player().position()),
                         "on their game too: " + ctx.player().position()));
+    }
+
+    /*
+     * In space, the ship at a stop, its pilot got up and standing in its cockpit has their game mode switched, from
+     * survival to creative and back: they stand on in the cockpit, where they stood.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void modes_switchedStandingAboardInSpaceTheCrewStaysWhereItStood(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final MovingStructure[] there = new MovingStructure[1];
+        final Vec3[] stood = new Vec3[1];
+        final KeyMapping crouch = ctx.mc().options.keyShift;
+        ctx.afterTest(() -> crouch.setDown(false));
+        ClientTestContext steps = atTheHelm(ctx, ship)
+                .thenServer(0, level -> ctx.assertTrue(MovingStructures.travel(ship[0], space(ctx), new Vec3(0,
+                        SystemLayout.ORBIT_Y, DEEP_SPACE)).ok(), "the ship is sent into space, over no world"))
+                .thenWaitUntilServer(level -> {
+                    there[0] = MovingStructures.byId(space(ctx), ship[0].id());
+                    return there[0] != null && there[0].ready();
+                }, ARRIVE, "the ship to come into space", level -> "at " + ship[0].pose())
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(SPACE), ARRIVE,
+                        "its pilot's game to be in space")
+                .thenServer(0, level -> MovingStructures.move(there[0], new TowardMotion(there[0].pose(), 1, 0)))
+                .then(SETTLE, () -> crouch.setDown(true))
+                .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,
+                        "its pilot to get up from the helm, crouching")
+                .then(SETTLE, () -> crouch.setDown(false))
+                .thenServer(SETTLE, level -> stood[0] = MovingStructures.toYard(there[0], ctx.serverPlayer()
+                        .position()));
+        for (int k = 0; k < SWITCHES; k++) {
+            final GameType mode = k % 2 == 0 ? GameType.SURVIVAL : GameType.CREATIVE;
+            steps = steps.thenServer(SETTLE, level -> ctx.serverPlayer().setGameMode(mode));
+        }
+        steps.thenServer(SETTLE, level -> {
+            final Vec3 now = MovingStructures.toYard(there[0], ctx.serverPlayer().position());
+            ctx.assertTrue(now.distanceTo(stood[0]) < STOOD_STILL, "switched from survival to creative and back "
+                    + SWITCHES + " times, the player stands where they stood in the cockpit: " + stood[0] + " then "
+                    + now);
+        });
     }
 
     /*

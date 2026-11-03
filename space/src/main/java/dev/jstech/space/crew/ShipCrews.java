@@ -98,8 +98,9 @@ public final class ShipCrews {
     }
 
     /*
-     * A block aboard a ship used: let be when its role is held; its airlock's door passed through; else refused, the
-     * player told why. Its docking collar asks for a place aboard the other ship too.
+     * A block aboard a ship used: let be when its role is held, or when the ship has no crew, nobody owning it; its
+     * airlock's door passed through; else refused, the player told why. Its docking collar asks for a place aboard the
+     * other ship too.
      */
     private static void used(final PlayerInteractEvent.RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
@@ -109,17 +110,15 @@ public final class ShipCrews {
         if (!YardLayout.isYardBlock(pos.getX()) || !(MovingStructures.at(level, pos) instanceof MovingStructure ship)) {
             return;
         }
-        final Optional<ShipCrew> crew = of(level, ship);
-        if (crew.isEmpty()) {
-            return;
-        }
         final Block block = FormedPartBlock.originalAt(level, pos, level.getBlockState(pos)).getBlock();
-        final boolean machine = level.getBlockEntity(pos) != null && !kit(block);
-        final CrewRole needed = needed(block, machine, event.getItemStack().getItem() instanceof BlockItem);
-        final CrewRole role = crew.get().roleOf(player);
-        if (!role.holds(needed)) {
-            refuse(event, player, refusal(crew.get(), needed));
-            return;
+        final Optional<ShipCrew> crew = of(level, ship);
+        if (crew.isPresent()) {
+            final boolean machine = level.getBlockEntity(pos) != null && !kit(block);
+            final CrewRole needed = needed(block, machine, event.getItemStack().getItem() instanceof BlockItem);
+            if (!crew.get().roleOf(player).holds(needed)) {
+                refuse(event, player, refusal(crew.get(), needed));
+                return;
+            }
         }
         if (block == ShipKitBlocks.DOCKING_COLLAR.get()) {
             final Optional<MovingStructure> other = ShipDocks.partner(ship);
