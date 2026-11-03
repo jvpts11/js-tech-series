@@ -3,6 +3,5 @@
   "textures": [
     "jsspace:textures/models/ship/small_corridor_enamel.png"
   ],
-  "translucent": true,
   "triangles": 9000
 }

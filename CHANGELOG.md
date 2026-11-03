@@ -509,6 +509,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   (`leavesShut`) and keeping the rooms on its two sides apart. A `FormedPiece` may ask for rooms (`rooms`, written in
   a pieces file as `rooms`, its blocks as `roomCells`), which the block it works by asks for while it stands, wherever
   its structure goes. Experimental.
+- (Core) Glass in a solid model: J's Core's API is at version 42. A mesh can be see-through of its own
+  (`ModelMesh.seeThrough`), as a glTF material blended (`alphaMode` `BLEND`) is read, and its faces are baked apart
+  (`BakedGeometry.Part.seeThrough`): only they are drawn sorted back to front with what else is see-through, the rest
+  of the model solid, in the same order every frame. The constructors without it are kept, drawing a mesh as its
+  model's definition says. Experimental.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -3147,6 +3152,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) A small starship's faces no longer fight as the eye moves: only its windows' glass is drawn see-through,
+  the rest of it solid, where the whole ship was drawn see-through and faces in one plane swapped places from frame to
+  frame; and no two of its faces lie on one another any more: a doorway's frame on the bulkhead's wall, the raised
+  cab's grating on its base, the Orbiter's glare shield, the suit locker's panels and the bunks' boards.
 - (Space) The Flight Computer's fail lamp reads dark while nothing fails, where its unlit glass and word were bright
   enough to read as lit.
 - (Space) A small starship's wings meet its hull cleanly: the blended delta's leading edge meets the hull 1.2 further

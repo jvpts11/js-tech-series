@@ -200,7 +200,8 @@ public final class KitDamage {
             final int[] at = parts.get(i);
             final BakedGeometry.Part part = bones.get(at[0]).get(at[1]);
             if (kept.get(i).size() > 0) {
-                out.get(at[0]).add(new BakedGeometry.Part(part.texture(), part.glow(), kept.get(i).toArray()));
+                out.get(at[0]).add(new BakedGeometry.Part(part.texture(), part.glow(), kept.get(i).toArray(),
+                        part.seeThrough()));
             }
         }
         // Each strike's edge, its pixels over the faces of the hull it struck, lifted a hair off them.

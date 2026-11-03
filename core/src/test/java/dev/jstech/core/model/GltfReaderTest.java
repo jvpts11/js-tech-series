@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class GltfReaderTest {
@@ -124,6 +125,26 @@ class GltfReaderTest {
         assertEquals("smile", smile.name());
         assertArrayEquals(new float[] {0, 0, 0, 0, 0, 0, 0, 0, 16}, smile.moves(), (float) EPSILON,
                 "only the corner the target names moves, a metre a block");
+    }
+
+    @Test
+    void read_drawsOnlyABlendedMaterialSeeThrough() {
+        final Builder gltf = new Builder();
+        final int corners = gltf.accessor(gltf.view(floats(0, 0, 0, 1, 0, 0, 0, 1, 0)), FLOAT, 3, "VEC3");
+        gltf.root.add("materials", JsonParser.parseString("""
+                [{"name": "paint"}, {"name": "glass", "alphaMode": "BLEND"}, {"name": "grille", "alphaMode": "MASK"}]
+                """).getAsJsonArray());
+        gltf.root.add("meshes", array(JsonParser.parseString("""
+                {"primitives": [{"attributes": {"POSITION": %d}},
+                                {"attributes": {"POSITION": %d}, "material": 0},
+                                {"attributes": {"POSITION": %d}, "material": 1},
+                                {"attributes": {"POSITION": %d}, "material": 2}]}
+                """.formatted(corners, corners, corners, corners)).getAsJsonObject()));
+        gltf.root.add("nodes", array(JsonParser.parseString("{\"name\": \"canopy\", \"mesh\": 0}").getAsJsonObject()));
+        final List<ModelMesh> meshes = GltfReader.read("canopy", gltf.text(), file -> null).bone("canopy")
+                .orElseThrow().meshes();
+        assertEquals(List.of(false, false, true, false), meshes.stream().map(ModelMesh::seeThrough).toList(),
+                "a material without blending is drawn as the model is; one blended, as glass");
     }
 
     /* A model of one triangle on a node moved a metre east and half a metre south. */

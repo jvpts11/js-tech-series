@@ -813,6 +813,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whole blocks.
 
 ### Fixed
+- A small starship's faces no longer fight as the eye moves: only its windows' glass is drawn see-through,
+  the rest of it solid, where the whole ship was drawn see-through and faces in one plane swapped places from frame to
+  frame; and no two of its faces lie on one another any more: a doorway's frame on the bulkhead's wall, the raised
+  cab's grating on its base, the Orbiter's glare shield, the suit locker's panels and the bunks' boards.
 - The Flight Computer's fail lamp reads dark while nothing fails, where its unlit glass and word were bright
   enough to read as lit.
 - A small starship's wings meet its hull cleanly: the blended delta's leading edge meets the hull 1.2 further

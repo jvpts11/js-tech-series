@@ -50,6 +50,8 @@ public final class KitInstancing {
     private static final Map<KitModel, Batch> BATCHES = new IdentityHashMap<>();
     private static final Map<KitModel, KitMesh> MESHES = new IdentityHashMap<>();
     private static final Map<KitModel, List<KitMesh.Glow>> GLOWS = new IdentityHashMap<>();
+    /* Whether each model has see-through faces of its own, its glass, worked out the first time it is drawn. */
+    private static final Map<KitModel, Boolean> GLAZED = new IdentityHashMap<>();
     private static final InstanceTexels TEXELS = new InstanceTexels();
     private static final String[] SAMPLERS = {"Sampler0", "Sampler1", "Sampler2"};
     private static final int LOW = 0xFFFF;
@@ -96,7 +98,7 @@ public final class KitInstancing {
                         @Nullable final Level glowsIn) {
         if (!collecting || buffers != Minecraft.getInstance().renderBuffers().bufferSource()
                 || model.definition().translucent() || !instance.deformers().isEmpty() || KitDamage.damaged(model)
-                || !KitLayers.of(model.id()).isEmpty()) {
+                || !KitLayers.of(model.id()).isEmpty() || GLAZED.computeIfAbsent(model, KitInstancing::glazed)) {
             return false;
         }
         final Batch batch = batch(model, painted);
@@ -124,6 +126,7 @@ public final class KitInstancing {
         MESHES.values().forEach(KitMesh::close);
         MESHES.clear();
         GLOWS.clear();
+        GLAZED.clear();
         for (final Batch head : BATCHES.values()) {
             for (Batch batch = head; batch != null; batch = batch.next) {
                 batch.data.close();
@@ -139,6 +142,23 @@ public final class KitInstancing {
             collecting = false;
             draw();
         }
+    }
+
+    /* Whether any of a model's faces are see-through of their own, as glass is. */
+    private static boolean glazed(final KitModel model) {
+        for (final List<BakedGeometry.Part> parts : model.geometry().bones()) {
+            for (final BakedGeometry.Part part : parts) {
+                if (part.seeThrough()) {
+                    return true;
+                }
+            }
+        }
+        for (final BakedGeometry.Deformed deformed : model.geometry().deformed()) {
+            if (deformed.mesh().seeThrough()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* The batch of a model, with a paint or without. */

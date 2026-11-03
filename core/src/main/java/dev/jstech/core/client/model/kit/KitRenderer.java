@@ -166,8 +166,8 @@ public final class KitRenderer {
                 final int lit = part.glow() ? LightTexture.FULL_BRIGHT : light;
                 final ResourceLocation location = model.texture(part.texture());
                 final TextureFrames frames = KitTextures.of(location).frames();
-                emit(buffers.getBuffer(own(model, location)), poses.last(), part.vertices(), part.vertices().length,
-                        lit, overlay, frames, tick);
+                emit(buffers.getBuffer(own(model, location, part.seeThrough())), poses.last(), part.vertices(),
+                        part.vertices().length, lit, overlay, frames, tick);
                 if (through != null) {
                     emit(through, poses.last(), part.vertices(), part.vertices().length, lit, overlay, frames,
                             tick);
@@ -199,9 +199,9 @@ public final class KitRenderer {
         return true;
     }
 
-    /** The way the faces painted with picture {@code texture} are drawn. */
+    /** The way the faces painted with picture {@code texture} are drawn, unless they are see-through of their own. */
     static RenderType type(final KitModel model, final int texture, @Nullable final ResourceLocation painted) {
-        return own(model, location(model, texture, painted));
+        return own(model, location(model, texture, painted), false);
     }
 
     /*
@@ -225,7 +225,7 @@ public final class KitRenderer {
             poses.mulPose(matrices[i]);
             for (final BakedGeometry.Part part : parts) {
                 final ResourceLocation location = location(model, part.texture(), painted);
-                final RenderType into = type == null ? own(model, location) : type.apply(location);
+                final RenderType into = type == null ? own(model, location, part.seeThrough()) : type.apply(location);
                 if (into != null) {
                     emit(buffers.getBuffer(into), poses.last(), part.vertices(), part.vertices().length,
                             part.glow() ? LightTexture.FULL_BRIGHT : light, overlay,
@@ -244,7 +244,8 @@ public final class KitRenderer {
                 continue;
             }
             final ResourceLocation location = location(model, deformed.mesh().texture(), painted);
-            final RenderType into = type == null ? own(model, location) : type.apply(location);
+            final RenderType into = type == null ? own(model, location, deformed.mesh().seeThrough())
+                    : type.apply(location);
             if (into == null) {
                 continue;
             }
@@ -270,10 +271,13 @@ public final class KitRenderer {
         return painted != null && texture == 0 ? painted : model.texture(texture);
     }
 
-    /* The way a model draws faces painted with {@code location}, see-through or not as its definition says. */
-    private static RenderType own(final KitModel model, final ResourceLocation location) {
+    /*
+     * The way a model draws faces painted with {@code location}: see-through when its definition says so or the faces
+     * are, as its glass is; otherwise solid, drawn in the same order every frame, so no two faces swap places.
+     */
+    private static RenderType own(final KitModel model, final ResourceLocation location, final boolean seeThrough) {
         final ModelDefinition definition = model.definition();
-        return definition.translucent() ? KitRenderTypes.translucent(location, definition.cracks())
+        return definition.translucent() || seeThrough ? KitRenderTypes.translucent(location, definition.cracks())
                 : KitRenderTypes.cutout(location, definition.cracks());
     }
 

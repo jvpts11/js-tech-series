@@ -14,6 +14,7 @@ import dev.jstech.testkit.client.ClientTestHelper;
 import dev.jstech.tests.TestShips;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -24,7 +25,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * The starship parts' interiors on a player's game, each in its maker's style: the Orbiter's airlock in Meridian
  * Orbital's padded white panels, its outer door's leaf shut in the doorway and the world outside hidden; the Hauler's
- * reactor room in Ironside Yards' bare metal; the Courier's docking module in Kosmozavod's turquoise.
+ * reactor room in Ironside Yards' bare metal; the Courier's docking module in Kosmozavod's turquoise. And a doorway's
+ * frame holding still as the eye moves, no face of the wall lying in its plane to fight it.
  */
 public final class ShipInteriorsClientTests {
 
@@ -53,6 +55,21 @@ public final class ShipInteriorsClientTests {
     private static final int ARRIVE = 600;
     private static final int SETTLE = 10;
     private static final int CHANNEL = 0xFF;
+    /*
+     * Inside the Orbiter's airlock, beside its doorway into the cockpit, and the face of the doorway's frame toward
+     * the doorway, where the bulkhead's wall once lay in the frame's plane and fought it as the eye moved.
+     */
+    private static final Vec3 FRAME_EYES = new Vec3(0.45, HULL + 1.65, 5.45);
+    private static final Vec3 FRAME = new Vec3(-0.55, HULL + 1.4, 5.0);
+    private static final int STEPS = 8;
+    private static final double STEP = 0.002;
+    /* The patch on the frame's face, in pixels either way of the middle, inside the strip the wall shared. */
+    private static final int FRAME_WIDE = 4;
+    private static final int FRAME_TALL = 10;
+    /* How far apart two colours are, all three channels together, to count as a pixel that changed. */
+    private static final int CHANGED = 60;
+    /* At most this much of the patch changes from one look to the next. */
+    private static final double FLIPPED = 0.1;
 
     private ShipInteriorsClientTests() {
     }
@@ -112,6 +129,37 @@ public final class ShipInteriorsClientTests {
                     ctx.assertTrue(door[0] - door[1] < TINT && door[0] - door[2] < TINT,
                             "the outer door's leaf hides the red wall outside: " + str(door));
                 });
+    }
+
+    @ClientTest(timeoutTicks = 1500)
+    public static void doorFrame_holdsStillAsTheEyeMoves(final ClientTestContext ctx) {
+        final List<int[]> seen = new ArrayList<>();
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            ctx.serverLevel().removeBlock(ctx.abs(STAND), false);
+            ctx.serverPlayer().setGameMode(GameType.CREATIVE);
+        }));
+        ctx.thenServer(0, level -> {
+            level.setBlockAndUpdate(ctx.abs(STAND), TestShips.DISPLAY.get().defaultBlockState());
+            ctx.serverPlayer().setGameMode(GameType.SPECTATOR);
+        });
+        show(ctx, ship("ORBITER", List.of("orbiter_cockpit", "airlock", "bay", "reactor_flush"), List.of()));
+        // A hair at a time toward the doorway, the eye kept on the frame's side where the wall met it.
+        for (int step = 0; step < STEPS; step++) {
+            final Vec3 eyes = FRAME_EYES.add(0, 0, -step * STEP);
+            stand(ctx, eyes);
+            ctx.thenWaitUntil(() -> ctx.player().getEyePosition().distanceTo(corner(ctx).add(eyes)) < STEP / 4,
+                            ARRIVE, "the player's eyes to move a hair")
+                    .then(2, () -> ctx.lookAt(corner(ctx).add(FRAME)))
+                    .then(SETTLE, () -> seen.add(patch(ctx)));
+        }
+        ctx.thenScreenshot(0, "ship-interior-door-frame").then(0, () -> {
+            double worst = 0;
+            for (int k = 1; k < seen.size(); k++) {
+                worst = Math.max(worst, flipped(seen.get(k - 1), seen.get(k)));
+            }
+            ctx.assertTrue(worst < FLIPPED, "the doorway's frame holds still as the eye moves a hair, no face of the "
+                    + "wall fighting it: at worst " + Math.round(worst * 100) + "% of its pixels changed");
+        });
     }
 
     /* Has the stand show {@code design}, in the orbiter's finish, and waits until the player's game has it. */
@@ -178,5 +226,36 @@ public final class ShipInteriorsClientTests {
 
     private static String str(final int[] colour) {
         return "(" + colour[0] + ", " + colour[1] + ", " + colour[2] + ")";
+    }
+
+    /* The pixels of a patch at the middle of the screen, row by row. */
+    private static int[] patch(final ClientTestContext ctx) {
+        final int x = ctx.mc().getWindow().getGuiScaledWidth() / 2;
+        final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2;
+        final int[] out = new int[(2 * FRAME_WIDE + 1) * (2 * FRAME_TALL + 1)];
+        int at = 0;
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int dy = -FRAME_TALL; dy <= FRAME_TALL; dy++) {
+                for (int dx = -FRAME_WIDE; dx <= FRAME_WIDE; dx++) {
+                    out[at++] = frame.pixel(x + dx, y + dy);
+                }
+            }
+        }
+        return out;
+    }
+
+    /* How much of a patch changed colour from one look to the next, from nought to one. */
+    private static double flipped(final int[] before, final int[] after) {
+        int changed = 0;
+        for (int i = 0; i < before.length; i++) {
+            final int a = before[i];
+            final int b = after[i];
+            final int apart = Math.abs((a >> 16 & CHANNEL) - (b >> 16 & CHANNEL))
+                    + Math.abs((a >> 8 & CHANNEL) - (b >> 8 & CHANNEL)) + Math.abs((a & CHANNEL) - (b & CHANNEL));
+            if (apart > CHANGED) {
+                changed++;
+            }
+        }
+        return changed / (double) before.length;
     }
 }

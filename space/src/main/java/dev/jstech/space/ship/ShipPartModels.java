@@ -37,7 +37,8 @@ import net.neoforged.neoforgespi.language.IModFileInfo;
  * kit is a bone of its own, named {@code c_<x>_<y>_<z>} by its place in the kit from the piece's anchor, so a block
  * missing is a bone hidden. A part is a model a piece of its kit, set from the piece's anchor on the ship; and a model
  * in each finish, the same geometry painted by the finish's texture. A cockpit's and a hull module's glass lets the
- * world be seen through it, so their models are drawn translucent.
+ * world be seen through it: its faces are a mesh of their own in each block's bone, blended, drawn see-through while
+ * the rest of the model is drawn solid, so no two faces in one plane swap places as the camera moves.
  */
 public final class ShipPartModels {
 
@@ -63,8 +64,6 @@ public final class ShipPartModels {
                 return;
             }
             final ShipPart declared = ShipParts.declared().get(part);
-            final boolean glazed = declared != null && (declared.kind() == ShipPartKind.COCKPIT
-                    || declared.kind() == ShipPartKind.HULL || declared.kind() == ShipPartKind.MODULE);
             for (final ShipKit.Piece piece : kit.pieces()) {
                 final String name = name(part, kit, piece);
                 NAMES.add(name);
@@ -79,9 +78,6 @@ public final class ShipPartModels {
                             .file("jsmodels/ship/" + name + ".gltf")
                             .texture("textures/models/ship/" + name + "_" + finish + ".png")
                             .triangles(MOST_TRIANGLES);
-                    if (glazed) {
-                        model.translucent();
-                    }
                     if (declared != null && declared.kind() == ShipPartKind.COCKPIT) {
                         // A cockpit's pilot seat is its helm: the pilot sitting in it flies the ship.
                         model.aboard(ShipKitBlocks.PILOT_SEAT.getId(), PILOT);

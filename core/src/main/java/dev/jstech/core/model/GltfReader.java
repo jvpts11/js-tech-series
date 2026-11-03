@@ -29,7 +29,8 @@ import org.joml.Vector3f;
 /**
  * Reads glTF 2.0, the format Blender writes natively and Maya, 3ds Max and Cinema 4D write with an exporter, in its
  * text form ({@code .gltf}, its buffers beside it or inside it) and its binary one ({@code .glb}): the nodes as bones,
- * their meshes with normals, pictures, skins and morph targets, the textures of their materials, and the animations,
+ * their meshes with normals, pictures, skins and morph targets, the textures of their materials and whether those are
+ * blended (drawn see-through, as glass is), and the animations,
  * stepped, straight or along cubic splines. glTF is right-handed with Y up, as the game is, so nothing turns round;
  * but it counts in metres and the Core in pixels, sixteen to a metre, a block being a metre. Pure.
  */
@@ -47,6 +48,7 @@ public final class GltfReader {
     private static final String DATA = "data:";
     private static final String BASE64 = ";base64,";
     private static final String CUBIC = "CUBICSPLINE";
+    private static final String BLEND = "BLEND";
     private static final int TRIANGLES = 4;
     private static final int STRIP = 5;
     private static final int FAN = 6;
@@ -172,7 +174,7 @@ public final class GltfReader {
                 target++;
             }
             out.add(new ModelMesh(positions, normals, uvs, triangles(mode, order), joints, weights, morphs,
-                    texture(primitive)));
+                    texture(primitive), blended(primitive)));
         }
         return out;
     }
@@ -209,6 +211,16 @@ public final class GltfReader {
             }
         }
         return out;
+    }
+
+    /* Whether a primitive's material is blended with what lies behind it, as glass is: drawn see-through. */
+    private boolean blended(final JsonObject primitive) {
+        if (!primitive.has("material")) {
+            return false;
+        }
+        final JsonObject material = array(this.root, "materials").get(primitive.get("material").getAsInt())
+                .getAsJsonObject();
+        return material.has("alphaMode") && BLEND.equals(material.get("alphaMode").getAsString());
     }
 
     /* The image of a primitive's material's base colour, by its place among the model's textures. */

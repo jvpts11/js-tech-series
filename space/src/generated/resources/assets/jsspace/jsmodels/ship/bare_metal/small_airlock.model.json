@@ -3,6 +3,5 @@
   "textures": [
     "jsspace:textures/models/ship/small_airlock_bare_metal.png"
   ],
-  "translucent": true,
   "triangles": 9000
 }

@@ -422,6 +422,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   (`leavesShut`) and keeping the rooms on its two sides apart. A `FormedPiece` may ask for rooms (`rooms`, written in
   a pieces file as `rooms`, its blocks as `roomCells`), which the block it works by asks for while it stands, wherever
   its structure goes. Experimental.
+- Glass in a solid model: J's Core's API is at version 42. A mesh can be see-through of its own
+  (`ModelMesh.seeThrough`), as a glTF material blended (`alphaMode` `BLEND`) is read, and its faces are baked apart
+  (`BakedGeometry.Part.seeThrough`): only they are drawn sorted back to front with what else is see-through, the rest
+  of the model solid, in the same order every frame. The constructors without it are kept, drawing a mesh as its
+  model's definition says. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

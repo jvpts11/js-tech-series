@@ -9327,8 +9327,9 @@ stable 4
 10 dev.jstech.core.model.BakedGeometry  int faces()
 10 dev.jstech.core.model.BakedGeometry  static final int STRIDE
 10 dev.jstech.core.model.BakedGeometry.Deformed  type record(int bone, boolean glow, ModelMesh mesh, ModelSkin skin)
-10 dev.jstech.core.model.BakedGeometry.Part  type record(int texture, boolean glow, float[] vertices)
+42 dev.jstech.core.model.BakedGeometry.Part  type record(int texture, boolean glow, float[] vertices, boolean seeThrough)
 10 dev.jstech.core.model.BakedGeometry.Part  int faces()
+42 dev.jstech.core.model.BakedGeometry.Part  new(int, boolean, float[])
 10 dev.jstech.core.model.BedrockReader  type final class
 10 dev.jstech.core.model.BedrockReader  static List<ModelAnimation> animations(String, JsonObject)
 10 dev.jstech.core.model.BedrockReader  static List<ModelData> geometry(String, JsonObject)
@@ -9506,9 +9507,10 @@ stable 4
 10 dev.jstech.core.model.ModelFormatException  new(String)
 10 dev.jstech.core.model.ModelFormatException  new(String, Throwable)
 10 dev.jstech.core.model.ModelLocator  type record(String name, Vector3fc offset, Vector3fc rotation)
-10 dev.jstech.core.model.ModelMesh  type record(float[] positions, float[] normals, float[] uvs, int[] triangles, int[] joints, float[] weights, List<MorphTarget> morphs, int texture)
+42 dev.jstech.core.model.ModelMesh  type record(float[] positions, float[] normals, float[] uvs, int[] triangles, int[] joints, float[] weights, List<MorphTarget> morphs, int texture, boolean seeThrough)
 10 dev.jstech.core.model.ModelMesh  boolean skinned()
 10 dev.jstech.core.model.ModelMesh  int corners()
+42 dev.jstech.core.model.ModelMesh  new(float[], float[], float[], int[], int[], float[], List<MorphTarget>, int)
 10 dev.jstech.core.model.ModelMesh.MorphTarget  type record(String name, float[] moves)
 10 dev.jstech.core.model.ModelPose  type final class
 10 dev.jstech.core.model.ModelPose  Matrix4f local(int, Matrix4f)

@@ -3,6 +3,5 @@
   "textures": [
     "jsspace:textures/models/ship/small_corridor_orbiter.png"
   ],
-  "translucent": true,
   "triangles": 9000
 }

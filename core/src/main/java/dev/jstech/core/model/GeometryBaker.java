@@ -47,7 +47,7 @@ public final class GeometryBaker {
         }
         for (int i = 0; i < model.bones().size(); i++) {
             final ModelBone bone = model.bones().get(i);
-            final Map<Integer, Corners> byTexture = new LinkedHashMap<>();
+            final Map<Look, Corners> byTexture = new LinkedHashMap<>();
             for (final ModelCube cube : bone.cubes()) {
                 cube(model, cube, byTexture);
             }
@@ -56,13 +56,14 @@ public final class GeometryBaker {
                 if (mesh.skinned() || !mesh.morphs().isEmpty()) {
                     deformed.add(new BakedGeometry.Deformed(i, glows[i], mesh, mesh.skinned() ? skin : null));
                 } else {
-                    mesh(mesh, mesh.positions(), byTexture.computeIfAbsent(mesh.texture(), key -> new Corners()));
+                    mesh(mesh, mesh.positions(), byTexture.computeIfAbsent(new Look(mesh.texture(),
+                            mesh.seeThrough()), key -> new Corners()));
                 }
             }
             final List<BakedGeometry.Part> parts = new ArrayList<>();
             final boolean glowing = glows[i];
-            byTexture.forEach((texture, corners) -> parts.add(new BakedGeometry.Part(texture, glowing,
-                    corners.done())));
+            byTexture.forEach((look, corners) -> parts.add(new BakedGeometry.Part(look.texture(), glowing,
+                    corners.done(), look.seeThrough())));
             bones.add(parts);
         }
         return new BakedGeometry(bones, deformed);
@@ -113,7 +114,7 @@ public final class GeometryBaker {
      * A cube's faces, each as Bedrock lays it: its corners in a fixed order round the face, the picture's right edge
      * at the first corner unless the cube is mirrored, turned by the face's quarter turns.
      */
-    private static void cube(final ModelData model, final ModelCube cube, final Map<Integer, Corners> byTexture) {
+    private static void cube(final ModelData model, final ModelCube cube, final Map<Look, Corners> byTexture) {
         final float grow = cube.inflate();
         final float lx = cube.from().x() - grow;
         final float ly = cube.from().y() - grow;
@@ -139,7 +140,7 @@ public final class GeometryBaker {
             if (turned) {
                 turn.transform(normal);
             }
-            final Corners out = byTexture.computeIfAbsent(picture.texture(), key -> new Corners());
+            final Corners out = byTexture.computeIfAbsent(new Look(picture.texture(), false), key -> new Corners());
             for (int k = 0; k < 4; k++) {
                 corner.set(corners[k * 3], corners[k * 3 + 1], corners[k * 3 + 2]);
                 if (turned) {
@@ -270,5 +271,9 @@ public final class GeometryBaker {
         public float[] done() {
             return Arrays.copyOf(this.data, this.size);
         }
+    }
+
+    /* How a bone's faces are drawn, which keeps them together: their texture, and whether they are see-through. */
+    private record Look(int texture, boolean seeThrough) {
     }
 }

@@ -292,7 +292,10 @@ block entity's state.
 A bone whose name ends in `_glow`, or that the declaration names, is drawn at full light, and so is everything hanging
 from it. With `glowLight(level, colour)` its glowing parts also light the world around them where they are drawn in
 the world, as a lamp's bulb does, moving with them: a lamp on a machine's turning arm lights what it passes. A
-see-through model has its faces sorted back to front by the game, as it sorts what it draws see-through. A
+see-through model has its faces sorted back to front by the game, as it sorts what it draws see-through. A model
+that is solid but for its glass, as a ship's hull with its windows, does not say `translucent()`: its glass is a mesh
+of its own whose glTF material is blended (`"alphaMode": "BLEND"`), and only those faces are sorted, the rest drawn
+solid in the same order every frame, so two faces in one plane never swap places as the camera moves. A
 block drawn with a model shows the cracks of being broken over it, as the game draws them over any block entity,
 unless it says `noCracks()`. Under a shader pack (Iris, Oculus) the model is drawn with the game's own entity shaders,
 so the pack draws it as it draws a mob; without one, the copies of a model in the world are drawn together by a shader

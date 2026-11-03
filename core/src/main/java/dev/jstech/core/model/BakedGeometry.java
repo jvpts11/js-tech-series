@@ -14,7 +14,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A model's shape worked out once, as it is drawn: every face of every cube and mesh of each bone laid out as the
  * corners of four-cornered faces in the bone's own space, with the point of the texture and the way it faces at each,
- * grouped by the texture they are painted with and whether they glow. A mesh that bends with a skin, or moves toward
+ * grouped by the texture they are painted with, whether they glow and whether they are see-through, as glass is
+ * though the rest of its model is not. A mesh that bends with a skin, or moves toward
  * a morph target, is kept as it is, to be worked out each frame. Built by {@link GeometryBaker}; pure.
  *
  * @param bones    the parts of each bone, in the model's order of bones
@@ -50,11 +51,17 @@ public record BakedGeometry(List<List<Part>> bones, List<Deformed> deformed) {
      * The faces of a bone painted with one texture, in its own space: {@link #STRIDE} numbers for each corner (x, y,
      * z in pixels, u and v from 0 to 1, and the normal), four corners for each face, a triangle's last corner twice.
      *
-     * @param texture  which of the model's textures they are painted with
-     * @param glow     whether they glow in the dark
-     * @param vertices their corners
+     * @param texture    which of the model's textures they are painted with
+     * @param glow       whether they glow in the dark
+     * @param vertices   their corners
+     * @param seeThrough whether they are drawn see-through whatever the model's definition says, as glass is
      */
-    public record Part(int texture, boolean glow, float[] vertices) {
+    public record Part(int texture, boolean glow, float[] vertices, boolean seeThrough) {
+
+        /** Faces drawn as the model's definition says, see-through or not. */
+        public Part(final int texture, final boolean glow, final float[] vertices) {
+            this(texture, glow, vertices, false);
+        }
 
         public Part {
             Objects.requireNonNull(vertices, "vertices");

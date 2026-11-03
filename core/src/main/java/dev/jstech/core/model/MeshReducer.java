@@ -360,7 +360,7 @@ public final class MeshReducer {
                 }
             }
             return new ModelMesh(positions, keptNormals, keptUvs, order, new int[0], new float[0],
-                    this.mesh.morphs(), this.mesh.texture());
+                    this.mesh.morphs(), this.mesh.texture(), this.mesh.seeThrough());
         }
 
         private void join(final int corner, final int triangle) {

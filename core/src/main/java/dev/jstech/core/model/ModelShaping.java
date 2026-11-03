@@ -140,7 +140,7 @@ public final class ModelShaping {
             triangles[i] = onto[mesh.triangles()[i]];
         }
         return new ModelMesh(corners, new float[0], new float[0], triangles, new int[0], new float[0], List.of(),
-                mesh.texture());
+                mesh.texture(), mesh.seeThrough());
     }
 
     /*
@@ -188,7 +188,7 @@ public final class ModelShaping {
             }
         }
         return new ModelMesh(positions, new float[0], uvs, triangles, new int[0], new float[0], List.of(),
-                mesh.texture());
+                mesh.texture(), mesh.seeThrough());
     }
 
     /* A corner's place, compared exactly. */

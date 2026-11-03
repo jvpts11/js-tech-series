@@ -7,6 +7,9 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.model.ModelMesh;
+import dev.jstech.core.model.ModelReaders;
+import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.ShipFinish;
 import dev.jstech.space.api.ShipFinishes;
 import dev.jstech.space.api.ShipKit;
@@ -16,18 +19,24 @@ import dev.jstech.space.ship.ShipPartModels;
 import dev.jstech.space.ship.SmallShipFinishes;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.tests.JsTests;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.locale.Language;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The starship parts' formed models: the three finishes declared and named; every piece of every part's kit a model in
- * each of them; and the Orbiter drawn with a model a piece, each where its anchor stands along the spine.
+ * each of them; the Orbiter drawn with a model a piece, each where its anchor stands along the spine; and every model
+ * drawn solid, its glass a see-through mesh of its own.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -71,7 +80,38 @@ public final class ShipPartModelGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void models_areSolidButForTheirGlass(final GameTestHelper helper) {
+        for (final String name : ShipPartModels.names()) {
+            for (final String finish : ShipPartModels.FINISHES) {
+                final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship/" + finish
+                        + "/" + name);
+                helper.assertFalse(ShipPartModels.get(id).orElseThrow().definition().translucent(),
+                        id + " is drawn solid, only its glass see-through");
+            }
+        }
+        for (final String name : List.of("small_orbiter_cockpit", "small_cab_cockpit", "small_greenhouse_cockpit",
+                "small_corridor")) {
+            helper.assertTrue(glass(name) > 0, name + " has its windows' glass as a see-through mesh of its own");
+        }
+        helper.assertTrue(glass("small_bay") == 0, "the hold, without a window, has no see-through mesh");
+        helper.succeed();
+    }
+
     private static ResourceLocation part(final String path) {
         return SmallShipParts.id("small_" + path);
+    }
+
+    /* How many see-through meshes the model {@code name} has, as the Core reads its file. */
+    private static long glass(final String name) {
+        final Path file = ModList.get().getModFileById(JsSpace.MODID).getFile().findResource("assets",
+                JsSpace.MODID, "jsmodels", "ship", name + ".gltf");
+        try {
+            return ModelReaders.read(name + ".gltf", Files.readAllBytes(file), beside -> null).stream()
+                    .flatMap(model -> model.bones().stream()).flatMap(bone -> bone.meshes().stream())
+                    .filter(ModelMesh::seeThrough).count();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }
