@@ -3104,6 +3104,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Space) Climbing over a world of the Solar System, the ground stays drawn under the climber from as high as the
+  game's sight reaches down to the top of the world: over the Moon, between about 250 and 320 high, it went black, out
+  of the game's sight and with no air to haze it, till the far map's picture took over at the top.
 - (Space) A space suit worn whole keeps the cold of a vacuum out, whatever the vacuum reads, as no air is there to
   carry the wearer's warmth away: out in space, frost crept over the view of a player sealed in a lunar suit, held just
   short of hurting them.

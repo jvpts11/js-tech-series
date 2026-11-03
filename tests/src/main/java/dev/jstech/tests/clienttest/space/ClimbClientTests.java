@@ -10,10 +10,12 @@ package dev.jstech.tests.clienttest.space;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.dimension.TravelScreens;
 import dev.jstech.core.client.sky.GroundCovers;
+import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.space.universe.ClimbView;
 import dev.jstech.space.universe.SpaceClimbs;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemSpaces;
+import dev.jstech.space.worldgen.MoonWorld;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.testkit.client.ClientTestHelper;
@@ -25,6 +27,7 @@ import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,6 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -74,6 +78,13 @@ public final class ClimbClientTests {
     /* How far a point's red, green and blue together may differ across the line. */
     private static final int SAME = 60;
     private static final int SEEN = 60;
+    /*
+     * How far under the top of the Moon's world the climber stands at least; the Moon's noon; the game's sight, in
+     * chunks, over the Moon, which the climber stands two sections over.
+     */
+    private static final int SHORT_OF_THE_TOP = 20;
+    private static final long MOON_NOON = 6_000L;
+    private static final int MOON_SIGHT = 6;
     private static final int NAVY = 250;
     private static final int CHANNEL = 0xFF;
     /* How long the way down from the orbit to its floor may take, flying down. */
@@ -206,6 +217,45 @@ public final class ClimbClientTests {
                     }
                 })
                 .thenScreenshot(0, "climb_blocks_given_way");
+    }
+
+    /*
+     * Flying up over the Moon at its noon, short of the top of its world, as high as the game's sight no longer reaches
+     * down to the ground: the ground is still drawn under the climber, where it went black with no air to haze it.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void climb_overTheMoonShortOfTheTopStillDrawsTheGround(final ClientTestContext ctx) {
+        final boolean[] daylight = new boolean[1];
+        final int[] sight = new int[1];
+        ctx.afterTest(() -> {
+            ctx.mc().execute(() -> ctx.mc().options.renderDistance().set(sight[0]));
+            ctx.server().execute(() -> {
+                ctx.server().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(daylight[0], ctx.server());
+                land(ctx);
+            });
+        });
+        ctx.then(0, () -> {
+            sight[0] = ctx.mc().options.renderDistance().get();
+            ctx.mc().options.renderDistance().set(MOON_SIGHT);
+        }).thenServer(0, level -> {
+            final GameRules.BooleanValue rule = level.getServer().getGameRules().getRule(GameRules.RULE_DAYLIGHT);
+            daylight[0] = rule.get();
+            rule.set(false, level.getServer());
+            final ResourceKey<Level> key = MoonWorld.world().dimension();
+            final ServerLevel moon = RuntimeDimensions.getOrCreate(level.getServer(), key, key.location());
+            moon.setDayTime(MOON_NOON);
+            final BlockPos origin = ctx.origin();
+            moon.getChunk(origin);
+            final int ground = moon.getHeight(Heightmap.Types.MOTION_BLOCKING, origin.getX(), origin.getZ());
+            final int eye = ground + (MOON_SIGHT + 2) * SectionPos.SECTION_SIZE;
+            ctx.assertTrue(eye < moon.getMaxBuildHeight() - SHORT_OF_THE_TOP, "the climber stands short of the top"
+                    + " of the Moon's world: " + eye);
+            look(ctx, moon, eye, DOWN);
+        }).thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(
+                MoonWorld.world().dimension()), DRAWN, "the player's game to reach the Moon")
+                .thenWaitUntil(() -> bright(colour(ctx, GROUND[0][0], GROUND[0][1])) > SEEN, DRAWN,
+                        "the Moon's ground to be drawn far below, short of the top of its world")
+                .thenScreenshot(0, "climb_moon_short_of_the_top");
     }
 
     /*

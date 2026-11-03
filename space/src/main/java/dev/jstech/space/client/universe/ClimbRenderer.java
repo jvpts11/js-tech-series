@@ -23,6 +23,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -91,8 +92,22 @@ final class ClimbRenderer {
             final Frame drawn = frame;
             return drawn != null && drawn.climb().blocksGone();
         });
-        // On the way up the loaded ground is drawn however far below it lies, until the far map's picture takes over.
-        GroundCovers.reachDown(() -> frame != null);
+        // On the way up the loaded ground is drawn however far below it lies, until the far map's picture takes over;
+        // and before the climb begins, from as high over the ground as the game's sight reaches down: from there up to
+        // the top of the world the ground fell out of sight, and over the Moon, with no air to haze it, went black.
+        GroundCovers.reachDown(() -> frame != null || overTheSight());
+    }
+
+    /* Whether the eye stands over a world of the system higher above its ground than the game's sight reaches down. */
+    private static boolean overTheSight() {
+        final Minecraft minecraft = Minecraft.getInstance();
+        final ClientLevel level = minecraft.level;
+        if (level == null) {
+            return false;
+        }
+        final double eye = minecraft.gameRenderer.getMainCamera().getPosition().y;
+        final int reach = (minecraft.options.getEffectiveRenderDistance() - 1) * SectionPos.SECTION_SIZE;
+        return eye - FarGround.sea(level) > reach && bodyHere(level) != null;
     }
 
     /* Works out this frame's climb, and turns the game's fog into the climb's haze. */
