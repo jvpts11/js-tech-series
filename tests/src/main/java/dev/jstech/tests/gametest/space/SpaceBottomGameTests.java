@@ -11,6 +11,8 @@ import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureResult;
+import dev.jstech.space.universe.SolarBody;
+import dev.jstech.space.universe.SpaceClimbs;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemLayout;
 import dev.jstech.space.universe.SystemSpaces;
@@ -29,7 +31,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * A system's space has no bottom: a player or a moving structure that goes far under its lowest block, where no world
- * lies under them, is neither hurt nor taken away, and stays where it went, as high up would be.
+ * lies under them, is neither hurt nor taken away, and stays where it went, as high up would be. Where a world lies
+ * under it, a structure sent under the floor of the low orbits goes down into that world, over its middle or near the
+ * edge of its map.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -44,6 +48,12 @@ public final class SpaceBottomGameTests {
     private static final double CLOSE = 1;
     private static final BlockPos CRAFT = new BlockPos(2, 2, 2);
     private static final int WATCHED = 60;
+    /* How far under the orbits' floor, over a world, a structure is sent. */
+    private static final double UNDER_FLOOR = 20;
+    /* Walking a spot out from a world's middle, in blocks, to the longitude near its map's edge, in degrees. */
+    private static final double EDGE_STEP = 16;
+    private static final int EDGE_STEPS = 100_000;
+    private static final double EDGE_LONGITUDE = 175;
 
     private SpaceBottomGameTests() {
     }
@@ -100,6 +110,83 @@ public final class SpaceBottomGameTests {
                     MovingStructures.takeAway(there);
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = "jsspace_bottom", timeoutTicks = 1200)
+    public static void bottom_aStructureSentUnderTheFloorOverAWorldArrives(final GameTestHelper helper) {
+        final ServerLevel overworld = helper.getLevel();
+        helper.setBlock(CRAFT, Blocks.IRON_BLOCK);
+        final StructureResult made = MovingStructures.assemble(overworld, helper.absolutePos(CRAFT),
+                helper.absolutePos(CRAFT));
+        helper.assertTrue(made.ok(), "the craft is made");
+        final MovingStructure craft = made.structure();
+        final double[] over = SystemLayout.centre(SolarBody.OVERWORLD);
+        final Vec3 under = new Vec3(over[0], SpaceClimbs.floor() - UNDER_FLOOR, over[2]);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(craft.ready(), "the craft is ready"))
+                .thenExecute(() -> helper.assertTrue(SystemLayout.over(under.x, under.z) == SolarBody.OVERWORLD,
+                        "the Overworld lies under the spot"))
+                .thenExecute(() -> helper.assertTrue(MovingStructures.travel(craft, space(helper), under).ok(),
+                        "the craft is sent into space, under the floor"))
+                .thenWaitUntil(() -> {
+                    final MovingStructure inSpace = MovingStructures.byId(space(helper), craft.id());
+                    final MovingStructure home = MovingStructures.byId(overworld, craft.id());
+                    helper.assertTrue(home != null && home.ready() && home != craft, "under the floor over the "
+                            + "Overworld, the craft goes down into it; in space it is " + (inSpace == null ? "gone"
+                            : "at " + inSpace.pose() + (inSpace.departing() ? ", waiting to go" : ", not going"))
+                            + "; in the Overworld " + (home == null ? "it is not" : home == craft ? "it is the one sent"
+                            : home.blocks() + " blocks at " + home.pose() + (home.ready() ? ", ready" : ", not ready")
+                            + (home.departing() ? ", waiting to go" : "")));
+                })
+                .thenExecute(() -> MovingStructures.takeAway(MovingStructures.byId(overworld, craft.id())))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = "jsspace_bottom", timeoutTicks = 1800)
+    public static void bottom_aStructureUnderTheFloorNearAWorldsEdgeArrives(final GameTestHelper helper) {
+        final ServerLevel overworld = helper.getLevel();
+        helper.setBlock(CRAFT, Blocks.IRON_BLOCK);
+        final StructureResult made = MovingStructures.assemble(overworld, helper.absolutePos(CRAFT),
+                helper.absolutePos(CRAFT));
+        helper.assertTrue(made.ok(), "the craft is made");
+        final MovingStructure craft = made.structure();
+        final Vec3 under = nearTheEdge();
+        final double[] place = SystemLayout.placeUnder(SolarBody.OVERWORLD, under.x, under.z);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(craft.ready(), "the craft is ready"))
+                .thenExecute(() -> helper.assertTrue(MovingStructures.travel(craft, space(helper), under).ok(),
+                        "the craft is sent into space, under the floor near the Overworld's edge, over "
+                                + place[0] + " east, " + place[1] + " north"))
+                .thenWaitUntil(() -> {
+                    final MovingStructure inSpace = MovingStructures.byId(space(helper), craft.id());
+                    final MovingStructure home = MovingStructures.byId(overworld, craft.id());
+                    helper.assertTrue(home != null && home.ready() && home != craft, "near the Overworld's edge, "
+                            + "the craft goes down into it; in space it is " + (inSpace == null ? "gone"
+                            : "at " + inSpace.pose() + (inSpace.departing() ? ", waiting to go" : ", not going")));
+                })
+                .thenExecute(() -> MovingStructures.takeAway(MovingStructures.byId(overworld, craft.id())))
+                .thenSucceed();
+    }
+
+    /* A spot under the floor over the Overworld, as near the edge of the map of it as its region reaches. */
+    private static Vec3 nearTheEdge() {
+        final double[] middle = SystemLayout.centre(SolarBody.OVERWORLD);
+        double x = middle[0];
+        double z = middle[2];
+        for (int k = 0; k < EDGE_STEPS; k++) {
+            final double nx = x + EDGE_STEP;
+            final double nz = z - EDGE_STEP;
+            if (SystemLayout.over(nx, nz) != SolarBody.OVERWORLD) {
+                break;
+            }
+            final double[] place = SystemLayout.placeUnder(SolarBody.OVERWORLD, nx, nz);
+            if (Math.abs(place[0]) >= EDGE_LONGITUDE) {
+                break;
+            }
+            x = nx;
+            z = nz;
+        }
+        return new Vec3(x, SpaceClimbs.floor() - UNDER_FLOOR, z);
     }
 
     private static ServerLevel space(final GameTestHelper helper) {
