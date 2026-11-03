@@ -3087,6 +3087,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   they were sent: before, the server could go on putting them back on its deck where their game had last said they
   stood, every move they made undone, till the world was opened again, and coming back to the game they were put on
   the structure again.
+- (Core) A player standing on a moving deck is put where their game says they stand on it: before, the server took
+  their step again against its own deck, a moment apart from the one their game drew, could stop it short on a block,
+  and sent them back to where the deck had been, so a pilot getting up from a ship's helm in flight slid along the
+  ship and fell off its back.
 - (Core) A seat aboard a moving structure goes on with it however fast it flies over land still being made: before, a
   ship come down from space onto the Moon and flying on over it could leave its pilot's seat behind in the air, the
   pilot with it, on the server, while on their game they sat on in the ship and could not get up.

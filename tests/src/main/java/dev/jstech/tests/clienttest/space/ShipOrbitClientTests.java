@@ -12,6 +12,7 @@ import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.moving.TowardMotion;
@@ -57,7 +58,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
  * A small ship climbing to space on a player's game, the player its pilot at its helm: pitched up and flying on, it
  * climbs over the line where the Overworld becomes its space and crosses into it with no loading screen at all, the
  * player still sitting at its helm on the other side, the ship drawn round them there. Come down from space onto the
- * Moon and flying on fast over it, its pilot stays at its helm, and gets up in it.
+ * Moon and flying on fast over it, its pilot stays at its helm, and gets up in it. Got up from its helm in flight,
+ * its pilot stands on its deck and goes on with it.
  */
 public final class ShipOrbitClientTests {
 
@@ -84,6 +86,12 @@ public final class ShipOrbitClientTests {
     private static final double UNDER_THE_FLOOR = 10;
     private static final double FAST = 120;
     private static final double FLIES_ON = 400;
+    /*
+     * How long a pilot got up in flight is watched on the deck, in ticks, and the longest step a tick on it a crouching
+     * walk makes, with room to spare, in blocks: one set back where the deck was goes the deck's own tick, two here.
+     */
+    private static final int WATCHED = 40;
+    private static final double A_STEP = 0.5;
     private static final ShipDesign SHIP = new ShipDesign("JS-06", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("lab"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
             part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
@@ -195,6 +203,79 @@ public final class ShipOrbitClientTests {
                             "and stands in the ship, " + there[0].worldBox() + ", on the server too: "
                             + pilot.position() + ", riding " + pilot.getVehicle());
                 });
+    }
+
+    /*
+     * Got up from its helm crouching while the ship flies on at its cruise, its pilot walks back along its deck,
+     * crouching, a crouching walk's step a tick on the server, never a jump: they go on with the ship, on the server
+     * and on their game, the deck under them all the while.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void helm_gotUpInFlightThePilotWalksTheDeckCrouchingAndGoesOnWithIt(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final KeyMapping crouch = ctx.mc().options.keyShift;
+        final KeyMapping back = ctx.mc().options.keyDown;
+        final boolean[] flying = new boolean[1];
+        // On the server, each tick once up: where on the deck they stood the tick before, their longest step on it.
+        final int[] watched = new int[1];
+        final double[] before = new double[3];
+        final double[] longest = new double[1];
+        final Consumer<ServerTickEvent.Post> watch = event -> {
+            final ServerPlayer player = ctx.serverPlayer();
+            if (!flying[0] || ship[0] == null || player.isPassenger() || watched[0] >= WATCHED) {
+                return;
+            }
+            final StructureFrame frame = ship[0].frame();
+            final double x = frame.yardX(player.getX(), player.getY(), player.getZ());
+            final double z = frame.yardZ(player.getX(), player.getY(), player.getZ());
+            if (watched[0]++ > 0) {
+                longest[0] = Math.max(longest[0], Math.hypot(x - before[0], z - before[2]));
+            }
+            before[0] = x;
+            before[2] = z;
+        };
+        NeoForge.EVENT_BUS.addListener(watch);
+        ctx.afterTest(() -> NeoForge.EVENT_BUS.unregister(watch));
+        ctx.afterTest(() -> {
+            crouch.setDown(false);
+            back.setDown(false);
+        });
+        atTheHelm(ctx, ship)
+                .thenServer(0, level -> {
+                    flying[0] = true;
+                    MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(
+                            new ShipFlightModel.State(CRUISE, 0, 1, 1, 0, 0)));
+                })
+                .then(SETTLE, () -> crouch.setDown(true))
+                .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,
+                        "its pilot to get up from the helm, crouching")
+                .then(0, () -> {
+                    // Looking along the ship's nose, as the pilot at its helm does.
+                    final ShipFlight flight = (ShipFlight) ship[0].motion();
+                    final StructureFrame frame = ship[0].frame();
+                    ctx.player().setYRot((float) Math.toDegrees(Math.atan2(-frame.turnX(flight.noseX(), 0,
+                            flight.noseZ()), frame.turnZ(flight.noseX(), 0, flight.noseZ()))));
+                    back.setDown(true);
+                })
+                // The server's own step met the deck's blocks as it had them, a moment apart from the deck the
+                // player's game moved against, stopped short, and sent them back to where it last had them, a place
+                // the deck had left.
+                .thenWaitUntilServer(level -> watched[0] >= WATCHED, ARRIVE, "its pilot to be watched on the deck",
+                        level -> watched[0] + " ticks")
+                .then(0, () -> {
+                    crouch.setDown(false);
+                    back.setDown(false);
+                })
+                .thenServer(0, level -> {
+                    final ServerPlayer pilot = ctx.serverPlayer();
+                    ctx.assertTrue(longest[0] < A_STEP, "its pilot walking back along the deck, crouching, the ship"
+                            + " flying on at " + CRUISE + " metres a second, steps along it a crouching walk's step a"
+                            + " tick, never set back where the deck was: their longest step " + longest[0] + " blocks");
+                    ctx.assertTrue(!pilot.isPassenger() && ship[0].worldBox().contains(pilot.position()), "and goes on"
+                            + " with the ship, " + ship[0].worldBox() + ": " + pilot.position());
+                })
+                .then(0, () -> ctx.assertTrue(ship[0].worldBox().inflate(1).contains(ctx.player().position()),
+                        "on their game too: " + ctx.player().position()));
     }
 
     /*

@@ -9,6 +9,7 @@ package dev.jstech.core.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import dev.jstech.core.moving.StructureCollisions;
 import dev.jstech.core.moving.StructureFooting;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -16,6 +17,7 @@ import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -61,6 +63,27 @@ public abstract class ServerGamePacketListenerImplMixin {
                                           final Operation<Double> original) {
         final Vec3 deck = packet.hasPosition() ? StructureFooting.reportedPlace(player) : null;
         return deck != null ? deck.z : original.call(packet, otherwise);
+    }
+
+    /*
+     * A player standing on a deck steps where their game says they stand on it, as the game would set them where it
+     * moved them: the server's own step meets the deck's blocks as it has them, a moment apart from the deck their
+     * game moved against, and can stop short on one. Stopped short, the server sent them back to where it last had
+     * them in the world, a place a deck in flight had already left, so their next step was further off still: a pilot
+     * getting up from a helm in flight slid along the ship and off its back.
+     */
+    @WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;move(Lnet/minecraft/world/entity/MoverType;"
+                    + "Lnet/minecraft/world/phys/Vec3;)V"))
+    private void jscore$stepOnTheDeck(final ServerPlayer mover, final MoverType type, final Vec3 by,
+                                      final Operation<Void> original,
+                                      @Local(argsOnly = true) final ServerboundMovePlayerPacket packet) {
+        final Vec3 deck = packet.hasPosition() ? StructureFooting.reportedPlace(mover) : null;
+        if (deck == null) {
+            original.call(mover, type, by);
+            return;
+        }
+        mover.setPos(deck.x, deck.y, deck.z);
     }
 
     @WrapOperation(method = "handleMoveVehicle", at = @At(value = "INVOKE",
