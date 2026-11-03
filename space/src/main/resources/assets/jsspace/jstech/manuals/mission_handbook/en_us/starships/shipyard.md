@@ -2,13 +2,13 @@
 section: starships
 order: 1
 icon: jsspace:shipyard_terminal
-covers: [jsspace:shipyard_terminal, jsspace:booth_panel, jsspace:cradle_clamp, jsspace:dock_conveyor, jsspace:dock_feeder, jsspace:dock_floodlight, jsspace:dock_gantry, jsspace:dock_girder, jsspace:dock_rail, jsspace:dock_stairs, jsspace:dock_tower, jsspace:dock_walkway, jsspace:pit_rim, jsspace:item_port]
+covers: [jsspace:shipyard_terminal, jsspace:booth_panel, jsspace:cradle_clamp, jsspace:dock_feeder, jsspace:dock_floodlight, jsspace:dock_gantry, jsspace:dock_girder, jsspace:dock_rail, jsspace:dock_stairs, jsspace:dock_tower, jsspace:dock_walkway, jsspace:pit_rim, jsspace:item_port]
 ---
 # Small Shipyard
 
 ## What it is
 
-The dry dock a small starship is built in: a pit sixteen blocks wide, twenty-four long and three deep, ringed by Pit Rim, with Cradle Clamps rising from its floor. Lattice Towers, Dock Girders, Dock Walkways and Gantry Rails line its sides, under the Gantry Bridge and four Dock Floodlights. Dock Stairs climb one side. At the back of the other, a booth of Control Booth Panels holds the Shipyard Terminal, over an Item Port and its Dock Conveyor. A Block Feeder stands on each lower walkway.
+The dry dock a small starship is built in: a pit sixteen blocks wide, twenty-four long and three deep, ringed by Pit Rim, with Cradle Clamps rising from its floor. Lattice Towers, Dock Girders, Dock Walkways and Gantry Rails line its sides, under the Gantry Bridge and four Dock Floodlights. Dock Stairs climb one side. At the back of the other, a booth of Control Booth Panels holds the Shipyard Terminal, over an Item Port. A Block Feeder stands on each lower walkway.
 
 ## What it is for
 

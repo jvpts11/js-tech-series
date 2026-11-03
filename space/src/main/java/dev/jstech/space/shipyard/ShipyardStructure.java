@@ -30,8 +30,8 @@ import net.minecraft.world.phys.Vec3;
  * the rails the gantry crane runs on, girders between them under walkways at two heights, a stair from the ground up
  * to both; the crane's bridge across the bay on the rails, a floodlight on each corner tower; on the east side at the
  * back the control booth, on the first walkway, with the terminal inside facing its windows on the bay; at its foot the
- * item port, its conveyor running into the bay; and a feeder on each first walkway's edge. The front, to the north, is
- * open. Its walls and floor are the ground it is dug in, whatever that is.
+ * item port; and a feeder on each first walkway's edge. The front, to the north, is open. Its walls and floor are the
+ * ground it is dug in, whatever that is.
  *
  * <p>It is drawn as it stands facing north, the open front to the north, as its formed model is made: across, x, from
  * the west tower line at -11 to the booth's outer wall at 11, the bay's middle between 0 and -1; up, y, from the
@@ -50,7 +50,6 @@ public final class ShipyardStructure {
     public static final String GANTRY = block("dock_gantry");
     public static final String FLOODLIGHT = block("dock_floodlight");
     public static final String BOOTH = block("booth_panel");
-    public static final String CONVEYOR = block("dock_conveyor");
     public static final String FEEDER = block("dock_feeder");
     public static final String CRADLE = block("cradle_clamp");
     public static final String RIM = block("pit_rim");
@@ -94,9 +93,8 @@ public final class ShipyardStructure {
     private static final int BOOTH_BACK = 12;
     private static final int TERMINAL_X = 10;
     private static final int TERMINAL_Z = 10;
-    /* The item port at the booth's foot, its conveyor into the bay; the feeders, one on each first walkway. */
+    /* The item port at the booth's foot; the feeders, one on each first walkway. */
     private static final int PORT_Z = 9;
-    private static final Set<Integer> CONVEYOR_Z = Set.of(6, 7, 8);
     private static final int FEEDER_Y = 4;
     private static final int EAST_FEEDER_Z = -3;
     private static final int WEST_FEEDER_Z = 2;
@@ -226,7 +224,6 @@ public final class ShipyardStructure {
                 .where('B', BlockMatch.blocks(GANTRY))
                 .where('F', BlockMatch.blocks(FLOODLIGHT))
                 .where('P', BlockMatch.blocks(BOOTH))
-                .where('V', BlockMatch.blocks(CONVEYOR))
                 .where('D', BlockMatch.blocks(FEEDER))
                 .where('C', BlockMatch.blocks(CRADLE))
                 .where('R', BlockMatch.blocks(RIM))
@@ -330,13 +327,10 @@ public final class ShipyardStructure {
         return !inside;
     }
 
-    /* The item port and its conveyor, on the ground under the booth, and the feeders on the walkways' edges. */
+    /* The item port, on the ground under the booth, and the feeders on the walkways' edges. */
     private static char fitting(final int x, final int y, final int z) {
         if (x == EAST_LINE && y == 0 && z == PORT_Z) {
             return 'I';
-        }
-        if (x == EAST_LINE && y == 0 && CONVEYOR_Z.contains(z)) {
-            return 'V';
         }
         if (y == FEEDER_Y && (x == EAST_RIM && z == EAST_FEEDER_Z || x == WEST_RIM && z == WEST_FEEDER_Z)) {
             return 'D';

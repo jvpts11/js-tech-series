@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "jsspace:dock_conveyor"
+          "name": "jsspace:dock_feeder"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "jsspace:blocks/dock_conveyor"
+  "random_sequence": "jsspace:blocks/dock_feeder"
 }

@@ -66,11 +66,6 @@
         "jsspace:dock_tower"
       ]
     },
-    "V": {
-      "blocks": [
-        "jsspace:dock_conveyor"
-      ]
-    },
     "W": {
       "blocks": [
         "jsspace:dock_walkway"
@@ -185,9 +180,9 @@
       "                       ",
       "T                    T ",
       "                       ",
-      "        C CC C       V ",
-      "                     V ",
-      "                     V ",
+      "        C CC C         ",
+      "                       ",
+      "                       ",
       "                     I ",
       "                       ",
       "                       ",

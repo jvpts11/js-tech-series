@@ -67,7 +67,6 @@ public final class ShipyardBlocks {
     public static final BlockEntry<Block> FLOODLIGHT = kit("dock_floodlight").named("Dock Floodlight")
             .properties(properties -> properties.lightLevel(state -> FLOODLIGHT_LIGHT)).register();
     public static final BlockEntry<Block> BOOTH = kit("booth_panel").named("Control Booth Panel").register();
-    public static final BlockEntry<Block> CONVEYOR = kit("dock_conveyor").named("Dock Conveyor").register();
     public static final BlockEntry<Block> FEEDER = kit("dock_feeder").named("Block Feeder").register();
     public static final BlockEntry<Block> CRADLE = kit("cradle_clamp").named("Cradle Clamp").register();
     public static final BlockEntry<Block> RIM = SpaceContent.CONTENT.block("pit_rim", Block::new).named("Pit Rim")
@@ -110,8 +109,8 @@ public final class ShipyardBlocks {
 
     /** The blocks of the dock, in the order the tab shows them. */
     public static List<BlockEntry<?>> blocks() {
-        return List.of(TERMINAL, TOWER, RAIL, GIRDER, WALKWAY, STAIRS, GANTRY, FLOODLIGHT, BOOTH, CONVEYOR, FEEDER,
-                CRADLE, RIM);
+        return List.of(TERMINAL, TOWER, RAIL, GIRDER, WALKWAY, STAIRS, GANTRY, FLOODLIGHT, BOOTH, FEEDER, CRADLE,
+                RIM);
     }
 
     /* A block of the kit: metal, as hard as iron, its face {@code block/shipyard/<id>} on all six sides. */

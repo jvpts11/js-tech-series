@@ -34,9 +34,8 @@ public final class TestShipyards {
             Map.entry('G', ShipyardBlocks.GIRDER.get()), Map.entry('W', ShipyardBlocks.WALKWAY.get()),
             Map.entry('S', ShipyardBlocks.STAIRS.get()), Map.entry('B', ShipyardBlocks.GANTRY.get()),
             Map.entry('F', ShipyardBlocks.FLOODLIGHT.get()), Map.entry('P', ShipyardBlocks.BOOTH.get()),
-            Map.entry('V', ShipyardBlocks.CONVEYOR.get()), Map.entry('D', ShipyardBlocks.FEEDER.get()),
-            Map.entry('C', ShipyardBlocks.CRADLE.get()), Map.entry('R', ShipyardBlocks.RIM.get()),
-            Map.entry('I', HangarBlocks.ITEM_PORT.get()));
+            Map.entry('D', ShipyardBlocks.FEEDER.get()), Map.entry('C', ShipyardBlocks.CRADLE.get()),
+            Map.entry('R', ShipyardBlocks.RIM.get()), Map.entry('I', HangarBlocks.ITEM_PORT.get()));
     /*
      * The ground round the pit, as far as the dock reaches and a block beyond: from under the pit's floor, a block
      * below the pattern's lowest layer, up to the layer the rim lies in, four blocks in all.

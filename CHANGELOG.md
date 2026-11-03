@@ -2769,8 +2769,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   long dug three deep into the ground, its rim of hazard concrete and a cradle of hydraulic clamps rising from its floor
   at four stations; down both sides four lattice towers, eleven blocks to the rails of a gantry crane, with walkways at
   two heights and a stair up to both; a floodlight on each corner tower; at the back the control booth on the first
-  walkway with the Shipyard Terminal inside, at its foot the Item Port and a conveyor into the bay, and a block feeder
-  on each first walkway. Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
+  walkway with the Shipyard Terminal inside, at its foot the Item Port, and a block feeder on each first walkway.
+  Built whole with the pit clear, it forms into the approved dock's model, and its blocks take
   its shapes: the walkways their gratings, the towers their lattice, the stair its steps. The Multiblock Builder used on
   a Structure Projector showing it digs the pit and builds it, whichever way it is turned.
 - (Space) The Starship Design, the Small Shipyard's builder, opened at its terminal once the dock is formed: the ship

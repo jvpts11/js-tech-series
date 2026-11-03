@@ -2,13 +2,13 @@
 section: starships
 order: 1
 icon: jsspace:shipyard_terminal
-covers: [jsspace:shipyard_terminal, jsspace:booth_panel, jsspace:cradle_clamp, jsspace:dock_conveyor, jsspace:dock_feeder, jsspace:dock_floodlight, jsspace:dock_gantry, jsspace:dock_girder, jsspace:dock_rail, jsspace:dock_stairs, jsspace:dock_tower, jsspace:dock_walkway, jsspace:pit_rim, jsspace:item_port]
+covers: [jsspace:shipyard_terminal, jsspace:booth_panel, jsspace:cradle_clamp, jsspace:dock_feeder, jsspace:dock_floodlight, jsspace:dock_gantry, jsspace:dock_girder, jsspace:dock_rail, jsspace:dock_stairs, jsspace:dock_tower, jsspace:dock_walkway, jsspace:pit_rim, jsspace:item_port]
 ---
 # Estaleiro Pequeno
 
 ## O que é
 
-A doca seca onde se constrói uma nave estelar pequena: um poço de dezesseis blocos de largura, vinte e quatro de comprimento e três de profundidade, cercado pela Borda do Poço, com Garras do Berço subindo do fundo. Torres de Treliça, Vigas da Doca, Passarelas da Doca e Trilhos do Pórtico Rolante ladeiam o poço, sob a Ponte do Pórtico Rolante e quatro Holofotes da Doca. A Escada da Doca sobe por um lado. No fundo do outro, uma cabine de Painéis da Cabine de Controle abriga o Terminal do Estaleiro, sobre uma Porta de Itens e a sua Esteira da Doca. Um Alimentador de Blocos fica em cada passarela de baixo.
+A doca seca onde se constrói uma nave estelar pequena: um poço de dezesseis blocos de largura, vinte e quatro de comprimento e três de profundidade, cercado pela Borda do Poço, com Garras do Berço subindo do fundo. Torres de Treliça, Vigas da Doca, Passarelas da Doca e Trilhos do Pórtico Rolante ladeiam o poço, sob a Ponte do Pórtico Rolante e quatro Holofotes da Doca. A Escada da Doca sobe por um lado. No fundo do outro, uma cabine de Painéis da Cabine de Controle abriga o Terminal do Estaleiro, sobre uma Porta de Itens. Um Alimentador de Blocos fica em cada passarela de baixo.
 
 ## Para que serve
 
