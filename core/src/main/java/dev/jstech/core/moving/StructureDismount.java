@@ -17,8 +17,11 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.vehicle.DismountHelper;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +31,9 @@ import org.jetbrains.annotations.Nullable;
  * yard: the nearest place they stand up in, going round the seat as they could, crawling if they must, through its
  * doorways and along its floor, its sides first as the game gets a rider off a minecart; with nowhere to stand, the
  * nearest they crouch in, then the nearest they crawl in, as the game has a rider leave a minecart in a low tunnel.
- * Never on what stands higher than the seat's own floor, a console or a cabinet beside it, nor up through a roof.
+ * Never on what stands higher than the seat's own floor, a console or a cabinet beside it, nor up through a roof; nor,
+ * round the seat, anywhere its sitter does not see from it, behind a wall or a window or under the floor: a cockpit's
+ * pilot gets up in the cockpit, never out of the hull beside it.
  */
 final class StructureDismount {
 
@@ -61,6 +66,9 @@ final class StructureDismount {
         final Map<BlockPos, Integer> seen = new HashMap<>();
         final ArrayDeque<BlockPos> open = new ArrayDeque<>();
         seen.put(seat, 0);
+        final Vec3 eye = rider.getEyePosition();
+        final Vec3 sitting = new Vec3(frame.yardX(eye.x, eye.y, eye.z), frame.yardY(eye.x, eye.y, eye.z),
+                frame.yardZ(eye.x, eye.y, eye.z));
         // Round the seat first, at its level and a step down: never up, onto the roof by a seat under it.
         for (final int dy : new int[] {0, -1}) {
             for (final int[] offset : DismountHelper.offsetsForDirection(way)) {
@@ -72,6 +80,10 @@ final class StructureDismount {
         }
         while (!open.isEmpty()) {
             final BlockPos at = open.poll();
+            // A place round the seat behind a wall or under the floor, outside the cabin, is not got up into.
+            if (seen.get(at) == 1 && !inSight(level, rider, sitting, at)) {
+                continue;
+            }
             for (int k = 0; k < poses.size(); k++) {
                 if (best[k] == null) {
                     final Vec3 fits = fits(level, rider, at, poses.get(k), frame);
@@ -101,6 +113,18 @@ final class StructureDismount {
             }
         }
         return null;
+    }
+
+    /*
+     * Whether {@code rider}'s eyes at {@code sitting}, in the yard, see the middle of the place {@code at} over its
+     * floor, no block of the structure in the way: a wall, a window, the floor between a seat and a place under it.
+     */
+    private static boolean inSight(final Level level, final LivingEntity rider, final Vec3 sitting,
+                                   final BlockPos at) {
+        final Vec3 there = new Vec3(at.getX() + HALF, at.getY() + HALF, at.getZ() + HALF);
+        final BlockHitResult hit = level.clip(new ClipContext(sitting, there, ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE, rider));
+        return hit.getType() == HitResult.Type.MISS || hit.getBlockPos().equals(at);
     }
 
     /*

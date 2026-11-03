@@ -153,25 +153,33 @@ public final class FormedShape {
      * @return its {@link MeshOutline#LINE} numbers to a line, reaching out of the block where the piece does
      */
     public Optional<float[]> pieceLines(final FormedPlace place, final double[] at) {
+        final Optional<FormedPiece> found = pieceAt(place, at);
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        final FormedPiece piece = found.get();
+        final float[] lines = this.pieceLines.computeIfAbsent(this.pieces.indexOf(piece), any -> piece.lines())
+                .clone();
+        for (int k = 0; k < lines.length; k += 3) {
+            lines[k] -= (float) (this.origin[0] + MeshCells.x(place.cell()));
+            lines[k + 1] -= (float) (this.origin[1] + MeshCells.y(place.cell()));
+            lines[k + 2] -= (float) (this.origin[2] + MeshCells.z(place.cell()));
+        }
+        return Optional.of(lines);
+    }
+
+    /**
+     * The piece the point {@code at} of the block {@code place} is on; none where no piece holds it.
+     *
+     * @param at a point of the block in its own space, as the model stands facing north, from 0 to 1 along each axis
+     */
+    public Optional<FormedPiece> pieceAt(final FormedPlace place, final double[] at) {
         if (this.pieces.isEmpty()) {
             return Optional.empty();
         }
         final double[] inModel = {at[0] + this.origin[0] + MeshCells.x(place.cell()),
             at[1] + this.origin[1] + MeshCells.y(place.cell()), at[2] + this.origin[2] + MeshCells.z(place.cell())};
-        for (int i = 0; i < this.pieces.size(); i++) {
-            final FormedPiece piece = this.pieces.get(i);
-            if (!piece.holds(inModel)) {
-                continue;
-            }
-            final float[] lines = this.pieceLines.computeIfAbsent(i, any -> piece.lines()).clone();
-            for (int k = 0; k < lines.length; k += 3) {
-                lines[k] -= (float) (this.origin[0] + MeshCells.x(place.cell()));
-                lines[k + 1] -= (float) (this.origin[1] + MeshCells.y(place.cell()));
-                lines[k + 2] -= (float) (this.origin[2] + MeshCells.z(place.cell()));
-            }
-            return Optional.of(lines);
-        }
-        return Optional.empty();
+        return Optional.ofNullable(FormedPiece.at(this.pieces, inModel));
     }
 
     /** The boxes of the block {@code cell}, as the model stands facing north, in sixteenths. */

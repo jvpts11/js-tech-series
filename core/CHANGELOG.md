@@ -406,6 +406,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `IPlanMember.partFormed(level, pos, formed, place)` tells a block that keeps itself which block of its part's model
   it stands for. `MeshSolid` finds what a model's faces close, and `MeshVoxels.boxes(triangles, within)` fills it.
   Experimental.
+- Pieces used whole: J's Core's API is at version 39. `FormedPiece` gains `uses`, the block of its model it
+  works by, written in a pieces file as `uses`, and `usesCell()`; `FormedShape.pieceAt(place, at)` finds the piece a
+  point is on; `FormedPieceUses.worksBy(level, pos, at)` finds the block a piece aimed at works by. Used from any block
+  it stands in, a piece is used through that block. Experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1940,6 +1944,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A formed model's pieces are outlined whole: aimed at on a door, a seat or a console a model names as one
   piece, from any block it stands in, the player sees the whole piece outlined, as the game outlines a block; aimed at
   the rest of the block, its part of the model as before.
+- A formed model's piece is used from any block it stands in, through the block it works by: a seat whose back
+  stands in the block over it is sat in from its back.
 
 ### Changed
 - Multiblocks: the game's invisible light block counts as empty, as a cave's air does, in a place a multiblock
@@ -2063,6 +2069,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A seat of a moving structure is sat in only with nothing of the structure between the player's eyes and it:
+  a cockpit's seat was sat in from outside, through its canopy. And one getting up never stands anywhere round the
+  seat they could not see from it, behind a wall or under the floor: a pilot could be got up out of the hull.
 - A block of a formed structure is solid through what its model's faces close, a seat, a console, a floor's
   body: before, only the sixteenths its faces passed through were solid, a thin shell a thing pushed against it could
   end up inside.

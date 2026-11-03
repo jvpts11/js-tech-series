@@ -493,6 +493,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `IPlanMember.partFormed(level, pos, formed, place)` tells a block that keeps itself which block of its part's model
   it stands for. `MeshSolid` finds what a model's faces close, and `MeshVoxels.boxes(triangles, within)` fills it.
   Experimental.
+- (Core) Pieces used whole: J's Core's API is at version 39. `FormedPiece` gains `uses`, the block of its model it
+  works by, written in a pieces file as `uses`, and `usesCell()`; `FormedShape.pieceAt(place, at)` finds the piece a
+  point is on; `FormedPieceUses.worksBy(level, pos, at)` finds the block a piece aimed at works by. Used from any block
+  it stands in, a piece is used through that block. Experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -2918,8 +2922,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A formed model's pieces are outlined whole: aimed at on a door, a seat or a console a model names as one
   piece, from any block it stands in, the player sees the whole piece outlined, as the game outlines a block; aimed at
   the rest of the block, its part of the model as before.
+- (Core) A formed model's piece is used from any block it stands in, through the block it works by: a seat whose back
+  stands in the block over it is sat in from its back.
 - (Space) A small starship's pilot seat, its flight console and the airlock's suit locker are outlined whole from any
-  block they stand in; and the ship's fixtures, the suit locker, the flight console, the oxygen panel and the bunk,
+  block they stand in, and used from any part of them; and the ship's fixtures, the suit locker, the flight console, the oxygen panel and the bunk,
   once their part is formed, stand, are aimed at and are outlined as the ship's model draws them there, no longer as
   whole blocks.
 
@@ -3098,6 +3104,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) A seat of a moving structure is sat in only with nothing of the structure between the player's eyes and it:
+  a cockpit's seat was sat in from outside, through its canopy. And one getting up never stands anywhere round the
+  seat they could not see from it, behind a wall or under the floor: a pilot could be got up out of the hull.
 - (Space) A starship nobody owns lets anyone through its airlock door, as it lets anyone fly it: before, its door did
   nothing, used from outside or from inside.
 - (Core) A block of a formed structure is solid through what its model's faces close, a seat, a console, a floor's

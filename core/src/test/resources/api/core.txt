@@ -11436,12 +11436,16 @@ stable 4
 21 dev.jstech.core.multiblock.shape.FormedAim  static BlockHitResult hit(Level, List<FormedPlace>, Vec3, Vec3, BlockPos)
 21 dev.jstech.core.multiblock.shape.FormedAim  static List<FormedPlace> places(Level, BlockPos, BlockState)
 19 dev.jstech.core.multiblock.shape.FormedAim  static Optional<FormedPlace> place(Level, BlockPos, BlockState)
-38 dev.jstech.core.multiblock.shape.FormedPiece  type record(String name, List<float[]> solids)
+39 dev.jstech.core.multiblock.shape.FormedPiece  type record(String name, List<float[]> solids, List<Integer> uses)
+39 dev.jstech.core.multiblock.shape.FormedPiece  OptionalLong usesCell()
 38 dev.jstech.core.multiblock.shape.FormedPiece  boolean holds(double[])
 38 dev.jstech.core.multiblock.shape.FormedPiece  float[] lines()
+39 dev.jstech.core.multiblock.shape.FormedPiece  new(String, List<float[]>)
 38 dev.jstech.core.multiblock.shape.FormedPiece  static FormedPiece at(List<FormedPiece>, double[])
 38 dev.jstech.core.multiblock.shape.FormedPiece  static final Codec<FormedPiece> CODEC
 38 dev.jstech.core.multiblock.shape.FormedPiece  static final double MARGIN
+39 dev.jstech.core.multiblock.shape.FormedPieceUses  type final class
+39 dev.jstech.core.multiblock.shape.FormedPieceUses  static Optional<BlockPos> worksBy(Level, BlockPos, Vec3)
 19 dev.jstech.core.multiblock.shape.FormedPlace  type record(ResourceLocation model, int orientation, int x, int y, int z)
 19 dev.jstech.core.multiblock.shape.FormedPlace  FormedPlace turned(Rotation)
 19 dev.jstech.core.multiblock.shape.FormedPlace  Orientation turn()
@@ -11452,6 +11456,7 @@ stable 4
 19 dev.jstech.core.multiblock.shape.FormedShape  Map<Long, int[]> cells()
 20 dev.jstech.core.multiblock.shape.FormedShape  Map<ResourceLocation, BlockAboard> aboard()
 20 dev.jstech.core.multiblock.shape.FormedShape  Optional<BlockAboard> aboard(Block)
+39 dev.jstech.core.multiblock.shape.FormedShape  Optional<FormedPiece> pieceAt(FormedPlace, double[])
 38 dev.jstech.core.multiblock.shape.FormedShape  Optional<float[]> pieceLines(FormedPlace, double[])
 19 dev.jstech.core.multiblock.shape.FormedShape  Optional<int[]> boxes(long)
 19 dev.jstech.core.multiblock.shape.FormedShape  Set<Long> apart()

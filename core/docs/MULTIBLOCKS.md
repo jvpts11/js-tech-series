@@ -460,10 +460,12 @@ CONTENT.model("capsule").file("jsmodels/capsule.gltf").formedFrom(rl("capsule"))
   space, faces facing out; aimed at from any block it stands in, the whole piece is outlined by its solids' sharp
   edges, in place of the part of the model in the block aimed at, and the rest of the block is outlined as before.
   A program making the model writes them beside its file, `<file>.pieces.json`, which the data run reads into the
-  shape file; or a mod declares them, `FormedShapes.declarePieces(model, pieces)`.
+  shape file; or a mod declares them, `FormedShapes.declarePieces(model, pieces)`. A piece may name the block of the
+  model it works by, `uses`: used from any other block it stands in, it is used through that one, aimed where the
+  player aimed, so a seat whose back stands in the block over it is sat in from its back.
 
 ```json
-{"pieces": [{"name": "seat", "solids": [[-0.2, 0.95, 3.87, ...], [-0.48, 1.28, 3.75, ...]]}]}
+{"pieces": [{"name": "seat", "solids": [[-0.2, 0.95, 3.87, ...], [-0.48, 1.28, 3.75, ...]], "uses": [-1, 1, 4]}]}
 ```
 
 - **A block that keeps itself stands as the model too** (*added 2026-11-03*): a block of a plan that keeps something

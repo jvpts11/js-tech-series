@@ -21,8 +21,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -37,6 +40,8 @@ final class StructureSeating {
 
     /* How far from their eyes a player takes hold of a rope, in blocks. */
     private static final double ZIPLINE_REACH = 6.0;
+    /* How far short of the point of a seat aimed at its line of sight is followed, in blocks. */
+    private static final double SHORT_OF_IT = 0.05;
 
     private StructureSeating() {
     }
@@ -122,7 +127,11 @@ final class StructureSeating {
         return sitter.startRiding(sitting, true);
     }
 
-    /* A player uses a block of a structure that is a seat: they sit on it, unless crouching, or it is taken. */
+    /*
+     * A player uses a block of a structure that is a seat: they sit on it, unless crouching, or it is taken, or it is
+     * not in their sight, the structure's own wall or window between their eyes and it: a cockpit's seat is sat in
+     * from the cockpit, not reached through its canopy from outside.
+     */
     private static void onUse(final PlayerInteractEvent.RightClickBlock event) {
         final BlockPos pos = event.getPos();
         final Player player = event.getEntity();
@@ -130,14 +139,37 @@ final class StructureSeating {
             return;
         }
         final Level level = event.getLevel();
-        if (BlockAboard.at(level, pos).seat().isEmpty() || MovingStructures.at(level, pos) == null) {
+        final IStructureBody body = MovingStructures.at(level, pos);
+        if (BlockAboard.at(level, pos).seat().isEmpty() || body == null) {
             return;
         }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
-        if (player instanceof ServerPlayer sitter) {
+        if (player instanceof ServerPlayer sitter && inSight(level, sitter, body.frame(), pos,
+                event.getHitVec().getLocation())) {
             sit(sitter, pos);
         }
+    }
+
+    /*
+     * Whether nothing of a structure standing as {@code frame} but the seat at {@code seat} is between
+     * {@code player}'s eyes and the point {@code aimed} of the seat they used, in the yard: the line to it stops a hair
+     * short of it, so the face aimed at does not stand in its way.
+     */
+    private static boolean inSight(final Level level, final Player player, final StructureFrame frame,
+                                   final BlockPos seat, final Vec3 aimed) {
+        final Vec3 eye = player.getEyePosition();
+        final Vec3 from = new Vec3(frame.yardX(eye.x, eye.y, eye.z), frame.yardY(eye.x, eye.y, eye.z),
+                frame.yardZ(eye.x, eye.y, eye.z));
+        final Vec3 along = aimed.subtract(from);
+        final double length = along.length();
+        if (length <= SHORT_OF_IT) {
+            return true;
+        }
+        final Vec3 to = from.add(along.scale((length - SHORT_OF_IT) / length));
+        final BlockHitResult hit = level.clip(new ClipContext(from, to, ClipContext.Block.OUTLINE,
+                ClipContext.Fluid.NONE, player));
+        return hit.getType() == HitResult.Type.MISS || hit.getBlockPos().equals(seat);
     }
 
     /* The seat entity someone sits in on the yard's block {@code pos}, or null for a seat free. */

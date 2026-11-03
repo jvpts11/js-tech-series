@@ -12,19 +12,24 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalLong;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A piece of a formed model a player takes for one thing, a door, a seat, a console, however many blocks it stands in:
  * aimed at from any of them, the whole piece is outlined, as the game outlines a block, in place of the part of the
- * model in the block aimed at. Its shape is a few convex solids round it, a seat its foot, its seat with the arms, its
- * back and its headrest, each outlined by its sharp edges. Pure, so it is tested without the game.
+ * model in the block aimed at; and used from any of them, it is used through the block it works by, where it names
+ * one, as a seat whose back stands in the block over it is sat in from its back. Its shape is a few convex solids round
+ * it, a seat its foot, its seat with the arms, its back and its headrest, each outlined by its sharp edges. Pure, so it
+ * is tested without the game.
  *
  * @param name   what it is, as its model names it
  * @param solids its convex solids, each its faces as triangles, nine numbers to one, in the model's own space, facing
  *               out
+ * @param uses   the block of the model it works by, its place's three numbers as {@link MeshCells#key} reads them;
+ *               none for a piece only outlined
  */
-public record FormedPiece(String name, List<float[]> solids) {
+public record FormedPiece(String name, List<float[]> solids, List<Integer> uses) {
 
     /** How far from its solids a point aimed at still counts as on the piece, in blocks. */
     public static final double MARGIN = 0.02;
@@ -43,12 +48,18 @@ public record FormedPiece(String name, List<float[]> solids) {
     /** How a shape file holds it. */
     public static final Codec<FormedPiece> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("name").forGetter(FormedPiece::name),
-            SOLID.listOf().fieldOf("solids").forGetter(FormedPiece::solids)).apply(instance, FormedPiece::new));
+            SOLID.listOf().fieldOf("solids").forGetter(FormedPiece::solids),
+            Codec.INT.listOf().optionalFieldOf("uses", List.of()).forGetter(FormedPiece::uses))
+            .apply(instance, FormedPiece::new));
 
     public FormedPiece {
         if (solids.isEmpty()) {
             throw new IllegalArgumentException("a piece has a solid at least: " + name);
         }
+        if (!uses.isEmpty() && uses.size() != AXES) {
+            throw new IllegalArgumentException("the block a piece works by is three numbers: " + name);
+        }
+        uses = List.copyOf(uses);
         final List<float[]> copied = new ArrayList<>(solids.size());
         for (final float[] solid : solids) {
             if (solid.length == 0 || solid.length % TRIANGLE != 0) {
@@ -57,6 +68,17 @@ public record FormedPiece(String name, List<float[]> solids) {
             copied.add(solid.clone());
         }
         solids = List.copyOf(copied);
+    }
+
+    /** A piece only outlined, working by no block of its own. */
+    public FormedPiece(final String name, final List<float[]> solids) {
+        this(name, solids, List.of());
+    }
+
+    /** The block of the model it works by, as {@link MeshCells#key} keys it; none for a piece only outlined. */
+    public OptionalLong usesCell() {
+        return this.uses.isEmpty() ? OptionalLong.empty()
+                : OptionalLong.of(MeshCells.key(this.uses.get(0), this.uses.get(1), this.uses.get(2)));
     }
 
     /** Whether the point {@code at}, in the model's space, is on the piece: within a solid, or {@link #MARGIN} off. */

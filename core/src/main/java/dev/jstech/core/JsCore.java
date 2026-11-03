@@ -219,6 +219,7 @@ import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.hands.HandUse;
+import dev.jstech.core.multiblock.shape.FormedPieceUses;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.notification.NotificationSettings;
 import dev.jstech.core.notification.NotificationSounds;
@@ -594,6 +595,8 @@ public final class JsCore {
         // The multiblock patterns of every mod, read from data and declared in code, and their formed blocks' shapes.
         MultiblockPatterns.register();
         FormedShapes.register();
+        // A formed model's piece used from any block it stands in is used through the block it works by.
+        FormedPieceUses.listen();
         // What breaks and dents formed models, and a lost block put back.
         FormedDamage.listen();
         DataMachines.register();
