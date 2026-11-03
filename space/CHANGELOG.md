@@ -704,9 +704,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Small Shipyard's robot arms build the ship sent to it: four orange arms, two on each side of the bay,
   each running on its rail along the bay's edge. What the ship wants goes in through the dock's item port, and no more;
   each arm takes a block from the feeder of its side, swings it over to its place, sets it down and welds it with
-  sparks, and a part glows round its box for a moment as it forms. Each arm is heard at work: its motor as it runs to
-  its feeder and swings the block over, and a knock as it sets the block down, a recording credited in the asset
-  registry. The arms' blocks are handed back when another ship is sent, and dropped when the terminal is broken.
+  sparks, and a part glows round its box for a moment as it forms. The arms' blocks are handed back when another ship
+  is sent, and dropped when the terminal is broken.
 - A ship built whole in the Small Shipyard leaves the dock's hold when its pilot uses its flight console with
   an empty hand: it becomes one moving structure, once, of the blocks at the places of its plan and no others, the
   dock's left where they stand, each block and what it keeps as it was. It stays a structure from then on, standing

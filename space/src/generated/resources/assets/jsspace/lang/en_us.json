@@ -1009,6 +1009,5 @@
   "subtitles.jsspace.ship.outer_door_open": "Airlock door opens",
   "subtitles.jsspace.ship.outer_door_shut": "Airlock door shuts",
   "subtitles.jsspace.ship.pressure_door": "Pressure door slides",
-  "subtitles.jsspace.ship.stair": "Boarding stair moves",
-  "subtitles.jsspace.shipyard.arm": "Robot arm moves"
+  "subtitles.jsspace.ship.stair": "Boarding stair moves"
 }

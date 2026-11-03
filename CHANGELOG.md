@@ -2793,9 +2793,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) The Small Shipyard's robot arms build the ship sent to it: four orange arms, two on each side of the bay,
   each running on its rail along the bay's edge. What the ship wants goes in through the dock's item port, and no more;
   each arm takes a block from the feeder of its side, swings it over to its place, sets it down and welds it with
-  sparks, and a part glows round its box for a moment as it forms. Each arm is heard at work: its motor as it runs to
-  its feeder and swings the block over, and a knock as it sets the block down, a recording credited in the asset
-  registry. The arms' blocks are handed back when another ship is sent, and dropped when the terminal is broken.
+  sparks, and a part glows round its box for a moment as it forms. The arms' blocks are handed back when another ship
+  is sent, and dropped when the terminal is broken.
 - (Core) The arms a plan is laid by, drawn on the player's game, each with its own model's bones turned to put its
   grip on its block, the block it carries in its grip or waiting in its feeder, and the sparks of its weld.
 - (Space) A ship built whole in the Small Shipyard leaves the dock's hold when its pilot uses its flight console with

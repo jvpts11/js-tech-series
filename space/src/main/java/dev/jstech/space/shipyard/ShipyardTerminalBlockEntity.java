@@ -92,8 +92,6 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     private final PlanArms arms;
     private final PartField armsField;
     private final PlanAssembler assembler;
-    /* When each arm was last heard beginning a block, on the server; never saved. */
-    private long[] armsHeard = new long[0];
     /* The plan being built, on the server, while its chunks are loaded; and whether it is to start. */
     private @Nullable PlannedBuild build;
     private boolean pending;
@@ -614,10 +612,6 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     /* Its arms' work changed: it is saved, and sent to its players. */
     private void armsChanged() {
         this.armsField.changed();
-        // An arm that has just begun a block is heard running and swinging it over.
-        if (this.level instanceof ServerLevel server) {
-            this.armsHeard = ShipyardSounds.armsBegun(server, this.arms, server.getGameTime(), this.armsHeard);
-        }
     }
 
     /* Its plan's counts changed: its arms look again, and its players hear the parts formed and what each lacks. */

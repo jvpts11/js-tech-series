@@ -75,7 +75,6 @@ import dev.jstech.space.ship.SmallShipMakers;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipDesigner;
 import dev.jstech.space.shipyard.ShipyardBlocks;
-import dev.jstech.space.shipyard.ShipyardSounds;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.spacecraft.SkeletonSpacecraft;
 import dev.jstech.space.universe.FarMaps;
@@ -237,8 +236,6 @@ public final class JsSpace {
         ShipyardStructure.declare();
         ShipyardBlocks.declare();
         ShipDesigner.declare();
-        // How it sounds: its robot arms at work.
-        ShipyardSounds.declare();
         // Where a spent stage goes: the landing platform it comes back to, or the ground it strikes, its crater and
         // its wreckage.
         LandingPlatform.declare();

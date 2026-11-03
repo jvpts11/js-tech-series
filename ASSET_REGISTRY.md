@@ -341,7 +341,6 @@ listed; the language guide in [docs/CODE_STYLE.md](docs/CODE_STYLE.md) covers th
 | `space/src/main/resources/assets/jsspace/sounds/ship/engine_thrust{,_inside}.ogg` | A steady stretch of a bass jet thruster cut into a seamless loop, and the same through a hull | Looped at a small starship's main engines while its throttle is open, louder the more it is, the second for whoever is inside it | Third-party | kyles, CC0, https://freesound.org/people/kyles/sounds/51808/ |
 | `space/src/main/resources/assets/jsspace/sounds/ship/engine_boost.ogg` | A rocket's thrust lighting, cut short with a long fade | Played at a small starship's main engines as its boost lights | Third-party | Maxx222, CC0, https://freesound.org/people/Maxx222/sounds/446764/ |
 | `space/src/main/resources/assets/jsspace/sounds/ship/gear.ogg` | Gears dropping into place | Played under a small starship as its gear starts going up or coming down | Third-party | J.R.Mythical, CC0, https://freesound.org/people/J.R.Mythical/sounds/589620/ |
-| `space/src/main/resources/assets/jsspace/sounds/shipyard/arm.ogg` | One run of a robotic arm's motor and the knock as it stops, cut from a longer recording and played slower, lower | Played at each of the Small Shipyard's robot arms as it begins a block, the knock as it sets the block down | Third-party | 4ntony, CC0, https://freesound.org/people/4ntony/sounds/204801/ |
 
 ## Art that lives in the code
 

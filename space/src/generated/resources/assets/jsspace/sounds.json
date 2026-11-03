@@ -82,14 +82,5 @@
       "jsspace:ship/stair"
     ],
     "subtitle": "subtitles.jsspace.ship.stair"
-  },
-  "shipyard/arm": {
-    "sounds": [
-      {
-        "attenuation_distance": 24,
-        "name": "jsspace:shipyard/arm"
-      }
-    ],
-    "subtitle": "subtitles.jsspace.shipyard.arm"
   }
 }
