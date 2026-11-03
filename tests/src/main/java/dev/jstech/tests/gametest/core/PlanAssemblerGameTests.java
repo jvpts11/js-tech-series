@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import dev.jstech.core.multiblock.BuildBalance;
 import dev.jstech.core.multiblock.plan.BuildPlan;
 import dev.jstech.core.multiblock.plan.PlanAssembler;
 import dev.jstech.core.multiblock.plan.PlanSpot;
@@ -60,6 +61,10 @@ public final class PlanAssemblerGameTests {
         build.start(helper.getLevel(), helper.absolutePos(MACHINE), () -> { });
         final PlanAssembler assembler = new PlanAssembler(helper.absolutePos(MACHINE), () -> { });
         assembler.build(build);
+        // At the default pace, a block at a time, so the gold is seen laid before its layer forms whatever a world's
+        // settings say.
+        final int pace = BuildBalance.blocksPerSecond();
+        BuildBalance.setBlocksPerSecond(BuildBalance.DEFAULT_BLOCKS_PER_SECOND);
         helper.onEachTick(() -> assembler.tick(helper.getLevel()));
         final IItemHandler inbox = assembler.inbox();
         helper.assertTrue(assembler.needs().equals(Map.of(Items.IRON_BLOCK, 3, Items.GOLD_BLOCK, 2))
@@ -75,8 +80,10 @@ public final class PlanAssemblerGameTests {
                     helper.assertTrue(insert(inbox, Items.GOLD_BLOCK, 1) == 0, "and no more of it");
                 })
                 .thenWaitUntil(() -> helper.assertTrue(at(helper, 0, 1).is(Blocks.GOLD_BLOCK),
-                        "with no iron, it lays what it holds: the gold"))
+                        "with no iron, it lays what it holds: the gold; it holds " + assembler.held() + ", waits "
+                                + assembler.waiting() + ", there stands " + at(helper, 0, 1)))
                 .thenExecute(() -> {
+                    BuildBalance.setBlocksPerSecond(pace);
                     helper.assertTrue(insert(inbox, Items.IRON_BLOCK, ALL) == 3, "three of iron go in");
                     helper.assertTrue(assembler.needs().isEmpty(), "it waits for nothing more");
                 })
