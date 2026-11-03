@@ -15,16 +15,19 @@ import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multiblock.damage.CellMark;
 import dev.jstech.core.multiblock.damage.DamageMark;
 import dev.jstech.core.multiblock.damage.FormedDamage;
+import dev.jstech.core.multiblock.shape.FormedDoors;
 import dev.jstech.core.multiblock.shape.FormedPiece;
 import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShape;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.multiblock.shape.IFormedPlaced;
+import dev.jstech.core.room.SealedRooms;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
@@ -44,7 +47,8 @@ import org.jetbrains.annotations.Nullable;
  * it whose faces reach into it, as a rocket's skirt rises round the engine on it; and it never looks for its plan's
  * owner, which gives it back itself. It keeps, too, the strikes of damage that reached it ({@code FormedDamage}),
  * and takes its shape from its faces as they left them; and the doors of its model moved from how they stood as it
- * formed, a shut leaf through it solid in it.
+ * formed, a shut leaf through it solid in it, a block a leaf stands in sealing a room as a door. The block a piece
+ * works by asks for the rooms the piece asks for while it stands.
  */
 public final class FormedPartBlockEntity extends SyncedBlockEntity implements IFormedPlaced {
 
@@ -64,6 +68,8 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
     private List<Object> wholeFrom = List.of();
     /* The damage a player's game last saw it keep, to tell when the server sends another. */
     private List<CellMark> damageSeen = List.of();
+    /* On the server, the blocks it asks for its pieces' rooms at, to stop asking when it is taken away. */
+    private List<BlockPos> asked = List.of();
 
     public FormedPartBlockEntity(final BlockPos pos, final BlockState state) {
         super(FormedParts.ENTITY.get(), pos, state);
@@ -106,6 +112,24 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
         }
         this.moved.set(List.copyOf(now));
         setChanged();
+    }
+
+    /**
+     * Whether a leaf of one of its own model's doors stands in it, shut or open: a block that seals as a door, keeping
+     * the rooms on its two sides apart.
+     */
+    public boolean holdsLeaf() {
+        return !leaves().isEmpty();
+    }
+
+    /** Whether every leaf of its own model's doors standing in it is shut; true for a block holding none. */
+    public boolean leavesShut() {
+        for (final FormedPiece door : leaves()) {
+            if (door.startsShut() == movedDoors().contains(door.name())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** The block it was before its structure formed. */
@@ -248,7 +272,10 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
         return this.shape;
     }
 
-    /* On a player's game, a block keeping damage that comes into sight has what is drawn from it redone. */
+    /*
+     * On a player's game, a block keeping damage that comes into sight has what is drawn from it redone; on the server,
+     * it asks for the rooms its pieces ask for.
+     */
     @Override
     public void onLoad() {
         super.onLoad();
@@ -256,31 +283,46 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
             this.damageSeen = damage();
             FormedDamage.changed();
         }
+        askRooms();
     }
 
-    /* On a player's game, a block keeping damage that goes has what is drawn from it redone. */
+    /*
+     * On a player's game, a block keeping damage that goes has what is drawn from it redone; on the server, taken away,
+     * not unloaded, it no longer asks for its pieces' rooms.
+     */
     @Override
     public void setRemoved() {
         super.setRemoved();
         if (this.level != null && this.level.isClientSide() && !damage().isEmpty()) {
             FormedDamage.changed();
         }
+        if (this.level instanceof ServerLevel server && server.isLoaded(this.worldPosition)
+                && !(server.getBlockEntity(this.worldPosition) instanceof FormedPartBlockEntity)) {
+            this.asked.forEach(room -> SealedRooms.untrack(server, room));
+        }
     }
 
-    /* Moved with a moving structure: its places in the models turn as the blocks turned. */
+    /*
+     * Moved with a moving structure: its places in the models turn as the blocks turned, and its pieces' rooms are
+     * asked for where it stands now, no longer where it stood.
+     */
     @Override
     public void moved(final BlockPos was, final BlockMove move) {
         super.moved(was, move);
-        if (move.rotation() == Rotation.NONE) {
-            return;
+        if (move.from() instanceof ServerLevel left) {
+            this.asked.forEach(room -> SealedRooms.untrack(left, room));
+            this.asked = List.of();
         }
-        final FormedPlace at = this.place.get();
-        if (at != null) {
-            this.place.set(at.turned(move.rotation()));
+        if (move.rotation() != Rotation.NONE) {
+            final FormedPlace at = this.place.get();
+            if (at != null) {
+                this.place.set(at.turned(move.rotation()));
+            }
+            if (!also().isEmpty()) {
+                this.also.set(also().stream().map(reaching -> reaching.turned(move.rotation())).toList());
+            }
         }
-        if (!also().isEmpty()) {
-            this.also.set(also().stream().map(reaching -> reaching.turned(move.rotation())).toList());
-        }
+        askRooms();
     }
 
     /* A player's game told of other damage redoes what it draws from it. */
@@ -330,6 +372,7 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
         this.original.set(was);
         this.terminal.set(owner.immutable());
         this.place.set(in);
+        askRooms();
     }
 
     /* Told it was laid by a plan, with the blocks of other models reaching into it. */
@@ -346,5 +389,44 @@ public final class FormedPartBlockEntity extends SyncedBlockEntity implements IF
     /* Told which blocks of other formed models reach into it now. */
     void reached(final List<FormedPlace> reaching) {
         this.also.set(List.copyOf(reaching));
+    }
+
+    /* The doors of its own model whose leaves stand in it. */
+    private List<FormedPiece> leaves() {
+        final FormedPlace own = this.place.get();
+        final Optional<FormedShape> file = own == null || this.level == null ? Optional.empty()
+                : FormedShapes.get(this.level, own.model());
+        if (file.isEmpty()) {
+            return List.of();
+        }
+        final List<FormedPiece> out = new ArrayList<>();
+        for (final FormedPiece piece : file.get().pieces()) {
+            if (piece.door() && file.get().leaf(piece.name()).containsKey(own.cell())) {
+                out.add(piece);
+            }
+        }
+        return out;
+    }
+
+    /* On the server, asks for the rooms its own model's pieces working by it ask for ({@link FormedPiece#rooms}). */
+    private void askRooms() {
+        final FormedPlace own = this.place.get();
+        if (!(this.level instanceof ServerLevel server) || own == null) {
+            return;
+        }
+        final Optional<FormedShape> file = FormedShapes.get(server, own.model());
+        if (file.isEmpty()) {
+            return;
+        }
+        final List<BlockPos> rooms = new ArrayList<>();
+        for (final FormedPiece piece : file.get().pieces()) {
+            if (piece.usesCell().isPresent() && piece.usesCell().getAsLong() == own.cell()) {
+                for (final long cell : piece.roomCells()) {
+                    rooms.add(FormedDoors.blockOf(this.worldPosition, own, cell));
+                }
+            }
+        }
+        rooms.forEach(room -> SealedRooms.track(server, room));
+        this.asked = List.copyOf(rooms);
     }
 }

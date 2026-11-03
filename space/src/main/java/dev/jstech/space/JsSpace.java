@@ -61,6 +61,7 @@ import dev.jstech.space.rocket.StageLanding;
 import dev.jstech.space.network.SpacePayloads;
 import dev.jstech.space.ship.ShipAutopilotControl;
 import dev.jstech.space.ship.ShipBoost;
+import dev.jstech.space.ship.ShipAirlocks;
 import dev.jstech.space.ship.ShipDocks;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipFlight;
@@ -224,8 +225,9 @@ public final class JsSpace {
         // Who may do what aboard a ship, and its console's crew page where its owner says so.
         ShipConsole.declare();
         ShipCrews.listen();
-        // Who may move its doors, and its airlock never open inside and out at once.
+        // Who may move its doors, and its airlock never open inside and out at once; its pump cycling its air.
         ShipDoorRules.listen();
+        ShipAirlocks.listen();
         // The Small Shipyard, the dry dock a small starship is built in: its shape, its blocks and its formed model.
         ShipyardStructure.declare();
         ShipyardBlocks.declare();

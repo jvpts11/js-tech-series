@@ -32,7 +32,8 @@ import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
  * or a fence, lets air through and is part of the room it stands in. The game's glass leaks a little and stands
  * little, its doors, trapdoors and fence gates leak a little more while shut and let everything through while open. A
  * dimension's rules may say some blocks seal otherwise there ({@link DimensionSeal}). A block merged into a formed
- * part seals as the block it was, so a formed hull keeps the room its blocks closed.
+ * part seals as the block it was, so a formed hull keeps the room its blocks closed; one a formed door's leaf stands in
+ * seals as a door, open while the leaf is.
  */
 public final class Seals {
 
@@ -76,10 +77,14 @@ public final class Seals {
             return declared;
         }
         // A block merged into a formed part seals as the block it was, a solid wall while that is not known yet as
-        // it merges: a formed hull holds its crew's air.
+        // it merges: a formed hull holds its crew's air. One a door's leaf stands in seals as a door.
         if (state.getBlock() instanceof FormedPartBlock) {
-            return level.getBlockEntity(pos) instanceof FormedPartBlockEntity merged && !merged.original().isAir()
-                    ? of(here, level, pos, merged.original()) : Seal.SOLID;
+            final FormedPartBlockEntity merged = level.getBlockEntity(pos) instanceof FormedPartBlockEntity cell
+                    ? cell : null;
+            final Seal was = merged != null && !merged.original().isAir() ? of(here, level, pos, merged.original())
+                    : Seal.SOLID;
+            return merged != null && was.wall() && merged.holdsLeaf()
+                    ? new Seal(true, was.leak(), was.rating(), true) : was;
         }
         if (state.isAir() || state.getBlock() instanceof LiquidBlock) {
             return Seal.PASSES;
@@ -95,9 +100,30 @@ public final class Seals {
         return seal.leak();
     }
 
+    /**
+     * The share of a face of {@code state}, at {@code pos} of {@code level}, gas crosses: as {@link #leak(Seal,
+     * BlockState)}, a formed door's leaf through it letting the whole face through while it is open.
+     */
+    public static double leak(final Seal seal, final BlockGetter level, final BlockPos pos, final BlockState state) {
+        if (!seal.wall() || seal.door() && open(level, pos, state)) {
+            return 1.0;
+        }
+        return seal.leak();
+    }
+
     /** Whether {@code state} is open, as a door, a trapdoor or a gate is. */
     public static boolean open(final BlockState state) {
         return state.hasProperty(BlockStateProperties.OPEN) && state.getValue(BlockStateProperties.OPEN);
+    }
+
+    /**
+     * Whether {@code state}, at {@code pos} of {@code level}, is open: as a door, a trapdoor or a gate is, or a block
+     * of a formed model a door's leaf stands in, while the leaf is open.
+     */
+    public static boolean open(final BlockGetter level, final BlockPos pos, final BlockState state) {
+        return open(state) || state.getBlock() instanceof FormedPartBlock
+                && level.getBlockEntity(pos) instanceof FormedPartBlockEntity merged && merged.holdsLeaf()
+                && !merged.leavesShut();
     }
 
     /** The difference in pressure {@code state} stands before it bursts, in kilopascals. */

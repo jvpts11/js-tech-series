@@ -10757,6 +10757,8 @@ stable 4
 40 dev.jstech.core.multiblock.FormedPartBlockEntity  List<String> movedDoors()
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  VoxelShape shape()
 23 dev.jstech.core.multiblock.FormedPartBlockEntity  boolean drawsPart()
+41 dev.jstech.core.multiblock.FormedPartBlockEntity  boolean holdsLeaf()
+41 dev.jstech.core.multiblock.FormedPartBlockEntity  boolean leavesShut()
 21 dev.jstech.core.multiblock.FormedPartBlockEntity  boolean planned()
 10 dev.jstech.core.multiblock.FormedPartBlockEntity  new(BlockPos, BlockState)
 19 dev.jstech.core.multiblock.FormedPartBlockEntity  void moved(BlockPos, BlockMove)
@@ -11453,7 +11455,8 @@ stable 4
 40 dev.jstech.core.multiblock.shape.FormedDoors  static void set(Level, Door, boolean)
 40 dev.jstech.core.multiblock.shape.FormedDoors.Door  type record(ResourceLocation model, String piece, BlockPos uses, List<BlockPos> leaf, boolean startsShut)
 40 dev.jstech.core.multiblock.shape.FormedDoors.Door  List<BlockPos> blocks()
-40 dev.jstech.core.multiblock.shape.FormedPiece  type record(String name, List<float[]> solids, List<Integer> uses, List<float[]> shut, List<String> moves, boolean startsShut)
+41 dev.jstech.core.multiblock.shape.FormedPiece  type record(String name, List<float[]> solids, List<Integer> uses, List<float[]> shut, List<String> moves, boolean startsShut, List<List<Integer>> rooms)
+41 dev.jstech.core.multiblock.shape.FormedPiece  List<Long> roomCells()
 39 dev.jstech.core.multiblock.shape.FormedPiece  OptionalLong usesCell()
 40 dev.jstech.core.multiblock.shape.FormedPiece  boolean door()
 38 dev.jstech.core.multiblock.shape.FormedPiece  boolean holds(double[])
@@ -11463,6 +11466,7 @@ stable 4
 39 dev.jstech.core.multiblock.shape.FormedPiece  new(String, List<float[]>)
 40 dev.jstech.core.multiblock.shape.FormedPiece  new(String, List<float[]>, List<Integer>)
 40 dev.jstech.core.multiblock.shape.FormedPiece  new(String, List<float[]>, List<Integer>, List<float[]>)
+41 dev.jstech.core.multiblock.shape.FormedPiece  new(String, List<float[]>, List<Integer>, List<float[]>, List<String>, boolean)
 38 dev.jstech.core.multiblock.shape.FormedPiece  static FormedPiece at(List<FormedPiece>, double[])
 38 dev.jstech.core.multiblock.shape.FormedPiece  static final Codec<FormedPiece> CODEC
 38 dev.jstech.core.multiblock.shape.FormedPiece  static final double MARGIN

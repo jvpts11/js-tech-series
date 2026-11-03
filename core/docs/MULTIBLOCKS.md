@@ -477,9 +477,17 @@ CONTENT.model("capsule").file("jsmodels/capsule.gltf").formedFrom(rl("capsule"))
   takes a shape from: the mod drawing the model moves them as the door stands (`FormedDoors.shut(level, uses, name,
   startsShut)`). Before a player moves a door the Core posts `FormedDoorEvent`; cancelled, the door stays as it is,
   as an airlock keeps one of its doors shut while the other is open, and the mod tells the player why.
+- **Doors hold air** (*added 2026-11-03*): a block a door's leaf stands in seals a sealed room as a door
+  (`FormedPartBlockEntity.holdsLeaf`): as the block it was while the leaf is shut, letting the whole face through
+  while it is open (`leavesShut`), and always keeping the rooms on its two sides apart, so their pressures even out
+  through it only while it is open. A piece may ask for rooms, `rooms`, the blocks of the model a room is looked for
+  at, as an air vent asks: the block it works by asks for them while it stands, wherever its structure goes. A door
+  asking for the rooms on both its sides makes each section of a ship its own room. A door or a crack that opens
+  onto a wall lets nothing through.
 
 ```json
-{"name": "pressure_door", "solids": [[...]], "uses": [-1, 1, 0], "shut": [[...]], "moves": ["door_leaf"]}
+{"name": "pressure_door", "solids": [[...]], "uses": [-1, 1, 0], "shut": [[...]], "moves": ["door_leaf"],
+ "rooms": [[-1, 1, -1], [-1, 1, 1]]}
 ```
 
 - **A block that keeps itself stands as the model too** (*added 2026-11-03*): a block of a plan that keeps something

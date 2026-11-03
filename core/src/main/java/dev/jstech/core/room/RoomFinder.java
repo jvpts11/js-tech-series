@@ -281,9 +281,11 @@ final class RoomFinder {
             beyond = block.relative(side);
             kind = seal.door() ? RoomFace.Kind.DOOR : seal.leak() > 0 ? RoomFace.Kind.CRACK : RoomFace.Kind.WALL;
         }
-        final double area = Seals.leak(seal, state);
         final double rating = seal.wall() ? Seals.rating(seal, state) : 0;
         final BlockState past = stateAt(beyond.asLong());
+        // A door or a crack opening onto a wall lets nothing through, as a door into a machine's solid casing.
+        final boolean ontoWall = seal.wall() && past != null && Seals.of(this.here, this.level, beyond, past).wall();
+        final double area = ontoWall ? 0 : Seals.leak(seal, this.level, block, state);
         final boolean water = past != null && past.getFluidState().is(FluidTags.WATER);
         final double outside;
         final AirMix air;

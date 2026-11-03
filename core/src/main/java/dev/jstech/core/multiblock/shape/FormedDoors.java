@@ -8,6 +8,7 @@
 package dev.jstech.core.multiblock.shape;
 
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import dev.jstech.core.room.Rooms;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -95,12 +96,18 @@ public final class FormedDoors {
         return startsShut != moved;
     }
 
-    /** Shuts {@code door}, or opens it, as no one's use: its leaf's blocks and the block it works by are told. */
+    /**
+     * Shuts {@code door}, or opens it, as no one's use: its leaf's blocks and the block it works by are told, and the
+     * rooms its leaf bounds are found again, its air going through it only while it is open.
+     */
     public static void set(final Level level, final Door door, final boolean shut) {
         for (final BlockPos at : door.blocks()) {
             if (level.getBlockEntity(at) instanceof FormedPartBlockEntity cell) {
                 cell.moveDoor(door.piece(), shut != door.startsShut());
             }
+        }
+        if (level instanceof ServerLevel server) {
+            door.leaf().forEach(at -> Rooms.resealed(server, at));
         }
     }
 

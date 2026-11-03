@@ -417,6 +417,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   forms. Whether a door is shut is kept by its blocks (`FormedPartBlockEntity.movedDoors`), wherever the structure goes;
   `FormedDoors.shut`, `named`, `set` and `blockOf` read and move one; `FormedDoorEvent`, posted before a player moves
   one, is cancelled to keep it as it is. Experimental.
+- Doors of formed models hold air: J's Core's API is at version 41. A block a door's leaf stands in seals a
+  sealed room as a door (`FormedPartBlockEntity.holdsLeaf`), letting the whole face through while its leaf is open
+  (`leavesShut`) and keeping the rooms on its two sides apart. A `FormedPiece` may ask for rooms (`rooms`, written in
+  a pieces file as `rooms`, its blocks as `roomCells`), which the block it works by asks for while it stands, wherever
+  its structure goes. Experimental.
 
 ### Added
 - A declared model may name a texture a pack makes as the game loads, once promised: the data run's check of

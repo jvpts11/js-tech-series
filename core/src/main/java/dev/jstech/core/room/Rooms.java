@@ -99,6 +99,17 @@ public final class Rooms {
         }
     }
 
+    /**
+     * Notes that the block at {@code pos} of {@code level} seals otherwise though it is the same block, as a block of a
+     * formed model does when the leaf of a door through it moves: the rooms it bounds are found again.
+     */
+    public static void resealed(final ServerLevel level, final BlockPos pos) {
+        final LevelRooms rooms = LEVELS.get(level);
+        if (rooms != null && !rooms.changing()) {
+            rooms.resealed(pos);
+        }
+    }
+
     /** The rooms kit of {@code level}. */
     static LevelRooms of(final ServerLevel level) {
         return LEVELS.computeIfAbsent(level, LevelRooms::new);

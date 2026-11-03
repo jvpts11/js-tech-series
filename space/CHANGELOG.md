@@ -79,6 +79,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A pressure door in the bulkhead at the front of each of a small starship's sections: it shuts and opens
   with a click, its leaf sliding into the bulkhead's wall, solid only while it is shut, the lamp over it red shut and
   green open. A ship's sections stand with their pressure doors open as it forms, its airlock's outer door shut.
+- The whole of a small starship's cabin holds its crew's air: each section is a room of its own, and the air
+  goes through a pressure door while it is open, the rooms either side evening out, and stops at it while it is shut.
+  The airlock is a room of its own that cycles: its pump, the Airlock Cycler, draws the chamber's air back into the
+  cabin before the outer door opens, all but a little, and fills the chamber again from the cabin as it shuts; an
+  airlock with no pump loses its chamber's air on every passage. Its Oxygen Panel fills a worn suit's tanks from the
+  cabin's air. The bunks, suit lockers and racks, standing in the blocks the hull passes through, hold the air as the
+  hull does; and the flight console's reserve tops the cabin up once a gas has fallen half a kilopascal under the
+  sea's air, as a cabin's pressure valve opens.
 - Four blocks of the starship's kit for its workshop and holds, each standing against the hull's wall and
   working as the game's own does: the Ship Crafting Table, the Ship Smithing Table, the Ship Furnace, which gives light
   while it burns, and the Ship Barrel, of 27 stacks. The holds carry their barrels along both walls, one on another

@@ -90,6 +90,22 @@ class FormedPieceTest {
                 List.of(), List.of(box(0, 0, 0, 1, 1, 0.1))));
     }
 
+    @Test
+    void roomCells_areTheBlocksItAsksForRoomsAtKeyed() {
+        final FormedPiece door = new FormedPiece("door", List.of(box(0, 0, 0, 1, 1, 1)), List.of(-1, 1, 0),
+                List.of(box(0, 0, 0, 1, 1, 0.1)), List.of(), false, List.of(List.of(-1, 1, -1), List.of(-1, 1, 1)));
+        assertEquals(List.of(MeshCells.key(-1, 1, -1), MeshCells.key(-1, 1, 1)), door.roomCells());
+        assertTrue(new FormedPiece("seat", List.of(box(0, 0, 0, 1, 1, 1))).roomCells().isEmpty());
+    }
+
+    @Test
+    void constructor_refusesRoomsAskedForByNoBlockOrOfTwoNumbers() {
+        assertThrows(IllegalArgumentException.class, () -> new FormedPiece("vent", List.of(box(0, 0, 0, 1, 1, 1)),
+                List.of(), List.of(), List.of(), false, List.of(List.of(0, 1, 0))));
+        assertThrows(IllegalArgumentException.class, () -> new FormedPiece("vent", List.of(box(0, 0, 0, 1, 1, 1)),
+                List.of(0, 0, 0), List.of(), List.of(), false, List.of(List.of(0, 1))));
+    }
+
     /* A box's twelve triangles from ({@code x0}, {@code y0}, {@code z0}) to ({@code x1}, {@code y1}, {@code z1}). */
     private static float[] box(final double x0, final double y0, final double z0, final double x1, final double y1,
                                final double z1) {

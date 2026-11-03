@@ -22,7 +22,10 @@ import org.jetbrains.annotations.Nullable;
  * one, as a seat whose back stands in the block over it is sat in from its back. Its shape is a few convex solids round
  * it, a seat its foot, its seat with the arms, its back and its headrest, each outlined by its sharp edges. A door is a
  * piece with a leaf: used, it shuts or opens ({@link FormedDoors}), and its leaf, while it is shut, is solid in the
- * blocks it stands in, the model drawing its leaf as the door stands. Pure, so it is tested without the game.
+ * blocks it stands in, the model drawing its leaf as the door stands; while the leaf is open, air goes through the
+ * blocks it stands in, and while it is shut they keep the rooms on its two sides apart, each its own. A piece may ask
+ * for rooms beside it, as an air vent does: the block it works by asks for them while it stands, so a ship's sections
+ * either side of a door are rooms. Pure, so it is tested without the game.
  *
  * @param name   what it is, as its model names it
  * @param solids its convex solids, each its faces as triangles, nine numbers to one, in the model's own space, facing
@@ -34,9 +37,11 @@ import org.jetbrains.annotations.Nullable;
  * @param moves  the bones of the model that move with a door, its leaf and what its opening lets down, a stair, so no
  *               block takes a shape from them; none for a piece that moves none
  * @param startsShut whether a door stands shut as its structure forms, an airlock's outer door; open, else
+ * @param rooms  the blocks of the model it asks for rooms at, each its place's three numbers; none for a piece that
+ *               asks for none. Only a piece working by a block of its own asks.
  */
 public record FormedPiece(String name, List<float[]> solids, List<Integer> uses, List<float[]> shut,
-                          List<String> moves, boolean startsShut) {
+                          List<String> moves, boolean startsShut, List<List<Integer>> rooms) {
 
     /** How far from its solids a point aimed at still counts as on the piece, in blocks. */
     public static final double MARGIN = 0.02;
@@ -59,7 +64,8 @@ public record FormedPiece(String name, List<float[]> solids, List<Integer> uses,
             Codec.INT.listOf().optionalFieldOf("uses", List.of()).forGetter(FormedPiece::uses),
             SOLID.listOf().optionalFieldOf("shut", List.of()).forGetter(FormedPiece::shut),
             Codec.STRING.listOf().optionalFieldOf("moves", List.of()).forGetter(FormedPiece::moves),
-            Codec.BOOL.optionalFieldOf("starts_shut", false).forGetter(FormedPiece::startsShut))
+            Codec.BOOL.optionalFieldOf("starts_shut", false).forGetter(FormedPiece::startsShut),
+            Codec.INT.listOf().listOf().optionalFieldOf("rooms", List.of()).forGetter(FormedPiece::rooms))
             .apply(instance, FormedPiece::new));
 
     public FormedPiece {
@@ -73,10 +79,23 @@ public record FormedPiece(String name, List<float[]> solids, List<Integer> uses,
             throw new IllegalArgumentException("a door works by a block of its own, which keeps whether it is shut: "
                     + name);
         }
+        if (!rooms.isEmpty() && uses.isEmpty()) {
+            throw new IllegalArgumentException("a piece asks for rooms by a block of its own: " + name);
+        }
+        if (rooms.stream().anyMatch(room -> room.size() != AXES)) {
+            throw new IllegalArgumentException("a block a piece asks for a room at is three numbers: " + name);
+        }
         uses = List.copyOf(uses);
         solids = copied(name, solids);
         shut = copied(name, shut);
         moves = List.copyOf(moves);
+        rooms = rooms.stream().map(List::copyOf).toList();
+    }
+
+    /** A piece asking for no rooms. */
+    public FormedPiece(final String name, final List<float[]> solids, final List<Integer> uses,
+                       final List<float[]> shut, final List<String> moves, final boolean startsShut) {
+        this(name, solids, uses, shut, moves, startsShut, List.of());
     }
 
     /**
@@ -117,6 +136,11 @@ public record FormedPiece(String name, List<float[]> solids, List<Integer> uses,
     public OptionalLong usesCell() {
         return this.uses.isEmpty() ? OptionalLong.empty()
                 : OptionalLong.of(MeshCells.key(this.uses.get(0), this.uses.get(1), this.uses.get(2)));
+    }
+
+    /** The blocks of the model it asks for rooms at, as {@link MeshCells#key} keys them; none for none. */
+    public List<Long> roomCells() {
+        return this.rooms.stream().map(room -> MeshCells.key(room.get(0), room.get(1), room.get(2))).toList();
     }
 
     /** Whether the point {@code at}, in the model's space, is on the piece: within a solid, or {@link #MARGIN} off. */

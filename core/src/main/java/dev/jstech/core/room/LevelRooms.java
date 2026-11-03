@@ -236,6 +236,28 @@ final class LevelRooms {
         }
     }
 
+    /** Notes that the block at {@code pos} seals otherwise though it is the same block: a formed door's leaf moved. */
+    void resealed(final BlockPos pos) {
+        final RoomStore rooms = this.store;
+        if (rooms == null || rooms.idle()) {
+            return;
+        }
+        final long cell = pos.asLong();
+        final Room inside = rooms.roomAt(cell);
+        if (inside != null) {
+            dirty(inside.id());
+        }
+        for (final Direction side : Direction.values()) {
+            final Room beside = rooms.roomAt(BlockPos.offset(cell, side));
+            if (beside != null) {
+                dirty(beside.id());
+            }
+        }
+        if (!rooms.seeds().isEmpty()) {
+            this.changedSections.add(SectionPos.asLong(pos));
+        }
+    }
+
     /**
      * A second of the places asking for a room: each that no room holds, the world changed near and whose wait is over
      * is looked for again.

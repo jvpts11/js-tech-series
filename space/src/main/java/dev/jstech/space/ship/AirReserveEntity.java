@@ -67,6 +67,11 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
     /* The sea's air, in kilopascals of each gas. */
     private static final double OXYGEN_KPA = 21.2;
     private static final double NITROGEN_KPA = 79.1;
+    /*
+     * How far under the sea's air a gas falls before the reserve tops it up, in kilopascals, as a cabin's pressure
+     * valve opens on a real fall: the last traces the cabin's rooms mix between them are left be.
+     */
+    private static final double SLACK_KPA = 0.5;
     private static final int TICKS_A_SECOND = 20;
     /* How finely its reactor's load is told its players, as a share of a full one. */
     private static final double LOAD_TOLD = 0.001;
@@ -322,10 +327,16 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
         return shares;
     }
 
-    /* Gives {@code room} as much of {@code gas} as brings it back to {@code kilopascals}, out of {@code left}. */
+    /*
+     * Gives {@code room} as much of {@code gas} as brings it back to {@code kilopascals}, out of {@code left}, once it
+     * has fallen more than the slack under it; nothing before.
+     */
     private static double topUp(final Room room, final ResourceLocation gas, final double kilopascals,
                                 final double left) {
         final double wanted = GasMath.moles(kilopascals, room.gasVolume(), GasMath.TEMPERED) - room.moles(gas);
+        if (wanted < GasMath.moles(SLACK_KPA, room.gasVolume(), GasMath.TEMPERED)) {
+            return 0;
+        }
         final double given = Math.max(0, Math.min(wanted, left));
         if (given > 0) {
             room.add(gas, given);

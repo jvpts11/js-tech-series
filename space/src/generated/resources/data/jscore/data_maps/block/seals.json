@@ -19,8 +19,7 @@
       "rating": 300.0
     },
     "jsspace:bunk_frame": {
-      "leak": 1.0,
-      "wall": false
+      "rating": 300.0
     },
     "jsspace:cabin_wall": {
       "rating": 300.0
@@ -50,8 +49,7 @@
       "rating": 300.0
     },
     "jsspace:cargo_rack": {
-      "leak": 1.0,
-      "wall": false
+      "rating": 300.0
     },
     "jsspace:compressor_stage": {
       "rating": 300.0
@@ -167,8 +165,7 @@
       "rating": 300.0
     },
     "jsspace:sample_rack": {
-      "leak": 1.0,
-      "wall": false
+      "rating": 300.0
     },
     "jsspace:server_panel": {
       "rating": 300.0
@@ -189,8 +186,7 @@
       "rating": 300.0
     },
     "jsspace:suit_locker": {
-      "leak": 1.0,
-      "wall": false
+      "rating": 300.0
     },
     "jsspace:swivel_duct": {
       "rating": 300.0
