@@ -7,11 +7,13 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.multiblock.plan.ArmMotion;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.SmallShipParts;
+import dev.jstech.space.shipyard.ShipyardSounds;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -33,7 +35,8 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 /**
  * A Small Shipyard's robot arms at work, on a player's game, as the approved storyboard shows them: the hold being
  * raised, its lowest blocks set by hand, the arms taking the rest from their feeders, swinging each over to its place,
- * setting it down and welding it with sparks, and the hold glowing round its box as it forms. Seen from where the
+ * setting it down and welding it with sparks, each arm heard as it begins its block, and the hold glowing round its
+ * box as it forms. Seen from where the
  * storyboard's camera stood, east of the bay looking at the west side's arm by its feeder.
  */
 public final class ShipArmsClientTests {
@@ -58,6 +61,8 @@ public final class ShipArmsClientTests {
     private static final int Y_TOP = 16;
     private static final int ARRIVE = 600;
     private static final int WORK = 1200;
+    /* How far back the sounds heard are looked through, in milliseconds. */
+    private static final long HEARD_FOR = 10_000;
 
     private ShipArmsClientTests() {
     }
@@ -110,6 +115,11 @@ public final class ShipArmsClientTests {
                 .thenWaitUntil(() -> any(ctx, terminal[0], ticks -> ticks > ArmMotion.FETCH + ArmMotion.GRIP + 4
                         && ticks < ArmMotion.SET - 4), WORK, "an arm to swing a block over")
                 .thenScreenshot(0, "arms-swing")
+                .then(0, () -> {
+                    final List<String> heard = AudioMixer.recent(HEARD_FOR);
+                    ctx.assertTrue(heard.contains(ShipyardSounds.ARM.id().toString()), "the arm is heard running and "
+                            + "swinging its block over: " + heard);
+                })
                 .thenWaitUntil(() -> any(ctx, terminal[0], ticks -> ticks > ArmMotion.SET + 2
                         && ticks < ArmMotion.END - 2), WORK, "an arm to weld a block it set down")
                 .thenScreenshot(0, "arms-weld")

@@ -882,6 +882,7 @@
   "jsspace.item_port.idle": "Nenhuma nave sendo construída",
   "jsspace.item_port.refuses": "%s não precisa disso",
   "jsspace.item_port.no_dock": "O porto não está em nenhuma doca formada",
+  "subtitles.jsspace.shipyard.arm": "Braço robô se move",
   "subtitles.jsspace.ship.pressure_door": "Porta de pressão desliza",
   "subtitles.jsspace.ship.outer_door_open": "Porta da eclusa abre",
   "subtitles.jsspace.ship.outer_door_shut": "Porta da eclusa fecha",
