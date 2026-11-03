@@ -2052,6 +2052,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- A structure held by another, as a ship a docking clamp draws in, goes on smoothly on the player's screen when
+  the server falls behind for a few ticks, along the way it was going, as a free one does: before, it stood still on
+  the screen till the server caught up, then jumped the ground at once.
 - A player sent away from a moving structure they stood on, by a command or to another dimension, stays where
   they were sent: before, the server could go on putting them back on its deck where their game had last said they
   stood, every move they made undone, till the world was opened again, and coming back to the game they were put on

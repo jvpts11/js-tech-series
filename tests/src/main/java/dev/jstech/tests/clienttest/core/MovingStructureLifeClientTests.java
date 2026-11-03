@@ -56,6 +56,7 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -85,6 +86,12 @@ public final class MovingStructureLifeClientTests {
     private static final double LEAST_JUMP = 0.08;
     /* The height above a bed's block a sleeper lies at, as the game's own. */
     private static final double LIES = 0.6875;
+    /* How far a clamp draws its visitor in before the server stalls, in blocks, and how long it stalls: five ticks. */
+    private static final double STALL_AFTER = 0.1;
+    private static final long STALL_MILLIS = 250;
+    /* A tick's step below this, in blocks, is standing still; above this many of the steps' middle size, a jump. */
+    private static final double STILL = 1.0e-4;
+    private static final double MOST_TICK_STEP = 2.5;
     /* The scene: from here to there, cleared before and after. */
     private static final BlockPos SCENE_FROM = new BlockPos(-6, 2, -16);
     private static final BlockPos SCENE_TO = new BlockPos(6, 12, -4);
@@ -441,6 +448,60 @@ public final class MovingStructureLifeClientTests {
                 .thenScreenshot(0, "life_docked");
     }
 
+    @ClientTest(timeoutTicks = 2400)
+    public static void docking_aClampDrawsTheVisitorInSmoothlyThoughTheServerStalls(final ClientTestContext ctx) {
+        final MovingStructure[] host = new MovingStructure[1];
+        final MovingStructure[] visitor = new MovingStructure[1];
+        final TickWatch[] ticked = new TickWatch[1];
+        final StructurePose[] held = new StructurePose[1];
+        ctx.afterTest(() -> {
+            if (ticked[0] != null) {
+                ticked[0].stop();
+            }
+            ctx.server().execute(() -> clear(ctx));
+        });
+        ctx.thenServer(0, level -> {
+            clear(ctx);
+            calm(level);
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(-2, 3, -9)), TestAboard.CLAMP.get().defaultBlockState()
+                    .setValue(DirectionalBlock.FACING, Direction.EAST));
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(-3, 3, -9)), Blocks.STONE.defaultBlockState());
+            host[0] = assembled(ctx, new BlockPos(-3, 3, -9), new BlockPos(-2, 3, -9));
+            level.setBlockAndUpdate(ctx.abs(new BlockPos(0, 3, -9)), TestAboard.CLAMP.get().defaultBlockState()
+                    .setValue(DirectionalBlock.FACING, Direction.WEST));
+            visitor[0] = assembled(ctx, new BlockPos(0, 3, -9), new BlockPos(0, 3, -9));
+        })
+                .thenTeleport(0, STAND, Direction.NORTH)
+                .thenAwaitLandDrawn(WAIT)
+                .then(0, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(new BlockPos(-1, 3, -9)))))
+                .thenWaitUntil(() -> drawn(List.of(host[0], visitor[0])), WAIT,
+                        "both structures to reach the player's game")
+                .then(0, () -> ticked[0] = TickWatch.of(visitor[0]))
+                .thenServer(0, level -> level.setBlockAndUpdate(find(level, host[0],
+                        state -> state.is(Blocks.STONE)), Blocks.REDSTONE_BLOCK.defaultBlockState()))
+                .thenWaitUntilServer(level -> visitor[0].mount() != null, WAIT, "the clamp to hold the visitor",
+                        level -> visitor[0].worldBox().toString())
+                .thenServer(0, level -> held[0] = visitor[0].pose())
+                .thenWaitUntilServer(level -> visitor[0].pose().distanceTo(held[0]) > STALL_AFTER, WAIT,
+                        "the visitor to be drawn in a little", level -> visitor[0].worldBox().toString())
+                // The server's thread stops for a few ticks, as a busy server's does: the player's game, ticking on,
+                // hears nothing of the visitor while it should be moving.
+                .thenServer(0, level -> {
+                    try {
+                        Thread.sleep(STALL_MILLIS);
+                    } catch (final InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                    }
+                })
+                .thenWaitUntilServer(level -> visitor[0].resting(), WAIT, "the visitor to be drawn in",
+                        level -> visitor[0].worldBox().toString())
+                .then(SETTLE, () -> {
+                    ticked[0].stop();
+                    same(ctx, visitor[0], RESTS, "the visitor docked");
+                    ticked[0].assertSteady(ctx, "the visitor drawn in through the server's stall");
+                });
+    }
+
     /* Makes every block of the box from {@code from} to {@code to} a structure. */
     private static MovingStructure assembled(final ClientTestContext ctx, final BlockPos from, final BlockPos to) {
         return MovingStructures.assemble(ctx.serverLevel(), ctx.abs(from), ctx.abs(to)).structure();
@@ -701,6 +762,76 @@ public final class MovingStructureLifeClientTests {
     }
 
     /* Where a structure is drawn, every frame the player's game draws: the place its pivot is drawn at. */
+    /*
+     * Where the player's game has a structure at each of its ticks: the pose it takes for the tick, which the frames
+     * of that tick are drawn towards. A frame-by-frame watch spreads a tick's jump over the tick's frames when they
+     * are many; tick by tick, a structure that stood while it should have moved, then made up the ground at once,
+     * shows.
+     */
+    private static final class TickWatch {
+
+        private final int plot;
+        private final List<Vec3> ticks = new ArrayList<>();
+        private final Consumer<ClientTickEvent.Post> listener = this::tick;
+
+        private TickWatch(final int plotOf) {
+            this.plot = plotOf;
+        }
+
+        /** Starts watching {@code structure}, every tick of the player's game. */
+        static TickWatch of(final MovingStructure structure) {
+            final TickWatch watch = new TickWatch(structure.plot());
+            NeoForge.EVENT_BUS.addListener(watch.listener);
+            return watch;
+        }
+
+        /** Stops watching. */
+        void stop() {
+            NeoForge.EVENT_BUS.unregister(listener);
+        }
+
+        /**
+         * Asserts that, from its first step to its last, it moved every tick, and no tick by more than MOST_TICK_STEP
+         * times its steps' middle size.
+         */
+        void assertSteady(final ClientTestContext ctx, final String what) {
+            final List<Double> steps = new ArrayList<>();
+            for (int i = 1; i < ticks.size(); i++) {
+                steps.add(ticks.get(i).distanceTo(ticks.get(i - 1)));
+            }
+            int first = 0;
+            while (first < steps.size() && steps.get(first) < STILL) {
+                first++;
+            }
+            int last = steps.size() - 1;
+            while (last > first && steps.get(last) < STILL) {
+                last--;
+            }
+            final List<Double> moving = new ArrayList<>(steps.subList(first, last + 1));
+            ctx.assertTrue(moving.size() > 3, what + " moved over " + moving.size() + " ticks");
+            final List<Double> sorted = new ArrayList<>(moving);
+            sorted.sort(Double::compare);
+            final double middle = sorted.get(sorted.size() / 2);
+            // The last step may be the part of one left over: it is not held to the others.
+            for (int i = 0; i < moving.size() - 1; i++) {
+                ctx.assertTrue(moving.get(i) >= STILL, what + " moves every tick it is drawn in: tick " + i + " of "
+                        + moving.size() + " stood, the steps " + moving);
+                ctx.assertTrue(moving.get(i) <= MOST_TICK_STEP * middle, what + " makes no jump: tick " + i + " of "
+                        + moving.size() + " went " + moving.get(i) + " blocks, its steps' middle " + middle
+                        + ", the steps " + moving);
+            }
+        }
+
+        private void tick(final ClientTickEvent.Post event) {
+            final ClientStructure seen = ClientMovingStructures.byPlot(plot);
+            if (seen == null || Minecraft.getInstance().level == null) {
+                return;
+            }
+            final StructurePose pose = seen.frame().pose();
+            ticks.add(new Vec3(pose.x(), pose.y(), pose.z()));
+        }
+    }
+
     private static final class StructureWatch {
 
         private final int plot;

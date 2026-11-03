@@ -397,14 +397,16 @@ public final class ClientStructure implements IStructureBody {
 
     /*
      * Where it stood on its parent, standing at {@code holder} now, at the server's tick {@code at}: between the two
-     * told round it, or the newest. Told it then before it was held, where it stood in the world is taken on the
-     * parent where it stands, so one just taken hold of does not jump for the ticks it is drawn behind.
+     * told round it, or carried on past the newest. Told it then before it was held, where it stood in the world is
+     * taken on the parent where it stands, so one just taken hold of does not jump for the ticks it is drawn behind.
      */
     private StructurePose localAt(final long at, final StructureFrame holder) {
+        StructurePosePayload earlier = null;
         StructurePosePayload before = null;
         StructurePosePayload after = null;
         for (final StructurePosePayload one : told) {
             if (one.tick() <= at) {
+                earlier = before;
                 before = one;
             } else {
                 after = one;
@@ -420,6 +422,13 @@ public final class ClientStructure implements IStructureBody {
         if (after != null && after != before && after.held()) {
             final double t = (double) (at - before.tick()) / (after.tick() - before.tick());
             return StructurePose.between(before.local(), after.local(), t);
+        }
+        // Past the newest, it goes on on its parent as it went between the last two, for a few ticks, as one held by
+        // none goes on at its speed: a server that falls behind for a moment does not stop it, then make it jump.
+        if (after == null && earlier != null && earlier.held() && at > before.tick()) {
+            final long past = Math.min(GOES_ON, at - before.tick());
+            final double t = 1 + (double) past / (before.tick() - earlier.tick());
+            return StructurePose.between(earlier.local(), before.local(), t);
         }
         return before.local();
     }
