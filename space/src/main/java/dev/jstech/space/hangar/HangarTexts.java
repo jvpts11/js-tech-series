@@ -21,7 +21,7 @@ public final class HangarTexts {
     public static final TextKey DESIGN = TextKey.of("jsspace.hangar.design", "Rocket Design");
     /* The Item Port's screen: its name, its hold's label, its display's lines and why it refuses a block. */
     public static final TextKey ITEM_PORT = TextKey.of("jsspace.item_port.title", "Item Port");
-    public static final TextKey PORT_HOLD = TextKey.of("jsspace.item_port.hold", "Port hold  -  to the belt");
+    public static final TextKey PORT_HOLD = TextKey.of("jsspace.item_port.hold", "Port hold  -  to the arms");
     public static final TextKey PORT_BLOCKS = TextKey.of("jsspace.item_port.blocks", "%s of %s blocks");
     public static final TextKey PORT_ROW = TextKey.of("jsspace.item_port.row", "%s of %s");
     public static final TextKey PORT_OK = TextKey.of("jsspace.item_port.ok", "ok");

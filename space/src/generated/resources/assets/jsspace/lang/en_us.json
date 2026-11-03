@@ -589,7 +589,7 @@
   "jsspace.host_rock.martian_regolith": "Martian Regolith %s Ore",
   "jsspace.host_rock.mudstone": "Mudstone %s Ore",
   "jsspace.item_port.blocks": "%s of %s blocks",
-  "jsspace.item_port.hold": "Port hold  -  to the belt",
+  "jsspace.item_port.hold": "Port hold  -  to the arms",
   "jsspace.item_port.idle": "No ship is being built",
   "jsspace.item_port.no_dock": "The port is in no formed dock",
   "jsspace.item_port.ok": "ok",

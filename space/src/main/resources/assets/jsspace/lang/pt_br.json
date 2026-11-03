@@ -875,7 +875,7 @@
   "block.jsspace.airlock_cycler": "Ciclador da Eclusa",
   "block.jsspace.boarding_stair": "Escada de Embarque",
   "jsspace.item_port.title": "Porto de Itens",
-  "jsspace.item_port.hold": "Porão do porto  -  para a esteira",
+  "jsspace.item_port.hold": "Porão do porto  -  para os braços",
   "jsspace.item_port.blocks": "%s de %s blocos",
   "jsspace.item_port.row": "%s de %s",
   "jsspace.item_port.ok": "ok",
