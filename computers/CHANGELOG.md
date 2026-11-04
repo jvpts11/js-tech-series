@@ -10,6 +10,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Programs: `install` at a prompt takes a program by the package name its disc shows, as the package
   managers do: `install kde-plasma` installs KDE Plasma and `install mines` the Minesweeper. It took only the
   program's id, so every program whose package name is not its id was "no such program" by the name on its disc.
+- Monitors: A program left open at a computer is still drawn on its monitor in the world after the world
+  is left and joined again. Its window was drawn empty, white on the lighter desktops, until the computer's screen was
+  opened.
 
 ## [0.5.2a] - 2026-10-14
 

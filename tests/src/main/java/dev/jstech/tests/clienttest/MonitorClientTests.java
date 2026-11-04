@@ -468,6 +468,45 @@ public final class MonitorClientTests {
     }
 
     /**
+     * A program left open at the machine is still drawn on its face by a program after the world is left and joined
+     * again, when this client keeps nothing of the machine: never an empty window in its system's window colour.
+     */
+    @ClientTest(timeoutTicks = 4000)
+    public static void face_drawsTheProgramLeftOpenAfterTheWorldIsJoinedAgain(final ClientTestContext ctx) {
+        final IDesktopApp[] opened = new IDesktopApp[1];
+        ctx.thenBuild(0, world -> {
+                    final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(COMPUTER);
+                    pc.console().install(Programs.MINESWEEPER.toString());
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntil(() -> MonitorPictureCache.of(ctx.abs(SCREEN)) instanceof IMonitorPicture.Desktop,
+                        BOOT_WAIT, "the machine to come up")
+                .thenRightClick(SETTLE, SCREEN)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains(MINESWEEPER),
+                        LIGHT_WAIT, "the desktop to list Minesweeper")
+                .then(SETTLE, () -> DesktopScreen.requestOpen(MINESWEEPER))
+                .thenWaitUntil(() -> {
+                    opened[0] = openProgram(ctx, MINESWEEPER);
+                    return opened[0] != null;
+                }, LIGHT_WAIT, "Minesweeper to open")
+                .then(SETTLE, () -> ctx.player().closeContainer())
+                .thenAwaitNoScreen(LIGHT_WAIT)
+                .thenWaitUntil(() -> faceDraws(ctx, opened[0]), LIGHT_WAIT, "the face to draw Minesweeper")
+                .thenSaveAndReload(SETTLE)
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntil(() -> faceDrawsA(ctx, opened[0].getClass()), LIGHT_WAIT,
+                        "the face, after the world was joined again, to draw Minesweeper by a program of its own",
+                        () -> {
+                            final OffscreenDesktop face = MonitorPainter.desktopOf(ctx.abs(SCREEN));
+                            return face == null ? "no face" : "drawn by " + face.windowPrograms().stream()
+                                    .map(app -> app.getClass().getSimpleName()).toList();
+                        })
+                .thenScreenshot(SETTLE, "face-with-a-program-after-joining-again");
+    }
+
+    /**
      * The face shows the desktop the machine keeps: a folder made on it and a program pinned to its panel, with nobody
      * at the machine; and a terminal left open there is drawn inside its own window, its last lines at the foot.
      */
@@ -688,6 +727,20 @@ public final class MonitorClientTests {
     }
 
     /* Whether the face of the monitor draws a window by that very program. */
+    /* Whether the face of the monitor draws a window by a program of that kind. */
+    private static boolean faceDrawsA(final ClientTestContext ctx, final Class<?> kind) {
+        final OffscreenDesktop face = MonitorPainter.desktopOf(ctx.abs(SCREEN));
+        if (face == null) {
+            return false;
+        }
+        for (final IDesktopApp drawn : face.windowPrograms()) {
+            if (kind.isInstance(drawn)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean faceDraws(final ClientTestContext ctx, final IDesktopApp program) {
         final OffscreenDesktop face = MonitorPainter.desktopOf(ctx.abs(SCREEN));
         if (face == null) {
