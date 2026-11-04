@@ -272,6 +272,12 @@ on their own.
     Panel, the `miner` at the prompt and the Mining Pool service.
   - **The firewall, the IDS and the antivirus**, with security's second phase ([Security](security.md)).
   - **The Defrag**, which every computer comes with ([Storage](storage.md)).
+  - **The disk tools**, which every system ships: **FDISK** at the prompt on MC-DOS and Frames 95; **Disk Management**
+    (and `diskpart`) on Frames XP to 11; `fdisk` on every Linux, with the **KDE Partition Manager** on KDE Plasma and
+    **GNOME Disks** on GNOME and Cinnamon; `gpart` on FreeBSD, `fdisk` and `disklabel` on OpenBSD, `fdisk` on UNIX.
+    They partition, format and resize by the rules of [Storage devices](storage-devices.md), and refuse to touch the
+    partition the system runs from. The table Arch's `fdisk` writes during the install is the disk's real table from
+    then on.
   - **The AI framework** of each era, the **inference service** and the **AI management program**
     ([Artificial intelligence](ai.md)).
 

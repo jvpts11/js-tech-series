@@ -109,3 +109,57 @@ The media of the AI are designed with it ([Artificial intelligence](ai.md)). Dis
   files: what a system takes once installed counts on the disk it goes to, not on the medium, so an installer always
   fits on its medium. Capacity only limits writable media, with files and patterns.
 - **Disks only in machines of their era or newer**: see [Eras](eras.md).
+
+### Partitions and file systems
+
+A disk is a **partition table**, and every partition has a **file system**, chosen when it is formatted: by the
+firmware's F, by `format` or `mkfs`, by a disk tool or by an installer. The file system is a real property of the
+partition, and it decides who reads it, how it gets back on its feet after a power loss, the limits of its era and what
+only the modern ones do.
+
+| File system | From | Read and written by | After a power loss | Limits and extras |
+| --- | --- | --- | --- | --- |
+| FAT12 | Vintage | every system | a long check | floppy disks |
+| FAT16 | Vintage | every system | a long check | no partition over 2 GB |
+| UFS | Vintage | UNIX, FreeBSD, OpenBSD | a long check | |
+| FAT32 | Legacy | every system | a long check | no file over 4 GB (a system image doesn't fit) |
+| NTFS | Legacy | Frames; Linux from the Transition | seconds (a journal) | owners of files |
+| ext2 | Legacy | Linux | a long check | |
+| ext3 | Legacy | Linux | seconds (a journal) | |
+| ext4 | Transition | Linux | seconds (a journal) | |
+| XFS | Transition | Linux | seconds (a journal) | grows, never shrinks |
+| exFAT | Transition | Frames; Linux from the Advanced | a long check | large USB sticks |
+| ZFS | Transition | FreeBSD | none (copy-on-write) | snapshots, mirrors that repair themselves |
+| btrfs | Standard | Linux | none (copy-on-write) | snapshots |
+
+- A system that can't read a partition still sees it, and offers to format it: Frames with a Linux partition is the
+  classic trap of a dual boot.
+- Each installer formats as its real one did: FAT16 on MC-DOS (FAT32 from the Legacy), FAT32 on Frames 95, NTFS on
+  Frames XP to 11, ext3 on the Legacy distributions and ext4 later, btrfs on Fedora from the Standard, UFS on UNIX,
+  FreeBSD (ZFS offered from the Transition) and OpenBSD, ext4 on Linux Mint, and whatever the player types on Arch and
+  Gentoo. MC-NET keeps its flat store on FAT.
+- A long check takes about a second for every 64 items' weight in use, at least 5 seconds and at most a minute; a
+  journal takes 2 seconds; copy-on-write takes none. Estimates.
+- **Snapshots** (btrfs and ZFS): `btrfs subvolume snapshot` and `zfs snapshot` keep the partition as it is, items and
+  files, and rolling back returns it there, the cure for a corruption or, with security, a ransomware. A snapshot weighs
+  what changed since it was taken.
+- **Mirrors** (ZFS): two disks hold the same pool; when corruption hits one, ZFS repairs it from the other
+  ([Storage](storage.md)).
+- **Owners of files**, once accounts come ([Security](security.md)): FAT and exFAT keep none, the others do.
+
+**Partitions:**
+
+- **MBR or GPT:** an installer writes MBR under a BIOS (Vintage to Transition) and GPT under UEFI (Standard and
+  Advanced). MBR keeps four partitions at most and sees at most 2 TB of a disk, so a 4 TB disk on MBR shows 2 TB, as a
+  real one does. A disk tool turns an empty disk from one into the other.
+- **Several systems on one disk**, each on its own partition: the boot manager lists them (the Midsoft Boot Manager,
+  GRUB, FreeBSD's loader) as it lists systems on different disks today. This replaces the one shared tree: two systems
+  on a disk see each other's files only when they read each other's file system.
+- **A FAT partition** both systems read carries files between them.
+- **A data partition:** reinstalling or formatting the system's partition leaves the others as they are, with their
+  items and files. Formatting a whole disk still erases everything on it.
+- **Resizing** follows the real limits: NTFS and btrfs shrink and grow while the system runs; ext4 grows while mounted
+  and shrinks only unmounted (from a live medium or another system); XFS and ZFS only grow; FAT and UFS resize only
+  unmounted. A partition never shrinks below what it holds.
+- **Every partition is a volume of its own** ([Volumes](#volumes), above), and the network counts each partition in a
+  file system it reads as a volume of its storage. A swap partition is never one.

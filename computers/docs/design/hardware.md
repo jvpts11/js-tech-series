@@ -337,3 +337,27 @@ The mining and simulation boards are designed with their systems ([Teracoin](ter
   the Tessera cards work as ordinary graphics cards; the MI300X and the NPUs only exist as art.
 - **Cooling parts:** a cooler slot for every processor on the board, and the coolers and case fans of each era, with the
   tower and water coolers of the Standard and the Advanced ([Temperature](temperature.md)).
+- **Workstations with two processors:** three new EATX boards with two sockets, for the Standard and the Advanced, as
+  the Legacy already has two:
+
+  | Board | Form factor | Socket | CPUs | Memory | Memory slots | Bus | Expansion slots | Disks |
+  | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: |
+  | MF EATX Standard WS Motherboard (2x LGA 2011) | EATX | LGA 2011 | 2 | DDR3 | 16 | PCIe 3.0 | 7 | 6 |
+  | MF EATX Advanced WS Motherboard (2x LGA 4677) | EATX | LGA 4677 | 2 | DDR5 | 16 | PCIe 5.0 | 7 | 6 |
+  | MF EATX Advanced WS Motherboard (2x SP5) | EATX | SP5 | 2 | DDR5 | 16 | PCIe 5.0 | 7 | 6 |
+
+  They go where EATX goes: the Cluster Management Computer, the Personal Computer from the Transition on, and the rack
+  servers; never the Crafting Computer. A two-socket EATX board makes the Personal Computer and the Cluster Management
+  Computer count two processors and eight memory modules, as real two-socket workstations do; with temperature, each
+  processor takes its own cooler. Today those computers count one processor and four modules whatever their board
+  offers. The catalogue lists the boards once the code declares them.
+- **Swap.** Between memory and the disks sits swap: Linux, FreeBSD, OpenBSD and UNIX keep it on a partition of its own,
+  Frames in a file (`WIN386.SWP` on Frames 95, `pagefile.sys` from Frames XP on). MC-DOS and MC-NET have none.
+  - What a computer can promise is its memory plus its swap: a program that doesn't fit in the memory left goes partly
+    to swap, and only when memory and swap are both spent does the system answer out of memory, its own way (the crash
+    pages of Frames, the out-of-memory killer of the Unixes, [Operating systems](operating-systems.md)).
+  - What lives in swap runs slower, by the disk it is on: a program with part of itself in swap gets its share of the
+    processor times 0.25 on a hard disk, 0.6 on an SSD and 0.9 on NVMe, for the part of it that is in swap. Estimates.
+  - The installers make it: on Linux and the BSDs a swap partition as big as the memory, on Frames a page file the
+    system sizes itself. Swap weighs on the disk as files do ([Storage devices](storage-devices.md)).
+  - The Task Manager and the System Monitor show it: the commit charge on Frames, the swap line on the others.

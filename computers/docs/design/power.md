@@ -120,8 +120,10 @@ an energy cable breaks) or a **power supply failure**. The Operations running st
 clean shutdown, but the items they were carrying (in the memory buffer, on their way to a disk or to an inventory) **are
 lost**, and the log says how many and of what. Windows close and Σ# programs stop.
 
-At the next boot, the system checks its disk in its own way: ScanDisk on Frames 95, chkdsk from Frames XP on, fsck on
-Linux, FreeBSD and UNIX. It takes a few seconds and erases nothing. A clean shutdown skips the check.
+At the next boot, the system checks the partitions that were in use, each in its own way: ScanDisk on Frames 95,
+chkdsk from Frames XP on, fsck on Linux, FreeBSD, OpenBSD and UNIX. How long depends on the file system: a long check
+without a journal (FAT, exFAT, ext2, UFS), seconds with one (NTFS, ext3, ext4, XFS), none on copy-on-write (btrfs, ZFS)
+([Storage devices](storage-devices.md)). It erases nothing. A clean shutdown skips the check.
 
 Today shutting down only exists in its clean form, and there are no disk checks.
 
@@ -145,8 +147,9 @@ between Mainframes ([Computers](computers.md)).
 
 A UPS block per era, like the other peripherals, and the Rack UPS (1U) for a whole rack.
 
-- It sits between the energy and the computer: energy goes into the UPS, the computer draws from it, and it charges its
-  battery while energy flows.
+- It stands against the computer it protects: the energy cable goes into the UPS, the computer draws from it through
+  the face they share, and it charges its battery while energy flows. Whether FE reaches a computer directly stays J's
+  Core's setting (above); no machine has a switch of its own.
 - On a power loss, the machine keeps running from the battery, and the system shows it in its own way (the battery icon
   and "On battery" on Frames, a notification on Linux, a line on MC-DOS).
 - At 10% battery, the system shuts itself down cleanly, as real UPS software does: no item is lost, and the next boot

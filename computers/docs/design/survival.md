@@ -35,7 +35,8 @@ The setting that turns the computers' draw off turns the machines' off too.
 
 | Source | What it gives |
 | --- | --- |
-| J's Core's generic ore of the element | tin, lead, zinc, nickel, aluminium, tantalum, chromium, cobalt, silver, manganese, mercury, fluorine (fluorspar), zirconium, tungsten, molybdenum; and vanilla's iron, copper and gold |
+| J's Core's generic ore of the element | tin, lead, zinc, nickel, aluminium, tantalum, chromium, cobalt, silver, manganese, mercury, zirconium, tungsten, molybdenum; and vanilla's iron, copper and gold |
+| A J's Core mineral | fluorine, from fluorspar (its element has no generic ore: its ores are salts) |
 | A byproduct, in the Crusher | gallium (from aluminium ore), indium and germanium (from zinc ore), hafnium (from zirconium ore), arsenic (from copper and gold ore), ruthenium (from nickel ore), sulfur (from zinc and lead ore) |
 | The Air Separation Unit | nitrogen, oxygen, argon, krypton |
 | The Electrolytic Cell | hydrogen and oxygen from water; chlorine and caustic soda from salt; refined copper; aluminium from alumina |
@@ -281,8 +282,8 @@ At its era's bench, every part is assembled from the chain's pieces:
 
 ### The Prebuilder
 
-A 3x3x2 multiblock, one for every era, made of Vintage materials. It is optional: assembling a computer by hand works as
-it does today.
+A 3x3x2 multiblock, one machine that builds the computers of every era, made of Vintage materials. It is optional:
+assembling a computer by hand works as it does today.
 
 - It takes a computer's case and its parts and puts them together, by the same rules as the computer's assembly window,
   and when it refuses it says why ([Computers](computers.md)).
@@ -298,7 +299,8 @@ opening the case.
 
 ### The Preinstaller and the firmware
 
-A 2x2x2 multiblock, one for every era, made of Vintage materials, because the first computer already needs it.
+A 2x2x2 multiblock, one machine that writes the firmware and the systems of every era, made of Vintage materials,
+because the first computer already needs it.
 
 - **A motherboard comes out of the chain with no firmware.** A computer with a blank board powers its fans and
   nothing more: the monitor has no signal, and the assembly window says the board has no firmware.

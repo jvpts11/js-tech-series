@@ -65,6 +65,9 @@ each mod's recipes.
   ores are salts have none.
 - Every mineral with uranium or thorium in it is **naturally radioactive**, at the lowest level of the Core's radiation
   ([Hazards](hazards.md)), and a setting turns that off.
+- **Fluorspar** (fluorite, CaF₂, a halide) is one of the catalogue's minerals, declared from its formula, with its ore
+  in the rocks its veins cross: fluorine's source for J's Computers' chain (its acid and its lasers) and for any mod
+  after it. Fluorine itself has no generic ore, by the rule above.
 
 Where ores lie, and how veins are made, is in [The world](world.md).
 

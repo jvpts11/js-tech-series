@@ -153,3 +153,7 @@ wait on it, and operators set it with `/jstech progress`.
   of that era, at the same moment as the "Build a working ... computer" advancements. Assembly counts, owning the parts
   does not, and the axis only moves forward. This lets J's Industrial and the other mods gate content on the era a
   player has reached. Today only an operator moves the axis.
+- **What an era or a tier reached sets off on the network:** when a team reaches an era, or one of J's Industrial's
+  tiers with J's Industrial installed, every network the team owns writes it in its event log (INFO, "Era Standard
+  reached by" the team, "Tier T3 reached by" the team), and an Automation Engine job can wait on it as it waits on the
+  world's events ([Operations](operations.md)). Nothing else shows: the advancement already marks the era.

@@ -54,8 +54,9 @@ model:
 
   A system may answer `OnSchedule`, which gets the processes ready to run and returns the next, once a slice; what it
   spends comes from process 1's credits. Without it, the mod schedules as the chosen kind does.
-- **The file system:** one of the mod's formats, of the DOS kind (drive letters, names in any case), the POSIX kind
-  (one tree from `/`, permissions) or flat. Other systems read its disks when they know the format.
+- **The file system:** one of the mod's file systems ([Storage devices](storage-devices.md)), of the DOS kind (drive
+  letters, names in any case), the POSIX kind (one tree from `/`, permissions) or flat; `.FileSystem(kind)` names it,
+  and every system that reads that file system reads the disk.
 - **The drivers:** the system says which classes of device it drives: the text screen, the graphics screen, sound,
   the network, disks, optical drives, USB, the printer. The drivers are the mod's: a system chooses them, never writes
   them. A device with no driver does not exist for that system: one with no sound driver plays nothing.
