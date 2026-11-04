@@ -199,6 +199,7 @@ KDE Guild's on Plasma), except the network tools, which are JSC Technologies' wh
 | Voidsoft | Soundfoundry |
 | Nextgre | NextgreIQL and its studio |
 | Prophet | Prophet YourIQL and its console |
+| Moon Mesosystems | nothing yet: a house waiting for its first software and hardware |
 
 Hardware makers are in [Eras](eras.md).
 
