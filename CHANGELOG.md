@@ -9,6 +9,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 
 ## [Unreleased]
 
+### Changed
+- (Computers) Programs: Virtual Studio and Virtual Studio Code have new icons, nearer the studio and the editor they
+  stand for: Virtual Studio's knot in white on its purple plate, and Virtual Studio Code's ribbon in white on its blue
+  one, in every desktop's look.
+
 ### Fixed
 - (Computers) Programs: `install` at a prompt takes a program by the package name its disc shows, as the package
   managers do: `install kde-plasma` installs KDE Plasma and `install mines` the Minesweeper. It took only the

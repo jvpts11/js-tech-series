@@ -6,6 +6,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+### Changed
+- Programs: Virtual Studio and Virtual Studio Code have new icons, nearer the studio and the editor they
+  stand for: Virtual Studio's knot in white on its purple plate, and Virtual Studio Code's ribbon in white on its blue
+  one, in every desktop's look.
+
 ### Fixed
 - Programs: `install` at a prompt takes a program by the package name its disc shows, as the package
   managers do: `install kde-plasma` installs KDE Plasma and `install mines` the Minesweeper. It took only the
