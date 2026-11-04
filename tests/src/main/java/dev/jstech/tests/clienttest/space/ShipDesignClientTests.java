@@ -74,38 +74,18 @@ public final class ShipDesignClientTests {
     private static final int WORDS = 3;
     private static final int HOLOGRAM = 120;
     private static final int WORDS_SEEN = 20;
+    /* How many green pixels show a joint's node. */
+    private static final int NODE_SEEN = 15;
 
     private ShipDesignClientTests() {
     }
 
     @ClientTest(timeoutTicks = 2000)
     public static void design_drawsTheShipAndSnapsTheWorkshopToAJoint(final ClientTestContext ctx) {
-        final ServerLevel[] built = new ServerLevel[1];
-        final BlockPos[] terminal = new BlockPos[1];
         final float[][] joint = new float[1][];
-        final ShipDesign ship = new ShipDesign("JS-01", List.of(part("orbiter_cockpit"), part("airlock"),
-                part("quarters"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
-                part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
-        ctx.afterTest(() -> {
-            ctx.mc().setScreen(null);
-            ctx.server().execute(() -> {
-                if (built[0] != null) {
-                    clear(ctx, built[0]);
-                }
-            });
-        });
-        ctx.thenServer(0, level -> {
-            built[0] = level;
-            terminal[0] = TestShipyards.build(level, ctx.abs(CORNER));
-        }).thenWaitUntilServer(level -> level.getBlockEntity(terminal[0]) instanceof ShipyardTerminalBlockEntity dock
-                && dock.formed(), ARRIVE, "the dock to form", level -> "not formed")
-                // In the control booth, at the back of it, facing the terminal and the bay beyond.
-                .thenTeleport(SETTLE, BOOTH, Direction.WEST)
-                .thenServer(SETTLE, level -> ShipDesigner.open(ctx.serverPlayer(),
-                        (ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0])))
-                .thenAwaitScreen(ShipDesignScreen.class, OPEN)
-                .then(SETTLE, () -> screen(ctx).edit(ship))
-                .thenScreenshot(SETTLE, "ship-design")
+        final ShipDesign ship = ship();
+        final BlockPos[] terminal = open(ctx, ship);
+        ctx.thenScreenshot(SETTLE, "ship-design")
                 .then(0, () -> {
                     // Under the letters of the screen's tag, filled cyan.
                     final int[] title = frame(ctx, ShipDesignLayout.TAG_X1 - 10, ShipDesignLayout.TAG_Y1 - 2);
@@ -137,39 +117,12 @@ public final class ShipDesignClientTests {
 
     @ClientTest(timeoutTicks = 2000)
     public static void held_isAHologramCyanLooseGreenSnappedRedWhereItDoesNotFit(final ClientTestContext ctx) {
-        final ServerLevel[] built = new ServerLevel[1];
-        final BlockPos[] terminal = new BlockPos[1];
-        final ShipDesign ship = new ShipDesign("JS-01", List.of(part("orbiter_cockpit"), part("airlock"),
-                part("quarters"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
-                part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
+        final ShipDesign ship = ship();
         // Where the mouse rests: over the void above the ship, on the joint the workshop snaps to, on the nose.
         final float[][] spot = new float[3][];
         final int[][] before = new int[3][];
-        ctx.afterTest(() -> {
-            ctx.mc().setScreen(null);
-            ctx.server().execute(() -> {
-                if (built[0] != null) {
-                    clear(ctx, built[0]);
-                }
-            });
-        });
-        ctx.thenServer(0, level -> {
-            built[0] = level;
-            terminal[0] = TestShipyards.build(level, ctx.abs(CORNER));
-        }).thenWaitUntilServer(level -> level.getBlockEntity(terminal[0]) instanceof ShipyardTerminalBlockEntity dock
-                && dock.formed(), ARRIVE, "the dock to form", level -> "not formed")
-                .thenTeleport(SETTLE, BOOTH, Direction.WEST)
-                .thenServer(SETTLE, level -> ShipDesigner.open(ctx.serverPlayer(),
-                        (ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0])))
-                .thenAwaitScreen(ShipDesignScreen.class, OPEN)
-                .then(SETTLE, () -> screen(ctx).edit(ship))
-                .then(SETTLE, () -> {
-                    final int[] free = frame(ctx, VOID_X, VOID_Y);
-                    spot[0] = new float[] {free[0], free[1]};
-                    spot[1] = screen(ctx).joint(QUARTERS_BACK).orElseThrow();
-                    spot[2] = screen(ctx).joint(0).orElseThrow();
-                    ctx.pointAt(spot[0][0], spot[0][1]);
-                })
+        open(ctx, ship);
+        ctx.then(SETTLE, () -> spots(ctx, spot))
                 // Nothing held yet: what each place shows of each colour, to be told from the hologram's.
                 .then(SETTLE, () -> {
                     for (int i = 0; i < spot.length; i++) {
@@ -212,6 +165,91 @@ public final class ShipDesignClientTests {
                 })
                 .thenAssert(SETTLE, () -> screen(ctx).design().equals(ship), "let go on the nose, the workshop is set "
                         + "nowhere");
+    }
+
+    @ClientTest(timeoutTicks = 2000)
+    public static void nodes_showOnlyTheJointsTheHeldPartSnapsTo(final ClientTestContext ctx) {
+        final float[][] spot = new float[3][];
+        open(ctx, ship());
+        ctx.then(SETTLE, () -> spots(ctx, spot))
+                .thenScreenshot(SETTLE, "ship-design-nothing-held")
+                .then(0, () -> {
+                    ctx.assertTrue(colours(ctx, spot[1])[GREEN_AT] < NODE_SEEN, "with nothing held no joint is "
+                            + "green: " + colours(ctx, spot[1])[GREEN_AT] + " green pixels by the quarters' back");
+                    ctx.assertTrue(colours(ctx, spot[2])[GREEN_AT] < NODE_SEEN, "nor the nose: "
+                            + colours(ctx, spot[2])[GREEN_AT]);
+                    final int[] card = frame(ctx, ShipDesignLayout.cardX(0) + 30, ShipDesignLayout.cardY(0) + 20);
+                    screen(ctx).mouseClicked(card[0], card[1], InputConstants.MOUSE_BUTTON_LEFT);
+                })
+                .thenScreenshot(SETTLE, "ship-design-module-held")
+                .then(0, () -> {
+                    ctx.assertTrue(colours(ctx, spot[1])[GREEN_AT] >= NODE_SEEN, "a module held, the joints of the "
+                            + "spine it snaps to are green: " + colours(ctx, spot[1])[GREEN_AT]);
+                    ctx.assertTrue(colours(ctx, spot[2])[GREEN_AT] < NODE_SEEN, "but not the nose, which only a "
+                            + "cockpit fits: " + colours(ctx, spot[2])[GREEN_AT]);
+                    // Let go over the parts, then the cockpits' tab and the first cockpit's card.
+                    final int[] panel = frame(ctx, ShipDesignLayout.CARD_X0, ShipDesignLayout.CHOSEN_Y);
+                    screen(ctx).mouseReleased(panel[0], panel[1], InputConstants.MOUSE_BUTTON_LEFT);
+                    final int[] tab = frame(ctx, ShipDesignLayout.tabX(0) + 5, ShipDesignLayout.TAB_Y0 + 5);
+                    screen(ctx).mouseClicked(tab[0], tab[1], InputConstants.MOUSE_BUTTON_LEFT);
+                    final int[] card = frame(ctx, ShipDesignLayout.cardX(0) + 30, ShipDesignLayout.cardY(0) + 20);
+                    screen(ctx).mouseClicked(card[0], card[1], InputConstants.MOUSE_BUTTON_LEFT);
+                })
+                .thenScreenshot(SETTLE, "ship-design-cockpit-held")
+                .then(0, () -> {
+                    ctx.assertTrue(colours(ctx, spot[2])[GREEN_AT] >= NODE_SEEN, "a cockpit held, the nose is green: "
+                            + colours(ctx, spot[2])[GREEN_AT]);
+                    ctx.assertTrue(colours(ctx, spot[1])[GREEN_AT] < NODE_SEEN, "and no joint along the spine: "
+                            + colours(ctx, spot[1])[GREEN_AT]);
+                    ctx.assertTrue(screen(ctx).design().equals(ship()), "nothing let go over the parts was set");
+                });
+    }
+
+    /* The ship the screen is opened on: a cockpit, an airlock, the quarters and a reactor, and its hung parts. */
+    private static ShipDesign ship() {
+        return new ShipDesign("JS-01", List.of(part("orbiter_cockpit"), part("airlock"), part("quarters"),
+                part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"), part("blended_delta"),
+                part("twin_canted_fins"), part("blisters"), part("wheels")));
+    }
+
+    /*
+     * Builds the dock where the test stands, stands the player at the back of its control booth, facing the terminal
+     * and the bay beyond, opens the Starship Design on {@code ship}; the dock's terminal's place, once it is built.
+     */
+    private static BlockPos[] open(final ClientTestContext ctx, final ShipDesign ship) {
+        final ServerLevel[] built = new ServerLevel[1];
+        final BlockPos[] terminal = new BlockPos[1];
+        ctx.afterTest(() -> {
+            ctx.mc().setScreen(null);
+            ctx.server().execute(() -> {
+                if (built[0] != null) {
+                    clear(ctx, built[0]);
+                }
+            });
+        });
+        ctx.thenServer(0, level -> {
+            built[0] = level;
+            terminal[0] = TestShipyards.build(level, ctx.abs(CORNER));
+        }).thenWaitUntilServer(level -> level.getBlockEntity(terminal[0]) instanceof ShipyardTerminalBlockEntity dock
+                && dock.formed(), ARRIVE, "the dock to form", level -> "not formed")
+                .thenTeleport(SETTLE, BOOTH, Direction.WEST)
+                .thenServer(SETTLE, level -> ShipDesigner.open(ctx.serverPlayer(),
+                        (ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0])))
+                .thenAwaitScreen(ShipDesignScreen.class, OPEN)
+                .then(SETTLE, () -> screen(ctx).edit(ship));
+        return terminal;
+    }
+
+    /*
+     * Where the mouse rests, into {@code spot}: over the void above the ship, on the joint the workshop snaps to, on
+     * the nose; the mouse put on the first.
+     */
+    private static void spots(final ClientTestContext ctx, final float[][] spot) {
+        final int[] free = frame(ctx, VOID_X, VOID_Y);
+        spot[0] = new float[] {free[0], free[1]};
+        spot[1] = screen(ctx).joint(QUARTERS_BACK).orElseThrow();
+        spot[2] = screen(ctx).joint(0).orElseThrow();
+        ctx.pointAt(spot[0][0], spot[0][1]);
     }
 
     private static ShipDesignScreen screen(final ClientTestContext ctx) {

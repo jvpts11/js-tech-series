@@ -576,25 +576,20 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                 up(ShipDesignTexts.BLK.with(span)), true);
     }
 
-    /* The joints' nodes, or those the held part snaps to, the one it snaps to bigger. */
+    /*
+     * The green nodes of the joints the held part snaps to, and only those, the one it snaps to bigger; none while
+     * nothing is held.
+     */
     private void nodes(final GuiGraphics g) {
         final Held h = this.held;
-        final List<Node> all = h == null ? joints(this.design.spine().size()) : targets(h);
-        for (final Node node : all) {
+        if (h == null) {
+            return;
+        }
+        for (final Node node : targets(h)) {
             final Optional<float[]> at = this.view.project(node.x(), node.y(), node.z(), this.width, this.height);
             at.ifPresent(p -> ShipDesignArt.node(g, Math.round(p[0]), Math.round(p[1]),
-                    h != null && this.target != null && node.target().equals(this.target)));
+                    this.target != null && node.target().equals(this.target)));
         }
-    }
-
-    /* The nodes at each joint of a spine of {@code sections}, the nose's and the tail's too. */
-    private List<Node> joints(final int sections) {
-        final List<Node> out = new ArrayList<>();
-        final int[] fronts = fronts(this.design.spine());
-        for (int j = 0; j <= sections; j++) {
-            out.add(new Node(0, JOINT_Y, fronts[j], new Target(false, j)));
-        }
-        return out;
     }
 
     /* The nodes {@code h} may snap to, each with what it snaps to. */

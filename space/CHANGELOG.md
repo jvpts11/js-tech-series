@@ -688,11 +688,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   a Structure Projector showing it digs the pit and builds it, whichever way it is turned.
 - The Starship Design, the Small Shipyard's builder, opened at its terminal once the dock is formed: the ship
   on a dotted floor in a dark void, turned with the right mouse button and brought nearer with the wheel, panels of
-  dark glass round it. A part is dragged from its card, or off the ship, to the green node of a joint and snaps there:
-  held, it is a hologram of itself under the mouse in cyan, standing where it would be set in green over a joint it
-  snaps to, and red over one it does not fit, the words by the mouse saying so and why (only a cockpit fits the nose);
-  a section taken off the spine leaves its gap till it is set down. The
-  parts by kind and by maker, each card with its own model; the chosen part's length, mass, blocks, power and note;
+  dark glass round it. A part is dragged from its card, or off the ship, to the green node of a joint and snaps there,
+  the green nodes shown only while a part is held and only at the joints it snaps to (the nose for a cockpit, the
+  spine's joints behind it for a section, its own place for a part hung on the hull). Held, a part is a hologram of
+  itself under the mouse in cyan, standing where it would be set in green over a joint it snaps to, and red over one
+  it does not fit, the words by the mouse saying so and why (only a cockpit fits the nose); a section taken off the
+  spine leaves its gap till it is set down. The parts by kind and by maker, each card with its own model; the chosen part's length, mass, blocks, power and note;
   the flight check; the ship's mass, thrust, vertical take-off thrust against weight, power and crew; the room left in
   its hull; its finish; the blocks the dock needs; the ship's footprint on the floor with its length and span. Flip
   turns a section's door and fittings to the other side. S saves it among the dock's plans by its name, E sends it to
