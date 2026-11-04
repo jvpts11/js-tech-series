@@ -102,7 +102,17 @@ public final class ShipDesignTexts {
     public static final TextKey PAIRS = TextKey.of("jsspace.ship_design.pairs",
             "A small ship's side parts always go in pairs");
     public static final TextKey NO_FLIP = TextKey.of("jsspace.ship_design.no_flip", "A cockpit is never flipped");
-    public static final TextKey SNAPS_HERE = TextKey.of("jsspace.ship_design.snaps_here", "Snaps here");
+    // By the mouse, as a part is held: loose, over a joint it snaps to, over one it does not fit and why.
+    public static final TextKey DRAG_TO_GREEN = TextKey.of("jsspace.ship_design.drag_to_green",
+            "%s: drag to a green joint");
+    public static final TextKey SNAPS_HERE = TextKey.of("jsspace.ship_design.snaps_here",
+            "Snaps here: let go to place");
+    public static final TextKey ONLY_COCKPIT_AT_NOSE = TextKey.of("jsspace.ship_design.only_cockpit_at_nose",
+            "Only a cockpit fits the nose");
+    public static final TextKey COCKPIT_ONLY_AT_NOSE = TextKey.of("jsspace.ship_design.cockpit_only_at_nose",
+            "A cockpit fits only the nose");
+    public static final TextKey NOT_IN_SPINE = TextKey.of("jsspace.ship_design.not_in_spine",
+            "%s goes on the hull, not in the spine");
     public static final TextKey SPAN = TextKey.of("jsspace.ship_design.span", "Span");
 
     private ShipDesignTexts() {

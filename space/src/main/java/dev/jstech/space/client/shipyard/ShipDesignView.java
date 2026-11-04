@@ -47,6 +47,8 @@ final class ShipDesignView {
     private float pitch = START_PITCH;
     private double distance = START_DISTANCE;
     private Vec3 target = Vec3.ZERO;
+    /* Where the camera stood as the floor was last drawn, which fades by how far off each point is. */
+    private Vec3 seenFrom = Vec3.ZERO;
     private final Matrix4f projection = new Matrix4f();
     private final Matrix4f view = new Matrix4f();
 
@@ -91,12 +93,12 @@ final class ShipDesignView {
 
     /**
      * Draws the void, the floor at {@code floorY}, the ship's {@code models} for {@code owner}, and the {@code held}
-     * part's models see-through in {@code holo}, moved by {@code heldAt}; over the whole screen {@code width} by
-     * {@code height}, in its scaled pixels.
+     * part's models see-through in {@code heldColour}, moved by {@code heldAt}, over the ship as a hologram is; over
+     * the whole screen {@code width} by {@code height}, in its scaled pixels.
      */
     void draw(final GuiGraphics g, final int width, final int height, final BlockEntity owner,
               final List<ShipPartModels.Placed> models, final List<ShipPartModels.Placed> held, final Vec3 heldAt,
-              final double floorY) {
+              final int heldColour, final double floorY) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         g.fillGradient(0, 0, width, height, c.skyHigh(), c.skyLow());
         g.flush();
@@ -120,6 +122,8 @@ final class ShipDesignView {
             ShipPartsRenderer.draw(owner, models, CabinReadings.AT_REST, pose, buffers, LightTexture.FULL_BRIGHT,
                     OverlayTexture.NO_OVERLAY);
             buffers.endBatch();
+            // The part held is a hologram over the ship, never hidden in it: it hides only its own far faces.
+            RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
             pose.pushPose();
             pose.translate(heldAt.x, heldAt.y, heldAt.z);
             for (final ShipPartModels.Placed part : held) {
@@ -133,7 +137,7 @@ final class ShipDesignView {
                     pose.scale(-1, 1, 1);
                 }
                 KitRenderer.drawTinted(KitAnimations.part(owner, "held:" + part.model() + "@" + part.z(),
-                        model.get()), pose, buffers, c.holo(), LightTexture.FULL_BRIGHT);
+                        model.get()), pose, buffers, heldColour, LightTexture.FULL_BRIGHT);
                 pose.popPose();
             }
             pose.popPose();
@@ -162,6 +166,37 @@ final class ShipDesignView {
         return Optional.of(new float[] {(at.x / at.w + 1.0F) / 2.0F * width, (1.0F - at.y / at.w) / 2.0F * height});
     }
 
+    /**
+     * The point of the ship's frame under the screen's point ({@code x}, {@code y}), on a screen {@code width} by
+     * {@code height}: where the line from the camera through it meets the upright plane through the view's middle
+     * facing the camera, so a part held there stays under the mouse, as far off as the ship.
+     */
+    Vec3 under(final double x, final double y, final int width, final int height) {
+        matrices(width, height);
+        final Matrix4f back = new Matrix4f(this.projection).mul(this.view).invert();
+        final float nx = (float) (x / Math.max(1, width) * 2 - 1);
+        final float ny = (float) (1 - y / Math.max(1, height) * 2);
+        final Vector4f near = back.transform(new Vector4f(nx, ny, -1, 1));
+        final Vector4f far = back.transform(new Vector4f(nx, ny, 1, 1));
+        final Vec3 from = new Vec3(near.x / near.w, near.y / near.w, near.z / near.w);
+        final Vec3 way = new Vec3(far.x / far.w, far.y / far.w, far.z / far.w).subtract(from);
+        final Vec3 facing = this.target.subtract(eye()).normalize();
+        final double along = way.dot(facing);
+        if (Math.abs(along) < 1.0e-9) {
+            return this.target;
+        }
+        return from.add(way.scale(this.target.subtract(from).dot(facing) / along));
+    }
+
+    /* Where the camera stands. */
+    private Vec3 eye() {
+        final double yawRad = Math.toRadians(this.yaw);
+        final double pitchRad = Math.toRadians(this.pitch);
+        return new Vec3(this.target.x - Math.sin(yawRad) * Math.cos(pitchRad) * this.distance,
+                this.target.y + Math.sin(pitchRad) * this.distance,
+                this.target.z + Math.cos(yawRad) * Math.cos(pitchRad) * this.distance);
+    }
+
     /* The camera's matrices for a screen {@code width} by {@code height}. */
     private void matrices(final int width, final int height) {
         this.projection.setPerspective((float) Math.toRadians(FOV), width / (float) Math.max(1, height), NEAR, FAR);
@@ -178,6 +213,7 @@ final class ShipDesignView {
         final VertexConsumer out = buffers.getBuffer(RenderType.debugQuads());
         final Matrix4f m = pose.last().pose();
         final float y = (float) floorY;
+        this.seenFrom = eye();
         final int cx = (int) Math.round(this.target.x);
         final int cz = (int) Math.round(this.target.z);
         for (int x = cx - FLOOR_REACH; x < cx + FLOOR_REACH; x += TILE) {
@@ -221,12 +257,7 @@ final class ShipDesignView {
 
     /* {@code colour} faded toward the void's horizon by how far the point is from the camera. */
     private int fogged(final int colour, final float x, final float y, final float z, final ShipDesignArt.Colours c) {
-        final double yawRad = Math.toRadians(this.yaw);
-        final double pitchRad = Math.toRadians(this.pitch);
-        final double ex = this.target.x - Math.sin(yawRad) * Math.cos(pitchRad) * this.distance;
-        final double ey = this.target.y + Math.sin(pitchRad) * this.distance;
-        final double ez = this.target.z + Math.cos(yawRad) * Math.cos(pitchRad) * this.distance;
-        final double far = Math.sqrt((x - ex) * (x - ex) + (y - ey) * (y - ey) + (z - ez) * (z - ez));
+        final double far = Math.sqrt(this.seenFrom.distanceToSqr(x, y, z));
         final float share = (float) Math.clamp((far - FOG_FROM) / (FOG_TO - FOG_FROM), 0.0, 1.0);
         return FastColor.ARGB32.lerp(share, colour, c.skyLow());
     }

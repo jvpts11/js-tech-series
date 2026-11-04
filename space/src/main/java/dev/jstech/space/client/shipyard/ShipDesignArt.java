@@ -30,8 +30,8 @@ public final class ShipDesignArt {
             0xFF63E6E2, 0x6E63E6E2, 0xFF1E5C62, 0xFFE8F0F2, 0xFF8AA0AA, 0xFF4E626E, 0xDE091017, 0xEB101C26,
             0xFF263C4A, 0xFFEF6A5A, 0xFFF0B23A, 0xFF5FE07A, 0xFF4CFF5A, 0xFF080C10, 0xF00C161E, 0xF50E282E,
             0xFF1C2A34, 0xEB04090D, 0xFF17212A, 0xFF0A0F13, 0xFF151E26, 0xFF5CDBD6, 0xFF63E5E0, 0xA04CCCFF,
-            0xFFDCFFDC, 0xC8091017, 0xFF000000, 0xFFFFFFFF, 0xFFEAEAE4, 0xFF2A2B2E, 0xFFB22822, 0xFFA0A2A6,
-            0xFF787C82, 0xFF962024, 0xFF961E24, 0xFFE2D8C0, 0xFFD4AA48));
+            0xA04CFF5A, 0xA0EF6A5A, 0xFFDCFFDC, 0xC8091017, 0xFF000000, 0xFFFFFFFF, 0xFFEAEAE4, 0xFF2A2B2E,
+            0xFFB22822, 0xFFA0A2A6, 0xFF787C82, 0xFF962024, 0xFF961E24, 0xFFE2D8C0, 0xFFD4AA48));
     /** The icons, by their cell in the icons' picture: the parts' kinds, then the tools. */
     public static final int COCKPIT = 0;
     public static final int HULL = 1;
@@ -59,6 +59,9 @@ public final class ShipDesignArt {
     private static final int CORNER_DOWN = 8;
     private static final int BUTTON_CUT = 4;
     private static final int TAG_H = 13;
+    /* The words by the mouse: their ground's height, and its room at either end. */
+    private static final int CALLOUT_H = 12;
+    private static final int CALLOUT_PAD = 4;
     private static final float DARKER = 0.4F;
     private static final float CHANNEL = 255.0F;
     /* The small text's size against the game's letters, as the mock's small face against its labels. */
@@ -188,6 +191,24 @@ public final class ShipDesignArt {
         }
     }
 
+    /**
+     * Words in the view by the mouse, as the approved design writes them: on the labels' dark ground, a line of their
+     * colour along its top, the words in that colour, from {@code x0} at {@code y}.
+     */
+    public static void callout(final GuiGraphics g, final Font font, final String words, final int x0, final int y,
+                               final int colour) {
+        final Colours c = PALETTE.get();
+        final int x1 = x0 + calloutWidth(font, words);
+        g.fill(x0, y, x1, y + CALLOUT_H, c.label());
+        hline(g, x0, x1, y, colour);
+        Draw.text(g, font, words, x0 + CALLOUT_PAD, y + 3, colour);
+    }
+
+    /** How wide the words {@code words} by the mouse are, their ground with them. */
+    public static int calloutWidth(final Font font, final String words) {
+        return font.width(words) + 2 * CALLOUT_PAD;
+    }
+
     /** A green node a section snaps to, as an editor's sphere: a disc, its darker rim, a glint. */
     public static void node(final GuiGraphics g, final int x, final int y, final boolean big) {
         final Colours c = PALETTE.get();
@@ -310,6 +331,8 @@ public final class ShipDesignArt {
      * @param floorMark  the floor's crosses
      * @param axis       the floor's lines along and across the ship's middle
      * @param holo       a part held, drawn see-through over the ship
+     * @param holoFits   a part held over a joint it snaps to
+     * @param holoBad    a part held over a joint it does not fit, and why
      * @param glint      a node's glint
      * @param label      the ground under a label in the view
      * @param black      black, for shading
@@ -327,7 +350,8 @@ public final class ShipDesignArt {
     public record Colours(int accent, int accentDim, int accentDeep, int text, int dim, int faint, int panel,
                           int panelHi, int line, int red, int amber, int green, int node, int dark, int card,
                           int cardOn, int barOff, int search, int skyLow, int skyHigh, int floor, int floorMark,
-                          int axis, int holo, int glint, int label, int black, int white, int orbiterA, int orbiterB,
-                          int orbiterC, int metalA, int metalB, int metalC, int enamelA, int enamelB, int enamelC) {
+                          int axis, int holo, int holoFits, int holoBad, int glint, int label, int black, int white,
+                          int orbiterA, int orbiterB, int orbiterC, int metalA, int metalB, int metalC, int enamelA,
+                          int enamelB, int enamelC) {
     }
 }

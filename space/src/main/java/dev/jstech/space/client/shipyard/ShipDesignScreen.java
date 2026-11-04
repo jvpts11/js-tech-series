@@ -67,7 +67,8 @@ import org.lwjgl.glfw.GLFW;
 /**
  * The Starship Design, a formed Small Shipyard's builder screen, as the approved design draws it: the ship in 3D on its
  * dotted floor through the middle, panels of dark glass round it. A part is dragged from its card, or off the ship,
- * to the green node of a joint, where it snaps, held over the ship see-through in cyan till it is let go; a section
+ * to the green node of a joint: a hologram of it follows the mouse in cyan, stands where it would be set in green over
+ * a joint it snaps to, and turns red over one it does not fit, the words by the mouse saying which and why; a section
  * taken off the spine leaves a gap till it is set down again. The parts are shown by kind and by maker, each card with
  * its own model; the chosen part's figures under them; at the right the flight check, the ship's figures, the room
  * left in its hull, its finish and what the dock needs; along the bottom the keys. The right mouse button turns the
@@ -122,8 +123,10 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     private static final long SAID_MILLIS = 3_000;
     private static final float TURN_SPEED = 0.5F;
     private static final double ZOOM_STEP = 1.12;
-    /* Where a part held hovers off the place it would snap to, up and to the side, as the design shows it dragged. */
-    private static final Vec3 HOVER = new Vec3(-4.2, 2.6, 0);
+    /* The words by the mouse: how far past it they end, how far under it they stand, over the panels' cards. */
+    private static final int CALLOUT_PAST = 18;
+    private static final int CALLOUT_UNDER = 6;
+    private static final float CALLOUT_DEPTH = 200;
     /* The floor under the stowed gear, the height of the joints' nodes over the hull's floor, the hull's half width. */
     private static final double FLOOR_Y = -2;
     private static final double JOINT_Y = 3.0;
@@ -191,11 +194,15 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         this.target = this.held == null ? null : target(mouseX, mouseY);
-        this.view.draw(g, this.width, this.height, this.terminal, drawnModels(), heldModels(), heldAt(),
-                FLOOR_Y);
+        final Ghost ghost = ghost(mouseX, mouseY);
+        this.view.draw(g, this.width, this.height, this.terminal, drawnModels(), ghost.models(), ghost.at(),
+                ghost.colour(), FLOOR_Y);
         footprint(g);
-        nodes(g, mouseX, mouseY);
+        nodes(g);
         super.render(g, mouseX, mouseY, partialTick);
+        if (!ghost.words().isEmpty()) {
+            callout(g, ghost, mouseX, mouseY);
+        }
     }
 
     @Override
@@ -427,9 +434,110 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         return with.subList(count, with.size());
     }
 
-    /* Where the held part hovers: off its snapping place, as it is dragged. */
-    private Vec3 heldAt() {
-        return HOVER;
+    /*
+     * The part held as the view draws it, and the words by the mouse: set where it would be, green, over a joint it
+     * snaps to; red over a joint it does not fit, saying why; cyan under the mouse otherwise.
+     */
+    private Ghost ghost(final int mouseX, final int mouseY) {
+        final Held h = this.held;
+        final ShipPart part = h == null ? null : this.parts.get(h.id());
+        if (h == null || part == null) {
+            return Ghost.NONE;
+        }
+        final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
+        if (this.target != null) {
+            return new Ghost(heldModels(), Vec3.ZERO, c.holoFits(), GameText.resolve(ShipDesignTexts.SNAPS_HERE),
+                    c.node());
+        }
+        final ShipDesign alone = alone(h.id(), part);
+        final List<ShipPartModels.Placed> models = ShipPartModels.of(this.parts, this.kits, alone);
+        final Node wrong = wrong(mouseX, mouseY, h);
+        if (wrong != null) {
+            return new Ghost(models, wrongAt(wrong, part, alone), c.holoBad(), GameText.resolve(why(h.id(), part)),
+                    c.red());
+        }
+        final Vec3 under = this.view.under(mouseX, mouseY, this.width, this.height);
+        return new Ghost(models, under.subtract(middle(alone)), c.holo(), GameText.resolve(
+                ShipDesignTexts.DRAG_TO_GREEN.with(Text.of(spoken(h.id())))), c.accent());
+    }
+
+    /* The words of {@code ghost} by the mouse: under it, ending just past it, kept over the view between the panels. */
+    private void callout(final GuiGraphics g, final Ghost ghost, final int mouseX, final int mouseY) {
+        final int w = ShipDesignArt.calloutWidth(this.font, ghost.words());
+        final int left = Math.round(guiX(ShipDesignLayout.LEFT_X1)) + 2;
+        final int right = Math.round(guiX(ShipDesignLayout.RIGHT_X0)) - 2;
+        final int x0 = Math.max(left, Math.min(right, mouseX + CALLOUT_PAST) - w);
+        g.pose().pushPose();
+        g.pose().translate(0, 0, CALLOUT_DEPTH);
+        ShipDesignArt.callout(g, this.font, ghost.words(), x0, mouseY + CALLOUT_UNDER, ghost.wordsColour());
+        g.pose().popPose();
+    }
+
+    /* The joint nearest the mouse, within the snap's reach, that {@code h}'s part does not fit; none for none. */
+    private @Nullable Node wrong(final double mouseX, final double mouseY, final Held h) {
+        final List<Node> fits = targets(h);
+        final double reach = (this.snap ? SNAP_REACH : FREE_REACH) * this.scale;
+        final int[] drawn = fronts(this.design.spine());
+        Node best = null;
+        double nearest = Double.MAX_VALUE;
+        for (int j = 0; j < drawn.length; j++) {
+            final int z = drawn[j];
+            if (fits.stream().anyMatch(node -> node.x() == 0 && node.y() == JOINT_Y && node.z() == z)) {
+                continue;
+            }
+            final Optional<float[]> at = this.view.project(0, JOINT_Y, z, this.width, this.height);
+            if (at.isEmpty()) {
+                continue;
+            }
+            final double away = Math.hypot(at.get()[0] - mouseX, at.get()[1] - mouseY);
+            if (away < reach && away < nearest) {
+                nearest = away;
+                best = new Node(0, JOINT_Y, z, new Target(false, j));
+            }
+        }
+        return best;
+    }
+
+    /*
+     * Where the part held over the joint {@code wrong} it does not fit stands: a section over the section that begins
+     * there, as the approved design draws a module held on the nose over the cockpit, or behind the tail's joint; a
+     * hung part on the joint.
+     */
+    private Vec3 wrongAt(final Node wrong, final ShipPart part, final ShipDesign alone) {
+        if (part.length() <= 0) {
+            return new Vec3(wrong.x(), wrong.y(), wrong.z()).subtract(middle(alone));
+        }
+        final int[] drawn = fronts(this.design.spine());
+        final int joint = wrong.target().at();
+        return new Vec3(0, 0, joint + 1 < drawn.length ? (drawn[joint] + drawn[joint + 1] - part.length()) / 2.0
+                : wrong.z());
+    }
+
+    /* Why the part {@code id} does not fit a joint of the spine it is held over. */
+    private Text why(final ResourceLocation id, final ShipPart part) {
+        if (part.place() == ShipPlace.NOSE) {
+            return ShipDesignTexts.COCKPIT_ONLY_AT_NOSE.text();
+        }
+        if (part.length() > 0) {
+            return ShipDesignTexts.ONLY_COCKPIT_AT_NOSE.text();
+        }
+        return ShipDesignTexts.NOT_IN_SPINE.with(Text.of(spoken(id)));
+    }
+
+    /* The middle of what {@code design} lays, in its own frame, as its models stand. */
+    private Vec3 middle(final ShipDesign design) {
+        final ShipLayout.Laid alone = ShipyardLayout.laid(this.parts, this.kits, design);
+        if (alone.cells().isEmpty()) {
+            return Vec3.ZERO;
+        }
+        final int[] box = bounds(alone.cells().keySet().stream().toList());
+        return new Vec3((box[0] + box[1] + 1) / 2.0, (box[2] + box[3] + 1) / 2.0, (box[4] + box[5] + 1) / 2.0);
+    }
+
+    /* A design of the part {@code id} alone: a section in a spine of its own, or a hung part on none. */
+    private static ShipDesign alone(final ResourceLocation id, final ShipPart part) {
+        return part.length() > 0 ? new ShipDesign("", List.of(id), List.of())
+                : new ShipDesign("", List.of(), List.of(id));
     }
 
     /* The ship's footprint on the floor: a dotted rectangle round it, its corners marked, its length and span. */
@@ -468,42 +576,14 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                 up(ShipDesignTexts.BLK.with(span)), true);
     }
 
-    /* The joints' nodes, the nodes the held part snaps to, its dotted lines to them and where it snaps. */
-    private void nodes(final GuiGraphics g, final int mouseX, final int mouseY) {
-        final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
+    /* The joints' nodes, or those the held part snaps to, the one it snaps to bigger. */
+    private void nodes(final GuiGraphics g) {
         final Held h = this.held;
         final List<Node> all = h == null ? joints(this.design.spine().size()) : targets(h);
         for (final Node node : all) {
             final Optional<float[]> at = this.view.project(node.x(), node.y(), node.z(), this.width, this.height);
             at.ifPresent(p -> ShipDesignArt.node(g, Math.round(p[0]), Math.round(p[1]),
                     h != null && this.target != null && node.target().equals(this.target)));
-        }
-        final Target to = this.target;
-        if (h == null || to == null) {
-            return;
-        }
-        for (final Node node : all) {
-            if (!node.target().equals(to)) {
-                continue;
-            }
-            final Optional<float[]> there = this.view.project(node.x(), node.y(), node.z(), this.width,
-                    this.height);
-            final Optional<float[]> from = this.view.project(node.x() + HOVER.x, node.y() + HOVER.y,
-                    node.z() + HOVER.z, this.width, this.height);
-            if (there.isEmpty() || from.isEmpty()) {
-                continue;
-            }
-            ShipDesignArt.node(g, Math.round(from.get()[0]), Math.round(from.get()[1]), false);
-            ShipDesignArt.dotted(g, from.get()[0], from.get()[1], there.get()[0], there.get()[1], c.node(), 3);
-            final String snaps = up(ShipDesignTexts.SNAPS_HERE);
-            final int sx = Math.round(there.get()[0]) + 7;
-            final int sy = Math.round(there.get()[1]) - 5;
-            g.fill(sx, sy, sx + ShipDesignArt.spacedWidth(this.font, snaps) + 6, sy + 11, c.label());
-            ShipDesignArt.spaced(g, this.font, snaps, sx + 3, sy + 2, c.node());
-        }
-        if (this.target == null) {
-            final String name = partName(h.id());
-            Draw.text(g, this.font, name, mouseX + 10, mouseY + 4, c.accent());
         }
     }
 
@@ -904,8 +984,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         if (part == null) {
             return;
         }
-        final ShipDesign alone = part.length() > 0 ? new ShipDesign("", List.of(id), List.of())
-                : new ShipDesign("", List.of(), List.of(id));
+        final ShipDesign alone = alone(id, part);
         final List<ShipPartModels.Placed> placed = ShipPartModels.of(this.parts, this.kits,
                 alone.painted(this.design.finish()));
         final ShipLayout.Laid alone3d = ShipyardLayout.laid(this.parts, this.kits, alone);
@@ -1460,6 +1539,12 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         return part == null ? id.getPath() : Component.translatable(part.name()).getString().toUpperCase(Locale.ROOT);
     }
 
+    /* The name of the part {@code id} as it is written, for the words by the mouse. */
+    private String spoken(final ResourceLocation id) {
+        final ShipPart part = this.parts.get(id);
+        return part == null ? id.getPath() : Component.translatable(part.name()).getString();
+    }
+
     private String makerName(final ResourceLocation id) {
         final ShipMaker made = this.makers.get(id);
         return made == null ? id.getPath() : Component.translatable(made.name()).getString().toUpperCase(Locale.ROOT);
@@ -1550,6 +1635,12 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     /* A node in the ship's frame, and what a part let go on it snaps to. */
     private record Node(double x, double y, double z, Target target) {
+    }
+
+    /* The part held as drawn: its models, moved by {@code at}, in {@code colour}; and the words by the mouse. */
+    private record Ghost(List<ShipPartModels.Placed> models, Vec3 at, int colour, String words, int wordsColour) {
+
+        static final Ghost NONE = new Ghost(List.of(), Vec3.ZERO, 0, "", 0);
     }
 
     /* A line of the flight check: what it says, its colour's kind and its mark. */

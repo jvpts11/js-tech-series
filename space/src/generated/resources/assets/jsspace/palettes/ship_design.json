@@ -19,6 +19,8 @@
   "glint": "#FFDCFFDC",
   "green": "#FF5FE07A",
   "holo": "#A04CCCFF",
+  "holoBad": "#A0EF6A5A",
+  "holoFits": "#A04CFF5A",
   "label": "#C8091017",
   "line": "#FF263C4A",
   "metalA": "#FFA0A2A6",

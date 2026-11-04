@@ -29,7 +29,8 @@ import net.minecraft.world.level.block.Blocks;
  * The Starship Design on a player's game, opened at a formed Small Shipyard's terminal: the approved builder's ship on
  * its dotted floor through the middle, its panels round it; the Workshop taken from its card and held over the joint
  * between the quarters and the reactor, where it snaps; let go there, it is set in the spine, and the shipyard keeps
- * the design.
+ * the design. Held, the part is a hologram: cyan under the mouse over the void, green where it would be set over a
+ * joint it snaps to, red over the nose it does not fit, the words by the mouse in the same colour.
  */
 public final class ShipDesignClientTests {
 
@@ -52,6 +53,27 @@ public final class ShipDesignClientTests {
     private static final int CHANNEL = 0xFF;
     /* How far the panels' cyan stands over red at the right panel's title. */
     private static final int CYAN = 60;
+    /* A point of the frame over the void above the ship, away from every joint. */
+    private static final int VOID_X = 300;
+    private static final int VOID_Y = 100;
+    /*
+     * Where the colours are counted about the mouse, in the GUI's pixels: over it, as far up and to either side;
+     * the words' band under it, from and to, as far left and right; and by how much a channel stands over another.
+     */
+    private static final int ABOVE = 16;
+    private static final int AROUND = 14;
+    private static final int WORDS_FROM = 8;
+    private static final int WORDS_TO = 16;
+    private static final int WORDS_LEFT = 60;
+    private static final int WORDS_RIGHT = 16;
+    private static final int HUE = 40;
+    /* The colours' places in a count, the words' after the hologram's, and how many more pixels prove each. */
+    private static final int CYAN_AT = 0;
+    private static final int GREEN_AT = 1;
+    private static final int RED_AT = 2;
+    private static final int WORDS = 3;
+    private static final int HOLOGRAM = 120;
+    private static final int WORDS_SEEN = 20;
 
     private ShipDesignClientTests() {
     }
@@ -113,6 +135,85 @@ public final class ShipDesignClientTests {
                                 + ((ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0])).design());
     }
 
+    @ClientTest(timeoutTicks = 2000)
+    public static void held_isAHologramCyanLooseGreenSnappedRedWhereItDoesNotFit(final ClientTestContext ctx) {
+        final ServerLevel[] built = new ServerLevel[1];
+        final BlockPos[] terminal = new BlockPos[1];
+        final ShipDesign ship = new ShipDesign("JS-01", List.of(part("orbiter_cockpit"), part("airlock"),
+                part("quarters"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
+                part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
+        // Where the mouse rests: over the void above the ship, on the joint the workshop snaps to, on the nose.
+        final float[][] spot = new float[3][];
+        final int[][] before = new int[3][];
+        ctx.afterTest(() -> {
+            ctx.mc().setScreen(null);
+            ctx.server().execute(() -> {
+                if (built[0] != null) {
+                    clear(ctx, built[0]);
+                }
+            });
+        });
+        ctx.thenServer(0, level -> {
+            built[0] = level;
+            terminal[0] = TestShipyards.build(level, ctx.abs(CORNER));
+        }).thenWaitUntilServer(level -> level.getBlockEntity(terminal[0]) instanceof ShipyardTerminalBlockEntity dock
+                && dock.formed(), ARRIVE, "the dock to form", level -> "not formed")
+                .thenTeleport(SETTLE, BOOTH, Direction.WEST)
+                .thenServer(SETTLE, level -> ShipDesigner.open(ctx.serverPlayer(),
+                        (ShipyardTerminalBlockEntity) level.getBlockEntity(terminal[0])))
+                .thenAwaitScreen(ShipDesignScreen.class, OPEN)
+                .then(SETTLE, () -> screen(ctx).edit(ship))
+                .then(SETTLE, () -> {
+                    final int[] free = frame(ctx, VOID_X, VOID_Y);
+                    spot[0] = new float[] {free[0], free[1]};
+                    spot[1] = screen(ctx).joint(QUARTERS_BACK).orElseThrow();
+                    spot[2] = screen(ctx).joint(0).orElseThrow();
+                    ctx.pointAt(spot[0][0], spot[0][1]);
+                })
+                // Nothing held yet: what each place shows of each colour, to be told from the hologram's.
+                .then(SETTLE, () -> {
+                    for (int i = 0; i < spot.length; i++) {
+                        before[i] = colours(ctx, spot[i]);
+                    }
+                })
+                .then(0, () -> {
+                    final int[] card = frame(ctx, ShipDesignLayout.cardX(0) + 30, ShipDesignLayout.cardY(0) + 20);
+                    screen(ctx).mouseClicked(card[0], card[1], InputConstants.MOUSE_BUTTON_LEFT);
+                    ctx.pointAt(spot[0][0], spot[0][1]);
+                })
+                .thenScreenshot(SETTLE, "ship-design-held-loose")
+                .then(0, () -> {
+                    final int[] now = colours(ctx, spot[0]);
+                    ctx.assertTrue(now[CYAN_AT] - before[0][CYAN_AT] > HOLOGRAM, "the workshop held over the void is "
+                            + "a cyan hologram under the mouse: " + now[CYAN_AT] + " cyan pixels, " + before[0][CYAN_AT]
+                            + " before");
+                    ctx.assertTrue(now[WORDS + CYAN_AT] - before[0][WORDS + CYAN_AT] > WORDS_SEEN, "and the words "
+                            + "by the mouse are cyan: " + now[WORDS + CYAN_AT]);
+                    ctx.pointAt(spot[1][0], spot[1][1]);
+                })
+                .thenScreenshot(SETTLE, "ship-design-held-snaps")
+                .then(0, () -> {
+                    final int[] now = colours(ctx, spot[1]);
+                    ctx.assertTrue(now[GREEN_AT] - before[1][GREEN_AT] > HOLOGRAM, "over the joint it snaps to, it "
+                            + "stands where it would be set, green: " + now[GREEN_AT] + " green pixels, "
+                            + before[1][GREEN_AT] + " before");
+                    ctx.assertTrue(now[WORDS + GREEN_AT] - before[1][WORDS + GREEN_AT] > WORDS_SEEN, "and the words "
+                            + "by the mouse are green: " + now[WORDS + GREEN_AT]);
+                    ctx.pointAt(spot[2][0], spot[2][1]);
+                })
+                .thenScreenshot(SETTLE, "ship-design-held-wrong")
+                .then(0, () -> {
+                    final int[] now = colours(ctx, spot[2]);
+                    ctx.assertTrue(now[RED_AT] - before[2][RED_AT] > HOLOGRAM, "over the nose, which only a cockpit "
+                            + "fits, it is red: " + now[RED_AT] + " red pixels, " + before[2][RED_AT] + " before");
+                    ctx.assertTrue(now[WORDS + RED_AT] - before[2][WORDS + RED_AT] > WORDS_SEEN, "and the words by "
+                            + "the mouse saying why are red: " + now[WORDS + RED_AT]);
+                    screen(ctx).mouseReleased(spot[2][0], spot[2][1], InputConstants.MOUSE_BUTTON_LEFT);
+                })
+                .thenAssert(SETTLE, () -> screen(ctx).design().equals(ship), "let go on the nose, the workshop is set "
+                        + "nowhere");
+    }
+
     private static ShipDesignScreen screen(final ClientTestContext ctx) {
         return ctx.screen(ShipDesignScreen.class);
     }
@@ -127,6 +228,42 @@ public final class ShipDesignClientTests {
         final float scale = screen.getXSize() / (float) ShipDesignLayout.WIDTH;
         return new int[] {Math.round(screen.getGuiLeft() + (x + 0.5F) * scale),
             Math.round(screen.getGuiTop() + (y + 0.5F) * scale)};
+    }
+
+    /*
+     * How many pixels about {@code at} are cyan, green and red: first over it, where the hologram stands, then in the
+     * band under it where the words by the mouse are written.
+     */
+    private static int[] colours(final ClientTestContext ctx, final float[] at) {
+        final int[] out = new int[2 * WORDS];
+        final int cx = Math.round(at[0]);
+        final int cy = Math.round(at[1]);
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = cy - ABOVE; y <= cy + 4; y++) {
+                for (int x = cx - AROUND; x <= cx + AROUND; x++) {
+                    tally(frame.pixel(x, y), out, 0);
+                }
+            }
+            for (int y = cy + WORDS_FROM; y <= cy + WORDS_TO; y++) {
+                for (int x = cx - WORDS_LEFT; x <= cx + WORDS_RIGHT; x++) {
+                    tally(frame.pixel(x, y), out, WORDS);
+                }
+            }
+        }
+        return out;
+    }
+
+    private static void tally(final int argb, final int[] out, final int from) {
+        final int r = argb >> 16 & CHANNEL;
+        final int g = argb >> 8 & CHANNEL;
+        final int b = argb & CHANNEL;
+        if (b > r + HUE && g > r + HUE) {
+            out[from + CYAN_AT]++;
+        } else if (g > r + HUE && g > b + HUE / 2) {
+            out[from + GREEN_AT]++;
+        } else if (r > g + HUE && r > b + HUE) {
+            out[from + RED_AT]++;
+        }
     }
 
     private static int pixel(final ClientTestContext ctx, final int x, final int y) {
