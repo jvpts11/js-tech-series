@@ -113,6 +113,14 @@ public final class ShipDesignTexts {
             "A cockpit fits only the nose");
     public static final TextKey NOT_IN_SPINE = TextKey.of("jsspace.ship_design.not_in_spine",
             "%s goes on the hull, not in the spine");
+    // By the mouse over a part of the ship: its maker, and what a click with the tool does to it.
+    public static final TextKey MAKER_AND_CLICK = TextKey.of("jsspace.ship_design.maker_and_click", "%s - %s");
+    public static final TextKey CLICK_PICK = TextKey.of("jsspace.ship_design.click_pick", "click to pick it up");
+    public static final TextKey CLICK_REMOVE = TextKey.of("jsspace.ship_design.click_remove",
+            "click to take it off");
+    public static final TextKey CLICK_FLIP = TextKey.of("jsspace.ship_design.click_flip", "click to flip it");
+    public static final TextKey CLICK_FINISH = TextKey.of("jsspace.ship_design.click_finish",
+            "click to change the finish");
     public static final TextKey SPAN = TextKey.of("jsspace.ship_design.span", "Span");
 
     private ShipDesignTexts() {

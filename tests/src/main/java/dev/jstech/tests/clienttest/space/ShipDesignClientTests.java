@@ -30,7 +30,9 @@ import net.minecraft.world.level.block.Blocks;
  * its dotted floor through the middle, its panels round it; the Workshop taken from its card and held over the joint
  * between the quarters and the reactor, where it snaps; let go there, it is set in the spine, and the shipyard keeps
  * the design. Held, the part is a hologram: cyan under the mouse over the void, green where it would be set over a
- * joint it snaps to, red over the nose it does not fit, the words by the mouse in the same colour.
+ * joint it snaps to, red over the nose it does not fit, the words by the mouse in the same colour; the green nodes only
+ * while a part is held, only where it snaps. With nothing held, the part under the mouse is outlined by its own
+ * faces, and a click takes that part.
  */
 public final class ShipDesignClientTests {
 
@@ -74,8 +76,9 @@ public final class ShipDesignClientTests {
     private static final int WORDS = 3;
     private static final int HOLOGRAM = 120;
     private static final int WORDS_SEEN = 20;
-    /* How many green pixels show a joint's node. */
+    /* How many green pixels show a joint's node; how many more cyan ones a part's outline. */
     private static final int NODE_SEEN = 15;
+    private static final int OUTLINE_SEEN = 25;
 
     private ShipDesignClientTests() {
     }
@@ -203,6 +206,38 @@ public final class ShipDesignClientTests {
                             + colours(ctx, spot[1])[GREEN_AT]);
                     ctx.assertTrue(screen(ctx).design().equals(ship()), "nothing let go over the parts was set");
                 });
+    }
+
+    @ClientTest(timeoutTicks = 2000)
+    public static void hover_outlinesThePartUnderTheMouseAndTheClickTakesIt(final ClientTestContext ctx) {
+        final float[][] spot = new float[3][];
+        final float[] reactor = new float[2];
+        final int[] before = new int[1];
+        open(ctx, ship());
+        ctx.then(SETTLE, () -> {
+            spots(ctx, spot);
+            // On the reactor's back, between the joint before it and the spine's end behind it.
+            final float[] front = screen(ctx).joint(QUARTERS_BACK).orElseThrow();
+            final float[] back = screen(ctx).joint(QUARTERS_BACK + 1).orElseThrow();
+            reactor[0] = (front[0] + back[0]) / 2;
+            reactor[1] = (front[1] + back[1]) / 2;
+        })
+                .then(SETTLE, () -> {
+                    before[0] = colours(ctx, reactor)[CYAN_AT];
+                    ctx.pointAt(reactor[0], reactor[1]);
+                })
+                .thenScreenshot(SETTLE, "ship-design-hover")
+                .then(0, () -> {
+                    final int now = colours(ctx, reactor)[CYAN_AT];
+                    ctx.assertTrue(now - before[0] > OUTLINE_SEEN, "the reactor under the mouse is outlined in cyan: "
+                            + now + " cyan pixels, " + before[0] + " with the mouse away");
+                    screen(ctx).mouseClicked(reactor[0], reactor[1], InputConstants.MOUSE_BUTTON_LEFT);
+                    final int[] panel = frame(ctx, ShipDesignLayout.CARD_X0, ShipDesignLayout.CHOSEN_Y);
+                    screen(ctx).mouseReleased(panel[0], panel[1], InputConstants.MOUSE_BUTTON_LEFT);
+                })
+                .thenAssert(SETTLE, () -> screen(ctx).design().spine().equals(List.of(part("orbiter_cockpit"),
+                        part("airlock"), part("quarters"))), "the click took the reactor itself, and let go over "
+                        + "the parts it is off the ship");
     }
 
     /* The ship the screen is opened on: a cockpit, an airlock, the quarters and a reactor, and its hung parts. */

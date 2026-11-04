@@ -38,8 +38,9 @@ import org.lwjgl.opengl.GL11;
 /**
  * The Starship Design's view of the ship, as the approved design draws it: the ship on a floor in a dark void, the
  * floor a cross every second block and a line along and across the ship's middle, fading into the void far off, seen
- * through a camera turning round the ship's middle at a height, as an editor's does. It draws the ship's models, and a
- * part held over it see-through in cyan; and it finds where a point of the ship falls on the screen.
+ * through a camera turning round the ship's middle at a height, as an editor's does. It draws the ship's models, the
+ * outline of the part under the mouse, and a part held over it as a hologram; and it finds where a point of the ship
+ * falls on the screen, and the line from the camera through a point of the screen.
  */
 final class ShipDesignView {
 
@@ -74,6 +75,8 @@ final class ShipDesignView {
     /* Where the floor fades into the void, from the camera, in blocks. */
     private static final double FOG_FROM = 40;
     private static final double FOG_TO = 110;
+    /* How far toward the camera a part's outline is drawn, in blocks. */
+    private static final double OUTLINE_LIFT = 0.04;
 
     /** Turns the camera by the mouse's move, in degrees. */
     void turn(final float yawBy, final float pitchBy) {
@@ -92,13 +95,14 @@ final class ShipDesignView {
     }
 
     /**
-     * Draws the void, the floor at {@code floorY}, the ship's {@code models} for {@code owner}, and the {@code held}
-     * part's models see-through in {@code heldColour}, moved by {@code heldAt}, over the ship as a hologram is; over
-     * the whole screen {@code width} by {@code height}, in its scaled pixels.
+     * Draws the void, the floor at {@code floorY}, the ship's {@code models} for {@code owner}, the {@code outline} of
+     * a part, each edge as its two ends, in {@code outlineColour} where it is not behind the ship, and the
+     * {@code held} part's models see-through in {@code heldColour}, moved by {@code heldAt}, over the ship as a
+     * hologram is; over the whole screen {@code width} by {@code height}, in its scaled pixels.
      */
     void draw(final GuiGraphics g, final int width, final int height, final BlockEntity owner,
-              final List<ShipPartModels.Placed> models, final List<ShipPartModels.Placed> held, final Vec3 heldAt,
-              final int heldColour, final double floorY) {
+              final List<ShipPartModels.Placed> models, final List<float[]> outline, final int outlineColour,
+              final List<ShipPartModels.Placed> held, final Vec3 heldAt, final int heldColour, final double floorY) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         g.fillGradient(0, 0, width, height, c.skyHigh(), c.skyLow());
         g.flush();
@@ -122,6 +126,9 @@ final class ShipDesignView {
             ShipPartsRenderer.draw(owner, models, CabinReadings.AT_REST, pose, buffers, LightTexture.FULL_BRIGHT,
                     OverlayTexture.NO_OVERLAY);
             buffers.endBatch();
+            if (!outline.isEmpty()) {
+                outline(pose, buffers, outline, outlineColour);
+            }
             // The part held is a hologram over the ship, never hidden in it: it hides only its own far faces.
             RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
             pose.pushPose();
@@ -172,14 +179,9 @@ final class ShipDesignView {
      * facing the camera, so a part held there stays under the mouse, as far off as the ship.
      */
     Vec3 under(final double x, final double y, final int width, final int height) {
-        matrices(width, height);
-        final Matrix4f back = new Matrix4f(this.projection).mul(this.view).invert();
-        final float nx = (float) (x / Math.max(1, width) * 2 - 1);
-        final float ny = (float) (1 - y / Math.max(1, height) * 2);
-        final Vector4f near = back.transform(new Vector4f(nx, ny, -1, 1));
-        final Vector4f far = back.transform(new Vector4f(nx, ny, 1, 1));
-        final Vec3 from = new Vec3(near.x / near.w, near.y / near.w, near.z / near.w);
-        final Vec3 way = new Vec3(far.x / far.w, far.y / far.w, far.z / far.w).subtract(from);
+        final Vec3[] line = ray(x, y, width, height);
+        final Vec3 from = line[0];
+        final Vec3 way = line[1];
         final Vec3 facing = this.target.subtract(eye()).normalize();
         final double along = way.dot(facing);
         if (Math.abs(along) < 1.0e-9) {
@@ -188,13 +190,57 @@ final class ShipDesignView {
         return from.add(way.scale(this.target.subtract(from).dot(facing) / along));
     }
 
-    /* Where the camera stands. */
-    private Vec3 eye() {
+    /**
+     * The line from the camera through the screen's point ({@code x}, {@code y}), on a screen {@code width} by
+     * {@code height}, in the ship's frame: where it starts, at the nearest the camera sees, and the way it goes, as
+     * far as the furthest.
+     */
+    Vec3[] ray(final double x, final double y, final int width, final int height) {
+        matrices(width, height);
+        final Matrix4f back = new Matrix4f(this.projection).mul(this.view).invert();
+        final float nx = (float) (x / Math.max(1, width) * 2 - 1);
+        final float ny = (float) (1 - y / Math.max(1, height) * 2);
+        final Vector4f near = back.transform(new Vector4f(nx, ny, -1, 1));
+        final Vector4f far = back.transform(new Vector4f(nx, ny, 1, 1));
+        final Vec3 from = new Vec3(near.x / near.w, near.y / near.w, near.z / near.w);
+        return new Vec3[] {from, new Vec3(far.x / far.w, far.y / far.w, far.z / far.w).subtract(from)};
+    }
+
+    /** Where the camera stands, in the ship's frame. */
+    Vec3 eye() {
         final double yawRad = Math.toRadians(this.yaw);
         final double pitchRad = Math.toRadians(this.pitch);
         return new Vec3(this.target.x - Math.sin(yawRad) * Math.cos(pitchRad) * this.distance,
                 this.target.y + Math.sin(pitchRad) * this.distance,
                 this.target.z + Math.cos(yawRad) * Math.cos(pitchRad) * this.distance);
+    }
+
+    /*
+     * The edges of a part's outline as lines a little toward the camera, so the faces they run along never hide
+     * them, but the ship in front of them does.
+     */
+    private void outline(final PoseStack pose, final MultiBufferSource.BufferSource buffers,
+                         final List<float[]> edges, final int colour) {
+        final Vec3 eye = eye();
+        final VertexConsumer out = buffers.getBuffer(RenderType.lines());
+        final PoseStack.Pose last = pose.last();
+        for (final float[] edge : edges) {
+            final Vec3 a = toward(eye, edge[0], edge[1], edge[2]);
+            final Vec3 b = toward(eye, edge[3], edge[4], edge[5]);
+            final Vec3 way = b.subtract(a).normalize();
+            out.addVertex(last, (float) a.x, (float) a.y, (float) a.z).setColor(colour)
+                    .setNormal(last, (float) way.x, (float) way.y, (float) way.z);
+            out.addVertex(last, (float) b.x, (float) b.y, (float) b.z).setColor(colour)
+                    .setNormal(last, (float) way.x, (float) way.y, (float) way.z);
+        }
+        // As wide as the game draws the outline of the block under the crosshair, by the window's size.
+        buffers.endBatch(RenderType.lines());
+    }
+
+    /* The point ({@code x}, {@code y}, {@code z}) brought a little toward {@code eye}. */
+    private static Vec3 toward(final Vec3 eye, final double x, final double y, final double z) {
+        final Vec3 at = new Vec3(x, y, z);
+        return at.add(eye.subtract(at).normalize().scale(OUTLINE_LIFT));
     }
 
     /* The camera's matrices for a screen {@code width} by {@code height}. */

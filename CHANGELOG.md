@@ -2780,7 +2780,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   spine's joints behind it for a section, its own place for a part hung on the hull). Held, a part is a hologram of
   itself under the mouse in cyan, standing where it would be set in green over a joint it snaps to, and red over one
   it does not fit, the words by the mouse saying so and why (only a cockpit fits the nose); a section taken off the
-  spine leaves its gap till it is set down. The parts by kind and by maker, each card with its own model; the chosen part's length, mass, blocks, power and note;
+  spine leaves its gap till it is set down. With nothing held, the part under the mouse is outlined in cyan by its
+  own silhouette, its name, its maker and what a click with the tool does to it beside the mouse; a click takes the
+  part whose own faces are under the mouse, never one whose box only is, as round the empty corners of a wing. The
+  parts by kind and by maker, each card with its own model; the chosen part's length, mass, blocks, power and note;
   the flight check; the ship's mass, thrust, vertical take-off thrust against weight, power and crew; the room left in
   its hull; its finish; the blocks the dock needs; the ship's footprint on the floor with its length and span. Flip
   turns a section's door and fittings to the other side. S saves it among the dock's plans by its name, E sends it to

@@ -79,6 +79,8 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     private final ShipyardTerminalBlockEntity terminal;
     private final ShipDesignView view = new ShipDesignView();
+    /* The faces of the ship's models as last drawn, which the mouse is over or not. */
+    private @Nullable ShipDesignMesh mesh;
     private ShipDesign design;
     private Map<ResourceLocation, ShipPart> parts = Map.of();
     private Map<ResourceLocation, ShipKit> kits = Map.of();
@@ -127,6 +129,8 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     private static final int CALLOUT_PAST = 18;
     private static final int CALLOUT_UNDER = 6;
     private static final float CALLOUT_DEPTH = 200;
+    /* How far right of the mouse a part's name under it begins. */
+    private static final int NAMED_PAST = 11;
     /* The floor under the stowed gear, the height of the joints' nodes over the hull's floor, the hull's half width. */
     private static final double FLOOR_Y = -2;
     private static final double JOINT_Y = 3.0;
@@ -195,13 +199,20 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         this.target = this.held == null ? null : target(mouseX, mouseY);
         final Ghost ghost = ghost(mouseX, mouseY);
-        this.view.draw(g, this.width, this.height, this.terminal, drawnModels(), ghost.models(), ghost.at(),
-                ghost.colour(), FLOOR_Y);
+        final List<ShipPartModels.Placed> drawn = drawnModels();
+        // With nothing held, the part under the mouse is outlined by its own silhouette, its name beside it.
+        final int under = this.held == null ? partAt(drawn, mouseX, mouseY) : -1;
+        final List<float[]> outline = under >= 0 && this.mesh != null ? this.mesh.outline(under, this.view.eye())
+                : List.of();
+        this.view.draw(g, this.width, this.height, this.terminal, drawn, outline,
+                ShipDesignArt.PALETTE.get().accent(), ghost.models(), ghost.at(), ghost.colour(), FLOOR_Y);
         footprint(g);
         nodes(g);
         super.render(g, mouseX, mouseY, partialTick);
         if (!ghost.words().isEmpty()) {
             callout(g, ghost, mouseX, mouseY);
+        } else if (under >= 0) {
+            named(g, under, mouseX, mouseY);
         }
     }
 
@@ -461,6 +472,49 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                 ShipDesignTexts.DRAG_TO_GREEN.with(Text.of(spoken(h.id())))), c.accent());
     }
 
+    /*
+     * The words by the mouse over the part numbered {@code part}: its name, and its maker with what a click of the
+     * tool does to it, beside the mouse, kept over the view between the panels.
+     */
+    private void named(final GuiGraphics g, final int part, final int mouseX, final int mouseY) {
+        final ResourceLocation id = idOf(part);
+        if (id == null) {
+            return;
+        }
+        final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
+        final String click = GameText.resolve(switch (this.tool) {
+            case REMOVE -> ShipDesignTexts.CLICK_REMOVE;
+            case FLIP -> ShipDesignTexts.CLICK_FLIP;
+            case FINISH -> ShipDesignTexts.CLICK_FINISH;
+            default -> ShipDesignTexts.CLICK_PICK;
+        });
+        final ShipPart known = this.parts.get(id);
+        final Optional<String> maker = known == null ? Optional.empty() : known.maker().map(this.makers::get)
+                .map(made -> Component.translatable(made.name()).getString());
+        final String line = maker.map(by -> GameText.resolve(ShipDesignTexts.MAKER_AND_CLICK.with(Text.of(by),
+                Text.of(click)))).orElse(click);
+        final String name = spoken(id);
+        final int w = Math.max(ShipDesignArt.calloutWidth(this.font, name), ShipDesignArt.calloutWidth(this.font,
+                line));
+        final int right = Math.round(guiX(ShipDesignLayout.RIGHT_X0)) - 2;
+        final int x0 = Math.max(Math.round(guiX(ShipDesignLayout.LEFT_X1)) + 2, Math.min(mouseX + NAMED_PAST,
+                right - w));
+        g.pose().pushPose();
+        g.pose().translate(0, 0, CALLOUT_DEPTH);
+        ShipDesignArt.namedCallout(g, this.font, name, line, x0, mouseY + CALLOUT_UNDER, c.accent(), c.text(),
+                c.dim());
+        g.pose().popPose();
+    }
+
+    /* The part numbered {@code part}, the spine's from the nose first, then the hung ones; none past them. */
+    private @Nullable ResourceLocation idOf(final int part) {
+        final int sections = this.design.spine().size();
+        if (part < 0 || part >= sections + this.design.hung().size()) {
+            return null;
+        }
+        return part < sections ? this.design.spine().get(part) : this.design.hung().get(part - sections);
+    }
+
     /* The words of {@code ghost} by the mouse: under it, ending just past it, kept over the view between the panels. */
     private void callout(final GuiGraphics g, final Ghost ghost, final int mouseX, final int mouseY) {
         final int w = ShipDesignArt.calloutWidth(this.font, ghost.words());
@@ -684,7 +738,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     /* A click on the ship: the tool at work on the part under the mouse, or that part taken up to be moved. */
     private boolean clickShip(final double mouseX, final double mouseY) {
-        final int part = partAt(mouseX, mouseY);
+        final int part = partAt(drawnModels(), mouseX, mouseY);
         if (this.tool == Tool.FINISH) {
             nextFinish();
             return true;
@@ -705,37 +759,18 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         return true;
     }
 
-    /* The part of the ship under the mouse, by its place among the spine's and then the hung parts; -1 for none. */
-    private int partAt(final double mouseX, final double mouseY) {
-        final Map<Integer, List<ShipLayout.Cell>> byPart = new LinkedHashMap<>();
-        this.laid.cells().forEach((cell, spot) -> byPart.computeIfAbsent(spot.part(), any -> new ArrayList<>())
-                .add(cell));
-        int best = -1;
-        double smallest = Double.MAX_VALUE;
-        for (final Map.Entry<Integer, List<ShipLayout.Cell>> entry : byPart.entrySet()) {
-            final int[] box = bounds(entry.getValue());
-            float x0 = Float.MAX_VALUE;
-            float y0 = Float.MAX_VALUE;
-            float x1 = -Float.MAX_VALUE;
-            float y1 = -Float.MAX_VALUE;
-            for (int k = 0; k < 8; k++) {
-                final Optional<float[]> p = this.view.project((k & 1) == 0 ? box[0] : box[1] + 1,
-                        (k & 2) == 0 ? box[2] : box[3] + 1, (k & 4) == 0 ? box[4] : box[5] + 1, this.width,
-                        this.height);
-                if (p.isPresent()) {
-                    x0 = Math.min(x0, p.get()[0]);
-                    y0 = Math.min(y0, p.get()[1]);
-                    x1 = Math.max(x1, p.get()[0]);
-                    y1 = Math.max(y1, p.get()[1]);
-                }
-            }
-            final double area = (x1 - x0) * (double) (y1 - y0);
-            if (mouseX >= x0 && mouseX <= x1 && mouseY >= y0 && mouseY <= y1 && area < smallest) {
-                smallest = area;
-                best = entry.getKey();
-            }
+    /*
+     * The number of the part of the ship whose own faces the mouse is over, the nearest, the spine's from the nose
+     * then the hung parts'; -1 for none, or the mouse over a panel.
+     */
+    private int partAt(final List<ShipPartModels.Placed> drawn, final double mouseX, final double mouseY) {
+        if (ShipDesignLayout.onPanel(frameX(mouseX), frameY(mouseY))) {
+            return -1;
         }
-        return best;
+        final ShipDesignMesh faces = ShipDesignMesh.of(this.terminal, drawn, this.mesh);
+        this.mesh = faces;
+        final Vec3[] line = this.view.ray(mouseX, mouseY, this.width, this.height);
+        return faces.partAt(line[0], line[1]);
     }
 
     /* Lets the held part go: set where it snaps, thrown away on the parts' panel, or put back where it was. */

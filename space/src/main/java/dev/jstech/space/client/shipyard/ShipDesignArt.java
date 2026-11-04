@@ -204,6 +204,22 @@ public final class ShipDesignArt {
         Draw.text(g, font, words, x0 + CALLOUT_PAD, y + 3, colour);
     }
 
+    /**
+     * A thing's name by the mouse, as the approved design writes the part under it: on the labels' dark ground, a
+     * line of {@code edge} along its top, the name in {@code nameColour} and under it {@code line} in
+     * {@code lineColour}, from {@code x0} at {@code y}.
+     */
+    public static void namedCallout(final GuiGraphics g, final Font font, final String name, final String line,
+                                    final int x0, final int y, final int edge, final int nameColour,
+                                    final int lineColour) {
+        final Colours c = PALETTE.get();
+        final int x1 = x0 + Math.max(calloutWidth(font, name), calloutWidth(font, line));
+        g.fill(x0, y, x1, y + 2 * CALLOUT_H - 1, c.label());
+        hline(g, x0, x1, y, edge);
+        Draw.text(g, font, name, x0 + CALLOUT_PAD, y + 3, nameColour);
+        Draw.text(g, font, line, x0 + CALLOUT_PAD, y + 3 + CALLOUT_H - 2, lineColour);
+    }
+
     /** How wide the words {@code words} by the mouse are, their ground with them. */
     public static int calloutWidth(final Font font, final String words) {
         return font.width(words) + 2 * CALLOUT_PAD;
