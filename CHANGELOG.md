@@ -9,6 +9,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 
 ## [Unreleased]
 
+## [0.5.3a] - 2026-11-04
+
+Codename: Boron.
+
 ### Changed
 - (Computers) Programs: Virtual Studio and Virtual Studio Code have new icons, nearer the studio and the editor they
   stand for: Virtual Studio's knot in white on its purple plate, and Virtual Studio Code's ribbon in white on its blue

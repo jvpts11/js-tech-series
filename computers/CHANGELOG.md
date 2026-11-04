@@ -6,6 +6,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+## [0.5.3a] - 2026-11-04
+
+Codename: Boron.
+
 ### Changed
 - Programs: Virtual Studio and Virtual Studio Code have new icons, nearer the studio and the editor they
   stand for: Virtual Studio's knot in white on its purple plate, and Virtual Studio Code's ribbon in white on its blue
