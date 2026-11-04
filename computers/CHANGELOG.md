@@ -6,6 +6,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+### Fixed
+- Programs: `install` at a prompt takes a program by the package name its disc shows, as the package
+  managers do: `install kde-plasma` installs KDE Plasma and `install mines` the Minesweeper. It took only the
+  program's id, so every program whose package name is not its id was "no such program" by the name on its disc.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.

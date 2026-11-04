@@ -131,13 +131,11 @@ public final class InstallService {
      * Installs a program from the disc in a linked drive.
      *
      * <p>Installing is something the machine does over time, from that disc. Whether it can, and why not, is decided
-     * in one place for every way of asking, so the prompt says exactly what the Setup window on a desktop would.
+     * in one place for every way of asking, so the prompt says exactly what the Setup window on a desktop would. The
+     * program is named as a package manager takes it: by the package name its disc shows, or by its id.
      */
     public ICliComputer.OpResult install(final String programId) {
-        final ResourceLocation location = ResourceLocation.tryParse(
-                programId.contains(":") ? programId.toLowerCase(Locale.ROOT)
-                        : "jsc:" + programId.toLowerCase(Locale.ROOT));
-        final ProgramSpec program = location == null ? null : Programs.get(location);
+        final ProgramSpec program = Programs.named(programId);
         if (program == null) {
             return ICliComputer.OpResult.fail(NO_SUCH.with(programId));
         }
