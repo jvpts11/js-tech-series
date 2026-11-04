@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The windows a machine has open, as the machine remembers them. They are the machine's, not this client's: they
@@ -64,6 +65,23 @@ final class WindowLayouts {
      * per machine, so a face shown again as its layout changes keeps the facts the machine already sent.
      */
     private static final Map<BlockPos, WelcomeApp> FACE_WELCOMES = new HashMap<>();
+    /*
+     * The programs a machine's face in the world is drawn with while this client has none of the machine's own, by
+     * window key: made as the machine's desktop makes them when it is opened, each handed what the machine remembers
+     * of it, and kept per machine so a face shown again as its layout changes keeps them. Access-ordered and bounded
+     * as the kept programs are; a program let go is closed, so it waits on no answer.
+     */
+    private static final Map<BlockPos, Map<String, IDesktopApp>> FACE_PROGRAMS =
+            new LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry<BlockPos, Map<String, IDesktopApp>> eldest) {
+                    if (size() <= MAX_SAVED_DESKTOPS) {
+                        return false;
+                    }
+                    eldest.getValue().values().forEach(IDesktopApp::onClosed);
+                    return true;
+                }
+            };
     /** Moves on each time the programs this client has for any machine change hands. */
     private static int generation;
 
@@ -77,6 +95,8 @@ final class WindowLayouts {
         SAVED_APPS.clear();
         FACE_WELCOMES.values().forEach(WelcomeApp::onClosed);
         FACE_WELCOMES.clear();
+        FACE_PROGRAMS.values().forEach(programs -> programs.values().forEach(IDesktopApp::onClosed));
+        FACE_PROGRAMS.clear();
         generation++;
     }
 
@@ -167,12 +187,14 @@ final class WindowLayouts {
      *
      * <p>A window whose program this client has, on the desktop open on its screen or kept since that desktop was
      * left, is drawn by that very program, so the face shows what the player saw at the machine and not a stand-in.
-     * Only a window this client never had a program for is drawn with none behind it ({@link MirroredWindowApp}), so a
-     * face seen across the room asks the machine nothing and takes no reply meant for a program open on a screen.
+     * A window this client has no program for, as after the game was left and joined again, is drawn by a program of
+     * the face's own, made as the machine's desktop makes it and handed what the machine remembers of it; it is let go
+     * once a program of the player's draws that window. Only while a desktop is open on the player's screen is none
+     * made, since a program made then would take the replies meant for that desktop's: the window is drawn with no
+     * program behind it ({@link MirroredWindowApp}) until the screen is closed and the face looks again.
      *
-     * <p>The machine's own welcome is the one exception: it is the first thing a new machine shows, and it only reads
-     * facts the machine hands every welcome open at it, so the face draws a welcome of its own rather than an empty
-     * window; it is let go once the welcome is closed or a program of the player's draws it.
+     * <p>The machine's own welcome draws a welcome of its own on the face in the same way, kept apart since it only
+     * reads facts the machine hands every welcome open at it.
      */
     void mirror(final List<OpenWindow> windows, final int workspace) {
         mirroring = true;
@@ -182,17 +204,24 @@ final class WindowLayouts {
         wm.setWorkspace(desktop.hasWorkspaces() ? workspace : 0);
         final DesktopViewport view = desktop.view();
         final Map<String, IDesktopApp> programs = programsOf(host);
+        final Map<String, IDesktopApp> facedBefore = FACE_PROGRAMS.getOrDefault(host, Map.of());
+        final Map<String, IDesktopApp> faced = new LinkedHashMap<>();
         boolean welcomeOnFace = false;
         for (final OpenWindow ow : windows) {
             // A window no launcher or program names (the machine's own welcome) shows no title rather than its key.
             final String name = desktop.nameOf(ow.key());
             final IDesktopApp live = programs.get(ow.key());
+            final IDesktopApp own = live != null || WelcomeApp.KEY.equals(ow.key()) ? null
+                    : facedBefore.containsKey(ow.key()) ? facedBefore.get(ow.key()) : faceProgram(ow);
             final IDesktopApp app;
             if (live != null) {
                 app = live;
             } else if (WelcomeApp.KEY.equals(ow.key())) {
                 app = FACE_WELCOMES.computeIfAbsent(host, WelcomeApp::new);
                 welcomeOnFace = true;
+            } else if (own != null) {
+                app = own;
+                faced.put(ow.key(), own);
             } else {
                 app = new MirroredWindowApp(name.equals(ow.key()) ? "" : name, ow.w(), ow.h());
             }
@@ -210,6 +239,37 @@ final class WindowLayouts {
                 gone.onClosed();
             }
         }
+        for (final Map.Entry<String, IDesktopApp> before : facedBefore.entrySet()) {
+            if (faced.get(before.getKey()) != before.getValue()) {
+                before.getValue().onClosed();
+            }
+        }
+        if (faced.isEmpty()) {
+            FACE_PROGRAMS.remove(host);
+        } else {
+            FACE_PROGRAMS.put(host, faced);
+        }
+    }
+
+    /*
+     * The program a face draws the window {@code ow} with when this client has none of the machine's own, made as
+     * the machine's desktop makes it when it is opened and handed what the machine remembers of it; null while a
+     * desktop is open on the player's screen, or for a program no longer installed.
+     */
+    @Nullable
+    private IDesktopApp faceProgram(final OpenWindow ow) {
+        if (DesktopScreen.current() != null) {
+            return null;
+        }
+        final IDesktopApp app = desktop.opener().factoryFor(ow.key());
+        if (app == null) {
+            return null;
+        }
+        app.applySkin(desktop.prefs().skin());
+        if (!ow.state().isEmpty()) {
+            app.restoreState(ow.state());
+        }
+        return app;
     }
 
     /**

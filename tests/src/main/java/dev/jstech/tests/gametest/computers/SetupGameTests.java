@@ -23,11 +23,13 @@ import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
+import java.util.Locale;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -252,6 +254,44 @@ public final class SetupGameTests {
                             "and says why: " + again.message());
                 })
                 .thenSucceed();
+    }
+
+    /** The prompt's install takes a program by the package name its disc shows, as a package manager does. */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void install_takesThePackageNameTheDiscShows(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = machineWithFloppy(helper, pos, MINESWEEPER);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    final String shown = spec(MINESWEEPER).commandName();
+                    helper.assertFalse(shown.equals(MINESWEEPER.getPath()),
+                            "the Minesweeper's package name is not its id: " + shown);
+                    final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
+                    final ICliComputer.OpResult result = cli.install(shown.toUpperCase(Locale.ROOT));
+                    helper.assertTrue(result.ok(), "install " + shown + " is accepted: " + result.message());
+                    final SetupJob job = mainframe.console().setup();
+                    helper.assertTrue(job != null && job.programId().equals(MINESWEEPER.toString()),
+                            "and sets up the Minesweeper");
+                })
+                .thenSucceed();
+    }
+
+    /** Every program installs by the package name its disc shows, or by its id, and nothing else is a program. */
+    @GameTest(template = ARENA)
+    public static void programs_areNamedByTheirPackageNameOrTheirId(final GameTestHelper helper) {
+        for (final ProgramSpec program : OsRegistry.programs()) {
+            helper.assertTrue(Programs.named(program.commandName()) == program,
+                    program.id() + " is named by its package name " + program.commandName());
+            helper.assertTrue(Programs.named(program.id().getPath()) == program,
+                    program.id() + " is named by the path of its id");
+            helper.assertTrue(Programs.named(program.id().toString()) == program, program.id() + " by its id");
+        }
+        final ProgramSpec kde = Programs.named("kde-plasma");
+        helper.assertTrue(kde != null && kde.id().equals(jsc("kde_plasma")),
+                "kde-plasma, as its disc shows it, is KDE Plasma");
+        helper.assertTrue(Programs.named("no-such-program") == null && Programs.named(" ") == null,
+                "a name no program has is none");
+        helper.succeed();
     }
 
     /** The progress payload encodes at the longest every one of its strings may be. */

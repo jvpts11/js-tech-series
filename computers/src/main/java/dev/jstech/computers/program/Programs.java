@@ -11,9 +11,11 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Well-known program ids and a thin CLI-facing view over the single program registry
@@ -152,6 +154,34 @@ public final class Programs {
     /** Every registered program descriptor. */
     public static List<ProgramSpec> all() {
         return List.copyOf(OsRegistry.programs());
+    }
+
+    /**
+     * The program a player means by {@code typed}, in any case: its whole id ({@code jsc:minesweeper}), the path of
+     * its id ({@code minesweeper}) or the name its package goes by ({@code mines}), which is the one its disc's
+     * tooltip shows and its package manager installs it by; {@code null} when none is. The path of an id is looked
+     * for first, so a name that ever meant a program still means it.
+     */
+    @Nullable
+    public static ProgramSpec named(@Nullable final String typed) {
+        final String wanted = typed == null ? "" : typed.strip();
+        if (wanted.isEmpty()) {
+            return null;
+        }
+        if (wanted.contains(":")) {
+            return get(ResourceLocation.tryParse(wanted.toLowerCase(Locale.ROOT)));
+        }
+        for (final ProgramSpec program : OsRegistry.programs()) {
+            if (program.id().getPath().equalsIgnoreCase(wanted)) {
+                return program;
+            }
+        }
+        for (final ProgramSpec program : OsRegistry.programs()) {
+            if (program.commandName().equalsIgnoreCase(wanted)) {
+                return program;
+            }
+        }
+        return null;
     }
 
     /** The programs every computer ships with (no install step). */

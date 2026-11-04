@@ -139,6 +139,23 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Exa and the Singularity draw what the Advanced draws: the supercomputer rack, the server rack, the
   speaker and the Pattern Encoder's USB-C took the Standard's look in those eras.
 
+## [0.5.3a] - 2026-11-04
+
+Codename: Boron.
+
+### Changed
+- Programs: Virtual Studio and Virtual Studio Code have new icons, nearer the studio and the editor they
+  stand for: Virtual Studio's knot in white on its purple plate, and Virtual Studio Code's ribbon in white on its blue
+  one, in every desktop's look.
+
+### Fixed
+- Programs: `install` at a prompt takes a program by the package name its disc shows, as the package
+  managers do: `install kde-plasma` installs KDE Plasma and `install mines` the Minesweeper. It took only the
+  program's id, so every program whose package name is not its id was "no such program" by the name on its disc.
+- Monitors: A program left open at a computer is still drawn on its monitor in the world after the world
+  is left and joined again. Its window was drawn empty, white on the lighter desktops, until the computer's screen was
+  opened.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.

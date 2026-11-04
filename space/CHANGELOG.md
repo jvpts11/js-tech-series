@@ -898,6 +898,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Overworld's clouds seen from space drift on smoothly as the world turns; every second they jumped back
   a little, as their cover was drawn anew, and the world turned a tick at a time.
 
+## [0.5.3a] - 2026-11-04
+
+Codename: Boron.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.

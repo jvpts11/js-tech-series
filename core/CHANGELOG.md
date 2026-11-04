@@ -2252,6 +2252,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stood at the end of the tick, not as the frame drew them, so with the structure going, the crosshair fell on the
   block beside the one drawn under it, frame after frame. The aim now meets them as the frame draws them.
 
+## [0.5.3a] - 2026-11-04
+
+Codename: Boron.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.

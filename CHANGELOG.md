@@ -3403,6 +3403,23 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   stood at the end of the tick, not as the frame drew them, so with the structure going, the crosshair fell on the
   block beside the one drawn under it, frame after frame. The aim now meets them as the frame draws them.
 
+## [0.5.3a] - 2026-11-04
+
+Codename: Boron.
+
+### Changed
+- (Computers) Programs: Virtual Studio and Virtual Studio Code have new icons, nearer the studio and the editor they
+  stand for: Virtual Studio's knot in white on its purple plate, and Virtual Studio Code's ribbon in white on its blue
+  one, in every desktop's look.
+
+### Fixed
+- (Computers) Programs: `install` at a prompt takes a program by the package name its disc shows, as the package
+  managers do: `install kde-plasma` installs KDE Plasma and `install mines` the Minesweeper. It took only the
+  program's id, so every program whose package name is not its id was "no such program" by the name on its disc.
+- (Computers) Monitors: A program left open at a computer is still drawn on its monitor in the world after the world
+  is left and joined again. Its window was drawn empty, white on the lighter desktops, until the computer's screen was
+  opened.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.

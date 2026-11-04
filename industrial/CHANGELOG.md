@@ -205,6 +205,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stub reaches the edge of the block. And no slit of sky shows along the CRC's foot under an entry or its terminal,
   which hid the ground's face.
 
+## [0.5.3a] - 2026-11-04
+
+Codename: Boron.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.
