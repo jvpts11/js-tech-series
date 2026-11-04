@@ -393,7 +393,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   deck, a slot 17 wide over it up to 106 for the rocket and the tower; it opens by itself for a crawler going through,
   and from the Bay Door Console, pressed high on its screen to open and low to shut. Against a long wall stands the
   control room, as a launch control room: a row of consoles before windows into the bay, the Hangar Terminal among
-  them, a chair at each; the door's console at the row's end; a step at the back with its railing and the Rocket
+  them, a chair at each, its back never taking a click meant for the console beyond it; the door's console at the
+  row's end; a step at the back with its railing and the Rocket
   Design Table on it; the status board on the end wall; light panels in the ceiling; a personnel door in its outer
   wall and one onto the bay's floor, each opened by using it; and in its outer wall the loading dock the crane's
   blocks come in through. Along the top of the long walls run the crane's rails, its bridge across the bay's middle,
@@ -427,10 +428,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   15,200, Mars 13,000) and a bar of how far the rocket gets, short in red; and its checks: a stage with propellant and
   no engine or an engine with nothing to burn, too weak to lift off, taller than the 96 blocks a hangar builds or
   wider than the 17 of its door's slot, the crew's seats, the heat shield to come home through air, the tanks filled
-  at the pad; its sign lit READY or
-  NOT READY. Every change is kept by the hangar; the design is named, saved as one of the hangar's sixteen plans,
-  loaded from them, and sent to the bay to be built once it is ready. Each hangar takes a number of its own in the
-  world the first time it forms, and its screen's sign reads it: Rocket Hangar 1, Rocket Hangar 2.
+  at the pad, each wrapped whole onto as many lines as it needs; its sign lit READY or NOT READY under them. Its words
+  are in the game's own letters at the interface's size, never smaller: the tools as icons, the one in use named
+  after them; on the spec sheet each figure on a line of its own, its name, its value and its inked bar; the view's
+  keys on a strip at its foot. The part under the mouse, a tank one layer thin as readily as a tall one, is found by
+  its own model's faces and outlined in yellow by its silhouette, its name, its size and its layers beside the mouse
+  with its stage and what a click of the tool does. Every change is kept by the hangar; the design is named, saved as
+  one of the hangar's sixteen plans, loaded from them, and sent to the bay to be built once it is ready. Each hangar
+  takes a number of its own in the world the first time it forms, and its screen's sign reads it: Rocket Hangar 1,
+  Rocket Hangar 2.
 - The rocket is built by its hangar's plan: once a design is sent to the bay, the hangar lays it out on the
   bay's floor, every block of every part's kit where it goes, and counts each part's blocks as they go down. A part
   forms by itself as its last block goes down, its blocks merging into its own model, round and shaped as it is drawn,
@@ -695,12 +701,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   it does not fit, the words by the mouse saying so and why (only a cockpit fits the nose); a section taken off the
   spine leaves its gap till it is set down. With nothing held, the part under the mouse is outlined in cyan by its
   own silhouette, its name, its maker and what a click with the tool does to it beside the mouse; a click takes the
-  part whose own faces are under the mouse, never one whose box only is, as round the empty corners of a wing. The
-  parts by kind and by maker, each card with its own model; the chosen part's length, mass, blocks, power and note;
-  the flight check; the ship's mass, thrust, vertical take-off thrust against weight, power and crew; the room left in
-  its hull; its finish; the blocks the dock needs; the ship's footprint on the floor with its length and span. Flip
-  turns a section's door and fittings to the other side. S saves it among the dock's plans by its name, E sends it to
-  the dock once it is ready to fly and fits the bay.
+  part whose own faces are under the mouse, never one whose box only is, as round the empty corners of a wing. Its
+  words are in the game's own letters at the interface's size, never smaller, the panels laid out round them: the
+  tools as icons, the one in use named after them; the parts by kind, each card with its own model, its name and its
+  maker's, the search finding a part by its maker too; the chosen part's length, mass, blocks, power and note; the
+  flight check, the room left in the hull among its lines; the ship's mass, thrust, vertical take-off thrust against
+  weight, power and crew; the blocks the dock needs and the Item Port holds; the ship's footprint on the floor with
+  its length and span, kept clear of the panels. F, or the Finish tool on the ship, changes its finish; Flip turns a
+  section's door and fittings to the other side. S saves it among the dock's plans by its name, E sends it to the
+  dock once it is ready to fly and fits the bay, what is done said over the keys a while.
 - A ship sent to the Small Shipyard is built by hand from its hologram: laid out over the pit as the dock
   stands, every block still to place shows where it goes, the layer being built glowing amber, and each part still to
   form has its box with a tag lifted over it, its name, its size, how many of its blocks are in place and whether it is

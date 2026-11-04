@@ -15,6 +15,7 @@ import com.mojang.math.Axis;
 import dev.jstech.core.client.camera.OrbitView;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.model.kit.KitAnimations;
+import dev.jstech.core.client.model.kit.KitInstance;
 import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.KitRenderer;
@@ -31,6 +32,7 @@ import dev.jstech.space.api.RocketKit;
 import dev.jstech.space.api.RocketKits;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.client.ModelFaces;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.gui.RocketDesignLayout;
 import dev.jstech.space.hangar.DesignDestinations;
@@ -74,6 +76,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 
 /**
  * The Rocket Design, a formed Rocket Hangar's design screen, as the approved design draws it: the hangar itself seen
@@ -130,6 +133,11 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
     private Target target = Target.NONE;
     /* How tall the rocket was when the view last turned round its middle. */
     private int framed = -1;
+    /* The faces of the rocket's models, of which models and where, and the parts drawn with a model. */
+    private @Nullable ModelFaces faces;
+    private List<RocketPartModels.Placed> facesOf = List.of();
+    private BlockPos facesPad = BlockPos.ZERO;
+    private Set<Integer> modelled = Set.of();
 
     private static final int HIDDEN = -10_000;
     /* How near a node, in the window's scaled pixels, a part must be let go to snap to it, the snap on and off. */
@@ -140,7 +148,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
     private static final double LIFT_SPEED = 0.004;
     private static final double ZOOM_STEP = 1.12;
     private static final int MOST_UNDO = 64;
-    private static final int SEGMENTS = 18;
+    private static final int SEGMENTS = 16;
     private static final float START_PITCH = 18.0F;
     private static final double SEEN_FROM = 1.6;
     private static final double LEAST_SEEN_FROM = 10;
@@ -158,10 +166,26 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
     /* A vacuum engine's impulse at sea level is well under its own in a vacuum. */
     private static final double VACUUM_NOZZLE = 0.7;
     private static final double KILO = 1_000;
-    private static final int GLYPH_HEIGHT = 8;
-    /* The size of the sign, the plan's name and the spec sheet's title against the rest, and how far down they sit. */
-    private static final float TITLE = 4.0F / 3.0F;
-    private static final int TITLE_DROP = 3;
+    /*
+     * The hazard stripes at each end of the hangar's sign; where a check's words begin after its lamp, a stage's
+     * engine after its number; a destination's globe's size; how wide a plan's name is in the plans' list.
+     */
+    private static final int HAZARD_END = 6;
+    private static final int CHECK_TEXT = 10;
+    private static final int STAGE_TEXT = 26;
+    private static final int PLANET = 4;
+    private static final int PLAN_NAME_W = 70;
+    /*
+     * The words by the mouse over a part: how far right of the mouse and under it they stand, over the plates' bins;
+     * a model's quarter turn, in degrees.
+     */
+    private static final int NAMED_PAST = 10;
+    private static final int NAMED_UNDER = 14;
+    private static final float CALLOUT_DEPTH = 200;
+    private static final float QUARTER = 90.0F;
+    /* The small letters' size against the game's, and the step between the spec sheet's lines of notes. */
+    private static final float SMALL = 0.75F;
+    private static final int NOTE_STEP = 8;
     /* The sign the game's text takes as its formatting mark, which a name must not hold. */
     private static final char FORMATTING_SIGN = (char) 0xA7;
 
@@ -178,6 +202,9 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
     public void render(final GuiGraphics graphics, final int mouseX, final int mouseY, final float partialTick) {
         scene(mouseX, mouseY);
         super.render(graphics, mouseX, mouseY, partialTick);
+        if (this.held == null && this.stretched < 0 && !this.plansOpen && this.hovered.place() >= 0) {
+            named(graphics, mouseX, mouseY);
+        }
     }
 
     @Override
@@ -355,11 +382,10 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
 
     @Override
     protected void init() {
-        final double pixels = Math.min(this.minecraft.getWindow().getWidth() / (double) RocketDesignLayout.WIDTH,
-                this.minecraft.getWindow().getHeight() / (double) RocketDesignLayout.HEIGHT);
-        // Whole or half screen pixels to a pixel of the frame where the window allows, so its letters stay sharp.
-        final double sharp = Math.floor(pixels * 2) / 2;
-        this.scale = (float) ((sharp >= 1 ? sharp : pixels) / this.minecraft.getWindow().getGuiScale());
+        // Whole points of the interface to a point of the frame where it fits, so its letters are the game's own.
+        final double room = Math.min(this.width / (double) RocketDesignLayout.WIDTH,
+                this.height / (double) RocketDesignLayout.HEIGHT);
+        this.scale = (float) (room >= 1 ? Math.floor(room) : room);
         this.imageWidth = Math.round(RocketDesignLayout.WIDTH * this.scale);
         this.imageHeight = Math.round(RocketDesignLayout.HEIGHT * this.scale);
         super.init();
@@ -430,35 +456,39 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
                 RocketDesignLayout.MIDDLE_X1, RocketDesignLayout.TOP_Y1, null);
         final int y0 = RocketDesignLayout.SIGN_Y0;
         final int y1 = RocketDesignLayout.SIGN_Y1;
-        RocketDesignArt.hazard(g, RocketDesignLayout.SIGN_X0, y0, RocketDesignLayout.SIGN_X0 + 14, y1);
-        g.fill(RocketDesignLayout.SIGN_X0 + 14, y0, RocketDesignLayout.SIGN_X1 - 14, y1, c.yellow());
-        RocketDesignArt.frame(g, RocketDesignLayout.SIGN_X0 + 14, y0, RocketDesignLayout.SIGN_X1 - 14, y1,
-                c.black());
-        // The sign, the plan's name and the spec sheet's title stand a third larger than the rest, as approved.
+        final int sign0 = RocketDesignLayout.SIGN_X0 + HAZARD_END;
+        final int sign1 = RocketDesignLayout.SIGN_X1 - HAZARD_END;
+        RocketDesignArt.hazard(g, RocketDesignLayout.SIGN_X0, y0, sign0, y1);
+        g.fill(sign0, y0, sign1, y1, c.yellow());
+        RocketDesignArt.frame(g, sign0, y0, sign1, y1, c.black());
         final String sign = up(RocketDesignTexts.HANGAR.with(this.terminal.number()));
-        Draw.text(g, this.font, sign, Math.round((RocketDesignLayout.SIGN_X0 + RocketDesignLayout.SIGN_X1) / 2.0F
-                - this.font.width(sign) * TITLE / 2), y0 + TITLE_DROP, c.black(), c.yellow(), TITLE);
-        RocketDesignArt.hazard(g, RocketDesignLayout.SIGN_X1 - 14, y0, RocketDesignLayout.SIGN_X1, y1);
+        Draw.textCentered(g, this.font, sign, (sign0 + sign1) / 2, y0 + 2, c.black());
+        RocketDesignArt.hazard(g, sign1, y0, RocketDesignLayout.SIGN_X1, y1);
         final int nameWidth = RocketDesignLayout.NAME_X1 - RocketDesignLayout.NAME_X0;
         if (this.naming != null) {
             RocketDesignArt.well(g, RocketDesignLayout.NAME_X0 - 2, y0, RocketDesignLayout.NAME_X1, y1);
             final boolean blink = Util.getMillis() / 500 % 2 == 0;
-            final String typed = this.naming.toString().toUpperCase(Locale.ROOT) + (blink ? "_" : "");
-            Draw.text(g, this.font, tail(typed, nameWidth - 2), RocketDesignLayout.NAME_X0, y0 + 4, c.yellow());
+            final String typed = this.naming + (blink ? "_" : "");
+            Draw.text(g, this.font, tail(typed, nameWidth - 2), RocketDesignLayout.NAME_X0, y0 + 2, c.yellow());
         } else {
-            Draw.text(g, this.font, fit(this.design.name().toUpperCase(Locale.ROOT), Math.round(nameWidth / TITLE)),
-                    RocketDesignLayout.NAME_X0, y0 + TITLE_DROP, c.stencil(), c.paint(), TITLE);
+            Draw.text(g, this.font, fit(this.design.name(), nameWidth), RocketDesignLayout.NAME_X0, y0 + 2,
+                    c.stencil());
         }
-        Draw.text(g, this.font, fit(up(counts(this.report.stages().size(), this.report.height())),
-                RocketDesignLayout.LAMP_X - RocketDesignLayout.COUNTS_X - 4),
-                RocketDesignLayout.COUNTS_X, y0 + 4, c.dimPaint());
+        final String crane = GameText.resolve(RocketDesignTexts.CRANE_READY);
+        RocketDesignArt.small(g, this.font, crane, RocketDesignLayout.CRANE_X1 - RocketDesignArt.smallWidth(this.font,
+                crane), y0 + 3, c.dimPaint());
         RocketDesignArt.lamp(g, RocketDesignLayout.LAMP_X, y0 + 3, c.green(), true);
-        Draw.text(g, this.font, up(RocketDesignTexts.CRANE_READY), RocketDesignLayout.LAMP_X + 12, y0 + 4,
-                c.stencil());
         for (int i = 0; i < Tool.BUTTONS; i++) {
-            RocketDesignArt.tool(g, this.font, toolX(i), RocketDesignLayout.TOOLS_Y0, toolIcon(i), toolLabel(i),
-                    toolOn(i));
+            RocketDesignArt.tool(g, RocketDesignLayout.toolX(i), RocketDesignLayout.TOOLS_Y0,
+                    RocketDesignLayout.TOOL_W, RocketDesignLayout.TOOL_H, toolIcon(i), toolOn(i));
         }
+        final String chosen = GameText.resolve(this.tool.label()) + (this.mirror > 1 ? "  "
+                + GameText.resolve(RocketDesignTexts.MIRROR.with(this.mirror)) : "");
+        Draw.text(g, this.font, chosen, RocketDesignLayout.toolX(Tool.BUTTONS) + 1, RocketDesignLayout.TOOL_NAME_Y,
+                c.stencil());
+        final String counts = GameText.resolve(counts(this.report.stages().size(), this.report.height()));
+        RocketDesignArt.small(g, this.font, counts, RocketDesignLayout.COUNTS_X1 - RocketDesignArt.smallWidth(
+                this.font, counts), RocketDesignLayout.TOOL_NAME_Y + 1, c.dimPaint());
     }
 
     /* The parts' bins: the categories' tabs, the diameters' toggles, the bins in sight, the chosen part's sheet. */
@@ -471,30 +501,30 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             final int ty = RocketDesignLayout.TAB_Y0;
             final PartCatalogue.Category tab = PartCatalogue.CATEGORIES.get(i);
             final boolean on = tab == this.category;
-            RocketDesignArt.well(g, tx, ty, tx + RocketDesignLayout.TAB_SIZE, ty + RocketDesignLayout.TAB_SIZE);
-            final int face = on ? c.yellow() : c.paintLo();
-            g.fill(tx + 1, ty + 1, tx + 21, ty + 20, face);
-            RocketDesignArt.hline(g, tx + 1, tx + 21, ty + 1, RocketDesignArt.mix(face, c.white(), 0.35F));
-            RocketDesignArt.icon(g, tab.icon(), tx + 6, ty + 5, on ? c.black() : c.stencil(),
-                    on ? c.black() : c.yellow());
-            g.fill(tx + 8, ty + 18, tx + 14, ty + 20, c.paintDeep());
+            RocketDesignArt.well(g, tx, ty, tx + RocketDesignLayout.TAB_W, ty + RocketDesignLayout.TAB_H);
+            g.fill(tx + 1, ty + 1, tx + RocketDesignLayout.TAB_W - 1, ty + RocketDesignLayout.TAB_H - 1,
+                    on ? c.yellow() : c.paintLo());
+            RocketDesignArt.icon(g, tab.icon(), tx + 3, ty + 2, RocketDesignArt.ICON_SMALL,
+                    on ? c.black() : c.stencil(), on ? c.black() : c.yellow());
         }
-        Draw.text(g, this.font, up(this.category.title()), RocketDesignLayout.TAB_X0,
-                RocketDesignLayout.CATEGORY_Y + 2, c.stencil());
+        Draw.text(g, this.font, GameText.resolve(this.category.title()), RocketDesignLayout.TAB_X0,
+                RocketDesignLayout.CATEGORY_Y, c.stencil());
         final List<Integer> sizes = diameters();
         for (int i = 0; i < sizes.size(); i++) {
             final int x1 = RocketDesignLayout.DIAMETERS_X1 - i * RocketDesignLayout.DIAMETER_STEP;
             final int x0 = x1 - RocketDesignLayout.DIAMETER_W;
             final int size = sizes.get(sizes.size() - 1 - i);
             final boolean on = !this.hiddenDiameters.contains(size);
-            final int y0 = RocketDesignLayout.CATEGORY_Y;
+            final int y0 = RocketDesignLayout.DIAMETER_Y0;
             g.fill(x0, y0, x1, y0 + RocketDesignLayout.DIAMETER_H, on ? c.yellow() : c.paintLo());
             RocketDesignArt.frame(g, x0, y0, x1, y0 + RocketDesignLayout.DIAMETER_H, c.black());
-            Draw.textCentered(g, this.font, up(RocketDesignTexts.DIAMETER.with(size)), (x0 + x1) / 2, y0 + 2,
-                    on ? c.black() : c.dimPaint());
+            final String label = up(RocketDesignTexts.DIAMETER.with(size));
+            RocketDesignArt.small(g, this.font, label, (x0 + x1) / 2 - RocketDesignArt.smallWidth(this.font, label)
+                    / 2, y0 + 2, on ? c.black() : c.dimPaint());
         }
         final List<PartCatalogue.Entry> shelf = shelf();
-        for (int i = 0; i < RocketDesignLayout.CARD_COLUMNS * RocketDesignLayout.CARD_ROWS; i++) {
+        final int shown = RocketDesignLayout.CARD_COLUMNS * RocketDesignLayout.CARD_ROWS;
+        for (int i = 0; i < shown; i++) {
             final int index = this.binScroll * RocketDesignLayout.CARD_COLUMNS + i;
             final int x0 = RocketDesignLayout.cardX(i);
             final int y0 = RocketDesignLayout.cardY(i);
@@ -503,27 +533,32 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
                 card(g, shelf.get(index), x0, y0);
             }
         }
+        final int more = shelf.size() - this.binScroll * RocketDesignLayout.CARD_COLUMNS - shown;
+        if (more > 0) {
+            RocketDesignArt.small(g, this.font, GameText.resolve(RocketDesignTexts.MORE_BINS.with(more)),
+                    RocketDesignLayout.MORE_X, RocketDesignLayout.MORE_Y, c.dimPaint());
+        }
         sheet(g);
     }
 
     /* A part's bin: its picture on the bin's floor, its label card under it, framed yellow when chosen. */
     private void card(final GuiGraphics g, final PartCatalogue.Entry entry, final int x0, final int y0) {
         final RocketDesignArt.Colours c = RocketDesignArt.PALETTE.get();
-        g.fill(x0 + 1, y0 + 1, x0 + RocketDesignLayout.CARD_W - 1, y0 + RocketDesignLayout.CARD_PICTURE_H, c.bin());
-        picture(g, entry, x0 + 1, y0 + 1, x0 + RocketDesignLayout.CARD_W - 1, y0 + RocketDesignLayout.CARD_PICTURE_H);
-        g.fill(x0 + 3, y0 + 43, x0 + 73, y0 + 69, c.holder());
-        g.fill(x0 + 5, y0 + 45, x0 + 71, y0 + 67, c.paper());
-        final String code = code(entry);
-        Draw.text(g, this.font, code, x0 + 8, y0 + 47, c.ink());
-        final String figure = figure(entry.part());
-        Draw.text(g, this.font, figure, x0 + 69 - this.font.width(figure), y0 + 47, c.ink());
-        Draw.text(g, this.font, fit(up(RocketDesignTexts.CARD_LINE.with(Text.literal(label(entry)),
-                entry.part().diameter())), 62), x0 + 8, y0 + 57, c.ink());
+        final int x1 = x0 + RocketDesignLayout.CARD_W;
+        final int label = y0 + RocketDesignLayout.CARD_PICTURE_H + 1;
+        g.fill(x0 + 1, y0 + 1, x1 - 1, label, c.bin());
+        picture(g, entry, x0 + 1, y0 + 1, x1 - 1, label);
+        g.fill(x0 + 2, label, x1 - 2, y0 + RocketDesignLayout.CARD_H - 1, c.holder());
+        g.fill(x0 + 3, label + 1, x1 - 3, y0 + RocketDesignLayout.CARD_H - 2, c.paper());
+        Draw.text(g, this.font, code(entry), x0 + 4, label + 2, c.ink());
+        final String figure = figure(entry.part()).replace(" ", "").toLowerCase(Locale.ROOT);
+        RocketDesignArt.small(g, this.font, figure, x1 - 4 - RocketDesignArt.smallWidth(this.font, figure),
+                label + 3, c.ink());
+        RocketDesignArt.small(g, this.font, fitSmall(GameText.resolve(RocketDesignTexts.CARD_LINE.with(
+                Text.literal(label(entry)), entry.part().diameter())), RocketDesignLayout.CARD_W - 7), x0 + 4,
+                label + 10, c.inkDim());
         if (entry.id().equals(this.chosen)) {
-            RocketDesignArt.frame(g, x0 - 2, y0 - 2, x0 + RocketDesignLayout.CARD_W + 2,
-                    y0 + RocketDesignLayout.CARD_H + 2, c.yellow());
-            RocketDesignArt.frame(g, x0 - 1, y0 - 1, x0 + RocketDesignLayout.CARD_W + 1,
-                    y0 + RocketDesignLayout.CARD_H + 1, c.yellow());
+            RocketDesignArt.frame(g, x0 - 1, y0 - 1, x1 + 1, y0 + RocketDesignLayout.CARD_H + 1, c.yellow());
         }
     }
 
@@ -583,30 +618,45 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         }
         final PartCatalogue.Entry entry = found.get();
         final RocketPart part = entry.part();
-        final int left = x0 + 18;
-        final int width = x1 - 6 - left;
-        Draw.text(g, this.font, fit(up(RocketDesignTexts.SPEC_SHEET.with(code(entry))), Math.round(width / TITLE)),
-                left, y0 + 5, c.ink(), c.paper(), TITLE);
-        Draw.text(g, this.font, fit(name(part).toUpperCase(Locale.ROOT) + " D" + part.diameter(), width), left,
-                y0 + 21, c.ink());
-        Draw.text(g, this.font, fit(up(RocketDesignTexts.TIER_MASS.with(part.tier(), tonnes(part.mass()))), width),
-                left, y0 + 31, c.inkDim());
+        final int left = x0 + 11;
+        final int right = x1 - 4;
+        final int width = right - left;
+        Draw.text(g, this.font, fit(GameText.resolve(RocketDesignTexts.SPEC_SHEET.with(code(entry))), width), left,
+                y0 + 3, c.ink());
+        RocketDesignArt.small(g, this.font, fitSmall(name(part) + " D" + part.diameter(), width), left, y0 + 14,
+                c.inkDim());
+        // Each figure on a line of its own: its name, its value at the right, its inked bar under them.
         final List<Row> rows = rows(part);
-        for (int i = 0; i < rows.size(); i++) {
-            final int yy = y0 + 44 + i * 20;
-            Draw.text(g, this.font, up(rows.get(i).name()), left, yy, c.ink());
-            final String value = up(rows.get(i).value());
-            Draw.text(g, this.font, value, x1 - 6 - this.font.width(value), yy, c.ink());
-            RocketDesignArt.inkBar(g, left, yy + 10, width, rows.get(i).share());
+        for (int i = 0; i < Math.min(rows.size(), RocketDesignLayout.SHEET_ROWS); i++) {
+            final int yy = RocketDesignLayout.SHEET_ROW_Y0 + i * RocketDesignLayout.SHEET_ROW_STEP;
+            final String value = GameText.resolve(rows.get(i).value());
+            final String name = GameText.resolve(rows.get(i).name());
+            // A value too long beside its name in the game's letters is written in the small ones.
+            if (this.font.width(name) + this.font.width(value) + 3 <= width) {
+                Draw.text(g, this.font, name, left, yy, c.ink());
+                Draw.text(g, this.font, value, right - this.font.width(value), yy, c.ink());
+            } else {
+                final int valueWidth = RocketDesignArt.smallWidth(this.font, value);
+                Draw.text(g, this.font, fit(name, width - valueWidth - 3), left, yy, c.ink());
+                RocketDesignArt.small(g, this.font, value, right - valueWidth, yy + 1, c.ink());
+            }
+            RocketDesignArt.inkBar(g, left, yy + 9, width, rows.get(i).share());
         }
-        int yy = y0 + 46 + rows.size() * 20;
+        // Its notes in the small letters under the figures, as many lines as the sheet holds.
+        int yy = RocketDesignLayout.SHEET_ROW_Y0 + Math.min(rows.size(), RocketDesignLayout.SHEET_ROWS)
+                * RocketDesignLayout.SHEET_ROW_STEP + 2;
         for (final TextKey note : notes(part)) {
-            for (final FormattedCharSequence line : this.font.split(Component.literal(up(note)), width)) {
-                if (yy + GLYPH_HEIGHT > RocketDesignLayout.SHEET_Y1 - 2) {
+            for (final FormattedCharSequence line : this.font.split(Component.literal(GameText.resolve(note)),
+                    Math.round(width / SMALL))) {
+                if (yy + NOTE_STEP > RocketDesignLayout.SHEET_Y1 - 1) {
                     return;
                 }
-                Draw.text(g, this.font, line, left, yy, c.inkDim());
-                yy += 10;
+                g.pose().pushPose();
+                g.pose().translate(left, yy, 0);
+                g.pose().scale(SMALL, SMALL, 1);
+                Draw.text(g, this.font, line, 0, 0, c.inkDim());
+                g.pose().popPose();
+                yy += NOTE_STEP;
             }
         }
     }
@@ -628,51 +678,47 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         }
         RocketDesignArt.heading(g, this.font, x0, RocketDesignLayout.DELTA_V_Y, up(RocketDesignTexts.DELTA_V), x1);
         RocketDesignArt.well(g, x0, RocketDesignLayout.LED_Y0, x1, RocketDesignLayout.LED_Y1);
-        // The delta-v and its unit at one size, twice the rest, as approved.
-        final String total = whole(this.report.deltaV()) + " " + up(RocketDesignTexts.UNIT_SPEED);
-        Draw.text(g, this.font, total, x0 + 6, RocketDesignLayout.LED_Y0 + 4, c.led(), c.paintDeep(), 2.0F);
+        final String total = whole(this.report.deltaV()) + " " + GameText.resolve(RocketDesignTexts.UNIT_SPEED);
+        Draw.text(g, this.font, total, x0 + 4, RocketDesignLayout.LED_Y0 + 3, c.led());
         final boolean engines = stages.stream().anyMatch(stage -> stage.engine().isPresent());
         final String ratio = String.format(Locale.ROOT, "%.2f", this.report.liftOff());
         final Text lift = !engines ? RocketDesignTexts.NO_ENGINES.text() : this.report.liftOff() > 1
                 ? RocketDesignTexts.LEAVES.with(ratio) : RocketDesignTexts.STAYS.with(ratio);
-        Draw.text(g, this.font, fit(up(lift), x1 - x0), x0, RocketDesignLayout.LIFT_Y,
+        RocketDesignArt.small(g, this.font, fitSmall(GameText.resolve(lift), x1 - x0), x0, RocketDesignLayout.LIFT_Y,
                 engines && this.report.liftOff() > 1 ? c.green() : c.lightRed());
         RocketDesignArt.heading(g, this.font, x0, RocketDesignLayout.DESTINATIONS_Y,
                 up(RocketDesignTexts.DESTINATIONS), x1);
         final List<DesignDestinations.Reach> reaches = this.report.destinations();
         if (reaches.isEmpty()) {
-            Draw.text(g, this.font, fit(up(RocketDesignTexts.NO_ROUTES), x1 - x0), x0, RocketDesignLayout.REACH_Y0,
-                    c.dimPaint());
+            RocketDesignArt.small(g, this.font, fitSmall(GameText.resolve(RocketDesignTexts.NO_ROUTES), x1 - x0), x0,
+                    RocketDesignLayout.REACH_Y0, c.dimPaint());
         }
         for (int i = 0; i < Math.min(RocketDesignLayout.REACHES, reaches.size()); i++) {
             reach(g, reaches.get(i), RocketDesignLayout.REACH_Y0 + i * RocketDesignLayout.REACH_STEP);
         }
         RocketDesignArt.heading(g, this.font, x0, RocketDesignLayout.CHECKS_Y, up(RocketDesignTexts.CHECKS), x1);
+        // Each check's words wrapped whole onto as many lines as they need, the sign coming down under them.
+        int yy = RocketDesignLayout.CHECK_Y0;
+        final int last = RocketDesignLayout.CHECK_Y0 + RocketDesignLayout.CHECK_LINES * RocketDesignLayout.CHECK_LINE;
         final List<DesignReport.Check> checks = this.report.checks();
-        final boolean more = checks.size() > RocketDesignLayout.CHECK_ROWS;
-        final int shown = more ? RocketDesignLayout.CHECK_ROWS - 1 : checks.size();
-        for (int i = 0; i < shown; i++) {
+        for (int i = 0; i < checks.size(); i++) {
             final DesignReport.Check check = checks.get(i);
-            final int yy = RocketDesignLayout.CHECK_Y0 + i * RocketDesignLayout.CHECK_STEP;
-            RocketDesignArt.lamp(g, x0 + 1, yy, lampOf(check.severity()), true);
-            Draw.text(g, this.font, fit(up(check.text()), x1 - x0 - 14), x0 + 14, yy, c.stencil());
+            final List<FormattedCharSequence> lines = this.font.split(Component.literal(GameText.resolve(
+                    check.text())), x1 - x0 - CHECK_TEXT);
+            if (yy + lines.size() * RocketDesignLayout.CHECK_LINE > last) {
+                RocketDesignArt.small(g, this.font, GameText.resolve(RocketDesignTexts.MORE.with(checks.size() - i)),
+                        x0 + CHECK_TEXT, yy + 1, c.dimPaint());
+                yy += RocketDesignLayout.CHECK_LINE;
+                break;
+            }
+            RocketDesignArt.lamp(g, x0, yy + 1, lampOf(check.severity()), true);
+            for (final FormattedCharSequence line : lines) {
+                Draw.text(g, this.font, line, x0 + CHECK_TEXT, yy, c.stencil());
+                yy += RocketDesignLayout.CHECK_LINE;
+            }
+            yy += 1;
         }
-        if (more) {
-            Draw.text(g, this.font, up(RocketDesignTexts.MORE.with(checks.size() - shown)), x0 + 14,
-                    RocketDesignLayout.CHECK_Y0 + shown * RocketDesignLayout.CHECK_STEP, c.dimPaint());
-        }
-        sign(g, this.report.ready());
-        RocketDesignArt.heading(g, this.font, x0, RocketDesignLayout.VIEW_Y, up(RocketDesignTexts.THE_VIEW), x1);
-        for (int i = 0; i < RocketDesignLayout.KEYS; i++) {
-            final int yy = RocketDesignLayout.KEY_Y0 + i * RocketDesignLayout.KEY_STEP;
-            final String key = up(RocketDesignTexts.VIEW_KEYS.get(i));
-            final int kw = this.font.width(key) + 6;
-            g.fill(x0, yy, x0 + kw, yy + 11, c.yellow());
-            RocketDesignArt.hline(g, x0, x0 + kw, yy + 10, c.keyShade());
-            Draw.text(g, this.font, key, x0 + 3, yy + 2, c.black());
-            Draw.text(g, this.font, fit(up(RocketDesignTexts.VIEW_DOES.get(i)), x1 - x0 - kw - 6), x0 + kw + 6,
-                    yy + 2, c.dimPaint());
-        }
+        sign(g, this.report.ready(), Math.max(yy + 2, RocketDesignLayout.STATUS_Y0));
     }
 
     /* A stage in its recess: its lamp, its number, its engine or what it lacks, its thrust and its delta-v. */
@@ -684,18 +730,15 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         final boolean engine = stage.engine().isPresent();
         final boolean lacking = engine != stage.propellant();
         final boolean payload = !engine && !stage.propellant();
-        RocketDesignArt.lamp(g, x0 + 5, y + 9, lacking ? c.red() : payload ? c.yellow() : c.green(), true);
-        Draw.text(g, this.font, up(RocketDesignTexts.STAGE.with(stage.number())), x0 + 18, y + 9, c.stencil());
-        final String title = engine ? name(this.parts.get(stage.engine().get())).toUpperCase(Locale.ROOT)
-                : up(payload ? RocketDesignTexts.PAYLOAD : RocketDesignTexts.NO_ENGINE_YET);
-        final int text = x0 + 40;
-        Draw.text(g, this.font, fit(title, x1 - 5 - text), text, y + 5, lacking ? c.lightRed() : c.stencil());
-        final String sub = engine ? up(RocketDesignTexts.RATIO.with(String.format(Locale.ROOT, "%.2f",
-                stage.ratio()))) : up(RocketDesignTexts.NO_THRUST);
-        Draw.text(g, this.font, sub, text, y + 15, lacking ? c.lightRed() : c.dimPaint());
-        final String speed = up(RocketDesignTexts.SPEED.with(whole(stage.deltaV())));
-        Draw.text(g, this.font, speed, x1 - 5 - this.font.width(speed), y + 15,
-                stage.deltaV() > 0 ? c.yellow() : c.lightRed());
+        RocketDesignArt.lamp(g, x0 + 3, y + 4, lacking ? c.red() : payload ? c.yellow() : c.green(), true);
+        Draw.text(g, this.font, up(RocketDesignTexts.STAGE.with(stage.number())), x0 + 13, y + 3, c.stencil());
+        final String speed = GameText.resolve(RocketDesignTexts.SPEED.with(whole(stage.deltaV())));
+        final int speedX = x1 - 3 - RocketDesignArt.smallWidth(this.font, speed);
+        RocketDesignArt.small(g, this.font, speed, speedX, y + 4, stage.deltaV() > 0 ? c.yellow() : c.lightRed());
+        final String title = engine ? name(this.parts.get(stage.engine().get()))
+                : GameText.resolve(payload ? RocketDesignTexts.PAYLOAD : RocketDesignTexts.NO_ENGINE_YET);
+        RocketDesignArt.small(g, this.font, fitWords(title, speedX - 3 - (x0 + STAGE_TEXT)), x0 + STAGE_TEXT, y + 4,
+                lacking ? c.lightRed() : c.stencil());
     }
 
     /* A destination: its globe, its name, what it asks, a bar of how far the rocket gets, what it is short by. */
@@ -708,54 +751,70 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             case MOON -> c.moon();
             case MARS -> c.mars();
         }).orElse(c.orbit());
-        RocketDesignArt.planet(g, x0 + 7, y + 5, 6, globe, reach.world().isEmpty());
-        Draw.text(g, this.font, up(reach.name()), x0 + 20, y + 1, c.stencil());
-        final String need = up(RocketDesignTexts.SPEED.with(whole(reach.need())));
-        Draw.text(g, this.font, need, x1 - this.font.width(need), y + 1, c.dimPaint());
+        RocketDesignArt.planet(g, x0 + 7, y + 4, PLANET, globe, reach.world().isEmpty());
+        Draw.text(g, this.font, fit(GameText.resolve(reach.name()), x1 - x0 - 16 - 30), x0 + 16, y, c.stencil());
+        final String need = whole(reach.need());
+        RocketDesignArt.small(g, this.font, need, x1 - RocketDesignArt.smallWidth(this.font, need), y + 1,
+                c.dimPaint());
         final double short1 = reach.shortBy(this.report.deltaV());
-        RocketDesignArt.segments(g, x0 + 20, y + 11, x1 - x0 - 20, this.report.deltaV() / reach.need(),
+        RocketDesignArt.segments(g, x0 + 16, y + 9, x1 - x0 - 16, this.report.deltaV() / reach.need(),
                 short1 > 0 ? c.red() : c.green(), c.paintDeep(), SEGMENTS);
         final Text line = short1 > 0 ? RocketDesignTexts.SHORT.with(whole(short1))
                 : RocketDesignTexts.SPARE.with(whole(this.report.deltaV() - reach.need()));
-        Draw.text(g, this.font, fit(up(line), x1 - x0 - 20), x0 + 20, y + 18, short1 > 0 ? c.lightRed() : c.green());
+        RocketDesignArt.small(g, this.font, fitSmall(GameText.resolve(line), x1 - x0 - 16), x0 + 16, y + 14,
+                short1 > 0 ? c.lightRed() : c.green());
     }
 
-    /* The bay's sign, lit green READY or red NOT READY. */
-    private void sign(final GuiGraphics g, final boolean ready) {
+    /* The bay's sign, from {@code y0} down, lit green READY or red NOT READY. */
+    private void sign(final GuiGraphics g, final boolean ready, final int y0) {
         final RocketDesignArt.Colours c = RocketDesignArt.PALETTE.get();
         final int x0 = RocketDesignLayout.INNER_X0;
         final int x1 = RocketDesignLayout.INNER_X1;
-        final int y0 = RocketDesignLayout.STATUS_Y0;
-        final int y1 = RocketDesignLayout.STATUS_Y1;
-        g.fill(x0 - 2, y0 - 2, x1 + 2, y1 + 2, c.paintDeep());
+        final int y1 = y0 + RocketDesignLayout.STATUS_H;
+        g.fill(x0 - 1, y0 - 1, x1 + 1, y1 + 1, c.paintDeep());
         g.fill(x0, y0, x1, y1, ready ? c.signGreen() : c.signRed());
         RocketDesignArt.hline(g, x0, x1, y0, ready ? c.signGreenHi() : c.signRedHi());
         RocketDesignArt.hline(g, x0, x1, y1 - 1, ready ? c.signGreenLo() : c.signRedLo());
         Draw.textCentered(g, this.font, up(ready ? RocketDesignTexts.READY : RocketDesignTexts.NOT_READY),
-                (x0 + x1) / 2, y0 + 7, ready ? c.signGreenInk() : c.signRedInk());
+                (x0 + x1) / 2, y0 + 3, ready ? c.signGreenInk() : c.signRedInk());
     }
 
-    /* The push buttons, and what the screen says: the last thing done, or what the mouse does now. */
+    /* The view's keys on a strip at its foot, the push buttons under it, and over them what the screen last said. */
     private void bottom(final GuiGraphics g) {
         final RocketDesignArt.Colours c = RocketDesignArt.PALETTE.get();
+        g.fill(RocketDesignLayout.MIDDLE_X0, RocketDesignLayout.STRIP_Y0, RocketDesignLayout.MIDDLE_X1,
+                RocketDesignLayout.PLATE_Y1, c.callout());
+        final StringBuilder keys = new StringBuilder();
+        // The view's own keys, the right button, the wheel and the middle button; the left works the parts.
+        for (int i = 1; i < RocketDesignTexts.VIEW_KEYS.size(); i++) {
+            keys.append(i == 1 ? "" : "   ").append(GameText.resolve(RocketDesignTexts.VIEW_KEYS.get(i))).append(' ')
+                    .append(GameText.resolve(RocketDesignTexts.VIEW_DOES.get(i)));
+        }
+        final String strip = fitSmall(keys.toString(), RocketDesignLayout.MIDDLE_X1 - RocketDesignLayout.MIDDLE_X0 - 4);
+        RocketDesignArt.small(g, this.font, strip, (RocketDesignLayout.MIDDLE_X0 + RocketDesignLayout.MIDDLE_X1) / 2
+                - RocketDesignArt.smallWidth(this.font, strip) / 2, RocketDesignLayout.STRIP_Y0 + 2, c.dimPaint());
         RocketDesignArt.plate(g, this.font, RocketDesignLayout.MIDDLE_X0, RocketDesignLayout.BOTTOM_Y0,
-                RocketDesignLayout.MIDDLE_X1, RocketDesignLayout.PLATE_Y1, null);
+                RocketDesignLayout.MIDDLE_X1, RocketDesignLayout.BOTTOM_Y1, null);
         final int y = RocketDesignLayout.BUTTON_Y0;
         final int h = RocketDesignLayout.BUTTON_H;
         RocketDesignArt.pushButton(g, this.font, RocketDesignLayout.buttonX(0), y, RocketDesignLayout.buttonW(0), h,
-                up(RocketDesignTexts.CONFIRM), c.confirm(), this.report.ready(), up(RocketDesignTexts.CONFIRM_KEY));
+                GameText.resolve(RocketDesignTexts.CONFIRM), c.confirm(), this.report.ready(),
+                up(RocketDesignTexts.CONFIRM_KEY));
         RocketDesignArt.pushButton(g, this.font, RocketDesignLayout.buttonX(1), y, RocketDesignLayout.buttonW(1), h,
-                up(RocketDesignTexts.SAVE), c.yellow(), false, up(RocketDesignTexts.SAVE_KEY));
+                GameText.resolve(RocketDesignTexts.SAVE), c.yellow(), false, up(RocketDesignTexts.SAVE_KEY));
         RocketDesignArt.pushButton(g, this.font, RocketDesignLayout.buttonX(2), y, RocketDesignLayout.buttonW(2), h,
-                up(RocketDesignTexts.PLANS), c.paintHi(), this.plansOpen, up(RocketDesignTexts.PLANS_KEY));
+                GameText.resolve(RocketDesignTexts.PLANS), c.paintHi(), this.plansOpen,
+                up(RocketDesignTexts.PLANS_KEY));
         RocketDesignArt.pushButton(g, this.font, RocketDesignLayout.buttonX(3), y, RocketDesignLayout.buttonW(3), h,
-                up(RocketDesignTexts.CLEAR), c.red(), false, up(RocketDesignTexts.CLEAR_KEY));
-        final Text hint = this.said != null && Util.getMillis() < this.saidUntil ? this.said
-                : this.held != null ? RocketDesignTexts.HINT_DROP.text() : this.tool.hint().text();
-        final int room = RocketDesignLayout.HINT_X1 - RocketDesignLayout.buttonX(3) - RocketDesignLayout.buttonW(3)
-                - 6;
-        final String words = fit(up(hint), room);
-        Draw.text(g, this.font, words, RocketDesignLayout.HINT_X1 - this.font.width(words), y + 5, c.yellow());
+                GameText.resolve(RocketDesignTexts.CLEAR), c.red(), false, up(RocketDesignTexts.CLEAR_KEY));
+        if (this.said != null && Util.getMillis() < this.saidUntil) {
+            final String words = GameText.resolve(this.said);
+            final int w = this.font.width(words) + 8;
+            final int x0 = (RocketDesignLayout.MIDDLE_X0 + RocketDesignLayout.MIDDLE_X1 - w) / 2;
+            g.fill(x0, RocketDesignLayout.SAID_Y, x0 + w, RocketDesignLayout.SAID_Y + 12, c.callout());
+            RocketDesignArt.hline(g, x0, x0 + w, RocketDesignLayout.SAID_Y, c.yellow());
+            Draw.text(g, this.font, words, x0 + 4, RocketDesignLayout.SAID_Y + 3, c.yellow());
+        }
     }
 
     /* The plans' list over the middle: each plan, the one in the bay marked, each with its load and delete. */
@@ -767,28 +826,82 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
                 up(RocketDesignTexts.PLANS));
         final List<RocketDesign> plans = this.terminal.plans();
         if (plans.isEmpty()) {
-            Draw.text(g, this.font, up(RocketDesignTexts.NO_PLANS), x0 + 12, RocketDesignLayout.PLAN_Y0 + 4,
-                    c.dimPaint());
+            Draw.text(g, this.font, GameText.resolve(RocketDesignTexts.NO_PLANS), x0 + 6, RocketDesignLayout.PLAN_Y0
+                    + 2, c.dimPaint());
         }
         final Optional<RocketDesign> inBay = this.terminal.plan();
+        final int load = loadX();
         for (int i = 0; i < Math.min(plans.size(), RocketDesignLayout.PLAN_ROWS); i++) {
             final RocketDesign plan = plans.get(i);
             final int y = RocketDesignLayout.PLAN_Y0 + i * RocketDesignLayout.PLAN_STEP;
-            RocketDesignArt.well(g, x0 + 8, y, x1 - 8, y + 16);
-            Draw.text(g, this.font, fit(plan.name().toUpperCase(Locale.ROOT), 120), x0 + 12, y + 4, c.stencil());
-            final String counts = up(counts(RocketStages.stages(this.parts, plan.stack()).size(),
+            RocketDesignArt.well(g, x0 + 4, y, x1 - 4, y + RocketDesignLayout.PLAN_STEP - 1);
+            Draw.text(g, this.font, fit(plan.name(), PLAN_NAME_W), x0 + 6, y + 2, c.stencil());
+            final String counts = GameText.resolve(counts(RocketStages.stages(this.parts, plan.stack()).size(),
                     RocketStages.height(this.parts, plan.stack())));
-            Draw.text(g, this.font, counts, x0 + 136, y + 4, c.dimPaint());
-            if (inBay.isPresent() && inBay.get().equals(plan)) {
-                Draw.text(g, this.font, up(RocketDesignTexts.IN_THE_BAY), x0 + 136 + this.font.width(counts) + 6,
-                        y + 4, c.green());
-            }
-            final int load = x1 - 10 - 2 * RocketDesignLayout.PLAN_BUTTON_W - 4;
-            RocketDesignArt.pushButton(g, this.font, load, y + 2, RocketDesignLayout.PLAN_BUTTON_W, 12,
-                    up(RocketDesignTexts.LOAD), c.yellow(), true, "");
-            RocketDesignArt.pushButton(g, this.font, load + RocketDesignLayout.PLAN_BUTTON_W + 4, y + 2,
-                    RocketDesignLayout.PLAN_BUTTON_W, 12, up(RocketDesignTexts.DELETE), c.red(), true, "");
+            final boolean here = inBay.isPresent() && inBay.get().equals(plan);
+            RocketDesignArt.small(g, this.font, fitSmall(counts + (here ? "  " + GameText.resolve(
+                    RocketDesignTexts.IN_THE_BAY) : ""), load - 4 - (x0 + 8 + PLAN_NAME_W)), x0 + 8 + PLAN_NAME_W,
+                    y + 3, here ? c.green() : c.dimPaint());
+            RocketDesignArt.pushButton(g, this.font, load, y + 2, RocketDesignLayout.PLAN_BUTTON_W, 9,
+                    GameText.resolve(RocketDesignTexts.LOAD), c.yellow(), true, "");
+            RocketDesignArt.pushButton(g, this.font, load + RocketDesignLayout.PLAN_BUTTON_W + 3, y + 2,
+                    RocketDesignLayout.PLAN_BUTTON_W, 9, GameText.resolve(RocketDesignTexts.DELETE), c.red(), true,
+                    "");
         }
+    }
+
+    /*
+     * The words by the mouse over a part of the rocket: its name, its size and its layers; its stage and what a click
+     * of the tool does to it; beside the mouse, kept over the view between the plates.
+     */
+    private void named(final GuiGraphics g, final int mouseX, final int mouseY) {
+        final List<RocketStack.Section> sections = this.design.stack().sections();
+        final int place = this.hovered.place();
+        if (place >= sections.size()) {
+            return;
+        }
+        final RocketStack.Section section = sections.get(place);
+        final RocketStack.Part shown = this.hovered.booster() && !section.boosters().isEmpty()
+                && !section.boosters().get(0).isEmpty() ? section.boosters().get(0).get(0) : section.part();
+        final RocketPart part = this.parts.get(shown.id());
+        String name = name(part) + (part == null ? "" : " D" + part.diameter());
+        if (part != null && part.stretches()) {
+            name = GameText.resolve(shown.layers() == 1 ? RocketDesignTexts.ONE_LAYER.with(name)
+                    : RocketDesignTexts.LAYERS.with(name, shown.layers()));
+        }
+        final TextKey click = switch (this.tool) {
+            case PLACE -> RocketDesignTexts.CLICK_PICK;
+            case OFFSET -> RocketDesignTexts.CLICK_STRETCH;
+            case ROTATE -> RocketDesignTexts.CLICK_TURN;
+            case ROOT -> RocketDesignTexts.CLICK_ROOT;
+        };
+        final String line = GameText.resolve(RocketDesignTexts.STAGE_AND_CLICK.with(stageOf(place),
+                GameText.resolve(click)));
+        final int w = RocketDesignArt.namedCalloutWidth(this.font, name, line);
+        final int x0 = Math.max(Math.round(guiX(RocketDesignLayout.LEFT_X1)) + 2, Math.min(mouseX + NAMED_PAST,
+                Math.round(guiX(RocketDesignLayout.RIGHT_X0)) - 2 - w));
+        g.pose().pushPose();
+        g.pose().translate(0, 0, CALLOUT_DEPTH);
+        RocketDesignArt.namedCallout(g, this.font, name, line, x0, mouseY + NAMED_UNDER);
+        g.pose().popPose();
+    }
+
+    /* The number of the stage the part at {@code place} is of, one at the bottom, each ending past a decoupler. */
+    private int stageOf(final int place) {
+        int stage = 1;
+        final List<RocketStack.Section> sections = this.design.stack().sections();
+        for (int k = 0; k < Math.min(place, sections.size()); k++) {
+            final RocketPart part = this.parts.get(sections.get(k).part().id());
+            if (part != null && part.kind().endsStage()) {
+                stage++;
+            }
+        }
+        return stage;
+    }
+
+    /* Where a plan's load button begins, its delete button after it at the list's right. */
+    private static int loadX() {
+        return RocketDesignLayout.PLANS_X1 - 6 - 2 * RocketDesignLayout.PLAN_BUTTON_W - 3;
     }
 
     /* The nodes over the view while a part is held, the one it will snap to large and tagged; the root's tag. */
@@ -845,8 +958,8 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             return false;
         }
         for (int i = 0; i < Tool.BUTTONS; i++) {
-            final int x0 = toolX(i);
-            if (x >= x0 && x < x0 + RocketDesignArt.toolWidth(this.font, toolLabel(i))) {
+            final int x0 = RocketDesignLayout.toolX(i);
+            if (x >= x0 && x < x0 + RocketDesignLayout.TOOL_W) {
                 if (i < Tool.ORDER.size()) {
                     this.tool = Tool.ORDER.get(i);
                 } else if (i == Tool.MIRROR_BUTTON) {
@@ -861,10 +974,10 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
     }
 
     private boolean clickBins(final double x, final double y) {
-        if (y >= RocketDesignLayout.TAB_Y0 && y < RocketDesignLayout.TAB_Y0 + RocketDesignLayout.TAB_SIZE) {
+        if (y >= RocketDesignLayout.TAB_Y0 && y < RocketDesignLayout.TAB_Y0 + RocketDesignLayout.TAB_H) {
             for (int i = 0; i < RocketDesignLayout.TABS; i++) {
                 final int tx = RocketDesignLayout.TAB_X0 + i * RocketDesignLayout.TAB_STEP;
-                if (x >= tx && x < tx + RocketDesignLayout.TAB_SIZE) {
+                if (x >= tx && x < tx + RocketDesignLayout.TAB_W) {
                     this.category = PartCatalogue.CATEGORIES.get(i);
                     this.binScroll = 0;
                     return true;
@@ -872,7 +985,8 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             }
         }
         final List<Integer> sizes = diameters();
-        if (y >= RocketDesignLayout.CATEGORY_Y && y < RocketDesignLayout.CATEGORY_Y + RocketDesignLayout.DIAMETER_H) {
+        if (y >= RocketDesignLayout.DIAMETER_Y0
+                && y < RocketDesignLayout.DIAMETER_Y0 + RocketDesignLayout.DIAMETER_H) {
             for (int i = 0; i < sizes.size(); i++) {
                 final int x1 = RocketDesignLayout.DIAMETERS_X1 - i * RocketDesignLayout.DIAMETER_STEP;
                 if (x >= x1 - RocketDesignLayout.DIAMETER_W && x < x1) {
@@ -928,10 +1042,10 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             return;
         }
         final List<RocketDesign> plans = this.terminal.plans();
-        final int load = RocketDesignLayout.PLANS_X1 - 10 - 2 * RocketDesignLayout.PLAN_BUTTON_W - 4;
+        final int load = loadX();
         for (int i = 0; i < Math.min(plans.size(), RocketDesignLayout.PLAN_ROWS); i++) {
             final int top = RocketDesignLayout.PLAN_Y0 + i * RocketDesignLayout.PLAN_STEP + 2;
-            if (y < top || y >= top + 12) {
+            if (y < top || y >= top + 9) {
                 continue;
             }
             if (x >= load && x < load + RocketDesignLayout.PLAN_BUTTON_W) {
@@ -939,8 +1053,8 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
                 this.root = 0;
                 this.plansOpen = false;
                 say(RocketDesignTexts.LOADED.text());
-            } else if (x >= load + RocketDesignLayout.PLAN_BUTTON_W + 4
-                    && x < load + 2 * RocketDesignLayout.PLAN_BUTTON_W + 4) {
+            } else if (x >= load + RocketDesignLayout.PLAN_BUTTON_W + 3
+                    && x < load + 2 * RocketDesignLayout.PLAN_BUTTON_W + 3) {
                 RocketDesigner.DELETE.send(i);
             }
         }
@@ -1187,7 +1301,13 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         RocketStack stack = this.design.stack();
         Set<Integer> ghosts = Set.of();
         Optional<RocketDesignScene.Loose> loose = Optional.empty();
-        Optional<Integer> outlined = this.hovered.place() >= 0 ? Optional.of(this.hovered.place()) : Optional.empty();
+        // A part under the mouse outlined by its own silhouette; a booster, or a part with no model, by its box.
+        final boolean bySilhouette = this.hovered.place() >= 0 && !this.hovered.booster()
+                && this.modelled.contains(this.hovered.place());
+        Optional<Integer> outlined = this.hovered.place() >= 0 && !bySilhouette ? Optional.of(this.hovered.place())
+                : Optional.empty();
+        final List<float[]> silhouette = bySilhouette ? faces(foot(bay.get())).outline(this.hovered.place(),
+                this.view.eye()) : List.of();
         if (this.stretched >= 0) {
             stack = DesignEdits.stretch(stack, this.stretched, this.stretchTo);
             outlined = Optional.of(this.stretched);
@@ -1208,7 +1328,8 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             }
         }
         RocketDesignScene.show(new RocketDesignScene.Shown(this.terminal, foot(bay.get()), this.parts, this.kits,
-                stack, ghosts, loose, outlined, Math.max(this.report.width(), 1), this.launcher));
+                stack, ghosts, loose, outlined, this.stretched < 0 ? silhouette : List.of(),
+                Math.max(this.report.width(), 1), this.launcher));
     }
 
     /* Where the rocket's foot stands in {@code bay}: on the deck of a mobile launcher, or on the floor. */
@@ -1231,9 +1352,17 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         final Vec3 to = ray.get().at(REACH);
         Hit best = Hit.NONE;
         double nearest = Double.MAX_VALUE;
+        // A part by its own model's faces, so a tank one layer thin is picked where it shows; a part with no model
+        // and a booster by its box.
+        final ModelFaces mesh = faces(foot(bay.get()));
+        final Optional<ModelFaces.Met> met = mesh.met(from, to.subtract(from));
+        if (met.isPresent()) {
+            nearest = Math.pow(met.get().along() * to.distanceTo(from), 2);
+            best = new Hit(met.get().part(), false);
+        }
         final List<AABB> boxes = boxes();
         for (int k = 0; k < boxes.size(); k++) {
-            final Optional<Vec3> on = boxes.get(k).clip(from, to);
+            final Optional<Vec3> on = this.modelled.contains(k) ? Optional.empty() : boxes.get(k).clip(from, to);
             if (on.isPresent() && on.get().distanceToSqr(from) < nearest) {
                 nearest = on.get().distanceToSqr(from);
                 best = new Hit(k, false);
@@ -1350,6 +1479,41 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         final Vec3 middle = ray.get().at(Math.max(1, distance));
         final double tall = RocketStages.height(this.parts, new RocketStack(run));
         return Optional.of(middle.subtract(0, tall / 2, 0));
+    }
+
+    /*
+     * The faces of the rocket's models as the hangar draws them standing on {@code pad}, worked out again as the
+     * design changes; the places of the parts drawn with a model kept with them.
+     */
+    private ModelFaces faces(final BlockPos pad) {
+        final List<RocketPartModels.Placed> placed = RocketPartModels.of(this.parts, this.kits, this.design.stack(),
+                false);
+        final ModelFaces known = this.faces;
+        if (known != null && placed.equals(this.facesOf) && pad.equals(this.facesPad)) {
+            return known;
+        }
+        final Vec3 foot = Vec3.atBottomCenterOf(pad);
+        final List<ModelFaces.Piece> pieces = new ArrayList<>();
+        final Set<Integer> drawn = new HashSet<>();
+        for (final RocketPartModels.Placed part : placed) {
+            final Optional<KitModel> model = KitModels.get(part.model());
+            if (model.isEmpty()) {
+                continue;
+            }
+            // The same instance the hangar draws the model with, as it stands there, turned as it was set.
+            final KitInstance instance = KitAnimations.part(this.terminal, "design:" + part.section() + "@" + part.y()
+                    + ":" + part.model(), model.get());
+            final Matrix4f place = new Matrix4f().translate((float) foot.x, (float) (foot.y + part.y()),
+                    (float) foot.z).rotateY((float) Math.toRadians(-QUARTER * part.turns()));
+            pieces.add(new ModelFaces.Piece(part.section(), model.get(), instance, place));
+            drawn.add(part.section());
+        }
+        final ModelFaces built = ModelFaces.of(pieces);
+        this.faces = built;
+        this.facesOf = placed;
+        this.facesPad = pad;
+        this.modelled = Set.copyOf(drawn);
+        return built;
     }
 
     private List<AABB> boxes() {
@@ -1489,21 +1653,6 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         return part == null ? "" : Component.translatable(part.name()).getString();
     }
 
-    private int toolX(final int i) {
-        int x = RocketDesignLayout.TOOLS_X0;
-        for (int k = 0; k < i; k++) {
-            x += RocketDesignArt.toolWidth(this.font, toolLabel(k)) + RocketDesignLayout.TOOL_GAP;
-        }
-        return x;
-    }
-
-    private String toolLabel(final int i) {
-        if (i < Tool.ORDER.size()) {
-            return up(Tool.ORDER.get(i).label());
-        }
-        return i == Tool.MIRROR_BUTTON ? up(RocketDesignTexts.MIRROR.with(this.mirror)) : up(RocketDesignTexts.SNAP);
-    }
-
     private int toolIcon(final int i) {
         if (i < Tool.ORDER.size()) {
             return Tool.ORDER.get(i).icon();
@@ -1534,6 +1683,27 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
 
     private String fit(final String words, final int width) {
         return this.font.plainSubstrByWidth(words, Math.max(0, width));
+    }
+
+    /*
+     * {@code words} in the small letters within {@code width} points: as many of its first words as fit, as a long
+     * name is known by its first; cut, if even the first does not.
+     */
+    private String fitWords(final String words, final int width) {
+        String out = words.strip();
+        while (out.contains(" ") && RocketDesignArt.smallWidth(this.font, out) > width) {
+            out = out.substring(0, out.lastIndexOf(' ')).stripTrailing();
+        }
+        return fitSmall(out, width);
+    }
+
+    /* {@code words} cut to fit {@code width} points in the small letters. */
+    private String fitSmall(final String words, final int width) {
+        String out = words;
+        while (!out.isEmpty() && RocketDesignArt.smallWidth(this.font, out) > width) {
+            out = out.substring(0, out.length() - 1);
+        }
+        return out;
     }
 
     /* The end of {@code words} that fits {@code width}, as a field shows what is typed last. */
@@ -1590,10 +1760,10 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
 
     /** What a click on the rocket does. */
     private enum Tool {
-        PLACE(RocketDesignArt.PLACE, RocketDesignTexts.PLACE, RocketDesignTexts.HINT_PLACE),
-        OFFSET(RocketDesignArt.OFFSET, RocketDesignTexts.OFFSET, RocketDesignTexts.HINT_OFFSET),
-        ROTATE(RocketDesignArt.ROTATE, RocketDesignTexts.ROTATE, RocketDesignTexts.HINT_ROTATE),
-        ROOT(RocketDesignArt.ROOT, RocketDesignTexts.ROOT, RocketDesignTexts.HINT_ROOT);
+        PLACE(RocketDesignArt.PLACE, RocketDesignTexts.PLACE),
+        OFFSET(RocketDesignArt.OFFSET, RocketDesignTexts.OFFSET),
+        ROTATE(RocketDesignArt.ROTATE, RocketDesignTexts.ROTATE),
+        ROOT(RocketDesignArt.ROOT, RocketDesignTexts.ROOT);
 
         /** The tools, in the order of their buttons, the mirror's and the snap's after them. */
         static final List<Tool> ORDER = List.of(PLACE, OFFSET, ROTATE, ROOT);
@@ -1602,12 +1772,10 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
 
         private final int icon;
         private final TextKey label;
-        private final TextKey hint;
 
-        Tool(final int icon, final TextKey label, final TextKey hint) {
+        Tool(final int icon, final TextKey label) {
             this.icon = icon;
             this.label = label;
-            this.hint = hint;
         }
 
         int icon() {
@@ -1616,10 +1784,6 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
 
         TextKey label() {
             return this.label;
-        }
-
-        TextKey hint() {
-            return this.hint;
         }
     }
 

@@ -62,7 +62,9 @@ public final class HangarBlocks {
     /* The shapes of the fittings, each as it faces north, in sixteenths of a block. */
     private static final int[][] STEP_BOX = {{0, 0, 0, 16, 8, 16}};
     private static final int[][] RAILING_BOX = {{0, 0, 0, 16, 8, 16}, {0, 8, 1, 16, 24, 3}};
-    private static final int[][] CHAIR_BOX = {{3, 0, 3, 13, 9, 13}, {3, 9, 11, 13, 21, 13}};
+    /* A chair's back ends at its block's top, though drawn higher: the console's screen beyond it, looked at from
+     * behind the chair, takes the click over it. */
+    private static final int[][] CHAIR_BOX = {{3, 0, 3, 13, 9, 13}, {3, 9, 11, 13, 16, 13}};
     private static final int[][] BOARD_BOX = {{0, 0, 14, 16, 16, 16}};
     private static final int[][] LAMP_BOX = {{2, 5, 13, 14, 11, 16}};
 

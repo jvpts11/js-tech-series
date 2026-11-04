@@ -271,9 +271,19 @@ public final class MultiblockBuilderScreen extends Screen {
         header(g, c, plan.name(), BuilderTexts.HEADER.with(plan.preview().sizeX(), plan.preview().sizeY(),
                 plan.preview().sizeZ(), facing(plan.facing()).text()));
         final int x = ProbeLayout.TEXT_LEFT;
-        small(g, BuilderTexts.TO_PLACE.text(), x, BuilderLayout.TO_PLACE_Y, c.cyan());
-        smallRight(g, BuilderTexts.COUNTS.with(plan.wants().size(), plan.already()), ProbeLayout.TEXT_RIGHT,
-                BuilderLayout.TO_PLACE_Y, c.dim());
+        final Text toPlace = BuilderTexts.TO_PLACE.text();
+        small(g, toPlace, x, BuilderLayout.TO_PLACE_Y, c.cyan());
+        // The counts at the right, kept clear of the words before them: in short, or cut, where they would run in.
+        final int room = ProbeLayout.TEXT_RIGHT - x - width(toPlace) - BuilderLayout.GAP;
+        Text counts = BuilderTexts.COUNTS.with(plan.wants().size(), plan.already());
+        if (width(counts) > room) {
+            counts = BuilderTexts.COUNTS_SHORT.with(plan.wants().size());
+        }
+        if (width(counts) > room) {
+            counts = Text.literal(this.font.plainSubstrByWidth(GameText.resolve(counts),
+                    (int) (room / ProbeLayout.SMALL)));
+        }
+        smallRight(g, counts, ProbeLayout.TEXT_RIGHT, BuilderLayout.TO_PLACE_Y, c.dim());
         final List<Map.Entry<String, Integer>> uses = new ArrayList<>(plan.order().uses().entrySet());
         final int first = firstShown(uses.size(), BuilderLayout.MATERIAL_ROWS);
         for (int k = first; k < Math.min(uses.size(), first + BuilderLayout.MATERIAL_ROWS); k++) {
@@ -309,8 +319,16 @@ public final class MultiblockBuilderScreen extends Screen {
                 : BuilderTexts.PLACES_EITHER.with(group.places());
         small(g, head, ProbeLayout.TEXT_LEFT, BuilderLayout.CHOICE_TOP + 2, c.amber());
         final String chosen = chosen(group);
-        for (int k = 0; k < Math.min(group.fits().size(), BuilderLayout.CHOICE_OPTIONS); k++) {
-            final String block = group.fits().get(k);
+        // The chosen block first, then the others, as many as are shown whole; how many more there are after.
+        final List<String> shown = new ArrayList<>(group.fits());
+        shown.remove(chosen);
+        shown.addFirst(chosen);
+        if (shown.size() > BuilderLayout.CHOICE_OPTIONS) {
+            smallRight(g, BuilderTexts.CHOICE_MORE.with(shown.size() - BuilderLayout.CHOICE_OPTIONS),
+                    ProbeLayout.TEXT_RIGHT, BuilderLayout.CHOICE_TOP + 2, c.dim());
+        }
+        for (int k = 0; k < Math.min(shown.size(), BuilderLayout.CHOICE_OPTIONS); k++) {
+            final String block = shown.get(k);
             final int bx = ProbeLayout.TEXT_LEFT + k * BuilderLayout.CHOICE_WIDTH;
             final int by = BuilderLayout.CHOICE_TOP + 10;
             if (block.equals(chosen)) {

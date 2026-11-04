@@ -48,8 +48,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The rocket being designed, drawn in the hangar itself while its design screen is open, standing on the middle of the
  * bay's floor: each part with its own model, turned as it was set; a part being placed see-through, cyan, where it
- * will go or under the mouse; the part under the mouse outlined; and the hazard stripes painted round the rocket's
- * place on the floor. Where a part has no model, as one a data pack adds, its box is outlined.
+ * will go or under the mouse; the part under the mouse outlined by its silhouette; and the hazard stripes painted
+ * round the rocket's place on the floor. Where a part has no model, as one a data pack adds, its box is outlined.
  */
 public final class RocketDesignScene {
 
@@ -60,6 +60,8 @@ public final class RocketDesignScene {
     private static final double STRIPE = 0.5;
     private static final double FLOOR = 0.01;
     private static final float CHANNEL = 255.0F;
+    /* How far toward the camera the outline of the part under the mouse is drawn, in blocks. */
+    private static final double SILHOUETTE_LIFT = 0.03;
     private static final ResourceLocation HAZARD = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
             "textures/misc/hangar_hazard.png");
 
@@ -162,8 +164,25 @@ public final class RocketDesignScene {
         }
         scene.outlined().filter(k -> k >= 0 && k < boxes.size()).ifPresent(k -> outline(poses, lines,
                 boxes.get(k).inflate(0.05), c.yellow()));
+        // The part under the mouse outlined by its own silhouette, its lines a little toward the camera.
+        final PoseStack.Pose pose = poses.last();
+        for (final float[] edge : scene.silhouette()) {
+            final Vec3 a = toward(camera, edge[0], edge[1], edge[2]);
+            final Vec3 b = toward(camera, edge[3], edge[4], edge[5]);
+            final Vec3 way = b.subtract(a).normalize();
+            lines.addVertex(pose, (float) a.x, (float) a.y, (float) a.z).setColor(c.yellow())
+                    .setNormal(pose, (float) way.x, (float) way.y, (float) way.z);
+            lines.addVertex(pose, (float) b.x, (float) b.y, (float) b.z).setColor(c.yellow())
+                    .setNormal(pose, (float) way.x, (float) way.y, (float) way.z);
+        }
         poses.popPose();
         buffers.endBatch();
+    }
+
+    /* The point ({@code x}, {@code y}, {@code z}) brought a little toward {@code eye}. */
+    private static Vec3 toward(final Vec3 eye, final double x, final double y, final double z) {
+        final Vec3 at = new Vec3(x, y, z);
+        return at.add(eye.subtract(at).normalize().scale(SILHOUETTE_LIFT));
     }
 
     /*
@@ -288,13 +307,15 @@ public final class RocketDesignScene {
      * @param stack    the rocket as it stands, with a part being placed already set where it will go
      * @param ghosts   the places of the parts being placed, drawn see-through
      * @param loose    a part being placed away from any node, drawn see-through where the mouse is
-     * @param outlined the place of the part under the mouse, outlined
-     * @param width    how wide the rocket stands, its boosters with it, in blocks
-     * @param launcher the blocks of the mobile launcher it stands on, from its foot; none when it stands on the floor
+     * @param outlined   the place of the part outlined by its box: one being stretched, or a booster's
+     * @param silhouette the outline of the part under the mouse, each edge its two ends, in the world
+     * @param width      how wide the rocket stands, its boosters with it, in blocks
+     * @param launcher   the blocks of the mobile launcher it stands on, from its foot; none when on the floor
      */
     public record Shown(HangarTerminalBlockEntity terminal, BlockPos pad, Map<ResourceLocation, RocketPart> parts,
                         Map<ResourceLocation, RocketKit> kits, RocketStack stack, Set<Integer> ghosts,
-                        Optional<Loose> loose, Optional<Integer> outlined, int width, List<PlanSpot> launcher) {
+                        Optional<Loose> loose, Optional<Integer> outlined, List<float[]> silhouette, int width,
+                        List<PlanSpot> launcher) {
     }
 
     /**

@@ -19,15 +19,16 @@ import net.minecraft.util.FastColor;
 
 /**
  * The Starship Design screen's things, drawn in the starship builders' way the approved design has: panels of dark
- * glass, a corner cut, a faint cyan edge brighter at its corners, their titles in spaced capitals; tags filled cyan
- * with a point, as the measures are; the tools' buttons, filled when chosen; key prompts in small caps; bars of
- * segments; the green nodes a section snaps to; and the icons of the parts' kinds and the tools.
+ * glass, a corner cut, a faint cyan edge brighter at two corners, their titles in the game's letters; tags filled
+ * cyan with a point, as the measures are; the tools' buttons, an icon each, filled when chosen; key prompts on small
+ * caps; bars of segments; the green nodes a section snaps to; the words by the mouse; and the icons of the parts'
+ * kinds and the tools.
  */
 @PaletteHolder
 public final class ShipDesignArt {
 
     public static final Palette<Colours> PALETTE = Palettes.declare(JsSpace.MODID, "ship_design", new Colours(
-            0xFF63E6E2, 0x6E63E6E2, 0xFF1E5C62, 0xFFE8F0F2, 0xFF8AA0AA, 0xFF4E626E, 0xDE091017, 0xEB101C26,
+            0xFF63E6E2, 0x6E63E6E2, 0xFF1E5C62, 0xFFF4F8FA, 0xFFA8BEC8, 0xFF6E8490, 0xEC080E14, 0xEB101C26,
             0xFF263C4A, 0xFFEF6A5A, 0xFFF0B23A, 0xFF5FE07A, 0xFF4CFF5A, 0xFF080C10, 0xF00C161E, 0xF50E282E,
             0xFF1C2A34, 0xEB04090D, 0xFF17212A, 0xFF0A0F13, 0xFF151E26, 0xFF5CDBD6, 0xFF63E5E0, 0xA04CCCFF,
             0xA04CFF5A, 0xA0EF6A5A, 0xFFDCFFDC, 0xC8091017, 0xFF000000, 0xFFFFFFFF, 0xFFEAEAE4, 0xFF2A2B2E,
@@ -48,6 +49,8 @@ public final class ShipDesignArt {
     public static final int SNAP = 12;
     public static final int SEARCH = 13;
     public static final int LOCK = 14;
+    /** How many points square an icon is on a tool's button or a kind's tab. */
+    public static final int ICON_SMALL = 9;
     /* The icons as two masks a cell each, the ink on the top row and the accent under it, tinted as drawn. */
     private static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
             "textures/gui/shipyard/ship_design_icons.png");
@@ -55,9 +58,11 @@ public final class ShipDesignArt {
     private static final int ICONS_WIDTH = 256;
     private static final int ICONS_HEIGHT = 32;
     /* A panel's bright corners, and a button's cut corner. */
-    private static final int CORNER = 12;
-    private static final int CORNER_DOWN = 8;
-    private static final int BUTTON_CUT = 4;
+    private static final int CORNER = 10;
+    private static final int BUTTON_CUT = 3;
+    /* A key's cap, its least width and its height. */
+    private static final int KEY_LEAST = 10;
+    private static final int KEY_H = 9;
     private static final int TAG_H = 13;
     /* The words by the mouse: their ground's height, and its room at either end. */
     private static final int CALLOUT_H = 12;
@@ -72,7 +77,7 @@ public final class ShipDesignArt {
 
     /**
      * A panel of dark glass from {@code x0, y0} to before {@code x1, y1}: its top left corner cut by {@code cut}, a
-     * faint cyan edge, brighter cyan at its corners, and its title in spaced capitals with a rule after it.
+     * faint cyan edge, brighter cyan at two of its corners, and its title in the game's letters with a rule after it.
      */
     public static void panel(final GuiGraphics g, final Font font, final int x0, final int y0, final int x1,
                              final int y1, final String title, final int cut) {
@@ -86,12 +91,10 @@ public final class ShipDesignArt {
         hline(g, x0, x1, y1 - 1, c.accentDim());
         vline(g, x1 - 1, y0, y1, c.accentDim());
         hline(g, x1 - CORNER, x1, y0, c.accent());
-        vline(g, x1 - 1, y0, y0 + CORNER_DOWN, c.accent());
         hline(g, x0, x0 + CORNER, y1 - 1, c.accent());
-        vline(g, x0, y1 - CORNER_DOWN, y1, c.accent());
         if (!title.isEmpty()) {
-            final int w = spaced(g, font, title, x0 + cut + 6, y0 + 5, c.accent());
-            hline(g, x0 + cut + 12 + w, x1 - 8, y0 + 9, c.line());
+            Draw.text(g, font, title, x0 + cut + 4, y0 + 3, c.accent());
+            hline(g, x0 + cut + 8 + font.width(title), x1 - 6, y0 + 7, c.line());
         }
     }
 
@@ -106,12 +109,12 @@ public final class ShipDesignArt {
         }
     }
 
-    /** A heading in small spaced capitals, a rule after it to {@code x1}. */
+    /** A heading in small capitals, a rule after it to {@code x1}. */
     public static void heading(final GuiGraphics g, final Font font, final int x, final int y, final String name,
                                final int x1) {
         final Colours c = PALETTE.get();
         final int w = small(g, font, name, x, y, c.dim());
-        hline(g, x + w + 5, x1, y + 3, c.line());
+        hline(g, x + w + 4, x1, y + 3, c.line());
     }
 
     /**
@@ -137,44 +140,29 @@ public final class ShipDesignArt {
         return w + 6;
     }
 
-    /** A tool's button: its icon and its name; filled when chosen. Its width. */
-    public static int button(final GuiGraphics g, final Font font, final int x, final int y, final int h,
-                             final int icon, final String label, final boolean on) {
+    /** A tool's button, {@code w} by {@code h}: its icon alone; filled when chosen. */
+    public static void toolButton(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                                  final int icon, final boolean on) {
         final Colours c = PALETTE.get();
-        final int w = buttonWidth(font, label);
-        final int ink;
-        final int accent;
         if (on) {
             chamfer(g, x, y, x + w, y + h, c.accent(), BUTTON_CUT, true, false, false);
-            ink = c.dark();
-            accent = c.dark();
+            icon(g, icon, x + 4, y + 3, ICON_SMALL, c.dark(), c.dark());
         } else {
             chamfer(g, x, y, x + w, y + h, c.panelHi(), BUTTON_CUT, true, false, false);
-            hline(g, x + BUTTON_CUT, x + w, y, c.accentDim());
             hline(g, x, x + w, y + h - 1, c.line());
-            ink = c.text();
-            accent = c.accent();
+            icon(g, icon, x + 4, y + 3, ICON_SMALL, c.text(), c.accent());
         }
-        icon(g, icon, x + 3, y + 1, ink, accent);
-        small(g, font, label, x + 18, y + 6, ink);
-        return w;
     }
 
-    /** How wide a tool's button of {@code label} is. */
-    public static int buttonWidth(final Font font, final String label) {
-        return 32 + spacedWidth(font, label);
-    }
-
-    /** A key prompt: the key in a small cap, what it does beside it. Its width. */
+    /** A key prompt: the key on a small cap, what it does beside it in the game's letters. Its width. */
     public static int keycap(final GuiGraphics g, final Font font, final int x, final int y, final String key,
                              final String label) {
         final Colours c = PALETTE.get();
-        final int kw = Math.max(11, Math.round(font.width(key) * SMALL) + 6);
-        g.fill(x, y, x + kw, y + 12, c.text());
-        hline(g, x, x + kw, y + 11, c.dim());
-        Draw.textScaled(g, font, key, x + kw / 2 - Math.round(font.width(key) * SMALL / 2), y + 3, c.dark(),
-                SMALL);
-        return kw + 5 + small(g, font, label, x + kw + 5, y + 3, c.text());
+        final int kw = Math.max(KEY_LEAST, smallWidth(font, key) + 5);
+        g.fill(x, y, x + kw, y + KEY_H, c.text());
+        Draw.textScaled(g, font, key, x + kw / 2 - smallWidth(font, key) / 2 + 1, y + 2, c.dark(), SMALL);
+        Draw.text(g, font, label, x + kw + 3, y + 1, c.text());
+        return kw + 3 + font.width(label);
     }
 
     /** A bar of twenty segments, as full as {@code share}, from {@code x} {@code w} wide. */
@@ -244,8 +232,16 @@ public final class ShipDesignArt {
     /** The icon in cell {@code icon}, its ink in {@code ink} and its accent in {@code accent}. */
     public static void icon(final GuiGraphics g, final int icon, final int x, final int y, final int ink,
                             final int accent) {
-        tinted(g, ink, () -> g.blit(ICONS, x, y, icon * CELL, 0, CELL, CELL, ICONS_WIDTH, ICONS_HEIGHT));
-        tinted(g, accent, () -> g.blit(ICONS, x, y, icon * CELL, CELL, CELL, CELL, ICONS_WIDTH, ICONS_HEIGHT));
+        icon(g, icon, x, y, CELL, ink, accent);
+    }
+
+    /** The icon in cell {@code icon}, {@code size} points square, its ink and its accent as given. */
+    public static void icon(final GuiGraphics g, final int icon, final int x, final int y, final int size,
+                            final int ink, final int accent) {
+        tinted(g, ink, () -> g.blit(ICONS, x, y, size, size, icon * CELL, 0, CELL, CELL, ICONS_WIDTH,
+                ICONS_HEIGHT));
+        tinted(g, accent, () -> g.blit(ICONS, x, y, size, size, icon * CELL, CELL, CELL, CELL, ICONS_WIDTH,
+                ICONS_HEIGHT));
     }
 
     /** {@code text} in the small letters, spaced a pixel; its width. */
@@ -258,23 +254,6 @@ public final class ShipDesignArt {
     /** How wide {@code text} is in the small letters. */
     public static int smallWidth(final Font font, final String text) {
         return Math.round(font.width(text) * SMALL);
-    }
-
-    /** {@code text} in the game's letters, its capitals spaced a pixel apart; its width. */
-    public static int spaced(final GuiGraphics g, final Font font, final String text, final int x, final int y,
-                             final int colour) {
-        int at = x;
-        for (int i = 0; i < text.length(); i++) {
-            final String letter = String.valueOf(text.charAt(i));
-            Draw.text(g, font, letter, at, y, colour);
-            at += font.width(letter) + 1;
-        }
-        return at - x;
-    }
-
-    /** How wide {@code text} is spaced a pixel apart. */
-    public static int spacedWidth(final Font font, final String text) {
-        return font.width(text) + text.length();
     }
 
     /** {@code a} mixed toward {@code b} by {@code share}. */

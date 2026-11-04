@@ -23,12 +23,14 @@ public final class BuilderTexts {
     public static final TextKey WEST = TextKey.of("jscore.builder.west", "WEST");
     public static final TextKey TO_PLACE = TextKey.of("jscore.builder.to_place", "TO PLACE");
     public static final TextKey COUNTS = TextKey.of("jscore.builder.counts", "%s blocks, %s already there");
+    public static final TextKey COUNTS_SHORT = TextKey.of("jscore.builder.counts_short", "%s blocks");
     public static final TextKey NEEDS = TextKey.of("jscore.builder.needs", "%s");
     public static final TextKey HAVE = TextKey.of("jscore.builder.have", "you have %s");
     public static final TextKey HAVE_SHORT = TextKey.of("jscore.builder.have_short", "have %s");
     public static final TextKey ONE_PLACE_EITHER = TextKey.of("jscore.builder.one_place_either",
             "1 PLACE TAKES EITHER");
     public static final TextKey PLACES_EITHER = TextKey.of("jscore.builder.places_either", "%s PLACES TAKE EITHER");
+    public static final TextKey CHOICE_MORE = TextKey.of("jscore.builder.choice_more", "+%s more");
     public static final TextKey SOURCE = TextKey.of("jscore.builder.source", "SOURCE");
     public static final TextKey INVENTORY = TextKey.of("jscore.builder.inventory", "Your inventory");
     public static final TextKey CREATIVE = TextKey.of("jscore.builder.creative", "Creative: nothing is taken");

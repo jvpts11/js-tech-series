@@ -56,8 +56,8 @@ public final class ShipDesignClientTests {
     /* How far the panels' cyan stands over red at the right panel's title. */
     private static final int CYAN = 60;
     /* A point of the frame over the void above the ship, away from every joint. */
-    private static final int VOID_X = 300;
-    private static final int VOID_Y = 100;
+    private static final int VOID_X = 150;
+    private static final int VOID_Y = 50;
     /*
      * Where the colours are counted about the mouse, in the GUI's pixels: over it, as far up and to either side;
      * the words' band under it, from and to, as far left and right; and by how much a channel stands over another.

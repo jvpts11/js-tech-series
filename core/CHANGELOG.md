@@ -829,8 +829,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   and peels layer by layer, laid out from the multiblock in force when the manual is read, its controller in place.
 - The Multiblock Builder, a handheld instrument used on a multiblock's controller, or on a Structure Projector
   showing a multiblock, which it then builds where the projector shows it, its controller last and turned as the
-  multiblock stands: its display says what is missing and how much of each block the player has, lets them choose
-  what goes where a place takes several blocks and where the blocks come from, and OK first takes out, from the top
+  multiblock stands: its display says what is missing and how much of each block the player has, the counts kept
+  clear of the words before them, lets them choose what goes where a place takes several blocks, the chosen block and
+  the next shown with their whole names and how many more there are, and where the blocks come from; OK first takes
+  out, from the top
   down, whatever stands where the multiblock must be left empty or in its places, giving the blocks back (a player in
   creative only clears), then builds the multiblock a block at a time from the inventory, as the player would place
   each block, stopping and saying why when it runs out, the player walks away, a place is protected or something it

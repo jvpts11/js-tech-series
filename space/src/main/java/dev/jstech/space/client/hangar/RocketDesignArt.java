@@ -33,7 +33,7 @@ public final class RocketDesignArt {
             0xFFF06E60, 0xFFB0B8BE, 0xFFFFB03C, 0xFF78828A, 0xFF969CA2, 0xFF961E16, 0xFFDC503C, 0xFF5A100C,
             0xFFFFD6C8, 0xFF2A8038, 0xFF60C86E, 0xFF14461C, 0xFFDCFFE0, 0xFF46AA50, 0xFFFFFFFF, 0xFF000000,
             0x5A000000, 0x9663E6E2, 0xFF3A7AD0, 0xFFC8C8C8, 0xFFD05A30, 0xFF63E6E2, 0xFF282C30, 0xFF966E14,
-            0xFFDCFFDC));
+            0xFFDCFFDC, 0xE614161A));
     /** The icons, by their cell in the icons' picture. */
     public static final int CAPSULE = 0;
     public static final int TANK = 1;
@@ -48,6 +48,8 @@ public final class RocketDesignArt {
     public static final int MIRROR = 10;
     public static final int SNAP = 11;
     public static final int LOCK = 12;
+    /** How many points square an icon is on a tool's button or a category's tab. */
+    public static final int ICON_SMALL = 9;
     /* The icons as two masks a cell each, the ink on the top row and the accent under it, tinted as drawn. */
     private static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
             "textures/gui/hangar/rocket_design_icons.png");
@@ -56,7 +58,14 @@ public final class RocketDesignArt {
     private static final int CELL = 16;
     private static final int ICONS_WIDTH = 256;
     private static final int ICONS_HEIGHT = 32;
-    private static final int RIVET_STEP = 28;
+    /* How far apart rivets are; a tile of the hazard stripes; a lamp's glass; an inked bar's height; in points. */
+    private static final int RIVET_STEP = 20;
+    private static final int STRIPES = 8;
+    private static final int LAMP = 5;
+    private static final int INK_BAR = 5;
+    /* The small letters' size against the game's; the height of the words by the mouse. */
+    private static final float SMALL = 0.75F;
+    private static final int CALLOUT_H = 20;
     private static final float LIGHTER = 0.45F;
     private static final float DARKER = 0.4F;
     private static final float CHANNEL = 255.0F;
@@ -64,7 +73,10 @@ public final class RocketDesignArt {
     private RocketDesignArt() {
     }
 
-    /** A plate of painted steel: lit along its top and left, dark along its bottom and right, rivets round it. */
+    /**
+     * A plate of painted steel: lit along its top and left, dark along its bottom and right, rivets along its top and
+     * foot; its title on a yellow plate over a band of hazard stripes at its head.
+     */
     public static void plate(final GuiGraphics g, final Font font, final int x0, final int y0, final int x1,
                              final int y1, @Nullable final String title) {
         final Colours c = PALETTE.get();
@@ -73,42 +85,68 @@ public final class RocketDesignArt {
         vline(g, x0, y0, y1, c.paintHi());
         hline(g, x0, x1, y1 - 1, c.paintDeep());
         vline(g, x1 - 1, y0, y1, c.paintDeep());
-        for (int x = x0 + 4; x < x1 - 4; x += RIVET_STEP) {
-            rivet(g, x, y0 + 3);
-            rivet(g, x, y1 - 5);
-        }
-        for (int y = y0 + 4; y < y1 - 4; y += RIVET_STEP) {
-            rivet(g, x0 + 3, y);
-            rivet(g, x1 - 5, y);
+        for (int x = x0 + 3; x < x1 - 3; x += RIVET_STEP) {
+            rivet(g, x, y0 + 2);
+            rivet(g, x, y1 - 4);
         }
         if (title != null) {
-            hazard(g, x0 + 8, y0 + 7, x1 - 8, y0 + 21);
-            final int w = font.width(title) + 10;
-            g.fill(x0 + 14, y0 + 7, x0 + 14 + w, y0 + 21, c.yellow());
-            frame(g, x0 + 14, y0 + 7, x0 + 14 + w, y0 + 21, c.black());
-            Draw.text(g, font, title, x0 + 19, y0 + 10, c.black());
+            hazard(g, x0 + 4, y0 + 4, x1 - 4, y0 + 15);
+            final int w = font.width(title) + 8;
+            g.fill(x0 + 8, y0 + 4, x0 + 8 + w, y0 + 15, c.yellow());
+            frame(g, x0 + 8, y0 + 4, x0 + 8 + w, y0 + 15, c.black());
+            Draw.text(g, font, title, x0 + 12, y0 + 6, c.black());
         }
     }
 
     /** A band of hazard stripes, yellow and black on the slant. */
     public static void hazard(final GuiGraphics g, final int x0, final int y0, final int x1, final int y1) {
-        for (int x = x0; x < x1; x += CELL) {
-            for (int y = y0; y < y1; y += CELL) {
-                final int w = Math.min(CELL, x1 - x);
-                final int h = Math.min(CELL, y1 - y);
-                g.blit(HAZARD, x, y, 0, 0, w, h, CELL, CELL);
+        for (int x = x0; x < x1; x += STRIPES) {
+            for (int y = y0; y < y1; y += STRIPES) {
+                final int w = Math.min(STRIPES, x1 - x);
+                final int h = Math.min(STRIPES, y1 - y);
+                g.blit(HAZARD, x, y, w, h, 0, 0, w * CELL / STRIPES, h * CELL / STRIPES, CELL, CELL);
             }
         }
     }
 
-    /** A section's name on the plate, in yellow, a painted rule after it to {@code x1}. */
+    /** A section's name on the plate, in small yellow letters, a painted rule after it to {@code x1}. */
     public static void heading(final GuiGraphics g, final Font font, final int x, final int y, final String name,
                                final int x1) {
         final Colours c = PALETTE.get();
-        final int w = font.width(name);
-        Draw.text(g, font, name, x, y, c.yellow());
-        hline(g, x + w + 5, x1, y + 4, c.paintLo());
-        hline(g, x + w + 5, x1, y + 5, c.paintHi());
+        final int w = small(g, font, name, x, y, c.yellow());
+        hline(g, x + w + 3, x1, y + 3, c.paintLo());
+        hline(g, x + w + 3, x1, y + 4, c.paintHi());
+    }
+
+    /** {@code text} in the small letters; its width. */
+    public static int small(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                            final int colour) {
+        Draw.textScaled(g, font, text, x, y, colour, SMALL);
+        return smallWidth(font, text);
+    }
+
+    /** How wide {@code text} is in the small letters. */
+    public static int smallWidth(final Font font, final String text) {
+        return Math.round(font.width(text) * SMALL);
+    }
+
+    /**
+     * A thing's name by the mouse, as the approved design writes the part under it: on a dark ground, a yellow line
+     * along its top, the name in the steel's white and under it {@code line} in the small paler letters.
+     */
+    public static void namedCallout(final GuiGraphics g, final Font font, final String name, final String line,
+                                    final int x0, final int y) {
+        final Colours c = PALETTE.get();
+        final int x1 = x0 + Math.max(font.width(name), smallWidth(font, line)) + 8;
+        g.fill(x0, y, x1, y + CALLOUT_H, c.callout());
+        hline(g, x0, x1, y, c.yellow());
+        Draw.text(g, font, name, x0 + 4, y + 3, c.stencil());
+        small(g, font, line, x0 + 4, y + 12, c.dimPaint());
+    }
+
+    /** How wide the words by the mouse are for {@code name} and {@code line}. */
+    public static int namedCalloutWidth(final Font font, final String name, final String line) {
+        return Math.max(font.width(name), smallWidth(font, line)) + 8;
     }
 
     /** A recess in the plate. */
@@ -122,76 +160,65 @@ public final class RocketDesignArt {
     /** A lamp of {@code colour}, lit or dark, its glass catching the light at its top left. */
     public static void lamp(final GuiGraphics g, final int x, final int y, final int colour, final boolean lit) {
         final Colours c = PALETTE.get();
-        g.fill(x - 1, y - 1, x + 8, y + 8, c.paintDeep());
+        g.fill(x - 1, y - 1, x + LAMP + 1, y + LAMP + 1, c.paintDeep());
         final int glass = lit ? colour : mix(colour, c.black(), 0.7F);
-        g.fill(x, y, x + 7, y + 7, glass);
-        g.fill(x + 1, y + 1, x + 4, y + 3, mix(glass, c.white(), 0.5F));
+        g.fill(x, y, x + LAMP, y + LAMP, glass);
+        g.fill(x + 1, y + 1, x + 3, y + 2, mix(glass, c.white(), 0.5F));
     }
 
     /**
-     * A workshop push button: its dark collar, its cap of {@code colour} lit along its top, its label on it, and its
-     * key on a small tag at its left; no tag for a button with no key.
+     * A workshop push button: its dark collar, its cap of {@code colour} lit along its top, its label on it in the
+     * small letters, and its key on a small tag at its left; the label in the middle for a button with no key.
      */
     public static void pushButton(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                                   final int h, final String label, final int colour, final boolean lit,
                                   final String key) {
         final Colours c = PALETTE.get();
-        g.fill(x - 2, y - 2, x + w + 2, y + h + 2, c.paintDeep());
+        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.paintDeep());
         final int cap = lit ? colour : mix(colour, c.paintDeep(), 0.25F);
         g.fill(x, y, x + w, y + h, cap);
         hline(g, x, x + w, y, mix(cap, c.white(), LIGHTER));
         hline(g, x, x + w, y + h - 1, mix(cap, c.black(), DARKER));
-        vline(g, x + w - 1, y, y + h, mix(cap, c.black(), 0.3F));
         final int ink = bright(cap) ? c.black() : c.stencil();
         if (key.isEmpty()) {
-            Draw.textCentered(g, font, label, x + w / 2, y + (h - 8) / 2, ink);
+            small(g, font, label, x + w / 2 - smallWidth(font, label) / 2, y + 3, ink);
             return;
         }
-        Draw.textCentered(g, font, label, x + w / 2 + 5, y + (h - 8) / 2, ink);
-        g.fill(x + 3, y + 3, x + 13, y + h - 3, c.paintDeep());
-        Draw.textCentered(g, font, key, x + 8, y + (h - 8) / 2, c.yellow());
+        g.fill(x + 2, y + 2, x + 10, y + h - 2, c.paintDeep());
+        small(g, font, key, x + 6 - smallWidth(font, key) / 2, y + 3, c.yellow());
+        small(g, font, label, x + 13, y + 3, ink);
     }
 
-    /** A tool's square button: its icon and its name, lit yellow while it is in use; its width. */
-    public static int tool(final GuiGraphics g, final Font font, final int x, final int y, final int icon,
-                           final String label, final boolean on) {
+    /** A tool's button, {@code w} by {@code h}: its icon alone, lit yellow while it is in use. */
+    public static void tool(final GuiGraphics g, final int x, final int y, final int w, final int h, final int icon,
+                            final boolean on) {
         final Colours c = PALETTE.get();
-        final int w = 9 + 8 + font.width(label) + 8;
-        g.fill(x - 1, y - 1, x + w + 1, y + 18, c.paintDeep());
+        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.paintDeep());
         final int face = on ? c.yellow() : c.paintHi();
-        g.fill(x, y, x + w, y + 17, face);
+        g.fill(x, y, x + w, y + h, face);
         hline(g, x, x + w, y, mix(face, c.white(), DARKER));
-        hline(g, x, x + w, y + 16, mix(face, c.black(), DARKER));
-        final int ink = on ? c.black() : c.stencil();
-        icon(g, icon, x + 5, y + 4, ink, on ? c.black() : c.yellow());
-        Draw.text(g, font, label, x + 18, y + 5, ink);
-        return w;
-    }
-
-    /** How wide a tool's button with {@code label} is. */
-    public static int toolWidth(final Font font, final String label) {
-        return 9 + 8 + font.width(label) + 8;
+        icon(g, icon, x + 3, y + 2, ICON_SMALL, on ? c.black() : c.stencil(), on ? c.black() : c.yellow());
     }
 
     /** A card of ruled paper, its red margin, its shadow on the plate. */
     public static void paper(final GuiGraphics g, final int x0, final int y0, final int x1, final int y1) {
         final Colours c = PALETTE.get();
-        g.fill(x0 + 2, y0 + 2, x1 + 2, y1 + 2, c.shadow());
+        g.fill(x0 + 1, y0 + 1, x1 + 1, y1 + 1, c.shadow());
         g.fill(x0, y0, x1, y1, c.paper());
-        for (int y = y0 + 20; y < y1 - 4; y += 10) {
-            hline(g, x0 + 4, x1 - 4, y, c.paperLine());
+        for (int y = y0 + 13; y < y1 - 2; y += 10) {
+            hline(g, x0 + 2, x1 - 2, y, c.paperLine());
         }
-        vline(g, x0 + 14, y0 + 2, y1 - 2, c.margin());
+        vline(g, x0 + 8, y0 + 1, y1 - 1, c.margin());
     }
 
     /** A bar inked on the spec sheet, hatched as far as {@code share}. */
     public static void inkBar(final GuiGraphics g, final int x, final int y, final int w, final double share) {
         final Colours c = PALETTE.get();
-        frame(g, x, y, x + w, y + 6, c.ink());
+        frame(g, x, y, x + w, y + INK_BAR, c.ink());
         final int fill = (int) ((w - 2) * Math.clamp(share, 0, 1));
         for (int xx = x + 1; xx < x + 1 + fill; xx++) {
             if (xx % 2 == 0) {
-                vline(g, xx, y + 1, y + 5, c.ink());
+                vline(g, xx, y + 1, y + INK_BAR - 1, c.ink());
             }
         }
     }
@@ -251,11 +278,13 @@ public final class RocketDesignArt {
         g.fill(x - 1, y - 1, x, y, c.glint());
     }
 
-    /** The icon in cell {@code icon}, its ink in {@code ink} and its accent in {@code accent}. */
-    public static void icon(final GuiGraphics g, final int icon, final int x, final int y, final int ink,
-                            final int accent) {
-        tinted(g, ink, () -> g.blit(ICONS, x, y, icon * CELL, 0, CELL, CELL, ICONS_WIDTH, ICONS_HEIGHT));
-        tinted(g, accent, () -> g.blit(ICONS, x, y, icon * CELL, CELL, CELL, CELL, ICONS_WIDTH, ICONS_HEIGHT));
+    /** The icon in cell {@code icon}, {@code size} points square, its ink and its accent as given. */
+    public static void icon(final GuiGraphics g, final int icon, final int x, final int y, final int size,
+                            final int ink, final int accent) {
+        tinted(g, ink, () -> g.blit(ICONS, x, y, size, size, icon * CELL, 0, CELL, CELL, ICONS_WIDTH,
+                ICONS_HEIGHT));
+        tinted(g, accent, () -> g.blit(ICONS, x, y, size, size, icon * CELL, CELL, CELL, CELL, ICONS_WIDTH,
+                ICONS_HEIGHT));
     }
 
     /** {@code a} mixed toward {@code b} by {@code share}. */
@@ -346,12 +375,13 @@ public final class RocketDesignArt {
      * @param bin        the ground a part is shown on in its bin
      * @param keyShade   the shade under a key's yellow cap
      * @param glint      a node's glint
+     * @param callout    the ground under the words by the mouse, and under the view's keys
      */
     public record Colours(int paint, int paintHi, int paintLo, int paintDeep, int stencil, int yellow, int black,
                           int paper, int paperLine, int margin, int ink, int inkDim, int redInk, int green, int red,
                           int node, int lightRed, int dimPaint, int led, int rivet, int holder, int signRed,
                           int signRedHi, int signRedLo, int signRedInk, int signGreen, int signGreenHi,
                           int signGreenLo, int signGreenInk, int confirm, int white, int pure, int shadow, int holo,
-                          int orbit, int moon, int mars, int cyan, int bin, int keyShade, int glint) {
+                          int orbit, int moon, int mars, int cyan, int bin, int keyShade, int glint, int callout) {
     }
 }

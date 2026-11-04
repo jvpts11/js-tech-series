@@ -30,7 +30,6 @@ public final class RocketDesignTexts {
     public static final TextKey ROTATE = TextKey.of("jsspace.design.screen.rotate", "Rotate");
     public static final TextKey ROOT = TextKey.of("jsspace.design.screen.root", "Root");
     public static final TextKey MIRROR = TextKey.of("jsspace.design.screen.mirror", "Mirror x%s");
-    public static final TextKey SNAP = TextKey.of("jsspace.design.screen.snap", "Snap");
     public static final TextKey CRANE_READY = TextKey.of("jsspace.design.screen.crane_ready", "Crane ready");
     public static final TextKey COUNTS = TextKey.of("jsspace.design.screen.counts", "%s stages %s blk");
     public static final TextKey COUNT_ONE = TextKey.of("jsspace.design.screen.count_one", "1 stage %s blk");
@@ -43,11 +42,6 @@ public final class RocketDesignTexts {
     public static final TextKey SAVE_KEY = TextKey.of("jsspace.design.screen.save_key", "S");
     public static final TextKey PLANS_KEY = TextKey.of("jsspace.design.screen.plans_key", "L");
     public static final TextKey CLEAR_KEY = TextKey.of("jsspace.design.screen.clear_key", "X");
-    public static final TextKey HINT_PLACE = TextKey.of("jsspace.design.screen.hint_place", "Drag to a node");
-    public static final TextKey HINT_OFFSET = TextKey.of("jsspace.design.screen.hint_offset", "Drag a tank taller");
-    public static final TextKey HINT_ROTATE = TextKey.of("jsspace.design.screen.hint_rotate", "Click a part to turn");
-    public static final TextKey HINT_ROOT = TextKey.of("jsspace.design.screen.hint_root", "Click the root part");
-    public static final TextKey HINT_DROP = TextKey.of("jsspace.design.screen.hint_drop", "Drop on a node");
     public static final TextKey SNAPS_HERE = TextKey.of("jsspace.design.screen.snaps_here", "Snaps here");
     public static final TextKey ROOT_TAG = TextKey.of("jsspace.design.screen.root_tag", "Root");
     public static final TextKey SAVED = TextKey.of("jsspace.design.screen.saved", "Saved");
@@ -59,7 +53,6 @@ public final class RocketDesignTexts {
     public static final TextKey FULL = TextKey.of("jsspace.design.screen.full", "The hangar keeps %s plans");
     public static final TextKey LOADED = TextKey.of("jsspace.design.screen.loaded", "Loaded");
     public static final TextKey SPEC_SHEET = TextKey.of("jsspace.design.screen.spec_sheet", "Spec sheet %s");
-    public static final TextKey TIER_MASS = TextKey.of("jsspace.design.screen.tier_mass", "Tier T%s  mass %s t");
     public static final TextKey THRUST_VACUUM = TextKey.of("jsspace.design.screen.thrust_vacuum", "Thrust vac");
     public static final TextKey THRUST_SEA = TextKey.of("jsspace.design.screen.thrust_sea", "Thrust SL");
     public static final TextKey ISP_VACUUM = TextKey.of("jsspace.design.screen.isp_vacuum", "Isp vac");
@@ -88,9 +81,7 @@ public final class RocketDesignTexts {
             "Lets a stage with an engine come back and land.");
     public static final TextKey STAGE = TextKey.of("jsspace.design.screen.stage", "S%s");
     public static final TextKey NO_ENGINE_YET = TextKey.of("jsspace.design.screen.no_engine_yet", "No engine yet");
-    public static final TextKey NO_THRUST = TextKey.of("jsspace.design.screen.no_thrust", "No thrust");
     public static final TextKey PAYLOAD = TextKey.of("jsspace.design.screen.payload", "Payload");
-    public static final TextKey RATIO = TextKey.of("jsspace.design.screen.ratio", "TWR %s");
     public static final TextKey SPEED = TextKey.of("jsspace.design.screen.speed", "%s m/s");
     public static final TextKey UNIT_SPEED = TextKey.of("jsspace.design.screen.unit_speed", "m/s");
     public static final TextKey DELTA_V = TextKey.of("jsspace.design.screen.delta_v", "Delta-v");
@@ -103,9 +94,19 @@ public final class RocketDesignTexts {
     public static final TextKey NO_ROUTES = TextKey.of("jsspace.design.screen.no_routes", "No routes from this world");
     public static final TextKey CHECKS = TextKey.of("jsspace.design.screen.checks", "Checks");
     public static final TextKey MORE = TextKey.of("jsspace.design.screen.more", "And %s more");
+    public static final TextKey MORE_BINS = TextKey.of("jsspace.design.screen.more_bins", "%s more  v");
+    // By the mouse over a part: its layers, its stage and what a click of the tool does to it.
+    public static final TextKey ONE_LAYER = TextKey.of("jsspace.design.screen.one_layer", "%s, 1 layer");
+    public static final TextKey LAYERS = TextKey.of("jsspace.design.screen.layers", "%s, %s layers");
+    public static final TextKey STAGE_AND_CLICK = TextKey.of("jsspace.design.screen.stage_and_click", "S%s. %s");
+    public static final TextKey CLICK_PICK = TextKey.of("jsspace.design.screen.click_pick", "Click to pick it up.");
+    public static final TextKey CLICK_STRETCH = TextKey.of("jsspace.design.screen.click_stretch",
+            "Drag up or down to stretch it.");
+    public static final TextKey CLICK_TURN = TextKey.of("jsspace.design.screen.click_turn", "Click to turn it.");
+    public static final TextKey CLICK_ROOT = TextKey.of("jsspace.design.screen.click_root",
+            "Click to make it the root.");
     public static final TextKey READY = TextKey.of("jsspace.design.screen.ready", "Ready");
     public static final TextKey NOT_READY = TextKey.of("jsspace.design.screen.not_ready", "Not ready");
-    public static final TextKey THE_VIEW = TextKey.of("jsspace.design.screen.the_view", "The view");
     public static final TextKey LEFT_BUTTON = TextKey.of("jsspace.design.screen.left_button", "LMB");
     public static final TextKey RIGHT_BUTTON = TextKey.of("jsspace.design.screen.right_button", "RMB");
     public static final TextKey WHEEL = TextKey.of("jsspace.design.screen.wheel", "WHL");

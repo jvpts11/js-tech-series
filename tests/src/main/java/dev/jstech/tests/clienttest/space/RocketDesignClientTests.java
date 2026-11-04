@@ -9,6 +9,8 @@ package dev.jstech.tests.clienttest.space;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.multiblock.Orientation;
+import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.client.hangar.RocketDesignScene;
 import dev.jstech.space.client.hangar.RocketDesignScreen;
 import dev.jstech.space.gui.RocketDesignLayout;
 import dev.jstech.space.hangar.HangarBay;
@@ -25,6 +27,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
@@ -60,6 +65,12 @@ public final class RocketDesignClientTests {
     private static final int LIT = 40;
     /* How far up the rocket's axis, from its foot, its colour is read: its engine's and its tank's, under the lamps. */
     private static final int UP = 4;
+    /* How far about the mouse an outline's yellow is counted, how bright its red is, how many pixels prove it. */
+    private static final int AROUND = 24;
+    private static final int YELLOW = 180;
+    private static final int OUTLINE_SEEN = 20;
+    /* A point of the terminal's console, toward its chair, under its screen: over the chair's back from behind it. */
+    private static final Vec3 CONSOLE_FACE = new Vec3(0.85, 0.7, 0.5);
 
     private RocketDesignClientTests() {
     }
@@ -130,6 +141,70 @@ public final class RocketDesignClientTests {
                         "closed, the view is the player's own again");
     }
 
+    @ClientTest(timeoutTicks = 2400)
+    public static void hover_outlinesAThinTankByItsSilhouetteAndTheClickTakesIt(final ClientTestContext ctx) {
+        final RocketStack.Part engine = new RocketStack.Part(SkeletonRocketParts.id("sea_level_engine_3"), 1);
+        final RocketStack.Part thin = new RocketStack.Part(SkeletonRocketParts.id("tank_3"), 1);
+        final RocketStack.Part capsule = new RocketStack.Part(SkeletonRocketParts.id("capsule_3"), 1);
+        final float[] tank = new float[2];
+        final int[] before = new int[1];
+        ctx.afterTest(() -> {
+            ctx.mc().setScreen(null);
+            ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL), TURN));
+        });
+        ctx.thenServer(0, level -> build(ctx, level))
+                .thenTeleport(SETTLE, EYE, Direction.WEST)
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(TERMINAL))
+                        instanceof HangarTerminalBlockEntity terminal && terminal.bay().isPresent(), ARRIVE,
+                        "the formed hangar to reach the player")
+                .thenRightClick(SETTLE, TERMINAL)
+                .thenAwaitScreen(RocketDesignScreen.class, OPEN)
+                .then(SETTLE, () -> {
+                    screen(ctx).edit(new RocketDesign("TEST", RocketStack.of(engine, thin, capsule)));
+                    // The mouse away over the bins, nothing of the rocket under it.
+                    final int[] away = frame(ctx, RocketDesignLayout.CARD_X0 + 4, RocketDesignLayout.SHEET_Y0 + 20);
+                    ctx.pointAt(away[0], away[1]);
+                })
+                .then(SETTLE, () -> {
+                    // The middle of the tank one layer thin, between the engine under it and the capsule.
+                    final AABB box = RocketDesignScene.boxes(RocketParts.all(ctx.mc().level), screen(ctx).design()
+                            .stack(), BlockPos.containing(foot(ctx))).get(1);
+                    final Vec2 at = screen(ctx).view().orElseThrow().project(box.getCenter()).orElseThrow();
+                    tank[0] = at.x;
+                    tank[1] = at.y;
+                    before[0] = yellow(ctx, tank);
+                    ctx.pointAt(tank[0], tank[1]);
+                })
+                .thenScreenshot(SETTLE, "rocket-design-hover")
+                .then(0, () -> {
+                    final int now = yellow(ctx, tank);
+                    ctx.assertTrue(now - before[0] > OUTLINE_SEEN, "the thin tank under the mouse is outlined in "
+                            + "yellow: " + now + " yellow pixels, " + before[0] + " with the mouse away");
+                    screen(ctx).mouseClicked(tank[0], tank[1], InputConstants.MOUSE_BUTTON_LEFT);
+                    final int[] bins = frame(ctx, RocketDesignLayout.CARD_X0 + 4, RocketDesignLayout.SHEET_Y0 + 20);
+                    screen(ctx).mouseReleased(bins[0], bins[1], InputConstants.MOUSE_BUTTON_LEFT);
+                })
+                .thenAssert(SETTLE, () -> screen(ctx).design().stack().sections().stream().noneMatch(section
+                        -> section.part().equals(thin)), "the click took the thin tank itself, and let go over the "
+                        + "bins it is off the rocket");
+    }
+
+    @ClientTest(timeoutTicks = 1200)
+    public static void terminal_takesTheClickOverTheChairBeforeIt(final ClientTestContext ctx) {
+        ctx.afterTest(() -> ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL),
+                TURN)));
+        ctx.thenServer(0, level -> build(ctx, level))
+                .thenTeleport(SETTLE, EYE, Direction.WEST)
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(TERMINAL))
+                        instanceof HangarTerminalBlockEntity terminal && terminal.bay().isPresent(), ARRIVE,
+                        "the formed hangar to reach the player")
+                // From behind the chair, at the console's face under its screen, over the chair's back.
+                .then(0, () -> ctx.lookAt(Vec3.atLowerCornerOf(ctx.abs(TERMINAL)).add(CONSOLE_FACE)))
+                .thenAssert(SETTLE, () -> ctx.mc().hitResult instanceof BlockHitResult hit
+                        && hit.getType() == HitResult.Type.BLOCK && hit.getBlockPos().equals(ctx.abs(TERMINAL)),
+                        "looked at over its chair, the terminal is what a click takes");
+    }
+
     private static RocketDesignScreen screen(final ClientTestContext ctx) {
         return ctx.screen(RocketDesignScreen.class);
     }
@@ -188,6 +263,25 @@ public final class RocketDesignClientTests {
             }
         }
         return new int[] {(int) (sum[0] / count), (int) (sum[1] / count), (int) (sum[2] / count)};
+    }
+
+    /* How many pixels about {@code at} are the yellow of an outline, over it and to either side. */
+    private static int yellow(final ClientTestContext ctx, final float[] at) {
+        int count = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = Math.round(at[1]) - AROUND; y <= Math.round(at[1]) + 4; y++) {
+                for (int x = Math.round(at[0]) - AROUND; x <= Math.round(at[0]) + AROUND; x++) {
+                    final int argb = frame.pixel(x, y);
+                    final int r = argb >> 16 & CHANNEL;
+                    final int g = argb >> 8 & CHANNEL;
+                    final int b = argb & CHANNEL;
+                    if (r > YELLOW && g > YELLOW - 40 && b < r - YELLOW / 2) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     private static int apart(final int[] a, final int[] b) {

@@ -87,7 +87,6 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     private Map<ResourceLocation, ShipMaker> makers = Map.of();
     private List<ResourceLocation> finishes = List.of();
     private int tab = MODULES_TAB;
-    private @Nullable ResourceLocation maker;
     private final StringBuilder search = new StringBuilder();
     private boolean searching;
     private int scroll;
@@ -119,9 +118,12 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     private static final int HIDDEN = -10_000;
     private static final int MODULES_TAB = 2;
-    /* How near a node, in the frame's pixels, a part must be let go to snap to it, the snap on and off. */
-    private static final double SNAP_REACH = 24;
-    private static final double FREE_REACH = 8;
+    /* How near a node, in the frame's points, a part must be let go to snap to it, the snap on and off. */
+    private static final double SNAP_REACH = 12;
+    private static final double FREE_REACH = 4;
+    /* The small letters' size against the game's; what ends a note cut short. */
+    private static final float SMALL = 0.75F;
+    private static final String MORE_DOTS = "...";
     private static final long SAID_MILLIS = 3_000;
     private static final float TURN_SPEED = 0.5F;
     private static final double ZOOM_STEP = 1.12;
@@ -131,6 +133,14 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     private static final float CALLOUT_DEPTH = 200;
     /* How far right of the mouse a part's name under it begins. */
     private static final int NAMED_PAST = 11;
+    /*
+     * The measures' tags: how far back of the footprint's side the length's begins, how far on the span's, how much
+     * wider than its name a tag is, and how far from the panels it is kept.
+     */
+    private static final int LENGTH_BACK = 70;
+    private static final int SPAN_ON = 8;
+    private static final int TAG_EXTRA = 18;
+    private static final int TAG_ROOM = 4;
     /* The floor under the stowed gear, the height of the joints' nodes over the hull's floor, the hull's half width. */
     private static final double FLOOR_Y = -2;
     private static final double JOINT_Y = 3.0;
@@ -144,16 +154,11 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
     private static final double STANDARD_GRAVITY = 9.80665;
     private static final double KILO = 1_000;
     private static final double MEGA = 1_000_000;
-    /* The scales of the figures' bars: a section of 10 blocks, 12 tonnes, 120 blocks, 30 megawatts; a ship of 60. */
-    private static final double PART_LENGTH = 10;
-    private static final double PART_TONNES = 12;
-    private static final double PART_BLOCKS = 120;
-    private static final double PART_MEGAWATTS = 30;
+    /* The scales of the ship's figures' bars: 60 tonnes, 600 kilonewtons, twice its weight, four aboard. */
     private static final double SHIP_TONNES = 60;
     private static final double SHIP_KILONEWTONS = 600;
     private static final double SHIP_TWR = 2;
     private static final double SHIP_CREW = 4;
-    private static final int MAKER_GLYPHS = 9;
     /* The ids of the finishes whose swatches the palette holds. */
     private static final ResourceLocation ORBITER = finish("orbiter");
     private static final ResourceLocation BARE_METAL = finish("bare_metal");
@@ -224,11 +229,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     @Override
     protected void init() {
-        final double pixels = Math.min(this.minecraft.getWindow().getWidth() / (double) ShipDesignLayout.WIDTH,
-                this.minecraft.getWindow().getHeight() / (double) ShipDesignLayout.HEIGHT);
-        // Whole or half screen pixels to a pixel of the frame where the window allows, so its letters stay sharp.
-        final double sharp = Math.floor(pixels * 2) / 2;
-        this.scale = (float) ((sharp >= 1 ? sharp : pixels) / this.minecraft.getWindow().getGuiScale());
+        this.scale = frameScale(this.width, this.height);
         this.imageWidth = Math.round(ShipDesignLayout.WIDTH * this.scale);
         this.imageHeight = Math.round(ShipDesignLayout.HEIGHT * this.scale);
         super.init();
@@ -266,7 +267,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         this.searching = button == InputConstants.MOUSE_BUTTON_LEFT && x >= ShipDesignLayout.SEARCH_X0
                 && x < ShipDesignLayout.SEARCH_X1 && y >= ShipDesignLayout.SEARCH_Y0 && y < ShipDesignLayout.SEARCH_Y1;
         if (button == InputConstants.MOUSE_BUTTON_LEFT) {
-            if (clickTop(x, y) || clickParts(x, y) || clickRight(x, y) || ShipDesignLayout.onPanel(x, y)) {
+            if (clickTop(x, y) || clickParts(x, y) || ShipDesignLayout.onPanel(x, y)) {
                 return true;
             }
             return clickShip(mouseX, mouseY);
@@ -622,12 +623,22 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         }
         final int length = box[5] - box[4] + 1;
         final int span = box[1] - box[0] + 1;
-        ShipDesignArt.tag(g, this.font, Math.round((b.get()[0] + cc.get()[0]) / 2) - 70,
-                Math.round((b.get()[1] + cc.get()[1]) / 2) - 4, up(ShipDesignTexts.LENGTH),
-                up(ShipDesignTexts.BLK.with(length)), true);
-        ShipDesignArt.tag(g, this.font, Math.round((a.get()[0] + b.get()[0]) / 2) + 8,
-                Math.round((a.get()[1] + b.get()[1]) / 2) + 4, up(ShipDesignTexts.SPAN),
-                up(ShipDesignTexts.BLK.with(span)), true);
+        // Each measure's tag beside its side of the footprint, kept over the view between the panels.
+        final int left = Math.round(guiX(ShipDesignLayout.LEFT_X1)) + TAG_ROOM;
+        final int right = Math.round(guiX(ShipDesignLayout.RIGHT_X0)) - TAG_ROOM;
+        final String lengthName = up(ShipDesignTexts.LENGTH);
+        final String spanName = up(ShipDesignTexts.SPAN);
+        ShipDesignArt.tag(g, this.font, Math.max(left, Math.min(right - tagWidth(lengthName),
+                Math.round((b.get()[0] + cc.get()[0]) / 2) - LENGTH_BACK)), Math.round((b.get()[1] + cc.get()[1]) / 2)
+                - 4, lengthName, GameText.resolve(ShipDesignTexts.BLK.with(length)), true);
+        ShipDesignArt.tag(g, this.font, Math.max(left, Math.min(right - tagWidth(spanName),
+                Math.round((a.get()[0] + b.get()[0]) / 2) + SPAN_ON)), Math.round((a.get()[1] + b.get()[1]) / 2) + 4,
+                spanName, GameText.resolve(ShipDesignTexts.BLK.with(span)), true);
+    }
+
+    /* How wide a measure's tag named {@code name} is. */
+    private int tagWidth(final String name) {
+        return this.font.width(name) + TAG_EXTRA;
     }
 
     /*
@@ -899,30 +910,32 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     // ---- The panels --------------------------------------------------------------------------------------------
 
-    /* The top: the screen's tag, the ship's name, its class, length and mass, and the tools. */
+    /* The top: the screen's tag, the ship's name, its length and mass, the tools as icons, the chosen one named. */
     private void top(final GuiGraphics g) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         ShipDesignArt.panel(g, this.font, ShipDesignLayout.MIDDLE_X0, ShipDesignLayout.PANEL_Y0,
-                ShipDesignLayout.MIDDLE_X1, ShipDesignLayout.TOP_Y1, "", ShipDesignLayout.CUT);
+                ShipDesignLayout.MIDDLE_X1, ShipDesignLayout.TOP_Y1, "", ShipDesignLayout.TOP_CUT);
         ShipDesignArt.chamfer(g, ShipDesignLayout.MIDDLE_X0, ShipDesignLayout.PANEL_Y0, ShipDesignLayout.TAG_X1,
-                ShipDesignLayout.TAG_Y1, c.accent(), ShipDesignLayout.CUT, true, false, false);
-        ShipDesignArt.spaced(g, this.font, up(ShipDesigner.DESIGN), ShipDesignLayout.MIDDLE_X0 + 10,
-                ShipDesignLayout.TITLE_Y - 1, c.dark());
+                ShipDesignLayout.TAG_Y1, c.accent(), ShipDesignLayout.TOP_CUT, true, false, false);
+        Draw.text(g, this.font, up(ShipDesigner.DESIGN), ShipDesignLayout.TAG_TEXT_X, ShipDesignLayout.TITLE_Y,
+                c.dark());
         final String name = this.naming != null ? this.naming + (Util.getMillis() / 500 % 2 == 0 ? "_" : "")
                 : this.design.name();
-        final int w = ShipDesignArt.spaced(g, this.font, name, ShipDesignLayout.NAME_X0, ShipDesignLayout.TITLE_Y - 1,
+        Draw.text(g, this.font, name, ShipDesignLayout.NAME_X0, ShipDesignLayout.TITLE_Y,
                 this.naming != null ? c.accent() : c.text());
-        final String line = up(ShipDesignTexts.CLASS_LINE.with(Text.of(up(ShipDesignTexts.SMALL_CLASS)),
-                length(), tenth(this.mass / KILO)));
-        ShipDesignArt.small(g, this.font, line, Math.max(ShipDesignLayout.FIGURES_X0,
-                ShipDesignLayout.NAME_X0 + w + 10), ShipDesignLayout.TITLE_Y + 1, c.dim());
-        int x = ShipDesignLayout.TOOLS_X0;
-        for (final Tool each : Tool.values()) {
+        ShipDesignArt.small(g, this.font, GameText.resolve(ShipDesignTexts.SIZE_LINE.with(length(),
+                tenth(this.mass / KILO))), ShipDesignLayout.NAME_X0 + this.font.width(name)
+                + ShipDesignLayout.FIGURES_GAP, ShipDesignLayout.TITLE_Y + 1, c.dim());
+        final Tool[] tools = Tool.values();
+        for (int i = 0; i < tools.length; i++) {
+            final Tool each = tools[i];
             final boolean on = each == Tool.MIRROR || each == Tool.SNAP && this.snap
                     || each != Tool.SNAP && each == this.tool;
-            x += ShipDesignArt.button(g, this.font, x, ShipDesignLayout.TOOLS_Y0, ShipDesignLayout.TOOL_H,
-                    each.icon, up(each.name), on) + ShipDesignLayout.TOOL_GAP;
+            ShipDesignArt.toolButton(g, ShipDesignLayout.toolX(i), ShipDesignLayout.TOOLS_Y0,
+                    ShipDesignLayout.TOOL_W, ShipDesignLayout.TOOL_H, each.icon, on);
         }
+        Draw.text(g, this.font, GameText.resolve(this.tool.name), ShipDesignLayout.toolX(tools.length) + 2,
+                ShipDesignLayout.TOOL_NAME_Y, c.text());
     }
 
     /* The parts: the search line, the kinds' tabs, the makers, the cards, the chosen part's figures and note. */
@@ -936,40 +949,24 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                 ShipDesignLayout.SEARCH_Y1, this.searching ? c.accent() : c.line());
         ShipDesignArt.icon(g, ShipDesignArt.SEARCH, ShipDesignLayout.SEARCH_X0 + 2, ShipDesignLayout.SEARCH_Y0 - 1,
                 c.dim(), c.dim());
-        final String searched = this.search.isEmpty() && !this.searching ? up(ShipDesignTexts.SEARCH)
-                : this.search.toString().toUpperCase(Locale.ROOT) + (this.searching ? "_" : "");
-        ShipDesignArt.small(g, this.font, searched, ShipDesignLayout.SEARCH_X0 + 18, ShipDesignLayout.SEARCH_Y0 + 4,
+        final String searched = this.search.isEmpty() && !this.searching ? GameText.resolve(ShipDesignTexts.SEARCH)
+                : this.search + (this.searching ? "_" : "");
+        Draw.text(g, this.font, searched, ShipDesignLayout.SEARCH_X0 + 16, ShipDesignLayout.SEARCH_Y0 + 2,
                 this.search.isEmpty() && !this.searching ? c.faint() : c.text());
         for (int i = 0; i < ShipDesignLayout.TABS; i++) {
             final int tx = ShipDesignLayout.tabX(i);
             final int ty = ShipDesignLayout.TAB_Y0;
             if (i == this.tab) {
                 ShipDesignArt.chamfer(g, tx, ty, tx + ShipDesignLayout.TAB_W, ty + ShipDesignLayout.TAB_SIZE,
-                        c.accent(), 4, true, false, false);
-                ShipDesignArt.icon(g, KIND_ICONS[i], tx + 2, ty + 1, c.dark(), c.dark());
+                        c.accent(), 3, true, false, false);
+                ShipDesignArt.icon(g, KIND_ICONS[i], tx + 2, ty + 3, ShipDesignArt.ICON_SMALL, c.dark(), c.dark());
             } else {
                 g.fill(tx, ty, tx + ShipDesignLayout.TAB_W, ty + ShipDesignLayout.TAB_SIZE, c.panelHi());
-                ShipDesignArt.hline(g, tx, tx + ShipDesignLayout.TAB_W, ty + ShipDesignLayout.TAB_SIZE - 1,
-                        c.line());
-                ShipDesignArt.icon(g, KIND_ICONS[i], tx + 2, ty + 1, c.dim(), c.accent());
+                ShipDesignArt.icon(g, KIND_ICONS[i], tx + 2, ty + 3, ShipDesignArt.ICON_SMALL, c.dim(), c.accent());
             }
         }
-        ShipDesignArt.spaced(g, this.font, up(KIND_NAMES[this.tab]), ShipDesignLayout.CARD_X0,
+        Draw.text(g, this.font, GameText.resolve(KIND_NAMES[this.tab]), ShipDesignLayout.CARD_X0,
                 ShipDesignLayout.KIND_Y, c.text());
-        int x = ShipDesignLayout.CARD_X0;
-        for (final Map.Entry<ResourceLocation, String> chip : makerChips().entrySet()) {
-            final boolean on = chip.getKey().equals(GAP) ? this.maker == null : chip.getKey().equals(this.maker);
-            final int w = ShipDesignArt.smallWidth(this.font, chip.getValue()) + 8;
-            if (on) {
-                g.fill(x, ShipDesignLayout.MAKER_Y0, x + w, ShipDesignLayout.MAKER_Y0 + ShipDesignLayout.MAKER_H,
-                        c.accentDeep());
-            }
-            ShipDesignArt.frame(g, x, ShipDesignLayout.MAKER_Y0, x + w,
-                    ShipDesignLayout.MAKER_Y0 + ShipDesignLayout.MAKER_H, on ? c.accent() : c.line());
-            ShipDesignArt.small(g, this.font, chip.getValue(), x + 4, ShipDesignLayout.MAKER_Y0 + 2,
-                    on ? c.text() : c.dim());
-            x += w + ShipDesignLayout.MAKER_GAP;
-        }
         final List<ResourceLocation> shelf = shelf();
         final int shown = ShipDesignLayout.CARD_COLUMNS * ShipDesignLayout.CARD_ROWS;
         for (int i = 0; i < shown; i++) {
@@ -978,10 +975,15 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                 card(g, shelf.get(index), ShipDesignLayout.cardX(i), ShipDesignLayout.cardY(i));
             }
         }
+        final int more = shelf.size() - this.scroll * ShipDesignLayout.CARD_COLUMNS - shown;
+        if (more > 0) {
+            ShipDesignArt.small(g, this.font, GameText.resolve(ShipDesignTexts.MORE.with(more)),
+                    ShipDesignLayout.MORE_X, ShipDesignLayout.MORE_Y, c.dim());
+        }
         chosenPart(g);
     }
 
-    /* A part's card: its model over its name and maker, its size, framed when chosen. */
+    /* A part's card: its model over its name and its maker's, framed when chosen. */
     private void card(final GuiGraphics g, final ResourceLocation id, final int x0, final int y0) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         final ShipPart part = this.parts.get(id);
@@ -990,20 +992,22 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         final int y1 = y0 + ShipDesignLayout.CARD_H;
         g.fill(x0, y0, x1, y1, on ? c.cardOn() : c.card());
         ShipDesignArt.frame(g, x0, y0, x1, y1, on ? c.accent() : c.line());
-        picture(g, id, x0 + 1, y0 + 1, x1 - 1, y0 + ShipDesignLayout.CARD_PICTURE_H);
-        ShipDesignArt.small(g, this.font, fit(partName(id), ShipDesignLayout.CARD_W - 6), x0 + 3,
-                y0 + ShipDesignLayout.CARD_PICTURE_H + 2, c.text());
-        if (part == null) {
-            return;
+        picture(g, id, x0 + 1, y0 + 1, x1 - 1, y0 + 1 + ShipDesignLayout.CARD_PICTURE_H);
+        // A name too long for the card in the game's letters is written in the small ones.
+        final int room = ShipDesignLayout.CARD_W - 3;
+        final String name = spoken(id);
+        if (this.font.width(name) <= room) {
+            Draw.text(g, this.font, name, x0 + 2, y0 + ShipDesignLayout.CARD_PICTURE_H + 2, c.text());
+        } else {
+            ShipDesignArt.small(g, this.font, fit(name, room, true), x0 + 2, y0 + ShipDesignLayout.CARD_PICTURE_H + 3,
+                    c.text());
         }
-        final String by = part.maker().map(this::makerName).orElse("");
-        ShipDesignArt.small(g, this.font, by.length() > MAKER_GLYPHS ? by.substring(0, MAKER_GLYPHS) : by, x0 + 3,
-                y0 + ShipDesignLayout.CARD_PICTURE_H + 10, c.dim());
-        if (part.room() > 0) {
-            final boolean medium = part.room() > 1;
-            final String size = up(medium ? ShipDesignTexts.MEDIUM : ShipDesignTexts.SMALL_CLASS).substring(0, 1);
-            g.fill(x1 - 12, y1 - 10, x1 - 2, y1 - 1, medium ? c.amber() : c.accentDeep());
-            ShipDesignArt.small(g, this.font, size, x1 - 9, y1 - 8, medium ? c.dark() : c.text());
+        if (part != null) {
+            // A maker's name too long for the card is known by its first word, as the yards are.
+            final String by = part.maker().map(this::spokenMaker).orElse("");
+            final String shown = ShipDesignArt.smallWidth(this.font, by) <= room ? by : by.split(" ")[0];
+            ShipDesignArt.small(g, this.font, fit(shown, room, true), x0 + 2,
+                    y0 + ShipDesignLayout.CARD_PICTURE_H + 11, c.dim());
         }
     }
 
@@ -1057,7 +1061,7 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         g.disableScissor();
     }
 
-    /* The chosen part's name, its class and maker, its figures on bars, its note, whose its inside and paint are. */
+    /* The chosen part's name over its figures, its length, mass, blocks and power, and its note. */
     private void chosenPart(final GuiGraphics g) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         final ResourceLocation id = this.chosen;
@@ -1068,54 +1072,46 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         final int x0 = ShipDesignLayout.CARD_X0;
         final int x1 = ShipDesignLayout.CHOSEN_X1;
         ShipDesignArt.heading(g, this.font, x0, ShipDesignLayout.CHOSEN_Y, partName(id), x1);
-        final String by = part.maker().map(this::makerName).orElse("");
-        final Text line = part.kind() == ShipPartKind.MODULE
-                ? ShipDesignTexts.MODULE_LINE.with(Text.of(up(part.room() > 1 ? ShipDesignTexts.MEDIUM
-                : ShipDesignTexts.SMALL_CLASS)), Text.of(by))
-                : ShipDesignTexts.PART_LINE.with(Text.of(up(ShipDesignTexts.SMALL_CLASS)), Text.of(by));
-        ShipDesignArt.small(g, this.font, up(line), x0, ShipDesignLayout.CHOSEN_Y + 12, c.dim());
         final ShipPart.Figures f = part.figures();
         final int blocks = this.kits.containsKey(id) ? ShipyardLayout.blocks(this.kits.get(id)) : 0;
-        figure(g, 0, up(ShipDesignTexts.LENGTH), up(ShipDesignTexts.BLK.with((int) part.length())),
-                part.length() / PART_LENGTH, c.accent());
-        figure(g, 1, up(ShipDesignTexts.MASS), up(ShipDesignTexts.TONNES.with(tenth(f.mass() / KILO))),
-                f.mass() / KILO / PART_TONNES, c.accent());
-        figure(g, 2, up(ShipDesignTexts.BLOCKS), String.valueOf(blocks), blocks / PART_BLOCKS, c.accent());
-        figure(g, 3, up(ShipDesignTexts.POWER), up(ShipDesignTexts.MEGAWATTS.with(tenth(f.power() / MEGA))),
-                Math.abs(f.power()) / MEGA / PART_MEGAWATTS, f.power() >= 0 ? c.green() : c.amber());
+        figure(g, 0, ShipDesignTexts.LENGTH, GameText.resolve(ShipDesignTexts.BLK.with((int) part.length())));
+        figure(g, 1, ShipDesignTexts.MASS, GameText.resolve(ShipDesignTexts.TONNES.with(tenth(f.mass() / KILO))));
+        figure(g, 2, ShipDesignTexts.BLOCKS, String.valueOf(blocks));
+        figure(g, 3, ShipDesignTexts.POWER, GameText.resolve(ShipDesignTexts.MEGAWATTS.with(
+                tenth(f.power() / MEGA))));
         final String noteKey = SmallShipNotes.keyOf(part.name());
         if (I18n.exists(noteKey)) {
-            final List<FormattedCharSequence> rows = this.font.split(Component.literal(
-                    Component.translatable(noteKey).getString().toUpperCase(Locale.ROOT)),
-                    Math.round((x1 - x0) / 0.75F));
+            final int wide = Math.round((x1 - x0) / SMALL);
+            final List<FormattedCharSequence> rows = this.font.split(Component.translatable(noteKey), wide);
             for (int i = 0; i < Math.min(rows.size(), ShipDesignLayout.NOTE_ROWS); i++) {
                 g.pose().pushPose();
                 g.pose().translate(x0, ShipDesignLayout.NOTE_Y + i * ShipDesignLayout.NOTE_STEP, 0);
-                g.pose().scale(0.75F, 0.75F, 1);
-                Draw.text(g, this.font, rows.get(i), 0, 0, c.dim());
+                g.pose().scale(SMALL, SMALL, 1);
+                if (i == ShipDesignLayout.NOTE_ROWS - 1 && rows.size() > ShipDesignLayout.NOTE_ROWS) {
+                    // The rest of a note longer than its lines, cut, its last line saying there is more.
+                    final String last = rowText(rows.get(i));
+                    String cut = last;
+                    while (!cut.isEmpty() && this.font.width(cut + MORE_DOTS) > wide) {
+                        cut = cut.substring(0, cut.length() - 1);
+                    }
+                    Draw.text(g, this.font, cut.stripTrailing() + MORE_DOTS, 0, 0, c.dim());
+                } else {
+                    Draw.text(g, this.font, rows.get(i), 0, 0, c.dim());
+                }
                 g.pose().popPose();
             }
         }
-        if (part.length() > 0) {
-            ShipDesignArt.small(g, this.font, up(ShipDesignTexts.INSIDE.with(Text.of(by))), x0,
-                    ShipDesignLayout.MAKER_LINE_Y, c.accent());
-        }
-        ShipDesignArt.small(g, this.font, up(ShipDesignTexts.PAINT), x0, ShipDesignLayout.MAKER_LINE_Y
-                + ShipDesignLayout.NOTE_STEP, c.accent());
     }
 
-    private void figure(final GuiGraphics g, final int row, final String name, final String value,
-                        final double share, final int colour) {
+    /* The chosen part's figure {@code row}: its name, and its value at the right. */
+    private void figure(final GuiGraphics g, final int row, final TextKey name, final String value) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         final int y = ShipDesignLayout.figureY(row);
-        ShipDesignArt.small(g, this.font, name, ShipDesignLayout.CARD_X0, y, c.dim());
-        ShipDesignArt.small(g, this.font, value, ShipDesignLayout.CHOSEN_X1 - ShipDesignArt.smallWidth(this.font,
-                value), y, c.text());
-        ShipDesignArt.bar(g, ShipDesignLayout.CARD_X0, y + 9, ShipDesignLayout.CHOSEN_X1 - ShipDesignLayout.CARD_X0,
-                Math.min(1, share), colour);
+        Draw.text(g, this.font, GameText.resolve(name), ShipDesignLayout.CARD_X0, y, c.dim());
+        right(g, value, ShipDesignLayout.CHOSEN_X1, y, c.text());
     }
 
-    /* The right: the flight check, the ship's figures, the room in its hull, its finish, the dock. */
+    /* The right: the flight check, the room in the hull among its lines; the ship's figures; the dock. */
     private void rightPanel(final GuiGraphics g) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         ShipDesignArt.panel(g, this.font, ShipDesignLayout.RIGHT_X0, ShipDesignLayout.PANEL_Y0,
@@ -1131,114 +1127,68 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
             g.fill(x0, y, x0 + ShipDesignLayout.CHECK_BOX, y + ShipDesignLayout.CHECK_BOX, ShipDesignArt.mix(colour,
                     c.black(), 0.6F));
             ShipDesignArt.frame(g, x0, y, x0 + ShipDesignLayout.CHECK_BOX, y + ShipDesignLayout.CHECK_BOX, colour);
-            ShipDesignArt.small(g, this.font, check.mark(), x0 + 3, y + 2, colour);
-            ShipDesignArt.small(g, this.font, up(check.line()), x0 + 16, y + 2, check.met() ? c.text() : colour);
+            ShipDesignArt.small(g, this.font, check.mark(), x0 + 4 - ShipDesignArt.smallWidth(this.font,
+                    check.mark()) / 2, y + 1, colour);
+            Draw.text(g, this.font, fit(GameText.resolve(check.line()), x1 - ShipDesignLayout.CHECK_TEXT_X, false),
+                    ShipDesignLayout.CHECK_TEXT_X, y, check.met() ? c.text() : colour);
         }
         ShipDesignArt.heading(g, this.font, x0, ShipDesignLayout.SHIP_Y, up(ShipDesignTexts.THE_SHIP), x1);
         final double twr = this.mass > 0 ? this.lift / (this.mass * STANDARD_GRAVITY) : 0;
-        shipFigure(g, 0, up(ShipDesignTexts.MASS), up(ShipDesignTexts.TONNES.with(tenth(this.mass / KILO))),
+        shipFigure(g, 0, ShipDesignTexts.MASS, GameText.resolve(ShipDesignTexts.TONNES.with(tenth(this.mass / KILO))),
                 this.mass / KILO / SHIP_TONNES, c.accent());
-        shipFigure(g, 1, up(ShipDesignTexts.THRUST), up(ShipDesignTexts.KILONEWTONS.with(
+        shipFigure(g, 1, ShipDesignTexts.THRUST, GameText.resolve(ShipDesignTexts.KILONEWTONS.with(
                 Math.round(this.thrust / KILO))), this.thrust / KILO / SHIP_KILONEWTONS, c.accent());
-        shipFigure(g, 2, up(ShipDesignTexts.VTOL_TWR), String.format(Locale.ROOT, "%.2f", twr), twr / SHIP_TWR,
+        shipFigure(g, 2, ShipDesignTexts.VTOL_TWR, String.format(Locale.ROOT, "%.2f", twr), twr / SHIP_TWR,
                 c.accent());
-        shipFigure(g, 3, up(ShipDesignTexts.POWER), up(ShipDesignTexts.POWER_OF.with(tenth(this.taken / MEGA),
-                tenth(this.made / MEGA))), this.made > 0 ? this.taken / this.made : 1, c.amber());
-        shipFigure(g, 4, up(ShipDesignTexts.CREW), up(ShipDesignTexts.CREW_LINE.with(this.seats, this.beds)),
-                (this.seats + this.beds) / SHIP_CREW, c.accent());
-        ShipDesignArt.heading(g, this.font, x0, ShipDesignLayout.ROOM_Y, up(ShipDesignTexts.ROOM), x1);
-        final List<String> rooms = rooms();
-        for (int k = 0; k < ShipDesignLayout.SLOTS; k++) {
-            final int sx = x0 + k * ShipDesignLayout.SLOT_STEP;
-            final int sy = ShipDesignLayout.ROOM_Y + 14;
-            final boolean used = k < rooms.size();
-            g.fill(sx, sy, sx + ShipDesignLayout.SLOT_W, sy + ShipDesignLayout.SLOT_H, used ? c.accentDeep()
-                    : c.card());
-            ShipDesignArt.frame(g, sx, sy, sx + ShipDesignLayout.SLOT_W, sy + ShipDesignLayout.SLOT_H,
-                    used ? c.accent() : c.line());
-            final String what = used ? fit(rooms.get(k), ShipDesignLayout.SLOT_W - 4) : up(ShipDesignTexts.FREE);
-            ShipDesignArt.small(g, this.font, what, sx + ShipDesignLayout.SLOT_W / 2
-                    - ShipDesignArt.smallWidth(this.font, what) / 2, sy + 7, used ? c.text() : c.faint());
-        }
-        ShipDesignArt.small(g, this.font, up(ShipDesignTexts.ROOM_NOTE), x0, ShipDesignLayout.ROOM_Y + 40, c.dim());
-        ShipDesignArt.heading(g, this.font, x0, ShipDesignLayout.FINISH_Y, up(ShipDesignTexts.FINISH), x1);
-        final List<ResourceLocation> known = swatched();
-        for (int k = 0; k < Math.min(known.size(), ShipDesignLayout.SWATCHES); k++) {
-            swatch(g, known.get(k), x0 + k * ShipDesignLayout.SWATCH_STEP, ShipDesignLayout.FINISH_Y + 13);
-        }
+        shipFigure(g, 3, ShipDesignTexts.POWER, GameText.resolve(ShipDesignTexts.POWER_OF.with(
+                tenth(this.taken / MEGA), tenth(this.made / MEGA))), this.made > 0 ? this.taken / this.made : 1,
+                c.amber());
+        shipFigure(g, 4, ShipDesignTexts.CREW, GameText.resolve(ShipDesignTexts.CREW_LINE.with(this.seats,
+                this.beds)), (this.seats + this.beds) / SHIP_CREW, c.accent());
         ShipDesignArt.heading(g, this.font, x0, ShipDesignLayout.DOCK_Y, up(ShipDesignTexts.THE_DOCK), x1);
         final int blocks = this.laid.cells().size();
         final int held = this.menu.held();
         final int dy = ShipDesignLayout.DOCK_Y;
-        ShipDesignArt.small(g, this.font, up(ShipDesignTexts.BLOCKS), x0, dy + 13, c.dim());
-        right(g, String.valueOf(blocks), x1, dy + 13, c.text());
-        ShipDesignArt.small(g, this.font, up(ShipDesignTexts.IN_THE_PORT), x0, dy + 26, c.dim());
-        right(g, String.valueOf(held), x1, dy + 26, c.text());
-        ShipDesignArt.bar(g, x0, dy + 35, x1 - x0, blocks > 0 ? held / (double) blocks : 0, c.amber());
-        ShipDesignArt.small(g, this.font, up(ShipDesignTexts.TO_BRING.with(blocks - held)), x0, dy + 46, c.amber());
+        Draw.text(g, this.font, GameText.resolve(ShipDesignTexts.BLOCKS), x0, dy + 9, c.dim());
+        right(g, String.valueOf(blocks), x1, dy + 9, c.text());
+        Draw.text(g, this.font, GameText.resolve(ShipDesignTexts.IN_THE_PORT), x0, dy + 20, c.dim());
+        right(g, String.valueOf(held), x1, dy + 20, c.text());
+        ShipDesignArt.bar(g, x0, dy + 29, x1 - x0, blocks > 0 ? held / (double) blocks : 0, c.amber());
+        Draw.text(g, this.font, GameText.resolve(ShipDesignTexts.TO_BRING.with(Math.max(0, blocks - held))), x0,
+                dy + 36, c.amber());
     }
 
-    private void shipFigure(final GuiGraphics g, final int row, final String name, final String value,
+    /* The ship's figure {@code row}: its name, its value at the right, its bar under them. */
+    private void shipFigure(final GuiGraphics g, final int row, final TextKey name, final String value,
                             final double share, final int colour) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         final int y = ShipDesignLayout.shipY(row);
-        ShipDesignArt.small(g, this.font, name, ShipDesignLayout.INNER_X0, y, c.dim());
+        Draw.text(g, this.font, GameText.resolve(name), ShipDesignLayout.INNER_X0, y, c.dim());
         right(g, value, ShipDesignLayout.INNER_X1, y, c.text());
         ShipDesignArt.bar(g, ShipDesignLayout.INNER_X0, y + 9, ShipDesignLayout.INNER_X1 - ShipDesignLayout.INNER_X0,
                 Math.min(1, share), colour);
     }
 
-    /* A finish's swatch: its three colours and its name, framed cyan when it is the ship's. */
-    private void swatch(final GuiGraphics g, final ResourceLocation id, final int x, final int y) {
-        final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
-        final boolean on = id.equals(this.design.finish());
-        g.fill(x, y, x + ShipDesignLayout.SWATCH_W, y + ShipDesignLayout.SWATCH_H, c.card());
-        ShipDesignArt.frame(g, x, y, x + ShipDesignLayout.SWATCH_W, y + ShipDesignLayout.SWATCH_H,
-                on ? c.accent() : c.line());
-        final int[] colours = id.equals(ORBITER) ? new int[] {c.orbiterA(), c.orbiterB(), c.orbiterC()}
-                : id.equals(BARE_METAL) ? new int[] {c.metalA(), c.metalB(), c.metalC()}
-                : new int[] {c.enamelA(), c.enamelB(), c.enamelC()};
-        for (int k = 0; k < colours.length; k++) {
-            g.fill(x + 3 + k * 9, y + 3, x + 11 + k * 9, y + 11, colours[k]);
-        }
-        final String name = ShipFinishes.get(this.minecraft.level, id).map(f -> Component.translatable(f.name())
-                .getString().toUpperCase(Locale.ROOT)).orElse(id.getPath());
-        ShipDesignArt.small(g, this.font, fit(name, ShipDesignLayout.SWATCH_W - 4), x + 3, y + 13,
-                on ? c.text() : c.dim());
-    }
-
-    /* The bottom: the keys, and what the screen is doing. */
+    /* The bottom: the keys; and over them, a while, what the screen last said. */
     private void bottom(final GuiGraphics g) {
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         ShipDesignArt.panel(g, this.font, ShipDesignLayout.MIDDLE_X0, ShipDesignLayout.BOTTOM_Y0,
-                ShipDesignLayout.MIDDLE_X1, ShipDesignLayout.PANEL_Y1, "", 5);
+                ShipDesignLayout.MIDDLE_X1, ShipDesignLayout.BOTTOM_Y1, "", ShipDesignLayout.BOTTOM_CUT);
         int x = ShipDesignLayout.KEYS_X0;
         x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_E),
-                up(ShipDesignTexts.SEND)) + 12;
+                GameText.resolve(ShipDesignTexts.SEND)) + ShipDesignLayout.KEY_GAP;
         x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_S),
-                up(ShipDesignTexts.SAVE)) + 12;
+                GameText.resolve(ShipDesignTexts.SAVE)) + ShipDesignLayout.KEY_GAP;
         x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_F),
-                up(ShipDesignTexts.FINISH_TOOL)) + 12;
-        ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, up(ShipDesignTexts.KEY_DELETE),
-                up(ShipDesignTexts.DELETE));
-        final Text now;
-        final int colour;
+                GameText.resolve(ShipDesignTexts.FINISH_TOOL)) + ShipDesignLayout.KEY_GAP;
+        ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, GameText.resolve(ShipDesignTexts.KEY_DELETE),
+                GameText.resolve(ShipDesignTexts.DELETE));
         if (this.said != null && Util.getMillis() < this.saidUntil) {
-            now = this.said;
-            colour = c.accent();
-        } else if (this.held != null) {
-            now = ShipDesignTexts.DRAG.with(Text.of(partName(this.held.id())));
-            colour = c.accent();
-        } else if (ready()) {
-            now = ShipDesignTexts.READY.text();
-            colour = c.green();
-        } else {
-            now = ShipDesignTexts.NOT_READY.with(Text.of(firstProblem()));
-            colour = c.amber();
+            final String words = GameText.resolve(this.said);
+            final int w = ShipDesignArt.calloutWidth(this.font, words);
+            ShipDesignArt.callout(g, this.font, words, (ShipDesignLayout.MIDDLE_X0 + ShipDesignLayout.MIDDLE_X1 - w)
+                    / 2, ShipDesignLayout.SAID_Y, c.accent());
         }
-        final String shown = up(now);
-        ShipDesignArt.small(g, this.font, shown, ShipDesignLayout.STATUS_X1 - ShipDesignArt.smallWidth(this.font,
-                shown), ShipDesignLayout.STATUS_Y, colour);
     }
 
     // ---- The clicks ----------------------------------------------------------------------------------------------
@@ -1252,23 +1202,21 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         if (y < ShipDesignLayout.TOOLS_Y0 || y >= ShipDesignLayout.TOOLS_Y0 + ShipDesignLayout.TOOL_H) {
             return false;
         }
-        int at = ShipDesignLayout.TOOLS_X0;
-        for (final Tool each : Tool.values()) {
-            final int w = ShipDesignArt.buttonWidth(this.font, up(each.name));
-            if (x >= at && x < at + w) {
-                switch (each) {
+        final Tool[] tools = Tool.values();
+        for (int i = 0; i < tools.length; i++) {
+            if (x >= ShipDesignLayout.toolX(i) && x < ShipDesignLayout.toolX(i) + ShipDesignLayout.TOOL_W) {
+                switch (tools[i]) {
                     case MIRROR -> say(ShipDesignTexts.PAIRS.text());
                     case SNAP -> this.snap = !this.snap;
-                    default -> this.tool = each;
+                    default -> this.tool = tools[i];
                 }
                 return true;
             }
-            at += w + ShipDesignLayout.TOOL_GAP;
         }
         return false;
     }
 
-    /* A click on the parts: a tab, a maker, a card to take up a part from. */
+    /* A click on the parts: a tab, or a card to take up a part from. */
     private boolean clickParts(final double x, final double y) {
         if (x < ShipDesignLayout.LEFT_X0 || x >= ShipDesignLayout.LEFT_X1) {
             return false;
@@ -1280,18 +1228,6 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                     this.scroll = 0;
                     return true;
                 }
-            }
-        }
-        if (y >= ShipDesignLayout.MAKER_Y0 && y < ShipDesignLayout.MAKER_Y0 + ShipDesignLayout.MAKER_H) {
-            int at = ShipDesignLayout.CARD_X0;
-            for (final Map.Entry<ResourceLocation, String> chip : makerChips().entrySet()) {
-                final int w = ShipDesignArt.smallWidth(this.font, chip.getValue()) + 8;
-                if (x >= at && x < at + w) {
-                    this.maker = chip.getKey().equals(GAP) ? null : chip.getKey();
-                    this.scroll = 0;
-                    return true;
-                }
-                at += w + ShipDesignLayout.MAKER_GAP;
             }
         }
         final List<ResourceLocation> shelf = shelf();
@@ -1309,25 +1245,8 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         return false;
     }
 
-    /* A click on the right: a finish's swatch. */
-    private boolean clickRight(final double x, final double y) {
-        final int sy = ShipDesignLayout.FINISH_Y + 13;
-        if (y < sy || y >= sy + ShipDesignLayout.SWATCH_H) {
-            return false;
-        }
-        final List<ResourceLocation> known = swatched();
-        for (int k = 0; k < Math.min(known.size(), ShipDesignLayout.SWATCHES); k++) {
-            final int sx = ShipDesignLayout.INNER_X0 + k * ShipDesignLayout.SWATCH_STEP;
-            if (x >= sx && x < sx + ShipDesignLayout.SWATCH_W) {
-                commit(this.design.painted(known.get(k)));
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean onName(final double x, final double y) {
-        return x >= ShipDesignLayout.NAME_X0 && x < ShipDesignLayout.FIGURES_X0 && y >= ShipDesignLayout.PANEL_Y0
+        return x >= ShipDesignLayout.NAME_X0 && x < ShipDesignLayout.NAME_X1 && y >= ShipDesignLayout.PANEL_Y0
                 && y < ShipDesignLayout.TAG_Y1;
     }
 
@@ -1427,14 +1346,12 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                 : Check.green(ShipDesignTexts.AIRLOCK_OK.text()));
         out.add(this.problems.contains(ShipChecks.Problem.NO_REACTOR) ? Check.red(ShipDesignTexts.NO_REACTOR.text())
                 : Check.green(ShipDesignTexts.REACTOR_OK.text()));
-        final Optional<ResourceLocation> main = ofKind(ShipPartKind.MAIN_ENGINE);
-        out.add(main.isEmpty() ? Check.red(ShipDesignTexts.NO_MAIN.text())
-                : Check.green(ShipDesignTexts.MAIN_OK.with(Text.of(partName(main.get())))));
+        out.add(ofKind(ShipPartKind.MAIN_ENGINE).isEmpty() ? Check.red(ShipDesignTexts.NO_MAIN.text())
+                : Check.green(ShipDesignTexts.MAIN_OK.text()));
         out.add(ofKind(ShipPartKind.AIR_ENGINE).isEmpty() ? Check.amber(ShipDesignTexts.NO_AIR.text())
                 : Check.green(ShipDesignTexts.AIR_OK.text()));
-        final Optional<ResourceLocation> gear = ofKind(ShipPartKind.GEAR);
-        out.add(gear.isEmpty() ? Check.red(ShipDesignTexts.NO_GEAR.text())
-                : Check.green(ShipDesignTexts.GEAR_OK.with(Text.of(partName(gear.get())))));
+        out.add(ofKind(ShipPartKind.GEAR).isEmpty() ? Check.red(ShipDesignTexts.NO_GEAR.text())
+                : Check.green(ShipDesignTexts.GEAR_OK.text()));
         out.add(spineCheck());
         out.add(this.problems.contains(ShipChecks.Problem.TOO_MUCH) ? Check.red(ShipDesignTexts.TOO_MUCH.text())
                 : Check.amber(ShipDesignTexts.ROOM_LINE.with(rooms().size(), ShipClass.SMALL.room())));
@@ -1493,17 +1410,21 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
                 && this.parts.get(id).kind() == kind).findFirst();
     }
 
-    /* The parts on the shelf: the chosen kind's, of the chosen maker, matching the search, in the catalogue's order. */
+    /*
+     * The parts on the shelf: the chosen kind's whose name or maker's name holds the search, in the catalogue's
+     * order.
+     */
     private List<ResourceLocation> shelf() {
         final String wanted = this.search.toString().toLowerCase(Locale.ROOT);
         final List<ResourceLocation> out = new ArrayList<>();
         for (final Map.Entry<ResourceLocation, ShipPart> entry : this.parts.entrySet()) {
             final ShipPart part = entry.getValue();
-            if (group(part.kind()) != this.tab || this.maker != null
-                    && !part.maker().map(this.maker::equals).orElse(false)) {
+            if (group(part.kind()) != this.tab) {
                 continue;
             }
-            if (!wanted.isEmpty() && !partName(entry.getKey()).toLowerCase(Locale.ROOT).contains(wanted)) {
+            final String by = part.maker().map(this::spokenMaker).orElse("");
+            if (!wanted.isEmpty() && !spoken(entry.getKey()).toLowerCase(Locale.ROOT).contains(wanted)
+                    && !by.toLowerCase(Locale.ROOT).contains(wanted)) {
                 continue;
             }
             out.add(entry.getKey());
@@ -1512,15 +1433,6 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         final List<ResourceLocation> declared = SmallShipParts.order();
         out.sort((a, b) -> Integer.compare(declared.contains(a) ? declared.indexOf(a) : declared.size(),
                 declared.contains(b) ? declared.indexOf(b) : declared.size()));
-        return out;
-    }
-
-    /* The makers' filters: all of them first, under the gap's id, then each maker's mark. */
-    private Map<ResourceLocation, String> makerChips() {
-        final Map<ResourceLocation, String> out = new LinkedHashMap<>();
-        out.put(GAP, up(ShipDesignTexts.ALL));
-        this.makers.forEach((id, made) -> out.put(id, Component.translatable(made.mark()).getString()
-                .toUpperCase(Locale.ROOT)));
         return out;
     }
 
@@ -1575,9 +1487,10 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         return part == null ? id.getPath() : Component.translatable(part.name()).getString();
     }
 
-    private String makerName(final ResourceLocation id) {
+    /* The name of the maker {@code id} as it is written. */
+    private String spokenMaker(final ResourceLocation id) {
         final ShipMaker made = this.makers.get(id);
-        return made == null ? id.getPath() : Component.translatable(made.name()).getString().toUpperCase(Locale.ROOT);
+        return made == null ? id.getPath() : Component.translatable(made.name()).getString();
     }
 
     private void say(final Text text) {
@@ -1585,17 +1498,39 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         this.saidUntil = Util.getMillis() + SAID_MILLIS;
     }
 
+    /* {@code text} in the game's letters, ending at {@code x1}. */
     private void right(final GuiGraphics g, final String text, final int x1, final int y, final int colour) {
-        ShipDesignArt.small(g, this.font, text, x1 - ShipDesignArt.smallWidth(this.font, text), y, colour);
+        Draw.text(g, this.font, text, x1 - this.font.width(text), y, colour);
     }
 
-    /* {@code text} cut to fit {@code width} pixels in the small letters. */
-    private String fit(final String text, final int width) {
+    /* The letters of {@code row}, a line the game's font laid out. */
+    private static String rowText(final FormattedCharSequence row) {
+        final StringBuilder out = new StringBuilder();
+        row.accept((index, style, letter) -> {
+            out.appendCodePoint(letter);
+            return true;
+        });
+        return out.toString();
+    }
+
+    /* {@code text} cut to fit {@code width} points, in the small letters or the game's. */
+    private String fit(final String text, final int width, final boolean small) {
         String out = text;
-        while (!out.isEmpty() && ShipDesignArt.smallWidth(this.font, out) > width) {
+        while (!out.isEmpty() && (small ? ShipDesignArt.smallWidth(this.font, out) : this.font.width(out)) > width) {
             out = out.substring(0, out.length() - 1);
         }
         return out;
+    }
+
+    /*
+     * How many of the interface's points a point of the frame is on a screen {@code width} by {@code height} of
+     * them: whole points where the frame fits, so its letters are the game's own size or a whole times it, never
+     * smaller; less only on a screen too small to hold it.
+     */
+    private static float frameScale(final int width, final int height) {
+        final double room = Math.min(width / (double) ShipDesignLayout.WIDTH,
+                height / (double) ShipDesignLayout.HEIGHT);
+        return (float) (room >= 1 ? Math.floor(room) : room);
     }
 
     private double frameX(final double mouseX) {

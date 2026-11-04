@@ -30,8 +30,8 @@ public final class BuilderLayout {
     public static final int NAME_X = ProbeLayout.TEXT_LEFT + ICON + 3;
     public static final int CHOICE_TOP = MATERIALS_Y + MATERIAL_ROWS * MATERIAL_PITCH;
     public static final int CHOICE_HEIGHT = 24;
-    /** The blocks of a choice shown side by side. */
-    public static final int CHOICE_OPTIONS = 3;
+    /** The blocks of a choice shown side by side, each wide enough for its name. */
+    public static final int CHOICE_OPTIONS = 2;
     public static final int CHOICE_WIDTH = (ProbeLayout.TEXT_RIGHT - ProbeLayout.TEXT_LEFT) / CHOICE_OPTIONS;
     public static final int SOURCE_Y = CHOICE_TOP + CHOICE_HEIGHT + 3;
     public static final int READY_Y = SOURCE_Y + 18;
@@ -42,6 +42,8 @@ public final class BuilderLayout {
     /** The sources shown at once. */
     public static final int SOURCE_ROWS = 6;
     public static final int LINE = 8;
+    /** The room kept between words on one line. */
+    public static final int GAP = 4;
     /** The display's room for small text, in the font's own pixels. */
     public static final int ROOM = (int) ((ProbeLayout.TEXT_RIGHT - ProbeLayout.TEXT_LEFT) / ProbeLayout.SMALL);
 
