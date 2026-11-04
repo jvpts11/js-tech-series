@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest.space;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.dimension.TravelScreens;
 import dev.jstech.core.dimension.RuntimeDimensions;
+import dev.jstech.space.geology.SpaceRocks;
 import dev.jstech.space.worldgen.MarsWorld;
 import dev.jstech.space.worldgen.MoonWorld;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -28,6 +29,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -50,6 +52,8 @@ public final class PassageClientTests {
     private static final float LOOKING_DOWN = 60F;
     private static final int ARRIVE = 600;
     private static final int SETTLE = 20;
+    /* How far round where the player arrives the ground is set, each way: past every block the frames read. */
+    private static final int GROUND_ROUND = 6;
     /*
      * The part of each frame read, in hundredths of its width and height: under the sky, which looking down this far
      * is out of the picture, clear of the hand and of the bar, every eighth pixel of it.
@@ -95,7 +99,7 @@ public final class PassageClientTests {
                         ARRIVE, "the player's game to be in the Overworld")
                 .thenAwaitLandDrawn(ARRIVE)
                 .then(SETTLE, toTheMoon::start)
-                .thenServer(0, level -> sendByCommand(ctx, moon(ctx)))
+                .thenServer(0, level -> sendByCommand(ctx, moon(ctx), SpaceRocks.MARE_BASALT.get()))
                 .thenWaitUntil(() -> arrived(ctx, MoonWorld.world().dimension()), ARRIVE,
                         "the player's game to reach the Moon and let its picture go")
                 .thenAwaitLandDrawn(ARRIVE)
@@ -105,7 +109,7 @@ public final class PassageClientTests {
                     toMars.start();
                 })
                 .thenScreenshot(0, "on_the_moon")
-                .thenServer(0, level -> sendByCommand(ctx, mars(ctx)))
+                .thenServer(0, level -> sendByCommand(ctx, mars(ctx), SpaceRocks.MARTIAN_REGOLITH.get()))
                 .thenWaitUntil(() -> arrived(ctx, MarsWorld.world().dimension()), ARRIVE,
                         "the player's game to reach Mars and let its picture go")
                 .thenAwaitLandDrawn(ARRIVE)
@@ -119,8 +123,20 @@ public final class PassageClientTests {
                 .thenScreenshot(0, "on_mars");
     }
 
-    /* Sends the player onto the ground of {@code level} by the game's own command, as a player types it. */
-    private static void sendByCommand(final ClientTestContext ctx, final ServerLevel level) {
+    /*
+     * Sends the player onto the ground of {@code level} by the game's own command, as a player types it, the top of
+     * the ground round where they arrive first made {@code ground}, one of that world's own: its biomes lie anywhere,
+     * so the ground the test looks at is set, never left to whichever biome happens to be there.
+     */
+    private static void sendByCommand(final ClientTestContext ctx, final ServerLevel level, final Block ground) {
+        level.getChunk(new BlockPos(AT_X, 0, AT_Z));
+        for (int dx = -GROUND_ROUND; dx <= GROUND_ROUND; dx++) {
+            for (int dz = -GROUND_ROUND; dz <= GROUND_ROUND; dz++) {
+                final int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, AT_X + dx, AT_Z + dz) - 1;
+                level.setBlock(new BlockPos(AT_X + dx, top, AT_Z + dz), ground.defaultBlockState(),
+                        Block.UPDATE_CLIENTS);
+            }
+        }
         final ServerPlayer player = ctx.serverPlayer();
         final String command = String.format(Locale.ROOT, "execute in %s run tp %s %.1f %d %.1f",
                 level.dimension().location(), player.getGameProfile().getName(), AT_X + 0.5, groundOf(level),

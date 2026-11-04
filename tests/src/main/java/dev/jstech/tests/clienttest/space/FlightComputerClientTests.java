@@ -73,6 +73,14 @@ public final class FlightComputerClientTests {
     /* How near red and blue the grey of the unknown is; how much redder than blue Mars' ground is. */
     private static final int GREY = 24;
     private static final int RUST = 30;
+    /*
+     * A box of the landing map, x0, y0, x1, y1 in the face's pixels, clear of its small map and its scale, and the
+     * least share of it in Mars' red: Mars' ground lies in patches, its basalt as grey as the unknown, so the ground
+     * the pass saw is told by how much of it is red, never by one point that may fall on basalt.
+     */
+    private static final int[] MAP_BOX = {FlightComputerFace.SX0 + 10, FlightComputerFace.SY0 + 24,
+        FlightComputerFace.SX0 + 130, FlightComputerFace.SY0 + 104};
+    private static final int LEAST_RUST_IN = 10;
     /* Where the landing page writes how much of the world is known, over its small map, and the least green there. */
     private static final int[] KNOWN_LABEL = {FlightComputerFace.SX1 - 104, FlightComputerFace.SY1 - 28 - 38 - 11,
         FlightComputerFace.SX1 - 54, FlightComputerFace.SY1 - 28 - 38 - 2};
@@ -104,9 +112,7 @@ public final class FlightComputerClientTests {
                     final int[] at = screenOf(ctx, LANDING_KEY);
                     ctx.click(at[0], at[1]);
                 })
-                .thenWaitUntil(() -> ctx.screen(FlightComputerScreen.class) != null
-                        && ctx.screen(FlightComputerScreen.class).getMenu().computer().page() == FlightPage.LANDING
-                        && LandingMapsClient.shown() != null, MAP_WAIT, "the landing page and its map to come")
+                .thenWaitUntil(() -> mapOfThePage(ctx), MAP_WAIT, "the landing page and its map to come")
                 .then(SETTLE, () -> seen[1] = sample(ctx, ON_MAP))
                 .thenScreenshot(0, "flight-computer-landing")
                 .then(0, () -> {
@@ -127,7 +133,7 @@ public final class FlightComputerClientTests {
 
     @ClientTest(timeoutTicks = 1500)
     public static void computer_landingShowsTheGroundTheTeamKnows(final ClientTestContext ctx) {
-        final int[][] seen = new int[1][];
+        final int[] rust = new int[1];
         final int[] known = new int[1];
         ctx.afterTest(() -> ctx.server().execute(() -> ctx.serverLevel().removeBlock(ctx.abs(COMPUTER), false)));
         ctx.thenTeleport(0, EYE, Direction.SOUTH)
@@ -151,15 +157,17 @@ public final class FlightComputerClientTests {
                 })
                 .thenRightClick(SETTLE, COMPUTER)
                 .thenAwaitScreen(FlightComputerScreen.class, OPEN)
-                .thenWaitUntil(() -> LandingMapsClient.shown() != null, MAP_WAIT, "the landing map to come")
+                .thenWaitUntil(() -> mapOfThePage(ctx) && ctx.screen(FlightComputerScreen.class).getMenu().computer()
+                        .mark() != null, MAP_WAIT, "the landing map round the marked spot to come")
                 .then(SETTLE, () -> {
-                    seen[0] = sample(ctx, ON_MAP);
+                    rust[0] = rustIn(ctx, MAP_BOX);
                     known[0] = greenIn(ctx, KNOWN_LABEL);
                 })
                 .thenScreenshot(0, "flight-computer-landing-known")
                 .then(0, () -> {
-                    ctx.assertTrue(seen[0][0] > seen[0][2] + RUST, "the ground of Mars the pass saw is drawn in its"
-                            + " own colours: " + str(seen[0]));
+                    final int points = (MAP_BOX[2] - MAP_BOX[0]) * (MAP_BOX[3] - MAP_BOX[1]);
+                    ctx.assertTrue(rust[0] * LEAST_RUST_IN >= points, "the ground of Mars the pass saw is drawn in"
+                            + " its own colours: " + rust[0] + " of " + points + " points of the map in its red");
                     ctx.assertTrue(LandingMapsClient.shown().share() > 0 && known[0] >= LEAST_GREEN,
                             "how much of Mars is known is written over its small map: " + known[0] + " green points");
                     ctx.assertTrue(ctx.screen(FlightComputerScreen.class).getMenu().computer().landing().isPresent(),
@@ -245,6 +253,23 @@ public final class FlightComputerClientTests {
         return count;
     }
 
+    /* How many points of the face's box {@code box}, x0, y0, x1, y1 in its own pixels, are in Mars' red. */
+    private static int rustIn(final ClientTestContext ctx, final int[] box) {
+        int count = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int x = box[0]; x < box[2]; x++) {
+                for (int y = box[1]; y < box[3]; y++) {
+                    final int[] point = screenOf(ctx, new int[] {x, y});
+                    final int argb = frame.pixel(point[0], point[1]);
+                    if ((argb >> 16 & CHANNEL) > (argb & CHANNEL) + RUST) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
     /* How many points of the face's box {@code box}, x0, y0, x1, y1 in its own pixels, are amber. */
     private static int amberIn(final ClientTestContext ctx, final int[] box) {
         int count = 0;
@@ -261,6 +286,25 @@ public final class FlightComputerClientTests {
             }
         }
         return count;
+    }
+
+    /*
+     * Whether the open Flight Computer is on its landing page and the landing map last come is the one drawn for what
+     * the page shows now: its world, round its marked spot or the world's middle. The maps are drawn away from the
+     * server's thread and the last one stays till the next comes, so a map asked for before, round another spot or of
+     * another test's page, is never taken for it.
+     */
+    private static boolean mapOfThePage(final ClientTestContext ctx) {
+        final FlightComputerScreen screen = ctx.screen(FlightComputerScreen.class);
+        final LandingMapsClient.Shown map = LandingMapsClient.shown();
+        if (screen == null || map == null) {
+            return false;
+        }
+        final FlightComputerBlockEntity computer = screen.getMenu().computer();
+        final BlockPos centre = computer.mark() == null ? BlockPos.ZERO : computer.mark();
+        return computer.page() == FlightPage.LANDING && map.world().equals(computer.target())
+                && map.centreX() == Math.floorDiv(centre.getX(), map.blocks()) * map.blocks()
+                && map.centreZ() == Math.floorDiv(centre.getZ(), map.blocks()) * map.blocks();
     }
 
     /* Where the face's pixel {@code at} is on the window, in the screen's own scaled units. */

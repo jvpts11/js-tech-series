@@ -27,7 +27,7 @@ radiators or with radiator fins; the Twin Bells and the four-bell Cluster at the
 nacelle; the Side Intakes and the Nacelle Intake; the Blended Delta, the Stub Wings and the Swept Wings; the Twin
 Canted Fins and the Single Fin; the Blister and Quad thrusters; Wheels and Legs.
 
-Every part is a multiblock built of a **kit of 61 blocks**, the same for every maker. A part forms into its model when
+Every part is a multiblock built of a **kit of 65 blocks**, the same for every maker. A part forms into its model when
 its last block goes in, and its blocks take the model's shapes: a hull's floor and ceiling leave room to walk, a window
 is glass the world is seen through, and the aim and the collision follow the model, not boxes.
 
@@ -52,7 +52,12 @@ A module takes a third of a small hull's room, a medium one the whole of it:
 - **Computing**: a desk and a server rack, joined to the network by the ship's antenna with J's Computers installed;
 - **Small Cargo**: racks of barrels;
 - the holds, which are medium modules: Bay Doors, Ramp and Side Door, with racks, tie-downs, a hoist rail and a manifest
-  terminal.
+  terminal, and barrels along both walls, one over another every second row.
+
+The furniture stands in the cells of the walls, leaving a corridor two blocks high from module to module on one floor.
+The Workshop's tables, furnace and barrel and the holds' barrels are blocks of the kit, the **Ship Crafting Table**,
+**Ship Smithing Table**, **Ship Furnace** and **Ship Barrel**: each works as the game's own and is drawn by its
+module's model, so a ship never carries a block of the game standing in for its fittings.
 
 The airlock has an Oxygen Panel that fills a worn suit's tanks from the cabin's air and a Suit Locker with nine places
 for a crew's suits and bottles. The reactor room has its fusion drum.
@@ -71,22 +76,33 @@ bunk is a respawn point only while its cabin has air.
 The **Small Shipyard** is a dry dock: a pit sixteen blocks wide and twenty-four long, dug three deep, with a rim of
 hazard concrete and a cradle of clamps rising from its floor; four lattice towers down each side, eleven blocks to the
 rails of a gantry crane, with walkways at two heights and a stair; floodlights at the corners; at the back a control
-booth with the **Shipyard Terminal**, and at its foot an **Item Port** with a conveyor into the bay. The pit must be
-clear.
+booth, and at its foot an **Item Port**. The pit must be clear. The booth is entered by its door: the **Shipyard
+Terminal** is the first half of its console under the windows on the bay, the parts list on the other half, and behind
+them stand a bench a computer can stand on and a socket in the wall beside it, for the day the yard is worked from a
+computer (below).
 
 The terminal opens the **Starship Design**, in the look of a shipbuilder's screen: the ship on a dotted floor in a dark
-void, turned and zoomed freely, with panels of dark glass. A part is dragged from its card to the green node of a joint
-and snaps there. The screen shows the parts by kind and by maker, the chosen part's length, mass, blocks, power and note,
-the flight check, the ship's mass, thrust, vertical take-off thrust against weight, power and crew, the room left in the
-hull, the finish, the blocks the dock needs, and the footprint on the floor. A design is saved by name among the dock's
-plans, and sent to the dock once it flies and fits the bay.
+void, turned and zoomed freely, with panels of dark glass, its words in the game's own letters. A part is dragged from
+its card as a hologram of itself under the mouse, green where it would snap to a joint, red where it does not fit,
+saying why; only the joints it fits show their green nodes. The part under the mouse is outlined by its own silhouette.
+The screen shows the parts by kind, searched by name or maker, the chosen part's length, mass, blocks, power and note,
+the flight check with the room left in the hull, the ship's mass, thrust, vertical take-off thrust against weight,
+power and crew, the blocks the dock needs and the Item Port holds, and the footprint on the floor; F changes the
+finish. A design is saved by name among the dock's plans, and sent to the dock once it flies and fits the bay.
 
 A design sent to the dock appears as a **hologram**: every block still to place shows where it goes, the layer being
 built glowing amber, and each part still to form has its box with a tag lifted over it, with its name, its size and how
 many of its blocks are in place. The ship is built by hand on the hologram, or by the dock's **four robot arms**, which
 take blocks from the feeders on the walkways, swing them to their place and weld them with sparks. What the ship needs
-goes in through the item port, and no more. With J's Computers installed, an Operation can start the arms on a plan the
-dock keeps by name, and the network brings the blocks.
+goes in through the Item Port, and no more: a player puts it in, or a hopper, a pipe of any mod or J's Computers'
+network does. The dock has no conveyor of its own; conveyors come to the series with J's Industrial, through J's
+Core.
+
+The Shipyard Terminal and the Rocket Hangar's terminal are **machines, not computers**: they are not members of a data
+network and take no data cable, and they work through their own screens. With J's Computers installed, when J's Space
+grows, the yard's booth and the hangar's control room get **a place for a computer**, where an Aerospace Design
+Computer runs AeroCAD and the other programs of the building, and J's Core's **network port** in the wall, which joins
+that computer to the network; both are optional places of the structure ([J's Computers](computers.md)).
 
 A ship built whole leaves the dock when its pilot uses its flight console: it becomes one moving structure, once, and
 stays one, standing still or flying. A ship is changed only in a dock: its pilot brings it into a free dock's bay and uses

@@ -10,13 +10,13 @@ every machine, rocket and starship works through its own screens and controls.
 J's Computers' registries of computers and hardware, through which J's Space adds the ones below, are designed with
 J's Computers and still to be built. None of the computers or hardware below is built in J's Space yet.
 
-What J's Space does with a data network is small. The Hangar Terminal of the Rocket Hangar and the Shipyard Terminal of
-the Small Shipyard are members of the series' data network, and each takes a data cable. On a network,
-`RUN jscore:assemble` sends a plan to the terminal and sets its machine building: the hangar's crane builds the rocket
-in the bay, or a hangar plan named in the request (`WITH plan = 'Orbital I'`), and the shipyard's robot arms build a
-ship plan the dock keeps by name. In both, the network brings the blocks. The small starship's Computing module is
-furniture, a desk and a server rack. The Flight Computer of a rocket is its flight display, not a computer of the
-network.
+J's Space joins no data network yet. The Hangar Terminal of the Rocket Hangar and the Shipyard Terminal of the Small
+Shipyard are **machines, not computers**: a member of the network that runs Operations is a computer, and a terminal
+that only works its building is not one. They take no data cable and work through their own screens. Their Loading
+Dock and Item Port take the blocks a build needs from a player, a hopper, any mod's pipe or J's Computers' buses. The
+shipyard's control booth already stands as it will be worked: a bench a computer can stand on, and a socket in the
+wall where the network port will go. The small starship's Computing module is furniture, a desk and a server rack.
+The Flight Computer of a rocket is its flight display, not a computer of the network.
 
 ## To build
 
@@ -30,7 +30,7 @@ J's Space adds them through J's Computers' API:
 | **Satellite Control Computer** | the Ground Station in its computer form | **Satellite Cards**, each adding capacity: more antennas and more satellites |
 | **Space Research Computer** | the Space Research Computer in its computer form; its data are files | **correlator cards**, which join the signals of several radio telescopes as ALMA's correlator does, and **image processing cards** |
 | **Flight Control Computer** | the flight computer in a rocket's instrument ring or a starship's cockpit, which joins the network through the craft's communications antenna | **radiation-hardened processors**, as real ones: the RAD750 flies in Curiosity, Perseverance and the James Webb Space Telescope. **Better hardware controls more stages and more systems**, and takes a rocket further |
-| **Aerospace Design Computer** | a new computer, with no machine form | it asks for **good graphics cards**, to run AeroCAD |
+| **Aerospace Design Computer** | a new computer, with no machine form; its place is the bench of the Small Shipyard's booth and of the Rocket Hangar's control room | it asks for **good graphics cards**, to run AeroCAD |
 | **Enigmatic hardware** | an Enigmatic processor and motherboard, outside the ladder of eras and about the size of the Singularity era ([Enigmatic technology](enigmatic-technology.md)) | |
 
 **Flight Control Computers follow J's Computers' eras.** A Vintage one is the **Apollo Guidance Computer** (1966): 2 KB
@@ -74,6 +74,14 @@ SELECT**:
 | Terraforming | the state of a world's project; contributing |
 | Megastructures | state; building a section; launching through the Mass Driver; sending up an elevator |
 | Cargo | a flight asked for by autocrafting ([Cargo](cargo.md)) |
+
+A building is worked from the network **through its computer**, never through its terminal. The Small Shipyard's booth
+and the Rocket Hangar's control room each get a place for a computer, an Aerospace Design Computer on the bench with its
+monitor, and a place for **J's Core's network port**, a block of the Core that serves any multiblock: the data cable
+plugs into the port, which sees the building's computer and puts it on the network. Through that computer the network
+keeps the designs, runs AeroCAD and the building's other programs, and starts the building on a plan, the network
+bringing the blocks. Both places are optional: the building forms and works without them. They come when J's Space
+grows; J's Computers' way for other mods to add their computers already exists, and J's Industrial's ICC uses it.
 
 ### Programs
 

@@ -644,11 +644,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   four-bell Cluster at the tail, and the Magnetic Nozzle in a nacelle; the Side Intakes and the Nacelle Intake, both
   turning their nozzles down to take off vertically; the Blended Delta, the Stub Wings that carry the nacelles and the
   Swept Wings; the Twin Canted Fins and the Single Fin; the thruster Blisters and Quads; Wheels and Legs.
-- The starship's block kit: 61 blocks, the same for every maker, in a row of their own in the J's Space tab.
+- The starship's block kit: 65 blocks, the same for every maker, in a row of their own in the J's Space tab.
   The structure's 14 (hull frame and plating, access panel, livery and thermal plating, carbon edge, deck plate and
   grating, bulkhead, pressure door, conduit, cable tray, viewport, light panel), the cockpit's 6, the airlock's and
   docking port's 6, the reactor's 5, the main engines' 5 (the Ship Engine Mount among them), the air-breathing
-  engines' 5, the wings' and fins' 5, the thrusters' and landing gear's 6, and the modules' 9. Every part of the
+  engines' 5, the wings' and fins' 5, the thrusters' and landing gear's 6, and the modules' 13. Every part of the
   catalogue is built of its kit: the sections of the spine as rings of the hull four blocks wide and three high, the
   other parts set from their places on the ship, wings, nacelles, intakes and gear on both sides.
 - The starship parts' formed models, as the approved catalogue drew them, the joints drawn on the hull where a
@@ -665,13 +665,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Kosmozavod's turquoise panels over beige quilted padding on a wooden floor; each module's bulkhead with its doorway,
   and in the cockpits the flight deck with its displays and switch panels. The windows are glass the world is seen
   through, from inside and out.
-- The small ship's functional modules, a third of its hull's room each: the Workshop, whose vanilla crafting
-  table, smithing table, furnace and barrel stand in it and work aboard; the Laboratory, with its bench, sample racks,
-  microscope and analyser; the Quarters, whose bunk is a respawn point in a sealed cabin of breathable air and wakes
-  no one where the air is gone; Computing, with its desk and server rack; and Small Cargo, its racks and a barrel. The
-  airlock's oxygen panel fills a worn suit's tanks from the cabin's air, and its suit locker keeps a crew's suits; the
-  holds keep their cargo in vanilla barrels, strapped down by the hoist rail and the manifest terminal; the reactor
-  room has its fusion drum. Fixtures the models draw stop drawing themselves once their part is formed.
+- The small ship's functional modules, a third of its hull's room each: the Workshop, whose crafting table,
+  smithing table, furnace and barrel, blocks of the ship's kit, stand in it and work aboard; the Laboratory, with its
+  bench, sample racks, microscope and analyser; the Quarters, whose bunk is a respawn point in a sealed cabin of
+  breathable air and wakes no one where the air is gone; Computing, with its desk and server rack; and Small Cargo, its
+  racks and a barrel. The airlock's oxygen panel fills a worn suit's tanks from the cabin's air, and its suit locker
+  keeps a crew's suits; the holds keep their cargo in the ship's own barrels, by the hoist rail and the manifest
+  terminal; the reactor room has its fusion drum. Fixtures the models draw stop drawing themselves once their part is
+  formed.
 - The starship cockpits come alive: each maker's rich pilot's seat, and the flight shown as it goes. Meridian
   Orbital's three displays follow the ship, the horizon banking and pitching, the map turning under the track, the
   engines' bars taking their load, and its master caution lights amber with the master alarm; Ironside Yards' green

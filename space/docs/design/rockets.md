@@ -37,7 +37,7 @@ The screen's sign reads READY or NOT READY. Every change is kept by the hangar; 
 Once a design is sent to the bay, the hangar lays it out as an **assembly plan** on the bay's floor, every block of every part's kit where it goes, and counts each part's blocks as they go down. Its **hologram** shows every block still to place as a see-through ghost, the layer to build next glowing amber and a wrong block outlined in red. Each part has its box drawn round it, in the colour of its kind, with its name and size, and a line across the top of the screen names the rocket, the part and layer being built and the block that layer needs most. The hangar's **bridge crane** then builds the rocket by itself, block by block, the lowest first:
 
 - the player feeds the blocks into the hangar's **Loading Dock** in its outer wall: a chest, a hopper, a pipe, a conveyor or another mod's exporter, anything that puts items in. The port takes only the blocks the rocket still wants, and no more of each, and gives back out what it no longer wants;
-- the Hangar Terminal takes a data cable. On a network that runs Operations, `RUN jscore:assemble` sets the crane building the plan sent to the bay, or one of the hangar's plans by name, and the request stays in flight until the rocket is whole.
+- the Hangar Terminal is a machine, not a computer: it takes no data cable. When J's Space grows, the control room gets a place for a computer and for J's Core's network port, and the network sets the crane building through that computer ([J's Computers](computers.md)).
 
 A player can also lay the blocks by hand, where the hologram shows them.
 

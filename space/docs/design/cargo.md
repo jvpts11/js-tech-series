@@ -8,9 +8,10 @@ rockets fly is in [Travel](travel.md), and how they are built in [Rockets](rocke
 J's Space has no cargo system of its own yet: no cargo for rockets, no freight, no deliveries. None of that is built.
 
 What is built is storage aboard the small starship. Its Small Cargo module has racks and a barrel, and the holds keep
-their cargo in vanilla barrels, strapped down by the hoist rail and the manifest terminal. These are plain storage in a
-ship's blocks. Beyond them, the Rocket Hangar and the Small Shipyard each take the blocks a build needs through an Item
-Port, from a chest, a hopper, a pipe, a conveyor or another mod's exporter. The port takes only what the build still
+their cargo in the ship's own barrels along both walls, by the hoist rail and the manifest terminal: Ship Barrels,
+blocks of the ship's kit that hold as the game's barrel does ([Starships](starships.md)). These are plain storage in a
+ship's blocks. Beyond them, the Rocket Hangar's Loading Dock and the Small Shipyard's Item Port take the blocks a build
+needs, from a player, a chest, a hopper, a pipe or another mod's exporter. The port takes only what the build still
 wants and gives back what it no longer wants.
 
 ## To build

@@ -129,3 +129,9 @@ what it held, however it goes. Its cells remember the origin, so a cable touchin
 
 - **The Multiblock Builder taking from a network's storage** is J's Computers' side of it, when J's Computers moves onto
   the Core.
+- **The network port**, a block of the Core's shared content for any multiblock: an entry a multiblock may declare,
+  never needed to form it, into which a data cable plugs. It sees the computer standing in the multiblock's place for
+  one and puts that computer on the network, so a building is worked from the network through its computer, never
+  through its terminal, which is a machine and no member of the network. The first to take it are J's Space's Small
+  Shipyard and Rocket Hangar, with an Aerospace Design Computer in the booth and the control room, when J's Space
+  grows.

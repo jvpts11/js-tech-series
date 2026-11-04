@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest.space;
 
 import dev.jstech.core.client.sky.SkyMeteors;
+import dev.jstech.core.client.weather.WeatherClient;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.world.event.WorldEvents;
 import dev.jstech.space.api.SpaceWorld;
@@ -128,6 +129,8 @@ public final class SpaceSkiesClientTests {
                 })
                 .thenWaitUntil(() -> in(ctx, SolarSystemWorlds.MARS), ARRIVE, "the player's game to reach Mars")
                 .thenAwaitLandDrawn(ARRIVE)
+                .thenServer(0, level -> calm(world(ctx, SolarSystemWorlds.MARS)))
+                .thenWaitUntil(() -> WeatherClient.around().isEmpty(), ARRIVE, "Mars' sky to be clear of dust")
                 .then(SETTLE, () -> {
                     final int[] rgb = colour(ctx, 0, -LOW, PATCH);
                     ctx.assertTrue(rgb[2] > rgb[0], "Mars' sunset is blue round its Sun: red " + rgb[0] + ", blue "
@@ -138,8 +141,10 @@ public final class SpaceSkiesClientTests {
                     final ServerLevel mars = world(ctx, SolarSystemWorlds.MARS);
                     mars.setDayTime(MIDNIGHT);
                     look(ctx, mars, NORTH, -45F);
+                    calm(mars);
                 })
                 .thenAwaitLandDrawn(ARRIVE)
+                .thenWaitUntil(() -> WeatherClient.around().isEmpty(), ARRIVE, "Mars' night to be clear of dust")
                 .then(SETTLE, () -> background[0] = lit(ctx, METEOR_REACH, METEOR_LIT))
                 .thenScreenshot(0, "mars_night")
                 .then(0, () -> SkyMeteors.fall(NORTH + METEOR_FROM, 45 + METEOR_FROM, NORTH + METEOR_TO,
@@ -175,6 +180,15 @@ public final class SpaceSkiesClientTests {
                 .thenScreenshot(0, "mars_storm")
                 .thenServer(0, level -> WorldEvents.stop(world(ctx, SolarSystemWorlds.MARS),
                         MarsWeather.GLOBAL_DUST_STORM));
+    }
+
+    /*
+     * Ends any dust storm on {@code mars}, planned or under way: the day's roll brings a regional one now and then,
+     * and its dust veils the sky the test reads, the sunset and the stars a meteor is told from.
+     */
+    private static void calm(final ServerLevel mars) {
+        WorldEvents.stop(mars, MarsWeather.DUST_STORM);
+        WorldEvents.stop(mars, MarsWeather.GLOBAL_DUST_STORM);
     }
 
     private static String rgb(final int[] colour) {

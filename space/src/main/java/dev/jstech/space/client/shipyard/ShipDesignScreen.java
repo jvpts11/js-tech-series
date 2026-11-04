@@ -926,15 +926,14 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         ShipDesignArt.small(g, this.font, GameText.resolve(ShipDesignTexts.SIZE_LINE.with(length(),
                 tenth(this.mass / KILO))), ShipDesignLayout.NAME_X0 + this.font.width(name)
                 + ShipDesignLayout.FIGURES_GAP, ShipDesignLayout.TITLE_Y + 1, c.dim());
-        final Tool[] tools = Tool.values();
-        for (int i = 0; i < tools.length; i++) {
-            final Tool each = tools[i];
+        for (int i = 0; i < Tool.ORDER.size(); i++) {
+            final Tool each = Tool.ORDER.get(i);
             final boolean on = each == Tool.MIRROR || each == Tool.SNAP && this.snap
                     || each != Tool.SNAP && each == this.tool;
             ShipDesignArt.toolButton(g, ShipDesignLayout.toolX(i), ShipDesignLayout.TOOLS_Y0,
                     ShipDesignLayout.TOOL_W, ShipDesignLayout.TOOL_H, each.icon, on);
         }
-        Draw.text(g, this.font, GameText.resolve(this.tool.name), ShipDesignLayout.toolX(tools.length) + 2,
+        Draw.text(g, this.font, GameText.resolve(this.tool.name), ShipDesignLayout.toolX(Tool.ORDER.size()) + 2,
                 ShipDesignLayout.TOOL_NAME_Y, c.text());
     }
 
@@ -1202,13 +1201,13 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         if (y < ShipDesignLayout.TOOLS_Y0 || y >= ShipDesignLayout.TOOLS_Y0 + ShipDesignLayout.TOOL_H) {
             return false;
         }
-        final Tool[] tools = Tool.values();
-        for (int i = 0; i < tools.length; i++) {
+        for (int i = 0; i < Tool.ORDER.size(); i++) {
             if (x >= ShipDesignLayout.toolX(i) && x < ShipDesignLayout.toolX(i) + ShipDesignLayout.TOOL_W) {
-                switch (tools[i]) {
+                final Tool each = Tool.ORDER.get(i);
+                switch (each) {
                     case MIRROR -> say(ShipDesignTexts.PAIRS.text());
                     case SNAP -> this.snap = !this.snap;
-                    default -> this.tool = tools[i];
+                    default -> this.tool = each;
                 }
                 return true;
             }
@@ -1580,6 +1579,9 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
         private final int icon;
         private final TextKey name;
+
+        /* The buttons left to right across the top, named so a new tool never moves the others by its place. */
+        private static final List<Tool> ORDER = List.of(PLACE, REMOVE, FLIP, MIRROR, FINISH, SNAP);
 
         Tool(final int icon, final TextKey name) {
             this.icon = icon;
