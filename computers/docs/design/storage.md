@@ -136,6 +136,9 @@ system's style (on Frames 95, the grid of coloured blocks); the machine keeps wo
 while it runs. A system that won't start is fixed by taking the disk to a Dock Station on another computer and running
 the Defrag there, or by installing it again.
 
+On every system the Defrag shows corrupted items in yellow and bad sectors in black, on its map or its bars, and ends
+a pass saying what it recovered and what was lost.
+
 **Settings:** in `[item_loss]` ([Power](power.md)), the `corruption` key turns all corruption off, and
 `network_conflict` only the corruption that comes from a conflict.
 
@@ -147,4 +150,5 @@ EXOTIC, as J's Core declares them, and every one weighs as fluids do today, 1,00
 for what has no state in J's Core (Mekanism's infusion types and pigments); Mekanism's gases and slurries come in
 through the bridge as GAS and SLURRY. Buses, disks, the terminal and Operations treat every kind the same way, as they
 do the three of today, and the terminal shows each with its picture: a liquid's texture, a gas's or a plasma's colour
-swatch.
+swatch. The category filters list them by state: Items, Liquids, Gases, Plasmas, Supercritical, Slurries and Exotic
+matter, with Chemicals for Mekanism's.

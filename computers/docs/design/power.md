@@ -121,7 +121,8 @@ clean shutdown, but the items they were carrying (in the memory buffer, on their
 lost**, and the log says how many and of what. Windows close and Σ# programs stop.
 
 At the next boot, the system checks the partitions that were in use, each in its own way: ScanDisk on Frames 95,
-chkdsk from Frames XP on, fsck on Linux, FreeBSD, OpenBSD and UNIX. How long depends on the file system: a long check
+chkdsk from Frames XP on, fsck on Linux, FreeBSD, OpenBSD and UNIX. MC-DOS checks nothing, as the real one
+didn't: its CHKDSK is run by hand. How long depends on the file system: a long check
 without a journal (FAT, exFAT, ext2, UFS), seconds with one (NTFS, ext3, ext4, XFS), none on copy-on-write (btrfs, ZFS)
 ([Storage devices](storage-devices.md)). It erases nothing. A clean shutdown skips the check.
 
@@ -145,7 +146,9 @@ between Mainframes ([Computers](computers.md)).
 
 ### The UPS
 
-A UPS block per era, like the other peripherals, and the Rack UPS (1U) for a whole rack.
+A UPS block per era, the MF PowerGuard, and the Rack UPS (1U) for a whole rack. The PowerGuard is a whole block, as
+real tower UPSes are: the energy cable plugs into the inlet in the middle of its back or of either side, its outlets
+are on top, and its front shows the battery, with its screen, its button and its lamps.
 
 - It stands against the computer it protects: the energy cable goes into the UPS, the computer draws from it through
   the face they share, and it charges its battery while energy flows. Whether FE reaches a computer directly stays J's
@@ -158,10 +161,10 @@ A UPS block per era, like the other peripherals, and the Rack UPS (1U) for a who
 
   | UPS | Battery | Most it carries | Lasts |
   | --- | ---: | ---: | --- |
-  | Vintage, Legacy | 90 kJ | 300 W | 5 game minutes at 300 W |
-  | Transition | 240 kJ | 500 W | 8 minutes at 500 W |
-  | Standard | 480 kJ | 800 W | 10 minutes at 800 W |
-  | Advanced | 1.35 MJ | 1,500 W | 15 minutes at 1,500 W |
+  | MF PowerGuard 300 (Vintage, Legacy) | 90 kJ | 300 W | 5 game minutes at 300 W |
+  | MF PowerGuard 500 (Transition) | 240 kJ | 500 W | 8 minutes at 500 W |
+  | MF PowerGuard 800 (Standard) | 480 kJ | 800 W | 10 minutes at 800 W |
+  | MF PowerGuard 1500 (Advanced) | 1.35 MJ | 1,500 W | 15 minutes at 1,500 W |
   | Rack UPS | 2.7 MJ | 3 kW | 15 minutes at 3 kW |
 
 - Every UPS Battery Expansion in the rack adds another 2.7 MJ, as real battery packs do; only the rack's room limits

@@ -92,6 +92,9 @@ A disk copied in creative mode shares its volume with the original.
 | USB stick | Standard | a Dock Station |
 | Blu-ray | Advanced | a Blu-ray Drive |
 
+USB sticks come in four models: the Vaultis Pocket 8G and 16G (USB 2.0) and 32G (USB 3.0) of the Standard, and the
+64G (USB-C) of the Advanced. The stick of today becomes the 32G.
+
 A medium holds a system's installer, a program's installer, or data (files, crafting patterns). Optical discs come
 **pressed** (CD-ROM, DVD-ROM, BD-ROM), which nothing can write, or **rewritable** (CD-RW, DVD-RW, BD-RE); floppy disks
 and USB sticks can always be written. The drives are peripherals ([Peripherals](peripherals.md)).

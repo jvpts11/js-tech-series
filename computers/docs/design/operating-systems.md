@@ -243,7 +243,9 @@ the kernel ignores a kill of init from the system; here it is what it would do i
 ## To build
 
 - **More triggers of the red page,** on every computer and rack server: a thermal trip, a failing power supply, unstable
-  power ([Temperature](temperature.md), [Power](power.md)).
+  power ([Temperature](temperature.md), [Power](power.md)). On Frames each has its stop code: the heat
+  `MACHINE_CHECK_EXCEPTION` on XP and `WHEA_UNCORRECTABLE_ERROR` from 7 on, a failing power supply and unstable power
+  `INTERNAL_POWER_ERROR`; on 10 and 11 the page's *What failed* names the part or the cause.
 - **The firmware lives on the motherboard.** A board made in survival comes out with no firmware, and a computer with a
   blank board shows nothing; the Preinstaller writes the firmware of the board's era onto it ([Survival](survival.md)).
 - **Network boot from the Mirror.** From the Legacy, the firmware's setup can boot from the network (PXE); from the
