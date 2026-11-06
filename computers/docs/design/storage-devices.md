@@ -134,13 +134,17 @@ only the modern ones do.
 | exFAT | Transition | Frames; Linux from the Advanced | a long check | large USB sticks |
 | ZFS | Transition | FreeBSD | none (copy-on-write) | snapshots, mirrors that repair themselves |
 | btrfs | Standard | Linux | none (copy-on-write) | snapshots |
+| HFS | Vintage | Quince | a long check | |
+| HFS+ | Legacy | Quince | a long check; seconds from Quince OS X (a journal) | |
+| APFS | Advanced | Quince | none (copy-on-write) | snapshots |
 
 - A system that can't read a partition still sees it, and offers to format it: Frames with a Linux partition is the
   classic trap of a dual boot.
 - Each installer formats as its real one did: FAT16 on MC-DOS (FAT32 from the Legacy), FAT32 on Frames 95, NTFS on
   Frames XP to 11, ext3 on the Legacy distributions and ext4 later, btrfs on Fedora from the Standard, UFS on UNIX,
   FreeBSD (ZFS offered from the Transition) and OpenBSD, ext4 on Linux Mint, and whatever the player types on Arch and
-  Gentoo. MC-NET keeps its flat store on FAT.
+  Gentoo. MC-NET keeps its flat store on FAT. Quince formats HFS on the Quince System, HFS+ on Quince OS 9 and Quince
+  OS X, and APFS on quinceOS ([Quince](quince.md)).
 - A long check takes about a second for every 64 items' weight in use, at least 5 seconds and at most a minute; a
   journal takes 2 seconds; copy-on-write takes none. Estimates.
 - **Snapshots** (btrfs and ZFS): `btrfs subvolume snapshot` and `zfs snapshot` keep the partition as it is, items and

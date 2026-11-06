@@ -275,7 +275,8 @@ on their own.
   - **The Defrag**, which every computer comes with ([Storage](storage.md)).
   - **The disk tools**, which every system ships: **FDISK** at the prompt on MC-DOS and Frames 95; **Disk Management**
     (and `diskpart`) on Frames XP to 11; `fdisk` on every Linux, with the **KDE Partition Manager** on KDE Plasma and
-    **GNOME Disks** on GNOME and Cinnamon; `gpart` on FreeBSD, `fdisk` and `disklabel` on OpenBSD, `fdisk` on UNIX.
+    **GNOME Disks** on GNOME and Cinnamon; `gpart` on FreeBSD, `fdisk` and `disklabel` on OpenBSD, `fdisk` on UNIX;
+    **Disk Utility** on Quince OS X and quinceOS, **Drive Setup** on Quince OS 9.
     They partition, format and resize by the rules of [Storage devices](storage-devices.md), and refuse to touch the
     partition the system runs from. The table Arch's `fdisk` writes during the install is the disk's real table from
     then on.

@@ -18,7 +18,9 @@ it is decided for Carbon.
 | Advanced | **Russet Studio** and the coloured qRusset | Quince Q1, Q2 and Q3 (ARM64, memory unified with graphics) | quinceOS | the Quince chip's own start |
 
 - **The all-in-ones** (the Russet 128K and every qRusset) carry their screen in their own block: they need no monitor,
-  and their face shows the screen as a monitor's does ([Peripherals](peripherals.md)).
+  and their face shows the screen as a monitor's does ([Peripherals](peripherals.md)). They and the Russet Studio take
+  cables only from behind: every line plugged in shows its socket where it meets the back face, and its cord into
+  the machine.
 - **Servers:** the **qServe**, a 1U rack server per era from the Legacy to the Advanced, in the ordinary racks, as the
   real one was a 19" unit ([Servers and racks](servers-and-racks.md)).
 - **The Quince Mainframe**, from the Transition on, a Mainframe of its own running Quince OS X Server
@@ -29,8 +31,13 @@ it is decided for Carbon.
 
 A Quince machine takes a Quince logic board, and a Quince logic board takes only the processors its era gives it
 (Motoroller, PowerQ, the Integra ones of the Transition and the Standard, and Quince's own); it never goes into another
-maker's case, and no other board goes into a Quince case. Memory modules, disks and graphics cards are the common ones;
-the all-in-ones draw with the graphics on their board.
+maker's case, and no other board goes into a Quince case. There are sixteen logic boards: one for each machine, one
+for the qServe of each era and one for the Quince Mainframe of each era. Memory modules, disks and graphics cards are
+the common ones; the all-in-ones draw with the graphics on their board. Quince's own chips carry memory in their
+package, unified with the graphics, and the Advanced logic boards keep the common memory slots besides.
+
+Powering a Quince machine on while sneaking opens its firmware's start-up choices, as holding the key did: the
+Startup Manager from the Transition on (its options on the Advanced), Open Firmware's `ok` prompt on the Legacy.
 
 ### Instruction sets
 
@@ -61,23 +68,42 @@ Disk and memory in MB, estimates, as for every system ([Operating systems](opera
 - **The kernels:** `quince_classic` is cooperative, with no command line at all, as the classic Mac was: it always
   boots to its desktop. `wallace` is preemptive and POSIX, with `zsh` (Wallace stands beside Darwin, the real kernel's
   name).
-- **Packages:** the classic systems install only from media. Quince OS X installs `.pkg` packages and programs dragged
-  into Applications; from the Standard, the **Quince Store** (served by the Mirror) and `keg`, after Homebrew. The
-  phones' qOS installs only from the Quince Store.
+- **Packages:** the classic systems install only from media: the Quince System from three floppy disks through the
+  slot, the installer asking for the next and ejecting the last, Quince OS 9 guided from its CD. Quince OS X installs
+  `.pkg` packages and programs dragged into Applications; from the Standard, the **Quince Store** (served by the
+  Mirror) and `keg`, after Homebrew. Everything in the Quince Store is free, and it lists the mod's own programs;
+  `keg` installs only from the Mirror (`mirror://mainframe`). The phones' qOS installs only from the Quince Store.
 - **The desktop:** Quince's skin, with the menu bar at the top, the **Seeker** (after the Finder) and, from Quince OS X,
   the Dock. Each system has its look: the Quince System in black and white, Quince OS 9 in Platinum, Quince OS X in
-  **Pulp** (after Aqua), then flat in the 2010s, and quinceOS's own. The looks are drawn and approved before any code.
+  **Pulp** (after Aqua) in the Legacy and the Transition, then flat in the Standard, and quinceOS's own in the
+  Advanced. Unlike the rest of the mod, these looks keep the rounded corners and the gel buttons of the systems they
+  parody. The Dock holds the system's programs, the Quince Store from the Standard, and the Trash at its end. Emptying
+  the Trash asks first only on Quince OS 9.
 - **Its programs:** the Seeker, TextPad, Preview, **qTunes** (the music player), **Expedition** (the browser, which
   waits for the web of the world), the Terminal (from Quince OS X), System Preferences and the **QuinceTime Player**,
   Quince's name for the Media Player ([Programs](programs.md)).
+- **System Preferences** has the panels of its real one, with Memory and Mirror among them. quinceOS starts into its
+  **recovery** from the start-up choices: Startup Disk, Reinstall quinceOS and Disk Utility. **Quince OS X Server**
+  runs its services from **Server Admin**: the Mainframe's, which are the Mirror, the IQL Engine and the Automation
+  Engine.
 
 ### Crashes and memory
 
-- **The crash pages:** the bomb, *Sorry, a system error occurred*, on the Quince System and Quince OS 9; the grey page
-  in many languages, *You need to restart your computer*, on Quince OS X and quinceOS; the **Sad Quince** at start-up
-  for a hardware fault, Quince's red page ([Operating systems](operating-systems.md)).
-- **Memory, on the classic systems:** each program has a fixed memory partition, which its Get Info sets, and a program
-  that doesn't fit is refused: *There is not enough memory to open*, as the real ones did.
+- **The crash pages:** the bomb, *Sorry, a system error occurred*, on the Quince System and Quince OS 9, wherever the
+  game brings a system down, its Restart losing whatever was open; the grey page in English, French, German and
+  Spanish, *You need to restart your computer*, on Quince OS X and quinceOS; the **Sad Quince** at start-up for a
+  hardware fault, Quince's red page ([Operating systems](operating-systems.md)).
+- **Memory, on the classic systems:** each program has a fixed memory partition, which its Get Info sets (one size on
+  the Quince System; the suggested, minimum and preferred sizes on Quince OS 9), and a program that doesn't fit is
+  refused: *There is not enough memory to open*, as the real ones did.
 - **Memory, on Quince OS X and quinceOS:** the dialog *Your system has run out of application memory* pauses the
   programs and lets the player choose which to force to quit; nothing ends without the player, and the kernel panics
   only when nothing is left.
+
+### File systems
+
+Quince formats as its real one did ([Storage devices](storage-devices.md)): **HFS** on the Quince System, **HFS+** on
+Quince OS 9 and Quince OS X, journaled from Quince OS X (back in seconds after a power loss), and **APFS** on
+quinceOS, copy-on-write with snapshots, as btrfs and ZFS. Only Quince's systems read and write them. **Disk
+Utility** is Quince's disk tool from Quince OS X on; Quince OS 9 has **Drive Setup**, and the Quince System formats
+only at its install.
