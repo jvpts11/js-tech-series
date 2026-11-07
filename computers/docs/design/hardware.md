@@ -359,5 +359,9 @@ The mining and simulation boards are designed with their systems ([Teracoin](ter
   - What lives in swap runs slower, by the disk it is on: a program with part of itself in swap gets its share of the
     processor times 0.25 on a hard disk, 0.6 on an SSD and 0.9 on NVMe, for the part of it that is in swap. Estimates.
   - The installers make it: on Linux and the BSDs a swap partition as big as the memory, on Frames a page file the
-    system sizes itself. Swap weighs on the disk as files do ([Storage devices](storage-devices.md)).
-  - The Task Manager and the System Monitor show it: the commit charge on Frames, the swap line on the others.
+    system sizes itself (one and a half times the memory on Frames 95 and XP, as big as the memory from Frames 7 on).
+    Swap weighs on the disk as files do ([Storage devices](storage-devices.md)).
+  - The Task Manager and the System Monitor show it: on Frames XP the PF Usage and the commit charge against its limit,
+    on Frames 10 and 11 a Memory page with what is promised, and on the others the swap line; each shows the programs
+    partly in swap and the speed they run at. At the prompt: `free`, `swapon` and `top` (with its SWAP column) on Linux,
+    `swapinfo` and `sysctl` on FreeBSD; MC-DOS's `mem` has no swap to show.

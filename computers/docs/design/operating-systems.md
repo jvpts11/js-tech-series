@@ -199,7 +199,8 @@ tune in play.
 When a program needs more than is free, each system answers as its real one did:
 
 - **Frames** goes down, whatever asked: a window, a program started at the prompt, a service. Frames 95, with no memory
-  protection, at once; XP, 7, 10 and 11 first warn with a balloon (*Low on memory*) once the memory passes nine tenths,
+  protection, at once; XP, 7, 10 and 11 first warn with a balloon (*Low on memory*) once what is promised (the memory
+  and the page file) passes nine tenths,
   naming the three programs that hold the most, and go down on the program that doesn't fit. Each edition has its own
   page: the fatal exception of 95, the STOP screen of XP and 7, the sad face of 10 and 11 with a real scannable code and
   the stop code (`MEMORY_MANAGEMENT`).

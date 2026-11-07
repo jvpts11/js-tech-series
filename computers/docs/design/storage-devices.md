@@ -147,10 +147,12 @@ only the modern ones do.
   OS X, and APFS on quinceOS ([Quince](quince.md)).
 - A long check takes about a second for every 64 items' weight in use, at least 5 seconds and at most a minute; a
   journal takes 2 seconds; copy-on-write takes none. Estimates.
-- **Snapshots** (btrfs and ZFS): `btrfs subvolume snapshot` and `zfs snapshot` keep the partition as it is, items and
-  files, and rolling back returns it there, the cure for a corruption or, with security, a ransomware. A snapshot weighs
-  what changed since it was taken.
-- **Mirrors** (ZFS): two disks hold the same pool; when corruption hits one, ZFS repairs it from the other
+- **Snapshots** (btrfs, ZFS and APFS): `btrfs subvolume snapshot` and `zfs snapshot` keep the partition as it is, items
+  and files, and rolling back returns it there, the cure for a corruption or, with security, a ransomware: btrfs at the
+  next start after `btrfs subvolume set-default`, ZFS at once with `zfs rollback`. A snapshot weighs what changed
+  since it was taken.
+- **Mirrors** (ZFS): two disks hold the same pool; when corruption hits one, ZFS repairs it from the other as it reads
+  the damaged part and when it scrubs (`zpool scrub`), and `zpool status` counts what it repaired
   ([Storage](storage.md)).
 - **Owners of files**, once accounts come ([Security](security.md)): FAT and exFAT keep none, the others do.
 
@@ -158,15 +160,26 @@ only the modern ones do.
 
 - **MBR or GPT:** an installer writes MBR under a BIOS (Vintage to Transition) and GPT under UEFI (Standard and
   Advanced). MBR keeps four partitions at most and sees at most 2 TB of a disk, so a 4 TB disk on MBR shows 2 TB, as a
-  real one does. A disk tool turns an empty disk from one into the other.
-- **Several systems on one disk**, each on its own partition: the boot manager lists them (the Midsoft Boot Manager,
-  GRUB, FreeBSD's loader) as it lists systems on different disks today. This replaces the one shared tree: two systems
-  on a disk see each other's files only when they read each other's file system.
+  real one does. A disk tool turns an empty disk from one into the other: Disk Management and `diskpart` only convert
+  an empty disk, and GNOME Disks' Format Disk and the KDE Partition Manager's New Partition Table erase the disk and
+  write the new table. Under UEFI the installers also make a small EFI system partition (512 MB, FAT32), where the
+  boot entries live; it is never a volume of the network.
+- **Several systems on one disk**, each on its own partition: GRUB lists them all, the Frames among them as the Frames
+  Boot Manager on the EFI partition, and the Midsoft Boot Manager lists each Frames with its disk and partition;
+  FreeBSD's loader lists none but its own, which GRUB or the firmware's F12 menu reaches, and the F12 menu has a line
+  for every system on a disk. MC-DOS and UNIX System V have no boot manager: on their disk the active partition is the
+  one that starts, switched by MC-DOS's FDISK and UNIX's `fdisk`. This replaces the one shared tree: two systems on
+  a disk see each other's files only when they read each other's file system.
 - **A FAT partition** both systems read carries files between them.
 - **A data partition:** reinstalling or formatting the system's partition leaves the others as they are, with their
   items and files. Formatting a whole disk still erases everything on it.
 - **Resizing** follows the real limits: NTFS and btrfs shrink and grow while the system runs; ext4 grows while mounted
   and shrinks only unmounted (from a live medium or another system); XFS and ZFS only grow; FAT and UFS resize only
   unmounted. A partition never shrinks below what it holds.
+- **Every installer's disk step** lists the partitions and the free space, as its real one did: Frames XP's text phase
+  (the four partitions of an MBR disk respected), the New, Delete, Format and Extend of Frames 7 to 11, Ubuntu and
+  Linux Mint beside another system (shrinking its partition to the size chosen), Debian and Fedora in their own looks,
+  FreeBSD's Auto (ZFS), with its mirror, and Auto (UFS). MC-DOS, UNIX System V and Frames 95 take their disk and format
+  it without asking.
 - **Every partition is a volume of its own** ([Volumes](#volumes), above), and the network counts each partition in a
   file system it reads as a volume of its storage. A swap partition is never one.
