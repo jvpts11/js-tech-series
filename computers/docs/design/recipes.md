@@ -664,3 +664,294 @@ The rest of the room, each at its era's bench:
 
 The Rack UPS, the UPS Battery Expansion, the PDU, the Cooling Unit and the Vent Panel are with power and
 cooling.
+
+### Peripherals and media
+
+Each at the bench of its era.
+
+#### Monitors
+
+The Display Line's screen of its era, an etched board and a case of 2 PVC sheets (Vintage) or 2
+polycarbonate. The Vintage tubes differ by their phosphor, as the real ones did: white (the tube's own zinc
+sulfide), green (doped with copper), amber (with manganese), and the CGA's colours (both, behind a steel
+shadow mask), which the Legacy's colour tube also has. A touch monitor is the monitor with its touch layer
+(an indium tin oxide foil), its cover glass and its touch controller.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Mono I Monitor | Vintage | 1 tube screen, 1 Vintage etched board and 2 PVC sheets |
+| Mono II Monitor | Vintage | 1 tube screen, 1 Vintage etched board, 2 PVC sheets and 1 copper nugget |
+| Amber Monitor | Vintage | 1 tube screen, 1 Vintage etched board, 2 PVC sheets and 1 manganese dust |
+| CGA Monitor | Vintage | 1 tube screen, 1 Vintage etched board, 2 PVC sheets, 1 steel sheet, 1 copper nugget and 1 manganese dust |
+| Legacy Monitor | Legacy | 1 tube screen, 1 Legacy etched board, 2 polycarbonate sheets, 1 steel sheet, 1 copper nugget and 1 manganese dust |
+| Transition Monitor | Transition | 1 liquid crystal screen, 1 Transition etched board and 2 polycarbonate sheets |
+| Monitor | Standard | 1 LED screen, 1 Standard etched board and 2 polycarbonate sheets |
+| Touch Monitor | Standard | 1 Monitor, 1 indium tin oxide foil, 1 glass pane and 1 Standard controller chip |
+| Color Monitor | Advanced | 1 self-lit panel, 1 Advanced etched board and 2 polycarbonate sheets |
+| Advanced Touch Monitor | Advanced | 1 Color Monitor, 1 indium tin oxide foil, 1 glass pane and 1 Advanced controller chip |
+
+#### Printers
+
+Each the printer of its kind: the dot matrix's 9-pin head (solenoids, copper coils) on its carriage rails;
+the inkjets' heads (a controller chip each) and the photo printer's little screen; the laser printer's
+laser, its drum (an aluminium plate) and its fuser's heater (a copper coil); the ink tank printer's tanks.
+The Large Scale Printer's mechanical blocks come from the Crafting Table, its Print Unit from the bench.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Epsilon FX-80 | Vintage | 2 PVC sheets, 2 electric motors, 2 copper coils, 2 steel rods and 1 Vintage etched board |
+| Pakard DeskJot 940 | Legacy | 2 polycarbonate sheets, 2 electric motors, 1 Legacy controller chip, 1 steel rod and 1 Legacy etched board |
+| Large Scale Printer: Print Unit | Legacy | 4 steel plates, 1 Legacy etched board, 4 Legacy controller chips and 1 electric motor |
+| Pakard FotoSmart C4280 | Transition | 2 polycarbonate sheets, 2 electric motors, 2 Transition controller chips, 1 liquid crystal screen and 1 Transition etched board |
+| Pakard LaserJot 1102 | Standard | 2 polycarbonate sheets, 2 electric motors, 1 gallium arsenide laser diode, 1 aluminium plate, 1 copper coil and 1 Standard etched board |
+| Epsilon EcoTonk ET-2720 | Advanced | 3 polycarbonate sheets, 2 electric motors, 1 Advanced controller chip, 1 LED and 1 Advanced etched board |
+
+| Block | Recipe | What it is |
+| --- | --- | --- |
+| Paper Feeder | `SP SP SP / SR M SR / SP SP SP` | the rollers and the motor that pulls the paper |
+| Inking Unit | `PVC PVC PVC / SR M SR / SP SP SP` | the ink tanks (PVC), the pump and the rollers |
+| Perfect Binder | `SP Co SP / SR M SR / SP SP SP` | the heated glue pot (a coil) and the press |
+
+#### Drives, the Dock Station and the scanner
+
+A drive is the spec's (optical: a motor, a lens, the laser diode of its era, an etched board; floppy: a
+motor, a magnetic head, an etched board) in a case of its own; the DVD Drive is the Transition's. The Dock
+Station's trays are a SATA port for each disk size and an M.2 slot, with its USB bridge. The scanner has its
+glass, a lens, its sensor and controller (2 controller chips), the carriage's motor, its lamp (a cold
+cathode lamp, an LED from the Standard), its board and its box; the Vinyl RW Drive its platter (a steel
+plate) and motor and its cutting head (a magnetic head driven by a copper coil); the Extended CD Drive, as the
+real duplicator towers, its eight drives (one reads, seven write) and its little screen.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Floppy Drive | Vintage | 1 electric motor, 1 magnetic head, 1 Vintage etched board and 1 PVC sheet |
+| Scanner (Vintage) | Vintage | 1 glass pane, 1 glass lens, 2 Vintage controller chips, 1 electric motor, 1 cold cathode lamp, 1 Vintage etched board and 1 PVC sheet |
+| Vinyl RW Drive (Vintage) | Vintage | 1 steel plate, 1 electric motor, 1 magnetic head, 1 copper coil, 1 Vintage etched board and 1 PVC sheet |
+| CD Drive | Legacy | 1 electric motor, 1 glass lens, 1 gallium arsenide laser diode, 1 Legacy etched board and 1 polycarbonate sheet |
+| Scanner (Legacy) | Legacy | 1 glass pane, 1 glass lens, 2 Legacy controller chips, 1 electric motor, 1 cold cathode lamp, 1 Legacy etched board and 1 polycarbonate sheet |
+| Vinyl RW Drive (Legacy) | Legacy | 1 steel plate, 1 electric motor, 1 magnetic head, 1 copper coil, 1 Legacy etched board and 1 polycarbonate sheet |
+| Extended CD Drive (Legacy) | Legacy | 8 Internal CD Drives, 4 steel plates, 1 Legacy etched board and 2 Legacy controller chips |
+| DVD Drive | Transition | 1 electric motor, 1 glass lens, 1 aluminium gallium indium phosphide laser diode, 1 Transition etched board and 1 polycarbonate sheet |
+| Scanner (Transition) | Transition | 1 glass pane, 1 glass lens, 2 Transition controller chips, 1 electric motor, 1 cold cathode lamp, 1 Transition etched board and 1 polycarbonate sheet |
+| Vinyl RW Drive (Transition) | Transition | 1 steel plate, 1 electric motor, 1 magnetic head, 1 copper coil, 1 Transition etched board and 1 polycarbonate sheet |
+| Extended CD Drive (Transition) | Transition | 8 Internal DVD Drives, 4 steel plates, 1 Transition etched board, 2 Transition controller chips and 1 liquid crystal screen |
+| Dock Station | Standard | 2 polycarbonate sheets, 1 Standard etched board, 1 Standard controller chip, 2 SATA Ports and 1 M.2 Slot |
+| Scanner (Standard) | Standard | 1 glass pane, 1 glass lens, 2 Standard controller chips, 1 electric motor, 1 LED, 1 Standard etched board and 1 polycarbonate sheet |
+| Vinyl RW Drive (Standard) | Standard | 1 steel plate, 1 electric motor, 1 magnetic head, 1 copper coil, 1 Standard etched board and 1 polycarbonate sheet |
+| Blu-ray Drive | Advanced | 1 electric motor, 1 glass lens, 1 gallium nitride laser diode, 1 Advanced etched board and 1 polycarbonate sheet |
+| Scanner (Advanced) | Advanced | 1 glass pane, 1 glass lens, 2 Advanced controller chips, 1 electric motor, 1 LED, 1 Advanced etched board and 1 polycarbonate sheet |
+| Vinyl RW Drive (Advanced) | Advanced | 1 steel plate, 1 electric motor, 1 magnetic head, 1 copper coil, 1 Advanced etched board and 1 polycarbonate sheet |
+| Extended CD Drive (Advanced) | Advanced | 8 Internal Blu-ray Drives, 4 steel plates, 1 Advanced etched board, 2 Advanced controller chips and 1 LED screen |
+
+#### Speakers, hubs and the devices of the network
+
+A speaker: its voice coil (a copper coil), its magnet (ferrite, as real speaker magnets are), its paper
+cone and its box; a powered one its amplifier (the era's etched board). The Redstone Interface: redstone,
+the lens of the face it reads through, its board and box. A hub: the Vintage's switch box, then the hub
+chip and a copper wire for each port it adds. A Pattern Encoder: its board and controller and the drive of
+its era's writable medium (the floppy drive, the internal CD, DVD and Blu-ray drives; the USB port, a copper
+foil and its controller, in the Standard).
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Redstone Interface (Vintage) | Vintage | 1 redstone, 1 glass lens, 1 Vintage etched board and 1 PVC sheet |
+| Vintage Hub (switch box) | Vintage | 1 steel plate, 1 steel rod, 2 copper wires and 1 Vintage etched board |
+| Pattern Encoder (Vintage) | Vintage | 1 Vintage etched board, 1 Vintage controller chip, 2 PVC sheets and 1 Floppy Drive |
+| Network Gateway | Vintage | 1 Vintage etched board, 1 Vintage controller chip, 2 PVC sheets and 2 copper wires |
+| Artisan ToneWorks | Legacy | 1 copper coil, 1 ferrite, 1 paper and 1 polycarbonate sheet |
+| Redstone Interface (Legacy) | Legacy | 1 redstone, 1 glass lens, 1 Legacy etched board and 1 polycarbonate sheet |
+| Hub (Legacy) | Legacy | 1 polycarbonate sheet, 1 Legacy etched board, 1 Legacy controller chip and 4 copper wires |
+| Pattern Encoder (Legacy) | Legacy | 1 Legacy etched board, 1 Legacy controller chip, 2 polycarbonate sheets and 1 Internal CD Drive |
+| Artisan Inspira 2.1 | Transition | 1 copper coil, 1 ferrite, 1 paper, 1 polycarbonate sheet and 2 copper wires |
+| Artisan Inspira 2.1 Subwoofer | Transition | 2 copper coils, 2 ferrites, 2 paper, 2 polycarbonate sheets and 1 Transition etched board |
+| Redstone Interface (Transition) | Transition | 1 redstone, 1 glass lens, 1 Transition etched board and 1 polycarbonate sheet |
+| Hub (Transition) | Transition | 1 polycarbonate sheet, 1 Transition etched board, 1 Transition controller chip and 4 copper wires |
+| Pattern Encoder (Transition) | Transition | 1 Transition etched board, 1 Transition controller chip, 2 polycarbonate sheets and 1 Internal DVD Drive |
+| Artisan WattWorks T20 | Standard | 1 copper coil, 1 ferrite, 1 paper, 1 aluminium plate and 1 Standard etched board |
+| Redstone Interface (Standard) | Standard | 1 redstone, 1 glass lens, 1 Standard etched board and 1 polycarbonate sheet |
+| Hub (Standard) | Standard | 1 polycarbonate sheet, 1 Standard etched board, 1 Standard controller chip and 7 copper wires |
+| Pattern Encoder (Standard) | Standard | 1 Standard etched board, 2 Standard controller chips, 2 polycarbonate sheets and 1 copper foil |
+| Artisan Cobble | Advanced | 1 copper coil, 1 ferrite, 1 paper, 1 polycarbonate sheet and 1 Advanced etched board |
+| Redstone Interface (Advanced) | Advanced | 1 redstone, 1 glass lens, 1 Advanced etched board and 1 polycarbonate sheet |
+| Hub (Advanced) | Advanced | 1 aluminium plate, 1 Advanced etched board, 1 Advanced controller chip and 7 copper wires |
+| Pattern Encoder (Advanced) | Advanced | 1 Advanced etched board, 1 Advanced controller chip, 2 polycarbonate sheets and 1 Internal Blu-ray Drive |
+
+#### Writable media
+
+The floppy disk is its film in a PVC case. A rewritable disc is the blank disc and its reflector, with the
+phase-change layer the real ones have (silver for the CD-RW's, silver and indium for the DVD-RW's, germanium
+for the BD-RE's); a DVD is two discs bonded. A USB stick is memory chips by its size, its controller, board,
+case and plug. A tape is its film (PVC) and its magnetic coat (iron oxide on the reel and the DLT, metal
+particles on the LTO-3, barium ferrite after) in a cartridge with, from the LTO, its memory chip. The blank
+vinyl is PVC, as vinyl is, with its paper label. **Media pressed with their content** (a CD-ROM, a DVD-ROM, a
+BD-ROM, an installer disc) **are never crafted**: they are found, bought and copied onto the blank media
+below ([Survival](survival.md)).
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Floppy Disk | Vintage | 1 floppy film and 1 PVC sheet |
+| Tape Reel | Vintage | 2 PVC sheets and 1 iron dust |
+| Blank Vinyl Record | Vintage | 2 PVC sheets and 1 paper |
+| CD-RW | Legacy | 1 blank disc, 1 aluminium foil and 1 silver dust |
+| DLT Tape | Legacy | 2 PVC sheets, 1 iron dust and 1 polycarbonate sheet |
+| DVD-RW | Transition | 2 blank discs, 1 aluminium foil, 1 silver dust and 1 indium dust |
+| LTO-3 Tape | Transition | 2 PVC sheets, 2 iron dust, 1 polycarbonate sheet and 1 Transition memory chip |
+| Vaultis Pocket 8G | Standard | 1 Standard memory chip, 1 Standard controller chip, 1 Standard etched board, 1 polycarbonate sheet and 1 copper foil |
+| Vaultis Pocket 16G | Standard | 2 Standard memory chips, 1 Standard controller chip, 1 Standard etched board, 1 polycarbonate sheet and 1 copper foil |
+| Vaultis Pocket 32G (the stick of today) | Standard | 4 Standard memory chips, 1 Standard controller chip, 1 Standard etched board, 1 polycarbonate sheet and 2 copper foils |
+| LTO-6 Tape | Standard | 2 PVC sheets, 1 ferrite, 1 polycarbonate sheet and 1 Standard memory chip |
+| BD-RE | Advanced | 1 blank disc, 1 silver foil and 1 germanium dust |
+| Vaultis Pocket 64G | Advanced | 1 Advanced memory chip, 1 Advanced controller chip, 1 Advanced etched board, 1 aluminium plate and 2 copper foils |
+| LTO-9 Tape | Advanced | 2 PVC sheets, 2 ferrites, 1 polycarbonate sheet and 1 Advanced memory chip |
+
+### The network
+
+#### Cables
+
+Every cable recipe gives 8. Each is what the real one has: the coaxials' braid (copper foil), more copper
+in the later twisted pairs (their twists are tighter, more copper to the metre), the shielded ones' foil,
+the long lines' armour (a steel rod), the direct-attach copper of the OSFP and the gold of its plugs. The
+crafting cable carries redstone, the line's signal; a peripheral cable takes its era's plugs, tin in the
+Vintage and gold after.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Thin Coaxial Cable | Vintage | 2 copper wires, 2 copper foils and 1 PVC sheet |
+| Thick Coaxial Cable | Vintage | 4 copper wires, 4 copper foils and 2 PVC sheets |
+| Telephone Line | Vintage | 2 copper wires and 1 PVC sheet |
+| Crafting Cable | Vintage | 3 copper wires, 1 PVC sheet and 1 redstone |
+| Vintage Peripheral Cable (DE-9, DB-25) | Vintage | 4 copper wires, 1 PVC sheet and 1 tin nugget |
+| Ethernet Cable | Legacy | 4 copper wires and 1 PVC sheet |
+| HBW Cable | Legacy | 10 copper wires, 2 copper foils and 2 PVC sheets |
+| Leased Line | Legacy | 4 copper wires, 1 PVC sheet and 1 copper foil |
+| Legacy Peripheral Cable (VGA, USB) | Legacy | 4 copper wires, 1 PVC sheet and 1 gold nugget |
+| Cat 5e Cable | Transition | 5 copper wires and 1 PVC sheet |
+| 10GBASE-CX4 Cable | Transition | 8 copper wires, 2 copper foils and 1 PVC sheet |
+| T3 Line | Transition | 1 copper wire, 2 copper foils and 1 PVC sheet |
+| InfiniBand Cable | Transition | 8 copper wires, 4 copper foils and 1 PVC sheet |
+| Transition Peripheral Cable (DVI, USB) | Transition | 5 copper wires, 1 PVC sheet and 1 gold nugget |
+| Gigabit Ethernet Cable | Standard | 6 copper wires and 1 PVC sheet |
+| Fibre Optic Cable | Standard | 4 optical fibres and 1 PVC sheet |
+| VLDC Cable | Standard | 4 optical fibres, 1 PVC sheet and 1 steel rod |
+| High Compute Cable | Standard | 8 optical fibres and 1 PVC sheet |
+| Peripheral Cable (HDMI, USB 3) | Standard | 6 copper wires, 1 PVC sheet, 1 gold nugget and 1 copper foil |
+| Cat 6a Cable | Advanced | 6 copper wires, 1 PVC sheet and 1 copper foil |
+| OM5 Fibre Cable | Advanced | 6 optical fibres and 1 PVC sheet |
+| Dark Fibre Cable | Advanced | 8 optical fibres, 1 PVC sheet and 1 steel rod |
+| OSFP Cable | Advanced | 16 copper wires, 8 copper foils, 2 PVC sheets and 1 gold nugget |
+| Advanced Peripheral Cable (DisplayPort, USB-C) | Advanced | 6 copper wires, 1 PVC sheet and 2 gold nuggets |
+
+#### Routers, repeaters and the Server Router
+
+A router is its box, its board, 2 controller chips, a memory chip (the routing table) and its ports (copper
+wires); an optical router is of aluminium, with the fibre's lasers and the fibre; a repeater one controller and
+two ports. A Server Router is a steel box with its board, the table's memory, its six faces' ports and one
+controller for every 4 racks it serves (4 in the Legacy, 8 in the Transition, 16 in the Standard, 32 in the
+Advanced).
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Router (Vintage) | Vintage | 1 PVC sheet, 1 Vintage etched board, 2 Vintage controller chips, 1 Vintage memory chip and 4 copper wires |
+| Repeater (Vintage) | Vintage | 1 PVC sheet, 1 Vintage etched board, 1 Vintage controller chip and 2 copper wires |
+| Router (Legacy) | Legacy | 1 polycarbonate sheet, 1 Legacy etched board, 2 Legacy controller chips, 1 Legacy memory chip and 4 copper wires |
+| Repeater (Legacy) | Legacy | 1 polycarbonate sheet, 1 Legacy etched board, 1 Legacy controller chip and 2 copper wires |
+| Server Router (Legacy) | Legacy | 2 steel plates, 1 Legacy etched board, 1 Legacy controller chip, 1 Legacy memory chip and 6 copper wires |
+| Router (Transition) | Transition | 1 polycarbonate sheet, 1 Transition etched board, 2 Transition controller chips, 1 Transition memory chip and 4 copper wires |
+| Repeater (Transition) | Transition | 1 polycarbonate sheet, 1 Transition etched board, 1 Transition controller chip and 2 copper wires |
+| Server Router (Transition) | Transition | 2 steel plates, 1 Transition etched board, 2 Transition controller chips, 1 Transition memory chip and 6 copper wires |
+| Router (Standard) | Standard | 1 polycarbonate sheet, 1 Standard etched board, 2 Standard controller chips, 1 Standard memory chip and 4 copper wires |
+| Repeater (Standard) | Standard | 1 polycarbonate sheet, 1 Standard etched board, 1 Standard controller chip and 2 copper wires |
+| Optical Router (Standard) | Standard | 1 aluminium plate, 1 Standard etched board, 2 Standard controller chips, 1 Standard memory chip, 2 gallium arsenide laser diodes and 2 optical fibres |
+| Server Router (Standard) | Standard | 2 steel plates, 1 Standard etched board, 4 Standard controller chips, 1 Standard memory chip and 6 copper wires |
+| Router (Advanced) | Advanced | 1 polycarbonate sheet, 1 Advanced etched board, 2 Advanced controller chips, 1 Advanced memory chip and 4 copper wires |
+| Repeater (Advanced) | Advanced | 1 polycarbonate sheet, 1 Advanced etched board, 1 Advanced controller chip and 2 copper wires |
+| Optical Router (Advanced) | Advanced | 1 aluminium plate, 1 Advanced etched board, 2 Advanced controller chips, 1 Advanced memory chip, 2 gallium arsenide laser diodes and 2 optical fibres |
+| Server Router (Advanced) | Advanced | 2 steel plates, 1 Advanced etched board, 8 Advanced controller chips, 1 Advanced memory chip and 6 copper wires |
+
+#### Storage and the crafting network
+
+Each with its box, its board and its controller: the Import Bus pulls with a motor; the Export Bus pushes with
+a motor and its ejector (a steel rod); the External Storage Bus reads an inventory as a disk (the era's drive
+connector); the Crafting Interface keeps its machine's patterns, a memory chip for every 3 patterns it holds.
+The Crafting Input Router and the Receiving Bus serve every era and are made once, in the Vintage.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Import Bus (Vintage) | Vintage | 1 PVC sheet, 1 Vintage etched board, 1 Vintage controller chip and 1 electric motor |
+| Export Bus (Vintage) | Vintage | 1 PVC sheet, 1 Vintage etched board, 1 Vintage controller chip, 1 electric motor and 1 steel rod |
+| External Storage Bus (Vintage) | Vintage | 1 PVC sheet, 1 Vintage etched board, 1 Vintage controller chip and 1 IDE Header |
+| Crafting Interface (Vintage) | Vintage | 1 PVC sheet, 1 Vintage etched board, 1 Vintage controller chip and 1 Vintage memory chip |
+| Crafting Input Router | Vintage | 1 PVC sheet, 1 Vintage etched board, 1 Vintage controller chip, 1 steel rod and 1 redstone |
+| Crafting Receiving Bus | Vintage | 1 PVC sheet, 1 Vintage etched board, 1 Vintage controller chip, 1 electric motor and 1 redstone |
+| Import Bus (Legacy) | Legacy | 1 polycarbonate sheet, 1 Legacy etched board, 1 Legacy controller chip and 1 electric motor |
+| Export Bus (Legacy) | Legacy | 1 polycarbonate sheet, 1 Legacy etched board, 1 Legacy controller chip, 1 electric motor and 1 steel rod |
+| External Storage Bus (Legacy) | Legacy | 1 polycarbonate sheet, 1 Legacy etched board, 1 Legacy controller chip and 1 IDE Header |
+| Crafting Interface (Legacy) | Legacy | 1 polycarbonate sheet, 1 Legacy etched board, 1 Legacy controller chip and 2 Legacy memory chips |
+| Import Bus (Transition) | Transition | 1 polycarbonate sheet, 1 Transition etched board, 1 Transition controller chip and 1 electric motor |
+| Export Bus (Transition) | Transition | 1 polycarbonate sheet, 1 Transition etched board, 1 Transition controller chip, 1 electric motor and 1 steel rod |
+| External Storage Bus (Transition) | Transition | 1 polycarbonate sheet, 1 Transition etched board, 1 Transition controller chip and 1 SATA Port |
+| Crafting Interface (Transition) | Transition | 1 polycarbonate sheet, 1 Transition etched board, 1 Transition controller chip and 3 Transition memory chips |
+| Import Bus (Standard) | Standard | 1 polycarbonate sheet, 1 Standard etched board, 1 Standard controller chip and 1 electric motor |
+| Export Bus (Standard) | Standard | 1 polycarbonate sheet, 1 Standard etched board, 1 Standard controller chip, 1 electric motor and 1 steel rod |
+| External Storage Bus (Standard) | Standard | 1 polycarbonate sheet, 1 Standard etched board, 1 Standard controller chip and 1 SATA Port |
+| Crafting Interface (Standard) | Standard | 1 polycarbonate sheet, 1 Standard etched board, 1 Standard controller chip and 3 Standard memory chips |
+| Import Bus (Advanced) | Advanced | 1 polycarbonate sheet, 1 Advanced etched board, 1 Advanced controller chip and 1 electric motor |
+| Export Bus (Advanced) | Advanced | 1 polycarbonate sheet, 1 Advanced etched board, 1 Advanced controller chip, 1 electric motor and 1 steel rod |
+| External Storage Bus (Advanced) | Advanced | 1 polycarbonate sheet, 1 Advanced etched board, 1 Advanced controller chip and 1 SATA Port |
+| Crafting Interface (Advanced) | Advanced | 1 polycarbonate sheet, 1 Advanced etched board, 1 Advanced controller chip and 4 Advanced memory chips |
+
+#### Function cards
+
+A card is the spec's expansion card: the etched board, 4 ceramic capacitors, its edge (as many copper foils
+as its slot has) and its plating, with its chips on top. The Crafting Card takes a controller for every
+thread and a memory chip for every 25 recipes it keeps; the personal-use cards (from the Legacy) what does
+their station's work (the Crafting Table Card 2 memory chips, its recipes; the Furnace Card its heater, a
+copper coil; the Enchanting Card lapis lazuli; the Anvil Card a steel plate); a Cluster Interface Card a
+controller for every lane and the port its line plugs into; the Vaultis Array two controllers, the Vaultis
+Cache one and its cache memory; the Optical Network Card the fibre's lasers and the fibre; a Phi, as a
+processor is made, the chips of its own die (MIC, 1 for every 8 cores, each next model one more) and 8
+memory chips; a WAN Interface Card what its line needs (the modem's line transformer, the T1's two, the
+T3's controllers and braid, the lasers and fibre of the VLDC and the Optical Transport); the Network Anchor
+Card a controller and 3 memory chips, the chunks it keeps.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Crafting Card ISA | Vintage | 1 Vintage etched board, 4 ceramic capacitors, 4 copper foils, 1 tin nugget, 1 Vintage controller chip and 1 Vintage memory chip |
+| Serial Console Card | Vintage | 1 Vintage etched board, 4 ceramic capacitors, 5 copper foils, 1 tin nugget, 1 Vintage controller chip and 1 copper wire |
+| Vaultis Array (Vintage) | Vintage | 1 Vintage etched board, 4 ceramic capacitors, 4 copper foils, 1 tin nugget and 2 Vintage controller chips |
+| Vaultis Cache (Vintage) | Vintage | 1 Vintage etched board, 4 ceramic capacitors, 4 copper foils, 1 tin nugget, 1 Vintage controller chip and 2 Vintage memory chips |
+| Modem Card (WAN) | Vintage | 1 Vintage etched board, 4 ceramic capacitors, 4 copper foils, 1 tin nugget, 1 Vintage controller chip and 1 transformer |
+| Network Anchor Card (Vintage) | Vintage | 1 Vintage etched board, 4 ceramic capacitors, 4 copper foils, 1 tin nugget, 1 Vintage controller chip and 3 Vintage memory chips |
+| Crafting Card PCI | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 5 copper foils, 1 gold nugget, 2 Legacy controller chips and 1 Legacy memory chip |
+| Crafting Table Card | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Legacy controller chip and 2 Legacy memory chips |
+| Furnace Card | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Legacy controller chip and 1 copper coil |
+| Enchanting Card | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Legacy controller chip and 1 lapis lazuli |
+| Anvil Card | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Legacy controller chip and 1 steel plate |
+| Management NIC | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 2 Legacy controller chips and 1 copper wire |
+| Vaultis Array (Legacy) | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 5 copper foils, 1 gold nugget and 2 Legacy controller chips |
+| Vaultis Cache (Legacy) | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 5 copper foils, 1 gold nugget, 1 Legacy controller chip and 2 Legacy memory chips |
+| T1 Card (WAN) | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 5 copper foils, 1 gold nugget, 1 Legacy controller chip and 2 transformers |
+| Network Anchor Card (Legacy) | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 5 copper foils, 1 gold nugget, 1 Legacy controller chip and 3 Legacy memory chips |
+| Crafting Card | Transition | 1 Transition etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 2 Transition controller chips and 3 Transition memory chips |
+| Crafting Card T3 | Transition | 1 Transition etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 4 Transition controller chips and 4 Transition memory chips |
+| Vaultis Array (Transition) | Transition | 1 Transition etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget and 2 Transition controller chips |
+| Vaultis Cache (Transition) | Transition | 1 Transition etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Transition controller chip and 2 Transition memory chips |
+| T3 Card (WAN) | Transition | 1 Transition etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 2 Transition controller chips, 1 transformer and 1 copper wire |
+| Network Anchor Card (Transition) | Transition | 1 Transition etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Transition controller chip and 3 Transition memory chips |
+| Crafting Card PCI-e 3.0 | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 6 Standard controller chips and 5 Standard memory chips |
+| Fabric Host Adapter | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 4 Standard controller chips and 1 copper wire |
+| Vaultis Array (Standard) | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget and 2 Standard controller chips |
+| Vaultis Cache (Standard) | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Standard controller chip and 4 Standard memory chips |
+| Optical Network Card | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Standard controller chip, 2 gallium arsenide laser diodes and 2 optical fibres |
+| Integra Phi 5100 | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 8 Standard MIC processor chips and 8 Standard memory chips |
+| Integra Phi 7120 | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 9 Standard MIC processor chips and 8 Standard memory chips |
+| Integra Phi 7290 | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 10 Standard MIC processor chips and 8 Standard memory chips |
+| Integra Phi 9000 | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 12 Standard MIC processor chips and 8 Standard memory chips |
+| VLDC Card (WAN) | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 2 Standard controller chips, 2 gallium arsenide laser diodes and 2 optical fibres |
+| Network Anchor Card (Standard) | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Standard controller chip and 3 Standard memory chips |
+| Crafting Card T4 | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 8 Advanced controller chips and 5 Advanced memory chips |
+| Fabric DPU | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 8 Advanced controller chips and 1 copper wire |
+| Vaultis Array (Advanced) | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget and 2 Advanced controller chips |
+| Vaultis Cache (Advanced) | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Advanced controller chip and 4 Advanced memory chips |
+| Optical Transport Card (WAN) | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 2 Advanced controller chips, 4 gallium arsenide laser diodes and 4 optical fibres |
+| Network Anchor Card (Advanced) | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Advanced controller chip and 3 Advanced memory chips |

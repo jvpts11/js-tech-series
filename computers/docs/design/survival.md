@@ -394,23 +394,19 @@ The generic components of J's Core's catalogue that J's Computers uses (electric
 magnetic heads, lead-acid batteries, lithium-ion cells) get their recipes here, as J's Core's design asks of every
 mod that uses them without J's Industrial. At its era's bench, every part is assembled from the chain's pieces:
 the processors, memory modules, graphics cards, motherboards and their components, power supplies, disks,
-computers, servers and racks are in [Recipes](recipes.md); the rest:
+computers, servers and racks, the peripherals, media, cables, network devices and cards are in
+[Recipes](recipes.md); the rest:
 
 | Part | Made of |
 | --- | --- |
-| Floppy disk | a film of PVC and iron dust, a PVC case |
-| Optical disc | a blank disc and an aluminium foil (silver for Blu-ray) |
-| Monitor | the Display Line's screen of its era, 1 etched board, a case of 2 PVC (Vintage) or 2 polycarbonate |
-| Drive | optical: a motor, a lens, the laser diode of its era, an etched board; floppy: a motor, a magnetic head, an etched board |
-| Expansion card | its chip, 4 capacitors, 1 etched board, its contacts (tin in the Vintage, gold later) |
-| Cables (8) | 4 copper wires and 1 PVC; the fibre lines, 4 optical fibres and 1 PVC |
 | Stock cooler | an aluminium plate in the Vintage; a fan and thermal paste added from the Legacy; a copper rod added from the Transition |
 | Tower cooler | 4 aluminium sheets, 2 copper rods (the heat pipes), 1 fan, 1 thermal paste |
 | Water cooler | 1 copper plate, 1 motor (the pump), 4 aluminium sheets (the radiator), 2 fans, 1 PVC, 250 mB of water, 1 thermal paste |
 | Fan | 1 motor and 1 PVC (Vintage) or 1 polycarbonate |
 
 **Software is never crafted:** systems and programs are found, bought, copied or downloaded (below,
-[Programs](programs.md)).
+[Programs](programs.md)), and so are the media pressed with them, such as an installer disc: a player finds
+one exploring, or buys it, and may copy it onto the blank media the bench makes.
 
 ### The Prebuilder
 
