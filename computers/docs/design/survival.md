@@ -12,9 +12,10 @@ and a modpack can write its own recipes and loot through KubeJS ([The API](api.m
 J's Computers never depends on J's Industrial, so it has a chain of its own, and J's Industrial brings another:
 
 - **J's Computers' chain is the easy one.** It follows a real electronics factory, from the ore to the chip, with real
-  materials: the elements, compounds, gases, acids and resins of J's Core's catalogue, in its forms (dust, plate,
-  sheet, foil, wire, rod, boule, wafer, lens, crystal). Each element comes from one source and one way of refining
-  it.
+  materials: the elements, compounds, gases, acids and resins of J's Core's catalogue, in its forms (crushed ore,
+  lump, dust, ingot, nugget, plate, sheet, foil, wire, rod, boule, wafer, lens, crystal). Each element comes from one
+  place in the world and one way of refining it; a gas may come out of more than one machine, as oxygen comes from
+  the air and from water.
 - **J's Industrial's chain is the hardcore one:** the real minerals (cassiterite, galena, bauxite, coltan), their
   byproducts and full refining, the Clean Room and its lithography, boards on its SMT Line, binning ([Eras](eras.md)).
 - **J's Computers' chain can be switched off** (`own_chain`, on by default). With J's Industrial installed, the
@@ -35,31 +36,112 @@ The setting that turns the computers' draw off turns the machines' off too.
 
 | Source | What it gives |
 | --- | --- |
-| J's Core's generic ore of the element | tin, lead, zinc, nickel, aluminium, tantalum, chromium, cobalt, silver, manganese, mercury, zirconium, tungsten, molybdenum; and vanilla's iron, copper and gold |
+| J's Core's generic ore of the element | tin, lead, zinc, nickel, aluminium, tantalum, chromium, cobalt, silver, lithium, manganese, mercury, zirconium, tungsten, molybdenum; and vanilla's iron, copper and gold |
 | A J's Core mineral | fluorine, from fluorspar (its element has no generic ore: its ores are salts) |
 | A byproduct, in the Crusher | gallium (from aluminium ore), indium and germanium (from zinc ore), hafnium (from zirconium ore), arsenic (from copper and gold ore), ruthenium (from nickel ore), sulfur (from zinc and lead ore) |
 | The Air Separation Unit | nitrogen, oxygen, argon, krypton |
 | The Electrolytic Cell | hydrogen and oxygen from water; chlorine and caustic soda from salt; refined copper; aluminium from alumina |
 | The Coke Oven | coke and coal tar from coal |
-| The Chemical Reactor | salt, with traces of boron, by evaporating water; alumina from aluminium ore and caustic soda; phosphorus from bone meal; methanol from coke and steam |
-| The Induction Furnace | steel from iron and coke; metallurgical silicon; calcium carbide |
-| Mined and grown vanilla | sand (silica), calcite (calcium), bone meal from a composter, water |
+| The Chemical Reactor | salt, with traces of boron dust, by evaporating water; alumina from crushed aluminium ore and caustic soda; lithium hydroxide from crushed lithium ore; the batteries' electrolyte; phosphorus dust from bone meal; methanol from coke and steam |
+| The Induction Furnace | steel from iron and coke; stainless steel; metallurgical silicon; calcium carbide |
+| Mined and grown vanilla | sand (silica), calcite (calcium), bone meal from a composter, water, logs; glass, made as in vanilla; paper, made as in vanilla or from wood pulp (below) |
 
 **The ores lie in veins** of J's Core's world kit, which J's Computers declares when no other mod has. The elements of
-the later eras lie in rarer and deeper veins, and some only in the Nether and the End, so each era still takes the
-player further across the world:
+the later eras lie in rarer and deeper veins, the last ones only in the deepslate, so each era still takes the
+player further across the world and further down. Every vein is in the Overworld:
 
 | Era | Where its new ores lie | Spacing | Height |
 | --- | --- | --- | --- |
 | Vintage | the Overworld, near the surface: tin, lead, zinc, nickel, aluminium, tantalum, chromium, manganese, mercury, fluorspar | 12 chunks | y 0 to 80 |
-| Legacy | deep in the Overworld: cobalt, silver | 16 chunks | y −16 to 40 |
+| Legacy | deep in the Overworld: cobalt, silver, lithium (spodumene) | 16 chunks | y −16 to 40 |
 | Transition | deep in the Overworld (indium, from the zinc already mined) | | |
 | Standard | the deepslate: zirconium (and its hafnium), tungsten | 24 chunks | y −64 to 0 |
-| Advanced | the Nether: molybdenum (ruthenium comes from the nickel already mined) | 24 chunks | y 10 to 110 |
-| Exa | the End, set when the era is designed | | |
+| Advanced | the deepslate: molybdenum (ruthenium comes from the nickel already mined) | 24 chunks | y −64 to 0 |
+| Exa | set when the era is designed | | |
 
 The spacing is the average distance between two veins of the same kind; a vein has the size of J's Core's kit
 (about 3 by 3 chunks).
+
+### The forms of each element
+
+The forms the chain asks for, which J's Computers declares to J's Core; no other form of these elements exists
+unless another mod asks for it. Where each metal becomes an ingot is in *The chain's numbers* below.
+
+| Element | Forms |
+| --- | --- |
+| Iron | crushed ore, ingot, nugget, dust |
+| Copper | crushed ore, ingot, nugget, plate, sheet, foil, wire, rod; refined copper as ingot and nugget |
+| Gold | crushed ore, ingot, nugget |
+| Tin | ore, raw, crushed ore, ingot, nugget |
+| Lead | ore, raw, crushed ore, ingot |
+| Zinc | ore, raw, crushed ore, ingot, dust |
+| Nickel | ore, raw, crushed ore, ingot, foil |
+| Aluminium | ore, raw, crushed ore, ingot, nugget, plate, sheet, foil |
+| Tantalum, manganese | ore, raw, crushed ore, ingot, dust |
+| Chromium, tungsten | ore, raw, crushed ore, ingot, nugget |
+| Cobalt | ore, raw, crushed ore, ingot, nugget, dust |
+| Silver | ore, raw, crushed ore, ingot, dust, foil |
+| Lithium | ore, raw, crushed ore (it is only used as its compounds) |
+| Mercury | ore, raw, crushed ore, liquid |
+| Zirconium | ore, raw, crushed ore (only for its hafnium) |
+| Molybdenum | ore, raw, crushed ore, ingot, plate |
+| Gallium, indium | dust, ingot |
+| Hafnium, ruthenium | dust, ingot, nugget |
+| Germanium | dust (a crystal in J's Core, with no ingot) |
+| Arsenic, sulfur, boron, phosphorus | dust |
+| Silicon | lump (metallurgical silicon), rod (polysilicon), boule, wafer |
+| Hydrogen, oxygen, nitrogen, argon, krypton, chlorine | gas |
+
+Fluorine comes in fluorspar, J's Core's mineral: its ore in five rocks, raw, dust and crystal. An ore, its raw
+form and its crushed ore take the colour of the mineral (red bauxite, green garnierite, lilac spodumene), as
+vanilla's raw iron is the colour of rust; the ingot and every later form take the colour of the metal, each its
+own hue so that no two read alike, as J's Core's materials page sets them.
+
+### The chain's compounds in J's Core
+
+The compounds, alloys, liquids and gases of the chain are materials of J's Core's catalogue, so that J's
+Industrial, J's Space and any other mod trade the same ones; their recipes are J's Computers'. Each carries its
+real formula and hazard classes, which its tooltip shows.
+
+| Material | Formula | State | Comes as |
+| --- | --- | --- | --- |
+| Alumina | Al₂O₃ | solid | dust |
+| Caustic soda | NaOH | solid | dust |
+| Salt | NaCl | solid | dust |
+| Zinc sulfide | ZnS | solid | dust |
+| Lithium hydroxide | LiOH | solid | dust |
+| Lithium cobalt oxide | LiCoO₂ | solid | dust |
+| Calcium carbide | CaC₂ | solid | lump |
+| Coke | C | solid | lump |
+| Metallurgical silicon | Si, 98% | solid | lump |
+| Polysilicon | Si, nine nines | solid | rod |
+| Cultured quartz | SiO₂ | crystal | crystal |
+| Gallium arsenide, aluminium gallium indium phosphide, gallium nitride | GaAs, AlGaInP, GaN | crystal | boule, wafer |
+| Calcium fluoride | CaF₂ | crystal | boule, lens |
+| Wood pulp | cellulose | solid | dust |
+| Phenolic resin, epoxy resin, polycarbonate, PVC | their polymers | polymer | sheet |
+| Steel | Fe-C | alloy | ingot, plate, sheet, rod |
+| Stainless steel | Fe70Cr20Ni10 | alloy | ingot, plate |
+| Solder | Sn60Pb40 | alloy | wire |
+| Lead-free solder | Sn-Ag-Cu | alloy | wire, nugget (its balls) |
+| Permalloy | Ni80Fe20 | alloy | ingot, foil |
+| Indium tin oxide | In₂O₃·SnO₂ | alloy | ingot, foil |
+| Refined copper | Cu, 99.99% | metal | ingot, nugget |
+| Coal tar, photoresist, liquid crystal | mixtures | liquid | fluid |
+| Battery electrolyte | LiPF₆ in organic carbonates | liquid | fluid |
+| Phenol | C₆H₅OH | liquid | fluid |
+| Methanol | CH₃OH | liquid | fluid |
+| Hydrofluoric acid | HF in water | liquid | fluid |
+| Sulfuric acid | H₂SO₄ | liquid | fluid |
+| Ferric chloride | FeCl₃ in water | liquid | fluid |
+| Ultrapure water | H₂O | liquid | fluid |
+| Hydrogen chloride | HCl | gas | gas |
+| Acetylene | C₂H₂ | gas | gas |
+
+The gases of the elements (hydrogen, oxygen, nitrogen, argon, krypton, chlorine) and liquid mercury are elements of
+the catalogue already. A gas is kept in pressurised tanks, travels in gas pipes and shows by its colour, never a
+texture: the colour its cylinder has in the European code (EN 1089-3), hydrogen red, oxygen white, nitrogen black,
+argon dark green, krypton bright green, chlorine yellow, hydrogen chloride yellow ochre, acetylene maroon.
 
 ### The material of each era
 
@@ -67,10 +149,10 @@ Each era asks for what its real hardware was made of. The amounts are first esti
 
 | Era | New materials | What they are for, as in the real hardware |
 | --- | --- | --- |
-| Vintage | silicon, phosphorus and boron, aluminium, tin and lead, nickel, tantalum, alumina, phenolic resin, zinc sulfide, ferrite, mercury, chromium, steel | chips; their dopants; the wiring inside the chip and disk platters; solder; permalloy heads; capacitors; ceramic chip packages; FR-2 boards (paper and phenolic resin from coal tar); the phosphor of tube monitors; inductors and motor magnets; the lithography's mercury lamp; its masks (chromium on quartz); cases |
-| Legacy | gold, glass fibre and epoxy, cobalt, gallium and arsenic, silver, polycarbonate | bonding wire and contacts; FR-4 boards; the platters' magnetic layer; the gallium arsenide laser of CD drives; thermal paste; compact discs |
-| Transition | copper inside the chip, lead-free solder (tin, silver, copper), indium tin oxide, aluminium gallium indium phosphide, krypton and fluorine | the copper wiring of around 2000; lead-free solder; flat screens; the laser of DVD drives; the krypton fluoride laser of the lithography |
-| Standard | hafnium, gallium nitride, germanium, tungsten, argon, calcium fluoride, ultrapure water | the high-k gate of 2007; LEDs and the blue laser of Blu-ray drives; silicon germanium and the core of optical fibre; the vias; the argon fluoride laser, its lenses and immersion |
+| Vintage | silicon, phosphorus and boron, aluminium, tin and lead, nickel, tantalum, alumina, phenolic resin, zinc sulfide, ferrite, mercury, chromium, steel and stainless steel | chips; their dopants; the wiring inside the chip and disk platters; solder and the lead-acid batteries of UPSes; permalloy heads; capacitors; ceramic chip packages; FR-2 boards (paper and phenolic resin from coal tar); the phosphor of tube monitors; inductors and motor magnets; the lithography's mercury lamp; its masks (chromium on quartz); cases; the vacuum chambers |
+| Legacy | gold, glass fibre and epoxy, cobalt, gallium and arsenic, silver, polycarbonate, lithium, indium tin oxide and liquid crystal, krypton and fluorine | bonding wire and contacts; FR-4 boards; the platters' magnetic layer; the gallium arsenide laser of CD drives; thermal paste; compact discs; the lithium-ion batteries of the first portables (lithium cobalt oxide); their small liquid crystal screens; the krypton fluoride laser of the lithography |
+| Transition | copper inside the chip, lead-free solder (tin, silver, copper), aluminium gallium indium phosphide, argon, calcium fluoride, ultrapure water | the copper wiring of around 2000; lead-free solder; flat desk monitors; the laser of DVD drives; the argon fluoride laser of the lithography, its lenses and immersion |
+| Standard | hafnium, gallium nitride, germanium, tungsten | the high-k gate of 2007; LEDs and the blue laser of Blu-ray drives; the core of optical fibre; the vias |
 | Advanced | molybdenum, tin droplets, cobalt, ruthenium | the mirrors and the tin plasma light of extreme ultraviolet lithography; the wiring of the modern nodes |
 | Exa | set when the era is designed | |
 | Singularity | computronium | everything ([The cosmological simulator](simulator.md)) |
@@ -168,18 +250,24 @@ a tick through J's Core's converters):
 The Coke Oven needs no energy: it burns part of its own coal, as a real one does. The Advanced's extreme ultraviolet
 lithography draws 10 kW, as the real one is the hungriest machine of a fab.
 
-- **Ore:** the Crusher turns 1 ore (the block or its raw form) into 2 crushed ores, with a chance of a byproduct's
-  dust: gallium 25% (from aluminium), indium 15% and germanium 10% (from zinc), hafnium 25% (from zirconium), arsenic
-  15% (from copper and gold), ruthenium 5% (from nickel), sulfur 50% (from zinc and lead). A crushed ore gives one
-  ingot: in the vanilla furnace for the metals it melts (iron, copper, gold, tin, lead, zinc, silver, nickel, cobalt,
-  manganese, gallium, indium, germanium), in the Induction Furnace for the refractory ones (tantalum, tungsten,
-  molybdenum, zirconium, hafnium). Crushed mercury ore, roasted in the Induction Furnace, gives 100 mB of mercury.
-- **Forms:** the Rolling Mill turns 1 ingot into 1 plate, 1 plate into 2 sheets and 1 sheet into 4 foils; the Wire
-  Drawer turns 1 ingot into 2 rods or 4 wires, and 1 gold or aluminium ingot into 16 bonding wires; the Grinder turns
-  1 ingot or crystal into 1 dust.
+- **Ore:** the Crusher turns 1 ore (the block or its raw form) into 2 crushed ores, J's Core's crushed form, with a
+  chance of a byproduct's dust: gallium 25% (from aluminium), indium 15% and germanium 10% (from zinc), hafnium 25%
+  (from zirconium), arsenic 15% (from copper and gold), ruthenium 5% (from nickel), sulfur 50% (from zinc and lead). A
+  crushed ore, or a byproduct's dust, gives one ingot: in the vanilla furnace for the metals it melts (iron, copper,
+  gold, tin, lead, zinc, silver, nickel, cobalt, manganese, gallium, indium), in the Induction Furnace for the
+  refractory ones (tantalum, chromium, tungsten, molybdenum, zirconium, hafnium, ruthenium). Crushed aluminium ore
+  never melts: it becomes alumina and then aluminium (below); crushed lithium ore neither, it becomes lithium
+  hydroxide. Arsenic stays a dust, as the real one turns to vapour before it melts, and so does germanium, a crystal.
+  Crushed mercury ore, roasted in the Induction Furnace, gives 100 mB of mercury.
+- **Forms:** the Rolling Mill turns 1 ingot into 1 plate, 1 plate into 2 sheets and 1 sheet into 4 foils, of any metal
+  or alloy; the ones the chain only uses as foil (nickel, silver, permalloy, indium tin oxide) go from 1 ingot
+  straight into 8 foils. The Wire Drawer turns 1 ingot into 2 rods and 1 rod into 2 wires, and 1 gold or aluminium
+  ingot into 16 bonding wires. The Grinder turns 1 ingot or crystal into 1 dust, and 1 log into 4 wood pulp, which
+  the Rolling Mill presses into 2 paper. An ingot gives 9 nuggets and 9 nuggets an ingot, at the crafting table.
 - **Alloys and furnace work** (Induction Furnace), in their real proportions: solder, 3 tin and 2 lead into 5;
   lead-free solder, 9 tin, 1 silver and a copper nugget into 10; permalloy, 4 nickel and 1 iron into 5; indium tin
-  oxide, 9 indium and 1 tin into 10; steel, 2 iron and 1 coke into 2; metallurgical silicon, 1 sand and 1 coke;
+  oxide, 9 indium and 1 tin into 10; steel, 2 iron and 1 coke into 2; stainless steel, 7 iron, 2 chromium and 1
+  nickel into 10; metallurgical silicon, 1 sand and 1 coke;
   calcium carbide, 1 calcite and 1 coke.
 - **Gases:** each step of the Air Separation Unit takes air and gives 780 mB of nitrogen, 210 of oxygen, 9 of argon and
   1 of krypton. Krypton is raised well above its real share, or the Transition's laser would take hours to fill.
@@ -191,7 +279,7 @@ lithography draws 10 kW, as the real one is the hungriest machine of a fab.
 
   | Product | From |
   | --- | --- |
-  | 1 salt (and 1 boron every 16) | 4,000 mB of water, evaporated (60 seconds) |
+  | 1 salt (and 1 boron dust every 16) | 4,000 mB of water, evaporated (60 seconds) |
   | 1 alumina | 1 crushed aluminium ore and 1 caustic soda (the Bayer process) |
   | 1,000 mB of hydrogen chloride | 500 of hydrogen and 500 of chlorine |
   | 1,000 mB of sulfuric acid | 1 sulfur, 500 of oxygen and 1,000 of water |
@@ -206,17 +294,22 @@ lithography draws 10 kW, as the real one is the hungriest machine of a fab.
   | 1 PVC | 1,000 of acetylene and 1,000 of hydrogen chloride |
   | 1,000 mB of photoresist | 1 phenolic resin and 500 of methanol |
   | 1 cultured quartz | 4 sand, 1 caustic soda and 1,000 of water (60 seconds) |
-  | 1 phosphorus | 4 bone meal, 1 coke and 1 sand |
+  | 1 phosphorus dust | 4 bone meal, 1 coke and 1 sand |
   | 500 mB of ultrapure water | 1,000 of water |
   | 1 zinc sulfide | 1 zinc dust and 1 sulfur |
   | 250 mB of liquid crystal | 500 of phenol and 1 fluorspar dust (real liquid crystals are fluorinated) |
   | 4 thermal paste | 1 silver dust and 1 zinc dust |
+  | 1 lithium hydroxide | 1 crushed lithium ore, 1 caustic soda and 1,000 of sulfuric acid (the acid leaches the ore, the soda turns its sulfate into the hydroxide, as the real plants do) |
+  | 1,000 mB of battery electrolyte | 1 lithium hydroxide, 1 phosphorus dust and 500 of hydrofluoric acid (lithium hexafluorophosphate in its solvent) |
+
+  Hydrogen chloride and acetylene are gases, as at room temperature: the reactor takes and gives them through its
+  gas entries.
 
 - **Components:**
 
   | Machine | What it makes |
   | --- | --- |
-  | Ceramic Kiln | 1 alumina into 4 ceramic packages; 1 alumina and 1 nickel foil into 8 ceramic capacitors (nickel electrodes, as in the real ones); 1 tantalum and 1 manganese dust into 8 tantalum capacitors (the real manganese dioxide cathode); 2 iron, 1 manganese and 1 zinc dust into 4 ferrites (manganese zinc) |
+  | Ceramic Kiln | 1 alumina into 4 ceramic packages; 1 alumina and 1 nickel foil into 8 ceramic capacitors (nickel electrodes, as in the real ones); 1 tantalum dust and 1 manganese dust into 8 tantalum capacitors (the real anode of pressed tantalum powder and its manganese dioxide cathode); 1 lithium hydroxide and 1 cobalt dust into 1 lithium cobalt oxide, the cathode of lithium-ion cells; 2 iron, 1 manganese and 1 zinc dust into 4 ferrites (manganese zinc) |
   | Coil Winder | 1 ferrite and 2 copper wires into 2 inductors; 2 ferrites and 4 copper wires into 1 transformer; 1 steel rod, 4 copper wires and 1 ferrite into 1 electric motor; 1 permalloy foil and 1 copper wire into 2 magnetic heads |
   | Optical Polisher | 1 cultured quartz into 4 oscillator crystals or 1 mask plate; 1 glass into 4 lenses; 1 calcium fluoride boule into 4 lenses; 1 polycarbonate into 4 blank discs; 1 glass into 8 glass fibres; 1 glass and 1 germanium nugget into 8 optical fibres |
   | Laminator | FR-2 (Vintage): 2 paper, 1 phenolic resin and 1 copper foil; FR-4 (from the Legacy): 2 glass fibres, 1 epoxy resin and 1 copper foil |

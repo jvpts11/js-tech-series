@@ -8,12 +8,12 @@ own design; this page is the system they all live in.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026: materials, forms, properties, mineral families and host
-rocks as registries, the 118 elements with their atomic weights and their hazards, isotopes, what lies beyond the known
-table, the exotic forms, minerals, liquids made from materials, the shared catalogue and the J's Tech creative tab.
-The catalogue holds the first nine real minerals of J's Industrial's list, declared from their formulas, and ammonia
-beside carbon dioxide and the fuels. How a mod uses it, with code: [Content](../CONTENT.md#materials). Nothing of this
-page is left to build.
+Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: materials,
+forms, properties, mineral families and host rocks as registries, the 118 elements with their atomic weights and their
+hazards, isotopes, what lies beyond the known table, the exotic forms, minerals, liquids made from materials, the
+shared catalogue and the J's Tech creative tab. The catalogue holds the first nine real minerals of J's Industrial's
+list, declared from their formulas, and ammonia beside carbon dioxide and the fuels. How a mod uses it, with code:
+[Content](../CONTENT.md#materials).
 
 ## The design
 
@@ -22,11 +22,13 @@ page is left to build.
 The closed lists give way to **registries**, open to any mod, each entry with an id (`namespace:path`):
 
 - **Materials.** J's Core declares the real catalogue (elements, alloys, minerals, compounds) and any mod adds its own.
-  A material has a **kind**, set by its state at room temperature (metal, crystal, gem, non-metal solid, mineral,
-  liquid, gas, exotic matter), and the kind says which forms make sense. Any material may also take another state:
-  molten metals are liquids, steam is a gas, a fusion fuel becomes a plasma ([States of matter](states-of-matter.md)).
+  A material has a **kind**, set by its state at room temperature (metal, crystal, gem, non-metal solid, polymer,
+  mineral, liquid, gas, exotic matter), and the kind says which forms make sense: a polymer comes as sheet and dust,
+  and a crystal may also be grown as a rod. Any material may also take another state: molten metals are liquids,
+  steam is a gas, a fusion fuel becomes a plasma ([States of matter](states-of-matter.md)).
 - **Forms**: the base set is ingot, nugget, block, dust, plate, sheet, wire, rod, bolt, gear, coil, spring, foil, frame,
-  lens, boule, wafer, crystal, gem, ore and raw; a mod adds others when it has a real use for them.
+  lens, boule, wafer, crystal, gem, ore, raw, crushed (an ore broken in a crusher, for any mod's crusher) and lump (a
+  solid in pieces, as coke); a mod adds others when it has a real use for them.
 - **Properties**: the data a material carries, **real data, never game rules**. The Core declares a few (symbol, atomic
   number, atomic weight, formula, colour, state at room temperature, hazards); a mod registers its own (molar mass,
   oxidation states...) and gives values in code or from a data pack. Each property says whether its tooltip line shows
@@ -124,3 +126,24 @@ lines, battery and wrench, the saw, the Configuration Card, the FE converters, t
 Detector, the containment of exotic matter, the Structure Projector, the handheld instruments, the physics tool).
 Nothing of it is repeated in the mods' own tabs, which keep their own content: J's Industrial's shows its machines,
 not the materials.
+
+## Still to build
+
+- **The forms crushed and lump, the polymer kind and crystals as rods**, for J's Computers' chain and any mod after
+  it.
+- **Fluorspar**, the mineral above, with its ore in the rocks its veins cross; and **lithium's generic ore**, from
+  spodumene, the silicate it is mined from.
+- **The compounds, alloys, liquids and gases of J's Computers' chain**, each with its real formula and hazard
+  classes, as J's Computers' Survival page lists them: alumina, caustic soda, salt, zinc sulfide, lithium hydroxide,
+  lithium cobalt oxide, calcium carbide, coke, metallurgical silicon, polysilicon and cultured quartz; gallium
+  arsenide, aluminium gallium indium phosphide, gallium nitride and calcium fluoride; wood pulp; the phenolic and
+  epoxy resins, polycarbonate and PVC; steel, stainless steel, solder, lead-free solder, permalloy, indium tin oxide
+  and refined copper; coal tar, phenol, methanol, hydrofluoric and sulfuric acid, ferric chloride, photoresist,
+  ultrapure water, liquid crystal and the battery electrolyte; and hydrogen chloride and acetylene, which are gases.
+- **The colours.** The metals of J's Computers' chain each take a hue of their own, so that no two ingots read
+  alike, on a real association where there is one: tin D2E2DA, silver F2F2FA, aluminium A6CFEA (sky), zinc 8FB0B8,
+  lead 66607A (purple grey), nickel C4C88E, tantalum 8466C8 (violet, as it anodises), indium 4E4AA0 (its indigo
+  line), chromium 6FA858 (chrome green), manganese D68AAE (rhodochrosite pink), cobalt 3858D8 (cobalt blue),
+  tungsten 3E4148 (graphite), molybdenum 9A9EA8, gallium 6CD4CC (aqua), hafnium 8C7A64, ruthenium B85A5A. A gas
+  takes the colour of its cylinder in the European code (EN 1089-3): hydrogen C8302A, oxygen F4F4F4, nitrogen
+  2A2A2A, argon 2E6B3A, krypton 6CC46C, chlorine D8C83A, hydrogen chloride C8902A, acetylene 7A2430.
