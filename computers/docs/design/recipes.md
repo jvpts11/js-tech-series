@@ -346,3 +346,321 @@ A Layout is the chip's drawing cut in PVC film, as real layouts were cut in film
 A processor or graphics die takes 1 sheet for every million transistors it has, rounded so that a bigger die
 always takes more: the Motoroller 68000 (68,000 transistors) 1, the 486 (1.2 million) 2, up to the K6 (8.8
 million) 9.
+
+### The hardware parts
+
+Every part of the catalogue is made at the bench of its era by a rule for its kind, with its counts taken from
+the part's own figures ([Catalogue](catalogue.md)). A part's contacts are plated with a tin nugget in the
+Vintage and a gold one from the Legacy, and a part with a fan takes the case fan of its era (below).
+
+#### The board's components
+
+A board is assembled from components: a socket for each processor family, a slot for each memory generation
+and each expansion bus, the storage and power connectors. Each is a plastic body (PVC in the Vintage and the
+Legacy, polycarbonate from the Transition; a socket of 1,000 pins or more takes two, of 2,500 or more three),
+its contacts (copper foil, 1 for every 100 pins; a power connector carries its current on copper wire), their
+plating (a power connector's always tin), and what its mechanism needs: a ZIF socket's lever (1 steel rod), an
+LGA socket's load plate and lever (1 steel plate, 2 above 3,000 pins, and 1 steel rod), a slot processor's two
+rails and Quince's processor card connector (2 steel rods), a DIP socket nothing. Among the components made
+of the same things, each with more pins takes at least one contact more than the one before it, era after era,
+so no two are alike at any bench. Each is made at the bench of the era that first needs it:
+
+| Component | Bench | Pins | Recipe | Gives |
+| --- | --- | ---: | --- | ---: |
+| AT Power Connector | Vintage | 12 | 1 PVC sheet, 1 copper wire and 1 tin nugget | 2 |
+| 30-pin SIMM Slot | Vintage | 30 | 1 PVC sheet, 1 copper foil and 1 tin nugget | 4 |
+| IDE Header | Vintage | 40 | 1 PVC sheet, 2 copper foils and 1 tin nugget | 4 |
+| Quince DIP-64 Socket | Vintage | 64 | 1 PVC sheet, 8 copper foils and 1 tin nugget | 1 |
+| 72-pin SIMM Slot | Vintage | 72 | 1 PVC sheet, 3 copper foils and 1 tin nugget | 4 |
+| ISA Slot | Vintage | 98 | 1 PVC sheet, 4 copper foils and 1 tin nugget | 2 |
+| PCI Slot | Vintage | 120 | 1 PVC sheet, 5 copper foils and 1 tin nugget | 2 |
+| AGP Slot | Vintage | 132 | 1 PVC sheet, 6 copper foils and 1 tin nugget | 2 |
+| SDRAM DIMM Slot | Vintage | 168 | 1 PVC sheet, 7 copper foils and 1 tin nugget | 4 |
+| Socket 3 | Vintage | 237 | 1 PVC sheet, 3 copper foils, 1 tin nugget and 1 steel rod | 1 |
+| Slot 1 | Vintage | 242 | 1 PVC sheet, 3 copper foils, 1 tin nugget and 2 steel rods | 1 |
+| Socket 7 | Vintage | 321 | 1 PVC sheet, 4 copper foils, 1 tin nugget and 1 steel rod | 1 |
+| Socket 8 | Vintage | 387 | 1 PVC sheet, 5 copper foils, 1 tin nugget and 1 steel rod | 1 |
+| EPS 8-pin Connector | Legacy | 8 | 1 PVC sheet, 2 copper wires and 1 tin nugget | 2 |
+| ATX 20-pin Connector | Legacy | 20 | 1 PVC sheet, 3 copper wires and 1 tin nugget | 2 |
+| PCIe x16 Slot | Legacy | 164 | 1 PVC sheet, 2 copper foils and 1 gold nugget | 2 |
+| DDR DIMM Slot | Legacy | 184 | 1 PVC sheet, 3 copper foils and 1 gold nugget | 4 |
+| DDR2 DIMM Slot | Legacy | 240 | 1 PVC sheet, 4 copper foils and 1 gold nugget | 4 |
+| Quince Processor Card Connector | Legacy | 300 | 1 PVC sheet, 3 copper foils, 1 gold nugget and 2 steel rods | 1 |
+| Socket 370 | Legacy | 370 | 1 PVC sheet, 4 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| Socket A | Legacy | 462 | 1 PVC sheet, 5 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| Socket 478 | Legacy | 478 | 1 PVC sheet, 6 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| Socket 604 | Legacy | 604 | 1 PVC sheet, 7 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| Socket 754 | Legacy | 754 | 1 PVC sheet, 8 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| LGA 775 | Legacy | 775 | 1 PVC sheet, 8 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| Socket 939 | Legacy | 939 | 1 PVC sheet, 10 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| Socket 940 | Legacy | 940 | 1 PVC sheet, 11 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| SATA Port | Transition | 7 | 1 polycarbonate sheet, 1 copper foil and 1 gold nugget | 4 |
+| ATX 24-pin Connector | Transition | 24 | 1 polycarbonate sheet, 1 copper wire and 1 tin nugget | 2 |
+| PCIe x1 Slot | Transition | 36 | 1 polycarbonate sheet, 2 copper foils and 1 gold nugget | 2 |
+| DDR3 DIMM Slot | Transition | 240 | 1 polycarbonate sheet, 3 copper foils and 1 gold nugget | 4 |
+| LGA 771 | Transition | 771 | 1 polycarbonate sheet, 8 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| AM2 | Transition | 940 | 1 polycarbonate sheet, 10 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| AM3 | Transition | 941 | 1 polycarbonate sheet, 11 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| LGA 1156 | Transition | 1156 | 2 polycarbonate sheets, 12 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| Socket F | Transition | 1207 | 2 polycarbonate sheets, 13 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| LGA 1366 | Transition | 1366 | 2 polycarbonate sheets, 14 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| FM2+ | Standard | 906 | 1 polycarbonate sheet, 12 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| AM3+ | Standard | 942 | 1 polycarbonate sheet, 13 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| LGA 1150 | Standard | 1150 | 2 polycarbonate sheets, 15 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| LGA 1155 | Standard | 1155 | 2 polycarbonate sheets, 16 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| G34 | Standard | 1944 | 2 polycarbonate sheets, 20 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| LGA 2011 | Standard | 2011 | 2 polycarbonate sheets, 21 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| M.2 Slot | Advanced | 75 | 1 polycarbonate sheet, 4 copper foils and 1 gold nugget | 4 |
+| DDR4 DIMM Slot | Advanced | 288 | 1 polycarbonate sheet, 5 copper foils and 1 gold nugget | 4 |
+| DDR5 DIMM Slot | Advanced | 288 | 1 polycarbonate sheet, 6 copper foils and 1 gold nugget | 4 |
+| LGA 1151 | Advanced | 1151 | 2 polycarbonate sheets, 22 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| LGA 1200 | Advanced | 1200 | 2 polycarbonate sheets, 23 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| AM4 | Advanced | 1331 | 2 polycarbonate sheets, 14 copper foils, 1 gold nugget and 1 steel rod | 1 |
+| LGA 1700 | Advanced | 1700 | 2 polycarbonate sheets, 24 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| AM5 | Advanced | 1718 | 2 polycarbonate sheets, 25 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| LGA 1851 | Advanced | 1851 | 2 polycarbonate sheets, 26 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| LGA 2066 | Advanced | 2066 | 2 polycarbonate sheets, 27 copper foils, 1 gold nugget, 1 steel plate and 1 steel rod | 1 |
+| Quince Q Socket | Advanced | 2600 | 3 polycarbonate sheets, 62 copper foils, 1 gold nugget, 2 steel plates and 1 steel rod | 1 |
+| LGA 3647 | Advanced | 3647 | 3 polycarbonate sheets, 37 copper foils, 1 gold nugget, 2 steel plates and 1 steel rod | 1 |
+| SP3 | Advanced | 4094 | 3 polycarbonate sheets, 42 copper foils, 1 gold nugget, 2 steel plates and 1 steel rod | 1 |
+| sTR4 | Advanced | 4094 | 3 polycarbonate sheets, 41 copper foils, 1 gold nugget, 2 steel plates and 1 steel rod | 1 |
+| LGA 4189 | Advanced | 4189 | 3 polycarbonate sheets, 43 copper foils, 1 gold nugget, 2 steel plates and 1 steel rod | 1 |
+| LGA 4677 | Advanced | 4677 | 3 polycarbonate sheets, 47 copper foils, 1 gold nugget, 2 steel plates and 1 steel rod | 1 |
+| sTR5 | Advanced | 4844 | 3 polycarbonate sheets, 49 copper foils, 1 gold nugget, 2 steel plates and 1 steel rod | 1 |
+| SP5 | Advanced | 6096 | 3 polycarbonate sheets, 61 copper foils, 1 gold nugget, 2 steel plates and 1 steel rod | 1 |
+
+#### The populated board
+
+Every motherboard starts as its era's populated board: the etched board, the chipset (controller chips, as the
+real chipset shrank), 1 oscillator crystal, 4 ceramic and 4 tantalum capacitors and 4 inductors.
+
+| Era | Populated board |
+| --- | --- |
+| Vintage | 1 Vintage etched board, 4 Vintage controller chips, 1 oscillator crystal, 4 ceramic capacitors, 4 tantalum capacitors and 4 inductors |
+| Legacy | 1 Legacy etched board, 2 Legacy controller chips, 1 oscillator crystal, 4 ceramic capacitors, 4 tantalum capacitors and 4 inductors |
+| Transition | 1 Transition etched board, 2 Transition controller chips, 1 oscillator crystal, 4 ceramic capacitors, 4 tantalum capacitors and 4 inductors |
+| Standard | 1 Standard etched board, 1 Standard controller chip, 1 oscillator crystal, 4 ceramic capacitors, 4 tantalum capacitors and 4 inductors |
+| Advanced | 1 Advanced etched board, 1 Advanced controller chip, 1 oscillator crystal, 4 ceramic capacitors, 4 tantalum capacitors and 4 inductors |
+
+#### Motherboards
+
+A motherboard takes 1 populated board of its era (2 for EATX, EEB and MTX), its socket once for every
+processor, its memory slots (a board of two generations has half of each, the newer one taking the odd
+slot), its expansion slots (a board with an older bus as well has 2 of the older one), its storage
+connectors (an IDE header for every two disks in the Vintage and the Legacy, a SATA port for each disk in the
+Transition and the Standard, an M.2 slot for each in the Advanced) and its power connector (AT in the
+Vintage, ATX 20-pin in the Legacy, ATX 24-pin after, and an EPS 8-pin for every processor on EEB and MTX
+boards and on boards with more than one processor). It comes out without firmware. The three two-socket WS
+boards ([Hardware](hardware.md)) follow the rule: 2 sockets, 16 DDR3 or DDR5 slots, 7 PCI Express slots, 6
+disks.
+
+The **mining boards** of the Mining Computer, the common desktop socket and memory of each era with its x1
+slots, and the **risers** that carry a graphics card to an x1 slot (a small board with an x16 slot, the USB
+cable and the adapter's gold edge):
+
+| Part | Bench | Recipe |
+| --- | --- | --- |
+| MF Mining Board (Transition) | Transition | 1 Transition populated board, 1 LGA 775, 2 DDR2 DIMM Slots, 4 PCIe x1 Slots, 1 SATA Port and 1 ATX 24-pin Connector |
+| MF Mining Board (Standard) | Standard | 1 Standard populated board, 1 LGA 1150, 2 DDR3 DIMM Slots, 6 PCIe x1 Slots, 1 SATA Port and 1 ATX 24-pin Connector |
+| MF Mining Board (Advanced) | Advanced | 1 Advanced populated board, 1 LGA 1151, 2 DDR4 DIMM Slots, 8 PCIe x1 Slots, 1 M.2 Slot and 1 ATX 24-pin Connector |
+| Mining Riser (Transition) | Transition | 1 Transition etched board, 1 PCIe x16 Slot, 2 copper wires, 1 PVC sheet and 1 gold nugget |
+| Mining Riser (Standard) | Standard | 1 Standard etched board, 1 PCIe x16 Slot, 3 copper wires, 1 PVC sheet and 1 gold nugget |
+| Mining Riser (Advanced) | Advanced | 1 Advanced etched board, 1 PCIe x16 Slot, 4 copper wires, 1 PVC sheet and 1 gold nugget |
+
+#### Processors
+
+A processor takes the processor chips of its era and microarchitecture, 1 for every 8 cores and at least 1
+(a 64-core processor takes 8, as real chiplets do); among the processors of one era, socket and
+microarchitecture, ranked by cores, then clock, then TDP, each takes at least one chip more than the one below
+it, as a faster bin of the same die. Then a copper plate (its heat spreader), a nickel foil from the
+Transition, its contacts' nugget and 1 socket of its family. Quince's processors follow the rule; a Q chip
+also carries its memory in the package, an Advanced memory chip for every 4 GB:
+
+| Processor | Era | Socket | Recipe |
+| --- | --- | --- | --- |
+| Motoroller 68000 | Vintage | Quince DIP-64 Socket | 1 Motoroller 68000 processor chip, 1 copper plate, 1 tin nugget and 1 Quince DIP-64 Socket |
+| PowerQ G3 | Legacy | Quince Processor Card Connector | 1 PowerQ G3 processor chip, 1 copper plate, 1 gold nugget and 1 Quince Processor Card Connector |
+| PowerQ G4 | Legacy | Quince Processor Card Connector | 1 PowerQ G4 processor chip, 1 copper plate, 1 gold nugget and 1 Quince Processor Card Connector |
+| Quince Q1 | Advanced | Quince Q Socket | 1 Quince Q1 processor chip, 1 copper plate, 2 Advanced memory chips, 1 nickel foil, 1 gold nugget and 1 Quince Q Socket |
+| Quince Q2 | Advanced | Quince Q Socket | 1 Quince Q2 processor chip, 1 copper plate, 4 Advanced memory chips, 1 nickel foil, 1 gold nugget and 1 Quince Q Socket |
+| Quince Q3 | Advanced | Quince Q Socket | 1 Quince Q3 processor chip, 1 copper plate, 6 Advanced memory chips, 1 nickel foil, 1 gold nugget and 1 Quince Q Socket |
+
+#### Graphics cards
+
+A graphics card takes the graphics chips of its era and microarchitecture, 1 for the smallest and, ranked by
+cores, then video memory, then TDP, at least one more for each bigger card of the same era and
+microarchitecture; memory chips for its video memory, at least 1, each holding what the era's density
+allowed (2 MB in the Vintage, 32 MB in the Legacy, 128 MB in the Transition, 1 GB in the Standard, 4 GB in
+the Advanced); 2 tantalum and 4 ceramic capacitors, 2 inductors, 1 etched board, an aluminium plate as its
+heatsink, a case fan of its era from the Legacy, and its contacts' nugget. The Phi coprocessors are
+expansion cards, with the other cards.
+
+#### Memory modules
+
+8 memory chips of its era, and 4 more for each bigger module of the same era and generation (registered
+modules ranked apart): the other side, then denser chips; the etched board; 1 solder, lead-free from the
+Transition; its edge, as many copper foils as its slot has, and their plating; a registered module (RDIMM)
+also its register, 1 controller chip.
+
+#### Power supplies
+
+1 transformer for every 300 W, and at least one more than the smaller supply of its era; 2 inductors, 4
+tantalum capacitors, 1 controller chip of its era, 4 copper wires, 1 aluminium plate, 2 steel plates, a case
+fan of its era and its era's power connector (AT, ATX 20-pin or ATX 24-pin).
+
+#### Disks
+
+- **A hard disk:** platters (1, 2, 3, 4 and 4 by era, and one more for each bigger disk of its era), a
+  magnetic head for each platter, 1 electric motor, 1 controller chip of its era, 1 aluminium plate and its
+  connector, an IDE header to the Legacy and a SATA port after. The Vintage's platters are the iron oxide
+  ones ([Survival](survival.md)).
+- **A solid-state disk:** 4 memory chips of its era (8 in the Advanced) and one more for each bigger one of its
+  era and kind, 1 controller chip and 1 etched board; a SATA one in its aluminium case (1 aluminium plate) with
+  its SATA port, an NVMe one a bare stick with its gold edge (1 gold nugget).
+
+#### Sound cards
+
+The expansion card of the spec: its chip (the era's controller chip, the sound processor), 4 ceramic
+capacitors, 1 etched board, its edge (as many copper foils as its slot has) and their plating; a wavetable
+card also its sample memory, 1 memory chip.
+
+#### Drives inside the case
+
+| Drive | Bench | Recipe |
+| --- | --- | --- |
+| Hot-Swap Drive Bay | Vintage | 2 steel plates, 1 Vintage etched board, 1 IDE Header and 1 PVC sheet |
+| Internal CD Drive | Legacy | 1 electric motor, 1 glass lens, 1 gallium arsenide laser diode, 1 Legacy etched board and 1 IDE Header |
+| Internal DVD Drive | Transition | 1 electric motor, 1 glass lens, 1 aluminium gallium indium phosphide laser diode, 1 Transition etched board and 1 SATA Port |
+| Internal Blu-ray Drive | Advanced | 1 electric motor, 1 glass lens, 1 gallium nitride laser diode, 1 Advanced etched board and 1 SATA Port |
+
+### Computers
+
+#### The desk computers
+
+A computer is made as its case, empty: its parts go in at its assembly window. A case is its metals and its
+front: the era's etched board (the panel with the power switch and the lights), 2 copper wires and a bezel,
+a PVC sheet in the Vintage and the Legacy, a polycarbonate sheet after. Each case gives the Personal Computer
+of its look:
+
+| Case | Era | Metals |
+| --- | --- | --- |
+| Beige AT minitower | Vintage | 6 steel plates |
+| ATX tower | Legacy | 6 steel plates and 2 aluminium plates |
+| Mid tower | Transition | 4 steel plates and 4 aluminium plates |
+| Neutral | Standard | 4 steel plates and 4 aluminium plates |
+| High Performance | Standard | 4 steel plates, 4 aluminium plates and 2 steel sheets |
+| Aesthetic | Standard | 4 steel plates, 4 aluminium plates and 2 glass panes |
+| Neutral | Advanced | 4 steel plates and 4 aluminium plates |
+| High Performance | Advanced | 4 steel plates, 4 aluminium plates and 2 steel sheets |
+| Aesthetic | Advanced | 4 steel plates, 4 aluminium plates and 2 glass panes |
+
+The **Crafting Computer** is the Personal Computer of the same case with its era's Crafting Card in it for
+good, and the **Cluster Management Computer** the same with its era's Cluster Interface Card (the
+Transition's takes the Legacy's Management NIC, which its PCI Express slots take); the Advanced High
+Performance case has no Cluster Management Computer. The **Mining Computer** is an open frame:
+
+| Computer | Bench | Recipe |
+| --- | --- | --- |
+| Mining Computer (Transition) | Transition | 8 steel rods, 2 steel plates, 1 Transition etched board and 2 copper wires |
+| Mining Computer (Standard) | Standard | 12 steel rods, 4 steel plates, 1 Standard etched board and 2 copper wires |
+| Mining Computer (Advanced) | Advanced | 16 steel rods, 4 steel plates, 1 Advanced etched board and 2 copper wires |
+
+#### Quince's machines
+
+Quince's logic boards follow the motherboards' rule, with their own sockets and the numbers of the real
+machines of each year; a Quince logic board takes only its era's processors ([Quince](quince.md)). Its
+desk machines follow the cases' rule, with the real machine's materials and, in an all-in-one, the era's
+screen:
+
+| Logic board of | Bench | Recipe |
+| --- | --- | --- |
+| Russet 128K | Vintage | 1 Vintage populated board, 1 Quince DIP-64 Socket, 4 30-pin SIMM Slots, 1 IDE Header and 1 AT Power Connector |
+| qRusset G3 | Legacy | 1 Legacy populated board, 1 Quince Processor Card Connector, 2 SDRAM DIMM Slots, 1 IDE Header and 1 ATX 20-pin Connector |
+| Russet Power G4 | Legacy | 2 Legacy populated boards, 2 Quince Processor Card Connectors, 4 DDR DIMM Slots, 2 IDE Headers, 1 ATX 20-pin Connector, 2 EPS 8-pin Connectors, 1 AGP Slot and 4 PCI Slots |
+| qServe (Legacy) | Legacy | 2 Legacy populated boards, 2 Quince Processor Card Connectors, 4 DDR DIMM Slots, 2 PCI Slots, 2 IDE Headers, 1 ATX 20-pin Connector and 2 EPS 8-pin Connectors |
+| Russet Pro (Transition) | Transition | 2 Transition populated boards, 2 LGA 771s, 8 DDR2 DIMM Slots, 4 PCIe x16 Slots, 4 SATA Ports, 1 ATX 24-pin Connector and 2 EPS 8-pin Connectors |
+| qRusset (white) | Transition | 1 Transition populated board, 1 LGA 775, 2 DDR2 DIMM Slots, 1 SATA Port and 1 ATX 24-pin Connector |
+| qServe (Transition) | Transition | 2 Transition populated boards, 2 LGA 771s, 8 DDR2 DIMM Slots, 2 PCIe x16 Slots, 3 SATA Ports, 1 ATX 24-pin Connector and 2 EPS 8-pin Connectors |
+| Quince Mainframe (Transition) | Transition | 2 Transition populated boards, 4 LGA 771s, 16 DDR2 DIMM Slots, 6 PCIe x16 Slots, 4 SATA Ports, 1 ATX 24-pin Connector and 4 EPS 8-pin Connectors |
+| qRusset (thin) | Standard | 1 Standard populated board, 1 LGA 1155, 4 DDR3 DIMM Slots, 1 SATA Port and 1 ATX 24-pin Connector |
+| Russet Pro (Standard) | Standard | 2 Standard populated boards, 1 LGA 2011, 4 DDR3 DIMM Slots, 2 PCIe x16 Slots, 1 SATA Port and 1 ATX 24-pin Connector |
+| qServe (Standard) | Standard | 2 Standard populated boards, 2 LGA 2011s, 12 DDR3 DIMM Slots, 2 PCIe x16 Slots, 3 SATA Ports, 1 ATX 24-pin Connector and 2 EPS 8-pin Connectors |
+| Quince Mainframe (Standard) | Standard | 2 Standard populated boards, 4 LGA 2011s, 32 DDR3 DIMM Slots, 6 PCIe x16 Slots, 4 SATA Ports, 1 ATX 24-pin Connector and 4 EPS 8-pin Connectors |
+| Russet Studio | Advanced | 1 Advanced populated board, 1 Quince Q Socket, 2 DDR5 DIMM Slots, 1 M.2 Slot and 1 ATX 24-pin Connector |
+| qRusset (coloured) | Advanced | 1 Advanced populated board, 1 Quince Q Socket, 1 M.2 Slot and 1 ATX 24-pin Connector |
+| qServe (Advanced) | Advanced | 2 Advanced populated boards, 1 Quince Q Socket, 8 DDR5 DIMM Slots, 2 PCIe x16 Slots, 4 M.2 Slots and 1 ATX 24-pin Connector |
+| Quince Mainframe (Advanced) | Advanced | 2 Advanced populated boards, 4 Quince Q Sockets, 32 DDR5 DIMM Slots, 6 PCIe x16 Slots, 4 M.2 Slots, 1 ATX 24-pin Connector and 4 EPS 8-pin Connectors |
+
+| Machine | Bench | Recipe |
+| --- | --- | --- |
+| Russet 128K | Vintage | 5 PVC sheets, 1 tube screen, 1 Vintage etched board and 2 copper wires |
+| qRusset G3 | Legacy | 4 polycarbonate sheets, 1 tube screen, 1 Legacy etched board, 2 copper wires and 1 PVC sheet |
+| Russet Power G4 | Legacy | 4 steel plates, 2 polycarbonate sheets, 1 Legacy etched board, 2 copper wires and 1 PVC sheet |
+| Russet Pro (Transition) | Transition | 6 aluminium plates, 2 aluminium sheets, 1 Transition etched board, 2 copper wires and 1 polycarbonate sheet |
+| qRusset (white) | Transition | 5 polycarbonate sheets, 1 liquid crystal screen, 1 Transition etched board and 2 copper wires |
+| qRusset (thin) | Standard | 4 aluminium plates, 1 LED screen, 1 glass pane, 1 Standard etched board, 2 copper wires and 1 polycarbonate sheet |
+| Russet Pro (Standard) | Standard | 4 aluminium plates, 2 steel rods, 1 Standard etched board, 2 copper wires and 1 polycarbonate sheet |
+| Russet Studio | Advanced | 6 aluminium plates, 1 Advanced etched board, 2 copper wires and 1 polycarbonate sheet |
+| qRusset (coloured) | Advanced | 4 aluminium plates, 1 self-lit panel, 1 glass pane, 1 Advanced etched board, 2 copper wires and 1 polycarbonate sheet |
+
+#### The server room
+
+A **server chassis** is 2 steel plates for every U, an aluminium front, the desk cases' front, and the
+connectors of the drives it takes from the rack's bays (its backplane: an IDE header for every two drives to
+the Legacy, a SATA port for each after). A **server** is its chassis with its fans (a case fan of its era for
+every U, two) and its rails (2 steel rods). The drives each chassis takes:
+
+| Chassis | U | Vintage | Legacy | Transition | Standard | Advanced |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Server | 1 | 1 | 2 | 4 | 3 | 4 |
+| Storage Server | 2 | 4 | 4 | 6 | 8 | 10 |
+| Compute Server | 2 | 1 | 1 | 1 | 1 | 1 |
+
+The rest of the room, each at its era's bench:
+
+| Block | Bench | Recipe | What it is |
+| --- | --- | --- | --- |
+| Supercomputer Node (Standard) | Standard | 4 steel plates, 1 aluminium plate, 1 Standard etched board, 2 copper wires, 1 polycarbonate sheet, 1 SATA Port, 4 case fans of its era and 2 steel rods | a 2U node, its box, front, bays, fans and rails at once |
+| Supercomputer Node (Advanced) | Advanced | 8 steel plates, 1 aluminium plate, 1 Advanced etched board, 2 copper wires, 1 polycarbonate sheet, 2 SATA Ports, 4 case fans of its era and 2 steel rods | its four sleds take a steel plate each |
+| Server Rack (Vintage) | Vintage | 12 steel plates, 4 steel rods, 2 case fans of its era, 1 Vintage etched board and 8 IDE Headers | the spec's 12 steel plates, its rails, its fans and the backplane of its 8U |
+| Server Rack (Legacy) | Legacy | 12 steel plates, 4 steel rods, 2 case fans of its era, 1 Legacy etched board and 8 IDE Headers | the spec's 12 steel plates, its rails, its fans and the backplane of its 8U |
+| Server Rack (Transition) | Transition | 12 steel plates, 4 steel rods, 2 case fans of its era, 1 Transition etched board and 8 SATA Ports | the spec's 12 steel plates, its rails, its fans and the backplane of its 8U |
+| Server Rack (Standard) | Standard | 12 steel plates, 4 steel rods, 2 case fans of its era, 1 Standard etched board and 8 SATA Ports | the spec's 12 steel plates, its rails, its fans and the backplane of its 8U |
+| Server Rack (Advanced) | Advanced | 12 steel plates, 4 steel rods, 2 case fans of its era, 1 Advanced etched board and 8 SATA Ports | the spec's 12 steel plates, its rails, its fans and the backplane of its 8U |
+| Supercomputer Rack (Standard) | Standard | 12 steel plates, 4 steel rods, 4 case fans of its era, 1 Standard etched board, 8 SATA Ports, 4 LEDs and 2 copper pipes | the Server Rack with its light bar and its coolant inlet and outlet |
+| Supercomputer Rack (Advanced) | Advanced | 12 steel plates, 4 steel rods, 4 case fans of its era, 1 Advanced etched board, 8 SATA Ports, 4 LEDs and 2 copper pipes | the Server Rack with its light bar and its coolant inlet and outlet |
+| KVM Switch (Vintage) | Vintage | 2 steel plates, 1 Vintage etched board, 1 Vintage controller chip and 4 copper wires | its board, its controller and four ports |
+| KVM Switch (Legacy) | Legacy | 2 steel plates, 1 Legacy etched board, 1 Legacy controller chip and 4 copper wires | its board, its controller and four ports |
+| KVM Switch (Transition) | Transition | 2 steel plates, 1 Transition etched board, 1 Transition controller chip and 4 copper wires | its board, its controller and four ports |
+| KVM Switch (Standard) | Standard | 2 steel plates, 1 Standard etched board, 1 Standard controller chip and 4 copper wires | its board, its controller and four ports |
+| KVM Switch (Advanced) | Advanced | 2 steel plates, 1 Advanced etched board, 1 Advanced controller chip and 4 copper wires | its board, its controller and four ports |
+| Tape Library (Vintage) | Vintage | 4 steel plates, 2 electric motors, 2 magnetic heads, 1 Vintage etched board and 2 Vintage controller chips | its robot and its drives (2U) |
+| Tape Library (Legacy) | Legacy | 4 steel plates, 2 electric motors, 2 magnetic heads, 1 Legacy etched board and 2 Legacy controller chips | its robot and its drives (2U) |
+| Tape Library (Transition) | Transition | 4 steel plates, 2 electric motors, 2 magnetic heads, 1 Transition etched board and 2 Transition controller chips | its robot and its drives (2U) |
+| Tape Library (Standard) | Standard | 4 steel plates, 2 electric motors, 2 magnetic heads, 1 Standard etched board and 2 Standard controller chips | its robot and its drives (2U) |
+| Tape Library (Advanced) | Advanced | 4 steel plates, 2 electric motors, 2 magnetic heads, 1 Advanced etched board and 2 Advanced controller chips | its robot and its drives (2U) |
+| Fibre Optic Interface (Standard) | Standard | 2 steel plates, 1 Standard etched board, 1 Standard controller chip, 2 gallium arsenide laser diodes and 2 optical fibres | its transceivers |
+| Fibre Optic Interface (Advanced) | Advanced | 2 steel plates, 1 Advanced etched board, 1 Advanced controller chip, 2 gallium arsenide laser diodes and 4 optical fibres | its transceivers |
+| Drive Shelf (JBOD) | Standard | 4 steel plates, 1 Standard etched board, 10 SATA Ports and 2 case fans of its era | ten drive bays (2U) |
+| Mainframe (Vintage) | Vintage | 12 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Vintage etched boards and 8 copper wires | placed whole (3x2x2) |
+| Mainframe (Legacy) | Legacy | 12 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Legacy etched boards and 8 copper wires | placed whole (3x2x2) |
+| Mainframe (Transition) | Transition | 12 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Transition etched boards and 8 copper wires | placed whole (3x2x2) |
+| Mainframe (Standard) | Standard | 12 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Standard etched boards and 8 copper wires | placed whole (3x2x2) |
+| Mainframe (Advanced) | Advanced | 12 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Advanced etched boards and 8 copper wires | placed whole (3x2x2) |
+| WAN Gateway Computer (Vintage) | Vintage | 16 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Vintage etched boards, 8 copper wires and 4 Vintage controller chips | placed whole (4x2x2), its four line ports |
+| WAN Gateway Computer (Legacy) | Legacy | 16 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Legacy etched boards, 8 copper wires and 4 Legacy controller chips | placed whole (4x2x2), its four line ports |
+| WAN Gateway Computer (Transition) | Transition | 16 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Transition etched boards, 8 copper wires and 4 Transition controller chips | placed whole (4x2x2), its four line ports |
+| WAN Gateway Computer (Standard) | Standard | 16 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Standard etched boards, 8 copper wires and 4 Standard controller chips | placed whole (4x2x2), its four line ports |
+| WAN Gateway Computer (Advanced) | Advanced | 16 steel plates, 4 aluminium plates, 4 case fans of its era, 2 Advanced etched boards, 8 copper wires and 4 Advanced controller chips | placed whole (4x2x2), its four line ports |
+| Quince Mainframe (Transition) | Transition | 16 aluminium plates, 4 case fans of its era, 2 Transition etched boards, 8 copper wires and 2 glass panes | aluminium and glass |
+| Quince Mainframe (Standard) | Standard | 16 aluminium plates, 4 case fans of its era, 2 Standard etched boards, 8 copper wires and 2 glass panes | aluminium and glass |
+| Quince Mainframe (Advanced) | Advanced | 16 aluminium plates, 4 case fans of its era, 2 Advanced etched boards, 8 copper wires and 2 glass panes | aluminium and glass |
+| qServe (Legacy) | Legacy | 3 aluminium plates, 1 Legacy etched board, 2 copper wires, 1 PVC sheet, 2 IDE Headers, 2 case fans of its era and 2 steel rods | a 1U of aluminium |
+| qServe (Transition) | Transition | 3 aluminium plates, 1 Transition etched board, 2 copper wires, 1 polycarbonate sheet, 3 SATA Ports, 2 case fans of its era and 2 steel rods | a 1U of aluminium |
+| qServe (Standard) | Standard | 3 aluminium plates, 1 Standard etched board, 2 copper wires, 1 polycarbonate sheet, 3 SATA Ports, 2 case fans of its era and 2 steel rods | a 1U of aluminium |
+| qServe (Advanced) | Advanced | 3 aluminium plates, 1 Advanced etched board, 2 copper wires, 1 polycarbonate sheet, 4 SATA Ports, 2 case fans of its era and 2 steel rods | a 1U of aluminium |
+| HBW Interface (Standard) | Standard | 2 steel plates, 1 Standard etched board, 2 Standard controller chips, 6 PCIe x16 Slots, 2 gallium arsenide laser diodes and 2 optical fibres | six coprocessor slots and the High compute line's transceivers |
+| HBW Interface (Advanced) | Advanced | 2 steel plates, 1 Advanced etched board, 2 Advanced controller chips, 6 PCIe x16 Slots, 2 gallium arsenide laser diodes and 2 optical fibres | six coprocessor slots and the High compute line's transceivers |
+
+The Rack UPS, the UPS Battery Expansion, the PDU, the Cooling Unit and the Vent Panel are with power and
+cooling.

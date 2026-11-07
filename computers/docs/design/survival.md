@@ -391,25 +391,18 @@ an ArF laser with immersion in the Transition and the Standard, EUV in the Advan
 ### The parts
 
 The generic components of J's Core's catalogue that J's Computers uses (electric motors, LEDs, oscillators, antennas,
-magnetic heads) get their recipes here, as J's Core's design asks of every mod that uses them without J's Industrial.
-At its era's bench, every part is assembled from the chain's pieces:
+magnetic heads, lead-acid batteries, lithium-ion cells) get their recipes here, as J's Core's design asks of every
+mod that uses them without J's Industrial. At its era's bench, every part is assembled from the chain's pieces:
+the processors, memory modules, graphics cards, motherboards and their components, power supplies, disks,
+computers, servers and racks are in [Recipes](recipes.md); the rest:
 
 | Part | Made of |
 | --- | --- |
-| Processor | 1 processor chip for every 8 cores, at least 1 (a 64-core processor takes 8, as real chiplets do); a copper plate as its heat spreader, with a nickel foil from the Transition; its contacts, a tin nugget in the Vintage and a gold one from the Legacy |
-| Memory module | 8 memory chips, 1 solder, 1 etched board |
-| Graphics card | 1 graphics chip; memory chips, 2, 4, 4, 8 and 8 by era; 2 tantalum and 4 ceramic capacitors; 2 inductors; 1 etched board; an aluminium plate as its heatsink; a fan from the Legacy |
-| Motherboard | controller chips, 4, 2, 2, 1 and 1 by era, as the real chipset shrank; 1 oscillator crystal, 8 capacitors, 4 inductors, 1 etched board (2 for EATX, EEB and MTX); it comes out without firmware |
-| Power supply | 1 transformer, 2 inductors, 4 capacitors, 1 controller chip, 4 copper wires, 1 aluminium plate, 2 steel plates, 1 fan |
-| Hard disk | platters, 1, 2, 3, 4 and 4 by era (an aluminium sheet with a layer of iron dust, iron oxide as the real ones had, in the Vintage, and 1 cobalt nugget from the Legacy), one magnetic head per platter, 1 motor, 1 controller chip, 1 aluminium plate |
-| Solid-state disk | 4 memory chips (8 in the Advanced), 1 controller chip, 1 etched board |
 | Floppy disk | a film of PVC and iron dust, a PVC case |
 | Optical disc | a blank disc and an aluminium foil (silver for Blu-ray) |
 | Monitor | the Display Line's screen of its era, 1 etched board, a case of 2 PVC (Vintage) or 2 polycarbonate |
 | Drive | optical: a motor, a lens, the laser diode of its era, an etched board; floppy: a motor, a magnetic head, an etched board |
 | Expansion card | its chip, 4 capacitors, 1 etched board, its contacts (tin in the Vintage, gold later) |
-| Case | AT, 6 steel plates; ATX, 6 steel and 2 aluminium plates; mid tower and Neutral, 4 steel and 4 aluminium; High Performance, those and 2 steel sheets (the mesh); Aesthetic, those and 2 glass panes |
-| Rack, rack unit | 12 steel plates; 2 steel plates and the parts each unit needs |
 | Cables (8) | 4 copper wires and 1 PVC; the fibre lines, 4 optical fibres and 1 PVC |
 | Stock cooler | an aluminium plate in the Vintage; a fan and thermal paste added from the Legacy; a copper rod added from the Transition |
 | Tower cooler | 4 aluminium sheets, 2 copper rods (the heat pipes), 1 fan, 1 thermal paste |
