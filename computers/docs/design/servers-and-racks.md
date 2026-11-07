@@ -379,7 +379,7 @@ How racks are made is decided with how hardware is made ([Eras](eras.md)).
   | Vent Panel | 1U | Passive ventilation: adds 500 W to the thermal budget ([Temperature](temperature.md)), the cheap partner of the Cooling Unit. |
   | PDU (Power Distribution Unit) | 1U | Measures the energy per bay and makes the bays' power programmable: it exposes their power to IQL, so an UPDATE or a JOB turns servers on and off by rule. Real power automation. ([Power](power.md)) |
   | Drive Shelf (JBOD) | 2U | A shelf of drives only (10 front slots, no server): it extends the bays of the server **right above it** in the stack. With no server above, it does nothing. A Storage Server with shelves is the monster NAS of the late game. |
-  | Tape Library | 2U | Cold storage for **data only**, for the Backup Service ([Programs](programs.md)): files, settings and system images on tapes. Huge, slow, and it **never** stores items, so nothing can be duplicated through it. |
+  | Tape Library | 2U | Cold storage for the Backup Service ([Programs](programs.md)): files, settings, system images and the network's items, on ten tapes of its era. Huge and slow; a tape winds before it reads or writes. Nothing duplicates through it: restoring gives back only what the network lost. |
 
 - **The AI Rack** (Standard and Advanced), the third type of rack: only AI Servers and their units (the GPU Interconnect
   Switch, the Coolant Distribution Unit, the Power Shelf, the High Compute Switch), with a much larger thermal budget

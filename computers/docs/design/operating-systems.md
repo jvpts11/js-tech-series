@@ -251,20 +251,30 @@ the kernel ignores a kill of init from the system; here it is what it would do i
 - **Network boot from the Mirror.** From the Legacy, the firmware's setup can boot from the network (PXE); from the
   Standard, UEFI boots over HTTP; the Vintage cannot. On a network whose Mainframe serves the Mirror, the firmware lists
   the systems published there, the players' own included, and boots the installer of the one chosen; the install then
-  runs as from a medium. Today a system is only installed from the Mirror from inside a running one
-  ([Programs](programs.md)).
+  runs as from a medium. The BIOS's boot page gains a Network (PXE) entry, with the board's PXE agent and the
+  Mirror's menu in the BIOS's blue; UEFI's Boot Manager an HTTP Boot entry that opens the Mirror's list on the
+  firmware's page, with INSTALL. The list shows only what the machine runs (its era and its processor), each system
+  with its house, the players' with their author and "community", and Boot from the local disk last. The entry
+  is always there: with no Mirror on the network it says *No Mirror answered on the network* and goes back to the
+  firmware. Today a system is only installed from the Mirror from inside a running one ([Programs](programs.md)).
 - **Systems and desktops written by players**, in Σ or Σ#, through the `System.OS` namespace
   ([Systems written by players](player-systems.md)).
-- **OpenBSD,** decided for Carbon: the proactively secure Unix, from the Legacy, on a kernel of its own (`openbsd`),
-  booting to the terminal, 1,024 MB of disk and 12 of memory, packages with `pkg_add` and the ports.
+- **OpenBSD,** decided for Carbon: the proactively secure Unix, by the Blowfish Project, at version 7.5 (fixed), from
+  the Legacy, on a kernel of its own (`openbsd`), booting to the terminal, 1,024 MB of disk and 12 of memory,
+  packages with `pkg_add` and the ports. Its mark is Puffy, which its `screenfetch` draws, and one sea wallpaper
+  serves every desktop it takes.
   - Its installer is the real one, questions and answers at the terminal: *(I)nstall, (U)pgrade, (A)utoinstall or
-    (S)hell?*, the host name, the network, root's password, sshd, X, the disk and the sets (`bsd`, `base`, `comp`,
-    `man`...), from the medium or from the Mirror over the network.
-  - It boots through `boot>`, waiting five seconds, with its own lines (*Automatic boot in progress: starting file
-    system checks*, *starting network daemons*), greets with *Welcome to OpenBSD: The proactively secure Unix-like
-    operating system* and runs `ksh`.
-  - Secure by default: a service installed comes switched off and is switched on with `rcctl enable`; it has `doas`
-    and `syspatch`. The player stays root until accounts come ([Security](security.md)).
+    (S)hell?*, the host name, the network, root's password, sshd, X, the disk (`wd0` on IDE disks, `sd0` on SATA)
+    and the sets (`bsd`, `bsd.rd`, `base`, `comp`, `man`), from the medium or from the Mirror over the network. Leaving
+    a set out only saves its room on the disk, but `man` and `comp` take their commands with them.
+  - It boots through `boot>`, waiting five seconds with no count shown: any key stops the wait, and Enter or `boot`
+    starts. It shows its own lines (*Automatic boot in progress: starting file system checks*, *starting network
+    daemons*), greets with *Welcome to OpenBSD: The proactively secure Unix-like operating system* and runs `ksh`, its
+    prompt the host name and `#`.
+  - Secure by default: a service installed comes switched off and is switched on with `rcctl enable`, and with a
+    desktop installed it still starts at the terminal until `rcctl enable xenodm`. It has `doas`, and `syspatch` is
+    how the system shows the update badge for itself ([Programs](programs.md)). The player stays root until
+    accounts come ([Security](security.md)).
   - Its panic stops in the kernel debugger, at `ddb>`: the machine waits until the player types `boot reboot`, with
     `trace`, `ps` and `show panic` there too.
   - Its memory follows the Unix family's rule, with OpenBSD's own line; it takes the desktop packages FreeBSD takes.
@@ -272,9 +282,14 @@ the kernel ignores a kill of init from the system; here it is what it would do i
     the hardest to attack, and `pledge` and `unveil` restrict what a program may do; designed with security.
 - **Linux Mint,** decided for Carbon: from the Standard (the era of the mod's Cinnamon), on the `linux` kernel, the one
   distribution that boots to its desktop, Cinnamon; 12,288 MB of disk and 64 of memory. Its medium boots a live
-  desktop with *Install Linux Mint* on it, which runs the guided installer. Packages through `apt`, the store, and
-  two programs of its own, by Spearmint Linux: the **Software Manager** and the **Update Manager**
-  ([Programs](programs.md)).
+  desktop, which writes nothing to the disk, with *Install Linux Mint* on it: the guided installer, in five screens
+  (the installation type, the divider beside another system, who you are, the copy, the end), with no language,
+  keyboard or time zone to ask. Mint goes on ext4 with a swap as big as the memory, beside another system by
+  shrinking its partition with the divider, and its password waits for the accounts. Packages through `apt`, the
+  store, and two programs of its own, by Spearmint Linux: the **Software Manager**, Mint's store on the Mirror's
+  catalogue, by Mint's categories with Network and Desktops, with no ratings, a featured row and the newest
+  arrivals; and the **Update Manager**, which applies a program at once and the desktop the next time it starts, its
+  shield on the panel only when there are updates ([Programs](programs.md)).
 - **Accounts and passwords:** every system has real user accounts and its `passwd`; with a directory on the network, the
   login is the network's ([Security](security.md)). Today they only exist as pages.
 - **The portable devices' mobile systems** ([Wireless](wireless.md)): real systems, from the factory, with no installer,

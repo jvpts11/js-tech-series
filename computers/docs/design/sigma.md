@@ -361,8 +361,10 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
     - `System.Teracoin`: `Wallet` (balance, send, address), `Chain` (height, difficulty), `Miner`, `Pool`.
     - `System.Robots`, commanding J's Core's robots (queued tasks, with loops, conditions and sensing written in the
       program), is designed now and built when J's Robotics exists.
-  - **A debugger:** breakpoints on a line, stepping, the locals and the call stack, in Virtual Studio, Visual
-    Studio Code and at the terminal with `sgdb`; each step spends credits as running does.
+  - **A debugger:** breakpoints on a line, stepping, the locals and the call stack, in Virtual Studio, Virtual
+    Studio Code and at the terminal with `sgdb`, which takes gdb's commands and `info credits`. A build with
+    `sgsc --debug` carries the debugger's lines and defines `DEBUG`. Each step spends credits as running does, and
+    the spend shows in the Diagnostic Tools and on the status bar, orange while debugging.
 - **Generics defined by the player** (classes and methods with type parameters), in version 4, with no cycle set. Today
   Σ# only has the built-in collections as generics. Σ stays a subset of Σ#.
 - **Two more event sources:**

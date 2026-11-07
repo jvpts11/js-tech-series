@@ -31,7 +31,7 @@ systems do ([Operating systems](operating-systems.md)). In Σ, the same calls ar
 | `Services` | programs run as services, up while the system is | `Register(name, path)`, `Start`, `Stop`, `Status`; the registered ones come up at boot, in order |
 | `Drivers` | the devices the machine has, and which of them the system drives | `Devices()` (each with its class), `Has(class)` |
 | `Boot` | what is shown while the system comes up | `Line(text)`, `Logo(image)`, `Progress(percent)`, `Done()` |
-| `Panic` | brings the machine down on a crash page with the system's own message | `Halt(message)`; the page: one of the mod's (the blue one, the black text of a kernel panic, the red one) or the system's own colours; `RebootAfter(seconds)` |
+| `Panic` | brings the machine down on a crash page with the system's own message | `Halt(message)`; the page: one of the mod's (the blue one, the black text of a kernel panic, the red one) or the system's own, `Colours(background, text)`, which its boot page wears too; `RebootAfter(seconds)` |
 | `Desktop` | the desktop the system starts, below | `Start(package)`, `Stop()`, `Current` |
 
 The windows of a graphical system are `System.UI`'s, which every program already uses.
@@ -71,6 +71,10 @@ model:
 
 - The system is the machine's process 1 and spends the machine's instruction credits, as any program does; the work
   the mod does for it (drawing, files, windows) costs it nothing more. The programs it starts are its children.
+- **Its pages:** the boot page shows the logo in the middle, the progress bar under it, the last line under the bar
+  and the system's name in a corner; the panic page shows the `Halt` message at the top, the error with its file and
+  line, the system, its author, the process and the memory, and at the foot *Restarting in N seconds* with
+  `RebootAfter`, or *Restart the computer* without it.
 - **Memory:** the system's process may hold up to a quarter of the machine's memory (a program, 64 MB, as today), and
   the `MemoryMb` it declares goes into the memory ledger as the mod's systems' does.
 - **A fault:** an exception the system's code doesn't catch is a panic, with the exception and its line, on the

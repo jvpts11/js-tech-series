@@ -189,6 +189,7 @@ KDE Guild's on Plasma), except the network tools, which are JSC Technologies' wh
 | Arch Collective | Arch Linux, screenfetch |
 | Gentoo Foundry | Gentoo |
 | Daemon Foundation | FreeBSD, ee |
+| Blowfish Project | OpenBSD |
 | Bellwether Labs | UNIX System V, Paint |
 | Open Desk Consortium | CDE |
 | KDE Guild | KDE Plasma |
@@ -242,29 +243,43 @@ on their own.
   Mirror serves them, as today.
 - **Systems and desktops written by players** are packages too: published to the Mirror and installed from it, or
   copied on media ([Systems written by players](player-systems.md)).
-- **The "update available" badge.** Settings > Programs marks with "update available" every program whose registry
-  version is newer than the installed one, and each manager's `list` marks them too (like `apt list --upgradable`).
-- **The Backup Service:** a service on a rack server (there is no backup chassis) that keeps **data only**: files,
-  settings, `.craft` patterns, IQL and Σ# scripts, Teracoin wallets ([Teracoin](teracoin.md)) and system images.
-  - **Nothing can be duplicated through it:** the contents of an **item** never go into a backup, in any form, on any
-    medium. The only redundancy for items is RAID ([Servers and racks](servers-and-racks.md)), which mirrors the volume
-    without ever copying it out.
-  - It keeps backups on another server's disk or in the **Tape Library**, a rack unit per era, huge and slow: cold
-    storage.
+- **The "update available" badge.** Settings > Programs marks, on every desktop and in its skin, every program whose
+  version on the Mirror is newer than the installed one, with *update available: 1.4 (installed 1.3)* under its name
+  and an Update button that installs the new version as the manager's upgrade does; the page counts the updates at
+  the top. Each package manager marks them in its own list, with its real command: `apt list --upgradable`,
+  `dnf check-update`, `pacman -Qu`, `emerge -pvuD @world`, `pkg version -vRL=`, `pkg_add -un`; on OpenBSD, `syspatch`
+  is the badge for the system itself. Frames and UNIX System V, with no manager, have Settings alone, and Linux
+  Mint's Update Manager follows the same rule, with its shield on the panel.
+- **The Backup Service:** a service on a rack server (there is no backup chassis) that backs up files, settings,
+  `.craft` patterns, IQL and Σ# scripts, Teracoin wallets ([Teracoin](teracoin.md)), system images and the
+  network's items.
+  - **Items without duplication:** a backup of items keeps what the network held. The network keeps a **ledger of
+    losses** (a failure, a Defrag that gave up, a dead disk, a RAID 0 that lost a drive, a virus, a DROP), and restoring
+    gives back, item by item, the lesser of what the backup holds and what the ledger lost since it, each loss once.
+    What left the network, was exported or was crafted never comes back; a backup undoes a DROP.
+  - It keeps backups on another server's disk or in the **Tape Library**, a 2U rack unit per era with ten tape slots
+    and its card ([Servers and racks](servers-and-racks.md)): cold storage, huge and slow. The tapes are items of their
+    era, with their real native capacity, and on a tape an item weighs what it weighs on a disk of the tape's era: the
+    reel holds 150 items, the DLT 2,560, the LTO-3 1,600, the LTO-6 10,240 and the LTO-9 73,728. A tape winds before it
+    reads or writes.
   - Backups run by hand or as an Automation Engine job (every night, for example).
   - **Restoring** puts files back: a system image fixes a corrupted system ([Storage](storage.md)); a restored wallet
-    gives back access to its coins.
-  - The **Backup Console** (Vaultis, Legacy, any desktop machine) is its window, the same pattern as the Messenger and
-    the Messenger Service: the service lives on the rack, and the console sets the backups and restores them.
-- **The Messenger** never reaches the game's chat: conversations stay on the network, and whoever runs the Messenger
-  Service can delete the conversations it keeps.
+    gives back access to its coins; items come back as above.
+  - The **Backup Console** (Vaultis, Legacy, any desktop machine) is its window, in four tabs (Jobs, Back up, Restore
+    and Tapes), the same pattern as the Messenger and the Messenger Service: the service lives on the rack, and the
+    console sets the backups and restores them.
+- **The Messenger** never reaches the game's chat: conversations stay on the network. Whoever is at the Messenger
+  Service's server deletes the conversations it keeps (only its administrator once accounts exist), with `msgsvc`
+  (`list`, `delete N`, `delete --all`, `status`); a deleted conversation leaves every Messenger without notice.
 - **More programs**, decided and waiting:
   - **The Media Player** comes with every desktop system (it isn't installed), under each environment's real name:
     Media Player on Frames 95, Frames Media Player from Frames XP on, Dragon Player on KDE Plasma, Videos on
     GNOME, Celluloid on Cinnamon, Audio on CDE and the QuinceTime Player on Quince's systems ([Quince](quince.md)). It
     plays the machine's songs (Ogg Vorbis and Wave, Soundfoundry's files, only the local ones: the library and streaming
-    stay Soundfoundry's) and **image sequences**, a folder of pictures from Paint or the camera played in order at up
-    to 20 a second, the mod's video. It opens from Files and follows the sound hardware's rules
+    stay Soundfoundry's) and **image sequences**, a folder of pictures from Paint or the camera played in the
+    order of their names, 12 a second at first and from 1 to 20 in its options, the mod's video (CDE's Audio shows
+    the picture in its wave's place). It opens from Files, whose folder menu has Play and Add to list, and follows the
+    sound hardware's rules
     ([Sound](sound.md)): with no sound card it plays no recordings. Command `media`, 8 MB of memory.
   - **The Data Compressor:** a storage service on a server (Vaultis, Standard). More items per disk (+20%, an estimate)
     at the cost of a longer wait on every read (+2 ticks): good on a hard disk, debatable on an SSD, bad on NVMe, where
