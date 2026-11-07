@@ -146,7 +146,7 @@ without it, the system's lock applies. Memory and disk figures are estimates.
 | KDE Plasma | KDE Guild | desktop | Legacy | 224 | 256 | Linux, FreeBSD | any |
 | GNOME | GNOME Trust | desktop | Legacy | 256 | 192 | Linux, FreeBSD | any |
 | Cinnamon | Spearmint Linux | desktop | Standard | 160 | 160 | Linux, FreeBSD | any |
-| CDE | Open Desk Consortium | desktop | Legacy | 16 | 32 | UNIX, FreeBSD, Linux | any |
+| CDE | Open Desk Consortium | desktop | Vintage | 16 | 32 | UNIX, FreeBSD, Linux | any |
 | Interactor | Nouvell Networks | operating space | Vintage | 1 | 2 | MC-NET | any |
 
 What each one does is in its description in the registry and on the page of its subject: the engines and their studios

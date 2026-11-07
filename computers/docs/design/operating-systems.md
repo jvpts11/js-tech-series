@@ -146,8 +146,9 @@ more; put back, it comes back. An add-on can register another operating space, a
 ## Desktops
 
 - Every Frames brings its desktop. On Linux, FreeBSD and UNIX, a desktop is a **package** ([Programs](programs.md)): KDE
-  Plasma, GNOME and CDE from the Legacy, Cinnamon from the Standard (CDE runs on UNIX, FreeBSD and Linux; the others on
-  Linux and FreeBSD). Every desktop has its era's face: the Transition's KDE is the KDE of that time.
+  Plasma and GNOME from the Legacy, Cinnamon from the Standard, and CDE from the Vintage, as the UNIX workstations
+  of 1993 had it (CDE runs on UNIX, FreeBSD and Linux; the others on Linux and FreeBSD). Every desktop has its era's
+  face: the Transition's KDE is the KDE of that time.
 - They all have the same programs, with the names their system gives them: Files is Dolphin on KDE and the File Manager
   on CDE; Frames adds the Device Manager, and CDE the Workstation Info.
 - **Open windows are the machine's state:** the list (program, position, size, order) lives on the server. Closing the

@@ -42,7 +42,9 @@ Mainframe and the racks stay on the backbone, by cable ([The network](network.md
 The PDA, the Smartphone and the Tablet follow real history, each per era: the PDA in the Legacy and the Transition (the
 Pocket PC with Wi-Fi), the Smartphone from the Transition on (2007) and the Tablet from the Standard on (2010). Each has
 its own hardware (the system on a chip, the memory, the storage) of its era, shown in the item's window (a Legacy PDA:
-400 MHz, 64 MB of memory, 64 MB of storage), and joins the network through an access point.
+400 MHz, 64 MB of memory, 64 MB of storage), and joins the network through an access point. Its chip is its
+maker's die of its era (Hightide's, Quince's qA, Motoroller's MX, Sunsung's Exo; the qPad Pro the Quince Q1),
+and its battery lithium-ion cells ([Recipes](recipes.md)).
 
 | Device | Eras | Systems |
 | --- | --- | --- |

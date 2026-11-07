@@ -33,3 +33,7 @@ chapter.
 ## To build
 
 - **The Σ# language reference** as a section of the Guide to Operations ([Σ and Σ#](sigma.md)).
+- **Getting the books:** the Guide to Operations is made at the Crafting Table, a binder; the books of the
+  systems and the languages are printed by the Large Scale Printer from the help of a computer whose system has
+  them, as every book is printed ([Peripherals](peripherals.md)), and turn up in libraries, offices and
+  universities ([Recipes](recipes.md)).

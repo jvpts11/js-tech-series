@@ -392,17 +392,8 @@ an ArF laser with immersion in the Transition and the Standard, EUV in the Advan
 
 The generic components of J's Core's catalogue that J's Computers uses (electric motors, LEDs, oscillators, antennas,
 magnetic heads, lead-acid batteries, lithium-ion cells) get their recipes here, as J's Core's design asks of every
-mod that uses them without J's Industrial. At its era's bench, every part is assembled from the chain's pieces:
-the processors, memory modules, graphics cards, motherboards and their components, power supplies, disks,
-computers, servers and racks, the peripherals, media, cables, network devices and cards are in
-[Recipes](recipes.md); the rest:
-
-| Part | Made of |
-| --- | --- |
-| Stock cooler | an aluminium plate in the Vintage; a fan and thermal paste added from the Legacy; a copper rod added from the Transition |
-| Tower cooler | 4 aluminium sheets, 2 copper rods (the heat pipes), 1 fan, 1 thermal paste |
-| Water cooler | 1 copper plate, 1 motor (the pump), 4 aluminium sheets (the radiator), 2 fans, 1 PVC, 250 mB of water, 1 thermal paste |
-| Fan | 1 motor and 1 PVC (Vintage) or 1 polycarbonate |
+mod that uses them without J's Industrial. At its era's bench, every part is assembled from the chain's pieces;
+what each part, computer, block and item is made of is in [Recipes](recipes.md).
 
 **Software is never crafted:** systems and programs are found, bought, copied or downloaded (below,
 [Programs](programs.md)), and so are the media pressed with them, such as an installer disc: a player finds
@@ -490,6 +481,9 @@ together give about one building every 190 blocks, most of them the small common
 - **The loot:** every chest draws 4 to 8 items from its building's table and era; a broken computer keeps each of its
   parts with a 50% chance; boxed software comes from the programs of the building's era, and a house's office only
   holds its house's (a Midsoft office only Midsoft's).
+- **A graphical system is always within reach:** every building of every era holds either a system with a
+  graphical interface, a system without one and a desktop for that one, or at least a system without one and a
+  desktop for it. In the Vintage, where no system has its own, that is UNIX System V with CDE.
 - **How they look:** every building is made of the game's blocks with the mod's machines, the same in every era, only
   its era's content changing (computers, monitors, racks, Mainframes, the network, boxes, posters). A working one stands
   whole, its lights on, its machines running its era's systems; a ruin has broken windows, holes in its walls, its flat
@@ -508,7 +502,7 @@ may be of.
 
 ### Villagers
 
-Two professions, each with its own job site:
+Two professions, each with its own job site, made at the Crafting Table ([Recipes](recipes.md)):
 
 | Profession | Job site | Sells | Buys |
 | --- | --- | --- | --- |

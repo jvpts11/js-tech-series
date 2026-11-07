@@ -46,7 +46,8 @@ Nothing on this page exists yet.
 | `CaF` | calcium fluoride lens | `Hg` | bucket of mercury | `Si` | silicon wafer |
 | `MC` | Machine Casing | `RC` | Refractory Casing | `LC` | Lined Casing |
 | `VC` | Vacuum Casing | `CC` | Clean Room Casing | `LI` | Liquid Inlet |
-| `LO` | Liquid Outlet |  |  |  |  |
+| `LO` | Liquid Outlet | `St` | steel sheet | `P` | paper |
+| `FD` | floppy disk | `So` | solder | `Pl` | planks of any wood |
 
 ### The benches
 
@@ -955,3 +956,159 @@ Card a controller and 3 memory chips, the chunks it keeps.
 | Vaultis Cache (Advanced) | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Advanced controller chip and 4 Advanced memory chips |
 | Optical Transport Card (WAN) | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 2 Advanced controller chips, 4 gallium arsenide laser diodes and 4 optical fibres |
 | Network Anchor Card (Advanced) | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Advanced controller chip and 3 Advanced memory chips |
+
+### Power and cooling
+
+#### Fans and coolers
+
+The case fan of each era (80, 80, 92, 120 and 120 mm) is the fan every part with one takes. It is a motor and
+its blades, PVC in the Vintage and polycarbonate after; the bigger fan takes more plastic, and the Advanced's
+carries its light ring (an LED). The stock cooler is an aluminium plate in the Vintage, with a fan and thermal
+paste from the Legacy and a copper rod from the Transition; the tower cooler 4 aluminium sheets, 2 copper rods
+(the heat pipes), a fan and thermal paste; the all-in-one MF AquaLoop a copper plate, the pump (a motor), the
+radiator (4 aluminium sheets on the 240, 6 on the 360), 2 or 3 fans, the hose (PVC), its water (a water bottle,
+about the 250 mB it holds) and thermal paste.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Vintage Case Fan, 80 mm | Vintage | 1 electric motor and 1 PVC sheet |
+| Stock Cooler (Vintage) | Vintage | 1 aluminium plate |
+| Legacy Case Fan, 80 mm | Legacy | 1 electric motor and 1 polycarbonate sheet |
+| Stock Cooler (Legacy) | Legacy | 1 aluminium plate, 1 Legacy case fan and 1 thermal paste |
+| Transition Case Fan, 92 mm | Transition | 1 electric motor and 2 polycarbonate sheets |
+| Stock Cooler (Transition) | Transition | 1 aluminium plate, 1 Transition case fan, 1 thermal paste and 1 copper rod |
+| Standard Case Fan, 120 mm | Standard | 1 electric motor and 3 polycarbonate sheets |
+| Stock Cooler (Standard) | Standard | 1 aluminium plate, 1 Standard case fan, 1 thermal paste and 1 copper rod |
+| Tower Cooler (Standard) | Standard | 4 aluminium sheets, 2 copper rods, 1 Standard case fan and 1 thermal paste |
+| MF AquaLoop 240 (Standard) | Standard | 1 copper plate, 1 electric motor, 4 aluminium sheets, 2 Standard case fans, 1 PVC sheet, 1 water bottle and 1 thermal paste |
+| MF AquaLoop 360 (Standard) | Standard | 1 copper plate, 1 electric motor, 6 aluminium sheets, 3 Standard case fans, 1 PVC sheet, 1 water bottle and 1 thermal paste |
+| Advanced Case Fan, 120 mm | Advanced | 1 electric motor, 3 polycarbonate sheets and 1 LED |
+| Stock Cooler (Advanced) | Advanced | 1 aluminium plate, 1 Advanced case fan, 1 thermal paste and 1 copper rod |
+| Tower Cooler (Advanced) | Advanced | 4 aluminium sheets, 2 copper rods, 1 Advanced case fan and 1 thermal paste |
+| MF AquaLoop 240 (Advanced) | Advanced | 1 copper plate, 1 electric motor, 4 aluminium sheets, 2 Advanced case fans, 1 PVC sheet, 1 water bottle and 1 thermal paste |
+| MF AquaLoop 360 (Advanced) | Advanced | 1 copper plate, 1 electric motor, 6 aluminium sheets, 3 Advanced case fans, 1 PVC sheet, 1 water bottle and 1 thermal paste |
+
+#### UPSes and their batteries
+
+A UPS is what a real one is: its steel box (3 plates for the 1500), its board and controller (the charger,
+the screen and the button), its inverter, built as a power supply's (a transformer for every 300 W it
+carries), its lead-acid batteries (one 12 V, 7 Ah block, about 300 kJ, for every 300 kJ it holds) and its
+outlets and inlet (4 copper wires). The battery comes from the Electrolytic Cell ([Survival](survival.md)).
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| MF PowerGuard 300 (Vintage) | Vintage | 2 steel plates, 1 Vintage etched board, 1 Vintage controller chip, 1 transformer, 1 lead-acid battery and 4 copper wires |
+| MF PowerGuard 300 (Legacy) | Legacy | 2 steel plates, 1 Legacy etched board, 1 Legacy controller chip, 1 transformer, 1 lead-acid battery and 4 copper wires |
+| MF PowerGuard 500 (Transition) | Transition | 2 steel plates, 1 Transition etched board, 1 Transition controller chip, 2 transformers, 1 lead-acid battery and 4 copper wires |
+| MF PowerGuard 800 (Standard) | Standard | 2 steel plates, 1 Standard etched board, 1 Standard controller chip, 3 transformers, 2 lead-acid batteries and 4 copper wires |
+| MF PowerGuard 1500 (Advanced) | Advanced | 3 steel plates, 1 Advanced etched board, 1 Advanced controller chip, 5 transformers, 5 lead-acid batteries and 4 copper wires |
+
+#### The power and cooling rack units
+
+Each is 2 steel plates for its 1U and what it needs: the Rack UPS a UPS's parts for 3 kW and 2.7 MJ; a UPS
+Battery Expansion its 9 batteries, the controller that watches them and its link to the UPS; the PDU its
+metering board, a current transformer and 8 outlets; the Cooling Unit an air conditioner, its compressor (a
+motor), its loop (2 copper pipes) and 2 fans. The **Vent Panel** has no electronics in it: it is one item for
+every era, made at the Crafting Table, and takes the colour of the rack it is in: `SP St SP`, the 1U's ears (steel
+plates) and the perforated face (a steel sheet).
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Rack UPS (Vintage) | Vintage | 2 steel plates, 1 Vintage etched board, 1 Vintage controller chip, 10 transformers, 9 lead-acid batteries and 4 copper wires |
+| UPS Battery Expansion (Vintage) | Vintage | 2 steel plates, 9 lead-acid batteries, 1 Vintage controller chip and 2 copper wires |
+| PDU (Vintage) | Vintage | 2 steel plates, 1 Vintage etched board, 1 Vintage controller chip, 1 transformer and 8 copper wires |
+| Cooling Unit (Vintage) | Vintage | 2 steel plates, 1 Vintage etched board, 1 Vintage controller chip, 2 Vintage case fans, 1 electric motor and 2 copper pipes |
+| Rack UPS (Legacy) | Legacy | 2 steel plates, 1 Legacy etched board, 1 Legacy controller chip, 10 transformers, 9 lead-acid batteries and 4 copper wires |
+| UPS Battery Expansion (Legacy) | Legacy | 2 steel plates, 9 lead-acid batteries, 1 Legacy controller chip and 2 copper wires |
+| PDU (Legacy) | Legacy | 2 steel plates, 1 Legacy etched board, 1 Legacy controller chip, 1 transformer and 8 copper wires |
+| Cooling Unit (Legacy) | Legacy | 2 steel plates, 1 Legacy etched board, 1 Legacy controller chip, 2 Legacy case fans, 1 electric motor and 2 copper pipes |
+| Rack UPS (Transition) | Transition | 2 steel plates, 1 Transition etched board, 1 Transition controller chip, 10 transformers, 9 lead-acid batteries and 4 copper wires |
+| UPS Battery Expansion (Transition) | Transition | 2 steel plates, 9 lead-acid batteries, 1 Transition controller chip and 2 copper wires |
+| PDU (Transition) | Transition | 2 steel plates, 1 Transition etched board, 1 Transition controller chip, 1 transformer and 8 copper wires |
+| Cooling Unit (Transition) | Transition | 2 steel plates, 1 Transition etched board, 1 Transition controller chip, 2 Transition case fans, 1 electric motor and 2 copper pipes |
+| Rack UPS (Standard) | Standard | 2 steel plates, 1 Standard etched board, 1 Standard controller chip, 10 transformers, 9 lead-acid batteries and 4 copper wires |
+| UPS Battery Expansion (Standard) | Standard | 2 steel plates, 9 lead-acid batteries, 1 Standard controller chip and 2 copper wires |
+| PDU (Standard) | Standard | 2 steel plates, 1 Standard etched board, 1 Standard controller chip, 1 transformer and 8 copper wires |
+| Cooling Unit (Standard) | Standard | 2 steel plates, 1 Standard etched board, 1 Standard controller chip, 2 Standard case fans, 1 electric motor and 2 copper pipes |
+| Rack UPS (Advanced) | Advanced | 2 steel plates, 1 Advanced etched board, 1 Advanced controller chip, 10 transformers, 9 lead-acid batteries and 4 copper wires |
+| UPS Battery Expansion (Advanced) | Advanced | 2 steel plates, 9 lead-acid batteries, 1 Advanced controller chip and 2 copper wires |
+| PDU (Advanced) | Advanced | 2 steel plates, 1 Advanced etched board, 1 Advanced controller chip, 1 transformer and 8 copper wires |
+| Cooling Unit (Advanced) | Advanced | 2 steel plates, 1 Advanced etched board, 1 Advanced controller chip, 2 Advanced case fans, 1 electric motor and 2 copper pipes |
+
+### Teracoin's hardware
+
+An ASIC is built as the real one: three hashboards (etched boards) of Blockwright's hashing chips of its era,
+the control board's controller, its fans and its power supply inside (a transformer for every 300 W it draws,
+1,400 and 3,200 W), in an aluminium case. A 3D printer is the real one's parts: the Prosa an aluminium frame,
+smooth rods, five stepper motors, its heater (a copper coil), the spring steel sheet and its screen; the Rattan
+a closed steel box with its glass door, four steppers, the belt that is its bed (PVC), its heater and its
+light. Each is made at its era's bench ([Teracoin](teracoin.md)).
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Blockwright Forge S1 | Standard | 2 aluminium plates, 3 Standard etched boards, 12 Standard Blockwright hashing chips, 1 Standard controller chip, 2 Standard case fans, 5 transformers and 4 copper wires |
+| Prosa i3 MK3 | Standard | 2 aluminium plates, 4 steel rods, 5 electric motors, 1 Standard etched board, 1 Standard controller chip, 1 copper coil, 1 steel plate and 1 liquid crystal screen |
+| Blockwright Forge A2 | Advanced | 2 aluminium plates, 3 Advanced etched boards, 16 Advanced Blockwright hashing chips, 1 Advanced controller chip, 4 Advanced case fans, 11 transformers and 4 copper wires |
+| Rattan Lab X1 | Advanced | 4 steel plates, 2 glass panes, 4 electric motors, 1 PVC sheet, 1 Advanced etched board, 1 Advanced controller chip, 1 copper coil and 1 LED |
+
+### Wireless and the portables
+
+An access point is its board, its radio (a controller; two on the dual-band ones), its antennas (two and three
+outside on the desk ones, four and eight inside the ceiling ones, as 802.11ac and Wi-Fi 6 had), its case, its
+light, the ceiling ones' mounting plate, and its two lines, data and energy. A Wi-Fi card is the card base,
+PCI in the Legacy and PCI Express x1 after, with its radio and antennas; the Advanced's carries Bluetooth, a
+second controller. A dock is its board, its charger (a controller and a transformer), its lines and its body:
+a PVC cradle, a polycarbonate base, an aluminium stand with its lamp, a wireless stand whose charging coil is a
+copper coil. The Hightide Pocket Pro's memory card is made at the Transition bench.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Wireless Access Point, 802.11b/g | Legacy | 1 Legacy etched board, 1 Legacy controller chip, 2 antennas, 1 PVC sheet and 2 copper wires |
+| Wi-Fi Card | Legacy | 1 Legacy etched board, 4 ceramic capacitors, 5 copper foils, 1 gold nugget, 1 Legacy controller chip and 1 antenna |
+| Mobile Device Charging Dock | Legacy | 1 Legacy etched board, 1 Legacy controller chip, 1 transformer, 2 copper wires and 1 PVC sheet |
+| Wireless Access Point, 802.11n | Transition | 1 Transition etched board, 1 Transition controller chip, 3 antennas, 1 polycarbonate sheet and 2 copper wires |
+| Wi-Fi Card | Transition | 1 Transition etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Transition controller chip and 3 antennas |
+| Mobile Device Charging Dock | Transition | 1 Transition etched board, 1 Transition controller chip, 1 transformer, 2 copper wires and 1 polycarbonate sheet |
+| Memory Card, 2 GB (Hightide Pocket Pro) | Transition | 2 Transition memory chips, 1 Transition controller chip, 1 Transition etched board, 1 polycarbonate sheet and 1 copper foil |
+| Wireless Access Point, 802.11ac | Standard | 1 Standard etched board, 2 Standard controller chips, 4 antennas, 1 polycarbonate sheet, 1 LED, 1 steel plate and 2 copper wires |
+| Wi-Fi Card | Standard | 1 Standard etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 1 Standard controller chip and 3 antennas |
+| Mobile Device Charging Dock | Standard | 1 Standard etched board, 1 Standard controller chip, 1 transformer, 2 copper wires, 1 aluminium plate and 1 LED |
+| Wireless Access Point, Wi-Fi 6 | Advanced | 1 Advanced etched board, 2 Advanced controller chips, 8 antennas, 1 polycarbonate sheet, 2 LEDs, 1 steel plate and 2 copper wires |
+| Wi-Fi Card + Bluetooth | Advanced | 1 Advanced etched board, 4 ceramic capacitors, 2 copper foils, 1 gold nugget, 2 Advanced controller chips and 2 antennas |
+| Mobile Device Charging Dock | Advanced | 1 Advanced etched board, 1 Advanced controller chip, 1 transformer, 2 copper wires, 1 polycarbonate sheet, 1 LED and 1 copper coil |
+
+A **portable** is the real device's parts, by the hardware of each one ([Wireless](wireless.md)): its chip,
+its maker's die of its era (Hightide, Quince qA, Motoroller MX, Sunsung Exo; the qPad Pro the Quince Q1), a
+faster model of the same die one chip more; its memory, the memory chips its era's density holds (32 MB in the
+Legacy, 128 MB in the Transition, 1 GB in the Standard, 4 GB in the Advanced), and its flash, one memory chip
+and one more for every bigger size of its era; the etched board; the screen of its era (two on a tablet) under
+its touch layer, an indium tin oxide foil; its lithium-ion cells (two on a tablet); its antennas (the PDA's
+Wi-Fi; the phone's network, Wi-Fi and GPS; the tablet's Wi-Fi and GPS); the camera's lens on the phones and
+tablets; and its case, PVC, polycarbonate, aluminium, or the qPhone X's steel.
+
+| Item | Bench | Recipe |
+| --- | --- | --- |
+| Hightide Pocket | Legacy | 1 Legacy Hightide chip, 3 Legacy memory chips, 1 Legacy etched board, 1 liquid crystal screen, 1 indium tin oxide foil, 1 lithium-ion cell, 1 antenna and 1 PVC sheet |
+| Hightide Pocket Pro | Transition | 1 Transition Hightide chip, 2 Transition memory chips, 1 Transition etched board, 1 liquid crystal screen, 1 indium tin oxide foil, 1 lithium-ion cell, 1 antenna and 1 polycarbonate sheet |
+| qPhone | Transition | 1 Transition Quince qA chip, 3 Transition memory chips, 1 Transition etched board, 1 liquid crystal screen, 1 indium tin oxide foil, 1 lithium-ion cell, 3 antennas, 1 glass lens and 1 aluminium plate |
+| Motoroller Landmark | Transition | 1 Transition Motoroller MX chip, 5 Transition memory chips, 1 Transition etched board, 1 liquid crystal screen, 1 indium tin oxide foil, 1 lithium-ion cell, 3 antennas, 1 glass lens and 1 polycarbonate sheet |
+| qPhone 5 | Standard | 1 Standard Quince qA chip, 3 Standard memory chips, 1 Standard etched board, 1 LED screen, 1 indium tin oxide foil, 1 lithium-ion cell, 3 antennas, 1 glass lens and 1 aluminium plate |
+| Hightide Wave | Standard | 1 Standard Hightide chip, 4 Standard memory chips, 1 Standard etched board, 1 LED screen, 1 indium tin oxide foil, 1 lithium-ion cell, 3 antennas, 1 glass lens and 1 aluminium plate |
+| qPad Air | Standard | 2 Standard Quince qA chips, 5 Standard memory chips, 1 Standard etched board, 2 LED screens, 1 indium tin oxide foil, 2 lithium-ion cells, 2 antennas, 1 glass lens and 2 aluminium plates |
+| Sunsung Nebula Tab | Standard | 1 Standard Sunsung Exo chip, 2 Standard memory chips, 1 Standard etched board, 2 LED screens, 1 indium tin oxide foil, 2 lithium-ion cells, 2 antennas, 1 glass lens and 2 polycarbonate sheets |
+| qPhone X | Advanced | 1 Advanced Quince qA chip, 2 Advanced memory chips, 1 Advanced etched board, 1 self-lit panel, 1 indium tin oxide foil, 1 lithium-ion cell, 3 antennas, 1 glass lens and 1 steel plate |
+| Sunsung Nebula S10 | Advanced | 1 Advanced Sunsung Exo chip, 4 Advanced memory chips, 1 Advanced etched board, 1 self-lit panel, 1 indium tin oxide foil, 1 lithium-ion cell, 3 antennas, 1 glass lens and 1 aluminium plate |
+| qPad Pro | Advanced | 1 Quince Q1 processor chip, 5 Advanced memory chips, 1 Advanced etched board, 2 self-lit panels, 1 indium tin oxide foil, 2 lithium-ion cells, 2 antennas, 1 glass lens and 2 aluminium plates |
+| Sunsung Nebula Tab S7 | Advanced | 2 Advanced Sunsung Exo chips, 4 Advanced memory chips, 1 Advanced etched board, 2 self-lit panels, 1 indium tin oxide foil, 2 lithium-ion cells, 2 antennas, 1 glass lens and 2 aluminium plates |
+
+### Books and the villagers' job sites
+
+- **The Guide to Operations** is a binder, as the first computers' manuals were, made at the Crafting Table from
+  the Vintage on: `PVC P / SR P / PVC P`, the PVC covers, the rings (a steel rod) and the pages.
+- **The books of the systems and the languages** (the Frames Resource Kit, the Linux Desk Reference, Linux by
+  Hand, the Daemon Handbook, Learning IQL, the Book of Sigma) are printed by the Large Scale Printer, as every
+  book is, 3 paper each, from the help of a computer whose system has them ([Manuals](manuals.md)). They also
+  turn up in libraries, offices and universities. The Technical Reference is J's Core's.
+- **The job sites**, as vanilla's: two things of the trade on 4 planks of any wood. The Programmer's Desk is
+  `FD P / Pl Pl / Pl Pl`, the floppy disk and the sheet of code on it;
+  the Repair Bench is `So Fe / Pl Pl / Pl Pl`, the solder and the iron of its tools.
