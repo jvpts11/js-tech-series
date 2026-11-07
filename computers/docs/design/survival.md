@@ -161,8 +161,9 @@ Without J's Industrial, the computronium of the Singularity comes from the cosmo
 
 ### The benches
 
-- The vanilla crafting table makes only the **Vintage Electronics Workbench**. Everything else is made with the mod's
-  benches and machines.
+- The vanilla crafting table makes the **Vintage Electronics Workbench** and every block of the machines that has
+  no electronics in it. What is electronic is made with the mod's benches and assembly lines, and the materials
+  and components with its machines ([Recipes](recipes.md)).
 - There is an **Electronics Workbench** per era (Vintage, Legacy, Transition, Standard, Advanced; the Exa and the
   Singularity get theirs with their eras). A bench assembles the parts of its era and of the eras before it, and the
   bench of the next era.
@@ -174,8 +175,13 @@ Without J's Industrial, the computronium of the Singularity comes from the cosmo
   is done; and the power strip with its lamp, its draw and the energy it holds.
 - To make parts on their own, each era has its **Electronics Assembly Line** (below), which runs its era's bench
   recipes.
-- The blocks of the machines below are made at the bench of the era that first needs them; every machine the Vintage
-  chain uses, the Prebuilder and the Preinstaller are made at the Vintage bench.
+- **A machine's blocks** are the casing of its duty (Machine, Refractory, Lined, Vacuum or Clean Room), the same
+  entries as every machine, its terminal and the working blocks that make it what it is (a Crusher's rolls, a
+  Rolling Mill's work rolls). The mechanical ones come from the Crafting Table, so the network's crafting patterns
+  make them from the start; the electronic ones (the terminal, the peripheral port, a laser, a placement head) from
+  the bench of their era by hand, and then from its Electronics Assembly Line. The Vintage machines come in three
+  steps, each made only of what the one before makes: from vanilla things, from the first metals, and the chip
+  factory. Every recipe is in [Recipes](recipes.md).
 
 ### The machines
 
@@ -189,7 +195,7 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
 | Ore and metals | Crusher | 3x3x3 | ore into crushed ore and its byproducts; a toothed double-roll crusher (J's Industrial's Macerator is a jaw crusher) |
 | | Grinder | 2x2x2 | ingots, crystals and glass into dust |
 | | Induction Furnace | 3x3x3 | dusts into ingots and alloys; sand and coke into metallurgical silicon; coke and calcite into calcium carbide |
-| | Electrolytic Cell | 3x2x2 | hydrogen and oxygen from water, chlorine from salt, refined copper, aluminium from alumina |
+| | Electrolytic Cell | 3x2x2 | hydrogen and oxygen from water, chlorine from salt, refined copper, aluminium from alumina; the first charge that forms a battery |
 | | Rolling Mill | 3x2x2 | ingot into plate, sheet and foil |
 | | Wire Drawer | 3x2x1 | ingot into rod and wire, bonding wire included |
 | Chemistry and gases | Coke Oven | 3x3x3 | coal into coke and coal tar |
@@ -201,21 +207,22 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
 | The chip factory | Lithography Station | 3x3x2 | a wafer's layer exposed through its mask; one per era |
 | | Plasma Etcher | 2x2x2 | the exposed layer etched |
 | | Ion Implanter | 3x2x2 | the layer doped |
-| | Deposition Chamber | 2x2x2 | metal laid on the layer (aluminium, copper, tungsten, cobalt), and the magnetic layer of disk platters |
+| | Deposition Chamber | 2x2x2 | metal laid on the layer (aluminium, copper, tungsten, cobalt), the magnetic layer of disk platters and floppy film, the chromium of a mask blank, the gold electrodes of oscillator crystals |
 | Packaging | Packaging Line | 3x2x2 | a finished wafer cut into dies, each packaged: ceramic in the Vintage, epoxy and pins later, solder balls from the Transition |
 | Boards and components | Laminator | 3x2x2 | paper or glass fibre and resin, clad in copper foil |
 | | Board Etcher | 3x2x2 | a clad laminate etched into a board's traces |
 | | Ceramic Kiln | 2x2x2 | alumina packages, ceramic capacitors, ferrites |
 | | Coil Winder | 3x2x1 | wire into coils, motors and magnetic heads |
 | Assembly | Electronics Assembly Line | 3x2x2 | its era's bench recipes, on their own; one per era, fed by its era's Crafting Interface |
-| | Optical Polisher | 2x2x2 | quartz and calcium fluoride into lenses and oscillator crystals, glass into blank discs; draws glass fibre, and optical fibre from germanium-doped glass |
+| | Optical Polisher | 2x2x2 | quartz into mask plates, glass and calcium fluoride into lenses, polycarbonate into blank discs; draws glass fibre, and optical fibre from germanium-doped glass |
 | Displays | Display Line | 3x3x2 | tube screens with their phosphor, flat screens with indium tin oxide, LED panels |
 
 - **Entries** tell what they are by their connector and their band: green takes in, orange gives out, yellow is
   energy, and the peripheral socket is cyan. The Coke Oven needs no energy. The Chemical Reactor has two liquid and two
   gas inlets, the Air Separation Unit a gas outlet for each gas, the Siemens Reactor two gas inlets, the Crystal Puller
   one (the nitrogen of gallium nitride), the Plasma Etcher a fluid and two gas inlets, the Board Etcher one for its
-  ferric chloride, the Display Line two fluid inlets (liquid crystal and mercury).
+  ferric chloride, the Display Line two fluid inlets (liquid crystal and mercury), and the Lithography Station a gas
+  inlet for its laser (Legacy, Transition, Standard) and a liquid inlet for its immersion (Transition, Standard).
 - **Every machine shows what it is processing:** it draws the recipe at work with its material, its colour, its part
   and its form, and gives off its particles in the colour of what comes out. A machine of a single recipe (the Coke
   Oven, the Air Separation Unit, the Siemens Reactor) always shows the same.
@@ -310,11 +317,13 @@ lithography draws 10 kW, as the real one is the hungriest machine of a fab.
   | Machine | What it makes |
   | --- | --- |
   | Ceramic Kiln | 1 alumina into 4 ceramic packages; 1 alumina and 1 nickel foil into 8 ceramic capacitors (nickel electrodes, as in the real ones); 1 tantalum dust and 1 manganese dust into 8 tantalum capacitors (the real anode of pressed tantalum powder and its manganese dioxide cathode); 1 lithium hydroxide and 1 cobalt dust into 1 lithium cobalt oxide, the cathode of lithium-ion cells; 2 iron, 1 manganese and 1 zinc dust into 4 ferrites (manganese zinc) |
-  | Coil Winder | 1 ferrite and 2 copper wires into 2 inductors; 2 ferrites and 4 copper wires into 1 transformer; 1 steel rod, 4 copper wires and 1 ferrite into 1 electric motor; 1 permalloy foil and 1 copper wire into 2 magnetic heads |
-  | Optical Polisher | 1 cultured quartz into 4 oscillator crystals or 1 mask plate; 1 glass into 4 lenses; 1 calcium fluoride boule into 4 lenses; 1 polycarbonate into 4 blank discs; 1 glass into 8 glass fibres; 1 glass and 1 germanium nugget into 8 optical fibres |
+  | Coil Winder | 1 ferrite and 2 copper wires into 2 inductors; 2 ferrites and 4 copper wires into 1 transformer; 1 steel rod, 4 copper wires and 1 ferrite into 1 electric motor; 1 permalloy foil and 1 copper wire into 2 magnetic heads; 4 copper wires into 1 copper coil |
+  | Optical Polisher | 1 cultured quartz into 1 mask plate; 1 glass into 4 lenses; 1 calcium fluoride boule into 4 lenses; 1 polycarbonate into 4 blank discs; 1 glass and 1 alumina into 8 glass fibres (E-glass has alumina in it); 1 glass and 1 germanium dust into 8 optical fibres |
+  | Deposition Chamber | 1 mask plate and 1 chromium nugget into 1 mask blank; 1 cultured quartz and 1 gold nugget into 4 oscillator crystals (their electrodes); 1 aluminium sheet and 1 iron dust into 1 platter in the Vintage, 1 aluminium sheet and 1 cobalt nugget from the Legacy; 1 PVC and 1 iron dust into 4 floppy films |
   | Laminator | FR-2 (Vintage): 2 paper, 1 phenolic resin and 1 copper foil; FR-4 (from the Legacy): 2 glass fibres, 1 epoxy resin and 1 copper foil |
   | Board Etcher | a clad laminate and 250 mB of ferric chloride into an etched board, which takes 1 laminate in the Vintage and the Legacy, 2 in the Transition, 3 in the Standard and 4 in the Advanced, as real boards gained layers |
-  | Display Line | a tube (Vintage, Legacy): 4 glass, 1 lead, 1 zinc sulfide, 2 coils; a liquid crystal screen (Transition): 2 glass, 1 indium tin oxide foil, 250 mB of liquid crystal and a cold cathode lamp (100 mB of mercury and 1 glass); the Standard's, the same with 8 gallium nitride LEDs instead of the lamp; the Advanced's, 2 glass, 1 indium tin oxide foil and 16 LEDs, a panel that lights itself |
+  | Display Line | a tube (Vintage, Legacy): 4 glass, 1 lead, 1 zinc sulfide, 2 coils; a liquid crystal screen (from the Legacy, for the first portables, and on desks from the Transition): 2 glass, 1 indium tin oxide foil, 250 mB of liquid crystal and a cold cathode lamp (1 glass and 100 mB of mercury, made on the same line); the Standard's, the same with 8 gallium nitride LEDs instead of the lamp; the Advanced's, 2 glass, 1 indium tin oxide foil and 16 LEDs, a panel that lights itself |
+  | Electrolytic Cell | 2 lead ingots, 1 PVC and 250 mB of sulfuric acid into 1 lead-acid battery (a 12 V, 7 Ah block, about 300 kJ); 1 lithium cobalt oxide, 1 coke (the graphite of the anode), 2 aluminium foils (the cathode's foil and the pouch), 1 copper foil (the anode's) and 250 mB of battery electrolyte into 1 lithium-ion cell. A real battery is filled and then formed by its first charge, which is electrolysis |
 
 ### How a chip is made
 
@@ -325,15 +334,21 @@ lithography draws 10 kW, as the real one is the hungriest machine of a fab.
    into 8 **wafers** and polishes them flat.
 4. Each layer of the chip goes through the **Lithography Station** (photoresist, the era's light and its mask), the
    **Plasma Etcher**, the **Ion Implanter** and the **Deposition Chamber**. A chip of a later era has more layers: 2 in
-   the Vintage, 3 in the Legacy, 4 in the Transition, 6 in the Standard, 8 in the Advanced.
-5. The **Packaging Line** cuts the finished wafer into dies and packages each into a **chip**: a processor, graphics,
-   memory or controller chip, by the masks used.
+   the Vintage, 3 in the Legacy, 4 in the Transition, 6 in the Standard, 8 in the Advanced. Between the machines it
+   is a **wafer in process**, whose tooltip names its chip, the layer it is on and the machine it goes to next.
+5. The **Packaging Line** cuts the finished wafer into dies and packages each into a **chip**, by the masks used:
+   a memory and a controller chip of each era, and a processor and a graphics chip for each microarchitecture of
+   each era, as the catalogue names them, so a Haswell is made of Haswell dies. The dies of the parts the
+   catalogue does not list are chips of their own too: Quince's (the Motoroller 68000, the PowerQ G3 and G4, the
+   Quince Q1 to Q3), the Phi's MIC (Standard), Blockwright's hashing chip (Standard, Advanced), and the portables'
+   four families (Hightide in the Legacy, the Transition and the Standard; Quince qA in the Transition, the
+   Standard and the Advanced; Motoroller MX in the Transition; Sunsung Exo in the Standard and the Advanced).
 
 What each layer uses, by machine:
 
 | Machine | Every layer |
 | --- | --- |
-| Lithography Station | 100 mB of photoresist; in the Standard also 100 mB of ultrapure water (the immersion); in the Advanced also 1 tin nugget every 4 layers (the plasma's droplets) |
+| Lithography Station | 100 mB of photoresist; in the Legacy also 10 mB of krypton (the laser's gas); in the Transition and the Standard also 10 mB of argon and 100 mB of ultrapure water (the immersion); in the Advanced also 1 tin nugget every 4 layers (the plasma's droplets) |
 | Plasma Etcher | 100 mB of hydrofluoric acid up to the Legacy; 100 mB of chlorine and 10 of argon from the Transition |
 | Ion Implanter | 1 phosphorus or boron dust dopes 8 layers |
 | Deposition Chamber | 1 nugget of the era's wiring metal: aluminium (Vintage, Legacy), refined copper (Transition), copper and tungsten in turn (Standard), cobalt and ruthenium in turn (Advanced); a Standard chip's first layer takes 1 hafnium nugget, the high-k gate |
@@ -343,20 +358,24 @@ package of its era: in the Vintage, 1 ceramic package and 2 aluminium bonding wi
 4 chips), 2 gold bonding wires and copper foil (1 for 4 chips); from the Transition, epoxy and 1 lead-free solder
 nugget, its balls.
 
-The lithography's light follows the real one: a mercury lamp in the Vintage and the Legacy, a krypton fluoride laser
-in the Transition, an argon fluoride laser with calcium fluoride lenses and immersion in ultrapure water in the
-Standard, extreme ultraviolet from tin plasma and molybdenum mirrors in the Advanced.
+The lithography's light follows the real one: a mercury lamp in the Vintage, a krypton fluoride laser in the
+Legacy, an argon fluoride laser with calcium fluoride lenses and immersion in ultrapure water in the Transition
+and the Standard, extreme ultraviolet from tin plasma and molybdenum mirrors in the Advanced. An excimer laser uses
+its gas, 10 mB of krypton or argon a layer, through its station's gas inlet.
 
-**Masks.** A mask serves one kind of chip of one era, sits in the station's mask slot and is never used up. Its blank
-is a mask plate from the Optical Polisher with 1 chromium nugget laid on it in the Deposition Chamber. The Vintage
-station writes it by photo-reduction from a drawing (the blank and 1 paper), as masks were made then; from the Legacy
-on, the linked computer writes it.
+**Masks.** A mask serves one kind of chip of one era (a processor or graphics mask, one microarchitecture), sits in
+the station's mask slot and is never used up. Its blank is a mask plate from the Optical Polisher with 1 chromium
+nugget laid on it in the Deposition Chamber. The Vintage station writes it by photo-reduction from a **Layout**, the
+chip's drawing cut in PVC film at the Vintage bench, as real layouts were cut in film and photographed down: the
+blank and the Layout give the mask, and the Layout is used up ([Recipes](recipes.md)). From the Legacy on, the
+linked computer writes the mask.
 
 **Lasers and LEDs.** The Crystal Puller also grows the boules of light: gallium arsenide (Legacy) from 2 gallium and 2
 arsenic; aluminium gallium indium phosphide (Transition) from 1 aluminium, 1 gallium, 1 indium and 1 phosphorus;
-gallium nitride (Standard) from 2 gallium and 1,000 mB of nitrogen. Their wafers take one layer and give 16 laser
-diodes or 32 LEDs. It grows calcium fluoride from 4 fluorspar dust (fluorspar is calcium fluoride), and the Optical
-Polisher cuts each boule into 4 lenses.
+gallium nitride (Standard) from 2 gallium and 1,000 mB of nitrogen. The Wafer Saw cuts each into 8 wafers, which
+take one layer through the laser mask (from the Legacy) or the LED mask (from the Standard), and the Packaging
+Line cuts a finished one into 16 laser diodes or 32 LEDs. It grows calcium fluoride from 4 fluorspar dust
+(fluorspar is calcium fluoride), and the Optical Polisher cuts each boule into 4 lenses.
 
 ### Chips are made by the computers of the era before
 

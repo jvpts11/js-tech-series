@@ -21,6 +21,7 @@ For using the mod rather than building it, the player and developer guides are o
 | [Hardware](hardware.md) | Processors, memory, graphics cards and motherboards. |
 | [Catalogue](catalogue.md) | Every part of every era with its figures, generated from the code. |
 | [Survival](survival.md) | The mod's own chain, its machines, the Prebuilder and the Preinstaller, abandoned buildings and villagers. |
+| [Recipes](recipes.md) | What every block and item is made of, and where. |
 | [Storage devices](storage-devices.md) | Disks, removable media and volumes. |
 | [Power](power.md) | Power supplies, energy, power supply failure, power loss and UPSes. |
 | [Temperature](temperature.md) | Thermal budgets and what heat does. |
@@ -58,6 +59,8 @@ describes it.
 - Survival: J's Computers' easy chain with a bench per era and its machines, the Prebuilder and the Preinstaller, the
   firmware on the motherboard, computers broken whole, twenty abandoned buildings, the Programmer and the IT
   Technician. [Survival](survival.md), [Eras](eras.md)
+- Recipes: every block and item, at the Crafting Table, the era's bench and its assembly line, or the chain's
+  machines, one recipe one result. [Recipes](recipes.md)
 - Disks only in machines of their era or newer, and the Dock Station only taking disks of its era or older.
   [Eras](eras.md), [Peripherals](peripherals.md)
 - Decided for Carbon: the Vinyl RW Drive that records and cuts music discs, Easy Disc Creator and the Extended CD

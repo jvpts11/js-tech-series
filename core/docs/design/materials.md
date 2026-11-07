@@ -110,8 +110,8 @@ The catalogue also holds what is not a material but is shared all the same:
 
 - **common liquids and gases**: fuels (gasoline, kerosene, diesel), hydrogen, oxygen, nitrogen, helium, xenon,
   propellants, and the like;
-- **generic components**: servomotors, electric motors, LEDs, sensors, oscillators, antennas, magnetic heads, and the
-  like.
+- **generic components**: servomotors, electric motors, LEDs, sensors, oscillators, antennas, magnetic heads,
+  lead-acid batteries, lithium-ion cells, and the like.
 
 They are **items and fluids with no game of their own**. Each mod that makes one gives its recipe: J's Industrial the
 full industrial chain, and a mod used without J's Industrial a simpler path of its own; with J's Industrial installed,
@@ -147,3 +147,5 @@ not the materials.
   tungsten 3E4148 (graphite), molybdenum 9A9EA8, gallium 6CD4CC (aqua), hafnium 8C7A64, ruthenium B85A5A. A gas
   takes the colour of its cylinder in the European code (EN 1089-3): hydrogen C8302A, oxygen F4F4F4, nitrogen
   2A2A2A, argon 2E6B3A, krypton 6CC46C, chlorine D8C83A, hydrogen chloride C8902A, acetylene 7A2430.
+- **The generic components J's Computers' chain makes** (the electric motor, the LED, the oscillator, the antenna,
+  the magnetic head, the lead-acid battery and the lithium-ion cell), registered as soon as a mod declares them.
