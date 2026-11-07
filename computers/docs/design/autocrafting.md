@@ -6,7 +6,8 @@ how a craft is planned.
 ## The words
 
 - **Pattern:** a recipe the network knows, what goes in and what comes out. There are three kinds:
-  - a **bench** pattern: a 3×3 grid and its result (a cell can take any item of a tag, "any planks");
+  - a **bench** pattern: a crafting table's 3×3 grid and its result (a cell can take any item of a tag, "any
+    planks"); the Electronics Workbenches are by hand and never run patterns ([Survival](survival.md));
   - a **machine** pattern: what to put in a machine and what it gives back, with a time limit and, for an output that
     only comes sometimes, its probability;
   - a **multi-stage** pattern (a pipeline): stages of both kinds, in order, each starting when the one before has made
