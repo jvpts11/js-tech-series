@@ -22,7 +22,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * What a machine's self-test warns of while it still boots, each in the voice of its firmware: the text BIOS a line,
  * the blue BIOS a WARNING! before it, the UEFI a box under its bar with a title and two lines. A warning only stays
- * written; the boot goes on. A supply that has failed never reaches the self-test: the machine does not start.
+ * written; the boot goes on. A supply that has failed never reaches the self-test: the machine does not start. A
+ * thermal trip at the last shutdown is warned of first, at the self-test after it.
  */
 @TextHolder
 final class PostWarnings {
@@ -43,6 +44,16 @@ final class PostWarnings {
     static final TextKey UEFI_UNITS_LINE = TextKey.of("jsc.post.uefi_psu_units_line",
             "%s: unit %s failed, unit %s carries the load.");
     static final TextKey UEFI_UNITS_ADVICE = TextKey.of("jsc.post.uefi_psu_units_advice", "Replace unit %s.");
+    /* A thermal trip at the last shutdown (computers/docs/design/temperature.md). */
+    static final TextKey CLI_TRIP = TextKey.of("jsc.post.cli_thermal_trip",
+            "Warning: CPU over temperature, thermal trip at %s C at the last shutdown");
+    static final TextKey BIOS_TRIP = TextKey.of("jsc.post.bios_thermal_trip",
+            "CPU Over Temperature (last shutdown at %s C)");
+    static final TextKey UEFI_TRIP = TextKey.of("jsc.post.uefi_thermal_trip", "CPU over temperature");
+    static final TextKey UEFI_TRIP_LINE = TextKey.of("jsc.post.uefi_thermal_trip_line",
+            "The last shutdown was a thermal trip at %s °C.");
+    static final TextKey UEFI_TRIP_ADVICE = TextKey.of("jsc.post.uefi_thermal_trip_advice",
+            "Look at the cooler and the case fans. DEL for Setup.");
 
     private PostWarnings() {
     }
@@ -57,6 +68,22 @@ final class PostWarnings {
      * @param uefiAdvice the box's second line, empty when the first says it all
      */
     record Warning(Text cli, Text bios, Text uefiTitle, Text uefiLine, Text uefiAdvice) {
+    }
+
+    /**
+     * What the self-test of the machine {@code state} reads warns of, in order: a thermal trip at its last shutdown,
+     * then a power supply worn out or short of a unit; none for a sound one.
+     */
+    static List<Warning> of(final FirmwareStatePayload state) {
+        final List<Warning> warnings = new ArrayList<>();
+        final FirmwareStatePayload.Thermal thermal = state.thermal();
+        if (thermal != null && thermal.lastTrip() > 0) {
+            final int celsius = thermal.lastTrip();
+            warnings.add(new Warning(CLI_TRIP.with(celsius), BIOS_TRIP.with(celsius), UEFI_TRIP.text(),
+                    UEFI_TRIP_LINE.with(celsius), UEFI_TRIP_ADVICE.text()));
+        }
+        warnings.addAll(of(state.psu()));
+        return warnings;
     }
 
     /** What the self-test of a machine with the power supply {@code psu} warns of, in order; none for a sound one. */

@@ -65,6 +65,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   supply named without a life lasting as a PowerGold; `PsuCondition`, `PsuConditions` (a supply's wear on its item),
   `PsuWear` (the wear's rule) and `PsuTexts` are new. A scripted supply's sheet takes `life_days` and `units`.
   Experimental.
+- Cooling as parts: J's Computers' API is at version 11. `CoolerSpec` (a processor's cooler: its era, its
+  kind, stock, tower or water, and the watts it takes away), `CaseFanSpec` (a case fan: its era, its size and its
+  watts) and `CaseCooling` (what a computer's case takes away on its own and its fan seats at the rear, on the top and
+  at the front) are new. `ComputersRegisterEvent.cooler` and `caseFan`, and `JsComputersApi.registerCooler` and
+  `registerCaseFan`, declare other mods' items; `ComputerDef` gains its case's `cooling`, the four-part constructor
+  kept for a computer cooled from outside it, which keeps no temperature. A modpack's startup script declares them with
+  `JsComputers.cooler(item, {era, kind, takes_away_watts})` and `JsComputers.caseFan(item, {era, size_mm,
+  takes_away_watts})`. Experimental.
 
 ### Added
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
@@ -168,6 +176,37 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   drawing and shows the rack's draw, its card each unit's; the Drive Shelf's badge points at the server it extends,
   and its card counts its bays and drives. The header says ON BATTERY or BYPASS.
 - The guide's list of the network's tables and their columns has the `events` and `power` tables.
+- Temperature: every computer has a heat budget, what its case takes away on its own (60 W for the
+  Vintage's minitower up to 300 W for the High Performance) and what the cooler over each processor and its case fans
+  add, and its parts' watts heat it against it. Its temperature is its surroundings' plus 60 °C times the heat over
+  the budget, the surroundings from its biome (about 20 °C in the plains, 38 °C in the desert, 8 °C in the snow, and
+  10 °C more in the Nether), and it gets there over about half a minute. Up to 80 °C it runs at full speed; to 90 °C
+  it loses a little, as a processor that stops holding its boost; at 90 °C it throttles, slowing its capacity and its
+  programs' credits just enough to hold there, down to a quarter; at 100 °C, when not even a quarter holds the heat,
+  it trips: it goes dark at once, its disks are checked at the next start, the network's event log writes the trip
+  as an ERROR, and it does not start again until it has cooled below 60 °C. A computer slowed by heat wears its power
+  supply twice as fast. The server settings `temperature.ambient_base`, `biome_factor`, `nether_extra` and
+  `restart_below_c` set the surroundings and the restart.
+- Coolers and case fans, the parts that cool: each era's stock cooler (a bare heat sink in the Vintage, 20
+  W, to the Advanced's with its lit ring, 200 W), the Standard and Advanced tower coolers (250 and 300 W), the MF
+  AquaLoop 240 and 360 water coolers (300 W Standard, 400 W Advanced) and each era's case fan (80 to 120 mm, 20 to 60
+  W). A cooler or fan of the case's era or an older one fits. A water cooler takes its processor's cooler seat and two
+  fan seats for its radiator, the two on top when the case has them, else the two at the front, and brings its
+  radiator's own fans. Each is drawn inside the case by its own model: the cooler on its processor, the fans on the
+  case's seats and the radiator under the roof or behind the front, lit with the light of an Aesthetic case.
+- The assembly window's COOLING face: tabs under the lamps turn the window between the board and the
+  cooling, which shows the case's fan seats where they are and a cooler seat over each processor, the radiator lying
+  on the seats it takes; the tab's lamp lights while the machine lacks cooling. TEMP, HEAT, BUDGET, AMBIENT and CLOCK
+  read how it stands, and the state reads THROTTLED while it holds 90 °C.
+- The temperature where a player looks: the TEMP tile of the terminal's Local tab, the processor's
+  temperature and the case fans that turn on the firmware's hardware page, and the Device Manager's Batteries (the
+  UPS's) and Cooling (the coolers, the case fans that turn of the seats, and how hot the processors and the graphics
+  cards run). After a trip the next self-test warns of it in its firmware's voice, and the boot goes on.
+- The Mainframe's cabinet takes 1,500 W away on its own, and a cooler over each socket adds to it.
+- Every computer's heat for any mod: a computer that keeps a temperature answers J's Core's thermal
+  budget, its parts' watts, its budget, its temperature in kelvin and the share of its clock its heat leaves it.
+- The Vent Panel, one for every era: a perforated 1U blank that adds 500 W to its rack's heat budget,
+  drawn in the colour of the rack it is mounted in, with a card on the rack's screen as the Cooling Unit's.
 - Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`
@@ -193,6 +232,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its autocrafting.
 
 ### Changed
+- A rack's heat is a temperature: the cabinet has one temperature for every machine in it, from its
+  heat budget (1,000 W, its Cooling Units and now its Vent Panels) and the load of its powered bays, by the same rules
+  as a computer's. The cut the rack had, the budget over the load down to a quarter, is now its throttling at 90 °C;
+  past what a quarter holds, at 100 °C, every running bay goes dark at once, and no bay switches on until the cabinet
+  has cooled below 60 °C. The rack's screen shows the temperature beside its units, "THROTTLED" with the share in
+  its header, a server's state THROTTLED, and the Cooling Unit's and the Vent Panel's cards what they add, the
+  budget, the load and the temperature.
+- The cases bring no cooler and no fans of their own: the cooler over a processor and the case fans are
+  parts the player fits, and a computer built before has none until they are fitted.
 - The workshop cards cost energy: the Workshop's work and an UPDATE's are paid by the computer that has
   the cards, smelting 2 kJ an item, enchanting 10 kJ for every level the enchanting table would take, repairing 2 kJ
   for every percent of durability given back, combining 10 kJ for every level the anvil would ask, naming 5 kJ. The

@@ -13,6 +13,8 @@ import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.MainframeLayout;
+import dev.jstech.computers.hardware.CaseCooling;
+import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.network.FailoverRole;
@@ -33,6 +35,9 @@ import net.minecraft.world.item.ItemStack;
  * queues (each queue's speed in the tooltip), its RAM buffer and its network; its switches are auto start and failover.
  */
 public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu> {
+
+    /* Where the cabinet's own share stands among the cooling face's readouts: after the budget. */
+    private static final int CABINET_ROW = 3;
 
     public MainframeScreen(final MainframeMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -73,6 +78,9 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
         if (!menu.buildValid()) {
             return GameText.resolve(AssemblyTexts.OFFLINE);
         }
+        if (menu.isRunning() && menu.thermal().throttled()) {
+            return GameText.resolve(AssemblyTexts.THROTTLED);
+        }
         if (menu.isRunning()) {
             // A Passive Failover member is powered and synced, not orchestrating.
             return GameText.resolve(menu.failoverRole() == FailoverRole.PASSIVE ? AssemblyTexts.STANDBY
@@ -86,10 +94,47 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
         if (menu.networkState() == MainframeBlockEntity.NET_STATE_CONFLICT || !menu.buildValid()) {
             return JsTechTheme.red();
         }
-        if (menu.isRunning()) {
+        if (menu.isRunning() && !menu.thermal().throttled()) {
             return menu.failoverRole() == FailoverRole.PASSIVE ? JsTechTheme.amber() : JsTechTheme.green();
         }
         return JsTechTheme.amber();
+    }
+
+    @Override
+    protected AssemblyGeometry.Face face() {
+        return menu.face();
+    }
+
+    @Override
+    protected void showFace(final AssemblyGeometry.Face face) {
+        menu.showFace(face);
+    }
+
+    @Override
+    protected int faceButton(final AssemblyGeometry.Face face) {
+        return face == AssemblyGeometry.Face.BOARD ? MainframeMenu.BUTTON_FACE_BOARD
+                : MainframeMenu.BUTTON_FACE_COOLING;
+    }
+
+    @Override
+    protected boolean coolingSlot(final Slot slot) {
+        return menu.coolingSlot(slot);
+    }
+
+    @Override
+    protected ThermalState thermal() {
+        return menu.thermal();
+    }
+
+    /** The cooling face's readouts, with what the cabinet takes away on its own between the budget and the air. */
+    @Override
+    protected List<Readout> coolingReadouts() {
+        final List<Readout> rows = new ArrayList<>(super.coolingReadouts());
+        final String cabinet = JsTechTheme.fmt(CaseCooling.MAINFRAME.caseWatts());
+        rows.add(CABINET_ROW, new Readout(GameText.resolve(AssemblyTexts.CABINET),
+                GameText.resolve(AssemblyTexts.WATTS.with(cabinet)), JsTechTheme.text(),
+                List.of(GameText.component(AssemblyTexts.CABINET_TIP.with(cabinet)))));
+        return rows;
     }
 
     @Override
@@ -110,7 +155,7 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
                         JsTechTheme.fmt(menu.ramBuffer()) + " " + GameText.resolve(AssemblyTexts.ITEMS),
                         JsTechTheme.text()),
                 new Readout(GameText.resolve(AssemblyTexts.NETWORK), network, networkColour),
-                drawReadout(menu.powerShown(), menu.psu()));
+                drawReadout(menu.powerShown(), menu.psu()), tempReadout(menu.thermal()));
     }
 
     @Override
@@ -165,6 +210,10 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
         final List<Component> failure = psuFailure(menu.psu());
         if (!failure.isEmpty()) {
             return failure;
+        }
+        final List<Component> hot = tooHot(menu.thermal());
+        if (!hot.isEmpty() && !menu.isRunning()) {
+            return hot;
         }
         if (!menu.buildValid()) {
             return List.of(GameText.component(AssemblyTexts.NOT_A_COMPUTER),

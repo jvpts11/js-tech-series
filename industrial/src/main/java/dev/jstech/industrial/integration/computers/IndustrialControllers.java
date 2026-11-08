@@ -103,12 +103,12 @@ public final class IndustrialControllers {
     }
 
     /**
-     * What an Industrial Controller Computer of {@code era} is: the boards, the parts and the case of a Personal
-     * Computer of that era, as the Industrial Controller.
+     * What an Industrial Controller Computer of {@code era} in a case of {@code style} is: the boards, the parts and
+     * the case of a Personal Computer of that era, cooled as one, as the Industrial Controller.
      */
-    public static ComputerDef computer(final Era era) {
-        final ComputerDef personal = PersonalComputerBlockEntity.computer(era);
-        return new ComputerDef(era, personal.formFactors(), MACHINE, personal.parts());
+    public static ComputerDef computer(final Era era, final CaseStyle style) {
+        final ComputerDef personal = PersonalComputerBlockEntity.computer(era, style);
+        return new ComputerDef(era, personal.formFactors(), MACHINE, personal.parts(), personal.cooling());
     }
 
     /**
@@ -122,9 +122,11 @@ public final class IndustrialControllers {
         modEventBus.addListener(ComputersRegisterEvent.class, IndustrialControllers::register);
         modEventBus.addListener(RegisterOperationTypesEvent.class, ControllerOperations::register);
         modEventBus.addListener(RegisterPayloadHandlersEvent.class, MachineMonitorPayloads::register);
-        // A controller draws its energy as every computer does, through the port J's Computers gives its own.
-        modEventBus.addListener(RegisterCapabilitiesEvent.class,
-                event -> ComputingCapabilities.offerEnergy(event, ENTITY.get()));
+        // A controller draws its energy and keeps its heat as every computer does, as J's Computers offers its own.
+        modEventBus.addListener(RegisterCapabilitiesEvent.class, event -> {
+            ComputingCapabilities.offerEnergy(event, ENTITY.get());
+            ComputingCapabilities.offerHeat(event, ENTITY.get());
+        });
     }
 
     /* The machine, the cards and each computer, on J's Computers' register event. */
@@ -133,7 +135,7 @@ public final class IndustrialControllers {
         FieldbusCards.register(event);
         MachineMonitor.register(event);
         for (final BlockEntry<IndustrialControllerBlock> controller : ALL) {
-            event.computer(controller.get(), computer(controller.get().era()));
+            event.computer(controller.get(), computer(controller.get().era(), controller.get().caseStyle()));
         }
     }
 

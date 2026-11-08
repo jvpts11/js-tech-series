@@ -12,6 +12,8 @@ import dev.jstech.computers.audio.ProgramCue;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ThermalState;
+import dev.jstech.core.text.Text;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
@@ -246,6 +248,24 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      */
     default UpsReading upsReading() {
         return UpsReading.NONE;
+    }
+
+    /** The UPS that carries this machine by name, as its Device Manager tells it; empty without one. On the server. */
+    default Text upsName() {
+        return Text.EMPTY;
+    }
+
+    /**
+     * The share of its clock the machine's heat leaves it, from a quarter to all of it: what its programs' credits run
+     * at (computers/docs/design/temperature.md). All of it for a machine with no temperature.
+     */
+    default double heatClock() {
+        return 1.0;
+    }
+
+    /** How the machine's heat stands, for its firmware and its system's tools; none for one with no temperature. */
+    default ThermalState thermal() {
+        return ThermalState.NONE;
     }
 
     /**

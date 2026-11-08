@@ -18,7 +18,7 @@ import dev.jstech.core.text.TextKey;
 final class ServerRackTexts {
 
     /* The rack units in use out of the cabinet's, then its state. */
-    static final TextKey THROTTLED = TextKey.of("jsc.rack.throttled", "%s/%sU  THROTTLED %s%%");
+    static final TextKey THROTTLED = TextKey.of("jsc.rack.throttled", "%s/%sU  %s°C  THROTTLED %s%%");
     static final TextKey LINKED = TextKey.of("jsc.rack.linked", "%s/%sU  LINKED");
     static final TextKey OFFLINE = TextKey.of("jsc.rack.offline", "%s/%sU  OFFLINE");
     static final TextKey UNIT = TextKey.of("jsc.rack.unit", "%sU");
@@ -85,6 +85,15 @@ final class ServerRackTexts {
     static final TextKey WATTS_SHORT = TextKey.of("jsc.rack.watts_short", "%s%sW");
     /* The UPS Battery Expansion's card: what it adds, and the UPS it adds to. */
     static final TextKey CARD_ADDS = TextKey.of("jsc.rack.card_adds", "ADDS");
+    /* The cabinet's heat on a cooling unit's card and a server's (computers/docs/design/temperature.md). */
+    static final TextKey CARD_BUDGET = TextKey.of("jsc.rack.card_budget", "BUDGET");
+    static final TextKey CARD_TEMP = TextKey.of("jsc.rack.card_temp", "TEMP");
+    static final TextKey CARD_MACHINES = TextKey.of("jsc.rack.card_machines", "MACHINES");
+    static final TextKey ADDS_WATTS = TextKey.of("jsc.rack.adds_watts", "+%s W");
+    static final TextKey DEGREES = TextKey.of("jsc.rack.degrees", "%s °C");
+    static final TextKey DEGREES_AT = TextKey.of("jsc.rack.degrees_at", "%s °C %s%%");
+    static final TextKey MACHINES_AT = TextKey.of("jsc.rack.machines_at", "at %s%%");
+    static final TextKey THROTTLED_STATE = TextKey.of("jsc.rack.throttled_state", "THROTTLED");
     static final TextKey CARD_UPS = TextKey.of("jsc.rack.card_ups", "UPS");
     /* The PDU's card: the whole rack's draw, each unit's, and who switches the bays. */
     static final TextKey CARD_TOTAL = TextKey.of("jsc.rack.card_total", "TOTAL");

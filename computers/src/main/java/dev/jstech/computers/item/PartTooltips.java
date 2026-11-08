@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.item;
 
+import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
+import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -60,6 +62,8 @@ public final class PartTooltips {
             case DiskSpec disk -> DiskTooltip.append(disk, stack, lines);
             case MotherboardSpec board -> MotherboardTooltip.append(board, lines);
             case PsuSpec psu -> PowerSupplyTooltip.append(psu, stack, lines);
+            case CoolerSpec cooler -> CoolingTooltip.append(cooler, lines);
+            case CaseFanSpec fan -> CoolingTooltip.append(fan, lines);
             case IExpansionCardSpec card -> card(card, part, stack, lines);
             default -> {
                 // A kind of sheet no tooltip is written for says nothing.

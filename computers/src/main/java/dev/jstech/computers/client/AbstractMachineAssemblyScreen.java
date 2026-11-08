@@ -13,13 +13,19 @@ import dev.jstech.computers.client.assembly.AssemblyPainter;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.Face;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
+import dev.jstech.computers.hardware.CaseCooling;
+import dev.jstech.computers.hardware.CaseFanSpec;
+import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.PsuCondition;
 import dev.jstech.computers.hardware.PsuConditions;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.PsuTexts;
 import dev.jstech.computers.hardware.PsuWear;
+import dev.jstech.computers.hardware.ThermalModel;
+import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
@@ -36,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -131,6 +138,11 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     private static final double[] LOAD_MARKS = {0.5, HIGH_LOAD};
     private static final int PERCENT = 100;
     private static final int TICKS_A_SECOND = 20;
+    /* The temperature gauge starts at the plains' surroundings. */
+    private static final double GAUGE_FROM = 20.0;
+    /* How the cooling face dims the board behind it, and the depth it is drawn at, over the board's parts. */
+    private static final int DIM_ALPHA = 178;
+    private static final float COOLING_Z = 200f;
 
     protected AbstractMachineAssemblyScreen(final T menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
@@ -156,7 +168,7 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
             tooltip(g, powerTooltip(), mouseX, mouseY);
             return;
         }
-        final List<Readout> rows = readouts();
+        final List<Readout> rows = shownReadouts();
         for (int i = 0; i < rows.size(); i++) {
             final Box r = geo.readout(i);
             if (hover(mouseX, mouseY, r.x(), r.y(), r.w(), r.h())) {
@@ -164,6 +176,20 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                 return;
             }
         }
+    }
+
+    /** Over a cooler's or a fan's seat, what it is and what it takes away, as the cooling face names them. */
+    @Override
+    protected void renderTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {
+        final Slot slot = hoveredSlot;
+        if (menu.getCarried().isEmpty() && slot != null && slot.hasItem() && coolingSlot(slot)) {
+            final List<Component> lines = coolingPartTooltip(slot);
+            if (!lines.isEmpty()) {
+                g.renderComponentTooltip(font, lines, mouseX, mouseY);
+                return;
+            }
+        }
+        super.renderTooltip(g, mouseX, mouseY);
     }
 
     @Override
@@ -187,6 +213,17 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                     return true;
                 }
             }
+            if (geo.cooled()) {
+                for (final Face face : Face.values()) {
+                    final Box tab = geo.tab(face);
+                    if (hover((int) mouseX, (int) mouseY, tab.x(), tab.y(), tab.w(), tab.h())) {
+                        // Turned here at once, and on the server, whose slots follow the same face.
+                        showFace(face);
+                        sendButton(faceButton(face));
+                        return true;
+                    }
+                }
+            }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -207,8 +244,10 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         super.init();
         seatSlots.clear();
         for (final Seat seat : geo.seats()) {
+            // The two faces seat parts in the same places (a cooler where its processor sits), so each seat takes its
+            // own face's slot.
             for (final Slot slot : menu.slots) {
-                if (slot.x == seat.x() && slot.y == seat.y()) {
+                if (slot.x == seat.x() && slot.y == seat.y() && coolingSlot(slot) == (seat.face() == Face.COOLING)) {
                     seatSlots.put(seat, slot);
                     break;
                 }
@@ -245,32 +284,38 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                 }
             }
         }
-        for (final Seat seat : geo.seats()) {
-            final Slot slot = seatSlots.get(seat);
-            /*
-             * Once a board is seated, a seat that neither it nor the chassis wires is not drawn at all: dimmed, it
-             * looked like a slot only waiting for its part, and took none. Before a board, every seat shows dimmed
-             * where its part will go.
-             */
-            if (boardIn && slot != null && !slot.isActive()) {
-                continue;
+        if (shownFace() == Face.BOARD) {
+            for (final Seat seat : geo.seats(Face.BOARD)) {
+                final Slot slot = seatSlots.get(seat);
+                /*
+                 * Once a board is seated, a seat that neither it nor the chassis wires is not drawn at all: dimmed, it
+                 * looked like a slot only waiting for its part, and took none. Before a board, every seat shows dimmed
+                 * where its part will go.
+                 */
+                if (boardIn && slot != null && !slot.isActive()) {
+                    continue;
+                }
+                // A tower's second row is a two-socket board's alone: it shows only while one is in.
+                if (geo.inSecondRow(seat) && (slot == null || !slot.isActive())) {
+                    continue;
+                }
+                AssemblyPainter.drawSeat(g, x, y, seat, slot != null && slot.isActive(),
+                        slot == null || !slot.hasItem());
+                final PsuSpec psu = seat.kind() == SeatKind.PSU && slot != null ? PsuConditions.spec(slot.getItem())
+                        : null;
+                if (psu != null) {
+                    AssemblyPainter.drawPsuEdge(g, x, y, seat, psu, PsuConditions.of(slot.getItem()));
+                }
             }
-            // A tower's second row is a two-socket board's alone: it shows only while one is in.
-            if (geo.inSecondRow(seat) && (slot == null || !slot.isActive())) {
-                continue;
-            }
-            AssemblyPainter.drawSeat(g, x, y, seat, slot != null && slot.isActive(), slot == null || !slot.hasItem());
-            final PsuSpec psu = seat.kind() == SeatKind.PSU && slot != null ? PsuConditions.spec(slot.getItem()) : null;
-            if (psu != null) {
-                AssemblyPainter.drawPsuEdge(g, x, y, seat, psu, PsuConditions.of(slot.getItem()));
-            }
+            drawCaptions(g, geo, x, y, era, boardIn);
+        } else {
+            drawCoolingFace(g, geo, x, y, era);
         }
-        drawCaptions(g, geo, x, y, era, boardIn);
         // The front panel.
         final Box power = geo.power();
         AssemblyPainter.drawPower(g, font, x, y, power, powerWord(),
                 hover(mouseX, mouseY, power.x(), power.y(), power.w(), power.h()), powerActive(), powerLamp());
-        final List<Readout> rows = readouts();
+        final List<Readout> rows = shownReadouts();
         for (int i = 0; i < rows.size() && i < geo.readouts(); i++) {
             final Readout r = rows.get(i);
             AssemblyPainter.drawReadout(g, font, x, y, geo.readout(i), r.label(), r.value(), r.colour());
@@ -299,13 +344,16 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                 new String[] {GameText.resolve(AssemblyTexts.LAMP_POWER), GameText.resolve(AssemblyTexts.LAMP_DISK),
                         GameText.resolve(AssemblyTexts.LAMP_NETWORK)},
                 lit, new int[] {JsTechTheme.green(), JsTechTheme.amber(), JsTechTheme.accent()});
+        if (geo.cooled()) {
+            drawTabs(g, geo, x, y, mouseX, mouseY);
+        }
     }
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         // Every word is drawn with the machine in renderBg; the game's own title and inventory caption are not shown.
         // The supply's wear goes over its icon, as an item's durability does, so it is drawn once the items are.
-        if (!ComputersServerConfig.psuFailures()) {
+        if (!ComputersServerConfig.psuFailures() || shownFace() != Face.BOARD) {
             return;
         }
         for (final Seat seat : geometry().seats(SeatKind.PSU)) {
@@ -395,6 +443,120 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                 power.psuWatts())), value, tooltip, new Gauge(load, gauge, LOAD_MARKS));
     }
 
+    /**
+     * The TEMP readout of the board's face (computers/docs/design/temperature.md): the degrees, green up to 80, amber
+     * to 90, red past, with a gauge from 20 to 100 °C marked at 80 and 90; its tooltip what the heat costs the machine
+     * and, when its cooling falls short of what it holds, what is missing and where to fit it. None for a machine with
+     * no temperature.
+     */
+    protected static Readout tempReadout(final ThermalState thermal) {
+        final String label = GameText.resolve(AssemblyTexts.TEMP);
+        if (!thermal.known()) {
+            return new Readout(label, "--", JsTechTheme.dim());
+        }
+        final List<Component> tooltip = new ArrayList<>();
+        tooltip.add(GameText.component(thermal.throttled()
+                ? AssemblyTexts.TEMP_THROTTLED.with(thermal.celsius(), thermal.clockPercent())
+                : thermal.clockPercent() < PERCENT ? AssemblyTexts.TEMP_FADING.with(thermal.celsius(),
+                thermal.clockPercent()) : AssemblyTexts.TEMP_FULL.with(thermal.celsius()))
+                .withColor(tempColour(thermal.celsius())));
+        tooltip.add(GameText.component(AssemblyTexts.TEMP_LOAD.with(thermal.heatWatts(), thermal.budgetWatts()))
+                .withColor(JsTechTheme.dim()));
+        final boolean bare = thermal.bareProcessors() > 0;
+        final boolean noFans = thermal.fans() == 0 && thermal.fanSeats() > 0;
+        if (bare) {
+            tooltip.add(GameText.component(thermal.bareProcessors() == 1 ? AssemblyTexts.NO_COOLER.text()
+                    : AssemblyTexts.NO_COOLERS.with(thermal.bareProcessors())).withColor(JsTechTheme.red()));
+        }
+        if (noFans) {
+            tooltip.add(GameText.component(AssemblyTexts.NO_FANS).withColor(JsTechTheme.red()));
+        }
+        if (bare || noFans) {
+            tooltip.add(GameText.component(AssemblyTexts.OPEN_COOLING).withColor(JsTechTheme.dim()));
+        }
+        return new Readout(label, GameText.resolve(AssemblyTexts.DEGREES.with(thermal.celsius())),
+                tempColour(thermal.celsius()), tooltip, tempGauge(thermal.celsius()));
+    }
+
+    /**
+     * What the power button says of a machine still too hot to start after a thermal trip: why, and how cool it has to
+     * be; nothing for any other.
+     */
+    protected static List<Component> tooHot(final ThermalState thermal) {
+        if (!thermal.cooling()) {
+            return List.of();
+        }
+        return List.of(GameText.component(AssemblyTexts.TOO_HOT).withColor(JsTechTheme.red()),
+                GameText.component(AssemblyTexts.COOLS_TO.with(ComputersServerConfig.restartBelow(),
+                        thermal.celsius())).withColor(JsTechTheme.dim()));
+    }
+
+    /**
+     * The cooling face's readouts: the temperature, the heat the parts make against the budget, the budget, the
+     * surroundings and the clock its heat leaves it.
+     */
+    protected List<Readout> coolingReadouts() {
+        final ThermalState thermal = thermal();
+        return List.of(tempReadout(thermal), heatReadout(thermal),
+                new Readout(GameText.resolve(AssemblyTexts.BUDGET),
+                        GameText.resolve(AssemblyTexts.WATTS.with(JsTechTheme.fmt(thermal.budgetWatts()))),
+                        JsTechTheme.text()),
+                ambientReadout(thermal), clockReadout(thermal));
+    }
+
+    /** The HEAT readout: the parts' watts, its gauge how near the budget they come. */
+    protected static Readout heatReadout(final ThermalState thermal) {
+        final double share = thermal.budgetWatts() <= 0 ? 1.0 : thermal.heatWatts() / (double) thermal.budgetWatts();
+        return new Readout(GameText.resolve(AssemblyTexts.HEAT),
+                GameText.resolve(AssemblyTexts.WATTS.with(JsTechTheme.fmt(thermal.heatWatts()))), JsTechTheme.text(),
+                List.of(), new Gauge(Math.min(1.0, share), tempColour(thermal.celsius()), 1.0));
+    }
+
+    /** The AMBIENT readout: the surroundings the machine stands in. */
+    protected static Readout ambientReadout(final ThermalState thermal) {
+        return new Readout(GameText.resolve(AssemblyTexts.AMBIENT),
+                GameText.resolve(AssemblyTexts.DEGREES.with(thermal.ambient())), JsTechTheme.text());
+    }
+
+    /** The CLOCK readout: amber below its full clock, red at the floor. */
+    protected static Readout clockReadout(final ThermalState thermal) {
+        final int clock = thermal.clockPercent();
+        final int colour = clock >= PERCENT ? JsTechTheme.text()
+                : clock <= (int) Math.round(ThermalModel.FLOOR * PERCENT) ? JsTechTheme.red() : JsTechTheme.amber();
+        return new Readout(GameText.resolve(AssemblyTexts.CLOCK), GameText.resolve(AssemblyTexts.PERCENT.with(clock)),
+                colour);
+    }
+
+    /** The colour of a temperature: green up to 80 °C, amber to 90, red from there. */
+    protected static int tempColour(final int celsius) {
+        return celsius >= ThermalModel.THROTTLE_AT ? JsTechTheme.red()
+                : celsius >= ThermalModel.FULL_UP_TO ? JsTechTheme.amber() : JsTechTheme.green();
+    }
+
+    /** The face the screen shows: its board's, or its cooling; a machine whose case does not cool shows its board. */
+    protected Face face() {
+        return Face.BOARD;
+    }
+
+    /** Turns the screen to {@code face}, at once on this side. */
+    protected void showFace(final Face face) {
+    }
+
+    /** The menu button the tab of {@code face} presses. */
+    protected int faceButton(final Face face) {
+        return -1;
+    }
+
+    /** Whether {@code slot} is one of the cooling face's: a cooler's or a fan's. */
+    protected boolean coolingSlot(final Slot slot) {
+        return false;
+    }
+
+    /** How the machine's heat stands, as the server last told the screen; none for a machine with no temperature. */
+    protected ThermalState thermal() {
+        return ThermalState.NONE;
+    }
+
     protected abstract Era caseEra();
 
     /** Where everything stands on this machine's screen. */
@@ -458,6 +620,187 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     /** The operations strip's counts, or null for a machine with no strip. */
     @Nullable
     protected Operations operations() {
+        return null;
+    }
+
+    /* The face drawn: the board's on a machine whose case does not cool. */
+    private Face shownFace() {
+        return geometry().cooled() ? face() : Face.BOARD;
+    }
+
+    /* The readouts of the face shown. */
+    private List<Readout> shownReadouts() {
+        return shownFace() == Face.COOLING ? coolingReadouts() : readouts();
+    }
+
+    /* The gauge of a temperature, from 20 °C to 100 °C, marked at 80 and 90. */
+    private static Gauge tempGauge(final int celsius) {
+        final double span = ThermalModel.TRIP_AT - GAUGE_FROM;
+        return new Gauge((celsius - GAUGE_FROM) / span, tempColour(celsius),
+                (ThermalModel.FULL_UP_TO - GAUGE_FROM) / span, (ThermalModel.THROTTLE_AT - GAUGE_FROM) / span);
+    }
+
+    /*
+     * The cooling face (computers/docs/design/temperature.md): the board and what is on it dim behind the cooling
+     * parts, a cooler seat over every processor and the case's fan seats, a water cooler's radiator over the pair of
+     * fan seats it takes with its hoses to its pump, and the captions over them. The dim and what is drawn over it go
+     * above the board's parts, which the items of the cooling seats then go above.
+     */
+    private void drawCoolingFace(final GuiGraphics g, final AssemblyGeometry geo, final int x, final int y,
+                                 final Era era) {
+        for (final Seat seat : geo.seats(Face.BOARD)) {
+            final Slot slot = seatSlots.get(seat);
+            if (slot != null && slot.hasItem()) {
+                g.renderItem(slot.getItem(), x + seat.x(), y + seat.y());
+            }
+        }
+        final Box box = geo.caseBox();
+        g.pose().pushPose();
+        g.pose().translate(0, 0, COOLING_Z);
+        g.fill(x + box.x() + 1, y + box.y() + 1, x + box.x() + box.w() - 1, y + box.y() + box.h() - 1,
+                AssemblyPainter.withAlpha(JsTechTheme.screen(), DIM_ALPHA));
+        g.pose().translate(0, 0, 1);
+        final List<CoolerSpec> coolers = new ArrayList<>();
+        for (final Seat seat : geo.seats(SeatKind.COOLER)) {
+            final Slot slot = seatSlots.get(seat);
+            coolers.add(slot == null ? null : HardwareRegistry.cooler(slot.getItem()));
+            if (slot != null && (slot.isActive() || !geo.inSecondRow(seat))) {
+                AssemblyPainter.drawSeat(g, x, y, seat, slot.isActive(), !slot.hasItem());
+            }
+        }
+        final Set<Integer> radiators = geo.cooling().radiatorSeats(coolers);
+        for (final Seat seat : geo.seats(SeatKind.FAN)) {
+            final Slot slot = seatSlots.get(seat);
+            if (!radiators.contains(seat.index()) && slot != null) {
+                AssemblyPainter.drawSeat(g, x, y, seat, slot.isActive(), !slot.hasItem());
+            }
+        }
+        drawRadiators(g, geo, x, y, era, coolers);
+        drawCoolingCaptions(g, geo, x, y);
+        g.pose().popPose();
+    }
+
+    /* Each water cooler's radiator over the pair of fan seats it takes, and the two hoses from its pump to it. */
+    private void drawRadiators(final GuiGraphics g, final AssemblyGeometry geo, final int x, final int y,
+                               final Era era, final List<CoolerSpec> coolers) {
+        final List<Integer> pairs = geo.cooling().radiatorPairs();
+        final List<Seat> fans = geo.seats(SeatKind.FAN);
+        final List<Seat> pumps = geo.seats(SeatKind.COOLER);
+        int pair = 0;
+        for (int i = 0; i < coolers.size() && pair < pairs.size(); i++) {
+            final CoolerSpec cooler = coolers.get(i);
+            if (cooler == null || cooler.radiatorFans() == 0) {
+                continue;
+            }
+            final Seat first = fans.get(pairs.get(pair));
+            final Seat second = fans.get(pairs.get(pair) + 1);
+            AssemblyPainter.drawRadiator(g, x + first.x(), y + first.y(), first.y() == second.y(), era,
+                    x + pumps.get(i).x(), y + pumps.get(i).y());
+            pair++;
+        }
+    }
+
+    private void drawCoolingCaptions(final GuiGraphics g, final AssemblyGeometry geo, final int x, final int y) {
+        final int dim = JsTechTheme.dim();
+        final int rail = y + AssemblyGeometry.RAIL_Y;
+        if (geo.cooling().rearFans() > 0) {
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.REAR), x + AssemblyGeometry.REAR_X, rail, dim);
+        }
+        final boolean many = geo.seats(SeatKind.COOLER).size() > 1;
+        JsTechTheme.textS(g, font, GameText.resolve(many ? AssemblyTexts.COOLERS : AssemblyTexts.COOLER),
+                x + AssemblyGeometry.CPU_X, rail, dim);
+        if (geo.topCaptionX() >= 0) {
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.TOP), x + geo.topCaptionX(), rail, dim);
+        }
+        if (geo.cooling().frontFans() > 0) {
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.FRONT), x + geo.frontX() - 2, rail, dim);
+        }
+    }
+
+    /*
+     * The tabs of the case's two faces under the lamps, the shown one lit; the cooling tab's lamp lights amber when the
+     * machine's cooling falls short of what it holds, red when a processor has no cooler or it would trip.
+     */
+    private void drawTabs(final GuiGraphics g, final AssemblyGeometry geo, final int x, final int y, final int mouseX,
+                          final int mouseY) {
+        for (final Face face : Face.values()) {
+            final Box tab = geo.tab(face);
+            final boolean on = face == shownFace();
+            if (on) {
+                JsTechTheme.selectedTab(g, x + tab.x(), y + tab.y(), tab.w(), tab.h());
+            } else {
+                JsTechTheme.panel(g, x + tab.x(), y + tab.y(), tab.w(), tab.h());
+                if (hover(mouseX, mouseY, tab.x(), tab.y(), tab.w(), tab.h())) {
+                    g.fill(x + tab.x() + 1, y + tab.y() + 1, x + tab.x() + tab.w() - 1, y + tab.y() + tab.h() - 1,
+                            JsTechTheme.hover());
+                }
+            }
+            JsTechTheme.textSCenter(g, font, GameText.resolve(face == Face.BOARD ? AssemblyTexts.FACE_BOARD
+                    : AssemblyTexts.FACE_COOLING), x + tab.x() + tab.w() / 2, y + tab.y() + 3,
+                    on ? JsTechTheme.tabLabelOn() : JsTechTheme.dim());
+        }
+        final ThermalState.Lack lack = thermal().lack();
+        if (lack != ThermalState.Lack.NONE) {
+            final Box cooling = geo.tab(Face.COOLING);
+            g.fill(x + cooling.x() + cooling.w() - 5, y + cooling.y() + 2, x + cooling.x() + cooling.w() - 2,
+                    y + cooling.y() + 5, lack == ThermalState.Lack.BARE ? JsTechTheme.red() : JsTechTheme.amber());
+        }
+    }
+
+    /* What the cooling face says of the cooler or the fan in {@code slot}: its name, where it sits, what it takes. */
+    private List<Component> coolingPartTooltip(final Slot slot) {
+        final ItemStack stack = slot.getItem();
+        final List<Component> lines = new ArrayList<>();
+        lines.add(stack.getHoverName());
+        final CoolerSpec cooler = HardwareRegistry.cooler(stack);
+        final CaseFanSpec fan = HardwareRegistry.caseFan(stack);
+        if (cooler != null) {
+            final Seat seat = seatOf(slot);
+            if (cooler.radiatorFans() > 0 && seat != null) {
+                lines.add(GameText.component(radiatorSide(seat.index()) == CaseCooling.Side.TOP
+                        ? AssemblyTexts.RADIATOR_TOP : AssemblyTexts.RADIATOR_FRONT).withColor(JsTechTheme.dim()));
+            }
+            lines.add(GameText.component(AssemblyTexts.TAKES_AWAY.with(cooler.takesAwayWatts()))
+                    .withColor(JsTechTheme.accent()));
+        } else if (fan != null) {
+            final Seat seat = seatOf(slot);
+            if (seat != null) {
+                final CaseCooling.Side side = geometry().fanSide(seat.index());
+                lines.add(GameText.component(side == CaseCooling.Side.REAR ? AssemblyTexts.SEAT_REAR
+                        : side == CaseCooling.Side.TOP ? AssemblyTexts.SEAT_TOP : AssemblyTexts.SEAT_FRONT)
+                        .withColor(JsTechTheme.dim()));
+            }
+            lines.add(GameText.component(AssemblyTexts.TAKES_AWAY.with(fan.takesAwayWatts()))
+                    .withColor(JsTechTheme.accent()));
+        }
+        return lines;
+    }
+
+    /*
+     * Where the radiator of the water cooler over processor {@code index} sits: the pair the water coolers before it
+     * leave, the top's first and the front's after.
+     */
+    private CaseCooling.Side radiatorSide(final int index) {
+        int before = 0;
+        for (final Seat seat : geometry().seats(SeatKind.COOLER)) {
+            final Slot slot = seatSlots.get(seat);
+            final CoolerSpec cooler = slot == null ? null : HardwareRegistry.cooler(slot.getItem());
+            if (seat.index() < index && cooler != null && cooler.radiatorFans() > 0) {
+                before++;
+            }
+        }
+        final List<Integer> pairs = geometry().cooling().radiatorPairs();
+        return before < pairs.size() ? geometry().fanSide(pairs.get(before)) : CaseCooling.Side.FRONT;
+    }
+
+    /* The seat {@code slot} sits in, or null. */
+    @Nullable
+    private Seat seatOf(final Slot slot) {
+        for (final Map.Entry<Seat, Slot> entry : seatSlots.entrySet()) {
+            if (entry.getValue() == slot) {
+                return entry.getKey();
+            }
+        }
         return null;
     }
 

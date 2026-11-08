@@ -93,7 +93,7 @@ public final class ServerRackLayout {
     /** The card's lines: the first's top, and the step from one to the next. */
     public static final int CARD_LINE_Y = CARD_Y + 25;
     public static final int CARD_LINE_PITCH = 19;
-    /** How many lines the card shows: state, boot, system, network, RAID and KVM. */
+    /** How many lines the card shows: state, boot, system, network, RAID and KVM, or the temperature of a hot rack. */
     public static final int CARD_LINES = 6;
 
     public static final int INV_X = 8;
@@ -187,7 +187,7 @@ public final class ServerRackLayout {
         }
         l.playerInventory(INV_X, INV_Y);
         l.text("title", TITLE_X, TITLE_Y, 18, 1.0f);                          // "SUPERCOMPUTER RACK"
-        final int pillChars = 19;                                             // "8/8U  THROTTLED 45%"
+        final int pillChars = 25;                                             // "8/8U  90°C  THROTTLED 45%"
         l.text("statusPill", HEADER_X + HEADER_W - 4 - Math.round(pillChars * GuiLayout.GLYPH_WIDTH), TITLE_Y,
                 pillChars, 1.0f);
         return l;

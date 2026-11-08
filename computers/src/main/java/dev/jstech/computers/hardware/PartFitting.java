@@ -82,4 +82,17 @@ public final class PartFitting {
     public static boolean diskFits(final DiskSpec disk, final @Nullable Era machineEra) {
         return machineEra == null || disk.era().isAtMost(machineEra);
     }
+
+    /**
+     * Whether {@code cooler} seats in a case of {@code caseEra}: one of its era or of an older one, as a disk goes in,
+     * since a later cooler's mount has nothing to hold it in an older case.
+     */
+    public static boolean coolerFits(final CoolerSpec cooler, final Era caseEra) {
+        return cooler.era().isAtMost(caseEra);
+    }
+
+    /** Whether {@code fan} seats in a case of {@code caseEra}: one of its era or of an older one, as a cooler does. */
+    public static boolean caseFanFits(final CaseFanSpec fan, final Era caseEra) {
+        return fan.era().isAtMost(caseEra);
+    }
 }

@@ -16,7 +16,9 @@ import dev.jstech.computers.api.planner.IPlannerStatistic;
 import dev.jstech.computers.engine.EngineDef;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.engine.nextgre.NextgreExtensions;
+import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ComputerDef;
+import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.ExpansionCardKind;
@@ -70,7 +72,7 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 10;
+    public static final int VERSION = 11;
 
     /* The languages the computers of a world can be programmed in. */
     private static final LanguageRegistry LANGUAGES = new LanguageRegistry();
@@ -250,6 +252,18 @@ public final class JsComputersApi {
     public static void registerExpansionCard(final ItemLike item, final IExpansionCardSpec spec,
                                              final @Nullable Era era) {
         HardwareRegistry.expansionCard(item, spec, era);
+    }
+
+    /** Makes {@code item} a processor's cooler of that sheet. */
+    @ApiStatus.Experimental
+    public static void registerCooler(final ItemLike item, final CoolerSpec spec) {
+        HardwareRegistry.cooler(item, spec);
+    }
+
+    /** Makes {@code item} a case fan of that sheet. */
+    @ApiStatus.Experimental
+    public static void registerCaseFan(final ItemLike item, final CaseFanSpec spec) {
+        HardwareRegistry.caseFan(item, spec);
     }
 
     /** Adds a generation of memory, which modules are made in and boards take. */

@@ -100,9 +100,16 @@ event.expansionCard(MyItems.Q_CARD.get(), new PlainCardSpec(MY_KIND, QUANTUM, Pc
   1)` lasts 150 game days at full load and has one unit; two or more units make it redundant, each wearing on its
   own. The supply's wear is kept on its item (`PsuConditions.of(stack)`), and a supply declared without a life lasts
   as long as an MF PowerGold.
+- **Cooling** (added 2026-11-08, J's Computers' API at version 11): `event.cooler(item, new CoolerSpec(QUANTUM,
+  CoolerSpec.Kind.TOWER, 450))` makes a processor's cooler and `event.caseFan(item, new CaseFanSpec(QUANTUM, 140,
+  80))` a case fan, each taking away the watts it is rated for. A computer you bring says how its case cools in its
+  entry: `new ComputerDef(era, forms, machine, parts, new CaseCooling(250, 1, 1, 2))` takes 250 W away on its own and
+  has one fan seat at the rear, one on the top and two at the front; one declared without it is cooled from outside,
+  as a server is by its rack, and has no temperature of its own (`computers/docs/design/temperature.md`).
 - What fits with what is the same for every part, in one place (`PartFitting`): a board goes in a case that takes its
   form factor, of the case's own era; a processor seats on a board of its socket and era; memory on a board of its era
-  that takes its generation; a card in a slot of its bus's family; a disk in a machine of its era or a later one.
+  that takes its generation; a card in a slot of its bus's family; a disk in a machine of its era or a later one; a
+  cooler or a case fan in a case of its era or a later one.
 - **The kinds parts are made of are open too**, ids like sockets: generations of memory (`event.memoryGeneration`),
   of expansion slot (`slotGeneration`), form factors of board (`formFactor`) and kinds of card (`cardKind`). A card of
   a kind of your own is a `PlainCardSpec`, or a sheet of your own implementing `IExpansionCardSpec`, and your mod
@@ -349,16 +356,18 @@ Register each with `event.plannerRule`, `plannerOperator`, `plannerStatistic`, `
 *Added 2026-11-08.*
 
 ```java
-IThermalBudget rack = ThermalBudgets.at(level, pos, null);   // any block of a Server Rack
-if (rack != null && rack.over()) {
-    // its machines run at rack.performance() of their speed
+IThermalBudget heat = ThermalBudgets.at(level, pos, null);   // a computer, or any block of a Server Rack
+if (heat != null && heat.temperature() > 363.15) {
+    // over 90 °C: it runs at heat.performance() of its speed
 }
 ```
 
-A Server Rack answers J's Core's thermal budget capability (`ThermalBudgets.BUDGET`, [Heat](../../core/docs/HEAT.md))
-from any of its blocks: the heat of the machines turned on in it (`loadWatts`), what its cabinet and its Cooling
-Units take away (`budgetWatts`), and the share of their speed its machines keep while it is over (`performance`).
-A rack keeps no temperature of its own, so its `temperature()` is not a number. Nothing is registered to read it.
+Every computer that keeps a temperature, and a Server Rack from any of its blocks, answer J's Core's thermal budget
+capability (`ThermalBudgets.BUDGET`, [Heat](../../core/docs/HEAT.md)): the heat of what is turned on (`loadWatts`),
+what its case, its coolers and its fans take away, or a rack's cabinet, Cooling Units and Vent Panels
+(`budgetWatts`), its temperature in kelvin (`temperature`), and the share of its clock its heat leaves it
+(`performance`). A computer cooled from outside it, as a server is by its rack, keeps no temperature and answers
+nothing. Nothing is registered to read it ([design](design/temperature.md)).
 
 ## What is not open
 

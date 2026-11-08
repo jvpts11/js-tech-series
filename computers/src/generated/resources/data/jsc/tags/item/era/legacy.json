@@ -104,6 +104,8 @@
     "jsc:sound_card_tone_blaster_live",
     "jsc:sound_card_tone_blaster_audigy",
     "jsc:internal_cd_drive",
+    "jsc:case_fan_legacy",
+    "jsc:stock_cooler_legacy",
     "jsc:cd_rom",
     "jsc:cd_rw"
   ]

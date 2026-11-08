@@ -14,6 +14,7 @@ import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ThermalModel;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.ServerRackMenu;
@@ -241,7 +242,8 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                     .with(usedU, ROWS));
             colour = battery ? JsTechTheme.amber() : JsTechTheme.red();
         } else {
-            pill = GameText.resolve(throttle < 100 ? ServerRackTexts.THROTTLED.with(usedU, ROWS, throttle)
+            pill = GameText.resolve(throttle < 100
+                    ? ServerRackTexts.THROTTLED.with(usedU, ROWS, menu.temperature(), throttle)
                     : (linked ? ServerRackTexts.LINKED : ServerRackTexts.OFFLINE).with(usedU, ROWS));
             colour = throttle < 100 ? JsTechTheme.amber() : linked ? JsTechTheme.green() : JsTechTheme.red();
         }
@@ -292,7 +294,15 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         final int cabled = unit.driveSlots();
         final int ventLeft = x + ServerRackLayout.frontItemX(Math.min(ServerRackLayout.FRONT_SLOTS, cabled)) + 2;
         final int ventRight = x + ventEnd(kind);
-        if (ventLeft < ventRight - 4) {
+        if (kind == RackUnitItem.Kind.VENT_PANEL) {
+            // A Vent Panel is perforated all across its face, its holes staggered row to row.
+            final int hole = AssemblyPainter.mix(face, JsTechTheme.screen(), 0.6f);
+            for (int vy = ry + 3, line = 0; vy < ry + h - 3; vy += 2, line++) {
+                for (int vx = ventLeft + line % 2; vx < ventRight; vx += 2) {
+                    g.fill(vx, vy, vx + 1, vy + 1, hole);
+                }
+            }
+        } else if (ventLeft < ventRight - 4) {
             final int vent = AssemblyPainter.mix(face, sheen, 0.12f);
             for (int vy = ry + 3; vy < ry + h - 3; vy += 2) {
                 g.fill(ventLeft, vy, ventRight, vy + 1, vent);
@@ -334,6 +344,8 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
             case UPS_BATTERY -> ServerRackLayout.CELLS_X - 3;
             // A PDU's faceplate is its outlets, a shelf's its bays: neither has vents.
             case PDU, DRIVE_SHELF -> 0;
+            // A Vent Panel is all holes, to the rail.
+            case VENT_PANEL -> ServerRackLayout.RAIL_R - 4;
             default -> ServerRackLayout.PWR_X - 2;
         };
     }
@@ -506,6 +518,7 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 case UPS_BATTERY -> expansionLines();
                 case PDU -> pduLines();
                 case DRIVE_SHELF -> shelfLines(top);
+                case COOLING_UNIT, VENT_PANEL -> coolingLines(top);
                 default -> List.of();
             };
         }
@@ -522,7 +535,43 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 new CardLine(ServerRackTexts.CARD_NETWORK, linked ? GameText.resolve(ServerRackTexts.NETWORK_LINKED)
                         : "--", linked ? JsTechTheme.accent() : JsTechTheme.dim()),
                 raidLine(top),
-                kvmLine(top));
+                // A hot cabinet's temperature is what its machines most need said: it takes the KVM's line.
+                menu.temperature() >= ThermalModel.FULL_UP_TO ? tempLine() : kvmLine(top));
+    }
+
+    /*
+     * A Cooling Unit or a Vent Panel: what it adds to the budget, the cabinet's budget against what its machines make,
+     * its one temperature, and the share of their clock that leaves its machines
+     * (computers/docs/design/temperature.md).
+     */
+    private List<CardLine> coolingLines(final int top) {
+        final int throttle = menu.throttlePercent();
+        final int load = menu.thermalLoadWatts();
+        final int budget = menu.thermalBudgetWatts();
+        return List.of(
+                new CardLine(ServerRackTexts.CARD_ADDS, GameText.resolve(ServerRackTexts.ADDS_WATTS.with(
+                        JsTechTheme.fmt(RackUnitItem.coolingWattsOf(menu.serverInBay(top))))), JsTechTheme.green()),
+                new CardLine(ServerRackTexts.CARD_BUDGET, watts(budget), JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_LOAD, watts(load), load > budget ? JsTechTheme.amber()
+                        : JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_TEMP, GameText.resolve(ServerRackTexts.DEGREES.with(
+                        menu.temperature())), tempColour(menu.temperature())),
+                new CardLine(ServerRackTexts.CARD_MACHINES, GameText.resolve(ServerRackTexts.MACHINES_AT.with(
+                        throttle)), throttle < 100 ? JsTechTheme.amber() : JsTechTheme.text()));
+    }
+
+    /* The cabinet's temperature on a server's card, and the share of its clock it leaves while it throttles. */
+    private CardLine tempLine() {
+        final int throttle = menu.throttlePercent();
+        return new CardLine(ServerRackTexts.CARD_TEMP, GameText.resolve(throttle < 100
+                ? ServerRackTexts.DEGREES_AT.with(menu.temperature(), throttle)
+                : ServerRackTexts.DEGREES.with(menu.temperature())), tempColour(menu.temperature()));
+    }
+
+    /* The colour of a temperature: green up to 80 °C, amber to 90, red from there. */
+    private static int tempColour(final int celsius) {
+        return celsius >= ThermalModel.THROTTLE_AT ? JsTechTheme.red()
+                : celsius >= ThermalModel.FULL_UP_TO ? JsTechTheme.amber() : JsTechTheme.green();
     }
 
     /* The Rack UPS: where the power comes from, its charge, what it holds, the load, how long it lasts, its end. */
@@ -684,6 +733,10 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         if (!menu.bayPowerOn(top)) {
             return new UnitState(ServerRackTexts.OFF, JsTechTheme.dim(), JsTechTheme.amber());
         }
+        // A cabinet that holds its machines at 90 °C slows each of them: the server says so first.
+        if (menu.temperature() >= ThermalModel.THROTTLE_AT && menu.throttlePercent() < 100) {
+            return new UnitState(ServerRackTexts.THROTTLED_STATE, JsTechTheme.amber(), JsTechTheme.amber());
+        }
         return menu.networkLinked() ? new UnitState(ServerRackTexts.ONLINE, JsTechTheme.green(), JsTechTheme.green())
                 : new UnitState(ServerRackTexts.READY, JsTechTheme.amber(), JsTechTheme.amber());
     }
@@ -797,14 +850,15 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         return first;
     }
 
-    /* Whether the card describes the unit topped at row: a computer, or the rack's power and storage. */
+    /* Whether the card describes the unit topped at row: a computer, or the rack's power, storage and cooling. */
     private boolean selectable(final int row) {
         if (isComputer(row)) {
             return true;
         }
         final RackUnitItem.Kind kind = row < 0 || row >= ROWS ? null : RackUnitItem.kindOf(menu.serverInBay(row));
         return kind == RackUnitItem.Kind.RACK_UPS || kind == RackUnitItem.Kind.UPS_BATTERY
-                || kind == RackUnitItem.Kind.PDU || kind == RackUnitItem.Kind.DRIVE_SHELF;
+                || kind == RackUnitItem.Kind.PDU || kind == RackUnitItem.Kind.DRIVE_SHELF
+                || kind == RackUnitItem.Kind.COOLING_UNIT || kind == RackUnitItem.Kind.VENT_PANEL;
     }
 
     /* Whether a computer is mounted with its top at row. */

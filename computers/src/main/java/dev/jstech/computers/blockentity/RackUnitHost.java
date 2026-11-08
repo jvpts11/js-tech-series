@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.os.HostScope;
@@ -28,6 +29,7 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.resources.ResourceLocation;
@@ -517,6 +519,22 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public UpsReading upsReading() {
         return rack.upsReading();
+    }
+
+    @Override
+    public Text upsName() {
+        return rack.upsName();
+    }
+
+    /** The cabinet's heat, which every machine in it shares: a server has no cooling of its own. */
+    @Override
+    public double heatClock() {
+        return rack.heatClock();
+    }
+
+    @Override
+    public ThermalState thermal() {
+        return rack.thermal();
     }
 
     @Override

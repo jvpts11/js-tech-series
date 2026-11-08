@@ -46,6 +46,10 @@ public final class DeviceRows {
     private static final TextKey POWER_SUPPLIES = TextKey.of("jsc.devices.type.power_supplies", "Power supplies");
     /** A device and what it is to be told of: "MF PowerGold 650G, degraded, 86% worn". */
     private static final TextKey WITH_NOTE = TextKey.of("jsc.devices.with_note", "%s, %s");
+    private static final TextKey BATTERIES = TextKey.of("jsc.devices.type.batteries", "Batteries");
+    private static final TextKey COOLING = TextKey.of("jsc.devices.type.cooling", "Cooling");
+    /** A device and how it stands, or how hot it runs: "Integra Centro C7 4790K 68 °C", "Case fans 3 of 3". */
+    private static final TextKey WITH_HEAT = TextKey.of("jsc.devices.with_heat", "%s %s");
     private static final TextKey CONTROLLER_SERIAL = TextKey.of("jsc.devices.controller.serial",
             "Serial and parallel ports");
     private static final TextKey CONTROLLER_USB = TextKey.of("jsc.devices.controller.usb", "USB controller");
@@ -58,6 +62,9 @@ public final class DeviceRows {
     public static final String HOST_ICON = "this_pc";
     /** The icon of a power supply. */
     public static final String PSU_ICON = "psu";
+    /** The icon of a UPS's battery, and of a cooler or a case fan. */
+    public static final String BATTERY_ICON = "battery";
+    public static final String FAN_ICON = "fan";
 
     private DeviceRows() {
     }
@@ -157,11 +164,16 @@ public final class DeviceRows {
     private static void byType(final DeviceMap map, final Builder b) {
         b.group(1, "motherboard", COMPUTER.text(), "type/computer",
                 map.board().isEmpty() ? List.of() : List.of(map.board()), "motherboard");
-        b.group(1, "cpu", PROCESSORS.text(), "type/processors", map.processors(), "cpu");
+        b.noted(1, BATTERY_ICON, BATTERIES.text(), "type/batteries", map.batteries());
+        b.noted(1, FAN_ICON, COOLING.text(), "type/cooling", map.cooling().parts());
+        b.group(1, "cpu", PROCESSORS.text(), "type/processors",
+                heated(map.processors(), map.cooling().processorHeat()), "cpu");
         b.group(1, "ram", MEMORY.text(), MEMORY_KEY, map.memory(), "ram");
         b.group(1, "disk", DISK_DRIVES.text(), "type/disks", map.disks(), "disk");
-        b.group(1, "gpu", DISPLAY_ADAPTERS.text(), "type/display",
-                map.video().stream().map(DeviceMap.VideoCard::name).toList(), "gpu");
+        // A board's own console output has no temperature of its own to tell: only the graphics do.
+        b.group(1, "gpu", DISPLAY_ADAPTERS.text(), "type/display", map.video().stream()
+                .map(card -> card.name().equals(DeviceMap.boardConsole()) ? card.name()
+                        : heated(card.name(), map.cooling().videoHeat())).toList(), "gpu");
         b.group(1, "sound_card", SOUND_DEVICES.text(), "type/sound",
                 map.audio().stream().map(DeviceMap.AudioSource::name).toList(), "sound_card");
         b.group(1, "network", NETWORK_ADAPTERS.text(), "type/network", map.network(), "network");
@@ -230,6 +242,15 @@ public final class DeviceRows {
         }
     }
 
+    /* The parts, each with how hot it runs beside its name when there is that to tell. */
+    private static List<Text> heated(final List<Text> parts, final Text heat) {
+        return parts.stream().map(part -> heated(part, heat)).toList();
+    }
+
+    private static Text heated(final Text part, final Text heat) {
+        return heat.isEmpty() ? part : WITH_HEAT.with(part, heat);
+    }
+
     private static List<DeviceMap.Device> plugged(final List<DeviceMap.Port> ports) {
         final List<DeviceMap.Device> out = new ArrayList<>();
         for (final DeviceMap.Port port : ports) {
@@ -259,6 +280,21 @@ public final class DeviceRows {
 
         void leaf(final int depth, final String icon, final Text label) {
             rows.add(new Row(depth, icon, label, State.NORMAL, "", false, NO_DEVICE));
+        }
+
+        /* A type and its devices, each told with its note, kept out altogether while there are none. */
+        void noted(final int depth, final String icon, final Text label, final String key,
+                   final List<DeviceMap.Noted> devices) {
+            if (devices.isEmpty()) {
+                return;
+            }
+            heading(depth, icon, label, key, true);
+            if (open(key)) {
+                for (final DeviceMap.Noted device : devices) {
+                    leaf(depth + 1, icon, device.note().isEmpty() ? device.name()
+                            : WITH_HEAT.with(device.name(), device.note()));
+                }
+            }
         }
 
         /* A type and its parts, the type folding them away. */

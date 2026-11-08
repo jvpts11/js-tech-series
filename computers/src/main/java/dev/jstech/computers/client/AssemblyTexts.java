@@ -134,6 +134,41 @@ final class AssemblyTexts {
     static final TextKey INSTALLED = TextKey.of("jsc.assembly.installed", "installed");
     static final TextKey NOT_INSTALLED = TextKey.of("jsc.assembly.not_installed", "not installed");
 
+    // The case's two faces, and what the cooling face reads (computers/docs/design/temperature.md).
+    static final TextKey FACE_BOARD = TextKey.of("jsc.assembly.face_board", "BOARD");
+    static final TextKey FACE_COOLING = TextKey.of("jsc.assembly.face_cooling", "COOLING");
+    static final TextKey COOLER = TextKey.of("jsc.assembly.cooler", "COOLER");
+    static final TextKey COOLERS = TextKey.of("jsc.assembly.coolers", "COOLERS");
+    static final TextKey TOP = TextKey.of("jsc.assembly.top", "TOP");
+    static final TextKey TEMP = TextKey.of("jsc.assembly.temp", "TEMP");
+    static final TextKey HEAT = TextKey.of("jsc.assembly.heat", "HEAT");
+    static final TextKey BUDGET = TextKey.of("jsc.assembly.budget", "BUDGET");
+    static final TextKey CABINET = TextKey.of("jsc.assembly.cabinet", "CABINET");
+    static final TextKey AMBIENT = TextKey.of("jsc.assembly.ambient", "AMBIENT");
+    static final TextKey CLOCK = TextKey.of("jsc.assembly.clock", "CLOCK");
+    static final TextKey THROTTLED = TextKey.of("jsc.assembly.throttled", "THROTTLED");
+    static final TextKey DEGREES = TextKey.of("jsc.assembly.degrees", "%s °C");
+    static final TextKey WATTS = TextKey.of("jsc.assembly.watts", "%s W");
+    static final TextKey PERCENT = TextKey.of("jsc.assembly.percent", "%s%%");
+    static final TextKey TEMP_FULL = TextKey.of("jsc.assembly.temp_full", "%s °C: full speed");
+    static final TextKey TEMP_FADING = TextKey.of("jsc.assembly.temp_fading", "%s °C: its boost fades, %s%% clock");
+    static final TextKey TEMP_THROTTLED = TextKey.of("jsc.assembly.temp_throttled", "%s °C: throttled to %s%%");
+    static final TextKey TEMP_LOAD = TextKey.of("jsc.assembly.temp_load", "Heat: %s W of a %s W budget");
+    static final TextKey NO_COOLER = TextKey.of("jsc.assembly.no_cooler", "No cooler on the processor");
+    static final TextKey NO_COOLERS = TextKey.of("jsc.assembly.no_coolers", "No cooler on %s processors");
+    static final TextKey NO_FANS = TextKey.of("jsc.assembly.no_fans", "No case fans");
+    static final TextKey OPEN_COOLING = TextKey.of("jsc.assembly.open_cooling", "Open COOLING to fit them");
+    static final TextKey TOO_HOT = TextKey.of("jsc.assembly.too_hot", "Too hot to start after a thermal trip");
+    static final TextKey COOLS_TO = TextKey.of("jsc.assembly.cools_to", "It starts again below %s °C: now %s °C");
+    static final TextKey RADIATOR_TOP = TextKey.of("jsc.assembly.radiator_top", "Radiator: top, two fan seats");
+    static final TextKey RADIATOR_FRONT = TextKey.of("jsc.assembly.radiator_front", "Radiator: front, two fan seats");
+    static final TextKey SEAT_REAR = TextKey.of("jsc.assembly.seat_rear", "Rear fan seat");
+    static final TextKey SEAT_TOP = TextKey.of("jsc.assembly.seat_top", "Top fan seat");
+    static final TextKey SEAT_FRONT = TextKey.of("jsc.assembly.seat_front", "Front fan seat");
+    static final TextKey TAKES_AWAY = TextKey.of("jsc.assembly.takes_away", "Takes away %s W");
+    static final TextKey CABINET_TIP = TextKey.of("jsc.assembly.cabinet_tip",
+            "The cabinet takes away %s W on its own, beside its coolers");
+
     // The Cluster Management Computer's readouts.
     static final TextKey NO_INTERFACE_CARD = TextKey.of("jsc.assembly.no_interface_card", "no interface card");
     /* Supercomputers, datacenters and HPC lanes in reach. */

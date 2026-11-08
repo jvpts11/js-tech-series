@@ -1,0 +1,301 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cooling.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cooling.definition1",
+      "term": "jsc.guide.cooling.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cooling.table1",
+      "heads": [
+        "jsc.guide.cooling.table1_head1",
+        "jsc.guide.cooling.table1_head2",
+        "jsc.guide.cooling.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cooling.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table1_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cooling.table2",
+      "heads": [
+        "jsc.guide.cooling.table2_head1",
+        "jsc.guide.cooling.table2_head2",
+        "jsc.guide.cooling.table2_head3",
+        "jsc.guide.cooling.table2_head4",
+        "jsc.guide.cooling.table2_head5",
+        "jsc.guide.cooling.table2_head6"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cooling.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_1_4"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_1_5"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_1_6"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_2_4"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_2_5"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_2_6"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_3_4"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_3_5"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_3_6"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_4_4"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_4_5"
+          },
+          {
+            "words": "jsc.guide.cooling.table2_4_6"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cooling.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cooling.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cooling.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cooling.table3",
+      "heads": [
+        "jsc.guide.cooling.table3_head1",
+        "jsc.guide.cooling.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cooling.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cooling.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.cooling.table3_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cooling.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cooling.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cooling.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cooling.fix1",
+          "problem": "jsc.guide.cooling.problem1"
+        },
+        {
+          "fix": "jsc.guide.cooling.fix2",
+          "problem": "jsc.guide.cooling.problem2"
+        },
+        {
+          "fix": "jsc.guide.cooling.fix3",
+          "problem": "jsc.guide.cooling.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:power_supplies",
+        "jsc:rack_cooling_and_heat"
+      ]
+    }
+  ],
+  "icon": "jsc:tower_cooler_standard",
+  "id": "jsc:cooling",
+  "items": [
+    "jsc:case_fan_vintage",
+    "jsc:case_fan_legacy",
+    "jsc:case_fan_transition",
+    "jsc:case_fan_standard",
+    "jsc:case_fan_advanced",
+    "jsc:stock_cooler_vintage",
+    "jsc:stock_cooler_legacy",
+    "jsc:stock_cooler_transition",
+    "jsc:stock_cooler_standard",
+    "jsc:stock_cooler_advanced",
+    "jsc:tower_cooler_standard",
+    "jsc:tower_cooler_advanced",
+    "jsc:aqualoop_240_standard",
+    "jsc:aqualoop_360_standard",
+    "jsc:aqualoop_240_advanced",
+    "jsc:aqualoop_360_advanced"
+  ],
+  "order": 23,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.cooling.title"
+}

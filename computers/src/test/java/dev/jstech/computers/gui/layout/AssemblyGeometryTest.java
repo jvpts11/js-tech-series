@@ -11,14 +11,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.Face;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
+import dev.jstech.computers.hardware.CaseCooling;
+import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class AssemblyGeometryTest {
@@ -53,7 +58,7 @@ class AssemblyGeometryTest {
     @Test
     void tower_keepsItsSupplyAtTheTopUpToTheTransitionAndAtTheFootAfter() {
         for (final Era era : HardwareEra.SERIES) {
-            final AssemblyGeometry geo = AssemblyGeometry.tower(era, TowerBoards.personalComputer(era), 3);
+            final AssemblyGeometry geo = tower(era, TowerBoards.personalComputer(era), CaseCooling.NONE, 3);
             final boolean atTop = geo.seat(SeatKind.PSU).y() == AssemblyGeometry.TOP;
             assertEquals(era.isAtMost(HardwareEra.TRANSITION), atTop, era + " supply");
         }
@@ -61,8 +66,8 @@ class AssemblyGeometryTest {
 
     @Test
     void bracketHidden_onlyOnTheSupplyRow() {
-        final AssemblyGeometry geo = AssemblyGeometry.tower(HardwareEra.STANDARD,
-                TowerBoards.personalComputer(HardwareEra.STANDARD), 3);
+        final AssemblyGeometry geo = tower(HardwareEra.STANDARD,
+                TowerBoards.personalComputer(HardwareEra.STANDARD), CaseCooling.NONE, 3);
         final List<Seat> cards = geo.seats(SeatKind.CARD);
         // The newer towers keep their supply at the foot, level with the last card.
         assertTrue(geo.bracketHidden(cards.get(cards.size() - 1)), "the last card shares the supply's row");
@@ -73,22 +78,22 @@ class AssemblyGeometryTest {
     void secondRow_onlyOnATowerThatTakesAWorkstationBoard() {
         for (final Era era : HardwareEra.SERIES) {
             assertEquals(era.isAtLeast(HardwareEra.TRANSITION),
-                    AssemblyGeometry.tower(era, TowerBoards.personalComputer(era), 3).secondRow(),
+                    tower(era, TowerBoards.personalComputer(era), CaseCooling.NONE, 3).secondRow(),
                     "a Personal Computer of " + era);
             assertEquals(era.isAtLeast(HardwareEra.LEGACY),
-                    AssemblyGeometry.tower(era, TowerBoards.clusterManagementComputer(era), 4).secondRow(),
+                    tower(era, TowerBoards.clusterManagementComputer(era), CaseCooling.NONE, 4).secondRow(),
                     "a Cluster Management Computer of " + era);
-            assertFalse(AssemblyGeometry.tower(era, TowerBoards.craftingComputer(era), 4).secondRow(),
+            assertFalse(tower(era, TowerBoards.craftingComputer(era), CaseCooling.NONE, 4).secondRow(),
                     "a Crafting Computer of " + era);
         }
     }
 
     @Test
     void secondRow_seatsTheSecondProcessorAndFourModulesUnderTheFirst() {
-        final AssemblyGeometry one = AssemblyGeometry.tower(HardwareEra.STANDARD,
-                TowerBoards.craftingComputer(HardwareEra.STANDARD), 4);
-        final AssemblyGeometry two = AssemblyGeometry.tower(HardwareEra.STANDARD,
-                TowerBoards.personalComputer(HardwareEra.STANDARD), 3);
+        final AssemblyGeometry one = tower(HardwareEra.STANDARD,
+                TowerBoards.craftingComputer(HardwareEra.STANDARD), CaseCooling.NONE, 4);
+        final AssemblyGeometry two = tower(HardwareEra.STANDARD,
+                TowerBoards.personalComputer(HardwareEra.STANDARD), CaseCooling.NONE, 3);
         final List<Seat> cpus = two.seats(SeatKind.CPU);
         final List<Seat> ram = two.seats(SeatKind.RAM);
         assertEquals(2, cpus.size());
@@ -104,13 +109,92 @@ class AssemblyGeometryTest {
                 "the cards stand a row lower");
     }
 
+    @Test
+    void coolingFace_seatsACoolerOverEveryProcessor() {
+        final AssemblyGeometry geo = tower(HardwareEra.STANDARD, TowerBoards.personalComputer(HardwareEra.STANDARD),
+                CaseCooling.HIGH_PERFORMANCE, 5);
+        final List<Seat> cpus = geo.seats(SeatKind.CPU);
+        final List<Seat> coolers = geo.seats(SeatKind.COOLER);
+        assertEquals(cpus.size(), coolers.size());
+        for (int i = 0; i < cpus.size(); i++) {
+            assertEquals(cpus.get(i).x(), coolers.get(i).x(), "cooler " + i + " over its processor");
+            assertEquals(cpus.get(i).y(), coolers.get(i).y(), "cooler " + i + " over its processor");
+        }
+        assertTrue(geo.inSecondRow(coolers.get(1)), "the second processor's cooler is the second row's");
+    }
+
+    @Test
+    void coolingFace_seatsTheFansWhereTheCasesHaveThem() {
+        // The High Performance case: one at the rear, the top pair over the memory, three down the front.
+        final AssemblyGeometry geo = tower(HardwareEra.STANDARD, TowerBoards.personalComputer(HardwareEra.STANDARD),
+                CaseCooling.HIGH_PERFORMANCE, 5);
+        final List<Seat> fans = geo.seats(SeatKind.FAN);
+        assertEquals(6, fans.size());
+        assertEquals(new Seat(SeatKind.FAN, 0, AssemblyGeometry.REAR_X, AssemblyGeometry.TOP), fans.get(0));
+        assertEquals(new Seat(SeatKind.FAN, 1, 98, AssemblyGeometry.TOP), fans.get(1));
+        assertEquals(new Seat(SeatKind.FAN, 2, 118, AssemblyGeometry.TOP), fans.get(2));
+        assertEquals(96, fans.get(3).y());
+        assertEquals(136, fans.get(5).y(), "the last front fan level with the lowest seat of the board's face");
+        assertEquals(geo.frontX(), fans.get(5).x());
+    }
+
+    @Test
+    void coolingFace_putsTheOldTowersRearFanUnderTheirSupply() {
+        final AssemblyGeometry geo = tower(HardwareEra.LEGACY, TowerBoards.personalComputer(HardwareEra.LEGACY),
+                CaseCooling.LEGACY, 5);
+        assertEquals(AssemblyGeometry.TOP + AssemblyGeometry.PITCH, geo.seats(SeatKind.FAN).get(0).y());
+        assertEquals(CaseCooling.Side.FRONT, geo.fanSide(1));
+    }
+
+    @Test
+    void coolingFace_centresALoneTopFan() {
+        final AssemblyGeometry geo = tower(HardwareEra.STANDARD, TowerBoards.personalComputer(HardwareEra.STANDARD),
+                CaseCooling.AESTHETIC, 5);
+        assertEquals(108, geo.seats(SeatKind.FAN).get(1).x());
+        assertEquals(108, geo.topCaptionX());
+    }
+
+    @Test
+    void coolingFace_noneForACaseCooledFromOutside() {
+        final AssemblyGeometry server = AssemblyGeometry.server(5);
+        assertFalse(server.cooled());
+        assertTrue(server.seats(Face.COOLING).isEmpty());
+        final AssemblyGeometry mainframe = AssemblyGeometry.mainframe(6);
+        assertEquals(4, mainframe.seats(SeatKind.COOLER).size(), "a cooler over each of the Mainframe's sockets");
+        assertTrue(mainframe.seats(SeatKind.FAN).isEmpty(), "and no fan seats");
+    }
+
+    @Test
+    void tabs_standUnderTheLampsInsideTheScreen() {
+        for (final AssemblyGeometry geo : everyGeometry()) {
+            if (!geo.cooled()) {
+                continue;
+            }
+            final Box board = geo.tab(Face.BOARD);
+            final Box cooling = geo.tab(Face.COOLING);
+            assertTrue(board.y() >= geo.lamps().y() + geo.lamps().h(), "the tabs under the lamps");
+            assertTrue(cooling.x() >= board.x() + board.w(), "the cooling tab right of the board's");
+            assertTrue(cooling.y() + cooling.h() <= geo.height() && cooling.x() + cooling.w() <= geo.width(),
+                    "the tabs inside the screen");
+        }
+    }
+
+    private static AssemblyGeometry tower(final Era era, final Set<FormFactor> boards, final CaseCooling cooling,
+                                          final int readouts) {
+        return AssemblyGeometry.tower(era, boards, cooling, readouts);
+    }
+
     private static List<AssemblyGeometry> everyGeometry() {
         final List<AssemblyGeometry> out = new ArrayList<>();
         for (final Era era : HardwareEra.SERIES) {
-            out.add(AssemblyGeometry.tower(era, TowerBoards.personalComputer(era), 4));
-            out.add(AssemblyGeometry.tower(era, TowerBoards.craftingComputer(era), 4));
+            for (final CaseStyle style : CaseStyle.values()) {
+                out.add(AssemblyGeometry.tower(era, TowerBoards.personalComputer(era), style.cooling(era), 5));
+                out.add(AssemblyGeometry.tower(era, TowerBoards.craftingComputer(era), style.cooling(era), 6));
+                out.add(AssemblyGeometry.tower(era, TowerBoards.clusterManagementComputer(era), style.cooling(era),
+                        6));
+            }
         }
-        out.add(AssemblyGeometry.mainframe(4));
+        out.add(AssemblyGeometry.mainframe(6));
         out.add(AssemblyGeometry.server(5));
         return out;
     }

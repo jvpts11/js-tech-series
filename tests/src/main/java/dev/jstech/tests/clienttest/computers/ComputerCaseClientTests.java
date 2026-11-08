@@ -29,6 +29,7 @@ import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -48,6 +49,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The small computers' cases in every age: the Personal Computer, the Crafting Computer and the Cluster Management
@@ -165,15 +167,19 @@ public final class ComputerCaseClientTests {
                     "psu_650g", List.of("disk_vaultis_link_sata_ssd_64g")),
             new Build("standard-neutral", ComputingModule.PERSONAL_COMPUTER, "motherboard_atx_standard_1155",
                     "cpu_integra_centro_c5_2500k", List.of("ram_ddr3_8192", "ram_ddr3_8192"),
-                    List.of("gpu_vertex_gtx_660"), "psu_850g", List.of("disk_ssd_500g")),
+                    List.of("gpu_vertex_gtx_660"), "psu_850g", List.of("disk_ssd_500g"), "tower_cooler_standard"),
+            new Build("standard-neutral-water", ComputingModule.PERSONAL_COMPUTER, "motherboard_atx_standard_lga1150",
+                    "cpu_integra_centro_c7_4790k", List.of("ram_ddr3_8192", "ram_ddr3_8192"),
+                    List.of("gpu_radiance_hd_7970"), "psu_850g", List.of("disk_ssd_500g"), "aqualoop_240_standard"),
             new Build("standard-high-performance", ComputingModule.HIGH_PERFORMANCE_PERSONAL_COMPUTER,
                     "motherboard_atx_standard_lga1150", "cpu_integra_centro_c7_4790k",
                     List.of("ram_ddr3_8192", "ram_ddr3_8192"), List.of("gpu_vertex_gtx_970"), "psu_850g",
-                    List.of("disk_nvme_500g", "disk_hdd_4t")),
+                    List.of("disk_nvme_500g", "disk_hdd_4t"), "aqualoop_240_standard"),
             new Build("standard-aesthetic", ComputingModule.AESTHETIC_PERSONAL_COMPUTER,
                     "motherboard_eatx_standard_2011", "cpu_integra_centro_c7_4960x",
                     List.of("ram_ddr3_8192", "ram_ddr3_8192", "ram_ddr3_8192", "ram_ddr3_8192"),
-                    List.of("gpu_vertex_gtx_780_ti"), "psu_850g", List.of("disk_hdd_8t", "disk_ssd_1t")),
+                    List.of("gpu_vertex_gtx_780_ti"), "psu_850g", List.of("disk_hdd_8t", "disk_ssd_1t"),
+                    "tower_cooler_standard"),
             new Build("standard-cluster", ComputingModule.HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER,
                     "motherboard_atx_standard_lga1150", "cpu_integra_servo_1231_v3",
                     List.of("ram_ddr3_8192", "ram_ddr3_8192", "ram_ddr3_8192", "ram_ddr3_8192"),
@@ -185,11 +191,12 @@ public final class ComputerCaseClientTests {
             new Build("advanced-high-performance", ComputingModule.ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER,
                     "motherboard_atx_advanced_1700", "cpu_integra_centro_c9_13900k",
                     List.of("ram_ddr5_32768", "ram_ddr5_32768", "ram_ddr5_32768", "ram_ddr5_32768"),
-                    List.of("gpu_vertex_rtx_4090"), "psu_1200p", List.of("disk_nvme_8t", "disk_hdd_24t")),
+                    List.of("gpu_vertex_rtx_4090"), "psu_1200p", List.of("disk_nvme_8t", "disk_hdd_24t"),
+                    "aqualoop_360_advanced"),
             new Build("advanced-aesthetic", ComputingModule.ADVANCED_AESTHETIC_PERSONAL_COMPUTER,
                     "motherboard_atx_advanced_1851", "cpu_integra_centro_ultra_c9_285k",
                     List.of("ram_ddr5_16384", "ram_ddr5_16384", "ram_ddr5_16384", "ram_ddr5_16384"),
-                    List.of("gpu_vertex_rtx_5090"), "psu_1600p", List.of("disk_nvme_8t")),
+                    List.of("gpu_vertex_rtx_5090"), "psu_1600p", List.of("disk_nvme_8t"), "tower_cooler_advanced"),
             new Build("advanced-crafting", ComputingModule.ADVANCED_CRAFTING_COMPUTER, "motherboard_atx_advanced_am4",
                     "cpu_velocion_awayken_3_3200g", List.of("ram_ddr4_8192", "ram_ddr4_8192"),
                     List.of("", "crafting_card_t4"), "psu_1000g", List.of("disk_nvme_8t")),
@@ -277,11 +284,12 @@ public final class ComputerCaseClientTests {
 
     /**
      * Each case with a machine built in it and its side off, seen from the open side: every part drawn by its own
-     * model in its place, the board's parts on the board's seats, the supply and the disks on the case's, the case's
-     * cooler on the processor (none on a cartridge that brings its own); an Advanced case's hard disk is in the cage
-     * under its shroud, hidden like its supply. The last two machines hold parts of other
-     * ages: a supply made for the other end of the case is turned over and has no leads, a card and a disk of an
-     * older age sit where this case puts them.
+     * model in its place, the board's parts on the board's seats, the supply, the disks and the case fans on the
+     * case's, the cooler fitted on the processor (none on a cartridge that brings its own), a water cooler's radiator
+     * under the roof of a case with two seats there and behind the front of one without, the fans of a lit case in its
+     * light; an Advanced case's hard disk is in the cage under its shroud, hidden like its supply. The last two
+     * machines hold parts of other ages: a supply made for the other end of the case is turned over and has no leads, a
+     * card and a disk of an older age sit where this case puts them.
      */
     @ClientTest(timeoutTicks = 2400)
     public static void installedParts_eachDrawnInItsPlace(final ClientTestContext ctx) {
@@ -729,8 +737,17 @@ public final class ComputerCaseClientTests {
      * A machine and what is built in it, by item id: the cards in their slots from the top, an empty name an empty
      * slot.
      */
+    /**
+     * A machine and the parts it is built with; its cooler none for its age's stock one, and its case fans its age's,
+     * one in every seat its case has.
+     */
     private record Build(String name, BlockEntry<?> machine, String board, String cpu, List<String> rams,
-                         List<String> cards, String psu, List<String> disks) {
+                         List<String> cards, String psu, List<String> disks, @Nullable String cooler) {
+
+        Build(final String name, final BlockEntry<?> machine, final String board, final String cpu,
+              final List<String> rams, final List<String> cards, final String psu, final List<String> disks) {
+            this(name, machine, board, cpu, rams, cards, psu, disks, null);
+        }
 
         void install(final AbstractSmallComputerBlockEntity computer) {
             final ComputerHardwareLayout layout = computer.hardwareLayout();
@@ -746,6 +763,11 @@ public final class ComputerCaseClientTests {
             slots.setStackInSlot(layout.psuSlot(), stack(psu));
             for (int k = 0; k < disks.size(); k++) {
                 slots.setStackInSlot(layout.diskStart() + k, stack(disks.get(k)));
+            }
+            final String age = HardwareEra.withParts(computer.computer().era()).path();
+            slots.setStackInSlot(layout.coolerStart(), stack(cooler != null ? cooler : "stock_cooler_" + age));
+            for (int seat = 0; seat < computer.computer().cooling().fans(); seat++) {
+                slots.setStackInSlot(layout.fanStart() + seat, stack("case_fan_" + age));
             }
         }
 

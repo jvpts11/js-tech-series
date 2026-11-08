@@ -113,6 +113,8 @@
     "jsc:disk_vaultis_link_sata_ssd_64g",
     "jsc:sound_card_tone_blaster_hi_fi",
     "jsc:internal_dvd_drive",
+    "jsc:case_fan_transition",
+    "jsc:stock_cooler_transition",
     "jsc:dvd_rom",
     "jsc:dvd_rw"
   ]

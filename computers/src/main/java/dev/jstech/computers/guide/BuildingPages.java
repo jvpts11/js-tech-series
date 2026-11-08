@@ -12,9 +12,12 @@ import static dev.jstech.computers.guide.ComputersGuide.hardwareOf;
 import static dev.jstech.computers.guide.ComputersGuide.itemsOf;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.CoolingItems;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.block.UpsBlock;
+import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
+import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.GpuSpec;
@@ -385,6 +388,7 @@ final class BuildingPages {
         disks(guide, section);
         powerSupplies(guide, section);
         upses(guide, section);
+        cooling(guide, section);
         soundCards(guide, section);
         expansionCards(guide, section);
     }
@@ -825,6 +829,78 @@ final class BuildingPages {
                         "The cable does not plug into the UPS.",
                         "It plugs in on the back and the sides only. Turn the UPS, or bring the cable to one of those.")
                 .seeAlso("jsc:power_supplies", "jsc:rack_equipment")
+                .register();
+    }
+
+    private static void cooling(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("cooling", section).titled("Cooling and temperature").icon(CoolingItems.STANDARD_TOWER_COOLER)
+                .coversAll(hardwareOf(CoolerSpec.class, CaseFanSpec.class))
+                .paragraph("Every part you put in a computer turns the watts it draws into heat, and the computer has"
+                        + " to take that heat away. What it can take away is its heat budget: what its case takes away"
+                        + " on its own, and what the coolers on its processors and its case fans add.")
+                .define("Heat budget", "The watts of heat a computer can take away from itself.")
+                .table("What each case takes away", "Case", "Takes away", "Fan seats")
+                .row(GuideCell.words("Vintage AT minitower"), GuideCell.words("60 W"), GuideCell.words("1 front"))
+                .row(GuideCell.words("Legacy ATX tower"), GuideCell.words("100 W"),
+                        GuideCell.words("1 rear, 1 front"))
+                .row(GuideCell.words("Transition mid tower"), GuideCell.words("150 W"),
+                        GuideCell.words("1 rear, 2 front"))
+                .row(GuideCell.words("Neutral, Standard and Advanced"), GuideCell.words("200 W"),
+                        GuideCell.words("1 rear, 2 front"))
+                .row(GuideCell.words("High Performance, Standard and Advanced"), GuideCell.words("300 W"),
+                        GuideCell.words("1 rear, 2 top, 3 front"))
+                .row(GuideCell.words("Aesthetic, Standard and Advanced"), GuideCell.words("150 W"),
+                        GuideCell.words("1 rear, 1 top, 2 front"))
+                .table("What each cooling part takes away", "Part", "Vintage", "Legacy", "Transition", "Standard",
+                        "Advanced")
+                .row(GuideCell.words("Stock cooler"), GuideCell.words("20 W"), GuideCell.words("60 W"),
+                        GuideCell.words("100 W"), GuideCell.words("150 W"), GuideCell.words("200 W"))
+                .row(GuideCell.words("Tower cooler"), GuideCell.words("none"), GuideCell.words("none"),
+                        GuideCell.words("none"), GuideCell.words("250 W"), GuideCell.words("300 W"))
+                .row(GuideCell.words("MF AquaLoop 240 or 360"), GuideCell.words("none"), GuideCell.words("none"),
+                        GuideCell.words("none"), GuideCell.words("300 W"), GuideCell.words("400 W"))
+                .row(GuideCell.words("Case fan"), GuideCell.words("20 W"), GuideCell.words("30 W"),
+                        GuideCell.words("40 W"), GuideCell.words("50 W"), GuideCell.words("60 W"))
+                .paragraph("You fit them on the COOLING face of the assembly window: open it with its tab under the"
+                        + " lamps. Each processor has a cooler seat over its socket, and the case's fan seats are where"
+                        + " the case has them, at the rear, on the top and at the front. The tab's lamp lights while"
+                        + " the computer lacks cooling for what it holds. A cooler or a fan of the case's era or an"
+                        + " older one goes in; a later one does not.")
+                .paragraph("A water cooler, the MF AquaLoop, takes its processor's cooler seat and two of the case's"
+                        + " fan seats for its radiator: the two on the top when the case has them, otherwise the two"
+                        + " at the front. The 360 mm one takes two as well. Its radiator brings its own fans.")
+                .paragraph("The temperature is the surroundings' plus 60 °C times the heat over the heat budget: with"
+                        + " the surroundings at 20 °C and the heat equal to the budget, the computer is at 80 °C. The"
+                        + " surroundings come from the biome, about 20 °C in the plains, 38 °C in the desert and 8 °C"
+                        + " in the snow, and the Nether adds 10 °C.")
+                .table("What the temperature does", "Temperature", "What happens")
+                .row(GuideCell.words("Up to 80 °C"), GuideCell.words("Full speed"))
+                .row(GuideCell.words("80 °C to 90 °C"),
+                        GuideCell.words("The speed drops little by little, to 85% at 90 °C"))
+                .row(GuideCell.words("90 °C"), GuideCell.words("Throttling: it slows down just enough to stay at"
+                        + " 90 °C, down to 25% of its speed"))
+                .row(GuideCell.words("100 °C"), GuideCell.words("Thermal trip: when not even 25% holds the heat, it"
+                        + " shuts down at once"))
+                .paragraph("Slowing down cuts the computer's capacity and its programs' credits, and wears its power"
+                        + " supply twice as fast ([](jsc:power_supplies)). A thermal trip is a sudden shutdown: the"
+                        + " disks are checked at the next start, and the computer does not start again until it has"
+                        + " cooled below 60 °C. Its firmware's self-test then warns of the trip, and the boot goes on.")
+                .paragraph("The temperature takes about half a minute to get most of the way to where a change leaves"
+                        + " it. You read it in the assembly window, on the firmware's hardware page, under Cooling in"
+                        + " the Device Manager, and on the TEMP tile of the terminal's Local tab.")
+                .paragraph("A Mainframe's cabinet takes away 1,500 W on its own, and a cooler over each of its sockets"
+                        + " adds to it. A server in a rack has no cooler of its own: the rack cools it"
+                        + " ([](jsc:rack_cooling_and_heat)).")
+                .ifSomethingGoesWrong("The computer is slower than it should be, and reads 90 °C.",
+                        "It makes more heat than it takes away. Fit a better cooler or more case fans, or take a part"
+                                + " out.",
+                        "The computer went dark and does not start.",
+                        "It tripped at 100 °C. Wait until it has cooled below 60 °C, and cool it better before you"
+                                + " start it again.",
+                        "A cooler or a fan does not go in.",
+                        "It is from a later era than the case, the seat is under a water cooler's radiator, or a water"
+                                + " cooler finds no two free seats for its radiator.")
+                .seeAlso("jsc:power_supplies", "jsc:rack_cooling_and_heat")
                 .register();
     }
 

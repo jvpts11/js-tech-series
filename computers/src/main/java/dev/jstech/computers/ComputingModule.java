@@ -949,6 +949,13 @@ public final class ComputingModule {
     // The shelf of drives of the late game, which turns a Storage Server into a great store.
     public static final ItemEntry<RackUnitItem> DRIVE_SHELF = rackUnit("drive_shelf", RackUnitItem.Kind.DRIVE_SHELF,
             HardwareEra.STANDARD).named("Drive Shelf").register();
+    /*
+     * The passive partner of the Cooling Unit: one panel for every era, drawn in the colour of the rack it is in, so it
+     * is of the Vintage's, which every rack seats, and shown with what every era shares.
+     */
+    public static final ItemEntry<RackUnitItem> VENT_PANEL = CONTENT.item("vent_panel",
+                    properties -> new RackUnitItem(properties, RackUnitItem.Kind.VENT_PANEL, HardwareEra.VINTAGE))
+            .tab(shelf(Shelf.RACK_BAYS, null)).named("Vent Panel").register();
     // A server rack takes the fibre backbone through one of these: the Standard's opens it to the Fibre Optic Cable,
     // the Advanced's to the OM5 Fibre Cable as well.
     public static final ItemEntry<RackUnitItem> FIBRE_OPTIC_INTERFACE = rackUnit("fibre_optic_interface",
@@ -1122,6 +1129,7 @@ public final class ComputingModule {
          * event bus below.
          */
         HardwareItems.init();
+        CoolingItems.init();
         ComputingSounds.init();
         ComputingAudioDevices.init();
         CONTENT.register(modEventBus);
@@ -1290,21 +1298,21 @@ public final class ComputingModule {
 
     private static BlockBuilder<PersonalComputerBlock> personalComputer(final String id, final Era era,
                                                                         final CaseStyle style) {
-        OwnComputers.computer(id, PersonalComputerBlockEntity.computer(era));
+        OwnComputers.computer(id, PersonalComputerBlockEntity.computer(era, style));
         return computer(id, era, style, Shelf.PERSONAL_COMPUTERS,
                 properties -> new PersonalComputerBlock(properties, era, style));
     }
 
     private static BlockBuilder<CraftingComputerBlock> craftingComputer(final String id, final Era era,
                                                                         final CaseStyle style) {
-        OwnComputers.computer(id, CraftingComputerBlockEntity.computer(era));
+        OwnComputers.computer(id, CraftingComputerBlockEntity.computer(era, style));
         return computer(id, era, style, Shelf.CRAFTING_COMPUTERS,
                 properties -> new CraftingComputerBlock(properties, era, style));
     }
 
     private static BlockBuilder<ClusterManagementComputerBlock> clusterManagementComputer(
             final String id, final Era era, final CaseStyle style) {
-        OwnComputers.computer(id, ClusterManagementComputerBlockEntity.computer(era));
+        OwnComputers.computer(id, ClusterManagementComputerBlockEntity.computer(era, style));
         return computer(id, era, style, Shelf.CLUSTER_MANAGEMENT_COMPUTERS,
                 properties -> new ClusterManagementComputerBlock(properties, era, style));
     }

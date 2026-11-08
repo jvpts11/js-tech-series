@@ -458,7 +458,7 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         g.fill(bx, by, bx + barW, by + BootSequenceLayout.BAR_H, post().track());
         final int fill = Math.min(barW, barW * ticks / postTicks);
         g.fill(bx, by, bx + fill, by + BootSequenceLayout.BAR_H, accent);
-        final List<PostWarnings.Warning> warnings = state == null ? List.of() : PostWarnings.of(state.psu());
+        final List<PostWarnings.Warning> warnings = state == null ? List.of() : PostWarnings.of(state);
         if (!warnings.isEmpty()) {
             renderUefiWarning(g, x, y, warnings.getFirst(), text, dim);
         }

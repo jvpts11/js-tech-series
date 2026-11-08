@@ -33,7 +33,8 @@
       "heads": [
         "jsc.guide.rack_cooling_and_heat.table2_head1",
         "jsc.guide.rack_cooling_and_heat.table2_head2",
-        "jsc.guide.rack_cooling_and_heat.table2_head3"
+        "jsc.guide.rack_cooling_and_heat.table2_head3",
+        "jsc.guide.rack_cooling_and_heat.table2_head4"
       ],
       "rows": [
         [
@@ -45,6 +46,9 @@
           },
           {
             "words": "jsc.guide.rack_cooling_and_heat.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_1_4"
           }
         ],
         [
@@ -56,6 +60,9 @@
           },
           {
             "words": "jsc.guide.rack_cooling_and_heat.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_2_4"
           }
         ],
         [
@@ -67,6 +74,9 @@
           },
           {
             "words": "jsc.guide.rack_cooling_and_heat.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_3_4"
           }
         ],
         [
@@ -78,6 +88,9 @@
           },
           {
             "words": "jsc.guide.rack_cooling_and_heat.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_4_4"
           }
         ],
         [
@@ -89,6 +102,23 @@
           },
           {
             "words": "jsc.guide.rack_cooling_and_heat.table2_5_3"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_5_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_6_3"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_6_4"
           }
         ]
       ]
@@ -107,6 +137,10 @@
         {
           "fix": "jsc.guide.rack_cooling_and_heat.fix1",
           "problem": "jsc.guide.rack_cooling_and_heat.problem1"
+        },
+        {
+          "fix": "jsc.guide.rack_cooling_and_heat.fix2",
+          "problem": "jsc.guide.rack_cooling_and_heat.problem2"
         }
       ]
     },
@@ -114,12 +148,13 @@
       "type": "see",
       "entries": [
         "jsc:rack_equipment",
-        "jsc:server_racks"
+        "jsc:server_racks",
+        "jsc:cooling"
       ]
     }
   ],
   "id": "jsc:rack_cooling_and_heat",
-  "order": 33,
+  "order": 34,
   "section": "jsc:racks",
   "title": "jsc.guide.rack_cooling_and_heat.title"
 }

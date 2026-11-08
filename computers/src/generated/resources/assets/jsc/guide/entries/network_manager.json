@@ -137,7 +137,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:network_manager",
-  "order": 71,
+  "order": 72,
   "section": "jsc:network_operation",
   "title": "jsc.guide.network_manager.title"
 }

@@ -183,6 +183,20 @@ public final class ScriptedHardware {
                 final PlainCardSpec card = read(HardwareCodecs.CARD, kept.sheet(), "the card " + kept.item());
                 event.expansionCard(item(kept, "card"), card, card.era());
             }
+        },
+        COOLER(false) {
+            @Override
+            void declare(final ComputersRegisterEvent event, final Kept kept) {
+                event.cooler(item(kept, "cooler"), read(HardwareCodecs.COOLER, kept.sheet(),
+                        "the cooler " + kept.item()));
+            }
+        },
+        CASE_FAN(false) {
+            @Override
+            void declare(final ComputersRegisterEvent event, final Kept kept) {
+                event.caseFan(item(kept, "case fan"), read(HardwareCodecs.CASE_FAN, kept.sheet(),
+                        "the case fan " + kept.item()));
+            }
         };
 
         private final boolean kind;

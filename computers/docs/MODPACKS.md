@@ -228,6 +228,8 @@ JsComputers.memory('mypack:scripted_ram', { era: 'advanced', generation: 'ddr5',
 | `JsComputers.motherboard(item, sheet)` | A board | `form_factor`, `era`, `socket`, `cpu_slots`, `memory`, `ram_slots`, `bus`, `slots`, `disk_slots` |
 | `JsComputers.powerSupply(item, sheet, era)` | A supply, shown with `era` | `wattage`, `efficiency_percent`, and `auto_scaling`, `life_days` (at full load, 100 if left out) and `units` (2 or more for a redundant one) |
 | `JsComputers.expansionCard(item, sheet)` | A card | `kind`, `era`, `bus`, `tdp_watts` |
+| `JsComputers.cooler(item, sheet)` | A processor's cooler | `era`, `kind` (`stock`, `tower`, `water`), `takes_away_watts` |
+| `JsComputers.caseFan(item, sheet)` | A case fan | `era`, `size_mm`, `takes_away_watts` |
 | `JsComputers.memoryGeneration(sheet)` | A generation of memory | `id`, `label`, `latency_ticks` |
 | `JsComputers.slotGeneration(sheet)` | A generation of slot | `id`, `generation`, `label`, `slot_name`, `family` |
 | `JsComputers.formFactor(sheet)` | A form factor | `id`, `label` |

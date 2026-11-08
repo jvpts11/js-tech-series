@@ -465,7 +465,7 @@
     "jsc:transition_mainframe",
     "jsc:advanced_mainframe"
   ],
-  "order": 27,
+  "order": 28,
   "section": "jsc:computers",
   "title": "jsc.guide.mainframes.title"
 }

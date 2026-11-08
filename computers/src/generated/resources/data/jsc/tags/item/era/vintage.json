@@ -85,6 +85,8 @@
     "jsc:sound_card_tone_blaster",
     "jsc:sound_card_tone_blaster_128",
     "jsc:hot_swap_drive_bay",
+    "jsc:case_fan_vintage",
+    "jsc:stock_cooler_vintage",
     "jsc:floppy_disk"
   ]
 }

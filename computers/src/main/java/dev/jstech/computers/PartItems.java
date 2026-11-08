@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers;
 
+import dev.jstech.computers.hardware.CaseFanSpec;
+import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.GpuSpec;
@@ -72,6 +74,16 @@ final class PartItems {
 
     static ItemBuilder<Item> disk(final String id, final DiskSpec spec) {
         OwnHardware.add(id, (event, item) -> event.disk(item, spec));
+        return onShelf(id, spec.era(), Item::new);
+    }
+
+    static ItemBuilder<Item> cooler(final String id, final CoolerSpec spec) {
+        OwnHardware.add(id, (event, item) -> event.cooler(item, spec));
+        return onShelf(id, spec.era(), Item::new);
+    }
+
+    static ItemBuilder<Item> caseFan(final String id, final CaseFanSpec spec) {
+        OwnHardware.add(id, (event, item) -> event.caseFan(item, spec));
         return onShelf(id, spec.era(), Item::new);
     }
 

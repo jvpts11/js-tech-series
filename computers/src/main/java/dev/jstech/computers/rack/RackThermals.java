@@ -11,27 +11,20 @@ import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 
 /**
- * How hot a cabinet runs, and what that costs the machines in it.
+ * What a cabinet can take away from the machines in it (computers/docs/design/temperature.md): a certain amount on its
+ * own, more for each Cooling Unit mounted in it, and a little more for each Vent Panel. The machines make heat in
+ * proportion to what they draw, and the cabinet has one temperature for all of them, which follows the same thresholds
+ * as every computer's ({@code ThermalModel}): past them every machine in it gives up the same share of its clock.
  *
- * <p>A cabinet sheds a certain amount of heat on its own, and each Cooling Unit mounted in it sheds more.
- * The machines inside make heat in proportion to what they draw. While the heat made is within what can be
- * shed, everything runs at full speed; past that, every machine in the cabinet gives up the same share of
- * its capacity, so the one answer applies to all of them rather than picking a victim.
- *
- * <p>There is a floor. Hot hardware slows down; it does not stop. A cabinet can be packed far past what it
- * can cool and will still deliver a quarter of what it would cold, which keeps a badly built rack slow and
- * annoying rather than dead and confusing.
- *
- * <p>This is arithmetic over two numbers, deliberately: the walking of the slots that produces them belongs
- * to the cabinet, and keeping the sums apart from it is what lets the awkward cases be tested directly.
+ * <p>This is arithmetic over the budget, deliberately: the walking of the slots that produces it belongs to the
+ * cabinet, and keeping the sums apart from it is what lets them be tested directly.
  */
 public final class RackThermals {
 
     /** What a cabinet sheds with no help, in watts. */
     public static final int PASSIVE_BUDGET_W = 1000;
-
-    /** However hot it gets, a machine keeps this share of its capacity. */
-    public static final int MIN_THROTTLE_PERCENT = 25;
+    /** What a Vent Panel adds, in watts: the cheap partner of the Cooling Unit. */
+    public static final int VENT_PANEL_W = 500;
 
     /**
      * What a Cooling Unit mounted in a cabinet sheds on top of that, by its era from the Vintage's to the Advanced's:
@@ -47,27 +40,8 @@ public final class RackThermals {
         return COOLING_UNIT_W[HardwareEra.partsIndex(era)];
     }
 
-    /** The heat a cabinet can shed with Cooling Units mounted in it that shed {@code coolingWatts} in all. */
+    /** The heat a cabinet can shed with units mounted in it that shed {@code coolingWatts} in all. */
     public static int budgetWatts(final int coolingWatts) {
         return PASSIVE_BUDGET_W + Math.max(0, coolingWatts);
-    }
-
-    /**
-     * How much of its capacity a machine in the cabinet delivers, in percent. Within budget it is all of
-     * it; past budget it falls in proportion to how far past, and never below the floor.
-     *
-     * <p>A cabinet drawing nothing is not throttled, which also keeps the division below from ever being
-     * by zero.
-     */
-    public static int throttlePercent(final int loadWatts, final int budgetWatts) {
-        if (loadWatts <= budgetWatts || loadWatts <= 0) {
-            return 100;
-        }
-        return Math.max(MIN_THROTTLE_PERCENT, (int) (100L * budgetWatts / loadWatts));
-    }
-
-    /** Whether the cabinet is past its budget and holding the machines in it back. */
-    public static boolean throttled(final int loadWatts, final int budgetWatts) {
-        return throttlePercent(loadWatts, budgetWatts) < 100;
     }
 }

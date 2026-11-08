@@ -145,6 +145,16 @@ public final class JsComputersScripts {
         ScriptedHardware.keep(ScriptedHardware.Kind.CARD, item, sheet, null);
     }
 
+    /** Makes the item a processor's cooler: era, kind (stock, tower or water), takes_away_watts. */
+    public static void cooler(final String item, final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.COOLER, item, sheet, null);
+    }
+
+    /** Makes the item a case fan: era, size_mm, takes_away_watts. */
+    public static void caseFan(final String item, final Object sheet) {
+        ScriptedHardware.keep(ScriptedHardware.Kind.CASE_FAN, item, sheet, null);
+    }
+
     /** Adds a generation of memory: id, label, latency_ticks. */
     public static void memoryGeneration(final Object sheet) {
         ScriptedHardware.keep(ScriptedHardware.Kind.MEMORY_GENERATION, null, sheet, null);

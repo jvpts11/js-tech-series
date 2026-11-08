@@ -161,6 +161,12 @@ public final class FirmwareScreenTexts {
     static final TextKey LABEL_HARDWARE_ERA = TextKey.of("jsc.firmware.screen.label_hardware_era", "Hardware Era");
     static final TextKey LABEL_BOOT_DISK = TextKey.of("jsc.firmware.screen.label_boot_disk", "Boot Disk");
     static final TextKey LABEL_POWER_SUPPLY = TextKey.of("jsc.firmware.screen.label_power_supply", "Power Supply");
+    /** The processor's temperature, and the case fans that turn beside it. */
+    static final TextKey LABEL_CPU_TEMPERATURE = TextKey.of("jsc.firmware.screen.label_cpu_temperature",
+            "CPU Temperature");
+    static final TextKey CPU_TEMPERATURE = TextKey.of("jsc.firmware.screen.cpu_temperature", "%s °C");
+    static final TextKey CPU_TEMPERATURE_FANS = TextKey.of("jsc.firmware.screen.cpu_temperature_fans",
+            "%s °C, %s of %s case fans");
     /** The power supply's wear; and the line each firmware reads the supply out in. */
     static final TextKey PSU_WORN = TextKey.of("jsc.firmware.screen.psu_worn", "%s%% worn");
     static final TextKey PSU_LINE = TextKey.of("jsc.firmware.screen.psu_line", "%s, %s");

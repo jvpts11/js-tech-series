@@ -10,6 +10,7 @@ package dev.jstech.computers.os.devices;
 import dev.jstech.computers.block.DataLinkNames;
 import dev.jstech.computers.blockentity.INamedDevice;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.GpuSpec;
@@ -23,8 +24,10 @@ import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.PsuTexts;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
+import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralHub;
@@ -52,6 +55,9 @@ import java.util.List;
  */
 public final class DeviceMaps {
 
+    /* How much of the processor's rise over the surroundings a graphics card runs at: it runs a little cooler. */
+    private static final double GPU_SHARE = 0.875;
+
     private DeviceMaps() {
     }
 
@@ -69,6 +75,7 @@ public final class DeviceMaps {
         final List<Text> cards = new ArrayList<>();
         final List<String> cardIcons = new ArrayList<>();
         final List<DeviceMap.PowerSupply> power = new ArrayList<>();
+        final List<DeviceMap.Noted> cooling = new ArrayList<>();
         network.add(DeviceMap.boardNetwork(DataLinkNames.access(era).text()));
         for (final ItemStack part : computer.hardwareStacks()) {
             final Text name = GameText.of(part.getHoverName());
@@ -91,18 +98,56 @@ public final class DeviceMaps {
                     power.add(new DeviceMap.PowerSupply(name, PsuTexts.note(psu, condition),
                             condition.failed(psu) || condition.degraded(psu)));
                 }
+                // A cooler is told by its name; the case fans together, by how many turn.
+                case CoolerSpec ignored -> cooling.add(new DeviceMap.Noted(name, Text.EMPTY));
                 case null, default -> {
                 }
             }
         }
+        final List<DeviceMap.Noted> batteries = batteries(computer);
+        final DeviceMap.Cooling cooled = cooling(computer.thermal(), cooling);
         if (build == null) {
             return new DeviceMap(Installers.hostName(computer), board, processors, memory, disks, List.of(),
-                    List.of(), family(era), List.of(), network, cards, cardIcons, power);
+                    List.of(), family(era), List.of(), network, cards, cardIcons, power, batteries, cooled);
         }
         final Linked linked = new Linked(level, computer);
         return new DeviceMap(Installers.hostName(computer), board, processors, memory, disks,
                 video(build, gpus, linked), audio(build, soundCards, linked), family(era), devicePorts(era, linked),
-                network, cards, cardIcons, power);
+                network, cards, cardIcons, power, batteries, cooled);
+    }
+
+    /* The battery of the UPS that carries the machine, told by where its power comes from and how full it is. */
+    private static List<DeviceMap.Noted> batteries(final IOsHost computer) {
+        final UpsReading ups = computer.upsReading();
+        if (!ups.present()) {
+            return List.of();
+        }
+        final Text note = switch (ups.mode()) {
+            case ON_BATTERY -> ups.minutesLeft() > 0L ? DeviceMap.UPS_ON_BATTERY_LASTS.with(ups.percent(),
+                    ups.minutesLeft()) : DeviceMap.UPS_ON_BATTERY.with(ups.percent());
+            case BYPASS -> DeviceMap.UPS_BYPASS.with(ups.percent());
+            case ON_LINE, NONE -> DeviceMap.UPS_ON_LINE.with(ups.percent());
+        };
+        final Text name = computer.upsName().isEmpty() ? DeviceMap.UPS.text() : DeviceMap.UPS_NAMED.with(
+                computer.upsName());
+        return List.of(new DeviceMap.Noted(name, note));
+    }
+
+    /*
+     * The coolers, then the case fans by how many turn of the seats there are, and how hot the processors run and the
+     * graphics cards, which run a little cooler than the processor over the same surroundings.
+     */
+    private static DeviceMap.Cooling cooling(final ThermalState thermal, final List<DeviceMap.Noted> coolers) {
+        if (!thermal.known()) {
+            return DeviceMap.Cooling.NONE;
+        }
+        final List<DeviceMap.Noted> parts = new ArrayList<>(coolers);
+        if (thermal.fanSeats() > 0) {
+            parts.add(new DeviceMap.Noted(DeviceMap.CASE_FANS.text(),
+                    DeviceMap.OF.with(thermal.fans(), thermal.fanSeats())));
+        }
+        final int video = (int) Math.round(thermal.ambient() + GPU_SHARE * (thermal.celsius() - thermal.ambient()));
+        return new DeviceMap.Cooling(parts, DeviceMap.DEGREES.with(thermal.celsius()), DeviceMap.DEGREES.with(video));
     }
 
     /** A graphics card as the device list needs it: its name and how many video outputs its generation carries. */

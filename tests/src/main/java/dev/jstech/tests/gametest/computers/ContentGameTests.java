@@ -8,7 +8,6 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
@@ -49,7 +48,6 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -332,8 +330,8 @@ public final class ContentGameTests {
     }
 
     /**
-     * Every part a small computer takes is drawn inside it by a model of its own, and every case has the cooler it
-     * sets on the processor.
+     * Every part a small computer takes is drawn inside it by a model of its own, its processor's cooler and its case
+     * fans too: a case brings neither of its own.
      */
     @GameTest(template = ARENA)
     public static void installableParts_haveTheModelsTheComputersDrawThemBy(final GameTestHelper helper) {
@@ -347,13 +345,6 @@ public final class ContentGameTests {
             parts++;
             partFiles(id.getPath()).stream().filter(file -> !exists(file))
                     .forEach(file -> wrong.add(id + " has no " + file));
-        }
-        for (final Block block : BuiltInRegistries.BLOCK) {
-            if (block instanceof IComputerCase chassis) {
-                partFiles("cooler_" + chassis.caseStyle().caseName(chassis.chassisEra())).stream()
-                        .filter(file -> !exists(file))
-                        .forEach(file -> wrong.add(BuiltInRegistries.BLOCK.getKey(block) + " has no " + file));
-            }
         }
         if (parts == 0) {
             wrong.add("no item goes into a small computer");

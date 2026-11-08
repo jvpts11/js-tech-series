@@ -10,9 +10,11 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.hardware.CaseBays;
+import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -24,7 +26,7 @@ class PersonalComputerLayoutTest {
     @Test
     void layout_isCleanInEveryEra() {
         for (final Era era : HardwareEra.SERIES) {
-            final GuiLayout l = PersonalComputerLayout.layout(era);
+            final GuiLayout l = PersonalComputerLayout.layout(era, cooling(era));
             assertTrue(l.isClean(), () -> era + ": overlaps " + l.overlaps() + ", out of bounds " + l.outOfBounds());
             assertTrue(l.zeroSizedSolids().isEmpty(), () -> era + ": zero-sized " + l.zeroSizedSolids());
         }
@@ -33,8 +35,8 @@ class PersonalComputerLayoutTest {
     @Test
     void layout_seatsEachSlotWhereItsPartIsDrawn() {
         for (final Era era : HardwareEra.SERIES) {
-            final AssemblyGeometry geo = PersonalComputerLayout.geometry(era);
-            final GuiLayout l = PersonalComputerLayout.layout(era);
+            final AssemblyGeometry geo = PersonalComputerLayout.geometry(era, cooling(era));
+            final GuiLayout l = PersonalComputerLayout.layout(era, cooling(era));
             assertEquals(at(geo.seat(SeatKind.BOARD)), l.slotAt("mobo"), era + " board");
             assertEquals(at(geo.seat(SeatKind.PSU)), l.slotAt("psu"), era + " supply");
             final List<Seat> cpus = geo.seats(SeatKind.CPU);
@@ -54,13 +56,32 @@ class PersonalComputerLayoutTest {
     @Test
     void layout_hasTheBaysOfItsEraCase() {
         for (final Era era : HardwareEra.SERIES) {
-            final long bays = PersonalComputerLayout.layout(era).elements().stream()
+            final long bays = PersonalComputerLayout.layout(era, cooling(era)).elements().stream()
                     .filter(e -> e.name().startsWith("bay_")).count();
             assertEquals(CaseBays.of(era), bays, era + " bays");
         }
     }
 
+    @Test
+    void coolingLayout_isCleanInEveryEraAndCase() {
+        for (final Era era : HardwareEra.SERIES) {
+            for (final CaseStyle style : CaseStyle.values()) {
+                final GuiLayout l = PersonalComputerLayout.geometry(era, style.cooling(era)).coolingLayout();
+                assertTrue(l.isClean(), () -> era + " " + style + ": overlaps " + l.overlaps() + ", out of bounds "
+                        + l.outOfBounds());
+                for (int seat = 0; seat < style.cooling(era).fans(); seat++) {
+                    assertTrue(l.hasSlot("fan_" + seat), era + " " + style + ": fan seat " + seat);
+                }
+            }
+        }
+    }
+
     private static GuiLayout.SlotPosition at(final Seat seat) {
         return new GuiLayout.SlotPosition(seat.x(), seat.y());
+    }
+
+    /* The case the era's computer comes in first: the sole tower of its age, the Neutral one after. */
+    private static CaseCooling cooling(final Era era) {
+        return (era.isAtMost(HardwareEra.TRANSITION) ? CaseStyle.SOLE : CaseStyle.NEUTRAL).cooling(era);
     }
 }

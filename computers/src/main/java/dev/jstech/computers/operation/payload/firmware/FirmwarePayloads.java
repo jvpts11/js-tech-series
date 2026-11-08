@@ -41,6 +41,7 @@ import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
@@ -243,7 +244,16 @@ public final class FirmwarePayloads {
         }
         return new FirmwareStatePayload(pos, EraCodecs.placeOf(era), machineOf(level, computer, pos),
                 computer.bootDiskSlot(),
-                computer.defaultInstallSlot(), entries, raidInfoOf(level, computer), psuOf(computer));
+                computer.defaultInstallSlot(), entries, raidInfoOf(level, computer), psuOf(computer),
+                thermalOf(computer));
+    }
+
+    /* The processor's temperature and the case fans the firmware reads, and the last trip; null for none. */
+    @Nullable
+    private static FirmwareStatePayload.Thermal thermalOf(final IOsHost computer) {
+        final ThermalState thermal = computer.thermal();
+        return thermal.known() ? new FirmwareStatePayload.Thermal(thermal.celsius(), thermal.fans(),
+                thermal.fanSeats(), thermal.lastTrip()) : null;
     }
 
     /* The power supply among the machine's parts, with the wear the self-test warns of; null for none. */

@@ -8,7 +8,11 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.hardware.CaseBays;
+import dev.jstech.computers.hardware.CaseCooling;
+import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.CoolerSpec;
+import dev.jstech.computers.hardware.CoolingFit;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
@@ -27,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The parts installed in one computer: the slots they sit in, and what they add up to.
@@ -42,6 +47,8 @@ final class ComputerHardware {
     private final ItemStackHandler handler;
     @Nullable
     private ComputerBuild cached;
+    /* What its cooling comes to, worked out with the build and kept as long. */
+    private CoolingFit cooling = CoolingFit.NONE;
     /*
      * Whether those parts make a computer that can be switched on, settled when the build is and not on every
      * ask. The question is asked of every machine on every tick, through isRunning, and answering it walks the
@@ -103,9 +110,32 @@ final class ComputerHardware {
         if (this.dirty) {
             this.cached = compute();
             this.powered = this.cached != null && this.cached.isPowered() && !PsuConditions.failed(psu());
+            this.cooling = computeCooling();
             this.dirty = false;
         }
         return this.cached;
+    }
+
+    /** What its cooling comes to as the parts stand: the case's, its coolers' and its fans' watts. */
+    CoolingFit cooling() {
+        current();
+        return this.cooling;
+    }
+
+    /** The cooler over processor {@code index}, or null for none. */
+    @Nullable
+    CoolerSpec cooler(final int index) {
+        return index < this.layout.coolerCount()
+                ? HardwareRegistry.cooler(this.handler.getStackInSlot(this.layout.coolerStart() + index)) : null;
+    }
+
+    /** The fan seats the water coolers' radiators take, of the case {@code cooling}. */
+    Set<Integer> radiatorSeats(final CaseCooling cooling) {
+        final List<CoolerSpec> coolers = new ArrayList<>(this.layout.coolerCount());
+        for (int i = 0; i < this.layout.coolerCount(); i++) {
+            coolers.add(cooler(i));
+        }
+        return cooling.radiatorSeats(coolers);
     }
 
     /** Whether the installed parts make a computer that can be switched on: a failed power supply makes none. */
@@ -278,6 +308,39 @@ final class ComputerHardware {
             add(frontDisks, HardwareRegistry.disk(this.machine.frontDisk(bay)));
         }
         return new ComputerBuild(motherboard, cpus, pcieCards, rams, psu, disks, frontDisks);
+    }
+
+    /*
+     * The coolers over the processors the board seats and the fans in the seats the case has, less those a radiator
+     * takes; a computer cooled from outside it has none of this.
+     */
+    private CoolingFit computeCooling() {
+        final CaseCooling cooling = this.machine.computer().cooling();
+        if (!this.machine.computer().cooled()) {
+            return CoolingFit.NONE;
+        }
+        final List<CoolerSpec> coolers = new ArrayList<>();
+        int bare = 0;
+        final int processors = Math.min(boardCpuSlots(), this.layout.coolerCount());
+        for (int i = 0; i < processors; i++) {
+            final CoolerSpec cooler = cooler(i);
+            coolers.add(cooler);
+            if (cooler == null && HardwareRegistry.cpu(this.handler.getStackInSlot(this.layout.cpuSlot(i))) != null) {
+                bare++;
+            }
+        }
+        // A water cooler's radiator holds its seats wherever its pump sits, on a socket the board has or not.
+        final Set<Integer> radiators = radiatorSeats(cooling);
+        final List<CaseFanSpec> fans = new ArrayList<>();
+        final int seats = Math.min(cooling.fans(), this.layout.fanCount());
+        int turning = 0;
+        for (int seat = 0; seat < seats; seat++) {
+            final CaseFanSpec fan = radiators.contains(seat) ? null
+                    : HardwareRegistry.caseFan(this.handler.getStackInSlot(this.layout.fanStart() + seat));
+            fans.add(fan);
+            turning += fan == null ? 0 : 1;
+        }
+        return new CoolingFit(cooling.budgetWatts(coolers, fans), turning, seats - radiators.size(), bare);
     }
 
     private static <S> void add(final List<S> into, final @Nullable S part) {

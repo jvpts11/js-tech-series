@@ -284,7 +284,7 @@
     }
   ],
   "id": "jsc:shell_verbs",
-  "order": 184,
+  "order": 185,
   "section": "jsc:prompt_system",
   "title": "jsc.guide.shell_verbs.title"
 }

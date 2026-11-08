@@ -360,7 +360,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:taskbar",
-  "order": 155,
+  "order": 156,
   "section": "jsc:desktop_working",
   "title": "jsc.guide.taskbar.title"
 }

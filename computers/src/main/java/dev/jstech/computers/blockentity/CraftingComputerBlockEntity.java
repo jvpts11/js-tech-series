@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.crafting.CraftingCards;
 import dev.jstech.computers.crafting.CraftingFloor;
@@ -92,7 +93,10 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     /** The 5.25-inch bays, as many as the most any era's case has; the case says how many it really has. */
     public static final int BAY_SLOTS_START = 13;
     public static final int BAY_SLOTS = 2;
-    public static final int HARDWARE_SLOTS = 15;
+    /* Its processor's cooler and the case's fan seats, as many as the case with the most has, after the bays. */
+    public static final int COOLER_SLOT = 15;
+    public static final int FAN_SLOTS_START = 16;
+    public static final int HARDWARE_SLOTS = 22;
 
     /** How long, in ticks, the crafting network this computer reads stays as it was last read. */
     public static final int FLOOR_FRESH_TICKS = 20;
@@ -106,10 +110,11 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
 
     /**
      * What a Crafting Computer of {@code era} is: a PC-class machine, each era on its own consumer form factor,
-     * Vintage on Baby-AT/AT and the later eras on ATX.
+     * Vintage on Baby-AT/AT and the later eras on ATX. Its case's {@code style} decides how much it cools.
      */
-    public static ComputerDef computer(final Era era) {
-        return new ComputerDef(era, TowerBoards.craftingComputer(era), HostScope.CRAFTING_COMPUTER, PARTS);
+    public static ComputerDef computer(final Era era, final CaseStyle style) {
+        return new ComputerDef(era, TowerBoards.craftingComputer(era), HostScope.CRAFTING_COMPUTER, PARTS,
+                style.cooling(era));
     }
 
     public static void serverTick(final Level level, final BlockPos pos,

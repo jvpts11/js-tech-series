@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.registry;
 
+import dev.jstech.computers.hardware.CaseFanSpec;
+import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.GpuSpec;
@@ -28,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The hardware every mod brings, by the item that is the part: an item is a processor, a graphics card, a memory
- * module, a disk, a motherboard, a power supply or an expansion card because an entry here says so, with the sheet of
+ * module, a disk, a motherboard, a power supply, an expansion card, a processor's cooler or a case fan because an entry
+ * here says so, with the sheet of
  * what it is. This mod's own parts are declared through the register event as an add-on's are, so the way in is the
  * one that always runs; the entries close once the game has loaded, and a lookup is one read of a map by the item.
  */
@@ -86,6 +89,16 @@ public final class HardwareRegistry {
         put(item, new Part(Kind.EXPANSION_CARD, spec, era));
     }
 
+    /** Declares {@code item} a processor's cooler, while the game loads. */
+    public static void cooler(final ItemLike item, final CoolerSpec spec) {
+        put(item, new Part(Kind.COOLER, spec, spec.era()));
+    }
+
+    /** Declares {@code item} a case fan, while the game loads. */
+    public static void caseFan(final ItemLike item, final CaseFanSpec spec) {
+        put(item, new Part(Kind.CASE_FAN, spec, spec.era()));
+    }
+
     /** The processor {@code stack} is, or null when it is none. */
     public static @Nullable CpuSpec cpu(final ItemStack stack) {
         return of(stack, Kind.PROCESSOR, CpuSpec.class);
@@ -125,6 +138,16 @@ public final class HardwareRegistry {
     public static @Nullable IExpansionCardSpec card(final ItemStack stack) {
         final Part part = part(stack.isEmpty() ? null : stack.getItem());
         return part != null && part.kind().card() ? (IExpansionCardSpec) part.spec() : null;
+    }
+
+    /** The processor's cooler {@code stack} is, or null when it is none. */
+    public static @Nullable CoolerSpec cooler(final ItemStack stack) {
+        return of(stack, Kind.COOLER, CoolerSpec.class);
+    }
+
+    /** The case fan {@code stack} is, or null when it is none. */
+    public static @Nullable CaseFanSpec caseFan(final ItemStack stack) {
+        return of(stack, Kind.CASE_FAN, CaseFanSpec.class);
     }
 
     /** What part {@code item} is, or null when it is no part. */
@@ -195,7 +218,9 @@ public final class HardwareRegistry {
         DISK("disk"),
         MOTHERBOARD("motherboard"),
         POWER_SUPPLY("power supply"),
-        EXPANSION_CARD("expansion card");
+        EXPANSION_CARD("expansion card"),
+        COOLER("processor cooler"),
+        CASE_FAN("case fan");
 
         private final String word;
 

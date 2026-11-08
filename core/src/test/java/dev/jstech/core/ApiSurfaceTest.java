@@ -50,9 +50,9 @@ class ApiSurfaceTest {
             "CpuSpec", "GpuSpec", "RamSpec", "DiskSpec", "MotherboardSpec", "PsuSpec", "IExpansionCardSpec",
             "PlainCardSpec", "RamGeneration", "PcieGeneration", "FormFactor", "ExpansionCardKind", "EraMedia",
             "CpuSocketId", "CpuDesign", "Microarchitecture", "IntegratedGraphics", "StorageTier", "ExpansionBus",
-            "MediaFormat",
-            // the computers: what one is, the machine it is, and the chassis of a server
-            "ComputerDef", "CaseParts", "HostScope", "RackChassis");
+            "MediaFormat", "CoolerSpec", "CaseFanSpec",
+            // the computers: what one is, the machine it is, how its case cools, and the chassis of a server
+            "ComputerDef", "CaseParts", "CaseCooling", "HostScope", "RackChassis");
 
     /**
      * What the promise reached before it was followed to its end, each line a promised type and a type of the series

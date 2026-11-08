@@ -31,7 +31,7 @@ public class ClusterManagementComputerScreen extends AbstractTowerAssemblyScreen
 
     @Override
     protected AssemblyGeometry makeGeometry() {
-        return ClusterManagementComputerLayout.geometry(caseEra());
+        return ClusterManagementComputerLayout.geometry(caseEra(), menu.cooling());
     }
 
     @Override
@@ -68,6 +68,6 @@ public class ClusterManagementComputerScreen extends AbstractTowerAssemblyScreen
                 new Readout(GameText.resolve(AssemblyTexts.MANAGEMENT),
                         GameText.resolve(manager ? AssemblyTexts.INSTALLED : AssemblyTexts.NOT_INSTALLED),
                         manager ? JsTechTheme.accent() : JsTechTheme.amber()),
-                draw());
+                draw(), temp());
     }
 }

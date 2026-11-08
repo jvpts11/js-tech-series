@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.computers.hardware.CaseParts;
 
 /**
@@ -24,8 +25,15 @@ import dev.jstech.computers.hardware.CaseParts;
  * @param ramStart      the first module's slot
  * @param ramCount      the memory modules in all
  * @param firstRam      how many of them sit from {@code ramStart} on; the rest come after the later processors
+ * <p>A computer its case cools has a cooler slot over each processor and the slots for its case's fans after all of
+ * those, for the same reason again; one cooled from outside it has neither.
+ *
  * @param laterStart    where the later processors start, after the bays, followed by the later modules
  * @param ramPerCpu     the modules each processor on the board opens, or 0 when the memory does not go by processor
+ * @param coolerStart   the first processor's cooler slot, the others after it in the processors' order
+ * @param coolerCount   the cooler slots, one for each processor, or none
+ * @param fanStart      the first fan slot, the seats numbered as the case numbers them: rear, top, front
+ * @param fanCount      the fan slots, as many as the case with the most seats has, or none
  */
 public record ComputerHardwareLayout(
         int motherboardSlot,
@@ -36,14 +44,16 @@ public record ComputerHardwareLayout(
         int diskStart, int diskCount,
         int bayStart, int bayCount,
         int laterStart, int ramPerCpu,
+        int coolerStart, int coolerCount,
+        int fanStart, int fanCount,
         int totalSlots) {
 
     /**
-     * The map of a case counting {@code parts}: the board first, then the processors, the memory, the cards, the
-     * supply, the disks and the bays, each kind right after the one before; then a workstation's later processors and
-     * their memory.
+     * The map of a case counting {@code parts} and cooling as {@code cooling} says: the board first, then the
+     * processors, the memory, the cards, the supply, the disks and the bays, each kind right after the one before; then
+     * a workstation's later processors and their memory; then the coolers and the fans of a case that cools.
      */
-    public static ComputerHardwareLayout of(final CaseParts parts) {
+    public static ComputerHardwareLayout of(final CaseParts parts, final CaseCooling cooling) {
         final boolean rows = parts.memoryPerProcessor() > 0;
         final int firstCpus = rows ? Math.min(1, parts.processors()) : parts.processors();
         final int firstRam = rows ? Math.min(parts.memoryPerProcessor(), parts.memory()) : parts.memory();
@@ -54,10 +64,13 @@ public record ComputerHardwareLayout(
         final int diskStart = psuSlot + 1;
         final int bayStart = diskStart + parts.disks();
         final int laterStart = bayStart + parts.bays();
-        final int total = laterStart + (parts.processors() - firstCpus) + (parts.memory() - firstRam);
+        final int coolerStart = laterStart + (parts.processors() - firstCpus) + (parts.memory() - firstRam);
+        final int coolers = cooling.equals(CaseCooling.NONE) ? 0 : parts.processors();
+        final int fanStart = coolerStart + coolers;
+        final int total = fanStart + cooling.fanSlots();
         return new ComputerHardwareLayout(0, cpuStart, parts.processors(), firstCpus, ramStart, parts.memory(),
                 firstRam, pcieStart, parts.cards(), psuSlot, diskStart, parts.disks(), bayStart, parts.bays(),
-                laterStart, parts.memoryPerProcessor(), total);
+                laterStart, parts.memoryPerProcessor(), coolerStart, coolers, fanStart, cooling.fanSlots(), total);
     }
 
     /** The slot of processor {@code index}, from 0. */
@@ -96,5 +109,13 @@ public record ComputerHardwareLayout(
 
     public boolean isBay(final int slot) {
         return slot >= bayStart && slot < bayStart + bayCount;
+    }
+
+    public boolean isCooler(final int slot) {
+        return slot >= coolerStart && slot < coolerStart + coolerCount;
+    }
+
+    public boolean isFan(final int slot) {
+        return slot >= fanStart && slot < fanStart + fanCount;
     }
 }

@@ -22,6 +22,7 @@ import dev.jstech.core.energy.WrongClass;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.look.IDescribed;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
@@ -149,8 +150,9 @@ public final class UpsBlockEntity extends SyncedBlockEntity implements IDescribe
         final UpsReading reading = this.battery.reading(this.rating, watts);
         final boolean wentOnBattery = mode == UpsReading.Mode.ON_BATTERY && was != UpsReading.Mode.ON_BATTERY;
         final boolean low = this.battery.low(this.rating);
+        final Text name = GameText.of(getBlockState().getBlock().getName());
         for (final AbstractComputerBlockEntity computer : this.loads) {
-            computer.upsTold(reading, level.getGameTime());
+            computer.upsTold(reading, name, level.getGameTime());
             // One already closing down, to switch off or to start over, is let finish: told again it would never end.
             if (!computer.isRunning() || computer.goingDown()) {
                 continue;

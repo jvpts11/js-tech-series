@@ -8,8 +8,11 @@
 package dev.jstech.tests.testkit.computers;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.CoolingItems;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -187,6 +190,8 @@ public final class TestWorldBuilder extends ScenarioBuilder {
                 new ItemStack(ComputingModule.PSU_650G.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
+        // Cooled as a machine like it is built: its graphics card would hold an uncooled case at 90 °C.
+        coolStandard(be);
         /*
          * A machine on a real base has a disk with a system on it. Without one the computer powers on into
          * its firmware with nothing to boot, which is not what the base is meant to demonstrate.
@@ -201,6 +206,19 @@ public final class TestWorldBuilder extends ScenarioBuilder {
         be.installOs(os);
         be.togglePower();
         return be;
+    }
+
+    /**
+     * Fits a Standard case's cooling into {@code be}: the stock cooler over its first processor and a fan in every seat
+     * its case has, as a machine of that generation is built (computers/docs/design/temperature.md).
+     */
+    public static void coolStandard(final AbstractSmallComputerBlockEntity be) {
+        final ItemStackHandler hw = be.getHardware();
+        final ComputerHardwareLayout layout = be.hardwareLayout();
+        hw.setStackInSlot(layout.coolerStart(), new ItemStack(CoolingItems.STANDARD_STOCK_COOLER.get()));
+        for (int seat = 0; seat < be.computer().cooling().fans(); seat++) {
+            hw.setStackInSlot(layout.fanStart() + seat, new ItemStack(CoolingItems.STANDARD_CASE_FAN.get()));
+        }
     }
 
     /**

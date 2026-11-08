@@ -14,7 +14,9 @@ import dev.jstech.computers.api.planner.IPlannerRule;
 import dev.jstech.computers.api.planner.IPlannerStatistic;
 import dev.jstech.computers.block.SmallComputerBlock;
 import dev.jstech.computers.engine.EngineDef;
+import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ComputerDef;
+import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.ExpansionCardKind;
@@ -223,6 +225,21 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
     @ApiStatus.Experimental
     public void expansionCard(final ItemLike item, final IExpansionCardSpec spec, final @Nullable Era era) {
         JsComputersApi.registerExpansionCard(item, spec, era);
+    }
+
+    /**
+     * Makes {@code item} a processor's cooler of that sheet, which seats over a processor in the cases of its era and
+     * later; a water cooler's radiator takes two of the case's fan seats besides.
+     */
+    @ApiStatus.Experimental
+    public void cooler(final ItemLike item, final CoolerSpec spec) {
+        JsComputersApi.registerCooler(item, spec);
+    }
+
+    /** Makes {@code item} a case fan of that sheet, which seats in a fan seat of the cases of its era and later. */
+    @ApiStatus.Experimental
+    public void caseFan(final ItemLike item, final CaseFanSpec spec) {
+        JsComputersApi.registerCaseFan(item, spec);
     }
 
     /** Adds a generation of memory, which your modules are made in and your boards take. */

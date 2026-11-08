@@ -53,6 +53,9 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MEMBER_DRIVE
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MEMORY;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MONITORS;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_POWER_SUPPLY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_CPU_TEMPERATURE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CPU_TEMPERATURE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CPU_TEMPERATURE_FANS;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_PROCESSOR;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_VIDEO;
 import static dev.jstech.computers.client.FirmwareScreenTexts.MONITORS_PORTS;
@@ -923,21 +926,28 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 : of(MONITORS_PORTS.with(machine.monitors(), machine.ports()));
         final String target = of(state == null || state.installTargetSlot() < 0 ? NO_DISK.text()
                 : DISK.with(state.installTargetSlot()));
-        final String[][] kv = {
-                {of(LABEL_PROCESSOR), cpu},
-                {of(LABEL_ISA), arch},
-                {of(LABEL_CORES), cores},
-                {of(LABEL_MEMORY), ram},
+        final List<String[]> rows = new ArrayList<>(List.of(
+                new String[] {of(LABEL_PROCESSOR), cpu},
+                new String[] {of(LABEL_ISA), arch},
+                new String[] {of(LABEL_CORES), cores},
+                new String[] {of(LABEL_MEMORY), ram},
                 /* The newest firmware calls the card graphics; the boards before it called it the video adapter. */
-                {of(kind == FirmwareKind.UEFI ? LABEL_GRAPHICS : LABEL_VIDEO), video},
-                {of(LABEL_BOARD), board},
-                {of(LABEL_MONITORS), monitors},
-                {of(LABEL_HARDWARE_ERA), eraLabel()},
-                {of(LABEL_BOOT_DISK), bootDiskLine()},
-                {of(LABEL_INSTALL_TARGET), target},
-                // Last, so it is the line a degraded supply turns to the warning colour.
-                {of(LABEL_POWER_SUPPLY), psuLine()},
-        };
+                new String[] {of(kind == FirmwareKind.UEFI ? LABEL_GRAPHICS : LABEL_VIDEO), video},
+                new String[] {of(LABEL_BOARD), board},
+                new String[] {of(LABEL_MONITORS), monitors},
+                new String[] {of(LABEL_HARDWARE_ERA), eraLabel()},
+                new String[] {of(LABEL_BOOT_DISK), bootDiskLine()},
+                new String[] {of(LABEL_INSTALL_TARGET), target}));
+        // The processor's temperature and the case fans that turn, as real BIOSes show them.
+        final FirmwareStatePayload.Thermal thermal = state == null ? null : state.thermal();
+        if (thermal != null) {
+            rows.add(new String[] {of(LABEL_CPU_TEMPERATURE), thermal.fanSeats() > 0
+                    ? of(CPU_TEMPERATURE_FANS.with(thermal.celsius(), thermal.fans(), thermal.fanSeats()))
+                    : of(CPU_TEMPERATURE.with(thermal.celsius()))});
+        }
+        // Last, so it is the line a degraded supply turns to the warning colour.
+        rows.add(new String[] {of(LABEL_POWER_SUPPLY), psuLine()});
+        final String[][] kv = rows.toArray(String[][]::new);
         /*
          * The values start at a column and end where the page does. A board and a graphics card are named by
          * whoever made them, at whatever length they chose, and drawn at full length they ran out of the page

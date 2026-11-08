@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.layout.AssemblyGeometry;
+import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.menu.AbstractAssemblyComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
@@ -48,13 +50,50 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
 
     @Override
     protected String stateWord() {
+        if (menu.buildValid() && menu.isRunning() && menu.thermal().throttled()) {
+            return GameText.resolve(AssemblyTexts.THROTTLED);
+        }
         return GameText.resolve(!menu.buildValid() ? AssemblyTexts.OFFLINE
                 : menu.isRunning() ? AssemblyTexts.ONLINE : AssemblyTexts.READY);
     }
 
     @Override
     protected int stateColour() {
+        if (menu.buildValid() && menu.isRunning() && menu.thermal().throttled()) {
+            return JsTechTheme.amber();
+        }
         return !menu.buildValid() ? JsTechTheme.red() : menu.isRunning() ? JsTechTheme.green() : JsTechTheme.amber();
+    }
+
+    @Override
+    protected AssemblyGeometry.Face face() {
+        return menu.face();
+    }
+
+    @Override
+    protected void showFace(final AssemblyGeometry.Face face) {
+        menu.showFace(face);
+    }
+
+    @Override
+    protected int faceButton(final AssemblyGeometry.Face face) {
+        return face == AssemblyGeometry.Face.BOARD ? AbstractAssemblyComputerMenu.BUTTON_FACE_BOARD
+                : AbstractAssemblyComputerMenu.BUTTON_FACE_COOLING;
+    }
+
+    @Override
+    protected boolean coolingSlot(final Slot slot) {
+        return menu.coolingSlot(slot);
+    }
+
+    @Override
+    protected ThermalState thermal() {
+        return menu.thermal();
+    }
+
+    /** The TEMP readout every tower shows last on its board's face. */
+    protected Readout temp() {
+        return tempReadout(menu.thermal());
     }
 
     @Override
@@ -101,6 +140,10 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
         final List<Component> failure = psuFailure(menu.psu());
         if (!failure.isEmpty()) {
             return failure;
+        }
+        final List<Component> hot = tooHot(menu.thermal());
+        if (!hot.isEmpty() && !menu.isRunning()) {
+            return hot;
         }
         if (!menu.buildValid()) {
             return List.of(GameText.component(AssemblyTexts.NOT_A_COMPUTER),

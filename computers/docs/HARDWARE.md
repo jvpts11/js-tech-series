@@ -42,7 +42,7 @@ joined to it. To do anything useful it needs a disk with a system installed on i
 | **Crafting Computer** | Runs the network's crafting ([Autocrafting](AUTOCRAFTING.md)). Needs a Crafting Card. | 1 CPU, 4 RAM, 4 expansion cards, 2 disks, 1 PSU. |
 | **Cluster Management Computer** | Installs systems on racked machines and watches them. Without a Cluster Interface Card it is an ordinary computer. | 1 CPU, 4 RAM (2 and 8 on a two-socket board), 4 expansion cards, 2 disks, 1 PSU, 18 storage slots. |
 | **Mainframe** | The network's brain: it keeps the index of everything stored, moves it and crafts it. | A block of 3 wide, 2 tall, 2 deep. 1 MTX board, 1 PSU, 4 CPUs, 8 RAM, 6 GPUs, 4 disks, 27 storage slots. |
-| **Server Rack** | A cabinet of 8 rack units (U) for Servers and the rack's own units: a KVM Switch, a Rack UPS and its battery expansions, a PDU, a Cooling Unit, a Drive Shelf. | A block of 2 wide, 3 tall, 2 deep. |
+| **Server Rack** | A cabinet of 8 rack units (U) for Servers and the rack's own units: a KVM Switch, a Rack UPS and its battery expansions, a PDU, a Cooling Unit, a Vent Panel, a Drive Shelf. | A block of 2 wide, 3 tall, 2 deep. |
 | **Supercomputer Rack** | The same cabinet for Supercomputer Nodes only (Standard and Advanced). | As the Server Rack. |
 
 Each computer exists in every era, named for it (the Vintage Personal Computer, the Legacy Mainframe). From the
@@ -103,8 +103,9 @@ the rack, and room for processors and expansion cards:
   `UPDATE power SET on = no WHERE server = 'VAULT-01'`); the **Drive Shelf** (2U, Standard) adds ten drive bays to
   the server mounted right above it, and does nothing with no server there; the **Cooling Unit** adds to the heat
   the cabinet can carry, 300 W for the Vintage one, 600 W for the Legacy, 1,000 W for the Transition, 1,500 W for the
-  Standard and 2,500 W for the Advanced. The KVM Switch, the Rack UPS, the Cooling Unit, the battery expansion and
-  the PDU come in every era, and a rack seats the units of its era and the earlier ones, as it does servers. The
+  Standard and 2,500 W for the Advanced, and the **Vent Panel** 500 W, one for every era in its rack's colour (see
+  [Cooling](#cooling)). The KVM Switch, the Rack UPS, the Cooling Unit, the battery expansion and the PDU come in every
+  era, and a rack seats the units of its era and the earlier ones, as it does servers. The
   **Fibre Optic Interface** is how a rack takes the fibre backbone: the Standard's takes the Fibre Optic Cable, the
   Advanced's, in an Advanced rack, the OM5 Fibre Cable as well.
 - A **supercomputer** is every Supercomputer Rack tied together by the high compute cable, meeting the network at
@@ -171,9 +172,9 @@ with no energy at all.
 so it goes with it from machine to machine, and how fast it grows depends on the load (the parts' watts over the
 rating): up to 50% a supply lives eight times its full-load life, up to 80% three times, above that its full-load
 life. At full load an MF PowerBasic lasts 60 game days, a PowerGold 100, a PowerPlat 150 and a ServerPSU 250, each
-supply a little more or less (up to a fifth either way, drawn once); a rack over its thermal budget halves the life
-of its servers' supplies. The wear shows as a bar under the supply in the assembly screens, as an item's durability
-does, and in its tooltip and the DRAW readout's. From 80% worn the supply is degraded: its seat's edge turns amber,
+supply a little more or less (up to a fifth either way, drawn once); a computer or a rack slowed by its heat wears
+its supplies twice as fast ([Cooling](#cooling)). The wear shows as a bar under the supply in the assembly screens,
+as an item's durability does, and in its tooltip and the DRAW readout's. From 80% worn the supply is degraded: its seat's edge turns amber,
 the self-test of every boot writes a warning, the Device Manager marks it under Power supplies, the firmware's
 Hardware page shows it, and the network's event log records a WARN. At 100% it fails: a system that is up goes down
 on its red page, which names the supply, and the computer goes dark (an ERROR in the log); it does not start again,
@@ -219,6 +220,61 @@ desktops their notice with the charge under it; MC-DOS and MC-NET print the UPS'
 Unix at its console gets the UPS daemon's broadcast. At 10% of the battery every system shuts itself down cleanly,
 as real UPS software does: nothing is lost, no disk is checked, and the network's event log records a WARN. No
 machine stays up on so low a battery; above it, a machine switched on in an outage starts on the battery.
+
+### Cooling
+
+*Added 2026-11-08.* Every computer turns its parts' watts into heat and has a **heat budget**, the watts it can
+take away from itself: what its case takes away on its own, plus the cooler over each processor and its case fans
+([design](design/temperature.md)).
+
+| Case | Takes away | Fan seats (rear, top, front) |
+| --- | ---: | --- |
+| Vintage AT minitower | 60 W | 0, 0, 1 |
+| Legacy ATX tower | 100 W | 1, 0, 1 |
+| Transition mid tower | 150 W | 1, 0, 2 |
+| Neutral (Standard, Advanced) | 200 W | 1, 0, 2 |
+| High Performance (Standard, Advanced) | 300 W | 1, 2, 3 |
+| Aesthetic (Standard, Advanced) | 150 W | 1, 1, 2 |
+
+| Part | Vintage | Legacy | Transition | Standard | Advanced |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Stock cooler (a bare heat sink in the Vintage) | 20 W | 60 W | 100 W | 150 W | 200 W |
+| Tower cooler | | | | 250 W | 300 W |
+| MF AquaLoop 240 or 360 (all-in-one water cooler) | | | | 300 W | 400 W |
+| Case fan (80, 80, 92, 120 and 120 mm) | 20 W | 30 W | 40 W | 50 W | 60 W |
+
+They go in on the **COOLING** face of the assembly window, a tab under its lamps: a cooler seat over each processor
+and the case's fan seats where the case has them; the tab's lamp lights while the computer lacks cooling. A cooler or
+fan of the case's era or an older one fits. A water cooler takes its processor's cooler seat and two fan seats for
+its radiator, the two on the top when the case has them, otherwise the two at the front (the 360 too), and brings its
+radiator's own fans. Each part is drawn inside the case by its own model, the fans and coolers of an Aesthetic case
+in its light. A Mainframe's cabinet takes away 1,500 W on its own, plus a cooler over each socket; a rack's servers
+have none, their rack cools them.
+
+The **temperature** is the surroundings' plus 60 °C times the heat over the budget, and it takes about half a minute
+to get there. The surroundings come from the biome, 20 + 15 x (the biome's temperature - 0.8) °C, about 20 °C in the
+plains, 38 °C in the desert and 8 °C in the snow, and the Nether adds 10 °C.
+
+| Temperature | What happens |
+| --- | --- |
+| up to 80 °C | full speed |
+| 80 to 90 °C | the speed drops a little, to 85% at 90 °C, as a processor that stops holding its boost |
+| 90 °C | **throttling**: the computer slows just enough to hold 90 °C, its capacity and its programs' credits, down to 25% |
+| 100 °C | **thermal trip**: when not even 25% holds the heat, it goes dark at once |
+
+A computer slowed by heat wears its power supply twice as fast. A thermal trip is a sudden shutdown: the disks it had
+in use are checked at the next start, the network's event log records an ERROR, and the computer does not start
+again until it has cooled below 60 °C; its next self-test warns of the trip, and the boot goes on. The temperature
+shows in the assembly window (TEMP, HEAT, BUDGET, AMBIENT and CLOCK), on the TEMP tile of the terminal's Local tab,
+on the firmware's hardware page with the case fans that turn, and in the Device Manager under Cooling, beside the
+UPS's battery under Batteries. A computer's heat is J's Core's thermal budget for any mod ([API](API.md)). The server
+settings `temperature.ambient_base`, `biome_factor`, `nether_extra` and `restart_below_c` set the surroundings and
+the restart; there is no switch to turn temperature off.
+
+A rack has one temperature for its whole cabinet, by the same rules: its budget is 1,000 W, plus its Cooling Units,
+plus 500 W for every **Vent Panel**, against the watts of its powered bays. Its throttling at 90 °C is the cut racks
+always had, the budget over the load down to a quarter; at 100 °C every running bay goes dark at once, and none
+switches on until the cabinet has cooled below 60 °C.
 
 ### Disks
 

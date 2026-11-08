@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
+import dev.jstech.computers.blockentity.ComputerThermalBudget;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.rack.RackThermalBudget;
@@ -62,6 +63,13 @@ public final class ComputingCapabilities {
         offerEnergy(event, ComputingModule.CRAFTING_COMPUTER_BE.get());
         offerEnergy(event, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get());
         offerEnergy(event, ComputingModule.MAINFRAME_BE.get());
+        offerHeat(event, ComputingModule.PERSONAL_COMPUTER_BE.get());
+        offerHeat(event, ComputingModule.SMALL_COMPUTER_BE.get());
+        offerHeat(event, ComputingModule.CRAFTING_COMPUTER_BE.get());
+        offerHeat(event, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get());
+        offerHeat(event, ComputingModule.MAINFRAME_BE.get());
+        ThermalBudgets.BUDGET.onBlockEntity(event, ComputingModule.MAINFRAME_PART_BE.get(),
+                (part, side) -> ComputerThermalBudget.of(mainframeOf(part)));
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.MAINFRAME_PART_BE.get(), (part, side) -> {
             final AbstractComputerBlockEntity mainframe = mainframeOf(part);
             return mainframe == null ? null : mainframe.energyPort();
@@ -100,6 +108,16 @@ public final class ComputingCapabilities {
                                                                          final BlockEntityType<B> type) {
         event.registerBlockEntity(EnergyPorts.PORT, type, (computer, side) -> computer.energyPort());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, type, (computer, side) -> computer.feEnergy());
+    }
+
+    /**
+     * Has every computer of {@code type} answer J's Core's thermal budget: its heat against what its case, coolers and
+     * fans take away, and its temperature (computers/docs/design/temperature.md). A mod with a computer of its own
+     * calls it while the capabilities are registered.
+     */
+    public static <B extends AbstractComputerBlockEntity> void offerHeat(final RegisterCapabilitiesEvent event,
+                                                                       final BlockEntityType<B> type) {
+        ThermalBudgets.BUDGET.onBlockEntity(event, type, (computer, side) -> ComputerThermalBudget.of(computer));
     }
 
     /* The rack a block of it belongs to, or none while it is bound to no rack that is loaded. */

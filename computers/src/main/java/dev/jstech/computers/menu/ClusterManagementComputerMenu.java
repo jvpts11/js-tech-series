@@ -22,7 +22,7 @@ public class ClusterManagementComputerMenu extends AbstractAssemblyComputerMenu 
     public ClusterManagementComputerMenu(final int containerId, final Inventory playerInventory,
                                          final ClusterManagementComputerBlockEntity be) {
         super(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), containerId, playerInventory, be,
-                ClusterManagementComputerLayout.layout(caseEra(be)), "pcie");
+                ClusterManagementComputerLayout.geometry(caseEra(be), be.computer().cooling()), "pcie");
         this.blockEntity = be;
     }
 

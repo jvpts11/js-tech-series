@@ -291,7 +291,7 @@
     }
   ],
   "id": "jsc:when_a_craft_goes_wrong",
-  "order": 113,
+  "order": 114,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.when_a_craft_goes_wrong.title"
 }

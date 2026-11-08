@@ -51,6 +51,16 @@ public final class PartRefusals {
             "The case has no bay here");
     public static final TextKey DRIVE_BAY = TextKey.of("jsc.part_refusal.drive_bay",
             "A drive bay takes only a disk");
+    public static final TextKey COOLER_TOO_NEW = TextKey.of("jsc.part_refusal.cooler_too_new",
+            "This cooler is of a later era than the case: its mount has nothing to hold it");
+    public static final TextKey NO_RADIATOR_ROOM = TextKey.of("jsc.part_refusal.no_radiator_room",
+            "Its radiator needs two free fan seats, on the top or at the front");
+    public static final TextKey FAN_TOO_NEW = TextKey.of("jsc.part_refusal.fan_too_new",
+            "This fan is of a later era than the case");
+    public static final TextKey NO_FAN_SEAT = TextKey.of("jsc.part_refusal.no_fan_seat",
+            "The case has no fan seat here");
+    public static final TextKey UNDER_RADIATOR = TextKey.of("jsc.part_refusal.under_radiator",
+            "A water cooler's radiator sits in this seat");
 
     private PartRefusals() {
     }

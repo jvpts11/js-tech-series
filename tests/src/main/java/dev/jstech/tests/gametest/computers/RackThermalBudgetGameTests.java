@@ -44,6 +44,9 @@ public final class RackThermalBudgetGameTests {
     private static final int RACK_BLOCKS = 12;
     private static final int HOT_SERVERS = 4;
     private static final int COOLING_ROW = 5;
+    /* Kelvin at 0 °C, and how warm any surroundings the arena stands in are, at the most. */
+    private static final double KELVIN = 273.15;
+    private static final double WARM = 60.0;
 
     private RackThermalBudgetGameTests() {
     }
@@ -66,13 +69,17 @@ public final class RackThermalBudgetGameTests {
                     helper.assertTrue(empty.loadWatts() == 0 && empty.budgetWatts() == RackThermals.PASSIVE_BUDGET_W
                             && empty.performance() == 1.0 && !empty.over(), "an empty rack makes no heat and sheds "
                             + RackThermals.PASSIVE_BUDGET_W + " W at full speed: " + describe(empty));
-                    helper.assertTrue(Double.isNaN(empty.temperature()), "a rack keeps a budget and no temperature: "
-                            + empty.temperature());
+                    helper.assertTrue(empty.temperature() > KELVIN && empty.temperature() < KELVIN + WARM,
+                            "an empty rack stands at its surroundings, in kelvin: " + empty.temperature());
 
                     // Machines laden with accelerators make the cabinet hotter than it can shed.
                     for (int row = 0; row < HOT_SERVERS; row++) {
                         rack.getServers().setStackInSlot(row, hotServer());
                     }
+                })
+                // The cabinet heats up over half a minute: settled, as long enough would leave it.
+                .thenExecuteAfter(1, rack::settleHeat)
+                .thenExecuteAfter(1, () -> {
                     final IThermalBudget hot = budget(helper, RACK);
                     helper.assertTrue(hot.over() && hot.loadWatts() == rack.thermalLoadWatts()
                             && hot.budgetWatts() == rack.thermalBudgetWatts()
@@ -91,6 +98,9 @@ public final class RackThermalBudgetGameTests {
 
                     // A Cooling Unit raises the budget past the load, and the machines run free again.
                     rack.getServers().setStackInSlot(COOLING_ROW, new ItemStack(ComputingModule.COOLING_UNIT.get()));
+                })
+                .thenExecuteAfter(1, rack::settleHeat)
+                .thenExecuteAfter(1, () -> {
                     final IThermalBudget cooled = budgetAt(helper, blocks.getLast());
                     helper.assertTrue(cooled.budgetWatts() > RackThermals.PASSIVE_BUDGET_W && !cooled.over()
                             && cooled.performance() == 1.0, "cooling buys the rack its speed back: "

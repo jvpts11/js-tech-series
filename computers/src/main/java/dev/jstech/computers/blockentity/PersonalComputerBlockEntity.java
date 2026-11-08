@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
@@ -79,7 +80,13 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
      */
     public static final int SECOND_CPU_SLOT = 15;
     public static final int SECOND_RAM_SLOTS_START = 16;
-    public static final int HARDWARE_SLOTS = 20;
+    /*
+     * A cooler over each processor's socket and the case's fan seats, as many as the case with the most has, after
+     * all of those for the same reason.
+     */
+    public static final int COOLER_SLOTS_START = 20;
+    public static final int FAN_SLOTS_START = 22;
+    public static final int HARDWARE_SLOTS = 28;
 
     public static final int STORAGE_SLOTS = 18;
     /**
@@ -125,10 +132,12 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
 
     /**
      * What a Personal Computer of {@code era} is. Each era takes its own consumer form factor: Vintage on Baby-AT/AT,
-     * Legacy on ATX, and from the Transition on ATX or the workstation's EATX, as the tower cases of the time did.
+     * Legacy on ATX, and from the Transition on ATX or the workstation's EATX, as the tower cases of the time did. Its
+     * case's {@code style} decides how much it cools.
      */
-    public static ComputerDef computer(final Era era) {
-        return new ComputerDef(era, TowerBoards.personalComputer(era), HostScope.PERSONAL_COMPUTER, PARTS);
+    public static ComputerDef computer(final Era era, final CaseStyle style) {
+        return new ComputerDef(era, TowerBoards.personalComputer(era), HostScope.PERSONAL_COMPUTER, PARTS,
+                style.cooling(era));
     }
 
     /** What the personal-use cards hold and do on this computer. */

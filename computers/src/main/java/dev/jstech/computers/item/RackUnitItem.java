@@ -55,7 +55,9 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
         /** Measures the energy of every bay and lets the network switch the bays' power. */
         PDU("pdu", 1),
         /** Ten drive bays and no server: it extends the bays of the server right above it. */
-        DRIVE_SHELF("drive_shelf", 2);
+        DRIVE_SHELF("drive_shelf", 2),
+        /** Passive ventilation, the cheap partner of the Cooling Unit: one for every era, in its rack's colour. */
+        VENT_PANEL("vent_panel", 1);
 
         private final String id;
         private final int heightU;
@@ -100,6 +102,10 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
             "Measures every bay's energy and lets the network switch their power");
     private static final TextKey SHELF_TOOLTIP = TextKey.of("item.jsc.drive_shelf.tooltip",
             "Ten drive bays for the server right above it");
+    private static final TextKey VENT_TOOLTIP = TextKey.of("item.jsc.vent_panel.tooltip",
+            "Passive ventilation: raises the rack's thermal budget");
+    private static final TextKey VENT_EVERY_ERA = TextKey.of("item.jsc.vent_panel.every_era",
+            "Fits a rack of every era, in the rack's colour");
     private static final TextKey ADDS = TextKey.of("item.jsc.rack_unit.adds", "+%s to the rack's UPS");
     /* The drive bays of a shelf: two rows of five. */
     private static final int SHELF_DRIVES = 10;
@@ -123,10 +129,19 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
         return era.isAtMost(rackEra);
     }
 
-    /** What the Cooling Unit in {@code stack} adds to its rack's heat budget: nothing for any other unit. */
+    /**
+     * What the Cooling Unit or the Vent Panel in {@code stack} adds to its rack's heat budget: nothing for any other
+     * unit.
+     */
     public static int coolingWattsOf(final ItemStack stack) {
-        return stack.getItem() instanceof RackUnitItem unit && unit.kind == Kind.COOLING_UNIT
-                ? RackThermals.coolingUnitWatts(unit.era) : 0;
+        if (!(stack.getItem() instanceof RackUnitItem unit)) {
+            return 0;
+        }
+        return switch (unit.kind) {
+            case COOLING_UNIT -> RackThermals.coolingUnitWatts(unit.era);
+            case VENT_PANEL -> RackThermals.VENT_PANEL_W;
+            default -> 0;
+        };
     }
 
     /** How much of the fibre the unit in {@code stack} lets into its rack: none for anything but a fibre interface. */
@@ -193,6 +208,7 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
             case UPS_BATTERY -> UPS_BATTERY_TOOLTIP;
             case PDU -> PDU_TOOLTIP;
             case DRIVE_SHELF -> SHELF_TOOLTIP;
+            case VENT_PANEL -> VENT_TOOLTIP;
         };
         tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY));
         if (kind == Kind.RACK_UPS) {
@@ -206,11 +222,15 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
             final TextKey takes = fibreReachOf(stack) == FibreReach.ADVANCED ? FIBRE_ADVANCED : FIBRE_STANDARD;
             tooltip.add(GameText.component(takes).withStyle(ChatFormatting.DARK_GRAY));
         }
-        if (kind == Kind.COOLING_UNIT) {
-            tooltip.add(GameText.component(COOLING_WATTS.with(RackThermals.coolingUnitWatts(era)))
+        if (kind == Kind.COOLING_UNIT || kind == Kind.VENT_PANEL) {
+            tooltip.add(GameText.component(COOLING_WATTS.with(coolingWattsOf(stack)))
                     .withStyle(ChatFormatting.DARK_GRAY));
         }
         tooltip.add(GameText.component(EQUIPMENT.with(kind.heightU())).withStyle(ChatFormatting.DARK_GRAY));
-        HardwareTooltip.appendEra(tooltip, era);
+        if (kind == Kind.VENT_PANEL) {
+            tooltip.add(GameText.component(VENT_EVERY_ERA).withStyle(ChatFormatting.DARK_GRAY));
+        } else {
+            HardwareTooltip.appendEra(tooltip, era);
+        }
     }
 }

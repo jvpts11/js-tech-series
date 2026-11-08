@@ -80,11 +80,13 @@ public final class IndustrialControllerGameTests {
         for (final BlockEntry<IndustrialControllerBlock> entry : IndustrialControllers.ALL) {
             final IndustrialControllerBlock block = entry.get();
             final ComputerDef def = ComputerRegistry.computer(block);
-            final ComputerDef personal = PersonalComputerBlockEntity.computer(block.era());
+            final ComputerDef personal = PersonalComputerBlockEntity.computer(block.era(), block.caseStyle());
             helper.assertTrue(def != null && def.machine() == IndustrialControllers.MACHINE,
                     entry.getId() + " is a computer of the Industrial Controller");
             helper.assertTrue(def.parts().equals(personal.parts()) && def.formFactors().equals(personal.formFactors()),
                     entry.getId() + " takes the boards and parts of a Personal Computer of its era");
+            helper.assertTrue(def.cooling().equals(personal.cooling()),
+                    entry.getId() + " is cooled as a Personal Computer in the same case");
             helper.assertTrue(block.caseModel().equals(JsIndustrial.MODID + ":computer_"
                     + block.caseStyle().caseName(block.era()) + "_industrial_controller_computer"),
                     "its case is drawn from this mod's model: " + block.caseModel());

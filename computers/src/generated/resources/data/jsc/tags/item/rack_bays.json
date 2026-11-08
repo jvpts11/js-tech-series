@@ -1,5 +1,6 @@
 {
   "values": [
+    "jsc:vent_panel",
     "jsc:vintage_kvm_switch",
     "jsc:vintage_rack_ups",
     "jsc:vintage_cooling_unit",

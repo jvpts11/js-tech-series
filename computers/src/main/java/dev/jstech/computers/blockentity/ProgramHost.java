@@ -110,7 +110,8 @@ final class ProgramHost {
         for (final CpuSpec cpu : build.cpus()) {
             coreMegahertz += (long) cpu.cores() * cpu.freqMhz();
         }
-        return MachinePrograms.creditsFor(coreMegahertz);
+        // A machine its heat slows runs its processors at that share of their clock.
+        return MachinePrograms.creditsFor((long) (coreMegahertz * this.machine.heatClock()));
     }
 
     /**

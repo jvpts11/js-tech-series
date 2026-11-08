@@ -12,6 +12,7 @@ import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
+import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
@@ -24,6 +25,7 @@ import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
+import dev.jstech.computers.rack.RackThermals;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -133,6 +135,32 @@ public class ServerRackMenu extends CoreMenu {
     public int throttlePercent() {
         final int percent = rack.throttleShown();
         return percent <= 0 ? 100 : percent;
+    }
+
+    /** The cabinet's one temperature, in whole °C, as the server last told the screen. */
+    public int temperature() {
+        return rack.temperatureShown();
+    }
+
+    /** The heat the machines switched on in the cabinet make, in watts: what they draw, from the synced slots. */
+    public int thermalLoadWatts() {
+        int watts = 0;
+        for (int row = 0; row < RACK_SLOTS; row++) {
+            final ComputerBuild build = ServerItem.build(serverInBay(row));
+            if (build != null && bayPowerOn(row)) {
+                watts += build.powerDraw();
+            }
+        }
+        return watts;
+    }
+
+    /** What the cabinet takes away: its own, its Cooling Units' and its Vent Panels', from the synced slots. */
+    public int thermalBudgetWatts() {
+        int cooling = 0;
+        for (int row = 0; row < RACK_SLOTS; row++) {
+            cooling += RackUnitItem.coolingWattsOf(serverInBay(row));
+        }
+        return RackThermals.budgetWatts(cooling);
     }
 
     /** Rebuild progress of the unit's array in permille, or 0 when it is not rebuilding. */

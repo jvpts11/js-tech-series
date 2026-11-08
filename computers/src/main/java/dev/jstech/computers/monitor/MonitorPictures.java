@@ -68,10 +68,12 @@ public final class MonitorPictures {
             case NO_POWER -> IMonitorPicture.DARK;
             case POST -> {
                 final OpenPostPayload post = SessionOpenings.post(level, at, owner, host);
-                // A machine standing at a failed self-test shows the end of it, which no clock runs out.
+                // A machine standing at a failed self-test shows the end of it, which no clock runs out. The self-test
+                // shows no temperature, so its picture holds still while the machine warms.
                 yield new IMonitorPicture.Session(era, new OpenPostPayload(post.host(), post.monitorPos(),
                         post.firmwareKind(), post.name(), 0, post.halted(), post.complaint()),
-                        state(level, host, owner), post.halted() ? 0L : now + post.remainingTicks());
+                        state(level, host, owner).withoutTemperature(),
+                        post.halted() ? 0L : now + post.remainingTicks());
             }
             case GOING_DOWN -> booting(era, SessionOpenings.systemDown(at, owner, host), now);
             case CRASHED -> crashed(era, SessionOpenings.crash(at, owner, host), now);
@@ -120,8 +122,9 @@ public final class MonitorPictures {
                     copy.firmwareKind(), copy.osName(), copy.targetLabel(), 0, copy.ticksTotal()), null,
                     now + copy.ticksLeft());
         }
+        // The installer shows no temperature either.
         return opening == null ? IMonitorPicture.DARK
-                : new IMonitorPicture.Session(era,opening, state(level, host, owner), 0L);
+                : new IMonitorPicture.Session(era,opening, state(level, host, owner).withoutTemperature(), 0L);
     }
 
     /* What the machine's firmware reads of its parts, which the self-test, the setup and the installer list. */

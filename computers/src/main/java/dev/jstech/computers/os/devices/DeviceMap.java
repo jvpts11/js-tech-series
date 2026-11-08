@@ -41,11 +41,14 @@ import java.util.List;
  * @param cardIcons   the icon each of those cards is drawn with, in the same order; a card past the end of the list
  *                    is drawn with the crafting card's
  * @param power       the power supplies, each with what it is to be told of
+ * @param batteries   the batteries that carry the machine, its UPS's, each with how it stands
+ * @param cooling     its coolers and case fans, and how hot its processors and graphics cards run
  */
 @TextHolder
 public record DeviceMap(String host, Text board, List<Text> processors, List<Text> memory, List<Text> disks,
                         List<VideoCard> video, List<AudioSource> audio, PortFamily family, List<Port> devicePorts,
-                        List<Text> network, List<Text> cards, List<String> cardIcons, List<PowerSupply> power) {
+                        List<Text> network, List<Text> cards, List<String> cardIcons, List<PowerSupply> power,
+                        List<Noted> batteries, Cooling cooling) {
 
     private static final TextKey OUTPUT = TextKey.of("jsc.devices.output", "Output %s");
     private static final TextKey HUB_PORT = TextKey.of("jsc.devices.hub_port", "Hub port %s");
@@ -59,6 +62,18 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
     private static final TextKey HUB = TextKey.of("jsc.devices.hub", "%s (%s ports)");
     private static final TextKey NAMED = TextKey.of("jsc.devices.named", "%s \"%s\"");
     private static final TextKey UNKNOWN = TextKey.of("jsc.devices.unknown", "Device out of reach");
+    /** A UPS's battery, by the UPS's name, and how it stands: where its power comes from and how full it is. */
+    public static final TextKey UPS = TextKey.of("jsc.devices.ups", "UPS");
+    public static final TextKey UPS_NAMED = TextKey.of("jsc.devices.ups_named", "%s (UPS)");
+    public static final TextKey UPS_ON_LINE = TextKey.of("jsc.devices.ups_on_line", "on the line, %s%%");
+    public static final TextKey UPS_ON_BATTERY = TextKey.of("jsc.devices.ups_on_battery", "on battery, %s%%");
+    public static final TextKey UPS_ON_BATTERY_LASTS = TextKey.of("jsc.devices.ups_on_battery_lasts",
+            "on battery, %s%%, about %s min left");
+    public static final TextKey UPS_BYPASS = TextKey.of("jsc.devices.ups_bypass", "in bypass, %s%%");
+    /** The case fans that turn, of the seats there are; how hot a part runs. */
+    public static final TextKey CASE_FANS = TextKey.of("jsc.devices.case_fans", "Case fans");
+    public static final TextKey OF = TextKey.of("jsc.devices.of", "%s of %s");
+    public static final TextKey DEGREES = TextKey.of("jsc.devices.degrees", "%s °C");
     /** The icon an expansion card is drawn with when it names none of its own. */
     public static final String CARD_ICON = "crafting_card";
 
@@ -75,6 +90,17 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
         cards = List.copyOf(cards);
         cardIcons = List.copyOf(cardIcons);
         power = List.copyOf(power);
+        batteries = List.copyOf(batteries);
+        cooling = cooling == null ? Cooling.NONE : cooling;
+    }
+
+    /** A machine with no battery and no cooling to tell of. */
+    public DeviceMap(final String host, final Text board, final List<Text> processors, final List<Text> memory,
+                     final List<Text> disks, final List<VideoCard> video, final List<AudioSource> audio,
+                     final PortFamily family, final List<Port> devicePorts, final List<Text> network,
+                     final List<Text> cards, final List<String> cardIcons, final List<PowerSupply> power) {
+        this(host, board, processors, memory, disks, video, audio, family, devicePorts, network, cards, cardIcons,
+                power, List.of(), Cooling.NONE);
     }
 
     /** A machine with no power supply to tell of. */
@@ -110,6 +136,26 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
      * attention.
      */
     public record PowerSupply(Text name, Text note, boolean attention) {
+    }
+
+    /** A device and what it is to be told by: a UPS's battery and how it stands, a cooler, the case fans that turn. */
+    public record Noted(Text name, Text note) {
+    }
+
+    /**
+     * How the machine is cooled (computers/docs/design/temperature.md): its coolers and its case fans, each with its
+     * note, and how hot its processors and its graphics cards run, empty for a machine with no temperature.
+     */
+    public record Cooling(List<Noted> parts, Text processorHeat, Text videoHeat) {
+
+        /** No cooling to tell of. */
+        public static final Cooling NONE = new Cooling(List.of(), Text.EMPTY, Text.EMPTY);
+
+        public Cooling {
+            parts = List.copyOf(parts);
+            processorHeat = processorHeat == null ? Text.EMPTY : processorHeat;
+            videoHeat = videoHeat == null ? Text.EMPTY : videoHeat;
+        }
     }
 
     /** The icon expansion card {@code index} is drawn with. */
@@ -292,7 +338,7 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
     /** The same machine under another name: the Frames editions write a computer's name in capitals. */
     public DeviceMap withHost(final String name) {
         return new DeviceMap(name, board, processors, memory, disks, video, audio, family, devicePorts, network, cards,
-                cardIcons);
+                cardIcons, power, batteries, cooling);
     }
 
     /** How many device ports the machine has: the board's and every hub's on them. */

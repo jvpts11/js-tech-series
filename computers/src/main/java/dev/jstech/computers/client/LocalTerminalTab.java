@@ -49,6 +49,10 @@ final class LocalTerminalTab extends AbstractTerminalTab {
         if (ComputersServerConfig.drawEnergy()) {
             tileBg(g, cx, cy, 1, 1);
         }
+        // How hot it is, for a machine that has a temperature, or its rack's (computers/docs/design/temperature.md).
+        if (menu.hasTemperature()) {
+            tileBg(g, cx, cy, 1, 2);
+        }
         inlineTrack(g, cx, cy + ComputerTerminalLayout.localBarDy(0), COL_W,
                 frac(menu.installedCpus(), menu.cpuSlots()), ACCENT2());
         inlineTrack(g, cx, cy + ComputerTerminalLayout.localBarDy(1), COL_W,
@@ -85,6 +89,11 @@ final class LocalTerminalTab extends AbstractTerminalTab {
             tile(g, cx + ComputerTerminalLayout.localTileDx(1), cy + ComputerTerminalLayout.localTileDy(1),
                     GameText.resolve(TerminalGridTexts.LINE), fmt(Math.round(menu.lineWatts() / WATTS_A_FE_TICK)),
                     GameText.resolve(TerminalGridTexts.FE_PER_TICK));
+        }
+        if (menu.hasTemperature()) {
+            tile(g, cx + ComputerTerminalLayout.localTileDx(2), cy + ComputerTerminalLayout.localTileDy(1),
+                    GameText.resolve(AssemblyTexts.TEMP), String.valueOf(menu.temperature()),
+                    GameText.resolve(TerminalGridTexts.CELSIUS));
         }
 
         Draw.text(g, font(), GameText.resolve(TerminalGridTexts.HARDWARE), cx,

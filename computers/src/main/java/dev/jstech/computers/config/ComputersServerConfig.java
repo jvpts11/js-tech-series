@@ -8,6 +8,7 @@
 package dev.jstech.computers.config;
 
 import dev.jstech.computers.api.language.ExecutionBalance;
+import dev.jstech.computers.hardware.ThermalModel;
 import dev.jstech.computers.workshop.UpdateCost;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigFiles;
@@ -116,6 +117,29 @@ public final class ComputersServerConfig {
             .named("Power supply life")
             .activeWhen(PSU_FAILURES);
 
+    public static final ConfigKey<Integer> AMBIENT_BASE = ConfigKey.whole("temperature.ambient_base", 20)
+            .range(-40, 60)
+            .comment("The surroundings a computer stands in where the biome's own temperature is 0.8, as in the "
+                    + "plains, in °C: a computer runs that much plus what its load raises it by.")
+            .named("Surroundings")
+            .unit("°C");
+    public static final ConfigKey<Integer> BIOME_FACTOR = ConfigKey.whole("temperature.biome_factor", 15)
+            .range(0, 40)
+            .comment("How many °C the surroundings rise for every point of the biome's own temperature: about 38 °C "
+                    + "in the desert and 8 °C in the snow at the defaults.")
+            .named("Biome warmth")
+            .unit("°C");
+    public static final ConfigKey<Integer> NETHER_EXTRA = ConfigKey.whole("temperature.nether_extra", 10)
+            .range(0, 60)
+            .comment("How many °C the Nether adds to the surroundings, over its biomes' own warmth.")
+            .named("Nether warmth")
+            .unit("°C");
+    public static final ConfigKey<Integer> RESTART_BELOW_C = ConfigKey.whole("temperature.restart_below_c", 60)
+            .range(30, 95)
+            .comment("How cool a computer that tripped from its heat has to be before it starts again, in °C.")
+            .named("Restart below")
+            .unit("°C");
+
     public static final ConfigKey<Boolean> LOSE_ON_POWER_LOSS = ConfigKey.flag("item_loss.power_loss", true)
             .comment("Whether what the Operations were carrying is lost when the machine running them goes dark "
                             + "suddenly: a power loss, unstable power or a power supply failing. The log says how "
@@ -191,6 +215,7 @@ public final class ComputersServerConfig {
             .sectionNamed("power", "Power")
             .sectionNamed("update", "Changing items")
             .sectionNamed("hardware", "Hardware")
+            .sectionNamed("temperature", "Temperature")
             .sectionNamed("item_loss", "Items lost")
             .sectionNamed("boot", "Starting up")
             .sectionNamed("install_by_hand", "Installing by hand")
@@ -201,6 +226,9 @@ public final class ComputersServerConfig {
             .sectionComment("update", "What the personal-use cards charge for changing an item: smelting, "
                     + "enchanting, repairing, combining and naming.")
             .sectionComment("hardware", "How the parts age: the power supplies' wear and their failure.")
+            .sectionComment("temperature", "How warm the surroundings a computer stands in are, by the biome and the "
+                    + "Nether, and how cool one that tripped from its heat has to be to start again. Temperature "
+                    + "itself has no switch: a computer cooled well never feels it.")
             .sectionComment("item_loss", "What a player who lets the network fail pays for it: the items in "
                     + "transit, lost in each situation turned on here.")
             .sectionComment("boot", "How the machines come up: whether they stop at their system's boot manager.")
@@ -222,6 +250,10 @@ public final class ComputersServerConfig {
             .key(UPDATE_COST)
             .key(PSU_FAILURES)
             .key(PSU_LIFE_MULTIPLIER)
+            .key(AMBIENT_BASE)
+            .key(BIOME_FACTOR)
+            .key(NETHER_EXTRA)
+            .key(RESTART_BELOW_C)
             .key(LOSE_ON_POWER_LOSS)
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
@@ -258,6 +290,20 @@ public final class ComputersServerConfig {
     /** How much longer than their lines' lives every power supply lasts. */
     public static double psuLifeMultiplier() {
         return FILE.get(PSU_LIFE_MULTIPLIER);
+    }
+
+    /**
+     * The surroundings in °C at a place of the biome temperature {@code biome}, in the Nether when {@code nether}: the
+     * settings' base, warmth for every point of the biome and the Nether's own.
+     */
+    public static double ambient(final double biome, final boolean nether) {
+        return ThermalModel.ambient(FILE.get(AMBIENT_BASE), FILE.get(BIOME_FACTOR), biome, FILE.get(NETHER_EXTRA),
+                nether);
+    }
+
+    /** How cool a computer that tripped from its heat has to be before it starts again, in °C. */
+    public static int restartBelow() {
+        return FILE.get(RESTART_BELOW_C);
     }
 
     /** Whether what the Operations carry is lost when the machine running them goes dark suddenly. */

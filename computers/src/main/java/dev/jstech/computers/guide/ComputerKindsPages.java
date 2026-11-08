@@ -456,8 +456,8 @@ final class ComputerKindsPages {
                 .coversAll(ComputersGuide.itemsOf(RackUnitItem.class))
                 .paragraph("Not everything in a rack computes. Some units serve the rack: the KVM Switch (keyboard,"
                         + " video, mouse), the Rack UPS (uninterruptible power supply) and its battery expansions, the"
-                        + " PDU (power distribution unit), the Cooling Unit, the Fibre Optic Interface and the Drive"
-                        + " Shelf take rack units, as a server does.")
+                        + " PDU (power distribution unit), the Cooling Unit, the Vent Panel, the Fibre Optic Interface"
+                        + " and the Drive Shelf take rack units, as a server does.")
                 .table("Rack units that are not computers", "Unit", "Takes", "What it does")
                 .row(GuideCell.words("KVM Switch"), GuideCell.words("1 U"),
                         GuideCell.words("Lets one monitor reach every machine in the rack"))
@@ -465,6 +465,8 @@ final class ComputerKindsPages {
                         GuideCell.words("Carries the rack on its battery when the power goes: 2.7 MJ, up to 3 kW"))
                 .row(GuideCell.words("Cooling Unit"), GuideCell.words("1 U"),
                         GuideCell.words("Adds to the heat budget, more in each newer era"))
+                .row(GuideCell.words("Vent Panel"), GuideCell.words("1 U"),
+                        GuideCell.words("Adds 500 W to the heat budget, in a rack of any era"))
                 .row(GuideCell.words("Fibre Optic Interface"), GuideCell.words("1 U"),
                         GuideCell.words("Lets the rack's back take the Fibre Optic Cable"))
                 .row(GuideCell.words("Advanced Fibre Optic Interface"), GuideCell.words("1 U"),
@@ -482,7 +484,9 @@ final class ComputerKindsPages {
                 .paragraph("The KVM Switch lets one monitor reach every machine in the rack, so you do not need a"
                         + " screen for each. A rack with two or more computers needs one to choose between them.")
                 .paragraph("The Cooling Unit raises the heat the rack can carry, a newer era's more than an older"
-                        + " one's, as explained in ([](jsc:rack_cooling_and_heat)).")
+                        + " one's, as explained in ([](jsc:rack_cooling_and_heat)). The Vent Panel is a perforated"
+                        + " blank that adds 500 W, and only one is made for every era: it takes the colour of the rack"
+                        + " it is mounted in.")
                 .paragraph("From the Standard on, the backbone is fibre, and a rack takes it only through a Fibre Optic"
                         + " Interface. The Standard one takes the Fibre Optic Cable; the Advanced one, which only an"
                         + " Advanced rack seats, takes the OM5 Fibre Cable as well. One in any row of the rack is"
@@ -523,29 +527,43 @@ final class ComputerKindsPages {
 
     private static void rackCoolingAndHeat(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("rack_cooling_and_heat", section).titled("Cooling and heat")
-                .paragraph("When you fill a rack, it can carry only so much heat before its machines slow down. Every"
-                        + " Cooling Unit in the rack counts toward that limit, wherever it sits.")
-                .define("Heat budget", "The watts of heat that a rack can carry before its machines slow down.")
-                .paragraph("The heat budget is 1,000 W plus what each Cooling Unit adds, by its era. The load is the"
-                        + " power draw of every machine whose bay is on: its processors and cards, added up.")
+                .paragraph("A rack has one temperature for the whole cabinet, shared by every machine in it. When you"
+                        + " fill a rack it heats up, and past a point its machines slow down. Every Cooling Unit and"
+                        + " every Vent Panel in the rack counts, wherever it sits.")
+                .define("Heat budget", "The watts of heat that a rack takes away, at which it stands at 80 °C.")
+                .paragraph("The heat budget is 1,000 W, plus what each Cooling Unit adds, by its era, plus 500 W for"
+                        + " each Vent Panel. The load is the power draw of every machine whose bay is on: its"
+                        + " processors and cards, added up.")
                 .tableFrom(RackFacts.COOLING_UNITS, "Cooling Units", "Unit", "Era", "Adds to the heat budget")
-                .paragraph("When the load is over the heat budget, every machine slows down by the same share. The"
-                        + " share is 100 times the budget, divided by the load, as a percent, and it never falls below"
-                        + " 25%. A hot rack slows down; it does not stop.")
-                .table("Share of speed for some loads", "Load", "Heat budget", "Share of speed")
-                .row(GuideCell.words("1,000 W"), GuideCell.words("1,000 W"), GuideCell.words("100%"))
-                .row(GuideCell.words("2,000 W"), GuideCell.words("1,000 W"), GuideCell.words("50%"))
-                .row(GuideCell.words("4,000 W"), GuideCell.words("1,000 W"), GuideCell.words("25%"))
-                .row(GuideCell.words("8,000 W"), GuideCell.words("1,000 W"),
-                        GuideCell.words("25%, the lowest share"))
-                .row(GuideCell.words("5,000 W"), GuideCell.words("2,500 W, with one Standard Cooling Unit"),
+                .paragraph("The rack's temperature follows the same rules as a computer's ([](jsc:cooling)): the"
+                        + " surroundings plus 60 °C times the load over the heat budget. Up to 80 °C every machine runs"
+                        + " at full speed. From 90 °C every machine slows down by the same share, just enough to hold"
+                        + " the rack at 90 °C, and never below 25%. At 100 °C, when not even 25% holds the heat, every"
+                        + " machine in the rack shuts down at once, and no bay switches on until the rack has cooled"
+                        + " below 60 °C.")
+                .table("Some loads, in the plains", "Load", "Heat budget", "Temperature", "Share of speed")
+                .row(GuideCell.words("1,000 W"), GuideCell.words("1,000 W"), GuideCell.words("80 °C"),
+                        GuideCell.words("100%"))
+                .row(GuideCell.words("1,500 W"), GuideCell.words("1,000 W"), GuideCell.words("90 °C"),
+                        GuideCell.words("66%"))
+                .row(GuideCell.words("2,000 W"), GuideCell.words("1,000 W"), GuideCell.words("90 °C"),
                         GuideCell.words("50%"))
-                .paragraph("The rack screen shows THROTTLED and the share while the rack is over its budget. The"
-                        + " slowdown cuts the capacity of each server, including the bonus from its graphics cards.")
+                .row(GuideCell.words("4,000 W"), GuideCell.words("1,000 W"), GuideCell.words("91 °C"),
+                        GuideCell.words("25%, the lowest share"))
+                .row(GuideCell.words("5,000 W"), GuideCell.words("1,000 W"), GuideCell.words("108 °C"),
+                        GuideCell.words("Thermal trip: every machine shuts down"))
+                .row(GuideCell.words("5,000 W"), GuideCell.words("2,500 W, with one Standard Cooling Unit"),
+                        GuideCell.words("90 °C"), GuideCell.words("50%"))
+                .paragraph("The rack screen shows the temperature, and THROTTLED with the share while its machines"
+                        + " slow down. The slowdown cuts the capacity of each server, including the bonus from its"
+                        + " graphics cards, and wears the servers' power supplies twice as fast.")
                 .ifSomethingGoesWrong("The rack shows THROTTLED.",
-                        "Switch off the bays of the machines you do not need, or add a Cooling Unit"
-                                + " ([](jsc:rack_equipment)).")
-                .seeAlso("jsc:rack_equipment", "jsc:server_racks")
+                        "Switch off the bays of the machines you do not need, or add a Cooling Unit or a Vent Panel"
+                                + " ([](jsc:rack_equipment)).",
+                        "Every server in the rack went dark at once.",
+                        "The rack tripped at 100 °C. Wait until it has cooled below 60 °C, and add cooling or take"
+                                + " load out before you switch the bays on again.")
+                .seeAlso("jsc:rack_equipment", "jsc:server_racks", "jsc:cooling")
                 .register();
     }
 

@@ -49,12 +49,12 @@ because a mod cannot add anything without holding them:
 - What a Mainframe can run to plan its network's work: `EngineDef`, a Network Operations Engine, and the
   `EngineCapability` values it may offer.
 - The hardware a mod brings: the sheet of each kind of part (`CpuSpec`, `GpuSpec`, `RamSpec`, `DiskSpec`,
-  `MotherboardSpec`, `PsuSpec`, `IExpansionCardSpec` and `PlainCardSpec`), what they are made of (`CpuSocketId`,
-  `CpuDesign`, `Microarchitecture`, `IntegratedGraphics`, `StorageTier`, `ExpansionBus`), the kinds that are open as
-  ids (`RamGeneration`, `PcieGeneration`, `FormFactor`, `ExpansionCardKind`), and what an era's software ships on
-  (`EraMedia`, `MediaFormat`).
-- The computers a mod brings: `ComputerDef` and `CaseParts`, the machine a computer is (`HostScope`), and the chassis of
-  a server (`RackChassis`).
+  `MotherboardSpec`, `PsuSpec`, `IExpansionCardSpec`, `PlainCardSpec`, `CoolerSpec` and `CaseFanSpec`), what they are
+  made of (`CpuSocketId`, `CpuDesign`, `Microarchitecture`, `IntegratedGraphics`, `StorageTier`, `ExpansionBus`), the
+  kinds that are open as ids (`RamGeneration`, `PcieGeneration`, `FormFactor`, `ExpansionCardKind`), and what an era's
+  software ships on (`EraMedia`, `MediaFormat`).
+- The computers a mod brings: `ComputerDef` and `CaseParts`, how its case cools (`CaseCooling`), the machine a computer
+  is (`HostScope`), and the chassis of a server (`RackChassis`).
 
 Everything public in one of these is part of the promise, as it is in the packages.
 

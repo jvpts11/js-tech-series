@@ -18,13 +18,18 @@ import org.jetbrains.annotations.ApiStatus;
  * or the item it is. Its id is that block's or that item's, and its case is the block itself, or the chassis of a
  * server; what the entry says is what each computer reads instead of writing it into its class.
  *
+ * <p>A computer whose case cools it (computers/docs/design/temperature.md) has a cooler seat over each processor's
+ * socket and the case's fan seats; one cooled from outside it, a server in its rack, has none.
+ *
  * @param era         the era of the case: a case takes a board of its own era only
  * @param formFactors the form factors of the boards the case takes
  * @param machine     the machine it is, which decides the programs made for one machine that install on it
  * @param parts       how many parts of each kind the case counts
+ * @param cooling     what the case takes away on its own and its fan seats
  */
 @ApiStatus.Experimental
-public record ComputerDef(Era era, Set<FormFactor> formFactors, HostScope machine, CaseParts parts) {
+public record ComputerDef(Era era, Set<FormFactor> formFactors, HostScope machine, CaseParts parts,
+                          CaseCooling cooling) {
 
     public ComputerDef {
         Objects.requireNonNull(era, "era");
@@ -34,6 +39,18 @@ public record ComputerDef(Era era, Set<FormFactor> formFactors, HostScope machin
         }
         Objects.requireNonNull(machine, "machine");
         Objects.requireNonNull(parts, "parts");
+        Objects.requireNonNull(cooling, "cooling");
+    }
+
+    /** A computer cooled from outside it, as a server is by its rack: no cooler seats and no fan seats. */
+    public ComputerDef(final Era era, final Set<FormFactor> formFactors, final HostScope machine,
+                       final CaseParts parts) {
+        this(era, formFactors, machine, parts, CaseCooling.NONE);
+    }
+
+    /** Whether its case cools it, which gives it a cooler seat over each processor. */
+    public boolean cooled() {
+        return !cooling.equals(CaseCooling.NONE);
     }
 
     /** Whether {@code board} goes in this computer's case: of a form it takes, and of the case's own era. */

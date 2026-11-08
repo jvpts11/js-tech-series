@@ -299,7 +299,7 @@
     "jsc:supercomputer_node",
     "jsc:advanced_supercomputer_node"
   ],
-  "order": 28,
+  "order": 29,
   "section": "jsc:racks",
   "title": "jsc.guide.server_racks.title"
 }

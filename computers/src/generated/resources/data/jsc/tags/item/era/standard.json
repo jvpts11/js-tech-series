@@ -128,6 +128,11 @@
     "jsc:motherboard_eatx_standard_dual_2011",
     "jsc:motherboard_eeb_s_g34",
     "jsc:motherboard_mtx_s_g34",
+    "jsc:case_fan_standard",
+    "jsc:stock_cooler_standard",
+    "jsc:tower_cooler_standard",
+    "jsc:aqualoop_240_standard",
+    "jsc:aqualoop_360_standard",
     "jsc:usb_flash_drive"
   ]
 }

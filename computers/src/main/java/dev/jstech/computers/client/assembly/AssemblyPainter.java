@@ -56,6 +56,19 @@ public final class AssemblyPainter {
     /** The power supply's wear bar, as the game draws an item's durability: its track, then what is left of it. */
     private static final Palette<WearBar> WEAR_BAR = Palettes.declare(JsComputers.MODID, "screen/psu_wear",
             new WearBar(0xFF000000, 0xFF3EE04A, 0xFFE0D22A, 0xFFFF8A1A, 0xFFFF3A2A, 0x78280000));
+    /** A water cooler's radiator on the cooling face. */
+    private static final Palette<Radiator> RADIATOR = Palettes.declare(JsComputers.MODID, "screen/assembly_radiator",
+            new Radiator(0xFF2A2C31, 0xFF5F6164, 0xFF111214, 0xFF4A4D55, 0xFFD6D9DD, 0xFFA1A3A6, 0xFF9AA0A8,
+                    0xFFF3F3F3, 0xFF111214));
+    private static final int RADIATOR_SEATS = 2;
+    private static final int RADIATOR_RING = 6;
+    private static final int RADIATOR_RING_DOTS = 20;
+    private static final int RADIATOR_BLADE = 5;
+    private static final int RADIATOR_BLADES = 7;
+    private static final double BLADE_PHASE = 0.3;
+    private static final double BLADE_SWEEP = 0.12;
+    private static final int FAN_RING_DOTS = 14;
+    private static final int COOLING_GHOST_ALPHA = 120;
     private static final int WEAR_BAR_X = 2;
     private static final int WEAR_BAR_Y = 13;
     private static final int WEAR_BAR_W = 13;
@@ -124,8 +137,61 @@ public final class AssemblyPainter {
         if (!active) {
             g.fill(x - 1, y - 1, x + 17, y + 17, withAlpha(JsTechTheme.screen(), 128));
         }
-        if (empty) {
+        if (empty && seat.kind() == SeatKind.COOLER) {
+            drawCoolerGhost(g, x, y, withAlpha(JsTechTheme.dim(), COOLING_GHOST_ALPHA));
+        } else if (empty && seat.kind() == SeatKind.FAN) {
+            drawFanGhost(g, x, y, withAlpha(JsTechTheme.dim(), COOLING_GHOST_ALPHA));
+        } else if (empty) {
             drawGhost(g, x, y, seat.kind(), JsTechTheme.dim(), active ? GHOST_ALPHA : DIMMED_GHOST_ALPHA);
+        }
+    }
+
+    /**
+     * A water cooler's radiator over a pair of fan seats, the first at ({@code x}, {@code y}): its fins, its end tanks,
+     * its two fans' rings over the fins, along the top when {@code horizontal} and down the front otherwise; then its
+     * two hoses to the pump over the processor at ({@code pumpX}, {@code pumpY}). The Standard's are black, the
+     * Advanced's white, as their coolers are.
+     */
+    public static void drawRadiator(final GuiGraphics g, final int x, final int y, final boolean horizontal,
+                                    final Era era, final int pumpX, final int pumpY) {
+        final Radiator colours = RADIATOR.get();
+        final boolean dark = HardwareEra.partsIndex(era) <= HardwareEra.partsIndex(HardwareEra.STANDARD);
+        final int fin = dark ? colours.finDark() : colours.finLight();
+        final int line = dark ? colours.lineDark() : colours.lineLight();
+        final int tank = dark ? colours.tankDark() : colours.tankLight();
+        final int blade = dark ? colours.bladeDark() : colours.bladeLight();
+        final int length = AssemblyGeometry.PITCH * RADIATOR_SEATS - 2;
+        final int w = horizontal ? length : GHOST;
+        final int h = horizontal ? GHOST : length;
+        frame(g, x - 1, y - 1, x + w + 1, y + h + 1, JsTechTheme.slotEdge());
+        g.fill(x, y, x + w, y + h, fin);
+        if (horizontal) {
+            for (int xx = x + 3; xx < x + w - 3; xx += 2) {
+                g.fill(xx, y + 1, xx + 1, y + h - 1, line);
+            }
+            g.fill(x, y, x + 3, y + h, tank);
+            g.fill(x + w - 3, y, x + w, y + h, tank);
+        } else {
+            for (int yy = y + 3; yy < y + h - 3; yy += 2) {
+                g.fill(x + 1, yy, x + w - 1, yy + 1, line);
+            }
+            g.fill(x, y, x + w, y + 3, tank);
+            g.fill(x, y + h - 3, x + w, y + h, tank);
+        }
+        for (int i = 0; i < RADIATOR_SEATS; i++) {
+            final int cx = horizontal ? x + 3 + (w - 6) * (2 * i + 1) / (2 * RADIATOR_SEATS) : x + w / 2;
+            final int cy = horizontal ? y + h / 2 : y + 3 + (h - 6) * (2 * i + 1) / (2 * RADIATOR_SEATS);
+            ring(g, cx, cy, RADIATOR_RING, mix(blade, colours.hose(), 0.2f), RADIATOR_RING_DOTS);
+            blades(g, cx, cy, RADIATOR_BLADE, blade);
+            g.fill(cx - 1, cy - 1, cx + 2, cy + 2, mix(blade, colours.hose(), 0.4f));
+        }
+        // The two hoses from the pump, along the top of the case to the radiator's near tank.
+        final int px = pumpX + 6;
+        final int py = pumpY - 1;
+        for (int k = 0; k < 2; k++) {
+            final int hy = py - 2 - k * 2;
+            g.fill(Math.min(px + k * 5, x + 1), hy, Math.max(px + k * 5, x + 1) + 1, hy + 1, colours.hose());
+            g.fill(px + k * 5, hy, px + k * 5 + 1, py + 1, colours.hose());
         }
     }
 
@@ -277,6 +343,45 @@ public final class AssemblyPainter {
         return (colour & 0xFFFFFF) | (alpha << 24);
     }
 
+    /* An empty fan seat's shape: the fan's square frame, its ring, its hub. */
+    private static void drawFanGhost(final GuiGraphics g, final int x, final int y, final int colour) {
+        frame(g, x + 1, y + 1, x + 15, y + 15, colour);
+        ring(g, x + 7.5, y + 7.5, 4.6, colour, FAN_RING_DOTS);
+        g.fill(x + 8, y + 8, x + 9, y + 9, colour);
+    }
+
+    /* An empty cooler seat's shape: a heatsink seen from above, its frame and its fins. */
+    private static void drawCoolerGhost(final GuiGraphics g, final int x, final int y, final int colour) {
+        frame(g, x + 2, y + 3, x + 14, y + 13, colour);
+        for (int xx = 4; xx < 13; xx += 2) {
+            g.fill(x + xx, y + 5, x + xx + 1, y + 11, colour);
+        }
+    }
+
+    /* A ring of {@code dots} pixels round ({@code cx}, {@code cy}). */
+    private static void ring(final GuiGraphics g, final double cx, final double cy, final double radius,
+                             final int colour, final int dots) {
+        for (int i = 0; i < dots; i++) {
+            final double t = 2 * Math.PI * i / dots;
+            final int px = (int) Math.round(cx + radius * Math.cos(t));
+            final int py = (int) Math.round(cy + radius * Math.sin(t));
+            g.fill(px, py, px + 1, py + 1, colour);
+        }
+    }
+
+    /* A fan's seven blades: short swept strokes from the hub out. */
+    private static void blades(final GuiGraphics g, final int cx, final int cy, final int radius, final int colour) {
+        for (int i = 0; i < RADIATOR_BLADES; i++) {
+            final double t = 2 * Math.PI * i / RADIATOR_BLADES + BLADE_PHASE;
+            for (int k = 2; k <= radius; k++) {
+                final double sweep = t + BLADE_SWEEP * k;
+                final int px = (int) Math.round(cx + k * Math.cos(sweep));
+                final int py = (int) Math.round(cy + k * Math.sin(sweep));
+                g.fill(px, py, px + 1, py + 1, colour);
+            }
+        }
+    }
+
     /* What is left of a unit: green past half, yellow to the warning, then orange; red once it has failed. */
     private static int wearColour(final WearBar colours, final float wear) {
         if (wear >= 1f) {
@@ -319,6 +424,8 @@ public final class AssemblyPainter {
             case PSU -> 4;
             case DISK -> 5;
             case BAY -> 6;
+            // The cooling seats' shapes are drawn rather than read off the sheet: the sheet's blank one stands in.
+            case COOLER, FAN -> 7;
         };
     }
 
@@ -343,5 +450,10 @@ public final class AssemblyPainter {
     }
 
     private record WearBar(int track, int good, int half, int degraded, int failed, int failedShade) {
+    }
+
+    /** A water cooler's radiator: the Standard's black and the Advanced's white fins, tanks and fans, and its hoses. */
+    private record Radiator(int finDark, int lineDark, int tankDark, int bladeDark, int finLight, int lineLight,
+                            int tankLight, int bladeLight, int hose) {
     }
 }

@@ -486,6 +486,16 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         return readings.lineWatts();
     }
 
+    /** Whether the machine has a temperature of its own, or its rack's. */
+    public boolean hasTemperature() {
+        return readings.temperature() != ComputerReadings.NO_TEMPERATURE;
+    }
+
+    /** How hot the machine is, in whole °C. */
+    public int temperature() {
+        return readings.temperature();
+    }
+
     public int serverCount() {
         return readings.serverCount();
     }

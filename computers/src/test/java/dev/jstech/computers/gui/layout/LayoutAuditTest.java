@@ -10,12 +10,14 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.EffectsPages;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.help.HelpForm;
+import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -137,14 +139,30 @@ class LayoutAuditTest {
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));
         c.add(new AuditCase("OpenWithLayout", OpenWithLayout.layout(), true));
-        // The three towers wear their era's case, whose bays and supply stand differently in each era.
+        /*
+         * The three towers wear their era's case, whose bays and supply stand differently in each era, in each style it
+         * comes in, whose fan seats stand differently again: the board's face and the cooling face.
+         */
         for (final Era era : HardwareEra.SERIES) {
-            c.add(new AuditCase("ClusterManagementComputerLayout(" + era + ")",
-                    ClusterManagementComputerLayout.layout(era), true));
-            c.add(new AuditCase("CraftingComputerLayout(" + era + ")", CraftingComputerLayout.layout(era), true));
-            c.add(new AuditCase("PersonalComputerLayout(" + era + ")", PersonalComputerLayout.layout(era), true));
+            for (final CaseStyle style : CaseStyle.values()) {
+                final CaseCooling cooling = style.cooling(era);
+                final String at = "(" + era + ", " + style + ")";
+                c.add(new AuditCase("ClusterManagementComputerLayout" + at,
+                        ClusterManagementComputerLayout.layout(era, cooling), true));
+                c.add(new AuditCase("ClusterManagementComputerLayout.cooling" + at,
+                        ClusterManagementComputerLayout.geometry(era, cooling).coolingLayout(), true));
+                c.add(new AuditCase("CraftingComputerLayout" + at, CraftingComputerLayout.layout(era, cooling),
+                        true));
+                c.add(new AuditCase("CraftingComputerLayout.cooling" + at,
+                        CraftingComputerLayout.geometry(era, cooling).coolingLayout(), true));
+                c.add(new AuditCase("PersonalComputerLayout" + at, PersonalComputerLayout.layout(era, cooling),
+                        true));
+                c.add(new AuditCase("PersonalComputerLayout.cooling" + at,
+                        PersonalComputerLayout.geometry(era, cooling).coolingLayout(), true));
+            }
         }
         c.add(new AuditCase("MainframeLayout", MainframeLayout.layout(), true));
+        c.add(new AuditCase("MainframeLayout.cooling", MainframeLayout.coolingLayout(), true));
         c.add(new AuditCase("ServerAssemblyLayout", ServerAssemblyLayout.layout(), true));
         // The KVM channel bar grows a row per channel; audit an empty bar and the most a switch reports.
         c.add(new AuditCase("KvmChannelLayout(0)", KvmChannelLayout.layout(0), true));

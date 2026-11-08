@@ -50,6 +50,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The rack-unit model of the Server Rack: front-panel hotswap slots belong to the rack, a mounted
@@ -871,6 +872,7 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void coolingUnit_buysBackTheThrottleOfADenseRack(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
+        final AtomicInteger throttled = new AtomicInteger();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rack.thermalThrottlePercent() == 100,
@@ -883,14 +885,20 @@ public final class RackUnitGameTests {
                         rack.getServers().setStackInSlot(row, hotServer());
                     }
                     helper.assertTrue(rack.thermalLoadWatts() > 0, "mounted machines make heat");
+                })
+                // The cabinet heats up over half a minute: settled, as long enough would leave it.
+                .thenExecuteAfter(1, rack::settleHeat)
+                .thenExecuteAfter(1, () -> {
                     helper.assertTrue(rack.thermalThrottled(),
                             "a dense cabinet with no cooling throttles; load " + rack.thermalLoadWatts()
                                     + "W over budget " + rack.thermalBudgetWatts() + "W");
-                    final int throttled = rack.thermalThrottlePercent();
-
+                    throttled.set(rack.thermalThrottlePercent());
                     // A Cooling Unit costs a rack unit and buys the headroom back.
                     rack.getServers().setStackInSlot(5, new ItemStack(ComputingModule.COOLING_UNIT.get()));
-                    helper.assertTrue(rack.thermalThrottlePercent() > throttled,
+                })
+                .thenExecuteAfter(1, rack::settleHeat)
+                .thenExecuteAfter(1, () -> {
+                    helper.assertTrue(rack.thermalThrottlePercent() > throttled.get(),
                             "cooling raises the budget and eases the throttle");
                     helper.assertTrue(!rack.thermalThrottled(),
                             "one Cooling Unit clears this cabinet; now "

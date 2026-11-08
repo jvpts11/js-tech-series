@@ -21,11 +21,18 @@ import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
+import dev.jstech.computers.hardware.CaseCooling;
+import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
+import dev.jstech.computers.hardware.CoolerSpec;
+import dev.jstech.computers.hardware.CoolingFit;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.ThermalModel;
+import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MachinePorts;
@@ -158,6 +165,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final ComputerEnergy energy = new ComputerEnergy(this::markDirtyOnly);
     /** When the power supply is next due to wear while the machine runs. */
     private final PsuWearing.Clock psuClock = new PsuWearing.Clock();
+    /** How hot it is against what its case, coolers and fans take away; nothing for a machine cooled from outside. */
+    private final ComputerHeat heat = new ComputerHeat();
     /*
      * The network the machine last ran on: its supply's wear is worked out once more as it stops, by when it may have
      * left the network, and what that wear comes to is still told to the network it ran on.
@@ -232,11 +241,25 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final DerivedInt psuWattsShown = fields().derived("PsuWatts", this::psuWatts).toMenu();
     private final DerivedInt lineWattsShown = fields().derived("LineWatts", this::lineWatts).toMenu();
     private final DerivedInt energizedShown = fields().derived("Energized", this::energized).toMenu();
+    /* How its heat stands, shown on its assembly screen while that is open. */
+    private final DerivedInt tempShown = fields().derived("TempShown", () -> thermal().celsius()).toMenu();
+    private final DerivedInt clockShown = fields().derived("ClockShown", () -> thermal().clockPercent()).toMenu();
+    private final DerivedInt budgetShown = fields().derived("BudgetShown", () -> thermal().budgetWatts()).toMenu();
+    private final DerivedInt ambientShown = fields().derived("AmbientShown", () -> thermal().ambient()).toMenu();
+    private final DerivedInt fansShown = fields().derived("FansShown", () -> thermal().fans()).toMenu();
+    private final DerivedInt seatsShown = fields().derived("FanSeatsShown", () -> thermal().fanSeats()).toMenu();
+    private final DerivedInt bareShown = fields().derived("BareShown", () -> thermal().bareProcessors()).toMenu();
+    private final DerivedInt tripShown = fields().derived("TripShown", () -> thermal().lastTrip()).toMenu();
+    private final DerivedInt heatFlagsShown = fields().derived("HeatFlagsShown", this::heatFlags).toMenu();
     /** How the UPS it stands against stands, as that UPS last told it, for the battery its system shows. */
     private final UpsFeed upsFeed = new UpsFeed(fields());
 
     /** How often the system it boots is looked at again for the players who see it: once a second. */
     private static final int OS_CHECK_TICKS = 20;
+    /* The bits of its heat's flags as its screen is told them. */
+    private static final int HEAT_KNOWN = 1;
+    private static final int HEAT_THROTTLED = 2;
+    private static final int HEAT_COOLING = 4;
 
     /*
      * Each part is saved in turn, in the order declared here: the hardware first, because the console rides on the
@@ -247,7 +270,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
                                           final BlockState state) {
         super(type, pos, state);
         this.computer = ComputerRegistry.require(state.getBlock());
-        this.hardware = new ComputerHardware(this, ComputerHardwareLayout.of(computer.parts()));
+        this.hardware = new ComputerHardware(this, ComputerHardwareLayout.of(computer.parts(), computer.cooling()));
         fields().part("Hardware", IFieldPart.of((tag, registries) -> {
             diskConsole.flush();
             hardware.save(tag, registries, hardwareNbtKey());
@@ -261,6 +284,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         fields().part("Energy", energy.store()).save();
         fields().part("EnergyOwed", IFieldPart.of((tag, registries) -> energy.saveDebt(tag),
                 (tag, registries) -> energy.loadDebt(tag))).save();
+        fields().part("Heat", IFieldPart.of((tag, registries) -> heat.save(tag),
+                (tag, registries) -> heat.load(tag))).save();
         fields().part("Session", IFieldPart.of((tag, registries) -> session.save(tag),
                 (tag, registries) -> session.load(tag))).save();
         fields().part("OutOfMemory", IFieldPart.of((tag, registries) -> kernel.save(tag),
@@ -283,7 +308,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (level != null) {
             psuClock.restart(level.getGameTime());
         }
-        power.hardwareChanged(buildValid());
+        // A machine set to start by itself waits, as the button does, while it is still too hot from a trip.
+        power.hardwareChanged(buildValid() && heat.mayStart());
         setChanged();
         HardwareMilestones.report(this);
         partsChanged();
@@ -399,6 +425,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             // Any internal drive or the hot-swap bay, in a bay the case really has.
             return stack.getItem() instanceof BayDriveItem && slot - layout().bayStart() < caseBays();
         }
+        if (layout().isCooler(slot)) {
+            return coolerRefusal(slot - layout().coolerStart(), stack) == null;
+        }
+        if (layout().isFan(slot)) {
+            return fanRefusal(slot - layout().fanStart(), stack) == null;
+        }
         return false;
     }
 
@@ -429,7 +461,65 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (layout().isBay(slot)) {
             return stack.getItem() instanceof BayDriveItem ? PartRefusals.NO_BAY : PartRefusals.NOT_THIS_SLOT;
         }
+        if (layout().isCooler(slot)) {
+            return coolerRefusal(slot - layout().coolerStart(), stack);
+        }
+        if (layout().isFan(slot)) {
+            return fanRefusal(slot - layout().fanStart(), stack);
+        }
         return PartRefusals.NOT_THIS_SLOT;
+    }
+
+    /*
+     * Why {@code stack} stays off processor {@code index}'s cooler seat, or null when it goes on: a cooler of the
+     * case's era or an older one, and a water cooler only where its radiator finds a pair of free fan seats, with the
+     * water coolers before it taking theirs first.
+     */
+    @Nullable
+    private TextKey coolerRefusal(final int index, final ItemStack stack) {
+        final CoolerSpec cooler = HardwareRegistry.cooler(stack);
+        if (cooler == null) {
+            return PartRefusals.NOT_THIS_SLOT;
+        }
+        if (!PartFitting.coolerFits(cooler, computer.era())) {
+            return PartRefusals.COOLER_TOO_NEW;
+        }
+        if (cooler.radiatorFans() == 0) {
+            return null;
+        }
+        final CaseCooling cooling = computer.cooling();
+        final List<CoolerSpec> coolers = new ArrayList<>(layout().coolerCount());
+        int water = 0;
+        for (int i = 0; i < layout().coolerCount(); i++) {
+            final CoolerSpec seated = i == index ? cooler : hardware.cooler(i);
+            coolers.add(seated);
+            water += seated != null && seated.radiatorFans() > 0 ? 1 : 0;
+        }
+        if (water > cooling.radiatorPairs().size()) {
+            return PartRefusals.NO_RADIATOR_ROOM;
+        }
+        for (final int seat : cooling.radiatorSeats(coolers)) {
+            if (seat < layout().fanCount() && !getHardware().getStackInSlot(layout().fanStart() + seat).isEmpty()) {
+                return PartRefusals.NO_RADIATOR_ROOM;
+            }
+        }
+        return null;
+    }
+
+    /* Why {@code stack} stays out of fan seat {@code seat}, or null when it goes in. */
+    @Nullable
+    private TextKey fanRefusal(final int seat, final ItemStack stack) {
+        final CaseFanSpec fan = HardwareRegistry.caseFan(stack);
+        if (fan == null) {
+            return PartRefusals.NOT_THIS_SLOT;
+        }
+        if (seat >= computer.cooling().fans()) {
+            return PartRefusals.NO_FAN_SEAT;
+        }
+        if (!PartFitting.caseFanFits(fan, computer.era())) {
+            return PartRefusals.FAN_TOO_NEW;
+        }
+        return hardware.radiatorSeats(computer.cooling()).contains(seat) ? PartRefusals.UNDER_RADIATOR : null;
     }
 
     /**
@@ -548,8 +638,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (level instanceof ServerLevel server) {
             sounds.pressed(server);
         }
-        // A computer with no energy to run on does not start: the button is pressed and nothing comes up.
-        if (!power.on() && buildValid() && !energized()) {
+        // A computer with no energy to run on, or still too hot from a trip, does not start: nothing comes up.
+        if (!power.on() && buildValid() && (!energized() || !heat.mayStart())) {
             return;
         }
         power.toggle();
@@ -561,7 +651,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     @Override
     public void setPowered(final boolean on) {
-        if (on && !power.on() && buildValid() && !energized()) {
+        if (on && !power.on() && buildValid() && (!energized() || !heat.mayStart())) {
             return;
         }
         final boolean wasOn = isRunning();
@@ -684,7 +774,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     public void toggleAutoStart() {
-        power.toggleAutoStart(buildValid());
+        power.toggleAutoStart(buildValid() && heat.mayStart());
     }
 
     /* Switched on with parts that do not make a computer: the board tests itself all the same and beeps its failure. */
@@ -938,6 +1028,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     @Override
     public void systemCameUp() {
         kernel.cameUp(this);
+        // The self-test on the way up warned of the trip that last shut it down; once up, that is said.
+        heat.warned();
     }
 
     /**
@@ -1060,8 +1152,65 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         session.setDesktopWorkspace(workspace);
     }
 
+    /** What its parts can orchestrate, in items a tick, under the clock its heat leaves it. */
     public long capacity() {
-        return hardware.capacity();
+        return (long) (hardware.capacity() * heatClock());
+    }
+
+    /**
+     * The share of its clock its heat leaves it, from a quarter to all of it (computers/docs/design/temperature.md):
+     * what its capacity and its programs' credits run at. All of it for a machine cooled from outside, or switched off.
+     */
+    @Override
+    public double heatClock() {
+        return computer.cooled() && isRunning() ? heat.reading().clock() : 1.0;
+    }
+
+    /** How its heat stands: what it reads, what it makes and takes away, its fans; nothing for one cooled outside. */
+    @Override
+    public ThermalState thermal() {
+        if (!computer.cooled()) {
+            return ThermalState.NONE;
+        }
+        final ThermalModel.Reading reading = heat.reading();
+        final CoolingFit cooling = hardware.cooling();
+        return new ThermalState(ThermalModel.shown(reading.celsius(), ThermalState.MOST_SHOWN),
+                isRunning() ? reading.clockPercent() : 100, isRunning() && reading.throttled(), partsWatts(),
+                cooling.budgetWatts(), (int) Math.round(heat.ambient()), cooling.fans(), cooling.fanSeats(),
+                cooling.bareProcessors(), !heat.mayStart(), heat.lastTrip());
+    }
+
+    /** Jumps its temperature to where its load leaves it, as if it had run long enough: for a test or a command. */
+    public void settleHeat() {
+        if (level != null) {
+            heat.settle(level.getGameTime());
+        }
+    }
+
+    /** How its heat stands as its open assembly screen was last told; none for a machine cooled from outside. */
+    public ThermalState thermalShown() {
+        final int flags = heatFlagsShown.getAsInt();
+        if ((flags & HEAT_KNOWN) == 0) {
+            return ThermalState.NONE;
+        }
+        return new ThermalState(tempShown.getAsInt(), clockShown.getAsInt(), (flags & HEAT_THROTTLED) != 0,
+                partsWattsShown.getAsInt(), budgetShown.getAsInt(), ambientShown.getAsInt(), fansShown.getAsInt(),
+                seatsShown.getAsInt(), bareShown.getAsInt(), (flags & HEAT_COOLING) != 0, tripShown.getAsInt());
+    }
+
+    /**
+     * Whether fan seat {@code seat} of its case takes a fan: one its case has, and no water cooler's radiator sits in.
+     * Read on either side, from the parts seated.
+     */
+    public boolean fanSeatOpen(final int seat) {
+        return seat < computer.cooling().fans() && !hardware.radiatorSeats(computer.cooling()).contains(seat);
+    }
+
+    /* Whether it has a temperature, throttles and is cooling from a trip, a bit each, for its screen. */
+    private int heatFlags() {
+        final ThermalState thermal = thermal();
+        return (thermal.known() ? HEAT_KNOWN : 0) | (thermal.throttled() ? HEAT_THROTTLED : 0)
+                | (thermal.cooling() ? HEAT_COOLING : 0);
     }
 
     public long ramBuffer() {
@@ -1605,6 +1754,24 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         }
         energy.payDebt(watts);
         wearPsu(level, build);
+        tickHeat(level, build);
+    }
+
+    /*
+     * Its heat for the tick: where its parts' watts against its cooling leave it, and the trip when not even a quarter
+     * of its clock holds the heat, which brings the system down on its red page and the machine dark at once.
+     */
+    private void tickHeat(final ServerLevel level, @Nullable final ComputerBuild build) {
+        if (!computer.cooled()) {
+            return;
+        }
+        final boolean running = isRunning();
+        if (heat.tick(level, worldPosition, level.getGameTime(), running, build == null || !running ? 0
+                : build.powerDraw(), hardware.cooling().budgetWatts())) {
+            stopSuddenly(CrashCause.THERMAL_TRIP, CrashPages.Moment.none());
+            logEvent(level, EventLevel.ERROR, NetworkEvents.THERMAL_TRIP.with(heat.lastTrip(),
+                    ComputersServerConfig.restartBelow()));
+        }
     }
 
     @Override
@@ -1612,9 +1779,14 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return upsFeed.reading();
     }
 
-    /** The UPS it stands against tells it, in tick {@code gameTime}, how it stands. */
-    void upsTold(final UpsReading reading, final long gameTime) {
-        upsFeed.told(reading, gameTime);
+    /** The UPS it stands against, {@code name}, tells it, in tick {@code gameTime}, how it stands. */
+    void upsTold(final UpsReading reading, final Text name, final long gameTime) {
+        upsFeed.told(reading, name, gameTime);
+    }
+
+    @Override
+    public Text upsName() {
+        return upsFeed.name();
     }
 
     /** The power supply in its slot, the stack that carries its wear; empty for none. */
@@ -1670,8 +1842,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             ranOn = networkUuid();
         }
         final long ticks = psuClock.due(level.getGameTime(), isRunning());
+        // A machine its heat slows wears its supply twice as fast.
+        final boolean hot = computer.cooled() && heat.reading().slowed();
         final PsuWearing.Outcome worn = ticks <= 0L || build == null ? null
-                : PsuWearing.wear(hardware.psu(), build.powerDraw(), ticks, false, level.random);
+                : PsuWearing.wear(hardware.psu(), build.powerDraw(), ticks, hot, level.random);
         if (worn == null) {
             return;
         }

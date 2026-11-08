@@ -36,6 +36,8 @@ public final class NetworkEvents {
     public static final TextKey POWER_LOST = TextKey.of("jsc.event_log.power_lost", "Power lost: no energy reached it");
     public static final TextKey UNSTABLE_POWER = TextKey.of("jsc.event_log.unstable_power",
             "Power lost: the line gave less than it draws (unstable power)");
+    public static final TextKey THERMAL_TRIP = TextKey.of("jsc.event_log.thermal_trip",
+            "Thermal trip at %s °C: shut down until it cools below %s °C");
     public static final TextKey ITEMS_LOST = TextKey.of("jsc.event_log.items_lost",
             "Lost in transit when it went dark: %s");
     public static final TextKey CONFLICT = TextKey.of("jsc.event_log.conflict",

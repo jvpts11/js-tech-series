@@ -81,6 +81,10 @@ public record DeviceMapPayload(BlockPos hostPos, DeviceMap map) implements Custo
             TextCodecs.STREAM_CODEC.encode(buf, supply.note());
             buf.writeBoolean(supply.attention());
         }
+        writeNoted(buf, m.batteries());
+        writeNoted(buf, m.cooling().parts());
+        TextCodecs.STREAM_CODEC.encode(buf, m.cooling().processorHeat());
+        TextCodecs.STREAM_CODEC.encode(buf, m.cooling().videoHeat());
     }
 
     private static DeviceMapPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -115,8 +119,30 @@ public record DeviceMapPayload(BlockPos hostPos, DeviceMap map) implements Custo
             power.add(new DeviceMap.PowerSupply(TextCodecs.STREAM_CODEC.decode(buf),
                     TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean()));
         }
+        final List<DeviceMap.Noted> batteries = readNoted(buf);
+        final List<DeviceMap.Noted> cooling = readNoted(buf);
+        final DeviceMap.Cooling cooled = new DeviceMap.Cooling(cooling, TextCodecs.STREAM_CODEC.decode(buf),
+                TextCodecs.STREAM_CODEC.decode(buf));
         return new DeviceMapPayload(host, new DeviceMap(name, board, processors, memory, disks, video, audio,
-                portFamily, ports, network, cardNames, cardIcons, power));
+                portFamily, ports, network, cardNames, cardIcons, power, batteries, cooled));
+    }
+
+    private static void writeNoted(final RegistryFriendlyByteBuf buf, final List<DeviceMap.Noted> devices) {
+        final int count = Math.min(devices.size(), MAX_ITEMS);
+        buf.writeVarInt(count);
+        for (final DeviceMap.Noted device : devices.subList(0, count)) {
+            TextCodecs.STREAM_CODEC.encode(buf, device.name());
+            TextCodecs.STREAM_CODEC.encode(buf, device.note());
+        }
+    }
+
+    private static List<DeviceMap.Noted> readNoted(final RegistryFriendlyByteBuf buf) {
+        final int count = Math.min(buf.readVarInt(), MAX_ITEMS);
+        final List<DeviceMap.Noted> out = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            out.add(new DeviceMap.Noted(TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf)));
+        }
+        return out;
     }
 
     private static void writePorts(final RegistryFriendlyByteBuf buf, final List<DeviceMap.Port> ports,

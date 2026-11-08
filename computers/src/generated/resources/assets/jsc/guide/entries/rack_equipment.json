@@ -100,6 +100,17 @@
           {
             "words": "jsc.guide.rack_equipment.table1_8_3"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_9_3"
+          }
         ]
       ]
     },
@@ -210,10 +221,11 @@
     "jsc:pdu",
     "jsc:advanced_pdu",
     "jsc:drive_shelf",
+    "jsc:vent_panel",
     "jsc:fibre_optic_interface",
     "jsc:advanced_fibre_optic_interface"
   ],
-  "order": 32,
+  "order": 33,
   "section": "jsc:racks",
   "title": "jsc.guide.rack_equipment.title"
 }

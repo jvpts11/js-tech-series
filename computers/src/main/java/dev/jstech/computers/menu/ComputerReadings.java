@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.menu;
 
+import dev.jstech.computers.hardware.ThermalState;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.EraCodecs;
@@ -68,6 +70,10 @@ final class ComputerReadings {
     private final MenuValue patternsHost;
     private final MenuValue partsWatts;
     private final MenuValue lineWatts;
+    private final MenuValue temperature;
+
+    /** What {@link #temperature} reads for a machine with no temperature of its own, a server's rack aside. */
+    public static final int NO_TEMPERATURE = -1_000;
 
     /** Declares every reading on the menu that owns it, through that menu's own value and flag factories. */
     ComputerReadings(@Nullable final IComputerTerminalHost host, final Level level,
@@ -115,6 +121,12 @@ final class ComputerReadings {
         this.patternsHost = flag.apply(() -> hostFlag(ComputerTerminalMenu::teachable));
         this.partsWatts = value.apply(() -> hostInt(IComputerTerminalHost::partsWatts));
         this.lineWatts = value.apply(() -> hostInt(IComputerTerminalHost::lineWatts));
+        this.temperature = value.apply(() -> thermal().known() ? thermal().celsius() : NO_TEMPERATURE);
+    }
+
+    /** How hot the machine is, in whole °C, or {@link #NO_TEMPERATURE} for one with no temperature of its own. */
+    public int temperature() {
+        return temperature.get();
     }
 
     public boolean running() {
@@ -275,6 +287,11 @@ final class ComputerReadings {
         }
         final Era hostEra = host.displayEra();
         return EraCodecs.placeOf(hostEra);
+    }
+
+    /* How the host's heat stands: none for a host that keeps no temperature. */
+    private ThermalState thermal() {
+        return host instanceof IOsHost machine ? machine.thermal() : ThermalState.NONE;
     }
 
     private int hostInt(final ToIntFunction<IComputerTerminalHost> getter) {

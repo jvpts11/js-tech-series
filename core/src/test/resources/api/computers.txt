@@ -10,8 +10,10 @@ stable 7
 1 dev.jstech.computers.api.ComputersRegisterEvent  type final class extends Event implements IModBusEvent
 8 dev.jstech.computers.api.ComputersRegisterEvent  LanguageRegistry languages()
 8 dev.jstech.computers.api.ComputersRegisterEvent  void cardKind(ExpansionCardKind)
+11 dev.jstech.computers.api.ComputersRegisterEvent  void caseFan(ItemLike, CaseFanSpec)
 5 dev.jstech.computers.api.ComputersRegisterEvent  void componentKind(ComponentKind)
 8 dev.jstech.computers.api.ComputersRegisterEvent  void computer(Block, ComputerDef)
+11 dev.jstech.computers.api.ComputersRegisterEvent  void cooler(ItemLike, CoolerSpec)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void desktop(DesktopEnvironmentDef)
 8 dev.jstech.computers.api.ComputersRegisterEvent  void disk(ItemLike, DiskSpec)
 3 dev.jstech.computers.api.ComputersRegisterEvent  void engine(EngineDef)
@@ -46,8 +48,10 @@ stable 7
 8 dev.jstech.computers.api.JsComputersApi  static LanguageRegistry languages()
 1 dev.jstech.computers.api.JsComputersApi  static final int VERSION
 8 dev.jstech.computers.api.JsComputersApi  static void registerCardKind(ExpansionCardKind)
+11 dev.jstech.computers.api.JsComputersApi  static void registerCaseFan(ItemLike, CaseFanSpec)
 5 dev.jstech.computers.api.JsComputersApi  static void registerComponentKind(ComponentKind)
 8 dev.jstech.computers.api.JsComputersApi  static void registerComputer(Block, ComputerDef)
+11 dev.jstech.computers.api.JsComputersApi  static void registerCooler(ItemLike, CoolerSpec)
 1 dev.jstech.computers.api.JsComputersApi  static void registerDesktop(DesktopEnvironmentDef)
 8 dev.jstech.computers.api.JsComputersApi  static void registerDisk(ItemLike, DiskSpec)
 3 dev.jstech.computers.api.JsComputersApi  static void registerEngine(EngineDef)
@@ -239,11 +243,42 @@ stable 7
 8 dev.jstech.computers.engine.EngineDef  String versionFor(Era)
 8 dev.jstech.computers.engine.EngineDef  boolean madeFor(Era)
 3 dev.jstech.computers.engine.EngineDef  boolean offers(EngineCapability)
+11 dev.jstech.computers.hardware.CaseCooling  type record(int caseWatts, int rearFans, int topFans, int frontFans)
+11 dev.jstech.computers.hardware.CaseCooling  List<Integer> radiatorPairs()
+11 dev.jstech.computers.hardware.CaseCooling  Set<Integer> radiatorSeats(List<CoolerSpec>)
+11 dev.jstech.computers.hardware.CaseCooling  Side radiatorSide(List<CoolerSpec>, int)
+11 dev.jstech.computers.hardware.CaseCooling  Side side(int)
+11 dev.jstech.computers.hardware.CaseCooling  int budgetWatts(List<CoolerSpec>, List<CaseFanSpec>)
+11 dev.jstech.computers.hardware.CaseCooling  int fanSlots()
+11 dev.jstech.computers.hardware.CaseCooling  int fans()
+11 dev.jstech.computers.hardware.CaseCooling  static final CaseCooling AESTHETIC
+11 dev.jstech.computers.hardware.CaseCooling  static final CaseCooling HIGH_PERFORMANCE
+11 dev.jstech.computers.hardware.CaseCooling  static final CaseCooling LEGACY
+11 dev.jstech.computers.hardware.CaseCooling  static final CaseCooling MAINFRAME
+11 dev.jstech.computers.hardware.CaseCooling  static final CaseCooling NEUTRAL
+11 dev.jstech.computers.hardware.CaseCooling  static final CaseCooling NONE
+11 dev.jstech.computers.hardware.CaseCooling  static final CaseCooling TRANSITION
+11 dev.jstech.computers.hardware.CaseCooling  static final CaseCooling VINTAGE
+11 dev.jstech.computers.hardware.CaseCooling  static final int MOST_FANS
+11 dev.jstech.computers.hardware.CaseCooling.Side  type enum
+11 dev.jstech.computers.hardware.CaseCooling.Side  FRONT
+11 dev.jstech.computers.hardware.CaseCooling.Side  REAR
+11 dev.jstech.computers.hardware.CaseCooling.Side  TOP
+11 dev.jstech.computers.hardware.CaseFanSpec  type record(Era era, int sizeMm, int takesAwayWatts)
 9 dev.jstech.computers.hardware.CaseParts  type record(int processors, int memory, int cards, int disks, int bays, int storage, int memoryPerProcessor)
 9 dev.jstech.computers.hardware.CaseParts  new(int, int, int, int, int, int)
 8 dev.jstech.computers.hardware.CaseParts  static final int AS_THE_BOARD
-8 dev.jstech.computers.hardware.ComputerDef  type record(Era era, Set<FormFactor> formFactors, HostScope machine, CaseParts parts)
+11 dev.jstech.computers.hardware.ComputerDef  type record(Era era, Set<FormFactor> formFactors, HostScope machine, CaseParts parts, CaseCooling cooling)
+11 dev.jstech.computers.hardware.ComputerDef  boolean cooled()
 8 dev.jstech.computers.hardware.ComputerDef  boolean takesBoard(MotherboardSpec)
+11 dev.jstech.computers.hardware.ComputerDef  new(Era, Set<FormFactor>, HostScope, CaseParts)
+11 dev.jstech.computers.hardware.CoolerSpec  type record(Era era, Kind kind, int takesAwayWatts)
+11 dev.jstech.computers.hardware.CoolerSpec  int radiatorFans()
+11 dev.jstech.computers.hardware.CoolerSpec.Kind  type enum
+11 dev.jstech.computers.hardware.CoolerSpec.Kind  STOCK
+11 dev.jstech.computers.hardware.CoolerSpec.Kind  TOWER
+11 dev.jstech.computers.hardware.CoolerSpec.Kind  WATER
+11 dev.jstech.computers.hardware.CoolerSpec.Kind  int radiatorFans()
 8 dev.jstech.computers.hardware.CpuDesign  type record(Microarchitecture arch, String codename, boolean smt, int efficiencyCores, int efficiencyMhz, Microarchitecture efficiencyArch, IntegratedGraphics graphics)
 8 dev.jstech.computers.hardware.CpuDesign  CpuDesign withEfficiencyCores(int, int, Microarchitecture)
 8 dev.jstech.computers.hardware.CpuDesign  CpuDesign withGraphics(IntegratedGraphics)

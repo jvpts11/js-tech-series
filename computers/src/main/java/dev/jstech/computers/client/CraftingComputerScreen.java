@@ -32,7 +32,7 @@ public class CraftingComputerScreen extends AbstractTowerAssemblyScreen<Crafting
 
     @Override
     protected AssemblyGeometry makeGeometry() {
-        return CraftingComputerLayout.geometry(caseEra());
+        return CraftingComputerLayout.geometry(caseEra(), menu.cooling());
     }
 
     @Override
@@ -62,7 +62,7 @@ public class CraftingComputerScreen extends AbstractTowerAssemblyScreen<Crafting
         return List.of(capacity(List.of()), craft,
                 new Readout(GameText.resolve(AssemblyTexts.RECIPE_ROM),
                         GameText.resolve(AssemblyTexts.OF.with(menu.romUsed(), menu.romLimit())), JsTechTheme.text()),
-                network(List.of()), draw());
+                network(List.of()), draw(), temp());
     }
 
     private static String formatFactor(final int factorX100) {

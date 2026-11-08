@@ -170,8 +170,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "hardware/PcieGeneration.java", 2, DECLARED_WHAT),
             data(COMPUTERS + "hardware/RamGeneration.java", 2, DECLARED_WHAT),
             data(COMPUTERS + "hardware/HardwareCodecs.java", 4, DECLARED_WHAT),
-            data(COMPUTERS + "registry/HardwareRegistry.java", 4, DECLARED_WHAT),
-            data(COMPUTERS + "scripting/ScriptedHardware.java", 15, DECLARED_WHAT
+            data(COMPUTERS + "registry/HardwareRegistry.java", 6, DECLARED_WHAT),
+            data(COMPUTERS + "scripting/ScriptedHardware.java", 18, DECLARED_WHAT
                     + ", from a modpack's startup script"),
             data(COMPUTERS + "blockentity/AbstractComputerBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "blockentity/MainframeBlockEntity.java", 1, SAVE_TAG),

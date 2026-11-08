@@ -11,6 +11,7 @@ import dev.jstech.computers.power.UpsReading;
 import dev.jstech.core.blockentity.BlockEntityFields;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.LongField;
+import dev.jstech.core.text.Text;
 
 /**
  * How the UPS a computer stands against stands, as that UPS last told it, for the battery its system shows: a UPS tells
@@ -23,6 +24,8 @@ final class UpsFeed {
     private final IntField percent;
     private final LongField minutes;
     private long toldAt = NEVER;
+    /* The UPS by name, which the machine's Device Manager tells it by; kept on the server, which builds that list. */
+    private Text name = Text.EMPTY;
 
     /* A UPS that has not told it for this long is gone: it tells every tick, before or after the computer's. */
     private static final int GONE_AFTER = 2;
@@ -35,17 +38,24 @@ final class UpsFeed {
         this.minutes = fields.longInteger("UpsMinutes", 0L).toClient();
     }
 
-    /** Its UPS tells it, in tick {@code gameTime}, how it stands. */
-    void told(final UpsReading reading, final long gameTime) {
+    /** Its UPS, {@code name}, tells it, in tick {@code gameTime}, how it stands. */
+    void told(final UpsReading reading, final Text name, final long gameTime) {
         this.toldAt = gameTime;
+        this.name = name;
         show(reading);
     }
 
     /** A tick of the computer, at {@code gameTime}: a UPS that stopped telling it is no longer shown. */
     void tick(final long gameTime) {
         if (gameTime - this.toldAt > GONE_AFTER && this.mode.get() != UpsReading.Mode.NONE.id()) {
+            this.name = Text.EMPTY;
             show(UpsReading.NONE);
         }
+    }
+
+    /** Its UPS by name, on the server; empty without one. */
+    Text name() {
+        return this.name;
     }
 
     /** How its UPS stands, on either side: none without one. */

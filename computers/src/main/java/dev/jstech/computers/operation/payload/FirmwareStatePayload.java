@@ -43,7 +43,8 @@ public record FirmwareStatePayload(
         int installTargetSlot,
         List<Entry> entries,
         RaidInfo raid,
-        @Nullable Psu psu
+        @Nullable Psu psu,
+        @Nullable Thermal thermal
 ) implements CustomPacketPayload {
 
     /**
@@ -54,6 +55,31 @@ public record FirmwareStatePayload(
      * @param condition how worn each of its units is
      */
     public record Psu(Text name, PsuSpec spec, PsuCondition condition) {
+    }
+
+    /**
+     * The processor's temperature as the firmware reads it (computers/docs/design/temperature.md), the case fans that
+     * turn, and the thermal trip that last shut the machine down, which its self-test warns of.
+     *
+     * @param celsius  how hot the processor is, in whole °C
+     * @param fans     the case fans turning
+     * @param fanSeats the seats the case has for them
+     * @param lastTrip how hot it was at the trip that last shut it down, in whole °C; 0 when none did
+     */
+    public record Thermal(int celsius, int fans, int fanSeats, int lastTrip) {
+    }
+
+    /**
+     * The same state with the processor's temperature left out, at 0: what a screen that does not show it carries, so
+     * a temperature that moves as the machine warms does not make its picture new every degree. The trip it warns of
+     * stays.
+     */
+    public FirmwareStatePayload withoutTemperature() {
+        if (thermal == null) {
+            return this;
+        }
+        return new FirmwareStatePayload(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, psu,
+                new Thermal(0, thermal.fans(), thermal.fanSeats(), thermal.lastTrip()));
     }
 
     /**
@@ -180,7 +206,14 @@ public record FirmwareStatePayload(
     /** The state of a machine whose power supply is not read: the guide's pictures, a host with none. */
     public FirmwareStatePayload(final BlockPos hostPos, final int eraPlace, final Machine machine, final int bootSlot,
                                 final int installTargetSlot, final List<Entry> entries, final RaidInfo raid) {
-        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, null);
+        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, null, null);
+    }
+
+    /** The state of a machine whose temperature is not read: one with none of its own. */
+    public FirmwareStatePayload(final BlockPos hostPos, final int eraPlace, final Machine machine, final int bootSlot,
+                                final int installTargetSlot, final List<Entry> entries, final RaidInfo raid,
+                                @Nullable final Psu psu) {
+        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, psu, null);
     }
 
     /** The supply {@code stack} as the self-test reads it, or null for anything that is no supply. */
@@ -240,6 +273,13 @@ public record FirmwareStatePayload(
             buf.writeVarInt(spec.units());
             PsuConditions.STREAM_CODEC.encode(buf, p.psu.condition());
         }
+        buf.writeBoolean(p.thermal != null);
+        if (p.thermal != null) {
+            buf.writeVarInt(p.thermal.celsius());
+            buf.writeVarInt(p.thermal.fans());
+            buf.writeVarInt(p.thermal.fanSeats());
+            buf.writeVarInt(p.thermal.lastTrip());
+        }
     }
 
     private static FirmwareStatePayload decode(final RegistryFriendlyByteBuf buf) {
@@ -274,7 +314,9 @@ public record FirmwareStatePayload(
                     buf.readVarInt())), buf.readBoolean(), Math.max(1, buf.readVarInt()), Math.max(1, buf.readVarInt()));
             psu = new Psu(name, spec, PsuConditions.STREAM_CODEC.decode(buf));
         }
-        return new FirmwareStatePayload(pos, era, machine, bootSlot, target, entries, raid, psu);
+        final Thermal thermal = buf.readBoolean()
+                ? new Thermal(buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt()) : null;
+        return new FirmwareStatePayload(pos, era, machine, bootSlot, target, entries, raid, psu, thermal);
     }
 
     private static void writeMachine(final RegistryFriendlyByteBuf buf, final Machine m) {

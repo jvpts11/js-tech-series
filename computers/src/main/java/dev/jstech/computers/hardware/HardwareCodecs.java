@@ -128,6 +128,18 @@ public final class HardwareCodecs {
             SLOT_GENERATION.fieldOf("bus").forGetter(PlainCardSpec::bus),
             Codec.INT.fieldOf("tdp_watts").forGetter(PlainCardSpec::tdpWatts)
     ).apply(i, PlainCardSpec::new));
+    public static final Codec<CoolerSpec.Kind> COOLER_KIND = Codec.STRING.comapFlatMap(HardwareCodecs::coolerKind,
+            kind -> kind.name().toLowerCase(Locale.ROOT));
+    public static final Codec<CoolerSpec> COOLER = RecordCodecBuilder.create(i -> i.group(
+            ERA.fieldOf("era").forGetter(CoolerSpec::era),
+            COOLER_KIND.fieldOf("kind").forGetter(CoolerSpec::kind),
+            Codec.INT.fieldOf("takes_away_watts").forGetter(CoolerSpec::takesAwayWatts)
+    ).apply(i, CoolerSpec::new));
+    public static final Codec<CaseFanSpec> CASE_FAN = RecordCodecBuilder.create(i -> i.group(
+            ERA.fieldOf("era").forGetter(CaseFanSpec::era),
+            Codec.INT.fieldOf("size_mm").forGetter(CaseFanSpec::sizeMm),
+            Codec.INT.fieldOf("takes_away_watts").forGetter(CaseFanSpec::takesAwayWatts)
+    ).apply(i, CaseFanSpec::new));
     /* The kinds a script declares, written out in full; a label is the same in every language, as this mod's are. */
     public static final Codec<RamGeneration> NEW_MEMORY_GENERATION = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.fieldOf("id").forGetter(RamGeneration::id),
@@ -178,6 +190,15 @@ public final class HardwareCodecs {
             }
         }
         return DataResult.error(() -> "no family of slot is " + name + "; the families are isa, pci, agp and pcie");
+    }
+
+    private static DataResult<CoolerSpec.Kind> coolerKind(final String name) {
+        for (final CoolerSpec.Kind kind : CoolerSpec.Kind.values()) {
+            if (kind.name().equalsIgnoreCase(name)) {
+                return DataResult.success(kind);
+            }
+        }
+        return DataResult.error(() -> "no kind of cooler is " + name + "; the kinds are stock, tower and water");
     }
 
     private static DataResult<Microarchitecture> knownDesign(final String id) {

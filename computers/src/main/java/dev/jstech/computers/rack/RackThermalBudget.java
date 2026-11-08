@@ -15,15 +15,16 @@ import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A Server Rack's heat as J's Core reads machines' heat: the draw of the machines turned on in it, what its cabinet and
- * its Cooling Units take away ({@link RackThermals}), and the share of their speed its machines keep while it is over.
- * The cabinet keeps a budget and no temperature of its own. Read live from the rack each time it is asked.
+ * A Server Rack's heat as J's Core reads machines' heat: the draw of the machines turned on in it, what its cabinet,
+ * its Cooling Units and its Vent Panels take away ({@link RackThermals}), the one temperature the cabinet has for all
+ * of them, and the share of their speed its machines keep. Read live from the rack each time it is asked.
  *
  * @param rack the rack it reads
  */
 public record RackThermalBudget(ServerRackBlockEntity rack) implements IThermalBudget {
 
     private static final double PERCENT = 100.0;
+    private static final double KELVIN = 273.15;
 
     /** The budget of the rack {@code part} is a block of, or none while it is bound to no rack that is loaded. */
     public static @Nullable IThermalBudget ofPart(final ServerRackPartBlockEntity part) {
@@ -47,7 +48,7 @@ public record RackThermalBudget(ServerRackBlockEntity rack) implements IThermalB
 
     @Override
     public double temperature() {
-        return Double.NaN;
+        return rack.thermal().celsius() + KELVIN;
     }
 
     @Override

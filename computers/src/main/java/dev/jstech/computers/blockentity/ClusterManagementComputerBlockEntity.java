@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.computers.hardware.CaseParts;
@@ -93,7 +94,13 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
      */
     public static final int SECOND_CPU_SLOT = 15;
     public static final int SECOND_RAM_SLOTS_START = 16;
-    public static final int HARDWARE_SLOTS = 20;
+    /*
+     * A cooler over each processor's socket and the case's fan seats, as many as the case with the most has, after
+     * all of those for the same reason.
+     */
+    public static final int COOLER_SLOTS_START = 20;
+    public static final int FAN_SLOTS_START = 22;
+    public static final int HARDWARE_SLOTS = 28;
     public static final int STORAGE_SLOTS = 18;
     /**
      * What a Cluster Management Computer's case counts, whatever its era: a processor and its four modules, and a
@@ -113,11 +120,11 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
 
     /**
      * What a Cluster Management Computer of {@code era} is: a workstation-class machine, Vintage on Baby-AT/AT and
-     * the later eras on ATX or EATX.
+     * the later eras on ATX or EATX. Its case's {@code style} decides how much it cools.
      */
-    public static ComputerDef computer(final Era era) {
+    public static ComputerDef computer(final Era era, final CaseStyle style) {
         return new ComputerDef(era, TowerBoards.clusterManagementComputer(era), HostScope.CLUSTER_MANAGEMENT_COMPUTER,
-                PARTS);
+                PARTS, style.cooling(era));
     }
 
     @Override

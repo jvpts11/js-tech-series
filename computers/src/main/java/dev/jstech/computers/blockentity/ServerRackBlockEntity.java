@@ -15,6 +15,7 @@ import dev.jstech.computers.block.FibreReach;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
@@ -27,6 +28,8 @@ import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PartFitting;
 import dev.jstech.computers.hardware.PsuConditions;
 import dev.jstech.computers.hardware.PsuTexts;
+import dev.jstech.computers.hardware.ThermalModel;
+import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
@@ -95,6 +98,7 @@ import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -184,6 +188,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public static final int UNIT_UPS_BATTERY_VINTAGE = 35;
     public static final int UNIT_PDU_VINTAGE = 40;
     public static final int UNIT_DRIVE_SHELF = 45;
+    /* The Vent Panel, drawn in its rack's colour: five in a row from the Vintage's to the Advanced's, by the rack. */
+    public static final int UNIT_VENT_PANEL_VINTAGE = 46;
     /* The 1U server's face of each era, and the supercomputer node's, which only the Standard and the Advanced make. */
     private static final EraTable<Integer> SERVER_FACES = EraTable.ofFive(UNIT_SERVER_VINTAGE, UNIT_SERVER_LEGACY,
             UNIT_SERVER_TRANSITION, UNIT_SERVER_STANDARD, UNIT_SERVER_ADVANCED);
@@ -201,7 +207,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             "compute_2u_vintage", "compute_2u_legacy", "compute_2u_transition", "compute_2u_advanced",
             "ups_battery_vintage", "ups_battery_legacy", "ups_battery_transition", "ups_battery_standard",
             "ups_battery_advanced", "pdu_vintage", "pdu_legacy", "pdu_transition", "pdu_standard", "pdu_advanced",
-            "drive_shelf"};
+            "drive_shelf", "vent_panel_vintage", "vent_panel_legacy", "vent_panel_transition", "vent_panel_standard",
+            "vent_panel_advanced"};
 
     /*
      * What the client copy knows about the cabinet: it holds no inventory, so the server sends the unit
@@ -252,6 +259,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             case UPS_BATTERY -> UNIT_UPS_BATTERY_VINTAGE + HardwareEra.partsIndex(unit.era());
             case PDU -> UNIT_PDU_VINTAGE + HardwareEra.partsIndex(unit.era());
             case DRIVE_SHELF -> UNIT_DRIVE_SHELF;
+            case VENT_PANEL -> UNIT_VENT_PANEL_VINTAGE + HardwareEra.partsIndex(rackEra());
         };
     }
 
@@ -373,6 +381,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     // Qualified with "this." because bayPowerOff is declared later in the file; a plain name would not compile.
     private final DerivedInt bayPowerShown = fields().derived("BayPower", () -> ~this.bayPowerOff & 0xFF).toMenu();
     private final DerivedInt throttleShown = fields().derived("Throttle", this::thermalThrottlePercent).toMenu();
+    private final DerivedInt temperatureShown = fields().derived("RackTemp", () -> thermal().celsius()).toMenu();
     /** Rebuild progress in permille, one handle per unit, filled in the constructor. */
     private final DerivedInt[] rebuildShown = new DerivedInt[CAPACITY_U];
     /** The row a linked monitor shows, plus one so that nothing shown travels as 0: what the unit card's KVM line reads. */
@@ -432,8 +441,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             unitStates.remove(slot);
             buildCached[slot] = false;
             mountedCache = null;
-            // A machine mounted with a failed supply sits dark, its switch off, until the supply is replaced.
-            if (psuFailed(slot)) {
+            /*
+             * A machine mounted with a failed supply sits dark, its switch off, until the supply is replaced; one
+             * mounted in a cabinet still too hot from a trip, until it has cooled and the switch is thrown.
+             */
+            if (psuFailed(slot) || !getStackInSlot(slot).isEmpty() && !heat.mayStart()) {
                 bayPowerOff |= 1 << slot;
             }
             markStorageChanged(slot);
@@ -978,6 +990,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final PsuWearing.Clock[] psuClocks = new PsuWearing.Clock[CAPACITY_U];
     /* The battery of the rack's UPS. */
     private final UpsBattery ups = new UpsBattery();
+    /* How hot the cabinet is: one temperature for every machine in it (computers/docs/design/temperature.md). */
+    private final ComputerHeat heat = new ComputerHeat();
 
     /** Whether the bay whose unit tops at {@code slot} has its power switch on. */
     public boolean bayPowerOn(final int slot) {
@@ -990,11 +1004,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             return;
         }
         /*
-         * A machine the cabinet has no energy for, or whose supply has failed, does not start: the switch is thrown and
-         * nothing comes up.
+         * A machine the cabinet has no energy for, whose supply has failed, or in a cabinet still too hot from a trip,
+         * does not start: the switch is thrown and nothing comes up.
          */
         final ComputerBuild build = buildAt(slot);
-        if (!bayPowerOn(slot) && build != null && build.isPowered() && (psuFailed(slot)
+        if (!bayPowerOn(slot) && build != null && build.isPowered() && (psuFailed(slot) || !heat.mayStart()
                 || !startsOn(drawnWatts() + ComputerEnergy.lineWatts(build.powerDraw(), build.psu())))) {
             return;
         }
@@ -1056,6 +1070,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         fields().part("Rack", IFieldPart.of(this::saveRack, this::loadRack)).save();
         fields().part("Energy", energy.store()).save();
+        fields().part("Heat", IFieldPart.of((tag, registries) -> heat.save(tag),
+                (tag, registries) -> heat.load(tag))).save();
         fields().part("Cabinet", new CabinetPart()).toClient();
         for (int slot = 0; slot < CAPACITY_U; slot++) {
             final int row = slot;
@@ -1088,6 +1104,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /** The cabinet's thermal throttle in percent, as last shown to the open menu. */
     public int throttleShown() {
         return throttleShown.getAsInt();
+    }
+
+    /** The cabinet's temperature in whole °C, as last shown to the open menu. */
+    public int temperatureShown() {
+        return temperatureShown.getAsInt();
     }
 
     /** Rebuild progress of unit {@code slot}'s array in permille, as last shown to the open menu. */
@@ -1336,6 +1357,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private void tick(final ServerLevel level) {
         drawEnergy(level);
         wearPsus(level);
+        tickHeat(level);
         sounds.tick();
         PeripheralReconciler.reconcile(this, level, worldPosition.asLong());
         final NetworkSystem system = NetworkSystem.get(level);
@@ -1538,9 +1560,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      * Thermal budget: what a dense cabinet costs you
      *
      * Every mounted machine dumps its power draw into the cabinet as heat. A rack sheds a fixed
-     * amount on its own; past that the machines throttle unless cooling is mounted, which is the
-     * trade-off the rack-unit budget is meant to create, since cooling spends the same U a server
-     * would. The watt figures are balancing estimates.
+     * amount on its own; past that the cabinet heats up and its machines throttle unless cooling is
+     * mounted, which is the trade-off the rack-unit budget is meant to create, since cooling spends
+     * the same U a server would. The watt figures are balancing estimates.
      */
 
     /** The total power draw of every machine mounted in this rack, in watts. */
@@ -1555,7 +1577,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return watts;
     }
 
-    /** The heat this cabinet can shed: its own dissipation plus what every Cooling Unit mounted sheds, by its era. */
+    /**
+     * The heat this cabinet can shed: its own dissipation plus what every Cooling Unit mounted sheds, by its era, and
+     * every Vent Panel.
+     */
     public int thermalBudgetWatts() {
         int cooling = 0;
         for (int i = 0; i < CAPACITY_U; i++) {
@@ -1564,14 +1589,36 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return RackThermals.budgetWatts(cooling);
     }
 
-    /** How much of its capacity a machine in this rack actually delivers, in percent. */
+    /** How much of its capacity a machine in this rack delivers, in percent: what the cabinet's heat leaves it. */
     public int thermalThrottlePercent() {
-        return RackThermals.throttlePercent(thermalLoadWatts(), thermalBudgetWatts());
+        return heat.reading().clockPercent();
     }
 
-    /** Whether the cabinet is over its thermal budget and holding the machines in it back. */
+    /** Whether the cabinet's heat is holding the machines in it back. */
     public boolean thermalThrottled() {
-        return thermalThrottlePercent() < 100;
+        return heat.reading().slowed();
+    }
+
+    /** How the cabinet's heat stands: one temperature for all its machines; Cooling Units and Vent Panels, no fans. */
+    @Override
+    public ThermalState thermal() {
+        final ThermalModel.Reading reading = heat.reading();
+        return new ThermalState(ThermalModel.shown(reading.celsius(), ThermalState.MOST_SHOWN),
+                reading.clockPercent(), reading.throttled(), thermalLoadWatts(), thermalBudgetWatts(),
+                (int) Math.round(heat.ambient()), 0, 0, 0, !heat.mayStart(), heat.lastTrip());
+    }
+
+    /** The share of their clock the cabinet's heat leaves its machines: what their programs' credits run at. */
+    @Override
+    public double heatClock() {
+        return heat.reading().clock();
+    }
+
+    /** Jumps the cabinet's temperature to where its load leaves it, as if long enough had passed: for a test. */
+    public void settleHeat() {
+        if (level != null) {
+            heat.settle(level.getGameTime());
+        }
     }
 
     /** The kind of cabinet this rack is: which computers it takes. Rack units fit every type. */
@@ -2207,6 +2254,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (slot >= 0) {
             unitState(slot).kernel.cameUp(this);
         }
+        // The self-test on the way up warned of the cabinet's last trip; once a system is up, that is said.
+        heat.warned();
     }
 
     @Override
@@ -2609,8 +2658,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     /** Applies the cabinet's thermal throttle to a machine's capacity. */
     public long throttled(final long capacity) {
-        final int percent = thermalThrottlePercent();
-        return percent >= 100 ? capacity : capacity * percent / 100;
+        final double clock = heat.reading().clock();
+        return clock >= 1.0 ? capacity : (long) (capacity * clock);
     }
 
     @Override
@@ -2937,6 +2986,18 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return ups.reading(upsRating(), drawnWatts());
     }
 
+    /** The rack's UPS by name, the first Rack UPS mounted in it; empty without one. */
+    @Override
+    public Text upsName() {
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            final ItemStack unit = servers.getStackInSlot(slot);
+            if (RackUnitItem.is(unit, RackUnitItem.Kind.RACK_UPS)) {
+                return GameText.of(unit.getHoverName());
+            }
+        }
+        return Text.EMPTY;
+    }
+
     /** Sets what the rack's UPS battery holds, for a test to start an outage from. */
     public void setUpsCharge(final long joules) {
         ups.setCharge(joules);
@@ -3020,7 +3081,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     /*
      * Each running machine's supply wears for the time it has been on, once a minute and when it stops, twice as fast
-     * while the cabinet runs over its thermal budget. Degraded or short of a unit, the network's log warns; failed,
+     * while the cabinet's heat slows its machines. Degraded or short of a unit, the network's log warns; failed,
      * its system goes down on its red page, the machine goes dark and its switch brings nothing up until the supply is
      * replaced.
      */
@@ -3035,7 +3096,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             final ItemStack server = servers.getStackInSlot(slot);
             final ItemStack psu = ServerItem.psu(server);
             final PsuWearing.Outcome worn = PsuWearing.wear(psu, build.powerDraw(), ticks,
-                    thermalLoadWatts() > thermalBudgetWatts(), level.random);
+                    heat.reading().slowed(), level.random);
             if (worn == null) {
                 continue;
             }
@@ -3053,6 +3114,23 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                         PsuTexts.percent(worn.after().worst(worn.spec()))));
             }
         }
+    }
+
+    /*
+     * The cabinet's heat for the tick: one temperature for every machine in it, from what they draw against what it
+     * takes away. When not even a quarter of their clock holds it, the cabinet trips: every running bay goes down on
+     * its red page at once, and no switch brings one up until it has cooled.
+     */
+    private void tickHeat(final ServerLevel level) {
+        final int load = thermalLoadWatts();
+        if (!heat.tick(level, worldPosition, level.getGameTime(), load > 0, load, thermalBudgetWatts())) {
+            return;
+        }
+        forEachRunningBay(slot -> {
+            bayStopsSuddenly(slot, CrashCause.THERMAL_TRIP, CrashPages.Moment.none());
+            logBay(level, slot, EventLevel.ERROR, NetworkEvents.THERMAL_TRIP.with(heat.lastTrip(),
+                    ComputersServerConfig.restartBelow()));
+        });
     }
 
     /* Whether the server in {@code slot} has a power supply whose every unit has failed. */

@@ -282,7 +282,7 @@ public final class PostWall {
         drives(state, out);
         out.add(Line.blank());
         // What the machine warns of, in its firmware's words; the boot goes on and the warning stays written.
-        for (final PostWarnings.Warning warning : PostWarnings.of(state.psu())) {
+        for (final PostWarnings.Warning warning : PostWarnings.of(state)) {
             out.add(legacy ? Line.warning(of(PostWarnings.BIOS_WARNING), of(warning.bios()))
                     : Line.of(of(warning.cli())));
         }

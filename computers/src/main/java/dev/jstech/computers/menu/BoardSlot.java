@@ -7,25 +7,35 @@
  */
 package dev.jstech.computers.menu;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.IntSupplier;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
-import java.util.function.IntSupplier;
-
 /**
- * A hardware slot usable only while its relative index is within the count the installed motherboard offers, so the CPU/RAM/PCIe/disk bays appear and accept parts according to the board, and none of them do until a board is installed (the limit is then 0). Shared by every computer-assembly menu so the board-gated slot behaves identically everywhere.
+ * A hardware slot usable only while its relative index is within the count the installed motherboard offers, so the
+ * CPU/RAM/PCIe/disk bays appear and accept parts according to the board, and none of them do until a board is
+ * installed (the limit is then 0). Shared by every computer-assembly menu so the board-gated slot behaves identically
+ * everywhere. On a screen with two faces it shows on its own face only.
  */
 final class BoardSlot extends SlotItemHandler {
 
     private final int relativeIndex;
     private final IntSupplier boardLimit;
+    private final BooleanSupplier onFace;
 
     BoardSlot(final IItemHandler handler, final int index, final int x, final int y,
               final int relativeIndex, final IntSupplier boardLimit) {
+        this(handler, index, x, y, relativeIndex, boardLimit, () -> true);
+    }
+
+    BoardSlot(final IItemHandler handler, final int index, final int x, final int y,
+              final int relativeIndex, final IntSupplier boardLimit, final BooleanSupplier onFace) {
         super(handler, index, x, y);
         this.relativeIndex = relativeIndex;
         this.boardLimit = boardLimit;
+        this.onFace = onFace;
     }
 
     @Override
@@ -34,7 +44,7 @@ final class BoardSlot extends SlotItemHandler {
          * Within the board's slot count, or already holding a part, so a component is never
          * trapped behind a smaller board swapped in later.
          */
-        return relativeIndex < boardLimit.getAsInt() || hasItem();
+        return onFace.getAsBoolean() && (relativeIndex < boardLimit.getAsInt() || hasItem());
     }
 
     @Override

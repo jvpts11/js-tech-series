@@ -8,6 +8,7 @@
 package dev.jstech.computers.gui.layout;
 
 import dev.jstech.computers.hardware.CaseBays;
+import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -53,18 +54,31 @@ public final class AssemblyGeometry {
 
     /** What a seat takes. */
     public enum SeatKind {
-        BOARD, CPU, RAM, CARD, PSU, BAY, DISK
+        BOARD, CPU, RAM, CARD, PSU, BAY, DISK, COOLER, FAN
+    }
+
+    /**
+     * The two faces of a case that cools its machine (computers/docs/design/temperature.md): the board with its parts,
+     * and the cooling, a cooler seat over every processor and the case's fan seats where its fans go.
+     */
+    public enum Face {
+        BOARD, COOLING
     }
 
     /**
      * One seat: a part's slot where the part sits.
      *
      * @param kind  what it takes
-     * @param index which of its kind it is, from 0
+     * @param index which of its kind it is, from 0: a fan seat's number as its case numbers them, rear, top, front
      * @param x     its left, window-relative
      * @param y     its top, window-relative
      */
     public record Seat(SeatKind kind, int index, int x, int y) {
+
+        /** The face it is on: a cooler's or a fan's seat on the cooling face, every other on the board's. */
+        public Face face() {
+            return kind == SeatKind.COOLER || kind == SeatKind.FAN ? Face.COOLING : Face.BOARD;
+        }
     }
 
     /** A box on the screen, window-relative. */
@@ -75,6 +89,8 @@ public final class AssemblyGeometry {
     private final int bays;
     private final boolean supplyAtTop;
     private final boolean secondRow;
+    /** How the case cools: its fan seats, and whether it has a cooling face at all. */
+    private final CaseCooling cooling;
     private final int readouts;
     private final boolean operations;
     private final int switches;
@@ -160,20 +176,26 @@ public final class AssemblyGeometry {
     private static final int MAINFRAME_DISKS = 4;
     /** The rack server's wall of fans, five high. */
     private static final int SERVER_FANS = 5;
+    /** The tabs of the case's two faces under the lamps: their height and the gap between them. */
+    private static final int TAB_H = 13;
+    private static final int TAB_GAP = 2;
 
     /**
      * @param kind        which case
      * @param bays        its 5.25-inch bays (the towers only)
      * @param supplyAtTop whether its supply sits at the top of the back panel, as in the old towers
      * @param secondRow   whether a tower seats a second processor and four more modules under the first row
-     * @param readouts    how many readouts its front panel shows
+     * @param cooling     how its case cools: a cooling face, with a cooler over every processor and its fan seats, for
+     *                    any but {@link CaseCooling#NONE}
+     * @param readouts    how many readouts its front panel shows, on the face that shows the most
      */
     public AssemblyGeometry(final Kind kind, final int bays, final boolean supplyAtTop, final boolean secondRow,
-                            final int readouts) {
+                            final CaseCooling cooling, final int readouts) {
         this.kind = kind;
         this.bays = kind == Kind.TOWER ? bays : 0;
         this.supplyAtTop = kind == Kind.TOWER && supplyAtTop;
         this.secondRow = kind == Kind.TOWER && secondRow;
+        this.cooling = kind == Kind.SERVER ? CaseCooling.NONE : cooling;
         this.readouts = readouts;
         this.operations = kind == Kind.MAINFRAME;
         // A server has no switches of its own: it is switched on and off in its rack.
@@ -185,38 +207,51 @@ public final class AssemblyGeometry {
         this.rightX = tower ? TOWER_RIGHT_X : BIG_RIGHT_X;
         this.frontX = trayRight + 2;
         this.caseRight = frontX + 21;
-        this.seats = Collections.unmodifiableList(seatMap());
+        final List<Seat> board = seatMap();
         int bottom = 0;
-        for (final Seat seat : seats) {
+        for (final Seat seat : board) {
             bottom = Math.max(bottom, seat.y() + (seat.kind() == SeatKind.CARD && !tower ? 22 : 18));
         }
         if (kind == Kind.SERVER) {
             bottom = Math.max(bottom, TOP + (SERVER_FANS - 1) * PITCH + 18);
         }
         this.caseBottom = bottom + 8;
+        board.addAll(coolingSeats(board));
+        this.seats = Collections.unmodifiableList(board);
         final int rightBottom = POWER_Y + POWER_H + 4 + readouts * READOUT_PITCH;
         this.inventoryY = Math.max(caseBottom + (operations ? OPERATIONS_H + 2 : 0) + 6, rightBottom + 6);
         this.height = inventoryY + 84;
     }
 
     /**
-     * A tower's geometry for its era's case: its bays, its supply at the top of the back panel in the towers up to the
-     * Transition's, at the foot in the newer ones, and the second row of a tower that takes {@code boards} when one of
-     * them is a workstation's ({@link TowerBoards#secondRow}).
+     * A tower's geometry for its era's case, cooling as {@code cooling} says: its bays, its supply at the top of the
+     * back panel in the towers up to the Transition's, at the foot in the newer ones, and the second row of a tower
+     * that takes {@code boards} when one of them is a workstation's ({@link TowerBoards#secondRow}).
      */
-    public static AssemblyGeometry tower(final Era era, final Set<FormFactor> boards, final int readouts) {
+    public static AssemblyGeometry tower(final Era era, final Set<FormFactor> boards, final CaseCooling cooling,
+                                         final int readouts) {
         return new AssemblyGeometry(Kind.TOWER, CaseBays.of(era), era.isAtMost(HardwareEra.TRANSITION),
-                TowerBoards.secondRow(boards), readouts);
+                TowerBoards.secondRow(boards), cooling, readouts);
     }
 
-    /** The Mainframe's geometry. */
+    /** The Mainframe's geometry: its cabinet cools as {@link CaseCooling#MAINFRAME}, a cooler over each socket. */
     public static AssemblyGeometry mainframe(final int readouts) {
-        return new AssemblyGeometry(Kind.MAINFRAME, 0, false, false, readouts);
+        return new AssemblyGeometry(Kind.MAINFRAME, 0, false, false, CaseCooling.MAINFRAME, readouts);
     }
 
-    /** A rack server's geometry. */
+    /** A rack server's geometry: its rack cools it, so it has no cooling face. */
     public static AssemblyGeometry server(final int readouts) {
-        return new AssemblyGeometry(Kind.SERVER, 0, false, false, readouts);
+        return new AssemblyGeometry(Kind.SERVER, 0, false, false, CaseCooling.NONE, readouts);
+    }
+
+    /** Whether the case has a cooling face, and the tabs to turn to it. */
+    public boolean cooled() {
+        return !cooling.equals(CaseCooling.NONE);
+    }
+
+    /** How the case cools. */
+    public CaseCooling cooling() {
+        return cooling;
     }
 
     public Kind kind() {
@@ -242,15 +277,51 @@ public final class AssemblyGeometry {
         return secondRow;
     }
 
-    /** Whether {@code seat} is one of the second row's, which shows only while a two-socket board is in. */
+    /**
+     * Whether {@code seat} is one of the second row's, which shows only while a two-socket board is in: the second
+     * processor, its modules, and the cooler over it.
+     */
     public boolean inSecondRow(final Seat seat) {
-        return secondRow && (seat.kind() == SeatKind.CPU && seat.index() > 0
+        return secondRow && ((seat.kind() == SeatKind.CPU || seat.kind() == SeatKind.COOLER) && seat.index() > 0
                 || seat.kind() == SeatKind.RAM && seat.index() >= TOWER_RAM);
     }
 
-    /** Every seat, in the order the machine's slots run. */
+    /** Every seat, in the order the machine's slots run: the board's face's first, then the cooling face's. */
     public List<Seat> seats() {
         return seats;
+    }
+
+    /** The seats of one face, in order. */
+    public List<Seat> seats(final Face face) {
+        final List<Seat> out = new ArrayList<>();
+        for (final Seat seat : seats) {
+            if (seat.face() == face) {
+                out.add(seat);
+            }
+        }
+        return out;
+    }
+
+    /** Where the case's fan seat {@code seat} stands: at the rear, on the top or at the front. */
+    public CaseCooling.Side fanSide(final int seat) {
+        return cooling.side(seat);
+    }
+
+    /** The tab that turns the screen to {@code face}, under the lamps; only a case that cools has them. */
+    public Box tab(final Face face) {
+        final Box lamps = lamps();
+        final int half = (lamps.w() - TAB_GAP) / 2;
+        return new Box(lamps.x() + (face == Face.BOARD ? 0 : half + TAB_GAP), lamps.y() + LAMPS_H + 5, half, TAB_H);
+    }
+
+    /** Where the cooling face's caption of its top fan seats goes: over the first of them; none for a case without. */
+    public int topCaptionX() {
+        for (final Seat seat : seats(SeatKind.FAN)) {
+            if (cooling.side(seat.index()) == CaseCooling.Side.TOP) {
+                return seat.x();
+            }
+        }
+        return -1;
     }
 
     /** The seats of one kind, in order. */
@@ -379,7 +450,7 @@ public final class AssemblyGeometry {
     public GuiLayout layout(final String cardKey) {
         final GuiLayout l = new GuiLayout(width, height);
         final int cpus = seats(SeatKind.CPU).size();
-        for (final Seat seat : seats) {
+        for (final Seat seat : seats(Face.BOARD)) {
             final String key = switch (seat.kind()) {
                 case BOARD -> "mobo";
                 case PSU -> "psu";
@@ -388,9 +459,46 @@ public final class AssemblyGeometry {
                 case CARD -> cardKey + "_" + seat.index();
                 case BAY -> "bay_" + seat.index();
                 case DISK -> "disk_" + seat.index();
+                case COOLER, FAN -> throw new IllegalStateException("a cooling seat on the board's face");
             };
             l.slot(key, seat.x(), seat.y());
         }
+        panels(l);
+        l.text("rearCaption", REAR_X, RAIL_Y, 4, 0.75f);
+        l.text("cpuCaption", CPU_X, RAIL_Y, 3, 0.75f);
+        l.text("dimmCaption", dimmX, RAIL_Y, 4, 0.75f);
+        if (hasFront()) {
+            l.text("frontCaption", frontX - 2, RAIL_Y, 5, 0.75f);
+        }
+        return l;
+    }
+
+    /**
+     * The cooling face's layout, which the menu seats the cooling slots from and the tests check: a cooler seat over
+     * every processor ({@code cooler_<i>}), the case's fan seats ({@code fan_<i>}, rear, top, front), the panels, the
+     * inventory and the captions. A case that does not cool has none of it.
+     */
+    public GuiLayout coolingLayout() {
+        final GuiLayout l = new GuiLayout(width, height);
+        for (final Seat seat : seats(Face.COOLING)) {
+            l.slot((seat.kind() == SeatKind.COOLER ? "cooler_" : "fan_") + seat.index(), seat.x(), seat.y());
+        }
+        panels(l);
+        if (cooling.rearFans() > 0) {
+            l.text("rearCaption", REAR_X, RAIL_Y, 4, 0.75f);
+        }
+        l.text("coolerCaption", CPU_X, RAIL_Y, 7, 0.75f);
+        if (topCaptionX() >= 0) {
+            l.text("topCaption", topCaptionX(), RAIL_Y, 3, 0.75f);
+        }
+        if (cooling.frontFans() > 0) {
+            l.text("frontCaption", frontX - 2, RAIL_Y, 5, 0.75f);
+        }
+        return l;
+    }
+
+    /* The front panel, the operations strip, the service panel, the tabs and the inventory, on either face. */
+    private void panels(final GuiLayout l) {
         final Box power = power();
         l.box("power", power.x(), power.y(), power.w(), power.h());
         for (int i = 0; i < readouts; i++) {
@@ -407,14 +515,44 @@ public final class AssemblyGeometry {
         }
         final Box lamps = lamps();
         l.box("lamps", lamps.x(), lamps.y(), lamps.w(), lamps.h());
-        l.playerInventory(INVENTORY_X, inventoryY);
-        l.text("rearCaption", REAR_X, RAIL_Y, 4, 0.75f);
-        l.text("cpuCaption", CPU_X, RAIL_Y, 3, 0.75f);
-        l.text("dimmCaption", dimmX, RAIL_Y, 4, 0.75f);
-        if (hasFront()) {
-            l.text("frontCaption", frontX - 2, RAIL_Y, 5, 0.75f);
+        if (cooled()) {
+            for (final Face face : Face.values()) {
+                final Box tab = tab(face);
+                l.box("tab_" + face.name(), tab.x(), tab.y(), tab.w(), tab.h());
+            }
         }
-        return l;
+        l.playerInventory(INVENTORY_X, inventoryY);
+    }
+
+    /*
+     * The cooling face's seats (computers/docs/design/temperature.md): a cooler over every processor, where the
+     * processor sits, and the case's fan seats where its fans go: the rear's at the top of the back panel, under the
+     * supply in the old towers; the top's over the memory; the front's down the front,
+     * the last level with the lowest seat of the board's face.
+     */
+    private List<Seat> coolingSeats(final List<Seat> board) {
+        final List<Seat> out = new ArrayList<>();
+        if (!cooled()) {
+            return out;
+        }
+        for (final Seat cpu : board) {
+            if (cpu.kind() == SeatKind.CPU) {
+                out.add(new Seat(SeatKind.COOLER, cpu.index(), cpu.x(), cpu.y()));
+            }
+        }
+        int seat = 0;
+        for (int i = 0; i < cooling.rearFans(); i++) {
+            out.add(new Seat(SeatKind.FAN, seat++, REAR_X, TOP + (supplyAtTop ? PITCH : 0) + i * PITCH));
+        }
+        for (int i = 0; i < cooling.topFans(); i++) {
+            final int x = cooling.topFans() == 1 ? dimmX + PITCH + PITCH / 2 : dimmX + (i + 1) * PITCH;
+            out.add(new Seat(SeatKind.FAN, seat++, x, TOP));
+        }
+        final int lowest = caseBottom - 8 - 18;
+        for (int i = 0; i < cooling.frontFans(); i++) {
+            out.add(new Seat(SeatKind.FAN, seat++, frontX, lowest - (cooling.frontFans() - 1 - i) * PITCH));
+        }
+        return out;
     }
 
     private List<Seat> seatMap() {

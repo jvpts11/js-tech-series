@@ -62,8 +62,9 @@ public final class HardwareItems {
 
     /**
      * The catalogue's order in the creative tab: era by era (Vintage to Singularity), and within each era
-     * motherboards, then CPUs, RAM, GPUs and sound cards, so the progression reads cleanly; then the supplies and the
-     * disks, which follow every era. Parts the order ranks alike keep the order they are declared in.
+     * motherboards, then CPUs, RAM, GPUs and sound cards, the bay drives, the coolers and the case fans, so the
+     * progression reads cleanly; then the supplies and the disks, which follow every era. Parts the order ranks alike
+     * keep the order they are declared in.
      */
     public static final Comparator<Item> CREATIVE_ORDER = Comparator.comparingInt(HardwareItems::shelf)
             .thenComparingInt(item -> era(item).level())
@@ -1704,15 +1705,17 @@ public final class HardwareItems {
         }
         final HardwareRegistry.Part part = HardwareRegistry.part(item);
         if (part == null) {
-            return 6;
+            return 8;
         }
         return switch (part.kind()) {
             case MOTHERBOARD -> 0;
             case PROCESSOR -> 1;
             case MEMORY -> 2;
             case GRAPHICS_CARD -> 3;
-            case EXPANSION_CARD -> part.spec() instanceof SoundCardSpec ? 4 : 6;
-            default -> 6;
+            case EXPANSION_CARD -> part.spec() instanceof SoundCardSpec ? 4 : 8;
+            case COOLER -> 6;
+            case CASE_FAN -> 7;
+            default -> 8;
         };
     }
 }

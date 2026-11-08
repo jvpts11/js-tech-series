@@ -30,7 +30,7 @@ public class PersonalComputerScreen extends AbstractTowerAssemblyScreen<Personal
 
     @Override
     protected AssemblyGeometry makeGeometry() {
-        return PersonalComputerLayout.geometry(caseEra());
+        return PersonalComputerLayout.geometry(caseEra(), menu.cooling());
     }
 
     @Override
@@ -54,6 +54,6 @@ public class PersonalComputerScreen extends AbstractTowerAssemblyScreen<Personal
                 new Readout(GameText.resolve(AssemblyTexts.RAM_BUFFER),
                         JsTechTheme.fmt(menu.ramBuffer()) + " " + GameText.resolve(AssemblyTexts.ITEMS),
                         JsTechTheme.text()),
-                network(network), draw());
+                network(network), draw(), temp());
     }
 }

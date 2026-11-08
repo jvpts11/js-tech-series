@@ -29,6 +29,7 @@ import dev.jstech.computers.crafting.PendingCraftOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.engine.INetworkEngine;
 import dev.jstech.computers.engine.NetworkOperationsService;
+import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
@@ -138,7 +139,10 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     public static final int PSU_SLOT = 19;
     public static final int DISK_SLOTS_START = 20;
     public static final int DISK_SLOTS = 4;
-    public static final int TOTAL_SLOTS = 24;
+    /** A cooler over each processor's socket, after the disks so a cabinet saved before them keeps its parts. */
+    public static final int COOLER_SLOTS_START = 24;
+    public static final int COOLER_SLOTS = 4;
+    public static final int TOTAL_SLOTS = 28;
 
     public static final int STORAGE_SLOTS = 27;
     /** What a Mainframe's cabinet counts, whatever its era: the slots above are where they sit; it has no bays. */
@@ -329,10 +333,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /**
      * What a Mainframe of {@code era} is: the MTX board of its own era, which every shipped era makes; a board of a
-     * different era is neither installable nor counted in the build.
+     * different era is neither installable nor counted in the build. Its cabinet cools as much as many towers, with a
+     * cooler over each socket and no fan seats.
      */
     public static ComputerDef computer(final Era era) {
-        return new ComputerDef(era, Set.of(FormFactor.MTX), HostScope.MAINFRAME, PARTS);
+        return new ComputerDef(era, Set.of(FormFactor.MTX), HostScope.MAINFRAME, PARTS, CaseCooling.MAINFRAME);
     }
 
     /*
