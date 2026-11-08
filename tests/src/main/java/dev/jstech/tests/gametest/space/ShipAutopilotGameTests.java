@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
@@ -109,6 +110,11 @@ public final class ShipAutopilotGameTests {
      * land is kept loaded for it, in chunks; how far along its stretch a block stands in its way.
      */
     private static final int RUNWAY_NORTH = 150;
+    /*
+     * How high a wheeled ship is taken up before it lands on a runway, the runway laid as high: over the tallest arena
+     * of the whole battery, the rocket hangar's, whose barrier walls would otherwise stand across the stretch.
+     */
+    private static final double RUNWAY_HIGH = 130;
     private static final int RUNWAY_BEHIND = 8;
     private static final int RUNWAY_CHUNKS = 15;
     private static final int BLOCKED_AT = 30;
@@ -229,7 +235,7 @@ public final class ShipAutopilotGameTests {
                 .thenExecute(() -> {
                     final BlockPos seat = aboard(ship[0], plan(helper, WHEELS_SHIP).where(spot(helper, WHEELS_SHIP,
                             ShipKitBlocks.PILOT_SEAT.getId())));
-                    aloft(ship[0], HIGH);
+                    aloft(ship[0], RUNWAY_HIGH);
                     pilot[0] = seated(helper, seat);
                     // A runway laid far to the north in the sky, its beacon facing north, the way it runs.
                     beacon[0] = skyRunwayNorthOf(level, ship[0].pose());
@@ -239,7 +245,7 @@ public final class ShipAutopilotGameTests {
                             && engaged.get().runway().orElse(-1.0) == 0 && engaged.get().cleared()
                             && engaged.get().spot().orElseThrow().equals(Vec3.atBottomCenterOf(beacon[0])),
                             "on wheels, its key at the helm engages LAND onto the runway, its stretch found clear: "
-                            + engaged);
+                            + engaged + "; it saw" + runwaysSeen(level, ship[0]));
                 })
                 .thenWaitUntil(() -> {
                     helper.assertTrue(beacon[0] != null, "a runway was laid");
@@ -290,7 +296,7 @@ public final class ShipAutopilotGameTests {
                 .thenExecute(() -> {
                     final BlockPos seat = aboard(ship[0], plan(helper, WHEELS_SHIP).where(spot(helper, WHEELS_SHIP,
                             ShipKitBlocks.PILOT_SEAT.getId())));
-                    aloft(ship[0], HIGH);
+                    aloft(ship[0], RUNWAY_HIGH);
                     pilot[0] = seated(helper, seat);
                     // A runway laid in the sky to the north, and a block across its stretch, where the ship would roll.
                     beacon[0] = skyRunwayNorthOf(level, ship[0].pose());
@@ -582,8 +588,9 @@ public final class ShipAutopilotGameTests {
 
     /*
      * A runway laid in the sky a way north of {@code at}, as high as the ship flies there, clear of whatever the tests
-     * beside this one stand on the land: a floor of stone from a little behind its beacon to the end of its stretch,
-     * as wide as the stretch, its beacon on it facing north, the way it runs; where the beacon stands.
+     * beside this one stand on the land, the ship taken over every arena's walls: a floor of stone from a little behind
+     * its beacon to the end of its stretch, as wide as the stretch, its beacon on it facing north, the way it runs;
+     * where the beacon stands.
      */
     private static BlockPos skyRunwayNorthOf(final ServerLevel level, final StructurePose at) {
         final BlockPos beacon = new BlockPos(Mth.floor(at.x()), Mth.floor(at.y()), Mth.floor(at.z()) - RUNWAY_NORTH);
@@ -595,6 +602,49 @@ public final class ShipAutopilotGameTests {
         level.setBlockAndUpdate(beacon, ShipLandingBlocks.BEACON.get().defaultBlockState()
                 .setValue(RunwayBeaconBlock.FACING, Direction.NORTH));
         return beacon;
+    }
+
+    /*
+     * What a LAND on wheels saw of the world's runways, for a failure to say why it took none: each beacon, how far,
+     * whether its stretch was found clear, the first block in its way and the other structures on it.
+     */
+    private static String runwaysSeen(final ServerLevel level, final MovingStructure ship) {
+        final Vec3 at = new Vec3(ship.pose().x(), ship.pose().y(), ship.pose().z());
+        final StringBuilder seen = new StringBuilder();
+        for (final ShipLandings.Beacon beacon : ShipLandings.beacons(level)) {
+            final Direction way = beacon.way();
+            final Direction right = way.getClockWise();
+            seen.append(" beacon ").append(beacon.at().toShortString()).append(' ')
+                    .append(Math.round(beacon.foot().distanceTo(at))).append(" m away, clear ")
+                    .append(Runways.clear(level, beacon, ship));
+            inTheWay:
+            for (int along = 1; along <= ShipAutopilots.RUNWAY_LENGTH; along++) {
+                for (int across = -Runways.HALF_WIDTH; across <= Runways.HALF_WIDTH; across++) {
+                    final BlockPos foot = beacon.at().relative(way, along).relative(right, across);
+                    if (!level.getBlockState(foot.below()).isFaceSturdy(level, foot.below(), Direction.UP)) {
+                        seen.append(", no floor under ").append(foot.toShortString());
+                        break inTheWay;
+                    }
+                    for (int up = 0; up < Runways.HEADROOM; up++) {
+                        if (!level.getBlockState(foot.above(up)).getCollisionShape(level, foot.above(up)).isEmpty()) {
+                            seen.append(", ").append(level.getBlockState(foot.above(up))).append(" at ")
+                                    .append(foot.above(up).toShortString());
+                            break inTheWay;
+                        }
+                    }
+                }
+            }
+            final AABB stretch = AABB.encapsulatingFullBlocks(beacon.at().relative(way).relative(right,
+                    -Runways.HALF_WIDTH), beacon.at().relative(way, ShipAutopilots.RUNWAY_LENGTH).relative(right,
+                    Runways.HALF_WIDTH).above(Runways.HEADROOM));
+            for (final IStructureBody body : MovingStructures.near(level, stretch)) {
+                if (body != ship) {
+                    seen.append(", structure ").append(body.id()).append(" over ").append(body.worldBox());
+                }
+            }
+            seen.append(';');
+        }
+        return seen.isEmpty() ? " no beacon" : seen.toString();
     }
 
     /* Takes the sky runway whose beacon stands at {@code beacon} away. */
