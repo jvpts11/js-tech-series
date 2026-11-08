@@ -12,6 +12,7 @@ import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.api.language.ILanguageProcess;
+import dev.jstech.core.diagnostic.CostMap;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.BenchReport;
 import dev.jstech.tests.testkit.BenchSupport;
@@ -20,8 +21,10 @@ import io.netty.buffer.Unpooled;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -55,8 +58,6 @@ public final class ProgramBenchmarkGameTests {
     /** Calls before a direct timing starts, for the JIT to settle on the path being measured. */
     private static final int WARMUP_CALLS = 50;
     private static final int MEASURED_CALLS = 200;
-    /** How many ticks {@link MinecraftServer#getAverageTickTimeNanos()} averages over. */
-    private static final int TICK_AVERAGE_WINDOW = 100;
 
     /** A tick this long drops the server below 20 TPS. */
     private static final double CATASTROPHE_MS = 50.0;
@@ -67,6 +68,8 @@ public final class ProgramBenchmarkGameTests {
 
     private static final int[] PROGRAM_COUNTS = {1, 8, 32};
     private static final int MACHINES = 24;
+    /** How long each of the machines' cost measures lasts, in seconds of ticks. */
+    private static final int MEASURE_SECONDS = 5;
     private static final int SAVED_PROGRAMS = 32;
 
     /** A program that never finishes its tick: every instruction the machine gives it is spent. */
@@ -291,43 +294,65 @@ public final class ProgramBenchmarkGameTests {
                 .thenSucceed();
     }
 
-    /** Two dozen machines, idle and then each running one busy program: what the whole server tick pays. */
-    @GameTest(template = BENCH_ARENA, batch = "jsc_bench_machines", timeoutTicks = 1200)
+    /**
+     * Two dozen machines, idle and then each running one busy program: what their own ticks cost the server, read from
+     * their places in the Core's cost map. A whole-server average would also count what earlier tests left the server
+     * doing (chunks still loading and saving), which grew with the battery and read as the machines' cost.
+     */
+    @GameTest(template = BENCH_ARENA, batch = "jsc_bench_machines", timeoutTicks = 2400)
     public static void bench_dozensOfBusyMachines(final GameTestHelper helper) {
-        final BenchReport report = new BenchReport("machines");
+        final BenchReport report = new BenchReport("machine_ticks");
         final MinecraftServer server = helper.getLevel().getServer();
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final long buildStart = System.nanoTime();
         final List<PersonalComputerBlockEntity> machines = new ArrayList<>();
+        final Set<BlockPos> places = new HashSet<>();
         for (int i = 0; i < MACHINES; i++) {
-            machines.add(world.placeRunningPersonalComputer(new BlockPos(2 + (i % 6) * 3, 2, 2 + (i / 6) * 3)));
+            final PersonalComputerBlockEntity pc =
+                    world.placeRunningPersonalComputer(new BlockPos(2 + (i % 6) * 3, 2, 2 + (i / 6) * 3));
+            machines.add(pc);
+            places.add(pc.getBlockPos());
         }
         report.put("build_ms", (System.nanoTime() - buildStart) / 1_000_000.0);
         report.put("machines", MACHINES);
-        final double[] first = {Double.NaN};
+        final double[] idle = {Double.NaN};
+        final double[] busy = {Double.NaN};
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + TICK_AVERAGE_WINDOW + 20,
-                        () -> first[0] = BenchSupport.averageTickMs(server))
-                // The better of two consecutive windows, so an autosave inside one of them is not read as the cost.
-                .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> BenchSupport.guarded(() -> {
-                    report.put("idle_ms", Math.min(first[0], BenchSupport.averageTickMs(server)));
+                .thenExecuteAfter(SETTLE + 20, () -> CostMap.measure(server, MEASURE_SECONDS,
+                        measure -> idle[0] = millisAt(measure, places)))
+                .thenWaitUntil(() -> helper.assertTrue(!Double.isNaN(idle[0]), "the idle machines are measured"))
+                .thenExecute(() -> BenchSupport.guarded(() -> {
                     for (final PersonalComputerBlockEntity pc : machines) {
                         final MachinePrograms.Started started = pc.programs().start("busy.sgs", BUSY, 1, pc);
                         helper.assertTrue(started.ok(), "a busy program starts on every machine: " + started.message());
                     }
                 }))
-                .thenExecuteAfter(TICK_AVERAGE_WINDOW + 20, () -> first[0] = BenchSupport.averageTickMs(server))
-                .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> BenchSupport.guarded(() -> {
-                    final double busy = Math.min(first[0], BenchSupport.averageTickMs(server));
+                .thenExecuteAfter(SETTLE + 20, () -> CostMap.measure(server, MEASURE_SECONDS,
+                        measure -> busy[0] = millisAt(measure, places)))
+                .thenWaitUntil(() -> helper.assertTrue(!Double.isNaN(busy[0]), "the busy machines are measured"))
+                .thenExecute(() -> BenchSupport.guarded(() -> {
                     for (final PersonalComputerBlockEntity pc : machines) {
                         assertAllAlive(helper, pc.programs(), 1);
                     }
-                    report.put("busy_ms", busy);
-                    report.put("busy_per_machine_us", busy * 1000.0 / MACHINES);
-                    helper.assertTrue(busy < CATASTROPHE_MS, MACHINES + " busy machines took " + busy + " ms a tick");
+                    report.put("idle_ms", idle[0]);
+                    report.put("busy_ms", busy[0]);
+                    report.put("busy_per_machine_us", busy[0] * 1000.0 / MACHINES);
+                    helper.assertTrue(busy[0] < CATASTROPHE_MS,
+                            MACHINES + " busy machines took " + busy[0] + " ms a tick");
                     finish(helper, report);
                 }))
                 .thenSucceed();
+    }
+
+    /* What the blocks at {@code places} cost a tick together over {@code measure}, in milliseconds. */
+    private static double millisAt(final CostMap.Measure measure, final Set<BlockPos> places) {
+        long nanos = 0L;
+        for (final CostMap.Entry entry : measure.places()) {
+            if (places.contains(entry.pos())) {
+                nanos += entry.nanosPerTick();
+            }
+        }
+        return nanos / 1_000_000.0;
     }
 
     /** Milliseconds a tick of these programs takes, timed straight on the machine's program table. */
