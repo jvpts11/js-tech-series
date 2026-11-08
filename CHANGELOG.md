@@ -514,6 +514,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   (`BakedGeometry.Part.seeThrough`): only they are drawn sorted back to front with what else is see-through, the rest
   of the model solid, in the same order every frame. The constructors without it are kept, drawing a mesh as its
   model's definition says. Experimental.
+- (Core) Thermal budgets: J's Core's API is at version 43. `IThermalBudget` is a machine's heat kept as a budget in
+  watts, as a computer's is: the heat its work makes now (`loadWatts`), the heat it can take away from itself
+  (`budgetWatts`), how hot it is in kelvin (`temperature`, not a number for one that keeps only its budget), the share
+  of its work it still does (`performance`) and whether it is over (`over`). A machine offers it on
+  `ThermalBudgets.BUDGET`, the same on every block of it. Experimental.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2046,6 +2051,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   reaches an era, or one of J's Industrial's tiers, each network it owns (the team of its Mainframe's operator)
   writes it into its event log, "Era Standard reached by" the team, and a job can wait for it, `WHEN ERA standard
   REACHED` or `WHEN TIER t3 REACHED`.
+- (Computers) A rack's heat for any mod: a Server Rack answers J's Core's thermal budget from any of its blocks, the
+  heat of the machines turned on in it against what its cabinet and Cooling Units take away, and the share of their
+  speed they keep while it is over.
 - (Computers) Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`

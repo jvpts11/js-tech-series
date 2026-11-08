@@ -335,6 +335,22 @@ cost in ticks; the cheapest plan not set aside runs.
 
 Register each with `event.plannerRule`, `plannerOperator`, `plannerStatistic`, `explainNode`.
 
+## Reading a machine's heat
+
+*Added 2026-11-08.*
+
+```java
+IThermalBudget rack = ThermalBudgets.at(level, pos, null);   // any block of a Server Rack
+if (rack != null && rack.over()) {
+    // its machines run at rack.performance() of their speed
+}
+```
+
+A Server Rack answers J's Core's thermal budget capability (`ThermalBudgets.BUDGET`, [Heat](../../core/docs/HEAT.md))
+from any of its blocks: the heat of the machines turned on in it (`loadWatts`), what its cabinet and its Cooling
+Units take away (`budgetWatts`), and the share of their speed its machines keep while it is over (`performance`).
+A rack keeps no temperature of its own, so its `temperature()` is not a number. Nothing is registered to read it.
+
 ## What is not open
 
 The calls a Σ# program can make are fixed, on purpose: a program built on one machine must mean the same thing on

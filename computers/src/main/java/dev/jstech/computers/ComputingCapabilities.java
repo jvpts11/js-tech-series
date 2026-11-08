@@ -8,14 +8,17 @@
 package dev.jstech.computers;
 
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
+import dev.jstech.computers.rack.RackThermalBudget;
+import dev.jstech.core.heat.ThermalBudgets;
 import dev.jstech.core.signal.Signals;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 /**
- * Exposes the Computing module's block capabilities that differ by side; an inventory, energy store or tank offered
- * on every side is declared as an exposed field of its block entity instead.
+ * Exposes the Computing module's block capabilities that differ by side, or that one block answers for another; an
+ * inventory, energy store or tank a block offers on every side is declared as an exposed field of its block entity
+ * instead.
  */
 public final class ComputingCapabilities {
 
@@ -37,5 +40,10 @@ public final class ComputingCapabilities {
         ComputerCraftIntegration.registerCapabilities(event);
         // A Redstone Interface says what it reads or emits to whatever reads the Core's signals.
         Signals.offer(event, ComputingModule.REDSTONE_INTERFACE_BE.get());
+        // A rack's heat as a budget, for whatever reads machines' heat through the Core, asked of any of its blocks.
+        ThermalBudgets.BUDGET.onBlockEntity(event, ComputingModule.SERVER_RACK_BE.get(),
+                (rack, side) -> new RackThermalBudget(rack));
+        ThermalBudgets.BUDGET.onBlockEntity(event, ComputingModule.SERVER_RACK_PART_BE.get(),
+                (part, side) -> RackThermalBudget.ofPart(part));
     }
 }

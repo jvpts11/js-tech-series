@@ -86,6 +86,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   reaches an era, or one of J's Industrial's tiers, each network it owns (the team of its Mainframe's operator)
   writes it into its event log, "Era Standard reached by" the team, and a job can wait for it, `WHEN ERA standard
   REACHED` or `WHEN TIER t3 REACHED`.
+- A rack's heat for any mod: a Server Rack answers J's Core's thermal budget from any of its blocks, the
+  heat of the machines turned on in it against what its cabinet and Cooling Units take away, and the share of their
+  speed they keep while it is over.
 - Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`

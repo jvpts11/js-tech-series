@@ -279,6 +279,37 @@ A machine of the Core's kit that makes heat declares its casing, what its work g
 to heat; past its limit it stops to cool and loses health while it stays past it, and starts again ten kelvin cooler.
 Taking its heat away is what radiators, heat pipes and coolers are for.
 
+## Machines whose heat is a budget
+
+*Added 2026-11-08.*
+
+Some machines keep their heat as a budget in watts instead of as a body of heat: the heat their work makes now
+against the heat they can take away from themselves, through their casing, their fans and their coolers. A computer
+is one; over its budget it slows down. Such a machine offers an `IThermalBudget` on the `ThermalBudgets.BUDGET`
+capability, the same on every block of it and every face:
+
+| Method | What it says |
+| --- | --- |
+| `loadWatts()` | the heat its work makes now, in watts |
+| `budgetWatts()` | the heat it can take away from itself, in watts |
+| `temperature()` | how hot it is, in kelvin, or not a number for a machine that keeps only its budget |
+| `performance()` | the share of its full work it does now, from 0 to 1 |
+| `over()` | whether it makes more heat than it takes away |
+
+```java
+// The mod that makes the machine, while the capabilities are registered:
+ThermalBudgets.BUDGET.onBlockEntity(event, MY_COMPUTER.get(), (computer, face) -> computer.thermalBudget());
+
+// Anything that reads it:
+IThermalBudget budget = ThermalBudgets.at(level, pos, null);
+if (budget != null && budget.over()) {
+    // it works at budget.performance() of its speed
+}
+```
+
+J's Computers' Server Racks answer it: their budget, the heat of the machines turned on in them, and the share of
+their speed they keep while over it.
+
 ## Too hot to touch
 
 *Added 2026-10-15.*

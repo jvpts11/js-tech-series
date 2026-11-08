@@ -22,7 +22,9 @@
  * no heat ({@link LevelHeatLines}). A block puts heat in or takes it out with a {@link HeatSource}, boils a liquid
  * with a {@link Boiler}, passes one through its wall with a {@link FluidPass}, and loses a cold liquid to the place's
  * heat with {@link BoilOff}; {@link HeatReadings} speaks a temperature in redstone, and {@link ThermalSight} shows
- * heat to a player who wears or holds an item that sees it.
+ * heat to a player who wears or holds an item that sees it. A machine whose heat is kept as a budget in watts, as a
+ * computer's is, the heat it makes against the heat it takes away, offers it as an {@link IThermalBudget} on
+ * {@link ThermalBudgets#BUDGET}.
  *
  * <p>How heat works and how a block holds it, from zero, is in {@code core/docs/HEAT.md}. An example that
  * compiles is the test mod's blocks that hold heat, a radiator, a heater, boilers and a heat exchanger among them

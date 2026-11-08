@@ -427,6 +427,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   (`BakedGeometry.Part.seeThrough`): only they are drawn sorted back to front with what else is see-through, the rest
   of the model solid, in the same order every frame. The constructors without it are kept, drawing a mesh as its
   model's definition says. Experimental.
+- Thermal budgets: J's Core's API is at version 43. `IThermalBudget` is a machine's heat kept as a budget in
+  watts, as a computer's is: the heat its work makes now (`loadWatts`), the heat it can take away from itself
+  (`budgetWatts`), how hot it is in kelvin (`temperature`, not a number for one that keeps only its budget), the share
+  of its work it still does (`performance`) and whether it is over (`over`). A machine offers it on
+  `ThermalBudgets.BUDGET`, the same on every block of it. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

@@ -6316,6 +6316,12 @@ stable 4
 10 dev.jstech.core.heat.IHeatPort  abstract double conductivity()
 10 dev.jstech.core.heat.IHeatPort  abstract double temperature()
 10 dev.jstech.core.heat.IHeatPort  abstract void exchange(double)
+43 dev.jstech.core.heat.IThermalBudget  type interface
+43 dev.jstech.core.heat.IThermalBudget  abstract double budgetWatts()
+43 dev.jstech.core.heat.IThermalBudget  abstract double loadWatts()
+43 dev.jstech.core.heat.IThermalBudget  abstract double performance()
+43 dev.jstech.core.heat.IThermalBudget  abstract double temperature()
+43 dev.jstech.core.heat.IThermalBudget  default boolean over()
 10 dev.jstech.core.heat.LevelHeat  type final class
 10 dev.jstech.core.heat.LevelHeat  boolean awake(BlockPos)
 10 dev.jstech.core.heat.LevelHeat  int awake()
@@ -6372,6 +6378,9 @@ stable 4
 10 dev.jstech.core.heat.Thermal  static final TextKey SPECIFIC_HEAT_NAME
 10 dev.jstech.core.heat.Thermal  static final TextKey SPECIFIC_HEAT_VALUE
 10 dev.jstech.core.heat.Thermal  static void declare()
+43 dev.jstech.core.heat.ThermalBudgets  type final class
+43 dev.jstech.core.heat.ThermalBudgets  static IThermalBudget at(Level, BlockPos, Direction)
+43 dev.jstech.core.heat.ThermalBudgets  static final CapabilityKind<IThermalBudget> BUDGET
 10 dev.jstech.core.heat.ThermalScale  type final class
 10 dev.jstech.core.heat.ThermalScale  static boolean apart(double, double)
 10 dev.jstech.core.heat.ThermalScale  static double warmth(double, double)
