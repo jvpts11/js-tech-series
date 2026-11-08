@@ -2041,6 +2041,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The world's events on the network: `QUERY events` lists the world events the network sees, under way
   where it stands or coming when a machine on it is the event's instrument; the event log writes each one expected,
   under way and over; and a job can wait for one, `WHEN EVENT mymod:solar_storm COMING` (or `UNDER WAY`, `ENDED`).
+- (Computers) Eras reached by building: the first working computer a player assembles of an era takes them and their
+  team to that era, along J's Core's axis of hardware eras that other mods can gate on, never back. When a team
+  reaches an era, or one of J's Industrial's tiers, each network it owns (the team of its Mainframe's operator)
+  writes it into its event log, "Era Standard reached by" the team, and a job can wait for it, `WHEN ERA standard
+  REACHED` or `WHEN TIER t3 REACHED`.
 - (Computers) Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`

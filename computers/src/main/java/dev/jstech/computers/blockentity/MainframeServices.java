@@ -418,6 +418,11 @@ final class MainframeServices {
         return removed;
     }
 
+    /** Hands the job agent a step the network's team reached. */
+    void stepReached(final String axis, final String step) {
+        jobAgent.reached(axis, step);
+    }
+
     /** Restarts a job: resumes it if paused and re-arms its trigger so it reschedules from now. */
     void restartJob(final String jobName) {
         pausedJobs.remove(jobName.toLowerCase(Locale.ROOT));

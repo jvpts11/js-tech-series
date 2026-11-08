@@ -1966,4 +1966,12 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     public void restartJob(final String jobName) {
         services.restartJob(jobName);
     }
+
+    /**
+     * Tells the jobs that the team owning the network reached {@code step} along {@code axis}, by the ids the progress
+     * saves them by: the ones waiting on it fire at the job agent's next look.
+     */
+    public void stepReached(final String axis, final String step) {
+        services.stepReached(axis, step);
+    }
 }

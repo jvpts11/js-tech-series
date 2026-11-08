@@ -17,6 +17,7 @@ import dev.jstech.computers.program.iql.IqlConditionParser;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
 import dev.jstech.computers.program.iql.IqlEventTrigger;
+import dev.jstech.computers.program.iql.IqlReachedTrigger;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -27,6 +28,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,7 +40,8 @@ import java.util.Map;
  * {@code EVERY <duration>} on a schedule, {@code WHEN <condition>} on the rising edge of the condition
  * (so it fires once when the condition becomes true, not every tick it stays true), and
  * {@code WHEN EVENT <kind> COMING | UNDER WAY | ENDED} at that step of a world event the network sees
- * ({@link IqlEventTrigger}). Firing runs the job's
+ * ({@link IqlEventTrigger}), and {@code WHEN ERA <era> REACHED} or {@code WHEN TIER <tier> REACHED} as the team
+ * that owns the network reaches that step ({@link IqlReachedTrigger}). Firing runs the job's
  * body through the {@link IqlEngine}, producing ordinary network Operations, and there is no special per-job
  * cost beyond those Operations. The agent evaluates every {@value #EVAL_INTERVAL} ticks to keep the
  * condition checks cheap; its scheduling state is transient (a reload reschedules from the next tick).
@@ -51,19 +54,27 @@ public final class IqlJobAgent {
     private long clock;
     private final Map<String, Long> lastFired = new HashMap<>();
     private final Map<String, Boolean> lastCondition = new HashMap<>();
+    /* The steps the network's team reached since the agent last looked, each heard once by the jobs waiting on it. */
+    private final List<Reached> reached = new ArrayList<>();
 
     public void tick(final MainframeBlockEntity mainframe, final ServerLevel level) {
         clock++;
+        if (clock % EVAL_INTERVAL != 0) {
+            return;
+        }
         /*
          * Jobs are the Automation Engine's: "at this time, or when this happens, do that", the same whichever
          * Network Operations Engine plans the network's work. A job's body is the network's language, so it still
-         * needs an engine running to be answered.
+         * needs an engine running to be answered. A step reached while no engine runs goes unheard, as a world event
+         * that passes while the network is not watching.
          */
-        if (!mainframe.isAutomationEngineActive() || clock % EVAL_INTERVAL != 0) {
+        if (!mainframe.isAutomationEngineActive()) {
+            reached.clear();
             return;
         }
         final List<IqlSavedObject> jobs = mainframe.iqlCatalog().ofType(IqlDefinition.ObjectType.JOB);
         if (jobs.isEmpty()) {
+            reached.clear();
             return;
         }
         IIqlView machine = null;
@@ -82,6 +93,15 @@ public final class IqlJobAgent {
                 JscEvents.awardOperator(mainframe, JscEvents.IQL_JOB);
             }
         }
+        reached.clear();
+    }
+
+    /**
+     * Tells the agent that the team owning its network reached {@code step} along the axis {@code axis}, both by the
+     * ids the progress saves them by; the jobs waiting on it fire at the agent's next look.
+     */
+    public void reached(final String axis, final String step) {
+        reached.add(new Reached(axis, step));
     }
 
     /** Re-arms a job's trigger so it reschedules from now (EVERY) or resets its edge detector (WHEN). */
@@ -123,6 +143,15 @@ public final class IqlJobAgent {
 
     private boolean shouldFireWhen(final IqlSavedObject job, final MainframeBlockEntity mainframe,
                                    final ServerLevel level) {
+        final IqlReachedTrigger step = IqlReachedTrigger.parse(job.triggerSpec());
+        if (step != null) {
+            for (final Reached heard : reached) {
+                if (step.names(heard.axis(), heard.step())) {
+                    return true;
+                }
+            }
+            return false;
+        }
         final IqlEventTrigger event = IqlEventTrigger.parse(job.triggerSpec());
         if (event != null) {
             return shouldFireOnEvent(job, event, mainframe, level);
@@ -188,5 +217,9 @@ public final class IqlJobAgent {
         final String id = name.contains(":") ? name : "minecraft:" + name;
         final ResourceLocation location = ResourceLocation.tryParse(id.toLowerCase(Locale.ROOT));
         return location == null ? null : BuiltInRegistries.ITEM.getOptional(location).orElse(null);
+    }
+
+    /* A step the team reached, by the ids of its axis and of the step. */
+    private record Reached(String axis, String step) {
     }
 }

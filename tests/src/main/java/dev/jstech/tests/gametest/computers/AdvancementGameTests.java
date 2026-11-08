@@ -27,6 +27,10 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.advancement.EventTrigger;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.jstechseries.tier.SeriesAxes;
+import dev.jstech.core.progression.PlayerProgress;
+import dev.jstech.core.progression.TeamProgress;
+import dev.jstech.core.team.CoreTeams;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachines;
@@ -187,6 +191,30 @@ public final class AdvancementGameTests {
             fit(computer);
             helper.assertTrue(done(player, "hardware/legacy_build"), "a working Legacy build earns its era");
             helper.assertFalse(done(player, "hardware/vintage_build"), "and not another era's");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** A working build moves whoever built it, and their team, to its era along J's Core's axis of eras. */
+    @GameTest(template = ARENA)
+    public static void hardwareChanged_aWorkingBuildMovesItsBuilderToItsEra(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper, UUID.randomUUID());
+        try {
+            final MinecraftServer server = helper.getLevel().getServer();
+            helper.assertValueEqual(PlayerProgress.reached(server, player.getUUID(), SeriesAxes.HARDWARE_ERA),
+                    HardwareEra.VINTAGE, "a new player starts at the first era");
+            helper.setBlock(WHERE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+            if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity computer)) {
+                throw new IllegalStateException("no legacy personal computer at " + WHERE);
+            }
+            MachineOperators.note(computer, player);
+            fit(computer);
+            helper.assertValueEqual(PlayerProgress.reached(server, player.getUUID(), SeriesAxes.HARDWARE_ERA),
+                    HardwareEra.LEGACY, "the builder reaches the Legacy");
+            helper.assertValueEqual(TeamProgress.reached(server, CoreTeams.teamOf(server, player.getUUID()),
+                    SeriesAxes.HARDWARE_ERA), HardwareEra.LEGACY, "and so does their team");
         } finally {
             leave(player);
         }

@@ -20,6 +20,7 @@ import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
 import dev.jstech.computers.audio.catalog.SoundfoundryCommand;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.datagen.JscDataGenerators;
+import dev.jstech.computers.eventlog.NetworkProgress;
 import dev.jstech.computers.eventlog.NetworkWorldEvents;
 import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.computers.hardware.HardwareKinds;
@@ -160,6 +161,7 @@ public class JsComputers {
         ScreenSessions.listen();
         IsmsTraces.listen();
         NetworkWorldEvents.listen();
+        NetworkProgress.listen();
         // A part's tooltip, whichever mod's item it is, on both sides: a server's own checks read it too.
         NeoForge.EVENT_BUS.addListener(PartTooltips::onTooltip);
     }

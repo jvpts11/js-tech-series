@@ -21,7 +21,10 @@ the storage, and the Operations being worked.
 **The network's event log** (added 2026-10-25), in the Network Manager's Log tab beside the Operations, writes
 down what happens to every machine: INFO (a machine switched on or off), WARN and ERROR (two Mainframes on one
 network). It filters by level, machine and period, prints, and exports to a text file on a disk of the Mainframe.
-A network keeps its last seven days, at most 2,000 events.
+A network keeps its last seven days, at most 2,000 events. When the team that owns the network (the team of its
+Mainframe's operator) reaches an era of hardware, or one of J's Industrial's tiers, the log says so in an INFO line
+("Era Standard reached by" the team); a team reaches an era the first time one of its players assembles a working
+computer of it (added 2026-11-08).
 
 ## Storage: items are data
 
@@ -113,7 +116,10 @@ QUERY disks
 - **Saved work** (engines that offer it): `CREATE VIEW`, `CREATE PROCEDURE` and `EXEC`, and `CREATE JOB` with
   `EVERY` a time or `WHEN` a condition, for the network to run on its own. A job can wait for a world event:
   `CREATE JOB safe AS EXEC shutdown WHEN EVENT mymod:solar_storm COMING` (or `UNDER WAY`, or `ENDED`), and answer it
-  on another mod's machine: `CREATE JOB shield AS RUN mymod:shield_up WHEN EVENT mymod:solar_storm COMING`.
+  on another mod's machine: `CREATE JOB shield AS RUN mymod:shield_up WHEN EVENT mymod:solar_storm COMING`. A job
+  can also wait for the network's team to reach an era or a tier: `CREATE JOB retool AS EXEC tooling WHEN ERA
+  standard REACHED`, or `WHEN TIER t3 REACHED`; it fires once, as the team gets there, if the Automation Engine is
+  running then.
 - A script is statements separated by `;`, with `--` comments, and can ask for values when it is run:
   `CRAFT <count, number, 64> <item, name, torch>`.
 
