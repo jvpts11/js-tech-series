@@ -67,6 +67,8 @@ public final class BootPhases {
     private long bootEndsAt;
     /** How long this coming-up takes in all, so a bar drawn half way through knows how far along it is. */
     private int bootTicksTotal;
+    /** The check of disks left unclean that this coming-up starts with, which its length includes. */
+    private DiskCheck diskCheck = DiskCheck.NONE;
     /** The game time the system finished coming up, for how long it has been up; zero until it has. */
     private long upSince;
 
@@ -147,6 +149,14 @@ public final class BootPhases {
     /** The system has finished coming up, now. */
     public void systemUp(final long now) {
         this.upSince = now;
+    }
+
+    /**
+     * Whether the machine's system has its disks in use: past its self-test and its boot menu, coming up, up or on its
+     * way down. Asked rather than {@link #upFor}, which a machine loaded already running never started counting.
+     */
+    public boolean systemMounted() {
+        return !this.needsPost && !this.halted && !this.atMenu;
     }
 
     /** How long the system has been up, in ticks; zero for one that has not come up since the power came on. */
@@ -263,8 +273,21 @@ public final class BootPhases {
 
     /** Says how long this coming-up takes, and so when it ends. */
     public void timeBoot(final long now, final int ticks) {
-        this.bootTicksTotal = Math.max(1, ticks);
+        timeBoot(now, ticks, DiskCheck.NONE);
+    }
+
+    /**
+     * Says how long this coming-up takes, the check of disks left unclean at its head included, and so when it ends.
+     */
+    public void timeBoot(final long now, final int ticks, final DiskCheck check) {
+        this.diskCheck = check;
+        this.bootTicksTotal = Math.max(1, ticks + check.ticks());
         this.bootEndsAt = now + this.bootTicksTotal;
+    }
+
+    /** The check of disks at the head of the coming-up under way, or {@link DiskCheck#NONE}. */
+    public DiskCheck diskCheck() {
+        return this.booting ? this.diskCheck : DiskCheck.NONE;
     }
 
     /** How long the coming-up under way takes in all. */
@@ -287,6 +310,7 @@ public final class BootPhases {
         this.booting = false;
         this.bootEndsAt = 0L;
         this.bootTicksTotal = 0;
+        this.diskCheck = DiskCheck.NONE;
     }
 
     /**

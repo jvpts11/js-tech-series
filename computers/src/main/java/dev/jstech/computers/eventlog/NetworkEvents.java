@@ -8,13 +8,19 @@
 package dev.jstech.computers.eventlog;
 
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,15 +34,25 @@ public final class NetworkEvents {
     public static final TextKey TURNED_ON = TextKey.of("jsc.event_log.turned_on", "Turned on");
     public static final TextKey TURNED_OFF = TextKey.of("jsc.event_log.turned_off", "Turned off");
     public static final TextKey POWER_LOST = TextKey.of("jsc.event_log.power_lost", "Power lost: no energy reached it");
+    public static final TextKey UNSTABLE_POWER = TextKey.of("jsc.event_log.unstable_power",
+            "Power lost: the line gave less than it draws (unstable power)");
+    public static final TextKey ITEMS_LOST = TextKey.of("jsc.event_log.items_lost",
+            "Lost in transit when it went dark: %s");
     public static final TextKey CONFLICT = TextKey.of("jsc.event_log.conflict",
             "Network conflict: a second Mainframe on the network, near %s");
     public static final TextKey CONFLICT_RESOLVED = TextKey.of("jsc.event_log.conflict_resolved",
             "Network conflict resolved");
     /** What the machine column shows for something of the whole network. */
     public static final TextKey WHOLE_NETWORK = TextKey.of("jsc.event_log.network", "network");
+    /* One kind lost: so many of an item, so many millibuckets of a fluid or a chemical; and the kinds not named. */
+    private static final TextKey LOST_ITEMS = TextKey.of("jsc.event_log.lost_items", "%s %s");
+    private static final TextKey LOST_DATA = TextKey.of("jsc.event_log.lost_data", "%s mB of %s");
+    private static final TextKey LOST_AND_MORE = TextKey.of("jsc.event_log.lost_and_more", "%s and %s more");
 
     /** The longest machine name a log keeps. */
     public static final int MOST_NAME = 48;
+    /* The kinds a loss names, the largest first; the rest are counted. */
+    private static final int LOST_NAMED = 3;
 
     private NetworkEvents() {
     }
@@ -62,22 +78,43 @@ public final class NetworkEvents {
         }
     }
 
-    /** Writes that a machine went dark for want of energy. */
-    public static void powerLost(final ServerLevel level, @Nullable final NetworkUuid network,
-                                 @Nullable final NodeUuid machine, final String machineName) {
-        if (machine != null) {
-            record(level, network, EventLevel.ERROR, machine, machineName, POWER_LOST.text());
+    /**
+     * Writes what a machine's Operations were carrying when it went dark suddenly, {@code lost} by kind: how much of
+     * the largest few, and how many kinds more.
+     */
+    public static void itemsLost(final ServerLevel level, @Nullable final NetworkUuid network,
+                                 @Nullable final NodeUuid machine, final String machineName,
+                                 final Map<StorageKey, Long> lost) {
+        if (machine == null || lost.isEmpty()) {
+            return;
         }
+        final List<Map.Entry<StorageKey, Long>> kinds = new ArrayList<>(lost.entrySet());
+        kinds.sort(Map.Entry.<StorageKey, Long>comparingByValue().reversed());
+        final List<Text> named = new ArrayList<>();
+        for (final Map.Entry<StorageKey, Long> kind : kinds.subList(0, Math.min(LOST_NAMED, kinds.size()))) {
+            final String amount = String.format(Locale.ROOT, "%,d", kind.getValue());
+            final String name = kind.getKey().displayName().getString();
+            named.add((kind.getKey().isItem() ? LOST_ITEMS : LOST_DATA).with(amount, name));
+        }
+        final Text list = TextLists.join(", ", named);
+        final int more = kinds.size() - named.size();
+        record(level, network, EventLevel.ERROR, machine, machineName,
+                ITEMS_LOST.with(more > 0 ? LOST_AND_MORE.with(list, more) : list));
     }
 
     /**
-     * What the log calls a machine: the name a player gave it, else its kind's short mark and its short id, as the
-     * network names its servers ({@code SRV-3fa2c1}).
+     * What the log calls a machine: the name a player gave it, else its id ({@link #machineId}), as the network names
+     * its servers ({@code SRV-3fa2c1}).
      */
     public static String machineName(final String customName, final HostScope machine, final NodeUuid node) {
-        if (!customName.isEmpty()) {
-            return customName;
-        }
+        return customName.isEmpty() ? machineId(machine, node) : customName;
+    }
+
+    /**
+     * A machine's id, which tells it apart from machines of the same name: its kind's short mark and its short id
+     * ({@code CC-4a91e2}).
+     */
+    public static String machineId(final HostScope machine, final NodeUuid node) {
         final String mark;
         if (machine == HostScope.MAINFRAME) {
             mark = "MF";

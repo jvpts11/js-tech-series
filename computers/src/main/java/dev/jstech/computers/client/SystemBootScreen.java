@@ -15,6 +15,7 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.computers.os.boot.DiskCheck;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -85,6 +86,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     private final boolean endsDark;
     /** The desktop coming up behind the system's own lines, the system by name, and the machine's host name. */
     private final BootIdentity who;
+    /** The check of disks a sudden shutdown left unclean, at the head of the wait, before the system's own lines. */
+    private final DiskCheck check;
 
     private int ticks;
 
@@ -96,7 +99,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         this.inventoryLabelY = OFF_SCREEN;
         final Starting starting = forFace != null ? forFace : pending != null ? pending
                 : new Starting(BootSequence.NONE, FALLBACK_TICKS, FALLBACK_TICKS, false, BootSplash.PLAIN,
-                        BootIdentity.NONE);
+                        BootIdentity.NONE, DiskCheck.NONE);
         forFace = null;
         this.sequence = starting.sequence();
         this.splash = starting.splash();
@@ -104,6 +107,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         this.ticks = Math.max(0, this.totalTicks - Math.max(0, starting.remainingTicks()));
         this.endsDark = starting.endsDark();
         this.who = starting.who();
+        this.check = starting.check();
     }
 
     /** How far through its wait the machine is, in hundredths, for a test that pictures one moment of it. */
@@ -113,25 +117,46 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
 
     /** Whether the desktop's own loading screen has taken the glass from the system's lines, for a test to ask. */
     public boolean desktopSplashUp() {
-        final int through = this.totalTicks > 0 ? this.ticks * 100 / this.totalTicks : 0;
-        return !this.endsDark && DesktopSplashArt.has(this.who.desktopId()) && through >= DesktopSplashArt.FROM;
+        return !checking() && !this.endsDark && DesktopSplashArt.has(this.who.desktopId())
+                && systemThrough() >= DesktopSplashArt.FROM;
+    }
+
+    /** Whether the glass shows the check of the disks, which comes before the system's own lines, for a test to ask. */
+    public boolean checking() {
+        return !this.check.isEmpty() && this.ticks < this.check.ticks();
     }
 
     /** What the machine is bringing up, said before the session that shows it is opened. */
     public static void expect(final BootSequence sequence, final int remainingTicks, final int totalTicks,
-                              final boolean endsDark, final BootSplash splash, final BootIdentity who) {
-        pending = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who);
+                              final boolean endsDark, final BootSplash splash, final BootIdentity who,
+                              final DiskCheck check) {
+        pending = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who, check);
     }
 
     /** The same, for the next screen built to draw a monitor's face, leaving what a session expects alone. */
     public static void faceWith(final BootSequence sequence, final int remainingTicks, final int totalTicks,
-                                final boolean endsDark, final BootSplash splash, final BootIdentity who) {
-        forFace = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who);
+                                final boolean endsDark, final BootSplash splash, final BootIdentity who,
+                                final DiskCheck check) {
+        forFace = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who, check);
     }
 
-    /** One machine coming up: what it prints, how far along it is, and what it comes up behind. */
+    /** One machine coming up: what it prints, how far along it is, what it comes up behind and what it checks first. */
     private record Starting(BootSequence sequence, int remainingTicks, int totalTicks, boolean endsDark,
-                            BootSplash splash, BootIdentity who) {
+                            BootSplash splash, BootIdentity who, DiskCheck check) {
+    }
+
+    /* How far the system's own coming-up is, after the check of the disks, and how long it takes after it. */
+    private int systemTicks() {
+        return Math.max(0, this.ticks - this.check.ticks());
+    }
+
+    private int systemTotal() {
+        return Math.max(1, this.totalTicks - this.check.ticks());
+    }
+
+    /* How far through the system's own coming-up it is, in hundredths. */
+    private int systemThrough() {
+        return systemTicks() * 100 / systemTotal();
     }
 
     @Override
@@ -170,6 +195,9 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     /** The colour the glass was mostly drawn in on the last frame: the desktop's picture, the system's, or plain. */
     private int lastGround() {
         final Era era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
+        if (checking()) {
+            return DiskCheckArt.ground(this.check);
+        }
         if (desktopSplashUp()) {
             return DesktopSplashArt.ground(this.who, era);
         }
@@ -186,12 +214,18 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         final Colours c = PALETTE.get();
         g.fill(x, y, x + W, y + H, c.ground());
 
+        // A sudden shutdown left disks unclean: the system checks them before anything else of its own.
+        if (checking()) {
+            DiskCheckArt.draw(g, font, this.check, x, y, this.ticks, MotionClock.loopTicks());
+            return;
+        }
+
         /*
          * A machine with a desktop hands over to it before the desktop is there to click: the system's own
          * lines stop and that desktop's picture takes the rest of the wait, which is the moment a player
          * finds out which of them this machine runs. A machine going down never reaches it.
          */
-        final int through = this.totalTicks > 0 ? this.ticks * 100 / this.totalTicks : 0;
+        final int through = systemThrough();
         if (desktopSplashUp()) {
             final int within = (through - DesktopSplashArt.FROM) * 100
                     / Math.max(1, 100 - DesktopSplashArt.FROM);
@@ -206,8 +240,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * words for that travel in the sequence and are drawn over the picture rather than instead of it.
          */
         if (BootSplashArt.paintsItsOwnGround(this.splash)) {
-            BootSplashArt.draw(g, font, this.splash, x, y, W, H, this.ticks, MotionClock.loopTicks(),
-                    this.totalTicks, this.endsDark, GameText.resolve(this.sequence.title()),
+            BootSplashArt.draw(g, font, this.splash, x, y, W, H, systemTicks(), MotionClock.loopTicks(),
+                    systemTotal(), this.endsDark, GameText.resolve(this.sequence.title()),
                     GameText.resolve(this.sequence.subtitle()), this.who);
             return;
         }
@@ -249,7 +283,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         final int labelAt = x + SystemBootLayout.MARGIN + markColumn();
         final int valueAt = x + SystemBootLayout.MARGIN + valueColumn();
         // Each step appears once the machine has got that far, so the screen fills as the work is done.
-        final int shown = this.sequence.shownAt(this.ticks, this.totalTicks);
+        final int shown = this.sequence.shownAt(systemTicks(), systemTotal());
         for (int i = 0; i < shown; i++) {
             final BootSequence.Line line = this.sequence.lines().get(i);
             if (!line.mark().isEmpty()) {
@@ -317,7 +351,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         final int by = y + SystemBootLayout.barY();
         final Colours c = PALETTE.get();
         g.fill(bx, by, bx + SystemBootLayout.BAR_W, by + SystemBootLayout.BAR_H, c.barTrack());
-        g.fill(bx, by, bx + Math.min(SystemBootLayout.BAR_W, SystemBootLayout.BAR_W * this.ticks / this.totalTicks),
+        g.fill(bx, by, bx + Math.min(SystemBootLayout.BAR_W, SystemBootLayout.BAR_W * systemTicks() / systemTotal()),
                 by + SystemBootLayout.BAR_H, c.barFill());
     }
 

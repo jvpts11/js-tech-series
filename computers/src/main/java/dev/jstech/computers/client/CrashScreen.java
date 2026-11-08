@@ -238,6 +238,9 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
         y += CrashLayout.ROW;
         final TextKey[] points = switch (this.page.cause()) {
             case HARDWARE -> new TextKey[] {CrashTexts.F95_HARDWARE, CrashTexts.F95_HARDWARE_NEXT};
+            case THERMAL_TRIP -> new TextKey[] {CrashTexts.F95_THERMAL, CrashTexts.F95_THERMAL_NEXT};
+            case POWER_SUPPLY -> new TextKey[] {CrashTexts.F95_PSU, CrashTexts.F95_PSU_NEXT};
+            case UNSTABLE_POWER -> new TextKey[] {CrashTexts.F95_POWER, CrashTexts.F95_POWER_NEXT};
             case INIT_KILLED -> new TextKey[] {CrashTexts.F95_PROCESS, CrashTexts.F95_PROCESS_NEXT};
             case MEMORY -> new TextKey[] {CrashTexts.F95_MEMORY, CrashTexts.F95_MEMORY_NEXT};
         };
@@ -260,6 +263,9 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
     private void framesNt(final GuiGraphics g, final Colours c) {
         final TextKey advice = switch (this.page.cause()) {
             case HARDWARE -> CrashTexts.NT_ADVICE_HARDWARE;
+            case THERMAL_TRIP -> CrashTexts.NT_ADVICE_THERMAL;
+            case POWER_SUPPLY -> CrashTexts.NT_ADVICE_PSU;
+            case UNSTABLE_POWER -> CrashTexts.NT_ADVICE_POWER;
             case INIT_KILLED -> CrashTexts.NT_ADVICE_PROCESS;
             case MEMORY -> CrashTexts.NT_ADVICE_MEMORY;
         };
@@ -320,8 +326,14 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
                 GameText.resolve(CrashTexts.MODERN_MORE.with(STOP_CODE_ADDRESS)), "",
                 GameText.resolve(CrashTexts.MODERN_SUPPORT),
                 GameText.resolve(CrashTexts.MODERN_STOP_CODE.with(this.page.stopCode()))));
-        if (!this.page.failedPart().isEmpty()) {
-            notes.add(GameText.resolve(CrashTexts.MODERN_FAILED.with(this.page.failedPart())));
+        // The part the page names, or what failed that is no part: the heat and the line, in the player's words.
+        final String failed = switch (this.page.cause()) {
+            case THERMAL_TRIP -> GameText.resolve(CrashTexts.MODERN_THERMAL);
+            case UNSTABLE_POWER -> GameText.resolve(CrashTexts.MODERN_UNSTABLE);
+            default -> this.page.failedPart();
+        };
+        if (!failed.isEmpty()) {
+            notes.add(GameText.resolve(CrashTexts.MODERN_FAILED.with(failed)));
         }
         int ny = qrY + inset;
         for (final String note : notes) {

@@ -17,6 +17,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.DiskCheck;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
@@ -207,6 +208,11 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public BootSequence bootSequence() {
         return rack.asUnit(row, rack::bootSequence);
+    }
+
+    @Override
+    public DiskCheck diskCheck() {
+        return rack.asUnit(row, rack::diskCheck);
     }
 
     @Override

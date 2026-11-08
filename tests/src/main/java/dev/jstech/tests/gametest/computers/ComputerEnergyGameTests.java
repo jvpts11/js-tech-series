@@ -10,6 +10,9 @@ package dev.jstech.tests.gametest.computers;
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.os.boot.DiskChecks;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.workshop.UpdateDoor;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
@@ -40,8 +43,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * What the computers draw from the grid: through their power supplies, a computer without the energy does not start
- * and one that runs out goes dark, a rack's bays alike; and what their personal-use cards' work costs in energy,
- * owed by the computer and paid as the grid fills it, new work waiting behind it. The draw is on in this batch alone.
+ * and one that runs out goes dark, a rack's bays alike, on the red page of unstable power when the line still brought
+ * a little; and what their personal-use cards' work costs in energy, owed by the computer and paid as the grid fills
+ * it, new work waiting behind it. The draw is on in this batch alone.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -131,6 +135,59 @@ public final class ComputerEnergyGameTests {
                     feeding.set(false);
                 })
                 .thenWaitUntil(() -> helper.assertFalse(pc.isRunning(), "without it, it goes dark"))
+                .thenSucceed();
+    }
+
+    /**
+     * A line that still brings something, only less than the computer draws, is unstable power: the system goes down
+     * on its red page, the machine is dark after it, and the disk it had in use is left to be checked.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 1_200, batch = BATCH)
+    public static void power_unstablePowerBringsTheSystemDownOnItsRedPage(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        final AtomicBoolean full = new AtomicBoolean(true);
+        helper.onEachTick(() -> {
+            if (full.get()) {
+                TestComputerEnergy.feed(pc.energyPort());
+            } else {
+                TestComputerEnergy.trickle(pc.energyPort());
+            }
+        });
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, pc::togglePower)
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "fed, the computer comes up"))
+                .thenExecute(() -> full.set(false))
+                .thenWaitUntil(() -> helper.assertFalse(pc.isRunning(), "on a trickle it goes dark"))
+                .thenExecute(() -> {
+                    final CrashPage page = pc.crashPage();
+                    helper.assertTrue(page != null && page.cause() == CrashCause.UNSTABLE_POWER && page.red(),
+                            "on the red page of unstable power; got " + page);
+                    helper.assertTrue(pc.crashEndsDark(), "which ends dark, the power gone");
+                    helper.assertTrue(DiskChecks.unclean(pc.diskInSlot(0)), "its disk left to be checked");
+                })
+                .thenSucceed();
+    }
+
+    /** A line cut altogether is a power loss: the machine goes dark at once, with no page. */
+    @GameTest(template = ARENA, timeoutTicks = 1_200, batch = BATCH)
+    public static void power_aCutLineGoesDarkWithNoPage(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        final AtomicBoolean feeding = new AtomicBoolean(true);
+        helper.onEachTick(() -> {
+            if (feeding.get()) {
+                TestComputerEnergy.feed(pc.energyPort());
+            }
+        });
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, pc::togglePower)
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "fed, the computer comes up"))
+                .thenExecute(() -> feeding.set(false))
+                .thenWaitUntil(() -> helper.assertFalse(pc.isRunning(), "cut off, it goes dark"))
+                .thenExecute(() -> {
+                    helper.assertTrue(pc.crashPage() == null, "with no page");
+                    helper.assertTrue(pc.stoppedSuddenly() && DiskChecks.unclean(pc.diskInSlot(0)),
+                            "suddenly, its disk left to be checked");
+                })
                 .thenSucceed();
     }
 
@@ -243,6 +300,11 @@ public final class ComputerEnergyGameTests {
                 .thenExecuteAfter(A_SECOND * 2, () -> helper.assertTrue(pc.isRunning() && pc.energized()
                         && pc.energyPort().stored() == 0L, "it runs with nothing in its store"))
                 .thenSucceed();
+    }
+
+    /* Whether the computer's system is up: past its self-test, its boot menu and its coming-up. */
+    private static boolean up(final PersonalComputerBlockEntity pc) {
+        return pc.isRunning() && !pc.needsPost() && !pc.booting() && !pc.atBootMenu();
     }
 
     /* Puts {@code card} in the first card slot after the graphics card's. */

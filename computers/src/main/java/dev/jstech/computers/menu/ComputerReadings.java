@@ -66,6 +66,8 @@ final class ComputerReadings {
     private final MenuValue indexHealth;
     private final MenuValue indexHealthTypes;
     private final MenuValue patternsHost;
+    private final MenuValue partsWatts;
+    private final MenuValue lineWatts;
 
     /** Declares every reading on the menu that owns it, through that menu's own value and flag factories. */
     ComputerReadings(@Nullable final IComputerTerminalHost host, final Level level,
@@ -111,6 +113,8 @@ final class ComputerReadings {
          * can be pulled while a player is looking straight at this tab.
          */
         this.patternsHost = flag.apply(() -> hostFlag(ComputerTerminalMenu::teachable));
+        this.partsWatts = value.apply(() -> hostInt(IComputerTerminalHost::partsWatts));
+        this.lineWatts = value.apply(() -> hostInt(IComputerTerminalHost::lineWatts));
     }
 
     public boolean running() {
@@ -247,6 +251,14 @@ final class ComputerReadings {
 
     public boolean patternsHost() {
         return patternsHost.isSet();
+    }
+
+    public int partsWatts() {
+        return partsWatts.get();
+    }
+
+    public int lineWatts() {
+        return lineWatts.get();
     }
 
     private int craftComputerCount() {

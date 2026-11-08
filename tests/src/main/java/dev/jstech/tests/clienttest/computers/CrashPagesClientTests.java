@@ -26,8 +26,9 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * Every crash page on the glass, as each system drew its own: a row of computers, one per system, each brought down and
- * then looked at, which is also a monitor opened on a page already standing. FreeBSD's is held with a key and let go
- * with the next, and the machine starts over from its self-test.
+ * then looked at, which is also a monitor opened on a page already standing, and the red pages of the heat, a failing
+ * supply and unstable power over a machine gone dark. FreeBSD's is held with a key and let go with the next, and the
+ * machine starts over from its self-test.
  */
 public final class CrashPagesClientTests {
 
@@ -45,7 +46,10 @@ public final class CrashPagesClientTests {
             new Case("frames_11", CrashCause.HARDWARE, CrashStyle.FRAMES_11),
             new Case("debian", CrashCause.MEMORY, CrashStyle.CONSOLE),
             new Case("unix", CrashCause.INIT_KILLED, CrashStyle.CONSOLE),
-            new Case("freebsd", CrashCause.INIT_KILLED, CrashStyle.CONSOLE));
+            new Case("freebsd", CrashCause.INIT_KILLED, CrashStyle.CONSOLE),
+            new Case("frames_xp", CrashCause.THERMAL_TRIP, CrashStyle.FRAMES_XP),
+            new Case("frames_11", CrashCause.POWER_SUPPLY, CrashStyle.FRAMES_11),
+            new Case("debian", CrashCause.UNSTABLE_POWER, CrashStyle.CONSOLE));
 
     private CrashPagesClientTests() {
     }
@@ -100,13 +104,20 @@ public final class CrashPagesClientTests {
         final Case one = CASES.get(i);
         final String name = one.system() + "-" + one.cause().name().toLowerCase(Locale.ROOT);
         ctx.thenTeleport(SETTLE, desk(i), Direction.WEST)
-                .thenServer(SETTLE, level -> ctx.assertTrue(machine(ctx, level, i).crash(one.cause(), moment(one)),
-                        one.system() + " should crash"))
+                .thenServer(SETTLE, level -> {
+                    final PersonalComputerBlockEntity pc = machine(ctx, level, i);
+                    // The heat, the supply and the line take the power with them, as a sudden shutdown does.
+                    if (one.cause().cutsPower()) {
+                        pc.stopSuddenly(one.cause(), moment(one));
+                        ctx.assertTrue(pc.crashPage() != null, one.system() + " should crash");
+                    } else {
+                        ctx.assertTrue(pc.crash(one.cause(), moment(one)), one.system() + " should crash");
+                    }
+                })
                 .thenRightClick(SETTLE, monitor(i))
                 .thenAwaitScreen(CrashScreen.class, SCREEN_WAIT)
                 .thenAssert(0, () -> page(ctx).page().style() == one.style()
-                                && page(ctx).page().red() == (one.cause() == CrashCause.HARDWARE
-                                && one.style().frames()),
+                                && page(ctx).page().red() == (one.cause().hardware() && one.style().frames()),
                         one.system() + " should show its own page")
                 .thenWaitUntil(() -> page(ctx).percent() >= COUNTED || !counts(one.style()), SCREEN_WAIT,
                         "the page to count far enough to show it counting")
@@ -135,6 +146,8 @@ public final class CrashPagesClientTests {
             case MEMORY -> CrashPages.Moment.memory("soundfoundryd", 412,
                     List.of(new CrashPages.Victim(4211, "paint", 512)));
             case HARDWARE -> CrashPages.Moment.hardware("Stratix Layer DDR3-8192");
+            case POWER_SUPPLY -> CrashPages.Moment.hardware("MF PowerPlat 1200P");
+            case THERMAL_TRIP, UNSTABLE_POWER -> CrashPages.Moment.none();
             case INIT_KILLED -> CrashPages.Moment.initKilled(one.system().equals("freebsd") ? "root@freebsd:~ # kill 1"
                     : "# kill 1", 15);
         };

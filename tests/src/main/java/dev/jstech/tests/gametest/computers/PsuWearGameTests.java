@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.computers;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvent;
@@ -20,6 +21,9 @@ import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.os.boot.DiskChecks;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.os.devices.DeviceMaps;
 import dev.jstech.computers.os.devices.DeviceRows;
@@ -29,6 +33,7 @@ import dev.jstech.tests.testkit.computers.TestComputerEnergy;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.BeforeBatch;
 import net.minecraft.gametest.framework.GameTest;
@@ -54,6 +59,7 @@ public final class PsuWearGameTests {
     /* Just under failing, and just under degraded: a few ticks of running cross either. */
     private static final float ALMOST_FAILED = 0.9999999f;
     private static final float ALMOST_DEGRADED = 0.7999999f;
+    private static final BlockPos PC = new BlockPos(2, 2, 2);
 
     private PsuWearGameTests() {
     }
@@ -139,6 +145,29 @@ public final class PsuWearGameTests {
                     cc.getHardware().setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
                             new ItemStack(ComputingModule.PSU_650G.get()));
                     helper.assertTrue(cc.buildValid(), "a new supply makes it a computer again");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A supply failing under a system that is up brings it down on its red page, which names the supply; the machine is
+     * dark after it, a sudden shutdown, its disk left to be checked.
+     */
+    @GameTest(template = ARENA, timeoutTicks = OVER_A_MINUTE + 800)
+    public static void psu_failingBringsTheSystemDownOnItsRedPage(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(pc.isRunning() && !pc.needsPost() && !pc.booting()
+                        && !pc.atBootMenu(), "the computer comes up"))
+                .thenExecute(() -> PsuConditions.set(pc.psuStack(), new PsuCondition(1f, List.of(ALMOST_FAILED))))
+                .thenWaitUntil(() -> helper.assertFalse(pc.isRunning(), "within a minute the supply fails"))
+                .thenExecute(() -> {
+                    final CrashPage page = pc.crashPage();
+                    helper.assertTrue(page != null && page.cause() == CrashCause.POWER_SUPPLY && page.red()
+                            && page.failedPart().equals(pc.psuStack().getHoverName().getString()),
+                            "on the red page of a failing supply, naming it; got " + page);
+                    helper.assertTrue(pc.crashEndsDark() && pc.stoppedSuddenly(), "which ends dark, suddenly");
+                    helper.assertTrue(DiskChecks.unclean(pc.diskInSlot(0)), "its disk left to be checked");
                 })
                 .thenSucceed();
     }

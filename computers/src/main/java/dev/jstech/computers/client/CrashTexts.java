@@ -33,6 +33,19 @@ final class CrashTexts {
             "A process the system cannot run without was ended.");
     static final TextKey F95_PROCESS_NEXT = TextKey.of("jsc.crash.f95.process_next",
             "Frames cannot continue. Frames will restart.");
+    static final TextKey F95_THERMAL = TextKey.of("jsc.crash.f95.thermal",
+            "The processor of this computer passed its safe temperature, and the hardware cut it off.");
+    static final TextKey F95_THERMAL_NEXT = TextKey.of("jsc.crash.f95.thermal_next",
+            "Frames cannot continue. Let the computer cool down, and look at its cooler and its case fans before it"
+                    + " starts again.");
+    static final TextKey F95_PSU = TextKey.of("jsc.crash.f95.psu",
+            "The power supply of this computer stopped giving steady power while it was running.");
+    static final TextKey F95_PSU_NEXT = TextKey.of("jsc.crash.f95.psu_next",
+            "Frames cannot continue. Replace the power supply before the computer starts again.");
+    static final TextKey F95_POWER = TextKey.of("jsc.crash.f95.power",
+            "The power reaching this computer is unstable: its voltage fell and rose while it was running.");
+    static final TextKey F95_POWER_NEXT = TextKey.of("jsc.crash.f95.power_next",
+            "Frames cannot continue. A UPS between the line and the computer keeps its power steady.");
     static final TextKey F95_RESTARTING = TextKey.of("jsc.crash.f95.restarting", "Restarting...");
 
     // Frames XP and 7: the Stop error screen.
@@ -49,6 +62,15 @@ final class CrashTexts {
                     + " Frames cannot run without it.");
     static final TextKey NT_ADVICE_PROCESS = TextKey.of("jsc.crash.nt.advice_process",
             "A process Frames cannot run without was ended. Do not end the system's own processes.");
+    static final TextKey NT_ADVICE_THERMAL = TextKey.of("jsc.crash.nt.advice_thermal",
+            "The processor of this computer passed its safe temperature and the hardware cut it off. Let the computer"
+                    + " cool down, and look at its cooler and its case fans before it starts again.");
+    static final TextKey NT_ADVICE_PSU = TextKey.of("jsc.crash.nt.advice_psu",
+            "The power supply of this computer failed while it was running. Replace it before the computer starts"
+                    + " again.");
+    static final TextKey NT_ADVICE_POWER = TextKey.of("jsc.crash.nt.advice_power",
+            "The power reaching this computer is unstable. A UPS between the line and the computer keeps its power"
+                    + " steady; check the generators that feed the line.");
     static final TextKey NT_TECHNICAL = TextKey.of("jsc.crash.nt.technical", "Technical information:");
     static final TextKey NT_STOP = TextKey.of("jsc.crash.nt.stop", "*** STOP: %s");
     static final TextKey XP_DUMP_BEGIN = TextKey.of("jsc.crash.xp.dump_begin", "Beginning dump of physical memory");
@@ -76,6 +98,8 @@ final class CrashTexts {
             "If you call a support person, give them this info:");
     static final TextKey MODERN_STOP_CODE = TextKey.of("jsc.crash.modern.stop_code", "Stop code: %s");
     static final TextKey MODERN_FAILED = TextKey.of("jsc.crash.modern.failed", "What failed: %s");
+    static final TextKey MODERN_THERMAL = TextKey.of("jsc.crash.modern.thermal", "Processor thermal trip");
+    static final TextKey MODERN_UNSTABLE = TextKey.of("jsc.crash.modern.unstable", "Unstable power from the line");
 
     private CrashTexts() {
     }

@@ -8,6 +8,8 @@
 package dev.jstech.computers.operation;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.storage.StorageKey;
@@ -25,6 +27,7 @@ import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -170,6 +173,14 @@ public final class NetworkUpdateOperation implements INetworkOperation {
             return;
         }
         final PersonalComputerBlockEntity computer = computer();
+        if (computer != null && !computer.isRunning() && computer.stoppedSuddenly()
+                && ComputersServerConfig.loseOnPowerLoss()) {
+            // The computer went dark with the card's work in it: what the card held goes with it, and its log says so.
+            final NodeUuid node = computer.nodeUuid();
+            NetworkEvents.itemsLost(level, network, node, node == null ? ""
+                    : NetworkEvents.machineName(computer.customName(), computer.machine(), node), lose());
+            return;
+        }
         if (computer == null || !computer.isRunning() || !request.action().card().in(computer.workshopCards())) {
             discard(computer);
             return;
@@ -201,6 +212,17 @@ public final class NetworkUpdateOperation implements INetworkOperation {
     @Override
     public void abandon() {
         discard(computer());
+    }
+
+    /**
+     * A machine went dark with this UPDATE under way, the Mainframe or the computer with the card: the drawer's work
+     * and what was on its way back are lost rather than left at the card's output.
+     */
+    @Override
+    public Map<StorageKey, Long> lose() {
+        final Map<StorageKey, Long> lost = new LinkedHashMap<>();
+        stop(computer(), lost);
+        return lost;
     }
 
     @Override
@@ -418,12 +440,18 @@ public final class NetworkUpdateOperation implements INetworkOperation {
         }
     }
 
+    private void discard(@Nullable final PersonalComputerBlockEntity computer) {
+        stop(computer, null);
+    }
+
     /*
      * Stops here: what is on its way is stopped where it is, and everything the card held, the drawer's work and what
      * was on its way back alike, is left at the card's output, or written straight back to the network when the
-     * computer is not there to take it.
+     * computer is not there to take it; with {@code lost}, a machine went dark with it, and it is counted there and
+     * lost instead.
      */
-    private void discard(@Nullable final PersonalComputerBlockEntity computer) {
+    private void stop(@Nullable final PersonalComputerBlockEntity computer,
+                      @Nullable final Map<StorageKey, Long> lost) {
         if (done) {
             return;
         }
@@ -431,6 +459,10 @@ public final class NetworkUpdateOperation implements INetworkOperation {
         abandonChild(takingSecond);
         final boolean held = computer != null && computer.updateDrawer().heldBy(operationId);
         for (final Returning back : returning) {
+            if (lost != null) {
+                back.insert().lose().forEach((key, amount) -> lost.merge(key, amount, Long::sum));
+                continue;
+            }
             back.insert().abandon();
             final long left = back.insert().leftover();
             if (left > 0L) {
@@ -441,7 +473,12 @@ public final class NetworkUpdateOperation implements INetworkOperation {
         if (held) {
             final UpdateDrawer drawer = computer.updateDrawer();
             for (final int slot : new int[] {UpdateDrawer.MADE, UpdateDrawer.WORK, UpdateDrawer.SECOND}) {
-                leave(computer, slot == UpdateDrawer.SECOND, drawer.take(slot));
+                final ItemStack stack = drawer.take(slot);
+                if (lost == null) {
+                    leave(computer, slot == UpdateDrawer.SECOND, stack);
+                } else if (!stack.isEmpty()) {
+                    lost.merge(StorageKey.of(stack), (long) stack.getCount(), Long::sum);
+                }
             }
             drawer.release(operationId);
         }

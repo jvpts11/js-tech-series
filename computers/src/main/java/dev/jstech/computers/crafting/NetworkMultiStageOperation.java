@@ -27,7 +27,9 @@ import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -331,6 +333,26 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
     public void abandon() {
         status = OperationRecord.STATUS_DISCARDED;
         finish();
+    }
+
+    /**
+     * The machine running it went dark suddenly: the stage in flight loses what it carries, and what the pipeline
+     * held between its stages is lost with it.
+     */
+    @Override
+    public Map<StorageKey, Long> lose() {
+        if (done) {
+            return Map.of();
+        }
+        final Map<StorageKey, Long> carried = new HashMap<>();
+        if (currentStage != null && !currentStage.isDone()) {
+            currentStage.lose().forEach((key, amount) -> carried.merge(key, amount, Long::sum));
+        }
+        if (pool != null) {
+            pool.drop().forEach((key, amount) -> carried.merge(key, amount, Long::sum));
+        }
+        abandon();
+        return carried;
     }
 
     @Override

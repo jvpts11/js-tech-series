@@ -91,7 +91,8 @@ final class MachineKernel {
     /**
      * Brings the running system down on its crash page for {@code cause}: everything it was running dies where it
      * stands, the session ends, and whoever is watching is shown the page. It stands its time, and then the machine
-     * starts over from its self-test; or, when what went was a part it cannot run without, the monitor goes dark.
+     * starts over from its self-test; or, when what went was a part it cannot run without or a cause that takes the
+     * power with it (the heat, the supply, the line), the monitor goes dark.
      *
      * @return whether it went down: a machine that is off, testing itself, at its boot menu, still bringing its system
      *         up or already on its way down, or whose system has no crash page (the earliest had none), stays as it is
@@ -110,7 +111,7 @@ final class MachineKernel {
         }
         final CrashPage page = CrashPages.of(style, system.platform(), cause,
                 MachineCrash.facts(machine, system, phases.upFor(now), moment));
-        final boolean dark = !machine.buildValid();
+        final boolean dark = !machine.buildValid() || cause.cutsPower();
         crash.begin(page, now, dark);
         if (dark) {
             // No computer is left to close down: the session ends now, and it owes a self-test once it is whole again.

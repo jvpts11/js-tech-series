@@ -89,6 +89,25 @@ public final class ComputerTerminalLayout {
     public static final int OPS_ROWS = 6;
 
     /*
+     * The Local heading, from the content's corner: its title with the machine's id across from it, two rows of
+     * tiles (what it orchestrates, its queues and its memory buffer; what its parts draw and what the line gives it),
+     * its hardware in bars a line apart, and its storage, all above the rule over the player's own slots.
+     */
+    public static final int LOCAL_TITLE_DY = 20;
+    public static final int LOCAL_TILES_DY = 32;
+    public static final int LOCAL_TILE_H = 26;
+    public static final int LOCAL_TILE_GAP = 4;
+    public static final int LOCAL_HARDWARE_DY = LOCAL_TILES_DY + 2 * LOCAL_TILE_H + LOCAL_TILE_GAP + 4;
+    public static final int LOCAL_BARS_DY = LOCAL_HARDWARE_DY + 10;
+    public static final int LOCAL_BAR_PITCH = 10;
+    public static final int LOCAL_BARS = 4;
+    public static final int LOCAL_STORAGE_DY = LOCAL_BARS_DY + LOCAL_BARS * LOCAL_BAR_PITCH + 2;
+    /** How wide the hardware column runs: up to the panel beside it, with a gutter. */
+    public static final int LOCAL_COL_W = PANE_X - CONTENT_X - 10;
+    /** How tall a bar's row is drawn: its label, and the track beside it. */
+    public static final int LOCAL_ROW_H = 8;
+
+    /*
      * The two buttons at the foot of the panel. They live here rather than in the screen because the
      * screen draws them, the click reads them and a client test presses them: three places that once held
      * their own copy of the same number, which is how the last one came to be pressing empty glass.
@@ -157,6 +176,47 @@ public final class ComputerTerminalLayout {
             }
         }
         l.playerInventory(INV_X, INV_Y);
+        return l;
+    }
+
+    /** How wide one of the Local heading's tiles is: three to a row across the column. */
+    public static int localTileW() {
+        return (LOCAL_COL_W - 2 * LOCAL_TILE_GAP) / 3;
+    }
+
+    /** Where the Local heading's tile in {@code column} (from 0) starts, from the content's left edge. */
+    public static int localTileDx(final int column) {
+        return column * (localTileW() + LOCAL_TILE_GAP);
+    }
+
+    /** Where its tiles in {@code row} (from 0) start, from the content's top. */
+    public static int localTileDy(final int row) {
+        return LOCAL_TILES_DY + row * (LOCAL_TILE_H + LOCAL_TILE_GAP);
+    }
+
+    /** Where its hardware bar in {@code row} (from 0: processors, memory, graphics cards, disks) is drawn. */
+    public static int localBarDy(final int row) {
+        return LOCAL_BARS_DY + row * LOCAL_BAR_PITCH;
+    }
+
+    /**
+     * The Local heading on the glass: its title, its six tiles, its hardware title, its four bars and its storage
+     * bar, each a box that may touch none of the others, and none reaching the rule over the player's own slots.
+     */
+    public static GuiLayout local() {
+        final GuiLayout l = new GuiLayout(WIDTH, INV_LINE_Y);
+        l.box("title", CONTENT_X, LOCAL_TITLE_DY, LOCAL_COL_W, LOCAL_ROW_H);
+        for (int row = 0; row < 2; row++) {
+            for (int column = 0; column < 3; column++) {
+                l.box("tile_" + row + "_" + column, CONTENT_X + localTileDx(column), localTileDy(row), localTileW(),
+                        LOCAL_TILE_H);
+            }
+        }
+        l.box("hardware", CONTENT_X, LOCAL_HARDWARE_DY, LOCAL_COL_W, LOCAL_ROW_H);
+        for (int row = 0; row < LOCAL_BARS; row++) {
+            l.box("bar_" + row, CONTENT_X, localBarDy(row), LOCAL_COL_W, LOCAL_ROW_H);
+        }
+        l.box("storage", CONTENT_X, LOCAL_STORAGE_DY, LOCAL_COL_W, LOCAL_ROW_H);
         return l;
     }
 

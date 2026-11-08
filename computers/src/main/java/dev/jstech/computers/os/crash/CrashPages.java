@@ -37,6 +37,13 @@ public final class CrashPages {
     private static final long EPOCH_BASE = 1_728_741_600L;
     private static final String LINUX_REBOOT = "Rebooting in 10 seconds..";
     private static final String FREEBSD_REBOOT = "Automatic reboot in 15 seconds - press a key on the console to abort";
+    /* The machine check a failing supply and a wavering line both raise, in each kernel's words. */
+    private static final String LINUX_POWER_CHECK =
+            "mce: [Hardware Error]: CPU 0: Machine Check Exception: 4 Bank 4: b200000000070f0f";
+    private static final String FREEBSD_POWER_CHECK = "MCA: Bank 4, Status 0xb200000000070f0f";
+    private static final String FREEBSD_MCA_FRAME = "0xffffffff810a4c71 at mca_intr+0x81";
+    private static final String SYSTEM_V_HARDWARE_TRAP = "Trap Type 00000002";
+    private static final String SYSTEM_V_POWER_FAIL = "PANIC: power fail";
 
     private CrashPages() {
     }
@@ -74,9 +81,14 @@ public final class CrashPages {
             return new Moment(asking, askingPid, killed, "", 0, "");
         }
 
-        /** The part called {@code part} was taken out from under the running system. */
+        /** The part called {@code part} was taken out from under the running system, or failed in it. */
         public static Moment hardware(final String part) {
             return new Moment("", 0, List.of(), "", 0, part);
+        }
+
+        /** Nothing the machine was running brought it down: the fault came from outside it, the heat or the line. */
+        public static Moment none() {
+            return new Moment("", 0, List.of(), "", 0, "");
         }
 
         /**
@@ -157,21 +169,37 @@ public final class CrashPages {
         };
     }
 
+    /* Every fault of the hardware is the processor's machine check (12) on Frames 95; only where it happened varies. */
     private static CrashPage frames95(final CrashCause cause) {
-        return switch (cause) {
-            case HARDWARE -> new CrashPage(CrashStyle.FRAMES_95, cause, "12", "0028:C0001F12 in VXD VMM(01) + 00001F12",
-                    "", List.of(), FRAMES_95_TICKS, false);
-            case INIT_KILLED -> new CrashPage(CrashStyle.FRAMES_95, cause, "0D",
-                    "0028:C000A2F4 in VXD VMM(01) + 0000A2F4", "", List.of(), FRAMES_95_TICKS, false);
-            case MEMORY -> new CrashPage(CrashStyle.FRAMES_95, cause, "0E", "0028:C0011E36 in VXD VMM(01) + 00010E36",
-                    "", List.of(), FRAMES_95_TICKS, false);
+        final String code = cause.hardware() ? "12" : cause == CrashCause.INIT_KILLED ? "0D" : "0E";
+        final String where = switch (cause) {
+            case HARDWARE, THERMAL_TRIP -> "0028:C0001F12 in VXD VMM(01) + 00001F12";
+            case POWER_SUPPLY -> "0028:C0002A40 in VXD VMM(01) + 00002A40";
+            case UNSTABLE_POWER -> "0028:C0003B18 in VXD VMM(01) + 00003B18";
+            case INIT_KILLED -> "0028:C000A2F4 in VXD VMM(01) + 0000A2F4";
+            case MEMORY -> "0028:C0011E36 in VXD VMM(01) + 00010E36";
         };
+        return new CrashPage(CrashStyle.FRAMES_95, cause, code, where, "", List.of(), FRAMES_95_TICKS, false);
     }
 
+    /*
+     * The heat stops Frames XP with the machine check it always had, and Frames 7 with the hardware error report that
+     * replaced it; a power supply failing and the line wavering are both the power manager's internal error.
+     */
     private static CrashPage framesNt(final CrashStyle style, final CrashCause cause, final int ticks) {
+        final boolean seven = style == CrashStyle.FRAMES_7;
         return switch (cause) {
             case HARDWARE -> new CrashPage(style, cause, "MACHINE_CHECK_EXCEPTION",
                     "0x0000009C (0x00000004,0x80549C00,0xB2000000,0x00070F0F)", "", List.of(), ticks, false);
+            case THERMAL_TRIP -> seven
+                    ? new CrashPage(style, cause, "WHEA_UNCORRECTABLE_ERROR",
+                            "0x00000124 (0x00000000,0x85B2E8FC,0xB2000000,0x00000400)", "", List.of(), ticks, false)
+                    : new CrashPage(style, cause, "MACHINE_CHECK_EXCEPTION",
+                            "0x0000009C (0x00000004,0x80549C00,0xB2000000,0x00070F0F)", "", List.of(), ticks, false);
+            case POWER_SUPPLY -> new CrashPage(style, cause, "INTERNAL_POWER_ERROR",
+                    "0x000000A0 (0x00000101,0x00000003,0x00000000,0x00000000)", "", List.of(), ticks, false);
+            case UNSTABLE_POWER -> new CrashPage(style, cause, "INTERNAL_POWER_ERROR",
+                    "0x000000A0 (0x0000000F,0x00000002,0x00000000,0x00000000)", "", List.of(), ticks, false);
             case INIT_KILLED -> new CrashPage(style, cause, "CRITICAL_PROCESS_DIED",
                     "0x000000EF (0x89D2B1A8,0x00000000,0x00000000,0x00000000)", "", List.of(), ticks, false);
             case MEMORY -> new CrashPage(style, cause, "MEMORY_MANAGEMENT",
@@ -179,14 +207,17 @@ public final class CrashPages {
         };
     }
 
+    /* The page names the part that failed; the heat and the line are named by the screen, in the player's words. */
     private static CrashPage framesModern(final CrashStyle style, final CrashCause cause, final Facts facts) {
         final String code = switch (cause) {
-            case HARDWARE -> "WHEA_UNCORRECTABLE_ERROR";
+            case HARDWARE, THERMAL_TRIP -> "WHEA_UNCORRECTABLE_ERROR";
+            case POWER_SUPPLY, UNSTABLE_POWER -> "INTERNAL_POWER_ERROR";
             case INIT_KILLED -> "CRITICAL_PROCESS_DIED";
             case MEMORY -> "MEMORY_MANAGEMENT";
         };
-        return new CrashPage(style, cause, code, "", cause == CrashCause.HARDWARE ? facts.part() : "", List.of(),
-                FRAMES_MODERN_TICKS, false);
+        final boolean namesPart = cause == CrashCause.HARDWARE || cause == CrashCause.POWER_SUPPLY;
+        return new CrashPage(style, cause, code, "", namesPart ? facts.part() : "", List.of(), FRAMES_MODERN_TICKS,
+                false);
     }
 
     private static List<String> linux(final CrashCause cause, final Facts facts) {
@@ -206,6 +237,34 @@ public final class CrashPages {
                 out.add(clock.stamp("mce: [Hardware Error]: Run the above through 'mcelog --ascii'"));
                 out.add(clock.stamp("mce: [Hardware Error]: Machine check: Processor context corrupt"));
                 reason = "Fatal machine check";
+                out.add(clock.stamp("Kernel panic - not syncing: " + reason));
+                trace = List.of();
+            }
+            case THERMAL_TRIP -> {
+                out.add(clock.stamp("CPU0: Core temperature above threshold, cpu clock throttled (total events ="
+                        + " 214)"));
+                out.add(clock.stamp("CPU0: Package temperature above threshold, cpu clock throttled (total events ="
+                        + " 214)"));
+                out.add(clock.stamp("thermal thermal_zone0: critical temperature reached (100 C), shutting down"));
+                out.add(clock.stamp("mce: [Hardware Error]: CPU 0: Machine Check: 0 Bank 1: b200000000000400"));
+                out.add(clock.stamp("mce: [Hardware Error]: Thermal trip: processor shut itself down"));
+                reason = "Fatal machine check: thermal trip";
+                out.add(clock.stamp("Kernel panic - not syncing: " + reason));
+                trace = List.of();
+            }
+            case POWER_SUPPLY -> {
+                out.add(clock.stamp("power_supply PSU0: +12V rail out of range (9.8 V)"));
+                out.add(clock.stamp("power_supply PSU0: " + facts.part() + ": output failed"));
+                out.add(clock.stamp(LINUX_POWER_CHECK));
+                reason = "Fatal hardware error: power supply failure";
+                out.add(clock.stamp("Kernel panic - not syncing: " + reason));
+                trace = List.of();
+            }
+            case UNSTABLE_POWER -> {
+                out.add(clock.stamp("ACPI: \\_SB_.PSU0: AC input unstable (187 V, sag of 41 V)"));
+                out.add(clock.stamp("power_supply PSU0: input voltage out of range, 3 times in 2 seconds"));
+                out.add(clock.stamp(LINUX_POWER_CHECK));
+                reason = "Fatal hardware error: unstable power";
                 out.add(clock.stamp("Kernel panic - not syncing: " + reason));
                 trace = List.of();
             }
@@ -261,6 +320,26 @@ public final class CrashPages {
                 out.add("panic: Unrecoverable machine check exception");
                 frames = List.of("0xffffffff810a4c71 at mca_intr+0x81", "0xffffffff8109c2f3 at trap+0x93");
             }
+            case THERMAL_TRIP -> {
+                out.add("coretemp0: critical temperature detected, suggest system shutdown");
+                out.add("MCA: Bank 1, Status 0xb200000000000400");
+                out.add("MCA: CPU 0 UNCOR PCC thermal trip");
+                out.add("panic: Unrecoverable machine check exception");
+                frames = List.of(FREEBSD_MCA_FRAME);
+            }
+            case POWER_SUPPLY -> {
+                out.add("acpi_psu0: +12V output failed (" + facts.part() + ")");
+                out.add(FREEBSD_POWER_CHECK);
+                out.add("panic: power supply failure");
+                frames = List.of(FREEBSD_MCA_FRAME);
+            }
+            case UNSTABLE_POWER -> {
+                out.add("acpi_acad0: AC line voltage unstable (187 V)");
+                out.add("acpi_acad0: AC line voltage unstable (232 V)");
+                out.add(FREEBSD_POWER_CHECK);
+                out.add("panic: unstable power");
+                frames = List.of(FREEBSD_MCA_FRAME);
+            }
             case INIT_KILLED -> {
                 out.add(facts.typed());
                 out.add("init died (signal " + facts.signal() + ", exit 0)");
@@ -298,7 +377,26 @@ public final class CrashPages {
         switch (cause) {
             case HARDWARE -> {
                 panic = "PANIC: memory parity error";
-                trap = "Trap Type 00000002";
+                trap = SYSTEM_V_HARDWARE_TRAP;
+            }
+            case THERMAL_TRIP -> {
+                out.add("WARNING: processor 0 over temperature");
+                out.add("");
+                panic = "PANIC: thermal trip on processor 0";
+                trap = SYSTEM_V_HARDWARE_TRAP;
+            }
+            case POWER_SUPPLY -> {
+                out.add("WARNING: power supply failure");
+                out.add("");
+                panic = SYSTEM_V_POWER_FAIL;
+                trap = SYSTEM_V_HARDWARE_TRAP;
+            }
+            case UNSTABLE_POWER -> {
+                out.add("WARNING: AC power unstable");
+                out.add("WARNING: AC power unstable");
+                out.add("");
+                panic = SYSTEM_V_POWER_FAIL;
+                trap = SYSTEM_V_HARDWARE_TRAP;
             }
             case INIT_KILLED -> {
                 out.add(facts.typed());

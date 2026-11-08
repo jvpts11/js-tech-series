@@ -143,7 +143,7 @@ public final class SessionFaces {
             }
             case OpenSystemBootPayload boot -> {
                 SystemBootScreen.faceWith(boot.sequence(), left, boot.totalTicks(), boot.endsDark(), boot.splash(),
-                        boot.who());
+                        boot.who(), boot.check());
                 yield AbstractComputerScreen.face(() -> new SystemBootScreen(
                         menu(inventory, monitor, boot.hostPos(), picture, MonitorSessionMenu.Phase.SYSTEM_BOOT),
                         inventory, Component.empty()), AROUND_X, AROUND_Y);

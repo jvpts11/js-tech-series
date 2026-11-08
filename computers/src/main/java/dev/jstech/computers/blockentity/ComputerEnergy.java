@@ -26,6 +26,9 @@ import org.jetbrains.annotations.Nullable;
  * <p>Work its cards do costs energy of its own, more than a store holds at once: it is owed, and paid out of the store
  * tick by tick as the grid fills it, a tick's draw always kept back so the machine runs on. New work waits until the
  * debt is paid.
+ *
+ * <p>A store that runs dry tells how: a line that still brought something within the last second fed it less than it
+ * draws, a weak generator or an overloaded grid, which is unstable power; one that brought nothing for longer was cut.
  */
 final class ComputerEnergy {
 
@@ -35,10 +38,16 @@ final class ComputerEnergy {
     private double owed;
     /* The joules owed for work its cards did. */
     private long debt;
+    /* What the store held once this machine had taken its share, so the next draw sees what the line brought since. */
+    private long left;
+    /* How many draws in a row the line brought nothing. */
+    private int dryDraws;
 
     /* The most a store takes from the grid in a tick: more than the supplies of a full rack give in one. */
     private static final long TAKES_A_TICK = 4_000L;
     private static final int TICKS_A_SECOND = 20;
+    /* A line that brought something this recently, though too little, wavers rather than being cut. */
+    private static final int WAVERS_WITHIN = TICKS_A_SECOND;
     private static final double PERCENT = 100.0;
     private static final String DEBT = "EnergyOwed";
 
@@ -84,15 +93,28 @@ final class ComputerEnergy {
         if (!ComputersServerConfig.drawEnergy()) {
             return true;
         }
+        // Counted only as far as it decides anything, so a store that sits full for years never runs the count over.
+        this.dryDraws = this.store.stored() > this.left ? 0 : Math.min(WAVERS_WITHIN, this.dryDraws + 1);
         final double need = watts / TICKS_A_SECOND + this.owed;
         final long whole = (long) need;
         if (this.store.damaged() || this.store.stored() < whole) {
             this.owed = 0.0;
+            this.left = this.store.stored();
             return false;
         }
         this.store.spend(whole);
         this.owed = need - whole;
+        this.left = this.store.stored();
         return true;
+    }
+
+    /**
+     * Whether a draw that failed failed on unstable power: the line still brought something within the last second,
+     * only less than the machine draws. A line that brought nothing, or a store burnt by the wrong class, is a power
+     * loss.
+     */
+    boolean wavering() {
+        return !this.store.damaged() && this.dryDraws < WAVERS_WITHIN;
     }
 
     /** Owes {@code joules} for work its cards did; nothing while the draw is off. */
@@ -131,6 +153,7 @@ final class ComputerEnergy {
         if (paid > 0L && !this.store.damaged()) {
             this.store.spend(paid);
             this.debt -= paid;
+            this.left = this.store.stored();
             this.changed.run();
         }
     }

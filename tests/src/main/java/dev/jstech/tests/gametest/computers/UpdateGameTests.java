@@ -12,8 +12,11 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.computers.engine.EngineVerb;
 import dev.jstech.computers.engine.NetworkOperationsService;
+import dev.jstech.computers.eventlog.EventLevel;
+import dev.jstech.computers.eventlog.NetworkEventLog;
 import dev.jstech.computers.operation.NetworkUpdateOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.ExternalDataPort;
@@ -24,6 +27,7 @@ import dev.jstech.computers.workshop.UpdateDrawer;
 import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
+import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -49,7 +53,8 @@ import org.jetbrains.annotations.Nullable;
  * the card works on it at the Workshop's rules, and it comes back to its server. What it refuses (anything but a
  * Personal Computer's own cards, a paid action with nobody there to pay, a network with no engine), the drawer the
  * item waits in (seen by no query, saved with the computer, handed to the card's output after a reload, dropped with
- * the computer), the one furnace both doors share, and that no craft can ever use a card.
+ * the computer, lost with a computer that goes dark suddenly), the one furnace both doors share, and that no craft can
+ * ever use a card.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -291,6 +296,47 @@ public final class UpdateGameTests {
                             "nothing is lost and what the card held waits at its output; raw " + raw + ", ingots "
                                     + ingots);
                     helper.assertTrue(pc.updateDrawer().free(), "and the drawer is let go");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * The computer going dark suddenly with the card at work loses what the card held: the UPDATE is discarded, nothing
+     * waits at the card's output, and the network's log says what was lost.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void update_losesWhatTheCardHeldWhenTheComputerGoesDark(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
+        final PersonalComputerBlockEntity pc = placePc(helper);
+        final NetworkUpdateOperation[] op = new NetworkUpdateOperation[1];
+        final NetworkUuid[] network = new NetworkUuid[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    install(pc, WorkshopCard.FURNACE);
+                    net.seed(Items.RAW_IRON, 4);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(held(net, Items.RAW_IRON) == 4L, "the network holds it"))
+                .thenExecute(() -> {
+                    network[0] = net.mainframe().networkUuid();
+                    op[0] = net.mainframe().networkOperations().update(request(pc, Items.RAW_IRON, 4,
+                            UpdateAction.SMELT, null));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(!pc.updateDrawer().slot(UpdateDrawer.WORK).isEmpty(),
+                        "the raw iron reaches the card"))
+                .thenExecute(() -> pc.stopSuddenly(null, CrashPages.Moment.none()))
+                .thenWaitUntil(() -> helper.assertTrue(op[0].isDone()
+                        && op[0].status() == OperationRecord.STATUS_DISCARDED, "the UPDATE is discarded"))
+                .thenExecute(() -> {
+                    final long raw = held(net, Items.RAW_IRON) + countAtOutput(pc, Items.RAW_IRON);
+                    final long ingots = held(net, Items.IRON_INGOT) + countAtOutput(pc, Items.IRON_INGOT);
+                    helper.assertTrue(raw + ingots < 4L && countAtOutput(pc, Items.RAW_IRON) == 0L,
+                            "what the card held is lost; raw " + raw + ", ingots " + ingots);
+                    helper.assertTrue(pc.updateDrawer().free(), "and the drawer is let go");
+                    helper.assertTrue(NetworkEventLog.of(helper.getLevel()).newest(network[0],
+                                    helper.getLevel().getGameTime(), any -> true, NetworkEventLog.MOST).stream()
+                                    .anyMatch(event -> event.level() == EventLevel.ERROR && event.message().english()
+                                            .startsWith("Lost in transit when it went dark: ")),
+                            "the network's log says what was lost");
                 })
                 .thenSucceed();
     }

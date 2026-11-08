@@ -327,7 +327,8 @@ public final class BootRunner {
         }
         final long now = level.getGameTime();
         if (phases.bootUntimed()) {
-            phases.timeBoot(now, bootLength(machine));
+            // Disks a sudden shutdown left unclean are checked first, as long as their file system takes.
+            phases.timeBoot(now, bootLength(machine), DiskChecks.atBoot(machine));
             /*
              * Whoever watched the self-test end is still looking at it, so they are shown the system coming up the
              * moment the machine knows how long that takes.
@@ -344,6 +345,9 @@ public final class BootRunner {
         }
         phases.endBoot();
         phases.systemUp(now);
+        if (DiskChecks.cameUp(machine)) {
+            machine.setChanged();
+        }
         machine.systemCameUp();
         machine.systemSound(level, SystemSound.STARTUP);
         final boolean balloon = greet(machine);

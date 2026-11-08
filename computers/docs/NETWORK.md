@@ -21,7 +21,9 @@ the storage, and the Operations being worked.
 **The network's event log** (added 2026-10-25), in the Network Manager's Log tab beside the Operations, writes
 down what happens to every machine: INFO (a machine switched on or off), WARN (a degraded power supply, or a
 redundant one that lost a unit) and ERROR (two Mainframes on one network, a machine that went dark because no energy
-reached it, or because its power supply failed; these added 2026-11-08). It filters by level, machine and period,
+reached it, or because its power supply failed; these added 2026-11-08; a machine that went dark on unstable power,
+and what the Operations of a machine that went dark were carrying, how much and of what, also added 2026-11-08).
+It filters by level, machine and period,
 prints, and exports to a text file on a disk of the Mainframe. A network keeps its last seven days, at most 2,000
 events. When the team that owns the network (the team of its
 Mainframe's operator) reaches an era of hardware, or one of J's Industrial's tiers, the log says so in an INFO line
@@ -163,6 +165,7 @@ waiting one climbs in priority, how long a saved one nobody resumed is kept. J's
 | `hardware.psu_failures` | on | Power supplies wear out and fail ([Hardware](HARDWARE.md#power-supplies-psu)). |
 | `hardware.psu_life_multiplier` | 1.0 | How much longer every power supply lasts, from 0.1 to 10. |
 | `install_by_hand.arch_every_step` | off | Ask for every step of Arch Linux's guide. |
+| `item_loss.power_loss` | on | What the Operations were carrying is lost when the machine running them goes dark suddenly ([Hardware](HARDWARE.md#power-supplies-psu)); off, it is given back. |
 | `install_by_hand.gentoo_every_step` | off | Ask for every step of Gentoo's handbook. |
 | `power.draw_energy` | on | Computers draw energy through their power supplies ([Hardware](HARDWARE.md#power-supplies-psu)); off, they run free. |
 | `prompt.list_commands` | off | The `listcmd` command on every system. |

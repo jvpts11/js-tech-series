@@ -178,6 +178,24 @@ public final class BootSplashArt {
     }
 
     /**
+     * The newest editions checking their disk after a sudden shutdown, under their mark as they always come up:
+     * Frames 10's mark and ring of dots, Frames 11's maker's mark and spinner, and the one line that says how far the
+     * scan and repair has got.
+     */
+    public static void checking(final GuiGraphics g, final Font font, final boolean eleven, final int x,
+                                final int y, final int w, final int h, final double loop, final String line) {
+        if (eleven) {
+            frames11(g, font, x, y, w, h, loop, "", line);
+            return;
+        }
+        final Ten c = TEN.get();
+        g.fill(x, y, x + w, y + h, c.ground());
+        SplashLogos.mark(g, PanelStyle.FRAMES_10, x + (w - TEN_MARK) / 2, y + h / 2 - TEN_MARK, TEN_MARK);
+        dots(g, x + w / 2 - DOTS_SIZE / 2, y + h / 2 + 22, loop);
+        Draw.textCentered(g, font, line, x + w / 2, y + h / 2 + 22 + DOTS_SIZE + 8, c.ink());
+    }
+
+    /**
      * The one colour that picture is mostly made of, which is what is left over the desktop as the picture gives way
      * to it: the sky's band for the oldest edition, the blue of the later one's welcome, the newest one's dark.
      */

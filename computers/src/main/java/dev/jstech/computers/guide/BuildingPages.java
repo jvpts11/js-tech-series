@@ -762,12 +762,24 @@ final class BuildingPages {
                         + " is degraded, and you are warned at every boot; at 100% it fails, and the computer goes"
                         + " dark until you put in a new one. The 3000P has two units: one can fail, and the other"
                         + " carries the load.")
+                .paragraph("A computer that loses its power instead of being switched off shuts down suddenly. A line"
+                        + " that still brings something, but less than the computer draws, is unstable power: the"
+                        + " system goes down on its red page first, and a supply that fails puts up its own. What the"
+                        + " Mainframe's Operations were carrying is lost, and the log says what. The next time the"
+                        + " system starts, it checks the disks it had in use: two seconds with a journal, up to a"
+                        + " minute without one, and nothing on MC-DOS. Switch your computers off with their button and"
+                        + " you lose nothing.")
                 .ifSomethingGoesWrong("The computer does not start, or the build says \"PSU insufficient\".",
                         "Its parts draw more than its supply gives. Use a supply with more watts.",
                         "The computer does not start, and its DRAW readout says NO POWER.",
                         "No energy reaches it. Run a cable to it from a generator or a battery.",
                         "The computer went dark, and its power button says \"PSU failure\".",
-                        "Its supply wore out. Put in a new supply, and run it further under its rating.")
+                        "Its supply wore out. Put in a new supply, and run it further under its rating.",
+                        "The computer goes down on a red page about unstable power.",
+                        "The line gives it less than it draws. Add a generator or a battery, or take machines off the"
+                                + " line.",
+                        "The computer starts with a long check of its disk.",
+                        "It went dark suddenly the last time. Let it finish: the check erases nothing.")
                 .seeAlso("jsc:build_refusals", "jsc:disks", "jsc:processors")
                 .register();
     }

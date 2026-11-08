@@ -66,6 +66,8 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
      * say what it is on says nothing at all instead.
      */
     private final String systemName;
+    /* The machine's id, which tells it apart from machines of the same name; sent for the same reason. */
+    private final String machineId;
     private final ComputerReadings readings;
     private int refreshTick;
     private boolean initialDataSent;
@@ -124,7 +126,8 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
     public ComputerTerminalMenu(final int containerId, final Inventory playerInventory,
                                 @Nullable final IComputerTerminalHost host,
                                 final BlockPos hostPos, final BlockPos monitorPos, final int initialTab,
-                                @Nullable final ResourceLocation spaceId, final String systemName) {
+                                @Nullable final ResourceLocation spaceId, final String systemName,
+                                final String machineId) {
         super(ComputingMenus.COMPUTER_TERMINAL_MENU.get(), containerId, playerInventory,
                 validity(playerInventory.player.level(), hostPos.immutable(), monitorPos.immutable()));
         this.level = playerInventory.player.level();
@@ -134,6 +137,7 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         this.monitorPos = monitorPos.immutable();
         this.spaceId = spaceId;
         this.systemName = systemName == null ? "" : systemName;
+        this.machineId = machineId == null ? "" : machineId;
         /*
          * Open on the tab the server worked out before the window opened (openingTab), which is the one the
          * client was sent too. A server building the menu works it out again, which changes nothing; a client
@@ -196,6 +200,11 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         return systemName;
     }
 
+    /** The machine's id ({@code CC-4a91e2}), which tells it apart from machines of the same name. */
+    public String machineId() {
+        return machineId;
+    }
+
     /**
      * The menu as the player's game opens it. The machine can stand beyond what this game has loaded while its
      * monitor is close by, so the menu opens without it then: everything it reads of the machine reads as nothing.
@@ -207,16 +216,18 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         final int initialTab = buf.readVarInt();
         final ResourceLocation spaceId = buf.readBoolean() ? buf.readResourceLocation() : null;
         final String systemName = buf.readUtf(MAX_SYSTEM_NAME);
+        final String machineId = buf.readUtf(MAX_SYSTEM_NAME);
         final var be = playerInventory.player.level().getBlockEntity(hostPos);
         return new ComputerTerminalMenu(containerId, playerInventory,
                 be instanceof IComputerTerminalHost terminalHost ? terminalHost : null, hostPos, monitorPos,
-                initialTab, spaceId, systemName);
+                initialTab, spaceId, systemName, machineId);
     }
 
-    /** Writes what the client needs before the menu exists: where it is, which heading, and what it runs. */
+    /** Writes what the client needs before the menu exists: where it is, which heading, what it runs and its id. */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
                                        final BlockPos hostPos, final int initialTab,
-                                       @Nullable final ResourceLocation spaceId, final String systemName) {
+                                       @Nullable final ResourceLocation spaceId, final String systemName,
+                                       final String machineId) {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
         buf.writeVarInt(initialTab);
@@ -231,6 +242,8 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         final String name = systemName == null ? "" : systemName;
         buf.writeUtf(name.length() > MAX_SYSTEM_NAME ? name.substring(0, MAX_SYSTEM_NAME) : name,
                 MAX_SYSTEM_NAME);
+        final String id = machineId == null ? "" : machineId;
+        buf.writeUtf(id.length() > MAX_SYSTEM_NAME ? id.substring(0, MAX_SYSTEM_NAME) : id, MAX_SYSTEM_NAME);
     }
 
     /**
@@ -461,6 +474,16 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
 
     public long ramBuffer() {
         return readings.ramBuffer();
+    }
+
+    /** What the machine's parts draw, in watts. */
+    public int partsWatts() {
+        return readings.partsWatts();
+    }
+
+    /** What they take from the line, in watts. */
+    public int lineWatts() {
+        return readings.lineWatts();
     }
 
     public int serverCount() {

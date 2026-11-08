@@ -1,0 +1,14 @@
+{
+  "band": "#FFAAAAAA",
+  "bandInk": "#FF000000",
+  "barFill": "#FF00AAAA",
+  "barTrack": "#FF000000",
+  "consoleGround": "#FF000000",
+  "consoleInk": "#FFC8C8C8",
+  "ink": "#FFFFFFFF",
+  "now": "#FFFFFF55",
+  "pending": "#FFAAAAAA",
+  "scanDiskGround": "#FF0000AA",
+  "sevenGround": "#FF000000",
+  "xpGround": "#FF0000AA"
+}

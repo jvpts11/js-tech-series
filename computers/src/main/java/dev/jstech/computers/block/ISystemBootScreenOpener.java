@@ -10,6 +10,7 @@ package dev.jstech.computers.block;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.computers.os.boot.DiskCheck;
 import dev.jstech.computers.registry.ClientHook;
 import net.minecraft.core.BlockPos;
 
@@ -32,9 +33,10 @@ public interface ISystemBootScreenOpener {
      * @param endsDark   whether a dark monitor follows rather than a system, as it does for a machine going down
      * @param who        the desktop this machine brings up after the system, the system by name and the machine's
      *                   host name, which a desktop's own loading screen may put on the glass
+     * @param check      the check of disks a sudden shutdown left unclean that the coming-up starts with
      */
     void open(BlockPos pos, BlockPos monitorPos, BootSequence sequence, int remaining, int total,
-              boolean endsDark, BootSplash splash, BootIdentity who);
+              boolean endsDark, BootSplash splash, BootIdentity who, DiskCheck check);
 
     final class Holder {
 
@@ -49,8 +51,9 @@ public interface ISystemBootScreenOpener {
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final BootSequence sequence,
                                 final int remaining, final int total, final boolean endsDark,
-                                final BootSplash splash, final BootIdentity who) {
-            HOOK.ifPresent(target -> target.open(pos, monitorPos, sequence, remaining, total, endsDark, splash, who));
+                                final BootSplash splash, final BootIdentity who, final DiskCheck check) {
+            HOOK.ifPresent(target -> target.open(pos, monitorPos, sequence, remaining, total, endsDark, splash, who,
+                    check));
         }
     }
 }

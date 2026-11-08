@@ -14,6 +14,7 @@ import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.block.OpticalPort;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftPlanning;
 import dev.jstech.computers.crafting.CraftRouting;
@@ -595,6 +596,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * being abandoned or logged: this is the chunk-unload path, where the block entity was just written to
      * disk with those Operations inside it, and abandoning them here would move items after the save (a
      * craft returning its pool), items the resumed Operation would move again on reload.
+     *
+     * <p>A Mainframe that went dark suddenly, by a power loss or a failing supply, loses what its Operations were
+     * carrying rather than handing it back, when the server's settings say so, and its network's log says what.
      */
     private void closeDispatch(final boolean keepPersistent) {
         if (dispatch != null) {
@@ -611,17 +615,26 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
              * INSERT returning leftover, a SELECT freeing its lock) recovers; then record each as
              * DISCARDED so a conflict or power-off leaves a trace in the log instead of vanishing.
              */
+            final boolean lose = !keepPersistent && stoppedSuddenly() && ComputersServerConfig.loseOnPowerLoss();
+            final Map<StorageKey, Long> lost = new HashMap<>();
             for (final var operation : scheduler.live()) {
                 if (keepPersistent && operation instanceof IPersistentOperation persistent
                         && !persistent.isEphemeral()) {
                     continue; // already saved with the block entity; it resumes on reload
                 }
-                operation.abandon();
+                if (lose) {
+                    operation.lose().forEach((key, amount) -> lost.merge(key, amount, Long::sum));
+                } else {
+                    operation.abandon();
+                }
                 if (operation.silent()) {
                     continue; // its record travels with the Operation it turned into
                 }
                 recordOperation(operation.toRecord().withStatus(OperationRecord.STATUS_DISCARDED));
                 scheduler.postDiscarded(operation);
+            }
+            if (level instanceof ServerLevel server) {
+                logItemsLost(server, lost);
             }
             scheduler.clear();
             // The index lives in RAM: powering off clears the catalog, rebuilt on the next start.

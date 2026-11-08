@@ -171,12 +171,24 @@ supply a little more or less (up to a fifth either way, drawn once); a rack over
 of its servers' supplies. The wear shows as a bar under the supply in the assembly screens, as an item's durability
 does, and in its tooltip and the DRAW readout's. From 80% worn the supply is degraded: its seat's edge turns amber,
 the self-test of every boot writes a warning, the Device Manager marks it under Power supplies, the firmware's
-Hardware page shows it, and the network's event log records a WARN. At 100% it fails: the computer goes dark at once
-(an ERROR in the log), and it does not start again, the assembly screen saying "PSU failure", until the supply is
-replaced; a failed supply cannot be repaired. The MF ServerPSU 3000P (Redundant) has two units that share the load,
-each with its own wear: when one fails, the other carries everything and wears faster for it, and only with both
-failed does the server go dark. The server settings `hardware.psu_failures` (off, no supply wears) and
-`hardware.psu_life_multiplier` (0.1 to 10) change all of this.
+Hardware page shows it, and the network's event log records a WARN. At 100% it fails: a system that is up goes down
+on its red page, which names the supply, and the computer goes dark (an ERROR in the log); it does not start again,
+the assembly screen saying "PSU failure", until the supply is replaced; a failed supply cannot be repaired. The MF
+ServerPSU 3000P (Redundant) has two units that share the load, each with its own wear: when one fails, the other
+carries everything and wears faster for it, and only with both failed does the server go dark. The server settings
+`hardware.psu_failures` (off, no supply wears) and `hardware.psu_life_multiplier` (0.1 to 10) change all of this.
+
+*Added 2026-11-08.* A computer that loses its power instead of being switched off shuts down **suddenly**: a power
+loss, unstable power or a failing supply. Unstable power is a line that still brings something, only less than the
+computer draws (a weak generator, an overloaded grid): a system that is up goes down on its red page first, with the
+stop code INTERNAL_POWER_ERROR on Frames and each Unix's own panic, and the computer is dark after it. A line cut
+altogether takes it at once, with no page. What the Operations of a Mainframe that goes dark were carrying (in its
+memory buffer, on their way to a disk, to an inventory or to a player) is lost, and so is the work in a Personal
+Computer's card when that computer goes dark; the network's event log says how much and of what. The server setting
+`item_loss.power_loss` gives it all back instead. The disks the system had in use are checked the next time it comes
+up ([Systems](SYSTEMS.md#after-a-sudden-shutdown)). A rack's bays shut down suddenly the same way. The Local heading
+of a computer's monitor shows its DRAW (its parts' watts) and its LINE (what it takes from the line, in FE a tick),
+and its id across from its title, which tells it from machines of the same name.
 
 ### Disks
 
@@ -223,6 +235,10 @@ failed does the server go dark. The server settings `hardware.psu_failures` (off
   drawn than the power supply gives.
 - **The computer went dark and does not start, and its power button says "PSU failure".** Its power supply wore out
   and failed. Put in a new one; a supply that runs well under its rating lasts much longer.
+- **The computer keeps going down on a red page that says INTERNAL_POWER_ERROR, or that the power is unstable.** The
+  line gives it less than it draws: add generation, take machines off the line, or put a UPS between them.
+- **Items an Operation was moving are gone, and the log says "Lost in transit".** The Mainframe went dark in the
+  middle of it. Keep its power steady, or turn `item_loss.power_loss` off on the server.
 - **A part sits in the window but does nothing.** The board does not offer that slot. Use a board with more.
 - **A part does not go in at all.** It is from another era than the board.
 - **The network is slow.** Look at the Mainframe first: its processors set how much it handles at once, and its

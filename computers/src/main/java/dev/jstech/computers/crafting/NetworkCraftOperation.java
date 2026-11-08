@@ -1097,6 +1097,26 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         finish();
     }
 
+    /**
+     * The machine running it went dark suddenly: its pool, the ingredients it took and what it made of them, is lost
+     * with it. Its machine steps are Operations of their own and lose what they carry themselves.
+     */
+    @Override
+    public Map<StorageKey, Long> lose() {
+        if (done) {
+            return Map.of();
+        }
+        final Map<StorageKey, Long> carried = new LinkedHashMap<>();
+        pool.forEach((key, amount) -> {
+            if (amount > 0L) {
+                carried.put(key, amount);
+            }
+        });
+        pool.clear();
+        finish();
+        return carried;
+    }
+
     @Override
     public UUID operationId() {
         return operationId;

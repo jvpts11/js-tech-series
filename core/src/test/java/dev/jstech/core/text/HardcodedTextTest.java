@@ -136,6 +136,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "operation/MoveLabels.java", 1, ORIGIN),
             data(COMPUTERS + "engine/prophet/ProphetEngine.java", 1, ORIGIN),
             data(COMPUTERS + "client/BootSplashArt.java", 5, LOGO),
+            data(COMPUTERS + "client/DiskCheckArt.java", 1, PRODUCTS),
             data(COMPUTERS + "client/CrashScreen.java", 3, "a kernel's own words on its console, and the one line"
                     + " the crash page's code carries, the same in every language"),
             data(COMPUTERS + "client/DesktopSplashArt.java", 2, LOGO),
@@ -192,9 +193,11 @@ class HardcodedTextTest {
             data(COMPUTERS + "machine/SourceChains.java", 14, "build flags, as a source build prints and reads them"),
             data(COMPUTERS + "os/Branding.java", 2, PRODUCTS),
             data(COMPUTERS + "os/boot/BootLines.java", 2, KERNEL_LOG),
+            data(COMPUTERS + "os/boot/DiskCheck.java", 25, "what fsck prints as it checks a disk after a sudden"
+                    + " shutdown: no fsck ever printed in anything but its own words"),
             data(COMPUTERS + "os/boot/BsdBootLines.java", 2, KERNEL_LOG),
             data(COMPUTERS + "os/boot/SysVBootLines.java", 3, KERNEL_LOG),
-            data(COMPUTERS + "os/crash/CrashPages.java", 67, "what a kernel prints as it panics, and where a"
+            data(COMPUTERS + "os/crash/CrashPages.java", 104, "what a kernel prints as it panics, and where a"
                     + " crashed system says it failed: no kernel ever printed them in anything but its own words"),
             data(COMPUTERS + "os/KernelNames.java", 4, "kernel names as a system reports them"),
             data(COMPUTERS + "os/OsBootstrap.java", 5, PRODUCTS),

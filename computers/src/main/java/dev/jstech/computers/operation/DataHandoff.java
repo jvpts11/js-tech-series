@@ -379,5 +379,12 @@ public final class DataHandoff {
         long total() {
             return total;
         }
+
+        @Override
+        public long dropHeld() {
+            final long held = total;
+            total = 0L;
+            return held;
+        }
     }
 }

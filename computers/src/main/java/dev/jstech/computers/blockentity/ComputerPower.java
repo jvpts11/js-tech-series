@@ -33,6 +33,11 @@ final class ComputerPower {
 
     private boolean manualOn;
     private boolean autoStart;
+    /*
+     * Whether the machine's last stop was sudden, its power lost rather than switched off, until it is on again: what
+     * its Operations were carrying is lost rather than handed back. Transient, as the moment it answers for is.
+     */
+    private boolean stoppedSuddenly;
 
     ComputerPower(final Runnable changed, final Runnable endSession, final Consumer<Boolean> switched) {
         this.changed = changed;
@@ -173,6 +178,9 @@ final class ComputerPower {
     void setPowered(final boolean on) {
         final boolean was = this.manualOn;
         this.manualOn = on;
+        if (on) {
+            this.stoppedSuddenly = false;
+        }
         if (was != on) {
             this.switched.accept(on);
         }
@@ -192,9 +200,15 @@ final class ComputerPower {
      */
     void lose() {
         this.manualOn = false;
+        this.stoppedSuddenly = true;
         this.phases.powered(false);
         this.endSession.run();
         this.changed.run();
+    }
+
+    /** Whether the machine's last stop was sudden, until it is on again. */
+    boolean stoppedSuddenly() {
+        return this.stoppedSuddenly;
     }
 
     void toggleAutoStart(final boolean buildValid) {
@@ -212,6 +226,7 @@ final class ComputerPower {
                 this.switched.accept(true);
             }
             this.manualOn = true;
+            this.stoppedSuddenly = false;
         }
         this.changed.run();
     }
@@ -236,6 +251,7 @@ final class ComputerPower {
             this.manualOn = false;
         } else if (this.autoStart) {
             this.manualOn = true;
+            this.stoppedSuddenly = false;
         }
     }
 

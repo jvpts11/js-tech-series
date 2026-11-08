@@ -11,8 +11,9 @@ import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
 
 /**
- * Why a system went down on its own: what its crash page says happened. A system of the Frames family shows the first
- * on its blue page and the second on its red one; a Unix kernel panics over all three in its own words.
+ * Why a system went down on its own: what its crash page says happened. A system of the Frames family shows a fault of
+ * its software on its blue page and a fault of its hardware on its red one; a Unix kernel panics over all of them in
+ * its own words.
  */
 public enum CrashCause implements IStableId {
 
@@ -23,7 +24,16 @@ public enum CrashCause implements IStableId {
     HARDWARE(1),
 
     /** The system's first process, the one every other descends from, was killed. */
-    INIT_KILLED(2);
+    INIT_KILLED(2),
+
+    /** The processor passed its safe temperature and the hardware cut it off. */
+    THERMAL_TRIP(3),
+
+    /** The power supply failed while the machine ran. */
+    POWER_SUPPLY(4),
+
+    /** The line fed the machine less than it draws: its voltage fell and rose while it ran. */
+    UNSTABLE_POWER(5);
 
     private static final StableIds<CrashCause> IDS = StableIds.of(CrashCause.class);
 
@@ -41,5 +51,18 @@ public enum CrashCause implements IStableId {
     @Override
     public int id() {
         return this.id;
+    }
+
+    /** Whether it is a fault of the hardware, which a Frames system shows on its red page. */
+    public boolean hardware() {
+        return this != MEMORY && this != INIT_KILLED;
+    }
+
+    /**
+     * Whether it takes the machine's power with it: after the page the machine is dark, a sudden shutdown, rather than
+     * starting over.
+     */
+    public boolean cutsPower() {
+        return this == THERMAL_TRIP || this == POWER_SUPPLY || this == UNSTABLE_POWER;
     }
 }

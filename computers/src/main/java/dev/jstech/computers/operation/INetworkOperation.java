@@ -8,8 +8,10 @@
 package dev.jstech.computers.operation;
 
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -50,6 +52,18 @@ public interface INetworkOperation {
      * the same clean-up as {@link #abandon()}, but the record reads DISCARDED so the log tells the two apart.
      */
     void cancel();
+
+    /**
+     * Settles the Operation early because the machine running it went dark suddenly: what it was carrying (in the
+     * memory buffer, on its way to a disk or to an inventory) is lost rather than handed back, and the rest is let go
+     * of as {@link #abandon()} lets it go. What stays where it was, in storage or in a machine in the world, stays.
+     *
+     * @return what was lost, by kind; nothing for an Operation that carries nothing, or has settled already
+     */
+    default Map<StorageKey, Long> lose() {
+        abandon();
+        return Map.of();
+    }
 
     /** The level the Mainframe schedules this Operation at; {@link OperationPriority#DEFAULT} unless changed. */
     OperationPriority priority();

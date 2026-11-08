@@ -195,4 +195,25 @@ class ComputerTerminalLayoutTest {
         assertEquals(-1, ComputerTerminalLayout.rowAt(
                 ComputerTerminalLayout.RAIL_X, ComputerTerminalLayout.rowY(2) + 1, 2));
     }
+
+    @Test
+    void local_isCleanAboveTheRule() {
+        // The layout's own height is the rule over the player's slots, so nothing of the heading may reach it.
+        final GuiLayout l = ComputerTerminalLayout.local();
+        assertTrue(l.overlaps().isEmpty(), "overlaps: " + l.overlaps());
+        assertTrue(l.outOfBounds().isEmpty(), "out of bounds: " + l.outOfBounds());
+    }
+
+    @Test
+    void local_barsAreALineOfTextApart() {
+        assertTrue(ComputerTerminalLayout.LOCAL_BAR_PITCH >= LINE_H, "a bar's label has to clear the next one's");
+        assertTrue(ComputerTerminalLayout.LOCAL_HARDWARE_DY >= ComputerTerminalLayout.localTileDy(1)
+                + ComputerTerminalLayout.LOCAL_TILE_H, "the hardware title starts under the second row of tiles");
+    }
+
+    @Test
+    void local_columnStopsShortOfThePanelBesideIt() {
+        assertTrue(ComputerTerminalLayout.CONTENT_X + ComputerTerminalLayout.LOCAL_COL_W
+                < ComputerTerminalLayout.PANE_X, "the hardware column ends before the network panel");
+    }
 }

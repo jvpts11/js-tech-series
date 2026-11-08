@@ -96,7 +96,7 @@ public final class MonitorPictures {
     private static IMonitorPicture booting(@Nullable final Era era, final OpenSystemBootPayload boot,
                                            final long now) {
         return new IMonitorPicture.Session(era,new OpenSystemBootPayload(boot.hostPos(), boot.monitorPos(), 0,
-                boot.totalTicks(), boot.sequence(), boot.endsDark(), boot.splash(), boot.who()), null,
+                boot.totalTicks(), boot.sequence(), boot.endsDark(), boot.splash(), boot.who(), boot.check()), null,
                 now + boot.remainingTicks());
     }
 

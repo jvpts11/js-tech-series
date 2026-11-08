@@ -26,6 +26,7 @@ import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -448,6 +449,20 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     @Override
     public void abandon() {
         finish();
+    }
+
+    /**
+     * The machine running it went dark suddenly: what a step of a craft held between its stages is lost with it. What
+     * is in the machine in the world stays there, as an abandoned step leaves it.
+     */
+    @Override
+    public Map<StorageKey, Long> lose() {
+        if (done) {
+            return Map.of();
+        }
+        final Map<StorageKey, Long> carried = io instanceof HeldIo held ? held.drop() : Map.of();
+        abandon();
+        return carried;
     }
 
     @Override

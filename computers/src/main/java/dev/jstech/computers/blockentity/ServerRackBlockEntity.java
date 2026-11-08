@@ -44,6 +44,8 @@ import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootPhases;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.DiskCheck;
+import dev.jstech.computers.os.boot.DiskChecks;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
@@ -1806,6 +1808,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     }
 
     @Override
+    public DiskCheck diskCheck() {
+        final int slot = soleComputerSlot();
+        return slot < 0 ? DiskCheck.NONE : unitState(slot).phases.diskCheck();
+    }
+
+    @Override
     @Nullable
     public ComputerBuild currentBuild() {
         return soleBuild();
@@ -2548,6 +2556,32 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return ramBuffer();
     }
 
+    /** What the parts of the machine the monitor shows draw, in watts; nothing without one. */
+    @Override
+    public int partsWatts() {
+        final ComputerBuild build = soleBuild();
+        return build == null ? 0 : build.powerDraw();
+    }
+
+    /** What they take from the line, in watts: their draw over its supply's efficiency. */
+    @Override
+    public int lineWatts() {
+        final ComputerBuild build = soleBuild();
+        return build == null ? 0 : (int) Math.ceil(ComputerEnergy.lineWatts(build.powerDraw(), build.psu()));
+    }
+
+    @Override
+    public String machineId() {
+        final ItemStack stack = soleServerStack();
+        final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;
+        if (node == null) {
+            return "";
+        }
+        final RackChassis chassis = ServerItem.chassisOf(stack);
+        return NetworkEvents.machineId(chassis == null ? HostScope.SERVER : chassis.computer().machine(),
+                new NodeUuid(node));
+    }
+
     @Override
     public int networkServerCount() {
         final NetworkUuid network = networkUuid();
@@ -2789,10 +2823,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         energy.sizeFor(supplies);
         final double drawn = drawnWatts();
         if (drawn > 0.0 && !energy.draw(drawn)) {
+            final boolean wavering = energy.wavering();
             for (int slot = 0; slot < CAPACITY_U; slot++) {
                 final ComputerBuild build = buildAt(slot);
                 if (build != null && build.isPowered() && bayPowerOn(slot)) {
-                    bayPowerLost(level, slot);
+                    bayPowerLost(level, slot, wavering);
                 }
             }
         }
@@ -2804,10 +2839,30 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
     }
 
-    /* The power went from under the machine in {@code slot}: it goes dark at once, and the network's log says why. */
-    private void bayPowerLost(final ServerLevel level, final int slot) {
+    /*
+     * The power went from under the machine in {@code slot}: a line that still brought something, only too little,
+     * brings its system down on its red page first; either way it goes dark at once, and the network's log says why.
+     */
+    private void bayPowerLost(final ServerLevel level, final int slot, final boolean wavering) {
+        bayStopsSuddenly(slot, wavering ? CrashCause.UNSTABLE_POWER : null, CrashPages.Moment.none());
+        logBay(level, slot, EventLevel.ERROR,
+                (wavering ? NetworkEvents.UNSTABLE_POWER : NetworkEvents.POWER_LOST).text());
+    }
+
+    /*
+     * The machine in {@code slot} goes dark suddenly: its system goes down on the page {@code cause} has first, when it
+     * has one, and the disks it had in use are left to be checked at its next start.
+     */
+    private void bayStopsSuddenly(final int slot, @Nullable final CrashCause cause, final CrashPages.Moment moment) {
+        // Asked before the page, which takes the system down and with it the sign that it was up.
+        final boolean mounted = unitState(slot).phases.systemMounted();
+        if (cause != null) {
+            asUnit(slot, () -> crash(cause, moment));
+        }
+        if (mounted) {
+            DiskChecks.markUnclean(unitHost(slot));
+        }
         bayDark(slot);
-        logBay(level, slot, EventLevel.ERROR, NetworkEvents.POWER_LOST.text());
     }
 
     /* The machine in {@code slot} goes dark at once: its switch off, whatever it ran ended, with no goodbye. */
@@ -2837,7 +2892,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /*
      * Each running machine's supply wears for the time it has been on, once a minute and when it stops, twice as fast
      * while the cabinet runs over its thermal budget. Degraded or short of a unit, the network's log warns; failed,
-     * the machine goes dark and its switch brings nothing up until the supply is replaced.
+     * its system goes down on its red page, the machine goes dark and its switch brings nothing up until the supply is
+     * replaced.
      */
     private void wearPsus(final ServerLevel level) {
         for (int slot = 0; slot < CAPACITY_U; slot++) {
@@ -2858,7 +2914,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             energyChanged();
             final String supply = psu.getHoverName().getString();
             if (worn.failedNow()) {
-                bayDark(slot);
+                bayStopsSuddenly(slot, CrashCause.POWER_SUPPLY, CrashPages.Moment.hardware(supply));
                 logBay(level, slot, EventLevel.ERROR, PsuTexts.LOG_FAILED.with(supply));
             } else if (worn.unitLost()) {
                 logBay(level, slot, EventLevel.WARN, PsuTexts.LOG_UNIT_FAILED.with(

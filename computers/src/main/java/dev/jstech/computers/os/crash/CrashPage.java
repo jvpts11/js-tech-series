@@ -20,7 +20,7 @@ import java.util.Objects;
  * @param cause      why the system went down, which turns a Frames page red when it was the hardware
  * @param stopCode   the stop code by name (MEMORY_MANAGEMENT), or the fatal exception's number on Frames 95
  * @param stopLine   the technical line under it: the STOP's numbers, or where Frames 95's exception happened
- * @param failedPart the part that was taken out, which the newer Frames name on their page; empty for none
+ * @param failedPart the part that was taken out or failed, which the newer Frames name on their page; empty for none
  * @param lines      what a kernel writes on the console, top to bottom; empty on a Frames page
  * @param totalTicks how long the page stands before the machine starts over
  * @param holdsOnKey whether a key on the console stops the automatic reboot, which then waits for another key
@@ -46,6 +46,6 @@ public record CrashPage(CrashStyle style, CrashCause cause, String stopCode, Str
 
     /** Whether this page is the red one a fault of the hardware puts up on a Frames system. */
     public boolean red() {
-        return this.style.frames() && this.cause == CrashCause.HARDWARE;
+        return this.style.frames() && this.cause.hardware();
     }
 }

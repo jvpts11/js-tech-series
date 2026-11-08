@@ -245,6 +245,20 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
         return waiting && !settled();
     }
 
+    /**
+     * The machine went dark suddenly: what its destination was holding back until the end, on its way to a player, is
+     * lost with it. What reached the destination tick by tick, a disk or an inventory, is there already.
+     */
+    @Override
+    public Map<StorageKey, Long> lose() {
+        if (settled()) {
+            return Map.of();
+        }
+        final long carried = destination.dropHeld();
+        finish();
+        return carried > 0L ? Map.of(key, carried) : Map.of();
+    }
+
     public NetworkSelectOperation onSettle(final Runnable callback) {
         setOnSettle(callback);
         return this;

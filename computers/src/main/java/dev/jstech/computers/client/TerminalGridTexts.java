@@ -57,6 +57,9 @@ final class TerminalGridTexts {
     // The Local heading.
     static final TextKey THIS_COMPUTER = TextKey.of("jsc.terminal.local.this_computer", "THIS COMPUTER");
     static final TextKey HARDWARE = TextKey.of("jsc.terminal.local.hardware", "HARDWARE");
+    static final TextKey LINE = TextKey.of("jsc.terminal.local.line", "LINE");
+    static final TextKey WATTS = TextKey.of("jsc.terminal.local.watts", "W");
+    static final TextKey FE_PER_TICK = TextKey.of("jsc.terminal.local.fe_per_tick", "FE/t");
     static final TextKey DISK = TextKey.of("jsc.terminal.local.disk", "Disk");
     static final TextKey STORAGE = TextKey.of("jsc.terminal.local.storage", "Storage");
     static final TextKey THE_NETWORK = TextKey.of("jsc.terminal.local.the_network", "THE NETWORK");

@@ -124,6 +124,21 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   does not start, "PSU failure", until the supply is replaced. The MF ServerPSU 3000P (Redundant) has two units that
   share the load, so one can fail and the other carries it all. The server settings `hardware.psu_failures` and
   `hardware.psu_life_multiplier` turn it off or stretch every life.
+- Sudden shutdowns: a computer or a rack's server that loses its power instead of being switched off shuts
+  down suddenly. A line that still brings something, only less than the machine draws, is unstable power: a system
+  that is up goes down on its red page first (INTERNAL_POWER_ERROR on Frames, each Unix's own panic) and the machine is
+  dark after it; a failing power supply puts up its red page too, naming the supply; a line cut altogether takes it
+  with no page. What a Mainframe's Operations were carrying (a pull on its way to a player, what an INSERT had not
+  written, a craft's pool, what a pipeline held between its stages) and what a Personal Computer's card was working on
+  are lost, and the network's event log says how much and of what; the server setting `item_loss.power_loss` gives it
+  all back instead.
+- The check of the disks after a sudden shutdown: the disks a system had in use are left unclean, the mark
+  riding on each disk, and the next system to start from them checks them first, as its file system needs: ScanDisk
+  on Frames 95, chkdsk from Frames XP on, under the mark on Frames 10 and 11, fsck on Linux, FreeBSD and UNIX. FAT and
+  UFS take a second for every 64 items in use, from 5 seconds to a minute; the journals of NTFS and ext take 2
+  seconds; btrfs nothing; MC-DOS and MC-NET check nothing, as the real ones did not. A clean shutdown leaves no mark.
+- The Local heading of a computer's monitor shows what it draws, its parts' watts (DRAW) and what it takes
+  from the line in FE a tick (LINE), and its id across from its title, which tells it from machines of the same name.
 - Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`

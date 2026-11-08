@@ -168,6 +168,14 @@ public interface IBootingMachine {
     }
 
     /**
+     * The check of disks a sudden shutdown left unclean that the coming-up under way starts with, or
+     * {@link DiskCheck#NONE}.
+     */
+    default DiskCheck diskCheck() {
+        return DiskCheck.NONE;
+    }
+
+    /**
      * What the system this machine boots remembers about being greeted, and whether its welcome comes back.
      *
      * <p>A host that does not keep it answers that nobody has met its system, which is what a machine with no

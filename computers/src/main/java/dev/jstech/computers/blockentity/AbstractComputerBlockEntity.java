@@ -59,6 +59,8 @@ import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.boot.BootTiming;
+import dev.jstech.computers.os.boot.DiskCheck;
+import dev.jstech.computers.os.boot.DiskChecks;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
@@ -78,6 +80,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.registry.ComputerRegistry;
 import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.LoopRequest;
@@ -119,6 +122,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -869,6 +873,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return power.bootTotal();
     }
 
+    @Override
+    public DiskCheck diskCheck() {
+        return power.phases().diskCheck();
+    }
+
     /** Whether the machine is closing its system down on its way to starting over. */
     @Override
     public boolean goingDown() {
@@ -1588,7 +1597,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         energy.sizeFor(build == null ? 0.0 : ComputerEnergy.lineWatts(build.psu().wattage(), build.psu()));
         final double watts = build == null ? 0.0 : ComputerEnergy.lineWatts(build.powerDraw(), build.psu());
         if (isRunning() && !energy.draw(watts)) {
-            powerLost(level);
+            powerLost(level, energy.wavering());
         }
         energy.payDebt(watts);
         wearPsu(level, build);
@@ -1599,19 +1608,48 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return hardware.psu();
     }
 
-    /* The power went: the machine goes dark at once, with no goodbye, and the network's log says why. */
-    private void powerLost(final ServerLevel level) {
-        power.lose();
+    /** Whether the machine's last stop was sudden, a power loss or a failing supply, until it is switched on again. */
+    public boolean stoppedSuddenly() {
+        return power.stoppedSuddenly();
+    }
+
+    /** Its id, which tells it apart from machines of the same name ({@code CC-4a91e2}); empty before it has one. */
+    public String machineId() {
         final NodeUuid node = nodeUuid();
-        if (node != null) {
-            NetworkEvents.powerLost(level, networkUuid(), node,
-                    NetworkEvents.machineName(customName(), machine(), node));
+        return node == null ? "" : NetworkEvents.machineId(machine(), node);
+    }
+
+    /**
+     * The machine goes dark suddenly: when {@code cause} has a page, the system goes down on it first and the page
+     * stands its time over the dark machine; the disks its system had in use are left to be checked at the next start,
+     * and what the Operations it ran were carrying is lost rather than handed back. The heat, a failing supply and
+     * unstable power come this way; a power loss with no page passes nothing.
+     */
+    public void stopSuddenly(@Nullable final CrashCause cause, final CrashPages.Moment moment) {
+        // Asked before the page, which takes the system down and with it the sign that it was up.
+        final boolean mounted = power.phases().systemMounted();
+        if (cause != null) {
+            crash(cause, moment);
         }
+        if (mounted) {
+            DiskChecks.markUnclean(this);
+        }
+        power.lose();
+    }
+
+    /*
+     * The power went: a line that still brought something, only too little, brings the system down on its red page
+     * first; either way the machine goes dark at once, with no goodbye, and the network's log says why.
+     */
+    private void powerLost(final ServerLevel level, final boolean wavering) {
+        stopSuddenly(wavering ? CrashCause.UNSTABLE_POWER : null, CrashPages.Moment.none());
+        logEvent(level, EventLevel.ERROR, (wavering ? NetworkEvents.UNSTABLE_POWER : NetworkEvents.POWER_LOST).text());
     }
 
     /*
      * The supply wears for the time the machine has been on, once a minute and when it stops. Degraded or short of a
-     * unit, the network's log warns; failed, the machine goes dark at once and stays so until the supply is replaced.
+     * unit, the network's log warns; failed, the system goes down on its red page, the machine goes dark at once and
+     * stays so until the supply is replaced.
      */
     private void wearPsu(final ServerLevel level, @Nullable final ComputerBuild build) {
         if (isRunning() && networkUuid() != null) {
@@ -1626,24 +1664,37 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         markDirtyOnly();
         final String supply = hardware.psu().getHoverName().getString();
         if (worn.failedNow()) {
-            power.lose();
+            stopSuddenly(CrashCause.POWER_SUPPLY, CrashPages.Moment.hardware(supply));
             hardware.markDirty();
             hardwareChanged();
-            logPsu(level, EventLevel.ERROR, PsuTexts.LOG_FAILED.with(supply));
+            logEvent(level, EventLevel.ERROR, PsuTexts.LOG_FAILED.with(supply));
         } else if (worn.unitLost()) {
-            logPsu(level, EventLevel.WARN, PsuTexts.LOG_UNIT_FAILED.with(worn.after().failedUnits(worn.spec()),
+            logEvent(level, EventLevel.WARN, PsuTexts.LOG_UNIT_FAILED.with(worn.after().failedUnits(worn.spec()),
                     worn.spec().units(), supply));
         } else if (worn.degradedNow()) {
-            logPsu(level, EventLevel.WARN, PsuTexts.LOG_DEGRADED.with(supply,
+            logEvent(level, EventLevel.WARN, PsuTexts.LOG_DEGRADED.with(supply,
                     PsuTexts.percent(worn.after().worst(worn.spec()))));
         }
     }
 
-    private void logPsu(final ServerLevel level, final EventLevel what, final Text message) {
+    /**
+     * Writes {@code message} into the log of the network the machine is on, or of the one it last ran on when it has
+     * just left it, under this machine's name.
+     */
+    protected void logEvent(final ServerLevel level, final EventLevel what, final Text message) {
         final NodeUuid node = nodeUuid();
         if (node != null) {
             NetworkEvents.record(level, networkUuid() != null ? networkUuid() : ranOn, what, node,
                     NetworkEvents.machineName(customName(), machine(), node), message);
+        }
+    }
+
+    /** Writes into the same log what the Operations it ran were carrying when it went dark, {@code lost} by kind. */
+    protected void logItemsLost(final ServerLevel level, final Map<StorageKey, Long> lost) {
+        final NodeUuid node = nodeUuid();
+        if (node != null) {
+            NetworkEvents.itemsLost(level, networkUuid() != null ? networkUuid() : ranOn, node,
+                    NetworkEvents.machineName(customName(), machine(), node), lost);
         }
     }
 

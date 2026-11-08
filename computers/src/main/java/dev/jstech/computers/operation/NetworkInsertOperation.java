@@ -47,6 +47,8 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
 
     private final String sourceLabel;
     private final UUID operationId = UUID.randomUUID();
+    /* Whether what it had not written yet went with a machine that went dark, leaving nothing to give back. */
+    private boolean lost;
 
     public NetworkInsertOperation(final ServerLevel level, final NetworkUuid network, final StorageKey key,
                                   final long demand, final String sourceLabel, final NetworkIndex index,
@@ -156,8 +158,24 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
         return movedTotal;
     }
 
+    /** What it was handed and did not write, which goes back where it came from; nothing once it was lost. */
     public long leftover() {
-        return Math.max(0L, demand - movedTotal);
+        return lost ? 0L : Math.max(0L, demand - movedTotal);
+    }
+
+    /**
+     * The machine went dark suddenly: what it had not written yet, taken from wherever it came, is lost with it, so
+     * whoever waits on it finds nothing left over to give back.
+     */
+    @Override
+    public Map<StorageKey, Long> lose() {
+        if (settled()) {
+            return Map.of();
+        }
+        final long carried = leftover();
+        lost = true;
+        finish();
+        return carried > 0L ? Map.of(key, carried) : Map.of();
     }
 
     @Override

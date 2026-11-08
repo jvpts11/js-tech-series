@@ -73,6 +73,18 @@ public final class HeldIo implements ICraftIo {
         held.values().removeIf(amount -> amount <= 0L);
     }
 
+    /** Drops everything it holds, for a machine that went dark with it, and answers what that was. */
+    public Map<StorageKey, Long> drop() {
+        final Map<StorageKey, Long> dropped = new LinkedHashMap<>();
+        held.forEach((key, amount) -> {
+            if (amount > 0L) {
+                dropped.put(key, amount);
+            }
+        });
+        held.clear();
+        return dropped;
+    }
+
     /** Whether it holds nothing. */
     public boolean isEmpty() {
         return held.values().stream().noneMatch(amount -> amount > 0L);

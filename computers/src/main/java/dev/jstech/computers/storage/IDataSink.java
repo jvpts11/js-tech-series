@@ -13,4 +13,12 @@ package dev.jstech.computers.storage;
 public interface IDataSink {
 
     long insert(StorageKey key, long amount, boolean simulate);
+
+    /**
+     * Drops what it has taken in and holds back until its Operation settles, for a machine that went dark with it on
+     * the way, and answers how much that was. A sink that hands everything on at once holds nothing.
+     */
+    default long dropHeld() {
+        return 0L;
+    }
 }

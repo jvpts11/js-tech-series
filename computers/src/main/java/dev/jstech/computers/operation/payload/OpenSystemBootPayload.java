@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.FileSystemType;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.computers.os.boot.DiskCheck;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
@@ -35,7 +37,7 @@ import java.util.List;
  */
 public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int remainingTicks, int totalTicks,
                                     BootSequence sequence, boolean endsDark, BootSplash splash,
-                                    BootIdentity who) implements CustomPacketPayload {
+                                    BootIdentity who, DiskCheck check) implements CustomPacketPayload {
 
     /** The longest a step's words may be; anything past it is a sentence, not a step. */
     public static final int MAX_TEXT = 64;
@@ -45,6 +47,17 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
 
     public static final StreamCodec<RegistryFriendlyByteBuf, OpenSystemBootPayload> STREAM_CODEC =
             StreamCodec.of(OpenSystemBootPayload::encode, OpenSystemBootPayload::decode);
+
+    public OpenSystemBootPayload {
+        check = check == null ? DiskCheck.NONE : check;
+    }
+
+    /** The same, for a coming-up or a going-down that starts with no check of its disks. */
+    public OpenSystemBootPayload(final BlockPos hostPos, final BlockPos monitorPos, final int remainingTicks,
+                                 final int totalTicks, final BootSequence sequence, final boolean endsDark,
+                                 final BootSplash splash, final BootIdentity who) {
+        this(hostPos, monitorPos, remainingTicks, totalTicks, sequence, endsDark, splash, who, DiskCheck.NONE);
+    }
 
     @Override
     public CustomPacketPayload.Type<OpenSystemBootPayload> type() {
@@ -72,6 +85,12 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         buf.writeUtf(clip(p.who().systemName()), MAX_TEXT);
         buf.writeUtf(clip(p.who().hostName()), MAX_TEXT);
         buf.writeUtf(clip(p.who().look()), MAX_TEXT);
+        buf.writeUtf(p.check().look().serializedName(), MAX_TEXT);
+        buf.writeUtf(p.check().type().serializedName(), MAX_TEXT);
+        buf.writeVarLong(p.check().usedMb());
+        buf.writeVarLong(p.check().capacityMb());
+        buf.writeVarInt(p.check().kinds());
+        buf.writeVarInt(p.check().ticks());
     }
 
     private static OpenSystemBootPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -89,10 +108,13 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
                     buf.readUtf(MAX_TEXT), buf.readBoolean()));
         }
         final boolean endsDark = buf.readBoolean();
-        return new OpenSystemBootPayload(host, monitor, remaining, total,
-                new BootSequence(title, subtitle, lines), endsDark, splash,
-                new BootIdentity(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT),
-                        buf.readUtf(MAX_TEXT)));
+        final BootIdentity who = new BootIdentity(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT),
+                buf.readUtf(MAX_TEXT));
+        final DiskCheck check = new DiskCheck(DiskCheck.Look.byName(buf.readUtf(MAX_TEXT)),
+                FileSystemType.byName(buf.readUtf(MAX_TEXT)), buf.readVarLong(), buf.readVarLong(), buf.readVarInt(),
+                buf.readVarInt());
+        return new OpenSystemBootPayload(host, monitor, remaining, total, new BootSequence(title, subtitle, lines),
+                endsDark, splash, who, check);
     }
 
     /*

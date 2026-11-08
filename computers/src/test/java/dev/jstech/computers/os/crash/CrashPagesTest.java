@@ -119,6 +119,65 @@ class CrashPagesTest {
     }
 
     @Test
+    void of_framesNamesTheStopCodesOfTheHeatTheSupplyAndTheLine() {
+        assertEquals("MACHINE_CHECK_EXCEPTION", page(CrashStyle.FRAMES_XP, Platform.FRAMES, CrashCause.THERMAL_TRIP,
+                CrashPages.Moment.none()).stopCode());
+        assertEquals("WHEA_UNCORRECTABLE_ERROR", page(CrashStyle.FRAMES_7, Platform.FRAMES, CrashCause.THERMAL_TRIP,
+                CrashPages.Moment.none()).stopCode());
+        assertEquals("WHEA_UNCORRECTABLE_ERROR", page(CrashStyle.FRAMES_11, Platform.FRAMES, CrashCause.THERMAL_TRIP,
+                CrashPages.Moment.none()).stopCode());
+        for (final CrashStyle style : List.of(CrashStyle.FRAMES_XP, CrashStyle.FRAMES_7, CrashStyle.FRAMES_10)) {
+            assertEquals("INTERNAL_POWER_ERROR", page(style, Platform.FRAMES, CrashCause.POWER_SUPPLY,
+                    CrashPages.Moment.hardware("MF PowerGold 650G")).stopCode());
+            assertEquals("INTERNAL_POWER_ERROR", page(style, Platform.FRAMES, CrashCause.UNSTABLE_POWER,
+                    CrashPages.Moment.none()).stopCode());
+        }
+        assertEquals("12", page(CrashStyle.FRAMES_95, Platform.FRAMES, CrashCause.UNSTABLE_POWER,
+                CrashPages.Moment.none()).stopCode());
+    }
+
+    @Test
+    void of_theHeatTheSupplyAndTheLineAreRedAndTakeThePower() {
+        for (final CrashCause cause : List.of(CrashCause.THERMAL_TRIP, CrashCause.POWER_SUPPLY,
+                CrashCause.UNSTABLE_POWER)) {
+            assertTrue(cause.hardware() && cause.cutsPower(), cause.name());
+            assertTrue(page(CrashStyle.FRAMES_10, Platform.FRAMES, cause, CrashPages.Moment.none()).red(),
+                    cause.name());
+        }
+        assertFalse(CrashCause.HARDWARE.cutsPower(), "a part taken out leaves the power where it was");
+        assertFalse(CrashCause.MEMORY.hardware() || CrashCause.INIT_KILLED.hardware());
+    }
+
+    @Test
+    void of_newerFramesNameTheSupplyThatFailedButNotTheHeatNorTheLine() {
+        assertEquals("MF PowerPlat 1200P", page(CrashStyle.FRAMES_11, Platform.FRAMES, CrashCause.POWER_SUPPLY,
+                CrashPages.Moment.hardware("MF PowerPlat 1200P")).failedPart());
+        assertEquals("", page(CrashStyle.FRAMES_11, Platform.FRAMES, CrashCause.THERMAL_TRIP,
+                CrashPages.Moment.none()).failedPart(), "the screen names the heat in the player's words");
+        assertEquals("", page(CrashStyle.FRAMES_10, Platform.FRAMES, CrashCause.UNSTABLE_POWER,
+                CrashPages.Moment.none()).failedPart(), "and the line");
+    }
+
+    @Test
+    void of_eachKernelPanicsOverTheHeatTheSupplyAndTheLineInItsOwnWords() {
+        assertTrue(page(CrashStyle.CONSOLE, Platform.LINUX, CrashCause.THERMAL_TRIP, CrashPages.Moment.none())
+                .lines().stream().anyMatch(l -> l.endsWith("Kernel panic - not syncing: Fatal machine check: thermal"
+                        + " trip")));
+        assertTrue(page(CrashStyle.CONSOLE, Platform.LINUX, CrashCause.POWER_SUPPLY,
+                CrashPages.Moment.hardware("MF PowerGold 650G")).lines().stream()
+                .anyMatch(l -> l.endsWith("power_supply PSU0: MF PowerGold 650G: output failed")));
+        assertTrue(page(CrashStyle.CONSOLE, Platform.FREEBSD, CrashCause.UNSTABLE_POWER, CrashPages.Moment.none())
+                .lines().contains("panic: unstable power"));
+        assertTrue(page(CrashStyle.CONSOLE, Platform.FREEBSD, CrashCause.POWER_SUPPLY,
+                CrashPages.Moment.hardware("MF PowerGold 650G")).lines()
+                .contains("acpi_psu0: +12V output failed (MF PowerGold 650G)"));
+        assertTrue(page(CrashStyle.CONSOLE, Platform.UNIX, CrashCause.THERMAL_TRIP, CrashPages.Moment.none())
+                .lines().contains("PANIC: thermal trip on processor 0"));
+        assertTrue(page(CrashStyle.CONSOLE, Platform.UNIX, CrashCause.UNSTABLE_POWER, CrashPages.Moment.none())
+                .lines().contains("PANIC: power fail"));
+    }
+
+    @Test
     void crashPage_keepsTheLastLinesWhenAKernelSaysTooMuch() {
         final List<String> lines = new ArrayList<>();
         for (int i = 0; i < CrashPage.MOST_LINES + 5; i++) {

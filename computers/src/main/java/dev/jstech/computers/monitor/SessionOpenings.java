@@ -77,7 +77,7 @@ public final class SessionOpenings {
     public static OpenSystemBootPayload systemBoot(final BlockPos monitorPos, final BlockPos owner,
                                                    final IOsHost computer) {
         return new OpenSystemBootPayload(owner, monitorPos, computer.bootRemaining(), computer.bootTotal(),
-                computer.bootSequence(), false, splashOf(computer), identityOf(computer));
+                computer.bootSequence(), false, splashOf(computer), identityOf(computer), computer.diskCheck());
     }
 
     /**

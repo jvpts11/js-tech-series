@@ -36,6 +36,18 @@ public interface IComputerTerminalHost {
 
     long computerRamBuffer();
 
+    /** What the machine's parts draw, in watts, as its assembly shows it; nothing without a build. */
+    int partsWatts();
+
+    /** What they take from the line, in watts: their draw over its power supply's efficiency; nothing without one. */
+    int lineWatts();
+
+    /**
+     * The machine's id, which tells it apart from machines of the same name: its kind's short mark and its short id
+     * ({@code CC-4a91e2}); empty for a machine with no identity yet.
+     */
+    String machineId();
+
     int networkServerCount();
 
     @Nullable

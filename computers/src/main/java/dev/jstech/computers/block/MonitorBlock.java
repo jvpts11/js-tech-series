@@ -730,12 +730,14 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
              */
             final OsDef running = ownerBe instanceof IOsHost machine ? machine.installedOs() : null;
             final String systemName = running == null ? "" : running.displayName();
+            // And the machine's id, which its Local header shows by its title and the client cannot work out.
+            final String machineId = host.machineId();
             player.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> new ComputerTerminalMenu(id, inv, host, owner, monitorPos, initialTab,
-                            spaceId, systemName),
+                            spaceId, systemName, machineId),
                     title),
                     buf -> ComputerTerminalMenu.writeOpenBuffer(buf, monitorPos, owner, initialTab, spaceId,
-                            systemName));
+                            systemName, machineId));
         }
     }
 

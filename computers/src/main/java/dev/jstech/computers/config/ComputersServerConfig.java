@@ -116,6 +116,13 @@ public final class ComputersServerConfig {
             .named("Power supply life")
             .activeWhen(PSU_FAILURES);
 
+    public static final ConfigKey<Boolean> LOSE_ON_POWER_LOSS = ConfigKey.flag("item_loss.power_loss", true)
+            .comment("Whether what the Operations were carrying is lost when the machine running them goes dark "
+                            + "suddenly: a power loss, unstable power or a power supply failing. The log says how "
+                            + "much and of what.",
+                    "Off, a sudden shutdown gives everything back, as switching the machine off does.")
+            .named("Lost on a power loss");
+
     public static final ConfigKey<Boolean> SHOW_BOOT_MENU = ConfigKey.flag("boot.show_boot_menu", true)
             .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: GRUB "
                             + "on a Linux, the loader on FreeBSD, the Midsoft Boot Manager with two systems.",
@@ -184,6 +191,7 @@ public final class ComputersServerConfig {
             .sectionNamed("power", "Power")
             .sectionNamed("update", "Changing items")
             .sectionNamed("hardware", "Hardware")
+            .sectionNamed("item_loss", "Items lost")
             .sectionNamed("boot", "Starting up")
             .sectionNamed("install_by_hand", "Installing by hand")
             .sectionNamed("prompt", "The prompt")
@@ -193,6 +201,8 @@ public final class ComputersServerConfig {
             .sectionComment("update", "What the personal-use cards charge for changing an item: smelting, "
                     + "enchanting, repairing, combining and naming.")
             .sectionComment("hardware", "How the parts age: the power supplies' wear and their failure.")
+            .sectionComment("item_loss", "What a player who lets the network fail pays for it: the items in "
+                    + "transit, lost in each situation turned on here.")
             .sectionComment("boot", "How the machines come up: whether they stop at their system's boot manager.")
             .sectionComment("install_by_hand", "Installing a system by hand: how much of its guide the machine "
                     + "insists on.")
@@ -212,6 +222,7 @@ public final class ComputersServerConfig {
             .key(UPDATE_COST)
             .key(PSU_FAILURES)
             .key(PSU_LIFE_MULTIPLIER)
+            .key(LOSE_ON_POWER_LOSS)
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
             .key(ARCH_EVERY_STEP)
@@ -247,6 +258,11 @@ public final class ComputersServerConfig {
     /** How much longer than their lines' lives every power supply lasts. */
     public static double psuLifeMultiplier() {
         return FILE.get(PSU_LIFE_MULTIPLIER);
+    }
+
+    /** Whether what the Operations carry is lost when the machine running them goes dark suddenly. */
+    public static boolean loseOnPowerLoss() {
+        return FILE.get(LOSE_ON_POWER_LOSS);
     }
 
     /** Whether a machine whose system brings a boot manager stops at it on the way up. */

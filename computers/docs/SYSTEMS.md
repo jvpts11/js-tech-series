@@ -88,6 +88,26 @@ Install a second system on another disk. The computer then stops at a boot manag
 Midsoft Boot Manager on Frames, GRUB on Linux, FreeBSD's own loader) so you choose which to start. The firmware's
 boot order says which disk starts first.
 
+### After a sudden shutdown
+
+*Added 2026-11-08.*
+
+A computer that went dark with its system up (a power loss, unstable power, a failing power supply,
+[Hardware](HARDWARE.md#power-supplies-psu)) leaves its disks unclean, and the next system to start from them checks
+them first, as its file system needs. The mark stays on each disk, so a disk moved to another computer is checked
+there; nothing is erased, and a clean shutdown leaves no mark.
+
+| System | Formats with | What it shows | How long |
+| --- | --- | --- | --- |
+| MC-DOS, MC-NET | FAT16 (FAT32 from the Legacy) | nothing: they never checked, and the mark waits for a system that does | none |
+| Frames 95 | FAT32 | ScanDisk on its blue screen, area by area | a second for every 64 items in use, 5 seconds to a minute |
+| Frames XP, Frames 7 | NTFS | chkdsk's three stages, on blue on XP and on black on 7 | 2 seconds (its journal) |
+| Frames 10, Frames 11 | NTFS | "Scanning and repairing drive" under the mark | 2 seconds |
+| Linux | ext3 on the Legacy, ext4 later, btrfs on Fedora from the Standard; ext4 when the root is formatted by hand | the journal replayed on the console; btrfs nothing | 2 seconds; none on btrfs |
+| FreeBSD, UNIX | UFS | fsck's five passes on the console | a second for every 64 items in use, 5 seconds to a minute |
+
+A disk is checked as the file system its computer's system formats with, until disks hold partitions of their own.
+
 ## Programs
 
 *Added 2026-08-26.*

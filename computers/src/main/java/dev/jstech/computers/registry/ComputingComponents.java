@@ -162,6 +162,14 @@ public final class ComputingComponents {
             DISK_SYSTEMS = saved("disk_systems", DiskSystems.CODEC, DiskSystems.STREAM_CODEC);
 
     /*
+     * A disk its system had in use when its machine went dark suddenly, as a real file system's dirty bit: the next
+     * system to come up from it checks it first. It rides on the disk, so a disk moved to another machine is checked
+     * there. Absent on a disk shut down cleanly.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>>
+            DISK_UNCLEAN = saved("disk_unclean", Codec.BOOL, ByteBufCodecs.BOOL);
+
+    /*
      * A user-chosen label for a disk or media volume, shown in This PC and the explorer drive tree and
      * editable there. Rides on the ItemStack so it travels with the disk/medium. Absent → the volume's
      * default name (e.g. "Local Disk" for a system disk, "Removable Drive" for a medium).
